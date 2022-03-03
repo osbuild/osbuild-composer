@@ -330,7 +330,6 @@
                   "sha256:b927eadbb2fd54abe5396510d6bbca5e13ed2c805c9f242db84704ca9c2b586e",
                   "sha256:ce7e129103cab9de8081b9752a9990a632b5930e371988892e671bb47d42d14e",
                   "sha256:b2dab55add49fdcc7d601f6e00f1f6f781faf195ba25d109850443d5fc64006b",
-                  "sha256:12cd4854dd1853d58df6be7a7c60ddb64a426192ba24ae09d6706d1d3be0e0d3",
                   "sha256:0f18c22fde546c3c280aafe9f56f22c6cd00330c12a82346df68fc3180898a1f",
                   "sha256:6821905c8c4a0c4865a287bf1c33d07e03ba86f54f98a99ec9da55fa6a7280cc",
                   "sha256:d053e4717d3d03df16821873d8ace2ebdb124d2ae39e487dce5a7052fa4db861",
@@ -371,6 +370,7 @@
                   "sha256:dff13503ad1435c4eda9c6cd2bede0fbf5b64297823f1c9a359b272842fe1734",
                   "sha256:b27b55b688df7e1448bb3e4576c1aebcd12bab42dd3c75a0c55770f1d7d30142",
                   "sha256:0ac8906dc2f608b8ba322b94406103bee644ed0e397ac30b05b2256cf0afcce2",
+                  "sha256:cda718ca791cad59843457b1dc3aa63109e7f9539562f25b072efe6d2322e80f",
                   "sha256:8e189b52393400ae76f91da94264c6bd6f72d2757eb2b164a7c8ed60ec651e75",
                   "sha256:cc60605cd4164fccd1f6b5cb07d29b55d878e1b50163be076f506eefdf46f595",
                   "sha256:0842ea3b84948aeb30085fd350862a29e4e6848f3ecf55445164c6d6e2c0079a",
@@ -404,7 +404,6 @@
                   "sha256:fc6f294d87c32dd80d09ad1e31005a6c379c476539fec9cd52b51f0bbc3384e3",
                   "sha256:f72118d72067987ac1eeded4b04e95e709b263c27877f3eb1112859db33cb403",
                   "sha256:fd2939c337fdc6f9d1aa4aeb19c182135116e495eef0afd49c7ba916f28cf72b",
-                  "sha256:20b51fff03d35f8412666717e3e715642bc0d1e32fb847fd626ad82d75d47891",
                   "sha256:5187f46a7402f65700bf2a26c8ac4bb8e57b6a733623c7b529c5ef4a14c9bae5",
                   "sha256:7d1661fe7d5976c1cd70f58af57809134db839be4936bbad60defa3104cc15c0",
                   "sha256:53849d779914a944acc126459911030c8ac8310ffcab354c6a7bcc4ef4af5bab",
@@ -661,6 +660,7 @@
                   "sha256:f7869ec212d50dac8e27645ae446e10383dfa46e8f770d46d43ad209bd4a5bed",
                   "sha256:fec32d37b2f34c891a64a8c5e2faf3d08de25d144289b6f2b7f5fafdd5eec4d2",
                   "sha256:7c0b2b064dad700cba2754b46f483e3e59aaf798740470df1daad3d5239fb893",
+                  "sha256:7962e7045eb9f550a7e0e385ebecb831c679b8a844354e05f53aec3c10cd3f31",
                   "sha256:d9dcb469e4c1a90f2e0ed3332d37feb88f804c882aae21fb6dfdeb6564dccfe5",
                   "sha256:a53f0be84231f676266183a16c0c474ba529f3a2858c6b86591221260a19840f",
                   "sha256:d1dbdff1f5e543bc5dcd8c957b07947cebd9ae4c3ba6d0cdf52a2a8c014c2fd5",
@@ -746,6 +746,7 @@
                   "sha256:9b1251422cfd498da3569583dea926198827e6e5fcf2a3d3d9c5521401ad0fc9",
                   "sha256:1eec9822d1dee41a2e3faae10258858687a63dd6af921937f469399e5e15edd2",
                   "sha256:3b1f1d599412fa0dc473e9ab4a37d295941d2493dabea4c0af2bb9ddd72844fb",
+                  "sha256:d3a1370d52091da18867c155f1cbb697266eaccb5ce12b68f1a455567f0c0172",
                   "sha256:ad060f60303b6764e08657436147cc24cfc4bb1ccc1431796407ba005a7bcec0",
                   "sha256:0c2f930db26b34c0b7ad316df5235e718d326761547351e2a01ff41b7962e3e3",
                   "sha256:6b9ba642fe5351a2295d80df235cb5297a7ab28e3e24f849b00bcbeacdd00759",
@@ -939,6 +940,7 @@
                   "sha256:03881c12727f04e9467a040fa42dea8cb724b0c75a8ff41e4feef2bb8b939500",
                   "sha256:2778a74edb8368fed9442b15a309ee7ae74dfe9f16c8f409c9562533660d082b",
                   "sha256:e920a82cda55b110690f3c946ec2cd85f969599c71212463279763afcc33303d",
+                  "sha256:aa20eb58a6e657d6b4c51521471f31dfc6ee310c76e10ba42380b1a58ae612e1",
                   "sha256:a22b281213a4e8aed27ff50de816f6b1f3736b47853be8d143c7636675a962b4",
                   "sha256:f94e1e67ff0acc7334d793c77e5933b8b531bdc0d5147b6e97e2410136b61920",
                   "sha256:aa2e5c11211535320abc583ad03d15866f4f26567d85937d48e295b6b99f95c6",
@@ -1941,9 +1943,6 @@
           "sha256:1136323a37c5940055c3891a260b26782b75ea986fb5fe02ad80364f60527450": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/grub2-common-2.02-106.el8.noarch.rpm"
           },
-          "sha256:12cd4854dd1853d58df6be7a7c60ddb64a426192ba24ae09d6706d1d3be0e0d3": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/alsa-sof-firmware-1.9.3-1.el8.noarch.rpm"
-          },
           "sha256:134219ddd4f07902fcbd999c089200e0d77eb5139eec73aa9e56e0bdddb7a932": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/gmp-6.1.2-10.el8.x86_64.rpm"
           },
@@ -2054,9 +2053,6 @@
           },
           "sha256:20ad0a3db2a075842747682638513899bb7d455c81cbee108d13cd64e173f260": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/subscription-manager-1.28.25-1.el8.x86_64.rpm"
-          },
-          "sha256:20b51fff03d35f8412666717e3e715642bc0d1e32fb847fd626ad82d75d47891": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/dracut-config-rescue-049-191.git20210920.el8.x86_64.rpm"
           },
           "sha256:211d74a081c06399001bf09c59e941b444f3175d2900a02775a232f4c83d3fb1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/sscg-2.3.3-14.el8.x86_64.rpm"
@@ -2697,6 +2693,9 @@
           "sha256:7920aaa592e8b27fe57592d16b2d8872ea18f87ceaa29cdbda4271c01a9264e6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/elfutils-libs-0.186-1.el8.x86_64.rpm"
           },
+          "sha256:7962e7045eb9f550a7e0e385ebecb831c679b8a844354e05f53aec3c10cd3f31": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/patch-2.7.6-11.el8.x86_64.rpm"
+          },
           "sha256:798420bbda79fd0b9312abac25efad6b28957c512497f37f4beddad5d67dd66a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libdaemon-0.14-15.el8.x86_64.rpm"
           },
@@ -3063,6 +3062,9 @@
           "sha256:a9ece4c02cb38584287a36c11f506f0c8a8f278724742531b9e2b0ace6585bbe": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/sed-4.5-5.el8.x86_64.rpm"
           },
+          "sha256:aa20eb58a6e657d6b4c51521471f31dfc6ee310c76e10ba42380b1a58ae612e1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/uuid-1.6.2-43.el8.x86_64.rpm"
+          },
           "sha256:aa2e5c11211535320abc583ad03d15866f4f26567d85937d48e295b6b99f95c6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/vim-filesystem-8.0.1763-16.el8_5.7.noarch.rpm"
           },
@@ -3354,6 +3356,9 @@
           "sha256:cd7c30d21e7240f60f0861c229e17fda43e855ab4c78fab39f47f7ae2be5720e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libmetalink-0.1.3-7.el8.x86_64.rpm"
           },
+          "sha256:cda718ca791cad59843457b1dc3aa63109e7f9539562f25b072efe6d2322e80f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/cryptsetup-reencrypt-2.3.7-1.el8.x86_64.rpm"
+          },
           "sha256:ce63708391f77873a344a2ff1ff148be88a5bac39693c9d0bb458f7b3ebd63b9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/findutils-4.6.0-20.el8.x86_64.rpm"
           },
@@ -3416,6 +3421,9 @@
           },
           "sha256:d3813d081414edc480f5ffb428f6c9b005e33ebe8dd3a6ac8bf4d13e5aa4419b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/xz-libs-5.2.4-3.el8.x86_64.rpm"
+          },
+          "sha256:d3a1370d52091da18867c155f1cbb697266eaccb5ce12b68f1a455567f0c0172": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/rng-tools-6.14-4.git.b2b7934e.el8.x86_64.rpm"
           },
           "sha256:d432e52165c7c5a4a6f258a397d36771ab6fdfd57ff5706c607130bf58a22dd7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/sssd-nfs-idmap-2.6.2-3.el8.x86_64.rpm"
@@ -7508,15 +7516,6 @@
         "checksum": "sha256:b2dab55add49fdcc7d601f6e00f1f6f781faf195ba25d109850443d5fc64006b"
       },
       {
-        "name": "alsa-sof-firmware",
-        "epoch": 0,
-        "version": "1.9.3",
-        "release": "1.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/alsa-sof-firmware-1.9.3-1.el8.noarch.rpm",
-        "checksum": "sha256:12cd4854dd1853d58df6be7a7c60ddb64a426192ba24ae09d6706d1d3be0e0d3"
-      },
-      {
         "name": "at",
         "epoch": 0,
         "version": "3.1.20",
@@ -7877,6 +7876,15 @@
         "checksum": "sha256:0ac8906dc2f608b8ba322b94406103bee644ed0e397ac30b05b2256cf0afcce2"
       },
       {
+        "name": "cryptsetup-reencrypt",
+        "epoch": 0,
+        "version": "2.3.7",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/cryptsetup-reencrypt-2.3.7-1.el8.x86_64.rpm",
+        "checksum": "sha256:cda718ca791cad59843457b1dc3aa63109e7f9539562f25b072efe6d2322e80f"
+      },
+      {
         "name": "cups-libs",
         "epoch": 1,
         "version": "2.2.6",
@@ -8172,15 +8180,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/dracut-config-generic-049-191.git20210920.el8.x86_64.rpm",
         "checksum": "sha256:fd2939c337fdc6f9d1aa4aeb19c182135116e495eef0afd49c7ba916f28cf72b"
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "049",
-        "release": "191.git20210920.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/dracut-config-rescue-049-191.git20210920.el8.x86_64.rpm",
-        "checksum": "sha256:20b51fff03d35f8412666717e3e715642bc0d1e32fb847fd626ad82d75d47891"
       },
       {
         "name": "dracut-network",
@@ -10487,6 +10486,15 @@
         "checksum": "sha256:7c0b2b064dad700cba2754b46f483e3e59aaf798740470df1daad3d5239fb893"
       },
       {
+        "name": "patch",
+        "epoch": 0,
+        "version": "2.7.6",
+        "release": "11.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/patch-2.7.6-11.el8.x86_64.rpm",
+        "checksum": "sha256:7962e7045eb9f550a7e0e385ebecb831c679b8a844354e05f53aec3c10cd3f31"
+      },
+      {
         "name": "pciutils",
         "epoch": 0,
         "version": "3.7.0",
@@ -11250,6 +11258,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/rhsm-icons-1.28.25-1.el8.noarch.rpm",
         "checksum": "sha256:3b1f1d599412fa0dc473e9ab4a37d295941d2493dabea4c0af2bb9ddd72844fb"
+      },
+      {
+        "name": "rng-tools",
+        "epoch": 0,
+        "version": "6.14",
+        "release": "4.git.b2b7934e.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/rng-tools-6.14-4.git.b2b7934e.el8.x86_64.rpm",
+        "checksum": "sha256:d3a1370d52091da18867c155f1cbb697266eaccb5ce12b68f1a455567f0c0172"
       },
       {
         "name": "rootfiles",
@@ -12987,6 +13004,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/unbound-libs-1.7.3-17.el8.x86_64.rpm",
         "checksum": "sha256:e920a82cda55b110690f3c946ec2cd85f969599c71212463279763afcc33303d"
+      },
+      {
+        "name": "uuid",
+        "epoch": 0,
+        "version": "1.6.2",
+        "release": "43.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/uuid-1.6.2-43.el8.x86_64.rpm",
+        "checksum": "sha256:aa20eb58a6e657d6b4c51521471f31dfc6ee310c76e10ba42380b1a58ae612e1"
       },
       {
         "name": "vim-common",
