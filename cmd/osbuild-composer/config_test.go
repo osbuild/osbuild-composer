@@ -55,6 +55,7 @@ func TestDefaultConfig(t *testing.T) {
 					"ec2",
 					"ec2-ha",
 					"ec2-sap",
+					"gce-rhui",
 				},
 			},
 		},

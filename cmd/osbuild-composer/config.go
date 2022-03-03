@@ -108,6 +108,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 						"ec2",
 						"ec2-ha",
 						"ec2-sap",
+						"gce-rhui",
 					},
 				},
 			},
