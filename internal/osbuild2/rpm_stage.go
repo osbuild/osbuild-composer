@@ -8,6 +8,9 @@ type RPMStageOptions struct {
 	// Array of GPG key contents to import
 	GPGKeys []string `json:"gpgkeys,omitempty"`
 
+	// Array of files in the tree containing GPG keys to import
+	GPGKeysFromTree []string `json:"gpgkeys.fromtree,omitempty"`
+
 	// Prevent dracut from running
 	DisableDracut bool `json:"disable_dracut,omitempty"`
 
