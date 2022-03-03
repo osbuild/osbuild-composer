@@ -880,6 +880,18 @@ func newDistro(distroName string) distro.Distro {
 					Layouts: []string{"us"},
 				},
 			},
+			Sysconfig: []*osbuild.SysconfigStageOptions{
+				{
+					Kernel: &osbuild.SysconfigKernelOptions{
+						UpdateDefault: true,
+						DefaultKernel: "kernel-core",
+					},
+					Network: &osbuild.SysconfigNetworkOptions{
+						Networking: true,
+						NoZeroConf: true,
+					},
+				},
+			},
 			EnabledServices: []string{
 				"firewalld",
 				"sshd",

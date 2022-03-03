@@ -1164,7 +1164,7 @@
             "options": {
               "kernel": {
                 "update_default": true,
-                "default_kernel": "kernel"
+                "default_kernel": "kernel-core"
               },
               "network": {
                 "networking": true,
