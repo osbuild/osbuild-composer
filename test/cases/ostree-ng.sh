@@ -96,7 +96,6 @@ ANSIBLE_USER_FOR_BIOS="installeruser"
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
-KS_FILE=${TEMPDIR}/ks.cfg
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
@@ -107,39 +106,21 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.4")
-        OSTREE_REF="test/rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8-unknown"
-        CONTAINER_TYPE=rhel-edge-container
-        CONTAINER_FILENAME=rhel84-container.tar
-        INSTALLER_TYPE=rhel-edge-installer
-        INSTALLER_FILENAME=rhel84-boot.iso
-        USER_IN_UPGRADE_BP="true"
-        INSTALLER_PATH="/ostree/repo"
-        ;;
     "rhel-8.6")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
-        USER_IN_UPGRADE_BP="false"
-        INSTALLER_PATH="/run/install/repo/ostree/repo"
         ;;
     "rhel-9.0")
         OSTREE_REF="test/rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
-        USER_IN_UPGRADE_BP="false"
-        INSTALLER_PATH="/run/install/repo/ostree/repo"
         ;;
     "centos-8")
         OSTREE_REF="test/centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
-        USER_IN_UPGRADE_BP="false"
-        INSTALLER_PATH="/run/install/repo/ostree/repo"
         ;;
     "centos-9")
         OSTREE_REF="test/centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
-        USER_IN_UPGRADE_BP="false"
-        INSTALLER_PATH="/run/install/repo/ostree/repo"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -645,12 +626,6 @@ password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHB
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
-
-if [[ "${USER_IN_UPGRADE_BP}" == "true" ]]; then
-    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
-key = "${SSH_KEY_PUB}"
-EOF
-fi
 
 greenprint "📄 upgrade blueprint"
 cat "$BLUEPRINT_FILE"
