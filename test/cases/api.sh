@@ -592,7 +592,7 @@ function createReqFileAWS() {
   "image_request": {
       "architecture": "$ARCH",
       "image_type": "${IMAGE_TYPE}",
-      "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+      "repositories": $(jq ".\"$ARCH\" | .[] | select((has(\"image_type_tags\") | not) or (.\"image_type_tags\" | index(\"${IMAGE_TYPE}\")))" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json | jq -s .),
       "upload_options": {
         "region": "${AWS_REGION}",
         "snapshot_name": "${AWS_SNAPSHOT_NAME}",
@@ -637,7 +637,7 @@ function createReqFileAWSS3() {
   "image_request": {
     "architecture": "$ARCH",
     "image_type": "${IMAGE_TYPE}",
-    "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+    "repositories": $(jq ".\"$ARCH\" | .[] | select((has(\"image_type_tags\") | not) or (.\"image_type_tags\" | index(\"${IMAGE_TYPE}\")))" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json | jq -s .),
     "ostree": {
       "ref": "${OSTREE_REF}"
     },
@@ -711,7 +711,7 @@ function createReqFileGCP() {
   "image_request": {
     "architecture": "$ARCH",
     "image_type": "${IMAGE_TYPE}",
-    "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+    "repositories": $(jq ".\"$ARCH\" | .[] | select((has(\"image_type_tags\") | not) or (.\"image_type_tags\" | index(\"${IMAGE_TYPE}\")))" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json | jq -s .),
     "upload_options": {
       "bucket": "${GCP_BUCKET}",
       "region": "${GCP_REGION}",
@@ -749,7 +749,7 @@ function createReqFileAzure() {
   "image_request": {
     "architecture": "$ARCH",
     "image_type": "${IMAGE_TYPE}",
-    "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
+    "repositories": $(jq ".\"$ARCH\" | .[] | select((has(\"image_type_tags\") | not) or (.\"image_type_tags\" | index(\"${IMAGE_TYPE}\")))" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json | jq -s .),
     "upload_options": {
       "tenant_id": "${AZURE_TENANT_ID}",
       "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
