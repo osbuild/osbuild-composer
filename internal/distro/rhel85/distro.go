@@ -884,6 +884,25 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
+	gceRhuiImgType := imageType{
+		name:     "gce-rhui",
+		filename: "image.tar.gz",
+		mimeType: "application/gzip",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    gceRhuiPackageSet,
+		},
+		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
+		bootable:            true,
+		bootType:            distro.UEFIBootType,
+		defaultSize:         20 * GigaByte,
+		pipelines:           gceRhuiPipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
+		exports:             []string{"archive"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -920,7 +939,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		exports:          []string{"bootiso"},
 	}
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, imageInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImageType, gceImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, tarImgType, imageInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImageType, gceImgType, gceRhuiImgType)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)

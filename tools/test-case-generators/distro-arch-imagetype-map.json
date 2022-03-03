@@ -126,6 +126,7 @@
             "ec2",
             "ec2-ha",
             "gce",
+            "gce-rhui",
             "openstack",
             "tar",
             "qcow2",

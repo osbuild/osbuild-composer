@@ -854,6 +854,39 @@ func gceByosPipelines(t *imageType, customizations *blueprint.Customizations, op
 	return gcePipelinesRhel86(t, getDefaultGceByosImageConfig(), customizations, options, repos, packageSetSpecs, rng)
 }
 
+func getDefaultGceRhuiImageConfig() *distro.ImageConfig {
+	defaultGceRhuiImageConfig := &distro.ImageConfig{
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					Rhsm: &osbuild.SubManConfigRHSMSection{
+						ManageRepos: common.BoolToPtr(false),
+					},
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+	}
+	defaultGceRhuiImageConfig = defaultGceRhuiImageConfig.InheritFrom(getDefaultGceByosImageConfig())
+	return defaultGceRhuiImageConfig
+}
+
+// GCE RHUI image
+func gceRhuiPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	return gcePipelinesRhel86(t, getDefaultGceRhuiImageConfig(), customizations, options, repos, packageSetSpecs, rng)
+}
+
 func tarArchivePipeline(name, inputPipelineName string, tarOptions *osbuild.TarStageOptions) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = name
