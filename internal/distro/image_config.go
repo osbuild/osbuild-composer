@@ -20,6 +20,9 @@ type ImageConfig struct {
 	DefaultTarget       string
 	Sysconfig           []*osbuild2.SysconfigStageOptions
 
+	// List of files from which to import GPG keys into the RPM database
+	GPGKeyFiles []string
+
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
 	RHSMConfig map[RHSMSubscriptionStatus]*osbuild2.RHSMStageOptions
@@ -71,6 +74,9 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.Sysconfig == nil {
 			finalConfig.Sysconfig = parentConfig.Sysconfig
+		}
+		if finalConfig.GPGKeyFiles == nil {
+			finalConfig.GPGKeyFiles = parentConfig.GPGKeyFiles
 		}
 		if finalConfig.RHSMConfig == nil {
 			finalConfig.RHSMConfig = parentConfig.RHSMConfig

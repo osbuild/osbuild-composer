@@ -363,7 +363,9 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
 	}
 
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
+	rpmOptions := rpmStageOptions(repos)
+	rpmOptions.GPGKeysFromTree = imageConfig.GPGKeyFiles
+	p.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(packages)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
 	if pt == nil || pt.FindMountable("/boot") == nil {
