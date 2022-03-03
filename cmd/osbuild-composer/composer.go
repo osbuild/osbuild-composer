@@ -19,6 +19,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
+	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
@@ -119,7 +120,10 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 }
 
 func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, enableJWT bool, l net.Listener) error {
-	c.api = cloudapi.NewServer(c.workers, c.distros, c.config.Koji.AWS.Bucket)
+	config := v2.ServerConfig{
+		AWSBucket: c.config.Koji.AWS.Bucket,
+	}
+	c.api = cloudapi.NewServer(c.workers, c.distros, config)
 	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
 
 	if !enableTLS {

@@ -32,7 +32,10 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	v2Server := v2.NewServer(workerServer, distros, "image-builder.service")
+	config := v2.ServerConfig{
+		AWSBucket: "image-builder.service",
+	}
+	v2Server := v2.NewServer(workerServer, distros, config)
 	require.NotNil(t, v2Server)
 
 	// start a routine which just completes depsolve jobs
