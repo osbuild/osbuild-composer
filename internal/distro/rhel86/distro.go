@@ -874,6 +874,10 @@ func newDistro(distroName string) distro.Distro {
 		defaultImageConfig: &distro.ImageConfig{
 			Timezone: "Etc/UTC",
 			Locale:   "en_US.UTF-8",
+			GPGKeyFiles: []string{
+				"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
+				"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+			},
 			Keyboard: &osbuild.KeymapStageOptions{
 				Keymap: "us",
 				X11Keymap: &osbuild.X11KeymapOptions{
