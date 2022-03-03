@@ -160,6 +160,7 @@
             "ec2-ha",
             "ec2-sap",
             "gce",
+            "gce-rhui",
             "openstack",
             "tar",
             "qcow2",

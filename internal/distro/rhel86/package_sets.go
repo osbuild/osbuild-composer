@@ -626,6 +626,15 @@ func gcePackageSet(t *imageType) rpmmd.PackageSet {
 	return gceCommonPackageSet(t)
 }
 
+// GCE RHUI image
+func gceRhuiPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"google-rhui-client-rhel8",
+		},
+	}.Append(gceCommonPackageSet(t))
+}
+
 // edge commit OS package set
 func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{

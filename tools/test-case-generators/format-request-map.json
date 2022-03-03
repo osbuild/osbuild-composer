@@ -72,6 +72,17 @@
     },
     "overrides": {}
   },
+  "gce-rhui": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "gce-rhui",
+      "repositories": [],
+      "filename": "image.tar.gz",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "edge-commit": {
     "compose-request": {
       "distro": "",

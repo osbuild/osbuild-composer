@@ -1611,6 +1611,51 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
+	defaultGceRhuiImageConfig := &distro.ImageConfig{
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					Rhsm: &osbuild.SubManConfigRHSMSection{
+						ManageRepos: common.BoolToPtr(false),
+					},
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+	}
+	defaultGceRhuiImageConfig = defaultGceRhuiImageConfig.InheritFrom(defaultGceByosImageConfig)
+
+	gceRhuiImgType := imageType{
+		name:     "gce-rhui",
+		filename: "image.tar.gz",
+		mimeType: "application/gzip",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    gceRhuiPackageSet,
+		},
+		defaultImageConfig:  defaultGceRhuiImageConfig,
+		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
+		bootable:            true,
+		bootType:            distro.UEFIBootType,
+		defaultSize:         20 * GigaByte,
+		pipelines:           gcePipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
+		exports:             []string{"archive"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -1650,7 +1695,7 @@ func newDistro(distroName string) distro.Distro {
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType, gceRhuiImgType)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
