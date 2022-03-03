@@ -34,9 +34,13 @@ import (
 
 // Server represents the state of the cloud Server
 type Server struct {
-	workers   *worker.Server
-	distros   *distroregistry.Registry
-	awsBucket string
+	workers *worker.Server
+	distros *distroregistry.Registry
+	config  ServerConfig
+}
+
+type ServerConfig struct {
+	AWSBucket string
 }
 
 type apiHandlers struct {
@@ -45,11 +49,11 @@ type apiHandlers struct {
 
 type binder struct{}
 
-func NewServer(workers *worker.Server, distros *distroregistry.Registry, bucket string) *Server {
+func NewServer(workers *worker.Server, distros *distroregistry.Registry, config ServerConfig) *Server {
 	server := &Server{
-		workers:   workers,
-		distros:   distros,
-		awsBucket: bucket,
+		workers: workers,
+		distros: distros,
+		config:  config,
 	}
 	return server
 }
@@ -345,7 +349,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t := target.NewAWSTarget(&target.AWSTargetOptions{
 					Filename:          imageType.Filename(),
 					Region:            awsUploadOptions.Region,
-					Bucket:            h.server.awsBucket,
+					Bucket:            h.server.config.AWSBucket,
 					Key:               key,
 					ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
 				})
@@ -381,7 +385,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
 					Filename: imageType.Filename(),
 					Region:   awsS3UploadOptions.Region,
-					Bucket:   h.server.awsBucket,
+					Bucket:   h.server.config.AWSBucket,
 					Key:      key,
 				})
 				t.ImageName = key
