@@ -891,7 +891,6 @@ func newDistro(distroName string) distro.Distro {
 					ClientAliveInterval: common.IntToPtr(180),
 				},
 			},
-			Authconfig: &osbuild.AuthconfigStageOptions{},
 			Modprobe: []*osbuild.ModprobeStageOptions{
 				{
 					Filename: "blacklist-nouveau.conf",
