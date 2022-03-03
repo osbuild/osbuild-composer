@@ -1,6 +1,8 @@
 package fedora33_test
 
 import (
+	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,6 +11,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	fedora "github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+)
+
+const (
+	// OS package set name
+	osPkgsKey = "packages"
 )
 
 func TestFilenameFromType(t *testing.T) {
@@ -146,8 +153,10 @@ func TestImageType_Name(t *testing.T) {
 			arch: distro.X86_64ArchName,
 			imgNames: []string{
 				"ami",
-				"qcow2",
+				"fedora-iot-commit",
 				"openstack",
+				"oci",
+				"qcow2",
 				"vhd",
 				"vmdk",
 			},
@@ -156,14 +165,17 @@ func TestImageType_Name(t *testing.T) {
 			arch: distro.Aarch64ArchName,
 			imgNames: []string{
 				"ami",
-				"qcow2",
+				"fedora-iot-commit",
+				"oci",
 				"openstack",
+				"qcow2",
 			},
 		},
 	}
 	for _, mapping := range imgMap {
 		arch, err := f35.GetArch(mapping.arch)
 		if assert.NoError(t, err) {
+			assert.Equal(t, len(mapping.imgNames), len(arch.ListImageTypes()), "image types for arch %s: %v", arch.Name(), arch.ListImageTypes())
 			for _, imgName := range mapping.imgNames {
 				imgType, err := arch.GetImageType(imgName)
 				if assert.NoError(t, err) {
@@ -224,6 +236,7 @@ func TestImageType_BasePackages(t *testing.T) {
 		bootloaderPackages []string
 		excludedPackages   []string
 		bootable           bool
+		arch               string
 	}{
 		{
 			name: "ami",
@@ -252,6 +265,7 @@ func TestImageType_BasePackages(t *testing.T) {
 				"zram-generator-defaults",
 			},
 			bootable: true,
+			arch:     distro.X86_64ArchName,
 		},
 		{
 			name: "openstack",
@@ -280,25 +294,73 @@ func TestImageType_BasePackages(t *testing.T) {
 				"zram-generator-defaults",
 			},
 			bootable: true,
+			arch:     distro.X86_64ArchName,
+		},
+		{
+			name: "fedora-iot-commit",
+			basePackages: []string{
+				"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan", "attr", "audit", "basesystem", "bash", "bash-completion",
+				"bluez", "bluez-libs", "bluez-mesh", "chrony", "clevis", "clevis-dracut", "clevis-luks", "clevis-pin-tpm2", "container-selinux", "coreutils",
+				"cracklib-dicts", "criu", "cryptsetup", "curl", "dbus-parsec", "dnsmasq", "dosfstools", "dracut-config-generic", "dracut-network", "e2fsprogs",
+				"efibootmgr", "fedora-release-iot", "firewalld", "fuse-overlayfs", "fwupd", "glibc", "glibc-minimal-langpack", "gnupg2", "greenboot", "greenboot-grub2",
+				"greenboot-reboot", "grub2", "greenboot-rpm-ostree-grub2", "greenboot-status", "iwlax2xx-firmware",
+				"kernel-tools", "keyutils", "less", "libgpiod-utils", "libsss_sudo", "lvm2", "nss-altfiles", "openssh-clients", "openssh-server",
+				"parsec", "passwd", "pinentry", "podman", "policycoreutils", "policycoreutils-python-utils", "polkit", "procps-ng", "python3", "rng-tools", "rootfiles",
+				"rpm", "rsync", "screen", "selinux-policy-targeted", "setools-console", "setup", "shadow-utils", "shadow-utils", "skopeo", "slirp4netns",
+				"sssd-client", "sudo", "systemd", "tar", "tmux", "tpm2-pkcs11", "traceroute", "usbguard", "util-linux", "vim-minimal", "which", "wpa_supplicant", "xfsprogs",
+				"xz", "zezere-ignition", "iwl7260-firmware", "gzip", "hostname", "ignition", "ima-evm-utils", "iproute", "iptables", "iputils", "iwd",
+
+				// Default from Blueprint
+				"kernel",
+			},
+			bootloaderPackages: []string{
+				"grub2-efi-x64", "shim-x64", "microcode_ctl",
+				"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
+				"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
+				"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware",
+			},
+			bootable: false,
+			arch:     distro.X86_64ArchName,
+		},
+		{
+			name: "fedora-iot-commit",
+			basePackages: []string{
+				"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan", "attr", "audit", "basesystem", "bash",
+				"bash-completion", "bluez", "bluez-libs", "bluez-mesh", "chrony", "clevis", "clevis-dracut", "clevis-luks",
+				"clevis-pin-tpm2", "container-selinux", "coreutils", "cracklib-dicts", "criu", "cryptsetup", "curl", "dbus-parsec", "dnsmasq",
+				"dosfstools", "dracut-config-generic", "dracut-network", "e2fsprogs", "efibootmgr", "fedora-release-iot", "firewalld", "fuse-overlayfs",
+				"fwupd", "glibc", "glibc-minimal-langpack", "gnupg2", "greenboot", "greenboot-grub2", "greenboot-reboot", "greenboot-rpm-ostree-grub2",
+				"greenboot-status", "grub2", "gzip", "hostname", "ignition", "ima-evm-utils", "iproute", "iptables", "iputils", "iwd",
+				"iwl7260-firmware", "iwlax2xx-firmware", "kernel-tools", "keyutils", "less", "libgpiod-utils", "libsss_sudo", "lvm2", "nss-altfiles",
+				"openssh-clients", "openssh-server", "parsec", "passwd", "pinentry", "podman", "policycoreutils", "policycoreutils-python-utils", "polkit",
+				"procps-ng", "python3", "rng-tools", "rootfiles", "rpm", "rsync", "screen", "selinux-policy-targeted", "setools-console", "setup", "shadow-utils",
+				"shadow-utils", "skopeo", "slirp4netns", "sssd-client", "sudo", "systemd", "tar", "tmux", "tpm2-pkcs11", "traceroute",
+				"usbguard", "util-linux", "vim-minimal", "which", "wpa_supplicant", "xfsprogs", "xz", "zezere-ignition",
+
+				// Default from Blueprint
+				"kernel",
+			},
+			bootloaderPackages: []string{
+				"grub2-efi-aa64", "shim-aa64",
+				"uboot-images-armv8", "bcm283x-firmware", "arm-image-installer"},
+			bootable: false,
+			arch:     distro.Aarch64ArchName,
 		},
 	}
 	f35 := fedora.NewF35()
-	arch, err := f35.GetArch(distro.X86_64ArchName)
-	assert.NoError(t, err)
 
 	for _, pkgMap := range pkgMaps {
+		arch, err := f35.GetArch(pkgMap.arch)
+		assert.NoError(t, err)
 		imgType, err := arch.GetImageType(pkgMap.name)
 		assert.NoError(t, err)
-		packages := imgType.PackageSets(blueprint.Blueprint{})["packages"]
+		packages := imgType.PackageSets(blueprint.Blueprint{})[osPkgsKey]
 		assert.NotNil(t, packages)
-		assert.Equalf(
-			t,
-			append(pkgMap.basePackages, pkgMap.bootloaderPackages...),
-			packages.Include,
-			"image type: %s",
-			pkgMap.name,
-		)
-		assert.Equalf(t, pkgMap.excludedPackages, packages.Exclude, "image type: %s", pkgMap.name)
+		sort.Strings(packages.Include)
+		basePackages := append(pkgMap.basePackages, pkgMap.bootloaderPackages...)
+		sort.Strings(basePackages)
+		assert.Equalf(t, basePackages, packages.Include, "base packages for arch %s, image type: %s", pkgMap.arch, pkgMap.name)
+		assert.Equalf(t, pkgMap.excludedPackages, packages.Exclude, "excluded packages for arch%s, image type: %s", pkgMap.arch, pkgMap.name)
 	}
 }
 
@@ -377,15 +439,17 @@ func TestFedora35_ModulePlatformID(t *testing.T) {
 }
 
 func TestFedora35_OSTreeRef(t *testing.T) {
+	ostreeImgName := "fedora-iot-commit"
 	f35 := fedora.NewF35()
 	assert.Equal(t, "fedora/35/%s/iot", f35.OSTreeRef())
 
-	x86_64, err := f35.GetArch(distro.X86_64ArchName)
-	assert.Nilf(t, err, "failed to get %q architecture of %q distribution", distro.X86_64ArchName, f35.Name())
-	ostreeImgName := "fedora-iot-commit"
-	ostreeImg, err := x86_64.GetImageType(ostreeImgName)
-	assert.Nilf(t, err, "failed to get %q image type for %q architecture of %q distribution", ostreeImgName, distro.X86_64ArchName, f35.Name())
-	assert.Equal(t, "fedora/35/x86_64/iot", ostreeImg.OSTreeRef())
+	for _, testArch := range []string{distro.X86_64ArchName, distro.Aarch64ArchName} {
+		arch, err := f35.GetArch(testArch)
+		assert.Nilf(t, err, "failed to get %q architecture of %q distribution", testArch, f35.Name())
+		ostreeImg, err := arch.GetImageType(ostreeImgName)
+		assert.Nilf(t, err, "failed to get %q image type for %q architecture of %q distribution", ostreeImgName, arch, f35.Name())
+		assert.Equal(t, fmt.Sprintf("fedora/35/%s/iot", testArch), ostreeImg.OSTreeRef())
+	}
 }
 
 func TestFedora35_KernelOption(t *testing.T) {

@@ -170,10 +170,13 @@ func kernelCount(imgType distro.ImageType) int {
 	sets := imgType.PackageSets(blueprint.Blueprint{})
 	pkgs := sets["packages"].Append(sets["blueprint"]).Include
 	n := 0
+	// ignore duplicated kernel packages
+	found := map[string]struct{}{}
 	for _, pkg := range pkgs {
 		for _, kernel := range knownKernels {
-			if kernel == pkg {
+			if _, ok := found[pkg]; !ok && kernel == pkg {
 				n++
+				found[pkg] = struct{}{}
 			}
 		}
 	}

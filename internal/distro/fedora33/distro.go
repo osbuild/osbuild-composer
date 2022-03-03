@@ -16,19 +16,33 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const nameTmpl = "fedora-%s"
-const modulePlatformIDTmpl = "platform:f%s"
+const (
+	// package set names
 
-// The second format value is intentionally escaped, because the
-// format string is substituted in two steps:
-//  1. on distribution level when being created
-//  2. on image level
-const ostreeRefTmpl = "fedora/%s/%%s/iot"
+	// build package set name
+	buildPkgsKey = "build-packages"
 
-const f33ReleaseVersion = "33"
-const f34ReleaseVersion = "34"
-const f35ReleaseVersion = "35"
-const f36ReleaseVersion = "36"
+	// main/common os image package set name
+	osPkgsKey = "packages"
+
+	// blueprint package set name
+	blueprintPkgsKey = "blueprint"
+
+	nameTmpl             = "fedora-%s"
+	modulePlatformIDTmpl = "platform:f%s"
+
+	// The second format value is intentionally escaped, because the
+	// format string is substituted in two steps:
+	//  1. on distribution level when being created
+	//  2. on image level
+	ostreeRefTmpl = "fedora/%s/%%s/iot"
+
+	// Supported Fedora versions
+	f33ReleaseVersion = "33"
+	f34ReleaseVersion = "34"
+	f35ReleaseVersion = "35"
+	f36ReleaseVersion = "36"
+)
 
 type distribution struct {
 	name             string
@@ -36,43 +50,39 @@ type distribution struct {
 	modulePlatformID string
 	ostreeRefTmpl    string
 	arches           map[string]architecture
-	buildPackages    []string
 }
 
 type architecture struct {
 	distro             *distribution
 	name               string
 	bootloaderPackages []string
-	buildPackages      []string
 	legacy             string
-	uefi               bool
+	bootType           distro.BootType
 	imageTypes         map[string]imageType
 }
+
+type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
 type imageType struct {
 	arch             *architecture
 	name             string
 	filename         string
 	mimeType         string
-	packages         []string
-	excludedPackages []string
+	packageSets      map[string]packageSetFunc
+	excludedPackages map[string]packageSetFunc
 	enabledServices  []string
 	disabledServices []string
 	kernelOptions    string
 	bootable         bool
 	rpmOstree        bool
 	defaultSize      uint64
-	assembler        func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler
+	assembler        func(bootType distro.BootType, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler
 }
 
 func removePackage(packages []string, packageToRemove string) []string {
 	for i, pkg := range packages {
 		if pkg == packageToRemove {
-			// override the package with the last one from the list
-			packages[i] = packages[len(packages)-1]
-
-			// drop the last package from the slice
-			return packages[:len(packages)-1]
+			return append(packages[:i], packages[i+1:]...)
 		}
 	}
 	return packages
@@ -111,8 +121,7 @@ func (d *distribution) setArches(arches ...architecture) {
 			distro:             d,
 			name:               a.name,
 			bootloaderPackages: a.bootloaderPackages,
-			buildPackages:      a.buildPackages,
-			uefi:               a.uefi,
+			bootType:           a.bootType,
 			imageTypes:         a.imageTypes,
 		}
 	}
@@ -148,7 +157,7 @@ func (a *architecture) setImageTypes(imageTypes ...imageType) {
 			name:             it.name,
 			filename:         it.filename,
 			mimeType:         it.mimeType,
-			packages:         it.packages,
+			packageSets:      it.packageSets,
 			excludedPackages: it.excludedPackages,
 			enabledServices:  it.enabledServices,
 			disabledServices: it.disabledServices,
@@ -196,49 +205,73 @@ func (t *imageType) PartitionType() string {
 	return ""
 }
 
-func (t *imageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
-	packages := append(t.packages, bp.GetPackages()...)
+func (t *imageType) getPackages(name string) rpmmd.PackageSet {
+	getter := t.packageSets[name]
+	if getter == nil {
+		return rpmmd.PackageSet{}
+	}
+
+	return getter(t)
+}
+
+func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
+	// merge package sets that appear in the image type with the package sets
+	// of the same name from the distro and arch
+	mergedSets := make(map[string]rpmmd.PackageSet)
+
+	imageSets := t.packageSets
+
+	for name := range imageSets {
+		mergedSets[name] = t.getPackages(name)
+	}
+
+	if _, hasPackages := imageSets[osPkgsKey]; !hasPackages {
+		// should this be possible??
+		mergedSets[osPkgsKey] = rpmmd.PackageSet{}
+	}
+
+	// every image type must define a 'build' package set
+	if _, hasBuild := imageSets[buildPkgsKey]; !hasBuild {
+		panic(fmt.Sprintf("'%s' image type has no '%s' package set defined", t.name, buildPkgsKey))
+	}
+
+	if t.bootable {
+		switch t.arch.Name() {
+		case distro.X86_64ArchName:
+			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: t.arch.bootloaderPackages})
+		case distro.Aarch64ArchName:
+			mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: t.arch.bootloaderPackages})
+		}
+
+	}
+	// blueprint packages
+	bpPackages := bp.GetPackages()
 	timezone, _ := bp.Customizations.GetTimezoneSettings()
 	if timezone != nil {
-		packages = append(packages, "chrony")
+		bpPackages = append(bpPackages, "chrony")
 	}
-	if t.bootable {
-		packages = append(packages, t.arch.bootloaderPackages...)
-	}
+
+	// depsolve bp packages separately
+	// bp packages aren't restricted by exclude lists
+	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
 
 	// copy the list of excluded packages from the image type
 	// and subtract any packages found in the blueprint (this
 	// will not handle the issue with dependencies present in
 	// the list of excluded packages, but it will create a
 	// possibility of a workaround at least)
-	excludedPackages := append([]string(nil), t.excludedPackages...)
-	for _, pkg := range bp.GetPackages() {
+	excludedPackages := mergedSets[osPkgsKey].Exclude
+	for _, pkg := range mergedSets[osPkgsKey].Append(mergedSets[blueprintPkgsKey]).Include {
 		// removePackage is fine if the package doesn't exist
 		excludedPackages = removePackage(excludedPackages, pkg)
 	}
+	mergedSets[osPkgsKey] = rpmmd.PackageSet{Include: mergedSets[osPkgsKey].Include, Exclude: excludedPackages}
 
-	return packages, excludedPackages
-}
+	// Add kernel package if none defined
+	kc := bp.Customizations.GetKernel()
+	mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kc.Name}})
 
-func (t *imageType) BuildPackages() []string {
-	packages := append(t.arch.distro.buildPackages, t.arch.buildPackages...)
-	if t.rpmOstree {
-		packages = append(packages, "rpm-ostree")
-	}
-	return packages
-}
-
-func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
-	includePackages, excludePackages := t.Packages(bp)
-	return map[string]rpmmd.PackageSet{
-		"packages": {
-			Include: includePackages,
-			Exclude: excludePackages,
-		},
-		"build-packages": {
-			Include: t.BuildPackages(),
-		},
-	}
+	return mergedSets
 }
 
 func (t *imageType) BuildPipelines() []string {
@@ -262,14 +295,14 @@ func (t *imageType) Manifest(c *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSpecSets map[string][]rpmmd.PackageSpec,
 	seed int64) (distro.Manifest, error) {
-	pipeline, err := t.pipeline(c, options, repos, packageSpecSets["packages"], packageSpecSets["build-packages"])
+	pipeline, err := t.pipeline(c, options, repos, packageSpecSets[osPkgsKey], packageSpecSets[buildPkgsKey])
 	if err != nil {
 		return distro.Manifest{}, err
 	}
 
 	return json.Marshal(
 		osbuild.Manifest{
-			Sources:  *sources(append(packageSpecSets["packages"], packageSpecSets["build-packages"]...)),
+			Sources:  *sources(append(packageSpecSets[osPkgsKey], packageSpecSets[buildPkgsKey]...)),
 			Pipeline: *pipeline,
 		},
 	)
@@ -391,8 +424,8 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	}
 
 	if t.bootable {
-		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
-		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
+		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.bootType)))
+		p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel())))
 	}
 	p.AddStage(osbuild.NewFixBLSStage())
 
@@ -415,7 +448,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		}))
 	}
 
-	p.Assembler = t.assembler(t.arch.uefi, options, t.arch, imageSize)
+	p.Assembler = t.assembler(t.arch.bootType, options, t.arch, imageSize)
 
 	return p, nil
 }
@@ -540,16 +573,16 @@ func (t *imageType) systemdStageOptions(enabledServices, disabledServices []stri
 	}
 }
 
-func (t *imageType) fsTabStageOptions(uefi bool) *osbuild.FSTabStageOptions {
+func (t *imageType) fsTabStageOptions(bootType distro.BootType) *osbuild.FSTabStageOptions {
 	options := osbuild.FSTabStageOptions{}
 	options.AddFilesystem("76a22bf4-f153-4541-b6c7-0332c0dfaeac", "ext4", "/", "defaults", 1, 1)
-	if uefi {
+	if bootType == distro.UEFIBootType {
 		options.AddFilesystem("46BB-8120", "vfat", "/boot/efi", "umask=0077,shortname=winnt", 0, 2)
 	}
 	return &options
 }
 
-func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization, uefi bool) *osbuild.GRUB2StageOptions {
+func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.KernelCustomization) *osbuild.GRUB2StageOptions {
 	id := uuid.MustParse("76a22bf4-f153-4541-b6c7-0332c0dfaeac")
 
 	if kernel != nil && kernel.Append != "" {
@@ -557,14 +590,14 @@ func (t *imageType) grub2StageOptions(kernelOptions string, kernel *blueprint.Ke
 	}
 
 	var uefiOptions *osbuild.GRUB2UEFI
-	if uefi {
+	if t.arch.bootType == distro.UEFIBootType {
 		uefiOptions = &osbuild.GRUB2UEFI{
 			Vendor: "fedora",
 		}
 	}
 
 	var legacy string
-	if !uefi {
+	if t.arch.bootType == distro.LegacyBootType {
 		legacy = t.arch.legacy
 	}
 
@@ -582,9 +615,9 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func qemuAssembler(format string, filename string, uefi bool, imageSize uint64) *osbuild.Assembler {
+func qemuAssembler(format string, filename string, bootType distro.BootType, imageSize uint64) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
-	if uefi {
+	if bootType == distro.UEFIBootType {
 		options = osbuild.QEMUAssemblerOptions{
 			Format:   format,
 			Filename: filename,
@@ -683,17 +716,6 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	const GigaByte = 1024 * 1024 * 1024
 
 	r := distribution{
-		buildPackages: []string{
-			"dnf",
-			"dosfstools",
-			"e2fsprogs",
-			"policycoreutils",
-			"qemu-img",
-			"selinux-policy-targeted",
-			"systemd",
-			"tar",
-			"xz",
-		},
 		name:             name,
 		modulePlatformID: modulePlatformID,
 		ostreeRefTmpl:    ostreeRef,
@@ -706,291 +728,181 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			"dracut-config-generic",
 			"grub2-pc",
 		},
-		buildPackages: []string{
-			"grub2-pc",
-		},
-		legacy: "i386-pc",
+		legacy:   "i386-pc",
+		bootType: distro.LegacyBootType,
 	}
 
 	aarch64 := architecture{
 		distro: &r,
 		name:   distro.Aarch64ArchName,
 		bootloaderPackages: []string{
-			"dracut-config-generic",
-			"efibootmgr",
-			"grub2-efi-aa64",
-			"grub2-tools",
-			"shim-aa64",
-		},
-		uefi: true,
+			"dracut-config-generic", "efibootmgr", "grub2-efi-aa64",
+			"grub2-tools", "shim-aa64"},
+		bootType: distro.UEFIBootType,
 	}
+
+	iotServices := []string{
+		"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service",
+		"zezere_ignition.timer", "zezere_ignition_banner.service",
+		"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck", "greenboot-rpm-ostree-grub2-check-fallback",
+		"greenboot-status", "greenboot-task-runner", "redboot-auto-reboot", "redboot-task-runner",
+		"parsec", "dbus-parsec"}
 
 	iotImgType := imageType{
 		name:     "fedora-iot-commit",
 		filename: "commit.tar",
 		mimeType: "application/x-tar",
-		packages: []string{
-			"fedora-release-iot",
-			"glibc", "glibc-minimal-langpack", "nss-altfiles",
-			"sssd-client", "libsss_sudo", "shadow-utils",
-			"dracut-config-generic", "dracut-network",
-			"rpm-ostree", "polkit", "lvm2",
-			"cryptsetup", "pinentry",
-			"keyutils", "cracklib-dicts",
-			"e2fsprogs", "xfsprogs", "dosfstools",
-			"gnupg2",
-			"basesystem", "python3", "bash",
-			"xz", "gzip",
-			"coreutils", "which", "curl",
-			"firewalld", "iptables",
-			"NetworkManager", "NetworkManager-wifi", "NetworkManager-wwan",
-			"wpa_supplicant", "iwd", "tpm2-pkcs11",
-			"dnsmasq", "traceroute",
-			"hostname", "iproute", "iputils",
-			"openssh-clients", "openssh-server", "passwd",
-			"policycoreutils", "procps-ng", "rootfiles", "rpm",
-			"selinux-policy-targeted", "setup", "shadow-utils",
-			"sudo", "systemd", "util-linux", "vim-minimal",
-			"less", "tar",
-			"fwupd", "usbguard",
-			"greenboot", "greenboot-grub2", "greenboot-rpm-ostree-grub2", "greenboot-reboot", "greenboot-status",
-			"ignition", "zezere-ignition",
-			"rsync", "attr",
-			"ima-evm-utils",
-			"bash-completion",
-			"tmux", "screen",
-			"policycoreutils-python-utils",
-			"setools-console",
-			"audit", "rng-tools", "chrony",
-			"bluez", "bluez-libs", "bluez-mesh",
-			"kernel-tools", "libgpiod-utils",
-			"podman", "container-selinux", "skopeo", "criu",
-			"slirp4netns", "fuse-overlayfs",
-			"clevis", "clevis-dracut", "clevis-luks", "clevis-pin-tpm2",
-			"parsec", "dbus-parsec",
-			// x86 specific
-			"grub2", "grub2-efi-x64", "efibootmgr", "shim-x64", "microcode_ctl",
-			"iwl1000-firmware", "iwl100-firmware", "iwl105-firmware", "iwl135-firmware",
-			"iwl2000-firmware", "iwl2030-firmware", "iwl3160-firmware", "iwl5000-firmware",
-			"iwl5150-firmware", "iwl6000-firmware", "iwl6050-firmware", "iwl7260-firmware",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: iotBuildPackageSet,
+			osPkgsKey:    iotCommitPackageSet,
 		},
-		enabledServices: []string{
-			"NetworkManager.service", "firewalld.service", "rngd.service", "sshd.service",
-			"zezere_ignition.timer", "zezere_ignition_banner.service",
-			"greenboot-grub2-set-counter", "greenboot-grub2-set-success", "greenboot-healthcheck", "greenboot-rpm-ostree-grub2-check-fallback",
-			"greenboot-status", "greenboot-task-runner", "redboot-auto-reboot", "redboot-task-runner",
-			"parsec", "dbus-parsec",
-		},
-		rpmOstree: true,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+		enabledServices: iotServices,
+		rpmOstree:       true,
+		assembler: func(bootType distro.BootType, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
 			return ostreeCommitAssembler(options, arch)
 		},
+	}
+
+	ec2EnabledServices := []string{
+		"cloud-init.service",
 	}
 
 	amiImgType := imageType{
 		name:     "ami",
 		filename: "image.raw",
 		mimeType: "application/octet-stream",
-		packages: []string{
-			"@Core",
-			"chrony",
-			"selinux-policy-targeted",
-			"langpacks-en",
-			"libxcrypt-compat",
-			"xfsprogs",
-			"cloud-init",
-			"checkpolicy",
-			"net-tools",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    ec2CorePackageSet,
 		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-			"geolite2-city",
-			"geolite2-country",
-			"zram-generator-defaults",
+		enabledServices: ec2EnabledServices,
+		kernelOptions:   "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
+		bootable:        true,
+		defaultSize:     6 * GigaByte,
+		assembler: func(bootType distro.BootType, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("raw", "image.raw", bootType, imageSize)
 		},
-		enabledServices: []string{
-			"cloud-init.service",
-		},
-		kernelOptions: "ro no_timer_check console=ttyS0,115200n8 console=tty1 biosdevname=0 net.ifnames=0 console=ttyS0,115200",
-		bootable:      true,
-		defaultSize:   6 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("raw", "image.raw", uefi, imageSize)
-		},
+	}
+
+	qcow2Services := []string{
+		"cloud-init.service",
+		"cloud-config.service",
+		"cloud-final.service",
+		"cloud-init-local.service",
 	}
 
 	qcow2ImageType := imageType{
 		name:     "qcow2",
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
-		packages: []string{
-			"@Fedora Cloud Server",
-			"chrony",
-			"systemd-udev",
-			"selinux-policy-targeted",
-			"langpacks-en",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    qcow2PackageSet,
 		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-			"etables",
-			"firewalld",
-			"geolite2-city",
-			"geolite2-country",
-			"gobject-introspection",
-			"plymouth",
-			"zram-generator-defaults",
+		enabledServices: qcow2Services,
+		bootable:        true,
+		defaultSize:     2 * GigaByte,
+		assembler: func(bootType distro.BootType, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", bootType, imageSize)
 		},
-		enabledServices: []string{
-			"cloud-init.service",
-			"cloud-config.service",
-			"cloud-final.service",
-			"cloud-init-local.service",
-		},
-		bootable:    true,
-		defaultSize: 2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, imageSize)
-		},
+	}
+
+	openStackServices := []string{
+		"cloud-init.service",
+		"cloud-config.service",
+		"cloud-final.service",
+		"cloud-init-local.service",
 	}
 
 	openstackImgType := imageType{
 		name:     "openstack",
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
-		packages: []string{
-			"@Core",
-			"chrony",
-			"selinux-policy-targeted",
-			"spice-vdagent",
-			"qemu-guest-agent",
-			"xen-libs",
-			"langpacks-en",
-			"cloud-init",
-			"libdrm",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    openStackPackageSet,
 		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-			"geolite2-city",
-			"geolite2-country",
-			"zram-generator-defaults",
+
+		enabledServices: openStackServices,
+		bootable:        true,
+		defaultSize:     2 * GigaByte,
+		assembler: func(bootType distro.BootType, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", bootType, options.Size)
 		},
-		enabledServices: []string{
-			"cloud-init.service",
-			"cloud-config.service",
-			"cloud-final.service",
-			"cloud-init-local.service",
-		},
-		bootable:    true,
-		defaultSize: 2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options.Size)
-		},
+	}
+
+	vhdEnabledServices := []string{
+		"sshd",
+		"waagent", // needed to run in Azure
+	}
+
+	vhdDisabledServices := []string{
+		"proc-sys-fs-binfmt_misc.mount",
+		"loadmodules.service",
 	}
 
 	vhdImgType := imageType{
 		name:     "vhd",
 		filename: "disk.vhd",
 		mimeType: "application/x-vhd",
-		packages: []string{
-			"@Core",
-			"chrony",
-			"selinux-policy-targeted",
-			"langpacks-en",
-			"net-tools",
-			"ntfsprogs",
-			"WALinuxAgent",
-			"libxcrypt-compat",
-			"initscripts",
-			"glibc-all-langpacks",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    vhdPackageSet,
 		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-			"geolite2-city",
-			"geolite2-country",
-			"zram-generator-defaults",
-		},
-		enabledServices: []string{
-			"sshd",
-			"waagent", // needed to run in Azure
-		},
-		disabledServices: []string{
-			"proc-sys-fs-binfmt_misc.mount",
-			"loadmodules.service",
-		},
+		enabledServices:  vhdEnabledServices,
+		disabledServices: vhdDisabledServices,
 		// These kernel parameters are required by Azure documentation
 		kernelOptions: "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:      true,
 		defaultSize:   2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("vpc", "disk.vhd", uefi, imageSize)
+		assembler: func(bootType distro.BootType, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("vpc", "disk.vhd", bootType, imageSize)
 		},
+	}
+
+	vmdkServices := []string{
+		"cloud-init.service",
+		"cloud-config.service",
+		"cloud-final.service",
+		"cloud-init-local.service",
 	}
 
 	vmdkImgType := imageType{
 		name:     "vmdk",
 		filename: "disk.vmdk",
 		mimeType: "application/x-vmdk",
-		packages: []string{
-			"@Fedora Cloud Server",
-			"chrony",
-			"systemd-udev",
-			"selinux-policy-targeted",
-			"langpacks-en",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    vmdkPackageSet,
 		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-			"etables",
-			"firewalld",
-			"geolite2-city",
-			"geolite2-country",
-			"gobject-introspection",
-			"plymouth",
-			"zram-generator-defaults",
+		enabledServices: vmdkServices,
+		bootable:        true,
+		defaultSize:     2 * GigaByte,
+		assembler: func(bootType distro.BootType, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("vmdk", "disk.vmdk", bootType, options.Size)
 		},
-		enabledServices: []string{
-			"cloud-init.service",
-			"cloud-config.service",
-			"cloud-final.service",
-			"cloud-init-local.service",
-		},
-		bootable:    true,
-		defaultSize: 2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("vmdk", "disk.vmdk", uefi, options.Size)
-		},
+	}
+
+	ociImageServices := []string{
+		"cloud-init.service",
+		"cloud-config.service",
+		"cloud-final.service",
+		"cloud-init-local.service",
 	}
 
 	ociImageType := imageType{
 		name:     "oci",
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
-		packages: []string{
-			"@Fedora Cloud Server",
-			"chrony",
-			"systemd-udev",
-			"selinux-policy-targeted",
-			"langpacks-en",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    ociImagePackageSet,
 		},
-		excludedPackages: []string{
-			"dracut-config-rescue",
-			"etables",
-			"firewalld",
-			"geolite2-city",
-			"geolite2-country",
-			"gobject-introspection",
-			"plymouth",
-			"zram-generator-defaults",
-		},
-		enabledServices: []string{
-			"cloud-init.service",
-			"cloud-config.service",
-			"cloud-final.service",
-			"cloud-init-local.service",
-		},
-		bootable:    true,
-		defaultSize: 2 * GigaByte,
-		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, options.Size)
+		enabledServices: ociImageServices,
+		bootable:        true,
+		defaultSize:     2 * GigaByte,
+		assembler: func(bootType distro.BootType, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+			return qemuAssembler("qcow2", "disk.qcow2", bootType, options.Size)
 		},
 	}
 
@@ -1005,6 +917,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	)
 
 	aarch64.setImageTypes(
+		iotImgType,
 		amiImgType,
 		qcow2ImageType,
 		openstackImgType,

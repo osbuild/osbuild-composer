@@ -171,7 +171,10 @@
         }
       }
     },
-    "overrides": {}
+    "overrides": {},
+    "supported_arches": [
+      "x86_64"
+    ]
   },
   "openstack": {
     "boot": {
