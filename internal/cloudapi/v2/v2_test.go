@@ -26,7 +26,7 @@ import (
 func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id"}})
+	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id", "account_id"}})
 
 	distros, err := distro_mock.NewDefaultRegistry()
 	require.NoError(t, err)
@@ -35,7 +35,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	config := v2.ServerConfig{
 		AWSBucket:            "image-builder.service",
 		JWTEnabled:           enableJWT,
-		TenantProviderFields: []string{"rh-org-id"},
+		TenantProviderFields: []string{"rh-org-id", "account_id"},
 	}
 	v2Server := v2.NewServer(workerServer, distros, config)
 	require.NotNil(t, v2Server)
