@@ -252,6 +252,10 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
     Answers Http requests to depsolve or dump packages.
     """
 
+    def __init__(self, *args, **kwargs):
+        self.cache_dir = None
+        super().__init__(*args, **kwargs)
+
     def init_cache_folder_list(self, repos):
         cache_folders = []
         for repo in repos:
