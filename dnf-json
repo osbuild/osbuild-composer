@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# pylint: disable=invalid-name
 
 import hashlib
 import json
@@ -92,6 +93,7 @@ class CacheState():
 
 class Solver():
 
+    # pylint: disable=too-many-arguments
     def __init__(self, repos, module_platform_id, persistdir, cachedir, arch):
         self.base = dnf.Base()
 
