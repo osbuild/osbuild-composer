@@ -434,6 +434,7 @@ Upgrade:
       - install_console.log
       - upgrade_console.log
       - leapp-preupgrade.log
+      - leapp-upgrade.log
       - leapp-report.txt
       - osbuild-upgrade8to9.log
       - osbuild-upgrade8to9.json
