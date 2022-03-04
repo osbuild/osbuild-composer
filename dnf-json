@@ -77,14 +77,14 @@ class CacheState():
             shutil.rmtree(folder)
 
     @staticmethod
-    def load_cache_state_from_disk(cache_dir):
+    def load(cache_dir):
         try:
             with open(os.path.join(cache_dir,"cache_state.pkl"), "rb") as inp:
                 return pickle.load(inp)
         except FileNotFoundError:
             return CacheState(cache_dir, timedelta(hours=24))
 
-    def store_on_disk(self):
+    def store(self):
         with open(os.path.join(self.cache_dir, "cache_state.pkl"), "wb") as outp:
             return pickle.dump(self, outp)
 
@@ -324,7 +324,7 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
 
                 if not self.cache_dir:
                     self.response_failure({ "kind": "Error", "reason": "No cache dir set" })
-                cache_state = CacheState.load_cache_state_from_disk(self.cache_dir)
+                cache_state = CacheState.load(self.cache_dir)
 
                 with tempfile.TemporaryDirectory() as persistdir:
                     try:
@@ -370,7 +370,7 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
                 for cache_folder in self.init_cache_folder_list(repos):
                     cache_state.update_used(cache_folder)
                 cache_state.clean_unused()
-                cache_state.store_on_disk()
+                cache_state.store()
 
 log.info("Starting the dnf-json server")
 
