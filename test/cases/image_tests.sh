@@ -42,10 +42,16 @@ test_divider () {
 }
 
 # Get a list of test cases.
+# Exclude test cases that require external dependencies like a http ostree repo.
+# These manifests exist only for correct manifest creation testing and cannot
+# be built during this test.
 get_test_cases () {
     TEST_CASE_SELECTOR="${DISTRO_CODE/-/_}-${ARCH}"
     pushd $IMAGE_TEST_CASES_PATH > /dev/null
-        ls "$TEST_CASE_SELECTOR"*.json
+        ALL_CASES=$(ls "$TEST_CASE_SELECTOR"*.json)
+        SKIP_CASES=$(jq -r 'if (.manifest.sources."org.osbuild.ostree" != null) then input_filename else empty end' "${TEST_CASE_SELECTOR}"*.json)
+        mapfile -t TEST_CASES < <(grep -vxFf <(printf '%s\n' "${SKIP_CASES[@]}") <(printf '%s\n' "${ALL_CASES[@]}"))
+        echo "${TEST_CASES[@]}"
     popd > /dev/null
 }
 
