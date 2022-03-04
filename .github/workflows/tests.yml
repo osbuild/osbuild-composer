@@ -12,7 +12,7 @@ on:
 
 jobs:
   lint:
-    name: "🛃 Unit tests"
+    name: "⌨ Lint"
     runs-on: ubuntu-20.04
     steps:
 
@@ -38,7 +38,7 @@ jobs:
         run: bash <(curl -s https://codecov.io/bash)
 
   unit-tests:
-    name: "⌨ Lint"
+    name: "🛃 Unit tests"
     runs-on: ubuntu-20.04
     steps:
 
