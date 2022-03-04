@@ -41,12 +41,14 @@ class CacheState():
     Meaning that the folders having reach a certain timeout will be deleted.
     """
 
-    def __init__(self, cache_dir, cache_timeout, folder_dict={}):
+    def __init__(self, cache_dir, cache_timeout, folder_dict=None):
         """
         cache_dir the place where the state is stored
         folder_dict a dict containing the existing list of cache folders
         cache_timeout a timedelta before a cache folder can be deleted
         """
+        if folder_dict is None:
+            folder_dict = {}
         self.cache_dir = cache_dir
         self.folder_dict = folder_dict
         self.cache_timeout = cache_timeout
