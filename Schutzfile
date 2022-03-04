@@ -1,26 +1,38 @@
 {
+  "fedora-34": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+      }
+    }
+  },
   "fedora-35": {
     "dependencies": {
       "osbuild": {
-        "commit": "6300a80c8466fc7297253cba91bb99994fa4e5c8"
+        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
       }
     }
   },
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "6300a80c8466fc7297253cba91bb99994fa4e5c8"
+        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
       }
     }
   },
   "rhel-8.5": {
     "dependencies": {
       "osbuild": {
-        "commit": "6300a80c8466fc7297253cba91bb99994fa4e5c8"
+        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
       }
     }
   },
   "rhel-8.6": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+      }
+    },
     "repos": {
       "file": "/etc/yum.repos.d/rhel8internal.repo",
       "x86_64": [
@@ -60,6 +72,11 @@
     }
   },
   "rhel-9.0": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+      }
+    },
     "repos": {
       "file": "/etc/yum.repos.d/rhel9internal.repo",
       "x86_64": [
@@ -101,11 +118,16 @@
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "6300a80c8466fc7297253cba91bb99994fa4e5c8"
+        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
       }
     }
   },
   "centos-9": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+      }
+    },
     "repos": {
       "file": "/etc/yum.repos.d/centos.repo",
       "x86_64": [
