@@ -35,6 +35,9 @@ EOF
 # AllowZoneDrifting is disabled in RHEL-9, see rhbz#2054271 for more details
 sed -i "s/^AllowZoneDrifting=.*/AllowZoneDrifting=no/" /etc/firewalld/firewalld.conf
 
+# This user choice has to be made or else it inhibits the upgrade
+leapp answer --add --section check_vdo.no_vdo_devices=True
+
 # check upgrade
 leapp preupgrade --debug --no-rhsm
 
