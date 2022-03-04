@@ -269,7 +269,7 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
         return cache_folders
 
     def _send(self):
-        self.client_address = ('',)
+        self.client_address = ('', 0)
 
     def response_with_dnf_error(self, kind: str, reason: str):
         self._send()
