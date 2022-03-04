@@ -20,9 +20,9 @@ import hawkey
 
 # Logging setup (to systemd if available)
 formatter = logging.Formatter(
-        fmt="%(asctime)s %(name)s.%(levelname)s: %(message)s",
-        datefmt="%Y.%m.%d %H:%M:%S"
-        )
+    fmt="%(asctime)s %(name)s.%(levelname)s: %(message)s",
+    datefmt="%Y.%m.%d %H:%M:%S"
+)
 handler = logging.StreamHandler(stream=sys.stdout)
 handler.setFormatter(formatter)
 log = logging.getLogger('dnf-json')
@@ -31,6 +31,7 @@ log.setLevel(logging.INFO)
 
 # Synchronisation necessary for the multiprocess request handling.
 process_lock = Lock()
+
 
 class CacheState():
     """
@@ -79,7 +80,7 @@ class CacheState():
     @classmethod
     def load(cls, cache_dir):
         try:
-            with open(os.path.join(cache_dir,"cache_state.pkl"), "rb") as inp:
+            with open(os.path.join(cache_dir, "cache_state.pkl"), "rb") as inp:
                 return pickle.load(inp)
         except FileNotFoundError:
             return cls(cache_dir, timedelta(hours=24))
@@ -87,6 +88,7 @@ class CacheState():
     def store(self):
         with open(os.path.join(self.cache_dir, "cache_state.pkl"), "wb") as outp:
             return pickle.dump(self, outp)
+
 
 class Solver():
 
@@ -243,11 +245,11 @@ class Solver():
             "dependencies": dependencies
         }
 
+
 class DnfJsonRequestHandler(BaseHTTPRequestHandler):
     """
     Answers Http requests to depsolve or dump packages.
     """
-
 
     def init_cache_folder_list(self, repos):
         cache_folders = []
@@ -266,7 +268,7 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
         return cache_folders
 
     def _send(self):
-        self.client_address=('',)
+        self.client_address = ('',)
 
     def response_with_dnf_error(self, kind: str, reason: str):
         self._send()
@@ -274,7 +276,7 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps({"kind": kind, "reason":
-            reason}).encode("utf-8"))
+                                     reason}).encode("utf-8"))
 
     def response_failure(self, json_object):
         self._send()
@@ -323,7 +325,7 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
                     self.cache_dir = arguments.get("cachedir", "")
 
                 if not self.cache_dir:
-                    self.response_failure({ "kind": "Error", "reason": "No cache dir set" })
+                    self.response_failure({"kind": "Error", "reason": "No cache dir set"})
                 cache_state = CacheState.load(self.cache_dir)
 
                 with tempfile.TemporaryDirectory() as persistdir:
@@ -340,11 +342,11 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
                             log.info("dump success")
                         elif command == "depsolve":
                             self.response_success(
-                                    solver.depsolve(
-                                        arguments["package-specs"],
-                                        arguments.get("exclude-specs", [])
-                                        )
-                                    )
+                                solver.depsolve(
+                                    arguments["package-specs"],
+                                    arguments.get("exclude-specs", [])
+                                )
+                            )
                             log.info("depsolve success")
 
                     except dnf.exceptions.MarkingErrors as e:
@@ -372,11 +374,13 @@ class DnfJsonRequestHandler(BaseHTTPRequestHandler):
                 cache_state.clean_unused()
                 cache_state.store()
 
+
 log.info("Starting the dnf-json server")
 
 LISTEN_FDS = int(os.environ.get("LISTEN_FDS", 0))
 # set from entrypoint if differs from 3
 LISTEN_FD = int(os.environ.get("LISTEN_FD", 3))
+
 
 # The dnf-json web server has to use forks to serve the requests. Because the
 # dnf library is leaking memory in its Cpp side.
@@ -389,6 +393,7 @@ class SystemDActivationSocketServer(socketserver.ForkingMixIn, socketserver.Unix
         if LISTEN_FDS > 1:
             log.warning("More than one LISTEN_FDS")
         self.socket = socket.fromfd(LISTEN_FD, self.address_family, self.socket_type)
+
 
 # start the web server
 server = SystemDActivationSocketServer('', DnfJsonRequestHandler)
