@@ -131,7 +131,8 @@ class Solver():
             self.base.repos.add(self._dnfrepo(repo, self.base.conf))
         self.base.fill_sack(load_system_repo=False)
 
-    def _dnfrepo(self, desc, parent_conf=None):
+    @staticmethod
+    def _dnfrepo(desc, parent_conf=None):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
 
         repo = dnf.repo.Repo(desc["id"], parent_conf)
@@ -190,9 +191,9 @@ class Solver():
 
         return checksums
 
-    def _timestamp_to_rfc3339(self, timestamp):
-        d = datetime.utcfromtimestamp(timestamp)
-        return d.strftime('%Y-%m-%dT%H:%M:%SZ')
+    @staticmethod
+    def _timestamp_to_rfc3339(timestamp):
+        return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
 
     def dump(self):
         packages = []
