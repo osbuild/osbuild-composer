@@ -76,13 +76,13 @@ class CacheState():
             del self.folder_dict[folder]
             shutil.rmtree(folder)
 
-    @staticmethod
-    def load(cache_dir):
+    @classmethod
+    def load(cls, cache_dir):
         try:
             with open(os.path.join(cache_dir,"cache_state.pkl"), "rb") as inp:
                 return pickle.load(inp)
         except FileNotFoundError:
-            return CacheState(cache_dir, timedelta(hours=24))
+            return cls(cache_dir, timedelta(hours=24))
 
     def store(self):
         with open(os.path.join(self.cache_dir, "cache_state.pkl"), "wb") as outp:
