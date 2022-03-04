@@ -122,6 +122,7 @@ sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/share/tests/osbuild-compose
 set +e
 sudo ssh "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS" 'source /root/upgrade_prepare.sh'
 sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-preupgrade.log .
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-upgrade.log .
 sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-report.txt .
 set -e
 
