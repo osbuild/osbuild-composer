@@ -1,24 +1,22 @@
 #!/usr/bin/python3
 
-import datetime
 import hashlib
 import json
-import tempfile
+import logging
 import os
+import pickle
+import shutil
 import socket
 import socketserver
-import logging
 import sys
-from http.server import BaseHTTPRequestHandler
-import pathlib
-from multiprocessing import Lock
-import queue
-import shutil
+import tempfile
+
 from datetime import datetime, timedelta
+from http.server import BaseHTTPRequestHandler
+from multiprocessing import Lock
 
 import dnf
 import hawkey
-import pickle
 
 # Logging setup (to systemd if available)
 formatter = logging.Formatter(
