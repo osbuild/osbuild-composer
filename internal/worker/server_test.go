@@ -129,7 +129,7 @@ func TestCreate(t *testing.T) {
 	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
 	handler := server.Handler()
 
-	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
 	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs",
@@ -158,10 +158,10 @@ func TestCancel(t *testing.T) {
 	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
 	handler := server.Handler()
 
-	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 	require.Equal(t, "osbuild", typ)
@@ -199,10 +199,10 @@ func TestUpdate(t *testing.T) {
 	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
 	handler := server.Handler()
 
-	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 	require.Equal(t, "osbuild", typ)
@@ -238,10 +238,10 @@ func TestArgs(t *testing.T) {
 			Payload: []string{"x", "y", "z"},
 		},
 	}
-	jobId, err := server.EnqueueOSBuild(arch.Name(), &job)
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &job, "")
 	require.NoError(t, err)
 
-	_, _, _, args, _, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	_, _, _, args, _, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.NotNil(t, args)
 
@@ -272,10 +272,10 @@ func TestUpload(t *testing.T) {
 	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
 	handler := server.Handler()
 
-	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, jobID, j)
 	require.Equal(t, "osbuild", typ)
@@ -306,10 +306,10 @@ func TestUploadAlteredBasePath(t *testing.T) {
 	server := newTestServer(t, tempdir, time.Duration(0), "/api/image-builder-worker/v1")
 	handler := server.Handler()
 
-	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, jobID, j)
 	require.Equal(t, "osbuild", typ)
@@ -379,7 +379,7 @@ func TestOAuth(t *testing.T) {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
 
-	_, err = workerServer.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	_, err = workerServer.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
 	client, err := worker.NewClient(proxySrv.URL, nil, &offlineToken, &oauthSrv.URL, "/api/image-builder-worker/v1")
@@ -404,7 +404,7 @@ func TestTimeout(t *testing.T) {
 	}
 	server := newTestServer(t, tempdir, time.Millisecond*10, "/api/image-builder-worker/v1")
 
-	_, _, _, _, _, err = server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	_, _, _, _, _, err = server.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
 	require.Equal(t, jobqueue.ErrDequeueTimeout, err)
 
 	test.TestRoute(t, server.Handler(), false, "POST", "/api/image-builder-worker/v1/jobs", `{"arch":"arch","types":["types"]}`, http.StatusNoContent,
@@ -424,10 +424,10 @@ func TestRequestJobById(t *testing.T) {
 	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
 	handler := server.Handler()
 
-	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{})
+	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "")
 	require.NoError(t, err)
 
-	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobId)
+	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobId, "")
 	require.NoError(t, err)
 
 	test.TestRoute(t, server.Handler(), false, "POST", "/api/worker/v1/jobs", `{"arch":"arch","types":["manifest-id-only"]}`, http.StatusBadRequest,
@@ -436,7 +436,7 @@ func TestRequestJobById(t *testing.T) {
 	_, _, _, _, _, err = server.RequestJobById(context.Background(), arch.Name(), jobId)
 	require.Error(t, jobqueue.ErrNotPending, err)
 
-	_, token, _, _, _, err := server.RequestJob(context.Background(), arch.Name(), []string{"depsolve"})
+	_, token, _, _, _, err := server.RequestJob(context.Background(), arch.Name(), []string{"depsolve"}, []string{""})
 	require.NoError(t, err)
 
 	depsolveJR, err := json.Marshal(worker.DepsolveJobResult{})
@@ -472,7 +472,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 		Manifest:  emptyManifestV2,
 		ImageName: "no-pipeline-names",
 	}
-	oldJobID, err := server.EnqueueOSBuild("x", &oldJob)
+	oldJobID, err := server.EnqueueOSBuild("x", &oldJob, "")
 	require.NoError(err)
 
 	newJob := worker.OSBuildJob{
@@ -483,7 +483,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 			Payload: []string{"other", "pipelines"},
 		},
 	}
-	newJobID, err := server.EnqueueOSBuild("x", &newJob)
+	newJobID, err := server.EnqueueOSBuild("x", &newJob, "")
 	require.NoError(err)
 
 	var oldJobRead worker.OSBuildJob
@@ -511,7 +511,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 		// don't block forever if the jobs weren't added or can't be retrieved
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
-		id, token, _, _, _, err := server.RequestJob(ctx, "x", []string{"osbuild"})
+		id, token, _, _, _, err := server.RequestJob(ctx, "x", []string{"osbuild"}, []string{""})
 		require.NoError(err)
 		return id, token
 	}
@@ -612,9 +612,9 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 
 	enqueueKojiJob := func(job *worker.OSBuildKojiJob) uuid.UUID {
 		initJob := new(worker.KojiInitJob)
-		initJobID, err := server.EnqueueKojiInit(initJob)
+		initJobID, err := server.EnqueueKojiInit(initJob, "")
 		require.NoError(err)
-		jobID, err := server.EnqueueOSBuildKoji("k", job, initJobID)
+		jobID, err := server.EnqueueOSBuildKoji("k", job, initJobID, "")
 		require.NoError(err)
 		return jobID
 	}
@@ -659,7 +659,7 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 	for idx := uint(0); idx < 2; idx++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
-		_, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"koji-init"})
+		_, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"koji-init"}, []string{""})
 		require.NoError(err)
 		require.NoError(server.FinishJob(token, nil))
 	}
@@ -668,7 +668,7 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 		// don't block forever if the jobs weren't added or can't be retrieved
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
-		id, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"osbuild-koji"})
+		id, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"osbuild-koji"}, []string{""})
 		require.NoError(err)
 		return id, token
 	}
@@ -769,10 +769,10 @@ func TestDepsolveLegacyErrorConversion(t *testing.T) {
 	}
 	server := newTestServer(t, tempdir, time.Duration(0), "/api/worker/v1")
 
-	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{})
+	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "")
 	require.NoError(t, err)
 
-	_, _, _, _, _, err = server.RequestJob(context.Background(), arch.Name(), []string{"depsolve"})
+	_, _, _, _, _, err = server.RequestJob(context.Background(), arch.Name(), []string{"depsolve"}, []string{""})
 	require.NoError(t, err)
 
 	reason := "Depsolve failed"
@@ -812,7 +812,7 @@ func TestMixedOSBuildJobErrors(t *testing.T) {
 		Manifest:  emptyManifestV2,
 		ImageName: "no-pipeline-names",
 	}
-	oldJobID, err := server.EnqueueOSBuild("x", &oldJob)
+	oldJobID, err := server.EnqueueOSBuild("x", &oldJob, "")
 	require.NoError(err)
 
 	newJob := worker.OSBuildJob{
@@ -823,7 +823,7 @@ func TestMixedOSBuildJobErrors(t *testing.T) {
 			Payload: []string{"other", "pipelines"},
 		},
 	}
-	newJobID, err := server.EnqueueOSBuild("x", &newJob)
+	newJobID, err := server.EnqueueOSBuild("x", &newJob, "")
 	require.NoError(err)
 
 	oldJobRead := new(worker.OSBuildJob)
@@ -844,7 +844,7 @@ func TestMixedOSBuildJobErrors(t *testing.T) {
 		// don't block forever if the jobs weren't added or can't be retrieved
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
-		id, token, _, _, _, err := server.RequestJob(ctx, "x", []string{"osbuild"})
+		id, token, _, _, _, err := server.RequestJob(ctx, "x", []string{"osbuild"}, []string{""})
 		require.NoError(err)
 		return id, token
 	}
@@ -917,9 +917,9 @@ func TestMixedOSBuildKojiJobErrors(t *testing.T) {
 
 	enqueueKojiJob := func(job *worker.OSBuildKojiJob) uuid.UUID {
 		initJob := new(worker.KojiInitJob)
-		initJobID, err := server.EnqueueKojiInit(initJob)
+		initJobID, err := server.EnqueueKojiInit(initJob, "")
 		require.NoError(err)
-		jobID, err := server.EnqueueOSBuildKoji("k", job, initJobID)
+		jobID, err := server.EnqueueOSBuildKoji("k", job, initJobID, "")
 		require.NoError(err)
 		return jobID
 	}
@@ -957,7 +957,7 @@ func TestMixedOSBuildKojiJobErrors(t *testing.T) {
 	for idx := uint(0); idx < 2; idx++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
-		_, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"koji-init"})
+		_, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"koji-init"}, []string{""})
 		require.NoError(err)
 		require.NoError(server.FinishJob(token, nil))
 	}
@@ -966,7 +966,7 @@ func TestMixedOSBuildKojiJobErrors(t *testing.T) {
 		// don't block forever if the jobs weren't added or can't be retrieved
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
-		id, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"osbuild-koji"})
+		id, token, _, _, _, err := server.RequestJob(ctx, "k", []string{"osbuild-koji"}, []string{""})
 		require.NoError(err)
 		return id, token
 	}

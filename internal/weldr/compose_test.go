@@ -7,12 +7,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
-	"github.com/stretchr/testify/require"
 )
 
 func TestComposeStatusFromLegacyError(t *testing.T) {
@@ -41,10 +42,10 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
 
-	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 
@@ -87,10 +88,10 @@ func TestComposeStatusFromJobError(t *testing.T) {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
 
-	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest})
+	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{"osbuild"})
+	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 

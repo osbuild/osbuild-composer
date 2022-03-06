@@ -28,7 +28,7 @@ const (
 	sqlListen   = `LISTEN jobs`
 	sqlUnlisten = `UNLISTEN jobs`
 
-	sqlEnqueue = `INSERT INTO jobs(id, type, args, queued_at) VALUES ($1, $2, $3, NOW())`
+	sqlEnqueue = `INSERT INTO jobs(id, type, args, queued_at, channel) VALUES ($1, $2, $3, NOW(), $4)`
 	sqlDequeue = `
 		UPDATE jobs
 		SET token = $1, started_at = now()
@@ -37,7 +37,7 @@ const (
 		  FROM ready_jobs
 			  -- use ANY here, because "type in ()" doesn't work with bound parameters
 			  -- literal syntax for this is '{"a", "b"}': https://www.postgresql.org/docs/13/arrays.html
-		  WHERE type = ANY($2)
+		  WHERE type = ANY($2) AND channel = ANY($3)
 		  LIMIT 1
 		  FOR UPDATE SKIP LOCKED
 		)
@@ -62,7 +62,7 @@ const (
 		WHERE job_id = $1`
 
 	sqlQueryJob = `
-		SELECT type, args, started_at, finished_at, canceled
+		SELECT type, args, channel, started_at, finished_at, canceled
 		FROM jobs
 		WHERE id = $1`
 	sqlQueryJobStatus = `
@@ -141,7 +141,7 @@ func (q *DBJobQueue) Close() {
 	q.pool.Close()
 }
 
-func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
+func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error connecting to database: %v", err)
@@ -160,7 +160,7 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	}()
 
 	id := uuid.New()
-	_, err = conn.Exec(context.Background(), sqlEnqueue, id, jobType, args)
+	_, err = conn.Exec(context.Background(), sqlEnqueue, id, jobType, args, channel)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error enqueuing job: %v", err)
 	}
@@ -187,7 +187,7 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return id, nil
 }
 
-func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
 		return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
@@ -216,7 +216,7 @@ func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 	var started, queued *time.Time
 	token := uuid.New()
 	for {
-		err = conn.QueryRow(ctx, sqlDequeue, token, jobTypes).Scan(&id, &token, &jobType, &args, &queued, &started)
+		err = conn.QueryRow(ctx, sqlDequeue, token, jobTypes, channels).Scan(&id, &token, &jobType, &args, &queued, &started)
 		if err == nil {
 			break
 		}
@@ -310,7 +310,7 @@ func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	var started, finished *time.Time
 	var jobType string
 	canceled := false
-	err = conn.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, nil, &started, &finished, &canceled)
+	err = conn.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, nil, nil, &started, &finished, &canceled)
 	if err == pgx.ErrNoRows {
 		return jobqueue.ErrNotExist
 	}
@@ -409,14 +409,14 @@ func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, result json.RawMes
 }
 
 // Job returns all the parameters that define a job (everything provided during Enqueue).
-func (q *DBJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, err error) {
+func (q *DBJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, channel string, err error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return
 	}
 	defer conn.Release()
 
-	err = conn.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, &args, nil, nil, nil)
+	err = conn.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, &args, &channel, nil, nil, nil)
 	if err == pgx.ErrNoRows {
 		err = jobqueue.ErrNotExist
 		return
