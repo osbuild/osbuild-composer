@@ -211,6 +211,7 @@ objects:
       enable_jwt = true
       jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs", "${MAS_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
+      jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
       [koji.aws_config]
       bucket = "${COMPOSER_CONFIG_BUCKET_NAME}"
       [worker]
@@ -222,6 +223,7 @@ objects:
       enable_jwt = true
       jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs", "${MAS_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
+      jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
 
 - apiVersion: batch/v1
   kind: CronJob
