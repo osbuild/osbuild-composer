@@ -161,7 +161,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		Name:    request.Name,
 		Version: request.Version,
 		Release: request.Release,
-	})
+	}, "")
 	if err != nil {
 		// This is a programming error.
 		panic(err)
@@ -177,7 +177,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			KojiServer:    request.Koji.Server,
 			KojiDirectory: kojiDirectory,
 			KojiFilename:  kojiFilenames[i],
-		}, initID)
+		}, initID, "")
 		if err != nil {
 			// This is a programming error.
 			panic(err)
@@ -194,7 +194,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		KojiDirectory: kojiDirectory,
 		TaskID:        uint64(request.Koji.TaskId),
 		StartTime:     uint64(time.Now().Unix()),
-	}, initID, buildIDs)
+	}, initID, buildIDs, "")
 	if err != nil {
 		// This is a programming error.
 		panic(err)

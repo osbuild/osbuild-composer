@@ -2337,7 +2337,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 				Build:   imageType.BuildPipelines(),
 				Payload: imageType.PayloadPipelines(),
 			},
-		})
+		}, "")
 		if err == nil {
 			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId, packageSets["packages"])
 		}

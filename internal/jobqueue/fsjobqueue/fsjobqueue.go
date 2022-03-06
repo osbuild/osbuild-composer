@@ -67,6 +67,7 @@ type job struct {
 	Args         json.RawMessage `json:"args,omitempty"`
 	Dependencies []uuid.UUID     `json:"dependencies"`
 	Result       json.RawMessage `json:"result,omitempty"`
+	Channel      string          `json:"channel"`
 
 	QueuedAt   time.Time `json:"queued_at,omitempty"`
 	StartedAt  time.Time `json:"started_at,omitempty"`
@@ -127,7 +128,7 @@ func New(dir string) (*fsJobQueue, error) {
 	return q, nil
 }
 
-func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
+func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -137,6 +138,7 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 		Type:         jobType,
 		Dependencies: dependencies,
 		QueuedAt:     time.Now(),
+		Channel:      channel,
 	}
 
 	var err error
@@ -172,7 +174,7 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return j.Id, nil
 }
 
-func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -191,7 +193,7 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID,
 	for {
 		var found bool
 		var err error
-		j, found, err = q.dequeueSuitableJob(jobTypes)
+		j, found, err = q.dequeueSuitableJob(jobTypes, channels)
 		if err != nil {
 			return uuid.Nil, uuid.Nil, nil, "", nil, err
 		}
@@ -358,7 +360,7 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID) (jobType string, result json.RawMes
 	return
 }
 
-func (q *fsJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, err error) {
+func (q *fsJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, channel string, err error) {
 	j, err := q.readJob(id)
 	if err != nil {
 		return
@@ -367,6 +369,7 @@ func (q *fsJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, de
 	jobType = j.Type
 	args = j.Args
 	dependencies = j.Dependencies
+	channel = j.Channel
 
 	return
 }
@@ -476,10 +479,11 @@ func (q *fsJobQueue) hasAllFinishedDependencies(j *job) (bool, error) {
 // - must be pending
 // - its dependencies must be finished
 // - must be of one of the type from jobTypes
+// - must be of one of the channel from channels
 //
 // If a suitable job is not found, false is returned.
 // If an error occurs during the search, it's returned.
-func (q *fsJobQueue) dequeueSuitableJob(jobTypes []string) (*job, bool, error) {
+func (q *fsJobQueue) dequeueSuitableJob(jobTypes []string, channels []string) (*job, bool, error) {
 	el := q.pending.Front()
 	for el != nil {
 		id := el.Value.(uuid.UUID)
@@ -489,7 +493,7 @@ func (q *fsJobQueue) dequeueSuitableJob(jobTypes []string) (*job, bool, error) {
 			return nil, false, err
 		}
 
-		if !jobMatchesCriteria(j, jobTypes) {
+		if !jobMatchesCriteria(j, jobTypes, channels) {
 			el = el.Next()
 			continue
 		}
@@ -527,12 +531,17 @@ func (q *fsJobQueue) removePendingJob(id uuid.UUID) {
 //
 // Criteria:
 //  - the job's type is one of the acceptedJobTypes
-func jobMatchesCriteria(j *job, acceptedJobTypes []string) bool {
-	for _, jt := range acceptedJobTypes {
-		if jt == j.Type {
-			return true
+//  - the job's channel is one of the acceptedChannels
+func jobMatchesCriteria(j *job, acceptedJobTypes []string, acceptedChannels []string) bool {
+	contains := func(slice []string, str string) bool {
+		for _, item := range slice {
+			if str == item {
+				return true
+			}
 		}
+
+		return false
 	}
 
-	return false
+	return contains(acceptedJobTypes, j.Type) && contains(acceptedChannels, j.Channel)
 }

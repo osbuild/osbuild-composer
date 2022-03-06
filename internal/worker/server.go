@@ -93,41 +93,41 @@ func (s *Server) WatchHeartbeats() {
 	}
 }
 
-func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob) (uuid.UUID, error) {
-	return s.enqueue("osbuild:"+arch, job, nil)
+func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob, channel string) (uuid.UUID, error) {
+	return s.enqueue("osbuild:"+arch, job, nil, channel)
 }
 
-func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, manifestID uuid.UUID) (uuid.UUID, error) {
-	return s.enqueue("osbuild:"+arch, job, []uuid.UUID{manifestID})
+func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, manifestID uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue("osbuild:"+arch, job, []uuid.UUID{manifestID}, channel)
 }
 
-func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID) (uuid.UUID, error) {
-	return s.enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID})
+func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID}, channel)
 }
 
-func (s *Server) EnqueueOSBuildKojiAsDependency(arch string, job *OSBuildKojiJob, manifestID, initID uuid.UUID) (uuid.UUID, error) {
-	return s.enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID, manifestID})
+func (s *Server) EnqueueOSBuildKojiAsDependency(arch string, job *OSBuildKojiJob, manifestID, initID uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID, manifestID}, channel)
 }
 
-func (s *Server) EnqueueKojiInit(job *KojiInitJob) (uuid.UUID, error) {
-	return s.enqueue("koji-init", job, nil)
+func (s *Server) EnqueueKojiInit(job *KojiInitJob, channel string) (uuid.UUID, error) {
+	return s.enqueue("koji-init", job, nil, channel)
 }
 
-func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID) (uuid.UUID, error) {
-	return s.enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...))
+func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...), channel)
 }
 
-func (s *Server) EnqueueDepsolve(job *DepsolveJob) (uuid.UUID, error) {
-	return s.enqueue("depsolve", job, nil)
+func (s *Server) EnqueueDepsolve(job *DepsolveJob, channel string) (uuid.UUID, error) {
+	return s.enqueue("depsolve", job, nil, channel)
 }
 
-func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID) (uuid.UUID, error) {
-	return s.enqueue("manifest-id-only", job, []uuid.UUID{parent})
+func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue("manifest-id-only", job, []uuid.UUID{parent}, channel)
 }
 
-func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID) (uuid.UUID, error) {
+func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	prometheus.EnqueueJobMetrics(jobType)
-	return s.jobs.Enqueue(jobType, job, dependencies)
+	return s.jobs.Enqueue(jobType, job, dependencies, channel)
 }
 
 func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobStatus, []uuid.UUID, error) {
@@ -289,7 +289,7 @@ func (s *Server) jobStatus(id uuid.UUID, result interface{}) (string, *JobStatus
 
 // OSBuildJob returns the parameters of an OSBuildJob
 func (s *Server) OSBuildJob(id uuid.UUID, job *OSBuildJob) error {
-	jobType, rawArgs, _, err := s.jobs.Job(id)
+	jobType, rawArgs, _, _, err := s.jobs.Job(id)
 	if err != nil {
 		return err
 	}
@@ -307,7 +307,7 @@ func (s *Server) OSBuildJob(id uuid.UUID, job *OSBuildJob) error {
 
 // OSBuildKojiJob returns the parameters of an OSBuildKojiJob
 func (s *Server) OSBuildKojiJob(id uuid.UUID, job *OSBuildKojiJob) error {
-	jobType, rawArgs, _, err := s.jobs.Job(id)
+	jobType, rawArgs, _, _, err := s.jobs.Job(id)
 	if err != nil {
 		return err
 	}
@@ -325,7 +325,7 @@ func (s *Server) OSBuildKojiJob(id uuid.UUID, job *OSBuildKojiJob) error {
 
 // JobType returns the type of the job
 func (s *Server) JobType(id uuid.UUID) (string, error) {
-	jobType, _, _, err := s.jobs.Job(id)
+	jobType, _, _, _, err := s.jobs.Job(id)
 	// the architecture is internally encdode in the job type, but hide that
 	// from this API
 	return strings.Split(jobType, ":")[0], err
@@ -389,15 +389,15 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.artifactsDir, id.String()))
 }
 
-func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
-	return s.requestJob(ctx, arch, jobTypes, uuid.Nil)
+func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
+	return s.requestJob(ctx, arch, jobTypes, uuid.Nil, channels)
 }
 
 func (s *Server) RequestJobById(ctx context.Context, arch string, requestedJobId uuid.UUID) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
-	return s.requestJob(ctx, arch, []string{}, requestedJobId)
+	return s.requestJob(ctx, arch, []string{}, requestedJobId, nil)
 }
 
-func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string, requestedJobId uuid.UUID) (
+func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string, requestedJobId uuid.UUID, channels []string) (
 	jobId uuid.UUID, token uuid.UUID, jobType string, args json.RawMessage, dynamicArgs []json.RawMessage, err error) {
 	// treat osbuild jobs specially until we have found a generic way to
 	// specify dequeuing restrictions. For now, we only have one
@@ -425,7 +425,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		jobId = requestedJobId
 		token, depIDs, jobType, args, err = s.jobs.DequeueByID(dequeueCtx, requestedJobId)
 	} else {
-		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, jts)
+		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, jts, channels)
 	}
 	if err != nil {
 		return
@@ -550,7 +550,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		return err
 	}
 
-	jobId, token, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types)
+	jobId, token, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types, []string{""})
 	if err != nil {
 		if err == jobqueue.ErrDequeueTimeout {
 			return ctx.JSON(http.StatusNoContent, api.ObjectReference{

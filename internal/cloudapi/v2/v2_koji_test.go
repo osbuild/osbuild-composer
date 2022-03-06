@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
@@ -19,7 +21,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
-	"github.com/stretchr/testify/require"
 )
 
 type jobResult struct {
@@ -368,7 +369,7 @@ func TestKojiCompose(t *testing.T) {
 			c.composeReplyCode, c.composeReply, "id", "operation_id")
 
 		// handle koji-init
-		_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"koji-init"})
+		_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"koji-init"}, []string{""})
 		require.NoError(t, err)
 		require.Equal(t, "koji-init", jobType)
 
@@ -386,7 +387,7 @@ func TestKojiCompose(t *testing.T) {
 			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
 		// handle osbuild-koji #1
-		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild-koji"})
+		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild-koji"}, []string{""})
 		require.NoError(t, err)
 		require.Equal(t, "osbuild-koji", jobType)
 
@@ -403,7 +404,7 @@ func TestKojiCompose(t *testing.T) {
 			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
 		// handle osbuild-koji #2
-		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild-koji"})
+		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild-koji"}, []string{""})
 		require.NoError(t, err)
 		require.Equal(t, "osbuild-koji", jobType)
 
@@ -427,7 +428,7 @@ func TestKojiCompose(t *testing.T) {
 			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
 		// handle koji-finalize
-		finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"koji-finalize"})
+		finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"koji-finalize"}, []string{""})
 		require.NoError(t, err)
 		require.Equal(t, "koji-finalize", jobType)
 
@@ -510,7 +511,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 		Version: "42",
 		Release: "1",
 	}
-	initID, err := workers.EnqueueKojiInit(&initJob)
+	initID, err := workers.EnqueueKojiInit(&initJob, "")
 	require.NoError(t, err)
 
 	buildJobs := make([]worker.OSBuildKojiJob, nImages)
@@ -524,7 +525,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 			KojiDirectory: "koji-server-test-dir",
 			KojiFilename:  fname,
 		}
-		buildID, err := workers.EnqueueOSBuildKoji(fmt.Sprintf("fake-arch-%d", idx), &buildJob, initID)
+		buildID, err := workers.EnqueueOSBuildKoji(fmt.Sprintf("fake-arch-%d", idx), &buildJob, initID, "")
 		require.NoError(t, err)
 
 		buildJobs[idx] = buildJob
@@ -542,7 +543,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 		TaskID:        0,
 		StartTime:     uint64(time.Now().Unix()),
 	}
-	finalizeID, err := workers.EnqueueKojiFinalize(&finalizeJob, initID, buildJobIDs)
+	finalizeID, err := workers.EnqueueKojiFinalize(&finalizeJob, initID, buildJobIDs, "")
 	require.NoError(t, err)
 
 	// ----- Jobs queued - Test API endpoints (status, manifests, logs) ----- //

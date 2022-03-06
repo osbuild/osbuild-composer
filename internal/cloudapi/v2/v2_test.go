@@ -39,7 +39,7 @@ func newV2Server(t *testing.T, dir string) (*v2.Server, *worker.Server, context.
 	depsolveContext, cancel := context.WithCancel(context.Background())
 	go func() {
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(context.Background(), test_distro.TestDistroName, []string{"depsolve"})
+			_, token, _, _, _, err := workerServer.RequestJob(context.Background(), test_distro.TestDistroName, []string{"depsolve"}, []string{""})
 			if err != nil {
 				continue
 			}
@@ -575,7 +575,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
+	jobId, token, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
@@ -647,7 +647,7 @@ func TestComposeStatusFailure(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
@@ -699,7 +699,7 @@ func TestComposeLegacyError(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 
@@ -754,7 +754,7 @@ func TestComposeJobError(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, "osbuild", jobType)
 

@@ -32,16 +32,16 @@ type JobQueue interface {
 	// have finished.
 	//
 	// Returns the id of the new job, or an error.
-	Enqueue(jobType string, args interface{}, dependencies []uuid.UUID) (uuid.UUID, error)
+	Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error)
 
 	// Dequeues a job, blocking until one is available.
 	//
-	// Waits until a job with a type of any of `jobTypes` is available, or `ctx` is
-	// canceled.
+	// Waits until a job with a type of any of `jobTypes` and any of `channels`
+	// is available, or `ctx` is canceled.
 	//
 	// Returns the job's id, token, dependencies, type, and arguments, or an error. Arguments
 	// can be unmarshaled to the type given in Enqueue().
-	Dequeue(ctx context.Context, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
+	Dequeue(ctx context.Context, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
 	// Dequeues a pending job by its ID in a non-blocking way.
 	//
@@ -67,7 +67,7 @@ type JobQueue interface {
 	JobStatus(id uuid.UUID) (jobType string, result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error)
 
 	// Job returns all the parameters that define a job (everything provided during Enqueue).
-	Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, err error)
+	Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, channel string, err error)
 
 	// Find job by token, this will return an error if the job hasn't been dequeued
 	IdFromToken(token uuid.UUID) (id uuid.UUID, err error)
