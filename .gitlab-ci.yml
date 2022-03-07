@@ -367,7 +367,7 @@ Rebase OSTree:
           - rhos-01/centos-stream-8-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
-.integration:
+.integration_base:
   stage: test
   extends: .terraform
   rules:
@@ -376,17 +376,39 @@ Rebase OSTree:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
+
+.rhel_runners: &rhel_runners
+    RUNNER:
+      - aws/centos-stream-8-x86_64
+      - aws/rhel-8.5-ga-x86_64
+      - aws/rhel-8.6-nightly-x86_64
+      - aws/rhel-9.0-nightly-x86_64
+      - aws/centos-stream-9-x86_64
+    INTERNAL_NETWORK: ["true"]
+
+.integration_rhel:
+  extends: .integration_base
   parallel:
     matrix:
-      - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-35-x86_64
-          - aws/centos-stream-8-x86_64
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-nightly-x86_64
-          - aws/centos-stream-9-x86_64
-        INTERNAL_NETWORK: ["true"]
+      - *rhel_runners
+
+.fedora_runners: &fedora_runners
+    RUNNER:
+      - aws/fedora-34-x86_64
+      - aws/fedora-35-x86_64
+
+.integration_fedora:
+  extends: .integration_base
+  parallel:
+    matrix:
+      - *fedora_runners
+
+.integration:
+  extends: .integration_base
+  parallel:
+    matrix:
+      - *fedora_runners
+      - *rhel_runners
 
 koji.sh:
   extends: .integration
@@ -402,6 +424,12 @@ azure.sh:
   extends: .integration
   variables:
     SCRIPT: azure.sh
+
+# The required GCE image type is not supported on Fedora
+gcp.sh:
+  extends: .integration_rhel
+  variables:
+    SCRIPT: gcp.sh
 
 vmware.sh:
   extends: .integration
