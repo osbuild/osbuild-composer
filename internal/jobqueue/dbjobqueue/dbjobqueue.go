@@ -41,7 +41,7 @@ const (
 		  LIMIT 1
 		  FOR UPDATE SKIP LOCKED
 		)
-		RETURNING id, token, type, args, queued_at, started_at`
+		RETURNING id, type, args`
 
 	sqlDequeueByID = `
 		UPDATE jobs
@@ -213,10 +213,9 @@ func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []
 	var id uuid.UUID
 	var jobType string
 	var args json.RawMessage
-	var started, queued *time.Time
 	token := uuid.New()
 	for {
-		err = conn.QueryRow(ctx, sqlDequeue, token, jobTypes, channels).Scan(&id, &token, &jobType, &args, &queued, &started)
+		err = conn.QueryRow(ctx, sqlDequeue, token, jobTypes, channels).Scan(&id, &jobType, &args)
 		if err == nil {
 			break
 		}
