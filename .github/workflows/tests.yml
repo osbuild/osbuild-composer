@@ -17,7 +17,7 @@ jobs:
     steps:
 
       - name: Set up Go 1.16
-        uses: actions/setup-go@v2.1.5
+        uses: actions/setup-go@v3
         with:
           go-version: 1.16
         id: go
@@ -43,7 +43,7 @@ jobs:
     steps:
 
       - name: Set up Go 1.16
-        uses: actions/setup-go@v2.1.5
+        uses: actions/setup-go@v3
         with:
           go-version: 1.16
         id: go
@@ -69,7 +69,7 @@ jobs:
     steps:
 
       - name: Set up Go 1.16
-        uses: actions/setup-go@v2.1.5
+        uses: actions/setup-go@v3
         with:
           go-version: 1.16
         id: go
