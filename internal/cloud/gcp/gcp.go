@@ -55,6 +55,16 @@ func New(credentials []byte) (*GCP, error) {
 	return &GCP{creds}, nil
 }
 
+// NewFromFile loads the credentials from a file and returns an authenticated
+// *GCP object instance.
+func NewFromFile(path string) (*GCP, error) {
+	gcpCredentials, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load GCP credentials from file %q: %v", path, err)
+	}
+	return New(gcpCredentials)
+}
+
 // GetCredentialsFromEnv reads the service account credentials JSON file from
 // the path pointed to by the environment variable name stored in
 // 'GCPCredentialsEnvName'. If the content of the JSON file was read successfully,

@@ -287,16 +287,11 @@ func main() {
 		}
 	}
 
-	// Check if the credentials file was provided in the worker configuration,
-	// and load it early to prevent potential failure due to issues with the file.
-	// Note that the content validity of the provided file is not checked and
-	// can not be reasonable checked with GCP other than by making real API calls.
-	var gcpCredentials []byte
+	// If the credentials are not provided in the configuration, then the
+	// worker will rely on the GCP library to authenticate using default means.
+	var gcpCredentials string
 	if config.GCP != nil {
-		gcpCredentials, err = ioutil.ReadFile(config.GCP.Credentials)
-		if err != nil {
-			logrus.Fatalf("cannot load GCP credentials: %v", err)
-		}
+		gcpCredentials = config.GCP.Credentials
 	}
 
 	// If the credentials are not provided in the configuration, then the
