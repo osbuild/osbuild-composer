@@ -42,6 +42,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("timeout", wrap(testDequeueTimeout))
 	t.Run("dequeue-by-id", wrap(testDequeueByID))
 	t.Run("multiple-channels", wrap(testMultipleChannels))
+	t.Run("100-dequeuers", wrap(test100dequeuers))
 }
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID, channel string) uuid.UUID {
@@ -584,4 +585,44 @@ func testMultipleChannels(t *testing.T, q jobqueue.JobQueue) {
 		_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
 		require.NoError(t, err)
 	})
+}
+
+// Tests that jobqueue implementations can have "unlimited" number of
+// dequeuers.
+// This was an issue in dbjobqueue in past: It used one DB connection per
+// a dequeuer and there was a limit of DB connection count.
+func test100dequeuers(t *testing.T, q jobqueue.JobQueue) {
+	var wg sync.WaitGroup
+
+	// Create 100 dequeuers
+	const count = 100
+	for i := 0; i < count; i++ {
+		wg.Add(1)
+		go func() {
+			defer func() {
+				wg.Done()
+			}()
+
+			finishNextTestJob(t, q, "octopus", testResult{}, nil)
+		}()
+	}
+
+	// wait a bit for all goroutines to initialize
+	time.Sleep(100 * time.Millisecond)
+
+	// try to do some other operations on the jobqueue
+	id := pushTestJob(t, q, "clownfish", nil, nil, "")
+
+	_, _, _, _, _, _, _, err := q.JobStatus(id)
+	require.NoError(t, err)
+
+	finishNextTestJob(t, q, "clownfish", testResult{}, nil)
+
+	// fulfill the needs of all dequeuers
+	for i := 0; i < count; i++ {
+		pushTestJob(t, q, "octopus", nil, nil, "")
+	}
+
+	wg.Wait()
+
 }
