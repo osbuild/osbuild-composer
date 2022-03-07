@@ -6,14 +6,15 @@
 package dbjobqueue
 
 import (
+	"container/list"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -124,7 +125,51 @@ const (
 )
 
 type DBJobQueue struct {
-	pool *pgxpool.Pool
+	pool         *pgxpool.Pool
+	dequeuers    *dequeuers
+	stopListener func()
+}
+
+// thread-safe list of dequeuers
+type dequeuers struct {
+	list  *list.List
+	mutex sync.Mutex
+}
+
+func newDequeuers() *dequeuers {
+	return &dequeuers{
+		list: list.New(),
+	}
+}
+
+func (d *dequeuers) pushBack(c chan struct{}) *list.Element {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+
+	return d.list.PushBack(c)
+}
+
+func (d *dequeuers) remove(e *list.Element) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+
+	d.list.Remove(e)
+}
+
+func (d *dequeuers) notifyAll() {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	cur := d.list.Front()
+	for cur != nil {
+		listenerChan := cur.Value.(chan struct{})
+
+		// notify in a non-blocking way
+		select {
+		case listenerChan <- struct{}{}:
+		default:
+		}
+		cur = cur.Next()
+	}
 }
 
 // Create a new DBJobQueue object for `url`.
@@ -134,10 +179,57 @@ func New(url string) (*DBJobQueue, error) {
 		return nil, fmt.Errorf("error establishing connection: %v", err)
 	}
 
-	return &DBJobQueue{pool}, nil
+	listenContext, cancel := context.WithCancel(context.Background())
+	q := &DBJobQueue{
+		pool:         pool,
+		dequeuers:    newDequeuers(),
+		stopListener: cancel,
+	}
+
+	go q.listen(listenContext)
+
+	return q, nil
+}
+
+func (q *DBJobQueue) listen(ctx context.Context) {
+	conn, err := q.pool.Acquire(ctx)
+	if err != nil {
+		panic(fmt.Errorf("error connecting to database: %v", err))
+	}
+	defer func() {
+		_, err := conn.Exec(ctx, sqlUnlisten)
+		if err != nil && !errors.Is(err, context.DeadlineExceeded) {
+			logrus.Error("Error unlistening for jobs in dequeue: ", err)
+		}
+		conn.Release()
+	}()
+
+	_, err = conn.Exec(ctx, sqlListen)
+	if err != nil {
+		panic(fmt.Errorf("error listening on jobs channel: %v", err))
+	}
+
+	for {
+		_, err = conn.Conn().WaitForNotification(ctx)
+		if err != nil {
+			// shutdown the listener if the context is canceled
+			if errors.Is(err, context.Canceled) {
+				return
+			}
+
+			// otherwise, just log the error and continue, there might just
+			// be a temporary networking issue
+			logrus.Debugf("error waiting for notification on jobs channel: %v", err)
+			continue
+		}
+
+		// something happened in the database, notify all dequeuers
+		q.dequeuers.notifyAll()
+	}
 }
 
 func (q *DBJobQueue) Close() {
+	q.stopListener()
 	q.pool.Close()
 }
 
@@ -193,43 +285,38 @@ func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []
 		return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
 	}
 
-	conn, err := q.pool.Acquire(ctx)
-	if err != nil {
-		return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error connecting to database: %v", err)
-	}
-	defer func() {
-		_, err := conn.Exec(ctx, sqlUnlisten)
-		if err != nil && !errors.Is(err, context.DeadlineExceeded) {
-			logrus.Error("Error unlistening for jobs in dequeue: ", err)
-		}
-		conn.Release()
-	}()
-
-	_, err = conn.Exec(ctx, sqlListen)
-	if err != nil {
-		return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error listening on jobs channel: %v", err)
-	}
+	// add ourselves as a dequeuer
+	c := make(chan struct{}, 1)
+	el := q.dequeuers.pushBack(c)
+	defer q.dequeuers.remove(el)
 
 	var id uuid.UUID
 	var jobType string
 	var args json.RawMessage
 	token := uuid.New()
 	for {
-		err = conn.QueryRow(ctx, sqlDequeue, token, jobTypes, channels).Scan(&id, &jobType, &args)
+		var err error
+		id, jobType, args, err = q.dequeueMaybe(ctx, token, jobTypes, channels)
 		if err == nil {
 			break
 		}
 		if err != nil && !errors.As(err, &pgx.ErrNoRows) {
 			return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error dequeuing job: %v", err)
 		}
-		_, err = conn.Conn().WaitForNotification(ctx)
-		if err != nil {
-			if pgconn.Timeout(err) {
-				return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
-			}
-			return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error waiting for notification on jobs channel: %v", err)
+
+		// no suitable job was found, wait for the next queue update
+		select {
+		case <-c:
+		case <-ctx.Done():
+			return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
 		}
 	}
+
+	conn, err := q.pool.Acquire(ctx)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer conn.Release()
 
 	// insert heartbeat
 	_, err = conn.Exec(ctx, sqlInsertHeartbeat, token, id)
@@ -246,6 +333,21 @@ func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []
 
 	return id, token, dependencies, jobType, args, nil
 }
+
+// dequeueMaybe is just a smaller helper for acquiring a connection and
+// running the sqlDequeue query
+func (q *DBJobQueue) dequeueMaybe(ctx context.Context, token uuid.UUID, jobTypes []string, channels []string) (id uuid.UUID, jobType string, args json.RawMessage, err error) {
+	var conn *pgxpool.Conn
+	conn, err = q.pool.Acquire(ctx)
+	if err != nil {
+		return
+	}
+	defer conn.Release()
+
+	err = conn.QueryRow(ctx, sqlDequeue, token, jobTypes, channels).Scan(&id, &jobType, &args)
+	return
+}
+
 func (q *DBJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	// Return early if the context is already canceled.
 	if err := ctx.Err(); err != nil {
