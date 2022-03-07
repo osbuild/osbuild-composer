@@ -58,7 +58,8 @@ type architecture struct {
 	bootloaderPackages []string
 	legacy             string
 	bootType           distro.BootType
-	imageTypes         map[string]imageType
+	imageTypes         map[string]distro.ImageType
+	imageTypeAliases   map[string]string
 }
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
@@ -66,10 +67,10 @@ type packageSetFunc func(t *imageType) rpmmd.PackageSet
 type imageType struct {
 	arch             *architecture
 	name             string
+	nameAliases      []string
 	filename         string
 	mimeType         string
 	packageSets      map[string]packageSetFunc
-	excludedPackages map[string]packageSetFunc
 	enabledServices  []string
 	disabledServices []string
 	kernelOptions    string
@@ -140,32 +141,37 @@ func (a *architecture) ListImageTypes() []string {
 	return formats
 }
 
-func (a *architecture) GetImageType(imageType string) (distro.ImageType, error) {
-	t, exists := a.imageTypes[imageType]
+func (a *architecture) GetImageType(name string) (distro.ImageType, error) {
+	t, exists := a.imageTypes[name]
 	if !exists {
-		return nil, errors.New("invalid image type: " + imageType)
+		aliasForName, exists := a.imageTypeAliases[name]
+		if !exists {
+			return nil, errors.New("invalid image type: " + name)
+		}
+		t, exists = a.imageTypes[aliasForName]
+		if !exists {
+			panic(fmt.Sprintf("image type '%s' is an alias to a non-existing image type '%s'", name, aliasForName))
+		}
 	}
-
-	return &t, nil
+	return t, nil
 }
 
-func (a *architecture) setImageTypes(imageTypes ...imageType) {
-	a.imageTypes = map[string]imageType{}
-	for _, it := range imageTypes {
-		a.imageTypes[it.name] = imageType{
-			arch:             a,
-			name:             it.name,
-			filename:         it.filename,
-			mimeType:         it.mimeType,
-			packageSets:      it.packageSets,
-			excludedPackages: it.excludedPackages,
-			enabledServices:  it.enabledServices,
-			disabledServices: it.disabledServices,
-			kernelOptions:    it.kernelOptions,
-			bootable:         it.bootable,
-			rpmOstree:        it.rpmOstree,
-			defaultSize:      it.defaultSize,
-			assembler:        it.assembler,
+func (a *architecture) addImageTypes(imageTypes ...imageType) {
+	if a.imageTypes == nil {
+		a.imageTypes = map[string]distro.ImageType{}
+	}
+	for idx := range imageTypes {
+		it := imageTypes[idx]
+		it.arch = a
+		a.imageTypes[it.name] = &it
+		for _, alias := range it.nameAliases {
+			if a.imageTypeAliases == nil {
+				a.imageTypeAliases = map[string]string{}
+			}
+			if existingAliasFor, exists := a.imageTypeAliases[alias]; exists {
+				panic(fmt.Sprintf("image type alias '%s' for '%s' is already defined for another image type '%s'", alias, it.name, existingAliasFor))
+			}
+			a.imageTypeAliases[alias] = it.name
 		}
 	}
 }
@@ -749,9 +755,10 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		"parsec", "dbus-parsec"}
 
 	iotImgType := imageType{
-		name:     "fedora-iot-commit",
-		filename: "commit.tar",
-		mimeType: "application/x-tar",
+		name:        "fedora-iot-commit",
+		nameAliases: []string{"iot-commit", "edge-commit"},
+		filename:    "commit.tar",
+		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: iotBuildPackageSet,
 			osPkgsKey:    iotCommitPackageSet,
@@ -906,7 +913,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		},
 	}
 
-	x86_64.setImageTypes(
+	x86_64.addImageTypes(
 		iotImgType,
 		amiImgType,
 		qcow2ImageType,
@@ -916,7 +923,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		ociImageType,
 	)
 
-	aarch64.setImageTypes(
+	aarch64.addImageTypes(
 		iotImgType,
 		amiImgType,
 		qcow2ImageType,
