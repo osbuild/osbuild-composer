@@ -1,12 +1,15 @@
 package weldr
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -54,6 +57,18 @@ type azureUploadSettings struct {
 }
 
 func (azureUploadSettings) isUploadSettings() {}
+
+type gcpUploadSettings struct {
+	Filename string `json:"filename"`
+	Region   string `json:"region"`
+	Bucket   string `json:"bucket"`
+	Object   string `json:"object"`
+
+	// base64 encoded GCP credentials JSON file
+	Credentials string `json:"credentials,omitempty"`
+}
+
+func (gcpUploadSettings) isUploadSettings() {}
 
 type vmwareUploadSettings struct {
 	Host       string `json:"host"`
@@ -113,6 +128,8 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 		settings = new(awsUploadSettings)
 	case "aws.s3":
 		settings = new(awsS3UploadSettings)
+	case "gcp":
+		settings = new(gcpUploadSettings)
 	case "vmware":
 		settings = new(vmwareUploadSettings)
 	case "oci":
@@ -177,6 +194,16 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 			upload.Settings = &azureUploadSettings{
 				Container: options.Container,
 				// StorageAccount and StorageAccessKey are intentionally not included.
+			}
+			uploads = append(uploads, upload)
+		case *target.GCPTargetOptions:
+			upload.ProviderName = "gcp"
+			upload.Settings = &gcpUploadSettings{
+				Filename: options.Filename,
+				Region:   options.Region,
+				Bucket:   options.Bucket,
+				Object:   options.Object,
+				// Credentials are intentionally not included.
 			}
 			uploads = append(uploads, upload)
 		case *target.VMWareTargetOptions:
@@ -254,6 +281,33 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			StorageAccount:   options.StorageAccount,
 			StorageAccessKey: options.StorageAccessKey,
 			Container:        options.Container,
+		}
+	case *gcpUploadSettings:
+		t.Name = "org.osbuild.gcp"
+
+		var gcpCredentials []byte
+		var err error
+		if options.Credentials != "" {
+			gcpCredentials, err = base64.StdEncoding.DecodeString(options.Credentials)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		// The uploaded image object name must have 'tar.gz' suffix to be imported
+		objectName := options.Object
+		if !strings.HasSuffix(objectName, ".tar.gz") {
+			objectName = objectName + ".tar.gz"
+			logrus.Infof("[GCP] object name must end with '.tar.gz', using %q as the object name", objectName)
+		}
+
+		t.Options = &target.GCPTargetOptions{
+			Filename:    imageType.Filename(),
+			Region:      options.Region,
+			Os:          imageType.Arch().Distro().Name(),
+			Bucket:      options.Bucket,
+			Object:      objectName,
+			Credentials: gcpCredentials,
 		}
 	case *vmwareUploadSettings:
 		t.Name = "org.osbuild.vmware"

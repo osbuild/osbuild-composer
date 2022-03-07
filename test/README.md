@@ -220,6 +220,14 @@ it uploads the image to Azure, boots it and tries to ssh into it.
    the *Access control (IAM)* section under the newly created resource group.
    Here, add the new application with the *Developer* role.
 
+### Setting up GCP upload tests
+
+The following environment variables are required
+
+- `GCP_BUCKET`
+- `GCP_REGION`
+- `GOOGLE_APPLICATION_CREDENTIALS`
+
 ### Setting up OpenStack upload tests
 
 The following environment variables are required

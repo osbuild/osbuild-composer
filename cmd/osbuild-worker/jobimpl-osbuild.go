@@ -465,7 +465,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		case *target.GCPTargetOptions:
 			ctx := context.Background()
 
-			g, err := impl.getGCP(nil)
+			g, err := impl.getGCP(options.Credentials)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				return nil

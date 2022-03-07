@@ -6,7 +6,12 @@ type GCPTargetOptions struct {
 	Os                string   `json:"os"` // not exposed in cloudapi for now
 	Bucket            string   `json:"bucket"`
 	Object            string   `json:"object"`
-	ShareWithAccounts []string `json:"shareWithAccounts"`
+	ShareWithAccounts []string `json:"shareWithAccounts,omitempty"`
+
+	// If provided, these credentials are used by the worker to import the image
+	// to GCP. If not provided, the worker will try to authenticate using the
+	// credentials from worker's configuration.
+	Credentials []byte `json:"credentials,omitempty"`
 }
 
 func (GCPTargetOptions) isTargetOptions() {}
