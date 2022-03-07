@@ -425,11 +425,11 @@ func Test_newBlueprintsFromV0(t *testing.T) {
 				},
 			},
 			want: map[string]blueprint.Blueprint{
-				"blueprint-1": blueprint.Blueprint{
+				"blueprint-1": {
 					Name:        "blueprint-1",
 					Description: "First Blueprint in Test",
 					Version:     "0.0.1"},
-				"blueprint-2": blueprint.Blueprint{
+				"blueprint-2": {
 					Name:        "blueprint-2",
 					Description: "Second Blueprint in Test",
 					Version:     "0.0.1"},
@@ -459,11 +459,11 @@ func Test_newBlueprintsV0(t *testing.T) {
 		{
 			name: "Two Blueprints",
 			blueprints: map[string]blueprint.Blueprint{
-				"blueprint-1": blueprint.Blueprint{
+				"blueprint-1": {
 					Name:        "blueprint-1",
 					Description: "First Blueprint in Test",
 					Version:     "0.0.1"},
-				"blueprint-2": blueprint.Blueprint{
+				"blueprint-2": {
 					Name:        "blueprint-2",
 					Description: "Second Blueprint in Test",
 					Version:     "0.0.1"},
@@ -517,11 +517,11 @@ func Test_newWorkspaceFromV0(t *testing.T) {
 				},
 			},
 			want: map[string]blueprint.Blueprint{
-				"blueprint-1": blueprint.Blueprint{
+				"blueprint-1": {
 					Name:        "blueprint-1",
 					Description: "First Blueprint in Test",
 					Version:     "0.0.1"},
-				"blueprint-2": blueprint.Blueprint{
+				"blueprint-2": {
 					Name:        "blueprint-2",
 					Description: "Second Blueprint in Test",
 					Version:     "0.0.1"},
@@ -551,11 +551,11 @@ func Test_newWorkspaceV0(t *testing.T) {
 		{
 			name: "Two Blueprints",
 			blueprints: map[string]blueprint.Blueprint{
-				"blueprint-1": blueprint.Blueprint{
+				"blueprint-1": {
 					Name:        "blueprint-1",
 					Description: "First Blueprint in Test",
 					Version:     "0.0.1"},
-				"blueprint-2": blueprint.Blueprint{
+				"blueprint-2": {
 					Name:        "blueprint-2",
 					Description: "Second Blueprint in Test",
 					Version:     "0.0.1"},
@@ -1264,7 +1264,7 @@ func Test_newComposesV0(t *testing.T) {
 				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
 					Blueprint: &bp,
 					ImageBuilds: []imageBuildV0{
-						imageBuildV0{
+						{
 							ID:        0,
 							ImageType: test_distro.TestImageTypeName,
 							Manifest:  []byte("JSON MANIFEST GOES HERE"),
@@ -1295,7 +1295,7 @@ func Test_newComposesV0(t *testing.T) {
 				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
 					Blueprint: &bp,
 					ImageBuilds: []imageBuildV0{
-						imageBuildV0{
+						{
 							ID:        0,
 							ImageType: test_distro.TestImageTypeName,
 							Manifest:  []byte("JSON MANIFEST GOES HERE"),

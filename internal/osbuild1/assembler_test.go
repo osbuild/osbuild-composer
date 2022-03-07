@@ -55,7 +55,7 @@ func TestAssembler_UnmarshalJSON(t *testing.T) {
 					Size:     2147483648,
 					PTUUID:   "0x14fc63d2",
 					PTType:   "mbr",
-					Partitions: []QEMUPartition{QEMUPartition{
+					Partitions: []QEMUPartition{{
 						Start:    2048,
 						Bootable: true,
 						Filesystem: &QEMUFilesystem{

@@ -64,8 +64,8 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 			fields: fields{
 				Name: "org.osbuild.files",
 				Source: &FilesSource{URLs: map[string]FileSource{
-					"checksum1": FileSource{URL: "url1"},
-					"checksum2": FileSource{URL: "url2"},
+					"checksum1": {URL: "url1"},
+					"checksum2": {URL: "url2"},
 				}},
 			},
 			args: args{

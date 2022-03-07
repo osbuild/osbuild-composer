@@ -19,7 +19,7 @@ func TestCheckAllowed(t *testing.T) {
 	GID := 321
 
 	expectedUsers := []UserCustomization{
-		UserCustomization{
+		{
 			Name:        "John",
 			Description: &Desc,
 			Password:    &Pass,
@@ -80,7 +80,7 @@ func TestGetKernel(t *testing.T) {
 func TestSSHKey(t *testing.T) {
 
 	expectedSSHKeys := []SSHKeyCustomization{
-		SSHKeyCustomization{
+		{
 			User: "test-user",
 			Key:  "test-key",
 		},
@@ -111,7 +111,7 @@ func TestGetUsers(t *testing.T) {
 	GID := 321
 
 	expectedUsers := []UserCustomization{
-		UserCustomization{
+		{
 			Name:        "John",
 			Description: &Desc,
 			Password:    &Pass,
@@ -137,7 +137,7 @@ func TestGetGroups(t *testing.T) {
 
 	GID := 1234
 	expectedGroups := []GroupCustomization{
-		GroupCustomization{
+		{
 			Name: "TestGroup",
 			GID:  &GID,
 		},

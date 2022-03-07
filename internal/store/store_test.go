@@ -44,11 +44,11 @@ type storeTest struct {
 
 //func to initialize some default values before the suite is ran
 func (suite *storeTest) SetupSuite() {
-	suite.myRepoConfig = []rpmmd.RepoConfig{rpmmd.RepoConfig{
+	suite.myRepoConfig = []rpmmd.RepoConfig{{
 		Name:       "testRepo",
 		MirrorList: "testURL",
 	}}
-	suite.myPackageSpec = []rpmmd.PackageSpec{rpmmd.PackageSpec{}}
+	suite.myPackageSpec = []rpmmd.PackageSpec{{}}
 	suite.myDistro = test_distro.New()
 	suite.myArch, _ = suite.myDistro.GetArch(test_distro.TestArchName)
 	suite.myImageType, _ = suite.myArch.GetImageType(test_distro.TestImageTypeName)
@@ -327,7 +327,7 @@ func (suite *storeTest) TestDeleteSourceByID() {
 }
 
 func (suite *storeTest) TestPushSource() {
-	expectedSource := map[string]SourceConfig{"testKey": SourceConfig{Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
+	expectedSource := map[string]SourceConfig{"testKey": {Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
 	suite.myStore.PushSource("testKey", suite.mySourceConfig)
 	suite.Equal(expectedSource, suite.myStore.sources)
 }
@@ -359,7 +359,7 @@ func (suite *storeTest) TestGetSource() {
 func (suite *storeTest) TestGetAllSourcesByName() {
 	suite.myStore.sources = make(map[string]SourceConfig)
 	suite.myStore.sources["testSource"] = suite.mySourceConfig
-	expectedSource := map[string]SourceConfig{"testSourceConfig": SourceConfig{Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
+	expectedSource := map[string]SourceConfig{"testSourceConfig": {Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
 	actualSource := suite.myStore.GetAllSourcesByName()
 	suite.Equal(expectedSource, actualSource)
 }
@@ -367,7 +367,7 @@ func (suite *storeTest) TestGetAllSourcesByName() {
 func (suite *storeTest) TestGetAllSourcesByID() {
 	suite.myStore.sources = make(map[string]SourceConfig)
 	suite.myStore.sources["testSource"] = suite.mySourceConfig
-	expectedSource := map[string]SourceConfig{"testSource": SourceConfig{Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
+	expectedSource := map[string]SourceConfig{"testSource": {Name: "testSourceConfig", Type: "", URL: "", CheckGPG: false, CheckSSL: false, System: false}}
 	actualSource := suite.myStore.GetAllSourcesByID()
 	suite.Equal(expectedSource, actualSource)
 }
