@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eo pipefail
 source /tmp/cloud_init_vars
 
 echo "Deploy cloud credentials for workers."
