@@ -1,4 +1,4 @@
-package fedora33_test
+package fedora_test
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
-	fedora "github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 )
 
 const (

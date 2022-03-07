@@ -1,4 +1,4 @@
-package fedora33
+package fedora
 
 // This file defines package sets that are used by more than one image type.
 

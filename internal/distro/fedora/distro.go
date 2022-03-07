@@ -1,4 +1,4 @@
-package fedora33
+package fedora
 
 import (
 	"encoding/json"
