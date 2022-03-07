@@ -112,15 +112,6 @@ if [ "$ON_JENKINS" = true ]; then
     SKIP_TAGS="rpmrepo"
 fi
 
-# Format: PACKER_IMAGE_USERS="\"000000000000\",\"000000000001\""
-if [ -n "$PACKER_IMAGE_USERS" ]; then
-    cat >> worker-packer.sh <<'EOF'
-cat > /osbuild-composer/templates/packer/share.auto.pkrvars.hcl <<EOF2
-image_users = [$PACKER_IMAGE_USERS]
-EOF2
-EOF
-fi
-
 cat >> worker-packer.sh <<'EOF'
 /usr/bin/packer build /osbuild-composer/templates/packer
 EOF
@@ -140,7 +131,6 @@ $CONTAINER_RUNTIME run --rm \
                    -e AWS_DEFAULT_REGION="us-east-1" \
                    -e COMMIT_SHA="$COMMIT_SHA" \
                    -e ON_JENKINS="$ON_JENKINS" \
-                   -e PACKER_IMAGE_USERS="$PACKER_IMAGE_USERS" \
                    -e RH_ACTIVATION_KEY="$RH_ACTIVATION_KEY" \
                    -e RH_ORG_ID="$RH_ORG_ID" \
                    -e PKR_VAR_aws_access_key="$PACKER_AWS_ACCESS_KEY_ID" \

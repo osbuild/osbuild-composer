@@ -37,9 +37,6 @@ source "amazon-ebs" "image_builder" {
   # Set a name for the resulting AMI.
   ami_name = "${var.image_name}"
 
-  # Share the resulting AMI with accounts
-  ami_users = "${var.image_users}"
-
   # Network configuration for the instance building our image.
   associate_public_ip_address = true
   ssh_interface = "public_ip"
