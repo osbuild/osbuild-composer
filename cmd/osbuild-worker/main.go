@@ -201,7 +201,10 @@ func main() {
 
 	var client *worker.Client
 	if unix {
-		client = worker.NewClientUnix(address, config.BasePath)
+		client = worker.NewClientUnix(worker.ClientConfig{
+			BaseURL:  address,
+			BasePath: config.BasePath,
+		})
 	} else if config.Authentication != nil && config.Authentication.OfflineTokenPath != "" {
 		var conf *tls.Config
 		conConf := &connectionConfig{
@@ -214,21 +217,22 @@ func main() {
 			}
 		}
 
-		var token *string
-		var oAuthURL *string
 		t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
 		if err != nil {
 			logrus.Fatalf("Could not read offline token: %v", err)
 		}
-		t2 := strings.TrimSpace(string(t))
-		token = &t2
-
-		if config.Authentication.OAuthURL == "" {
+		token := strings.TrimSpace(string(t))
+		if token != "" && config.Authentication.OAuthURL == "" {
 			logrus.Fatal("OAuth URL should be specified together with the offline token")
 		}
-		oAuthURL = &config.Authentication.OAuthURL
 
-		client, err = worker.NewClient(fmt.Sprintf("https://%s", address), conf, token, oAuthURL, config.BasePath)
+		client, err = worker.NewClient(worker.ClientConfig{
+			BaseURL:      fmt.Sprintf("https://%s", address),
+			TlsConfig:    conf,
+			OfflineToken: token,
+			OAuthURL:     config.Authentication.OAuthURL,
+			BasePath:     config.BasePath,
+		})
 		if err != nil {
 			logrus.Fatalf("Error creating worker client: %v", err)
 		}
@@ -246,7 +250,11 @@ func main() {
 			}
 		}
 
-		client, err = worker.NewClient(fmt.Sprintf("https://%s", address), conf, nil, nil, config.BasePath)
+		client, err = worker.NewClient(worker.ClientConfig{
+			BaseURL:   fmt.Sprintf("https://%s", address),
+			TlsConfig: conf,
+			BasePath:  config.BasePath,
+		})
 		if err != nil {
 			logrus.Fatalf("Error creating worker client: %v", err)
 		}
