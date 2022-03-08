@@ -391,7 +391,13 @@ func TestOAuth(t *testing.T) {
 	_, err = workerServer.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	client, err := worker.NewClient(proxySrv.URL, nil, &offlineToken, &oauthSrv.URL, "/api/image-builder-worker/v1")
+	client, err := worker.NewClient(worker.ClientConfig{
+		BaseURL:      proxySrv.URL,
+		TlsConfig:    nil,
+		OfflineToken: offlineToken,
+		OAuthURL:     oauthSrv.URL,
+		BasePath:     "/api/image-builder-worker/v1",
+	})
 	require.NoError(t, err)
 	job, err := client.RequestJob([]string{"osbuild"}, arch.Name())
 	require.NoError(t, err)
