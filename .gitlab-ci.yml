@@ -7,6 +7,8 @@ stages:
   - finish
 
 .base:
+  before_script:
+    - schutzbot/ci_details.sh > ci-details
   after_script:
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
@@ -18,6 +20,7 @@ stages:
     paths:
       - journal-log.gpg
       - ci-artifacts
+      - ci-details
       - "*.repo"
       - COMPOSER_NVR
     when: always
