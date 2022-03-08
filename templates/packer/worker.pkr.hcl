@@ -44,7 +44,7 @@ source "amazon-ebs" "image_builder" {
   associate_public_ip_address = true
   ssh_interface = "public_ip"
   ssh_username = "ec2-user"
-  instance_type = "c5.large"
+  instance_type = "c6a.large"
 }
 
 build {
