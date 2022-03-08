@@ -90,6 +90,7 @@ EOF
 sudo tee "/etc/osbuild-worker/osbuild-worker.toml" >/dev/null <<EOF
 [authentication]
 oauth_url = "http://localhost:8081/token"
+client_id = "rhsm-api"
 offline_token = "/etc/osbuild-worker/token"
 
 [koji.localhost.kerberos]
