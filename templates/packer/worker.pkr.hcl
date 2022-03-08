@@ -32,6 +32,9 @@ source "amazon-ebs" "image_builder" {
     Name = "${var.image_name}"
     composer_commit = "${var.composer_commit}"
     osbuild_commit = "${var.osbuild_commit}"
+    os = "rhel"
+    os_version = "8"
+    arch = "x86_64"
   }
 
   # Set a name for the resulting AMI.
