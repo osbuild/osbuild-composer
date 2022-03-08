@@ -137,6 +137,7 @@ func main() {
 		} `toml:"azure"`
 		AWS *struct {
 			Credentials string `toml:"credentials"`
+			Bucket      string `toml:"bucket"`
 		} `toml:"aws"`
 		Authentication *struct {
 			OAuthURL         string `toml:"oauth_url"`

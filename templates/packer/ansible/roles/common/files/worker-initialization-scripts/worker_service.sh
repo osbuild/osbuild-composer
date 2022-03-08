@@ -14,7 +14,8 @@ credentials = "/etc/osbuild-worker/gcp_credentials.json"
 [azure]
 credentials = "/etc/osbuild-worker/azure_credentials.toml"
 [aws]
-credentials = "/etc/osbuild-worker/aws_credentials.toml"
+credentials = "${WORKER_CONFIG_AWS_CREDENTIALS:-}"
+bucket = "${WORKER_CONFIG_AWS_BUCKET:-}"
 EOF
 
 # Prepare osbuild-composer's remote worker services and sockets.
