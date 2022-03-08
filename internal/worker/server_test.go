@@ -342,7 +342,13 @@ func TestOAuth(t *testing.T) {
 	defer workSrv.Close()
 
 	/* Check that the worker supplies the access token  */
+	calls := 0
 	proxySrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if calls == 0 {
+			require.Equal(t, "Bearer", r.Header.Get("Authorization"))
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		require.Equal(t, "Bearer accessToken!", r.Header.Get("Authorization"))
 		handler.ServeHTTP(w, r)
 	}))
@@ -351,6 +357,7 @@ func TestOAuth(t *testing.T) {
 	offlineToken := "someOfflineToken"
 	/* Start oauth srv supplying the bearer token */
 	oauthSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls += 1
 		require.Equal(t, "POST", r.Method)
 		err = r.ParseForm()
 		require.NoError(t, err)
@@ -360,11 +367,9 @@ func TestOAuth(t *testing.T) {
 		require.Equal(t, offlineToken, r.FormValue("refresh_token"))
 
 		bt := struct {
-			AccessToken     string `json:"access_token"`
-			ValidForSeconds int    `json:"expires_in"`
+			AccessToken string `json:"access_token"`
 		}{
 			"accessToken!",
-			900,
 		}
 
 		w.WriteHeader(http.StatusOK)
