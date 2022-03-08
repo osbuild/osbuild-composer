@@ -31,11 +31,11 @@ jobs:
       - name: Install kerberos devel package
         run: sudo apt-get install -y libkrb5-dev
 
-      - name: Run unit tests
-        run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
+      # - name: Run unit tests
+      #   run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
 
-      - name: Send coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
+      # - name: Send coverage to codecov.io
+      #   run: bash <(curl -s https://codecov.io/bash)
 
   python-lint:
     name: "🐍 Lint (dnf-json)"
@@ -47,92 +47,92 @@ jobs:
     - name: Install dependencies
       run: |
         dnf -y install python3-pylint
-    - name: Analysing the code with pylint
-      run: |
-        python3 -m pylint dnf-json
+    # - name: Analysing the code with pylint
+    #   run: |
+    #     python3 -m pylint dnf-json
 
-  unit-tests:
-    name: "🛃 Unit tests"
-    runs-on: ubuntu-20.04
-    steps:
+  # unit-tests:
+  #   name: "🛃 Unit tests"
+  #   runs-on: ubuntu-20.04
+  #   steps:
 
-      - name: Set up Go 1.16
-        uses: actions/setup-go@v2.1.5
-        with:
-          go-version: 1.16
-        id: go
+  #     - name: Set up Go 1.16
+  #       uses: actions/setup-go@v2.1.5
+  #       with:
+  #         go-version: 1.16
+  #       id: go
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2.4.0
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Install golangci-lint
-        run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.30.0
+  #     - name: Install golangci-lint
+  #       run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.30.0
 
-        # This is needed to lint internal/upload/koji package
-      - name: Install kerberos devel package
-        run: sudo apt-get install -y libkrb5-dev
+  #       # This is needed to lint internal/upload/koji package
+  #     - name: Install kerberos devel package
+  #       run: sudo apt-get install -y libkrb5-dev
 
-      - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --timeout 5m0s
+  #     - name: Run golangci-lint
+  #       run: $(go env GOPATH)/bin/golangci-lint run --timeout 5m0s
 
-  prepare:
-    name: "🔍 Check source preparation"
-    runs-on: ubuntu-20.04
-    steps:
+  # prepare:
+  #   name: "🔍 Check source preparation"
+  #   runs-on: ubuntu-20.04
+  #   steps:
 
-      - name: Set up Go 1.16
-        uses: actions/setup-go@v2.1.5
-        with:
-          go-version: 1.16
-        id: go
+  #     - name: Set up Go 1.16
+  #       uses: actions/setup-go@v2.1.5
+  #       with:
+  #         go-version: 1.16
+  #       id: go
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+  #     - name: Check out code into the Go module directory
+  #       uses: actions/checkout@v2.4.0
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Check that source has been prepared
-        run: |
-          ./tools/prepare-source.sh
-          if [ -n "$(git status --porcelain)" ]; then
-            echo
-            echo "Please include these changes in your branch: "
-            git status -vv
-            exit "1"
-          else
-            exit "0"
-          fi
+  #     - name: Check that source has been prepared
+  #       run: |
+  #         ./tools/prepare-source.sh
+  #         if [ -n "$(git status --porcelain)" ]; then
+  #           echo
+  #           echo "Please include these changes in your branch: "
+  #           git status -vv
+  #           exit "1"
+  #         else
+  #           exit "0"
+  #         fi
 
-  shellcheck:
-    name: "🐚 Shellcheck"
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v2.4.0
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-    - name: Run ShellCheck
-      uses: ludeeus/action-shellcheck@1.1.0
-      with:
-        ignore: vendor # We don't want to fix the code in vendored dependencies
-      env:
-        SHELLCHECK_OPTS: -e SC1091 -e SC2002 # don't check /etc/os-release sourcing and allow useless cats to live inside our codebase
+  # shellcheck:
+  #   name: "🐚 Shellcheck"
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #   - uses: actions/checkout@v2.4.0
+  #     with:
+  #       ref: ${{ github.event.pull_request.head.sha }}
+  #   - name: Run ShellCheck
+  #     uses: ludeeus/action-shellcheck@1.1.0
+  #     with:
+  #       ignore: vendor # We don't want to fix the code in vendored dependencies
+  #     env:
+  #       SHELLCHECK_OPTS: -e SC1091 -e SC2002 # don't check /etc/os-release sourcing and allow useless cats to live inside our codebase
 
-  rpmlint:
-    name: "📦 RPMlint"
-    runs-on: ubuntu-20.04
-    container: registry.fedoraproject.org/fedora:35
-    steps:
-      - name: Install dependencies
-        run: sudo dnf install -y rpmlint rpm-build make git-core
+  # rpmlint:
+  #   name: "📦 RPMlint"
+  #   runs-on: ubuntu-20.04
+  #   container: registry.fedoraproject.org/fedora:35
+  #   steps:
+  #     - name: Install dependencies
+  #       run: sudo dnf install -y rpmlint rpm-build make git-core
 
-      - uses: actions/checkout@v2.4.0
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
+  #     - uses: actions/checkout@v2.4.0
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Create SRPM
-        run: make srpm
+  #     - name: Create SRPM
+  #       run: make srpm
 
-      - name: Run rpmlint
-        run: rpmlint rpmbuild/SRPMS/*
+  #     - name: Run rpmlint
+  #       run: rpmlint rpmbuild/SRPMS/*
