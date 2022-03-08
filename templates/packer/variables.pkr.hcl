@@ -9,9 +9,6 @@ variable "region" {
   default = "us-east-1"
 }
 
-# Base image
-variable "ami_id" { type = string }
-
 # Automatically set by environment variables in GitHub Actions.
 variable "composer_commit" { type = string }
 variable "osbuild_commit" { type = string }

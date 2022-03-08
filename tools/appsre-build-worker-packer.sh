@@ -6,7 +6,6 @@ set -exv
 COMMIT_SHA=$(git rev-parse HEAD)
 COMMIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 ON_JENKINS=true
-AMI_ID=ami-06f1e6f8b3457ae7c
 
 # Use gitlab CI variables if available
 if [ -n "$CI_COMMIT_SHA" ]; then
@@ -51,6 +50,7 @@ set -exv
 EOF
 chmod +x worker-packer.sh
 
+# warning: this is RHEL 8 x86_64 specific!
 function ec2_rpm_build {
     cat >> worker-packer.sh <<'EOF'
 function cleanup {
@@ -72,7 +72,8 @@ mkdir -p "$RPMBUILD_DIR"
 
 aws ec2 create-key-pair --key-name "$KEY_NAME" --query 'KeyMaterial' --output text > /osbuild-composer/keypair.pem
 chmod 600 /osbuild-composer/keypair.pem
-aws ec2 run-instances --image-id "$PKR_VAR_ami_id" --instance-type c5.large --key-name "$KEY_NAME" \
+# rhel 8.5 AMI
+aws ec2 run-instances --image-id ami-06f1e6f8b3457ae7c --instance-type c5.large --key-name "$KEY_NAME" \
     --tag-specifications "ResourceType=instance,Tags=[{Key=commit,Value=$COMMIT_SHA},{Key=name,Value=rpm-builder-$COMMIT_SHA}]" \
     > ./rpminstance.json
 AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "rpminstance.json")
@@ -144,7 +145,6 @@ $CONTAINER_RUNTIME run --rm \
                    -e RH_ACTIVATION_KEY="$RH_ACTIVATION_KEY" \
                    -e RH_ORG_ID="$RH_ORG_ID" \
                    -e PKR_VAR_aws_access_key="$PACKER_AWS_ACCESS_KEY_ID" \
-                   -e PKR_VAR_ami_id="$AMI_ID" \
                    -e PKR_VAR_aws_secret_key="$PACKER_AWS_SECRET_ACCESS_KEY" \
                    -e PKR_VAR_image_name="osbuild-composer-worker-$COMMIT_BRANCH-$COMMIT_SHA" \
                    -e PKR_VAR_composer_commit="$COMMIT_SHA" \
