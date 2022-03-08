@@ -52,7 +52,7 @@ build {
 
   provisioner "ansible" {
     playbook_file = "${path.root}/ansible/playbook.yml"
-    user = "ec2-user"
+    user = build.User
     extra_arguments = [
       "-e", "COMPOSER_COMMIT=${var.composer_commit}",
       "-e", "OSBUILD_COMMIT=${var.osbuild_commit}",
