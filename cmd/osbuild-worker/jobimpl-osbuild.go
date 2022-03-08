@@ -36,6 +36,7 @@ type OSBuildJobImpl struct {
 	GCPCreds    []byte
 	AzureCreds  *azure.Credentials
 	AWSCreds    string
+	AWSBucket   string
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -268,13 +269,17 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				key = uuid.New().String()
 			}
 
-			_, err = a.Upload(path.Join(outputDirectory, exportPath, options.Filename), options.Bucket, key)
+			bucket := options.Bucket
+			if impl.AWSBucket != "" {
+				bucket = impl.AWSBucket
+			}
+			_, err = a.Upload(path.Join(outputDirectory, exportPath, options.Filename), bucket, key)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				return nil
 			}
 
-			ami, err := a.Register(args.Targets[0].ImageName, options.Bucket, key, options.ShareWithAccounts, common.CurrentArch())
+			ami, err := a.Register(args.Targets[0].ImageName, bucket, key, options.ShareWithAccounts, common.CurrentArch())
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, err.Error())
 				return nil
@@ -305,12 +310,16 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			key += "-" + options.Filename
 
-			_, err = a.Upload(path.Join(outputDirectory, exportPath, options.Filename), options.Bucket, key)
+			bucket := options.Bucket
+			if impl.AWSBucket != "" {
+				bucket = impl.AWSBucket
+			}
+			_, err = a.Upload(path.Join(outputDirectory, exportPath, options.Filename), bucket, key)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				return nil
 			}
-			url, err := a.S3ObjectPresignedURL(options.Bucket, key)
+			url, err := a.S3ObjectPresignedURL(bucket, key)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				return nil
