@@ -142,6 +142,8 @@ func main() {
 		Authentication *struct {
 			OAuthURL         string `toml:"oauth_url"`
 			OfflineTokenPath string `toml:"offline_token"`
+			ClientId         string `toml:"client_id"`
+			ClientSecret     string `toml:"client_secret"`
 		} `toml:"authentication"`
 		RelaxTimeoutFactor uint   `toml:"RelaxTimeoutFactor"`
 		BasePath           string `toml:"base_path"`
@@ -205,7 +207,7 @@ func main() {
 			BaseURL:  address,
 			BasePath: config.BasePath,
 		})
-	} else if config.Authentication != nil && config.Authentication.OfflineTokenPath != "" {
+	} else if config.Authentication != nil {
 		var conf *tls.Config
 		conConf := &connectionConfig{
 			CACertFile: "/etc/osbuild-composer/ca-crt.pem",
@@ -217,13 +219,13 @@ func main() {
 			}
 		}
 
-		t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
-		if err != nil {
-			logrus.Fatalf("Could not read offline token: %v", err)
-		}
-		token := strings.TrimSpace(string(t))
-		if token != "" && config.Authentication.OAuthURL == "" {
-			logrus.Fatal("OAuth URL should be specified together with the offline token")
+		token := ""
+		if config.Authentication.OfflineTokenPath != "" {
+			t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
+			if err != nil {
+				logrus.Fatalf("Could not read offline token: %v", err)
+			}
+			token = strings.TrimSpace(string(t))
 		}
 
 		client, err = worker.NewClient(worker.ClientConfig{
@@ -231,6 +233,8 @@ func main() {
 			TlsConfig:    conf,
 			OfflineToken: token,
 			OAuthURL:     config.Authentication.OAuthURL,
+			ClientId:     config.Authentication.ClientId,
+			ClientSecret: config.Authentication.ClientSecret,
 			BasePath:     config.BasePath,
 		})
 		if err != nil {

@@ -24,6 +24,8 @@ type Client struct {
 	offlineToken string
 	oAuthURL     string
 	accessToken  string
+	clientId     string
+	clientSecret string
 
 	tokenMu sync.RWMutex
 }
@@ -33,6 +35,8 @@ type ClientConfig struct {
 	TlsConfig    *tls.Config
 	OfflineToken string
 	OAuthURL     string
+	ClientId     string
+	ClientSecret string
 	BasePath     string
 }
 
@@ -118,19 +122,29 @@ func NewClientUnix(conf ClientConfig) *Client {
 	}
 }
 
-// Note: Only call this function with Client.tokenMu locked!
 func (c *Client) refreshAccessToken() error {
 	c.tokenMu.Lock()
 	defer c.tokenMu.Unlock()
 
-	if c.offlineToken == "" || c.oAuthURL == "" {
-		return fmt.Errorf("No offline token or oauth url available")
+	if c.oAuthURL == "" {
+		return fmt.Errorf("No oauth /token url available")
+	}
+
+	if c.offlineToken == "" && (c.clientId == "" || c.clientSecret == "") {
+		return fmt.Errorf("No offline token or client secret available")
 	}
 
 	data := url.Values{}
-	data.Set("grant_type", "refresh_token")
-	data.Set("client_id", "rhsm-api")
-	data.Set("refresh_token", c.offlineToken)
+	if c.offlineToken != "" || c.oAuthURL != "" {
+		data.Set("grant_type", "refresh_token")
+		data.Set("client_id", "rhsm-api")
+		data.Set("refresh_token", c.offlineToken)
+	}
+	if c.clientId != "" || c.clientSecret != "" {
+		data.Set("grant_type", "client_credentials")
+		data.Set("client_id", c.clientId)
+		data.Set("client_secret", c.clientSecret)
+	}
 
 	resp, err := http.PostForm(c.oAuthURL, data)
 	if err != nil {
@@ -159,7 +173,6 @@ func (c *Client) NewRequest(method, url string, headers map[string]string, body 
 		return nil, err
 	}
 
-	// If we're using OAUTH, add the Bearer token
 	if c.offlineToken != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token()))
 	}
