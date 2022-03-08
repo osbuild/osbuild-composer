@@ -27,12 +27,20 @@ type bearerToken struct {
 type Client struct {
 	server           *url.URL
 	requester        *http.Client
-	offlineToken     *string
-	oAuthURL         *string
+	offlineToken     string
+	oAuthURL         string
 	lastTokenRefresh *time.Time
 	bearerToken      *bearerToken
 
 	tokenMu *sync.Mutex
+}
+
+type ClientConfig struct {
+	BaseURL      string
+	TlsConfig    *tls.Config
+	OfflineToken string
+	OAuthURL     string
+	BasePath     string
 }
 
 type Job interface {
@@ -58,13 +66,13 @@ type job struct {
 	dynamicArgs      []json.RawMessage
 }
 
-func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string, basePath string) (*Client, error) {
-	server, err := url.Parse(baseURL)
+func NewClient(conf ClientConfig) (*Client, error) {
+	server, err := url.Parse(conf.BaseURL)
 	if err != nil {
 		return nil, err
 	}
 
-	api.BasePath = basePath
+	api.BasePath = conf.BasePath
 
 	server, err = server.Parse(api.BasePath + "/")
 	if err != nil {
@@ -73,21 +81,27 @@ func NewClient(baseURL string, conf *tls.Config, offlineToken, oAuthURL *string,
 
 	requester := &http.Client{}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	if conf != nil {
-		transport.TLSClientConfig = conf
+	if conf.TlsConfig != nil {
+		transport.TLSClientConfig = conf.TlsConfig
 	}
 	requester.Transport = transport
 
-	return &Client{server, requester, offlineToken, oAuthURL, nil, nil, &sync.Mutex{}}, nil
+	return &Client{
+		server:       server,
+		requester:    requester,
+		offlineToken: conf.OfflineToken,
+		oAuthURL:     conf.OAuthURL,
+		tokenMu:      &sync.Mutex{},
+	}, nil
 }
 
-func NewClientUnix(path string, basePath string) *Client {
+func NewClientUnix(conf ClientConfig) *Client {
 	server, err := url.Parse("http://localhost/")
 	if err != nil {
 		panic(err)
 	}
 
-	api.BasePath = basePath
+	api.BasePath = conf.BasePath
 
 	server, err = server.Parse(api.BasePath + "/")
 	if err != nil {
@@ -97,27 +111,30 @@ func NewClientUnix(path string, basePath string) *Client {
 	requester := &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(context context.Context, network, addr string) (net.Conn, error) {
-				return net.Dial("unix", path)
+				return net.Dial("unix", conf.BaseURL)
 			},
 		},
 	}
 
-	return &Client{server, requester, nil, nil, nil, nil, nil}
+	return &Client{
+		server:    server,
+		requester: requester,
+	}
 }
 
 // Note: Only call this function with Client.tokenMu locked!
 func (c *Client) refreshBearerToken() error {
-	if c.offlineToken == nil || c.oAuthURL == nil {
+	if c.offlineToken == "" || c.oAuthURL == "" {
 		return fmt.Errorf("No offline token or oauth url available")
 	}
 
 	data := url.Values{}
 	data.Set("grant_type", "refresh_token")
 	data.Set("client_id", "rhsm-api")
-	data.Set("refresh_token", *c.offlineToken)
+	data.Set("refresh_token", c.offlineToken)
 
 	t := time.Now()
-	resp, err := http.PostForm(*c.oAuthURL, data)
+	resp, err := http.PostForm(c.oAuthURL, data)
 	if err != nil {
 		return err
 	}
@@ -140,7 +157,7 @@ func (c *Client) NewRequest(method, url string, body io.Reader) (*http.Request, 
 	}
 
 	// If we're using OAUTH, add the Bearer token
-	if c.offlineToken != nil {
+	if c.offlineToken != "" {
 		// make sure we have a valid token
 		var d time.Duration
 		c.tokenMu.Lock()
