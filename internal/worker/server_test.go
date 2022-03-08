@@ -399,6 +399,7 @@ func TestOAuth(t *testing.T) {
 	client, err := worker.NewClient(worker.ClientConfig{
 		BaseURL:      proxySrv.URL,
 		TlsConfig:    nil,
+		ClientId:     "rhsm-api",
 		OfflineToken: offlineToken,
 		OAuthURL:     oauthSrv.URL,
 		BasePath:     "/api/image-builder-worker/v1",
