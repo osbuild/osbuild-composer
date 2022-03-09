@@ -48,6 +48,7 @@ type API struct {
 
 	rpmmd        rpmmd.RPMMD
 	arch         distro.Arch
+	archName     string
 	repoRegistry *reporegistry.RepoRegistry
 
 	logger *log.Logger
@@ -131,6 +132,7 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
 		workers:                  workers,
 		rpmmd:                    rpm,
 		arch:                     arch,
+		archName:                 arch.Name(),
 		repoRegistry:             rr,
 		logger:                   logger,
 		compatOutputDir:          compatOutputDir,
@@ -150,29 +152,34 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistr
 
 	hostDistroName, _, _, err := distro.GetHostDistroName()
 	if err != nil {
-		return nil, fmt.Errorf("host distro is not supported")
+		return nil, fmt.Errorf("failed to read host distro information")
 	}
 	archName := common.CurrentArch()
-
-	hostDistro := dr.GetDistro(hostDistroName)
-	if hostDistro == nil {
-		return nil, fmt.Errorf("host distro is not supported")
-	}
-
-	hostArch, err := hostDistro.GetArch(archName)
-	if err != nil {
-		return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
-	}
 
 	rr, err := reporegistry.New(repoPaths)
 	if err != nil {
 		return nil, fmt.Errorf("error loading repository definitions: %v", err)
 	}
 
-	// Check if repositories for the host distro and arch were loaded
-	_, err = rr.ReposByArch(hostArch, false)
-	if err != nil {
-		return nil, fmt.Errorf("loaded repository definitions don't contain any for the host distro/arch: %v", err)
+	var hostArch distro.Arch
+	hostDistro := dr.GetDistro(hostDistroName)
+	if hostDistro != nil {
+		// get canonical distro name if the host distro is supported
+		hostDistroName = hostDistro.Name()
+
+		hostArch, err = hostDistro.GetArch(archName)
+		if err != nil {
+			return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
+		}
+
+		// Check if repositories for the host distro and arch were loaded
+		_, err = rr.ReposByArchName(hostDistroName, archName, false)
+		if err != nil {
+			log.Printf("loaded repository definitions don't contain any for the host distro/arch: %v", err)
+		}
+
+	} else {
+		log.Printf("host distro %q is not supported: only cross-distro builds are available", hostDistroName)
 	}
 
 	store := store.New(&stateDir, hostArch, logger)
@@ -183,12 +190,13 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistr
 		workers:                  workers,
 		rpmmd:                    rpm,
 		arch:                     hostArch,
+		archName:                 archName,
 		repoRegistry:             rr,
 		logger:                   logger,
 		compatOutputDir:          compatOutputDir,
-		hostDistroName:           hostDistro.Name(),
+		hostDistroName:           hostDistroName,
 		distroRegistry:           dr,
-		distros:                  validDistros(rr, dr, hostArch.Name(), logger),
+		distros:                  validDistros(rr, dr, archName, logger),
 		distrosImageTypeDenylist: distrosImageTypeDenylist,
 	}
 	return setupRouter(api), nil
