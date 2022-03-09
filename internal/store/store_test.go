@@ -1,8 +1,6 @@
 package store
 
 import (
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -112,18 +110,11 @@ func (suite *storeTest) SetupSuite() {
 
 //setup before each test
 func (suite *storeTest) SetupTest() {
-	tmpDir, err := ioutil.TempDir("/tmp", "osbuild-composer-test-")
-	suite.NoError(err)
 	distro := test_distro.New()
 	arch, err := distro.GetArch(test_distro.TestArchName)
 	suite.NoError(err)
-	suite.dir = tmpDir
+	suite.dir = suite.T().TempDir()
 	suite.myStore = New(&suite.dir, arch, nil)
-}
-
-//teardown after each test
-func (suite *storeTest) TearDownTest() {
-	os.RemoveAll(suite.dir)
 }
 
 func (suite *storeTest) TestRandomSHA1String() {

@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -28,10 +26,7 @@ type jobResult struct {
 }
 
 func TestKojiCompose(t *testing.T) {
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
-	kojiServer, workerServer, _, cancel := newV2Server(t, dir, []string{""}, false)
+	kojiServer, workerServer, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
 	handler := kojiServer.Handler("/api/image-builder-composer/v2")
 	workerHandler := workerServer.Handler()
 	defer cancel()
@@ -461,10 +456,7 @@ func TestKojiCompose(t *testing.T) {
 }
 
 func TestKojiRequest(t *testing.T) {
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
-	server, _, _, cancel := newV2Server(t, dir, []string{""}, false)
+	server, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
 	handler := server.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
@@ -476,7 +468,7 @@ func TestKojiRequest(t *testing.T) {
 	resp := rec.Result()
 
 	var status api.Status
-	err = json.NewDecoder(resp.Body).Decode(&status)
+	err := json.NewDecoder(resp.Body).Decode(&status)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusNotFound, resp.StatusCode)
 
@@ -493,10 +485,7 @@ func TestKojiRequest(t *testing.T) {
 }
 
 func TestKojiJobTypeValidation(t *testing.T) {
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
-	server, workers, _, cancel := newV2Server(t, dir, []string{""}, false)
+	server, workers, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
 	handler := server.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 

@@ -3,7 +3,6 @@ package weldr
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -22,11 +21,7 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 
 	distroStruct := test_distro.New()
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
@@ -68,11 +63,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 
 	distroStruct := test_distro.New()
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)

@@ -5,9 +5,7 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
-	"os"
 	"path"
 	"testing"
 
@@ -63,9 +61,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 			t.Parallel()
 
 			// Set up temporary directory for rpm/dnf cache
-			dir, err := ioutil.TempDir("/tmp", "rpmmd-test-")
-			require.Nilf(t, err, "Failed to create tmp dir for depsolve test: %v", err)
-			defer os.RemoveAll(dir)
+			dir := t.TempDir()
 
 			// use a fullpath to dnf-json, this allows this test to have an arbitrary
 			// working directory

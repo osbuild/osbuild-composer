@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -191,13 +189,9 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerHandler http.Handler, orgI
 // that all jobs are assigned to the correct channel, therefore we need also
 // this test.
 func TestMultitenancy(t *testing.T) {
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
-
 	// Passing an empty list as depsolving channels, we want to do depsolves
 	// ourselvess
-	apiServer, workerServer, q, cancel := newV2Server(t, dir, []string{}, true)
+	apiServer, workerServer, q, cancel := newV2Server(t, t.TempDir(), []string{}, true)
 	handler := apiServer.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
