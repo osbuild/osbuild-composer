@@ -277,21 +277,9 @@ func TestReposByArch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := rr.ReposByArch(tt.args.arch, tt.args.taggedRepos)
+			got, err := rr.ReposByArchName(tt.args.arch.Distro().Name(), tt.args.arch.Name(), tt.args.taggedRepos)
 			assert.Nil(t, err)
-
-			var gotNames []string
-			for _, r := range got {
-				gotNames = append(gotNames, r.Name)
-			}
-
-			if !reflect.DeepEqual(gotNames, tt.want) {
-				t.Errorf("ReposByArch() =\n got: %#v\n want: %#v", gotNames, tt.want)
-			}
-
-			got, err = rr.ReposByArchName(tt.args.arch.Distro().Name(), tt.args.arch.Name(), tt.args.taggedRepos)
-			assert.Nil(t, err)
-			gotNames = []string{}
+			gotNames := []string{}
 			for _, r := range got {
 				gotNames = append(gotNames, r.Name)
 			}
@@ -309,12 +297,13 @@ func TestInvalidReposByArch(t *testing.T) {
 	rr := getTestingRepoRegistry()
 
 	ta := test_distro.TestArch{}
+	td := test_distro.TestDistro{}
 
-	repos, err := rr.ReposByArch(&ta, false)
+	repos, err := rr.ReposByArchName(td.Name(), ta.Name(), false)
 	assert.Nil(t, repos)
 	assert.NotNil(t, err)
 
-	repos, err = rr.ReposByArch(&ta, true)
+	repos, err = rr.ReposByArchName(td.Name(), ta.Name(), false)
 	assert.Nil(t, repos)
 	assert.NotNil(t, err)
 }
