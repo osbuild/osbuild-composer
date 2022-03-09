@@ -17,11 +17,6 @@ type document struct {
 	CanSwim bool   `json:"can-swim"`
 }
 
-func cleanupTempDir(t *testing.T, dir string) {
-	err := os.RemoveAll(dir)
-	require.NoError(t, err)
-}
-
 // If the passed directory is not readable (writable), we should notice on the
 // first read (write).
 func TestDegenerate(t *testing.T) {
@@ -42,14 +37,12 @@ func TestDegenerate(t *testing.T) {
 	})
 
 	t.Run("invalid-json", func(t *testing.T) {
-		dir, err := ioutil.TempDir("", "jsondb-test-")
-		require.NoError(t, err)
-		defer cleanupTempDir(t, dir)
+		dir := t.TempDir()
 
 		db := jsondb.New(dir, 0755)
 
 		// write-only file
-		err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0600)
+		err := ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0600)
 		require.NoError(t, err)
 
 		var d document
@@ -59,11 +52,9 @@ func TestDegenerate(t *testing.T) {
 }
 
 func TestCorrupt(t *testing.T) {
-	dir, err := ioutil.TempDir("", "jsondb-test-")
-	require.NoError(t, err)
-	defer cleanupTempDir(t, dir)
+	dir := t.TempDir()
 
-	err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0600)
+	err := ioutil.WriteFile(path.Join(dir, "one.json"), []byte("{"), 0600)
 	require.NoError(t, err)
 
 	db := jsondb.New(dir, 0755)
@@ -73,11 +64,9 @@ func TestCorrupt(t *testing.T) {
 }
 
 func TestRead(t *testing.T) {
-	dir, err := ioutil.TempDir("", "jsondb-test-")
-	require.NoError(t, err)
-	defer cleanupTempDir(t, dir)
+	dir := t.TempDir()
 
-	err = ioutil.WriteFile(path.Join(dir, "one.json"), []byte("true"), 0600)
+	err := ioutil.WriteFile(path.Join(dir, "one.json"), []byte("true"), 0600)
 	require.NoError(t, err)
 
 	db := jsondb.New(dir, 0755)
@@ -106,9 +95,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestMultiple(t *testing.T) {
-	dir, err := ioutil.TempDir("", "jsondb-test-")
-	require.NoError(t, err)
-	defer cleanupTempDir(t, dir)
+	dir := t.TempDir()
 
 	perm := os.FileMode(0600)
 	documents := map[string]document{
@@ -120,7 +107,7 @@ func TestMultiple(t *testing.T) {
 	db := jsondb.New(dir, perm)
 
 	for name, doc := range documents {
-		err = db.Write(name, doc)
+		err := db.Write(name, doc)
 		require.NoError(t, err)
 	}
 	names, err := db.List()

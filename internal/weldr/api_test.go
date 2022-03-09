@@ -125,11 +125,7 @@ func TestBasic(t *testing.T) {
 		{"/api/v1/compose/types?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	for _, c := range cases {
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
@@ -153,9 +149,7 @@ func TestBlueprintsNew(t *testing.T) {
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","distro":"fedora-1","packages":[],"version":""}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"'fedora-1' is not a valid distribution"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -164,10 +158,6 @@ func TestBlueprintsNew(t *testing.T) {
 }
 
 func TestBlueprintsNewToml(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	blueprint := `
 name = "test"
 description = "Test"
@@ -181,7 +171,7 @@ version = "2.4.*"`
 	req.Header.Set("Content-Type", "text/x-toml")
 	recorder := httptest.NewRecorder()
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
@@ -189,15 +179,11 @@ version = "2.4.*"`
 }
 
 func TestBlueprintsEmptyToml(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	req := httptest.NewRequest("POST", "/api/v0/blueprints/new", bytes.NewReader(nil))
 	req.Header.Set("Content-Type", "text/x-toml")
 	recorder := httptest.NewRecorder()
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
@@ -205,10 +191,6 @@ func TestBlueprintsEmptyToml(t *testing.T) {
 }
 
 func TestBlueprintsInvalidToml(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	blueprint := `
 name = "test"
 description = "Test"
@@ -222,7 +204,7 @@ version = "2.4.*"`
 	req.Header.Set("Content-Type", "text/x-toml")
 	recorder := httptest.NewRecorder()
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
@@ -242,9 +224,7 @@ func TestBlueprintsWorkspaceJSON(t *testing.T) {
 		{"POST", "/api/v0/blueprints/workspace", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"Missing blueprint"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -253,10 +233,6 @@ func TestBlueprintsWorkspaceJSON(t *testing.T) {
 }
 
 func TestBlueprintsWorkspaceTOML(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	blueprint := `
 name = "test"
 description = "Test"
@@ -270,7 +246,7 @@ version = "2.4.*"`
 	req.Header.Set("Content-Type", "text/x-toml")
 	recorder := httptest.NewRecorder()
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
@@ -278,15 +254,11 @@ version = "2.4.*"`
 }
 
 func TestBlueprintsWorkspaceEmptyTOML(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	req := httptest.NewRequest("POST", "/api/v0/blueprints/workspace", bytes.NewReader(nil))
 	req.Header.Set("Content-Type", "text/x-toml")
 	recorder := httptest.NewRecorder()
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
@@ -294,10 +266,6 @@ func TestBlueprintsWorkspaceEmptyTOML(t *testing.T) {
 }
 
 func TestBlueprintsWorkspaceInvalidTOML(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	blueprint := `
 name = "test"
 description = "Test"
@@ -311,7 +279,7 @@ version = "2.4.*"`
 	req.Header.Set("Content-Type", "text/x-toml")
 	recorder := httptest.NewRecorder()
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
@@ -333,9 +301,7 @@ func TestBlueprintsInfo(t *testing.T) {
 		{"GET", "/api/v0/blueprints/info/test3-non", ``, http.StatusOK, `{"blueprints":[],"changes":[],"errors":[{"id":"UnknownBlueprint","msg":"test3-non: "}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -349,11 +315,7 @@ func TestBlueprintsInfo(t *testing.T) {
 }
 
 func TestBlueprintsInfoToml(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"test1","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.0"}`)
 
 	req := httptest.NewRequest("GET", "/api/v0/blueprints/info/test1?format=toml", nil)
@@ -364,7 +326,7 @@ func TestBlueprintsInfoToml(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var got blueprint.Blueprint
-	_, err = toml.DecodeReader(resp.Body, &got)
+	_, err := toml.DecodeReader(resp.Body, &got)
 	require.NoErrorf(t, err, "error decoding toml file")
 
 	expected := blueprint.Blueprint{
@@ -384,11 +346,7 @@ func TestBlueprintsInfoToml(t *testing.T) {
 }
 
 func TestNonExistentBlueprintsInfoToml(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	req := httptest.NewRequest("GET", "/api/v0/blueprints/info/test3-non?format=toml", nil)
 	recorder := httptest.NewRecorder()
 	api.ServeHTTP(recorder, req)
@@ -453,9 +411,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test,test2", http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","distro":"","version":"0.0.1","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"},{"name":"dep-package3","version":"7:3.0.3-1.fc30.x86_64"}],"modules":[{"name":"dep-package2","version":"2.9-1.fc30.x86_64"}],"groups":[]}},{"blueprint":{"name":"test2","description":"Test","distro":"","version":"0.0.0","packages":[{"name":"dep-package1","version":"1.33-2.fc30.x86_64"},{"name":"dep-package3","version":"7:3.0.3-1.fc30.x86_64"}],"modules":[{"name":"dep-package2","version":"2.9-1.fc30.x86_64"}],"groups":[]}}],"errors":[]}`},
 		}
 
-		tempdir, err := ioutil.TempDir("", "weldr-tests-")
-		require.NoError(t, err)
-		defer os.RemoveAll(tempdir)
+		tempdir := t.TempDir()
 
 		for _, c := range cases {
 			api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -476,9 +432,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/missing?format=toml", http.StatusOK, ""},
 		}
 
-		tempdir, err := ioutil.TempDir("", "weldr-tests-")
-		require.NoError(t, err)
-		defer os.RemoveAll(tempdir)
+		tempdir := t.TempDir()
 
 		for _, c := range cases {
 			api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -497,9 +451,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test,test2?format=toml", http.StatusBadRequest, "{\"status\":false,\"errors\":[{\"id\":\"HTTPError\",\"msg\":\"toml format only supported when requesting one blueprint\"}]}"},
 		}
 
-		tempdir, err := ioutil.TempDir("", "weldr-tests-")
-		require.NoError(t, err)
-		defer os.RemoveAll(tempdir)
+		tempdir := t.TempDir()
 
 		for _, c := range cases {
 			api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -521,9 +473,7 @@ func TestBlueprintsDiff(t *testing.T) {
 		{"GET", "/api/v0/blueprints/diff/test/NEWEST/WORKSPACE", ``, http.StatusOK, `{"diff":[{"new":{"Package":{"name":"systemd","version":"123"}},"old":null},{"new":null,"old":{"Package":{"name":"httpd","version":"2.4.*"}}}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -546,9 +496,7 @@ func TestBlueprintsDelete(t *testing.T) {
 		{"DELETE", "/api/v0/blueprints/delete/test3-non", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"Unknown blueprint: test3-non"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -559,11 +507,7 @@ func TestBlueprintsDelete(t *testing.T) {
 }
 
 func TestBlueprintsChanges(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	rand.Seed(time.Now().UnixNano())
 	// math/rand is good enough in this case
 	/* #nosec G404 */
@@ -590,9 +534,7 @@ func TestBlueprintsDepsolve(t *testing.T) {
 		{rpmmd_mock.BadDepsolve, http.StatusOK, `{"blueprints":[{"blueprint":{"name":"test","description":"Test","distro":"","version":"0.0.1","packages":[{"name":"dep-package1","version":"*"}],"groups":[],"modules":[{"name":"dep-package3","version":"*"}]},"dependencies":[]}],"errors":[{"id":"BlueprintsError","msg":"test: DNF error occured: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -605,11 +547,7 @@ func TestBlueprintsDepsolve(t *testing.T) {
 // TestOldBlueprintsUndo run tests with blueprint changes after a service restart
 // Old blueprints are not saved, after a restart the changes are listed, but cannot be recalled
 func TestOldBlueprintsUndo(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.OldChangesFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.OldChangesFixture)
 	rand.Seed(time.Now().UnixNano())
 	// math/rand is good enough in this case
 	/* #nosec G404 */
@@ -643,11 +581,7 @@ func TestOldBlueprintsUndo(t *testing.T) {
 
 // TestNewBlueprintsUndo run tests with blueprint changes without a service restart
 func TestNewBlueprintsUndo(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	rand.Seed(time.Now().UnixNano())
 	// math/rand is good enough in this case
 	/* #nosec G404 */
@@ -949,9 +883,7 @@ func TestCompose(t *testing.T) {
 		},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, s := createWeldrAPI(tempdir, rpmmd_mock.NoComposesFixture)
@@ -997,9 +929,7 @@ func TestComposeDelete(t *testing.T) {
 		{"/api/v0/compose/delete/30000000-0000-0000-0000-000000000003,42000000-0000-0000-0000-000000000000", `{"uuids":[{"uuid":"30000000-0000-0000-0000-000000000003","status":true}],"errors":[{"id":"UnknownUUID","msg":"compose 42000000-0000-0000-0000-000000000000 doesn't exist"}]}`, []string{"30000000-0000-0000-0000-000000000000", "30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002", "30000000-0000-0000-0000-000000000004"}},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, s := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -1036,9 +966,7 @@ func TestComposeStatus(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -1065,9 +993,7 @@ func TestComposeInfo(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -1095,9 +1021,7 @@ func TestComposeLogs(t *testing.T) {
 		{"/api/v1/compose/results/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", "{\"sources\":{},\"pipeline\":{}}"},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range successCases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -1166,9 +1090,7 @@ func TestComposeLog(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -1194,9 +1116,7 @@ func TestComposeQueue(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -1222,9 +1142,7 @@ func TestComposeFinished(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -1250,9 +1168,7 @@ func TestComposeFailed(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -1281,9 +1197,7 @@ func TestSourcesNew(t *testing.T) {
 		{"POST", "/api/v1/projects/source/new", `{"id": "fish","name":"fish repo","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false,"distros":["fedora-1"]}`, http.StatusBadRequest, `{"status":false, "errors":[{"id":"ProjectsError", "msg":"Invalid distributions: fedora-1"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -1293,9 +1207,7 @@ func TestSourcesNew(t *testing.T) {
 }
 
 func TestSourcesNewTomlV0(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	sources := []string{`
 name = "fish"
@@ -1327,9 +1239,7 @@ check_gpg = false
 
 // Empty TOML, and invalid TOML should return an error
 func TestSourcesNewWrongTomlV0(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	sources := []string{``, `
 url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"
@@ -1352,9 +1262,7 @@ check_gpg = false
 
 // TestSourcesNewTomlV1 tests the v1 sources API with id and name
 func TestSourcesNewTomlV1(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	sources := []string{`
 id = "fish"
@@ -1393,10 +1301,6 @@ check_gpg = false
 }
 
 func TestSourcesInfoTomlV1(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	source := `
 id = "fish"
 name = "fish"
@@ -1411,7 +1315,7 @@ rhsm = true
 	req.Header.Set("Content-Type", "text/x-toml")
 	recorder := httptest.NewRecorder()
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	api.ServeHTTP(recorder, req)
 
 	r := recorder.Result()
@@ -1422,9 +1326,7 @@ rhsm = true
 
 // TestSourcesNewWrongTomlV1 Tests that Empty TOML, and invalid TOML should return an error
 func TestSourcesNewWrongTomlV1(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	sources := []string{``, `
 url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"
@@ -1458,13 +1360,9 @@ check_gpg = false
 }
 
 func TestSourcesInfo(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	sourceStr := `{"name":"fish","type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","check_gpg":false,"check_ssl":false,"system":false}`
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	test.SendHTTP(api, true, "POST", "/api/v0/projects/source/new", sourceStr)
 	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
 	test.TestRoute(t, api, true, "GET", "/api/v0/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
@@ -1472,13 +1370,9 @@ func TestSourcesInfo(t *testing.T) {
 }
 
 func TestSourcesInfoToml(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
-
 	sourceStr := `{"name":"fish","type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","check_gpg":false,"check_ssl":false,"system":false}`
 
-	api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	test.SendHTTP(api, true, "POST", "/api/v0/projects/source/new", sourceStr)
 
 	req := httptest.NewRequest("GET", "/api/v0/projects/source/info/fish?format=toml", nil)
@@ -1487,7 +1381,7 @@ func TestSourcesInfoToml(t *testing.T) {
 	resp := recorder.Result()
 
 	var sources map[string]store.SourceConfig
-	_, err = toml.DecodeReader(resp.Body, &sources)
+	_, err := toml.DecodeReader(resp.Body, &sources)
 	require.NoErrorf(t, err, "error decoding toml file")
 
 	expected := map[string]store.SourceConfig{
@@ -1514,9 +1408,7 @@ func TestSourcesDelete(t *testing.T) {
 		{"DELETE", "/api/v0/projects/source/delete/unknown", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownSource","msg":"unknown is not a valid source."}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, rpmmd_mock.BaseFixture)
@@ -1540,9 +1432,7 @@ func TestProjectsDepsolve(t *testing.T) {
 		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -1567,9 +1457,7 @@ func TestProjectsInfo(t *testing.T) {
 		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/package16?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -1596,9 +1484,7 @@ func TestModulesInfo(t *testing.T) {
 		{rpmmd_mock.BaseFixture, "/api/v1/modules/info/package16?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -1621,9 +1507,7 @@ func TestProjectsList(t *testing.T) {
 		{rpmmd_mock.BaseFixture, "/api/v0/projects/list?distro=fedora-1&offset=1&limit=1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -1649,9 +1533,7 @@ func TestModulesList(t *testing.T) {
 		{rpmmd_mock.BaseFixture, "/api/v0/modules/list/package2*,package16?distro=fedora-1&offset=1&limit=1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
@@ -1729,9 +1611,7 @@ func TestComposeTypes_ImageTypeDenylist(t *testing.T) {
 		},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI2(tempdir, rpmmd_mock.BaseFixture, c.ImageTypeDenylist)
@@ -1891,9 +1771,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		},
 	}
 
-	tempdir, err := ioutil.TempDir("", "weldr-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	for _, c := range cases {
 		api, s := createWeldrAPI2(tempdir, rpmmd_mock.NoComposesFixture, c.imageTypeDenylist)

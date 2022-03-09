@@ -4,11 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -43,13 +40,7 @@ func newTestKojiServer(t *testing.T, dir string) (*kojiapi.Server, *worker.Serve
 }
 
 func TestStatus(t *testing.T) {
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-kojiapi-")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	kojiServer, _ := newTestKojiServer(t, dir)
+	kojiServer, _ := newTestKojiServer(t, t.TempDir())
 	handler := kojiServer.Handler("/api/composer-koji/v1")
 	test.TestRoute(t, handler, false, "GET", "/api/composer-koji/v1/status", ``, http.StatusOK, `{"status":"OK"}`, "message")
 }
@@ -59,13 +50,7 @@ type jobResult struct {
 }
 
 func TestCompose(t *testing.T) {
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-kojiapi-")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	kojiServer, workerServer := newTestKojiServer(t, dir)
+	kojiServer, workerServer := newTestKojiServer(t, t.TempDir())
 	handler := kojiServer.Handler("/api/composer-koji/v1")
 	workerHandler := workerServer.Handler()
 
@@ -455,13 +440,7 @@ func TestCompose(t *testing.T) {
 }
 
 func TestRequest(t *testing.T) {
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-kojiapi-")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	server, _ := newTestKojiServer(t, dir)
+	server, _ := newTestKojiServer(t, t.TempDir())
 	handler := server.Handler("/api/composer-koji/v1")
 
 	// Make request to an invalid route
@@ -472,7 +451,7 @@ func TestRequest(t *testing.T) {
 	resp := rec.Result()
 
 	var status api.Status
-	err = json.NewDecoder(resp.Body).Decode(&status)
+	err := json.NewDecoder(resp.Body).Decode(&status)
 	require.NoError(t, err)
 	require.Equal(t, http.StatusNotFound, resp.StatusCode)
 
@@ -489,11 +468,7 @@ func TestRequest(t *testing.T) {
 }
 
 func TestJobTypeValidation(t *testing.T) {
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-kojiapi-")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
+	dir := t.TempDir()
 
 	server, workers := newTestKojiServer(t, dir)
 	handler := server.Handler("/api/composer-koji/v1")

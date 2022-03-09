@@ -11,13 +11,7 @@ import (
 )
 
 func TestWriteFileAtomically(t *testing.T) {
-	dir, err := ioutil.TempDir("", "jsondb-test-")
-	require.NoError(t, err)
-
-	defer func() {
-		err := os.RemoveAll(dir)
-		require.NoError(t, err)
-	}()
+	dir := t.TempDir()
 
 	t.Run("success", func(t *testing.T) {
 		octopus := []byte("🐙\n")
@@ -25,7 +19,7 @@ func TestWriteFileAtomically(t *testing.T) {
 		// use an uncommon mode to check it's set correctly
 		perm := os.FileMode(0750)
 
-		err = writeFileAtomically(dir, "octopus", perm, func(f *os.File) error {
+		err := writeFileAtomically(dir, "octopus", perm, func(f *os.File) error {
 			_, err := f.Write(octopus)
 			return err
 		})
@@ -48,12 +42,12 @@ func TestWriteFileAtomically(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
-		err = writeFileAtomically(dir, "no-octopus", 0750, func(f *os.File) error {
+		err := writeFileAtomically(dir, "no-octopus", 0750, func(f *os.File) error {
 			return errors.New("something went wrong")
 		})
 		require.Error(t, err)
 
-		_, err := os.Stat(path.Join(dir, "no-octopus"))
+		_, err = os.Stat(path.Join(dir, "no-octopus"))
 		require.Error(t, err)
 
 		// ensure there are no stray temporary files
