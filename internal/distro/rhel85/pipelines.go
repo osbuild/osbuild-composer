@@ -1277,6 +1277,12 @@ func bootloaderConfigStage(t *imageType, partitionTable *disk.PartitionTable, ke
 	options := osbuild.NewGrub2StageOptions(partitionTable, kernelOptions, kernel, kernelVer, uefi, legacy, "redhat", install)
 	options.Greenboot = greenboot
 
+	// `NewGrub2StageOptions` now might set this to "saved"; but when 8.5 was released
+	// it was not available. To keep manifests from changing we need to reset it here.
+	if options.Config != nil {
+		options.Config.Default = ""
+	}
+
 	// before unifying the org.osbuild.grub2 stage option generator, we didn't
 	// set the following for RHEL 8.5, so we need to revert here to maintain
 	// the old behaviour
