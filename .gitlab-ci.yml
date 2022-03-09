@@ -249,10 +249,15 @@ regression-include-excluded-packages:
   variables:
     SCRIPT: regression-include-excluded-packages.sh
 
-regression-old-worker-new-composer.sh:
+regression-old-worker-new-composer:
   extends: .regression
   variables:
     SCRIPT: regression-old-worker-new-composer.sh
+
+regression-no-explicit-rootfs-definition:
+  extends: .regression
+  variables:
+    SCRIPT: regression-no-explicit-rootfs-definition.sh
 
 Image Tests:
   stage: test
