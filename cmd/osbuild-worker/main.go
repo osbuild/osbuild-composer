@@ -279,8 +279,10 @@ func main() {
 	// worker will look in $HOME/.aws/credentials or at the file pointed by
 	// the "AWS_SHARED_CREDENTIALS_FILE" variable.
 	var awsCredentials = ""
+	var awsBucket = ""
 	if config.AWS != nil {
 		awsCredentials = config.AWS.Credentials
+		awsBucket = config.AWS.Bucket
 	}
 
 	// depsolve jobs can be done during other jobs
@@ -323,6 +325,7 @@ func main() {
 			GCPCreds:    gcpCredentials,
 			AzureCreds:  azureCredentials,
 			AWSCreds:    awsCredentials,
+			AWSBucket:   awsBucket,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:              store,
