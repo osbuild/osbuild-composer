@@ -1087,7 +1087,15 @@ func bootloaderConfigStage(t *imageType, partitionTable *disk.PartitionTable, ke
 	kernelOptions := t.kernelOptions
 	uefi := t.supportsUEFI()
 	legacy := t.arch.legacy
-	return osbuild.NewGRUB2Stage(osbuild.NewGrub2StageOptions(partitionTable, kernelOptions, kernel, kernelVer, uefi, legacy, "redhat", false))
+	options := osbuild.NewGrub2StageOptions(partitionTable, kernelOptions, kernel, kernelVer, uefi, legacy, "redhat", false)
+
+	// `NewGrub2StageOptions` now might set this to "saved"; but when 9.0 beta was released
+	// it was not available. To keep manifests from changing we need to reset it here.
+	if options.Config != nil {
+		options.Config.Default = ""
+	}
+
+	return osbuild.NewGRUB2Stage(options)
 }
 
 func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.Devices, mounts *osbuild.Mounts, disk *osbuild.Device) *osbuild.Stage {
