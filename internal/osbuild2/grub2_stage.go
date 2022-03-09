@@ -34,6 +34,7 @@ type GRUB2UEFI struct {
 }
 
 type GRUB2Config struct {
+	Default        string   `json:"default,omitempty"`
 	TerminalInput  []string `json:"terminal_input,omitempty"`
 	TerminalOutput []string `json:"terminal_output,omitempty"`
 	Timeout        int      `json:"timeout,omitempty"`
