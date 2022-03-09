@@ -378,6 +378,9 @@ func imageTypeToCompatString(imgType distro.ImageType) string {
 }
 
 func imageTypeFromCompatString(input string, arch distro.Arch) distro.ImageType {
+	if arch == nil {
+		return nil
+	}
 	for k, v := range imageTypeCompatMapping {
 		if v == input {
 			imgType, err := arch.GetImageType(k)
