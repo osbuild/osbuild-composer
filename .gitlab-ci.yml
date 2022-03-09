@@ -274,7 +274,6 @@ OSTree:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-8-x86_64
 
 New OSTree:
   stage: test
@@ -301,224 +300,224 @@ OSTree simplified installer:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/rhel-9.0-nightly-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+           - rhos-01/rhel-9.0-nightly-x86_64-large
+           - rhos-01/centos-stream-9-x86_64-large
 
-OSTree raw image:
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/rhel-9.0-nightly-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+ OSTree raw image:
+   stage: test
+   extends: OSTree
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
+   parallel:
+     matrix:
+       - RUNNER:
+           - rhos-01/rhel-8.6-nightly-x86_64-large
+           - rhos-01/centos-stream-8-x86_64-large
+           - rhos-01/rhel-9.0-nightly-x86_64-large
+           - rhos-01/centos-stream-9-x86_64-large
 
-Rebase OSTree:
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-rebase.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64-large
-          - rhos-01/rhel-9.0-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
+ Rebase OSTree:
+   stage: test
+   extends: OSTree
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/ostree-rebase.sh
+   parallel:
+     matrix:
+       - RUNNER:
+           - rhos-01/rhel-8.6-nightly-x86_64-large
+           - rhos-01/rhel-9.0-nightly-x86_64-large
+           - rhos-01/centos-stream-8-x86_64-large
 
-.INTEGRATION_TESTS: &INTEGRATION_TESTS
-  SCRIPT:
-    - koji.sh
-    - aws.sh
-    - azure.sh
-    - vmware.sh
-    - filesystem.sh
-    - cross-distro.sh
+ .INTEGRATION_TESTS: &INTEGRATION_TESTS
+   SCRIPT:
+     - koji.sh
+     - aws.sh
+     - azure.sh
+     - vmware.sh
+     - filesystem.sh
+     - cross-distro.sh
 
-Integration:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/${SCRIPT}
-  parallel:
-    matrix:
-      - <<: *INTEGRATION_TESTS
-        RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-35-x86_64
-          - aws/centos-stream-8-x86_64
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-nightly-x86_64
-          - aws/centos-stream-9-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - SCRIPT:
-          - azure_hyperv_gen2.sh
-        RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
+ Integration:
+   stage: test
+   extends: .terraform
+   rules:
+     - !reference [.upstream_rules, rules]
+     - !reference [.nightly_rules, rules]
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
+   parallel:
+     matrix:
+       - <<: *INTEGRATION_TESTS
+         RUNNER:
+           - aws/fedora-34-x86_64
+           - aws/fedora-35-x86_64
+           - aws/centos-stream-8-x86_64
+           - aws/rhel-8.5-ga-x86_64
+           - aws/rhel-8.6-nightly-x86_64
+           - aws/rhel-9.0-nightly-x86_64
+           - aws/centos-stream-9-x86_64
+         INTERNAL_NETWORK: ["true"]
+       - SCRIPT:
+           - azure_hyperv_gen2.sh
+         RUNNER:
+           - aws/rhel-8.6-nightly-x86_64
+         INTERNAL_NETWORK: ["true"]
 
-.API_TESTS: &API_TESTS
-  IMAGE_TYPE:
-    - aws
-    - azure
-    - edge-commit
-    - gcp
+ .API_TESTS: &API_TESTS
+   IMAGE_TYPE:
+     - aws
+     - azure
+     - edge-commit
+     - gcp
 
-API:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-    # note: cloud API is not supported for on-prem installations so
-    # don't run this test case for nightly trees
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
-  parallel:
-    matrix:
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
+ API:
+   stage: test
+   extends: .terraform
+   rules:
+     - !reference [.upstream_rules, rules]
+     # note: cloud API is not supported for on-prem installations so
+     # don't run this test case for nightly trees
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
+   parallel:
+     matrix:
+       - <<: *API_TESTS
+         RUNNER:
+           - aws/rhel-8.5-ga-x86_64
+           - aws/rhel-8.6-nightly-x86_64
+           - aws/rhel-9.0-nightly-x86_64
+         INTERNAL_NETWORK: ["true"]
 
-libvirt:
-  stage: test
-  extends: .terraform/openstack
-  rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/libvirt.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-8.5-ga-x86_64
-          - rhos-01/rhel-8.6-nightly-x86_64
+ libvirt:
+   stage: test
+   extends: .terraform/openstack
+   rules:
+     - !reference [.upstream_rules, rules]
+     - !reference [.nightly_rules, rules]
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/libvirt.sh
+   parallel:
+     matrix:
+       - RUNNER:
+           - rhos-01/centos-stream-8-x86_64
+           - rhos-01/rhel-8.5-ga-x86_64
+           - rhos-01/rhel-8.6-nightly-x86_64
+           - rhos-01/rhel-9.0-nightly-x86_64
+           - rhos-01/centos-stream-9-x86_64
+
+ RHEL 9 on 8:
+   stage: test
+   extends: .terraform
+   rules:
+     - !reference [.upstream_rules, rules]
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/koji.sh
+   variables:
+     RUNNER: aws/rhel-8.5-ga-x86_64
+     INTERNAL_NETWORK: "true"
+     DISTRO_CODE: rhel-90
+
+ Multi-tenancy:
+   stage: test
+   extends: .terraform
+   rules:
+     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/multi-tenancy.sh
+   variables:
+     RUNNER: aws/rhel-8.5-ga-x86_64
+     INTERNAL_NETWORK: "true"
+
+ Upgrade:
+   stage: test
+   extends: .terraform/openstack
+   rules:
+     - !reference [.nightly_rules, rules]
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
+   variables:
+     RUNNER: rhos-01/rhel-9.0-nightly-x86_64
+   artifacts:
+     paths:
+       - journal-log.gpg
+       - ci-artifacts
+       - install_console.log
+       - upgrade_console.log
+       - leapp-preupgrade.log
+       - leapp-upgrade.log
+       - leapp-report.txt
+       - osbuild-upgrade8to9.log
+       - osbuild-upgrade8to9.json
+     when: always
+
+ NIGHTLY_FAIL:
+   stage: finish
+   tags:
+     - shell
+   rules:
+     - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
+       when: on_failure
+   script:
+     - schutzbot/slack_notification.sh FAILED ":big-sad:"
+
+ NIGHTLY_SUCCESS:
+   stage: finish
+   tags:
+     - shell
+   rules:
+     - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
+   script:
+     - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
+
+ Installer:
+   stage: test
+   extends: .terraform/openstack
+   rules:
+     - !reference [.upstream_rules, rules]
+     - !reference [.nightly_rules, rules]
+   script:
+     - schutzbot/deploy.sh
+     - /usr/libexec/tests/osbuild-composer/installers.sh
+   parallel:
+     matrix:
+       - RUNNER:
+           - rhos-01/rhel-8.6-nightly-x86_64
+           disable until https://bugzilla.redhat.com/show_bug.cgi?id=2059565 is fixed
           - rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
-RHEL 9 on 8:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/koji.sh
-  variables:
-    RUNNER: aws/rhel-8.5-ga-x86_64
-    INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-90
+ SCHEDULED_CLOUD_CLEANER:
+   stage: cleanup
+   tags:
+     - terraform
+   variables:
+     RUNNER: aws/centos-stream-8-x86_64
+     INTERNAL_NETWORK: "true"
+   rules:
+     - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
+   script:
+     - schutzbot/deploy.sh
+     - schutzbot/scheduled_cloud_cleaner.sh
 
-Multi-tenancy:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/multi-tenancy.sh
-  variables:
-    RUNNER: aws/rhel-8.5-ga-x86_64
-    INTERNAL_NETWORK: "true"
-
-Upgrade:
-  stage: test
-  extends: .terraform/openstack
-  rules:
-    - !reference [.nightly_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
-  variables:
-    RUNNER: rhos-01/rhel-9.0-nightly-x86_64
-  artifacts:
-    paths:
-      - journal-log.gpg
-      - ci-artifacts
-      - install_console.log
-      - upgrade_console.log
-      - leapp-preupgrade.log
-      - leapp-upgrade.log
-      - leapp-report.txt
-      - osbuild-upgrade8to9.log
-      - osbuild-upgrade8to9.json
-    when: always
-
-NIGHTLY_FAIL:
-  stage: finish
-  tags:
-    - shell
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
-      when: on_failure
-  script:
-    - schutzbot/slack_notification.sh FAILED ":big-sad:"
-
-NIGHTLY_SUCCESS:
-  stage: finish
-  tags:
-    - shell
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
-  script:
-    - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
-
-Installer:
-  stage: test
-  extends: .terraform/openstack
-  rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/installers.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64
-          # disable until https://bugzilla.redhat.com/show_bug.cgi?id=2059565 is fixed
-          #- rhos-01/rhel-9.0-nightly-x86_64
-          #- rhos-01/centos-stream-9-x86_64
-
-SCHEDULED_CLOUD_CLEANER:
-  stage: cleanup
-  tags:
-    - terraform
-  variables:
-    RUNNER: aws/centos-stream-8-x86_64
-    INTERNAL_NETWORK: "true"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
-  script:
-    - schutzbot/deploy.sh
-    - schutzbot/scheduled_cloud_cleaner.sh
-
-SonarQube:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-  script:
-    - schutzbot/sonarqube.sh
-  variables:
-    RUNNER: aws/centos-stream-8-x86_64
-    INTERNAL_NETWORK: "true"
-    GIT_DEPTH: 0
+ SonarQube:
+   stage: test
+   extends: .terraform
+   rules:
+     - !reference [.upstream_rules, rules]
+   script:
+     - schutzbot/sonarqube.sh
+   variables:
+     RUNNER: aws/centos-stream-8-x86_64
+     INTERNAL_NETWORK: "true"
+     GIT_DEPTH: 0
 
 finish:
   stage: finish

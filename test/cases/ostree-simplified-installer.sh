@@ -500,7 +500,8 @@ sudo virt-install --name="${IMAGE_KEY}-http"\
                   --nographics \
                   --noautoconsole \
                   --wait=-1 \
-                  --noreboot
+                  --noreboot \
+                  --debug
 
 # Start VM.
 greenprint "💻 Start HTTP BOOT VM"
@@ -577,7 +578,7 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
-                   --noreboot
+                   --debug
 
 # Start VM.
 greenprint "💻 Start UEFI VM"
