@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SCHUTZBOT_SSH_KEY: ${{ secrets.SCHUTZBOT_SSH_KEY }}
-      SKIP_CI: ${{ (github.event.pull_request.draft == true || contains(github.event.pull_request.labels.*.name, 'WIP')) && !contains(github.event.pull_request.labels.*.name, 'WIP+test') }}
     steps:
       - name: Report status
         uses: haya14busa/action-workflow_run-status@v1
@@ -51,6 +50,30 @@ jobs:
             git checkout ${{ github.event.workflow_run.head_branch }}
           fi
 
+      - name: Download artifacts
+        uses: actions/github-script@v5
+        with:
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "PR_STATUS"
+            })[0];
+            let download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/PR_STATUS.zip`, Buffer.from(download.data));
+
+      - name: Unzip artifact
+        run: unzip PR_STATUS.zip
+
       - name: Push to gitlab
         run: |
           mkdir -p ~/.ssh
@@ -59,5 +82,6 @@ jobs:
           touch ~/.ssh/known_hosts
           ssh-keyscan -t rsa gitlab.com >> ~/.ssh/known_hosts
           git remote add ci git@gitlab.com:osbuild/ci/osbuild-composer.git
+          SKIP_CI=$(cat SKIP_CI.txt)
           [[ "${SKIP_CI}" == true ]] && PUSH_OPTION='-o ci.variable="SKIP_CI=true"' || PUSH_OPTION=""
           git push -f ${PUSH_OPTION} ci
