@@ -47,7 +47,6 @@ type API struct {
 	workers *worker.Server
 
 	rpmmd        rpmmd.RPMMD
-	arch         distro.Arch
 	archName     string
 	repoRegistry *reporegistry.RepoRegistry
 
@@ -89,10 +88,10 @@ func (cs ComposeState) ToString() string {
 	}
 }
 
-// systemRepoIDs returns a list of the system repos
+// systemRepoNames returns a list of the system repos
 // NOTE: The system repos have no concept of id vs. name so the id is returned
 func (api *API) systemRepoNames() (names []string) {
-	repos, err := api.repoRegistry.ReposByArch(api.arch, false)
+	repos, err := api.repoRegistry.ReposByArchName(api.hostDistroName, api.archName, false)
 	if err == nil {
 		for _, repo := range repos {
 			names = append(names, repo.Name)
@@ -131,7 +130,6 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
 		store:                    store,
 		workers:                  workers,
 		rpmmd:                    rpm,
-		arch:                     arch,
 		archName:                 arch.Name(),
 		repoRegistry:             rr,
 		logger:                   logger,
@@ -189,7 +187,6 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistr
 		store:                    store,
 		workers:                  workers,
 		rpmmd:                    rpm,
-		arch:                     hostArch,
 		archName:                 archName,
 		repoRegistry:             rr,
 		logger:                   logger,
@@ -442,7 +439,7 @@ func (api *API) getImageType(distroName, imageType string) (distro.ImageType, er
 	if distro == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
 	}
-	arch, err := distro.GetArch(api.arch.Name())
+	arch, err := distro.GetArch(api.archName)
 	if err != nil {
 		return nil, err
 	}
@@ -624,7 +621,7 @@ func (api *API) getSourceConfigs(params httprouter.Params) (map[string]store.Sou
 	sources := map[string]store.SourceConfig{}
 	errors := []responseError{}
 
-	repos, err := api.repoRegistry.ReposByArch(api.arch, false)
+	repos, err := api.repoRegistry.ReposByArchName(api.hostDistroName, api.archName, false)
 	if err != nil {
 		error := responseError{
 			ID:  "InternalError",
@@ -1255,7 +1252,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		}
 
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, repos, d.ModulePlatformID(), api.arch.Name(), d.Releasever())
+			err := packageInfos[i].FillDependencies(api.rpmmd, repos, d.ModulePlatformID(), api.archName, d.Releasever())
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1334,7 +1331,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names},
 		repos,
 		d.ModulePlatformID(),
-		api.arch.Name(),
+		api.archName,
 		d.Releasever())
 	if err != nil {
 		errors := responseError{
@@ -2141,7 +2138,7 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet,
 			imageTypeRepos,
 			platformID,
-			api.arch.Name(),
+			api.archName,
 			releasever)
 		if err != nil {
 			return nil, err
@@ -2335,7 +2332,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	} else {
 		var jobId uuid.UUID
 
-		jobId, err = api.workers.EnqueueOSBuild(api.arch.Name(), &worker.OSBuildJob{
+		jobId, err = api.workers.EnqueueOSBuild(api.archName, &worker.OSBuildJob{
 			Manifest:        manifest,
 			Targets:         targets,
 			ImageName:       imageType.Filename(),
@@ -2525,11 +2522,11 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	// Get the distro specific arch so that we can return the correct list of image types
-	arch, err := d.GetArch(api.arch.Name())
+	arch, err := d.GetArch(api.archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "DistroError",
-			Msg: fmt.Sprintf("Unknown arch: %s", api.arch.Name()),
+			Msg: fmt.Sprintf("Unknown arch: %s", api.archName),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
@@ -3116,7 +3113,7 @@ func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 		return nil, err
 	}
 
-	packages, _, err := api.rpmmd.FetchMetadata(repos, d.ModulePlatformID(), api.arch.Name(), d.Releasever())
+	packages, _, err := api.rpmmd.FetchMetadata(repos, d.ModulePlatformID(), api.archName, d.Releasever())
 	return packages, err
 }
 
@@ -3140,7 +3137,7 @@ func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.
 
 // Returns all configured repositories (base + sources) as rpmmd.RepoConfig
 func (api *API) allRepositories(distroName string) ([]rpmmd.RepoConfig, error) {
-	archRepos, err := api.repoRegistry.ReposByArchName(distroName, api.arch.Name(), false)
+	archRepos, err := api.repoRegistry.ReposByArchName(distroName, api.archName, false)
 	if err != nil {
 		return nil, err
 	}
@@ -3168,7 +3165,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		return nil, err
 	}
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, d.ModulePlatformID(), api.arch.Name(), d.Releasever())
+	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, d.ModulePlatformID(), api.archName, d.Releasever())
 	if err != nil {
 		return nil, err
 	}
