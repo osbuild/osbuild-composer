@@ -45,7 +45,12 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	depsolveContext, cancel := context.WithCancel(context.Background())
 	go func() {
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(context.Background(), test_distro.TestDistroName, []string{"depsolve"}, depsolveChannels)
+			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestDistroName, []string{"depsolve"}, depsolveChannels)
+			select {
+			case <-depsolveContext.Done():
+				return
+			default:
+			}
 			if err != nil {
 				continue
 			}
