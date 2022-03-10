@@ -4,9 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -43,7 +42,10 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 
 	// start a routine which just completes depsolve jobs
 	depsolveContext, cancel := context.WithCancel(context.Background())
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for {
 			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestDistroName, []string{"depsolve"}, depsolveChannels)
 			select {
@@ -61,16 +63,15 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 				return
 			}
 
-			select {
-			case <-depsolveContext.Done():
-				return
-			default:
-				continue
-			}
 		}
 	}()
 
-	return v2Server, workerServer, q, cancel
+	cancelWithWait := func() {
+		cancel()
+		wg.Wait()
+	}
+
+	return v2Server, workerServer, q, cancelWithWait
 }
 
 func TestUnknownRoute(t *testing.T) {
@@ -130,11 +131,7 @@ func TestGetErrorList(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
-	// Test is flaky if we use t.TempDir()
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
-	srv, _, _, cancel := newV2Server(t, dir, []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
 	defer cancel()
 
 	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
@@ -799,11 +796,7 @@ func TestComposeJobError(t *testing.T) {
 }
 
 func TestComposeCustomizations(t *testing.T) {
-	// Test is flaky if we use t.TempDir()
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
-	srv, _, _, cancel := newV2Server(t, dir, []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -849,11 +842,7 @@ func TestComposeCustomizations(t *testing.T) {
 }
 
 func TestImageTypes(t *testing.T) {
-	// Test is flaky if we use t.TempDir()
-	dir, err := ioutil.TempDir("", "osbuild-composer-test-api-v2-")
-	require.NoError(t, err)
-	defer os.RemoveAll(dir)
-	srv, _, _, cancel := newV2Server(t, dir, []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
