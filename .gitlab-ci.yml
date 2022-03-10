@@ -121,7 +121,7 @@ Packer:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH =~ /PR-[0-9]+/'
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
     - tools/appsre-build-worker-packer.sh
   variables:
