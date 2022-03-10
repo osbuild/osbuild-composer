@@ -20,7 +20,6 @@ source "amazon-ebs" "image_builder" {
   # Network configuration for the instance building our image.
   associate_public_ip_address = true
   ssh_interface = "public_ip"
-  instance_type = "c6a.large"
 }
 
 build {
@@ -30,6 +29,7 @@ build {
     # Use a static RHEL 8.5 Cloud Access Image.
     source_ami = "ami-06f1e6f8b3457ae7c"
     ssh_username = "ec2-user"
+    instance_type = "c6a.large"
 
     # Set a name for the resulting AMI.
     ami_name = "${var.image_name}"
@@ -39,7 +39,6 @@ build {
       AppCode = "IMGB-001"
       Name = "${var.image_name}"
       composer_commit = "${var.composer_commit}"
-      osbuild_commit = "${var.osbuild_commit}"
       os = "rhel"
       os_version = "8"
       arch = "x86_64"
@@ -59,8 +58,8 @@ build {
     user = build.User
     extra_arguments = [
       "-e", "COMPOSER_COMMIT=${var.composer_commit}",
-      "-e", "OSBUILD_COMMIT=${var.osbuild_commit}",
       "--skip-tags", "${var.ansible_skip_tags}",
     ]
+    inventory_directory = "${path.root}/ansible/inventory/${source.name}"
   }
 }
