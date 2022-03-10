@@ -19,3 +19,7 @@ $GO_BINARY fmt ./...
 
 # ... and all code has been regenerated from its sources.
 $GO_BINARY generate ./...
+
+# format bash scripts
+go install mvdan.cc/sh/v3/cmd/shfmt@latest
+shfmt -w .
