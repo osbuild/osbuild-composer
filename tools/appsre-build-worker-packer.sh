@@ -126,6 +126,48 @@ cat >> worker-packer.sh <<'EOF'
 /usr/bin/packer build /osbuild-composer/templates/packer
 EOF
 
+# prepare ansible inventories
+function write_inventories {
+    for item in templates/packer/ansible/inventory/*; do
+        local distro_arch
+        distro_arch="$(basename "$item")"
+
+        # strip arch
+        local distro="${distro_arch%-*}"
+
+        # write rpmrepo_distribution variable
+        local rpmrepo_distribution="$distro"
+        if [[ $rpmrepo_distribution == rhel-8 ]]; then
+            rpmrepo_distribution=rhel-8-cdn
+        fi
+        cat >"$item/group_vars/all.yml" <<EOF
+---
+rpmrepo_distribution: $rpmrepo_distribution
+EOF
+
+        # get distro name for schutzfile
+        local schutzfile_distro="$distro"
+        if [[ $schutzfile_distro == rhel-8 ]]; then
+            schutzfile_distro=rhel-8.5
+        fi
+
+        # get osbuild_commit from schutzfile
+        local osbuild_commit
+        osbuild_commit=$(jq -r ".[\"$schutzfile_distro\"].dependencies.osbuild.commit" Schutzfile)
+
+        # write osbuild_commit variable if defined in Schutzfile
+        # if it's not defined, osbuild will be installed from distribution repositories
+        if [[ $osbuild_commit != "null" ]]; then
+            tee -a "$item/group_vars/all.yml" null >dev <<EOF
+osbuild_commit: $osbuild_commit
+EOF
+        fi
+
+    done
+}
+
+write_inventories
+
 greenprint "📦 Building the packer container"
 $CONTAINER_RUNTIME build \
                    -f distribution/Dockerfile-ubi-packer \
@@ -148,6 +190,5 @@ $CONTAINER_RUNTIME run --rm \
                    -e PKR_VAR_aws_secret_key="$PACKER_AWS_SECRET_ACCESS_KEY" \
                    -e PKR_VAR_image_name="osbuild-composer-worker-$COMMIT_BRANCH-$COMMIT_SHA" \
                    -e PKR_VAR_composer_commit="$COMMIT_SHA" \
-                   -e PKR_VAR_osbuild_commit="$(jq -r '.["rhel-8.4"].dependencies.osbuild.commit' Schutzfile)" \
                    -e PKR_VAR_ansible_skip_tags="$SKIP_TAGS" \
                    "packer:$COMMIT_SHA" /osbuild-composer/worker-packer.sh

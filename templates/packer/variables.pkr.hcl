@@ -15,9 +15,8 @@ variable "region" {
   default = "us-east-1"
 }
 
-# Automatically set by environment variables in GitHub Actions.
+# Automatically set by environment variables
 variable "composer_commit" { type = string }
-variable "osbuild_commit" { type = string }
 
 # The name of the resulting AMI and the underlying EBS snapshot
 variable "image_name" { type = string }

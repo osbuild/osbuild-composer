@@ -6,7 +6,7 @@
   yum_repository:
     name: "composer"
     description: "osbuild-composer commit {{ COMPOSER_COMMIT }}"
-    baseurl: "http://osbuild-composer-repos.s3.amazonaws.com/osbuild-composer/rhel-8-cdn/x86_64/{{ COMPOSER_COMMIT }}"
+    baseurl: "http://osbuild-composer-repos.s3.amazonaws.com/osbuild-composer/{{ rpmrepo_distribution }}/{{ ansible_architecture }}/{{ COMPOSER_COMMIT }}"
     enabled: yes
     gpgcheck: no
     priority: "5"
@@ -16,11 +16,13 @@
     - rpmrepo
   yum_repository:
     name: "osbuild"
-    description: "osbuild commit {{ OSBUILD_COMMIT }}"
-    baseurl: "http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild/rhel-8-cdn/x86_64/{{ OSBUILD_COMMIT }}"
+    description: "osbuild commit {{ osbuild_commit }}"
+    baseurl: "http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild/{{ rpmrepo_distribution }}/{{ ansible_architecture }}/{{ osbuild_commit }}"
     enabled: yes
     gpgcheck: no
     priority: "5"
+  # if osbuild_commit is not defined, osbuild from distribution repositories is installed
+  when: osbuild_commit is defined
 
 # We need EPEL for monit
 - name: Add EPEL
@@ -28,6 +30,7 @@
     name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
     state: present
     disable_gpg_check: yes
+  when: ansible_distribution == 'RedHat'
 
 - name: Upgrade all packages
   package:
@@ -55,7 +58,7 @@
 
 - name: Download AWS CLI installer
   get_url:
-    url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
     dest: /tmp/awscli.zip
   register: result
   retries: 5
