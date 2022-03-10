@@ -9,6 +9,5 @@ echo "Writing offline token."
   --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \
   --secret-id "${OFFLINE_TOKEN_ARN}" | jq -r ".SecretString" > /tmp/offline-token.json
 
-mkdir /etc/osbuild-worker
 jq -r ".offline_token" /tmp/offline-token.json > /etc/osbuild-worker/offline-token
 rm -f /tmp/offline-token.json

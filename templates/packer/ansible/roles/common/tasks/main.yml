@@ -9,5 +9,8 @@
 # Configure worker initialization service.
 - include_tasks: worker-initialization-service.yml
 
+# Configure the worker.
+- include_tasks: worker-config.yml
+
 - name: Ensure SELinux contexts are updated
   command: restorecon -Rv /etc
