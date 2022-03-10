@@ -279,6 +279,7 @@ paths:
           description: ID of the error
       responses:
         '200':
+          description: Error description
           content:
             application/json:
               schema:
@@ -445,6 +446,9 @@ components:
         properties:
           image_builds:
             type: array
+            items:
+              type: object
+              x-go-type: interface{}
           koji:
             $ref: '#/components/schemas/KojiLogs'
     KojiLogs:
@@ -464,6 +468,9 @@ components:
         properties:
           manifests:
             type: array
+            items:
+              type: object
+              x-go-type: interface{}
     ImageStatus:
       required:
        - status
@@ -659,15 +666,15 @@ components:
           description: 'Determines whether a valid subscription is required to access this repository.'
         baseurl:
           type: string
-          format: url
+          format: uri
           example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
         mirrorlist:
           type: string
-          format: url
+          format: uri
           example: 'http://mirrorlist.centos.org/?release=8-stream&arch=aarch64&repo=BaseOS'
         metalink:
           type: string
-          format: url
+          format: uri
           example: 'https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=x86_64'
         gpgkey:
           type: string
@@ -865,13 +872,11 @@ components:
           example: 'rhel/8/x86_64/edge'
         parent:
           type: string
-          examples:
-            commit_id:
-              value: '02604b2da6e954bd34b8b82a835e5a77d2b60ffa'
-              summary: A commit ID
-            ref:
-              value: 'rhel/8/x86_64/edge'
-              summary: A branch-like ref
+          description: >
+            Can be either a commit (example:
+            02604b2da6e954bd34b8b82a835e5a77d2b60ffa), or a branch-like
+            reference (example: rhel/8/x86_64/edge)
+          example: 'rhel/8/x86_64/edge'
     Subscription:
       type: object
       required:
@@ -890,10 +895,10 @@ components:
           example: 'my-secret-key'
         server_url:
           type: string
+          format: uri
           example: 'subscription.rhsm.redhat.com'
         base_url:
           type: string
-          format: url
           example: 'http://cdn.redhat.com/'
         insights:
           type: boolean
@@ -925,7 +930,7 @@ components:
       properties:
         server:
           type: string
-          format: url
+          format: uri
           example: 'https://koji.fedoraproject.org/kojihub'
         task_id:
           type: integer
