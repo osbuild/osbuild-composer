@@ -6,6 +6,7 @@ set -exv
 COMMIT_SHA=$(git rev-parse HEAD)
 COMMIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 ON_JENKINS=true
+SKIP_CREATE_AMI=false
 
 # Use gitlab CI variables if available
 if [ -n "$CI_COMMIT_SHA" ]; then
@@ -21,6 +22,11 @@ fi
 
 if [ "$ON_JENKINS" = false ]; then
     sudo dnf install -y podman jq
+fi
+
+# skip creating AMIs on PRs to save a ton of resources
+if [[ $COMMIT_BRANCH == PR-* ]]; then
+    SKIP_CREATE_AMI=true
 fi
 
 # decide whether podman or docker should be used
@@ -202,4 +208,5 @@ $CONTAINER_RUNTIME run --rm \
                    -e PKR_VAR_image_name="osbuild-composer-worker-$COMMIT_BRANCH-$COMMIT_SHA" \
                    -e PKR_VAR_composer_commit="$COMMIT_SHA" \
                    -e PKR_VAR_ansible_skip_tags="$SKIP_TAGS" \
+                   -e PKR_VAR_skip_create_ami="$SKIP_CREATE_AMI" \
                    "packer:$COMMIT_SHA" /osbuild-composer/worker-packer.sh
