@@ -159,11 +159,11 @@ func TestCompose(t *testing.T) {
 		 }
 	}`, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
-		"href": "/api/image-builder-composer/v2/errors/4",
-		"id": "4",
+		"href": "/api/image-builder-composer/v2/errors/30",
+		"id": "30",
 		"kind": "Error",
-		"code": "IMAGE-BUILDER-COMPOSER-4",
-		"reason": "Unsupported distribution"
+		"code": "IMAGE-BUILDER-COMPOSER-30",
+		"reason": "Request could not be validated"
 	}`, "operation_id")
 
 	// unsupported architecture
@@ -207,11 +207,11 @@ func TestCompose(t *testing.T) {
 		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
-		"href": "/api/image-builder-composer/v2/errors/6",
-		"id": "6",
+		"href": "/api/image-builder-composer/v2/errors/30",
+		"id": "30",
 		"kind": "Error",
-		"code": "IMAGE-BUILDER-COMPOSER-6",
-		"reason": "Unsupported image type"
+		"code": "IMAGE-BUILDER-COMPOSER-30",
+		"reason": "Request could not be validated"
 	}`, "operation_id")
 
 	// Returns 404, but should be 405; see https://github.com/labstack/echo/issues/1981
@@ -945,7 +945,9 @@ func TestImageTypes(t *testing.T) {
 				"rhsm": false
 			}],
 			"upload_options": {
-				"region": "eu-central-1"
+				"region": "eu-central-1",
+				"snapshot_name": "name",
+				"share_with_accounts": ["123456789012","234567890123"]
 			}
 		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `

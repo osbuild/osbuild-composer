@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -25,11 +26,13 @@ func (r RequestBodies) JSONLookup(token string) (interface{}, error) {
 }
 
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#requestBodyObject
 type RequestBody struct {
 	ExtensionProps
+
 	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
 	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
-	Content     Content `json:"content,omitempty" yaml:"content,omitempty"`
+	Content     Content `json:"content" yaml:"content"`
 }
 
 func NewRequestBody() *RequestBody {
@@ -98,10 +101,8 @@ func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 }
 
 func (value *RequestBody) Validate(ctx context.Context) error {
-	if v := value.Content; v != nil {
-		if err := v.Validate(ctx); err != nil {
-			return err
-		}
+	if value.Content == nil {
+		return errors.New("content of the request body is required")
 	}
-	return nil
+	return value.Content.Validate(ctx)
 }

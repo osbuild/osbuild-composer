@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-// Paths is specified by OpenAPI/Swagger standard version 3.0.
+// Paths is specified by OpenAPI/Swagger standard version 3.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
 type Paths map[string]*PathItem
 
 func (value Paths) Validate(ctx context.Context) error {
@@ -21,31 +22,60 @@ func (value Paths) Validate(ctx context.Context) error {
 			pathItem = value[path]
 		}
 
-		normalizedPath, pathParamsCount := normalizeTemplatedPath(path)
+		normalizedPath, _, varsInPath := normalizeTemplatedPath(path)
 		if oldPath, ok := normalizedPaths[normalizedPath]; ok {
 			return fmt.Errorf("conflicting paths %q and %q", path, oldPath)
 		}
 		normalizedPaths[path] = path
 
-		var globalCount uint
+		var commonParams []string
 		for _, parameterRef := range pathItem.Parameters {
 			if parameterRef != nil {
 				if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
-					globalCount++
+					commonParams = append(commonParams, parameter.Name)
 				}
 			}
 		}
 		for method, operation := range pathItem.Operations() {
-			var count uint
+			var setParams []string
 			for _, parameterRef := range operation.Parameters {
 				if parameterRef != nil {
 					if parameter := parameterRef.Value; parameter != nil && parameter.In == ParameterInPath {
-						count++
+						setParams = append(setParams, parameter.Name)
 					}
 				}
 			}
-			if count+globalCount != pathParamsCount {
-				return fmt.Errorf("operation %s %s must define exactly all path parameters", method, path)
+			if expected := len(setParams) + len(commonParams); expected != len(varsInPath) {
+				expected -= len(varsInPath)
+				if expected < 0 {
+					expected *= -1
+				}
+				missing := make(map[string]struct{}, expected)
+				definedParams := append(setParams, commonParams...)
+				for _, name := range definedParams {
+					if _, ok := varsInPath[name]; !ok {
+						missing[name] = struct{}{}
+					}
+				}
+				for name := range varsInPath {
+					got := false
+					for _, othername := range definedParams {
+						if othername == name {
+							got = true
+							break
+						}
+					}
+					if !got {
+						missing[name] = struct{}{}
+					}
+				}
+				if len(missing) != 0 {
+					missings := make([]string, 0, len(missing))
+					for name := range missing {
+						missings = append(missings, name)
+					}
+					return fmt.Errorf("operation %s %s must define exactly all path parameters (missing: %v)", method, path, missings)
+				}
 			}
 		}
 
@@ -53,6 +83,11 @@ func (value Paths) Validate(ctx context.Context) error {
 			return err
 		}
 	}
+
+	if err := value.validateUniqueOperationIDs(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -75,9 +110,9 @@ func (paths Paths) Find(key string) *PathItem {
 		return pathItem
 	}
 
-	normalizedPath, expected := normalizeTemplatedPath(key)
+	normalizedPath, expected, _ := normalizeTemplatedPath(key)
 	for path, pathItem := range paths {
-		pathNormalized, got := normalizeTemplatedPath(path)
+		pathNormalized, got, _ := normalizeTemplatedPath(path)
 		if got == expected && pathNormalized == normalizedPath {
 			return pathItem
 		}
@@ -85,43 +120,75 @@ func (paths Paths) Find(key string) *PathItem {
 	return nil
 }
 
-func normalizeTemplatedPath(path string) (string, uint) {
+func (value Paths) validateUniqueOperationIDs() error {
+	operationIDs := make(map[string]string)
+	for urlPath, pathItem := range value {
+		if pathItem == nil {
+			continue
+		}
+		for httpMethod, operation := range pathItem.Operations() {
+			if operation == nil || operation.OperationID == "" {
+				continue
+			}
+			endpoint := httpMethod + " " + urlPath
+			if endpointDup, ok := operationIDs[operation.OperationID]; ok {
+				if endpoint > endpointDup { // For make error message a bit more deterministic. May be useful for tests.
+					endpoint, endpointDup = endpointDup, endpoint
+				}
+				return fmt.Errorf("operations %q and %q have the same operation id %q",
+					endpoint, endpointDup, operation.OperationID)
+			}
+			operationIDs[operation.OperationID] = endpoint
+		}
+	}
+	return nil
+}
+
+func normalizeTemplatedPath(path string) (string, uint, map[string]struct{}) {
 	if strings.IndexByte(path, '{') < 0 {
-		return path, 0
+		return path, 0, nil
 	}
 
-	var buf strings.Builder
-	buf.Grow(len(path))
+	var buffTpl strings.Builder
+	buffTpl.Grow(len(path))
 
 	var (
 		cc         rune
 		count      uint
 		isVariable bool
+		vars       = make(map[string]struct{})
+		buffVar    strings.Builder
 	)
 	for i, c := range path {
 		if isVariable {
 			if c == '}' {
-				// End path variables
+				// End path variable
+				isVariable = false
+
+				vars[buffVar.String()] = struct{}{}
+				buffVar = strings.Builder{}
+
 				// First append possible '*' before this character
 				// The character '}' will be appended
 				if i > 0 && cc == '*' {
-					buf.WriteRune(cc)
+					buffTpl.WriteRune(cc)
 				}
-				isVariable = false
 			} else {
-				// Skip this character
+				buffVar.WriteRune(c)
 				continue
 			}
+
 		} else if c == '{' {
 			// Begin path variable
-			// The character '{' will be appended
 			isVariable = true
+
+			// The character '{' will be appended
 			count++
 		}
 
 		// Append the character
-		buf.WriteRune(c)
+		buffTpl.WriteRune(c)
 		cc = c
 	}
-	return buf.String(), count
+	return buffTpl.String(), count, vars
 }

@@ -43,6 +43,7 @@ const (
 	ErrorInvalidOSTreeParams          ServiceErrorCode = 27
 	ErrorTenantNotFound               ServiceErrorCode = 28
 	ErrorNoGPGKey                     ServiceErrorCode = 29
+	ErrorInvalidRequest               ServiceErrorCode = 30
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -110,6 +111,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidOSTreeParams, http.StatusBadRequest, "Invalid OSTree parameters or parameter combination"},
 		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
 		serviceError{ErrorNoGPGKey, http.StatusBadRequest, "Invalid repository, when check_gpg is set, gpgkey must be specified"},
+		serviceError{ErrorInvalidRequest, http.StatusBadRequest, "Request could not be validated"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},

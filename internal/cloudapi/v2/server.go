@@ -8,6 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers"
+	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -30,6 +34,7 @@ type Server struct {
 	workers *worker.Server
 	distros *distroregistry.Registry
 	config  ServerConfig
+	router  routers.Router
 
 	goroutinesCtx       context.Context
 	goroutinesCtxCancel context.CancelFunc
@@ -44,10 +49,26 @@ type ServerConfig struct {
 
 func NewServer(workers *worker.Server, distros *distroregistry.Registry, config ServerConfig) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
+	spec, err := GetSwagger()
+	if err != nil {
+		panic(err)
+	}
+
+	loader := openapi3.NewLoader()
+	if err := spec.Validate(loader.Context); err != nil {
+		panic(err)
+	}
+
+	router, err := legacyrouter.NewRouter(spec)
+	if err != nil {
+		panic(err)
+	}
+
 	server := &Server{
 		workers: workers,
 		distros: distros,
 		config:  config,
+		router:  router,
 
 		goroutinesCtx:       ctx,
 		goroutinesCtxCancel: cancel,
@@ -66,9 +87,37 @@ func (s *Server) Handler(path string) http.Handler {
 	handler := apiHandlers{
 		server: s,
 	}
-	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware), &handler)
+	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware, s.ValidateRequest), &handler)
 
 	return e
+}
+
+func (s *Server) ValidateRequest(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		request := c.Request()
+
+		// extract route and parameters from request
+		route, params, err := s.router.FindRoute(request)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorResourceNotFound, err)
+		}
+
+		input := &openapi3filter.RequestValidationInput{
+			Request:    request,
+			PathParams: params,
+			Route:      route,
+			Options: &openapi3filter.Options{
+				AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
+			},
+		}
+
+		ctx := request.Context()
+		if err := openapi3filter.ValidateRequest(ctx, input); err != nil {
+			return HTTPErrorWithInternal(ErrorInvalidRequest, err)
+		}
+
+		return next(c)
+	}
 }
 
 func (s *Server) Shutdown() {

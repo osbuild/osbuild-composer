@@ -83,8 +83,10 @@ func (value Parameters) Validate(ctx context.Context) error {
 }
 
 // Parameter is specified by OpenAPI/Swagger 3.0 standard.
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
 type Parameter struct {
 	ExtensionProps
+
 	Name            string      `json:"name,omitempty" yaml:"name,omitempty"`
 	In              string      `json:"in,omitempty" yaml:"in,omitempty"`
 	Description     string      `json:"description,omitempty" yaml:"description,omitempty"`
@@ -167,42 +169,42 @@ func (parameter *Parameter) UnmarshalJSON(data []byte) error {
 	return jsoninfo.UnmarshalStrictStruct(data, parameter)
 }
 
-func (parameter Parameter) JSONLookup(token string) (interface{}, error) {
+func (value Parameter) JSONLookup(token string) (interface{}, error) {
 	switch token {
 	case "schema":
-		if parameter.Schema != nil {
-			if parameter.Schema.Ref != "" {
-				return &Ref{Ref: parameter.Schema.Ref}, nil
+		if value.Schema != nil {
+			if value.Schema.Ref != "" {
+				return &Ref{Ref: value.Schema.Ref}, nil
 			}
-			return parameter.Schema.Value, nil
+			return value.Schema.Value, nil
 		}
 	case "name":
-		return parameter.Name, nil
+		return value.Name, nil
 	case "in":
-		return parameter.In, nil
+		return value.In, nil
 	case "description":
-		return parameter.Description, nil
+		return value.Description, nil
 	case "style":
-		return parameter.Style, nil
+		return value.Style, nil
 	case "explode":
-		return parameter.Explode, nil
+		return value.Explode, nil
 	case "allowEmptyValue":
-		return parameter.AllowEmptyValue, nil
+		return value.AllowEmptyValue, nil
 	case "allowReserved":
-		return parameter.AllowReserved, nil
+		return value.AllowReserved, nil
 	case "deprecated":
-		return parameter.Deprecated, nil
+		return value.Deprecated, nil
 	case "required":
-		return parameter.Required, nil
+		return value.Required, nil
 	case "example":
-		return parameter.Example, nil
+		return value.Example, nil
 	case "examples":
-		return parameter.Examples, nil
+		return value.Examples, nil
 	case "content":
-		return parameter.Content, nil
+		return value.Content, nil
 	}
 
-	v, _, err := jsonpointer.GetForToken(parameter.ExtensionProps, token)
+	v, _, err := jsonpointer.GetForToken(value.ExtensionProps, token)
 	return v, err
 }
 
@@ -251,6 +253,10 @@ func (value *Parameter) Validate(ctx context.Context) error {
 		return fmt.Errorf("parameter can't have 'in' value %q", value.In)
 	}
 
+	if in == ParameterInPath && !value.Required {
+		return fmt.Errorf("path parameter %q must be required", value.Name)
+	}
+
 	// Validate a parameter's serialization method.
 	sm, err := value.SerializationMethod()
 	if err != nil {
@@ -294,6 +300,7 @@ func (value *Parameter) Validate(ctx context.Context) error {
 			return fmt.Errorf("parameter %q schema is invalid: %v", value.Name, err)
 		}
 	}
+
 	if content := value.Content; content != nil {
 		if err := content.Validate(ctx); err != nil {
 			return fmt.Errorf("parameter %q content is invalid: %v", value.Name, err)
