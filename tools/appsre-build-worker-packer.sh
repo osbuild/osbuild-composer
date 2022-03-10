@@ -122,8 +122,19 @@ EOF2
 EOF
 fi
 
-cat >> worker-packer.sh <<'EOF'
-/usr/bin/packer build /osbuild-composer/templates/packer
+if [ "$ON_JENKINS" = true ]; then
+    # jenkins on main: build rhel only
+    PACKER_ONLY_EXCEPT=--only=amazon-ebs.rhel-8-x86_64
+elif [ -n "$CI_COMMIT_BRANCH" ] && [ "$CI_COMMIT_BRANCH" == "main" ]; then
+    # Schutzbot on main: build all except rhel
+    PACKER_ONLY_EXCEPT=--except=amazon-ebs.rhel-8-x86_64
+elif [ -n "$CI_COMMIT_BRANCH" ]; then
+    # Schutzbot but not main, build everything (use dummy except)
+    PACKER_ONLY_EXCEPT=--except=amazon-ebs.dummy
+fi
+
+cat >> worker-packer.sh <<EOF
+/usr/bin/packer build $PACKER_ONLY_EXCEPT /osbuild-composer/templates/packer
 EOF
 
 # prepare ansible inventories
