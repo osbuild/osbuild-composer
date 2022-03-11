@@ -818,8 +818,12 @@ func TestStageV2_UnmarshalJSON(t *testing.T) {
 				Inputs: &RPMStageInputs{
 					Packages: &RPMStageInput{
 						References: RPMStageReferences{
-							"checksum1",
-							"checksum2",
+							"checksum1": &RPMStageReference{},
+							"checksum2": &RPMStageReference{
+								Metadata: &RPMStageReferenceMetadata{
+									CheckGPG: true,
+								},
+							},
 						},
 					},
 				},
@@ -828,7 +832,7 @@ func TestStageV2_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.rpm","inputs":{"packages":{"type":"","origin":"","references":["checksum1","checksum2"]}},"options":{"gpgkeys":["key1","key2"]}}`),
+				data: []byte(`{"type":"org.osbuild.rpm","inputs":{"packages":{"type":"","origin":"","references":{"checksum1":{},"checksum2":{"metadata":{"rpm.check_gpg":true}}}}},"options":{"gpgkeys":["key1","key2"]}}`),
 			},
 		},
 		{
