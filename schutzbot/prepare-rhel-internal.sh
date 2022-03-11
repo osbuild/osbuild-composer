@@ -3,13 +3,12 @@ set -euo pipefail
 
 # Colorful output.
 function greenprint {
-  echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
 ALL_ARCHES="aarch64 ppc64le s390x x86_64"
 
-if [ -e ../tools/define-compose-url.sh ]
-then
+if [ -e ../tools/define-compose-url.sh ]; then
     source ../tools/define-compose-url.sh
 else
     source ./tools/define-compose-url.sh
@@ -19,7 +18,7 @@ fi
 greenprint "📜 Generating dnf repository file"
 rm -f rhel"${VERSION_ID%.*}"internal.repo
 for ARCH in $ALL_ARCHES; do
-    tee -a rhel"${VERSION_ID%.*}"internal.repo << EOF
+    tee -a rhel"${VERSION_ID%.*}"internal.repo <<EOF
 
 [rhel${VERSION_ID}-internal-baseos-${ARCH}]
 name=RHEL Internal BaseOS
@@ -39,15 +38,14 @@ priority=1
 EOF
 done
 
-
 # Create an osbuild-composer JSON file for content consumption
 greenprint "📜 Generate osbuild-composer JSON source file"
-tee rhel-"${VERSION_ID%.*}".json << EOF
+tee rhel-"${VERSION_ID%.*}".json <<EOF
 {
 EOF
 
 for ARCH in $ALL_ARCHES; do
-    tee -a rhel-"${VERSION_ID%.*}".json << EOF
+    tee -a rhel-"${VERSION_ID%.*}".json <<EOF
     "${ARCH}": [
         {
             "name": "baseos-${ARCH}",
@@ -63,7 +61,7 @@ EOF
 
     # only x86_64 has an RT repository
     if [ "$ARCH" == "x86_64" ]; then
-        tee -a rhel-"${VERSION_ID%.*}".json << EOF
+        tee -a rhel-"${VERSION_ID%.*}".json <<EOF
         ,{
             "name": "rt-${ARCH}",
             "baseurl": "${COMPOSE_URL}/compose/RT/${ARCH}/os/",
@@ -72,19 +70,19 @@ EOF
 EOF
     fi
 
-    tee -a rhel-"${VERSION_ID%.*}".json << EOF
+    tee -a rhel-"${VERSION_ID%.*}".json <<EOF
     ]
 EOF
 
     # append comma for all arches except the last one
     if [ "$ARCH" != "x86_64" ]; then
-        tee -a rhel-"${VERSION_ID%.*}".json << EOF
+        tee -a rhel-"${VERSION_ID%.*}".json <<EOF
         ,
 EOF
     fi
 done
 
-tee -a rhel-"${VERSION_ID%.*}".json << EOF
+tee -a rhel-"${VERSION_ID%.*}".json <<EOF
 }
 EOF
 
@@ -97,7 +95,7 @@ if [ -n "${REPO_URL+x}" ]; then
     JOB_NAME="${JOB_NAME:-${CI_JOB_ID}}"
 
     greenprint "📜 Amend dnf repository file"
-    tee -a rhel"${VERSION_ID%.*}"internal.repo << EOF
+    tee -a rhel"${VERSION_ID%.*}"internal.repo <<EOF
 
 [osbuild-composer-tests-multi-arch]
 name=Tests ${JOB_NAME}

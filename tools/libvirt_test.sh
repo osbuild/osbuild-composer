@@ -2,7 +2,7 @@
 set -euo pipefail
 
 #
-# tests that guest images are buildable using composer-cli and and verifies 
+# tests that guest images are buildable using composer-cli and and verifies
 # they boot with cloud-init using libvirt
 #
 
@@ -32,11 +32,11 @@ function greenprint {
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
-sudo virsh list --all > /dev/null
+sudo virsh list --all >/dev/null
 
 # Set a customized dnsmasq configuration for libvirt so we always get the
 # same address on bootup.
-sudo tee /tmp/integration.xml > /dev/null << EOF
+sudo tee /tmp/integration.xml >/dev/null <<EOF
 <network>
   <name>integration</name>
   <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
@@ -55,7 +55,7 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
   </ip>
 </network>
 EOF
-if ! sudo virsh net-info integration > /dev/null 2>&1; then
+if ! sudo virsh net-info integration >/dev/null 2>&1; then
     sudo virsh net-define /tmp/integration.xml
     sudo virsh net-start integration
 fi
@@ -66,7 +66,7 @@ WHEEL_GROUP=wheel
 if [[ $ID == rhel ]]; then
     WHEEL_GROUP=adm
 fi
-sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
+sudo tee /etc/polkit-1/rules.d/50-libvirt.rules >/dev/null <<EOF
 polkit.addRule(function(action, subject) {
     if (action.id == "org.libvirt.unix.manage" &&
         subject.isInGroup("${WHEEL_GROUP}")) {
@@ -94,7 +94,7 @@ SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 
 # Check for the smoke test file on the AWS instance that we start.
-smoke_test_check () {
+smoke_test_check() {
     # Ensure the ssh key has restricted permissions.
     SSH_OPTIONS=(-o StrictHostKeyChecking=no -o ConnectTimeout=5)
     SMOKE_TEST=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
@@ -106,21 +106,21 @@ smoke_test_check () {
 }
 
 # Get the compose log.
-get_compose_log () {
+get_compose_log() {
     COMPOSE_ID=$1
     LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.log
 
     # Download the logs.
-    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
+    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" >/dev/null
 }
 
 # Get the compose metadata.
-get_compose_metadata () {
+get_compose_metadata() {
     COMPOSE_ID=$1
     METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.json
 
     # Download the metadata.
-    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
+    sudo composer-cli compose metadata "$COMPOSE_ID" >/dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
@@ -128,11 +128,11 @@ get_compose_metadata () {
     sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
+    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" >/dev/null
 }
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "bp"
 description = "A base system"
 version = "0.0.1"
@@ -162,7 +162,7 @@ fi
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
     if rpm -q --quiet weldr-client; then
         COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
     else
@@ -202,10 +202,10 @@ BIG_TEMP_DIR=/var/lib/osbuild-composer-tests
 sudo rm -rf "${BIG_TEMP_DIR}" || true
 sudo mkdir "${BIG_TEMP_DIR}"
 pushd "${BIG_TEMP_DIR}"
-    sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-    IMAGE_FILENAME=$(basename "$(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}")")
-    LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
-    sudo mv "$IMAGE_FILENAME" "$LIBVIRT_IMAGE_PATH"
+sudo composer-cli compose image "${COMPOSE_ID}" >/dev/null
+IMAGE_FILENAME=$(basename "$(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}")")
+LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
+sudo mv "$IMAGE_FILENAME" "$LIBVIRT_IMAGE_PATH"
 popd
 
 # Prepare cloud-init data.
@@ -219,8 +219,8 @@ greenprint "💿 Creating a cloud-init ISO"
 CLOUD_INIT_PATH=/var/lib/libvirt/images/seed.iso
 rm -f $CLOUD_INIT_PATH
 pushd "$CLOUD_INIT_DIR"
-    sudo mkisofs -o $CLOUD_INIT_PATH -V cidata \
-        -r -J user-data meta-data network-config > /dev/null 2>&1
+sudo mkisofs -o $CLOUD_INIT_PATH -V cidata \
+    -r -J user-data meta-data network-config >/dev/null 2>&1
 popd
 
 # Ensure SELinux is happy with our new images.
@@ -324,14 +324,14 @@ fi
 sudo rm -f "$LIBVIRT_IMAGE_PATH" $CLOUD_INIT_PATH
 
 # Also delete the compose so we don't run out of disk space
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 
 # Use the return code of the smoke test to determine if we passed or failed.
 if [[ $RESULTS == 1 ]]; then
-  greenprint "💚 Success"
+    greenprint "💚 Success"
 else
-  greenprint "❌ Failed"
-  exit 1
+    greenprint "❌ Failed"
+    exit 1
 fi
 
 exit 0

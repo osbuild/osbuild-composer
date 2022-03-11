@@ -7,7 +7,6 @@
 # it checks the whole E2E setup including parsing of the JWT token which is
 # not tested in the unit test.
 
-
 set -euo pipefail
 
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
@@ -26,19 +25,19 @@ function greenprint {
 greenprint "Registering clean ups"
 KILL_PIDS=()
 function cleanup() {
-  set +eu
-  greenprint "Stopping containers"
-  sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh stop
+    set +eu
+    greenprint "Stopping containers"
+    sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh stop
 
-  greenprint "Removing generated CA cert"
-  sudo rm \
-      /etc/pki/ca-trust/source/anchors/osbuild-composer-tests-ca-crt.pem
-  sudo update-ca-trust
+    greenprint "Removing generated CA cert"
+    sudo rm \
+        /etc/pki/ca-trust/source/anchors/osbuild-composer-tests-ca-crt.pem
+    sudo update-ca-trust
 
-  for P in "${KILL_PIDS[@]}"; do
-      sudo pkill -P "$P"
-  done
-  set -eu
+    for P in "${KILL_PIDS[@]}"; do
+        sudo pkill -P "$P"
+    done
+    set -eu
 }
 trap cleanup EXIT
 
@@ -116,7 +115,7 @@ sudo systemctl start osbuild-remote-worker@localhost:8700
 DISTRO=rhel-86
 
 function s3_request {
-  cat <<EOF
+    cat <<EOF
 {
   "distribution": "$DISTRO",
   "image_request": {
@@ -132,8 +131,8 @@ EOF
 }
 
 function koji_request {
-  local task_id="$1"
-  cat <<EOF
+    local task_id="$1"
+    cat <<EOF
 {
   "distribution": "$DISTRO",
   "image_request": {
@@ -153,85 +152,84 @@ EOF
 }
 
 function access_token {
-  local refresh_token="$1"
-  curl --request POST \
-    --data "refresh_token=$refresh_token" \
-    --header "Content-Type: application/x-www-form-urlencoded" \
-    --silent \
-    --show-error \
-    --fail \
-    localhost:8081/token | jq -r .access_token
+    local refresh_token="$1"
+    curl --request POST \
+        --data "refresh_token=$refresh_token" \
+        --header "Content-Type: application/x-www-form-urlencoded" \
+        --silent \
+        --show-error \
+        --fail \
+        localhost:8081/token | jq -r .access_token
 }
 
 function send_compose {
-  local request_file="$1"
-  local refresh_token="$2"
-  curl \
-    --silent \
-    --show-error \
-    --fail \
-    --header 'Content-Type: application/json' \
-    --header "Authorization: Bearer $(access_token "$refresh_token")" \
-    --request POST \
-    --data @"$request_file" \
-    http://localhost:443/api/image-builder-composer/v2/compose | jq -r '.id'
+    local request_file="$1"
+    local refresh_token="$2"
+    curl \
+        --silent \
+        --show-error \
+        --fail \
+        --header 'Content-Type: application/json' \
+        --header "Authorization: Bearer $(access_token "$refresh_token")" \
+        --request POST \
+        --data @"$request_file" \
+        http://localhost:443/api/image-builder-composer/v2/compose | jq -r '.id'
 }
 
 function compose_status {
-  local compose="$1"
-  local refresh_token="$2"
-  curl \
-    --silent \
-    --show-error \
-    --fail \
-    --header "Authorization: Bearer $(access_token "$refresh_token")" \
-    "http://localhost:443/api/image-builder-composer/v2/composes/$compose" | jq -r '.status'
+    local compose="$1"
+    local refresh_token="$2"
+    curl \
+        --silent \
+        --show-error \
+        --fail \
+        --header "Authorization: Bearer $(access_token "$refresh_token")" \
+        "http://localhost:443/api/image-builder-composer/v2/composes/$compose" | jq -r '.status'
 }
 
 function assert_status {
-  local compose="$1"
-  local refresh_token="$2"
-  local status="$3"
-  [[ $(compose_status "$compose" "$refresh_token") == "$status" ]]
+    local compose="$1"
+    local refresh_token="$2"
+    local status="$3"
+    [[ $(compose_status "$compose" "$refresh_token") == "$status" ]]
 }
 
 function wait_for_status {
-  local compose="$1"
-  local refresh_token="$2"
-  local desired_status="$3"
-  while true
-  do
-    local current_status
-    current_status=$(compose_status "$compose" "$refresh_token")
+    local compose="$1"
+    local refresh_token="$2"
+    local desired_status="$3"
+    while true; do
+        local current_status
+        current_status=$(compose_status "$compose" "$refresh_token")
 
-    case "$current_status" in
-      "$desired_status")
-        break
-        ;;
-      # default undesired state
-      "failure")
-        echo "Image compose failed"
-        exit 1
-        ;;
-    esac
+        case "$current_status" in
+            "$desired_status")
+                break
+                ;;
+                # default undesired state
+            "failure")
+                echo "Image compose failed"
+                exit 1
+                ;;
+        esac
 
-    sleep 10
+        sleep 10
     done
 }
 
 function set_worker_org {
-  local org="$1"
-  greenprint "Setting worker's org ID to $org"
-  sudo tee "/etc/osbuild-worker/token" >/dev/null <<EOF
+    local org="$1"
+    greenprint "Setting worker's org ID to $org"
+    sudo tee "/etc/osbuild-worker/token" >/dev/null <<EOF
 $org
 EOF
-  sudo systemctl restart osbuild-remote-worker@localhost:8700
+    sudo systemctl restart osbuild-remote-worker@localhost:8700
 }
 
 ORG=42
 greenprint "Sending 1st compose, koji, org id = $ORG"
 koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
-ID=$(send_compose <( koji_request 1 ) $ORG)
+ID=$(send_compose <(koji_request 1) $ORG)
 
 greenprint "Making sure that a different worker doesn't pick up the compose."
 set_worker_org 100
@@ -244,7 +242,7 @@ wait_for_status "$ID" $ORG success
 
 ORG=2022
 greenprint "Sending 2nd compose, s3, org id = $ORG"
-ID=$(send_compose <( s3_request ) $ORG)
+ID=$(send_compose <(s3_request) $ORG)
 
 greenprint "Making sure that a different worker doesn't pick up the compose."
 set_worker_org 42

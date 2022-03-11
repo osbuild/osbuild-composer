@@ -3,7 +3,7 @@
 #
 # Test osbuild-composer 'upload to vmware' functionality. To do so, create and
 # push a blueprint with composer cli. Then, create an instance in vSphere
-# from the uploaded image. Finally, verify that the instance is running and 
+# from the uploaded image. Finally, verify that the instance is running and
 # cloud init ran.
 #
 
@@ -25,7 +25,6 @@ function get_build_info() {
     jq -r "${key}" "${fname}"
 }
 
-
 if [ "$ID" != "rhel" ]; then
     greenprint "VMware test not supported on $ID"
     exit 0
@@ -40,7 +39,7 @@ GOVC_CMD=/tmp/govc
 # instead of sourcing them from a file!
 VCENTER_CREDS="${VCENTER_CREDS:-}"
 if [ -n "$VCENTER_CREDS" ]; then
-# shellcheck source=/dev/null
+    # shellcheck source=/dev/null
     source "$VCENTER_CREDS"
 fi
 
@@ -48,11 +47,11 @@ fi
 if ! hash govc; then
     greenprint "Installing govc"
     pushd /tmp
-        curl -Ls --retry 5 --output govc.gz \
-            https://github.com/vmware/govmomi/releases/download/v0.24.0/govc_linux_amd64.gz
-        gunzip -f govc.gz
-        chmod +x /tmp/govc
-        $GOVC_CMD version
+    curl -Ls --retry 5 --output govc.gz \
+        https://github.com/vmware/govmomi/releases/download/v0.24.0/govc_linux_amd64.gz
+    gunzip -f govc.gz
+    chmod +x /tmp/govc
+    $GOVC_CMD version
     popd
 fi
 
@@ -77,7 +76,7 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "$SSH_KEY".pub)
 
 # Check that the system started and is running correctly
-running_test_check () {
+running_test_check() {
     STATUS=$(sudo ssh -i "${SSH_KEY}" redhat@"${1}" 'systemctl --wait is-system-running')
     if [[ $STATUS == running || $STATUS == degraded ]]; then
         echo 0
@@ -87,21 +86,21 @@ running_test_check () {
 }
 
 # Get the compose log.
-get_compose_log () {
+get_compose_log() {
     COMPOSE_ID=$1
     LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-vmware.log
 
     # Download the logs.
-    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
+    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" >/dev/null
 }
 
 # Get the compose metadata.
-get_compose_metadata () {
+get_compose_metadata() {
     COMPOSE_ID=$1
     METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-vmware.json
 
     # Download the metadata.
-    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
+    sudo composer-cli compose metadata "$COMPOSE_ID" >/dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
@@ -109,11 +108,11 @@ get_compose_metadata () {
     sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
+    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" >/dev/null
 }
 
 # Write an VMWare TOML file
-tee "$VMWARE_CONFIG" > /dev/null << EOF
+tee "$VMWARE_CONFIG" >/dev/null <<EOF
 provider = "vmware"
 
 [settings]
@@ -126,7 +125,7 @@ dataCenter = "${GOVMOMI_DATACENTER}"
 EOF
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "bash"
 description = "A base system with bash"
 version = "0.0.1"
@@ -162,7 +161,7 @@ COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
     COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
     # Is the compose finished?
@@ -217,7 +216,7 @@ VM_IP=$($GOVC_CMD vm.ip -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOM
 greenprint "⏱ Waiting for VM to respond to ssh"
 LOOP_COUNTER=1
 while [ $LOOP_COUNTER -le 30 ]; do
-    if ssh-keyscan "$VM_IP" > /dev/null 2>&1; then
+    if ssh-keyscan "$VM_IP" >/dev/null 2>&1; then
         echo "SSH is up!"
         ssh-keyscan "$VM_IP" | sudo tee -a /root/.ssh/known_hosts
         break

@@ -32,9 +32,4 @@ OSBUILD_LABEL=$(matchpathcon -n "$(which osbuild)")
 chcon "$OSBUILD_LABEL" tools/image-info
 
 # test the test case generation when dnf-json socket is stopped
-sudo ./tools/test-case-generators/generate-test-cases\
-    --output test/data/manifests\
-    --arch x86_64\
-    --distro rhel-8\
-    --image-type qcow2\
-    --store "$WORKDIR"
+sudo ./tools/test-case-generators/generate-test-cases --output test/data/manifests --arch x86_64 --distro rhel-8 --image-type qcow2 --store "$WORKDIR"

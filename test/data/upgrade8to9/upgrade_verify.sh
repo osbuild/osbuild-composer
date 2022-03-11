@@ -18,21 +18,21 @@ function get_build_info() {
 }
 
 # Get the compose log.
-get_compose_log () {
+get_compose_log() {
     COMPOSE_ID=$1
     LOG_FILE=/root/logs/osbuild-upgrade8to9.log
 
     # Download the logs.
-    composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
+    composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" >/dev/null
 }
 
 # Get the compose metadata.
-get_compose_metadata () {
+get_compose_metadata() {
     COMPOSE_ID=$1
     METADATA_FILE=/root/logs/osbuild-upgrade8to9.json
 
     # Download the metadata.
-    composer-cli compose metadata "$COMPOSE_ID" > /dev/null
+    composer-cli compose metadata "$COMPOSE_ID" >/dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
@@ -40,7 +40,7 @@ get_compose_metadata () {
     rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    jq -M '.' "${COMPOSE_ID}".json | tee "$METADATA_FILE" > /dev/null
+    jq -M '.' "${COMPOSE_ID}".json | tee "$METADATA_FILE" >/dev/null
 }
 
 IMAGE_KEY=osbuild-composer-upgrade-test
@@ -55,7 +55,7 @@ dnf install -y jq
 
 # Prepare repository override
 mkdir -p /etc/osbuild-composer/repositories
-tee /etc/osbuild-composer/repositories/rhel-90.json > /dev/null << EOF
+tee /etc/osbuild-composer/repositories/rhel-90.json >/dev/null <<EOF
 {
     "x86_64": [
         {
@@ -81,7 +81,7 @@ EOF
 systemctl start osbuild-composer.socket
 
 # prepare a simple blueprint
-tee blueprint.toml > /dev/null << EOF
+tee blueprint.toml >/dev/null <<EOF
 name = "bash"
 description = "A base system with bash"
 version = "0.0.1"
@@ -100,7 +100,7 @@ COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
 # Wait for the compose to finish.
 while true; do
-    composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
     COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
     # Is the compose finished?

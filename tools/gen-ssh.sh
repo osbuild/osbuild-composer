@@ -9,7 +9,7 @@ ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa
 key=" - $(cat "${SSH_KEY}".pub)"
 # Temporary, will copy user data from cloud-init once
 # go test are updated
-tee "${SSH_DATA_DIR}"/user-data > /dev/null << EOF
+tee "${SSH_DATA_DIR}"/user-data >/dev/null <<EOF
 #cloud-config
 write_files:
   - path: "/etc/smoke-test.txt"

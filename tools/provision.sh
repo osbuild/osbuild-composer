@@ -13,9 +13,9 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
 fi
 
 # RHEL 8.6+ and CentOS 9 require different handling for ansible
-ge86=$(echo "${VERSION_ID}" | awk '{print $1 >= 8.6}')  # do a numerical comparison for the version
+ge86=$(echo "${VERSION_ID}" | awk '{print $1 >= 8.6}') # do a numerical comparison for the version
 echo -n "${ID}=${VERSION_ID} "
-if [[ "${ID}" == "rhel" || "${ID}" == "centos" ]] && (( ge86 )); then
+if [[ "${ID}" == "rhel" || "${ID}" == "centos" ]] && ((ge86)); then
     sudo dnf install -y ansible-core koji
 else
     sudo dnf install -y ansible koji
@@ -52,11 +52,11 @@ V2_AZURE_CLIENT_ID="${V2_AZURE_CLIENT_ID:-}"
 V2_AZURE_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET:-}"
 if [[ -n "$V2_AZURE_CLIENT_ID" && -n "$V2_AZURE_CLIENT_SECRET" ]]; then
     set +x
-    sudo tee /etc/osbuild-worker/azure-credentials.toml > /dev/null << EOF
+    sudo tee /etc/osbuild-worker/azure-credentials.toml >/dev/null <<EOF
 client_id =     "$V2_AZURE_CLIENT_ID"
 client_secret = "$V2_AZURE_CLIENT_SECRET"
 EOF
-    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml >/dev/null <<EOF
 
 [azure]
 credentials = "/etc/osbuild-worker/azure-credentials.toml"
@@ -69,12 +69,12 @@ V2_AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID:-}"
 V2_AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY:-}"
 if [[ -n "$V2_AWS_ACCESS_KEY_ID" && -n "$V2_AWS_SECRET_ACCESS_KEY" ]]; then
     set +x
-    sudo tee /etc/osbuild-worker/aws-credentials.toml > /dev/null << EOF
+    sudo tee /etc/osbuild-worker/aws-credentials.toml >/dev/null <<EOF
 [default]
 aws_access_key_id = "$V2_AWS_ACCESS_KEY_ID"
 aws_secret_access_key = "$V2_AWS_SECRET_ACCESS_KEY"
 EOF
-    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml >/dev/null <<EOF
 
 [aws]
 credentials = "/etc/osbuild-worker/aws-credentials.toml"

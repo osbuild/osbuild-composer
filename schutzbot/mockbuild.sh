@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Colorful output.
 function greenprint {
-  echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
 # Get OS and architecture details.
@@ -13,7 +13,7 @@ source tools/set-env-variables.sh
 MOCK_CONFIG="${ID}-${VERSION_ID%.*}-$(uname -m)"
 
 if [[ $ID == centos ]]; then
-  MOCK_CONFIG="centos-stream-${VERSION_ID%.*}-$(uname -m)"
+    MOCK_CONFIG="centos-stream-${VERSION_ID%.*}-$(uname -m)"
 fi
 
 # The commit this script operates on.
@@ -29,10 +29,10 @@ MOCK_REPO_BASE_URL="http://${REPO_BUCKET}.s3-website.us-east-2.amazonaws.com"
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
 if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
-  # If this script runs on a subscribed RHEL, the RPMs are actually built
-  # using the latest CDN content, therefore rhel-*-cdn is used as the distro
-  # version.
-  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+    # If this script runs on a subscribed RHEL, the RPMs are actually built
+    # using the latest CDN content, therefore rhel-*-cdn is used as the distro
+    # version.
+    DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
 fi
 
 # Relative path of the repository – used for constructing both the local and
@@ -50,8 +50,8 @@ REPO_URL=${MOCK_REPO_BASE_URL}/${REPO_PATH}
 
 # Don't rerun the build if it already exists
 if curl --silent --fail --head --output /dev/null "${REPO_URL}/repodata/repomd.xml"; then
-  greenprint "🎁 Repository already exists. Exiting."
-  exit 0
+    greenprint "🎁 Repository already exists. Exiting."
+    exit 0
 fi
 
 # Mock and s3cmd is only available in EPEL for RHEL.
@@ -66,7 +66,6 @@ fi
 greenprint "📦 Installing mock requirements"
 sudo dnf -y install createrepo_c mock s3cmd
 
-
 # Print some data.
 greenprint "🧬 Using mock config: ${MOCK_CONFIG}"
 greenprint "📦 SHA: ${COMMIT}"
@@ -79,7 +78,7 @@ if [[ "$ID" == rhel && ${VERSION_ID%.*} == 8 ]] && ! sudo subscription-manager s
     # remove the subscription check
     sudo sed -i "s/config_opts\['redhat_subscription_required'\] = True/config_opts['redhat_subscription_required'] = False/" /etc/mock/templates/rhel-8.tpl
     # reuse redhat.repo
-    cat /etc/yum.repos.d/rhel8internal.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl > /dev/null
+    cat /etc/yum.repos.d/rhel8internal.repo | sudo tee -a /etc/mock/templates/rhel-8.tpl >/dev/null
     # We need triple quotes at the end of the template to mark the end of the repo list.
     echo '"""' | sudo tee -a /etc/mock/templates/rhel-8.tpl
 elif [[ ${VERSION_ID%.*} == 9 ]]; then
@@ -90,10 +89,10 @@ fi
 greenprint "🔧 Building source RPM"
 git archive --prefix "osbuild-composer-${COMMIT}/" --output "osbuild-composer-${COMMIT}.tar.gz" HEAD
 sudo mock -r "$MOCK_CONFIG" --buildsrpm \
-  --define "commit ${COMMIT}" \
-  --spec ./osbuild-composer.spec \
-  --sources "./osbuild-composer-${COMMIT}.tar.gz" \
-  --resultdir ./srpm
+    --define "commit ${COMMIT}" \
+    --spec ./osbuild-composer.spec \
+    --sources "./osbuild-composer-${COMMIT}.tar.gz" \
+    --resultdir ./srpm
 
 if [ "${NIGHTLY:=false}" == "true" ]; then
     RELAX_REQUIRES="--with=relax_requires"
@@ -126,7 +125,7 @@ createrepo_c "${REPO_DIR}"
 # Upload repository to S3.
 greenprint "☁ Uploading RPMs to S3"
 pushd repo
-    AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
+AWS_ACCESS_KEY_ID="$V2_AWS_ACCESS_KEY_ID" \
     AWS_SECRET_ACCESS_KEY="$V2_AWS_SECRET_ACCESS_KEY" \
     s3cmd --acl-public put --recursive . s3://${REPO_BUCKET}/
 popd

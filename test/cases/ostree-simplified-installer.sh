@@ -28,11 +28,11 @@ sudo systemctl enable --now firewalld
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
-sudo virsh list --all > /dev/null
+sudo virsh list --all >/dev/null
 
 # Set a customized dnsmasq configuration for libvirt so we always get the
 # same address on bootup.
-sudo tee /tmp/integration.xml > /dev/null << EOF
+sudo tee /tmp/integration.xml >/dev/null <<EOF
 <network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
   <name>integration</name>
   <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
@@ -58,7 +58,7 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
 </network>
 EOF
 
-if ! sudo virsh net-info integration > /dev/null 2>&1; then
+if ! sudo virsh net-info integration >/dev/null 2>&1; then
     sudo virsh net-define /tmp/integration.xml
 fi
 if [[ $(sudo virsh net-info integration | grep 'Active' | awk '{print $2}') == 'no' ]]; then
@@ -67,7 +67,7 @@ fi
 
 # Allow anyone in the wheel group to talk to libvirt.
 greenprint "🚪 Allowing users in wheel group to talk to libvirt"
-sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
+sudo tee /etc/polkit-1/rules.d/50-libvirt.rules >/dev/null <<EOF
 polkit.addRule(function(action, subject) {
     if (action.id == "org.libvirt.unix.manage" &&
         subject.isInGroup("adm")) {
@@ -123,26 +123,26 @@ case "${ID}-${VERSION_ID}" in
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
-        exit 1;;
+        exit 1
+        ;;
 esac
 
-
 # Get the compose log.
-get_compose_log () {
+get_compose_log() {
     COMPOSE_ID=$1
     LOG_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.log
 
     # Download the logs.
-    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
+    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" >/dev/null
 }
 
 # Get the compose metadata.
-get_compose_metadata () {
+get_compose_metadata() {
     COMPOSE_ID=$1
     METADATA_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.json
 
     # Download the metadata.
-    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
+    sudo composer-cli compose metadata "$COMPOSE_ID" >/dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
@@ -150,7 +150,7 @@ get_compose_metadata () {
     sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    sudo cat "${TEMPDIR}"/"${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
+    sudo cat "${TEMPDIR}"/"${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" >/dev/null
 }
 
 # Build ostree image.
@@ -178,7 +178,7 @@ build_image() {
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
         COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
         # Is the compose finished?
@@ -207,7 +207,7 @@ build_image() {
 }
 
 # Wait for the ssh server up to be.
-wait_for_ssh_up () {
+wait_for_ssh_up() {
     SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
@@ -217,7 +217,7 @@ wait_for_ssh_up () {
 }
 
 # Clean up our mess.
-clean_up () {
+clean_up() {
     greenprint "🧼 Cleaning up"
 
     # Clear vm
@@ -244,7 +244,7 @@ clean_up () {
 }
 
 # Test result checking
-check_result () {
+check_result() {
     greenprint "🎏 Checking for test result"
     if [[ $RESULTS == 1 ]]; then
         greenprint "💚 Success"
@@ -291,19 +291,19 @@ sudo git checkout c2bab2c3cda954087fe66b683d31bffeac0c7189
 sudo CONTAINER_IMAGE=quay.io/fido-fdo/fdo-admin-cli:0.4.0 ./create-keys.sh
 #DIUN_PUB_KEY_HASH=$(cat keys/diun_pub_key_hash)
 sudo podman run -d \
-  -v "$PWD"/ownership_vouchers:/etc/fdo/ownership_vouchers:z \
-  -v "$PWD"/config/manufacturing-server.yml:/etc/fdo/manufacturing-server.conf.d/00-default.yml:z \
-  -v "$PWD"/keys:/etc/fdo/keys:z \
-  --ip 192.168.200.2 \
-  --name fdo-manufacturing-server \
-  --network edge \
-  quay.io/fido-fdo/fdo-manufacturing-server:0.4.0
+    -v "$PWD"/ownership_vouchers:/etc/fdo/ownership_vouchers:z \
+    -v "$PWD"/config/manufacturing-server.yml:/etc/fdo/manufacturing-server.conf.d/00-default.yml:z \
+    -v "$PWD"/keys:/etc/fdo/keys:z \
+    --ip 192.168.200.2 \
+    --name fdo-manufacturing-server \
+    --network edge \
+    quay.io/fido-fdo/fdo-manufacturing-server:0.4.0
 cd .. || exit
 
 # Wait for fdo server to be running
 until [ "$(curl -X POST http://192.168.200.2:8080/ping)" == "pong" ]; do
-    sleep 1;
-done;
+    sleep 1
+done
 
 ##########################################################
 ##
@@ -312,7 +312,7 @@ done;
 ##########################################################
 
 # Write a blueprint for ostree image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "container"
 description = "A base rhel-edge container image"
 version = "0.0.1"
@@ -348,7 +348,7 @@ build_image container "${CONTAINER_TYPE}"
 
 # Download the image
 greenprint "📥 Downloading the container image"
-sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+sudo composer-cli compose image "${COMPOSE_ID}" >/dev/null
 
 # Deal with stage repo image
 greenprint "🗜 Starting container"
@@ -365,8 +365,8 @@ sudo rm -f "$IMAGE_FILENAME"
 
 # Wait for container to be running
 until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
-    sleep 1;
-done;
+    sleep 1
+done
 
 # Sync installer edge content
 greenprint "📡 Sync installer content from stage repo"
@@ -374,8 +374,8 @@ sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage "$OSTREE_REF"
 
 # Clean compose and blueprints.
 greenprint "🧽 Clean up container blueprint and compose"
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete container > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
+sudo composer-cli blueprints delete container >/dev/null
 
 ############################################################
 ##
@@ -388,7 +388,7 @@ sudo composer-cli blueprints delete container > /dev/null
 greenprint "Negative test: checking error message when no installation device specified"
 
 greenprint "📋 Preparing installer blueprint with no installation device"
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "simplenodevice"
 description = "A rhel-edge simplified-installer image without installation device specified"
 version = "0.0.1"
@@ -414,7 +414,7 @@ else
 fi
 
 # Write a blueprint for installer image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "installer"
 description = "A rhel-edge simplified-installer image"
 version = "0.0.1"
@@ -443,14 +443,14 @@ build_image installer "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
 
 # Download the image
 greenprint "📥 Downloading the installer image"
-sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+sudo composer-cli compose image "${COMPOSE_ID}" >/dev/null
 ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
 sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete installer > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
+sudo composer-cli blueprints delete installer >/dev/null
 
 ##################################################################
 ##
@@ -484,23 +484,23 @@ sudo podman ps -a
 
 greenprint "Check manufacturing server up and running"
 until [ "$(curl -X POST http://192.168.200.2:8080/ping)" == "pong" ]; do
-    sleep 1;
-done;
+    sleep 1
+done
 
 greenprint "📋 Install edge vm via http boot"
-sudo virt-install --name="${IMAGE_KEY}-http"\
-                  --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                  --ram 3072 \
-                  --vcpus 2 \
-                  --network network=integration,mac=34:49:22:B0:83:30 \
-                  --os-type linux \
-                  --os-variant "${OS_VARIANT}" \
-                  --pxe \
-                  --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
-                  --nographics \
-                  --noautoconsole \
-                  --wait=-1 \
-                  --noreboot
+sudo virt-install --name="${IMAGE_KEY}-http" \
+    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+    --ram 3072 \
+    --vcpus 2 \
+    --network network=integration,mac=34:49:22:B0:83:30 \
+    --os-type linux \
+    --os-variant "${OS_VARIANT}" \
+    --pxe \
+    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+    --nographics \
+    --noautoconsole \
+    --wait=-1 \
+    --noreboot
 
 # Start VM.
 greenprint "💻 Start HTTP BOOT VM"
@@ -524,7 +524,7 @@ greenprint "🕹 Get ostree install commit value"
 INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+sudo tee "${TEMPDIR}"/inventory >/dev/null <<EOF
 [ostree_guest]
 ${HTTP_GUEST_ADDRESS}
 
@@ -565,19 +565,19 @@ greenprint "🖥 Create qcow2 file for virt install"
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
-sudo virt-install  --name="${IMAGE_KEY}-uefi"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:31 \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --noreboot
+sudo virt-install --name="${IMAGE_KEY}-uefi" \
+    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+    --ram 3072 \
+    --vcpus 2 \
+    --network network=integration,mac=34:49:22:B0:83:31 \
+    --os-type linux \
+    --os-variant ${OS_VARIANT} \
+    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+    --nographics \
+    --noautoconsole \
+    --wait=-1 \
+    --noreboot
 
 # Start VM.
 greenprint "💻 Start UEFI VM"
@@ -601,7 +601,7 @@ greenprint "🕹 Get ostree install commit value"
 INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+sudo tee "${TEMPDIR}"/inventory >/dev/null <<EOF
 [ostree_guest]
 ${UEFI_GUEST_ADDRESS}
 
@@ -627,7 +627,7 @@ check_result
 
 # Write a blueprint for ostree image.
 # NB: no ssh key in this blueprint for the admin user
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "upgrade"
 description = "An upgrade rhel-edge container image"
 version = "0.0.2"
@@ -662,11 +662,11 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve upgrade
 
 # Build upgrade image.
-build_image upgrade  "${CONTAINER_TYPE}" "$PROD_REPO_URL"
+build_image upgrade "${CONTAINER_TYPE}" "$PROD_REPO_URL"
 
 # Download the image
 greenprint "📥 Downloading the upgrade image"
-sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+sudo composer-cli compose image "${COMPOSE_ID}" >/dev/null
 
 # Clear stage repo running env
 greenprint "🧹 Clearing stage repo running env"
@@ -690,8 +690,8 @@ EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
 sudo podman run -d --name rhel-edge --network edge --ip "$STAGE_REPO_ADDRESS" "$EDGE_IMAGE_ID"
 # Wait for container to be running
 until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
-    sleep 1;
-done;
+    sleep 1
+done
 
 # Pull upgrade to prod mirror
 greenprint "⛓ Pull upgrade to prod mirror"
@@ -705,8 +705,8 @@ UPGRADE_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Clean compose and blueprints.
 greenprint "🧽 Clean up upgrade blueprint and compose"
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete upgrade > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
+sudo composer-cli blueprints delete upgrade >/dev/null
 
 greenprint "🗳 Upgrade ostree image/commit"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
@@ -731,7 +731,7 @@ done
 check_result
 
 # Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+sudo tee "${TEMPDIR}"/inventory >/dev/null <<EOF
 [ostree_guest]
 ${UEFI_GUEST_ADDRESS}
 

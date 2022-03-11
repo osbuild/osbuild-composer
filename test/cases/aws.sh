@@ -2,8 +2,8 @@
 
 #
 # Test osbuild-composer 'upload to aws' functionality. To do so, create and
-# push a blueprint with composer cli. Then, create an instance in aws 
-# from the uploaded image. Finally, verify that the instance is running and 
+# push a blueprint with composer cli. Then, create an instance in aws
+# from the uploaded image. Finally, verify that the instance is running and
 # cloud init ran.
 #
 
@@ -52,13 +52,12 @@ trap cleanup EXIT
 # resources in case the test unexpectedly fails or is canceled
 CI="${CI:-false}"
 if [[ "$CI" == true ]]; then
-  # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
-  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
+    # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
+    TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
 else
-  # if not running in Jenkins, generate ID not relying on specific env variables
-  TEST_ID=$(uuidgen);
+    # if not running in Jenkins, generate ID not relying on specific env variables
+    TEST_ID=$(uuidgen)
 fi
-
 
 # Jenkins sets WORKSPACE to the job workspace, but if this script runs
 # outside of Jenkins, we can set up a temporary directory instead.
@@ -97,7 +96,7 @@ fi
 $AWS_CMD --version
 
 # Check for the smoke test file on the AWS instance that we start.
-smoke_test_check () {
+smoke_test_check() {
     # Ensure the ssh key has restricted permissions.
     SMOKE_TEST=$(sudo ssh -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
     if [[ $SMOKE_TEST == smoke-test ]]; then
@@ -108,21 +107,21 @@ smoke_test_check () {
 }
 
 # Get the compose log.
-get_compose_log () {
+get_compose_log() {
     COMPOSE_ID=$1
     LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-aws.log
 
     # Download the logs.
-    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
+    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" >/dev/null
 }
 
 # Get the compose metadata.
-get_compose_metadata () {
+get_compose_metadata() {
     COMPOSE_ID=$1
     METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-aws.json
 
     # Download the metadata.
-    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
+    sudo composer-cli compose metadata "$COMPOSE_ID" >/dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
@@ -130,20 +129,20 @@ get_compose_metadata () {
     sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
+    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" >/dev/null
 }
 
 # Get the console screenshot from the AWS instance.
-store_instance_screenshot () {
+store_instance_screenshot() {
     INSTANCE_ID=${1}
     LOOP_COUNTER=${2}
     SCREENSHOT_FILE=${WORKSPACE}/console-screenshot-${ID}-${VERSION_ID}-${LOOP_COUNTER}.jpg
 
-    $AWS_CMD ec2 get-console-screenshot --instance-id "${1}" > "$INSTANCE_CONSOLE"
-    jq -r '.ImageData' "$INSTANCE_CONSOLE" | base64 -d - > "$SCREENSHOT_FILE"
+    $AWS_CMD ec2 get-console-screenshot --instance-id "${1}" >"$INSTANCE_CONSOLE"
+    jq -r '.ImageData' "$INSTANCE_CONSOLE" | base64 -d - >"$SCREENSHOT_FILE"
 }
 
-is_weldr_client_installed () {
+is_weldr_client_installed() {
     if rpm --quiet -q weldr-client; then
         echo true
     else
@@ -152,7 +151,7 @@ is_weldr_client_installed () {
 }
 
 # Write an AWS TOML file
-tee "$AWS_CONFIG" > /dev/null << EOF
+tee "$AWS_CONFIG" >/dev/null <<EOF
 provider = "aws"
 
 [settings]
@@ -164,7 +163,7 @@ key = "${TEST_ID}"
 EOF
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "bash"
 description = "A base system with bash"
 version = "0.0.1"
@@ -196,7 +195,7 @@ COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
     COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
     # Is the compose finished?
@@ -227,8 +226,8 @@ fi
 greenprint "🔍 Search for created AMI"
 $AWS_CMD ec2 describe-images \
     --owners self \
-    --filters Name=name,Values="${TEST_ID}" \
-    | tee "$AMI_DATA" > /dev/null
+    --filters Name=name,Values="${TEST_ID}" |
+    tee "$AMI_DATA" >/dev/null
 
 AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$AMI_DATA")
 SNAPSHOT_ID=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$AMI_DATA")
@@ -241,7 +240,7 @@ $AWS_CMD ec2 create-tags \
 # NOTE(mhayden): Getting TagSpecifications to play along with bash's
 # parsing of curly braces and square brackets is nuts, so we just write some
 # json and pass it to the aws command.
-tee "$AWS_INSTANCE_JSON" > /dev/null << EOF
+tee "$AWS_INSTANCE_JSON" >/dev/null <<EOF
 {
     "TagSpecifications": [
         {
@@ -268,14 +267,14 @@ $AWS_CMD ec2 run-instances \
     --image-id "${AMI_IMAGE_ID}" \
     --instance-type t3a.micro \
     --user-data file://"${SSH_DATA_DIR}"/user-data \
-    --cli-input-json file://"${AWS_INSTANCE_JSON}" > /dev/null
+    --cli-input-json file://"${AWS_INSTANCE_JSON}" >/dev/null
 
 # Wait for the instance to finish building.
 greenprint "⏱ Waiting for AWS instance to be marked as running"
 while true; do
     $AWS_CMD ec2 describe-instances \
-        --filters Name=image-id,Values="${AMI_IMAGE_ID}" \
-        | tee "$INSTANCE_DATA" > /dev/null
+        --filters Name=image-id,Values="${AMI_IMAGE_ID}" |
+        tee "$INSTANCE_DATA" >/dev/null
 
     INSTANCE_STATUS=$(jq -r '.Reservations[].Instances[].State.Name' "$INSTANCE_DATA")
 
@@ -296,7 +295,7 @@ PUBLIC_IP=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$INSTANCE_DATA"
 # Wait for the node to come online.
 greenprint "⏱ Waiting for AWS instance to respond to ssh"
 for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan "$PUBLIC_IP" > /dev/null 2>&1; then
+    if ssh-keyscan "$PUBLIC_IP" >/dev/null 2>&1; then
         echo "SSH is up!"
         ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
         break
@@ -336,7 +335,7 @@ $AWS_CMD ec2 deregister-image --image-id "${AMI_IMAGE_ID}"
 $AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
 
 # Also delete the compose so we don't run out of disk space
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 
 # Use the return code of the smoke test to determine if we passed or failed.
 # On rhel continue with the cloudapi test

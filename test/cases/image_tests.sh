@@ -37,7 +37,7 @@ PASSED_TESTS=()
 FAILED_TESTS=()
 
 # Print out a nice test divider so we know when tests stop and start.
-test_divider () {
+test_divider() {
     printf "%0.s-" {1..78} && echo
 }
 
@@ -45,21 +45,21 @@ test_divider () {
 # Exclude test cases that require external dependencies like a http ostree repo.
 # These manifests exist only for correct manifest creation testing and cannot
 # be built during this test.
-get_test_cases () {
+get_test_cases() {
     TEST_CASE_SELECTOR="${DISTRO_CODE/-/_}-${ARCH}"
-    pushd $IMAGE_TEST_CASES_PATH > /dev/null
-        ALL_CASES=$(ls "$TEST_CASE_SELECTOR"*.json)
-        SKIP_OSTREE=$(jq -r 'if (.manifest.sources."org.osbuild.ostree" != null) then input_filename else empty end' "${TEST_CASE_SELECTOR}"*.json)
-        # temporarily skip azure-rhui image, see COMPOSER-1397 for details
-        SKIP_TMP=$(grep azure_rhui <<< "$ALL_CASES")
-        SKIP_CASES=("${SKIP_OSTREE[@]}" "$SKIP_TMP")
-        mapfile -t TEST_CASES < <(grep -vxFf <(printf '%s\n' "${SKIP_CASES[@]}") <(printf '%s\n' "${ALL_CASES[@]}"))
-        echo "${TEST_CASES[@]}"
-    popd > /dev/null
+    pushd $IMAGE_TEST_CASES_PATH >/dev/null
+    ALL_CASES=$(ls "$TEST_CASE_SELECTOR"*.json)
+    SKIP_OSTREE=$(jq -r 'if (.manifest.sources."org.osbuild.ostree" != null) then input_filename else empty end' "${TEST_CASE_SELECTOR}"*.json)
+    # temporarily skip azure-rhui image, see COMPOSER-1397 for details
+    SKIP_TMP=$(grep azure_rhui <<<"$ALL_CASES")
+    SKIP_CASES=("${SKIP_OSTREE[@]}" "$SKIP_TMP")
+    mapfile -t TEST_CASES < <(grep -vxFf <(printf '%s\n' "${SKIP_CASES[@]}") <(printf '%s\n' "${ALL_CASES[@]}"))
+    echo "${TEST_CASES[@]}"
+    popd >/dev/null
 }
 
 # Run a test case and store the result as passed or failed.
-run_test_case () {
+run_test_case() {
     TEST_RUNNER=$1
     TEST_CASE_FILENAME=$2
     TEST_NAME=$(basename "$TEST_CASE_FILENAME")

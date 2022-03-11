@@ -36,17 +36,17 @@ function retry {
 }
 
 function setup_repo {
-  local project=$1
-  local commit=$2
-  local priority=${3:-10}
+    local project=$1
+    local commit=$2
+    local priority=${3:-10}
 
-  local REPO_PATH=${project}/${DISTRO_VERSION}/${ARCH}/${commit}
-  if [[ "${NIGHTLY:=false}" == "true" && "${project}" == "osbuild-composer" ]]; then
-    REPO_PATH=nightly/${REPO_PATH}
-  fi
+    local REPO_PATH=${project}/${DISTRO_VERSION}/${ARCH}/${commit}
+    if [[ "${NIGHTLY:=false}" == "true" && "${project}" == "osbuild-composer" ]]; then
+        REPO_PATH=nightly/${REPO_PATH}
+    fi
 
-  greenprint "Setting up dnf repository for ${project} ${commit}"
-  sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
+    greenprint "Setting up dnf repository for ${project} ${commit}"
+    sudo tee "/etc/yum.repos.d/${project}.repo" <<EOF
 [${project}]
 name=${project} ${commit}
 baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${REPO_PATH}
@@ -60,31 +60,31 @@ EOF
 source tools/set-env-variables.sh
 
 if [[ $ID == "rhel" && ${VERSION_ID%.*} == "9" ]]; then
-  # There's a bug in RHEL 9 that causes /tmp to be mounted on tmpfs.
-  # Explicitly stop and mask the mount unit to prevent this.
-  # Otherwise, the tests will randomly fail because we use /tmp quite a lot.
-  # See https://bugzilla.redhat.com/show_bug.cgi?id=1959826
-  greenprint "Disabling /tmp as tmpfs on RHEL 9"
-  sudo systemctl stop tmp.mount && sudo systemctl mask tmp.mount
+    # There's a bug in RHEL 9 that causes /tmp to be mounted on tmpfs.
+    # Explicitly stop and mask the mount unit to prevent this.
+    # Otherwise, the tests will randomly fail because we use /tmp quite a lot.
+    # See https://bugzilla.redhat.com/show_bug.cgi?id=1959826
+    greenprint "Disabling /tmp as tmpfs on RHEL 9"
+    sudo systemctl stop tmp.mount && sudo systemctl mask tmp.mount
 fi
 
 # Distro version that this script is running on.
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
 if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
-  # If this script runs on subscribed RHEL, install content built using CDN
-  # repositories.
-  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+    # If this script runs on subscribed RHEL, install content built using CDN
+    # repositories.
+    DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
 
-  # workaround for https://github.com/osbuild/osbuild/issues/717
-  sudo subscription-manager config --rhsm.manage_repos=1
+    # workaround for https://github.com/osbuild/osbuild/issues/717
+    sudo subscription-manager config --rhsm.manage_repos=1
 fi
 
 greenprint "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
 greenprint "Adding osbuild team ssh keys"
-cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
+cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys >/dev/null
 
 # TODO: include this in the jenkins runner (and split test/target machines out)
 sudo dnf -y install jq
@@ -96,21 +96,21 @@ setup_repo osbuild-composer "${GIT_COMMIT}" 5
 
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 if [[ "${OSBUILD_GIT_COMMIT}" != "null" ]]; then
-  setup_repo osbuild "${OSBUILD_GIT_COMMIT}" 10
+    setup_repo osbuild "${OSBUILD_GIT_COMMIT}" 10
 fi
 
 if [[ "$PROJECT" != "osbuild-composer" ]]; then
-  PROJECT_COMMIT=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependants[\"${PROJECT}\"].commit" Schutzfile)
-  setup_repo "${PROJECT}" "${PROJECT_COMMIT}" 10
+    PROJECT_COMMIT=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependants[\"${PROJECT}\"].commit" Schutzfile)
+    setup_repo "${PROJECT}" "${PROJECT_COMMIT}" 10
 
-  # Get a list of packages needed to be preinstalled before "${PROJECT}-tests".
-  # Useful mainly for EPEL.
-  PRE_INSTALL_PACKAGES=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependants[\"${PROJECT}\"].pre_install_packages[]?" Schutzfile)
+    # Get a list of packages needed to be preinstalled before "${PROJECT}-tests".
+    # Useful mainly for EPEL.
+    PRE_INSTALL_PACKAGES=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependants[\"${PROJECT}\"].pre_install_packages[]?" Schutzfile)
 
-  if [ "${PRE_INSTALL_PACKAGES}" ]; then
-    # shellcheck disable=SC2086 # We need to pass multiple arguments here.
-    sudo dnf -y install ${PRE_INSTALL_PACKAGES}
-  fi
+    if [ "${PRE_INSTALL_PACKAGES}" ]; then
+        # shellcheck disable=SC2086 # We need to pass multiple arguments here.
+        sudo dnf -y install ${PRE_INSTALL_PACKAGES}
+    fi
 fi
 
 if [ -f "rhel${VERSION_ID%.*}internal.repo" ]; then
@@ -127,7 +127,7 @@ retry sudo dnf -y upgrade selinux-policy
 retry sudo dnf -y install "${PROJECT}-tests"
 
 # Save osbuild-composer NVR to a file to be used as CI artifact
-rpm -q osbuild-composer > COMPOSER_NVR
+rpm -q osbuild-composer >COMPOSER_NVR
 
 if [ "${NIGHTLY:=false}" == "true" ]; then
     # check if we've installed the osbuild-composer RPM from the nightly tree

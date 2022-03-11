@@ -9,7 +9,7 @@ INSTANCE_PROFILE=$(curl -Ls http://169.254.169.254/latest/meta-data/iam/security
 # Determine if we should use staging/stable SQS endpoint.
 SQS_ENDPOINT=staging
 if [[ $INSTANCE_PROFILE =~ stable ]]; then
-  SQS_ENDPOINT=stable
+	SQS_ENDPOINT=stable
 fi
 
 QUEUE_URL=https://queue.amazonaws.com/933752197999/image-builder-pozorbot-${SQS_ENDPOINT}

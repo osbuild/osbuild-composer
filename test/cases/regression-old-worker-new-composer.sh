@@ -28,11 +28,11 @@ sudo cp -a /usr/share/tests/osbuild-composer/repositories "$REPOS/repositories"
 sudo dnf remove -y osbuild-composer osbuild-composer-worker osbuild-composer-tests
 
 function setup_repo {
-  local project=$1
-  local commit=$2
-  local priority=${3:-10}
-  echo "Setting up dnf repository for ${project} ${commit}"
-  sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
+    local project=$1
+    local commit=$2
+    local priority=${3:-10}
+    echo "Setting up dnf repository for ${project} ${commit}"
+    sudo tee "/etc/yum.repos.d/${project}.repo" <<EOF
 [${project}]
 name=${project} ${commit}
 baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/rhel-8-cdn/x86_64/${commit}
@@ -56,24 +56,24 @@ DNF_DIR="$(mktemp -d)"
 DNF_SOCK="$DNF_DIR/api.sock"
 
 sudo podman pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
-     "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
+    "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
 
 # The host entitlement doesn't get picked up by composer
 # see https://github.com/osbuild/osbuild-composer/issues/1845
-sudo podman run  \
-     --name=composer \
-     -d \
-     -v /etc/osbuild-composer:/etc/osbuild-composer:Z \
-     -v /etc/rhsm:/etc/rhsm:Z \
-     -v /etc/pki/entitlement:/etc/pki/entitlement:Z \
-     -v "$REPOS/repositories":/usr/share/osbuild-composer/repositories:Z \
-     -v "$WELDR_DIR:/run/weldr/":Z \
-     -v "$DNF_DIR:/run/osbuild-dnf-json/":Z \
-     -e OVERWRITE_CACHE_DIR="/var/cache/dnf-json" \
-     -p 8700:8700 \
-     "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}" \
-     --weldr-api --dnf-json --remote-worker-api \
-     --no-local-worker-api --no-composer-api
+sudo podman run \
+    --name=composer \
+    -d \
+    -v /etc/osbuild-composer:/etc/osbuild-composer:Z \
+    -v /etc/rhsm:/etc/rhsm:Z \
+    -v /etc/pki/entitlement:/etc/pki/entitlement:Z \
+    -v "$REPOS/repositories":/usr/share/osbuild-composer/repositories:Z \
+    -v "$WELDR_DIR:/run/weldr/":Z \
+    -v "$DNF_DIR:/run/osbuild-dnf-json/":Z \
+    -e OVERWRITE_CACHE_DIR="/var/cache/dnf-json" \
+    -p 8700:8700 \
+    "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}" \
+    --weldr-api --dnf-json --remote-worker-api \
+    --no-local-worker-api --no-composer-api
 
 # try starting a worker
 set +e
@@ -94,7 +94,7 @@ trap log_on_exit EXIT
 BLUEPRINT_FILE=$(mktemp)
 COMPOSE_START=$(mktemp)
 COMPOSE_INFO=$(mktemp)
-tee "$BLUEPRINT_FILE" > /dev/null << EOF2
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF2
 name = "simple"
 version = "0.0.1"
 
@@ -110,7 +110,7 @@ COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 # Wait for the compose to finish.
 echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
-    sudo composer-cli -s "$WELDR_SOCK" --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    sudo composer-cli -s "$WELDR_SOCK" --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
     COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
     # Is the compose finished?

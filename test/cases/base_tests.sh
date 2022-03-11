@@ -2,7 +2,7 @@
 set -euo pipefail
 
 #
-# Script that executes different high level sanity tests writen in GO. 
+# Script that executes different high level sanity tests writen in GO.
 #
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
@@ -14,20 +14,20 @@ PASSED_TESTS=()
 FAILED_TESTS=()
 
 TEST_CASES=(
-  "osbuild-weldr-tests"
-  "osbuild-dnf-json-tests"
-  "osbuild-composer-cli-tests"
-  "osbuild-auth-tests"
-  "osbuild-composer-dbjobqueue-tests"
+    "osbuild-weldr-tests"
+    "osbuild-dnf-json-tests"
+    "osbuild-composer-cli-tests"
+    "osbuild-auth-tests"
+    "osbuild-composer-dbjobqueue-tests"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
-test_divider () {
+test_divider() {
     printf "%0.s-" {1..78} && echo
 }
 
 # Run a test case and store the result as passed or failed.
-run_test_case () {
+run_test_case() {
     TEST_NAME=$(basename "$1")
     echo
     test_divider
@@ -43,7 +43,6 @@ run_test_case () {
     test_divider
     echo
 }
-
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
@@ -66,7 +65,7 @@ pushd "$(mktemp -d)"
 go mod init temp
 go get github.com/jackc/tern
 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PGPORT=5432 \
-      go run github.com/jackc/tern migrate -m /usr/share/tests/osbuild-composer/schemas
+    go run github.com/jackc/tern migrate -m /usr/share/tests/osbuild-composer/schemas
 popd
 
 # Change to the working directory.

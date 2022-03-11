@@ -17,8 +17,8 @@
 set -euo pipefail
 
 if [[ "$#" != 2 ]]; then
-  echo "usage: $0 CONFIG USERDATA"
-  exit 1
+	echo "usage: $0 CONFIG USERDATA"
+	exit 1
 fi
 
 scriptdir=$(dirname "$0")
@@ -26,33 +26,33 @@ config=$1
 userdata=$2
 
 if [ ! -f "$config" ]; then
-  echo "first parameter should be a file"
-  exit 1
+	echo "first parameter should be a file"
+	exit 1
 fi
 
 if [ -d "$(dirname "$config")/../.git" ]; then
-  if [ "$(git status --porcelain -uno | wc -l)" -gt 0 ] || [ "$(git branch --show-current)" != "main" ]; then
-    read -p "Are you sure you want to deploy from git repo with non-main branch or dirty files ? " -n 1 -r
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-      exit 1
-    fi
-  fi
+	if [ "$(git status --porcelain -uno | wc -l)" -gt 0 ] || [ "$(git branch --show-current)" != "main" ]; then
+		read -p "Are you sure you want to deploy from git repo with non-main branch or dirty files ? " -n 1 -r
+		if [[ $REPLY =~ ^[Nn]$ ]]; then
+			exit 1
+		fi
+	fi
 fi
 
 # Verify that an openstackrc file has been sourced. This will fail when the
 # variables do not exist.
-printenv OS_PROJECT_NAME OS_USERNAME > /dev/null
+printenv OS_PROJECT_NAME OS_USERNAME >/dev/null
 
 workdir=$(mktemp -d "$scriptdir/qemu-tmp-XXXXXX")
 function cleanup() {
-  rm -rf "$workdir"
+	rm -rf "$workdir"
 }
 trap cleanup EXIT
 
 if [ -d "$userdata" ]; then
-  "$scriptdir/gen-user-data" "$userdata" > "$workdir/user-data"
+	"$scriptdir/gen-user-data" "$userdata" >"$workdir/user-data"
 else
-  cp "$userdata" "$workdir/user-data"
+	cp "$userdata" "$workdir/user-data"
 fi
 
 name=$(jq -r '.name // ""' "$config")
@@ -62,23 +62,23 @@ network=$(jq -r '.network // ""' "$config")
 extra_args=$(jq -r '.extra_args // ""' "$config")
 
 if [[ -z "$name" || -z "$image" || -z "$flavor" ]]; then
-  echo "at least 'name', 'image', and 'flavor' must be set in $config"
-  exit 1
+	echo "at least 'name', 'image', and 'flavor' must be set in $config"
+	exit 1
 fi
 
 if openstack server show "$name" 2>/dev/null >/dev/null; then
-  echo "server '$name' already exists - delete it with"
-  echo ""
-  echo "    openstack server stop $name"
-  echo "    openstack server delete $name"
-  exit 1
+	echo "server '$name' already exists - delete it with"
+	echo ""
+	echo "    openstack server stop $name"
+	echo "    openstack server delete $name"
+	exit 1
 fi
 
 openstack server create \
-  --wait \
-  --image "$image" \
-  --flavor "$flavor" \
-  --user-data "$workdir/user-data" \
-  ${network:+--network "$network"} \
-  ${extra_args:+$extra_args} \
-  "$name"
+	--wait \
+	--image "$image" \
+	--flavor "$flavor" \
+	--user-data "$workdir/user-data" \
+	${network:+--network "$network"} \
+	${extra_args:+$extra_args} \
+	"$name"

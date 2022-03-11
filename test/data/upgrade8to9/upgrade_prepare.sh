@@ -4,8 +4,8 @@
 set -xeuo pipefail
 
 # Disable gpgcheck for internal repositories
-echo "gpgcheck=0" >> /etc/yum.repos.d/baseos.repo
-echo "gpgcheck=0" >> /etc/yum.repos.d/appstream.repo
+echo "gpgcheck=0" >>/etc/yum.repos.d/baseos.repo
+echo "gpgcheck=0" >>/etc/yum.repos.d/appstream.repo
 
 # Install SUT
 dnf install -y osbuild-composer composer-cli
@@ -18,7 +18,7 @@ source /root/prepare_test_env.sh
 get_data_files
 
 # prepare upgrade repositories
-tee /etc/leapp/files/leapp_upgrade_repositories.repo > /dev/null << EOF
+tee /etc/leapp/files/leapp_upgrade_repositories.repo >/dev/null <<EOF
 [APPSTREAM]
 name=APPSTREAM
 baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.0.0/compose/AppStream/x86_64/os/

@@ -13,7 +13,7 @@ ARCH=$(uname -m)
 KERNEL=$(uname -r)
 
 echo -e "\033[0;36m"
-cat << EOF
+cat <<EOF
 ------------------------------------------------------------------------------
 CI MACHINE SPECS
 ------------------------------------------------------------------------------
@@ -47,9 +47,9 @@ fi
 # Ensure cloud-init has completely finished on the instance. This ensures that
 # the instance is fully ready to go.
 while true; do
-  if [[ -f /var/lib/cloud/instance/boot-finished ]]; then
-    break
-  fi
-  echo -e "\n🤔 Waiting for cloud-init to finish running..."
-  sleep 5
+    if [[ -f /var/lib/cloud/instance/boot-finished ]]; then
+        break
+    fi
+    echo -e "\n🤔 Waiting for cloud-init to finish running..."
+    sleep 5
 done

@@ -4,7 +4,7 @@ source /tmp/cloud_init_vars
 
 echo "Setting up worker services."
 
-sudo tee /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+sudo tee /etc/osbuild-worker/osbuild-worker.toml >/dev/null <<EOF
 base_path = "/api/image-builder-worker/v1"
 [authentication]
 oauth_url = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"

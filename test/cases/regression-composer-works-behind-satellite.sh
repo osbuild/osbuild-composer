@@ -2,7 +2,7 @@
 
 #
 # osbuild-composer can work with multiple subscriptions on the host system.
-# test this by simulating a custom repository with custom certificates and 
+# test this by simulating a custom repository with custom certificates and
 # verifies that an image can be built using those.
 #
 
@@ -48,16 +48,14 @@ function cleanup {
     cat /var/log/httpd/error_log
 
     greenprint "Putting things back to their previous configuration"
-    if [ -n "${REDHAT_REPO}" ] && [ -n "${REDHAT_REPO_BACKUP}" ];
-    then
+    if [ -n "${REDHAT_REPO}" ] && [ -n "${REDHAT_REPO_BACKUP}" ]; then
         lsattr "${REDHAT_REPO}"
         chattr -i "${REDHAT_REPO}"
         sudo rm -f "${REDHAT_REPO}"
         sudo mv "${REDHAT_REPO_BACKUP}" "${REDHAT_REPO}" || echo "no redhat.repo backup"
         sudo mv "${REPOSITORY_OVERRIDE}.backup" "${REPOSITORY_OVERRIDE}" || echo "no repo override backup"
     fi
-    if [[ -d /etc/httpd/conf.d.backup ]];
-    then
+    if [[ -d /etc/httpd/conf.d.backup ]]; then
         sudo rm -rf /etc/httpd/conf.d
         sudo mv /etc/httpd/conf.d.backup /etc/httpd/conf.d
     fi
@@ -90,12 +88,11 @@ case "${ID}" in
     "rhel")
         echo "Running on RHEL"
         case "${VERSION_ID%.*}" in
-            "8" )
+            "8")
                 echo "Running on RHEL ${VERSION_ID}"
                 # starting in 8.5 the override file contains minor version number as well
                 VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
-                if grep beta /etc/os-release;
-                then
+                if grep beta /etc/os-release; then
                     DISTRO_NAME="rhel-8-beta"
                     REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}-beta.json"
                 else
@@ -109,12 +106,11 @@ case "${ID}" in
                     REPO2_NAME="appstream-${ARCH}"
                 fi
                 ;;
-            "9" )
+            "9")
                 echo "Running on RHEL ${VERSION_ID}"
                 # in 9.0 the override file contains minor version number as well
                 VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
-                if grep beta /etc/os-release;
-                then
+                if grep beta /etc/os-release; then
                     DISTRO_NAME="rhel-90-beta"
                     REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}-beta.json"
                 else
@@ -131,18 +127,19 @@ case "${ID}" in
             *)
                 echo "Unknown RHEL: ${VERSION_ID}"
                 exit 0
+                ;;
         esac
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 0
+        ;;
 esac
 
 trap cleanup EXIT
 
 # If the runner doesn't use overrides, start using it.
-if [ ! -f "${REPOSITORY_OVERRIDE}" ];
-then
+if [ ! -f "${REPOSITORY_OVERRIDE}" ]; then
     REPODIR=/etc/osbuild-composer/repositories/
     sudo mkdir -p "${REPODIR}"
     sudo cp "/usr/share/tests/osbuild-composer/repositories/${DISTRO_NAME}.json" "${REPOSITORY_OVERRIDE}"
@@ -163,12 +160,10 @@ PROXY1_REDIRECT_URL=$(curl -s -o /dev/null -w '%{redirect_url}' "${REPO1_BASEURL
 PROXY2_REDIRECT_URL=$(curl -s -o /dev/null -w '%{redirect_url}' "${REPO2_BASEURL}"repodata/repomd.xml | cut -f1,2,3 -d'/')/
 
 # Some repos, e.g. the internal mirrors don't have any redirections, if that happens, just put a placeholder into the variable.
-if [[ "${PROXY1_REDIRECT_URL}" == "/" ]];
-then
+if [[ "${PROXY1_REDIRECT_URL}" == "/" ]]; then
     PROXY1_REDIRECT_URL="http://example.com/"
 fi
-if [[ "${PROXY2_REDIRECT_URL}" == "/" ]];
-then
+if [[ "${PROXY2_REDIRECT_URL}" == "/" ]]; then
     PROXY2_REDIRECT_URL="http://example.com/"
 fi
 
@@ -194,7 +189,7 @@ sudo chmod +r /etc/pki/httpd/ca2/*.key
 greenprint "Initialize httpd configurations"
 sudo mv /etc/httpd/conf.d /etc/httpd/conf.d.backup
 sudo mkdir -p /etc/httpd/conf.d
-sudo tee /etc/httpd/conf.d/repo1.conf << STOPHERE
+sudo tee /etc/httpd/conf.d/repo1.conf <<STOPHERE
 # Port to Listen on
 Listen 8008
 
@@ -218,7 +213,7 @@ Listen 8008
 </VirtualHost>
 STOPHERE
 
-sudo tee /etc/httpd/conf.d/repo2.conf << STOPHERE
+sudo tee /etc/httpd/conf.d/repo2.conf <<STOPHERE
 # Port to Listen on
 Listen 8009
 
@@ -245,7 +240,7 @@ STOPHERE
 REDHAT_REPO=/etc/yum.repos.d/redhat.repo
 REDHAT_REPO_BACKUP=/etc/yum.repos.d/redhat.repo.backup
 sudo mv ${REDHAT_REPO} ${REDHAT_REPO_BACKUP} || echo "no redhat.repo"
-sudo tee ${REDHAT_REPO} << STOPHERE
+sudo tee ${REDHAT_REPO} <<STOPHERE
 [repo1]
 name = Repo 1 - local proxy
 baseurl = https://localhost:8008/repo
@@ -287,7 +282,7 @@ sudo dnf install --repo=repo1 --repo=repo2 zsh -y
 greenprint "Rewrite osbuild-composer repository configuration"
 # In case this test case runs as part of multiple different test, try not to ruit the environment
 sudo mv "${REPOSITORY_OVERRIDE}" "${REPOSITORY_OVERRIDE}.backup"
-sudo tee "${REPOSITORY_OVERRIDE}" << STOPHERE
+sudo tee "${REPOSITORY_OVERRIDE}" <<STOPHERE
 {
   "${ARCH}": [
     {
@@ -312,7 +307,7 @@ sudo composer-cli status show
 BLUEPRINT_FILE=/tmp/bp.toml
 BLUEPRINT_NAME=zishy
 
-cat > "$BLUEPRINT_FILE" << STOPHERE
+cat >"$BLUEPRINT_FILE" <<STOPHERE
 name = "${BLUEPRINT_NAME}"
 description = "A base system with zsh"
 version = "0.0.1"
@@ -325,14 +320,12 @@ function try_image_build {
     COMPOSE_START=/tmp/compose-start.json
     COMPOSE_INFO=/tmp/compose-info.json
     sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-    if ! sudo composer-cli blueprints depsolve ${BLUEPRINT_NAME};
-    then
+    if ! sudo composer-cli blueprints depsolve ${BLUEPRINT_NAME}; then
         sudo cat /var/log/httpd/error_log
         sudo journalctl -xe --unit osbuild-composer
         exit 1
     fi
-    if ! sudo composer-cli --json compose start ${BLUEPRINT_NAME} qcow2 | tee "${COMPOSE_START}";
-    then
+    if ! sudo composer-cli --json compose start ${BLUEPRINT_NAME} qcow2 | tee "${COMPOSE_START}"; then
         sudo journalctl -xe --unit osbuild-composer
         WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
         sudo journalctl -xe --unit "${WORKER_UNIT}"
@@ -343,7 +336,7 @@ function try_image_build {
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "${COMPOSE_INFO}" > /dev/null
+        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "${COMPOSE_INFO}" >/dev/null
         COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
         # Is the compose finished?

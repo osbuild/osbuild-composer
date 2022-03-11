@@ -2,7 +2,7 @@
 
 #
 # Test osbuild-composer 'upload to azure' functionality. To do so, create and
-# push a blueprint with composer cli. Then, use terraform to create 
+# push a blueprint with composer cli. Then, use terraform to create
 # an instance in azure from the uploaded image. Finally, verify the instance
 # is running with cloud-init ran.
 #
@@ -71,11 +71,9 @@ fi
 az version
 
 # We need terraform to provision the vm in azure and then destroy it
-if [ "$ID" == "rhel" ] || [ "$ID" == "centos" ]
-then
+if [ "$ID" == "rhel" ] || [ "$ID" == "centos" ]; then
     release="RHEL"
-elif [ "$ID" == "fedora" ]
-then
+elif [ "$ID" == "fedora" ]; then
     release="fedora"
 else
     echo "Test is not running on neither Fedora, RHEL or CentOS, terminating!"
@@ -106,7 +104,7 @@ COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 # Check for the smoke test file on the Azure instance that we start.
-smoke_test_check () {
+smoke_test_check() {
     SMOKE_TEST=$(sudo ssh -i key.rsa redhat@"${1}" -o StrictHostKeyChecking=no 'cat /etc/smoke-test.txt')
     if [[ $SMOKE_TEST == smoke-test ]]; then
         echo 1
@@ -116,21 +114,21 @@ smoke_test_check () {
 }
 
 # Get the compose log.
-get_compose_log () {
+get_compose_log() {
     COMPOSE_ID=$1
     LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-azure.log
 
     # Download the logs.
-    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
+    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" >/dev/null
 }
 
 # Get the compose metadata.
-get_compose_metadata () {
+get_compose_metadata() {
     COMPOSE_ID=$1
     METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-azure.json
 
     # Download the metadata.
-    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
+    sudo composer-cli compose metadata "$COMPOSE_ID" >/dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
@@ -138,10 +136,10 @@ get_compose_metadata () {
     sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
+    sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" >/dev/null
 }
 
-is_weldr_client_installed () {
+is_weldr_client_installed() {
     if rpm --quiet -q weldr-client; then
         echo true
     else
@@ -151,8 +149,7 @@ is_weldr_client_installed () {
 
 # Export Azure credentials if running on Jenkins
 set +u
-if [ -n "$AZURE_CREDS" ]
-then
+if [ -n "$AZURE_CREDS" ]; then
     exec 4<"$AZURE_CREDS"
     readarray -t -u 4 vars
     for line in "${vars[@]}"; do export "${line?}"; done
@@ -161,7 +158,7 @@ fi
 set -u
 
 # Write an Azure TOML file
-tee "$AZURE_CONFIG" > /dev/null << EOF
+tee "$AZURE_CONFIG" >/dev/null <<EOF
 provider = "azure"
 
 [settings]
@@ -171,7 +168,7 @@ container = "${AZURE_CONTAINER_NAME}"
 EOF
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "bash"
 description = "A base system with bash"
 version = "0.0.1"
@@ -188,13 +185,13 @@ EOF
 
 # Make sure the specified storage account exists
 if [ "$(az resource list --name "$AZURE_STORAGE_ACCOUNT")" == "[]" ]; then
-	echo "The storage account ${AZURE_STORAGE_ACCOUNT} was removed!"
-	az storage account create \
-		--name "${AZURE_STORAGE_ACCOUNT}" \
-		--resource-group "${AZURE_RESOURCE_GROUP}" \
-		--location  "${AZURE_LOCATION}" \
-		--sku Standard_RAGRS \
-		--kind StorageV2
+    echo "The storage account ${AZURE_STORAGE_ACCOUNT} was removed!"
+    az storage account create \
+        --name "${AZURE_STORAGE_ACCOUNT}" \
+        --resource-group "${AZURE_RESOURCE_GROUP}" \
+        --location "${AZURE_LOCATION}" \
+        --sku Standard_RAGRS \
+        --kind StorageV2
 fi
 
 # Prepare the blueprint for the compose.
@@ -217,7 +214,7 @@ COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 # Wait for the compose to finish.
 greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
     COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
     # Is the compose finished?
@@ -253,10 +250,10 @@ export TF_VAR_TEST_ID="$TEST_ID"
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/image#argument-reference
 export TF_VAR_HYPER_V_GEN="${HYPER_V_GEN}"
 export BLOB_URL="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_CONTAINER_NAME/$IMAGE_KEY.vhd"
-export ARM_CLIENT_ID="$V2_AZURE_CLIENT_ID" > /dev/null
-export ARM_CLIENT_SECRET="$V2_AZURE_CLIENT_SECRET" > /dev/null
-export ARM_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" > /dev/null
-export ARM_TENANT_ID="$AZURE_TENANT_ID" > /dev/null
+export ARM_CLIENT_ID="$V2_AZURE_CLIENT_ID" >/dev/null
+export ARM_CLIENT_SECRET="$V2_AZURE_CLIENT_SECRET" >/dev/null
+export ARM_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" >/dev/null
+export ARM_TENANT_ID="$AZURE_TENANT_ID" >/dev/null
 
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 
@@ -274,7 +271,7 @@ terraform import azurerm_storage_blob.testBlob "$BLOB_URL"
 terraform apply -auto-approve
 
 PUBLIC_IP=$(terraform output -raw public_IP)
-terraform output -raw tls_private_key > key.rsa
+terraform output -raw tls_private_key >key.rsa
 chmod 400 key.rsa
 
 # Check for our smoke test file.
@@ -293,7 +290,7 @@ done
 terraform destroy -auto-approve
 
 # Also delete the compose so we don't run out of disk space
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 
 # Use the return code of the smoke test to determine if we passed or failed.
 if [[ $RESULTS == 1 ]]; then
@@ -305,4 +302,3 @@ elif [[ $RESULTS != 1 ]]; then
 fi
 
 exit 0
-

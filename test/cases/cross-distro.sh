@@ -41,9 +41,8 @@ case $ID in
     *)
         echo "Unknown distribution id: $ID 😢"
         exit 1
-    ;;
+        ;;
 esac
-
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
@@ -69,7 +68,7 @@ if [ ! -e $APISOCKET ]; then
     exit 1
 fi
 
-if ! sudo curl -s --unix-socket $APISOCKET http:///localhost/api/status > /dev/null; then
+if ! sudo curl -s --unix-socket $APISOCKET http:///localhost/api/status >/dev/null; then
     echo "osbuild-composer server not available. 😢"
     exit 1
 fi
@@ -85,7 +84,7 @@ INSTALLED_DISTROS=$(find "/usr/share/osbuild-composer/repositories" -name '*.jso
 INSTALLED_REMAINDER=$(echo "$INSTALLED_DISTROS" | grep -v -E "$PATTERN")
 # Check if there are any extra distros that match the host pattern but are not recognized
 UNRECOGNIZED_DISTROS=$(echo "${INSTALLED_DISTROS}" | grep -v "${RECOGNIZED_DISTROS}")
-if [ -n "$INSTALLED_REMAINDER" ] || [ -n "$UNRECOGNIZED_DISTROS" ];then
+if [ -n "$INSTALLED_REMAINDER" ] || [ -n "$UNRECOGNIZED_DISTROS" ]; then
     echo "Unexpected distros detected:"
     echo "$INSTALLED_REMAINDER"
     echo "$UNRECOGNIZED_DISTROS"
@@ -111,7 +110,7 @@ ALL_EXPECTED_DISTROS=$(echo "$ALL_DISTROS" | grep -E "$PATTERN" | grep -Ev 'beta
 ALL_REMAINDERS=$(echo "$ALL_DISTROS" | grep -v "$RECOGNIZED_DISTROS")
 
 # Check for any missing distros based on the expected host pattern
-if [ "$ALL_EXPECTED_DISTROS" != "$INSTALLED_DISTROS" ];then
+if [ "$ALL_EXPECTED_DISTROS" != "$INSTALLED_DISTROS" ]; then
     echo "Some distros are missing!"
     echo "Missing distros:"
     diff <(echo "${ALL_EXPECTED_DISTROS}") <(echo "${INSTALLED_DISTROS}") | grep "<" | sed 's/^<\ //g'
@@ -121,7 +120,7 @@ fi
 # Push a blueprint with unsupported distro to see if composer fails gracefuly
 for REMAINING_DISTRO in $ALL_REMAINDERS; do
     TEST_BP=blueprint.toml
-    tee "$TEST_BP" > /dev/null << EOF
+    tee "$TEST_BP" >/dev/null <<EOF
 name = "bash"
 description = "A base system with bash"
 version = "0.0.1"
@@ -140,13 +139,13 @@ EOF
         RESPONSE=${RESPONSE#*: }
     fi
 
-    if [ "$RESPONSE" == "$EXPECTED_RESPONSE" ];then
-            echo "Blueprint push with $REMAINING_DISTRO distro failed as expected."
+    if [ "$RESPONSE" == "$EXPECTED_RESPONSE" ]; then
+        echo "Blueprint push with $REMAINING_DISTRO distro failed as expected."
     else
-            echo "Something went wrong during blueprint push test."
-            echo "RESPONSE=$RESPONSE"
-            echo "EXPECTED_RESPONSE=$EXPECTED_RESPONSE"
-            exit 1
+        echo "Something went wrong during blueprint push test."
+        echo "RESPONSE=$RESPONSE"
+        echo "EXPECTED_RESPONSE=$EXPECTED_RESPONSE"
+        exit 1
     fi
 done
 

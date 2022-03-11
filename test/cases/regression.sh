@@ -23,12 +23,12 @@ TEST_CASES=(
 )
 
 # Print out a nice test divider so we know when tests stop and start.
-test_divider () {
+test_divider() {
     printf "%0.s-" {1..78} && echo
 }
 
 # Run a test case and store the result as passed or failed.
-run_test_case () {
+run_test_case() {
     TEST_NAME=$(basename "$1")
     echo
     test_divider
@@ -44,7 +44,6 @@ run_test_case () {
     test_divider
     echo
 }
-
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
@@ -76,4 +75,3 @@ else
     echo "🔥 One or more tests failed."
     exit 1
 fi
-

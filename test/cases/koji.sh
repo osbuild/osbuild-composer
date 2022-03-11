@@ -51,7 +51,7 @@ koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass
 
 # Always build the latest RHEL - that suits the koji API usecase the most.
 if [[ "$DISTRO_CODE" == rhel-8* ]]; then
-  DISTRO_CODE=rhel-86
+    DISTRO_CODE=rhel-86
 fi
 
 if [ "${COMPOSER_API:=true}" == "true" ]; then

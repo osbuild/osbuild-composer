@@ -8,8 +8,8 @@ set -euo pipefail
 source /etc/os-release
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.6" | "rhel-9.0" | "centos-9")
-        ;;
+    "rhel-8.6" | "rhel-9.0" | "centos-9") ;;
+
     *)
         echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
         exit 0
@@ -74,7 +74,7 @@ build_image() {
     else
         STATUS=$(jq -r '.status' "$COMPOSE_START")
     fi
-    
+
     if [[ $want_fail == "$STATUS" ]]; then
         echo "Something went wrong with the compose. 😢"
         sudo pkill -P ${WORKER_JOURNAL_PID}
@@ -96,7 +96,7 @@ build_image() {
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
         COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
         # Is the compose finished?
@@ -120,7 +120,7 @@ build_image() {
 }
 
 # Clean up our mess.
-clean_up () {
+clean_up() {
     greenprint "🧼 Cleaning up"
     # Remove "remote" repo.
     sudo rm -f "$IMAGE_FILENAME"
@@ -137,7 +137,7 @@ clean_up () {
 greenprint "🚀 Checking custom filesystems (success case)"
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "rhel85-custom-filesystem"
 description = "A base system with custom mountpoints"
 version = "0.0.1"
@@ -175,7 +175,7 @@ build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem qcow2 false
 
 # Download the image.
 greenprint "📥 Downloading the image"
-sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+sudo composer-cli compose image "${COMPOSE_ID}" >/dev/null
 IMAGE_FILENAME="${COMPOSE_ID}-disk.qcow2"
 
 greenprint "💬 Checking mountpoints"
@@ -183,18 +183,18 @@ INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
 FAILED_MOUNTPOINTS=()
 
 for MOUNTPOINT in '/' '/var' '/var/log' '/var/log/audit' '/var/tmp' '/usr' '/tmp'; do
-  EXISTS=$(jq -e --arg m "$MOUNTPOINT" 'any(.fstab[] | .[] == $m; .)' <<< "${INFO}")
-  if $EXISTS; then
-    greenprint "INFO: mountpoint $MOUNTPOINT exists"
-  else
-    FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
-  fi
+    EXISTS=$(jq -e --arg m "$MOUNTPOINT" 'any(.fstab[] | .[] == $m; .)' <<<"${INFO}")
+    if $EXISTS; then
+        greenprint "INFO: mountpoint $MOUNTPOINT exists"
+    else
+        FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
+    fi
 done
 
 # Clean compose and blueprints.
 greenprint "🧼 Clean up osbuild-composer again"
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete rhel85-custom-filesystem > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
+sudo composer-cli blueprints delete rhel85-custom-filesystem >/dev/null
 
 ##################################################
 ##
@@ -205,7 +205,7 @@ sudo composer-cli blueprints delete rhel85-custom-filesystem > /dev/null
 greenprint "🚀 Checking custom filesystems (fail case)"
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "rhel85-custom-filesystem-fail"
 description = "A base system with custom mountpoints"
 version = "0.0.1"
@@ -231,22 +231,22 @@ build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem-fail qcow2 true
 FAILED_MOUNTPOINTS=()
 
 greenprint "💬 Checking expected failures"
-for MOUNTPOINT in '/etc' '/boot' ; do
-  if ! [[ $ERROR_MSG == *"$MOUNTPOINT"* ]]; then
-    FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
-  fi
+for MOUNTPOINT in '/etc' '/boot'; do
+    if ! [[ $ERROR_MSG == *"$MOUNTPOINT"* ]]; then
+        FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
+    fi
 done
 
 # Clean compose and blueprints.
 greenprint "🧼 Clean up osbuild-composer again"
-sudo composer-cli blueprints delete rhel85-custom-filesystem-fail > /dev/null
+sudo composer-cli blueprints delete rhel85-custom-filesystem-fail >/dev/null
 
 clean_up
 
 if [ ${#FAILED_MOUNTPOINTS[@]} -eq 0 ]; then
-  echo "🎉 All tests passed."
-  exit 0
+    echo "🎉 All tests passed."
+    exit 0
 else
-  echo "🔥 One or more tests failed."
-  exit 1
+    echo "🔥 One or more tests failed."
+    exit 1
 fi

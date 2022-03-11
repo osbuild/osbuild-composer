@@ -10,7 +10,7 @@ mkdir --parents /tmp/logs
 LOGS_DIRECTORY=$(mktemp --directory --tmpdir=/tmp/logs)
 
 # Print out a nice test divider so we know when tests stop and start.
-test_divider () {
+test_divider() {
     printf "%0.s-" {1..78} && echo
 }
 

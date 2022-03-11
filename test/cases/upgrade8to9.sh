@@ -28,10 +28,10 @@ function wait_for_vm {
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
-sudo virsh list --all > /dev/null
+sudo virsh list --all >/dev/null
 
 # define custom network for libvirt
-if ! sudo virsh net-info integration > /dev/null 2>&1; then
+if ! sudo virsh net-info integration >/dev/null 2>&1; then
     sudo virsh net-define /usr/share/tests/osbuild-composer/upgrade8to9/integration.xml
     sudo virsh net-start integration
 fi
@@ -42,7 +42,7 @@ WHEEL_GROUP=wheel
 if [[ $ID == rhel ]]; then
     WHEEL_GROUP=adm
 fi
-sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
+sudo tee /etc/polkit-1/rules.d/50-libvirt.rules >/dev/null <<EOF
 polkit.addRule(function(action, subject) {
     if (action.id == "org.libvirt.unix.manage" &&
         subject.isInGroup("${WHEEL_GROUP}")) {
@@ -57,7 +57,7 @@ SSH_KEY_PUB=${SSH_DATA_DIR}/id_rsa.pub
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_KS="sshkey --username root \"$(cat "$SSH_KEY_PUB")\""
 
-sudo tee ks.cfg > /dev/null << EOF
+sudo tee ks.cfg >/dev/null <<EOF
 text --non-interactive
 method url
 keyboard --vckeymap=us --xlayouts='us'
@@ -96,22 +96,22 @@ TEMPFILE=$(mktemp)
 sudo chown qemu:qemu "$TEMPFILE"
 
 # watch the installation and log to a file
-sudo tail -f "$TEMPFILE" | sudo tee install_console.log > /dev/null &
+sudo tail -f "$TEMPFILE" | sudo tee install_console.log >/dev/null &
 CONSOLE_PID=$!
 
 # Install the test VM
 sudo virt-install --name rhel-test \
-                  --memory 3072 \
-                  --vcpus 2 \
-                  --disk size=20 \
-                  --location http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.6.0/compose/BaseOS/x86_64/os/ \
-                  --network network=integration,mac=34:49:22:B0:83:30 \
-                  --console pipe,source.path="$TEMPFILE" \
-                  --noautoconsole \
-                  --graphics none \
-                  --wait -1 \
-                  --extra-args 'inst.ks=http://192.168.100.1:80/ks.cfg' \
-                  --extra-args 'console=ttyS0'
+    --memory 3072 \
+    --vcpus 2 \
+    --disk size=20 \
+    --location http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.6.0/compose/BaseOS/x86_64/os/ \
+    --network network=integration,mac=34:49:22:B0:83:30 \
+    --console pipe,source.path="$TEMPFILE" \
+    --noautoconsole \
+    --graphics none \
+    --wait -1 \
+    --extra-args 'inst.ks=http://192.168.100.1:80/ks.cfg' \
+    --extra-args 'console=ttyS0'
 
 # wait for VM to start and kill console logging
 wait_for_vm
@@ -127,7 +127,7 @@ sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/lo
 set -e
 
 # watch and log the console during upgrade
-sudo tail -f "$TEMPFILE" | sudo tee upgrade_console.log > /dev/null &
+sudo tail -f "$TEMPFILE" | sudo tee upgrade_console.log >/dev/null &
 CONSOLE_PID=$!
 
 # wait for VM to reboot and kill console logging
@@ -142,10 +142,10 @@ RESULT="$?"
 sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":logs/* .
 
 if [[ "$RESULT" == 0 ]]; then
-  greenprint "💚 Success"
+    greenprint "💚 Success"
 else
-  greenprint "❌ Failed"
-  exit 1
+    greenprint "❌ Failed"
+    exit 1
 fi
 
 exit 0

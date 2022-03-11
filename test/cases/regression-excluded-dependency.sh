@@ -18,14 +18,13 @@ source /etc/os-release
 /usr/libexec/osbuild-composer-test/provision.sh
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.6" | "rhel-9.0" | "centos-9")
-        ;;
+    "rhel-8.6" | "rhel-9.0" | "centos-9") ;;
+
     *)
         echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
         exit 0
         ;;
 esac
-
 
 set -xeuo pipefail
 
@@ -44,7 +43,7 @@ COMPOSE_START=/tmp/compose-start.json
 COMPOSE_INFO=/tmp/compose-info.json
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "nss-devel"
 description = "A base system with nss-devel"
 version = "0.0.1"
@@ -63,7 +62,7 @@ COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 # Wait for the compose to finish.
 echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
     COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
     # Is the compose finished?

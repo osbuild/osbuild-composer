@@ -2,9 +2,9 @@
 set -euo pipefail
 
 #
-# This test builds a image-installer iso which is then used for OS installation. 
-# To do so, it creates an image-installer iso, then modifies the kickstart so it 
-# can be installed automatically, installs the VM with virt-install waits for it 
+# This test builds a image-installer iso which is then used for OS installation.
+# To do so, it creates an image-installer iso, then modifies the kickstart so it
+# can be installed automatically, installs the VM with virt-install waits for it
 # to boot and then run some test using ansible to check if everything is as expected
 #
 
@@ -21,7 +21,7 @@ function greenprint {
 
 # modify existing kickstart by prepending and appending commands
 function modksiso {
-    sudo dnf install -y lorax  # for mkksiso
+    sudo dnf install -y lorax # for mkksiso
     isomount=$(mktemp -d)
     kspath=$(mktemp -d)
 
@@ -40,14 +40,14 @@ function modksiso {
     trap cleanup RETURN
 
     ksfiles=("${isomount}"/*.ks)
-    ksfile="${ksfiles[0]}"  # there shouldn't be more than one anyway
+    ksfile="${ksfiles[0]}" # there shouldn't be more than one anyway
     echo "Found kickstart file ${ksfile}"
 
     ksbase=$(basename "${ksfile}")
     newksfile="${kspath}/${ksbase}"
     oldks=$(cat "${ksfile}")
     echo "Preparing modified kickstart file"
-    cat > "${newksfile}" << EOFKS
+    cat >"${newksfile}" <<EOFKS
 text --non-interactive
 zerombr
 clearpart --all --initlabel --disklabel=gpt
@@ -74,11 +74,11 @@ EOFKS
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
-sudo virsh list --all > /dev/null
+sudo virsh list --all >/dev/null
 
 # Set a customized dnsmasq configuration for libvirt so we always get the
 # same address on bootup.
-sudo tee /tmp/integration.xml > /dev/null << EOF
+sudo tee /tmp/integration.xml >/dev/null <<EOF
 <network>
   <name>integration</name>
   <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
@@ -97,7 +97,7 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
   </ip>
 </network>
 EOF
-if ! sudo virsh net-info integration > /dev/null 2>&1; then
+if ! sudo virsh net-info integration >/dev/null 2>&1; then
     sudo virsh net-define /tmp/integration.xml
 fi
 if [[ $(sudo virsh net-info integration | grep 'Active' | awk '{print $2}') == 'no' ]]; then
@@ -106,7 +106,7 @@ fi
 
 # Allow anyone in the wheel group to talk to libvirt.
 greenprint "🚪 Allowing users in wheel group to talk to libvirt"
-sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
+sudo tee /etc/polkit-1/rules.d/50-libvirt.rules >/dev/null <<EOF
 polkit.addRule(function(action, subject) {
     if (action.id == "org.libvirt.unix.manage" &&
         subject.isInGroup("adm")) {
@@ -131,7 +131,8 @@ case "${ID}-${VERSION_ID}" in
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
-        exit 1;;
+        exit 1
+        ;;
 esac
 TEST_UUID=$(uuidgen)
 SSH_USER="admin"
@@ -155,21 +156,21 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 # Get the compose log.
-get_compose_log () {
+get_compose_log() {
     COMPOSE_ID=$1
     LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.log
 
     # Download the logs.
-    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
+    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" >/dev/null
 }
 
 # Get the compose metadata.
-get_compose_metadata () {
+get_compose_metadata() {
     COMPOSE_ID=$1
     METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.json
 
     # Download the metadata.
-    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
+    sudo composer-cli compose metadata "$COMPOSE_ID" >/dev/null
 
     # Find the tarball and extract it.
     TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
@@ -177,7 +178,7 @@ get_compose_metadata () {
     sudo rm -f "$TARBALL"
 
     # Move the JSON file into place.
-    sudo jq -M '.' "${TEMPDIR}"/"${COMPOSE_ID}".json | tee "$METADATA_FILE" > /dev/null
+    sudo jq -M '.' "${TEMPDIR}"/"${COMPOSE_ID}".json | tee "$METADATA_FILE" >/dev/null
 }
 
 # Build an installer
@@ -204,7 +205,7 @@ build_image() {
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
         if rpm -q --quiet weldr-client; then
             COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
         else
@@ -237,7 +238,7 @@ build_image() {
 }
 
 # Wait for the ssh server up to be.
-wait_for_ssh_up () {
+wait_for_ssh_up() {
     SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
@@ -247,7 +248,7 @@ wait_for_ssh_up () {
 }
 
 # Clean up our mess.
-clean_up () {
+clean_up() {
     greenprint "🧼 Cleaning up"
     if [[ $(sudo virsh domstate "${IMAGE_KEY}") == "running" ]]; then
         sudo virsh destroy "${IMAGE_KEY}"
@@ -261,7 +262,7 @@ clean_up () {
 }
 
 # Test result checking
-check_result () {
+check_result() {
     greenprint "🎏 Checking for test result"
     if [[ $RESULTS == 1 ]]; then
         greenprint "💚 Success"
@@ -281,7 +282,7 @@ check_result () {
 # Write a blueprint for installer image.
 # The tar base image is very lean, so let's add a bunch of packages to make it
 # usable (adding most of the packages from the qcow2 image plus some for fun)
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "installer"
 description = "An installer image"
 version = "0.0.1"
@@ -330,7 +331,7 @@ build_image installer image-installer
 
 # Download the image
 greenprint "📥 Downloading the installer image"
-sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+sudo composer-cli compose image "${COMPOSE_ID}" >/dev/null
 ISO_FILENAME="${COMPOSE_ID}-installer.iso"
 greenprint "🖥 Modify kickstart file and create new ISO"
 modksiso "${ISO_FILENAME}" "/var/lib/libvirt/images/${ISO_FILENAME}"
@@ -338,8 +339,8 @@ sudo rm "${ISO_FILENAME}"
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete installer > /dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
+sudo composer-cli blueprints delete installer >/dev/null
 
 ########################################################
 ##
@@ -364,19 +365,18 @@ sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 # Install image via anaconda.
 
 greenprint "💿 Install image via installer(ISO) on VM"
-sudo virt-install  --name="${IMAGE_KEY}"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --noreboot
-
+sudo virt-install --name="${IMAGE_KEY}" \
+    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+    --ram 3072 \
+    --vcpus 2 \
+    --network network=integration,mac=34:49:22:B0:83:30 \
+    --os-type linux \
+    --os-variant ${OS_VARIANT} \
+    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+    --nographics \
+    --noautoconsole \
+    --wait=-1 \
+    --noreboot
 
 # Start VM.
 greenprint "💻 Start VM"
@@ -397,7 +397,7 @@ done
 check_result
 
 # Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+sudo tee "${TEMPDIR}"/inventory >/dev/null <<EOF
 [guest]
 ${GUEST_ADDRESS}
 

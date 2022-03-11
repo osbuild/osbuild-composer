@@ -13,7 +13,7 @@ SONAR_SCANNER_CMD="sonar-scanner-$SONAR_SCANNER_CLI_VERSION-linux/bin/sonar-scan
 SCANNER_OPTS="-Dsonar.projectKey=osbuild:osbuild-composer -Dsonar.sources=. -Dsonar.host.url=https://sonarqube.corp.redhat.com -Dsonar.login=$SONAR_SCANNER_TOKEN -Dsonar.c.file.suffixes=-"
 
 # add options for branch analysis if not running on main
-if [ "$CI_COMMIT_BRANCH" != "main" ];then
+if [ "$CI_COMMIT_BRANCH" != "main" ]; then
     SCANNER_OPTS="$SCANNER_OPTS -Dsonar.pullrequest.branch=$CI_COMMIT_BRANCH -Dsonar.pullrequest.key=$CI_COMMIT_SHA -Dsonar.pullrequest.base=main"
 fi
 

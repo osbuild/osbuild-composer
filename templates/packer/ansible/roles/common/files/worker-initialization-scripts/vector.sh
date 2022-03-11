@@ -5,7 +5,7 @@ source /tmp/cloud_init_vars
 echo "Writing vector config."
 
 sudo mkdir -p /etc/vector
-sudo tee /etc/vector/vector.toml > /dev/null << EOF
+sudo tee /etc/vector/vector.toml >/dev/null <<EOF
 [sources.journald]
 type = "journald"
 exclude_units = ["vector.service"]

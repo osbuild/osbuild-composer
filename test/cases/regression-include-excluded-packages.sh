@@ -26,7 +26,7 @@ if [[ "${ID}" == "fedora" ]]; then
 fi
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" >/dev/null <<EOF
 name = "nss-devel"
 description = "A base system with nss-devel"
 version = "0.0.1"
@@ -53,7 +53,7 @@ fi
 # Wait for the compose to finish.
 echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" >/dev/null
     if rpm -q --quiet weldr-client; then
         COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
     else
