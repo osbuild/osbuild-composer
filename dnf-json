@@ -118,9 +118,6 @@ class Solver():
         # building images, I don't care if we download even more.
         self.base.conf.zchunk = False
 
-        # Try another mirror if it takes longer than 5 seconds to connect.
-        self.base.conf.timeout = 5
-
         # Set the rest of the dnf configuration.
         self.base.conf.module_platform_id = module_platform_id
         self.base.conf.config_file_path = "/dev/null"
