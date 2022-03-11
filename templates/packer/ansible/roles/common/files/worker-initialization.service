@@ -11,7 +11,9 @@ ExecStart=/usr/local/libexec/worker-initialization-scripts/set_hostname.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/vector.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/offline_token.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/subscription_manager.sh
-ExecStart=/usr/local/libexec/worker-initialization-scripts/worker_external_creds.sh
+ExecStart=/usr/local/libexec/worker-initialization-scripts/get_aws_creds.sh
+ExecStart=/usr/local/libexec/worker-initialization-scripts/get_azure_creds.sh
+ExecStart=/usr/local/libexec/worker-initialization-scripts/get_gcp_creds.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/worker_service.sh
 
 [Install]
