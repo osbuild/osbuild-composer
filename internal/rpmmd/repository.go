@@ -34,6 +34,7 @@ type repository struct {
 
 type dnfRepoConfig struct {
 	ID             string `json:"id"`
+	Name           string `json:"name,omitempty"`
 	BaseURL        string `json:"baseurl,omitempty"`
 	Metalink       string `json:"metalink,omitempty"`
 	MirrorList     string `json:"mirrorlist,omitempty"`
@@ -409,6 +410,7 @@ func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever
 	id := strconv.Itoa(i)
 	dnfRepo := dnfRepoConfig{
 		ID:             id,
+		Name:           repo.Name,
 		BaseURL:        repo.BaseURL,
 		Metalink:       repo.Metalink,
 		MirrorList:     repo.MirrorList,
