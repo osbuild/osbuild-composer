@@ -406,8 +406,8 @@ func NewRPMMD(cacheDir string) RPMMD {
 	}
 }
 
-func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, i int, arch, releasever string) (dnfRepoConfig, error) {
-	id := strconv.Itoa(i)
+func (repo RepoConfig) toDNFRepoConfig(rpmmd *rpmmdImpl, repoID int, arch, releasever string) (dnfRepoConfig, error) {
+	id := strconv.Itoa(repoID)
 	dnfRepo := dnfRepoConfig{
 		ID:             id,
 		Name:           repo.Name,
