@@ -18,6 +18,7 @@ import (
 )
 
 type repository struct {
+	Name       string `json:"name,omitempty"`
 	BaseURL    string `json:"baseurl,omitempty"`
 	Metalink   string `json:"metalink,omitempty"`
 	MirrorList string `json:"mirrorlist,omitempty"`
@@ -102,8 +103,12 @@ func main() {
 
 	repos := make([]rpmmd.RepoConfig, len(composeRequest.Repositories))
 	for i, repo := range composeRequest.Repositories {
+		repoName := repo.Name
+		if repoName == "" {
+			repoName = fmt.Sprintf("repo-%d", i)
+		}
 		repos[i] = rpmmd.RepoConfig{
-			Name:       fmt.Sprintf("repo-%d", i),
+			Name:       repoName,
 			BaseURL:    repo.BaseURL,
 			Metalink:   repo.Metalink,
 			MirrorList: repo.MirrorList,
