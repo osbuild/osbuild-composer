@@ -46,7 +46,31 @@ type RPMStageInput struct {
 
 func (RPMStageInput) isStageInput() {}
 
-type RPMStageReferences []string
+// RPM package reference metadata
+type RPMStageReferenceMetadata struct {
+	// This option defaults to `false`, therefore it does not need to be
+	// defined as pointer to bool and can be omitted.
+	CheckGPG bool `json:"rpm.check_gpg,omitempty"`
+}
+
+type RPMStageReference struct {
+	Metadata *RPMStageReferenceMetadata `json:"metadata,omitempty"`
+}
+
+// References to RPM packages defined in JSON as:
+//
+// "sha256:<...>": {
+//    "metadata": {
+//	    "rpm.check_gpg": <boolean>
+//    }
+// },
+// "sha256:<...>": {
+//    "metadata": {
+//	    "rpm.check_gpg": <boolean>
+//    }
+// }
+// ...
+type RPMStageReferences map[string]*RPMStageReference
 
 func (RPMStageReferences) isReferences() {}
 
@@ -120,9 +144,14 @@ func NewRpmStageSourceFilesInputs(specs []rpmmd.PackageSpec) *RPMStageInputs {
 }
 
 func pkgRefs(specs []rpmmd.PackageSpec) RPMStageReferences {
-	refs := make([]string, len(specs))
-	for idx, pkg := range specs {
-		refs[idx] = pkg.Checksum
+	refs := make(RPMStageReferences, len(specs))
+	for _, pkg := range specs {
+		refs[pkg.Checksum] = &RPMStageReference{}
+		if pkg.CheckGPG {
+			refs[pkg.Checksum].Metadata = &RPMStageReferenceMetadata{
+				CheckGPG: pkg.CheckGPG,
+			}
+		}
 	}
 	return refs
 }
