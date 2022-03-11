@@ -205,7 +205,7 @@ class Solver():
                 "summary": package.summary,
                 "description": package.description,
                 "url": package.url,
-                "repo_id": package.reponame,
+                "repo_id": package.repoid,
                 "epoch": package.epoch,
                 "version": package.version,
                 "release": package.release,
@@ -235,7 +235,7 @@ class Solver():
                 "version": package.version,
                 "release": package.release,
                 "arch": package.arch,
-                "repo_id": package.reponame,
+                "repo_id": package.repoid,
                 "path": package.relativepath,
                 "remote_location": package.remote_location(),
                 "checksum": (
