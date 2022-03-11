@@ -16,3 +16,8 @@ sudo tee /etc/osbuild-worker/azure_credentials.toml > /dev/null << EOF
 client_id =     "$CLIENT_ID"
 client_secret = "$CLIENT_SECRET"
 EOF
+
+sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+[azure]
+credentials = "/etc/osbuild-worker/azure_credentials.toml"
+EOF
