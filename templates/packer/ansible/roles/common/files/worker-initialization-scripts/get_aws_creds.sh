@@ -19,4 +19,10 @@ aws_access_key_id = "$ACCESS_KEY_ID"
 aws_secret_access_key = "$SECRET_ACCESS_KEY"
 EOF
 
+  sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+[aws]
+credentials = "${WORKER_CONFIG_AWS_CREDENTIALS:-}"
+bucket = "${WORKER_CONFIG_AWS_BUCKET:-}"
+EOF
+
 fi
