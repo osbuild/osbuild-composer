@@ -139,6 +139,8 @@ class Solver():
 
         repo = dnf.repo.Repo(desc["id"], parent_conf)
 
+        if "name" in desc:
+            repo.name = desc["name"]
         if "baseurl" in desc:
             repo.baseurl = desc["baseurl"]
         elif "metalink" in desc:
