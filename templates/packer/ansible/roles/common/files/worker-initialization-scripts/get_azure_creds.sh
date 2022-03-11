@@ -4,6 +4,11 @@ source /tmp/cloud_init_vars
 
 echo "Deploy Azure credentials."
 
+if [[ -z "$AZURE_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
+  echo "AZURE_ACCOUNT_IMAGE_BUILDER_ARN not defined, skipping."
+  exit 0
+fi
+
 # Deploy the Azure credentials file.
 /usr/local/bin/aws secretsmanager get-secret-value \
   --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \

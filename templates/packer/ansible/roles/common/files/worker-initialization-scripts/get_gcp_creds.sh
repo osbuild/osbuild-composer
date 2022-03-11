@@ -4,6 +4,11 @@ source /tmp/cloud_init_vars
 
 echo "Deploy GCP credentials."
 
+if [[ -z "$GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
+  echo "GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN not defined, skipping."
+  exit 0
+fi
+
 # Deploy the GCP Service Account credentials file.
 /usr/local/bin/aws secretsmanager get-secret-value \
   --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \
