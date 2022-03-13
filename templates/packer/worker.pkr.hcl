@@ -69,7 +69,7 @@ build {
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}"
+      Name = "${var.image_name}-fedora-35-x86_64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
       os_version = "35"
@@ -106,7 +106,7 @@ EOF
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}"
+      Name = "${var.image_name}-fedora-35-aarch64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
       os_version = "35"
