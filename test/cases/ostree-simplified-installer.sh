@@ -499,9 +499,7 @@ sudo virt-install --name="${IMAGE_KEY}-http"\
                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
                   --nographics \
                   --noautoconsole \
-                  --wait=-1 \
-                  --noreboot \
-                  --debug
+                  --wait=-1
 
 # Start VM.
 greenprint "💻 Start HTTP BOOT VM"
@@ -577,8 +575,7 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
                    --nographics \
                    --noautoconsole \
-                   --wait=-1 \
-                   --debug
+                   --wait=-1
 
 # Start VM.
 greenprint "💻 Start UEFI VM"
