@@ -31,7 +31,7 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "iteration": 1645525186957,
+      "iteration": 1647253881137,
       "links": [],
       "panels": [
         {
@@ -1356,7 +1356,6 @@ data:
               },
               "mappings": [],
               "max": 1,
-              "min": 3,
               "noValue": "0",
               "thresholds": {
                 "mode": "absolute",
@@ -2743,5 +2742,5 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 4
+      "version": 5
     }
