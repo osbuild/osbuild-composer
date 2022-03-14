@@ -133,6 +133,15 @@ func NewRPMStageOptions(repos []rpmmd.RepoConfig) *RPMStageOptions {
 		if repo.GPGKey == "" {
 			continue
 		}
+		// DNF imports the GPG key specified in the repository only if it can not
+		// verify a package using already imported keys. If the `gpgcheck` is
+		// disabled for the repository, the installed packages are not verified
+		// and therefore the GPG key is not imported. Mimic this DNF behavior
+		// and import the repository GPG key only if `gpgcheck` is enabled for
+		// it.
+		if !repo.CheckGPG {
+			continue
+		}
 		gpgKeys = append(gpgKeys, repo.GPGKey)
 	}
 

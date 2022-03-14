@@ -87,3 +87,37 @@ func Test_OSBuildMetadataToRPMs(t *testing.T) {
 	// if neither GPG nor PGP is set, the signature is nil
 	require.Nil(t, rpms[2].Signature)
 }
+
+func Test_NewRPMStageOptions(t *testing.T) {
+	repos := []rpmmd.RepoConfig{
+		{
+			Name:     "name2",
+			BaseURL:  "http://example.com",
+			GPGKey:   "gpg_key1",
+			CheckGPG: true,
+		},
+		{
+			Name:     "name2",
+			BaseURL:  "http://example.com",
+			GPGKey:   "gpg_key2",
+			CheckGPG: false,
+		},
+		{
+			Name:     "name3",
+			BaseURL:  "http://example.com",
+			GPGKey:   "gpg_key3",
+			CheckGPG: true,
+		},
+		{
+			Name:     "name3",
+			BaseURL:  "http://example.com",
+			CheckGPG: true,
+		},
+	}
+
+	expected_options := &RPMStageOptions{
+		GPGKeys: []string{"gpg_key1", "gpg_key3"},
+	}
+
+	require.Equal(t, expected_options, NewRPMStageOptions(repos))
+}
