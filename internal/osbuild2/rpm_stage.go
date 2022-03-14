@@ -126,3 +126,17 @@ func pkgRefs(specs []rpmmd.PackageSpec) RPMStageReferences {
 	}
 	return refs
 }
+
+func NewRPMStageOptions(repos []rpmmd.RepoConfig) *RPMStageOptions {
+	var gpgKeys []string
+	for _, repo := range repos {
+		if repo.GPGKey == "" {
+			continue
+		}
+		gpgKeys = append(gpgKeys, repo.GPGKey)
+	}
+
+	return &RPMStageOptions{
+		GPGKeys: gpgKeys,
+	}
+}

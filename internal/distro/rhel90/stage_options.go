@@ -10,26 +10,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 const (
 	kspath = "/osbuild.ks"
 )
-
-func rpmStageOptions(repos []rpmmd.RepoConfig) *osbuild.RPMStageOptions {
-	var gpgKeys []string
-	for _, repo := range repos {
-		if repo.GPGKey == "" {
-			continue
-		}
-		gpgKeys = append(gpgKeys, repo.GPGKey)
-	}
-
-	return &osbuild.RPMStageOptions{
-		GPGKeys: gpgKeys,
-	}
-}
 
 // selinuxStageOptions returns the options for the org.osbuild.selinux stage.
 // Setting the argument to 'true' relabels the '/usr/bin/cp' and '/usr/bin/tar'
