@@ -29,13 +29,10 @@ data:
         ]
       },
       "editable": true,
-      "fiscalYearStartMonth": 0,
       "gnetId": null,
       "graphTooltip": 0,
-      "id": 219,
-      "iteration": 1638547440887,
+      "iteration": 1647253765879,
       "links": [],
-      "liveNow": false,
       "panels": [
         {
           "collapsed": false,
@@ -130,7 +127,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - sum(increase(image_builder_composer_total_failed_compose_requests[$__range]))/sum(increase(image_builder_composer_total_compose_requests[$__range]))",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_composer_total_failed_compose_requests[$__range]))\n    /\n    sum(increase(image_builder_composer_total_compose_requests[$__range]))\n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -282,7 +279,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_total_compose_requests[$interval])) - sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))",
+              "expr": "(sum(rate(image_builder_composer_total_compose_requests[$interval])) OR on() vector(0)) \n- \n(sum(rate(image_builder_composer_total_failed_compose_requests[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "success/sec",
@@ -290,7 +287,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))",
+              "expr": "(sum(rate(image_builder_composer_total_failed_compose_requests[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "errors/sec",
@@ -371,7 +368,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))/sum(rate(image_builder_composer_total_compose_requests[$interval]))",
+              "expr": "(\n  sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))\n  /\n  sum(rate(image_builder_composer_total_compose_requests[$interval]))\n) OR on() vector(0)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -465,7 +462,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo) / ((sum(rate(image_builder_composer_total_failed_compose_requests[28d]))/ sum(rate(image_builder_composer_total_compose_requests[28d]))) + 0.001)",
+              "expr": "28 * 24 * (1 - $stability_slo)\n/\n(\n  (\n    sum(rate(image_builder_composer_total_failed_compose_requests[28d]))\n    / \n    sum(rate(image_builder_composer_total_compose_requests[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -560,11 +557,11 @@ data:
               "mode": "single"
             }
           },
-          "pluginVersion": "8.1.5",
+          "pluginVersion": "8.2.1",
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((1 - sum(increase(image_builder_composer_total_failed_compose_requests[28d]))/sum(increase(image_builder_composer_total_compose_requests[28d]))) - $stability_slo)/ (1 - $stability_slo)",
+              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      (\n        sum(increase(image_builder_composer_total_failed_compose_requests[28d]))\n        /\n        sum(increase(image_builder_composer_total_compose_requests[28d]))\n      ) OR on() vector(0) # set fallback for empty query result\n    )\n  )\n)\n/\n(1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1059,7 +1056,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) / (1 - sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[$__range]))/sum(rate(image_builder_composer_http_duration_seconds_count[$__range])))",
+              "expr": "28 * 24 * (1 - $latency_slo) \n/\n(\n  1.001 - (\n    (\n      sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[$__range]))\n      /\n      sum(rate(image_builder_composer_http_duration_seconds_count[$__range]))\n    ) OR on() vector(1) # set fallback incase the above query result is empty\n  ) \n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1153,11 +1150,11 @@ data:
               "mode": "single"
             }
           },
-          "pluginVersion": "8.1.5",
+          "pluginVersion": "8.2.1",
           "targets": [
             {
               "exemplar": true,
-              "expr": "1 - ((sum(increase(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[28d]))/sum(increase(image_builder_composer_http_duration_seconds_count[28d]))) - $latency_slo)/ (1 - $latency_slo)",
+              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\"}[28d]))\n      /\n      sum(increase(image_builder_composer_http_duration_seconds_count[28d]))\n    ) OR on() vector(1)\n  ) - $latency_slo\n)\n/ \n(1 - $latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1172,7 +1169,7 @@ data:
         }
       ],
       "refresh": false,
-      "schemaVersion": 31,
+      "schemaVersion": 30,
       "style": "dark",
       "tags": [],
       "templating": {
@@ -1324,5 +1321,5 @@ data:
       "timezone": "",
       "title": "Image Builder Composer",
       "uid": "image-builder-composer",
-      "version": 3
+      "version": 4
     }
