@@ -341,7 +341,7 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_hash="+fdo.DiunPubKeyHash)
 	}
 	if fdo.DiunPubKeyRootCerts != "" {
-		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_root_certs=/fdo_diun_root_certs.pem")
+		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_root_certs=/fdo_diun_pub_key_root_certs.pem")
 	}
 
 	return grubISOStageOptions
