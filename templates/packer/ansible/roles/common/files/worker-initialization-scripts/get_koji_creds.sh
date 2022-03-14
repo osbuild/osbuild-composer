@@ -11,7 +11,7 @@ fi
 
 /usr/local/bin/aws secretsmanager get-secret-value \
   --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \
-  --secret-id "${KOJI_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN}" | jq -r ".SecretString" > /tmp/koji_credentials.json
+  --secret-id "${KOJI_ACCOUNT_IMAGE_BUILDER_ARN}" | jq -r ".SecretString" > /tmp/koji_credentials.json
 
 KOJIHUB=$(jq -r ".kojihub" /tmp/koji_credentials.json)
 PRINCIPAL=$(jq -r ".principal" /tmp/koji_credentials.json)
