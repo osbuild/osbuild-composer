@@ -503,7 +503,7 @@ else
 fi
 
 # generate a temp key for user tests
-ssh-keygen -t rsa-sha2-512 -f /tmp/usertest -C "usertest" -N ""
+ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
 
 function createReqFileAWS() {
   AWS_SNAPSHOT_NAME=${TEST_ID}
@@ -531,11 +531,11 @@ function createReqFileAWS() {
       {
         "name": "user1",
         "groups": ["wheel"],
-        "key": "$(cat /tmp/usertest.pub)"
+        "key": "$(cat "${WORKDIR}/usertest.pub")"
       },
       {
         "name": "user2",
-        "key": "$(cat /tmp/usertest.pub)"
+        "key": "$(cat "${WORKDIR}/usertest.pub")"
       }
     ]
   },
@@ -576,11 +576,11 @@ function createReqFileAWSS3() {
       {
         "name": "user1",
         "groups": ["wheel"],
-        "key": "$(cat /tmp/usertest.pub)"
+        "key": "$(cat "${WORKDIR}/usertest.pub")"
       },
       {
         "name": "user2",
-        "key": "$(cat /tmp/usertest.pub)"
+        "key": "$(cat "${WORKDIR}/usertest.pub")"
       }
     ]
   },
@@ -977,14 +977,14 @@ function verifyInAWS() {
   _instanceCheck "$_ssh"
 
   # Check access to user1 and user2
-  check_groups=$(ssh -oStrictHostKeyChecking=no -i /tmp/usertest "user1@$HOST" -t 'groups')
+  check_groups=$(ssh -oStrictHostKeyChecking=no -i "${WORKDIR}/usertest" "user1@$HOST" -t 'groups')
   if [[ $check_groups =~ "wheel" ]]; then
    echo "✔️  user1 has the group wheel"
   else
     echo 'user1 should have the group wheel 😢'
     exit 1
   fi
-  check_groups=$(ssh -oStrictHostKeyChecking=no -i /tmp/usertest "user2@$HOST" -t 'groups')
+  check_groups=$(ssh -oStrictHostKeyChecking=no -i "${WORKDIR}/usertest" "user2@$HOST" -t 'groups')
   if [[ $check_groups =~ "wheel" ]]; then
     echo 'user2 should not have group wheel 😢'
     exit 1
