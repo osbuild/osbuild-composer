@@ -1,5 +1,5 @@
 #!/bin/bash
-set -uo pipefail
+set -euox pipefail
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
@@ -221,10 +221,10 @@ clean_up () {
     greenprint "🧼 Cleaning up"
 
     # Clear vm
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-uefi") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-uefi"
+    if [[ $(sudo virsh domstate "${IMAGE_KEY}-fdorootcert") == "running" ]]; then
+        sudo virsh destroy "${IMAGE_KEY}-fdorootcert"
     fi
-    sudo virsh undefine "${IMAGE_KEY}-uefi" --nvram
+    sudo virsh undefine "${IMAGE_KEY}-fdorootcert" --nvram
     # Remove qcow2 file.
     sudo rm -f "$LIBVIRT_IMAGE_PATH"
 
@@ -289,7 +289,8 @@ sudo git clone https://github.com/runcom/fdo-containers
 cd fdo-containers/ || exit
 sudo git checkout c2bab2c3cda954087fe66b683d31bffeac0c7189
 sudo CONTAINER_IMAGE=quay.io/fido-fdo/fdo-admin-cli:0.4.0 ./create-keys.sh
-#DIUN_PUB_KEY_HASH=$(cat keys/diun_pub_key_hash)
+DIUN_PUB_KEY_HASH=$(cat keys/diun_pub_key_hash)
+DIUN_PUB_KEY_ROOT_CERTS=$(cat keys/diun_cert.pem)
 sudo podman run -d \
   -v "$PWD"/ownership_vouchers:/etc/fdo/ownership_vouchers:z \
   -v "$PWD"/config/manufacturing-server.yml:/etc/fdo/manufacturing-server.conf.d/00-default.yml:z \
@@ -377,42 +378,43 @@ greenprint "🧽 Clean up container blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete container > /dev/null
 
-############################################################
-##
-## Build edge-simplified-installer image
-##
-############################################################
+### Will move this negative test cases into downstream.
 
 # Verify that composer can report proper error message if no installation device is specified in blueprint
 # https://github.com/osbuild/osbuild-composer/pull/1755
-greenprint "Negative test: checking error message when no installation device specified"
+# greenprint "Negative test: checking error message when no installation device specified"
 
-greenprint "📋 Preparing installer blueprint with no installation device"
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "simplenodevice"
-description = "A rhel-edge simplified-installer image without installation device specified"
-version = "0.0.1"
-modules = []
-groups = []
-EOF
+# greenprint "📋 Preparing installer blueprint with no installation device"
+# tee "$BLUEPRINT_FILE" > /dev/null << EOF
+# name = "simplenodevice"
+# description = "A rhel-edge simplified-installer image without installation device specified"
+# version = "0.0.1"
+# modules = []
+# groups = []
+# EOF
 
-sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli blueprints depsolve simplenodevice
+# sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+# sudo composer-cli blueprints depsolve simplenodevice
 
-result=$(sudo composer-cli compose start-ostree simplenodevice "$INSTALLER_TYPE" --ref "$OSTREE_REF" --url "$PROD_REPO_URL" 2>&1)
-expected='boot ISO image type "edge-simplified-installer" requires specifying an installation device to install to'
+# result=$(sudo composer-cli compose start-ostree simplenodevice "$INSTALLER_TYPE" --ref "$OSTREE_REF" --url "$PROD_REPO_URL" 2>&1)
+# expected='boot ISO image type "edge-simplified-installer" requires specifying an installation device to install to'
 
-echo "Command output is: $result"
+# echo "Command output is: $result"
 
-greenprint "🎏 Checking if command result contains expected error message."
-if [[ "$result" == *"$expected"* ]]; then
-    greenprint "Success: osbuild-composer can report proper error messages when no installation device specified for simplified installer image"
-else
-    greenprint "Failed: expected error message not found."
-    clean_up
-    exit 1
-fi
+# greenprint "🎏 Checking if command result contains expected error message."
+# if [[ "$result" == *"$expected"* ]]; then
+#     greenprint "Success: osbuild-composer can report proper error messages when no installation device specified for simplified installer image"
+# else
+#     greenprint "Failed: expected error message not found."
+#     clean_up
+#     exit 1
+# fi
 
+############################################################################
+##
+## Http boot: provision edge-simplified-installer with diun_pub_key_insecure
+##
+############################################################################
 # Write a blueprint for installer image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "installer"
@@ -451,12 +453,6 @@ sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
 greenprint "🧹 Clean up installer blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete installer > /dev/null
-
-##################################################################
-##
-## Install edge vm with edge-simplified-installer (http boot)
-##
-##################################################################
 
 HTTPD_PATH="/var/www/html"
 GRUB_CFG=${HTTPD_PATH}/httpboot/EFI/BOOT/grub.cfg
@@ -517,6 +513,17 @@ for LOOP_COUNTER in $(seq 0 30); do
     sleep 10
 done
 
+# FDO test case: check if /boot/device-credentials exist.
+greenprint "FDO test: Checking if /boot/device-credentials exist."
+if_boot_credentials_exist=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${HTTP_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |test -f /boot/device-credentials && echo true")
+if [ "${if_boot_credentials_exist}" ];then
+    greenprint "💚 Success"
+else
+    greenprint "❌ Failed"
+    clean_up
+    exit 1
+fi
+
 # Check image installation result
 check_result
 
@@ -550,11 +557,49 @@ fi
 sudo virsh undefine "${IMAGE_KEY}-http" --nvram
 sudo rm -f "$LIBVIRT_IMAGE_PATH"
 
-##################################################################
+###########################################################################
 ##
-## Install edge vm with edge-simplified-installer (UEFI)
+## UEFI: Provision edge-simplified-installer with diun_pub_key_hash
 ##
-##################################################################
+###########################################################################
+
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "fdosshkey"
+description = "A rhel-edge simplified-installer image"
+version = "0.0.1"
+modules = []
+groups = []
+
+[customizations]
+installation_device = "/dev/vda"
+
+[customizations.fdo]
+manufacturing_server_url="http://192.168.200.2:8080"
+diun_pub_key_hash="${DIUN_PUB_KEY_HASH}"
+EOF
+
+greenprint "📄 fdosshkey blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing fdosshkey blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve fdosshkey
+
+# Build fdosshkey image.
+# Test --url arg following by URL with tailling slash for bz#1942029
+build_image fdosshkey "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+
+# Download the image
+greenprint "📥 Downloading the fdosshkey image"
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
+
+# Clean compose and blueprints.
+greenprint "🧹 Clean up fdosshkey blueprint and compose"
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli blueprints delete fdosshkey > /dev/null
 
 # Ensure SELinux is happy with our new images.
 greenprint "👿 Running restorecon on image directory"
@@ -565,7 +610,7 @@ greenprint "🖥 Create qcow2 file for virt install"
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
-sudo virt-install  --name="${IMAGE_KEY}-uefi"\
+sudo virt-install  --name="${IMAGE_KEY}-fdosshkey"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
@@ -581,7 +626,123 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
 
 # Start VM.
 greenprint "💻 Start UEFI VM"
-sudo virsh start "${IMAGE_KEY}-uefi"
+sudo virsh start "${IMAGE_KEY}-fdosshkey"
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check image installation result
+check_result
+
+greenprint "🕹 Get ostree install commit value"
+INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${UEFI_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes 
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
+# Clean up BIOS VM
+greenprint "🧹 Clean up VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-fdosshkey") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-fdosshkey"
+fi
+sudo virsh undefine "${IMAGE_KEY}-fdosshkey" --nvram
+sudo rm -f "$LIBVIRT_IMAGE_PATH"
+
+###########################################################################
+##
+## UEFI: Provision edge-simplified-installer with diun_pub_key_root_certs
+##
+###########################################################################
+
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "fdorootcert"
+description = "A rhel-edge simplified-installer image"
+version = "0.0.1"
+modules = []
+groups = []
+
+[customizations]
+installation_device = "/dev/vda"
+
+[customizations.fdo]
+manufacturing_server_url="http://192.168.200.2:8080"
+diun_pub_key_root_certs="""
+${DIUN_PUB_KEY_ROOT_CERTS}"""
+EOF
+
+greenprint "📄 fdosshkey blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing installer blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve fdorootcert
+
+# Build fdorootcert image.
+# Test --url arg following by URL with tailling slash for bz#1942029
+build_image fdorootcert "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+
+# Download the image
+greenprint "📥 Downloading the fdorootcert image"
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
+
+# Clean compose and blueprints.
+greenprint "🧹 Clean up fdorootcert blueprint and compose"
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli blueprints delete fdorootcert > /dev/null
+
+# Ensure SELinux is happy with our new images.
+greenprint "👿 Running restorecon on image directory"
+sudo restorecon -Rv /var/lib/libvirt/images/
+
+# Create qcow2 file for virt install.
+greenprint "🖥 Create qcow2 file for virt install"
+sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+
+greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
+sudo virt-install  --name="${IMAGE_KEY}-fdorootcert"\
+                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                   --ram 3072 \
+                   --vcpus 2 \
+                   --network network=integration,mac=34:49:22:B0:83:31 \
+                   --os-type linux \
+                   --os-variant ${OS_VARIANT} \
+                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --nographics \
+                   --noautoconsole \
+                   --wait=-1 \
+                   --noreboot
+
+# Start VM.
+greenprint "💻 Start UEFI VM"
+sudo virsh start "${IMAGE_KEY}-fdorootcert"
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
