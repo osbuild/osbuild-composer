@@ -61,9 +61,9 @@ func EnqueueJobMetrics(jobType string) {
 	PendingJobs.WithLabelValues(jobType).Inc()
 }
 
-func DequeueJobMetrics(queued time.Time, started time.Time, jobType string) {
-	if !started.IsZero() && !queued.IsZero() {
-		diff := started.Sub(queued).Seconds()
+func DequeueJobMetrics(pending time.Time, started time.Time, jobType string) {
+	if !started.IsZero() && !pending.IsZero() {
+		diff := started.Sub(pending).Seconds()
 		JobWaitDuration.WithLabelValues(jobType).Observe(diff)
 		PendingJobs.WithLabelValues(jobType).Dec()
 		RunningJobs.WithLabelValues(jobType).Inc()

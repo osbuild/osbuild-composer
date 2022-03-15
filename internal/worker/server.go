@@ -461,12 +461,22 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		return
 	}
 
+	// Record how long the job has been pending for, that is either how
+	// long it has been queued for, in case it has no dependencies, or
+	// how long it has been since all its dependencies finished, if it
+	// has any.
+	pending := status.Queued
+
 	for _, depID := range depIDs {
 		// TODO: include type of arguments
 		var result json.RawMessage
-		_, result, _, _, _, _, _, err = s.jobs.JobStatus(depID)
+		var finished time.Time
+		_, result, _, _, finished, _, _, err = s.jobs.JobStatus(depID)
 		if err != nil {
 			return
+		}
+		if finished.After(pending) {
+			pending = finished
 		}
 		dynamicArgs = append(dynamicArgs, result)
 	}
@@ -478,7 +488,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		}
 	}
 
-	prometheus.DequeueJobMetrics(status.Queued, status.Started, jobType)
+	prometheus.DequeueJobMetrics(pending, status.Started, jobType)
 
 	return
 }
