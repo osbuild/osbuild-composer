@@ -453,8 +453,6 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	if err != nil {
 		logrus.Errorf("error retrieving job status: %v", err)
 		return
-	} else {
-		prometheus.DequeueJobMetrics(status.Queued, status.Started, jobType)
 	}
 
 	for _, depID := range depIDs {
@@ -474,6 +472,9 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		}
 	}
 
+	// TODO: Drop the ':$architecture' for metrics too, first prometheus queries for alerts and
+	// dashboards need to be adjusted.
+	prometheus.DequeueJobMetrics(status.Queued, status.Started, jobType)
 	if jobType == "osbuild:"+arch {
 		jobType = "osbuild"
 	} else if jobType == "osbuild-koji:"+arch {
