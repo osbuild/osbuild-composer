@@ -270,6 +270,18 @@ function cleanupAzure() {
   fi
 }
 
+function dump_db() {
+  # Disable -x for these commands to avoid printing the whole result and manifest into the log
+  set +x
+
+  # Make sure we get 3 job entries in the db per compose (depsolve + manifest + build)
+  sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows"
+
+  # Save the result, including the manifest, for the job, straight from the db
+  sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" | sudo tee "${ARTIFACTS}/build-result.txt"
+  set -x
+}
+
 WORKDIR=$(mktemp -d)
 KILL_PIDS=()
 function cleanup() {
@@ -288,6 +300,9 @@ function cleanup() {
       cleanupAzure
       ;;
   esac
+
+  # dump the DB here to ensure that it gets dumped even if the test fails
+  dump_db
 
   sudo rm -rf "$WORKDIR"
 
@@ -799,16 +814,6 @@ SUBS_COMPOSES="$(collectMetrics)"
 test "$UPLOAD_STATUS" = "success"
 test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
-
-# Disable -x for these commands to avoid printing the whole result and manifest into the log
-set +x
-
-# Make sure we get 3 job entries in the db per compose (depsolve + manifest + build)
-sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows"
-
-# Save the result, including the manifest, for the job, straight from the db
-sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" | sudo tee "${ARTIFACTS}/build-result.txt"
-set -x
 
 #
 # Verify the Cloud-provider specific upload_status options
