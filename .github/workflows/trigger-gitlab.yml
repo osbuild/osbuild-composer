@@ -76,6 +76,7 @@ jobs:
 
       - name: Push to gitlab
         run: |
+          set -x
           mkdir -p ~/.ssh
           echo "${SCHUTZBOT_SSH_KEY}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
