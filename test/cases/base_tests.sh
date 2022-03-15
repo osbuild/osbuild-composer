@@ -19,6 +19,7 @@ TEST_CASES=(
   "osbuild-composer-cli-tests"
   "osbuild-auth-tests"
   "osbuild-composer-dbjobqueue-tests"
+  "osbuild-composer-image-types-tests"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
