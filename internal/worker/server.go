@@ -452,13 +452,18 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	jobType, status, _, err := s.jobStatus(jobId, nil)
 	if err != nil {
 		logrus.Errorf("error retrieving job status: %v", err)
+		return
 	} else {
 		prometheus.DequeueJobMetrics(status.Queued, status.Started, jobType)
 	}
 
 	for _, depID := range depIDs {
 		// TODO: include type of arguments
-		_, result, _, _, _, _, _, _ := s.jobs.JobStatus(depID)
+		var result json.RawMessage
+		_, result, _, _, _, _, _, err = s.jobs.JobStatus(depID)
+		if err != nil {
+			return
+		}
 		dynamicArgs = append(dynamicArgs, result)
 	}
 
