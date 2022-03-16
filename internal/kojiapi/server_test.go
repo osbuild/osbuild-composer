@@ -529,8 +529,8 @@ func TestJobTypeValidation(t *testing.T) {
 		resp, _ := json.Marshal(map[string]string{"message": msg})
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%s%s", initID, path), ``, http.StatusNotFound, string(resp))
 
-		for idx, buildID := range buildJobIDs {
-			msg := fmt.Sprintf("Job %s not found: expected \"koji-finalize\", found \"osbuild-koji:fake-arch-%d\" job instead", buildID, idx)
+		for _, buildID := range buildJobIDs {
+			msg := fmt.Sprintf("Job %s not found: expected \"koji-finalize\", found \"osbuild-koji\" job instead", buildID)
 			resp, _ := json.Marshal(map[string]string{"message": msg})
 			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%s%s", buildID, path), ``, http.StatusNotFound, string(resp))
 		}

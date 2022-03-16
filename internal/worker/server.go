@@ -171,7 +171,7 @@ func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobS
 		return nil, nil, err
 	}
 
-	if !strings.HasPrefix(jobType, "osbuild:") { // Build jobs get automatic arch suffix: Check prefix
+	if jobType != "osbuild" { // Build jobs get automatic arch suffix
 		return nil, nil, fmt.Errorf("expected osbuild:*, found %q job instead", jobType)
 	}
 
@@ -199,7 +199,7 @@ func (s *Server) OSBuildKojiJobStatus(id uuid.UUID, result *OSBuildKojiJobResult
 		return nil, nil, err
 	}
 
-	if !strings.HasPrefix(jobType, "osbuild-koji:") { // Build jobs get automatic arch suffix: Check prefix
+	if jobType != "osbuild-koji" { // Build jobs get automatic arch suffix
 		return nil, nil, fmt.Errorf("expected \"osbuild-koji:*\", found %q job instead", jobType)
 	}
 
@@ -295,6 +295,12 @@ func (s *Server) jobStatus(id uuid.UUID, result interface{}) (string, *JobStatus
 		if err != nil {
 			return "", nil, nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
 		}
+	}
+
+	if strings.HasPrefix(jobType, "osbuild:") {
+		jobType = "osbuild"
+	} else if strings.HasPrefix(jobType, "osbuild-koji:") {
+		jobType = "osbuild-koji"
 	}
 
 	return jobType, &JobStatus{
@@ -441,9 +447,9 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	var depIDs []uuid.UUID
 	if requestedJobId != uuid.Nil {
 		jobId = requestedJobId
-		token, depIDs, jobType, args, err = s.jobs.DequeueByID(dequeueCtx, requestedJobId)
+		token, depIDs, _, args, err = s.jobs.DequeueByID(dequeueCtx, requestedJobId)
 	} else {
-		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, jts, channels)
+		jobId, token, depIDs, _, args, err = s.jobs.Dequeue(dequeueCtx, jts, channels)
 	}
 	if err != nil {
 		return
@@ -470,12 +476,6 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		if err != nil {
 			return
 		}
-	}
-
-	if jobType == "osbuild:"+arch {
-		jobType = "osbuild"
-	} else if jobType == "osbuild-koji:"+arch {
-		jobType = "osbuild-koji"
 	}
 
 	prometheus.DequeueJobMetrics(status.Queued, status.Started, jobType)
