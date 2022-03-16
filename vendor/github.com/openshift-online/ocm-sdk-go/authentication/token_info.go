@@ -16,7 +16,9 @@ limitations under the License.
 
 package authentication
 
-import "github.com/golang-jwt/jwt"
+import (
+	"github.com/golang-jwt/jwt/v4"
+)
 
 // tokenInfo stores information about a token. We need to store both the original text and the
 // parsed objects because some tokens (refresh tokens in particular) may be opaque strings instead
