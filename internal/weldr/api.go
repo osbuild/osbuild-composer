@@ -3,6 +3,7 @@ package weldr
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	errors_package "errors"
@@ -52,6 +53,7 @@ type API struct {
 
 	logger *log.Logger
 	router *httprouter.Router
+	server http.Server
 
 	compatOutputDir string
 
@@ -271,14 +273,18 @@ func setupRouter(api *API) *API {
 }
 
 func (api *API) Serve(listener net.Listener) error {
-	server := http.Server{Handler: api}
+	api.server = http.Server{Handler: api}
 
-	err := server.Serve(listener)
+	err := api.server.Serve(listener)
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
 
 	return nil
+}
+
+func (api *API) Shutdown(ctx context.Context) error {
+	return api.server.Shutdown(ctx)
 }
 
 func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
