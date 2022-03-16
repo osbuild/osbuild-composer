@@ -10,6 +10,7 @@ import argparse
 import contextlib
 import os
 import pathlib
+import signal
 import socket
 import subprocess
 import sys
@@ -301,6 +302,13 @@ class Cli(contextlib.AbstractContextManager):
         proc_dnf_json = None
         res = 0
         sockets = self._prepare_sockets()
+
+        def handler(signum, frame):
+            proc_composer.terminate()
+            proc_worker.terminate()
+            proc_dnf_json.terminate()
+
+        signal.signal(signal.SIGTERM, handler)
 
         liveness = pathlib.Path('/run/live')
 
