@@ -9,6 +9,7 @@ a container.
 import argparse
 import contextlib
 import os
+import pathlib
 import socket
 import subprocess
 import sys
@@ -301,6 +302,10 @@ class Cli(contextlib.AbstractContextManager):
         res = 0
         sockets = self._prepare_sockets()
 
+        liveness = pathlib.Path('/run/live')
+
+        liveness.touch()
+
         try:
             if self.args.builtin_worker:
                 proc_worker = self._spawn_worker()
@@ -324,7 +329,6 @@ class Cli(contextlib.AbstractContextManager):
                     proc_dnf_json.terminate()
                 proc_dnf_json.wait()
 
-            return res
         except KeyboardInterrupt:
             if proc_worker:
                 proc_worker.terminate()
@@ -343,6 +347,8 @@ class Cli(contextlib.AbstractContextManager):
             if proc_composer:
                 proc_composer.kill()
             raise
+        finally:
+            liveness.unlink()
 
         return res
 

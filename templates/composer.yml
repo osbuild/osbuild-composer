@@ -41,10 +41,10 @@ objects:
           name: composer
           livenessProbe:
             failureThreshold: 3
-            httpGet:
-              path: ${LIVENESS_URI}
-              port: ${{COMPOSER_API_PORT}}
-              scheme: HTTP
+            exec:
+              command:
+              - cat
+              - /tmp/live
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
