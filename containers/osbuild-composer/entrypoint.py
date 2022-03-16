@@ -330,15 +330,15 @@ class Cli(contextlib.AbstractContextManager):
                 proc_dnf_json.wait()
 
         except KeyboardInterrupt:
+            if proc_composer:
+                proc_composer.terminate()
+                res = proc_composer.wait()
             if proc_worker:
                 proc_worker.terminate()
                 proc_worker.wait()
             if proc_dnf_json:
                 proc_dnf_json.terminate()
                 proc_dnf_json.wait()
-            if proc_composer:
-                proc_composer.terminate()
-                res = proc_composer.wait()
         except:
             if proc_worker:
                 proc_worker.kill()
