@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -36,6 +38,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string]rpmmd.PackageSet, r
 }
 
 func (impl *DepsolveJobImpl) Run(job worker.Job) error {
+	logWithId := logrus.WithField("jobId", job.Id())
 	var args worker.DepsolveJob
 	err := job.Args(&args)
 	if err != nil {
@@ -57,10 +60,12 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 				// This still has the kind/reason format but a kind that's returned
 				// by dnf-json and not explicitly handled here.
 				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, err.Error())
+				logWithId.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
 			}
 		case error:
 			// Error originates from internal/rpmmd, not from dnf-json
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, err.Error())
+			logWithId.Errorf("rpmmd error in depsolve job: %v", err)
 		}
 	}
 
