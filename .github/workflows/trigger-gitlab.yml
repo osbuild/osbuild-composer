@@ -76,7 +76,6 @@ jobs:
 
       - name: Push to gitlab
         run: |
-          set -x
           mkdir -p ~/.ssh
           echo "${SCHUTZBOT_SSH_KEY}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
@@ -84,5 +83,8 @@ jobs:
           ssh-keyscan -t rsa gitlab.com >> ~/.ssh/known_hosts
           git remote add ci git@gitlab.com:osbuild/ci/osbuild-composer.git
           SKIP_CI=$(cat SKIP_CI.txt)
-          [[ "${SKIP_CI}" == true ]] && PUSH_OPTION='-o ci.variable="SKIP_CI=true"' || PUSH_OPTION=""
-          git push -f ${PUSH_OPTION} ci
+          if [[ "${SKIP_CI}" == true ]];then
+            git push -f -o ci.variable="SKIP_CI=true" ci
+          else
+            git push -f ci 
+          fi
