@@ -103,6 +103,8 @@ func (s *Server) Handler() http.Handler {
 	return e
 }
 
+const maxHeartbeatRetries = 2
+
 // This function should be started as a goroutine
 // Every 30 seconds it goes through all running jobs, removing any unresponsive ones.
 // It fails jobs which fail to check if they cancelled for more than 2 minutes.
@@ -110,11 +112,10 @@ func (s *Server) WatchHeartbeats() {
 	//nolint:staticcheck // avoid SA1015, this is an endless function
 	for range time.Tick(time.Second * 30) {
 		for _, token := range s.jobs.Heartbeats(time.Second * 120) {
-			id, _ := s.jobs.IdFromToken(token)
-			logrus.Infof("Removing unresponsive job: %s\n", id)
-
 			missingHeartbeatResult := JobResult{
-				JobError: clienterrors.WorkerClientError(clienterrors.ErrorJobMissingHeartbeat, "Worker running this job stopped responding.", nil),
+				JobError: clienterrors.WorkerClientError(clienterrors.ErrorJobMissingHeartbeat,
+					fmt.Sprintf("Workers running this job stopped responding more than %d times.", maxHeartbeatRetries),
+					nil),
 			}
 
 			resJson, err := json.Marshal(missingHeartbeatResult)
@@ -122,9 +123,9 @@ func (s *Server) WatchHeartbeats() {
 				logrus.Panicf("Cannot marshal the heartbeat error: %v", err)
 			}
 
-			err = s.FinishJob(token, resJson)
+			err = s.RequeueOrFinishJob(token, maxHeartbeatRetries, resJson)
 			if err != nil {
-				logrus.Errorf("Error finishing unresponsive job: %v", err)
+				logrus.Errorf("Error requeueing or finishing unresponsive job: %v", err)
 			}
 		}
 	}
@@ -618,6 +619,10 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 }
 
 func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
+	return s.RequeueOrFinishJob(token, 0, result)
+}
+
+func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result json.RawMessage) error {
 	jobId, err := s.jobs.IdFromToken(token)
 	if err != nil {
 		switch err {
@@ -628,7 +633,7 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 		}
 	}
 
-	err = s.jobs.FinishJob(jobId, result)
+	err = s.jobs.RequeueOrFinishJob(jobId, maxRetries, result)
 	if err != nil {
 		switch err {
 		case jobqueue.ErrNotRunning:

@@ -55,7 +55,7 @@ func testDeleteJob(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
 
 	res, err := json.Marshal(result)
 	require.NoError(t, err)
-	err = q.FinishJob(id, res)
+	err = q.RequeueOrFinishJob(id, 0, res)
 	require.NoError(t, err)
 
 	_, _, r, _, _, _, _, _, _, err := q.JobStatus(id)
