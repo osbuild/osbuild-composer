@@ -304,11 +304,17 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"@core", "chrony", "firewalld", "langpacks-en", "open-vm-tools",
+			"@core",
+			"chrony",
+			"cloud-init",
+			"firewalld",
+			"langpacks-en",
+			"open-vm-tools",
 			"selinux-policy-targeted",
 		},
 		Exclude: []string{
-			"dracut-config-rescue", "rng-tools",
+			"dracut-config-rescue",
+			"rng-tools",
 		},
 	}.Append(bootPackageSet(t))
 
