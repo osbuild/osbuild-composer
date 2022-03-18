@@ -34,7 +34,14 @@ func AddValue(query *url.Values, name string, value interface{}) {
 	if *query == nil {
 		*query = make(url.Values)
 	}
-	query.Add(name, fmt.Sprintf("%v", value))
+	var text string
+	switch typed := value.(type) {
+	case time.Time:
+		text = typed.UTC().Format(time.RFC3339)
+	default:
+		text = fmt.Sprintf("%v", value)
+	}
+	query.Add(name, text)
 }
 
 // CopyQuery creates a copy of the given set of query parameters.
@@ -65,6 +72,12 @@ func CopyHeader(header http.Header) http.Header {
 		result[name] = CopyValues(values)
 	}
 	return result
+}
+
+const impersonateUserHeader = "Impersonate-User"
+
+func AddImpersonationHeader(header *http.Header, user string) {
+	AddHeader(header, impersonateUserHeader, user)
 }
 
 // CopyValues copies a slice of strings.
@@ -113,6 +126,7 @@ func PollContext(
 	// Create a cancellable context so that we can explicitly cancel it when we know that the next
 	// iteration of the loop will be after the deadline:
 	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	// If no expected status has been explicitly specified then add the default:
 	if len(statuses) == 0 {
