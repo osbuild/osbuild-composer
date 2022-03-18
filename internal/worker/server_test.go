@@ -213,6 +213,41 @@ func TestUpdate(t *testing.T) {
 		"operation_id")
 }
 
+func TestInterrupt(t *testing.T) {
+	distroStruct := test_distro.New()
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	if err != nil {
+		t.Fatalf("error getting image type from arch: %v", err)
+	}
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
+	handler := server.Handler()
+
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	require.NoError(t, err)
+
+	j, token, _, _, _, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, jobId, j)
+
+	test.TestRoute(t, handler, false, "DELETE", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
+		fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"InterruptJobResponse"}`, token, token))
+	test.TestRoute(t, handler, false, "DELETE", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound,
+		`{"href":"/api/worker/v1/errors/5","code":"IMAGE-BUILDER-WORKER-5","id":"5","kind":"Error","message":"Token not found","reason":"Token not found"}`,
+		"operation_id")
+
+	j, _, _, _, _, err = server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, jobId, j)
+}
+
 func TestArgs(t *testing.T) {
 	distroStruct := test_distro.New()
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)

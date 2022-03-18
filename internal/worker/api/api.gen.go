@@ -44,6 +44,9 @@ type GetJobResponse struct {
 	Canceled bool `json:"canceled"`
 }
 
+// InterruptJobResponse defines model for InterruptJobResponse.
+type InterruptJobResponse ObjectReference
+
 // ObjectReference defines model for ObjectReference.
 type ObjectReference struct {
 	Href string `json:"href"`
@@ -105,6 +108,9 @@ type ServerInterface interface {
 	// Request a job
 	// (POST /jobs)
 	RequestJob(ctx echo.Context) error
+	// Interrupt a running job
+	// (DELETE /jobs/{token})
+	InterruptJob(ctx echo.Context, token string) error
 	// Get running job
 	// (GET /jobs/{token})
 	GetJob(ctx echo.Context, token string) error
@@ -151,6 +157,22 @@ func (w *ServerInterfaceWrapper) RequestJob(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.RequestJob(ctx)
+	return err
+}
+
+// InterruptJob converts echo context to params.
+func (w *ServerInterfaceWrapper) InterruptJob(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "token", runtime.ParamLocationPath, ctx.Param("token"), &token)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter token: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.InterruptJob(ctx, token)
 	return err
 }
 
@@ -258,6 +280,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/errors/:id", wrapper.GetError)
 	router.POST(baseURL+"/jobs", wrapper.RequestJob)
+	router.DELETE(baseURL+"/jobs/:token", wrapper.InterruptJob)
 	router.GET(baseURL+"/jobs/:token", wrapper.GetJob)
 	router.PATCH(baseURL+"/jobs/:token", wrapper.UpdateJob)
 	router.PUT(baseURL+"/jobs/:token/artifacts/:name", wrapper.UploadJobArtifact)
@@ -269,26 +292,27 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"ErGthZv63wAAAP//2xy7+JAXAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -323,6 +323,10 @@ func (job *Job) run(ctx context.Context, heartbeat time.Duration, ip *instancepr
 		// The worker is shutting down, don't report a partial result.
 		// The job will be requeued by composer once the heartbeat times out.
 		logrus.Warnf("Worker interrupted while running job '%s' (%s). Ignoring result", job.Id(), job.Type())
+		err = job.interrupt(context.Background())
+		if err != nil {
+			logrus.Warnf("Error interrupting job '%s' (%s): %v", job.Id(), job.Type(), err)
+		}
 	case <-runCtx.Done():
 		// Composer cancelled the job.
 		logrus.Infof("Job '%s' (%s) cancelled remotely. Ignoring result", job.Id(), job.Type())
@@ -436,6 +440,26 @@ func (j *Job) finish(ctx context.Context, result interface{}) error {
 
 	if response.StatusCode != http.StatusOK {
 		return errorFromResponse(response, "error setting job status")
+	}
+
+	return nil
+}
+
+func (j *Job) interrupt(ctx context.Context) error {
+	response, err := j.client.newRequest(ctx, "DELETE", j.location, map[string]string{}, nil)
+	if err != nil {
+		return fmt.Errorf("error interrupting job: %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return errorFromResponse(response, "error interrupting job")
+	}
+
+	var jr api.InterruptJobResponse
+	err = json.NewDecoder(response.Body).Decode(&jr)
+	if err != nil {
+		return fmt.Errorf("error parsing response: %v", err)
 	}
 
 	return nil

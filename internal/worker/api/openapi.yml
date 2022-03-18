@@ -136,6 +136,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    delete:
+      operationId: InterruptJob
+      summary: Interrupt a running job
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterruptJobResponse'
+        '4XX':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '5XX':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /jobs/{token}/artifacts/{name}:
     put:
@@ -300,4 +320,6 @@ components:
         result:
           x-go-type: json.RawMessage
     UpdateJobResponse:
+      $ref: '#/components/schemas/ObjectReference'
+    InterruptJobResponse:
       $ref: '#/components/schemas/ObjectReference'

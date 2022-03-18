@@ -40,6 +40,8 @@ const (
 	JobTypeAWSEC2Share      string = "aws-ec2-share"
 )
 
+const maxRetries = 4
+
 type Server struct {
 	jobs   jobqueue.JobQueue
 	logger *log.Logger
@@ -103,8 +105,6 @@ func (s *Server) Handler() http.Handler {
 	return e
 }
 
-const maxHeartbeatRetries = 2
-
 // This function should be started as a goroutine
 // Every 30 seconds it goes through all running jobs, removing any unresponsive ones.
 // It fails jobs which fail to check if they cancelled for more than 2 minutes.
@@ -114,7 +114,7 @@ func (s *Server) WatchHeartbeats() {
 		for _, token := range s.jobs.Heartbeats(time.Second * 120) {
 			missingHeartbeatResult := JobResult{
 				JobError: clienterrors.WorkerClientError(clienterrors.ErrorJobMissingHeartbeat,
-					fmt.Sprintf("Workers running this job stopped responding more than %d times.", maxHeartbeatRetries),
+					fmt.Sprintf("Workers running this job stopped responding. The job was requeued more than %d times.", maxRetries),
 					nil),
 			}
 
@@ -123,7 +123,7 @@ func (s *Server) WatchHeartbeats() {
 				logrus.Panicf("Cannot marshal the heartbeat error: %v", err)
 			}
 
-			err = s.RequeueOrFinishJob(token, maxHeartbeatRetries, resJson)
+			err = s.RequeueOrFinishJob(token, maxRetries, resJson)
 			if err != nil {
 				logrus.Errorf("Error requeueing or finishing unresponsive job: %v", err)
 			}
@@ -742,6 +742,21 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 	return nil
 }
 
+func (s *Server) InterruptJob(token uuid.UUID) error {
+	interruptionResult := JobResult{
+		JobError: clienterrors.WorkerClientError(clienterrors.ErrorJobInterrupted,
+			fmt.Sprintf("Workers running this job was interrupted. The job was requeued more than %d times.", maxRetries),
+			nil),
+	}
+
+	resJson, err := json.Marshal(interruptionResult)
+	if err != nil {
+		logrus.Panicf("Cannot marshal the interruption error: %v", err)
+	}
+
+	return s.RequeueOrFinishJob(token, maxRetries, resJson)
+}
+
 // apiHandlers implements api.ServerInterface - the http api route handlers
 // generated from api/openapi.yml. This is a separate object, because these
 // handlers should not be exposed on the `Server` object.
@@ -912,6 +927,31 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 		Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
 		Id:   token.String(),
 		Kind: "UpdateJobResponse",
+	})
+}
+
+func (h *apiHandlers) InterruptJob(ctx echo.Context, idstr string) error {
+	token, err := uuid.Parse(idstr)
+	if err != nil {
+		return api.HTTPErrorWithInternal(api.ErrorMalformedJobId, err)
+	}
+
+	err = h.server.InterruptJob(token)
+	if err != nil {
+		switch err {
+		case ErrInvalidToken:
+			return api.HTTPError(api.ErrorJobNotFound)
+		case ErrJobNotRunning:
+			return api.HTTPError(api.ErrorJobNotRunning)
+		default:
+			return api.HTTPErrorWithInternal(api.ErrorFinishingJob, err)
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, api.InterruptJobResponse{
+		Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+		Id:   token.String(),
+		Kind: "InterruptJobResponse",
 	})
 }
 

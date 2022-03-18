@@ -36,6 +36,7 @@ const (
 	ErrorOSTreeRefResolution  ClientErrorCode = 33
 	ErrorOSTreeParamsInvalid  ClientErrorCode = 34
 	ErrorOSTreeDependency     ClientErrorCode = 35
+	ErrorJobInterrupted       ClientErrorCode = 36
 )
 
 type ClientErrorCode int
