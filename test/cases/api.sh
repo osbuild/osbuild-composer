@@ -54,7 +54,8 @@ else
 fi
 
 # Start the db
-sudo ${CONTAINER_RUNTIME} run -d --name osbuild-composer-db \
+DB_CONTAINER_NAME="osbuild-composer-db"
+sudo ${CONTAINER_RUNTIME} run -d --name "${DB_CONTAINER_NAME}" \
     --health-cmd "pg_isready -U postgres -d osbuildcomposer" --health-interval 2s \
     --health-timeout 2s --health-retries 10 \
     -e POSTGRES_USER=postgres \
@@ -311,10 +312,10 @@ function dump_db() {
   set +x
 
   # Make sure we get 3 job entries in the db per compose (depsolve + manifest + build)
-  sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows"
+  sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows"
 
   # Save the result, including the manifest, for the job, straight from the db
-  sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
+  sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
     | gpg --batch --yes --passphrase "${GPG_SYMMETRIC_PASSPHRASE}" -o "${ARTIFACTS}/build-result.gpg" --symmetric -
   set -x
 }
@@ -341,6 +342,9 @@ function cleanup() {
 
   # dump the DB here to ensure that it gets dumped even if the test fails
   dump_db
+
+  sudo ${CONTAINER_RUNTIME} kill "${DB_CONTAINER_NAME}"
+  sudo ${CONTAINER_RUNTIME} rm "${DB_CONTAINER_NAME}"
 
   sudo rm -rf "$WORKDIR"
 
