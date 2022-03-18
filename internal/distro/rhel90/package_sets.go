@@ -520,6 +520,7 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
 			"chrony",
+			"cloud-init",
 			"firewalld",
 			"langpacks-en",
 			"open-vm-tools",
