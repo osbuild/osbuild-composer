@@ -387,6 +387,7 @@ cross-distro.sh:
     - azure
     - edge-commit
     - gcp
+    - vsphere
 
 API:
   stage: test
