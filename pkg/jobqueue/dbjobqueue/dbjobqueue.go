@@ -55,6 +55,11 @@ const (
 		)
 		RETURNING token, type, args, queued_at, started_at`
 
+	sqlRequeue = `
+		UPDATE jobs
+		SET started_at = NULL, token = NULL, retries = retries + 1
+		WHERE id = $1 AND started_at IS NOT NULL AND finished_at IS NULL`
+
 	sqlInsertDependency  = `INSERT INTO job_dependencies VALUES ($1, $2)`
 	sqlQueryDependencies = `
 		SELECT dependency_id
@@ -66,7 +71,7 @@ const (
 		WHERE dependency_id = $1`
 
 	sqlQueryJob = `
-		SELECT type, args, channel, started_at, finished_at, canceled
+		SELECT type, args, channel, started_at, finished_at, retries, canceled
 		FROM jobs
 		WHERE id = $1`
 	sqlQueryJobStatus = `
@@ -396,7 +401,7 @@ func (q *DBJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, 
 	return token, dependencies, jobType, args, nil
 }
 
-func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
+func (q *DBJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) error {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return fmt.Errorf("error connecting to database: %v", err)
@@ -410,46 +415,57 @@ func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	defer func() {
 		err = tx.Rollback(context.Background())
 		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
-			q.logger.Error(err, "Error rolling back finish job transaction", "job_id", id.String())
+			q.logger.Error(err, "Error rolling back retry job transaction", "job_id", id.String())
 		}
 
 	}()
 
 	// Use double pointers for timestamps because they might be NULL, which would result in *time.Time == nil
-	var started, finished *time.Time
 	var jobType string
+	var started, finished *time.Time
+	var retries uint64
 	canceled := false
-	err = tx.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, nil, nil, &started, &finished, &canceled)
+	err = tx.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, nil, nil, &started, &finished, &retries, &canceled)
 	if err == pgx.ErrNoRows {
 		return jobqueue.ErrNotExist
 	}
 	if canceled {
 		return jobqueue.ErrCanceled
 	}
-	if finished != nil {
+	if started == nil || finished != nil {
 		return jobqueue.ErrNotRunning
 	}
 
 	// Remove from heartbeats
 	tag, err := tx.Exec(context.Background(), sqlDeleteHeartbeat, id)
 	if err != nil {
-		return fmt.Errorf("error finishing job %s: %v", id, err)
+		return fmt.Errorf("error removing job %s from heartbeats: %v", id, err)
 	}
 
 	if tag.RowsAffected() != 1 {
 		return jobqueue.ErrNotExist
 	}
 
-	err = tx.QueryRow(context.Background(), sqlFinishJob, result, id).Scan(&finished)
+	if retries >= maxRetries {
+		err = tx.QueryRow(context.Background(), sqlFinishJob, result, id).Scan(&finished)
+		if err == pgx.ErrNoRows {
+			return jobqueue.ErrNotExist
+		}
+		if err != nil {
+			return fmt.Errorf("error finishing job %s: %v", id, err)
+		}
+	} else {
+		tag, err = tx.Exec(context.Background(), sqlRequeue, id)
+		if err != nil {
+			return fmt.Errorf("error requeueing job %s: %v", id, err)
+		}
 
-	if err == pgx.ErrNoRows {
-		return jobqueue.ErrNotExist
-	}
-	if err != nil {
-		return fmt.Errorf("error finishing job %s: %v", id, err)
+		if tag.RowsAffected() != 1 {
+			return jobqueue.ErrNotExist
+		}
 	}
 
-	_, err = conn.Exec(context.Background(), sqlNotify)
+	_, err = tx.Exec(context.Background(), sqlNotify)
 	if err != nil {
 		return fmt.Errorf("error notifying jobs channel: %v", err)
 	}
@@ -459,8 +475,11 @@ func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 		return fmt.Errorf("unable to commit database transaction: %v", err)
 	}
 
-	q.logger.Info("Finished job", "job_type", jobType, "job_id", id.String())
-
+	if retries >= maxRetries {
+		q.logger.Info("Finished job", "job_type", jobType, "job_id", id.String())
+	} else {
+		q.logger.Info("Requeued job", "job_type", jobType, "job_id", id.String())
+	}
 	return nil
 }
 
@@ -530,7 +549,7 @@ func (q *DBJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, de
 	}
 	defer conn.Release()
 
-	err = conn.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, &args, &channel, nil, nil, nil)
+	err = conn.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, &args, &channel, nil, nil, nil, nil)
 	if err == pgx.ErrNoRows {
 		err = jobqueue.ErrNotExist
 		return

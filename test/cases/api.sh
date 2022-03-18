@@ -481,11 +481,29 @@ jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE
 sendCompose "$REQUEST_FILE2"
 waitForState "failure"
 
-# crashed/stopped/killed worker should result in a failed state
+# crashed/stopped/killed worker should result in the job being retried
 sendCompose "$REQUEST_FILE"
 waitForState "building"
 sudo systemctl stop "osbuild-remote-worker@*"
-waitForState "failure"
+RETRIED=0
+for RETRY in {1..10}; do
+    ROWS=$(sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c \
+                "SELECT retries FROM jobs WHERE id = '$COMPOSE_ID' AND retries = 1")
+    if grep -q "1 row" <<< "$ROWS"; then
+        RETRIED=1
+        break
+    else
+        echo "Waiting until job is retried ($RETRY/10)"
+        sleep 30
+    fi
+done
+if [ "$RETRIED" != 1 ]; then
+    echo "Job $COMPOSE_ID wasn't retried after killing the worker"
+    exit 1
+fi
+# remove the job from the queue so the worker doesn't pick it up again
+sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c \
+     "DELETE FROM jobs WHERE id = '$COMPOSE_ID'"
 sudo systemctl start "osbuild-remote-worker@localhost:8700.service"
 
 # full integration case

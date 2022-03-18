@@ -33,6 +33,8 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("errors", wrap(testErrors))
 	t.Run("args", wrap(testArgs))
 	t.Run("cancel", wrap(testCancel))
+	t.Run("requeue", wrap(testRequeue))
+	t.Run("requeue-limit", wrap(testRequeueLimit))
 	t.Run("job-types", wrap(testJobTypes))
 	t.Run("dependencies", wrap(testDependencies))
 	t.Run("multiple-workers", wrap(testMultipleWorkers))
@@ -61,7 +63,7 @@ func finishNextTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, result
 	require.Equal(t, jobType, typ)
 	require.NotNil(t, args)
 
-	err = q.FinishJob(id, result)
+	err = q.RequeueOrFinishJob(id, 0, result)
 	require.NoError(t, err)
 
 	return id
@@ -88,7 +90,7 @@ func testErrors(t *testing.T, q jobqueue.JobQueue) {
 	require.NoError(t, err)
 	require.Equal(t, id, idFromT)
 
-	err = q.FinishJob(id, nil)
+	err = q.RequeueOrFinishJob(id, 0, nil)
 	require.NoError(t, err)
 
 	// Make sure the token gets removed
@@ -363,7 +365,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, jobType, "clownfish")
 	require.True(t, canceled)
 	require.Nil(t, result)
-	err = q.FinishJob(id, &testResult{})
+	err = q.RequeueOrFinishJob(id, 0, &testResult{})
 	require.Error(t, err)
 
 	// Cancel a running job, which should not dequeue the canceled job from above
@@ -383,7 +385,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, jobType, "clownfish")
 	require.True(t, canceled)
 	require.Nil(t, result)
-	err = q.FinishJob(id, &testResult{})
+	err = q.RequeueOrFinishJob(id, 0, &testResult{})
 	require.Error(t, err)
 
 	// Cancel a finished job, which is a no-op
@@ -396,7 +398,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	require.Empty(t, deps)
 	require.Equal(t, "clownfish", typ)
 	require.Equal(t, json.RawMessage("null"), args)
-	err = q.FinishJob(id, &testResult{})
+	err = q.RequeueOrFinishJob(id, 0, &testResult{})
 	require.NoError(t, err)
 	err = q.CancelJob(id)
 	require.Error(t, err)
@@ -407,6 +409,73 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	require.False(t, canceled)
 	err = json.Unmarshal(result, &testResult{})
 	require.NoError(t, err)
+}
+
+func testRequeue(t *testing.T, q jobqueue.JobQueue) {
+	// Requeue a non-existing job
+	err := q.RequeueOrFinishJob(uuid.New(), 1, nil)
+	require.Error(t, err)
+
+	// Requeue a pending job
+	id := pushTestJob(t, q, "clownfish", nil, nil, "")
+	require.NotEmpty(t, id)
+	err = q.RequeueOrFinishJob(id, 1, nil)
+	require.Error(t, err)
+
+	// Requeue a running job
+	r, tok1, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, id, r)
+	require.NotEmpty(t, tok1)
+	require.Empty(t, deps)
+	require.Equal(t, "clownfish", typ)
+	require.Equal(t, json.RawMessage("null"), args)
+	err = q.RequeueOrFinishJob(id, 1, nil)
+	require.NoError(t, err)
+	r, tok2, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, id, r)
+	require.NotEmpty(t, tok2)
+	require.NotEqual(t, tok1, tok2)
+	require.Empty(t, deps)
+	require.Equal(t, "clownfish", typ)
+	require.Equal(t, json.RawMessage("null"), args)
+	jobType, _, result, _, _, _, canceled, _, _, err := q.JobStatus(id)
+	require.NoError(t, err)
+	require.Equal(t, jobType, "clownfish")
+	require.False(t, canceled)
+	require.Nil(t, result)
+	err = q.RequeueOrFinishJob(id, 0, &testResult{})
+	require.NoError(t, err)
+
+	// Requeue a finished job
+	err = q.RequeueOrFinishJob(id, 1, nil)
+	require.Error(t, err)
+}
+
+func testRequeueLimit(t *testing.T, q jobqueue.JobQueue) {
+	// Start a job
+	id := pushTestJob(t, q, "clownfish", nil, nil, "")
+	require.NotEmpty(t, id)
+	_, _, _, _, _, err := q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	require.NoError(t, err)
+	// Requeue once
+	err = q.RequeueOrFinishJob(id, 1, nil)
+	require.NoError(t, err)
+	// Start again
+	_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	require.NoError(t, err)
+	_, _, result, _, _, finished, _, _, _, err := q.JobStatus(id)
+	require.NoError(t, err)
+	require.True(t, finished.IsZero())
+	require.Nil(t, result)
+	// Requeue a second time, this time finishing it
+	err = q.RequeueOrFinishJob(id, 1, &testResult{})
+	require.NoError(t, err)
+	_, _, result, _, _, finished, _, _, _, err = q.JobStatus(id)
+	require.NoError(t, err)
+	require.False(t, finished.IsZero())
+	require.NotNil(t, result)
 }
 
 func testHeartbeats(t *testing.T, q jobqueue.JobQueue) {
@@ -434,7 +503,7 @@ func testHeartbeats(t *testing.T, q jobqueue.JobQueue) {
 	require.NoError(t, err)
 	require.Equal(t, id2, id)
 
-	err = q.FinishJob(id, &testResult{})
+	err = q.RequeueOrFinishJob(id, 0, &testResult{})
 	require.NoError(t, err)
 
 	// No heartbeats for finished job
@@ -456,7 +525,7 @@ func testDequeueByID(t *testing.T, q jobqueue.JobQueue) {
 		require.Equal(t, "octopus", typ)
 		require.NotNil(t, args)
 
-		err = q.FinishJob(one, nil)
+		err = q.RequeueOrFinishJob(one, 0, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, two, finishNextTestJob(t, q, "octopus", testResult{}, nil))
@@ -482,7 +551,7 @@ func testDequeueByID(t *testing.T, q jobqueue.JobQueue) {
 		_, _, _, _, err = q.DequeueByID(context.Background(), one)
 		require.Equal(t, jobqueue.ErrNotPending, err)
 
-		err = q.FinishJob(one, nil)
+		err = q.RequeueOrFinishJob(one, 0, nil)
 		require.NoError(t, err)
 
 		_, _, _, _, err = q.DequeueByID(context.Background(), one)

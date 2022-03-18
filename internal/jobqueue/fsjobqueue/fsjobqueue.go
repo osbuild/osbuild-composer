@@ -75,7 +75,8 @@ type job struct {
 	FinishedAt time.Time `json:"finished_at,omitempty"`
 	ExpiresAt  time.Time `json:"expires_at,omitempty"`
 
-	Canceled bool `json:"canceled,omitempty"`
+	Retries  uint64 `json:"retries"`
+	Canceled bool   `json:"canceled,omitempty"`
 }
 
 // Create a new fsJobQueue object for `dir`. This object must have exclusive
@@ -111,7 +112,7 @@ func New(dir string) (*fsJobQueue, error) {
 		if !j.StartedAt.IsZero() && j.FinishedAt.IsZero() && !j.Canceled {
 			// Fail older running jobs which don't have a token stored
 			if j.Token == uuid.Nil {
-				err = q.FinishJob(j.Id, nil)
+				err = q.RequeueOrFinishJob(j.Id, 0, nil)
 				if err != nil {
 					return nil, fmt.Errorf("Error finishing job '%s' without a token: %v", j.Id, err)
 				}
@@ -274,7 +275,7 @@ func (q *fsJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, 
 	return j.Token, j.Dependencies, j.Type, j.Args, nil
 }
 
-func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
+func (q *fsJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -291,33 +292,57 @@ func (q *fsJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 		return jobqueue.ErrNotRunning
 	}
 
-	j.FinishedAt = time.Now()
-
-	j.Result, err = json.Marshal(result)
-	if err != nil {
-		return fmt.Errorf("error marshaling result: %v", err)
-	}
-
-	delete(q.heartbeats, j.Token)
 	delete(q.jobIdByToken, j.Token)
+	delete(q.heartbeats, j.Token)
 
-	// Write before notifying dependants, because it will be read again.
-	err = q.db.Write(id.String(), j)
-	if err != nil {
-		return fmt.Errorf("error writing job %s: %v", id, err)
-	}
+	if j.Retries >= maxRetries {
+		j.FinishedAt = time.Now()
 
-	for _, depid := range q.dependants[id] {
-		dep, err := q.readJob(depid)
+		j.Result, err = json.Marshal(result)
 		if err != nil {
-			return err
+			return fmt.Errorf("error marshaling result: %v", err)
 		}
-		err = q.maybeEnqueue(dep, false)
+
+		// Write before notifying dependants, because it will be read again.
+		err = q.db.Write(id.String(), j)
 		if err != nil {
-			return err
+			return fmt.Errorf("error writing job %s: %v", id, err)
+		}
+
+		for _, depid := range q.dependants[id] {
+			dep, err := q.readJob(depid)
+			if err != nil {
+				return err
+			}
+			err = q.maybeEnqueue(dep, false)
+			if err != nil {
+				return err
+			}
+		}
+		delete(q.dependants, id)
+	} else {
+		j.Token = uuid.Nil
+		j.StartedAt = time.Time{}
+		j.Retries += 1
+
+		// Write the job before updating in-memory state, so that the latter
+		// doesn't become corrupt when writing fails.
+		err = q.db.Write(j.Id.String(), j)
+		if err != nil {
+			return fmt.Errorf("cannot write job: %v", err)
+		}
+
+		// add the job to the list of pending ones
+		q.pending.PushBack(j.Id)
+
+		// notify all listeners in a non-blocking way
+		for c := range q.listeners {
+			select {
+			case c <- struct{}{}:
+			default:
+			}
 		}
 	}
-	delete(q.dependants, id)
 
 	return nil
 }
