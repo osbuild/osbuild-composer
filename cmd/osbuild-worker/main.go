@@ -123,7 +123,7 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 
 func main() {
 	var config struct {
-		KojiServers map[string]struct {
+		Koji map[string]struct {
 			Kerberos *struct {
 				Principal string `toml:"principal"`
 				KeyTab    string `toml:"keytab"`
@@ -193,7 +193,7 @@ func main() {
 	_ = os.Mkdir(output, os.ModeDir)
 
 	kojiServers := make(map[string]koji.GSSAPICredentials)
-	for server, creds := range config.KojiServers {
+	for server, creds := range config.Koji {
 		if creds.Kerberos == nil {
 			// For now we only support Kerberos authentication.
 			continue
