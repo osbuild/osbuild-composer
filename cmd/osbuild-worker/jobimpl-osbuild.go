@@ -23,20 +23,18 @@ import (
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
-	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 type OSBuildJobImpl struct {
-	Store       string
-	Output      string
-	KojiServers map[string]koji.GSSAPICredentials
-	GCPCreds    []byte
-	AzureCreds  *azure.Credentials
-	AWSCreds    string
-	AWSBucket   string
+	Store      string
+	Output     string
+	GCPCreds   []byte
+	AzureCreds *azure.Credentials
+	AWSCreds   string
+	AWSBucket  string
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they

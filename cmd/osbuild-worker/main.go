@@ -340,13 +340,12 @@ func main() {
 	// non-depsolve job
 	jobImpls := map[string]JobImplementation{
 		"osbuild": &OSBuildJobImpl{
-			Store:       store,
-			Output:      output,
-			KojiServers: kojiServers,
-			GCPCreds:    gcpCredentials,
-			AzureCreds:  azureCredentials,
-			AWSCreds:    awsCredentials,
-			AWSBucket:   awsBucket,
+			Store:      store,
+			Output:     output,
+			GCPCreds:   gcpCredentials,
+			AzureCreds: azureCredentials,
+			AWSCreds:   awsCredentials,
+			AWSBucket:  awsBucket,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:              store,
