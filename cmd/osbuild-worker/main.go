@@ -31,6 +31,10 @@ type connectionConfig struct {
 	ClientCertFile string
 }
 
+type KojiServer struct {
+	KerberosCredentials koji.GSSAPICredentials
+}
+
 // Represents the implementation of a job type as defined by the worker API.
 type JobImplementation interface {
 	Run(job worker.Job) error
@@ -189,15 +193,19 @@ func main() {
 	output := path.Join(cacheDirectory, "output")
 	_ = os.Mkdir(output, os.ModeDir)
 
-	kojiServers := make(map[string]koji.GSSAPICredentials)
+	kojiServers := make(map[string]KojiServer)
 	for server, creds := range config.Koji {
 		if creds.Kerberos == nil {
 			// For now we only support Kerberos authentication.
+			logrus.Warn("Koji server %s doesn't have Kerberos credentials specified, skipping", server)
 			continue
 		}
-		kojiServers[server] = koji.GSSAPICredentials{
-			Principal: creds.Kerberos.Principal,
-			KeyTab:    creds.Kerberos.KeyTab,
+
+		kojiServers[server] = KojiServer{
+			KerberosCredentials: koji.GSSAPICredentials{
+				Principal: creds.Kerberos.Principal,
+				KeyTab:    creds.Kerberos.KeyTab,
+			},
 		}
 	}
 
