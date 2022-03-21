@@ -68,6 +68,13 @@ if [[ $ID == "rhel" && ${VERSION_ID%.*} == "9" ]]; then
   sudo systemctl stop tmp.mount && sudo systemctl mask tmp.mount
 fi
 
+if [[ $ID == "centos" && $VERSION_ID == "8" ]]; then
+    # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2065292
+    # Remove when podman-4.0.2-2.el8 is in Centos 8 repositories
+    greenprint "Updating libseccomp on Centos 8"
+    sudo dnf upgrade -y libseccomp
+fi
+
 # Distro version that this script is running on.
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
