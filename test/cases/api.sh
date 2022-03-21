@@ -312,7 +312,7 @@ function dump_db() {
   set +x
 
   # Make sure we get 3 job entries in the db per compose (depsolve + manifest + build)
-  sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows"
+  sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows" > /dev/null
 
   # Save the result, including the manifest, for the job, straight from the db
   sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
