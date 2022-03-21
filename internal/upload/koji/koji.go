@@ -3,10 +3,6 @@ package koji
 import (
 	"bytes"
 	"context"
-	"net"
-	"strings"
-	"time"
-
 	// koji uses MD5 hashes
 	/* #nosec G501 */
 	"crypto/md5"
@@ -18,15 +14,19 @@ import (
 	"hash/adler32"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/kolo/xmlrpc"
 	"github.com/sirupsen/logrus"
 	"github.com/ubccr/kerby/khttp"
 
 	rh "github.com/hashicorp/go-retryablehttp"
+
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -468,7 +468,7 @@ func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
 	}, nil
 }
 
-func CreateKojiTransport(relaxTimeout uint) http.RoundTripper {
+func CreateKojiTransport(relaxTimeout uint, proxy *url.URL) http.RoundTripper {
 	// Koji for some reason needs TLS renegotiation enabled.
 	// Clone the default http rt and enable renegotiation.
 	rt := &rh.RoundTripper{Client: rh.NewClient()}
@@ -478,6 +478,12 @@ func CreateKojiTransport(relaxTimeout uint) http.RoundTripper {
 	transport.TLSClientConfig = &tls.Config{
 		Renegotiation: tls.RenegotiateOnceAsClient,
 		MinVersion:    tls.VersionTLS12,
+	}
+
+	if proxy != nil {
+		transport.Proxy = func(request *http.Request) (*url.URL, error) {
+			return proxy, nil
+		}
 	}
 
 	// Relax timeouts a bit

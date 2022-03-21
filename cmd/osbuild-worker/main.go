@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -33,6 +34,7 @@ type connectionConfig struct {
 
 type KojiServer struct {
 	KerberosCredentials koji.GSSAPICredentials
+	Proxy               *url.URL
 }
 
 // Represents the implementation of a job type as defined by the worker API.
@@ -132,6 +134,7 @@ func main() {
 				Principal string `toml:"principal"`
 				KeyTab    string `toml:"keytab"`
 			} `toml:"kerberos,omitempty"`
+			Proxy string `toml:"proxy"`
 		} `toml:"koji"`
 		GCP *struct {
 			Credentials string `toml:"credentials"`
@@ -194,18 +197,27 @@ func main() {
 	_ = os.Mkdir(output, os.ModeDir)
 
 	kojiServers := make(map[string]KojiServer)
-	for server, creds := range config.Koji {
-		if creds.Kerberos == nil {
+	for server, k := range config.Koji {
+		if k.Kerberos == nil {
 			// For now we only support Kerberos authentication.
 			logrus.Warn("Koji server %s doesn't have Kerberos credentials specified, skipping", server)
 			continue
 		}
 
+		var proxyURL *url.URL
+		if k.Proxy != "" {
+			proxyURL, err = url.Parse(k.Proxy)
+			if err != nil {
+				logrus.Fatalf("Could not parse proxy URL (%s) for server %s: %v", k.Proxy, server, err)
+			}
+		}
+
 		kojiServers[server] = KojiServer{
 			KerberosCredentials: koji.GSSAPICredentials{
-				Principal: creds.Kerberos.Principal,
-				KeyTab:    creds.Kerberos.KeyTab,
+				Principal: k.Kerberos.Principal,
+				KeyTab:    k.Kerberos.KeyTab,
 			},
+			Proxy: proxyURL,
 		}
 	}
 

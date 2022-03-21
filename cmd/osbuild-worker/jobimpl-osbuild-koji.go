@@ -24,8 +24,6 @@ type OSBuildKojiJobImpl struct {
 }
 
 func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, filename string) (string, uint64, error) {
-	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
-
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return "", 0, err
@@ -35,6 +33,8 @@ func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, fil
 	if !exists {
 		return "", 0, fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
+
+	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor, kojiServer.Proxy)
 
 	k, err := koji.NewFromGSSAPI(server, &kojiServer.KerberosCredentials, transport)
 	if err != nil {

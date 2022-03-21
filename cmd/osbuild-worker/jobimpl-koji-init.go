@@ -17,8 +17,6 @@ type KojiInitJobImpl struct {
 }
 
 func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (string, uint64, error) {
-	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
-
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return "", 0, err
@@ -28,6 +26,8 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 	if !exists {
 		return "", 0, fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
+
+	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor, kojiServer.Proxy)
 
 	k, err := koji.NewFromGSSAPI(server, &kojiServer.KerberosCredentials, transport)
 	if err != nil {

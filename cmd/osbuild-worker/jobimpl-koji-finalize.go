@@ -25,7 +25,6 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 	buildRoots []koji.BuildRoot,
 	images []koji.Image,
 	directory, token string) error {
-	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -36,6 +35,8 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 	if !exists {
 		return fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
+
+	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor, kojiServer.Proxy)
 
 	k, err := koji.NewFromGSSAPI(server, &kojiServer.KerberosCredentials, transport)
 	if err != nil {
@@ -57,8 +58,6 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 }
 
 func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token string) error {
-	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
-
 	serverURL, err := url.Parse(server)
 	if err != nil {
 		return err
@@ -68,6 +67,8 @@ func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token stri
 	if !exists {
 		return fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
+
+	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor, kojiServer.Proxy)
 
 	k, err := koji.NewFromGSSAPI(server, &kojiServer.KerberosCredentials, transport)
 	if err != nil {
