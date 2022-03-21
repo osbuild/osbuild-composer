@@ -135,8 +135,10 @@ wait_for_vm
 sudo pkill -P "$CONSOLE_PID"
 
 # run second phase of the test
+set +e
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS" 'source /root/upgrade_verify.sh'
 RESULT="$?"
+set -e
 
 # copy over osbuild-composer logs
 sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":logs/* .
