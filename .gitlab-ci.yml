@@ -8,8 +8,9 @@ stages:
 
 .base:
   before_script:
-    - schutzbot/ci_details.sh > ci-details
+    - schutzbot/ci_details.sh > ci-details-before-run
   after_script:
+    - schutzbot/ci_details.sh > ci-details-after-run
     - schutzbot/update_github_status.sh update
     - schutzbot/save_journal.sh
     - schutzbot/run_cloud_cleaner.sh
@@ -20,7 +21,8 @@ stages:
     paths:
       - journal-log.gpg
       - ci-artifacts
-      - ci-details
+      - ci-details-before-run
+      - ci-details-after-run
       - "*.repo"
       - COMPOSER_NVR
     when: always
@@ -77,9 +79,6 @@ RPM:
     - !reference [.build_rules, rules]
   script:
     - sh "schutzbot/mockbuild.sh"
-  after_script:
-    - schutzbot/update_github_status.sh update
-    - schutzbot/save_journal.sh
   parallel:
     matrix:
       - RUNNER:
