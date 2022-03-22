@@ -33,6 +33,11 @@ CI MACHINE SPECS
 EOF
 echo -e "\033[0m"
 
+echo "List of system repositories:"
+yum repolist -v
+
+echo "------------------------------------------------------------------------------"
+
 echo "List of installed packages:"
 rpm -qa | sort
 echo "------------------------------------------------------------------------------"
