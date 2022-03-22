@@ -127,7 +127,9 @@
       "osbuild": {
         "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
       }
-    },
+    }
+  },
+  "centos-stream-9": {
     "repos": {
       "file": "/etc/yum.repos.d/centos.repo",
       "x86_64": [
