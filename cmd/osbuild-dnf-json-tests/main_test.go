@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel86"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
 )
@@ -39,11 +40,13 @@ func TestFetchChecksum(t *testing.T) {
 		IgnoreSSL: true,
 	}
 
+	solver := dnfjson.NewSolver("platform:f31", "31", "x86_64", path.Join(dir, "rpmmd"))
 	// use a fullpath to dnf-json, this allows this test to have an arbitrary
 	// working directory
-	rpmMetadata := rpmmd.NewRPMMD(path.Join(dir, "rpmmd"))
-	_, c, err := rpmMetadata.FetchMetadata([]rpmmd.RepoConfig{repoCfg}, "platform:f31", "x86_64", "31")
+	solver.SetDNFJSONPath("/usr/libexec/osbuild-composer/dnf-json")
+	res, err := solver.FetchMetadata([]rpmmd.RepoConfig{repoCfg})
 	assert.Nilf(t, err, "Failed to fetch checksum: %v", err)
+	c := res.Checksums
 	assert.NotEqual(t, "", c["repo"], "The checksum is empty")
 }
 
@@ -63,10 +66,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 			// Set up temporary directory for rpm/dnf cache
 			dir := t.TempDir()
-
-			// use a fullpath to dnf-json, this allows this test to have an arbitrary
-			// working directory
-			rpm := rpmmd.NewRPMMD(dir)
+			baseSolver := dnfjson.NewBaseSolver(dir)
 
 			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
 			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
@@ -75,7 +75,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 				t.Run(archStr, func(t *testing.T) {
 					arch, err := distroStruct.GetArch(archStr)
 					require.NoError(t, err)
-
+					solver := baseSolver.NewWithConfig(distroStruct.ModulePlatformID(), distroStruct.Releasever(), archStr)
 					for _, imgTypeStr := range arch.ListImageTypes() {
 						t.Run(imgTypeStr, func(t *testing.T) {
 							imgType, err := arch.GetImageType(imgTypeStr)
@@ -83,10 +83,10 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 							packages := imgType.PackageSets(blueprint.Blueprint{})
 
-							_, _, err = rpm.Depsolve(packages["build"], repos[archStr], distroStruct.ModulePlatformID(), archStr, distroStruct.Releasever())
+							_, err = solver.Depsolve(packages["build"], repos[archStr])
 							assert.NoError(t, err)
 
-							_, _, err = rpm.Depsolve(packages["packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr, distroStruct.Releasever())
+							_, err = solver.Depsolve(packages["packages"], repos[archStr])
 							assert.NoError(t, err)
 						})
 					}
@@ -111,10 +111,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 
 			// Set up temporary directory for rpm/dnf cache
 			dir := t.TempDir()
-
-			// use a fullpath to dnf-json, this allows this test to have an arbitrary
-			// working directory
-			rpm := rpmmd.NewRPMMD(dir)
+			solver := dnfjson.NewSolver(distroStruct.ModulePlatformID(), distroStruct.Releasever(), distro.X86_64ArchName, dir)
 
 			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
 			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
@@ -150,7 +147,29 @@ func TestDepsolvePackageSets(t *testing.T) {
 				return expectedPkgSpecsSetNames
 			}(imagePkgSets, imagePkgSetChains)
 
-			gotPackageSpecsSets, err := rpm.DepsolvePackageSets(imagePkgSetChains, imagePkgSets, x86Repos, nil, distroStruct.ModulePlatformID(), x86Arch.Name(), distroStruct.Releasever())
+			gotPackageSpecsSets := make(map[string]*dnfjson.DepsolveResult, len(imagePkgSets))
+			// first depsolve package sets that are part of a chain
+			for specName, setNames := range imagePkgSetChains {
+				pkgSets := make([]rpmmd.PackageSet, len(setNames))
+				for idx, pkgSetName := range setNames {
+					pkgSets[idx] = imagePkgSets[pkgSetName]
+					delete(imagePkgSets, pkgSetName) // will be depsolved here: remove from map
+				}
+				res, err := solver.ChainDepsolve(pkgSets, x86Repos, nil)
+				if err != nil {
+					require.Nil(t, err)
+				}
+				gotPackageSpecsSets[specName] = res
+			}
+
+			// depsolve the rest of the package sets
+			for name, pkgSet := range imagePkgSets {
+				res, err := solver.ChainDepsolve([]rpmmd.PackageSet{pkgSet}, x86Repos, nil)
+				if err != nil {
+					require.Nil(t, err)
+				}
+				gotPackageSpecsSets[name] = res
+			}
 			require.Nil(t, err)
 			require.EqualValues(t, len(expectedPackageSpecsSetNames), len(gotPackageSpecsSets))
 			for _, name := range expectedPackageSpecsSetNames {

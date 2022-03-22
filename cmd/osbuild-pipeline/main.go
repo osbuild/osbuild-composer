@@ -10,6 +10,7 @@ import (
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -122,24 +123,36 @@ func main() {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
 
-	rpm_md := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
+	packageSets := imageType.PackageSets(composeRequest.Blueprint)
 
-	packageSpecSets, err := rpm_md.DepsolvePackageSets(
-		imageType.PackageSetsChains(),
-		imageType.PackageSets(composeRequest.Blueprint),
-		repos,
-		nil,
-		d.ModulePlatformID(),
-		arch.Name(),
-		d.Releasever(),
-	)
-	if err != nil {
-		panic("Could not depsolve: " + err.Error())
+	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), path.Join(home, ".cache/osbuild-composer/rpmmd"))
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+	// first depsolve package sets that are part of a chain
+	for specName, setNames := range imageType.PackageSetsChains() {
+		pkgSets := make([]rpmmd.PackageSet, len(setNames))
+		for idx, pkgSetName := range setNames {
+			pkgSets[idx] = packageSets[pkgSetName]
+			delete(packageSets, pkgSetName) // will be depsolved here: remove from map
+		}
+		res, err := solver.ChainDepsolve(pkgSets, repos, nil)
+		if err != nil {
+			panic("Could not depsolve: " + err.Error())
+		}
+		depsolvedSets[specName] = res.Dependencies
+	}
+
+	// depsolve the rest of the package sets
+	for name, pkgSet := range packageSets {
+		res, err := solver.ChainDepsolve([]rpmmd.PackageSet{pkgSet}, repos, nil)
+		if err != nil {
+			panic("Could not depsolve: " + err.Error())
+		}
+		depsolvedSets[name] = res.Dependencies
 	}
 
 	var bytes []byte
 	if rpmmdArg {
-		bytes, err = json.Marshal(packageSpecSets)
+		bytes, err = json.Marshal(depsolvedSets)
 		if err != nil {
 			panic(err)
 		}
@@ -160,7 +173,7 @@ func main() {
 				},
 			},
 			repos,
-			packageSpecSets,
+			depsolvedSets,
 			seedArg)
 		if err != nil {
 			panic(err.Error())

@@ -23,11 +23,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -39,7 +39,7 @@ type Composer struct {
 	logger   *log.Logger
 	distros  *distroregistry.Registry
 
-	rpm rpmmd.RPMMD
+	solver *dnfjson.BaseSolver
 
 	workers *worker.Server
 	weldr   *weldr.API
@@ -73,7 +73,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	c.distros = distroregistry.NewDefault()
 	logrus.Infof("Loaded %d distros", len(c.distros.List()))
 
-	c.rpm = rpmmd.NewRPMMD(path.Join(c.cacheDir, "rpmmd"))
+	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
 
 	var jobs jobqueue.JobQueue
 	if config.Worker.PGDatabase != "" {
@@ -117,7 +117,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 
 func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 	distrosImageTypeDenylist map[string][]string) (err error) {
-	c.weldr, err = weldr.New(repoPaths, c.stateDir, c.rpm, c.distros, c.logger, c.workers, distrosImageTypeDenylist)
+	c.weldr, err = weldr.New(repoPaths, c.stateDir, c.solver, c.distros, c.logger, c.workers, distrosImageTypeDenylist)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, en
 	}
 
 	c.api = cloudapi.NewServer(c.workers, c.distros, config)
-	c.koji = kojiapi.NewServer(c.logger, c.workers, c.rpm, c.distros)
+	c.koji = kojiapi.NewServer(c.logger, c.workers, c.solver, c.distros)
 
 	if !enableTLS {
 		c.apiListener = l

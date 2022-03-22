@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -14,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
@@ -24,16 +28,44 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
+var dnfjsonPath string
+
+func init() {
+	// compile the mock-dnf-json binary to speed up tests
+	tmpdir, err := os.MkdirTemp("", "")
+	if err != nil {
+		panic(err)
+	}
+	dnfjsonPath = filepath.Join(tmpdir, "mock-dnf-json")
+	cmd := exec.Command("go", "build", "-o", dnfjsonPath, "../../cmd/mock-dnf-json")
+	if err := cmd.Run(); err != nil {
+		panic(err)
+	}
+}
+
 func newTestKojiServer(t *testing.T, dir string) (*kojiapi.Server, *worker.Server) {
-	rpm_fixture := rpmmd_mock.BaseFixture(dir)
-	rpm := rpmmd_mock.NewRPMMDMock(rpm_fixture)
-	require.NotNil(t, rpm)
+
+	// create tempdir subdirectory for store
+	dbpath, err := os.MkdirTemp(dir, "")
+	if err != nil {
+		panic(err)
+	}
+	rpm_fixture := rpmmd_mock.BaseFixture(dbpath)
 
 	distros, err := distro_mock.NewDefaultRegistry()
 	require.NoError(t, err)
 	require.NotNil(t, distros)
 
-	kojiServer := kojiapi.NewServer(nil, rpm_fixture.Workers, rpm, distros)
+	solver := dnfjson.NewBaseSolver("") // test solver doesn't need a cache dir
+	// create tempdir subdirectory for solver response file
+	dspath, err := os.MkdirTemp(dir, "")
+	if err != nil {
+		panic(err)
+	}
+
+	respfile := rpm_fixture.ResponseGenerator(dspath)
+	solver.SetDNFJSONPath(dnfjsonPath, respfile)
+	kojiServer := kojiapi.NewServer(nil, rpm_fixture.Workers, solver, distros)
 	require.NotNil(t, kojiServer)
 
 	return kojiServer, rpm_fixture.Workers

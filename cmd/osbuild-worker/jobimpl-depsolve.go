@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -18,22 +19,35 @@ type DepsolveJobImpl struct {
 // in repos are used for all package sets, whereas the repositories in
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string,
-	packageSets map[string]rpmmd.PackageSet,
-	repos []rpmmd.RepoConfig,
-	packageSetsRepos map[string][]rpmmd.RepoConfig,
-	modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
-	rpmMD := rpmmd.NewRPMMD(impl.RPMMDCache)
+func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string, packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, packageSetsRepos map[string][]rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
+	solver := dnfjson.NewSolver(modulePlatformID, releasever, arch, impl.RPMMDCache)
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+	psRepos := make([][]rpmmd.RepoConfig, 0)
 
-	return rpmMD.DepsolvePackageSets(
-		packageSetsChains,
-		packageSets,
-		repos,
-		packageSetsRepos,
-		modulePlatformID,
-		arch,
-		releasever,
-	)
+	// first depsolve package sets that are part of a chain
+	for specName, setNames := range packageSetsChains {
+		pkgSets := make([]rpmmd.PackageSet, len(setNames))
+		for idx, pkgSetName := range setNames {
+			pkgSets[idx] = packageSets[pkgSetName]
+			psRepos = append(psRepos, packageSetsRepos[pkgSetName]) // will be nil if it doesn't exist
+			delete(packageSets, pkgSetName)                         // will be depsolved here: remove from map
+		}
+		res, err := solver.ChainDepsolve(pkgSets, repos, psRepos)
+		if err != nil {
+			return nil, err
+		}
+		depsolvedSets[specName] = res.Dependencies
+	}
+
+	// depsolve the rest of the package sets
+	for name, pkgSet := range packageSets {
+		res, err := solver.ChainDepsolve([]rpmmd.PackageSet{pkgSet}, repos, [][]rpmmd.RepoConfig{packageSetsRepos[name]})
+		if err != nil {
+			return nil, err
+		}
+		depsolvedSets[name] = res.Dependencies
+	}
+	return depsolvedSets, nil
 }
 
 func (impl *DepsolveJobImpl) Run(job worker.Job) error {
