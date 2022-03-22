@@ -93,21 +93,24 @@ const depsolveTestResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     }
@@ -145,7 +148,7 @@ const depsolvePackageNotExistError = `
   "errors": [
     {
       "id": "BlueprintsError",
-      "msg": "test: DNF error occured: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"
+      "msg": "test: DNF error occurred: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"
     }
   ]
 }
@@ -180,7 +183,7 @@ const depsolveBadError = `
   "errors": [
     {
       "id": "BlueprintsError",
-      "msg": "test: DNF error occured: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"
+      "msg": "test: DNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"
     }
   ]
 }
@@ -232,35 +235,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-01-03T15:04:05",
-          "epoch": 0,
-          "release": "0.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "0.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-01-02T15:04:05",
           "epoch": 0,
           "release": "0.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "0.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-01-03T15:04:05",
+          "epoch": 0,
+          "release": "0.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "0.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -276,32 +279,32 @@ const projectsInfoResponse = `
           "build_time": "2006-02-02T15:04:05",
           "epoch": 0,
           "release": "1.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "1.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-02-03T15:04:05",
           "epoch": 0,
           "release": "1.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "1.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -317,32 +320,32 @@ const projectsInfoResponse = `
           "build_time": "2006-11-02T15:04:05",
           "epoch": 0,
           "release": "10.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "10.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-11-03T15:04:05",
           "epoch": 0,
           "release": "10.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "10.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -355,35 +358,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-12-03T15:04:05",
-          "epoch": 0,
-          "release": "11.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "11.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-12-02T15:04:05",
           "epoch": 0,
           "release": "11.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "11.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-12-03T15:04:05",
+          "epoch": 0,
+          "release": "11.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "11.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -399,32 +402,32 @@ const projectsInfoResponse = `
           "build_time": "2007-01-02T15:04:05",
           "epoch": 0,
           "release": "12.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "12.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-01-03T15:04:05",
           "epoch": 0,
           "release": "12.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "12.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -440,32 +443,32 @@ const projectsInfoResponse = `
           "build_time": "2007-02-02T15:04:05",
           "epoch": 0,
           "release": "13.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "13.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-02-03T15:04:05",
           "epoch": 0,
           "release": "13.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "13.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -478,35 +481,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-03-03T15:04:05",
-          "epoch": 0,
-          "release": "14.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "14.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-03-02T15:04:05",
           "epoch": 0,
           "release": "14.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "14.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-03-03T15:04:05",
+          "epoch": 0,
+          "release": "14.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "14.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -519,35 +522,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-04-03T15:04:05",
-          "epoch": 0,
-          "release": "15.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "15.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-04-02T15:04:05",
           "epoch": 0,
           "release": "15.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "15.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-04-03T15:04:05",
+          "epoch": 0,
+          "release": "15.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "15.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -563,32 +566,32 @@ const projectsInfoResponse = `
           "build_time": "2007-05-02T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-05-03T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -601,35 +604,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-06-03T15:04:05",
-          "epoch": 0,
-          "release": "17.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "17.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-06-02T15:04:05",
           "epoch": 0,
           "release": "17.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "17.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-06-03T15:04:05",
+          "epoch": 0,
+          "release": "17.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "17.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -645,32 +648,32 @@ const projectsInfoResponse = `
           "build_time": "2007-07-02T15:04:05",
           "epoch": 0,
           "release": "18.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "18.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-07-03T15:04:05",
           "epoch": 0,
           "release": "18.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "18.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -683,35 +686,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-08-03T15:04:05",
-          "epoch": 0,
-          "release": "19.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "19.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-08-02T15:04:05",
           "epoch": 0,
           "release": "19.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "19.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-08-03T15:04:05",
+          "epoch": 0,
+          "release": "19.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "19.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -727,32 +730,32 @@ const projectsInfoResponse = `
           "build_time": "2006-03-02T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-03-03T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -765,35 +768,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-09-03T15:04:05",
-          "epoch": 0,
-          "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "20.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-09-02T15:04:05",
           "epoch": 0,
           "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "20.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-09-03T15:04:05",
+          "epoch": 0,
+          "release": "20.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "20.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -809,32 +812,32 @@ const projectsInfoResponse = `
           "build_time": "2007-10-02T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-10-03T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -847,35 +850,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-04-03T15:04:05",
-          "epoch": 0,
-          "release": "3.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "3.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-04-02T15:04:05",
           "epoch": 0,
           "release": "3.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "3.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-04-03T15:04:05",
+          "epoch": 0,
+          "release": "3.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "3.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -888,35 +891,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-05-03T15:04:05",
-          "epoch": 0,
-          "release": "4.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "4.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-05-02T15:04:05",
           "epoch": 0,
           "release": "4.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "4.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-05-03T15:04:05",
+          "epoch": 0,
+          "release": "4.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "4.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -929,35 +932,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-06-03T15:04:05",
-          "epoch": 0,
-          "release": "5.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "5.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-06-02T15:04:05",
           "epoch": 0,
           "release": "5.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "5.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-06-03T15:04:05",
+          "epoch": 0,
+          "release": "5.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "5.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -973,32 +976,32 @@ const projectsInfoResponse = `
           "build_time": "2006-07-02T15:04:05",
           "epoch": 0,
           "release": "6.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "6.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-07-03T15:04:05",
           "epoch": 0,
           "release": "6.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "6.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -1014,32 +1017,32 @@ const projectsInfoResponse = `
           "build_time": "2006-08-02T15:04:05",
           "epoch": 0,
           "release": "7.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "7.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-08-03T15:04:05",
           "epoch": 0,
           "release": "7.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "7.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -1052,35 +1055,35 @@ const projectsInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-09-03T15:04:05",
-          "epoch": 0,
-          "release": "8.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "8.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-09-02T15:04:05",
           "epoch": 0,
           "release": "8.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "8.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-09-03T15:04:05",
+          "epoch": 0,
+          "release": "8.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "8.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -1096,32 +1099,32 @@ const projectsInfoResponse = `
           "build_time": "2006-10-02T15:04:05",
           "epoch": 0,
           "release": "9.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "9.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-10-03T15:04:05",
           "epoch": 0,
           "release": "9.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "9.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     }
@@ -1144,32 +1147,32 @@ const projectsInfoFilteredResponse = `
           "build_time": "2007-05-02T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-05-03T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -1185,32 +1188,32 @@ const projectsInfoFilteredResponse = `
           "build_time": "2006-03-02T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-03-03T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -1223,35 +1226,35 @@ const projectsInfoFilteredResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-09-03T15:04:05",
-          "epoch": 0,
-          "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "20.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-09-02T15:04:05",
           "epoch": 0,
           "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "20.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-09-03T15:04:05",
+          "epoch": 0,
+          "release": "20.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "20.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -1267,32 +1270,32 @@ const projectsInfoFilteredResponse = `
           "build_time": "2007-10-02T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-10-03T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     }
@@ -1360,35 +1363,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-01-03T15:04:05",
-          "epoch": 0,
-          "release": "0.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "0.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-01-02T15:04:05",
           "epoch": 0,
           "release": "0.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "0.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-01-03T15:04:05",
+          "epoch": 0,
+          "release": "0.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "0.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1397,21 +1400,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1427,32 +1433,32 @@ const modulesInfoResponse = `
           "build_time": "2006-02-02T15:04:05",
           "epoch": 0,
           "release": "1.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "1.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-02-03T15:04:05",
           "epoch": 0,
           "release": "1.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "1.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1461,21 +1467,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1491,32 +1500,32 @@ const modulesInfoResponse = `
           "build_time": "2006-11-02T15:04:05",
           "epoch": 0,
           "release": "10.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "10.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-11-03T15:04:05",
           "epoch": 0,
           "release": "10.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "10.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1525,21 +1534,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1552,35 +1564,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-12-03T15:04:05",
-          "epoch": 0,
-          "release": "11.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "11.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-12-02T15:04:05",
           "epoch": 0,
           "release": "11.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "11.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-12-03T15:04:05",
+          "epoch": 0,
+          "release": "11.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "11.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1589,21 +1601,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1619,32 +1634,32 @@ const modulesInfoResponse = `
           "build_time": "2007-01-02T15:04:05",
           "epoch": 0,
           "release": "12.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "12.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-01-03T15:04:05",
           "epoch": 0,
           "release": "12.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "12.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1653,21 +1668,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1683,32 +1701,32 @@ const modulesInfoResponse = `
           "build_time": "2007-02-02T15:04:05",
           "epoch": 0,
           "release": "13.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "13.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-02-03T15:04:05",
           "epoch": 0,
           "release": "13.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "13.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1717,21 +1735,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1744,35 +1765,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-03-03T15:04:05",
-          "epoch": 0,
-          "release": "14.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "14.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-03-02T15:04:05",
           "epoch": 0,
           "release": "14.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "14.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-03-03T15:04:05",
+          "epoch": 0,
+          "release": "14.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "14.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1781,21 +1802,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1808,35 +1832,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-04-03T15:04:05",
-          "epoch": 0,
-          "release": "15.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "15.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-04-02T15:04:05",
           "epoch": 0,
           "release": "15.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "15.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-04-03T15:04:05",
+          "epoch": 0,
+          "release": "15.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "15.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1845,21 +1869,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1875,32 +1902,32 @@ const modulesInfoResponse = `
           "build_time": "2007-05-02T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-05-03T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1909,21 +1936,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -1936,35 +1966,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-06-03T15:04:05",
-          "epoch": 0,
-          "release": "17.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "17.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-06-02T15:04:05",
           "epoch": 0,
           "release": "17.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "17.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-06-03T15:04:05",
+          "epoch": 0,
+          "release": "17.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "17.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -1973,21 +2003,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2003,32 +2036,32 @@ const modulesInfoResponse = `
           "build_time": "2007-07-02T15:04:05",
           "epoch": 0,
           "release": "18.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "18.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-07-03T15:04:05",
           "epoch": 0,
           "release": "18.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "18.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2037,21 +2070,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2064,35 +2100,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-08-03T15:04:05",
-          "epoch": 0,
-          "release": "19.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "19.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-08-02T15:04:05",
           "epoch": 0,
           "release": "19.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "19.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-08-03T15:04:05",
+          "epoch": 0,
+          "release": "19.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "19.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2101,21 +2137,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2131,32 +2170,32 @@ const modulesInfoResponse = `
           "build_time": "2006-03-02T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-03-03T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2165,21 +2204,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2192,35 +2234,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-09-03T15:04:05",
-          "epoch": 0,
-          "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "20.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-09-02T15:04:05",
           "epoch": 0,
           "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "20.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-09-03T15:04:05",
+          "epoch": 0,
+          "release": "20.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "20.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2229,21 +2271,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2259,32 +2304,32 @@ const modulesInfoResponse = `
           "build_time": "2007-10-02T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-10-03T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2293,21 +2338,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2320,35 +2368,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-04-03T15:04:05",
-          "epoch": 0,
-          "release": "3.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "3.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-04-02T15:04:05",
           "epoch": 0,
           "release": "3.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "3.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-04-03T15:04:05",
+          "epoch": 0,
+          "release": "3.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "3.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2357,21 +2405,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2384,35 +2435,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-05-03T15:04:05",
-          "epoch": 0,
-          "release": "4.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "4.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-05-02T15:04:05",
           "epoch": 0,
           "release": "4.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "4.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-05-03T15:04:05",
+          "epoch": 0,
+          "release": "4.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "4.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2421,21 +2472,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2448,35 +2502,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-06-03T15:04:05",
-          "epoch": 0,
-          "release": "5.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "5.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-06-02T15:04:05",
           "epoch": 0,
           "release": "5.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "5.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-06-03T15:04:05",
+          "epoch": 0,
+          "release": "5.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "5.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2485,21 +2539,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2515,32 +2572,32 @@ const modulesInfoResponse = `
           "build_time": "2006-07-02T15:04:05",
           "epoch": 0,
           "release": "6.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "6.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-07-03T15:04:05",
           "epoch": 0,
           "release": "6.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "6.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2549,21 +2606,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2579,32 +2639,32 @@ const modulesInfoResponse = `
           "build_time": "2006-08-02T15:04:05",
           "epoch": 0,
           "release": "7.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "7.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-08-03T15:04:05",
           "epoch": 0,
           "release": "7.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "7.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2613,21 +2673,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2640,35 +2703,35 @@ const modulesInfoResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-09-03T15:04:05",
-          "epoch": 0,
-          "release": "8.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "8.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-09-02T15:04:05",
           "epoch": 0,
           "release": "8.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "8.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-09-03T15:04:05",
+          "epoch": 0,
+          "release": "8.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "8.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2677,21 +2740,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2707,32 +2773,32 @@ const modulesInfoResponse = `
           "build_time": "2006-10-02T15:04:05",
           "epoch": 0,
           "release": "9.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "9.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-10-03T15:04:05",
           "epoch": 0,
           "release": "9.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "9.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2741,21 +2807,24 @@ const modulesInfoResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     }
@@ -2778,32 +2847,32 @@ const modulesInfoFilteredResponse = `
           "build_time": "2007-05-02T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-05-03T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2812,21 +2881,24 @@ const modulesInfoFilteredResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2842,32 +2914,32 @@ const modulesInfoFilteredResponse = `
           "build_time": "2006-03-02T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-03-03T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2876,21 +2948,24 @@ const modulesInfoFilteredResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2903,35 +2978,35 @@ const modulesInfoFilteredResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-09-03T15:04:05",
-          "epoch": 0,
-          "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "20.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-09-02T15:04:05",
           "epoch": 0,
           "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "20.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-09-03T15:04:05",
+          "epoch": 0,
+          "release": "20.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "20.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -2940,21 +3015,24 @@ const modulesInfoFilteredResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     },
@@ -2970,32 +3048,32 @@ const modulesInfoFilteredResponse = `
           "build_time": "2007-10-02T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-10-03T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -3004,21 +3082,24 @@ const modulesInfoFilteredResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     }
@@ -3041,32 +3122,32 @@ const modulesInfoPackage16Response = `
           "build_time": "2007-05-02T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-05-03T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ],
       "dependencies": [
@@ -3075,21 +3156,24 @@ const modulesInfoPackage16Response = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         },
         {
           "name": "dep-package2",
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
-          "arch": "x86_64"
+          "arch": "x86_64",
+          "check_gpg": true
         }
       ]
     }
@@ -3112,35 +3196,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-01-03T15:04:05",
-          "epoch": 0,
-          "release": "0.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "0.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-01-02T15:04:05",
           "epoch": 0,
           "release": "0.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "0.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-01-03T15:04:05",
+          "epoch": 0,
+          "release": "0.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "0.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3156,32 +3240,32 @@ const projectsListResponse = `
           "build_time": "2006-02-02T15:04:05",
           "epoch": 0,
           "release": "1.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "1.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-02-03T15:04:05",
           "epoch": 0,
           "release": "1.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "1.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3197,32 +3281,32 @@ const projectsListResponse = `
           "build_time": "2006-11-02T15:04:05",
           "epoch": 0,
           "release": "10.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "10.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-11-03T15:04:05",
           "epoch": 0,
           "release": "10.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "10.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3235,35 +3319,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-12-03T15:04:05",
-          "epoch": 0,
-          "release": "11.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "11.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-12-02T15:04:05",
           "epoch": 0,
           "release": "11.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "11.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-12-03T15:04:05",
+          "epoch": 0,
+          "release": "11.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "11.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3279,32 +3363,32 @@ const projectsListResponse = `
           "build_time": "2007-01-02T15:04:05",
           "epoch": 0,
           "release": "12.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "12.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-01-03T15:04:05",
           "epoch": 0,
           "release": "12.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "12.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3320,32 +3404,32 @@ const projectsListResponse = `
           "build_time": "2007-02-02T15:04:05",
           "epoch": 0,
           "release": "13.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "13.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-02-03T15:04:05",
           "epoch": 0,
           "release": "13.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "13.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3358,35 +3442,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-03-03T15:04:05",
-          "epoch": 0,
-          "release": "14.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "14.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-03-02T15:04:05",
           "epoch": 0,
           "release": "14.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "14.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-03-03T15:04:05",
+          "epoch": 0,
+          "release": "14.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "14.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3399,35 +3483,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-04-03T15:04:05",
-          "epoch": 0,
-          "release": "15.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "15.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-04-02T15:04:05",
           "epoch": 0,
           "release": "15.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "15.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-04-03T15:04:05",
+          "epoch": 0,
+          "release": "15.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "15.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3443,32 +3527,32 @@ const projectsListResponse = `
           "build_time": "2007-05-02T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-05-03T15:04:05",
           "epoch": 0,
           "release": "16.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "16.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3481,35 +3565,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-06-03T15:04:05",
-          "epoch": 0,
-          "release": "17.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "17.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-06-02T15:04:05",
           "epoch": 0,
           "release": "17.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "17.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-06-03T15:04:05",
+          "epoch": 0,
+          "release": "17.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "17.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3525,32 +3609,32 @@ const projectsListResponse = `
           "build_time": "2007-07-02T15:04:05",
           "epoch": 0,
           "release": "18.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "18.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-07-03T15:04:05",
           "epoch": 0,
           "release": "18.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "18.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3563,35 +3647,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-08-03T15:04:05",
-          "epoch": 0,
-          "release": "19.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "19.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-08-02T15:04:05",
           "epoch": 0,
           "release": "19.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "19.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-08-03T15:04:05",
+          "epoch": 0,
+          "release": "19.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "19.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3607,32 +3691,32 @@ const projectsListResponse = `
           "build_time": "2006-03-02T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-03-03T15:04:05",
           "epoch": 0,
           "release": "2.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "2.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3645,35 +3729,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2007-09-03T15:04:05",
-          "epoch": 0,
-          "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "20.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2007-09-02T15:04:05",
           "epoch": 0,
           "release": "20.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "20.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2007-09-03T15:04:05",
+          "epoch": 0,
+          "release": "20.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "20.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3689,32 +3773,32 @@ const projectsListResponse = `
           "build_time": "2007-10-02T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2007-10-03T15:04:05",
           "epoch": 0,
           "release": "21.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "21.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3727,35 +3811,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-04-03T15:04:05",
-          "epoch": 0,
-          "release": "3.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "3.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-04-02T15:04:05",
           "epoch": 0,
           "release": "3.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "3.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-04-03T15:04:05",
+          "epoch": 0,
+          "release": "3.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "3.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3768,35 +3852,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-05-03T15:04:05",
-          "epoch": 0,
-          "release": "4.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "4.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-05-02T15:04:05",
           "epoch": 0,
           "release": "4.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "4.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-05-03T15:04:05",
+          "epoch": 0,
+          "release": "4.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "4.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3809,35 +3893,35 @@ const projectsListResponse = `
       "builds": [
         {
           "arch": "x86_64",
-          "build_time": "2006-06-03T15:04:05",
-          "epoch": 0,
-          "release": "5.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
-          "source": {
-            "license": "MIT",
-            "version": "5.1",
-            "source_ref": "SOURCE_REF",
-            "metadata": {}
-          }
-        },
-        {
-          "arch": "x86_64",
           "build_time": "2006-06-02T15:04:05",
           "epoch": 0,
           "release": "5.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "5.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
+        },
+        {
+          "arch": "x86_64",
+          "build_time": "2006-06-03T15:04:05",
+          "epoch": 0,
+          "release": "5.fc30",
+          "source": {
+            "license": "MIT",
+            "version": "5.1",
+            "source_ref": "SOURCE_REF",
+            "metadata": {}
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3853,32 +3937,32 @@ const projectsListResponse = `
           "build_time": "2006-07-02T15:04:05",
           "epoch": 0,
           "release": "6.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "6.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-07-03T15:04:05",
           "epoch": 0,
           "release": "6.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "6.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     },
@@ -3894,32 +3978,32 @@ const projectsListResponse = `
           "build_time": "2006-08-02T15:04:05",
           "epoch": 0,
           "release": "7.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "7.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-08-03T15:04:05",
           "epoch": 0,
           "release": "7.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "7.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     }
@@ -3945,32 +4029,32 @@ const projectsList1Response = `
           "build_time": "2006-02-02T15:04:05",
           "epoch": 0,
           "release": "1.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "1.0",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         },
         {
           "arch": "x86_64",
           "build_time": "2006-02-03T15:04:05",
           "epoch": 0,
           "release": "1.fc30",
-          "changelog": "CHANGELOG_NEEDED",
-          "build_config_ref": "BUILD_CONFIG_REF",
-          "build_env_ref": "BUILD_ENV_REF",
-          "metadata": {},
           "source": {
             "license": "MIT",
             "version": "1.1",
             "source_ref": "SOURCE_REF",
             "metadata": {}
-          }
+          },
+          "changelog": "CHANGELOG_NEEDED",
+          "build_config_ref": "BUILD_CONFIG_REF",
+          "build_env_ref": "BUILD_ENV_REF",
+          "metadata": {}
         }
       ]
     }
