@@ -33,6 +33,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
@@ -47,7 +48,7 @@ type API struct {
 	store   *store.Store
 	workers *worker.Server
 
-	rpmmd        rpmmd.RPMMD
+	solver       *dnfjson.BaseSolver
 	archName     string
 	repoRegistry *reporegistry.RepoRegistry
 
@@ -121,7 +122,7 @@ func validDistros(rr *reporegistry.RepoRegistry, dr *distroregistry.Registry, ar
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 // NewTestAPI is used for the test framework, sets up a single distro
-func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
+func NewTestAPI(solver *dnfjson.BaseSolver, arch distro.Arch, dr *distroregistry.Registry,
 	rr *reporegistry.RepoRegistry, logger *log.Logger,
 	store *store.Store, workers *worker.Server, compatOutputDir string,
 	distrosImageTypeDenylist map[string][]string) *API {
@@ -131,7 +132,7 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
 	api := &API{
 		store:                    store,
 		workers:                  workers,
-		rpmmd:                    rpm,
+		solver:                   solver,
 		archName:                 arch.Name(),
 		repoRegistry:             rr,
 		logger:                   logger,
@@ -144,7 +145,7 @@ func NewTestAPI(rpm rpmmd.RPMMD, arch distro.Arch, dr *distroregistry.Registry,
 	return setupRouter(api)
 }
 
-func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistry.Registry,
+func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *distroregistry.Registry,
 	logger *log.Logger, workers *worker.Server, distrosImageTypeDenylist map[string][]string) (*API, error) {
 	if logger == nil {
 		logger = log.New(os.Stdout, "", 0)
@@ -188,7 +189,7 @@ func New(repoPaths []string, stateDir string, rpm rpmmd.RPMMD, dr *distroregistr
 	api := &API{
 		store:                    store,
 		workers:                  workers,
-		rpmmd:                    rpm,
+		solver:                   solver,
 		archName:                 archName,
 		repoRegistry:             rr,
 		logger:                   logger,
@@ -1257,8 +1258,10 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 			return
 		}
 
+		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
 		for i := range packageInfos {
-			err := packageInfos[i].FillDependencies(api.rpmmd, repos, d.ModulePlatformID(), api.archName, d.Releasever())
+			pkgName := packageInfos[i].Name
+			solved, err := solver.Depsolve(rpmmd.PackageSet{Include: []string{pkgName}}, repos)
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1267,6 +1270,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 				statusResponseError(writer, http.StatusBadRequest, errors)
 				return
 			}
+			packageInfos[i].Dependencies = solved.Dependencies
 		}
 	}
 
@@ -1334,11 +1338,11 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: names},
+	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
+	deps, err := solver.Depsolve(
+		rpmmd.PackageSet{Include: names},
 		repos,
-		d.ModulePlatformID(),
-		api.archName,
-		d.Releasever())
+	)
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
@@ -1347,9 +1351,8 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-
 	err = json.NewEncoder(writer).Encode(reply{
-		Projects: packages,
+		Projects: deps.Dependencies,
 	})
 	common.PanicOnError(err)
 }
@@ -2142,23 +2145,37 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 	}
 
 	packageSets := imageType.PackageSets(bp)
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+
 	platformID := imageType.Arch().Distro().ModulePlatformID()
 	releasever := imageType.Arch().Distro().Releasever()
+	solver := api.solver.NewWithConfig(platformID, releasever, api.archName)
+	psRepos := make([][]rpmmd.RepoConfig, 0)
 
-	packageSpecSets, err := api.rpmmd.DepsolvePackageSets(
-		imageType.PackageSetsChains(),
-		packageSets,
-		imageTypeRepos,
-		packageSetsRepos,
-		platformID,
-		api.archName,
-		releasever,
-	)
-	if err != nil {
-		return nil, err
+	// first depsolve package sets that are part of a chain
+	for specName, setNames := range imageType.PackageSetsChains() {
+		pkgSets := make([]rpmmd.PackageSet, len(setNames))
+		for idx, pkgSetName := range setNames {
+			pkgSets[idx] = packageSets[pkgSetName]
+			psRepos = append(psRepos, packageSetsRepos[pkgSetName]) // will be nil if it doesn't exist
+			delete(packageSets, pkgSetName)                         // will be depsolved here: remove from map
+		}
+		res, err := solver.ChainDepsolve(pkgSets, imageTypeRepos, psRepos)
+		if err != nil {
+			return nil, err
+		}
+		depsolvedSets[specName] = res.Dependencies
 	}
 
-	return packageSpecSets, nil
+	// depsolve the rest of the package sets
+	for name, pkgSet := range packageSets {
+		res, err := solver.ChainDepsolve([]rpmmd.PackageSet{pkgSet}, imageTypeRepos, [][]rpmmd.RepoConfig{packageSetsRepos[name]})
+		if err != nil {
+			return nil, err
+		}
+		depsolvedSets[name] = res.Dependencies
+	}
+	return depsolvedSets, nil
 }
 
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
@@ -3126,8 +3143,12 @@ func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 		return nil, err
 	}
 
-	packages, _, err := api.rpmmd.FetchMetadata(repos, d.ModulePlatformID(), api.archName, d.Releasever())
-	return packages, err
+	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
+	packages, err := solver.FetchMetadata(repos)
+	if err != nil {
+		return nil, err
+	}
+	return packages.Packages, nil
 }
 
 // Returns only user-defined repositories, which should be used only for
@@ -3186,12 +3207,14 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		return nil, err
 	}
 
-	packages, _, err := api.rpmmd.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos, d.ModulePlatformID(), api.archName, d.Releasever())
+	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
+	solved, err := solver.Depsolve(rpmmd.PackageSet{Include: bp.GetPackages()}, repos)
 	if err != nil {
 		return nil, err
 	}
 
-	return packages, err
+	packages := solved.Dependencies
+	return packages, nil
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

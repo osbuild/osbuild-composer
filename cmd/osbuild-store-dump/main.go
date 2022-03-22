@@ -12,24 +12,22 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, rpm_md rpmmd.RPMMD, repos []rpmmd.RepoConfig) (distro.Manifest, []rpmmd.PackageSpec) {
+func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, cacheDir string, repos []rpmmd.RepoConfig) (distro.Manifest, []rpmmd.PackageSpec) {
 	packageSets := t.PackageSets(bp)
-	pkgSpecSets, err := rpm_md.DepsolvePackageSets(
-		t.PackageSetsChains(),
-		packageSets,
-		repos,
-		nil,
-		d.ModulePlatformID(),
-		a.Name(),
-		d.Releasever(),
-	)
-	if err != nil {
-		panic("Could not depsolve: " + err.Error())
+	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
+	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), cacheDir)
+	for name, packages := range packageSets {
+		res, err := solver.Depsolve(packages, repos)
+		if err != nil {
+			panic(err)
+		}
+		pkgSpecSets[name] = res.Dependencies
 	}
 	manifest, err := t.Manifest(bp.Customizations, distro.ImageOptions{}, repos, pkgSpecSets, 0)
 	if err != nil {
@@ -142,7 +140,7 @@ func main() {
 	if err != nil {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
-	rpmmd := rpmmd.NewRPMMD(path.Join(homeDir, ".cache/osbuild-composer/rpmmd"))
+	rpmmdCache := path.Join(homeDir, ".cache/osbuild-composer/rpmmd")
 
 	s := store.New(&cwd, a, nil)
 	if s == nil {
@@ -160,7 +158,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	manifest, packages := getManifest(bp2, t1, a, d, rpmmd, repos)
+	manifest, packages := getManifest(bp2, t1, a, d, rpmmdCache, repos)
 	err = s.PushCompose(id1,
 		manifest,
 		t1,
@@ -175,7 +173,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	manifest, packages = getManifest(bp1, t2, a, d, rpmmd, repos)
+	manifest, packages = getManifest(bp1, t2, a, d, rpmmdCache, repos)
 	err = s.PushCompose(id2,
 		manifest,
 		t2,

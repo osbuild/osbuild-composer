@@ -18,6 +18,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -25,19 +26,19 @@ import (
 
 // Server represents the state of the koji Server
 type Server struct {
-	logger      *log.Logger
-	workers     *worker.Server
-	rpmMetadata rpmmd.RPMMD
-	distros     *distroregistry.Registry
+	logger  *log.Logger
+	workers *worker.Server
+	solver  *dnfjson.BaseSolver
+	distros *distroregistry.Registry
 }
 
 // NewServer creates a new koji server
-func NewServer(logger *log.Logger, workers *worker.Server, rpmMetadata rpmmd.RPMMD, distros *distroregistry.Registry) *Server {
+func NewServer(logger *log.Logger, workers *worker.Server, solver *dnfjson.BaseSolver, distros *distroregistry.Registry) *Server {
 	s := &Server{
-		logger:      logger,
-		workers:     workers,
-		rpmMetadata: rpmMetadata,
-		distros:     distros,
+		logger:  logger,
+		workers: workers,
+		solver:  solver,
+		distros: distros,
 	}
 
 	return s
@@ -122,18 +123,19 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			panic("Could not initialize empty blueprint.")
 		}
 
+		solver := h.server.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch.Name())
 		packageSets := imageType.PackageSets(*bp)
-		packageSpecSets, err := h.server.rpmMetadata.DepsolvePackageSets(
-			imageType.PackageSetsChains(),
-			packageSets,
-			repositories,
-			nil,
-			d.ModulePlatformID(),
-			arch.Name(),
-			d.Releasever(),
-		)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
+		packageSpecSets := make(map[string][]rpmmd.PackageSpec)
+		for specName, setNames := range imageType.PackageSetsChains() {
+			chain := make([]rpmmd.PackageSet, len(setNames))
+			for idx, pkgSetName := range setNames {
+				chain[idx] = packageSets[pkgSetName]
+			}
+			res, err := solver.ChainDepsolve(chain, repositories, nil)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
+			}
+			packageSpecSets[specName] = res.Dependencies
 		}
 
 		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, packageSpecSets, manifestSeed)
