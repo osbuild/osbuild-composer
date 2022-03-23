@@ -45,6 +45,9 @@ const (
 	PRePartitionGUID = "9E1A2D38-C612-4316-AA26-8B49521E5A8B"
 
 	RootPartitionUUID = "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
+
+	// Extended Boot Loader Partition
+	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 )
 
 // Entity is the base interface for all disk-related entities.
