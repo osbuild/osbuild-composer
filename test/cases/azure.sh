@@ -94,11 +94,7 @@ ARCH=$(uname -m)
 TEST_ID="$DISTRO_CODE-$ARCH-$BRANCH_NAME-$BUILD_ID"
 IMAGE_KEY=image-${TEST_ID}
 
-# Jenkins sets WORKSPACE to the job workspace, but if this script runs
-# outside of Jenkins, we can set up a temporary directory instead.
-if [[ ${WORKSPACE:-empty} == empty ]]; then
-    WORKSPACE=$(mktemp -d)
-fi
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
 # Set up temporary files.
 AZURE_CONFIG=${TEMPDIR}/azure.toml
@@ -119,7 +115,7 @@ smoke_test_check () {
 # Get the compose log.
 get_compose_log () {
     COMPOSE_ID=$1
-    LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-azure.log
+    LOG_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-azure.log
 
     # Download the logs.
     sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
@@ -128,7 +124,7 @@ get_compose_log () {
 # Get the compose metadata.
 get_compose_metadata () {
     COMPOSE_ID=$1
-    METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-azure.json
+    METADATA_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-azure.json
 
     # Download the metadata.
     sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null

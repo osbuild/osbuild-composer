@@ -84,13 +84,12 @@ QUAY_REPO_URL="quay.io/osbuild/testing-rhel-edge-push"
 QUAY_REPO_TAG=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
 STAGE_OCP4_SERVER_NAME="edge-stage-server"
 STAGE_OCP4_REPO_URL="http://${STAGE_OCP4_SERVER_NAME}-${QUAY_REPO_TAG}-frontdoor.apps.ocp.ci.centos.org/repo/"
-ARTIFACTS="ci-artifacts"
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 # For CS8, CS9, RHEL 8.5 and above
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-installer
 INSTALLER_FILENAME=installer.iso
-mkdir -p "${ARTIFACTS}"
 ANSIBLE_USER_FOR_BIOS="installeruser"
 OSTREE_OSNAME=rhel
 

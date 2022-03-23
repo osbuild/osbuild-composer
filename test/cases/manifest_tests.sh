@@ -6,8 +6,7 @@ DNF_JSON_PATH="/usr/libexec/osbuild-composer/dnf-json"
 IMAGE_TEST_CASES_PATH="/usr/share/tests/osbuild-composer/manifests"
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
-mkdir --parents /tmp/logs
-LOGS_DIRECTORY=$(mktemp --directory --tmpdir=/tmp/logs)
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
 # Print out a nice test divider so we know when tests stop and start.
 test_divider () {
@@ -27,7 +26,7 @@ test_divider
 echo "🏃🏻 Running test: ${TEST_NAME}"
 test_divider
 
-if sudo "$MANIFEST_TESTS_RUNNER" -test.v -manifests-path "$IMAGE_TEST_CASES_PATH" -dnf-json-path "$DNF_JSON_PATH" | tee "${LOGS_DIRECTORY}"/"${TEST_NAME}".log; then
+if sudo "$MANIFEST_TESTS_RUNNER" -test.v -manifests-path "$IMAGE_TEST_CASES_PATH" -dnf-json-path "$DNF_JSON_PATH" | tee "${ARTIFACTS}"/"${TEST_NAME}".log; then
     echo "🎉  Test passed."
     exit 0
 else

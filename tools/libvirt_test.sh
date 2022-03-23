@@ -90,10 +90,7 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
-if [[ ${WORKSPACE:-empty} == empty ]]; then
-    WORKSPACE=$(mktemp -d)
-fi
-
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 
@@ -112,7 +109,7 @@ smoke_test_check () {
 # Get the compose log.
 get_compose_log () {
     COMPOSE_ID=$1
-    LOG_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.log
+    LOG_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.log
 
     # Download the logs.
     sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
@@ -121,7 +118,7 @@ get_compose_log () {
 # Get the compose metadata.
 get_compose_metadata () {
     COMPOSE_ID=$1
-    METADATA_FILE=${WORKSPACE}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.json
+    METADATA_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${IMAGE_TYPE}.json
 
     # Download the metadata.
     sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null

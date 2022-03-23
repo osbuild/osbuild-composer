@@ -12,8 +12,7 @@ function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
-ARTIFACTS=ci-artifacts
-mkdir -p "${ARTIFACTS}"
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 

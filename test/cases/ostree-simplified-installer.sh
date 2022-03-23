@@ -94,12 +94,11 @@ FDO_SERVER_ADDRESS=192.168.200.2
 FDO_ADMIN_CLI_VERSION=0.4.0
 # FDO Manualfacture server image version
 FDO_MF_SERVER_VERSION=0.4.0
-ARTIFACTS="ci-artifacts"
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-simplified-installer
 INSTALLER_FILENAME=simplified-installer.iso
-mkdir -p "${ARTIFACTS}"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)

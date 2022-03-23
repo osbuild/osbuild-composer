@@ -151,8 +151,7 @@ TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
 GUEST_ADDRESS=192.168.100.50
 SSH_USER="admin"
-ARTIFACTS="ci-artifacts"
-mkdir -p "${ARTIFACTS}"
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
