@@ -490,9 +490,9 @@ Installer:
     matrix:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64
-          # disable until https://bugzilla.redhat.com/show_bug.cgi?id=2059565 is fixed
-          #- rhos-01/rhel-9.0-nightly-x86_64
-          #- rhos-01/centos-stream-9-x86_64
+          - rhos-01/rhel-9.0-nightly-x86_64
+          # anaconda-34.25.1.1-1.el9 has to land first
+          # - rhos-01/centos-stream-9-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
