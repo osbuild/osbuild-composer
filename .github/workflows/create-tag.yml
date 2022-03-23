@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Even or odd week
-        run: if [ `expr \`date +\%s\` / 86400 \% 2` -eq 0 ]; then echo "WEEK='odd'" >> $GITHUB_ENV; else echo "WEEK='even'" >> $GITHUB_ENV; fi
+        run: if [ `expr \`date +\%s\` / 86400 \% 2` -eq 0 ]; then echo "WEEK=odd" >> $GITHUB_ENV; else echo "WEEK=even" >> $GITHUB_ENV; fi
         shell: bash
 
       - name: Upstream tag
