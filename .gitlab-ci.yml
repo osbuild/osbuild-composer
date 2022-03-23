@@ -8,21 +8,18 @@ stages:
 
 .base:
   before_script:
-    - schutzbot/ci_details.sh > ci-details-before-run
+    - schutzbot/ci_details.sh > ci-details-before-run.txt
     - cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
   after_script:
-    - schutzbot/ci_details.sh > ci-details-after-run || true
+    - schutzbot/ci_details.sh > ci-details-after-run.txt || true
     - schutzbot/update_github_status.sh update || true
     - schutzbot/save_journal.sh || true
+    - schutzbot/upload_artifacts.sh
   interruptible: true
   tags:
     - terraform
   artifacts:
     paths:
-      - journal-log.gpg
-      - ci-artifacts
-      - ci-details-before-run
-      - ci-details-after-run
       - "*.repo"
       - COMPOSER_NVR
     when: always
@@ -446,17 +443,7 @@ aws.sh:
   extends: .integration
   variables:
     SCRIPT: aws.sh
-  artifacts:
-    paths:
-      - cloud-image-val/report.html
-      - journal-log.gpg
-      - ci-artifacts
-      - ci-details-before-run
-      - ci-details-after-run
-      - "*.repo"
-      - COMPOSER_NVR
-    when: always
-
+    
 azure.sh:
   extends: .integration
   variables:
@@ -595,18 +582,6 @@ Upgrade:
     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
   variables:
     RUNNER: rhos-01/rhel-9.1-nightly-x86_64
-  artifacts:
-    paths:
-      - journal-log.gpg
-      - ci-artifacts
-      - install_console.log
-      - upgrade_console.log
-      - leapp-preupgrade.log
-      - leapp-upgrade.log
-      - leapp-report.txt
-      - osbuild-upgrade8to9.log
-      - osbuild-upgrade8to9.json
-    when: always
 
 NIGHTLY_FAIL:
   stage: finish

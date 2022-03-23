@@ -4,6 +4,8 @@ set -uxo pipefail
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
+
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
@@ -123,9 +125,9 @@ sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/share/tests/osbuild-compose
 sudo ssh "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS" 'sed -i "s/PermitRootLogin yes/PermitRootLogin yes #for sure/" /etc/ssh/sshd_config'
 set +e
 sudo ssh "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS" 'source /root/upgrade_prepare.sh'
-sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-preupgrade.log .
-sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-upgrade.log .
-sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-report.txt .
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-preupgrade.log "$ARTIFACTS"
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-upgrade.log "$ARTIFACTS"
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":/var/log/leapp/leapp-report.txt "$ARTIFACTS"
 set -e
 
 # watch and log the console during upgrade
@@ -143,7 +145,7 @@ RESULT="$?"
 set -e
 
 # copy over osbuild-composer logs
-sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":logs/* .
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":logs/* "$ARTIFACTS"
 
 if [[ "$RESULT" == 0 ]]; then
   greenprint "💚 Success"
