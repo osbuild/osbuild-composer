@@ -124,12 +124,12 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 			args.Manifest = manifestJR.Manifest
 			if len(args.Manifest) == 0 {
 				err := fmt.Errorf("Received empty manifest")
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, err.Error())
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyManifest, err.Error())
 				return err
 			}
 		} else {
 			err := fmt.Errorf("Job has no manifest")
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, err.Error())
+			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyManifest, err.Error())
 			return err
 		}
 	}

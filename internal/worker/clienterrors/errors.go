@@ -19,6 +19,7 @@ const (
 	ErrorKojiFinalize         ClientErrorCode = 16
 	ErrorInvalidConfig        ClientErrorCode = 17
 	ErrorOldResultCompatible  ClientErrorCode = 18
+	ErrorEmptyManifest        ClientErrorCode = 19
 
 	ErrorDNFDepsolveError ClientErrorCode = 20
 	ErrorDNFMarkingErrors ClientErrorCode = 21
@@ -63,6 +64,8 @@ func GetStatusCode(err *Error) StatusCode {
 		return JobStatusUserInputError
 	case ErrorInvalidTarget:
 		return JobStatusUserInputError
+	case ErrorEmptyManifest:
+		return JobStatusInternalError
 	default:
 		return JobStatusInternalError
 	}
