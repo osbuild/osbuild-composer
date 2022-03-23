@@ -278,7 +278,8 @@ function dump_db() {
   sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows"
 
   # Save the result, including the manifest, for the job, straight from the db
-  sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" | sudo tee "${ARTIFACTS}/build-result.txt"
+  sudo podman exec osbuild-composer-db psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
+    | gpg --batch --yes --passphrase "${GPG_SYMMETRIC_PASSPHRASE}" -o "${ARTIFACTS}/build-result.gpg" --symmetric -
   set -x
 }
 
