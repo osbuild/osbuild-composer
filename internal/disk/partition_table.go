@@ -179,7 +179,12 @@ func (pt *PartitionTable) CreateMountpoint(mountpoint string, size uint64) (Enti
 	var maxNo int
 
 	if pt.Type == "gpt" {
-		partition.Type = FilesystemDataGUID
+		switch mountpoint {
+		case "/boot":
+			partition.Type = XBootLDRPartitionGUID
+		default:
+			partition.Type = FilesystemDataGUID
+		}
 		maxNo = 128
 	} else {
 		maxNo = 4

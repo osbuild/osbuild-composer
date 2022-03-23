@@ -32,7 +32,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 524288000, // 500 MB
-				Type: disk.FilesystemDataGUID,
+				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
@@ -78,7 +78,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 524288000, // 500 MB
-				Type: disk.FilesystemDataGUID,
+				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
@@ -193,7 +193,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 402653184, // 384 MB
-				Type: disk.FilesystemDataGUID,
+				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
@@ -253,7 +253,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 402653184, // 384 MB
-				Type: disk.FilesystemDataGUID,
+				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
