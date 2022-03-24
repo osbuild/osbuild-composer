@@ -279,7 +279,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if err != nil {
 			return HTTPError(ErrorUnsupportedArchitecture)
 		}
-		imageType, err := arch.GetImageType(imageTypeFromApiImageType(ir.ImageType))
+		imageType, err := arch.GetImageType(imageTypeFromApiImageType(ir.ImageType, arch))
 		if err != nil {
 			return HTTPError(ErrorUnsupportedImageType)
 		}
@@ -715,7 +715,7 @@ func generateManifest(ctx context.Context, cancel context.CancelFunc, workers *w
 	jobResult.Manifest = manifest
 }
 
-func imageTypeFromApiImageType(it ImageTypes) string {
+func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 	switch it {
 	case ImageTypesAws:
 		return "ami"
@@ -738,6 +738,13 @@ func imageTypeFromApiImageType(it ImageTypes) string {
 	case ImageTypesImageInstaller:
 		return "image-installer"
 	case ImageTypesEdgeCommit:
+		// Fedora doesn't define "rhel-edge-commit", or "edge-commit" yet.
+		// Assume that if the distro contains "fedora-iot-commit", it's Fedora
+		// and translate ImageTypesEdgeCommit to fedora-iot-commit in this case.
+		// This should definitely be removed in the near future.
+		if _, err := arch.GetImageType("fedora-iot-commit"); err == nil {
+			return "fedora-iot-commit"
+		}
 		return "rhel-edge-commit"
 	case ImageTypesEdgeContainer:
 		return "rhel-edge-container"
