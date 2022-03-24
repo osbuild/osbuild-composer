@@ -557,6 +557,13 @@ func osPipeline(t *imageType,
 
 		if cfg := imageConfig.Grub2Config; cfg != nil {
 			if grub2, ok := bootloader.Options.(*osbuild.GRUB2StageOptions); ok {
+
+				// grub2.Config.Default is owned and set by `NewGrub2StageOptions`
+				// and thus we need to preserve it
+				if grub2.Config != nil {
+					cfg.Default = grub2.Config.Default
+				}
+
 				grub2.Config = cfg
 			}
 		}
