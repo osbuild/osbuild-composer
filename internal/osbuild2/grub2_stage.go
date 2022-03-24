@@ -90,6 +90,9 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 			stageOptions.KernelOptions += " " + kernel.Append
 		}
 		stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + kernelVer
+		stageOptions.Config = &GRUB2Config{
+			Default: "saved",
+		}
 	}
 
 	return &stageOptions
@@ -129,6 +132,9 @@ func NewGrub2StageOptionsUnified(pt *disk.PartitionTable,
 
 	if kernelVer != "" {
 		stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + kernelVer
+		stageOptions.Config = &GRUB2Config{
+			Default: "saved",
+		}
 	}
 
 	return &stageOptions
