@@ -458,48 +458,22 @@ else
   TEST_ID=$(uuidgen);
 fi
 
-case "$ID-$VERSION_ID" in
-  "rhel-9.0")
-    DISTRO="rhel-90"
-    if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
-      SSH_USER="ec2-user"
-    else
-      SSH_USER="cloud-user"
-    fi
-    ;;
-  "rhel-8.6")
-    DISTRO="rhel-86"
-    if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
-      SSH_USER="ec2-user"
-    else
-      SSH_USER="cloud-user"
-    fi
-    ;;
-  "rhel-8.5")
-    DISTRO="rhel-85"
-    if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
-      SSH_USER="ec2-user"
-    else
-      SSH_USER="cloud-user"
-    fi
-    ;;
-  "centos-8")
-    DISTRO="centos-8"
-    if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
-      SSH_USER="ec2-user"
-    else
-      SSH_USER="cloud-user"
-    fi
-    ;;
-  "centos-9")
-    DISTRO="centos-9"
-    if [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
-      SSH_USER="ec2-user"
-    else
-      SSH_USER="cloud-user"
-    fi
-    ;;
-esac
+if [[ "$ID" == "fedora" ]]; then
+  # fedora uses fedora for everything
+  SSH_USER="fedora"
+elif [[ "$CLOUD_PROVIDER" == "$CLOUD_PROVIDER_AWS" ]]; then
+  # RHEL and centos use ec2-user for AWS
+  SSH_USER="ec2-user"
+else
+  # RHEL and centos use cloud-user for other clouds
+  SSH_USER="cloud-user"
+fi
+
+# This removes dot from VERSION_ID.
+# ID == rhel   && VERSION_ID == 8.6 => DISTRO == rhel-86
+# ID == centos && VERSION_ID == 8   => DISTRO == centos-8
+# ID == fedora && VERSION_ID == 35  => DISTRO == fedora-35
+DISTRO="$ID-${VERSION_ID//./}"
 
 # Only RHEL need subscription block.
 if [[ "$ID" == "rhel" ]]; then
