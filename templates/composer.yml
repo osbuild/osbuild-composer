@@ -199,10 +199,8 @@ objects:
     name: composer-config
   data:
     acl.yml: |
-      - claim: user_id
-        pattern: ^(54629121|54629180|54597799|54676085|54968801)$
       - claim: rh-org-id
-        pattern: ^(13826359|15842261|15877963|15885990)$
+        pattern: ^(15842261|15877963|15885990)$
       - claim: account_id
         pattern: ^(15842261)$
     osbuild-composer.toml: |
