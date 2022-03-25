@@ -1108,7 +1108,10 @@
               "uefi": {
                 "vendor": "redhat"
               },
-              "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-361.el8.aarch64"
+              "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-361.el8.aarch64",
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {
