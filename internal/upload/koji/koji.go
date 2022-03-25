@@ -331,13 +331,13 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 		return shouldRetry, retErr
 	}
 
-	client := rh.Client{
-		HTTPClient: &http.Client{
-			Transport: k.transport,
-		},
-		CheckRetry: countingCheckRetry,
-		Logger:     rh.LeveledLogger(&LeveledLogrus{logrus.StandardLogger()}),
+	client := rh.NewClient()
+
+	client.HTTPClient = &http.Client{
+		Transport: k.transport,
 	}
+	client.CheckRetry = countingCheckRetry
+	client.Logger = rh.LeveledLogger(&LeveledLogrus{logrus.StandardLogger()})
 
 	respData, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
 
