@@ -341,9 +341,6 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 
 	respData, err := client.Post(u.String(), "application/octet-stream", bytes.NewBuffer(chunk))
 
-	// don't count the first call since it's not a retry
-	retries--
-
 	if err != nil {
 		return retries, err
 	}
