@@ -1007,7 +1007,8 @@
                 "vendor": "redhat",
                 "unified": true
               },
-              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-4.el9.aarch64"
+              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-4.el9.aarch64",
+              "config": {}
             }
           },
           {

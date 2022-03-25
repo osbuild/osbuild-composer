@@ -1307,7 +1307,10 @@
               "uefi": {
                 "vendor": "centos"
               },
-              "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-358.el8.x86_64"
+              "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-358.el8.x86_64",
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {

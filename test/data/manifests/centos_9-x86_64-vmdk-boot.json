@@ -906,7 +906,10 @@
                 "unified": true
               },
               "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64",
-              "write_cmdline": false
+              "write_cmdline": false,
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {

@@ -933,7 +933,8 @@
               "uefi": {
                 "vendor": "redhat"
               },
-              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-4.el9.x86_64"
+              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-4.el9.x86_64",
+              "config": {}
             }
           },
           {
