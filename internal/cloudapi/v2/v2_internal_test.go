@@ -3,10 +3,11 @@ package v2
 import (
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 func TestSplitExtension(t *testing.T) {
@@ -129,7 +130,7 @@ func TestRepoConfigConversion(t *testing.T) {
 			repo: Repository{
 				Baseurl:     common.StringToPtr("http://base.url"),
 				CheckGpg:    common.BoolToPtr(true),
-				GpgKey:      common.StringToPtr("some-kind-of-key"),
+				Gpgkey:      common.StringToPtr("some-kind-of-key"),
 				IgnoreSsl:   common.BoolToPtr(false),
 				Metalink:    nil,
 				Mirrorlist:  nil,
@@ -153,7 +154,7 @@ func TestRepoConfigConversion(t *testing.T) {
 			repo: Repository{
 				Baseurl:     common.StringToPtr("http://base.url"),
 				CheckGpg:    nil,
-				GpgKey:      nil,
+				Gpgkey:      nil,
 				IgnoreSsl:   common.BoolToPtr(true),
 				Metalink:    common.StringToPtr("http://example.org/metalink"),
 				Mirrorlist:  common.StringToPtr("http://example.org/mirrorlist"),
@@ -177,7 +178,7 @@ func TestRepoConfigConversion(t *testing.T) {
 			repo: Repository{
 				Baseurl:     nil,
 				CheckGpg:    nil,
-				GpgKey:      nil,
+				Gpgkey:      nil,
 				IgnoreSsl:   common.BoolToPtr(true),
 				Metalink:    common.StringToPtr("http://example.org/metalink"),
 				Mirrorlist:  common.StringToPtr("http://example.org/mirrorlist"),
@@ -201,7 +202,7 @@ func TestRepoConfigConversion(t *testing.T) {
 			repo: Repository{
 				Baseurl:     nil,
 				CheckGpg:    nil,
-				GpgKey:      nil,
+				Gpgkey:      nil,
 				IgnoreSsl:   common.BoolToPtr(true),
 				Metalink:    common.StringToPtr("http://example.org/metalink"),
 				Mirrorlist:  nil,
@@ -233,7 +234,7 @@ func TestRepoConfigConversion(t *testing.T) {
 	noURL := Repository{
 		Baseurl:     nil,
 		CheckGpg:    nil,
-		GpgKey:      nil,
+		Gpgkey:      nil,
 		IgnoreSsl:   nil,
 		Metalink:    nil,
 		Mirrorlist:  nil,
