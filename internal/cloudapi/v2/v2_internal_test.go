@@ -230,17 +230,44 @@ func TestRepoConfigConversion(t *testing.T) {
 		assert.Equal(rc, &tc.repoConfig, "mismatch in test case %d", idx)
 	}
 
-	// test error
-	noURL := Repository{
-		Baseurl:     nil,
-		CheckGpg:    nil,
-		Gpgkey:      nil,
-		IgnoreSsl:   nil,
-		Metalink:    nil,
-		Mirrorlist:  nil,
-		Rhsm:        true,
-		PackageSets: nil,
+	errorTestCases := []struct {
+		repo Repository
+		err  string
+	}{
+		// invalid repo
+		{
+			repo: Repository{
+				Baseurl:     nil,
+				CheckGpg:    nil,
+				Gpgkey:      nil,
+				IgnoreSsl:   nil,
+				Metalink:    nil,
+				Mirrorlist:  nil,
+				Rhsm:        true,
+				PackageSets: nil,
+			},
+			err: HTTPError(ErrorInvalidRepository).Error(),
+		},
+
+		// check gpg required but no gpgkey given
+		{
+			repo: Repository{
+				Baseurl:     nil,
+				CheckGpg:    common.BoolToPtr(true),
+				Gpgkey:      nil,
+				IgnoreSsl:   common.BoolToPtr(true),
+				Metalink:    common.StringToPtr("http://example.org/metalink"),
+				Mirrorlist:  nil,
+				Rhsm:        true,
+				PackageSets: nil,
+			},
+			err: HTTPError(ErrorNoGPGKey).Error(),
+		},
 	}
-	_, err := genRepoConfig(noURL)
-	assert.EqualError(err, HTTPError(ErrorInvalidRepository).Error())
+
+	for _, tc := range errorTestCases {
+		rc, err := genRepoConfig(tc.repo)
+		assert.Nil(rc)
+		assert.EqualError(err, tc.err)
+	}
 }
