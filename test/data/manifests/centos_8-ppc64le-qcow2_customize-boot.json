@@ -1385,7 +1385,10 @@
               "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
               "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto debug",
               "legacy": "powerpc-ieee1275",
-              "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-358.el8.ppc64le"
+              "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-358.el8.ppc64le",
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {

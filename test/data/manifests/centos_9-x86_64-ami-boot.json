@@ -988,7 +988,10 @@
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
               "legacy": "i386-pc",
               "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64",
-              "write_cmdline": false
+              "write_cmdline": false,
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {

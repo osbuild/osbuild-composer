@@ -980,7 +980,8 @@
               "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
               "kernel_opts": "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
               "legacy": "i386-pc",
-              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-4.el9.x86_64"
+              "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-4.el9.x86_64",
+              "config": {}
             }
           },
           {
