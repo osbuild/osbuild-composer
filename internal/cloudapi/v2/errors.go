@@ -42,6 +42,7 @@ const (
 	ErrorInvalidJobType               ServiceErrorCode = 26
 	ErrorInvalidOSTreeParams          ServiceErrorCode = 27
 	ErrorTenantNotFound               ServiceErrorCode = 28
+	ErrorNoGPGKey                     ServiceErrorCode = 29
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -107,6 +108,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidNumberOfImageBuilds, http.StatusBadRequest, "Compose request has unsupported number of image builds"},
 		serviceError{ErrorInvalidOSTreeParams, http.StatusBadRequest, "Invalid OSTree parameters or parameter combination"},
 		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
+		serviceError{ErrorNoGPGKey, http.StatusBadRequest, "Invalid repository, when check_gpg is set, gpgkey must be specified"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
