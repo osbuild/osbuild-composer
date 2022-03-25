@@ -1265,8 +1265,8 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 	if repo.CheckGpg != nil {
 		repoConfig.CheckGPG = *repo.CheckGpg
 	}
-	if repo.GpgKey != nil {
-		repoConfig.GPGKey = *repo.GpgKey
+	if repo.Gpgkey != nil {
+		repoConfig.GPGKey = *repo.Gpgkey
 	}
 	if repo.IgnoreSsl != nil {
 		repoConfig.IgnoreSSL = *repo.IgnoreSsl
