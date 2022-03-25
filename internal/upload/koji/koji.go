@@ -314,7 +314,6 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	retries := uint(0)
 
 	countingCheckRetry := func(ctx context.Context, resp *http.Response, err error) (bool, error) {
-		retries++
 		shouldRetry, retErr := rh.DefaultRetryPolicy(ctx, resp, err)
 
 		// DefaultRetryPolicy denies retrying for any certificate related error.
@@ -323,9 +322,14 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 			if v, ok := err.(*url.Error); ok {
 				if _, ok := v.Err.(x509.UnknownAuthorityError); ok {
 					// retry if it's a timeout
-					return strings.Contains(strings.ToLower(v.Error()), "timeout"), v
+					shouldRetry = strings.Contains(strings.ToLower(v.Error()), "timeout")
+					retErr = v
 				}
 			}
+		}
+
+		if shouldRetry {
+			retries++
 		}
 
 		return shouldRetry, retErr
