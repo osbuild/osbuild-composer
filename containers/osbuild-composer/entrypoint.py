@@ -310,7 +310,7 @@ class Cli(contextlib.AbstractContextManager):
 
         signal.signal(signal.SIGTERM, handler)
 
-        liveness = pathlib.Path('/run/live')
+        liveness = pathlib.Path('/tmp/osbuild-composer-live')
 
         liveness.touch()
 
