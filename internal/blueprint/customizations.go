@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
@@ -249,7 +250,19 @@ func (c *Customizations) GetUsers() []UserCustomization {
 		}
 	}
 
-	return append(users, c.User...)
+	users = append(users, c.User...)
+
+	// sanitize user home directory in blueprint: if it has a trailing slash,
+	// it might lead to the directory not getting the correct selinux labels
+	for idx := range users {
+		u := users[idx]
+		if u.Home != nil {
+			homedir := strings.TrimRight(*u.Home, "/")
+			u.Home = &homedir
+			users[idx] = u
+		}
+	}
+	return users
 }
 
 func (c *Customizations) GetGroups() []GroupCustomization {
