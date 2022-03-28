@@ -108,7 +108,7 @@ man: $(MANPAGES_TROFF)
 
 .PHONY: build
 build:
-	- mkdir bin
+	- mkdir -p bin
 	go build -o bin/osbuild-composer ./cmd/osbuild-composer/
 	go build -o bin/osbuild-worker ./cmd/osbuild-worker/
 	go build -o bin/osbuild-pipeline ./cmd/osbuild-pipeline/
@@ -116,6 +116,7 @@ build:
 	go build -o bin/osbuild-upload-aws ./cmd/osbuild-upload-aws/
 	go build -o bin/osbuild-upload-gcp ./cmd/osbuild-upload-gcp/
 	go build -o bin/osbuild-upload-oci ./cmd/osbuild-upload-oci/
+	go build -o bin/osbuild-upload-generic-s3 ./cmd/osbuild-upload-generic-s3/
 	go build -o bin/osbuild-mock-openid-provider ./cmd/osbuild-mock-openid-provider
 	go build -o bin/osbuild-service-maintenance ./cmd/osbuild-service-maintenance
 	go test -c -tags=integration -o bin/osbuild-composer-cli-tests ./cmd/osbuild-composer-cli-tests/main_test.go

@@ -139,6 +139,9 @@ func main() {
 			Credentials string `toml:"credentials"`
 			Bucket      string `toml:"bucket"`
 		} `toml:"aws"`
+		GenericS3 *struct {
+			Credentials string `toml:"credentials"`
+		} `toml:"generic_s3"`
 		Authentication *struct {
 			OAuthURL         string `toml:"oauth_url"`
 			OfflineTokenPath string `toml:"offline_token"`
@@ -306,6 +309,11 @@ func main() {
 		awsBucket = config.AWS.Bucket
 	}
 
+	var genericS3Credentials = ""
+	if config.GenericS3 != nil {
+		genericS3Credentials = config.GenericS3.Credentials
+	}
+
 	// depsolve jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
 	defer depsolveCtxCancel()
@@ -340,13 +348,14 @@ func main() {
 	// non-depsolve job
 	jobImpls := map[string]JobImplementation{
 		"osbuild": &OSBuildJobImpl{
-			Store:       store,
-			Output:      output,
-			KojiServers: kojiServers,
-			GCPCreds:    gcpCredentials,
-			AzureCreds:  azureCredentials,
-			AWSCreds:    awsCredentials,
-			AWSBucket:   awsBucket,
+			Store:          store,
+			Output:         output,
+			KojiServers:    kojiServers,
+			GCPCreds:       gcpCredentials,
+			AzureCreds:     azureCredentials,
+			AWSCreds:       awsCredentials,
+			AWSBucket:      awsBucket,
+			GenericS3Creds: genericS3Credentials,
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:              store,

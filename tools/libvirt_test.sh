@@ -17,6 +17,8 @@ IMAGE_TYPE=${1:-qcow2}
 # Take the boot type passed to the script or use BIOS by default if nothing
 # was passed.
 BOOT_TYPE=${2:-bios}
+# Take the image from the url passes to the script or build it by default if nothing
+LIBVIRT_IMAGE_URL=${3:-""}
 
 # Select the file extension based on the image that we are building.
 IMAGE_EXTENSION=$IMAGE_TYPE
@@ -131,82 +133,90 @@ get_compose_metadata () {
     sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
 }
 
-# Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "bp"
-description = "A base system"
-version = "0.0.1"
-EOF
-
-# Prepare the blueprint for the compose.
-greenprint "📋 Preparing blueprint"
-sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli blueprints depsolve bp
-
-# Get worker unit file so we can watch the journal.
-WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
-sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
-WORKER_JOURNAL_PID=$!
-# Stop watching the worker journal when exiting.
-trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
-
-# Start the compose
-greenprint "🚀 Starting compose"
-sudo composer-cli --json compose start bp "$IMAGE_TYPE" | tee "$COMPOSE_START"
-if rpm -q --quiet weldr-client; then
-    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
-else
-    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
-fi
-
-# Wait for the compose to finish.
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    if rpm -q --quiet weldr-client; then
-        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
-    else
-        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
-    fi
-
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-
-    # Wait 30 seconds and try again.
-    sleep 5
-done
-
-# Capture the compose logs from osbuild.
-greenprint "💬 Getting compose log and metadata"
-get_compose_log "$COMPOSE_ID"
-get_compose_metadata "$COMPOSE_ID"
-
-# Kill the journal monitor immediately and remove the trap
-sudo pkill -P ${WORKER_JOURNAL_PID}
-trap - EXIT
-
-# Did the compose finish with success?
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
-    echo "Something went wrong with the compose. 😢"
-    exit 1
-fi
-
-# Download the image.
-greenprint "📥 Downloading the image"
-
 # Current $PWD is inside /tmp, there may not be enough space for an image.
 # Let's use a bigger temporary directory for this operation.
 BIG_TEMP_DIR=/var/lib/osbuild-composer-tests
 sudo rm -rf "${BIG_TEMP_DIR}" || true
 sudo mkdir "${BIG_TEMP_DIR}"
-pushd "${BIG_TEMP_DIR}"
-    sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-    IMAGE_FILENAME=$(basename "$(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}")")
+
+if [ -z "${LIBVIRT_IMAGE_URL}" ]; then
+    # Write a basic blueprint for our image.
+    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "bp"
+description = "A base system"
+version = "0.0.1"
+EOF
+
+    # Prepare the blueprint for the compose.
+    greenprint "📋 Preparing blueprint"
+    sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+    sudo composer-cli blueprints depsolve bp
+
+    # Get worker unit file so we can watch the journal.
+    WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
+    sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
+    WORKER_JOURNAL_PID=$!
+    # Stop watching the worker journal when exiting.
+    trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
+
+    # Start the compose
+    greenprint "🚀 Starting compose"
+    sudo composer-cli --json compose start bp "$IMAGE_TYPE" | tee "$COMPOSE_START"
+    if rpm -q --quiet weldr-client; then
+        COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
+    else
+        COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
+    fi
+
+    # Wait for the compose to finish.
+    greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
+    while true; do
+        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
+        if rpm -q --quiet weldr-client; then
+            COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
+        else
+            COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
+        fi
+
+        # Is the compose finished?
+        if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
+            break
+        fi
+
+        # Wait 30 seconds and try again.
+        sleep 5
+    done
+
+    # Capture the compose logs from osbuild.
+    greenprint "💬 Getting compose log and metadata"
+    get_compose_log "$COMPOSE_ID"
+    get_compose_metadata "$COMPOSE_ID"
+
+    # Kill the journal monitor immediately and remove the trap
+    sudo pkill -P ${WORKER_JOURNAL_PID}
+    trap - EXIT
+
+    # Did the compose finish with success?
+    if [[ $COMPOSE_STATUS != FINISHED ]]; then
+        echo "Something went wrong with the compose. 😢"
+        exit 1
+    fi
+
+    # Download the image.
+    greenprint "📥 Downloading the image"
+
+    pushd "${BIG_TEMP_DIR}"
+        sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+        IMAGE_FILENAME=$(basename "$(find . -maxdepth 1 -type f -name "*.${IMAGE_EXTENSION}")")
+        LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
+        sudo mv "$IMAGE_FILENAME" "$LIBVIRT_IMAGE_PATH"
+    popd
+else
+    pushd "${BIG_TEMP_DIR}"
     LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
-    sudo mv "$IMAGE_FILENAME" "$LIBVIRT_IMAGE_PATH"
-popd
+    sudo curl -o "${LIBVIRT_IMAGE_PATH}" "${LIBVIRT_IMAGE_URL}"
+    popd
+fi
 
 # Prepare cloud-init data.
 CLOUD_INIT_DIR=$(mktemp -d)
@@ -323,8 +333,10 @@ else
 fi
 sudo rm -f "$LIBVIRT_IMAGE_PATH" $CLOUD_INIT_PATH
 
-# Also delete the compose so we don't run out of disk space
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+if [ -z "${LIBVIRT_IMAGE_URL}" ]; then
+    # Also delete the compose so we don't run out of disk space
+    sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+fi
 
 # Use the return code of the smoke test to determine if we passed or failed.
 if [[ $RESULTS == 1 ]]; then
