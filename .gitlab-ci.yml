@@ -442,7 +442,7 @@ API:
         RUNNER:
           - aws/fedora-35-x86_64
 
-libvirt:
+.libvirt_integration:
   stage: test
   extends: .terraform/openstack
   rules:
@@ -450,7 +450,7 @@ libvirt:
     - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/libvirt.sh
+    - /usr/libexec/tests/osbuild-composer/${SCRIPT}
   parallel:
     matrix:
       - RUNNER:
@@ -459,6 +459,21 @@ libvirt:
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
+
+libvirt.sh:
+  extends: .libvirt_integration
+  variables:
+    SCRIPT: libvirt.sh
+
+generic_s3.sh:
+  extends: .libvirt_integration
+  variables:
+    SCRIPT: generic_s3.sh
+
+aws_s3.sh:
+  extends: .libvirt_integration
+  variables:
+    SCRIPT: aws_s3.sh
 
 RHEL 9 on 8:
   stage: test

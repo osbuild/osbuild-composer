@@ -30,13 +30,14 @@ import (
 )
 
 type OSBuildJobImpl struct {
-	Store       string
-	Output      string
-	KojiServers map[string]koji.GSSAPICredentials
-	GCPCreds    []byte
-	AzureCreds  *azure.Credentials
-	AWSCreds    string
-	AWSBucket   string
+	Store          string
+	Output         string
+	KojiServers    map[string]koji.GSSAPICredentials
+	GCPCreds       []byte
+	AzureCreds     *azure.Credentials
+	AWSCreds       string
+	AWSBucket      string
+	GenericS3Creds string
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -50,6 +51,16 @@ func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string
 	} else {
 		return awscloud.NewDefault(region)
 	}
+}
+
+func (impl *OSBuildJobImpl) getAWSForEndpoint(endpoint, region, accessId, secret, token string) (*awscloud.AWS, error) {
+	if accessId != "" && secret != "" {
+		return awscloud.NewForEndpoint(endpoint, region, accessId, secret, token)
+	}
+	if impl.GenericS3Creds != "" {
+		return awscloud.NewForEndpointFromFile(impl.GenericS3Creds, endpoint, region)
+	}
+	return nil, fmt.Errorf("no credentials found")
 }
 
 func validateResult(result *worker.OSBuildJobResult, jobID string) {
@@ -69,6 +80,65 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 		logWithId.Infof("osbuild job succeeded")
 	}
 	result.Success = true
+}
+
+func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, osbuildJobResult *worker.OSBuildJobResult, genericS3 bool, streamOptimized bool, streamOptimizedPath string) (err error) {
+	imagePath := path.Join(outputDirectory, exportPath, filename)
+
+	// *** SPECIAL VMDK HANDLING START ***
+	// Upload the VMDK image as stream-optimized.
+	// The VMDK conversion is applied only when the job was submitted by Weldr API,
+	// therefore we need to do the conversion here explicitly if it was not done.
+	if streamOptimized {
+		// If the streamOptimizedPath is empty, the conversion was not done
+		if streamOptimizedPath == "" {
+			var f *os.File
+			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
+			if err != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
+				return nil
+			}
+			streamOptimizedPath = f.Name()
+			f.Close()
+		}
+		// Replace the original file by the stream-optimized one
+		err = os.Rename(streamOptimizedPath, imagePath)
+		if err != nil {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
+			return nil
+		}
+	}
+	// *** SPECIAL VMDK HANDLING END ***
+
+	if key == "" {
+		key = uuid.New().String()
+	}
+	key += "-" + filename
+
+	_, err = a.Upload(imagePath, bucket, key)
+	if err != nil {
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
+		return
+	}
+
+	url, err := a.S3ObjectPresignedURL(bucket, key)
+	if err != nil {
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
+		return
+	}
+
+	var targetResult *target.TargetResult
+	if genericS3 {
+		targetResult = target.NewGenericS3TargetResult(&target.GenericS3TargetResultOptions{URL: url})
+	} else {
+		targetResult = target.NewAWSS3TargetResult(&target.AWSS3TargetResultOptions{URL: url})
+	}
+	osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, targetResult)
+
+	osbuildJobResult.Success = true
+	osbuildJobResult.UploadStatus = "success"
+
+	return
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
@@ -314,59 +384,26 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			key := options.Key
-			if key == "" {
-				key = uuid.New().String()
-			}
-			key += "-" + options.Filename
-
 			bucket := options.Bucket
 			if impl.AWSBucket != "" {
 				bucket = impl.AWSBucket
 			}
 
-			imagePath := path.Join(outputDirectory, exportPath, options.Filename)
-
-			// *** SPECIAL VMDK HANDLING START ***
-			// Upload the VMDK image as stream-optimized.
-			// The VMDK conversion is applied only when the job was submitted by Weldr API,
-			// therefore we need to do the conversion here explicitly if it was not done.
-			if args.StreamOptimized {
-				// If the streamOptimizedPath is empty, the conversion was not done
-				if streamOptimizedPath == "" {
-					var f *os.File
-					f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
-					if err != nil {
-						osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
-						return nil
-					}
-					streamOptimizedPath = f.Name()
-					f.Close()
-				}
-				// Replace the original file by the stream-optimized one
-				err = os.Rename(streamOptimizedPath, imagePath)
-				if err != nil {
-					osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
-					return nil
-				}
-			}
-			// *** SPECIAL VMDK HANDLING END ***
-
-			_, err = a.Upload(imagePath, bucket, key)
+			err = uploadToS3(a, outputDirectory, exportPath, bucket, options.Key, options.Filename, osbuildJobResult, false, args.StreamOptimized, streamOptimizedPath)
 			if err != nil {
-				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				return nil
 			}
-			url, err := a.S3ObjectPresignedURL(bucket, key)
+		case *target.GenericS3TargetOptions:
+			a, err := impl.getAWSForEndpoint(options.Endpoint, options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
 			if err != nil {
-				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				return nil
 			}
 
-			osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, target.NewAWSS3TargetResult(&target.AWSS3TargetResultOptions{URL: url}))
-
-			osbuildJobResult.Success = true
-			osbuildJobResult.UploadStatus = "success"
+			err = uploadToS3(a, outputDirectory, exportPath, options.Bucket, options.Key, options.Filename, osbuildJobResult, true, args.StreamOptimized, streamOptimizedPath)
+			if err != nil {
+				return nil
+			}
 		case *target.AzureTargetOptions:
 			azureStorageClient, err := azure.NewStorageClient(options.StorageAccount, options.StorageAccessKey)
 			if err != nil {

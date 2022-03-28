@@ -36,6 +36,17 @@ type awsUploadSettings struct {
 
 func (awsUploadSettings) isUploadSettings() {}
 
+type awsS3UploadSettings struct {
+	Region          string `json:"region"`
+	AccessKeyID     string `json:"accessKeyID,omitempty"`
+	SecretAccessKey string `json:"secretAccessKey,omitempty"`
+	SessionToken    string `json:"sessionToken,omitempty"`
+	Bucket          string `json:"bucket"`
+	Key             string `json:"key"`
+}
+
+func (awsS3UploadSettings) isUploadSettings() {}
+
 type azureUploadSettings struct {
 	StorageAccount   string `json:"storageAccount,omitempty"`
 	StorageAccessKey string `json:"storageAccessKey,omitempty"`
@@ -68,6 +79,13 @@ type ociUploadSettings struct {
 
 func (ociUploadSettings) isUploadSettings() {}
 
+type genericS3UploadSettings struct {
+	awsS3UploadSettings
+	Endpoint string `json:"endpoint"`
+}
+
+func (genericS3UploadSettings) isUploadSettings() {}
+
 type uploadRequest struct {
 	Provider  string         `json:"provider"`
 	ImageName string         `json:"image_name"`
@@ -93,10 +111,14 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 		settings = new(azureUploadSettings)
 	case "aws":
 		settings = new(awsUploadSettings)
+	case "aws.s3":
+		settings = new(awsS3UploadSettings)
 	case "vmware":
 		settings = new(vmwareUploadSettings)
 	case "oci":
 		settings = new(ociUploadSettings)
+	case "generic.s3":
+		settings = new(genericS3UploadSettings)
 	default:
 		return errors.New("unexpected provider name")
 	}
@@ -167,6 +189,27 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 				// Username and Password are intentionally not included.
 			}
 			uploads = append(uploads, upload)
+		case *target.AWSS3TargetOptions:
+			upload.ProviderName = "aws.s3"
+			upload.Settings = &awsS3UploadSettings{
+				Region: options.Region,
+				Bucket: options.Bucket,
+				Key:    options.Key,
+				// AccessKeyID and SecretAccessKey are intentionally not included.
+			}
+			uploads = append(uploads, upload)
+		case *target.GenericS3TargetOptions:
+			upload.ProviderName = "generic.s3"
+			upload.Settings = &genericS3UploadSettings{
+				awsS3UploadSettings: awsS3UploadSettings{
+					Region: options.Region,
+					Bucket: options.Bucket,
+					Key:    options.Key,
+					// AccessKeyID and SecretAccessKey are intentionally not included.
+				},
+				Endpoint: options.Endpoint,
+			}
+			uploads = append(uploads, upload)
 		}
 	}
 
@@ -185,6 +228,17 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 	case *awsUploadSettings:
 		t.Name = "org.osbuild.aws"
 		t.Options = &target.AWSTargetOptions{
+			Filename:        imageType.Filename(),
+			Region:          options.Region,
+			AccessKeyID:     options.AccessKeyID,
+			SecretAccessKey: options.SecretAccessKey,
+			SessionToken:    options.SessionToken,
+			Bucket:          options.Bucket,
+			Key:             options.Key,
+		}
+	case *awsS3UploadSettings:
+		t.Name = "org.osbuild.aws.s3"
+		t.Options = &target.AWSS3TargetOptions{
 			Filename:        imageType.Filename(),
 			Region:          options.Region,
 			AccessKeyID:     options.AccessKeyID,
@@ -224,6 +278,20 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Bucket:      options.Bucket,
 			Namespace:   options.Namespace,
 			Compartment: options.Compartment,
+		}
+	case *genericS3UploadSettings:
+		t.Name = "org.osbuild.generic.s3"
+		t.Options = &target.GenericS3TargetOptions{
+			AWSS3TargetOptions: target.AWSS3TargetOptions{
+				Filename:        imageType.Filename(),
+				Region:          options.Region,
+				AccessKeyID:     options.AccessKeyID,
+				SecretAccessKey: options.SecretAccessKey,
+				SessionToken:    options.SessionToken,
+				Bucket:          options.Bucket,
+				Key:             options.Key,
+			},
+			Endpoint: options.Endpoint,
 		}
 	}
 

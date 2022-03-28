@@ -55,8 +55,10 @@ func UnmarshalTargetResultOptions(trName string, rawOptions json.RawMessage) (Ta
 		options = new(AzureImageTargetResultOptions)
 	case "org.osbuild.oci":
 		options = new(OCITargetResultOptions)
+	case "org.osbuild.generic.s3":
+		options = new(GenericS3TargetResultOptions)
 	default:
-		return nil, fmt.Errorf("Unexpected target result name: %s", trName)
+		return nil, fmt.Errorf("unexpected target result name: %s", trName)
 	}
 	err := json.Unmarshal(rawOptions, options)
 

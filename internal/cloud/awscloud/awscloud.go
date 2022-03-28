@@ -22,11 +22,14 @@ type AWS struct {
 }
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
-func newAwsFromCreds(creds *credentials.Credentials, region string) (*AWS, error) {
+func newAwsFromCreds(creds *credentials.Credentials, region string, endpoint *string) (*AWS, error) {
 	// Create a Session with a custom region
+	s3ForcePathStyle := endpoint != nil
 	sess, err := session.NewSession(&aws.Config{
-		Credentials: creds,
-		Region:      aws.String(region),
+		Credentials:      creds,
+		Region:           aws.String(region),
+		Endpoint:         endpoint,
+		S3ForcePathStyle: &s3ForcePathStyle,
 	})
 	if err != nil {
 		return nil, err
@@ -41,7 +44,7 @@ func newAwsFromCreds(creds *credentials.Credentials, region string) (*AWS, error
 
 // Initialize a new AWS object from individual bits. SessionToken is optional
 func New(region string, accessKeyID string, accessKey string, sessionToken string) (*AWS, error) {
-	return newAwsFromCreds(credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken), region)
+	return newAwsFromCreds(credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken), region, nil)
 }
 
 // Initializes a new AWS object with the credentials info found at filename's location.
@@ -54,13 +57,31 @@ func New(region string, accessKeyID string, accessKey string, sessionToken strin
 // "AWS_SHARED_CREDENTIALS_FILE" env variable or will default to
 // $HOME/.aws/credentials.
 func NewFromFile(filename string, region string) (*AWS, error) {
-	return newAwsFromCreds(credentials.NewSharedCredentials(filename, "default"), region)
+	return newAwsFromCreds(credentials.NewSharedCredentials(filename, "default"), region, nil)
 }
 
 // Initialize a new AWS object from defaults.
 // Looks for env variables, shared credential file, and EC2 Instance Roles.
 func NewDefault(region string) (*AWS, error) {
-	return newAwsFromCreds(nil, region)
+	return newAwsFromCreds(nil, region, nil)
+}
+
+// Initialize a new AWS object targeting a specific endpoint from individual bits. SessionToken is optional
+func NewForEndpoint(endpoint, region string, accessKeyID string, accessKey string, sessionToken string) (*AWS, error) {
+	return newAwsFromCreds(credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken), region, &endpoint)
+}
+
+// Initializes a new AWS object targeting a specific endpoint with the credentials info found at filename's location.
+// The credential files should match the AWS format, such as:
+// [default]
+// aws_access_key_id = secretString1
+// aws_secret_access_key = secretString2
+//
+// If filename is empty the underlying function will look for the
+// "AWS_SHARED_CREDENTIALS_FILE" env variable or will default to
+// $HOME/.aws/credentials.
+func NewForEndpointFromFile(filename string, endpoint, region string) (*AWS, error) {
+	return newAwsFromCreds(credentials.NewSharedCredentials(filename, "default"), region, &endpoint)
 }
 
 func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, error) {
