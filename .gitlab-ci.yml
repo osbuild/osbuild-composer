@@ -529,7 +529,7 @@ SonarQube:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == "main"'
   script:
     - schutzbot/sonarqube.sh
   variables:
