@@ -749,8 +749,14 @@ sudo virt-install  --name="${IMAGE_KEY}-fdorootcert"\
                    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
                    --nographics \
                    --noautoconsole \
-                   --wait=-1 \
+                   --wait=15 \
                    --noreboot
+
+# Installation can get stuck, destroying VM helps
+# See https://github.com/osbuild/osbuild-composer/issues/2413
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-fdorootcert") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-fdorootcert"
+fi
 
 # Start VM.
 greenprint "💻 Start UEFI VM"
