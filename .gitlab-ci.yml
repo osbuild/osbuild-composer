@@ -330,16 +330,7 @@ Rebase OSTree:
           - rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64-large
 
-.INTEGRATION_TESTS: &INTEGRATION_TESTS
-  SCRIPT:
-    - koji.sh
-    - aws.sh
-    - azure.sh
-    - vmware.sh
-    - filesystem.sh
-    - cross-distro.sh
-
-Integration:
+.integration:
   stage: test
   extends: .terraform
   rules:
@@ -350,8 +341,7 @@ Integration:
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
   parallel:
     matrix:
-      - <<: *INTEGRATION_TESTS
-        RUNNER:
+      - RUNNER:
           - aws/fedora-34-x86_64
           - aws/fedora-35-x86_64
           - aws/centos-stream-8-x86_64
@@ -360,11 +350,36 @@ Integration:
           - aws/rhel-9.0-nightly-x86_64
           - aws/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
-      - SCRIPT:
-          - azure_hyperv_gen2.sh
-        RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
+
+koji.sh:
+  extends: .integration
+  variables:
+    SCRIPT: koji.sh
+
+aws.sh:
+  extends: .integration
+  variables:
+    SCRIPT: aws.sh
+
+azure.sh:
+  extends: .integration
+  variables:
+    SCRIPT: azure.sh
+
+vmware.sh:
+  extends: .integration
+  variables:
+    SCRIPT: vmware.sh
+
+filesystem.sh:
+  extends: .integration
+  variables:
+    SCRIPT: filesystem.sh
+
+cross-distro.sh:
+  extends: .integration
+  variables:
+    SCRIPT: cross-distro.sh
 
 .API_TESTS: &API_TESTS
   IMAGE_TYPE:
