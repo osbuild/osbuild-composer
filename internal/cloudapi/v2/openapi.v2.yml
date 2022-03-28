@@ -652,11 +652,11 @@ components:
         - vsphere
     Repository:
       type: object
-      required:
-        - rhsm
       properties:
         rhsm:
           type: boolean
+          default: false
+          description: 'Determines whether a valid subscription is required to access this repository.'
         baseurl:
           type: string
           format: url

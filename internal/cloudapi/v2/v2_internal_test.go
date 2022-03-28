@@ -134,7 +134,7 @@ func TestRepoConfigConversion(t *testing.T) {
 				IgnoreSsl:   common.BoolToPtr(false),
 				Metalink:    nil,
 				Mirrorlist:  nil,
-				Rhsm:        false,
+				Rhsm:        common.BoolToPtr(false),
 				PackageSets: nil,
 			},
 			repoConfig: rpmmd.RepoConfig{
@@ -158,7 +158,7 @@ func TestRepoConfigConversion(t *testing.T) {
 				IgnoreSsl:   common.BoolToPtr(true),
 				Metalink:    common.StringToPtr("http://example.org/metalink"),
 				Mirrorlist:  common.StringToPtr("http://example.org/mirrorlist"),
-				Rhsm:        false,
+				Rhsm:        common.BoolToPtr(false),
 				PackageSets: nil,
 			},
 			repoConfig: rpmmd.RepoConfig{
@@ -182,7 +182,7 @@ func TestRepoConfigConversion(t *testing.T) {
 				IgnoreSsl:   common.BoolToPtr(true),
 				Metalink:    common.StringToPtr("http://example.org/metalink"),
 				Mirrorlist:  common.StringToPtr("http://example.org/mirrorlist"),
-				Rhsm:        false,
+				Rhsm:        common.BoolToPtr(false),
 				PackageSets: nil,
 			},
 			repoConfig: rpmmd.RepoConfig{
@@ -206,7 +206,7 @@ func TestRepoConfigConversion(t *testing.T) {
 				IgnoreSsl:   common.BoolToPtr(true),
 				Metalink:    common.StringToPtr("http://example.org/metalink"),
 				Mirrorlist:  nil,
-				Rhsm:        true,
+				Rhsm:        common.BoolToPtr(true),
 				PackageSets: nil,
 			},
 			repoConfig: rpmmd.RepoConfig{
@@ -243,7 +243,7 @@ func TestRepoConfigConversion(t *testing.T) {
 				IgnoreSsl:   nil,
 				Metalink:    nil,
 				Mirrorlist:  nil,
-				Rhsm:        true,
+				Rhsm:        common.BoolToPtr(true),
 				PackageSets: nil,
 			},
 			err: HTTPError(ErrorInvalidRepository).Error(),
@@ -258,7 +258,7 @@ func TestRepoConfigConversion(t *testing.T) {
 				IgnoreSsl:   common.BoolToPtr(true),
 				Metalink:    common.StringToPtr("http://example.org/metalink"),
 				Mirrorlist:  nil,
-				Rhsm:        true,
+				Rhsm:        common.BoolToPtr(true),
 				PackageSets: nil,
 			},
 			err: HTTPError(ErrorNoGPGKey).Error(),

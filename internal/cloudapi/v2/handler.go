@@ -1010,7 +1010,8 @@ func collectRepos(irRepos, payloadRepositories []Repository, payloadPackageSets 
 
 func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 	repoConfig := new(rpmmd.RepoConfig)
-	repoConfig.RHSM = repo.Rhsm
+
+	repoConfig.RHSM = repo.Rhsm != nil && *repo.Rhsm
 
 	if repo.Baseurl != nil {
 		repoConfig.BaseURL = *repo.Baseurl
