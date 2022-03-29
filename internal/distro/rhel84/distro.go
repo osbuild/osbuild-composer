@@ -407,7 +407,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel84")
 	}
 
-	if t.arch.Name() == distro.S390xArchName {
+	if t.arch.Name() == distro.S390xArchName && t.bootable {
 		if pt == nil {
 			panic("s390x image must have a partition table, this is a programming error")
 		}
