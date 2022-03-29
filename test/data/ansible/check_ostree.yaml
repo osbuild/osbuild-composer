@@ -347,6 +347,9 @@
       command: podman run registry.access.redhat.com/ubi8/ubi-minimal:latest cat /etc/redhat-release
       register: podman_result
       become: yes
+      retries: 30  # due to https://github.com/osbuild/osbuild-composer/issues/2492
+      delay: 2
+      until: podman_result is success
       ignore_errors: yes  # due to https://bugzilla.redhat.com/show_bug.cgi?id=1903983
 
     - name: run container test
@@ -530,6 +533,10 @@
         - name: install sanely failing health check unit to test red boot status behavior
           command: rpm-ostree install --cache-only https://s3.amazonaws.com/org.osbuild.test-dependencies/greenboot-failing-unit-1.0-1.el8.noarch.rpm
           become: yes
+          register: install_result
+          retries: 30  # due to https://github.com/osbuild/osbuild-composer/issues/2492
+          delay: 2
+          until: install_result is success
 
         - name: reboot to deploy new ostree commit
           reboot:
