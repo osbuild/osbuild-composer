@@ -513,7 +513,14 @@
       }
     },
     "no-image-info": true,
-    "overrides": {}
+    "overrides": {
+      "rhel-85": {
+        "blueprint": {}
+      },
+      "rhel-90-beta": {
+        "blueprint": {}
+      }
+    }
   },
   "edge-simplified-installer": {
     "compose-request": {
