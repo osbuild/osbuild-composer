@@ -64,8 +64,12 @@ func GetStatusCode(err *Error) StatusCode {
 		return JobStatusUserInputError
 	case ErrorInvalidTarget:
 		return JobStatusUserInputError
+	case ErrorDepsolveDependency:
+		return JobStatusUserInputError
+	case ErrorManifestDependency:
+		return JobStatusUserInputError
 	case ErrorEmptyManifest:
-		return JobStatusInternalError
+		return JobStatusUserInputError
 	default:
 		return JobStatusInternalError
 	}
