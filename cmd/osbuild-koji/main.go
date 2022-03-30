@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/go-retryablehttp"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/sirupsen/logrus"
@@ -42,7 +41,7 @@ func main() {
 	}
 	defer file.Close()
 
-	transport := &retryablehttp.RoundTripper{}
+	transport := koji.CreateRetryableTransport()
 	k, err := koji.NewFromPlain(server, "osbuild", "osbuildpass", transport)
 	if err != nil {
 		println(err.Error())

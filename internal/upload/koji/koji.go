@@ -162,7 +162,7 @@ func NewFromPlain(server, user, password string, transport http.RoundTripper) (*
 	// The API doesn't require sessionID, sessionKey and callnum yet,
 	// so there's no need to use the custom Koji RoundTripper,
 	// let's just use the one that the called passed in.
-	rhTransport := &rh.RoundTripper{Client: rh.NewClient()}
+	rhTransport := CreateRetryableTransport()
 	loginClient, err := xmlrpc.NewClient(server, rhTransport)
 	if err != nil {
 		return nil, err
@@ -443,7 +443,7 @@ func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
 func CreateKojiTransport(relaxTimeout uint) http.RoundTripper {
 	// Koji for some reason needs TLS renegotiation enabled.
 	// Clone the default http rt and enable renegotiation.
-	rt := &rh.RoundTripper{Client: rh.NewClient()}
+	rt := CreateRetryableTransport()
 
 	transport := rt.Client.HTTPClient.Transport.(*http.Transport)
 
@@ -486,4 +486,10 @@ func createCustomRetryableClient() *rh.Client {
 	client.Logger = rh.LeveledLogger(&LeveledLogrus{logrus.StandardLogger()})
 	client.CheckRetry = customCheckRetry
 	return client
+}
+
+func CreateRetryableTransport() *rh.RoundTripper {
+	rt := rh.RoundTripper{}
+	rt.Client = createCustomRetryableClient()
+	return &rt
 }
