@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/crypt"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
@@ -27,39 +26,6 @@ func selinuxStageOptions(labelcp bool) *osbuild.SELinuxStageOptions {
 		}
 	}
 	return options
-}
-
-func userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
-	options := osbuild.UsersStageOptions{
-		Users: make(map[string]osbuild.UsersStageOptionsUser),
-	}
-
-	for _, c := range users {
-		if c.Password != nil && !crypt.PasswordIsCrypted(*c.Password) {
-			cryptedPassword, err := crypt.CryptSHA512(*c.Password)
-			if err != nil {
-				return nil, err
-			}
-
-			c.Password = &cryptedPassword
-		}
-
-		user := osbuild.UsersStageOptionsUser{
-			Groups:      c.Groups,
-			Description: c.Description,
-			Home:        c.Home,
-			Shell:       c.Shell,
-			Password:    c.Password,
-			Key:         c.Key,
-		}
-
-		user.UID = c.UID
-		user.GID = c.GID
-
-		options.Users[c.Name] = user
-	}
-
-	return &options, nil
 }
 
 func usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuild.FirstBootStageOptions {

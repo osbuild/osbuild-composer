@@ -421,9 +421,9 @@ func osPipeline(t *imageType,
 			return nil, err
 		} else if userOptions != nil {
 			if t.rpmOstree {
-				// for ostree, writing the key during user creation is redundant
-				// and can cause issues so create users without keys and write them
-				// on first boot
+				// for ostree, writing the key during user creation is
+				// redundant and can cause issues so create users without keys
+				// and write them on first boot
 				userOptionsSansKeys, err := osbuild.NewUsersStageOptions(c.GetUsers(), true)
 				if err != nil {
 					return nil, err
