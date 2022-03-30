@@ -478,7 +478,7 @@ func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []
 	}
 
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
-	p.AddStage(osbuild.NewAnacondaStage(t.anacondaStageOptions()))
+	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(false)))
 	p.AddStage(osbuild.NewLoraxScriptStage(t.loraxScriptStageOptions()))
 	p.AddStage(osbuild.NewDracutStage(t.dracutStageOptions(kernelVer)))
 	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", nil, nil, fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
@@ -597,16 +597,6 @@ func (t *imageTypeS2) buildStampStageOptions() *osbuild.BuildstampStageOptions {
 		Version: "8.4",
 		Variant: "edge",
 		Final:   true,
-	}
-}
-
-func (t *imageTypeS2) anacondaStageOptions() *osbuild.AnacondaStageOptions {
-	return &osbuild.AnacondaStageOptions{
-		KickstartModules: []string{
-			"org.fedoraproject.Anaconda.Modules.Network",
-			"org.fedoraproject.Anaconda.Modules.Payloads",
-			"org.fedoraproject.Anaconda.Modules.Storage",
-		},
 	}
 }
 
