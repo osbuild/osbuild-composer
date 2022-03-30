@@ -84,16 +84,6 @@ func buildStampStageOptions(arch string) *osbuild.BuildstampStageOptions {
 	}
 }
 
-func anacondaStageOptions() *osbuild.AnacondaStageOptions {
-	return &osbuild.AnacondaStageOptions{
-		KickstartModules: []string{
-			"org.fedoraproject.Anaconda.Modules.Network",
-			"org.fedoraproject.Anaconda.Modules.Payloads",
-			"org.fedoraproject.Anaconda.Modules.Storage",
-		},
-	}
-}
-
 func loraxScriptStageOptions(arch string) *osbuild.LoraxScriptStageOptions {
 	return &osbuild.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
