@@ -7,6 +7,18 @@
 
 set -exuo pipefail
 
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+
+# Only run this on x86 and rhel8 GA; since the container is based on the ubi
+# container, and we use the weldr api
+if [ "$ARCH" != "x86_64" ] || [ "$ID" != rhel ] || ! sudo subscription-manager status; then
+    echo "Test only supported on GA RHEL."
+    exit 0
+fi
+
+# Provision the software under test.                                                                                                                                                                              
+/usr/libexec/osbuild-composer-test/provision.sh
+
 function get_build_info() {
     key="$1"
     fname="$2"
@@ -153,9 +165,12 @@ tee "dnf-json-request.json" <<EOF
 }
 EOF
 
-DNF_JSON_OUT=$(curl -d"@dnf-json-request.json" --unix-socket "$DNF_SOCK" http:/dump | jq '.packages | length')
+DNF_JSON_OUT=$(sudo curl -d"@dnf-json-request.json" --unix-socket "$DNF_SOCK" http:/dump | jq '.packages | length')
 # expect more than 1 package
 if [ ! "$DNF_JSON_OUT" -gt "1" ]; then
     echo "dnf-json endpoint didn't return list of packages"
     exit 1
 fi
+
+echo "Test passed!"
+exit 0

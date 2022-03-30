@@ -14,16 +14,18 @@
 
 set -xeuo pipefail
 
-# Provision the software under test.
-BLUEPRINT_FILE=/tmp/blueprint.toml
-COMPOSE_START=/tmp/compose-start.json
-COMPOSE_INFO=/tmp/compose-info.json
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-source /etc/os-release
 if [[ "${ID}" == "fedora" ]]; then
     echo "$0 is only enabled for rhel like systems; skipping..."
     exit 0
 fi
+
+# Provision the software under test.
+/usr/libexec/osbuild-composer-test/provision.sh
+BLUEPRINT_FILE=/tmp/blueprint.toml
+COMPOSE_START=/tmp/compose-start.json
+COMPOSE_INFO=/tmp/compose-info.json
 
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
@@ -74,7 +76,10 @@ sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 jq . "${COMPOSE_INFO}"
 
 # Did the compose finish with success?
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
+if [[ $COMPOSE_STATUS == FINISHED ]]; then
+    echo "Test passed!"
+    exit 0
+else
     echo "Something went wrong with the compose. 😢"
     exit 1
 fi

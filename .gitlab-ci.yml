@@ -195,7 +195,7 @@ Manifests:
           - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
-Regression:
+.regression:
   stage: test
   extends: .terraform
   rules:
@@ -203,7 +203,7 @@ Regression:
     - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/regression.sh
+    - /usr/libexec/tests/osbuild-composer/${SCRIPT}
   parallel:
     matrix:
       - RUNNER:
@@ -223,6 +223,36 @@ Regression:
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
+
+regression-bigiso:
+  extends: .regression
+  variables:
+    SCRIPT: regression-bigiso.sh
+
+regression-composer-works-behind-satellite-fallback:
+  extends: .regression
+  variables:
+    SCRIPT: regression-composer-works-behind-satellite-fallback.sh
+
+regression-composer-works-behind-satellite:
+  extends: .regression
+  variables:
+    SCRIPT: regression-composer-works-behind-satellite.sh
+
+regression-excluded-dependency:
+  extends: .regression
+  variables:
+    SCRIPT: regression-excluded-dependency.sh
+
+regression-include-excluded-packages:
+  extends: .regression
+  variables:
+    SCRIPT: regression-include-excluded-packages.sh
+
+regression-old-worker-new-composer.sh:
+  extends: .regression
+  variables:
+    SCRIPT: regression-old-worker-new-composer.sh
 
 Image Tests:
   stage: test
