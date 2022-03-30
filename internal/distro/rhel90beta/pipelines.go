@@ -227,7 +227,7 @@ func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
 	}
 
 	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
@@ -744,7 +744,7 @@ func osPipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackag
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
 	}
 
 	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
@@ -823,7 +823,7 @@ func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, 
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
 	}
 
 	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {

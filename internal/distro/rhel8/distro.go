@@ -383,7 +383,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
 	}
 
 	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers()); err != nil {
@@ -478,23 +478,6 @@ func (t *imageType) rpmStageOptions(arch architecture, repos []rpmmd.RepoConfig,
 		GPGKeys:  gpgKeys,
 		Packages: packages,
 	}
-}
-
-func (t *imageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
-	options := osbuild.GroupsStageOptions{
-		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
-	}
-
-	for _, group := range groups {
-		groupData := osbuild.GroupsStageOptionsGroup{
-			Name: group.Name,
-		}
-		groupData.GID = group.GID
-
-		options.Groups[group.Name] = groupData
-	}
-
-	return &options
 }
 
 func (t *imageType) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
