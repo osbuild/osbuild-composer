@@ -625,8 +625,9 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ostreeRepoPath := "/ostree/repo"
 
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), ostreePayloadStages(options, ostreeRepoPath)))
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", nil, nil, fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
+	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), ostreePayloadStages(options, ostreeRepoPath), ksUsers))
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
 	if err != nil {
 		return nil, err
 	}
@@ -663,8 +664,8 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 
 	tarPath := "/liveimg.tar"
 	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), tarPayloadStages))
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, fmt.Sprintf("file://%s", tarPath), nil, nil, "", "")
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), tarPayloadStages, true))
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, fmt.Sprintf("file://%s", tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "")
 	if err != nil {
 		return nil, err
 	}
@@ -757,14 +758,16 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
 	}
 
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
-	}
+	if !t.bootISO {
+		if groups := c.GetGroups(); len(groups) > 0 {
+			p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
+		}
 
-	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
-		return nil, err
-	} else if userOptions != nil {
-		p.AddStage(osbuild.NewUsersStage(userOptions))
+		if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
+			return nil, err
+		} else if userOptions != nil {
+			p.AddStage(osbuild.NewUsersStage(userOptions))
+		}
 	}
 
 	if services := c.GetServices(); services != nil || t.enabledServices != nil || t.disabledServices != nil || t.defaultTarget != "" {
@@ -982,7 +985,7 @@ func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*
 	return stages
 }
 
-func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, arch string, payloadStages []*osbuild.Stage) *osbuild.Pipeline {
+func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer string, arch string, payloadStages []*osbuild.Stage, users bool) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
@@ -1018,7 +1021,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	}
 
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
-	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(false)))
+	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(users)))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer)))
 
