@@ -317,7 +317,7 @@ func (t *imageTypeS2) ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rp
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
 	}
 
 	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
@@ -551,23 +551,6 @@ func (t *imageTypeS2) usersFirstBootOptions(usersStageOptions *osbuild.UsersStag
 	}
 
 	return options
-}
-
-func (t *imageTypeS2) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
-	options := osbuild.GroupsStageOptions{
-		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
-	}
-
-	for _, group := range groups {
-		groupData := osbuild.GroupsStageOptionsGroup{
-			Name: group.Name,
-		}
-		groupData.GID = group.GID
-
-		options.Groups[group.Name] = groupData
-	}
-
-	return &options
 }
 
 func (t *imageTypeS2) firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {

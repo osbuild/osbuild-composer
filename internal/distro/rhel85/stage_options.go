@@ -52,23 +52,6 @@ func usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuil
 	return options
 }
 
-func groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {
-	options := osbuild.GroupsStageOptions{
-		Groups: map[string]osbuild.GroupsStageOptionsGroup{},
-	}
-
-	for _, group := range groups {
-		groupData := osbuild.GroupsStageOptionsGroup{
-			Name: group.Name,
-		}
-		groupData.GID = group.GID
-
-		options.Groups[group.Name] = groupData
-	}
-
-	return &options
-}
-
 func firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
 	options := osbuild.FirewallStageOptions{
 		Ports: firewall.Ports,
@@ -205,7 +188,6 @@ func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.Kickstart
 		},
 	}
 }
-
 func bootISOMonoStageOptions(kernelVer string, arch string) *osbuild.BootISOMonoStageOptions {
 	comprOptions := new(osbuild.FSCompressionOptions)
 	if bcj := osbuild.BCJOption(arch); bcj != "" {

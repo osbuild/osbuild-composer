@@ -3839,11 +3839,9 @@
           "options": {
             "groups": {
               "group1": {
-                "name": "group1",
                 "gid": 1030
               },
               "group2": {
-                "name": "group2",
                 "gid": 1050
               }
             }
