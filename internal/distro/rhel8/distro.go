@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -387,12 +386,10 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
 	}
 
-	if users := c.GetUsers(); len(users) > 0 {
-		options, err := t.userStageOptions(users)
-		if err != nil {
-			return nil, err
-		}
-		p.AddStage(osbuild.NewUsersStage(options))
+	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers()); err != nil {
+		return nil, err
+	} else if userOptions != nil {
+		p.AddStage(osbuild.NewUsersStage(userOptions))
 	}
 
 	if services := c.GetServices(); services != nil || t.enabledServices != nil || t.disabledServices != nil || t.defaultTarget != "" {
@@ -481,39 +478,6 @@ func (t *imageType) rpmStageOptions(arch architecture, repos []rpmmd.RepoConfig,
 		GPGKeys:  gpgKeys,
 		Packages: packages,
 	}
-}
-
-func (t *imageType) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
-	options := osbuild.UsersStageOptions{
-		Users: make(map[string]osbuild.UsersStageOptionsUser),
-	}
-
-	for _, c := range users {
-		if c.Password != nil && !crypt.PasswordIsCrypted(*c.Password) {
-			cryptedPassword, err := crypt.CryptSHA512(*c.Password)
-			if err != nil {
-				return nil, err
-			}
-
-			c.Password = &cryptedPassword
-		}
-
-		user := osbuild.UsersStageOptionsUser{
-			Groups:      c.Groups,
-			Description: c.Description,
-			Home:        c.Home,
-			Shell:       c.Shell,
-			Password:    c.Password,
-			Key:         c.Key,
-		}
-
-		user.UID = c.UID
-		user.GID = c.GID
-
-		options.Users[c.Name] = user
-	}
-
-	return &options, nil
 }
 
 func (t *imageType) groupStageOptions(groups []blueprint.GroupCustomization) *osbuild.GroupsStageOptions {

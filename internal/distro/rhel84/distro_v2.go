@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 
@@ -321,13 +320,18 @@ func (t *imageTypeS2) ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rp
 		p.AddStage(osbuild.NewGroupsStage(t.groupStageOptions(groups)))
 	}
 
-	if users := c.GetUsers(); len(users) > 0 {
-		options, err := t.userStageOptions(users)
+	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
+		return nil, err
+	} else if userOptions != nil {
+		// for ostree, writing the key during user creation is redundant and
+		// can cause issues so create users without keys and write them on
+		// first boot
+		userOptionsSansKeys, err := osbuild.NewUsersStageOptions(c.GetUsers(), true)
 		if err != nil {
 			return nil, err
 		}
-		p.AddStage(osbuild.NewUsersStage(options))
-		p.AddStage(osbuild.NewFirstBootStage(t.usersFirstBootOptions(options)))
+		p.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
+		p.AddStage(osbuild.NewFirstBootStage(t.usersFirstBootOptions(userOptions)))
 	}
 
 	if services := c.GetServices(); services != nil || t.enabledServices != nil || t.disabledServices != nil || t.defaultTarget != "" {
@@ -526,39 +530,6 @@ func (t *imageTypeS2) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 		}
 	}
 	return options
-}
-
-func (t *imageTypeS2) userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
-	options := osbuild.UsersStageOptions{
-		Users: make(map[string]osbuild.UsersStageOptionsUser),
-	}
-
-	for _, c := range users {
-		if c.Password != nil && !crypt.PasswordIsCrypted(*c.Password) {
-			cryptedPassword, err := crypt.CryptSHA512(*c.Password)
-			if err != nil {
-				return nil, err
-			}
-
-			c.Password = &cryptedPassword
-		}
-
-		user := osbuild.UsersStageOptionsUser{
-			Groups:      c.Groups,
-			Description: c.Description,
-			Home:        c.Home,
-			Shell:       c.Shell,
-			Password:    c.Password,
-			Key:         c.Key,
-		}
-
-		user.UID = c.UID
-		user.GID = c.GID
-
-		options.Users[c.Name] = user
-	}
-
-	return &options, nil
 }
 
 func (t *imageTypeS2) usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuild.FirstBootStageOptions {
