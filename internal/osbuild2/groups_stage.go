@@ -9,10 +9,7 @@ type GroupsStageOptions struct {
 func (GroupsStageOptions) isStageOptions() {}
 
 type GroupsStageOptionsGroup struct {
-	// NOTE: the name field does not exist in the osbuild schema and should be
-	// removed
-	Name string `json:"name,omitempty"`
-	GID  *int   `json:"gid,omitempty"`
+	GID *int `json:"gid,omitempty"`
 }
 
 func NewGroupsStage(options *GroupsStageOptions) *Stage {
