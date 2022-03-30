@@ -4,11 +4,8 @@
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-# Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
-
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.6" | "rhel-9.0" | "centos-9")
+    "rhel-8.6" | "rhel-9.0" | "centos-9" | "centos-8")
         ;;
     *)
         echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
@@ -34,6 +31,7 @@ function get_build_info() {
 }
 
 # Provision the software under test.
+/usr/libexec/osbuild-composer-test/provision.sh
 BLUEPRINT_FILE=/tmp/blueprint.toml
 COMPOSE_START=/tmp/compose-start.json
 COMPOSE_INFO=/tmp/compose-info.json
@@ -94,7 +92,10 @@ sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 jq . "${COMPOSE_INFO}"
 
 # Did the compose finish with success?
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
+if [[ $COMPOSE_STATUS == FINISHED ]]; then
+    echo "Test passed!"
+    exit 0
+else
     echo "Something went wrong with the compose. 😢"
     exit 1
 fi

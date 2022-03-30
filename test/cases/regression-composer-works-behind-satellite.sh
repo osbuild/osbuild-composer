@@ -44,14 +44,14 @@ function cleanup {
     set +eu
 
     greenprint "Display httpd logs"
-    cat /var/log/httpd/access_log
-    cat /var/log/httpd/error_log
+    sudo cat /var/log/httpd/access_log
+    sudo cat /var/log/httpd/error_log
 
     greenprint "Putting things back to their previous configuration"
     if [ -n "${REDHAT_REPO}" ] && [ -n "${REDHAT_REPO_BACKUP}" ];
     then
         lsattr "${REDHAT_REPO}"
-        chattr -i "${REDHAT_REPO}"
+        sudo chattr -i "${REDHAT_REPO}"
         sudo rm -f "${REDHAT_REPO}"
         sudo mv "${REDHAT_REPO_BACKUP}" "${REDHAT_REPO}" || echo "no redhat.repo backup"
         sudo mv "${REPOSITORY_OVERRIDE}.backup" "${REPOSITORY_OVERRIDE}" || echo "no repo override backup"
@@ -66,8 +66,7 @@ function cleanup {
     sudo systemctl stop httpd || echo "failed to stop httpd"
 }
 
-source /etc/os-release
-ARCH=$(uname -m)
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Skip if running on subscribed RHEL
 if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
@@ -271,7 +270,7 @@ metadata_expire = 86400
 enabled_metadata = 0
 STOPHERE
 
-chattr +i ${REDHAT_REPO}
+sudo chattr +i ${REDHAT_REPO}
 lsattr ${REDHAT_REPO}
 cat ${REDHAT_REPO}
 
@@ -363,7 +362,10 @@ function try_image_build {
     sudo journalctl -xe --unit "${WORKER_UNIT}"
 
     # Did the compose finish with success?
-    if [[ $COMPOSE_STATUS != FINISHED ]]; then
+    if [[ $COMPOSE_STATUS == FINISHED ]]; then
+        echo "Test passed!"
+        exit 0
+    else
         echo "Something went wrong with the compose. 😢"
         exit 1
     fi

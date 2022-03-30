@@ -38,9 +38,7 @@ function generate_certificates {
     sudo openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365 -sha256
 }
 
-
-source /etc/os-release
-ARCH=$(uname -m)
+source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Skip if running on subscribed RHEL
 if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
@@ -325,7 +323,10 @@ function try_image_build {
     sudo journalctl -xe --unit "${WORKER_UNIT}"
 
     # Did the compose finish with success?
-    if [[ $COMPOSE_STATUS != FINISHED ]]; then
+    if [[ $COMPOSE_STATUS == FINISHED ]]; then
+        echo "Test passed!"
+        exit 0
+    else
         echo "Something went wrong with the compose. 😢"
         exit 1
     fi
@@ -338,7 +339,7 @@ if [ -f "${REDHAT_REPO}" ];
 then
     echo "The ${REDHAT_REPO} file shouldn't exist, removing it for the test"
     REDHAT_REPO_BACKUP="${REDHAT_REPO}.backup"
-    chattr -i ${REDHAT_REPO}
+    sudo chattr -i ${REDHAT_REPO}
     sudo mv "${REDHAT_REPO}" "${REDHAT_REPO_BACKUP}"
 fi
 
@@ -369,7 +370,7 @@ CLIENT_CERT="/etc/pki/entitlement/0.pem"
 sudo cp "${PKI_DIR}/ca1/client.key" "${CLIENT_KEY}"
 sudo cp "${PKI_DIR}/ca1/client.crt" "${CLIENT_CERT}"
 
-update-ca-trust
+sudo update-ca-trust
 
 # Allow httpd process to create network connections
 sudo setsebool httpd_can_network_connect on
