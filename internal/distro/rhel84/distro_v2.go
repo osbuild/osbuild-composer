@@ -265,7 +265,7 @@ func (t *imageTypeS2) pipelines(customizations *blueprint.Customizations, option
 		}
 		// TODO: panic if not found
 		kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
-		anacondaPipeline, err := t.anacondaTreePipeline(repos, packageSetSpecs["installer"], options, kernelVer)
+		anacondaPipeline, err := t.anacondaTreePipeline(repos, customizations, packageSetSpecs["installer"], options, kernelVer)
 		if err != nil {
 			return nil, err
 		}
@@ -439,7 +439,7 @@ func (t *imageTypeS2) containerPipeline() *osbuild.Pipeline {
 	return p
 }
 
-func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, kernelVer string) (*osbuild.Pipeline, error) {
+func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, customizations *blueprint.Customizations, packages []rpmmd.PackageSpec, options distro.ImageOptions, kernelVer string) (*osbuild.Pipeline, error) {
 	ostreeRepoPath := "/ostree/repo"
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
@@ -478,10 +478,11 @@ func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []
 	}
 
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
-	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(false)))
+	nUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
+	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(nUsers)))
 	p.AddStage(osbuild.NewLoraxScriptStage(t.loraxScriptStageOptions()))
 	p.AddStage(osbuild.NewDracutStage(t.dracutStageOptions(kernelVer)))
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", nil, nil, fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
 	if err != nil {
 		return nil, err
 	}
