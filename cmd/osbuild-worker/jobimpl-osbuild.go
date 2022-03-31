@@ -315,7 +315,35 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if impl.AWSBucket != "" {
 				bucket = impl.AWSBucket
 			}
-			_, err = a.Upload(path.Join(outputDirectory, exportPath, options.Filename), bucket, key)
+
+			imagePath := path.Join(outputDirectory, exportPath, options.Filename)
+
+			// *** SPECIAL VMDK HANDLING START ***
+			// Upload the VMDK image as stream-optimized.
+			// The VMDK conversion is applied only when the job was submitted by Weldr API,
+			// therefore we need to do the conversion here explicitly if it was not done.
+			if args.StreamOptimized {
+				// If the streamOptimizedPath is empty, the conversion was not done
+				if streamOptimizedPath == "" {
+					var f *os.File
+					f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
+					if err != nil {
+						osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
+						return nil
+					}
+					streamOptimizedPath = f.Name()
+					f.Close()
+				}
+				// Replace the original file by the stream-optimized one
+				err = os.Rename(streamOptimizedPath, imagePath)
+				if err != nil {
+					osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
+					return nil
+				}
+			}
+			// *** SPECIAL VMDK HANDLING END ***
+
+			_, err = a.Upload(imagePath, bucket, key)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				return nil

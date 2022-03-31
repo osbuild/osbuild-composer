@@ -532,8 +532,9 @@ func enqueueCompose(workers *worker.Server, distribution distro.Distro, bp bluep
 	}
 
 	id, err = workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{
-		Targets: []*target.Target{ir.target},
-		Exports: ir.imageType.Exports(),
+		Targets:         []*target.Target{ir.target},
+		Exports:         ir.imageType.Exports(),
+		StreamOptimized: ir.imageType.Name() == "vmdk", // https://github.com/osbuild/osbuild/issues/528,
 		PipelineNames: &worker.PipelineNames{
 			Build:   ir.imageType.BuildPipelines(),
 			Payload: ir.imageType.PayloadPipelines(),

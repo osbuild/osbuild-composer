@@ -1231,12 +1231,11 @@ function verifyInVSphere() {
     _ci_iso_path="$(_createCIUserdataISO "${_ci_userdata_path}" "${_ci_metadata_path}")"
 
     VSPHERE_IMAGE_NAME="${VSPHERE_VM_NAME}.vmdk"
+    mv "${_filename}" "${WORKDIR}/${VSPHERE_IMAGE_NAME}"
 
     # import the built VMDK image to VSphere
     # import.vmdk seems to be creating the provided directory and
     # if one with this name exists, it appends "_<number>" to the name
-    greenprint "🚧 Converting the downloaded VMDK image to be streamOptimized"
-    qemu-img convert -O vmdk -o subformat=streamOptimized "${_filename}" "${WORKDIR}/${VSPHERE_IMAGE_NAME}"
     greenprint "💿 ⬆️ Importing the converted VMDK image to VSphere"
     $GOVC_CMD import.vmdk \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
