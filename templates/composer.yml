@@ -200,9 +200,9 @@ objects:
   data:
     acl.yml: |
       - claim: rh-org-id
-        pattern: ^(15842261|15877963|15885990)$
+        pattern: ^(${ACL_ORG_ID_TENANTS})$
       - claim: account_id
-        pattern: ^(15842261)$
+        pattern: ^(${ACL_ACCOUNT_ID_TENANTS})$
     osbuild-composer.toml: |
       log_level = "info"
       [koji]
@@ -347,6 +347,12 @@ parameters:
     name: COMPOSER_CONFIG_BUCKET_NAME
     required: true
     value: "imagebuilder.service.staging"
+  - description: Allowed tenants based on org id
+    name: ACL_ORG_ID_TENANTS
+    value: "15842261|15877963|15885990"
+  - description: Allowed tenants based on account id
+    name: ACL_ACCOUNT_ID_TENANTS
+    value: "15842261"
   - description: composer-api port
     name: COMPOSER_API_PORT
     required: true
