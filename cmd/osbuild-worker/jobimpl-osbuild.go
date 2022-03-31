@@ -112,20 +112,29 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	// In case the manifest is empty, try to get it from dynamic args
-	if len(args.Manifest) == 0 && job.NDynamicArgs() > 0 {
-		var manifestJR worker.ManifestJobByIDResult
-		err = job.DynamicArgs(0, &manifestJR)
-		if err != nil {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args")
-			return err
-		}
+	if len(args.Manifest) == 0 {
+		if job.NDynamicArgs() > 0 {
+			var manifestJR worker.ManifestJobByIDResult
+			err = job.DynamicArgs(0, &manifestJR)
+			if err != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args")
+				return err
+			}
 
-		// skip the job if the manifest generation failed
-		if manifestJR.JobError != nil {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed")
+			// skip the job if the manifest generation failed
+			if manifestJR.JobError != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed")
+				return nil
+			}
+			args.Manifest = manifestJR.Manifest
+			if len(args.Manifest) == 0 {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyManifest, "Received empty manifest")
+				return nil
+			}
+		} else {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyManifest, "Job has no manifest")
 			return nil
 		}
-		args.Manifest = manifestJR.Manifest
 	}
 	// copy pipeline info to the result
 	osbuildJobResult.PipelineNames = args.PipelineNames
