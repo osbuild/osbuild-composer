@@ -67,8 +67,6 @@ init:
     - aws/rhel-8.6-nightly-aarch64
     - aws/rhel-9.0-nightly-x86_64
     - aws/rhel-9.0-nightly-aarch64
-    - aws/centos-stream-9-x86_64
-    - aws/centos-stream-9-aarch64
 
   INTERNAL_NETWORK: ["true"]
 
@@ -81,15 +79,6 @@ RPM:
     - sh "schutzbot/mockbuild.sh"
   parallel:
     matrix:
-      - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.5-ga-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
       - <<: *RPM_RUNNERS_RHEL
 
 Build -tests RPM for RHEL:
@@ -106,28 +95,6 @@ Build -tests RPM for RHEL:
   parallel:
     matrix:
       - <<: *RPM_RUNNERS_RHEL
-
-Container:
-  stage: rpmbuild
-  extends: .terraform
-  rules:
-    - !reference [.build_rules, rules]
-  script:
-    - sh "schutzbot/containerbuild.sh"
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/centos-stream-8-x86_64
-
-Packer:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH =~ /PR-[0-9]+/'
-  script:
-    - tools/appsre-build-worker-packer.sh
-  variables:
-    RUNNER: aws/rhel-8.5-ga-x86_64
 
 Prepare-rhel-internal:
   stage: prepare-rhel-internal
@@ -163,21 +130,10 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.5-ga-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-      - RUNNER:
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-8.6-nightly-aarch64
           - aws/rhel-9.0-nightly-x86_64
           - aws/rhel-9.0-nightly-aarch64
-          - aws/centos-stream-9-x86_64
-          - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Manifests:
@@ -207,21 +163,10 @@ Regression:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-      - RUNNER:
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.5-ga-aarch64
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-8.6-nightly-aarch64
           - aws/rhel-9.0-nightly-x86_64
           - aws/rhel-9.0-nightly-aarch64
-          - aws/centos-stream-9-x86_64
-          - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Image Tests:
@@ -242,20 +187,6 @@ Image Tests:
           - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
-Test Case Generation:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/generation.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/fedora-34-x86_64
-        INTERNAL_NETWORK: ["true"]
-
 OSTree:
   stage: test
   extends: .terraform/openstack
@@ -268,12 +199,8 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-35-x86_64
-          - rhos-01/rhel-8.5-ga-x86_64
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-8-x86_64
 
 New OSTree:
   stage: test
@@ -286,8 +213,6 @@ New OSTree:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
 
 OSTree simplified installer:
   stage: test
@@ -299,9 +224,7 @@ OSTree simplified installer:
     matrix:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
 
 OSTree raw image:
   stage: test
@@ -313,9 +236,7 @@ OSTree raw image:
     matrix:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
 
 Rebase OSTree:
   stage: test
@@ -328,7 +249,6 @@ Rebase OSTree:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
 
 .integration:
   stage: test
@@ -342,19 +262,9 @@ Rebase OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-35-x86_64
-          - aws/centos-stream-8-x86_64
-          - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.6-nightly-x86_64
           - aws/rhel-9.0-nightly-x86_64
-          - aws/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
-
-koji.sh:
-  extends: .integration
-  variables:
-    SCRIPT: koji.sh
 
 aws.sh:
   extends: .integration
@@ -381,32 +291,6 @@ cross-distro.sh:
   variables:
     SCRIPT: cross-distro.sh
 
-.API_TESTS: &API_TESTS
-  IMAGE_TYPE:
-    - aws
-    - azure
-    - edge-commit
-    - gcp
-
-API:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-    # note: cloud API is not supported for on-prem installations so
-    # don't run this test case for nightly trees
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
-  parallel:
-    matrix:
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-
 libvirt:
   stage: test
   extends: .terraform/openstack
@@ -419,24 +303,8 @@ libvirt:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-8.5-ga-x86_64
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
-RHEL 9 on 8:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/koji.sh
-  variables:
-    RUNNER: aws/rhel-8.5-ga-x86_64
-    INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-90
 
 Upgrade:
   stage: test
@@ -494,7 +362,6 @@ Installer:
       - RUNNER:
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
