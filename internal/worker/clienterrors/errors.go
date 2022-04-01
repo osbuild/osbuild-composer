@@ -33,7 +33,7 @@ type ClientErrorCode int
 type Error struct {
 	ID      ClientErrorCode `json:"id"`
 	Reason  string          `json:"reason"`
-	Details interface{}     `json:"details"`
+	Details interface{}     `json:"details,omitempty"`
 }
 
 const (
