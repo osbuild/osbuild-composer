@@ -149,7 +149,7 @@ func (c *Client) refreshAccessToken() error {
 		data.Set("client_secret", c.clientSecret)
 	}
 
-	resp, err := http.PostForm(c.oAuthURL, data)
+	resp, err := c.requester.PostForm(c.oAuthURL, data)
 	if err != nil {
 		return err
 	}
