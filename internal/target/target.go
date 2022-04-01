@@ -11,11 +11,11 @@ import (
 
 type Target struct {
 	Uuid      uuid.UUID              `json:"uuid"`
-	ImageName string                 `json:"image_name"`
-	Name      string                 `json:"name"`
+	ImageName string                 `json:"image_name"` // Desired name of the image in the target environment
+	Name      string                 `json:"name"`       // Name of the specific target type
 	Created   time.Time              `json:"created"`
 	Status    common.ImageBuildState `json:"status"`
-	Options   TargetOptions          `json:"options"`
+	Options   TargetOptions          `json:"options"` // Target type specific options
 }
 
 func newTarget(name string, options TargetOptions) *Target {
