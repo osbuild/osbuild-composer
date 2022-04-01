@@ -249,8 +249,8 @@ func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) 
 		return nil, nil, err
 	}
 
-	if jobType != "manifest-job-by-id" {
-		return nil, nil, fmt.Errorf("expected \"manifest-job-by-id\", found %q job instead", jobType)
+	if jobType != "manifest-id-only" {
+		return nil, nil, fmt.Errorf("expected \"manifest-id-only\", found %q job instead", jobType)
 	}
 
 	return status, deps, nil
