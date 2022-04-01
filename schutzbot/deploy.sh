@@ -90,9 +90,6 @@ fi
 greenprint "Enabling fastestmirror to speed up dnf 🏎️"
 echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
-greenprint "Adding osbuild team ssh keys"
-cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
-
 # TODO: include this in the jenkins runner (and split test/target machines out)
 sudo dnf -y install jq
 
