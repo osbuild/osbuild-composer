@@ -209,6 +209,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		if err != nil {
 			return err
 		}
+		f.Close()
 	}
 
 	if len(args.Targets) == 0 {
