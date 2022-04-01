@@ -157,7 +157,6 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [-unix] address\n", os.Args[0])
 		flag.PrintDefaults()
-		os.Exit(0)
 	}
 
 	flag.Parse()
@@ -165,6 +164,7 @@ func main() {
 	address := flag.Arg(0)
 	if address == "" {
 		flag.Usage()
+		os.Exit(2)
 	}
 
 	_, err := toml.DecodeFile(configFile, &config)
