@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"path/filepath"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -218,8 +219,11 @@ func (t *imageTypeS2) pipelines(customizations *blueprint.Customizations, option
 		if options.OSTree.Parent == "" {
 			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
-		if customizations != nil {
-			return nil, fmt.Errorf("boot ISO image type %q does not support blueprint customizations", t.name)
+		if t.name == "rhel-edge-installer" {
+			allowed := []string{"User", "Group"}
+			if err := customizations.CheckAllowed(allowed...); err != nil {
+				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+			}
 		}
 	}
 
