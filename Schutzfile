@@ -141,34 +141,34 @@
           {
             "title": "baseos",
             "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220322"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220330"
           },
           {
             "title": "appstream",
             "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220322"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220330"
           },
           {
             "title": "crb",
             "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-crb-20220322"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-crb-20220330"
           }
         ],
         "aarch64": [
           {
             "title": "baseos",
             "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220322"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220330"
           },
           {
             "title": "appstream",
             "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220322"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220330"
           },
           {
             "title": "crb",
             "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-crb-20220322"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-crb-20220330"
           }
         ]
       }
