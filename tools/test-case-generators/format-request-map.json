@@ -145,6 +145,26 @@
       "x86_64"
     ]
   },
+  "rhel-edge-installer": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "rhel-edge-installer",
+      "repositories": [],
+      "filename": "installer.iso",
+      "ostree": {
+        "ref": "test/edge",
+        "url": "http://edge.example.com/repo",
+        "parent": "test/edge"
+      },
+      "blueprint": {}
+    },
+    "no-image-info": true,
+    "overrides": {},
+    "supported_arches": [
+      "x86_64"
+    ]
+  },
   "fedora-iot-commit": {
     "compose-request": {
       "distro": "",
