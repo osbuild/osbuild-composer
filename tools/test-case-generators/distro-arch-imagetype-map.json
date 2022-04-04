@@ -1,304 +1,304 @@
 {
-    "fedora-34": {
-        "x86_64": [
-            "ami",
-            "fedora-iot-commit",
-            "openstack",
-            "qcow2",
-            "vhd",
-            "vmdk",
-            "oci"
-        ],
-        "aarch64": [
-            "ami",
-            "openstack",
-            "qcow2",
-            "oci"
-        ]
-    },
-    "fedora-35": {
-        "x86_64": [
-            "ami",
-            "fedora-iot-commit",
-            "openstack",
-            "qcow2",
-            "vhd",
-            "vmdk",
-            "oci"
-        ],
-        "aarch64": [
-            "ami",
-            "openstack",
-            "qcow2",
-            "oci"
-        ]
-    },
-    "centos-8": {
-        "x86_64": [
-            "ami",
-            "openstack",
-            "tar",
-            "qcow2",
-            "edge-commit",
-            "edge-container",
-            "edge-installer",
-            "edge-simplified-installer",
-            "image-installer",
-            "edge-simplified-installer",
-            "vhd",
-            "vmdk"
-        ],
-        "aarch64": [
-            "ami",
-            "openstack",
-            "qcow2",
-            "edge-commit",
-            "edge-container",
-            "edge-installer",
-            "edge-simplified-installer",
-            "image-installer",
-            "edge-simplified-installer",
-            "tar"
-        ],
-        "ppc64le": [
-            "qcow2",
-            "tar"
-        ]
-    },
-    "rhel-8": {
-        "x86_64": [
-            "ami",
-            "openstack",
-            "qcow2",
-            "rhel-edge-commit",
-            "tar",
-            "vhd",
-            "vmdk"
-        ],
-        "aarch64": [
-            "ami",
-            "openstack",
-            "qcow2",
-            "rhel-edge-commit",
-            "tar"
-        ],
-        "ppc64le": [
-            "qcow2",
-            "tar"
-        ],
-        "s390x": [
-            "qcow2",
-            "tar"
-        ]
-    },
-    "rhel-84": {
-        "x86_64": [
-            "ami",
-            "openstack",
-            "tar",
-            "qcow2",
-            "rhel-edge-commit",
-            "rhel-edge-container",
-            "vhd",
-            "vmdk"
-        ],
-        "aarch64": [
-            "ami",
-            "openstack",
-            "qcow2",
-            "rhel-edge-commit",
-            "rhel-edge-container",
-            "tar"
-        ],
-        "ppc64le": [
-            "qcow2",
-            "tar"
-        ],
-        "s390x": [
-            "qcow2"
-        ]
-    },
-    "rhel-85": {
-        "x86_64": [
-            "ami",
-            "azure-rhui",
-            "ec2",
-            "ec2-ha",
-            "openstack",
-            "tar",
-            "qcow2",
-            "edge-commit",
-            "edge-container",
-            "image-installer",
-            "vhd",
-            "vmdk"
-        ],
-        "aarch64": [
-            "ami",
-            "ec2",
-            "openstack",
-            "qcow2",
-            "edge-commit",
-            "edge-container",
-            "tar"
-        ],
-        "ppc64le": [
-            "qcow2",
-            "tar"
-        ],
-        "s390x": [
-            "qcow2",
-            "tar"
-        ]
-    },
-    "rhel-86": {
-        "x86_64": [
-            "ami",
-            "azure-rhui",
-            "ec2",
-            "ec2-ha",
-            "ec2-sap",
-            "openstack",
-            "tar",
-            "qcow2",
-            "edge-commit",
-            "edge-container",
-            "edge-installer",
-            "edge-simplified-installer",
-            "image-installer",
-            "edge-simplified-installer",
-            "vhd",
-            "vmdk"
-        ],
-        "aarch64": [
-            "ami",
-            "ec2",
-            "openstack",
-            "qcow2",
-            "edge-commit",
-            "edge-container",
-            "edge-installer",
-            "edge-simplified-installer",
-            "image-installer",
-            "edge-simplified-installer",
-            "tar"
-        ],
-        "ppc64le": [
-            "qcow2",
-            "tar"
-        ],
-        "s390x": [
-            "qcow2",
-            "tar"
-        ]
-    },
-    "rhel-90-beta": {
-        "x86_64": [
-            "ami",
-            "ec2",
-            "ec2-ha",
-            "ec2-sap",
-            "edge-commit",
-            "edge-container",
-            "image-installer",
-            "openstack",
-            "qcow2",
-            "tar",
-            "vhd",
-            "vmdk"
-        ],
-        "aarch64": [
-            "ami",
-            "ec2",
-            "edge-commit",
-            "edge-container",
-            "openstack",
-            "qcow2",
-            "tar"
-        ],
-        "ppc64le": [
-            "qcow2",
-            "tar"
-        ],
-        "s390x": [
-            "qcow2",
-            "tar"
-        ]
-    },
-    "rhel-90": {
-        "x86_64": [
-            "ami",
-            "ec2",
-            "ec2-ha",
-            "ec2-sap",
-            "edge-commit",
-            "edge-container",
-            "edge-installer",
-            "edge-simplified-installer",
-            "image-installer",
-            "edge-simplified-installer",
-            "openstack",
-            "qcow2",
-            "tar",
-            "vhd",
-            "vmdk"
-        ],
-        "aarch64": [
-            "ami",
-            "ec2",
-            "edge-commit",
-            "edge-container",
-            "edge-installer",
-            "edge-simplified-installer",
-            "image-installer",
-            "edge-simplified-installer",
-            "openstack",
-            "qcow2",
-            "tar"
-        ],
-        "ppc64le": [
-            "qcow2",
-            "tar"
-        ],
-        "s390x": [
-            "qcow2",
-            "tar"
-        ]
-    },
-    "centos-9": {
-        "x86_64": [
-            "ami",
-            "openstack",
-            "tar",
-            "qcow2",
-            "edge-commit",
-            "edge-container",
-            "edge-installer",
-            "edge-simplified-installer",
-            "image-installer",
-            "edge-simplified-installer",
-            "vhd",
-            "vmdk"
-        ],
-        "aarch64": [
-            "ami",
-            "openstack",
-            "qcow2",
-            "edge-commit",
-            "edge-container",
-            "edge-installer",
-            "edge-simplified-installer",
-            "image-installer",
-            "edge-simplified-installer",
-            "tar"
-        ],
-        "ppc64le": [
-            "qcow2",
-            "tar"
-        ],
-        "s390x": [
-            "qcow2",
-            "tar"
-        ]
-    }
+  "fedora-34": {
+    "x86_64": [
+      "ami",
+      "fedora-iot-commit",
+      "openstack",
+      "qcow2",
+      "vhd",
+      "vmdk",
+      "oci"
+    ],
+    "aarch64": [
+      "ami",
+      "openstack",
+      "qcow2",
+      "oci"
+    ]
+  },
+  "fedora-35": {
+    "x86_64": [
+      "ami",
+      "fedora-iot-commit",
+      "openstack",
+      "qcow2",
+      "vhd",
+      "vmdk",
+      "oci"
+    ],
+    "aarch64": [
+      "ami",
+      "openstack",
+      "qcow2",
+      "oci"
+    ]
+  },
+  "centos-8": {
+    "x86_64": [
+      "ami",
+      "openstack",
+      "tar",
+      "qcow2",
+      "edge-commit",
+      "edge-container",
+      "edge-installer",
+      "edge-simplified-installer",
+      "image-installer",
+      "edge-simplified-installer",
+      "vhd",
+      "vmdk"
+    ],
+    "aarch64": [
+      "ami",
+      "openstack",
+      "qcow2",
+      "edge-commit",
+      "edge-container",
+      "edge-installer",
+      "edge-simplified-installer",
+      "image-installer",
+      "edge-simplified-installer",
+      "tar"
+    ],
+    "ppc64le": [
+      "qcow2",
+      "tar"
+    ]
+  },
+  "rhel-8": {
+    "x86_64": [
+      "ami",
+      "openstack",
+      "qcow2",
+      "rhel-edge-commit",
+      "tar",
+      "vhd",
+      "vmdk"
+    ],
+    "aarch64": [
+      "ami",
+      "openstack",
+      "qcow2",
+      "rhel-edge-commit",
+      "tar"
+    ],
+    "ppc64le": [
+      "qcow2",
+      "tar"
+    ],
+    "s390x": [
+      "qcow2",
+      "tar"
+    ]
+  },
+  "rhel-84": {
+    "x86_64": [
+      "ami",
+      "openstack",
+      "tar",
+      "qcow2",
+      "rhel-edge-commit",
+      "rhel-edge-container",
+      "vhd",
+      "vmdk"
+    ],
+    "aarch64": [
+      "ami",
+      "openstack",
+      "qcow2",
+      "rhel-edge-commit",
+      "rhel-edge-container",
+      "tar"
+    ],
+    "ppc64le": [
+      "qcow2",
+      "tar"
+    ],
+    "s390x": [
+      "qcow2"
+    ]
+  },
+  "rhel-85": {
+    "x86_64": [
+      "ami",
+      "azure-rhui",
+      "ec2",
+      "ec2-ha",
+      "openstack",
+      "tar",
+      "qcow2",
+      "edge-commit",
+      "edge-container",
+      "image-installer",
+      "vhd",
+      "vmdk"
+    ],
+    "aarch64": [
+      "ami",
+      "ec2",
+      "openstack",
+      "qcow2",
+      "edge-commit",
+      "edge-container",
+      "tar"
+    ],
+    "ppc64le": [
+      "qcow2",
+      "tar"
+    ],
+    "s390x": [
+      "qcow2",
+      "tar"
+    ]
+  },
+  "rhel-86": {
+    "x86_64": [
+      "ami",
+      "azure-rhui",
+      "ec2",
+      "ec2-ha",
+      "ec2-sap",
+      "openstack",
+      "tar",
+      "qcow2",
+      "edge-commit",
+      "edge-container",
+      "edge-installer",
+      "edge-simplified-installer",
+      "image-installer",
+      "edge-simplified-installer",
+      "vhd",
+      "vmdk"
+    ],
+    "aarch64": [
+      "ami",
+      "ec2",
+      "openstack",
+      "qcow2",
+      "edge-commit",
+      "edge-container",
+      "edge-installer",
+      "edge-simplified-installer",
+      "image-installer",
+      "edge-simplified-installer",
+      "tar"
+    ],
+    "ppc64le": [
+      "qcow2",
+      "tar"
+    ],
+    "s390x": [
+      "qcow2",
+      "tar"
+    ]
+  },
+  "rhel-90-beta": {
+    "x86_64": [
+      "ami",
+      "ec2",
+      "ec2-ha",
+      "ec2-sap",
+      "edge-commit",
+      "edge-container",
+      "image-installer",
+      "openstack",
+      "qcow2",
+      "tar",
+      "vhd",
+      "vmdk"
+    ],
+    "aarch64": [
+      "ami",
+      "ec2",
+      "edge-commit",
+      "edge-container",
+      "openstack",
+      "qcow2",
+      "tar"
+    ],
+    "ppc64le": [
+      "qcow2",
+      "tar"
+    ],
+    "s390x": [
+      "qcow2",
+      "tar"
+    ]
+  },
+  "rhel-90": {
+    "x86_64": [
+      "ami",
+      "ec2",
+      "ec2-ha",
+      "ec2-sap",
+      "edge-commit",
+      "edge-container",
+      "edge-installer",
+      "edge-simplified-installer",
+      "image-installer",
+      "edge-simplified-installer",
+      "openstack",
+      "qcow2",
+      "tar",
+      "vhd",
+      "vmdk"
+    ],
+    "aarch64": [
+      "ami",
+      "ec2",
+      "edge-commit",
+      "edge-container",
+      "edge-installer",
+      "edge-simplified-installer",
+      "image-installer",
+      "edge-simplified-installer",
+      "openstack",
+      "qcow2",
+      "tar"
+    ],
+    "ppc64le": [
+      "qcow2",
+      "tar"
+    ],
+    "s390x": [
+      "qcow2",
+      "tar"
+    ]
+  },
+  "centos-9": {
+    "x86_64": [
+      "ami",
+      "openstack",
+      "tar",
+      "qcow2",
+      "edge-commit",
+      "edge-container",
+      "edge-installer",
+      "edge-simplified-installer",
+      "image-installer",
+      "edge-simplified-installer",
+      "vhd",
+      "vmdk"
+    ],
+    "aarch64": [
+      "ami",
+      "openstack",
+      "qcow2",
+      "edge-commit",
+      "edge-container",
+      "edge-installer",
+      "edge-simplified-installer",
+      "image-installer",
+      "edge-simplified-installer",
+      "tar"
+    ],
+    "ppc64le": [
+      "qcow2",
+      "tar"
+    ],
+    "s390x": [
+      "qcow2",
+      "tar"
+    ]
+  }
 }
