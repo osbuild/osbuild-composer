@@ -99,6 +99,7 @@
       "qcow2",
       "rhel-edge-commit",
       "rhel-edge-container",
+      "rhel-edge-installer",
       "vhd",
       "vmdk"
     ],
