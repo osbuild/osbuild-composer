@@ -125,8 +125,8 @@ case "${ID}-${VERSION_ID}" in
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
-        OS_VARIANT="centos9"
-        BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
+        OS_VARIANT="centos-stream9"
+        BOOT_LOCATION="https://odcs.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/os/"
         PARENT_REF="centos/9/${ARCH}/edge"
         ;;
     *)

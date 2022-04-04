@@ -303,7 +303,7 @@ OSTree:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 New OSTree:
   stage: test
@@ -359,6 +359,7 @@ Rebase OSTree:
           - rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64-large
+          - rhos-01/centos-stream-9-x86_64-large
 
 .integration:
   stage: test
