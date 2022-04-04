@@ -14,6 +14,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const (
+	kspath = "/usr/share/anaconda/interactive-defaults.ks"
+)
+
 type imageTypeS2 struct {
 	arch             *architecture
 	name             string
@@ -261,7 +265,11 @@ func (t *imageTypeS2) pipelines(customizations *blueprint.Customizations, option
 		}
 		// TODO: panic if not found
 		kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
-		pipelines = append(pipelines, *t.anacondaTreePipeline(repos, packageSetSpecs["installer"], options, kernelVer))
+		anacondaPipeline, err := t.anacondaTreePipeline(repos, packageSetSpecs["installer"], options, kernelVer)
+		if err != nil {
+			return nil, err
+		}
+		pipelines = append(pipelines, *anacondaPipeline)
 		pipelines = append(pipelines, *t.bootISOTreePipeline(kernelVer))
 		pipelines = append(pipelines, *t.bootISOPipeline())
 	} else {
@@ -431,7 +439,7 @@ func (t *imageTypeS2) containerPipeline() *osbuild.Pipeline {
 	return p
 }
 
-func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, kernelVer string) *osbuild.Pipeline {
+func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, kernelVer string) (*osbuild.Pipeline, error) {
 	ostreeRepoPath := "/ostree/repo"
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
@@ -473,9 +481,13 @@ func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []
 	p.AddStage(osbuild.NewAnacondaStage(t.anacondaStageOptions()))
 	p.AddStage(osbuild.NewLoraxScriptStage(t.loraxScriptStageOptions()))
 	p.AddStage(osbuild.NewDracutStage(t.dracutStageOptions(kernelVer)))
-	p.AddStage(osbuild.NewKickstartStage(t.kickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", nil, nil, fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
+	if err != nil {
+		return nil, err
+	}
+	p.AddStage(osbuild.NewKickstartStage(kickstartOptions))
 
-	return p
+	return p, nil
 }
 
 func (t *imageTypeS2) bootISOTreePipeline(kernelVer string) *osbuild.Pipeline {
@@ -662,18 +674,6 @@ func (t *imageTypeS2) dracutStageOptions(kernelVer string) *osbuild.DracutStageO
 		Kernel:  kernel,
 		Modules: modules,
 		Install: []string{"/.buildstamp"},
-	}
-}
-
-func (t *imageTypeS2) kickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
-	return &osbuild.KickstartStageOptions{
-		Path: "/usr/share/anaconda/interactive-defaults.ks",
-		OSTree: &osbuild.OSTreeOptions{
-			OSName: "rhel",
-			URL:    ostreeURL,
-			Ref:    ostreeRef,
-			GPG:    false,
-		},
 	}
 }
 
