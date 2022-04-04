@@ -625,7 +625,11 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ostreeRepoPath := "/ostree/repo"
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), ostreePayloadStages(options, ostreeRepoPath)))
-	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), ostreeKickstartStageOptions(fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)))
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", nil, nil, fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
+	if err != nil {
+		return nil, err
+	}
+	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), kickstartOptions))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
 	return pipelines, nil
 }
@@ -659,7 +663,11 @@ func tarInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	tarPath := "/liveimg.tar"
 	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), tarPayloadStages))
-	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), tarKickstartStageOptions(fmt.Sprintf("file://%s", tarPath))))
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, fmt.Sprintf("file://%s", tarPath), nil, nil, "", "")
+	if err != nil {
+		return nil, err
+	}
+	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, t.Arch().Name(), kickstartOptions))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), t.Arch().Name()))
 	return pipelines, nil
 }
