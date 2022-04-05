@@ -618,13 +618,6 @@ version = "*"
 
 [customizations.kernel]
 name = "kernel-rt"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
 
 greenprint "📄 upgrade blueprint"
