@@ -23,3 +23,7 @@ func NewServer(workers *worker.Server, distros *distroregistry.Registry, config 
 func (server *Server) V2(path string) http.Handler {
 	return server.v2.Handler(path)
 }
+
+func (server *Server) Shutdown() {
+	server.v2.Shutdown()
+}

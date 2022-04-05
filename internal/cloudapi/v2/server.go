@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,6 +30,10 @@ type Server struct {
 	workers *worker.Server
 	distros *distroregistry.Registry
 	config  ServerConfig
+
+	goroutinesCtx       context.Context
+	goroutinesCtxCancel context.CancelFunc
+	goroutinesGroup     sync.WaitGroup
 }
 
 type ServerConfig struct {
@@ -38,10 +43,14 @@ type ServerConfig struct {
 }
 
 func NewServer(workers *worker.Server, distros *distroregistry.Registry, config ServerConfig) *Server {
+	ctx, cancel := context.WithCancel(context.Background())
 	server := &Server{
 		workers: workers,
 		distros: distros,
 		config:  config,
+
+		goroutinesCtx:       ctx,
+		goroutinesCtxCancel: cancel,
 	}
 	return server
 }
@@ -60,6 +69,11 @@ func (s *Server) Handler(path string) http.Handler {
 	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware), &handler)
 
 	return e
+}
+
+func (s *Server) Shutdown() {
+	s.goroutinesCtxCancel()
+	s.goroutinesGroup.Wait()
 }
 
 func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
@@ -99,7 +113,11 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	go generateManifest(context.Background(), s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+	s.goroutinesGroup.Add(1)
+	go func() {
+		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+		defer s.goroutinesGroup.Done()
+	}()
 
 	return id, nil
 }
@@ -161,7 +179,13 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		}
 		kojiFilenames = append(kojiFilenames, kojiFilename)
 		buildIDs = append(buildIDs, buildID)
-		go generateManifest(context.Background(), s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+
+		// copy the image request while passing it into the goroutine to prevent data races
+		s.goroutinesGroup.Add(1)
+		go func(ir imageRequest) {
+			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+			defer s.goroutinesGroup.Done()
+		}(ir)
 	}
 	id, err = s.workers.EnqueueKojiFinalize(&worker.KojiFinalizeJob{
 		Server:        server,
@@ -196,7 +220,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 			time.Sleep(time.Millisecond * 50)
 			select {
 			case <-ctx.Done():
-				logWithId.Warning("Manifest job dependencies took longer than 5 minutes to finish, returning to avoid dangling routines")
+				logWithId.Warning("Manifest job dependencies took longer than 5 minutes to finish, or the server is shutting down, returning to avoid dangling routines")
 				break
 			default:
 				continue

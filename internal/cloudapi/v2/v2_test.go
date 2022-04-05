@@ -39,6 +39,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	}
 	v2Server := v2.NewServer(workerServer, distros, config)
 	require.NotNil(t, v2Server)
+	t.Cleanup(v2Server.Shutdown)
 
 	// start a routine which just completes depsolve jobs
 	depsolveContext, cancel := context.WithCancel(context.Background())
