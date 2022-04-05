@@ -865,7 +865,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		payloadPipelines: []string{"os", "root-tar"},
 		exports:          []string{"root-tar"},
 	}
-	tarInstallerImgTypeX86_64 := imageType{
+	imageInstallerImgTypeX86_64 := imageType{
 		name:     "image-installer",
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
@@ -877,7 +877,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		rpmOstree:        false,
 		bootISO:          true,
 		bootable:         true,
-		pipelines:        tarInstallerPipelines,
+		pipelines:        imageInstallerPipelines,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
@@ -886,7 +886,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	ociImgtype := qcow2ImgType
 	ociImgtype.name = "oci"
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64, tarImgType, tarInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, ociImgtype)
+	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64, tarImgType, imageInstallerImgTypeX86_64, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, ociImgtype)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, ec2ImgTypeAarch64, tarImgType, edgeCommitImgType, edgeOCIImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
