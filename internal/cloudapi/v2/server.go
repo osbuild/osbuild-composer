@@ -99,8 +99,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
-	go generateManifest(ctx, cancel, s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+	go generateManifest(context.Background(), s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
 
 	return id, nil
 }
@@ -162,9 +161,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		}
 		kojiFilenames = append(kojiFilenames, kojiFilename)
 		buildIDs = append(buildIDs, buildID)
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
-		go generateManifest(ctx, cancel, s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+		go generateManifest(context.Background(), s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
 	}
 	id, err = s.workers.EnqueueKojiFinalize(&worker.KojiFinalizeJob{
 		Server:        server,
@@ -183,7 +180,8 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
-func generateManifest(ctx context.Context, cancel context.CancelFunc, workers *worker.Server, depsolveJobID uuid.UUID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Customizations) {
+func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID uuid.UUID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Customizations) {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*5)
 	defer cancel()
 
 	// wait until job is in a pending state
