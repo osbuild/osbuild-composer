@@ -2,25 +2,19 @@ package worker_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 func TestOAuth(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "worker-tests-")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempdir)
+	tempdir := t.TempDir()
 
 	q, err := fsjobqueue.New(tempdir)
 	require.NoError(t, err)
@@ -72,21 +66,7 @@ func TestOAuth(t *testing.T) {
 	}))
 	defer oauthSrv.Close()
 
-	distroStruct := test_distro.New()
-	arch, err := distroStruct.GetArch(test_distro.TestArchName)
-	if err != nil {
-		t.Fatalf("error getting arch from distro: %v", err)
-	}
-	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
-	if err != nil {
-		t.Fatalf("error getting image type from arch: %v", err)
-	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
-	if err != nil {
-		t.Fatalf("error creating osbuild manifest: %v", err)
-	}
-
-	_, err = workerServer.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	_, err = workerServer.EnqueueOSBuild("arch", &worker.OSBuildJob{}, "")
 	require.NoError(t, err)
 
 	client, err := worker.NewClient(worker.ClientConfig{
@@ -98,7 +78,7 @@ func TestOAuth(t *testing.T) {
 		BasePath:     "/api/image-builder-worker/v1",
 	})
 	require.NoError(t, err)
-	job, err := client.RequestJob([]string{"osbuild"}, arch.Name())
+	job, err := client.RequestJob([]string{"osbuild"}, "arch")
 	require.NoError(t, err)
 	r := strings.NewReader("artifact contents")
 	require.NoError(t, job.UploadArtifact("some-artifact", r))
