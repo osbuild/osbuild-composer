@@ -211,7 +211,7 @@ func generateManifest(ctx context.Context, cancel context.CancelFunc, workers *w
 		break
 	}
 
-	var jobResult *worker.ManifestJobByIDResult = &worker.ManifestJobByIDResult{
+	jobResult := &worker.ManifestJobByIDResult{
 		Manifest: nil,
 	}
 
