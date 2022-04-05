@@ -15,67 +15,25 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
-	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
-// Server represents the state of the cloud Server
-type Server struct {
-	workers *worker.Server
-	distros *distroregistry.Registry
-	config  ServerConfig
-}
-
-type ServerConfig struct {
-	AWSBucket            string
-	TenantProviderFields []string
-	JWTEnabled           bool
-}
-
 type apiHandlers struct {
 	server *Server
 }
 
 type binder struct{}
-
-func NewServer(workers *worker.Server, distros *distroregistry.Registry, config ServerConfig) *Server {
-	server := &Server{
-		workers: workers,
-		distros: distros,
-		config:  config,
-	}
-	return server
-}
-
-func (server *Server) Handler(path string) http.Handler {
-	e := echo.New()
-	e.Binder = binder{}
-	e.HTTPErrorHandler = server.HTTPErrorHandler
-	e.Pre(common.OperationIDMiddleware)
-	e.Use(middleware.Recover())
-	e.Logger = common.Logger()
-
-	handler := apiHandlers{
-		server: server,
-	}
-	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware), &handler)
-
-	return e
-}
 
 func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	contentType := ctx.Request().Header["Content-Type"]
