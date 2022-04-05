@@ -330,7 +330,9 @@ func (c *Composer) Start() error {
 	logrus.Info("Shutting down.")
 
 	if c.apiListener != nil {
+		// First, close all listeners and then wait for all goroutines to finish.
 		err := composerAPI.Shutdown(context.Background())
+		c.api.Shutdown()
 		if err != nil {
 			panic(err)
 		}
