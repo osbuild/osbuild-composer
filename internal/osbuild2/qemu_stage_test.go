@@ -10,14 +10,14 @@ func TestNewQemuStage(t *testing.T) {
 
 	formatOptionsList := []QEMUFormatOptions{
 		Qcow2Options{
-			Type:   "qcow2",
+			Type:   QEMUFormatQCOW2,
 			Compat: "0.10",
 		},
 		VPCOptions{
-			Type: "vpc",
+			Type: QEMUFormatVPC,
 		},
 		VMDKOptions{
-			Type: "vmdk",
+			Type: QEMUFormatVMDK,
 		},
 	}
 
