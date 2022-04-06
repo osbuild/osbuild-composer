@@ -9,7 +9,7 @@ import (
 func TestNewQemuStage(t *testing.T) {
 
 	formatOptionsList := []QEMUFormatOptions{
-		Qcow2Options{
+		QCOW2Options{
 			Type:   QEMUFormatQCOW2,
 			Compat: "0.10",
 		},

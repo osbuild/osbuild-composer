@@ -282,7 +282,7 @@ func qemuStageOptions(filename string, format osbuild.QEMUFormat, compat string)
 	var options osbuild.QEMUFormatOptions
 	switch format {
 	case osbuild.QEMUFormatQCOW2:
-		options = osbuild.Qcow2Options{
+		options = osbuild.QCOW2Options{
 			Type:   format,
 			Compat: compat,
 		}

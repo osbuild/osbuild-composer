@@ -35,7 +35,7 @@ type QEMUFormatOptions interface {
 	validate() error
 }
 
-type Qcow2Options struct {
+type QCOW2Options struct {
 	// The type of the format must be 'qcow2'
 	Type QEMUFormat `json:"type"`
 
@@ -43,9 +43,9 @@ type Qcow2Options struct {
 	Compat string `json:"compat"`
 }
 
-func (Qcow2Options) isQEMUFormatOptions() {}
+func (QCOW2Options) isQEMUFormatOptions() {}
 
-func (o Qcow2Options) validate() error {
+func (o QCOW2Options) validate() error {
 	if o.Type != QEMUFormatQCOW2 {
 		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatQCOW2)
 	}
