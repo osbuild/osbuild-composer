@@ -20,13 +20,23 @@ type QEMUStageOptions struct {
 
 func (QEMUStageOptions) isStageOptions() {}
 
+type QEMUFormat string
+
+const (
+	QEMUFormatQCOW2 QEMUFormat = "qcow2"
+	QEMUFormatVDI   QEMUFormat = "vdi"
+	QEMUFormatVMDK  QEMUFormat = "vmdk"
+	QEMUFormatVPC   QEMUFormat = "vpc"
+	QEMUFormatVHDX  QEMUFormat = "vhdx"
+)
+
 type QEMUFormatOptions interface {
 	isQEMUFormatOptions()
 }
 
 type Qcow2Options struct {
 	// The type of the format must be 'qcow2'
-	Type string `json:"type"`
+	Type QEMUFormat `json:"type"`
 
 	// The qcow2-compatibility-version to use
 	Compat string `json:"compat"`
@@ -36,14 +46,14 @@ func (Qcow2Options) isQEMUFormatOptions() {}
 
 type VPCOptions struct {
 	// The type of the format must be 'vpc'
-	Type string `json:"type"`
+	Type QEMUFormat `json:"type"`
 }
 
 func (VPCOptions) isQEMUFormatOptions() {}
 
 type VMDKOptions struct {
 	// The type of the format must be 'vpc'
-	Type string `json:"type"`
+	Type QEMUFormat `json:"type"`
 }
 
 func (VMDKOptions) isQEMUFormatOptions() {}
@@ -88,15 +98,15 @@ type qemuStageOptions QEMUStageOptions
 func (options QEMUStageOptions) MarshalJSON() ([]byte, error) {
 	switch o := options.Format.(type) {
 	case Qcow2Options:
-		if o.Type != "qcow2" {
+		if o.Type != QEMUFormatQCOW2 {
 			return nil, fmt.Errorf("invalid format type %q for qcow2 options", o.Type)
 		}
 	case VPCOptions:
-		if o.Type != "vpc" {
+		if o.Type != QEMUFormatVPC {
 			return nil, fmt.Errorf("invalid format type %q for vpc options", o.Type)
 		}
 	case VMDKOptions:
-		if o.Type != "vmdk" {
+		if o.Type != QEMUFormatVMDK {
 			return nil, fmt.Errorf("invalid format type %q for vmdk options", o.Type)
 		}
 	default:

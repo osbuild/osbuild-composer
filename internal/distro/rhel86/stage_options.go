@@ -278,21 +278,21 @@ func xorrisofsStageOptions(filename, isolabel, arch string, isolinux bool) *osbu
 	return options
 }
 
-func qemuStageOptions(filename, format, compat string) *osbuild.QEMUStageOptions {
+func qemuStageOptions(filename string, format osbuild.QEMUFormat, compat string) *osbuild.QEMUStageOptions {
 	var options osbuild.QEMUFormatOptions
 	switch format {
-	case "qcow2":
+	case osbuild.QEMUFormatQCOW2:
 		options = osbuild.Qcow2Options{
-			Type:   "qcow2",
+			Type:   format,
 			Compat: compat,
 		}
-	case "vpc":
+	case osbuild.QEMUFormatVPC:
 		options = osbuild.VPCOptions{
-			Type: "vpc",
+			Type: format,
 		}
-	case "vmdk":
+	case osbuild.QEMUFormatVMDK:
 		options = osbuild.VMDKOptions{
-			Type: "vmdk",
+			Type: format,
 		}
 	default:
 		panic("unknown format in qemu stage: " + format)
