@@ -21,6 +21,7 @@ type QEMUStageOptions struct {
 func (QEMUStageOptions) isStageOptions() {}
 
 type QEMUFormat string
+type VMDKSubformat string
 
 const (
 	QEMUFormatQCOW2 QEMUFormat = "qcow2"
@@ -28,6 +29,12 @@ const (
 	QEMUFormatVMDK  QEMUFormat = "vmdk"
 	QEMUFormatVPC   QEMUFormat = "vpc"
 	QEMUFormatVHDX  QEMUFormat = "vhdx"
+
+	VMDKSubformatMonolithicSparse     VMDKSubformat = "monolithicSparse"
+	VMDKSubformatMonolithicFlat       VMDKSubformat = "monolithicFlat"
+	VMDKSubformatTwoGbMaxExtentSparse VMDKSubformat = "twoGbMaxExtentSparse"
+	VMDKSubformatTwoGbMaxExtentFlat   VMDKSubformat = "twoGbMaxExtentFlat"
+	VMDKSubformatStreamOptimized      VMDKSubformat = "streamOptimized"
 )
 
 type QEMUFormatOptions interface {
@@ -83,6 +90,8 @@ func (o VPCOptions) validate() error {
 type VMDKOptions struct {
 	// The type of the format must be 'vpc'
 	Type QEMUFormat `json:"type"`
+
+	Subformat VMDKSubformat `json:"subformat,omitempty"`
 }
 
 func (VMDKOptions) isQEMUFormatOptions() {}
@@ -91,6 +100,27 @@ func (o VMDKOptions) validate() error {
 	if o.Type != QEMUFormatVMDK {
 		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatVMDK)
 	}
+
+	if o.Subformat != "" {
+		allowedVMDKSubformats := []VMDKSubformat{
+			VMDKSubformatMonolithicFlat,
+			VMDKSubformatMonolithicSparse,
+			VMDKSubformatTwoGbMaxExtentFlat,
+			VMDKSubformatTwoGbMaxExtentSparse,
+			VMDKSubformatStreamOptimized,
+		}
+		valid := false
+		for _, value := range allowedVMDKSubformats {
+			if o.Subformat == value {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("'subformat' option does not allow %q as a value", o.Subformat)
+		}
+	}
+
 	return nil
 }
 
