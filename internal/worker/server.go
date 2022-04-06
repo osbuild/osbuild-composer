@@ -243,23 +243,6 @@ func (s *Server) DepsolveJobStatus(id uuid.UUID, result *DepsolveJobResult) (*Jo
 	return status, deps, nil
 }
 
-func (s *Server) ManifestByIdJobStatus(id uuid.UUID, result *ManifestJobByIDResult) (*JobStatus, []uuid.UUID, error) {
-	jobType, status, deps, err := s.jobStatus(id, result)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if jobType != "manifest-by-id" {
-		return nil, nil, fmt.Errorf("expected \"koji-init\", found %q job instead", jobType)
-	}
-
-	if result.JobError == nil && result.Error != "" {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.Error)
-	}
-
-	return status, deps, nil
-}
-
 func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) (*JobStatus, []uuid.UUID, error) {
 	jobType, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
