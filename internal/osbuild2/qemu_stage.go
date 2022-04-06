@@ -32,6 +32,7 @@ const (
 
 type QEMUFormatOptions interface {
 	isQEMUFormatOptions()
+	validate() error
 }
 
 type Qcow2Options struct {
@@ -44,6 +45,13 @@ type Qcow2Options struct {
 
 func (Qcow2Options) isQEMUFormatOptions() {}
 
+func (o Qcow2Options) validate() error {
+	if o.Type != QEMUFormatQCOW2 {
+		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatQCOW2)
+	}
+	return nil
+}
+
 type VPCOptions struct {
 	// The type of the format must be 'vpc'
 	Type QEMUFormat `json:"type"`
@@ -51,12 +59,26 @@ type VPCOptions struct {
 
 func (VPCOptions) isQEMUFormatOptions() {}
 
+func (o VPCOptions) validate() error {
+	if o.Type != QEMUFormatVPC {
+		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatVPC)
+	}
+	return nil
+}
+
 type VMDKOptions struct {
 	// The type of the format must be 'vpc'
 	Type QEMUFormat `json:"type"`
 }
 
 func (VMDKOptions) isQEMUFormatOptions() {}
+
+func (o VMDKOptions) validate() error {
+	if o.Type != QEMUFormatVMDK {
+		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatVMDK)
+	}
+	return nil
+}
 
 type QEMUStageInputs struct {
 	Image *QEMUStageInput `json:"image"`
@@ -96,21 +118,8 @@ type qemuStageOptions QEMUStageOptions
 
 // Custom marshaller for validating
 func (options QEMUStageOptions) MarshalJSON() ([]byte, error) {
-	switch o := options.Format.(type) {
-	case Qcow2Options:
-		if o.Type != QEMUFormatQCOW2 {
-			return nil, fmt.Errorf("invalid format type %q for qcow2 options", o.Type)
-		}
-	case VPCOptions:
-		if o.Type != QEMUFormatVPC {
-			return nil, fmt.Errorf("invalid format type %q for vpc options", o.Type)
-		}
-	case VMDKOptions:
-		if o.Type != QEMUFormatVMDK {
-			return nil, fmt.Errorf("invalid format type %q for vmdk options", o.Type)
-		}
-	default:
-		return nil, fmt.Errorf("unknown format options in QEMU stage: %#v", options.Format)
+	if err := options.Format.validate(); err != nil {
+		return nil, err
 	}
 
 	return json.Marshal(qemuStageOptions(options))
