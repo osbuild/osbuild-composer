@@ -977,6 +977,23 @@ func newDistro(distroName string) distro.Distro {
 							Enabled: false,
 						},
 					},
+					SubMan: &osbuild.RHSMStageOptionsSubMan{
+						Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+							AutoRegistration: common.BoolToPtr(true),
+						},
+						Rhsm: &osbuild.SubManConfigRHSMSection{
+							ManageRepos: common.BoolToPtr(false),
+						},
+					},
+				},
+				distro.RHSMConfigWithSubscription: {
+					SubMan: &osbuild.RHSMStageOptionsSubMan{
+						Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+							AutoRegistration: common.BoolToPtr(true),
+						},
+						// do not disable the redhat.repo management if the user
+						// explicitly request the system to be subscribed
+					},
 				},
 			},
 			Grub2Config: &osbuild.GRUB2Config{

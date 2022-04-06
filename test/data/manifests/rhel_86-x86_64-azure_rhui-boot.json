@@ -1026,6 +1026,14 @@
                 "subscription-manager": {
                   "enabled": false
                 }
+              },
+              "subscription-manager": {
+                "rhsm": {
+                  "manage_repos": false
+                },
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
               }
             }
           },
@@ -13202,7 +13210,7 @@
       "bin:x:1:",
       "cdrom:x:11:",
       "chrony:x:986:",
-      "clevis:x:993:",
+      "clevis:x:994:",
       "cockpit-ws:x:989:",
       "cockpit-wsinstance:x:988:",
       "daemon:x:2:",
@@ -13222,14 +13230,14 @@
       "man:x:15:",
       "mem:x:8:",
       "nobody:x:65534:",
-      "polkitd:x:996:",
-      "printadmin:x:994:",
+      "polkitd:x:992:",
+      "printadmin:x:995:",
       "render:x:998:",
       "rngd:x:985:",
       "root:x:0:",
       "setroubleshoot:x:990:",
       "slocate:x:21:",
-      "ssh_keys:x:995:",
+      "ssh_keys:x:996:",
       "sshd:x:74:",
       "sssd:x:987:",
       "sys:x:3:",
@@ -13240,7 +13248,7 @@
       "tcpdump:x:72:",
       "tss:x:59:clevis",
       "tty:x:5:",
-      "unbound:x:992:",
+      "unbound:x:993:",
       "users:x:100:",
       "utempter:x:35:",
       "utmp:x:22:",
@@ -13974,7 +13982,7 @@
         "size": 67667738112,
         "start": 1051721728,
         "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
-        "uuid": "krHFC4-dpMH-VJcx-sBIJ-ABet-kvRW-Q9hEJw"
+        "uuid": "7LXUU6-BGq7-Mkda-qdUC-GJ26-JCjM-bAeugo"
       },
       {
         "bootable": false,
@@ -14011,7 +14019,7 @@
       "adm:x:3:4:adm:/var/adm:/sbin/nologin",
       "bin:x:1:1:bin:/bin:/sbin/nologin",
       "chrony:x:990:986::/var/lib/chrony:/sbin/nologin",
-      "clevis:x:997:993:Clevis Decryption Framework unprivileged user:/var/cache/clevis:/sbin/nologin",
+      "clevis:x:998:994:Clevis Decryption Framework unprivileged user:/var/cache/clevis:/sbin/nologin",
       "cockpit-ws:x:993:989:User for cockpit web service:/nonexisting:/sbin/nologin",
       "cockpit-wsinstance:x:992:988:User for cockpit-ws instances:/nonexisting:/sbin/nologin",
       "daemon:x:2:2:daemon:/sbin:/sbin/nologin",
@@ -14024,7 +14032,7 @@
       "mail:x:8:12:mail:/var/spool/mail:/sbin/nologin",
       "nobody:x:65534:65534:Kernel Overflow User:/:/sbin/nologin",
       "operator:x:11:0:operator:/root:/sbin/nologin",
-      "polkitd:x:998:996:User for polkitd:/:/sbin/nologin",
+      "polkitd:x:996:992:User for polkitd:/:/sbin/nologin",
       "rngd:x:989:985:Random Number Generator Daemon:/var/lib/rngd:/sbin/nologin",
       "root:x:0:0:root:/root:/bin/bash",
       "setroubleshoot:x:994:990::/var/lib/setroubleshoot:/sbin/nologin",
@@ -14036,7 +14044,7 @@
       "systemd-resolve:x:193:193:systemd Resolver:/:/sbin/nologin",
       "tcpdump:x:72:72::/:/sbin/nologin",
       "tss:x:59:59:Account used for TPM access:/dev/null:/sbin/nologin",
-      "unbound:x:996:992:Unbound DNS resolver:/etc/unbound:/sbin/nologin"
+      "unbound:x:997:993:Unbound DNS resolver:/etc/unbound:/sbin/nologin"
     ],
     "rhsm": {
       "dnf-plugins": {
@@ -14059,7 +14067,7 @@
           "entitlementcertdir": "/etc/pki/entitlement",
           "full_refresh_on_yum": "0",
           "inotify": "1",
-          "manage_repos": "1",
+          "manage_repos": "0",
           "package_profile_on_trans": "0",
           "pluginconfdir": "/etc/rhsm/pluginconf.d",
           "plugindir": "/usr/share/rhsm-plugins",
@@ -14069,7 +14077,7 @@
           "report_package_profile": "1"
         },
         "rhsmcertd": {
-          "auto_registration": "0",
+          "auto_registration": "1",
           "auto_registration_interval": "60",
           "autoattachinterval": "1440",
           "certcheckinterval": "240",
@@ -14101,6 +14109,7 @@
         "/boot/efi/EFI/redhat/shimx64.efi": ".......T.",
         "/etc/dnf/plugins/subscription-manager.conf": "S.5....T.",
         "/etc/machine-id": ".M.......",
+        "/etc/rhsm/rhsm.conf": "..5....T.",
         "/etc/security/pwquality.conf": "S.5....T.",
         "/etc/ssh/sshd_config": "S.5....T.",
         "/etc/waagent.conf": "..5....T.",

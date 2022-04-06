@@ -1022,6 +1022,14 @@
                 "subscription-manager": {
                   "enabled": false
                 }
+              },
+              "subscription-manager": {
+                "rhsm": {
+                  "manage_repos": false
+                },
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
               }
             }
           },
@@ -13919,7 +13927,7 @@
         "size": 67667738112,
         "start": 1051721728,
         "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
-        "uuid": "zQYrlg-Thk5-WKd6-MXEx-ixaD-H5Kw-hom2gi"
+        "uuid": "xmOwdh-Ej3V-TzwH-CbpE-FKhh-azUG-13zwuf"
       },
       {
         "bootable": false,
@@ -14004,7 +14012,7 @@
           "entitlementcertdir": "/etc/pki/entitlement",
           "full_refresh_on_yum": "0",
           "inotify": "1",
-          "manage_repos": "1",
+          "manage_repos": "0",
           "package_profile_on_trans": "0",
           "pluginconfdir": "/etc/rhsm/pluginconf.d",
           "plugindir": "/usr/share/rhsm-plugins",
@@ -14014,7 +14022,7 @@
           "report_package_profile": "1"
         },
         "rhsmcertd": {
-          "auto_registration": "0",
+          "auto_registration": "1",
           "auto_registration_interval": "60",
           "autoattachinterval": "1440",
           "certcheckinterval": "240",
@@ -14047,6 +14055,7 @@
         "/boot/efi/EFI/redhat/shimx64.efi": ".......T.",
         "/etc/dnf/plugins/subscription-manager.conf": "S.5....T.",
         "/etc/machine-id": ".M.......",
+        "/etc/rhsm/rhsm.conf": "..5....T.",
         "/etc/security/pwquality.conf": "S.5....T.",
         "/etc/ssh/sshd_config": "S.5....T.",
         "/etc/waagent.conf": "..5....T.",
