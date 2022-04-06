@@ -283,6 +283,11 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		return
 	}
 
+	if len(depsolveResults.PackageSpecs) == 0 {
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs")
+		return
+	}
+
 	manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, seed)
 	if err != nil {
 		reason := "Error generating manifest"
