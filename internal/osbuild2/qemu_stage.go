@@ -52,6 +52,20 @@ func (o QCOW2Options) validate() error {
 	return nil
 }
 
+type VDIOptions struct {
+	// The type of the format must be 'vdi'
+	Type QEMUFormat `json:"type"`
+}
+
+func (VDIOptions) isQEMUFormatOptions() {}
+
+func (o VDIOptions) validate() error {
+	if o.Type != QEMUFormatVDI {
+		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatVDI)
+	}
+	return nil
+}
+
 type VPCOptions struct {
 	// The type of the format must be 'vpc'
 	Type QEMUFormat `json:"type"`
@@ -76,6 +90,20 @@ func (VMDKOptions) isQEMUFormatOptions() {}
 func (o VMDKOptions) validate() error {
 	if o.Type != QEMUFormatVMDK {
 		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatVMDK)
+	}
+	return nil
+}
+
+type VHDXOptions struct {
+	// The type of the format must be 'vhdx'
+	Type QEMUFormat `json:"type"`
+}
+
+func (VHDXOptions) isQEMUFormatOptions() {}
+
+func (o VHDXOptions) validate() error {
+	if o.Type != QEMUFormatVHDX {
+		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatVHDX)
 	}
 	return nil
 }

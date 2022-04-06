@@ -13,11 +13,17 @@ func TestNewQemuStage(t *testing.T) {
 			Type:   QEMUFormatQCOW2,
 			Compat: "0.10",
 		},
+		VDIOptions{
+			Type: QEMUFormatVDI,
+		},
 		VPCOptions{
 			Type: QEMUFormatVPC,
 		},
 		VMDKOptions{
 			Type: QEMUFormatVMDK,
+		},
+		VHDXOptions{
+			Type: QEMUFormatVHDX,
 		},
 	}
 
