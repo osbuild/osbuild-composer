@@ -88,7 +88,7 @@ func (o VPCOptions) validate() error {
 }
 
 type VMDKOptions struct {
-	// The type of the format must be 'vpc'
+	// The type of the format must be 'vmdk'
 	Type QEMUFormat `json:"type"`
 
 	Subformat VMDKSubformat `json:"subformat,omitempty"`
