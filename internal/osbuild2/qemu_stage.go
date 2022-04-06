@@ -40,6 +40,7 @@ const (
 type QEMUFormatOptions interface {
 	isQEMUFormatOptions()
 	validate() error
+	formatType() QEMUFormat
 }
 
 type QCOW2Options struct {
@@ -59,6 +60,10 @@ func (o QCOW2Options) validate() error {
 	return nil
 }
 
+func (o QCOW2Options) formatType() QEMUFormat {
+	return o.Type
+}
+
 type VDIOptions struct {
 	// The type of the format must be 'vdi'
 	Type QEMUFormat `json:"type"`
@@ -73,6 +78,10 @@ func (o VDIOptions) validate() error {
 	return nil
 }
 
+func (o VDIOptions) formatType() QEMUFormat {
+	return o.Type
+}
+
 type VPCOptions struct {
 	// The type of the format must be 'vpc'
 	Type QEMUFormat `json:"type"`
@@ -85,6 +94,10 @@ func (o VPCOptions) validate() error {
 		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatVPC)
 	}
 	return nil
+}
+
+func (o VPCOptions) formatType() QEMUFormat {
+	return o.Type
 }
 
 type VMDKOptions struct {
@@ -124,6 +137,10 @@ func (o VMDKOptions) validate() error {
 	return nil
 }
 
+func (o VMDKOptions) formatType() QEMUFormat {
+	return o.Type
+}
+
 type VHDXOptions struct {
 	// The type of the format must be 'vhdx'
 	Type QEMUFormat `json:"type"`
@@ -136,6 +153,10 @@ func (o VHDXOptions) validate() error {
 		return fmt.Errorf("invalid format type %q for %q options", o.Type, QEMUFormatVHDX)
 	}
 	return nil
+}
+
+func (o VHDXOptions) formatType() QEMUFormat {
+	return o.Type
 }
 
 type QEMUStageInputs struct {
@@ -168,6 +189,70 @@ func NewQEMUStage(options *QEMUStageOptions, inputs *QEMUStageInputs) *Stage {
 		Type:    "org.osbuild.qemu",
 		Options: options,
 		Inputs:  inputs,
+	}
+}
+
+// NewQEMUStageOptions creates a new QEMU Stage options object.
+//
+// In case the format-specific options are provided, they are used for
+// the Stage options.
+func NewQEMUStageOptions(filename string, format QEMUFormat, formatOptions QEMUFormatOptions) *QEMUStageOptions {
+	if formatOptions != nil {
+		// If the format type is not set explicitly in the provided format
+		// options, set it to the appropriate value based on the format options
+		// object type.
+		if formatOptions.formatType() == "" {
+			switch o := formatOptions.(type) {
+			case QCOW2Options:
+				o.Type = QEMUFormatQCOW2
+				formatOptions = o
+			case VDIOptions:
+				o.Type = QEMUFormatVDI
+				formatOptions = o
+			case VPCOptions:
+				o.Type = QEMUFormatVPC
+				formatOptions = o
+			case VMDKOptions:
+				o.Type = QEMUFormatVMDK
+				formatOptions = o
+			case VHDXOptions:
+				o.Type = QEMUFormatVHDX
+				formatOptions = o
+			default:
+				panic(fmt.Sprintf("unknown format options type in qemu stage: %t", o))
+			}
+		}
+
+		// Ensure that the explicitly provided QEMU format and the format set
+		// in the format options structure (set by user or by this function
+		// above) are matching.
+		if t := formatOptions.formatType(); t != format {
+			panic(fmt.Sprintf("mismatch between passed format type %q and format options type %q", format, t))
+		}
+
+		if err := formatOptions.validate(); err != nil {
+			panic(err)
+		}
+	} else {
+		switch format {
+		case QEMUFormatQCOW2:
+			formatOptions = QCOW2Options{Type: format}
+		case QEMUFormatVDI:
+			formatOptions = VDIOptions{Type: format}
+		case QEMUFormatVPC:
+			formatOptions = VPCOptions{Type: format}
+		case QEMUFormatVMDK:
+			formatOptions = VMDKOptions{Type: format}
+		case QEMUFormatVHDX:
+			formatOptions = VHDXOptions{Type: format}
+		default:
+			panic("unknown format in qemu stage: " + format)
+		}
+	}
+
+	return &QEMUStageOptions{
+		Filename: filename,
+		Format:   formatOptions,
 	}
 }
 

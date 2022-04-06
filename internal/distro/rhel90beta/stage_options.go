@@ -207,29 +207,3 @@ func xorrisofsStageOptions(filename string, arch string) *osbuild.XorrisofsStage
 		IsohybridMBR: "/usr/share/syslinux/isohdpfx.bin",
 	}
 }
-
-func qemuStageOptions(filename string, format osbuild.QEMUFormat, compat string) *osbuild.QEMUStageOptions {
-	var options osbuild.QEMUFormatOptions
-	switch format {
-	case osbuild.QEMUFormatQCOW2:
-		options = osbuild.QCOW2Options{
-			Type:   format,
-			Compat: compat,
-		}
-	case osbuild.QEMUFormatVPC:
-		options = osbuild.VPCOptions{
-			Type: format,
-		}
-	case osbuild.QEMUFormatVMDK:
-		options = osbuild.VMDKOptions{
-			Type: format,
-		}
-	default:
-		panic("unknown format in qemu stage: " + format)
-	}
-
-	return &osbuild.QEMUStageOptions{
-		Filename: filename,
-		Format:   options,
-	}
-}

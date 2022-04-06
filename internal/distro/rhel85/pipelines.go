@@ -55,7 +55,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, "0.10")
+	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "0.10"})
 	pipelines = append(pipelines, *qemuPipeline)
 
 	return pipelines, nil
@@ -99,7 +99,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVPC, "")
+	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVPC, nil)
 	pipelines = append(pipelines, *qemuPipeline)
 	return pipelines, nil
 }
@@ -130,7 +130,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVMDK, "")
+	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVMDK, nil)
 	pipelines = append(pipelines, *qemuPipeline)
 	return pipelines, nil
 }
@@ -161,7 +161,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, "")
+	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, nil)
 	pipelines = append(pipelines, *qemuPipeline)
 	return pipelines, nil
 }
@@ -1271,12 +1271,15 @@ func xzArchivePipeline(inputPipelineName, inputFilename, outputFilename string) 
 	return p
 }
 
-func qemuPipeline(inputPipelineName, inputFilename, outputFilename string, format osbuild.QEMUFormat, qcow2Compat string) *osbuild.Pipeline {
+func qemuPipeline(inputPipelineName, inputFilename, outputFilename string, format osbuild.QEMUFormat, formatOptions osbuild.QEMUFormatOptions) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = string(format)
 	p.Build = "name:build"
 
-	qemuStage := osbuild.NewQEMUStage(qemuStageOptions(outputFilename, format, qcow2Compat), osbuild.NewQemuStagePipelineFilesInputs(inputPipelineName, inputFilename))
+	qemuStage := osbuild.NewQEMUStage(
+		osbuild.NewQEMUStageOptions(outputFilename, format, formatOptions),
+		osbuild.NewQemuStagePipelineFilesInputs(inputPipelineName, inputFilename),
+	)
 	p.AddStage(qemuStage)
 	return p
 }
