@@ -2347,11 +2347,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		var jobId uuid.UUID
 
 		jobId, err = api.workers.EnqueueOSBuild(api.archName, &worker.OSBuildJob{
-			Manifest:        manifest,
-			Targets:         targets,
-			ImageName:       imageType.Filename(),
-			StreamOptimized: imageType.Name() == "vmdk", // https://github.com/osbuild/osbuild/issues/528
-			Exports:         imageType.Exports(),
+			Manifest:  manifest,
+			Targets:   targets,
+			ImageName: imageType.Filename(),
+			Exports:   imageType.Exports(),
 			PipelineNames: &worker.PipelineNames{
 				Build:   imageType.BuildPipelines(),
 				Payload: imageType.PayloadPipelines(),
