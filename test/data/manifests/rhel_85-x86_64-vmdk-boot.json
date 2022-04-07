@@ -2454,7 +2454,8 @@
             "options": {
               "filename": "disk.vmdk",
               "format": {
-                "type": "vmdk"
+                "type": "vmdk",
+                "subformat": "streamOptimized"
               }
             }
           }
