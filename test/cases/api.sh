@@ -166,7 +166,7 @@ function checkEnvAzure() {
 
 # Check that needed variables are set to register to RHSM (RHEL only)
 function checkEnvSubscription() {
-  printenv API_TEST_SUBSCRIPTION_ORG_ID API_TEST_SUBSCRIPTION_ACTIVATION_KEY > /dev/null
+  printenv API_TEST_SUBSCRIPTION_ORG_ID API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2 > /dev/null
 }
 
 function checkEnvVSphere() {
@@ -541,7 +541,7 @@ if [[ "$ID" == "rhel" ]]; then
 ,
     "subscription": {
       "organization": "${API_TEST_SUBSCRIPTION_ORG_ID:-}",
-      "activation_key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY:-}",
+      "activation_key": "${API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2:-}",
       "base_url": "https://cdn.redhat.com/",
       "server_url": "subscription.rhsm.redhat.com",
       "insights": true
