@@ -326,7 +326,7 @@ func TestBlueprintsInfoToml(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var got blueprint.Blueprint
-	_, err := toml.DecodeReader(resp.Body, &got)
+	_, err := toml.NewDecoder(resp.Body).Decode(&got)
 	require.NoErrorf(t, err, "error decoding toml file")
 
 	expected := blueprint.Blueprint{
@@ -1381,7 +1381,7 @@ func TestSourcesInfoToml(t *testing.T) {
 	resp := recorder.Result()
 
 	var sources map[string]store.SourceConfig
-	_, err := toml.DecodeReader(resp.Body, &sources)
+	_, err := toml.NewDecoder(resp.Body).Decode(&sources)
 	require.NoErrorf(t, err, "error decoding toml file")
 
 	expected := map[string]store.SourceConfig{

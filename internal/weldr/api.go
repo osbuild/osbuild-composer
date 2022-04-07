@@ -1902,7 +1902,7 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 	if contentType[0] == "application/json" {
 		err = json.NewDecoder(request.Body).Decode(&blueprint)
 	} else if contentType[0] == "text/x-toml" {
-		_, err = toml.DecodeReader(request.Body, &blueprint)
+		_, err = toml.NewDecoder(request.Body).Decode(&blueprint)
 	} else {
 		err = errors_package.New("blueprint must be in json or toml format")
 	}
@@ -1975,7 +1975,7 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 	if contentType[0] == "application/json" {
 		err = json.NewDecoder(request.Body).Decode(&blueprint)
 	} else if contentType[0] == "text/x-toml" {
-		_, err = toml.DecodeReader(request.Body, &blueprint)
+		_, err = toml.NewDecoder(request.Body).Decode(&blueprint)
 	} else {
 		err = errors_package.New("blueprint must be in json or toml format")
 	}
