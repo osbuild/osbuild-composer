@@ -3725,6 +3725,7 @@
         "name": "org.osbuild.qemu",
         "options": {
           "format": "vmdk",
+          "vmdk_subformat": "streamOptimized",
           "filename": "disk.vmdk",
           "size": 2147483648,
           "ptuuid": "0x14fc63d2",

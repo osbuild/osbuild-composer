@@ -3482,6 +3482,7 @@
             "type": "grub2"
           },
           "format": "vmdk",
+          "vmdk_subformat": "streamOptimized",
           "filename": "disk.vmdk",
           "size": 4294967296,
           "ptuuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",

@@ -781,12 +781,13 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 	panic("unknown arch: " + arch.Name())
 }
 
-func qemuAssembler(pt *disk.PartitionTable, format string, filename string, imageOptions distro.ImageOptions, arch distro.Arch, qcow2Compat string) *osbuild.Assembler {
+func qemuAssembler(pt *disk.PartitionTable, format string, filename string, imageOptions distro.ImageOptions, arch distro.Arch, qcow2Compat string, vmdkSubformat osbuild.VMDKSubformat) *osbuild.Assembler {
 	options := osbuild.NewQEMUAssemblerOptions(pt)
 
 	options.Format = format
 	options.Filename = filename
 	options.Qcow2Compat = qcow2Compat
+	options.VMDKSubformat = vmdkSubformat
 
 	if arch.Name() == "x86_64" {
 		options.Bootloader = &osbuild.QEMUBootloader{
@@ -1050,7 +1051,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		defaultSize:             6 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
 		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler(pt, "raw", "image.raw", options, arch, "")
+			return qemuAssembler(pt, "raw", "image.raw", options, arch, "", "")
 		},
 	}
 
@@ -1137,7 +1138,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
 			// guest images of RHEL 8 must be bootable with older QEMUs.
 			const qcow2Compat = "0.10"
-			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch, qcow2Compat)
+			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch, qcow2Compat, "")
 		},
 	}
 
@@ -1165,7 +1166,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		defaultSize:             4 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
 		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch, "")
+			return qemuAssembler(pt, "qcow2", "disk.qcow2", options, arch, "", "")
 		},
 	}
 
@@ -1224,7 +1225,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		defaultSize:             4 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
 		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler(pt, "vpc", "disk.vhd", options, arch, "")
+			return qemuAssembler(pt, "vpc", "disk.vhd", options, arch, "", "")
 		},
 	}
 
@@ -1253,7 +1254,7 @@ func newDistro(name, modulePlatformID, ostreeRef string, isCentos bool) distro.D
 		defaultSize:             4 * GigaByte,
 		partitionTableGenerator: defaultPartitionTable,
 		assembler: func(pt *disk.PartitionTable, options distro.ImageOptions, arch distro.Arch) *osbuild.Assembler {
-			return qemuAssembler(pt, "vmdk", "disk.vmdk", options, arch, "")
+			return qemuAssembler(pt, "vmdk", "disk.vmdk", options, arch, "", osbuild.VMDKSubformatStreamOptimized)
 		},
 	}
 

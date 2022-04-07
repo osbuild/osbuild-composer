@@ -103,7 +103,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVMDK, nil)
+	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{Subformat: osbuild.VMDKSubformatStreamOptimized})
 	pipelines = append(pipelines, *qemuPipeline)
 	return pipelines, nil
 }

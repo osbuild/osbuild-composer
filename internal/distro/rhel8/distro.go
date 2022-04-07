@@ -551,15 +551,16 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 	}
 }
 
-func qemuAssembler(format string, filename string, uefi bool, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
+func qemuAssembler(format string, filename string, uefi bool, arch distro.Arch, imageSize uint64, vmdkSubformat osbuild.VMDKSubformat) *osbuild.Assembler {
 	var options osbuild.QEMUAssemblerOptions
 	if uefi {
 		options = osbuild.QEMUAssemblerOptions{
-			Format:   format,
-			Filename: filename,
-			Size:     imageSize,
-			PTUUID:   "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
-			PTType:   "gpt",
+			Format:        format,
+			VMDKSubformat: vmdkSubformat,
+			Filename:      filename,
+			Size:          imageSize,
+			PTUUID:        "8DFDFF87-C96E-EA48-A3A6-9408F1F6B1EF",
+			PTType:        "gpt",
 			Partitions: []osbuild.QEMUPartition{
 				{
 					Start: 2048,
@@ -589,11 +590,12 @@ func qemuAssembler(format string, filename string, uefi bool, arch distro.Arch, 
 					Type:     "grub2",
 					Platform: "powerpc-ieee1275",
 				},
-				Format:   format,
-				Filename: filename,
-				Size:     imageSize,
-				PTUUID:   "0x14fc63d2",
-				PTType:   "dos",
+				Format:        format,
+				VMDKSubformat: vmdkSubformat,
+				Filename:      filename,
+				Size:          imageSize,
+				PTUUID:        "0x14fc63d2",
+				PTType:        "dos",
 				Partitions: []osbuild.QEMUPartition{
 					{
 						Size:     8192,
@@ -615,11 +617,12 @@ func qemuAssembler(format string, filename string, uefi bool, arch distro.Arch, 
 				Bootloader: &osbuild.QEMUBootloader{
 					Type: "zipl",
 				},
-				Format:   format,
-				Filename: filename,
-				Size:     imageSize,
-				PTUUID:   "0x14fc63d2",
-				PTType:   "dos",
+				Format:        format,
+				VMDKSubformat: vmdkSubformat,
+				Filename:      filename,
+				Size:          imageSize,
+				PTUUID:        "0x14fc63d2",
+				PTType:        "dos",
 				Partitions: []osbuild.QEMUPartition{
 					{
 						Start:    2048,
@@ -634,11 +637,12 @@ func qemuAssembler(format string, filename string, uefi bool, arch distro.Arch, 
 			}
 		} else {
 			options = osbuild.QEMUAssemblerOptions{
-				Format:   format,
-				Filename: filename,
-				Size:     imageSize,
-				PTUUID:   "0x14fc63d2",
-				PTType:   "mbr",
+				Format:        format,
+				VMDKSubformat: vmdkSubformat,
+				Filename:      filename,
+				Size:          imageSize,
+				PTUUID:        "0x14fc63d2",
+				PTType:        "mbr",
 				Partitions: []osbuild.QEMUPartition{
 					{
 						Start:    2048,
@@ -868,7 +872,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:      true,
 		defaultSize:   6 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("raw", "image.raw", uefi, arch, imageSize)
+			return qemuAssembler("raw", "image.raw", uefi, arch, imageSize, "")
 		},
 	}
 
@@ -951,7 +955,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, arch, imageSize)
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, arch, imageSize, "")
 		},
 	}
 
@@ -977,7 +981,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("qcow2", "disk.qcow2", uefi, arch, imageSize)
+			return qemuAssembler("qcow2", "disk.qcow2", uefi, arch, imageSize, "")
 		},
 	}
 
@@ -1031,7 +1035,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("vpc", "disk.vhd", uefi, arch, imageSize)
+			return qemuAssembler("vpc", "disk.vhd", uefi, arch, imageSize, "")
 		},
 	}
 
@@ -1058,7 +1062,7 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		bootable:      true,
 		defaultSize:   4 * GigaByte,
 		assembler: func(uefi bool, options distro.ImageOptions, arch distro.Arch, imageSize uint64) *osbuild.Assembler {
-			return qemuAssembler("vmdk", "disk.vmdk", uefi, arch, imageSize)
+			return qemuAssembler("vmdk", "disk.vmdk", uefi, arch, imageSize, osbuild.VMDKSubformatStreamOptimized)
 		},
 	}
 
