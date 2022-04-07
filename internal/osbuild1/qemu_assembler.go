@@ -2,6 +2,16 @@ package osbuild1
 
 import "github.com/osbuild/osbuild-composer/internal/disk"
 
+type VMDKSubformat string
+
+const (
+	VMDKSubformatMonolithicSparse     VMDKSubformat = "monolithicSparse"
+	VMDKSubformatMonolithicFlat       VMDKSubformat = "monolithicFlat"
+	VMDKSubformatTwoGbMaxExtentSparse VMDKSubformat = "twoGbMaxExtentSparse"
+	VMDKSubformatTwoGbMaxExtentFlat   VMDKSubformat = "twoGbMaxExtentFlat"
+	VMDKSubformatStreamOptimized      VMDKSubformat = "streamOptimized"
+)
+
 // QEMUAssemblerOptions desrcibe how to assemble a tree into an image using qemu.
 //
 // The assembler creates an image of the given size, adds a GRUB2 bootloader
@@ -9,14 +19,15 @@ import "github.com/osbuild/osbuild-composer/internal/disk"
 // containing the indicated partitions. Finally, the image is converted into
 // the target format and stored with the given filename.
 type QEMUAssemblerOptions struct {
-	Bootloader  *QEMUBootloader `json:"bootloader,omitempty"`
-	Format      string          `json:"format"`
-	Qcow2Compat string          `json:"qcow2_compat,omitempty"`
-	Filename    string          `json:"filename"`
-	Size        uint64          `json:"size"`
-	PTUUID      string          `json:"ptuuid"`
-	PTType      string          `json:"pttype"`
-	Partitions  []QEMUPartition `json:"partitions"`
+	Bootloader    *QEMUBootloader `json:"bootloader,omitempty"`
+	Format        string          `json:"format"`
+	Qcow2Compat   string          `json:"qcow2_compat,omitempty"`
+	VMDKSubformat VMDKSubformat   `json:"vmdk_subformat,omitempty"`
+	Filename      string          `json:"filename"`
+	Size          uint64          `json:"size"`
+	PTUUID        string          `json:"ptuuid"`
+	PTType        string          `json:"pttype"`
+	Partitions    []QEMUPartition `json:"partitions"`
 }
 
 type QEMUPartition struct {
