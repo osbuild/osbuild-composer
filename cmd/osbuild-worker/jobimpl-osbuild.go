@@ -116,6 +116,7 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, osbuildJobResult *worker.OSBuildJobResult, genericS3 bool, streamOptimized bool, streamOptimizedPath string) (err error) {
 	imagePath := path.Join(outputDirectory, exportPath, filename)
 
+	// TODO: delete the stream-optimized handling after "some" time (kept for backward compatibility)
 	// *** SPECIAL VMDK HANDLING START ***
 	// Upload the VMDK image as stream-optimized.
 	// The VMDK conversion is applied only when the job was submitted by Weldr API,
@@ -294,6 +295,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return nil
 	}
 
+	// TODO: delete the stream-optimized handling after "some" time (kept for backward compatibility)
 	streamOptimizedPath := ""
 
 	// NOTE: Currently OSBuild supports multiple exports, but this isn't used
@@ -303,6 +305,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	if osbuildJobResult.OSBuildOutput.Success && args.ImageName != "" {
 		var f *os.File
 		imagePath := path.Join(outputDirectory, exportPath, args.ImageName)
+		// TODO: delete the stream-optimized handling after "some" time (kept for backward compatibility)
 		if args.StreamOptimized {
 			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
 			if err != nil {
@@ -354,6 +357,15 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			// create a symlink so that uploaded image has the name specified by user
 			imageName := args.Targets[0].ImageName + ".vmdk"
 			imagePath := path.Join(tempDirectory, imageName)
+
+			// New version of composer is already generating manifest with stream-optimized VMDK and is not setting
+			// the args.StreamOptimized option. In such case, the image itself is already stream optimized.
+			// Simulate the case as if it was converted by the worker. This makes it simpler to reuse the rest of
+			// the existing code below.
+			if !args.StreamOptimized {
+				streamOptimizedPath = path.Join(outputDirectory, exportPath, options.Filename)
+			}
+
 			err = os.Symlink(streamOptimizedPath, imagePath)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
