@@ -138,7 +138,6 @@ func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UU
 }
 
 func (s *Server) CheckBuildDependencies(dep uuid.UUID, jobErr *clienterrors.Error) error {
-	var depErrs []clienterrors.Error
 	var manifestJR ManifestJobByIDResult
 	_, deps, err := s.ManifestJobStatus(dep, &manifestJR)
 	if err != nil {
@@ -146,28 +145,23 @@ func (s *Server) CheckBuildDependencies(dep uuid.UUID, jobErr *clienterrors.Erro
 	}
 
 	if manifestJobErr := manifestJR.JobError; manifestJobErr != nil {
-		if manifestJobErr.HasDependencyError() && len(deps) > 0 {
-			if len(deps) > 1 {
-				return fmt.Errorf("Unexpected number of dependencies received")
-			}
-
-			var depsolveJR DepsolveJobResult
-			_, _, err := s.DepsolveJobStatus(deps[0], &depsolveJR)
-			if err != nil {
-				return err
-			}
-
-			if depJobErr := depsolveJR.JobError; depJobErr != nil {
-				depErrs = append(depErrs, *depJobErr)
-			}
+		if !manifestJobErr.HasDependencyError() {
+			jobErr.Details = manifestJobErr
+			return nil
+		}
+		if len(deps) > 1 {
+			return fmt.Errorf("Unexpected number of dependencies received")
 		}
 
-		depErrs = append(depErrs, *manifestJobErr)
+		var depsolveJR DepsolveJobResult
+		_, _, err := s.DepsolveJobStatus(deps[0], &depsolveJR)
+		if err != nil {
+			return err
+		}
+
+		jobErr.Details = depsolveJR.JobError
 	}
 
-	jobErr.Details = clienterrors.ErrorDetails{
-		FailedDependencies: depErrs,
-	}
 	return nil
 }
 
