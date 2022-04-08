@@ -33,8 +33,8 @@ require (
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
-	github.com/labstack/echo/v4 v4.6.1
-	github.com/labstack/gommon v0.3.0
+	github.com/labstack/echo/v4 v4.7.2
+	github.com/labstack/gommon v0.3.1
 	github.com/openshift-online/ocm-sdk-go v0.1.214
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
 	github.com/prometheus/client_golang v1.12.0
@@ -51,5 +51,4 @@ require (
 	google.golang.org/genproto v0.0.0-20211221195035-429b39de9b1c
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/ini.v1 v1.66.4
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
