@@ -605,7 +605,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 			buildJobResults = append(buildJobResults, buildJobResult)
 			buildJobStatuses = append(buildJobStatuses, ImageStatus{
 				Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildJobResult),
-				Error:  composeStatusErrorFromJobError(result.JobError),
+				Error:  composeStatusErrorFromJobError(buildJobResult.JobError),
 			})
 		}
 		response := ComposeStatus{
