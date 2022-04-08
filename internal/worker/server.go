@@ -137,6 +137,40 @@ func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UU
 	return s.jobs.Enqueue(jobType, job, dependencies, channel)
 }
 
+func (s *Server) CheckBuildDependencies(dep uuid.UUID, jobErr *clienterrors.Error) error {
+	var depErrs []clienterrors.Error
+	var manifestJR ManifestJobByIDResult
+	_, deps, err := s.ManifestJobStatus(dep, &manifestJR)
+	if err != nil {
+		return err
+	}
+
+	if manifestJobErr := manifestJR.JobError; manifestJobErr != nil {
+		if manifestJobErr.HasDependencyError() && len(deps) > 0 {
+			if len(deps) > 1 {
+				return fmt.Errorf("Unexpected number of dependencies received")
+			}
+
+			var depsolveJR DepsolveJobResult
+			_, _, err := s.DepsolveJobStatus(deps[0], &depsolveJR)
+			if err != nil {
+				return err
+			}
+
+			if depJobErr := depsolveJR.JobError; depJobErr != nil {
+				depErrs = append(depErrs, *depJobErr)
+			}
+		}
+
+		depErrs = append(depErrs, *manifestJobErr)
+	}
+
+	jobErr.Details = clienterrors.ErrorDetails{
+		FailedDependencies: depErrs,
+	}
+	return nil
+}
+
 func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobStatus, []uuid.UUID, error) {
 	jobType, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
