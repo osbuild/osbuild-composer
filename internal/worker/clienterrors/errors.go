@@ -78,6 +78,17 @@ func GetStatusCode(err *Error) StatusCode {
 	}
 }
 
+func (e *Error) HasDependencyError() bool {
+	switch e.ID {
+	case ErrorDepsolveDependency:
+		return true
+	case ErrorManifestDependency:
+		return true
+	default:
+		return false
+	}
+}
+
 func WorkerClientError(code ClientErrorCode, reason string, details ...interface{}) *Error {
 	return &Error{
 		ID:      code,
