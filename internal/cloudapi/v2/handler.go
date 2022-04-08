@@ -513,9 +513,16 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 
 	if jobType == "osbuild" {
 		var result worker.OSBuildJobResult
-		status, _, err := h.server.workers.OSBuildJobStatus(jobId, &result)
+		status, deps, err := h.server.workers.OSBuildJobStatus(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
+		}
+
+		if result.JobError != nil && result.JobError.HasDependencyError() {
+			err = h.server.workers.CheckBuildDependencies(deps[0], result.JobError)
+			if err != nil {
+				return HTTPError(ErrorGettingBuildDependencyStatus)
+			}
 		}
 
 		var us *UploadStatus
@@ -598,9 +605,15 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		var buildJobStatuses []ImageStatus
 		for i := 1; i < len(deps); i++ {
 			var buildJobResult worker.OSBuildKojiJobResult
-			buildJobStatus, _, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &buildJobResult)
+			buildJobStatus, buildDeps, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &buildJobResult)
 			if err != nil {
 				return HTTPError(ErrorMalformedOSBuildJobResult)
+			}
+			if buildJobResult.JobError != nil && buildJobResult.JobError.HasDependencyError() {
+				err = h.server.workers.CheckBuildDependencies(buildDeps[1], buildJobResult.JobError)
+				if err != nil {
+					return HTTPError(ErrorGettingBuildDependencyStatus)
+				}
 			}
 			buildJobResults = append(buildJobResults, buildJobResult)
 			buildJobStatuses = append(buildJobStatuses, ImageStatus{

@@ -61,6 +61,7 @@ const (
 	ErrorGettingDepsolveJobStatus                 ServiceErrorCode = 1013
 	ErrorDepsolveJobCanceled                      ServiceErrorCode = 1014
 	ErrorUnexpectedNumberOfImageBuilds            ServiceErrorCode = 1015
+	ErrorGettingBuildDependencyStatus             ServiceErrorCode = 1016
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -126,6 +127,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorGettingDepsolveJobStatus, http.StatusInternalServerError, "Unable to get depsolve job status"},
 		serviceError{ErrorDepsolveJobCanceled, http.StatusInternalServerError, "Depsolve job was cancelled"},
 		serviceError{ErrorUnexpectedNumberOfImageBuilds, http.StatusInternalServerError, "Compose has unexpected number of image builds"},
+		serviceError{ErrorGettingBuildDependencyStatus, http.StatusInternalServerError, "Error checking status of build job dependencies"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},
