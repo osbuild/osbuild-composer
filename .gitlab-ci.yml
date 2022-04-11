@@ -412,6 +412,16 @@ cross-distro.sh:
   variables:
     SCRIPT: cross-distro.sh
 
+generic_s3.sh:
+  extends: .integration
+  variables:
+    SCRIPT: generic_s3.sh
+
+aws_s3.sh:
+  extends: .integration
+  variables:
+    SCRIPT: aws_s3.sh
+
 .API_TESTS: &API_TESTS
   IMAGE_TYPE:
     - aws
@@ -464,16 +474,6 @@ libvirt.sh:
   extends: .libvirt_integration
   variables:
     SCRIPT: libvirt.sh
-
-generic_s3.sh:
-  extends: .libvirt_integration
-  variables:
-    SCRIPT: generic_s3.sh
-
-aws_s3.sh:
-  extends: .libvirt_integration
-  variables:
-    SCRIPT: aws_s3.sh
 
 RHEL 9 on 8:
   stage: test
