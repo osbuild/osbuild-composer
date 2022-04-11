@@ -89,8 +89,23 @@ ${CONTAINER_RUNTIME} run --rm -d \
 # Kill the server once we're done
 trap '${CONTAINER_RUNTIME} kill ${MINIO_CONTAINER_NAME}' EXIT
 
-# Configure the local server
-${MC_CMD} alias set ${MINIO_SERVER_ALIAS} ${MINIO_ENDPOINT} ${MINIO_ROOT_USER} "${MINIO_ROOT_PASSWORD}"
+# Configure the local server (retry until the service is up)
+MINIO_CONFIGURE_RETRY=0
+MINIO_CONFIGURE_MAX_RETRY=5
+MINIO_RETRY_INTERVAL=15
+until [ "${MINIO_CONFIGURE_RETRY}" -ge "${MINIO_CONFIGURE_MAX_RETRY}" ]
+do
+    ${MC_CMD} alias set ${MINIO_SERVER_ALIAS} ${MINIO_ENDPOINT} ${MINIO_ROOT_USER} "${MINIO_ROOT_PASSWORD}" && break
+    MINIO_CONFIGURE_RETRY=$(${MINIO_CONFIGURE_RETRY} + 1)
+	echo "Retrying [${MINIO_CONFIGURE_RETRY}/${MINIO_CONFIGURE_MAX_RETRY}] in ${MINIO_RETRY_INTERVAL}(s) "
+	sleep ${MINIO_RETRY_INTERVAL}
+done
+
+if [ "${MINIO_CONFIGURE_RETRY}" -ge "${MINIO_CONFIGURE_MAX_RETRY}" ]; then
+  echo "Failed to set MinIO alias after ${MINIO_CONFIGURE_MAX_RETRY} attempts!"
+  exit 1
+fi
+
 # Create the bucket
 ${MC_CMD} mb ${MINIO_SERVER_ALIAS}/${MINIO_BUCKET}
 
