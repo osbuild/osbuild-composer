@@ -264,6 +264,7 @@ Image Tests:
   stage: test
   extends: .terraform
   rules:
+    - !reference [.upstream_rules, rules]
     - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
