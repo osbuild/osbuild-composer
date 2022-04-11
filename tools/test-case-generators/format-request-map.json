@@ -259,6 +259,37 @@
         }
       }
     },
+    "overrides": {},
+    "supported_arches": [
+      "x86_64"
+    ]
+  },
+  "fedora-iot-container": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "fedora-iot-container",
+      "repositories": [],
+      "filename": "container.tar",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
+  "fedora-iot-installer": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "fedora-iot-installer",
+      "repositories": [],
+      "filename": "installer.iso",
+      "ostree": {
+        "ref": "test/iot",
+        "url": "http://iot.example.com/repo",
+        "parent": "test/iot"
+      },
+      "blueprint": {}
+    },
+    "no-image-info": true,
     "overrides": {}
   },
   "openstack": {
@@ -516,11 +547,7 @@
           }
         ],
         "modules": [],
-        "groups": [
-          {
-            "name": "core"
-          }
-        ],
+        "groups": [],
         "customizations": {
           "hostname": "my-host",
           "kernel": {
