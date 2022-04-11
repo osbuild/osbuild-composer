@@ -14,7 +14,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	fedora "github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel86"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -83,7 +83,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 							packages := imgType.PackageSets(blueprint.Blueprint{})
 
-							_, _, err = rpm.Depsolve(packages["build-packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr, distroStruct.Releasever())
+							_, _, err = rpm.Depsolve(packages["build"], repos[archStr], distroStruct.ModulePlatformID(), archStr, distroStruct.Releasever())
 							assert.NoError(t, err)
 
 							_, _, err = rpm.Depsolve(packages["packages"], repos[archStr], distroStruct.ModulePlatformID(), archStr, distroStruct.Releasever())
