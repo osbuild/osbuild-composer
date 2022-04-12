@@ -329,6 +329,67 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
+		{
+			initResult: worker.KojiInitJobResult{
+				BuildID: 42,
+				Token:   `"foobar"`,
+			},
+			buildResult: worker.OSBuildKojiJobResult{
+				Arch:      test_distro.TestArchName,
+				HostOS:    test_distro.TestDistroName,
+				ImageHash: "browns",
+				ImageSize: 42,
+				OSBuildOutput: &osbuild.Result{
+					Success: true,
+				},
+				JobResult: worker.JobResult{
+					JobError: clienterrors.WorkerClientError(
+						clienterrors.ErrorManifestDependency,
+						"Manifest dependency failed",
+						clienterrors.WorkerClientError(
+							clienterrors.ErrorDNFOtherError,
+							"DNF Error",
+						),
+					),
+				},
+			},
+			composeReplyCode: http.StatusCreated,
+			composeReply:     `"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"`,
+			composeStatus: `{
+				"kind": "ComposeStatus",
+				"image_status": {
+					"error": {
+						"details": {
+							"id": 22,
+							"reason": "DNF Error"
+						},
+						"id": 9,
+						"reason": "Manifest dependency failed"
+					},
+					"status": "failure",
+				},
+				"image_statuses": [
+					{
+						"error": {
+							"details": {
+								"id": 22,
+								"reason": "Error in depsolve job"
+							},
+							"id": 9,
+							"reason": "Manifest dependency failed"
+						},
+						"status": "failure"
+					},
+					{
+						"status": "success"
+					}
+				],
+				"koji_status": {
+					"build_id": 42
+				},
+				"status": "failure"
+			}`,
+		},
 	}
 	for _, c := range cases[2:3] {
 		test.TestRoute(t, handler, false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
