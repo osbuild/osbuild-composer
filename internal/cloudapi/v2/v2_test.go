@@ -796,6 +796,73 @@ func TestComposeJobError(t *testing.T) {
 	}`, jobId, jobId))
 }
 
+func TestComposeDependencyError(t *testing.T) {
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, "osbuild", jobType)
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building"},
+		"status": "pending"
+	}`, jobId, jobId))
+
+	jobErr := worker.JobResult{
+		JobError: clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed"),
+	}
+	jobErr.JobError.Details = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, "DNF Error")
+	jobResult, err := json.Marshal(worker.OSBuildJobResult{JobResult: jobErr})
+	require.NoError(t, err)
+
+	err = wrksrv.FinishJob(token, jobResult)
+	require.NoError(t, err)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {
+			"error": {
+				"details": {
+					"details": null,
+					"id": 22,
+					"reason": "DNF Error"
+				},
+				"id": 9,
+				"reason": "Manifest dependency failed"
+			},
+			"status": "failure"
+		},
+		"status": "failure"
+	}`, jobId, jobId))
+}
+
 func TestComposeCustomizations(t *testing.T) {
 	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
 	defer cancel()
