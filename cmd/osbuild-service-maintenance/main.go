@@ -7,15 +7,11 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
 )
 
 func main() {
 	logrus.SetReportCaller(true)
 
-	archs := []string{"x86_64"}
-	jobType := "osbuild"
 	// 14 days
 	cutoff := time.Now().Add(-(time.Hour * 24 * 14))
 	logrus.Infof("Cutoff date: %v", cutoff)
@@ -90,7 +86,6 @@ func main() {
 		logrus.Info("🦀🦀🦀 DB maintenance not enabled, skipping  🦀🦀🦀")
 		return
 	}
-
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		conf.PGUser,
 		conf.PGPassword,
@@ -99,35 +94,9 @@ func main() {
 		conf.PGDatabase,
 		conf.PGSSLMode,
 	)
-	jobs, err := dbjobqueue.New(dbURL)
+	err = DBCleanup(dbURL, conf.DryRun, cutoff)
 	if err != nil {
-		panic(err)
-	}
-
-	var jobTypes []string
-	for _, a := range archs {
-		jobTypes = append(jobTypes, fmt.Sprintf("%s:%s", jobType, a))
-	}
-
-	jobsByType, err := jobs.JobsUptoByType(jobTypes, cutoff)
-	if err != nil {
-		logrus.Errorf("Error querying jobs: %v", err)
-		return
-	}
-
-	for k, v := range jobsByType {
-		logrus.Infof("Deleting jobs and their dependencies of type %v", k)
-		if conf.DryRun {
-			logrus.Infof("Dry run, skipping deletion of jobs: %v", v)
-			continue
-		}
-
-		for _, jobId := range v {
-			err = jobs.DeleteJobIncludingDependencies(jobId)
-			if err != nil {
-				logrus.Errorf("Error deleting job: %v", jobId)
-			}
-		}
+		logrus.Fatalf("Error during DBCleanup: %v", err)
 	}
 	logrus.Info("🦀🦀🦀 dbqueue cleanup done 🦀🦀🦀")
 }
