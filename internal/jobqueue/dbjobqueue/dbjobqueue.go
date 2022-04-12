@@ -493,6 +493,9 @@ func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, result json.RawMes
 	var sp, fp *time.Time
 	var rp pgtype.JSON
 	err = conn.QueryRow(context.Background(), sqlQueryJobStatus, id).Scan(&jobType, &rp, &queued, &sp, &fp, &canceled)
+	if err == pgx.ErrNoRows {
+		err = jobqueue.ErrNotExist
+	}
 	if err != nil {
 		return
 	}

@@ -127,6 +127,7 @@ build:
 	go test -c -tags=integration -o bin/osbuild-koji-tests ./cmd/osbuild-koji-tests/
 	go test -c -tags=integration -o bin/osbuild-composer-dbjobqueue-tests ./cmd/osbuild-composer-dbjobqueue-tests/
 	go test -c -tags=integration -o bin/osbuild-composer-manifest-tests ./cmd/osbuild-composer-manifest-tests/
+	go test -c -tags=integration -o bin/osbuild-service-maintenance-tests ./cmd/osbuild-service-maintenance
 
 .PHONY: install
 install:
