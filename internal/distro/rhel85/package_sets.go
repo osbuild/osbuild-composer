@@ -15,10 +15,21 @@ import (
 func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
-			"dnf", "dosfstools", "e2fsprogs", "glibc", "lorax-templates-generic",
-			"lorax-templates-rhel", "policycoreutils", "python36",
-			"python3-iniparse", "qemu-img", "selinux-policy-targeted", "systemd",
-			"tar", "xfsprogs", "xz",
+			"dnf",
+			"dosfstools",
+			"e2fsprogs",
+			"glibc",
+			"lorax-templates-generic",
+			"lorax-templates-rhel",
+			"policycoreutils",
+			"python36",
+			"python3-iniparse",
+			"qemu-img",
+			"selinux-policy-targeted",
+			"systemd",
+			"tar",
+			"xfsprogs",
+			"xz",
 		},
 	}
 
