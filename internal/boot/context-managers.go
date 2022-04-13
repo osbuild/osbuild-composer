@@ -139,7 +139,7 @@ func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 				"-nographic",
 				image,
 			)
-		} else if common.CurrentArch() == "aarch64" {
+		} else if common.CurrentArch() == distro.Aarch64ArchName {
 			// This command does not use KVM as I was unable to make it work in Beaker,
 			// once we have machines that can use KVM, enable it to make it faster
 			qemuCmd = ns.NamespacedCommand(

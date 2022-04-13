@@ -1097,7 +1097,7 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename string, forma
 }
 
 func bootloaderConfigStage(t *imageType, partitionTable *disk.PartitionTable, kernel *blueprint.KernelCustomization, kernelVer string) *osbuild.Stage {
-	if t.arch.name == distro.S390xArchName {
+	if t.Arch().Name() == distro.S390xArchName {
 		return osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 	}
 

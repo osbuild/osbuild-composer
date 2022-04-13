@@ -230,7 +230,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	d := t.arch.distro
-	archName := t.arch.name
+	archName := t.Arch().Name()
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ostreeRepoPath := "/ostree/repo"
 	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
@@ -277,7 +277,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	if err != nil {
 		return nil, err
 	}
-	archName := t.arch.name
+	archName := t.Arch().Name()
 	d := t.arch.distro
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "BaseOS", true))
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
@@ -738,7 +738,7 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 
 	// create boot ISO with raw image
 	d := t.arch.distro
-	archName := t.arch.name
+	archName := t.Arch().Name()
 	installerTreePipeline := simplifiedInstallerTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", customizations.GetFDO())
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	efibootTreePipeline := simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, customizations.GetFDO())
@@ -1092,7 +1092,7 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename string, forma
 }
 
 func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, kernelVer string, install, greenboot bool) *osbuild.Stage {
-	if t.arch.name == distro.S390xArchName {
+	if t.Arch().Name() == distro.S390xArchName {
 		return osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 	}
 

@@ -209,9 +209,9 @@ func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolab
 func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
 	var architectures []string
 
-	if arch == "x86_64" {
+	if arch == distro.X86_64ArchName {
 		architectures = []string{"X64"}
-	} else if arch == "aarch64" {
+	} else if arch == distro.Aarch64ArchName {
 		architectures = []string{"AA64"}
 	} else {
 		panic("unsupported architecture")

@@ -62,7 +62,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 }
 
 func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
-	if t.arch.name == distro.S390xArchName {
+	if t.Arch().Name() == distro.S390xArchName {
 		rootFs := pt.FindMountable("/")
 		if rootFs == nil {
 			panic("s390x image must have a root filesystem, this is a programming error")
@@ -1461,9 +1461,9 @@ func simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, arch strin
 
 	var architectures []string
 
-	if arch == "x86_64" {
+	if arch == distro.X86_64ArchName {
 		architectures = []string{"IA32", "X64"}
-	} else if arch == "aarch64" {
+	} else if arch == distro.Aarch64ArchName {
 		architectures = []string{"AA64"}
 	} else {
 		panic("unsupported architecture")
@@ -1705,7 +1705,7 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename string, forma
 }
 
 func bootloaderConfigStage(t *imageType, partitionTable *disk.PartitionTable, kernel *blueprint.KernelCustomization, kernelVer string, install, greenboot bool) *osbuild.Stage {
-	if t.arch.name == distro.S390xArchName {
+	if t.Arch().Name() == distro.S390xArchName {
 		return osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 	}
 

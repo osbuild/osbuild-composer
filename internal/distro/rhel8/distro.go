@@ -166,7 +166,7 @@ func (t *imageType) MIMEType() string {
 
 func (t *imageType) OSTreeRef() string {
 	if t.rpmOstree {
-		return fmt.Sprintf(ostreeRef, t.arch.name)
+		return fmt.Sprintf(ostreeRef, t.Arch().Name())
 	}
 	return ""
 }
@@ -342,7 +342,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	p := &osbuild.Pipeline{}
 	p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel82")
 
-	if t.arch.Name() == "s390x" {
+	if t.arch.Name() == distro.S390xArchName {
 		p.AddStage(osbuild.NewKernelCmdlineStage(&osbuild.KernelCmdlineStageOptions{
 			RootFsUUID: "0bd700f8-090f-4556-b797-b340297ea1bd",
 			KernelOpts: "net.ifnames=0 crashkernel=auto",
@@ -354,7 +354,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 
 	if t.bootable {
 		p.AddStage(osbuild.NewFSTabStage(t.fsTabStageOptions(t.arch.uefi)))
-		if t.arch.Name() != "s390x" {
+		if t.arch.Name() != distro.S390xArchName {
 			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(t.kernelOptions, c.GetKernel(), t.arch.uefi)))
 		}
 	}
@@ -404,7 +404,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.AddStage(osbuild.NewFirewallStage(t.firewallStageOptions(firewall)))
 	}
 
-	if t.arch.Name() == "s390x" {
+	if t.arch.Name() == distro.S390xArchName {
 		p.AddStage(osbuild.NewZiplStage(&osbuild.ZiplStageOptions{}))
 	}
 
@@ -584,7 +584,7 @@ func qemuAssembler(format string, filename string, uefi bool, arch distro.Arch, 
 			},
 		}
 	} else {
-		if arch.Name() == "ppc64le" {
+		if arch.Name() == distro.Ppc64leArchName {
 			options = osbuild.QEMUAssemblerOptions{
 				Bootloader: &osbuild.QEMUBootloader{
 					Type:     "grub2",
@@ -612,7 +612,7 @@ func qemuAssembler(format string, filename string, uefi bool, arch distro.Arch, 
 					},
 				},
 			}
-		} else if arch.Name() == "s390x" {
+		} else if arch.Name() == distro.S390xArchName {
 			options = osbuild.QEMUAssemblerOptions{
 				Bootloader: &osbuild.QEMUBootloader{
 					Type: "zipl",

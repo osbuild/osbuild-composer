@@ -308,7 +308,7 @@ func TestImageType_Name(t *testing.T) {
 	for _, dist := range rhelFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
-				if mapping.arch == "s390x" && dist.name == "centos" {
+				if mapping.arch == distro.S390xArchName && dist.name == "centos" {
 					continue
 				}
 				arch, err := dist.distro.GetArch(mapping.arch)
