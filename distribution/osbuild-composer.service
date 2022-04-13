@@ -8,6 +8,9 @@ After=network.target
 # to disable it.
 Wants=osbuild-worker@1.service
 
+# This unit should be started only via a socket unit
+RefuseManualStart=true
+
 [Service]
 Type=simple
 ExecStart=/usr/libexec/osbuild-composer/osbuild-composer
