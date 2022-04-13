@@ -12,8 +12,8 @@ import (
 func main() {
 	logrus.SetReportCaller(true)
 
-	// 14 days
-	cutoff := time.Now().Add(-(time.Hour * 24 * 14))
+	// 15 days
+	cutoff := time.Now().Add(-(time.Hour * 24 * 15))
 	logrus.Infof("Cutoff date: %v", cutoff)
 
 	var conf Config
