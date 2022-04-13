@@ -278,7 +278,7 @@ func (t *imageType) MIMEType() string {
 func (t *imageType) OSTreeRef() string {
 	d := t.arch.distro
 	if t.rpmOstree {
-		return fmt.Sprintf(d.ostreeRefTmpl, t.arch.name)
+		return fmt.Sprintf(d.ostreeRefTmpl, t.Arch().Name())
 	}
 	return ""
 }

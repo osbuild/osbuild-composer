@@ -220,7 +220,7 @@ func TestImageType_Name(t *testing.T) {
 	for _, dist := range rhelFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
-				if mapping.arch == "s390x" && dist.name == "centos" {
+				if mapping.arch == distro.S390xArchName && dist.name == "centos" {
 					continue
 				}
 				arch, err := dist.distro.GetArch(mapping.arch)
@@ -443,7 +443,7 @@ func TestDistro_ManifestError(t *testing.T) {
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
-			if archName == "s390x" && imgTypeName == "tar" {
+			if archName == distro.S390xArchName && imgTypeName == "tar" {
 				// broken arch-imgType combination; see
 				// https://github.com/osbuild/osbuild-composer/issues/1220
 				continue
@@ -514,7 +514,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 	for _, dist := range rhelFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
-				if mapping.arch == "s390x" && dist.name == "centos" {
+				if mapping.arch == distro.S390xArchName && dist.name == "centos" {
 					continue
 				}
 				arch, err := dist.distro.GetArch(mapping.arch)
@@ -623,7 +623,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			for _, archName := range d.ListArches() {
 				arch, _ := d.GetArch(archName)
 				for _, imgTypeName := range arch.ListImageTypes() {
-					if (archName == "s390x" && imgTypeName == "tar") || imgTypeName == "rhel-edge-installer" {
+					if (archName == distro.S390xArchName && imgTypeName == "tar") || imgTypeName == "rhel-edge-installer" {
 						continue
 					}
 					imgType, _ := arch.GetImageType(imgTypeName)
@@ -660,7 +660,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			for _, archName := range d.ListArches() {
 				arch, _ := d.GetArch(archName)
 				for _, imgTypeName := range arch.ListImageTypes() {
-					if (archName == "s390x" && imgTypeName == "tar") || imgTypeName == "rhel-edge-installer" {
+					if (archName == distro.S390xArchName && imgTypeName == "tar") || imgTypeName == "rhel-edge-installer" {
 						continue
 					}
 					imgType, _ := arch.GetImageType(imgTypeName)

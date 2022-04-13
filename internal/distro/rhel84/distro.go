@@ -200,7 +200,7 @@ func (t *imageType) MIMEType() string {
 
 func (t *imageType) OSTreeRef() string {
 	if t.rpmOstree {
-		return fmt.Sprintf(ostreeRef, t.arch.name)
+		return fmt.Sprintf(ostreeRef, t.Arch().Name())
 	}
 	return ""
 }
@@ -407,7 +407,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.SetBuild(t.buildPipeline(repos, *t.arch, buildPackageSpecs), "org.osbuild.rhel84")
 	}
 
-	if t.arch.Name() == "s390x" {
+	if t.arch.Name() == distro.S390xArchName {
 		if pt == nil {
 			panic("s390x image must have a partition table, this is a programming error")
 		}
@@ -431,7 +431,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 	}
 
 	if t.bootable {
-		if t.arch.Name() != "s390x" {
+		if t.arch.Name() != distro.S390xArchName {
 			p.AddStage(osbuild.NewGRUB2Stage(t.grub2StageOptions(pt, t.kernelOptions, c.GetKernel(), packageSpecs, t.arch.uefi, t.arch.legacy)))
 		}
 	}
@@ -483,7 +483,7 @@ func (t *imageType) pipeline(c *blueprint.Customizations, options distro.ImageOp
 		p.AddStage(osbuild.NewFirewallStage(t.firewallStageOptions(firewall)))
 	}
 
-	if t.arch.Name() == "s390x" {
+	if t.arch.Name() == distro.S390xArchName {
 		p.AddStage(osbuild.NewZiplStage(&osbuild.ZiplStageOptions{}))
 	}
 
@@ -653,7 +653,7 @@ func (t *imageType) selinuxStageOptions() *osbuild.SELinuxStageOptions {
 }
 
 func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) disk.PartitionTable {
-	if arch.Name() == "x86_64" {
+	if arch.Name() == distro.X86_64ArchName {
 		return disk.PartitionTable{
 			Size: imageSize,
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
@@ -696,7 +696,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 				},
 			},
 		}
-	} else if arch.Name() == "aarch64" {
+	} else if arch.Name() == distro.Aarch64ArchName {
 		return disk.PartitionTable{
 			Size: imageSize,
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
@@ -732,7 +732,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 				},
 			},
 		}
-	} else if arch.Name() == "ppc64le" {
+	} else if arch.Name() == distro.Ppc64leArchName {
 		return disk.PartitionTable{
 			Size: imageSize,
 			UUID: "0x14fc63d2",
@@ -756,7 +756,7 @@ func defaultPartitionTable(imageSize uint64, arch distro.Arch, rng *rand.Rand) d
 				},
 			},
 		}
-	} else if arch.Name() == "s390x" {
+	} else if arch.Name() == distro.S390xArchName {
 		return disk.PartitionTable{
 			Size: imageSize,
 			UUID: "0x14fc63d2",
@@ -793,12 +793,12 @@ func qemuAssembler(pt *disk.PartitionTable, format string, filename string, imag
 		options.Bootloader = &osbuild.QEMUBootloader{
 			Type: "grub2",
 		}
-	} else if arch.Name() == "ppc64le" {
+	} else if arch.Name() == distro.Ppc64leArchName {
 		options.Bootloader = &osbuild.QEMUBootloader{
 			Type:     "grub2",
 			Platform: "powerpc-ieee1275",
 		}
-	} else if arch.Name() == "s390x" {
+	} else if arch.Name() == distro.S390xArchName {
 		options.Bootloader = &osbuild.QEMUBootloader{
 			Type: "zipl",
 		}

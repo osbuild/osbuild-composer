@@ -60,7 +60,7 @@ func (t *imageTypeS2) MIMEType() string {
 
 func (t *imageTypeS2) OSTreeRef() string {
 	if t.rpmOstree {
-		return fmt.Sprintf(ostreeRef, t.arch.name)
+		return fmt.Sprintf(ostreeRef, t.Arch().Name())
 	}
 	return ""
 }

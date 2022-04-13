@@ -223,7 +223,7 @@ func (t *imageType) MIMEType() string {
 
 func (t *imageType) OSTreeRef() string {
 	if t.rpmOstree {
-		return fmt.Sprintf(ostreeRef, t.arch.name)
+		return fmt.Sprintf(ostreeRef, t.Arch().Name())
 	}
 	return ""
 }
