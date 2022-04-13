@@ -104,21 +104,18 @@ const (
 	sqlQueryJobsUptoByType = `
                 SELECT array_agg(id), type
                 FROM jobs
-                WHERE type = ANY($1) AND finished_at < $2
+                WHERE type = ANY($1) AND queued_at < $2
                 GROUP BY type`
-	sqlQueryDepedenciesRecursively = `
+	sqlQueryDepedendantsRecursively = `
                 WITH RECURSIVE dependencies(d) AS (
-                                SELECT dependency_id
+                                SELECT job_id
                                 FROM job_dependencies
-                                WHERE job_id = $1
-                                UNION ALL
-                                SELECT dependency_id
+                                WHERE dependency_id = $1
+                                UNION
+                                SELECT job_id
                                 FROM dependencies, job_dependencies
-                                WHERE job_dependencies.job_id = d  )
+                                WHERE job_dependencies.dependency_id = d)
                 SELECT * FROM dependencies`
-	sqlDeleteJobDependencies = `
-                DELETE FROM job_dependencies
-                WHERE dependency_id = ANY($1)`
 	sqlDeleteJobs = `
                 DELETE FROM jobs
                 WHERE id = ANY($1)`
@@ -658,7 +655,7 @@ func (q *DBJobQueue) JobsUptoByType(jobTypes []string, upto time.Time) (result m
 }
 
 // Deletes single job and dependencies (recursively)
-func (q *DBJobQueue) DeleteJobIncludingDependencies(jobId uuid.UUID) error {
+func (q *DBJobQueue) DeleteJobIncludingDependants(jobId uuid.UUID) error {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 
@@ -677,7 +674,7 @@ func (q *DBJobQueue) DeleteJobIncludingDependencies(jobId uuid.UUID) error {
 		}
 	}()
 
-	rows, err := tx.Query(context.Background(), sqlQueryDepedenciesRecursively, jobId)
+	rows, err := tx.Query(context.Background(), sqlQueryDepedendantsRecursively, jobId)
 	if err != nil {
 		return fmt.Errorf("error querying the job's dependencies: %v", err)
 	}
@@ -693,11 +690,6 @@ func (q *DBJobQueue) DeleteJobIncludingDependencies(jobId uuid.UUID) error {
 		dependencies = append(dependencies, dep)
 	}
 
-	depTag, err := tx.Exec(context.Background(), sqlDeleteJobDependencies, dependencies)
-	if err != nil {
-		return fmt.Errorf("Error removing from dependencies recursively for job %v: %v", jobId, err)
-	}
-
 	jobAndDependencies := append(dependencies, jobId)
 	jobsTag, err := tx.Exec(context.Background(), sqlDeleteJobs, jobAndDependencies)
 	if err != nil {
@@ -709,7 +701,6 @@ func (q *DBJobQueue) DeleteJobIncludingDependencies(jobId uuid.UUID) error {
 		return fmt.Errorf("unable to commit database transaction: %v", err)
 	}
 
-	logrus.Infof("Removed %d rows from dependencies for job %v", depTag.RowsAffected(), jobId)
-	logrus.Infof("Removed %d rows from jobs for job %v, this includes dependencies", jobsTag.RowsAffected(), jobId)
+	logrus.Infof("Removed %d rows from jobs for job %v, this includes dependants %v", jobsTag.RowsAffected(), jobId, dependencies)
 	return nil
 }

@@ -10,33 +10,26 @@ import (
 )
 
 func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
-	archs := []string{"x86_64"}
-	jobType := "osbuild"
-
 	jobs, err := dbjobqueue.New(dbURL)
 	if err != nil {
 		return err
 	}
 
-	var jobTypes []string
-	for _, a := range archs {
-		jobTypes = append(jobTypes, fmt.Sprintf("%s:%s", jobType, a))
-	}
-
-	jobsByType, err := jobs.JobsUptoByType(jobTypes, cutoff)
+	// Query 'root' jobs
+	jobsByType, err := jobs.JobsUptoByType([]string{"depsolve", "koji-init"}, cutoff)
 	if err != nil {
 		return fmt.Errorf("Error querying jobs: %v", err)
 	}
 
 	for k, v := range jobsByType {
-		logrus.Infof("Deleting jobs and their dependencies of type %v", k)
+		logrus.Infof("Deleting %d %s jobs and their dependants", len(v), k)
 		if dryRun {
-			logrus.Infof("Dry run, skipping deletion of jobs: %v", v)
+			logrus.Info("Dry run, skipping deletion of jobs")
 			continue
 		}
 
 		for _, jobId := range v {
-			err = jobs.DeleteJobIncludingDependencies(jobId)
+			err = jobs.DeleteJobIncludingDependants(jobId)
 			if err != nil {
 				return fmt.Errorf("Error deleting job: %v", jobId)
 			}

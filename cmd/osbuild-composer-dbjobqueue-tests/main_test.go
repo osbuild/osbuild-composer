@@ -65,15 +65,12 @@ func TestJobQueueInterface(t *testing.T) {
 	t.Run("maintenance-delete-job-and-dependencies", wrap(testDeleteJobAndDependencies))
 }
 
-func setFinishedAt(t *testing.T, q *dbjobqueue.DBJobQueue, id uuid.UUID, finished time.Time) {
+func setQueuedAt(t *testing.T, q *dbjobqueue.DBJobQueue, id uuid.UUID, queued time.Time) {
 	conn, err := pgx.Connect(context.Background(), url)
 	require.NoError(t, err)
 	defer conn.Close(context.Background())
 
-	started := finished.Add(-time.Second)
-	queued := started.Add(-time.Second)
-
-	_, err = conn.Exec(context.Background(), "UPDATE jobs SET queued_at = $1, started_at = $2, finished_at = $3 WHERE id = $4", queued, started, finished, id)
+	_, err = conn.Exec(context.Background(), "UPDATE jobs SET queued_at = $1 WHERE id = $2", queued, id)
 	require.NoError(t, err)
 }
 
@@ -89,7 +86,7 @@ func testJobsUptoByType(t *testing.T, q *dbjobqueue.DBJobQueue) {
 	require.NoError(t, err)
 	err = q.FinishJob(id80, nil)
 	require.NoError(t, err)
-	setFinishedAt(t, q, id80, date80)
+	setQueuedAt(t, q, id80, date80)
 
 	id85, err := q.Enqueue("octopus", nil, nil, "")
 	require.NoError(t, err)
@@ -98,7 +95,7 @@ func testJobsUptoByType(t *testing.T, q *dbjobqueue.DBJobQueue) {
 	require.NoError(t, err)
 	err = q.FinishJob(id85, nil)
 	require.NoError(t, err)
-	setFinishedAt(t, q, id85, date85)
+	setQueuedAt(t, q, id85, date85)
 
 	ids, err := q.JobsUptoByType([]string{"octopus"}, date85)
 	require.NoError(t, err)
@@ -135,7 +132,7 @@ func testDeleteJobAndDependencies(t *testing.T, q *dbjobqueue.DBJobQueue) {
 	_, _, _, _, err = q.Job(c1)
 	require.NoError(t, err)
 
-	require.NoError(t, q.DeleteJobIncludingDependencies(id3))
+	require.NoError(t, q.DeleteJobIncludingDependants(id1))
 	for _, id := range []uuid.UUID{id1, id2, id3} {
 		_, _, _, _, err = q.Job(id)
 		require.ErrorIs(t, err, jobqueue.ErrNotExist)
@@ -161,7 +158,8 @@ func testDeleteJobAndDependencies(t *testing.T, q *dbjobqueue.DBJobQueue) {
 	require.NoError(t, err)
 	require.NotEqual(t, uuid.Nil, id4)
 
-	require.NoError(t, q.DeleteJobIncludingDependencies(id4))
+	require.NoError(t, q.DeleteJobIncludingDependants(id1))
+	require.NoError(t, q.DeleteJobIncludingDependants(id3))
 	for _, id := range []uuid.UUID{id1, id2, id3, id4} {
 		_, _, _, _, err = q.Job(id)
 		require.ErrorIs(t, err, jobqueue.ErrNotExist)
@@ -173,10 +171,9 @@ func testDeleteJobAndDependencies(t *testing.T, q *dbjobqueue.DBJobQueue) {
 		require.NoError(t, err)
 	}
 
-	// id1 has 2 dependants, and the maintenance queries currently do not account for this
-	// situation as it does not occur in the service.  This should be changed once we allow
-	// multiple build job per depsolve job, and the depsolve job should only be removed once all
-	// the build jobs have been dealt with.
+	// multiple branches depend on id1
+	// id1 -> id2a -> id3
+	//     -> id2b
 	id1, err = q.Enqueue("octopus", nil, nil, "")
 	require.NoError(t, err)
 	require.NotEqual(t, uuid.Nil, id1)
@@ -190,20 +187,11 @@ func testDeleteJobAndDependencies(t *testing.T, q *dbjobqueue.DBJobQueue) {
 	require.NoError(t, err)
 	require.NotEqual(t, uuid.Nil, id3)
 
-	require.NoError(t, q.DeleteJobIncludingDependencies(id3))
-	for _, id := range []uuid.UUID{id1, id2a, id3} {
+	require.NoError(t, q.DeleteJobIncludingDependants(id1))
+	for _, id := range []uuid.UUID{id1, id2a, id2b, id3} {
 		_, _, _, _, err = q.Job(id)
 		require.ErrorIs(t, err, jobqueue.ErrNotExist)
 	}
-
-	// id2b still exists
-	_, _, _, _, err = q.Job(id2b)
-	require.NoError(t, err)
-
-	// id2b can still be deleted with it's dependencies missing
-	require.NoError(t, q.DeleteJobIncludingDependencies(id2b))
-	_, _, _, _, err = q.Job(id2b)
-	require.ErrorIs(t, err, jobqueue.ErrNotExist)
 
 	// controls should still exist
 	for _, c := range controls {
@@ -211,7 +199,7 @@ func testDeleteJobAndDependencies(t *testing.T, q *dbjobqueue.DBJobQueue) {
 		require.NoError(t, err)
 	}
 
-	require.NoError(t, q.DeleteJobIncludingDependencies(uuid.Nil))
+	require.NoError(t, q.DeleteJobIncludingDependants(uuid.Nil))
 	// controls should still exist
 	for _, c := range controls {
 		_, _, _, _, err = q.Job(c)
