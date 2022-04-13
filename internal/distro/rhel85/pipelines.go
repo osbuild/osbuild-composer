@@ -19,12 +19,12 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
 		return nil, err
 	}
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -76,12 +76,11 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *dis
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
 		return nil, err
 	}
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -107,12 +106,12 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
 		return nil, err
 	}
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -138,12 +137,12 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
 		return nil, err
 	}
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -896,7 +895,7 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -936,7 +935,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1064,12 +1063,21 @@ func osPipeline(t *imageType,
 	repos []rpmmd.RepoConfig,
 	packages []rpmmd.PackageSpec,
 	c *blueprint.Customizations,
-	options distro.ImageOptions) (*osbuild.Pipeline, error) {
+	options distro.ImageOptions,
+	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
 	p.Build = "name:build"
 	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
-	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
+	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
+	if pt == nil || pt.FindMountable("/boot") == nil {
+		// NOTE(akoutsou): this is technically not needed when pt == nil, but
+		// it was done unconditionally before, so we should keep the image
+		// definitions the same
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
+	} else {
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+	}
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))

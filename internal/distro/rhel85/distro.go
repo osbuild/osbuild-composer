@@ -268,6 +268,24 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 		bpPackages = append(bpPackages, "chrony")
 	}
 
+	// if we have file system customization that will need to a new mount point
+	// the layout is converted to LVM so we need to corresponding packages
+	if !t.rpmOstree {
+		archName := t.arch.Name()
+		pt := t.basePartitionTables[archName]
+		haveNewMountpoint := false
+
+		if fs := bp.Customizations.GetFilesystems(); fs != nil {
+			for i := 0; !haveNewMountpoint && i < len(fs); i++ {
+				haveNewMountpoint = !pt.ContainsMountpoint(fs[i].Mountpoint)
+			}
+		}
+
+		if haveNewMountpoint {
+			bpPackages = append(bpPackages, "lvm2")
+		}
+	}
+
 	// depsolve bp packages separately
 	// bp packages aren't restricted by exclude lists
 	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
@@ -331,8 +349,9 @@ func (t *imageType) getPartitionTable(
 	}
 
 	imageSize := t.Size(options.Size)
+	lvmify := !t.rpmOstree
 
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, false, rng)
+	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, lvmify, rng)
 }
 
 func (t *imageType) PartitionType() string {
