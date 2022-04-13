@@ -106,21 +106,9 @@ const (
                 FROM jobs
                 WHERE type = ANY($1) AND finished_at < $2
                 GROUP BY type`
-	sqlQueryDepedenciesRecursively = `
-                WITH RECURSIVE dependencies(d) AS (
-                                SELECT dependency_id
-                                FROM job_dependencies
-                                WHERE job_id = $1
-                                UNION ALL
-                                SELECT dependency_id
-                                FROM dependencies, job_dependencies
-                                WHERE job_dependencies.job_id = d  )
-                SELECT * FROM dependencies`
-	sqlDeleteJobDependencies = `
-                DELETE FROM job_dependencies
-                WHERE dependency_id = ANY($1)`
-	sqlDeleteJobs = `
-                DELETE FROM jobs
+	sqlDeleteJobResult = `
+                UPDATE jobs
+                SET result = NULL
                 WHERE id = ANY($1)`
 )
 
@@ -657,59 +645,16 @@ func (q *DBJobQueue) JobsUptoByType(jobTypes []string, upto time.Time) (result m
 	return
 }
 
-// Deletes single job and dependencies (recursively)
-func (q *DBJobQueue) DeleteJobIncludingDependencies(jobId uuid.UUID) error {
+func (q *DBJobQueue) DeleteJobResult(jobIds []uuid.UUID) (int64, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
-
-		return fmt.Errorf("error connecting to database: %v", err)
+		return -1, fmt.Errorf("error connecting to database: %v", err)
 	}
 	defer conn.Release()
 
-	tx, err := conn.Begin(context.Background())
+	tag, err := conn.Exec(context.Background(), sqlDeleteJobResult, jobIds)
 	if err != nil {
-		return fmt.Errorf("error starting database transaction: %v", err)
+		return tag.RowsAffected(), fmt.Errorf("Error deleting results from jobs: %v", err)
 	}
-	defer func() {
-		err := tx.Rollback(context.Background())
-		if err != nil && !errors.As(err, &pgx.ErrTxClosed) {
-			logrus.Error("error rolling back enqueue transaction: ", err)
-		}
-	}()
-
-	rows, err := tx.Query(context.Background(), sqlQueryDepedenciesRecursively, jobId)
-	if err != nil {
-		return fmt.Errorf("error querying the job's dependencies: %v", err)
-	}
-
-	var dependencies []uuid.UUID
-	for rows.Next() {
-		var dep uuid.UUID
-		err = rows.Scan(&dep)
-		if err != nil {
-			return err
-		}
-
-		dependencies = append(dependencies, dep)
-	}
-
-	depTag, err := tx.Exec(context.Background(), sqlDeleteJobDependencies, dependencies)
-	if err != nil {
-		return fmt.Errorf("Error removing from dependencies recursively for job %v: %v", jobId, err)
-	}
-
-	jobAndDependencies := append(dependencies, jobId)
-	jobsTag, err := tx.Exec(context.Background(), sqlDeleteJobs, jobAndDependencies)
-	if err != nil {
-		return fmt.Errorf("Error removing from jobs recursively for job %v: %v", jobId, err)
-	}
-
-	err = tx.Commit(context.Background())
-	if err != nil {
-		return fmt.Errorf("unable to commit database transaction: %v", err)
-	}
-
-	logrus.Infof("Removed %d rows from dependencies for job %v", depTag.RowsAffected(), jobId)
-	logrus.Infof("Removed %d rows from jobs for job %v, this includes dependencies", jobsTag.RowsAffected(), jobId)
-	return nil
+	return tag.RowsAffected(), nil
 }

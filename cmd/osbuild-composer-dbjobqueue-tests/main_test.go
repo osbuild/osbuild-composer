@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -62,7 +63,7 @@ func TestJobQueueInterface(t *testing.T) {
 	}
 
 	t.Run("maintenance-query-jobs-before", wrap(testJobsUptoByType))
-	t.Run("maintenance-delete-job-and-dependencies", wrap(testDeleteJobAndDependencies))
+	t.Run("maintenance-delete-job-results", wrap(testDeleteJobResult))
 }
 
 func setFinishedAt(t *testing.T, q *dbjobqueue.DBJobQueue, id uuid.UUID, finished time.Time) {
@@ -109,112 +110,37 @@ func testJobsUptoByType(t *testing.T, q *dbjobqueue.DBJobQueue) {
 	require.ElementsMatch(t, []uuid.UUID{id80, id85}, ids["octopus"])
 }
 
-func testDeleteJobAndDependencies(t *testing.T, q *dbjobqueue.DBJobQueue) {
-	// id1 -> id2 -> id3
-	id1, err := q.Enqueue("octopus", nil, nil, "")
+func testDeleteJobResult(t *testing.T, q *dbjobqueue.DBJobQueue) {
+	id, err := q.Enqueue("octopus", nil, nil, "")
 	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id1)
-	id2, err := q.Enqueue("octopus", nil, []uuid.UUID{id1}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id2)
-	id3, err := q.Enqueue("octopus", nil, []uuid.UUID{id2}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id3)
-
-	c1, err := q.Enqueue("octopus", nil, nil, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, c1)
-	c2, err := q.Enqueue("octopus", nil, []uuid.UUID{c1}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, c2)
-	c3, err := q.Enqueue("octopus", nil, []uuid.UUID{c2}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, c3)
-	controls := []uuid.UUID{c1, c2, c3}
-
-	_, _, _, _, err = q.Job(c1)
+	require.NotEqual(t, uuid.Nil, id)
+	_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
 	require.NoError(t, err)
 
-	require.NoError(t, q.DeleteJobIncludingDependencies(id3))
-	for _, id := range []uuid.UUID{id1, id2, id3} {
-		_, _, _, _, err = q.Job(id)
-		require.ErrorIs(t, err, jobqueue.ErrNotExist)
+	type Result struct {
+		Result string `json:"result"`
+	}
+	result := Result{
+		"deleteme",
 	}
 
-	// controls should still exist
-	for _, c := range controls {
-		_, _, _, _, err = q.Job(c)
-		require.NoError(t, err)
-	}
-
-	// id1 -> id2 -> id4 && id3 -> id4
-	id1, err = q.Enqueue("octopus", nil, nil, "")
+	res, err := json.Marshal(result)
 	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id1)
-	id2, err = q.Enqueue("octopus", nil, []uuid.UUID{id1}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id2)
-	id3, err = q.Enqueue("octopus", nil, nil, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id3)
-	id4, err := q.Enqueue("octopus", nil, []uuid.UUID{id2, id3}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id4)
-
-	require.NoError(t, q.DeleteJobIncludingDependencies(id4))
-	for _, id := range []uuid.UUID{id1, id2, id3, id4} {
-		_, _, _, _, err = q.Job(id)
-		require.ErrorIs(t, err, jobqueue.ErrNotExist)
-	}
-
-	// controls should still exist
-	for _, c := range controls {
-		_, _, _, _, err = q.Job(c)
-		require.NoError(t, err)
-	}
-
-	// id1 has 2 dependants, and the maintenance queries currently do not account for this
-	// situation as it does not occur in the service.  This should be changed once we allow
-	// multiple build job per depsolve job, and the depsolve job should only be removed once all
-	// the build jobs have been dealt with.
-	id1, err = q.Enqueue("octopus", nil, nil, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id1)
-	id2a, err := q.Enqueue("octopus", nil, []uuid.UUID{id1}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id2a)
-	id2b, err := q.Enqueue("octopus", nil, []uuid.UUID{id1}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id2b)
-	id3, err = q.Enqueue("octopus", nil, []uuid.UUID{id2a}, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id3)
-
-	require.NoError(t, q.DeleteJobIncludingDependencies(id3))
-	for _, id := range []uuid.UUID{id1, id2a, id3} {
-		_, _, _, _, err = q.Job(id)
-		require.ErrorIs(t, err, jobqueue.ErrNotExist)
-	}
-
-	// id2b still exists
-	_, _, _, _, err = q.Job(id2b)
+	err = q.FinishJob(id, res)
 	require.NoError(t, err)
 
-	// id2b can still be deleted with it's dependencies missing
-	require.NoError(t, q.DeleteJobIncludingDependencies(id2b))
-	_, _, _, _, err = q.Job(id2b)
-	require.ErrorIs(t, err, jobqueue.ErrNotExist)
+	_,r,_,_,_,_,_,err := q.JobStatus(id)
+	require.NoError(t, err)
 
-	// controls should still exist
-	for _, c := range controls {
-		_, _, _, _, err = q.Job(c)
-		require.NoError(t, err)
-	}
+	var r1 Result
+	require.NoError(t, json.Unmarshal(r, &r1))
+	require.Equal(t, result, r1)
 
-	require.NoError(t, q.DeleteJobIncludingDependencies(uuid.Nil))
-	// controls should still exist
-	for _, c := range controls {
-		_, _, _, _, err = q.Job(c)
-		require.NoError(t, err)
-	}
+	rows, err := q.DeleteJobResult([]uuid.UUID{id})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), rows)
+
+	_,r,_,_,_,_,_,err = q.JobStatus(id)
+	require.NoError(t, err)
+	require.Nil(t, r)
 }

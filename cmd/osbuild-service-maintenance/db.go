@@ -10,37 +10,31 @@ import (
 )
 
 func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
-	archs := []string{"x86_64"}
-	jobType := "osbuild"
-
 	jobs, err := dbjobqueue.New(dbURL)
 	if err != nil {
 		return err
 	}
 
-	var jobTypes []string
-	for _, a := range archs {
-		jobTypes = append(jobTypes, fmt.Sprintf("%s:%s", jobType, a))
-	}
-
-	jobsByType, err := jobs.JobsUptoByType(jobTypes, cutoff)
+	// The results of these jobs take up the most space and can contain sensitive data. Delete
+	// them after a while.
+	jobsByType, err := jobs.JobsUptoByType([]string{"manifest-id-only", "depsolve"}, cutoff)
 	if err != nil {
 		return fmt.Errorf("Error querying jobs: %v", err)
 	}
 
 	for k, v := range jobsByType {
-		logrus.Infof("Deleting jobs and their dependencies of type %v", k)
+		logrus.Infof("Deleting results from %d %s jobs", len(v), k)
 		if dryRun {
-			logrus.Infof("Dry run, skipping deletion of jobs: %v", v)
+			logrus.Info("Dry run, skipping deletion of jobs")
 			continue
 		}
-
-		for _, jobId := range v {
-			err = jobs.DeleteJobIncludingDependencies(jobId)
-			if err != nil {
-				return fmt.Errorf("Error deleting job: %v", jobId)
-			}
+		rows, err := jobs.DeleteJobResult(v)
+		if err != nil {
+			logrus.Errorf("Error deleting results for jobs: %v, %d rows affected", rows, err)
+			continue
 		}
+		logrus.Infof("Deleted results from %d jobs out of %d job ids", rows, len(v))
 	}
+
 	return nil
 }
