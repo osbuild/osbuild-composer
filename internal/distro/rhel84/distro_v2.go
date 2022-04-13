@@ -466,7 +466,7 @@ func (t *imageTypeS2) anacondaTreePipeline(repos []rpmmd.RepoConfig, customizati
 	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(nUsers)))
 	p.AddStage(osbuild.NewLoraxScriptStage(t.loraxScriptStageOptions()))
 	p.AddStage(osbuild.NewDracutStage(t.dracutStageOptions(kernelVer)))
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref, "rhel")
 	if err != nil {
 		return nil, err
 	}

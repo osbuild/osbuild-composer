@@ -6,29 +6,13 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 const (
 	kspath = "/osbuild.ks"
 )
-
-func rpmStageOptions(repos []rpmmd.RepoConfig) *osbuild.RPMStageOptions {
-	var gpgKeys []string
-	for _, repo := range repos {
-		if repo.GPGKey == "" {
-			continue
-		}
-		gpgKeys = append(gpgKeys, repo.GPGKey)
-	}
-
-	return &osbuild.RPMStageOptions{
-		GPGKeys: gpgKeys,
-	}
-}
 
 // selinuxStageOptions returns the options for the org.osbuild.selinux stage.
 // Setting the argument to 'true' relabels the '/usr/bin/cp'
@@ -43,39 +27,6 @@ func selinuxStageOptions(labelcp bool) *osbuild.SELinuxStageOptions {
 		}
 	}
 	return options
-}
-
-func userStageOptions(users []blueprint.UserCustomization) (*osbuild.UsersStageOptions, error) {
-	options := osbuild.UsersStageOptions{
-		Users: make(map[string]osbuild.UsersStageOptionsUser),
-	}
-
-	for _, c := range users {
-		if c.Password != nil && !crypt.PasswordIsCrypted(*c.Password) {
-			cryptedPassword, err := crypt.CryptSHA512(*c.Password)
-			if err != nil {
-				return nil, err
-			}
-
-			c.Password = &cryptedPassword
-		}
-
-		user := osbuild.UsersStageOptionsUser{
-			Groups:      c.Groups,
-			Description: c.Description,
-			Home:        c.Home,
-			Shell:       c.Shell,
-			Password:    c.Password,
-			Key:         c.Key,
-		}
-
-		user.UID = c.UID
-		user.GID = c.GID
-
-		options.Users[c.Name] = user
-	}
-
-	return &options, nil
 }
 
 func usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuild.FirstBootStageOptions {
@@ -148,16 +99,6 @@ func buildStampStageOptions(arch, product, osVersion, variant string) *osbuild.B
 	}
 }
 
-func anacondaStageOptions() *osbuild.AnacondaStageOptions {
-	return &osbuild.AnacondaStageOptions{
-		KickstartModules: []string{
-			"org.fedoraproject.Anaconda.Modules.Network",
-			"org.fedoraproject.Anaconda.Modules.Payloads",
-			"org.fedoraproject.Anaconda.Modules.Storage",
-		},
-	}
-}
-
 func loraxScriptStageOptions(arch string) *osbuild.LoraxScriptStageOptions {
 	return &osbuild.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
@@ -216,18 +157,6 @@ func dracutStageOptions(kernelVer, arch string, additionalModules []string) *osb
 		Kernel:  kernel,
 		Modules: modules,
 		Install: []string{"/.buildstamp"},
-	}
-}
-
-func ostreeKickstartStageOptions(ostreeURL, ostreeRef string) *osbuild.KickstartStageOptions {
-	return &osbuild.KickstartStageOptions{
-		Path: kspath,
-		OSTree: &osbuild.OSTreeOptions{
-			OSName: "fedora",
-			URL:    ostreeURL,
-			Ref:    ostreeRef,
-			GPG:    false,
-		},
 	}
 }
 

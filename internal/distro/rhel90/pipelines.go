@@ -234,7 +234,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ostreeRepoPath := "/ostree/repo"
 	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), makeISORootPath(ostreeRepoPath), options.OSTree.Ref)
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), makeISORootPath(ostreeRepoPath), options.OSTree.Ref, "rhel")
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +273,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 
 	tarPath := "/liveimg.tar"
 	tarPayloadStages := []*osbuild.Stage{osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, osbuild.NewTarStagePipelineTreeInputs(treePipeline.Name))}
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "")
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "", "rhel")
 	if err != nil {
 		return nil, err
 	}

@@ -626,7 +626,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 
 	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), ostreePayloadStages(options, ostreeRepoPath), ksUsers))
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref)
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), fmt.Sprintf("file://%s", ostreeRepoPath), options.OSTree.Ref, "rhel")
 	if err != nil {
 		return nil, err
 	}
@@ -664,7 +664,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	tarPath := "/liveimg.tar"
 	tarPayloadStages := []*osbuild.Stage{tarStage("os", tarPath)}
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, t.Arch().Name(), tarPayloadStages, true))
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, fmt.Sprintf("file://%s", tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "")
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, fmt.Sprintf("file://%s", tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "", "rhel")
 	if err != nil {
 		return nil, err
 	}

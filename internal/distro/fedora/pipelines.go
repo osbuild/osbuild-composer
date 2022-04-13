@@ -171,8 +171,12 @@ func iotInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ostreeRepoPath := "/ostree/repo"
 	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
-	kickstartOptions := ostreeKickstartStageOptions(makeISORootPath(ostreeRepoPath), options.OSTree.Ref)
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "iot"))
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), makeISORootPath(ostreeRepoPath), options.OSTree.Ref, "fedora")
+	if err != nil {
+		return nil, err
+	}
+	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "iot", ksUsers))
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, payloadStages))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, archName, false))
@@ -225,7 +229,7 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 	p := new(osbuild.Pipeline)
 	p.Name = "build"
 	p.Runner = runner
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(buildPackageSpecs)))
+	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(buildPackageSpecs)))
 	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(true)))
 	return p
 }
@@ -251,7 +255,8 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
 	}
 
-	rpmOptions := rpmStageOptions(repos)
+	rpmOptions := osbuild.NewRPMStageOptions(repos)
+	rpmOptions.GPGKeysFromTree = imageConfig.GPGKeyFiles
 	p.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(packages)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
@@ -292,37 +297,29 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
 	}
 
-	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
-	}
-
-	if users := c.GetUsers(); len(users) > 0 {
-		userOptions, err := userStageOptions(users)
-		if err != nil {
-			return nil, err
+	if !t.bootISO {
+		// don't put users and groups in the payload of an installer
+		// add them via kickstart instead
+		if groups := c.GetGroups(); len(groups) > 0 {
+			p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
 		}
-		if t.rpmOstree {
-			// for ostree, writing the key during user creation is redundant
-			// and can cause issues so create users without keys and write them
-			// on first boot
-			userOptionsSansKeys := new(osbuild.UsersStageOptions)
-			userOptionsSansKeys.Users = make(map[string]osbuild.UsersStageOptionsUser, len(userOptions.Users))
-			for name, options := range userOptions.Users {
-				userOptionsSansKeys.Users[name] = osbuild.UsersStageOptionsUser{
-					UID:         options.UID,
-					GID:         options.GID,
-					Groups:      options.Groups,
-					Description: options.Description,
-					Home:        options.Home,
-					Shell:       options.Shell,
-					Password:    options.Password,
-					Key:         nil,
+
+		if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
+			return nil, err
+		} else if userOptions != nil {
+			if t.rpmOstree {
+				// for ostree, writing the key during user creation is
+				// redundant and can cause issues so create users without keys
+				// and write them on first boot
+				userOptionsSansKeys, err := osbuild.NewUsersStageOptions(c.GetUsers(), true)
+				if err != nil {
+					return nil, err
 				}
+				p.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
+				p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+			} else {
+				p.AddStage(osbuild.NewUsersStage(userOptions))
 			}
-			p.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
-			p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
-		} else {
-			p.AddStage(osbuild.NewUsersStage(userOptions))
 		}
 	}
 
@@ -423,7 +420,11 @@ func osPipeline(t *imageType,
 
 		if cfg := imageConfig.Grub2Config; cfg != nil {
 			if grub2, ok := bootloader.Options.(*osbuild.GRUB2StageOptions); ok {
-				grub2.Config = cfg
+				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`
+				// and thus we need to preserve it
+				if grub2.Config != nil {
+					cfg.Default = grub2.Config.Default
+				}
 			}
 		}
 
@@ -478,7 +479,7 @@ func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpe
 	p := new(osbuild.Pipeline)
 	p.Name = "container-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	language, _ := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
@@ -538,11 +539,11 @@ func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*
 	return stages
 }
 
-func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string) *osbuild.Pipeline {
+func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string, users bool) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "anaconda-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(rpmStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
+	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch, product, osVersion, variant)))
 	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 
@@ -571,7 +572,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	}
 
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
-	p.AddStage(osbuild.NewAnacondaStage(anacondaStageOptions()))
+	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(users)))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
 		"anaconda",

@@ -44,7 +44,8 @@ func NewKickstartStageOptions(
 	userCustomizations []blueprint.UserCustomization,
 	groupCustomizations []blueprint.GroupCustomization,
 	ostreeURL string,
-	ostreeRef string) (*KickstartStageOptions, error) {
+	ostreeRef string,
+	osName string) (*KickstartStageOptions, error) {
 
 	var users map[string]UsersStageOptionsUser
 	if usersOptions, err := NewUsersStageOptions(userCustomizations, false); err != nil {
@@ -61,7 +62,7 @@ func NewKickstartStageOptions(
 	var ostreeOptions *OSTreeOptions
 	if ostreeURL != "" {
 		ostreeOptions = &OSTreeOptions{
-			OSName: "rhel",
+			OSName: osName,
 			URL:    ostreeURL,
 			Ref:    ostreeRef,
 			GPG:    false,
