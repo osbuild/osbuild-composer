@@ -412,7 +412,7 @@ github.com/ubccr/kerby/khttp
 github.com/valyala/bytebufferpool
 # github.com/valyala/fasttemplate v1.2.1
 github.com/valyala/fasttemplate
-# github.com/vmware/govmomi v0.26.1
+# github.com/vmware/govmomi v0.27.4
 ## explicit
 github.com/vmware/govmomi/cns
 github.com/vmware/govmomi/cns/methods
@@ -427,6 +427,7 @@ github.com/vmware/govmomi/govc/vm
 github.com/vmware/govmomi/govc/vm/guest
 github.com/vmware/govmomi/guest
 github.com/vmware/govmomi/guest/toolbox
+github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
 github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
