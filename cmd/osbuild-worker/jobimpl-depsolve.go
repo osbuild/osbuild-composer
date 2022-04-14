@@ -62,13 +62,15 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	result.PackageSpecs, err = impl.depsolve(args.PackageSetsChains, args.PackageSets, args.Repos, args.PackageSetsRepos, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
 		switch e := err.(type) {
-		case *rpmmd.DNFError:
-			// Error originates from dnf-json (the http call dnf-json wasn't StatusOK)
+		case *dnfjson.Error:
+			// Error originates from dnf-json
 			switch e.Kind {
 			case "DepsolveError":
 				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, err.Error())
 			case "MarkingErrors":
 				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, err.Error())
+			case "RepoError":
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, err.Error())
 			default:
 				// This still has the kind/reason format but a kind that's returned
 				// by dnf-json and not explicitly handled here.
