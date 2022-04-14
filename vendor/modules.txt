@@ -64,7 +64,7 @@ github.com/Azure/go-autorest/tracing
 ## explicit
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
-# github.com/aws/aws-sdk-go v1.43.38
+# github.com/aws/aws-sdk-go v1.43.39
 ## explicit
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -259,7 +259,7 @@ github.com/google/uuid
 github.com/googleapis/gax-go/v2
 github.com/googleapis/gax-go/v2/apierror
 github.com/googleapis/gax-go/v2/apierror/internal/proto
-# github.com/gophercloud/gophercloud v0.22.0
+# github.com/gophercloud/gophercloud v0.24.0
 ## explicit
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack

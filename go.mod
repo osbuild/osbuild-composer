@@ -15,7 +15,7 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/BurntSushi/toml v1.1.0
-	github.com/aws/aws-sdk-go v1.43.38
+	github.com/aws/aws-sdk-go v1.43.39
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
@@ -27,7 +27,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-cmp v0.5.7
 	github.com/google/uuid v1.3.0
-	github.com/gophercloud/gophercloud v0.22.0
+	github.com/gophercloud/gophercloud v0.24.0
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/jackc/pgtype v1.10.0
 	github.com/jackc/pgx/v4 v4.15.0
