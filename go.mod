@@ -48,6 +48,6 @@ require (
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 	google.golang.org/api v0.63.0
 	google.golang.org/genproto v0.0.0-20211221195035-429b39de9b1c
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/ini.v1 v1.66.4
 )

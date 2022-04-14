@@ -688,7 +688,7 @@ google.golang.org/grpc/xds/internal/xdsclient/bootstrap
 google.golang.org/grpc/xds/internal/xdsclient/load
 google.golang.org/grpc/xds/internal/xdsclient/v2
 google.golang.org/grpc/xds/internal/xdsclient/v3
-# google.golang.org/protobuf v1.27.1
+# google.golang.org/protobuf v1.28.0
 ## explicit
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
