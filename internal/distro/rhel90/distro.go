@@ -86,6 +86,18 @@ var distroMap = map[string]distribution{
 		runner:             "org.osbuild.rhel90",
 		defaultImageConfig: defaultDistroImageConfig,
 	},
+	"rhel-90-beta": {
+		name:               "rhel-90-beta",
+		product:            "Red Hat Enterprise Linux",
+		osVersion:          "9.0",
+		releaseVersion:     "9",
+		modulePlatformID:   "platform:el9",
+		vendor:             "redhat",
+		ostreeRefTmpl:      "rhel/9/%s/edge",
+		isolabelTmpl:       "RHEL-9-0-0-BaseOS-%s",
+		runner:             "org.osbuild.rhel90",
+		defaultImageConfig: defaultDistroImageConfig,
+	},
 	"centos-9": {
 		name:               "centos-9",
 		product:            "CentOS Stream",
@@ -619,6 +631,15 @@ func New() distro.Distro {
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("rhel-90")
+}
+
+// New creates a new distro object, defining the supported architectures and image types
+func NewRHEL9Beta() distro.Distro {
+	return newDistro("rhel-90-beta")
+}
+
+func NewRHEL9BetaHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro("rhel-90-beta")
 }
 
 func NewCentos() distro.Distro {
