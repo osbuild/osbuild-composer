@@ -26,6 +26,7 @@ const (
 	ErrorDNFOtherError     ClientErrorCode = 22
 	ErrorRPMMDError        ClientErrorCode = 23
 	ErrorEmptyPackageSpecs ClientErrorCode = 24
+	ErrorDNFRepoError      ClientErrorCode = 25
 )
 
 type ClientErrorCode int
@@ -57,6 +58,8 @@ func GetStatusCode(err *Error) StatusCode {
 		return JobStatusUserInputError
 	case ErrorDNFMarkingErrors:
 		return JobStatusUserInputError
+	case ErrorDNFRepoError:
+		return JobStatusInternalError
 	case ErrorNoDynamicArgs:
 		return JobStatusUserInputError
 	case ErrorInvalidTargetConfig:
