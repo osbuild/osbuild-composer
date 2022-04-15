@@ -92,6 +92,7 @@ INSTALLER_TYPE=edge-installer
 INSTALLER_FILENAME=installer.iso
 mkdir -p "${ARTIFACTS}"
 ANSIBLE_USER_FOR_BIOS="installeruser"
+OSTREE_OSNAME=rhel
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -106,6 +107,13 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
+    "fedora-35")
+        CONTAINER_TYPE=fedora-iot-container
+        INSTALLER_TYPE=fedora-iot-installer
+        OSTREE_REF="fedora/35/${ARCH}/iot"
+        OSTREE_OSNAME=fedora
+        OS_VARIANT="fedora35"
+        ;;
     "rhel-8.6")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
@@ -168,8 +176,8 @@ poweroff
 echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 echo -e 'installeruser\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 # delete local ostree repo and add external prod edge repo
-ostree remote delete rhel
-ostree remote add --no-gpg-verify --no-sign-verify rhel ${PROD_REPO_URL}
+ostree remote delete ${OSTREE_OSNAME}
+ostree remote add --no-gpg-verify --no-sign-verify ${OSTREE_OSNAME} ${PROD_REPO_URL}
 %end
 EOFKS
 
@@ -544,7 +552,7 @@ EOF
 
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on BIOS VM"
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -615,10 +623,15 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
+EOF
 
+# No RT kernel in Fedora
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
 name = "kernel-rt"
 EOF
+fi
 
 greenprint "📄 upgrade blueprint"
 cat "$BLUEPRINT_FILE"
@@ -678,7 +691,7 @@ sudo composer-cli blueprints delete upgrade > /dev/null
 # Upgrade image/commit.
 # Test user admin added by edge-container bp
 greenprint "🗳 Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} 'sudo rpm-ostree upgrade --os=rhel'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "sudo rpm-ostree upgrade --os=${OSTREE_OSNAME}"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} 'nohup sudo systemctl reboot &>/dev/null & exit'
 
 # Sleep 10 seconds here to make sure vm restarted already
@@ -714,7 +727,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
