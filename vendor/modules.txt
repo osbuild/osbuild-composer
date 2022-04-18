@@ -341,7 +341,7 @@ github.com/mattn/go-ieproxy
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/microcosm-cc/bluemonday v1.0.15
+# github.com/microcosm-cc/bluemonday v1.0.16
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
 # github.com/mitchellh/go-homedir v1.1.0
@@ -350,7 +350,7 @@ github.com/mitchellh/go-homedir
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.2
 github.com/modern-go/reflect2
-# github.com/openshift-online/ocm-sdk-go v0.1.214
+# github.com/openshift-online/ocm-sdk-go v0.1.262
 ## explicit
 github.com/openshift-online/ocm-sdk-go/authentication
 github.com/openshift-online/ocm-sdk-go/errors
@@ -394,10 +394,10 @@ github.com/segmentio/ksuid
 github.com/sirupsen/logrus
 # github.com/sony/gobreaker v0.4.2-0.20210216022020-dd874f9dd33b
 github.com/sony/gobreaker
-# github.com/spf13/cobra v0.0.3
+# github.com/spf13/cobra v1.4.0
 ## explicit
 github.com/spf13/cobra
-# github.com/spf13/pflag v1.0.1
+# github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
 # github.com/stretchr/testify v1.7.1
 ## explicit
@@ -474,7 +474,7 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
+# golang.org/x/crypto v0.0.0-20211215165025-cf75a172585e
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/pbkdf2
