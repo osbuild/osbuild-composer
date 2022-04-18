@@ -39,7 +39,7 @@ require (
 	github.com/prometheus/client_golang v1.12.0
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v0.0.3
+	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.1
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.26.1
