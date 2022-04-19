@@ -55,13 +55,19 @@
       "name": "google-compute-engine",
       "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20220322",
       "check_gpg": false,
-      "image_type_tags": ["gce", "gcp"]
+      "image_type_tags": [
+        "gce",
+        "gcp"
+      ]
     },
     {
       "name": "google-cloud-sdk",
       "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-cloud-sdk-20220322",
       "check_gpg": false,
-      "image_type_tags": ["gce", "gcp"]
+      "image_type_tags": [
+        "gce",
+        "gcp"
+      ]
     }
   ]
 }
