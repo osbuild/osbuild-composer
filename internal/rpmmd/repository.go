@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -111,6 +112,14 @@ func (pkg Package) ToPackageInfo() PackageInfo {
 type PackageSet struct {
 	Include []string
 	Exclude []string
+}
+
+// The input to chain depsolve request. A set of packages to include / exclude
+// and a set of repository IDs to use, which are represented as indexes to
+// an array of repositories provided together with this request.
+type chainPackageSet struct {
+	PackageSet
+	Repos []int
 }
 
 // Append the Include and Exclude package list from another PackageSet and
@@ -509,6 +518,155 @@ func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePl
 		Dependencies []dnfPackageSpec  `json:"dependencies"`
 	}
 	err := runDNF("depsolve", arguments, &reply)
+
+	dependencies := make([]PackageSpec, len(reply.Dependencies))
+	for i, pack := range reply.Dependencies {
+		id, err := strconv.Atoi(pack.RepoID)
+		if err != nil {
+			panic(err)
+		}
+		repo := repos[id]
+		dep := reply.Dependencies[i]
+		dependencies[i].Name = dep.Name
+		dependencies[i].Epoch = dep.Epoch
+		dependencies[i].Version = dep.Version
+		dependencies[i].Release = dep.Release
+		dependencies[i].Arch = dep.Arch
+		dependencies[i].RemoteLocation = dep.RemoteLocation
+		dependencies[i].Checksum = dep.Checksum
+		dependencies[i].CheckGPG = repo.CheckGPG
+		if repo.RHSM {
+			dependencies[i].Secrets = "org.osbuild.rhsm"
+		}
+	}
+
+	return dependencies, reply.Checksums, err
+}
+
+// ChainPackageSets constructs an array of `ChainPackageSet` based on the provided
+// arguments. The provided `packageSets` map is transformed into an array based
+// on the order of package set names passed in `packageSetsChain`. Repositories
+// provided in `repos` are used for every transaction, while repositories from
+// `packageSetsRepos` are used only for package sets with the respective name.
+//
+// The function returns a `ChainPackageSet` slice, which members are referencing
+// repositories from the returned `RepoConfig` by their index. The returned
+// `RepoConfig` slice is specific to the requested `packageSetsChain`.
+//
+// NOTE: Due to implementation limitations of DNF and dnf-json, each package set
+// in the chain must use all of the repositories used by its predecessor.
+// An error is returned if this requirement is not met.
+func chainPackageSets(packageSetsChain []string, packageSets map[string]PackageSet, repos []RepoConfig, packageSetsRepos map[string][]RepoConfig) ([]chainPackageSet, []RepoConfig, error) {
+	transactions := make([]chainPackageSet, 0, len(packageSetsChain))
+	transactionsRepos := make([]RepoConfig, 0, len(repos))
+
+	transactionsRepos = append(transactionsRepos, repos...)
+
+	// These repo IDs will be used for every transaction
+	baseRepoIDs := make([]int, 0, len(repos))
+	for idx := range repos {
+		baseRepoIDs = append(baseRepoIDs, idx)
+	}
+
+	for transactionIdx, pkgSetName := range packageSetsChain {
+		pkgSet, ok := packageSets[pkgSetName]
+		if !ok {
+			return nil, nil, fmt.Errorf("package set %q requested in the 'packageSetsChain' does not exist in provided 'packageSets'", pkgSetName)
+		}
+
+		transaction := chainPackageSet{
+			PackageSet: pkgSet,
+			Repos:      baseRepoIDs, // Due to its capacity, the slice will be copied if any repo is appended
+		}
+
+		// Add any package-set-specific repos to the list of transaction repos
+		if pkgSetRepos, ok := packageSetsRepos[pkgSetName]; ok {
+			for _, pkgSetRepo := range pkgSetRepos {
+				// Check if the repo has been already used by a transaction
+				// and if yes, just use its ID. Skip the "base" repos.
+				pkgSetRepoID := -1
+				for idx := len(repos); idx < len(transactionsRepos); idx++ {
+					transactionRepo := transactionsRepos[idx]
+					if reflect.DeepEqual(pkgSetRepo, transactionRepo) {
+						pkgSetRepoID = idx
+						break
+					}
+				}
+
+				if pkgSetRepoID == -1 {
+					transactionsRepos = append(transactionsRepos, pkgSetRepo)
+					pkgSetRepoID = len(transactionsRepos) - 1
+				}
+
+				transaction.Repos = append(transaction.Repos, pkgSetRepoID)
+			}
+		}
+
+		// Sort the slice of repo IDs to make it easier to compare
+		sort.Ints(transaction.Repos)
+
+		// If more than one transaction, ensure that the transaction uses
+		// all of the repos from its predecessor
+		if transactionIdx > 0 {
+			previousTransRepos := transactions[transactionIdx-1].Repos
+			if len(transaction.Repos) < len(previousTransRepos) {
+				return nil, nil, fmt.Errorf("chained packageSet %q does not use all of the repos used by its predecessor", pkgSetName)
+			}
+
+			for idx, repoID := range previousTransRepos {
+				if repoID != transaction.Repos[idx] {
+					return nil, nil, fmt.Errorf("chained packageSet %q does not use all of the repos used by its predecessor", pkgSetName)
+				}
+			}
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	return transactions, transactionsRepos, nil
+}
+
+// ChainDepsolve takes a list of required package sets (included and excluded), which should be depsolved
+// as separate transactions, list of repositories, platform ID for modularity, architecture and release version.
+// It returns a list of all packages (with solved dependencies) that will be installed into the system.
+func (r *rpmmdImpl) chainDepsolve(chains []chainPackageSet, repos []RepoConfig, modulePlatformID, arch, releasever string) ([]PackageSpec, map[string]string, error) {
+	var dnfRepoConfigs []dnfRepoConfig
+	for i, repo := range repos {
+		dnfRepo, err := repo.toDNFRepoConfig(r, i, arch, releasever)
+		if err != nil {
+			return nil, nil, err
+		}
+		dnfRepoConfigs = append(dnfRepoConfigs, dnfRepo)
+	}
+
+	type dnfTransaction struct {
+		PackageSpecs []string `json:"package-specs"`
+		ExcludSpecs  []string `json:"exclude-specs"`
+		Repos        []int    `json:"repos"`
+	}
+	var dnfTransactions []dnfTransaction
+	for _, transaction := range chains {
+		dnfTransactions = append(dnfTransactions, dnfTransaction{
+			PackageSpecs: transaction.Include,
+			ExcludSpecs:  transaction.Exclude,
+			Repos:        transaction.Repos,
+		})
+	}
+
+	var arguments = struct {
+		Transactions     []dnfTransaction `json:"transactions"`
+		Repos            []dnfRepoConfig  `json:"repos"`
+		CacheDir         string           `json:"cachedir"`
+		ModulePlatformID string           `json:"module_platform_id"`
+		Arch             string           `json:"arch"`
+	}{dnfTransactions, dnfRepoConfigs, r.CacheDir, modulePlatformID, arch}
+
+	var reply struct {
+		Checksums    map[string]string `json:"checksums"`
+		Dependencies []dnfPackageSpec  `json:"dependencies"`
+	}
+
+	err := runDNF("chain-depsolve", arguments, &reply)
 
 	dependencies := make([]PackageSpec, len(reply.Dependencies))
 	for i, pack := range reply.Dependencies {
