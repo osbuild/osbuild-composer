@@ -3,8 +3,9 @@ module github.com/osbuild/osbuild-composer
 go 1.16
 
 require (
-	cloud.google.com/go v0.100.0
 	cloud.google.com/go/cloudbuild v1.0.0
+	cloud.google.com/go/compute v1.3.0
+	cloud.google.com/go/iam v0.3.0 // indirect
 	cloud.google.com/go/storage v1.18.2
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-sdk-for-go v63.1.0+incompatible
@@ -42,11 +43,11 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.1
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
-	github.com/vmware/govmomi v0.26.1
+	github.com/vmware/govmomi v0.27.4
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
-	google.golang.org/api v0.63.0
-	google.golang.org/genproto v0.0.0-20211221195035-429b39de9b1c
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158
+	google.golang.org/api v0.70.0
+	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
 	gopkg.in/ini.v1 v1.66.4
 )
