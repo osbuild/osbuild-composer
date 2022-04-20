@@ -40,7 +40,9 @@ import (
 	"cloud.google.com/go/internal/optional"
 	"cloud.google.com/go/internal/trace"
 	"cloud.google.com/go/internal/version"
+	"cloud.google.com/go/storage/internal"
 	gapic "cloud.google.com/go/storage/internal/apiv2"
+	"github.com/googleapis/gax-go/v2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/xerrors"
 	"google.golang.org/api/googleapi"
@@ -63,11 +65,14 @@ var (
 	ErrBucketNotExist = errors.New("storage: bucket doesn't exist")
 	// ErrObjectNotExist indicates that the object does not exist.
 	ErrObjectNotExist = errors.New("storage: object doesn't exist")
+	// errMethodNotSupported indicates that the method called is not currently supported by the client.
+	// TODO: Export this error when launching the transport-agnostic client.
+	errMethodNotSupported = errors.New("storage: method is not currently supported")
 	// errMethodNotValid indicates that given HTTP method is not valid.
 	errMethodNotValid = fmt.Errorf("storage: HTTP method should be one of %v", reflect.ValueOf(signedURLMethods).MapKeys())
 )
 
-var userAgent = fmt.Sprintf("gcloud-golang-storage/%s", version.Repo)
+var userAgent = fmt.Sprintf("gcloud-golang-storage/%s", internal.Version)
 
 const (
 	// ScopeFullControl grants permissions to manage your
@@ -83,7 +88,7 @@ const (
 	ScopeReadWrite = raw.DevstorageReadWriteScope
 )
 
-var xGoogHeader = fmt.Sprintf("gl-go/%s gccl/%s", version.Go(), version.Repo)
+var xGoogHeader = fmt.Sprintf("gl-go/%s gccl/%s", version.Go(), internal.Version)
 
 func setClientHeader(headers http.Header) {
 	headers.Set("x-goog-api-client", xGoogHeader)
@@ -102,6 +107,7 @@ type Client struct {
 	readHost string
 	// May be nil.
 	creds *google.Credentials
+	retry *retryConfig
 
 	// gc is an optional gRPC-based, GAPIC client.
 	//
@@ -203,6 +209,8 @@ func newHybridClient(ctx context.Context, opts *hybridClientOptions) (*Client, e
 	if opts == nil {
 		opts = &hybridClientOptions{}
 	}
+	opts.GRPCOpts = append(defaultGRPCOptions(), opts.GRPCOpts...)
+
 	c, err := NewClient(ctx, opts.HTTPOpts...)
 	if err != nil {
 		return nil, err
@@ -268,10 +276,18 @@ type bucketBoundHostname struct {
 }
 
 func (s pathStyle) host(bucket string) string {
+	if host := os.Getenv("STORAGE_EMULATOR_HOST"); host != "" {
+		return stripScheme(host)
+	}
+
 	return "storage.googleapis.com"
 }
 
 func (s virtualHostedStyle) host(bucket string) string {
+	if host := os.Getenv("STORAGE_EMULATOR_HOST"); host != "" {
+		return bucket + "." + stripScheme(host)
+	}
+
 	return bucket + ".storage.googleapis.com"
 }
 
@@ -317,6 +333,14 @@ func VirtualHostedStyle() URLStyle {
 // be set to true.
 func BucketBoundHostname(hostname string) URLStyle {
 	return bucketBoundHostname{hostname: hostname}
+}
+
+// Strips the scheme from a host if it contains it
+func stripScheme(host string) string {
+	if strings.Contains(host, "://") {
+		host = strings.SplitN(host, "://", 2)[1]
+	}
+	return host
 }
 
 // SignedURLOptions allows you to restrict the access to the signed URL.
@@ -545,6 +569,8 @@ func v4SanitizeHeaders(hdrs []string) []string {
 // access to a restricted resource for a limited time without needing a
 // Google account or signing in. For more information about signed URLs, see
 // https://cloud.google.com/storage/docs/accesscontrol#signed_urls_query_string_authentication
+// If initializing a Storage Client, instead use the Bucket.SignedURL method
+// which uses the Client's credentials to handle authentication.
 func SignedURL(bucket, object string, opts *SignedURLOptions) (string, error) {
 	now := utcNow()
 	if err := validateOptions(opts, now); err != nil {
@@ -815,7 +841,7 @@ func signedURLV2(bucket, name string, opts *SignedURLOptions) (string, error) {
 	}
 	encoded := base64.StdEncoding.EncodeToString(b)
 	u.Scheme = "https"
-	u.Host = "storage.googleapis.com"
+	u.Host = PathStyle().host(bucket)
 	q := u.Query()
 	q.Set("GoogleAccessId", opts.GoogleAccessID)
 	q.Set("Expires", fmt.Sprintf("%d", opts.Expires.Unix()))
@@ -836,6 +862,7 @@ type ObjectHandle struct {
 	encryptionKey  []byte // AES-256 key
 	userProject    string // for requester-pays buckets
 	readCompressed bool   // Accept-Encoding: gzip
+	retry          *retryConfig
 }
 
 // ACL provides access to the object's access control list.
@@ -899,7 +926,7 @@ func (o *ObjectHandle) Attrs(ctx context.Context) (attrs *ObjectAttrs, err error
 	}
 	var obj *raw.Object
 	setClientHeader(call.Header())
-	err = runWithRetry(ctx, func() error { obj, err = call.Do(); return err })
+	err = run(ctx, func() error { obj, err = call.Do(); return err }, o.retry, true)
 	var e *googleapi.Error
 	if ok := xerrors.As(err, &e); ok && e.Code == http.StatusNotFound {
 		return nil, ErrObjectNotExist
@@ -1000,7 +1027,11 @@ func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (
 	}
 	var obj *raw.Object
 	setClientHeader(call.Header())
-	err = runWithRetry(ctx, func() error { obj, err = call.Do(); return err })
+	var isIdempotent bool
+	if o.conds != nil && o.conds.MetagenerationMatch != 0 {
+		isIdempotent = true
+	}
+	err = run(ctx, func() error { obj, err = call.Do(); return err }, o.retry, isIdempotent)
 	var e *googleapi.Error
 	if ok := xerrors.As(err, &e); ok && e.Code == http.StatusNotFound {
 		return nil, ErrObjectNotExist
@@ -1064,7 +1095,13 @@ func (o *ObjectHandle) Delete(ctx context.Context) error {
 	}
 	// Encryption doesn't apply to Delete.
 	setClientHeader(call.Header())
-	err := runWithRetry(ctx, func() error { return call.Do() })
+	var isIdempotent bool
+	// Delete is idempotent if GenerationMatch or Generation have been passed in.
+	// The default generation is negative to get the latest version of the object.
+	if (o.conds != nil && o.conds.GenerationMatch != 0) || o.gen >= 0 {
+		isIdempotent = true
+	}
+	err := run(ctx, func() error { return call.Do() }, o.retry, isIdempotent)
 	var e *googleapi.Error
 	if ok := xerrors.As(err, &e); ok && e.Code == http.StatusNotFound {
 		return ErrObjectNotExist
@@ -1274,6 +1311,9 @@ type ObjectAttrs struct {
 	// Composer. In those cases, if the SendCRC32C field in the Writer or Composer
 	// is set to is true, the uploaded data is rejected if its CRC32C hash does
 	// not match this field.
+	//
+	// Note: For a Writer, SendCRC32C must be set to true BEFORE the first call to
+	// Writer.Write() in order to send the checksum.
 	CRC32C uint32
 
 	// MediaLink is an URL to the object's content. This field is read-only.
@@ -1433,7 +1473,7 @@ func newObjectFromProto(o *storagepb.Object) *ObjectAttrs {
 		EventBasedHold:          o.GetEventBasedHold(),
 		TemporaryHold:           o.TemporaryHold,
 		RetentionExpirationTime: convertProtoTime(o.GetRetentionExpireTime()),
-		ACL:                     fromProtoToObjectACLRules(o.GetAcl()),
+		ACL:                     toObjectACLRulesFromProto(o.GetAcl()),
 		Owner:                   o.GetOwner().GetEntity(),
 		ContentEncoding:         o.ContentEncoding,
 		ContentDisposition:      o.ContentDisposition,
@@ -1536,6 +1576,14 @@ type Query struct {
 	// which returns all properties. Passing ProjectionNoACL will omit Owner and ACL,
 	// which may improve performance when listing many objects.
 	Projection Projection
+
+	// IncludeTrailingDelimiter controls how objects which end in a single
+	// instance of Delimiter (for example, if Query.Delimiter = "/" and the
+	// object name is "foo/bar/") are included in the results. By default, these
+	// objects only show up as prefixes. If IncludeTrailingDelimiter is set to
+	// true, they will also be included as objects and their metadata will be
+	// populated in the returned ObjectAttrs.
+	IncludeTrailingDelimiter bool
 }
 
 // attrToFieldMap maps the field names of ObjectAttrs to the underlying field
@@ -1759,6 +1807,169 @@ func setConditionField(call reflect.Value, name string, value interface{}) bool 
 	return true
 }
 
+// Retryer returns an object handle that is configured with custom retry
+// behavior as specified by the options that are passed to it. All operations
+// on the new handle will use the customized retry configuration.
+// These retry options will merge with the bucket's retryer (if set) for the
+// returned handle. Options passed into this method will take precedence over
+// retry options on the bucket and client. Note that you must explicitly pass in
+// each option you want to override.
+func (o *ObjectHandle) Retryer(opts ...RetryOption) *ObjectHandle {
+	o2 := *o
+	var retry *retryConfig
+	if o.retry != nil {
+		// merge the options with the existing retry
+		retry = o.retry
+	} else {
+		retry = &retryConfig{}
+	}
+	for _, opt := range opts {
+		opt.apply(retry)
+	}
+	o2.retry = retry
+	o2.acl.retry = retry
+	return &o2
+}
+
+// SetRetry configures the client with custom retry behavior as specified by the
+// options that are passed to it. All operations using this client will use the
+// customized retry configuration.
+// This should be called once before using the client for network operations, as
+// there could be indeterminate behaviour with operations in progress.
+// Retry options set on a bucket or object handle will take precedence over
+// these options.
+func (c *Client) SetRetry(opts ...RetryOption) {
+	var retry *retryConfig
+	if c.retry != nil {
+		// merge the options with the existing retry
+		retry = c.retry
+	} else {
+		retry = &retryConfig{}
+	}
+	for _, opt := range opts {
+		opt.apply(retry)
+	}
+	c.retry = retry
+}
+
+// RetryOption allows users to configure non-default retry behavior for API
+// calls made to GCS.
+type RetryOption interface {
+	apply(config *retryConfig)
+}
+
+// WithBackoff allows configuration of the backoff timing used for retries.
+// Available configuration options (Initial, Max and Multiplier) are described
+// at https://pkg.go.dev/github.com/googleapis/gax-go/v2#Backoff. If any fields
+// are not supplied by the user, gax default values will be used.
+func WithBackoff(backoff gax.Backoff) RetryOption {
+	return &withBackoff{
+		backoff: backoff,
+	}
+}
+
+type withBackoff struct {
+	backoff gax.Backoff
+}
+
+func (wb *withBackoff) apply(config *retryConfig) {
+	config.backoff = &wb.backoff
+}
+
+// RetryPolicy describes the available policies for which operations should be
+// retried. The default is `RetryIdempotent`.
+type RetryPolicy int
+
+const (
+	// RetryIdempotent causes only idempotent operations to be retried when the
+	// service returns a transient error. Using this policy, fully idempotent
+	// operations (such as `ObjectHandle.Attrs()`) will always be retried.
+	// Conditionally idempotent operations (for example `ObjectHandle.Update()`)
+	// will be retried only if the necessary conditions have been supplied (in
+	// the case of `ObjectHandle.Update()` this would mean supplying a
+	// `Conditions.MetagenerationMatch` condition is required).
+	RetryIdempotent RetryPolicy = iota
+
+	// RetryAlways causes all operations to be retried when the service returns a
+	// transient error, regardless of idempotency considerations.
+	RetryAlways
+
+	// RetryNever causes the client to not perform retries on failed operations.
+	RetryNever
+)
+
+// WithPolicy allows the configuration of which operations should be performed
+// with retries for transient errors.
+func WithPolicy(policy RetryPolicy) RetryOption {
+	return &withPolicy{
+		policy: policy,
+	}
+}
+
+type withPolicy struct {
+	policy RetryPolicy
+}
+
+func (ws *withPolicy) apply(config *retryConfig) {
+	config.policy = ws.policy
+}
+
+// WithErrorFunc allows users to pass a custom function to the retryer. Errors
+// will be retried if and only if `shouldRetry(err)` returns true.
+// By default, the following errors are retried (see invoke.go for the default
+// shouldRetry function):
+//
+// - HTTP responses with codes 408, 429, 502, 503, and 504.
+//
+// - Transient network errors such as connection reset and io.ErrUnexpectedEOF.
+//
+// - Errors which are considered transient using the Temporary() interface.
+//
+// - Wrapped versions of these errors.
+//
+// This option can be used to retry on a different set of errors than the
+// default.
+func WithErrorFunc(shouldRetry func(err error) bool) RetryOption {
+	return &withErrorFunc{
+		shouldRetry: shouldRetry,
+	}
+}
+
+type withErrorFunc struct {
+	shouldRetry func(err error) bool
+}
+
+func (wef *withErrorFunc) apply(config *retryConfig) {
+	config.shouldRetry = wef.shouldRetry
+}
+
+type retryConfig struct {
+	backoff     *gax.Backoff
+	policy      RetryPolicy
+	shouldRetry func(err error) bool
+}
+
+func (r *retryConfig) clone() *retryConfig {
+	if r == nil {
+		return nil
+	}
+
+	var bo *gax.Backoff
+	if r.backoff != nil {
+		bo = &gax.Backoff{
+			Initial:    r.backoff.Initial,
+			Max:        r.backoff.Max,
+			Multiplier: r.backoff.Multiplier,
+		}
+	}
+
+	return &retryConfig{
+		backoff:     bo,
+		policy:      r.policy,
+		shouldRetry: r.shouldRetry,
+	}
+}
+
 // composeSourceObj wraps a *raw.ComposeRequestSourceObjects, but adds the methods
 // that modifyCall searches for by name.
 type composeSourceObj struct {
@@ -1802,10 +2013,10 @@ func (c *Client) ServiceAccount(ctx context.Context, projectID string) (string, 
 	r := c.raw.Projects.ServiceAccount.Get(projectID)
 	var res *raw.ServiceAccount
 	var err error
-	err = runWithRetry(ctx, func() error {
+	err = run(ctx, func() error {
 		res, err = r.Context(ctx).Do()
 		return err
-	})
+	}, c.retry, true)
 	if err != nil {
 		return "", err
 	}
@@ -1822,7 +2033,14 @@ func bucketResourceName(p, b string) string {
 // parseBucketName strips the leading resource path segment and returns the
 // bucket ID, which is the simple Bucket name typical of the v1 API.
 func parseBucketName(b string) string {
-	return strings.TrimPrefix(b, "projects/_/buckets/")
+	sep := strings.LastIndex(b, "/")
+	return b[sep+1:]
+}
+
+// toProjectResource accepts a project ID and formats it as a Project resource
+// name.
+func toProjectResource(project string) string {
+	return fmt.Sprintf("projects/%s", project)
 }
 
 // setConditionProtoField uses protobuf reflection to set named condition field
