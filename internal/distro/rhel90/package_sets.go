@@ -667,6 +667,8 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 	ec2SapPackageSet := ec2CommonPackageSet(t)
 	ec2SapPackageSet = ec2SapPackageSet.Append(rpmmd.PackageSet{
 		Include: []string{
+			// RHBZ#2076763
+			"@Server",
 			// SAP System Roles
 			// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
 			"ansible-core",
