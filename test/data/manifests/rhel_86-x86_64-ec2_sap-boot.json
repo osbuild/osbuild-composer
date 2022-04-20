@@ -1213,25 +1213,25 @@
                   "domain": "@sapsys",
                   "type": "hard",
                   "item": "nofile",
-                  "value": 65536
+                  "value": 1048576
                 },
                 {
                   "domain": "@sapsys",
                   "type": "soft",
                   "item": "nofile",
-                  "value": 65536
+                  "value": 1048576
                 },
                 {
                   "domain": "@dba",
                   "type": "hard",
                   "item": "nofile",
-                  "value": 65536
+                  "value": 1048576
                 },
                 {
                   "domain": "@dba",
                   "type": "soft",
                   "item": "nofile",
-                  "value": 65536
+                  "value": 1048576
                 },
                 {
                   "domain": "@sapsys",
@@ -12914,12 +12914,12 @@
       "man:x:15:",
       "mem:x:8:",
       "nobody:x:65534:",
-      "polkitd:x:996:",
+      "polkitd:x:995:",
       "render:x:998:",
       "root:x:0:",
       "rpc:x:32:",
       "rpcuser:x:29:",
-      "ssh_keys:x:995:",
+      "ssh_keys:x:996:",
       "sshd:x:74:",
       "sssd:x:993:",
       "sys:x:3:",
@@ -13646,7 +13646,7 @@
       "mail:x:8:12:mail:/var/spool/mail:/sbin/nologin",
       "nobody:x:65534:65534:Kernel Overflow User:/:/sbin/nologin",
       "operator:x:11:0:operator:/root:/sbin/nologin",
-      "polkitd:x:998:996:User for polkitd:/:/sbin/nologin",
+      "polkitd:x:998:995:User for polkitd:/:/sbin/nologin",
       "root:x:0:0:root:/root:/bin/bash",
       "rpc:x:32:32:Rpcbind Daemon:/var/lib/rpcbind:/sbin/nologin",
       "rpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin",
@@ -13739,10 +13739,10 @@
     "security-limits": {
       "/etc/security/limits.d": {
         "99-sap.conf": [
-          "@sapsys hard nofile 65536",
-          "@sapsys soft nofile 65536",
-          "@dba hard nofile 65536",
-          "@dba soft nofile 65536",
+          "@sapsys hard nofile 1048576",
+          "@sapsys soft nofile 1048576",
+          "@dba hard nofile 1048576",
+          "@dba soft nofile 1048576",
           "@sapsys hard nproc unlimited",
           "@sapsys soft nproc unlimited",
           "@dba hard nproc unlimited",
