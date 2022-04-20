@@ -514,7 +514,7 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 		"@Server",
 		// SAP System Roles
 		// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-		"ansible",
+		"ansible-core", // RHBZ#2077356
 		"rhel-system-roles-sap",
 		// RHBZ#1959813
 		"bind-utils",
