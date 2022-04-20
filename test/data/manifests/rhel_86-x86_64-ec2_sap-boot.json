@@ -1006,6 +1006,7 @@
                   "sha256:ceb9382fbfb2bda85764ea055ffdad26a202c5d8744d867472eb75020060a5aa": {},
                   "sha256:cec7c0d124dc281ef4befe001bceabbeba83c5bf05c9a4430102b490cc8bf8e8": {},
                   "sha256:cf08ceb39359d00f9da0abaf15e799725288f8cd3a54d075fb37b76967776949": {},
+                  "sha256:cf3b992e8f7d04c45bbcd92ba93d70350b6a8a0b920cd11f58d7b808fdb256e0": {},
                   "sha256:cf87c40ad67122c0192fde3ff525b1279511db928db4e6a8007c3d5f7dc292fb": {},
                   "sha256:d0188d22323619c9069c2de6f85ebe5302c76fde5f52ebd148988e75a75110dc": {},
                   "sha256:d0296d30e72dff9781fa5d3ca6837eacc661857cbb8b33951789278d2605e6c5": {},
@@ -3631,6 +3632,9 @@
           },
           "sha256:cf08ceb39359d00f9da0abaf15e799725288f8cd3a54d075fb37b76967776949": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libseccomp-2.5.2-1.el8.x86_64.rpm"
+          },
+          "sha256:cf3b992e8f7d04c45bbcd92ba93d70350b6a8a0b920cd11f58d7b808fdb256e0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-sap-n8.6-20220201/Packages/compat-sap-c++-10-10.2.1-1.el8.x86_64.rpm"
           },
           "sha256:cf87c40ad67122c0192fde3ff525b1279511db928db4e6a8007c3d5f7dc292fb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/sssd-krb5-2.6.2-3.el8.x86_64.rpm"
@@ -15049,6 +15053,15 @@
         "checksum": "sha256:181b8eba4af4e219343a833e2dae17ab90ccda84b6d61701b28a096091c08ceb"
       },
       {
+        "name": "compat-sap-c++-10",
+        "epoch": 0,
+        "version": "10.2.1",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-sap-n8.6-20220201/Packages/compat-sap-c++-10-10.2.1-1.el8.x86_64.rpm",
+        "checksum": "sha256:cf3b992e8f7d04c45bbcd92ba93d70350b6a8a0b920cd11f58d7b808fdb256e0"
+      },
+      {
         "name": "compat-sap-c++-9",
         "epoch": 0,
         "version": "9.1.1",
@@ -15482,6 +15495,7 @@
       "cockpit-system-261-1.el8.noarch",
       "cockpit-ws-261-1.el8.x86_64",
       "colord-libs-1.4.2-1.el8.x86_64",
+      "compat-sap-c++-10-10.2.1-1.el8.x86_64",
       "compat-sap-c++-9-9.1.1-2.2.el8.x86_64",
       "conmon-2.0.32-1.module+el8.6.0+13880+7c3afcf8.x86_64",
       "container-selinux-2.173.0-2.module+el8.6.0+13880+7c3afcf8.noarch",
