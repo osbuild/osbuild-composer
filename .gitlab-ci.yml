@@ -559,7 +559,6 @@ Upgrade:
 
 NIGHTLY_FAIL:
   stage: finish
-  dependencies: []
   tags:
     - shell
   rules:
@@ -570,7 +569,6 @@ NIGHTLY_FAIL:
 
 NIGHTLY_SUCCESS:
   stage: finish
-  dependencies: []
   tags:
     - shell
   rules:
