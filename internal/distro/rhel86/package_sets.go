@@ -519,6 +519,7 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 		// RHBZ#1959813
 		"bind-utils",
 		"compat-sap-c++-9",
+		"compat-sap-c++-10", // RHBZ#2074114
 		"nfs-utils",
 		"tcsh",
 		// RHBZ#1959955
