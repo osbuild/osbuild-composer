@@ -510,6 +510,8 @@ func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
 func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 	ec2SapPackageSet := ec2CommonPackageSet(t)
 	ec2SapPackageSet.Include = append(ec2SapPackageSet.Include,
+		// RHBZ#2074107
+		"@Server",
 		// SAP System Roles
 		// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
 		"ansible",
