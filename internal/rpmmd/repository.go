@@ -495,52 +495,12 @@ func (r *rpmmdImpl) FetchMetadata(repos []RepoConfig, modulePlatformID, arch, re
 }
 
 func (r *rpmmdImpl) Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch, releasever string) ([]PackageSpec, map[string]string, error) {
-	var dnfRepoConfigs []dnfRepoConfig
-
-	for i, repo := range repos {
-		dnfRepo, err := repo.toDNFRepoConfig(r, i, arch, releasever)
-		if err != nil {
-			return nil, nil, err
-		}
-		dnfRepoConfigs = append(dnfRepoConfigs, dnfRepo)
+	pkgSetName := "packages"
+	chainPkgSets, chainRepos, err := chainPackageSets([]string{pkgSetName}, map[string]PackageSet{pkgSetName: packageSet}, repos, nil)
+	if err != nil {
+		return nil, nil, err
 	}
-
-	var arguments = struct {
-		PackageSpecs     []string        `json:"package-specs"`
-		ExcludSpecs      []string        `json:"exclude-specs"`
-		Repos            []dnfRepoConfig `json:"repos"`
-		CacheDir         string          `json:"cachedir"`
-		ModulePlatformID string          `json:"module_platform_id"`
-		Arch             string          `json:"arch"`
-	}{packageSet.Include, packageSet.Exclude, dnfRepoConfigs, r.CacheDir, modulePlatformID, arch}
-	var reply struct {
-		Checksums    map[string]string `json:"checksums"`
-		Dependencies []dnfPackageSpec  `json:"dependencies"`
-	}
-	err := runDNF("depsolve", arguments, &reply)
-
-	dependencies := make([]PackageSpec, len(reply.Dependencies))
-	for i, pack := range reply.Dependencies {
-		id, err := strconv.Atoi(pack.RepoID)
-		if err != nil {
-			panic(err)
-		}
-		repo := repos[id]
-		dep := reply.Dependencies[i]
-		dependencies[i].Name = dep.Name
-		dependencies[i].Epoch = dep.Epoch
-		dependencies[i].Version = dep.Version
-		dependencies[i].Release = dep.Release
-		dependencies[i].Arch = dep.Arch
-		dependencies[i].RemoteLocation = dep.RemoteLocation
-		dependencies[i].Checksum = dep.Checksum
-		dependencies[i].CheckGPG = repo.CheckGPG
-		if repo.RHSM {
-			dependencies[i].Secrets = "org.osbuild.rhsm"
-		}
-	}
-
-	return dependencies, reply.Checksums, err
+	return r.chainDepsolve(chainPkgSets, chainRepos, modulePlatformID, arch, releasever)
 }
 
 // ChainPackageSets constructs an array of `ChainPackageSet` based on the provided
