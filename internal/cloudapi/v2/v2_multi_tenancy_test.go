@@ -94,7 +94,7 @@ func scheduleRequest(t *testing.T, handler http.Handler, orgID, request string) 
 	var id v2.ComposeId
 	require.NoError(t, json.Unmarshal(result.Body, &id))
 
-	return uuid.MustParse(id.Id)
+	return uuid.MustParse(string(id.Id))
 }
 
 func getAllJobsOfCompose(t *testing.T, q jobqueue.JobQueue, finalJob uuid.UUID) []uuid.UUID {

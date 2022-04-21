@@ -9,8 +9,10 @@ import (
 )
 
 // T is the root of an OpenAPI v3 document
+// See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oasObject
 type T struct {
 	ExtensionProps
+
 	OpenAPI      string               `json:"openapi" yaml:"openapi"` // Required
 	Components   Components           `json:"components,omitempty" yaml:"components,omitempty"`
 	Info         *Info                `json:"info" yaml:"info"`   // Required
@@ -95,6 +97,24 @@ func (value *T) Validate(ctx context.Context) error {
 	{
 		wrap := func(e error) error { return fmt.Errorf("invalid servers: %v", e) }
 		if v := value.Servers; v != nil {
+			if err := v.Validate(ctx); err != nil {
+				return wrap(err)
+			}
+		}
+	}
+
+	{
+		wrap := func(e error) error { return fmt.Errorf("invalid tags: %w", e) }
+		if v := value.Tags; v != nil {
+			if err := v.Validate(ctx); err != nil {
+				return wrap(err)
+			}
+		}
+	}
+
+	{
+		wrap := func(e error) error { return fmt.Errorf("invalid external docs: %w", e) }
+		if v := value.ExternalDocs; v != nil {
 			if err := v.Validate(ctx); err != nil {
 				return wrap(err)
 			}

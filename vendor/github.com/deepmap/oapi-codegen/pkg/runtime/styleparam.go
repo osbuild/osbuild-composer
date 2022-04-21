@@ -14,6 +14,7 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -21,8 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
@@ -185,7 +184,7 @@ func styleStruct(style string, explode bool, paramName string, paramLocation Par
 	if timeVal, ok := marshalDateTimeValue(value); ok {
 		styledVal, err := stylePrimitive(style, explode, paramName, paramLocation, timeVal)
 		if err != nil {
-			return "", errors.Wrap(err, "failed to style time")
+			return "", fmt.Errorf("failed to style time: %w", err)
 		}
 		return styledVal, nil
 	}
@@ -348,6 +347,12 @@ func stylePrimitive(style string, explode bool, paramName string, paramLocation 
 // Kind of an interface, not the Type to work with aliased types.
 func primitiveToString(value interface{}) (string, error) {
 	var output string
+
+	// sometimes time and date used like primitive types
+	// it can happen if paramether is object and has time or date as field
+	if res, ok := marshalDateTimeValue(value); ok {
+		return res, nil
+	}
 
 	// Values may come in by pointer for optionals, so make sure to dereferene.
 	v := reflect.Indirect(reflect.ValueOf(value))

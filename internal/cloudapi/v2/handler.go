@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -458,7 +459,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			Id:   id.String(),
 			Kind: "ComposeId",
 		},
-		Id: id.String(),
+		Id: types.UUID(id.String()),
 	})
 }
 
@@ -501,8 +502,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 	return ""
 }
 
-func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
+func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id types.UUID) error {
+	jobId, err := uuid.Parse(string(id))
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
 	}
@@ -743,8 +744,8 @@ func composeStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.Koj
 }
 
 // ComposeMetadata handles a /composes/{id}/metadata GET request
-func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
+func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id types.UUID) error {
+	jobId, err := uuid.Parse(string(id))
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
 	}
@@ -854,8 +855,8 @@ func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadat
 }
 
 // Get logs for a compose
-func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
+func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id types.UUID) error {
+	jobId, err := uuid.Parse(string(id))
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
 	}
@@ -912,8 +913,8 @@ func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
 }
 
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
-func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
+func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id types.UUID) error {
+	jobId, err := uuid.Parse(string(id))
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
 	}

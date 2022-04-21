@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -222,7 +223,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, &api.ComposeResponse{
-		Id:          id.String(),
+		Id:          types.UUID(id.String()),
 		KojiBuildId: int(initResult.BuildID),
 	})
 }
@@ -300,8 +301,8 @@ func imageStatusFromJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJ
 }
 
 // GetComposeId handles a /compose/{id} GET request
-func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr string) error {
-	id, err := uuid.Parse(idstr)
+func (h *apiHandlers) GetComposeId(ctx echo.Context, idstr types.UUID) error {
+	id, err := uuid.Parse(string(idstr))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
@@ -353,8 +354,8 @@ func (h *apiHandlers) GetStatus(ctx echo.Context) error {
 }
 
 // Get logs for a compose
-func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
-	id, err := uuid.Parse(idstr)
+func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr types.UUID) error {
+	id, err := uuid.Parse(string(idstr))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
@@ -396,8 +397,8 @@ func (h *apiHandlers) GetComposeIdLogs(ctx echo.Context, idstr string) error {
 }
 
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
-func (h *apiHandlers) GetComposeIdManifests(ctx echo.Context, idstr string) error {
-	id, err := uuid.Parse(idstr)
+func (h *apiHandlers) GetComposeIdManifests(ctx echo.Context, idstr types.UUID) error {
+	id, err := uuid.Parse(string(idstr))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}

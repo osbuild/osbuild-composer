@@ -297,6 +297,21 @@ func SwaggerUriToChiUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
 
+// This function converts a swagger style path URI with parameters to a
+// Gin compatible path URI. We need to replace all of Swagger parameters with
+// ":param". Valid input parameters are:
+//   {param}
+//   {param*}
+//   {.param}
+//   {.param*}
+//   {;param}
+//   {;param*}
+//   {?param}
+//   {?param*}
+func SwaggerUriToGinUri(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, ":$1")
+}
+
 // Returns the argument names, in order, in a given URI string, so for
 // /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3
 func OrderedParamsFromUri(uri string) []string {
@@ -519,19 +534,45 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 	return sanitizedDeDup
 }
 
-// Converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
-// valid in Go
-func SchemaNameToTypeName(name string) string {
-	if name == "$" {
-		name = "DollarSign"
-	} else {
-		name = ToCamelCase(name)
-		// Prepend "N" to schemas starting with a number
-		if name != "" && unicode.IsDigit([]rune(name)[0]) {
-			name = "N" + name
+func typeNamePrefix(name string) (prefix string) {
+	for _, r := range name {
+		switch r {
+		case '$':
+			if len(name) == 1 {
+				return "DollarSign"
+			}
+		case '-':
+			prefix += "Minus"
+		case '+':
+			prefix += "Plus"
+		case '&':
+			prefix += "And"
+		case '~':
+			prefix += "Tilde"
+		case '=':
+			prefix += "Equal"
+		case '#':
+			prefix += "Hash"
+		case '.':
+			prefix += "Dot"
+		default:
+			// Prepend "N" to schemas starting with a number
+			if prefix == "" && unicode.IsDigit(r) {
+				return "N"
+			}
+
+			// break the loop, done parsing prefix
+			return
 		}
 	}
-	return name
+
+	return
+}
+
+// SchemaNameToTypeName converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
+// valid in Go
+func SchemaNameToTypeName(name string) string {
+	return typeNamePrefix(name) + ToCamelCase(name)
 }
 
 // According to the spec, additionalProperties may be true, false, or a
