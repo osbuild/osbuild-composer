@@ -49,7 +49,7 @@ type RPMStageInput struct {
 
 	// Collection of references. Each reference defines a package to be
 	// installed, with optional metadata.
-	References RPMStageReferences `json:"references"`
+	References RPMStageSourceArrayRefs `json:"references"`
 }
 
 func (RPMStageInput) isStageInput() {}
@@ -181,13 +181,17 @@ func NewRpmStageSourceFilesInputs(specs []rpmmd.PackageSpec) *RPMStageInputs {
 	return &RPMStageInputs{Packages: stageInput}
 }
 
-func pkgRefs(specs []rpmmd.PackageSpec) RPMStageReferences {
-	refs := make(RPMStageReferences, len(specs))
-	for _, pkg := range specs {
-		refs[pkg.Checksum] = &RPMStageSourceOptions{}
+func pkgRefs(specs []rpmmd.PackageSpec) RPMStageSourceArrayRefs {
+	refs := make(RPMStageSourceArrayRefs, len(specs))
+	for idx, pkg := range specs {
+		refs[idx] = &RPMStageSourceArrayRef{
+			ID: pkg.Checksum,
+		}
 		if pkg.CheckGPG {
-			refs[pkg.Checksum].Metadata = &RPMStageReferenceMetadata{
-				CheckGPG: pkg.CheckGPG,
+			refs[idx].Options = &RPMStageSourceOptions{
+				Metadata: &RPMStageReferenceMetadata{
+					CheckGPG: pkg.CheckGPG,
+				},
 			}
 		}
 	}
