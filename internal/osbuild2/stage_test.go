@@ -817,11 +817,16 @@ func TestStageV2_UnmarshalJSON(t *testing.T) {
 				Type: "org.osbuild.rpm",
 				Inputs: &RPMStageInputs{
 					Packages: &RPMStageInput{
-						References: RPMStageReferences{
-							"checksum1": &RPMStageSourceOptions{},
-							"checksum2": &RPMStageSourceOptions{
-								Metadata: &RPMStageReferenceMetadata{
-									CheckGPG: true,
+						References: RPMStageSourceArrayRefs{
+							&RPMStageSourceArrayRef{
+								ID: "checksum1",
+							},
+							&RPMStageSourceArrayRef{
+								ID: "checksum2",
+								Options: &RPMStageSourceOptions{
+									Metadata: &RPMStageReferenceMetadata{
+										CheckGPG: true,
+									},
 								},
 							},
 						},
@@ -832,7 +837,7 @@ func TestStageV2_UnmarshalJSON(t *testing.T) {
 				},
 			},
 			args: args{
-				data: []byte(`{"type":"org.osbuild.rpm","inputs":{"packages":{"type":"","origin":"","references":{"checksum1":{},"checksum2":{"metadata":{"rpm.check_gpg":true}}}}},"options":{"gpgkeys":["key1","key2"]}}`),
+				data: []byte(`{"type":"org.osbuild.rpm","inputs":{"packages":{"type":"","origin":"","references":[{"id":"checksum1"},{"id":"checksum2","options":{"metadata":{"rpm.check_gpg":true}}}]}},"options":{"gpgkeys":["key1","key2"]}}`),
 			},
 		},
 		{

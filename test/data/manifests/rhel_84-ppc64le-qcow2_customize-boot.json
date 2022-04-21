@@ -11350,7 +11350,6 @@
         "/proc": ".M.......",
         "/run/cockpit": ".M.......",
         "/sys": ".M.......",
-        "/var/lib/powerpc-utils/smt.state": "..5....T.",
         "/var/log/lastlog": ".M....G..",
         "/var/spool/anacron/cron.daily": ".M.......",
         "/var/spool/anacron/cron.monthly": ".M.......",
