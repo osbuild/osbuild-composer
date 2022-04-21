@@ -99,3 +99,10 @@ func TestDistro_Version(t *testing.T) {
 		require.Error(err, "Invalid manifest did not return an error")
 	}
 }
+
+func TestDistro_ImageType_PackageSetsChains(t *testing.T) {
+	dr := distroregistry.NewDefault()
+	for _, distroName := range dr.List() {
+		distro_test_common.TestImageType_PackageSetsChains(t, dr.GetDistro(distroName))
+	}
+}

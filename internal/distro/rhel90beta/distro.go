@@ -182,6 +182,7 @@ type imageType struct {
 	filename         string
 	mimeType         string
 	packageSets      map[string]rpmmd.PackageSet
+	packageSetChains map[string][]string
 	enabledServices  []string
 	disabledServices []string
 	defaultTarget    string
@@ -320,6 +321,10 @@ func (t *imageType) PayloadPipelines() []string {
 
 func (t *imageType) PayloadPackageSets() []string {
 	return []string{blueprintPkgsKey}
+}
+
+func (t *imageType) PackageSetsChains() map[string][]string {
+	return t.packageSetChains
 }
 
 func (t *imageType) Exports() []string {
@@ -590,6 +595,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: edgeBuildPackageSet(),
 			osPkgsKey:    edgeCommitPackageSet(),
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		enabledServices:  edgeServices,
 		rpmOstree:        true,
 		pipelines:        edgeCommitPipelines,
@@ -606,6 +614,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey:     edgeBuildPackageSet(),
 			osPkgsKey:        edgeCommitPackageSet(),
 			containerPkgsKey: {Include: []string{"httpd"}},
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		enabledServices:  edgeServices,
 		rpmOstree:        true,
@@ -632,6 +643,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			osPkgsKey:        edgeCommitPackageSet(),
 			installerPkgsKey: edgeInstallerPackageSet(),
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		enabledServices:  edgeServices,
 		rpmOstree:        true,
 		bootISO:          true,
@@ -650,6 +664,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			osPkgsKey: qcow2CommonPackageSet(),
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		bootable:            true,
 		defaultSize:         10 * GigaByte,
 		pipelines:           qcow2Pipelines,
@@ -665,6 +682,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		mimeType: "application/x-vhd",
 		packageSets: map[string]rpmmd.PackageSet{
 			osPkgsKey: vhdCommonPackageSet(),
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		enabledServices: []string{
 			"sshd",
@@ -688,6 +708,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			osPkgsKey: vmdkCommonPackageSet(),
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
 		defaultSize:         4 * GigaByte,
@@ -704,6 +727,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		mimeType: "application/x-qemu-disk",
 		packageSets: map[string]rpmmd.PackageSet{
 			osPkgsKey: openstackCommonPackageSet(),
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
@@ -736,6 +762,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    ec2CommonPackageSet(),
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
@@ -757,6 +786,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    ec2CommonPackageSet(),
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
@@ -776,6 +808,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    rhelEc2PackageSet(),
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
@@ -798,6 +833,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    rhelEc2PackageSet(),
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
@@ -817,6 +855,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 		packageSets: map[string]rpmmd.PackageSet{
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    rhelEc2HaPackageSet(),
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
@@ -839,6 +880,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet(),
 			osPkgsKey:    rhelEc2SapPackageSet(),
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultTarget:       "multi-user.target",
 		enabledServices:     ec2EnabledServices,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
@@ -860,6 +904,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 				Exclude: []string{"rng-tools"},
 			},
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		pipelines:        tarPipelines,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "root-tar"},
@@ -873,6 +920,9 @@ func newDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 			buildPkgsKey:     x8664InstallerBuildPackageSet(),
 			osPkgsKey:        bareMetalPackageSet(),
 			installerPkgsKey: installerPackageSet(),
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		rpmOstree:        false,
 		bootISO:          true,

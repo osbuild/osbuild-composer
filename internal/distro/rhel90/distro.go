@@ -226,6 +226,7 @@ type imageType struct {
 	filename           string
 	mimeType           string
 	packageSets        map[string]packageSetFunc
+	packageSetChains   map[string][]string
 	defaultImageConfig *distro.ImageConfig
 	kernelOptions      string
 	defaultSize        uint64
@@ -358,6 +359,10 @@ func (t *imageType) PayloadPipelines() []string {
 
 func (t *imageType) PayloadPackageSets() []string {
 	return []string{blueprintPkgsKey}
+}
+
+func (t *imageType) PackageSetsChains() map[string][]string {
+	return t.packageSetChains
 }
 
 func (t *imageType) Exports() []string {
@@ -676,6 +681,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: edgeBuildPackageSet,
 			osPkgsKey:    edgeCommitPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices,
 		},
@@ -699,6 +707,9 @@ func newDistro(distroName string) distro.Distro {
 					Include: []string{"nginx"},
 				}
 			},
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices,
@@ -749,6 +760,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey:     edgeInstallerBuildPackageSet,
 			osPkgsKey:        edgeCommitPackageSet,
 			installerPkgsKey: edgeInstallerPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale:          "en_US.UTF-8",
@@ -801,6 +815,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    qcow2CommonPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: "multi-user.target",
 			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
@@ -833,6 +850,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    vhdCommonPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
 			EnabledServices: []string{
@@ -859,6 +879,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    vmdkCommonPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
 		},
@@ -879,6 +902,9 @@ func newDistro(distroName string) distro.Distro {
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    openstackCommonPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
@@ -1094,6 +1120,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig:  defaultAMIImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295",
 		bootable:            true,
@@ -1114,6 +1143,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig:  defaultAMIImageConfig,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0",
 		bootable:            true,
@@ -1132,6 +1164,9 @@ func newDistro(distroName string) distro.Distro {
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2PackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultEc2ImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295",
@@ -1153,6 +1188,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2PackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig:  defaultEc2ImageConfig,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0",
 		bootable:            true,
@@ -1171,6 +1209,9 @@ func newDistro(distroName string) distro.Distro {
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2HaPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultEc2ImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295",
@@ -1302,6 +1343,9 @@ func newDistro(distroName string) distro.Distro {
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2SapPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultEc2SapImageConfigX86_64,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1",
@@ -1443,6 +1487,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    gcePackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig:  defaultGceImageConfig,
 		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d",
 		bootable:            true,
@@ -1468,6 +1515,9 @@ func newDistro(distroName string) distro.Distro {
 				}
 			},
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		pipelines:        tarPipelines,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "root-tar"},
@@ -1481,6 +1531,9 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey:     anacondaBuildPackageSet,
 			osPkgsKey:        bareMetalPackageSet,
 			installerPkgsKey: anacondaPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		rpmOstree:        false,
 		bootISO:          true,
