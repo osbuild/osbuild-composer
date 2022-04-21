@@ -291,6 +291,10 @@ func (t *imageType) PayloadPackageSets() []string {
 	return []string{"packages"}
 }
 
+func (t *imageType) PackageSetsChains() map[string][]string {
+	return map[string][]string{}
+}
+
 func (t *imageType) Exports() []string {
 	if len(t.exports) > 0 {
 		return t.exports

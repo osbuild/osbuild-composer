@@ -291,6 +291,10 @@ func (t *imageType) PayloadPackageSets() []string {
 	return []string{blueprintPkgsKey}
 }
 
+func (t *imageType) PackageSetsChains() map[string][]string {
+	return map[string][]string{osPkgsKey: {osPkgsKey, blueprintPkgsKey}}
+}
+
 func (t *imageType) Exports() []string {
 	return t.exports
 }

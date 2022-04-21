@@ -144,6 +144,10 @@ func (t *imageTypeS2) PayloadPackageSets() []string {
 	return []string{"packages"}
 }
 
+func (t *imageTypeS2) PackageSetsChains() map[string][]string {
+	return map[string][]string{}
+}
+
 func (t *imageTypeS2) Exports() []string {
 	return t.exports
 }
