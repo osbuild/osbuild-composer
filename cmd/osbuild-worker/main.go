@@ -123,6 +123,9 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 
 func main() {
 	var config struct {
+		Composer *struct {
+			Proxy string `toml:"proxy"`
+		}
 		Koji map[string]struct {
 			Kerberos *struct {
 				Principal string `toml:"principal"`
@@ -240,6 +243,11 @@ func main() {
 			clientSecret = strings.TrimSpace(string(cs))
 		}
 
+		proxy := ""
+		if config.Composer != nil && config.Composer.Proxy != "" {
+			proxy = config.Composer.Proxy
+		}
+
 		client, err = worker.NewClient(worker.ClientConfig{
 			BaseURL:      fmt.Sprintf("https://%s", address),
 			TlsConfig:    conf,
@@ -248,6 +256,7 @@ func main() {
 			ClientId:     config.Authentication.ClientId,
 			ClientSecret: clientSecret,
 			BasePath:     config.BasePath,
+			ProxyURL:     proxy,
 		})
 		if err != nil {
 			logrus.Fatalf("Error creating worker client: %v", err)
@@ -266,10 +275,16 @@ func main() {
 			}
 		}
 
+		proxy := ""
+		if config.Composer != nil && config.Composer.Proxy != "" {
+			proxy = config.Composer.Proxy
+		}
+
 		client, err = worker.NewClient(worker.ClientConfig{
 			BaseURL:   fmt.Sprintf("https://%s", address),
 			TlsConfig: conf,
 			BasePath:  config.BasePath,
+			ProxyURL:  proxy,
 		})
 		if err != nil {
 			logrus.Fatalf("Error creating worker client: %v", err)

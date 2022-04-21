@@ -38,6 +38,7 @@ type ClientConfig struct {
 	ClientId     string
 	ClientSecret string
 	BasePath     string
+	ProxyURL     string
 }
 
 type Job interface {
@@ -91,6 +92,17 @@ func NewClient(conf ClientConfig) (*Client, error) {
 
 	requester := &http.Client{}
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	if conf.ProxyURL != "" {
+		proxyURL, err := url.Parse(conf.ProxyURL)
+		if err != nil {
+			return nil, err
+		}
+
+		transport.Proxy = func(request *http.Request) (*url.URL, error) {
+			return proxyURL, nil
+		}
+	}
+
 	if conf.TlsConfig != nil {
 		transport.TLSClientConfig = conf.TlsConfig
 	}

@@ -100,3 +100,39 @@ func TestOAuth(t *testing.T) {
 	require.False(t, c)
 	require.NoError(t, err)
 }
+
+func TestProxy(t *testing.T) {
+	workerURL, oauthURL, offlineToken := newTestWorkerServer(t)
+
+	// initialize a test proxy server
+	proxy := &proxy{}
+	proxySrv := httptest.NewServer(proxy)
+	t.Cleanup(proxySrv.Close)
+
+	client, err := worker.NewClient(worker.ClientConfig{
+		BaseURL:      workerURL,
+		TlsConfig:    nil,
+		ClientId:     "rhsm-api",
+		OfflineToken: offlineToken,
+		OAuthURL:     oauthURL,
+		BasePath:     "/api/image-builder-worker/v1",
+		ProxyURL:     proxySrv.URL,
+	})
+
+	require.NoError(t, err)
+	job, err := client.RequestJob([]string{"osbuild"}, "arch")
+	require.NoError(t, err)
+	r := strings.NewReader("artifact contents")
+	require.NoError(t, job.UploadArtifact("some-artifact", r))
+	c, err := job.Canceled()
+	require.False(t, c)
+	require.NoError(t, err)
+
+	// we expect 5 calls to go through the proxy:
+	// - request job (fails, no oauth token)
+	// - oauth call
+	// - request job (succeeds)
+	// - upload artifact
+	// - cancel
+	require.Equal(t, 5, proxy.calls)
+}
