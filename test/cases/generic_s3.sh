@@ -1,7 +1,19 @@
 #!/bin/bash
-set -euo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+
+if [ "${NIGHTLY:=false}" == "true" ]; then
+    case "${ID}-${VERSION_ID}" in
+        "rhel-8.6" | "rhel-9.0")
+            echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
+            exit 0
+            ;;
+        *)
+            ;;
+    esac
+fi
+
+set -euo pipefail
 
 # Container images for MinIO Server and Client
 CONTAINER_MINIO_CLIENT="quay.io/minio/mc:latest"
