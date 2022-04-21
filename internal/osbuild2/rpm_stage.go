@@ -84,6 +84,34 @@ type RPMStageReferences map[string]*RPMStageSourceOptions
 
 func (RPMStageReferences) isReferences() {}
 
+// RPMStageSourceArrayRefs: References to RPM packages defined in JSON as an
+// array of objects (preserves item order):
+// [
+//   {
+//     "id": "sha256:<...>": {
+//       "options": {
+//         "rpm.check_gpg": <boolean>
+//       }
+//     }
+//   },
+//   {
+//     "id": "sha256:<...>": {
+//       "options": {
+//         "rpm.check_gpg": <boolean>
+//       }
+//     }
+//   },
+//   ...
+// ]
+type RPMStageSourceArrayRefs []*RPMStageSourceArrayRef
+
+func (RPMStageSourceArrayRefs) isReferences() {}
+
+type RPMStageSourceArrayRef struct {
+	ID      string                 `json:"id"`
+	Options *RPMStageSourceOptions `json:"options,omitempty"`
+}
+
 // NewRPMStage creates a new RPM stage.
 func NewRPMStage(options *RPMStageOptions, inputs *RPMStageInputs) *Stage {
 	return &Stage{
