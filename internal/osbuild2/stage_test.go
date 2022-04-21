@@ -818,8 +818,8 @@ func TestStageV2_UnmarshalJSON(t *testing.T) {
 				Inputs: &RPMStageInputs{
 					Packages: &RPMStageInput{
 						References: RPMStageReferences{
-							"checksum1": &RPMStageReference{},
-							"checksum2": &RPMStageReference{
+							"checksum1": &RPMStageSourceOptions{},
+							"checksum2": &RPMStageSourceOptions{
 								Metadata: &RPMStageReferenceMetadata{
 									CheckGPG: true,
 								},

@@ -61,9 +61,9 @@ type RPMStageReferenceMetadata struct {
 	CheckGPG bool `json:"rpm.check_gpg,omitempty"`
 }
 
-// RPMStageReference holds the metadata/options for a single RPM package to be
+// RPMStageSourceOptions holds the metadata/options for a single RPM package to be
 // installed.
-type RPMStageReference struct {
+type RPMStageSourceOptions struct {
 	Metadata *RPMStageReferenceMetadata `json:"metadata,omitempty"`
 }
 
@@ -80,7 +80,7 @@ type RPMStageReference struct {
 //    }
 // }
 // ...
-type RPMStageReferences map[string]*RPMStageReference
+type RPMStageReferences map[string]*RPMStageSourceOptions
 
 func (RPMStageReferences) isReferences() {}
 
@@ -156,7 +156,7 @@ func NewRpmStageSourceFilesInputs(specs []rpmmd.PackageSpec) *RPMStageInputs {
 func pkgRefs(specs []rpmmd.PackageSpec) RPMStageReferences {
 	refs := make(RPMStageReferences, len(specs))
 	for _, pkg := range specs {
-		refs[pkg.Checksum] = &RPMStageReference{}
+		refs[pkg.Checksum] = &RPMStageSourceOptions{}
 		if pkg.CheckGPG {
 			refs[pkg.Checksum].Metadata = &RPMStageReferenceMetadata{
 				CheckGPG: pkg.CheckGPG,
