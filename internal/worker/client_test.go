@@ -13,7 +13,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-func TestOAuth(t *testing.T) {
+// newTestWorkerServer returns 3 strings:
+// - base URL of the worker server
+// - base URL of the OAuth server
+// - offline token for OAuth
+//
+// The worker server has one pending osbuild job of arch "arch" ready to be dequeued.
+func newTestWorkerServer(t *testing.T) (string, string, string) {
 	tempdir := t.TempDir()
 
 	q, err := fsjobqueue.New(tempdir)
@@ -23,10 +29,16 @@ func TestOAuth(t *testing.T) {
 		BasePath:     "/api/image-builder-worker/v1",
 	}
 	workerServer := worker.NewServer(nil, q, config)
+	_, err = workerServer.EnqueueOSBuild("arch", &worker.OSBuildJob{}, "")
+	require.NoError(t, err)
+
 	handler := workerServer.Handler()
 
 	workSrv := httptest.NewServer(handler)
-	defer workSrv.Close()
+	t.Cleanup(workSrv.Close)
+
+	offlineToken := "someOfflineToken"
+	accessToken := "accessToken!"
 
 	/* Check that the worker supplies the access token  */
 	calls := 0
@@ -36,17 +48,16 @@ func TestOAuth(t *testing.T) {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		require.Equal(t, "Bearer accessToken!", r.Header.Get("Authorization"))
+		require.Equal(t, "Bearer "+accessToken, r.Header.Get("Authorization"))
 		handler.ServeHTTP(w, r)
 	}))
-	defer proxySrv.Close()
+	t.Cleanup(proxySrv.Close)
 
-	offlineToken := "someOfflineToken"
 	/* Start oauth srv supplying the bearer token */
 	oauthSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls += 1
 		require.Equal(t, "POST", r.Method)
-		err = r.ParseForm()
+		err := r.ParseForm()
 		require.NoError(t, err)
 
 		require.Equal(t, "refresh_token", r.FormValue("grant_type"))
@@ -56,7 +67,7 @@ func TestOAuth(t *testing.T) {
 		bt := struct {
 			AccessToken string `json:"access_token"`
 		}{
-			"accessToken!",
+			accessToken,
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -64,17 +75,20 @@ func TestOAuth(t *testing.T) {
 		err = json.NewEncoder(w).Encode(bt)
 		require.NoError(t, err)
 	}))
-	defer oauthSrv.Close()
+	t.Cleanup(oauthSrv.Close)
 
-	_, err = workerServer.EnqueueOSBuild("arch", &worker.OSBuildJob{}, "")
-	require.NoError(t, err)
+	return proxySrv.URL, oauthSrv.URL, offlineToken
+}
+
+func TestOAuth(t *testing.T) {
+	workerURL, oauthURL, offlineToken := newTestWorkerServer(t)
 
 	client, err := worker.NewClient(worker.ClientConfig{
-		BaseURL:      proxySrv.URL,
+		BaseURL:      workerURL,
 		TlsConfig:    nil,
 		ClientId:     "rhsm-api",
 		OfflineToken: offlineToken,
-		OAuthURL:     oauthSrv.URL,
+		OAuthURL:     oauthURL,
 		BasePath:     "/api/image-builder-worker/v1",
 	})
 	require.NoError(t, err)
@@ -84,4 +98,5 @@ func TestOAuth(t *testing.T) {
 	require.NoError(t, job.UploadArtifact("some-artifact", r))
 	c, err := job.Canceled()
 	require.False(t, c)
+	require.NoError(t, err)
 }
