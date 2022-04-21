@@ -6247,7 +6247,7 @@
               "product": "Fedora",
               "version": "35",
               "final": true,
-              "variant": "iot",
+              "variant": "IoT",
               "bugurl": ""
             }
           },

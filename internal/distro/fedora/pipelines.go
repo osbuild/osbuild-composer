@@ -176,7 +176,7 @@ func iotInstallerPipelines(t *imageType, customizations *blueprint.Customization
 		return nil, err
 	}
 	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "iot", ksUsers))
+	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "IoT", ksUsers))
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, payloadStages))
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, archName, false))
