@@ -33,14 +33,22 @@ type RPMPackage struct {
 
 func (RPMStageOptions) isStageOptions() {}
 
+// RPMStageInputs defines a collection of packages to be installed by the RPM
+// stage.
 type RPMStageInputs struct {
+
+	// Packages to install
 	Packages *RPMStageInput `json:"packages"`
 }
 
 func (RPMStageInputs) isStageInputs() {}
 
+// RPMStageInput defines a single input source.
 type RPMStageInput struct {
 	inputCommon
+
+	// Collection of references. Each reference defines a package to be
+	// installed, with optional metadata.
 	References RPMStageReferences `json:"references"`
 }
 
@@ -53,11 +61,13 @@ type RPMStageReferenceMetadata struct {
 	CheckGPG bool `json:"rpm.check_gpg,omitempty"`
 }
 
+// RPMStageReference holds the metadata/options for a single RPM package to be
+// installed.
 type RPMStageReference struct {
 	Metadata *RPMStageReferenceMetadata `json:"metadata,omitempty"`
 }
 
-// References to RPM packages defined in JSON as:
+// RPMStageReferences: References to RPM packages defined in JSON as:
 //
 // "sha256:<...>": {
 //    "metadata": {
