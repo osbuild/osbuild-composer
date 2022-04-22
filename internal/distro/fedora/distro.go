@@ -248,6 +248,7 @@ var (
 		EnabledServices: []string{
 			"cloud-init.service",
 		},
+		DefaultTarget: "multi-user.target",
 	}
 
 	amiImgType = imageType{
@@ -259,7 +260,7 @@ var (
 			osPkgsKey:    ec2CommonPackageSet,
 		},
 		defaultImageConfig:  defaultEc2ImageConfig,
-		kernelOptions:       "ro no_timer_check net.ifnames=0 console=tty1 console=ttyS0,115200n8",
+		kernelOptions:       "ro no_timer_check net.ifnames=0 console=tty1",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         6 * GigaByte,
