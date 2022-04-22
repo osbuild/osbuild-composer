@@ -11911,7 +11911,7 @@
         }
       }
     },
-    "default-target": "graphical.target",
+    "default-target": "multi-user.target",
     "dnf": {
       "dnf.conf": {
         "main": {

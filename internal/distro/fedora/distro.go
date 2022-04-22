@@ -285,7 +285,7 @@ type distribution struct {
 	defaultImageConfig *distro.ImageConfig
 }
 
-// RHEL-based OS image configuration defaults
+// Fedora based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
 	Timezone: "UTC",
 	Locale:   "en_US",
@@ -828,7 +828,7 @@ func newDistro(distroName string) distro.Distro {
 		name:     distro.X86_64ArchName,
 		distro:   &rd,
 		legacy:   "i386-pc",
-		bootType: distro.LegacyBootType,
+		bootType: distro.HybridBootType,
 	}
 
 	aarch64 := architecture{
