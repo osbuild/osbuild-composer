@@ -477,7 +477,12 @@ func (pt *PartitionTable) ensureLVM() error {
 	bootPath := entityPath(pt, "/boot")
 	if bootPath == nil {
 		_, err := pt.CreateMountpoint("/boot", 512*1024*1024)
-		return err
+
+		if err != nil {
+			return err
+		}
+
+		rootPath = entityPath(pt, "/")
 	}
 
 	parent := rootPath[1] // NB: entityPath has reversed order
