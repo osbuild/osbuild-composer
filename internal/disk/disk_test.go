@@ -372,6 +372,13 @@ var bp = []blueprint.FilesystemCustomization{
 	},
 }
 
+var bp2 = []blueprint.FilesystemCustomization{
+	{
+		Mountpoint: "/opt",
+		MinSize:    7 * 1024 * 1024 * 1024,
+	},
+}
+
 func TestDisk_ForEachEntity(t *testing.T) {
 
 	count := 0
@@ -415,32 +422,35 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
-	for name := range testPartitionTables {
-		pt := testPartitionTables[name]
+	blueprints := [][]blueprint.FilesystemCustomization{bp, bp2}
+	for _, tbp := range blueprints {
+		for name := range testPartitionTables {
+			pt := testPartitionTables[name]
 
-		if name == "btrfs" || name == "luks" {
-			assert.Panics(func() {
-				_, _ = NewPartitionTable(&pt, bp, uint64(13*1024*1024), true, rng)
-			})
-			continue
+			if name == "btrfs" || name == "luks" {
+				assert.Panics(func() {
+					_, _ = NewPartitionTable(&pt, tbp, uint64(13*1024*1024), true, rng)
+				})
+				continue
+			}
+
+			mpt, err := NewPartitionTable(&pt, tbp, uint64(13*1024*1024), true, rng)
+			assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
+
+			rootPath := entityPath(mpt, "/")
+			if rootPath == nil {
+				panic("no root mountpoint for PartitionTable")
+			}
+
+			bootPath := entityPath(mpt, "/boot")
+			if bootPath == nil {
+				panic("no boot mountpoint for PartitionTable")
+			}
+
+			parent := rootPath[1]
+			_, ok := parent.(*LVMLogicalVolume)
+			assert.True(ok, "Partition table '%s': root's parent (%q) is not an LVM logical volume", name, parent)
 		}
-
-		mpt, err := NewPartitionTable(&pt, bp, uint64(13*1024*1024), true, rng)
-		assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
-
-		rootPath := entityPath(mpt, "/")
-		if rootPath == nil {
-			panic("no root mountpoint for PartitionTable")
-		}
-
-		bootPath := entityPath(mpt, "/boot")
-		if bootPath == nil {
-			panic("no boot mountpoint for PartitionTable")
-		}
-
-		parent := rootPath[1]
-		_, ok := parent.(*LVMLogicalVolume)
-		assert.True(ok, "Partition table '%s': root's parent (%q) is not an LVM logical volume", name, parent)
 	}
 }
 
