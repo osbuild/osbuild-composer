@@ -212,7 +212,15 @@ type RPMMD interface {
 	// Depsolve takes a list of required content (specs), explicitly unwanted content (excludeSpecs), list
 	// or repositories, and platform ID for modularity. It returns a list of all packages (with solved
 	// dependencies) that will be installed into the system.
+	//
+	// NOTE: Kept for legacy purposes (Weldr). New code should default to using DepsolvePackageSets().
 	Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch, releasever string) ([]PackageSpec, map[string]string, error)
+
+	// DepsolvePackageSets takes a map of package sets chains, which should be depsolved as separate transactions,
+	// a map of package sets (included and excluded), a list of common and package-set-specific repositories,
+	// platform ID for modularity, architecture and release version. It returns a map of Package Specs, depsolved
+	// in a chain or alone, as defined based on the provided arguments.
+	DepsolvePackageSets(packageSetsChains map[string][]string, packageSets map[string]PackageSet, repos []RepoConfig, packageSetsRepos map[string][]RepoConfig, modulePlatformID, arch, releasever string) (map[string][]PackageSpec, error)
 }
 
 type DNFError struct {
@@ -650,6 +658,55 @@ func (r *rpmmdImpl) chainDepsolve(chains []chainPackageSet, repos []RepoConfig, 
 	}
 
 	return dependencies, reply.Checksums, err
+}
+
+// DepsolvePackageSets takes a map of package sets chains, which should be depsolved as separate transactions,
+// a map of package sets (included and excluded), a list of common and package-set-specific repositories,
+// platform ID for modularity, architecture and release version. It returns a map of Package Specs, depsolved
+// in a chain or alone, as defined based on the provided arguments.
+func (r *rpmmdImpl) DepsolvePackageSets(
+	packageSetsChains map[string][]string,
+	packageSets map[string]PackageSet,
+	repos []RepoConfig,
+	packageSetsRepos map[string][]RepoConfig,
+	modulePlatformID, arch, releasever string) (map[string][]PackageSpec, error) {
+
+	packageSpecsSets := make(map[string][]PackageSpec, len(packageSets))
+	// map to hold package set names which were processed as chains
+	chainPkgSets := make(map[string]struct{}, len(packageSets))
+
+	for name, packageSetChain := range packageSetsChains {
+		for _, packageSetName := range packageSetChain {
+			chainPkgSets[packageSetName] = struct{}{}
+		}
+		chainPkgSets, chainRepos, err := chainPackageSets(packageSetChain, packageSets, repos, packageSetsRepos)
+		if err != nil {
+			return nil, err
+		}
+		packageSpecs, _, err := r.chainDepsolve(chainPkgSets, chainRepos, modulePlatformID, arch, releasever)
+		if err != nil {
+			return nil, err
+		}
+		packageSpecsSets[name] = packageSpecs
+	}
+
+	// Process the remaining package sets not contained in the package set chains
+	for name, packageSet := range packageSets {
+		if _, ok := chainPkgSets[name]; ok {
+			continue
+		}
+		chainPkgSets, chainRepos, err := chainPackageSets([]string{name}, map[string]PackageSet{name: packageSet}, repos, packageSetsRepos)
+		if err != nil {
+			return nil, err
+		}
+		packageSpecs, _, err := r.chainDepsolve(chainPkgSets, chainRepos, modulePlatformID, arch, releasever)
+		if err != nil {
+			return nil, err
+		}
+		packageSpecsSets[name] = packageSpecs
+	}
+
+	return packageSpecsSets, nil
 }
 
 func (packages PackageList) Search(globPatterns ...string) (PackageList, error) {

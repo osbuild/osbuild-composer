@@ -86,6 +86,57 @@ func createBaseDepsolveFixture() []rpmmd.PackageSpec {
 	}
 }
 
+func createBaseDepsolvePackageSetsFixture() map[string][]rpmmd.PackageSpec {
+	return map[string][]rpmmd.PackageSpec{
+		"build": {
+			{
+				Name:    "dep-package3",
+				Epoch:   7,
+				Version: "3.0.3",
+				Release: "1.fc30",
+				Arch:    "x86_64",
+			},
+			{
+				Name:    "dep-package1",
+				Epoch:   0,
+				Version: "1.33",
+				Release: "2.fc30",
+				Arch:    "x86_64",
+			},
+			{
+				Name:    "dep-package2",
+				Epoch:   0,
+				Version: "2.9",
+				Release: "1.fc30",
+				Arch:    "x86_64",
+			},
+		},
+		"packages": {
+			{
+				Name:    "dep-package3",
+				Epoch:   7,
+				Version: "3.0.3",
+				Release: "1.fc30",
+				Arch:    "x86_64",
+			},
+			{
+				Name:    "dep-package1",
+				Epoch:   0,
+				Version: "1.33",
+				Release: "2.fc30",
+				Arch:    "x86_64",
+			},
+			{
+				Name:    "dep-package2",
+				Epoch:   0,
+				Version: "2.9",
+				Release: "1.fc30",
+				Arch:    "x86_64",
+			},
+		},
+	}
+}
+
 func BaseFixture(tmpdir string) Fixture {
 	return Fixture{
 		fetchPackageList{
@@ -95,6 +146,7 @@ func BaseFixture(tmpdir string) Fixture {
 		},
 		depsolve{
 			createBaseDepsolveFixture(),
+			createBaseDepsolvePackageSetsFixture(),
 			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
@@ -112,6 +164,7 @@ func NoComposesFixture(tmpdir string) Fixture {
 		},
 		depsolve{
 			createBaseDepsolveFixture(),
+			createBaseDepsolvePackageSetsFixture(),
 			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
@@ -128,6 +181,7 @@ func NonExistingPackage(tmpdir string) Fixture {
 			nil,
 		},
 		depsolve{
+			nil,
 			nil,
 			nil,
 			&rpmmd.DNFError{
@@ -148,6 +202,7 @@ func BadDepsolve(tmpdir string) Fixture {
 			nil,
 		},
 		depsolve{
+			nil,
 			nil,
 			nil,
 			&rpmmd.DNFError{
@@ -173,6 +228,7 @@ func BadFetch(tmpdir string) Fixture {
 		depsolve{
 			nil,
 			nil,
+			nil,
 			&rpmmd.DNFError{
 				Kind:   "DepsolveError",
 				Reason: "There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch",
@@ -192,6 +248,7 @@ func OldChangesFixture(tmpdir string) Fixture {
 		},
 		depsolve{
 			createBaseDepsolveFixture(),
+			createBaseDepsolvePackageSetsFixture(),
 			map[string]string{"base": "sha256:f34848ca92665c342abd5816c9e3eda0e82180671195362bcd0080544a3bc2ac"},
 			nil,
 		},
