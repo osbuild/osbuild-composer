@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	fedora "github.com/osbuild/osbuild-composer/internal/distro/fedora33"
+	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel86"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
 )
@@ -90,6 +91,71 @@ func TestCrossArchDepsolve(t *testing.T) {
 						})
 					}
 				})
+			}
+		})
+	}
+}
+
+// This test loads all the repositories available in /repositories directory
+// and tries to depsolve all package sets of one image type for one architecture.
+func TestDepsolvePackageSets(t *testing.T) {
+	// Load repositories from the definition we provide in the RPM package
+	repoDir := "/usr/share/tests/osbuild-composer"
+
+	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
+	for _, distroStruct := range []distro.Distro{rhel.NewCentos()} {
+		t.Run(distroStruct.Name(), func(t *testing.T) {
+
+			// Run tests in parallel to speed up run times.
+			t.Parallel()
+
+			// Set up temporary directory for rpm/dnf cache
+			dir := t.TempDir()
+
+			// use a fullpath to dnf-json, this allows this test to have an arbitrary
+			// working directory
+			rpm := rpmmd.NewRPMMD(dir)
+
+			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
+			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
+			x86Repos, ok := repos[distro.X86_64ArchName]
+			require.Truef(t, ok, "failed to get %q repos for %q", distro.X86_64ArchName, distroStruct.Name())
+
+			x86Arch, err := distroStruct.GetArch(distro.X86_64ArchName)
+			require.Nilf(t, err, "failed to get %q arch of %q distro", distro.X86_64ArchName, distroStruct.Name())
+
+			qcow2ImageTypeName := "qcow2"
+			qcow2Image, err := x86Arch.GetImageType(qcow2ImageTypeName)
+			require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, distroStruct.Name(), distro.X86_64ArchName)
+
+			imagePkgSets := qcow2Image.PackageSets(blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}})
+			imagePkgSetChains := qcow2Image.PackageSetsChains()
+			require.NotEmptyf(t, imagePkgSetChains, "the %q image has no package set chains defined", qcow2ImageTypeName)
+
+			expectedPackageSpecsSetNames := func(pkgSets map[string]rpmmd.PackageSet, pkgSetChains map[string][]string) []string {
+				expectedPkgSpecsSetNames := make([]string, 0, len(pkgSets))
+				chainPkgSets := make(map[string]struct{}, len(pkgSets))
+				for name, pkgSetChain := range pkgSetChains {
+					expectedPkgSpecsSetNames = append(expectedPkgSpecsSetNames, name)
+					for _, pkgSetName := range pkgSetChain {
+						chainPkgSets[pkgSetName] = struct{}{}
+					}
+				}
+				for name := range pkgSets {
+					if _, ok := chainPkgSets[name]; ok {
+						continue
+					}
+					expectedPkgSpecsSetNames = append(expectedPkgSpecsSetNames, name)
+				}
+				return expectedPkgSpecsSetNames
+			}(imagePkgSets, imagePkgSetChains)
+
+			gotPackageSpecsSets, err := rpm.DepsolvePackageSets(imagePkgSetChains, imagePkgSets, x86Repos, nil, distroStruct.ModulePlatformID(), x86Arch.Name(), distroStruct.Releasever())
+			require.Nil(t, err)
+			require.EqualValues(t, len(expectedPackageSpecsSetNames), len(gotPackageSpecsSets))
+			for _, name := range expectedPackageSpecsSetNames {
+				_, ok := gotPackageSpecsSets[name]
+				assert.True(t, ok)
 			}
 		})
 	}
