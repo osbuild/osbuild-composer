@@ -172,14 +172,6 @@ func (t *TestImageType) PartitionType() string {
 	return ""
 }
 
-func (t *TestImageType) Packages(bp blueprint.Blueprint) ([]string, []string) {
-	return nil, nil
-}
-
-func (t *TestImageType) BuildPackages() []string {
-	return nil
-}
-
 func (t *TestImageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
 	return nil
 }
