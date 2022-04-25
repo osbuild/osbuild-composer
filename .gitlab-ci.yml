@@ -559,6 +559,9 @@ Upgrade:
 
 NIGHTLY_FAIL:
   stage: finish
+  dependencies:
+    - COMPOSE_ID
+    - COMPOSER_NVR
   tags:
     - shell
   rules:
@@ -569,6 +572,9 @@ NIGHTLY_FAIL:
 
 NIGHTLY_SUCCESS:
   stage: finish
+  dependencies:
+    - COMPOSE_ID
+    - COMPOSER_NVR
   tags:
     - shell
   rules:
