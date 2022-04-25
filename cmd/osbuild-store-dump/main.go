@@ -19,13 +19,17 @@ import (
 
 func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, rpm_md rpmmd.RPMMD, repos []rpmmd.RepoConfig) (distro.Manifest, []rpmmd.PackageSpec) {
 	packageSets := t.PackageSets(bp)
-	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
-	for name, packages := range packageSets {
-		pkgs, _, err := rpm_md.Depsolve(packages, repos, d.ModulePlatformID(), a.Name(), d.Releasever())
-		if err != nil {
-			panic(err)
-		}
-		pkgSpecSets[name] = pkgs
+	pkgSpecSets, err := rpm_md.DepsolvePackageSets(
+		t.PackageSetsChains(),
+		packageSets,
+		repos,
+		nil,
+		d.ModulePlatformID(),
+		a.Name(),
+		d.Releasever(),
+	)
+	if err != nil {
+		panic("Could not depsolve: " + err.Error())
 	}
 	manifest, err := t.Manifest(bp.Customizations, distro.ImageOptions{}, repos, pkgSpecSets, 0)
 	if err != nil {
