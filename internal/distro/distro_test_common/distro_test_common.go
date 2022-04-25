@@ -141,13 +141,17 @@ func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint,
 
 	rpm_md := rpmmd.NewRPMMD(cacheDir)
 
-	imgPackageSpecSets := make(map[string][]rpmmd.PackageSpec)
-	for name, packages := range imgPackageSets {
-		packageSpecs, _, err := rpm_md.Depsolve(packages, repos, imageType.Arch().Distro().ModulePlatformID(), imageType.Arch().Name(), imageType.Arch().Distro().Releasever())
-		if err != nil {
-			panic("Could not depsolve: " + err.Error())
-		}
-		imgPackageSpecSets[name] = packageSpecs
+	imgPackageSpecSets, err := rpm_md.DepsolvePackageSets(
+		imageType.PackageSetsChains(),
+		imgPackageSets,
+		repos,
+		nil,
+		imageType.Arch().Distro().ModulePlatformID(),
+		imageType.Arch().Name(),
+		imageType.Arch().Distro().Releasever(),
+	)
+	if err != nil {
+		panic("Could not depsolve: " + err.Error())
 	}
 
 	return imgPackageSpecSets
