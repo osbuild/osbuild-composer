@@ -18,23 +18,22 @@ type DepsolveJobImpl struct {
 // in repos are used for all package sets, whereas the repositories in
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, packageSetsRepos map[string][]rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
+func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string,
+	packageSets map[string]rpmmd.PackageSet,
+	repos []rpmmd.RepoConfig,
+	packageSetsRepos map[string][]rpmmd.RepoConfig,
+	modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
 	rpmMD := rpmmd.NewRPMMD(impl.RPMMDCache)
 
-	packageSpecs := make(map[string][]rpmmd.PackageSpec)
-	for name, packageSet := range packageSets {
-		repositories := make([]rpmmd.RepoConfig, len(repos))
-		copy(repositories, repos)
-		if packageSetRepositories, ok := packageSetsRepos[name]; ok {
-			repositories = append(repositories, packageSetRepositories...)
-		}
-		packageSpec, _, err := rpmMD.Depsolve(packageSet, repositories, modulePlatformID, arch, releasever)
-		if err != nil {
-			return nil, err
-		}
-		packageSpecs[name] = packageSpec
-	}
-	return packageSpecs, nil
+	return rpmMD.DepsolvePackageSets(
+		packageSetsChains,
+		packageSets,
+		repos,
+		packageSetsRepos,
+		modulePlatformID,
+		arch,
+		releasever,
+	)
 }
 
 func (impl *DepsolveJobImpl) Run(job worker.Job) error {
@@ -46,7 +45,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.DepsolveJobResult
-	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.Repos, args.PackageSetsRepos, args.ModulePlatformID, args.Arch, args.Releasever)
+	result.PackageSpecs, err = impl.depsolve(args.PackageSetsChains, args.PackageSets, args.Repos, args.PackageSetsRepos, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
 		switch e := err.(type) {
 		case *rpmmd.DNFError:

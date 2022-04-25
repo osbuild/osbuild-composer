@@ -84,12 +84,13 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	ir := irs[0]
 
 	depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
-		PackageSets:      ir.imageType.PackageSets(bp),
-		Repos:            ir.repositories,
-		ModulePlatformID: distribution.ModulePlatformID(),
-		Arch:             ir.arch.Name(),
-		Releasever:       distribution.Releasever(),
-		PackageSetsRepos: ir.packageSetsRepositories,
+		PackageSetsChains: ir.imageType.PackageSetsChains(),
+		PackageSets:       ir.imageType.PackageSets(bp),
+		Repos:             ir.repositories,
+		ModulePlatformID:  distribution.ModulePlatformID(),
+		Arch:              ir.arch.Name(),
+		Releasever:        distribution.Releasever(),
+		PackageSetsRepos:  ir.packageSetsRepositories,
 	}, channel)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)

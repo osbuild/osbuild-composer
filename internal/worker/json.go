@@ -108,12 +108,13 @@ func (pn *PipelineNames) All() []string {
 // PackageSetsRepos are only used by the package sets that share the same name
 // (map key).
 type DepsolveJob struct {
-	PackageSets      map[string]rpmmd.PackageSet   `json:"package_sets"`
-	Repos            []rpmmd.RepoConfig            `json:"repos"`
-	ModulePlatformID string                        `json:"module_platform_id"`
-	Arch             string                        `json:"arch"`
-	Releasever       string                        `json:"releasever"`
-	PackageSetsRepos map[string][]rpmmd.RepoConfig `json:"package_sets_repositories,omitempty"`
+	PackageSetsChains map[string][]string           `json:"package_sets_chains"`
+	PackageSets       map[string]rpmmd.PackageSet   `json:"package_sets"`
+	Repos             []rpmmd.RepoConfig            `json:"repos"`
+	ModulePlatformID  string                        `json:"module_platform_id"`
+	Arch              string                        `json:"arch"`
+	Releasever        string                        `json:"releasever"`
+	PackageSetsRepos  map[string][]rpmmd.RepoConfig `json:"package_sets_repositories,omitempty"`
 }
 
 type ErrorType string
