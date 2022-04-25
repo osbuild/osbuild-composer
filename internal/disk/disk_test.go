@@ -471,3 +471,105 @@ func TestClone(t *testing.T) {
 		}
 	}
 }
+
+func TestFindDirectoryPartition(t *testing.T) {
+	assert := assert.New(t)
+	usr := Partition{
+		Type: FilesystemDataGUID,
+		UUID: RootPartitionUUID,
+		Payload: &Filesystem{
+			Type:         "xfs",
+			Label:        "root",
+			Mountpoint:   "/usr",
+			FSTabOptions: "defaults",
+			FSTabFreq:    0,
+			FSTabPassNo:  0,
+		},
+	}
+
+	{
+		pt := testPartitionTables["plain"]
+		assert.Equal("/", pt.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot/efi", pt.findDirectoryEntityPath("/boot/efi/Linux")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot", pt.findDirectoryEntityPath("/boot/loader")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot", pt.findDirectoryEntityPath("/boot")[0].(Mountable).GetMountpoint())
+
+		ptMod := pt.Clone().(*PartitionTable)
+		ptMod.Partitions = append(ptMod.Partitions, usr)
+		assert.Equal("/", ptMod.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr/bin")[0].(Mountable).GetMountpoint())
+
+		// invalid dir should return nil
+		assert.Nil(pt.findDirectoryEntityPath("invalid"))
+	}
+
+	{
+		pt := testPartitionTables["plain-noboot"]
+		assert.Equal("/", pt.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/", pt.findDirectoryEntityPath("/boot")[0].(Mountable).GetMountpoint())
+		assert.Equal("/", pt.findDirectoryEntityPath("/boot/loader")[0].(Mountable).GetMountpoint())
+
+		ptMod := pt.Clone().(*PartitionTable)
+		ptMod.Partitions = append(ptMod.Partitions, usr)
+		assert.Equal("/", ptMod.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr/bin")[0].(Mountable).GetMountpoint())
+
+		// invalid dir should return nil
+		assert.Nil(pt.findDirectoryEntityPath("invalid"))
+	}
+
+	{
+		pt := testPartitionTables["luks"]
+		assert.Equal("/", pt.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot", pt.findDirectoryEntityPath("/boot")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot", pt.findDirectoryEntityPath("/boot/loader")[0].(Mountable).GetMountpoint())
+
+		ptMod := pt.Clone().(*PartitionTable)
+		ptMod.Partitions = append(ptMod.Partitions, usr)
+		assert.Equal("/", ptMod.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr/bin")[0].(Mountable).GetMountpoint())
+
+		// invalid dir should return nil
+		assert.Nil(pt.findDirectoryEntityPath("invalid"))
+	}
+
+	{
+		pt := testPartitionTables["luks+lvm"]
+		assert.Equal("/", pt.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot", pt.findDirectoryEntityPath("/boot")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot", pt.findDirectoryEntityPath("/boot/loader")[0].(Mountable).GetMountpoint())
+
+		ptMod := pt.Clone().(*PartitionTable)
+		ptMod.Partitions = append(ptMod.Partitions, usr)
+		assert.Equal("/", ptMod.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr/bin")[0].(Mountable).GetMountpoint())
+
+		// invalid dir should return nil
+		assert.Nil(pt.findDirectoryEntityPath("invalid"))
+	}
+
+	{
+		pt := testPartitionTables["btrfs"]
+		assert.Equal("/", pt.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot", pt.findDirectoryEntityPath("/boot")[0].(Mountable).GetMountpoint())
+		assert.Equal("/boot", pt.findDirectoryEntityPath("/boot/loader")[0].(Mountable).GetMountpoint())
+
+		ptMod := pt.Clone().(*PartitionTable)
+		ptMod.Partitions = append(ptMod.Partitions, usr)
+		assert.Equal("/", ptMod.findDirectoryEntityPath("/opt")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr")[0].(Mountable).GetMountpoint())
+		assert.Equal("/usr", ptMod.findDirectoryEntityPath("/usr/bin")[0].(Mountable).GetMountpoint())
+
+		// invalid dir should return nil
+		assert.Nil(pt.findDirectoryEntityPath("invalid"))
+	}
+
+	{
+		pt := PartitionTable{} // pt with no root should return nil
+		assert.Nil(pt.findDirectoryEntityPath("/var"))
+	}
+}

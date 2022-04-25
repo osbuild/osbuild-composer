@@ -3,6 +3,7 @@ package disk
 import (
 	"fmt"
 	"math/rand"
+	"path/filepath"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -159,6 +160,21 @@ func (pt *PartitionTable) EnsureSize(s uint64) bool {
 		return true
 	}
 	return false
+}
+
+func (pt *PartitionTable) findDirectoryEntityPath(dir string) []Entity {
+	if path := entityPath(pt, dir); path != nil {
+		return path
+	}
+
+	parent := filepath.Dir(dir)
+	if dir == parent {
+		// invalid dir or pt has no root
+		return nil
+	}
+
+	// move up the directory path and check again
+	return pt.findDirectoryEntityPath(parent)
 }
 
 func (pt *PartitionTable) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
