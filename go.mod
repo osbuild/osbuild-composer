@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	cloud.google.com/go/cloudbuild v1.2.0
-	cloud.google.com/go/compute v1.6.0
+	cloud.google.com/go/compute v1.6.1
 	cloud.google.com/go/storage v1.22.0
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-sdk-for-go v63.1.0+incompatible
@@ -47,6 +47,6 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
 	google.golang.org/api v0.75.0
-	google.golang.org/genproto v0.0.0-20220414192740-2d67ff6cf2b4
+	google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
 	gopkg.in/ini.v1 v1.66.4
 )
