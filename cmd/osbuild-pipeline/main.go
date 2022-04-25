@@ -117,8 +117,6 @@ func main() {
 		}
 	}
 
-	packageSets := imageType.PackageSets(composeRequest.Blueprint)
-
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic("os.UserHomeDir(): " + err.Error())
@@ -126,13 +124,17 @@ func main() {
 
 	rpm_md := rpmmd.NewRPMMD(path.Join(home, ".cache/osbuild-composer/rpmmd"))
 
-	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
-	for name, packages := range packageSets {
-		packageSpecs, _, err := rpm_md.Depsolve(packages, repos, d.ModulePlatformID(), arch.Name(), d.Releasever())
-		if err != nil {
-			panic("Could not depsolve: " + err.Error())
-		}
-		packageSpecSets[name] = packageSpecs
+	packageSpecSets, err := rpm_md.DepsolvePackageSets(
+		imageType.PackageSetsChains(),
+		imageType.PackageSets(composeRequest.Blueprint),
+		repos,
+		nil,
+		d.ModulePlatformID(),
+		arch.Name(),
+		d.Releasever(),
+	)
+	if err != nil {
+		panic("Could not depsolve: " + err.Error())
 	}
 
 	var bytes []byte
