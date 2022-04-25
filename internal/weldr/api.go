@@ -2131,26 +2131,33 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 	if bp.Distro != imageType.Arch().Distro().Name() {
 		return nil, fmt.Errorf("Blueprint distro %s does not match imageType distro %s", bp.Distro, imageType.Arch().Distro().Name())
 	}
-	packageSets := imageType.PackageSets(bp)
-	packageSpecSets := make(map[string][]rpmmd.PackageSpec)
 
-	imageTypeRepos, err := api.allRepositoriesByImageType(imageType)
+	imageTypeRepos, payloadRepos, err := api.allRepositoriesByImageType(imageType)
 	if err != nil {
 		return nil, err
 	}
+	packageSetsRepos := make(map[string][]rpmmd.RepoConfig, len(imageType.PayloadPackageSets()))
+	for _, name := range imageType.PayloadPackageSets() {
+		packageSetsRepos[name] = payloadRepos
+	}
+
+	packageSets := imageType.PackageSets(bp)
 	platformID := imageType.Arch().Distro().ModulePlatformID()
 	releasever := imageType.Arch().Distro().Releasever()
-	for name, packageSet := range packageSets {
-		packageSpecs, _, err := api.rpmmd.Depsolve(packageSet,
-			imageTypeRepos,
-			platformID,
-			api.archName,
-			releasever)
-		if err != nil {
-			return nil, err
-		}
-		packageSpecSets[name] = packageSpecs
+
+	packageSpecSets, err := api.rpmmd.DepsolvePackageSets(
+		imageType.PackageSetsChains(),
+		packageSets,
+		imageTypeRepos,
+		packageSetsRepos,
+		platformID,
+		api.archName,
+		releasever,
+	)
+	if err != nil {
+		return nil, err
 	}
+
 	return packageSpecSets, nil
 }
 
@@ -2297,7 +2304,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	seed := bigSeed.Int64()
 
-	imageRepos, err := api.allRepositoriesByImageType(imageType)
+	imageRepos, payloadRepos, err := api.allRepositoriesByImageType(imageType)
 	// this should not happen if the api.depsolveBlueprintForImageType() call above worked
 	if err != nil {
 		errors := responseError{
@@ -2307,6 +2314,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		statusResponseError(writer, http.StatusInternalServerError, errors)
 		return
 	}
+	imageRepos = append(imageRepos, payloadRepos...)
 
 	manifest, err := imageType.Manifest(bp.Customizations,
 		distro.ImageOptions{
@@ -3123,35 +3131,43 @@ func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 	return packages, err
 }
 
-// Returns all configured repositories (base, depending on the image type + sources) as rpmmd.RepoConfig
+// Returns only user-defined repositories, which should be used only for
+// payload package sets.
+func (api *API) payloadRepositories(distroName string) []rpmmd.RepoConfig {
+	distroSourceConfigs := api.store.GetAllDistroSources(distroName)
+	payloadRepos := make([]rpmmd.RepoConfig, 0, len(distroSourceConfigs))
+	for id, source := range distroSourceConfigs {
+		payloadRepos = append(payloadRepos, source.RepoConfig(id))
+	}
+	return payloadRepos
+}
+
+// Returns all configured repositories as rpmmd.RepoConfig.
+// The first returned slice represents the Base repos (depending on the image
+// type), while the second value represents the payload repos (defined by user).
 // The difference from allRepositories() is that this method may return additional repositories,
 // which are needed to build the specific image type. The allRepositories() can't do this, because
 // it is used in places where image types are not considered.
-func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
-	imageTypeRepos, err := api.repoRegistry.ReposByImageType(imageType)
+func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, []rpmmd.RepoConfig, error) {
+	repos, err := api.repoRegistry.ReposByImageType(imageType)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	repos := append([]rpmmd.RepoConfig{}, imageTypeRepos...)
-	for id, source := range api.store.GetAllDistroSources(imageType.Arch().Distro().Name()) {
-		repos = append(repos, source.RepoConfig(id))
-	}
+	payloadRepos := api.payloadRepositories(imageType.Arch().Distro().Name())
 
-	return repos, nil
+	return repos, payloadRepos, nil
 }
 
 // Returns all configured repositories (base + sources) as rpmmd.RepoConfig
 func (api *API) allRepositories(distroName string) ([]rpmmd.RepoConfig, error) {
-	archRepos, err := api.repoRegistry.ReposByArchName(distroName, api.archName, false)
+	repos, err := api.repoRegistry.ReposByArchName(distroName, api.archName, false)
 	if err != nil {
 		return nil, err
 	}
 
-	repos := append([]rpmmd.RepoConfig{}, archRepos...)
-	for id, source := range api.store.GetAllDistroSources(distroName) {
-		repos = append(repos, source.RepoConfig(id))
-	}
+	payloadRepos := api.payloadRepositories(distroName)
+	repos = append(repos, payloadRepos...)
 
 	return repos, nil
 }
