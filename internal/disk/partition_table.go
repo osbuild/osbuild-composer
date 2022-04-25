@@ -425,6 +425,9 @@ func clampFSSize(mountpoint string, size uint64) uint64 {
 	return size
 }
 
+// resizeEntityBranch resizes the first entity in the specified path to be at
+// least the specified size and then grows every entity up the path to the
+// PartitionTable accordingly.
 func resizeEntityBranch(path []Entity, size uint64) {
 	if len(path) == 0 {
 		return
