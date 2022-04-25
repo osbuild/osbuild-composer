@@ -12,6 +12,19 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const (
+	// package set names
+
+	// build package set name
+	buildPkgsKey = "build"
+
+	// main/common os image package set name
+	osPkgsKey = "packages"
+
+	// blueprint package set name
+	blueprintPkgsKey = "blueprint"
+)
+
 type TestDistro struct {
 	name             string
 	releasever       string
@@ -173,7 +186,25 @@ func (t *TestImageType) PartitionType() string {
 }
 
 func (t *TestImageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
-	return nil
+	return map[string]rpmmd.PackageSet{
+		buildPkgsKey: {
+			Include: []string{
+				"dep-package1",
+				"dep-package2",
+				"dep-package3",
+			},
+		},
+		blueprintPkgsKey: {
+			Include: bp.GetPackages(),
+		},
+		osPkgsKey: {
+			Include: []string{
+				"dep-package1",
+				"dep-package2",
+				"dep-package3",
+			},
+		},
+	}
 }
 
 func (t *TestImageType) BuildPipelines() []string {
@@ -185,11 +216,13 @@ func (t *TestImageType) PayloadPipelines() []string {
 }
 
 func (t *TestImageType) PayloadPackageSets() []string {
-	return []string{}
+	return []string{blueprintPkgsKey}
 }
 
 func (t *TestImageType) PackageSetsChains() map[string][]string {
-	return map[string][]string{}
+	return map[string][]string{
+		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+	}
 }
 
 func (t *TestImageType) Exports() []string {

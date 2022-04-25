@@ -625,6 +625,14 @@ func TestCompose(t *testing.T) {
 	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
 	require.NoError(t, err)
 
+	tempdir := t.TempDir()
+	fixtureGenerator := rpmmd_mock.NoComposesFixture
+	fixture := fixtureGenerator(tempdir)
+	rpmMD := rpmmd_mock.NewRPMMDMock(fixture)
+
+	packageSpecSets, err := rpmMD.DepsolvePackageSets(nil, nil, nil, nil, "", "", "")
+	require.NoError(t, err)
+
 	expectedComposeLocal := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
@@ -639,7 +647,7 @@ func TestCompose(t *testing.T) {
 			ImageType:   imgType,
 			Manifest:    manifest,
 		},
-		Packages: []rpmmd.PackageSpec{},
+		Packages: packageSpecSets["packages"],
 	}
 	expectedComposeLocalAndAws := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
@@ -670,7 +678,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: []rpmmd.PackageSpec{},
+		Packages: packageSpecSets["packages"],
 	}
 	expectedComposeOSTree := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
@@ -686,7 +694,7 @@ func TestCompose(t *testing.T) {
 			ImageType:   imgType,
 			Manifest:    manifest,
 		},
-		Packages: []rpmmd.PackageSpec{},
+		Packages: packageSpecSets["packages"],
 	}
 
 	// For 2nd distribution
@@ -712,7 +720,7 @@ func TestCompose(t *testing.T) {
 			ImageType:   imgType2,
 			Manifest:    manifest2,
 		},
-		Packages: []rpmmd.PackageSpec{},
+		Packages: packageSpecSets["packages"],
 	}
 
 	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
@@ -883,10 +891,8 @@ func TestCompose(t *testing.T) {
 		},
 	}
 
-	tempdir := t.TempDir()
-
 	for _, c := range cases {
-		api, s := createWeldrAPI(tempdir, rpmmd_mock.NoComposesFixture)
+		api, s := createWeldrAPI(tempdir, fixtureGenerator)
 		test.TestRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 
 		if c.ExpectedStatus != http.StatusOK {
@@ -1629,6 +1635,14 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
 	require.NoError(t, err)
 
+	tempdir := t.TempDir()
+	fixtureGenerator := rpmmd_mock.NoComposesFixture
+	fixture := fixtureGenerator(tempdir)
+	rpmMD := rpmmd_mock.NewRPMMDMock(fixture)
+
+	packageSpecSets, err := rpmMD.DepsolvePackageSets(nil, nil, nil, nil, "", "", "")
+	require.NoError(t, err)
+
 	expectedComposeLocal := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
@@ -1643,7 +1657,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			ImageType:   imgType,
 			Manifest:    manifest,
 		},
-		Packages: []rpmmd.PackageSpec{},
+		Packages: packageSpecSets["packages"],
 	}
 
 	expectedComposeLocal2 := &store.Compose{
@@ -1660,7 +1674,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			ImageType:   imgType2,
 			Manifest:    manifest,
 		},
-		Packages: []rpmmd.PackageSpec{},
+		Packages: packageSpecSets["packages"],
 	}
 
 	var cases = []struct {
@@ -1771,10 +1785,8 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		},
 	}
 
-	tempdir := t.TempDir()
-
 	for _, c := range cases {
-		api, s := createWeldrAPI2(tempdir, rpmmd_mock.NoComposesFixture, c.imageTypeDenylist)
+		api, s := createWeldrAPI2(tempdir, fixtureGenerator, c.imageTypeDenylist)
 		test.TestRoute(t, api, true, "POST", c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 
 		if c.ExpectedStatus != http.StatusOK {
