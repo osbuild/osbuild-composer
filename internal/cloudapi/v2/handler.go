@@ -376,21 +376,21 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					share = *gcpUploadOptions.ShareWithAccounts
 				}
 
-				// the uploaded object must have a valid extension
-				object := fmt.Sprintf("composer-api-%s.tar.gz", uuid.New().String())
+				imageName := fmt.Sprintf("composer-api-%s", uuid.New().String())
 				t := target.NewGCPTarget(&target.GCPTargetOptions{
-					Filename:          imageType.Filename(),
-					Region:            gcpUploadOptions.Region,
-					Os:                imageType.Arch().Distro().Name(), // not exposed in cloudapi
-					Bucket:            gcpUploadOptions.Bucket,
-					Object:            object,
+					Filename: imageType.Filename(),
+					Region:   gcpUploadOptions.Region,
+					Os:       imageType.Arch().Distro().Name(), // not exposed in cloudapi
+					Bucket:   gcpUploadOptions.Bucket,
+					// the uploaded object must have a valid extension
+					Object:            fmt.Sprintf("%s.tar.gz", imageName),
 					ShareWithAccounts: share,
 				})
 				// Import will fail if an image with this name already exists
 				if gcpUploadOptions.ImageName != nil {
 					t.ImageName = *gcpUploadOptions.ImageName
 				} else {
-					t.ImageName = object
+					t.ImageName = imageName
 				}
 
 				irTarget = t
