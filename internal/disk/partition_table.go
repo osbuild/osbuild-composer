@@ -177,6 +177,39 @@ func (pt *PartitionTable) findDirectoryEntityPath(dir string) []Entity {
 	return pt.findDirectoryEntityPath(parent)
 }
 
+// EnsureDirectorySizes takes a mapping of directory paths to sizes (in bytes)
+// and resizes the appropriate partitions such that they are at least the size
+// of the sum of their subdirectories.
+// The function will panic if any of the directory paths are invalid.
+func (pt *PartitionTable) EnsureDirectorySizes(dirSizeMap map[string]uint64) {
+
+	type mntSize struct {
+		entPath []Entity
+		newSize uint64
+	}
+
+	// add up the required size for each directory grouped by their mountpoints
+	mntSizeMap := make(map[string]*mntSize)
+	for dir, size := range dirSizeMap {
+		entPath := pt.findDirectoryEntityPath(dir)
+		if entPath == nil {
+			panic(fmt.Sprintf("EnsureDirectorySizes: invalid dir path %q", dir))
+		}
+		mnt := entPath[0].(Mountable)
+		mountpoint := mnt.GetMountpoint()
+		if _, ok := mntSizeMap[mountpoint]; !ok {
+			mntSizeMap[mountpoint] = &mntSize{entPath, 0}
+		}
+		es := mntSizeMap[mountpoint]
+		es.newSize += size
+	}
+
+	// resize all the entities in the map
+	for _, es := range mntSizeMap {
+		resizeEntityBranch(es.entPath, es.newSize)
+	}
+}
+
 func (pt *PartitionTable) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
 	filesystem := Filesystem{
 		Type:         "xfs",

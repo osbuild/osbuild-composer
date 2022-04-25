@@ -573,3 +573,113 @@ func TestFindDirectoryPartition(t *testing.T) {
 		assert.Nil(pt.findDirectoryEntityPath("/var"))
 	}
 }
+
+func TestEnsureDirectorySizes(t *testing.T) {
+	assert := assert.New(t)
+
+	GiB := 1024 * 1024 * 1024
+	varSizes := map[string]uint64{
+		"/var/lib":         uint64(3 * GiB),
+		"/var/cache":       uint64(2 * GiB),
+		"/var/log/journal": uint64(2 * GiB),
+	}
+
+	varAndHomeSizes := map[string]uint64{
+		"/var/lib":         uint64(3 * GiB),
+		"/var/cache":       uint64(2 * GiB),
+		"/var/log/journal": uint64(2 * GiB),
+		"/home/user/data":  uint64(10 * GiB),
+	}
+
+	{
+		pt := testPartitionTables["plain"]
+		pt = *pt.Clone().(*PartitionTable) // don't modify the original test data
+
+		{
+			// make sure we have the correct volume
+			// guard against changes in the test pt
+			rootPart := pt.Partitions[3]
+			rootPayload := rootPart.Payload.(*Filesystem)
+
+			assert.Equal("/", rootPayload.Mountpoint)
+			assert.Equal(uint64(0), rootPart.Size)
+		}
+
+		{
+			// add requirements for /var subdirs that are > 5 GiB
+			pt.EnsureDirectorySizes(varSizes)
+			rootPart := pt.Partitions[3]
+			assert.Equal(uint64(7*GiB), rootPart.Size)
+
+			// invalid
+			assert.Panics(func() { pt.EnsureDirectorySizes(map[string]uint64{"invalid": uint64(300)}) })
+		}
+	}
+
+	{
+		pt := testPartitionTables["luks+lvm"]
+		pt = *pt.Clone().(*PartitionTable) // don't modify the original test data
+
+		{
+			// make sure we have the correct volume
+			// guard against changes in the test pt
+			rootPart := pt.Partitions[3]
+			rootLUKS := rootPart.Payload.(*LUKSContainer)
+			rootVG := rootLUKS.Payload.(*LVMVolumeGroup)
+			rootLV := rootVG.LogicalVolumes[0]
+			rootFS := rootLV.Payload.(*Filesystem)
+			homeLV := rootVG.LogicalVolumes[1]
+			homeFS := homeLV.Payload.(*Filesystem)
+
+			assert.Equal(uint64(5*GiB), rootPart.Size)
+			assert.Equal("/", rootFS.Mountpoint)
+			assert.Equal(uint64(2*GiB), rootLV.Size)
+			assert.Equal("/home", homeFS.Mountpoint)
+			assert.Equal(uint64(2*GiB), homeLV.Size)
+		}
+
+		{
+			// add requirements for /var subdirs that are > 5 GiB
+			pt.EnsureDirectorySizes(varAndHomeSizes)
+			rootPart := pt.Partitions[3]
+			rootLUKS := rootPart.Payload.(*LUKSContainer)
+			rootVG := rootLUKS.Payload.(*LVMVolumeGroup)
+			rootLV := rootVG.LogicalVolumes[0]
+			homeLV := rootVG.LogicalVolumes[1]
+			assert.Equal(uint64(17*GiB)+rootVG.MetadataSize(), rootPart.Size)
+			assert.Equal(uint64(7*GiB), rootLV.Size)
+			assert.Equal(uint64(10*GiB), homeLV.Size)
+
+			// invalid
+			assert.Panics(func() { pt.EnsureDirectorySizes(map[string]uint64{"invalid": uint64(300)}) })
+		}
+	}
+
+	{
+		pt := testPartitionTables["btrfs"]
+		pt = *pt.Clone().(*PartitionTable) // don't modify the original test data
+
+		{
+			// make sure we have the correct volume
+			// guard against changes in the test pt
+			rootPart := pt.Partitions[3]
+			rootPayload := rootPart.Payload.(*Btrfs)
+			assert.Equal("/", rootPayload.Subvolumes[0].Mountpoint)
+			assert.Equal(uint64(0), rootPayload.Subvolumes[0].Size)
+			assert.Equal("/var", rootPayload.Subvolumes[1].Mountpoint)
+			assert.Equal(uint64(5*GiB), rootPayload.Subvolumes[1].Size)
+		}
+
+		{
+			// add requirements for /var subdirs that are > 5 GiB
+			pt.EnsureDirectorySizes(varSizes)
+			rootPart := pt.Partitions[3]
+			rootPayload := rootPart.Payload.(*Btrfs)
+			assert.Equal(uint64(7*GiB), rootPayload.Subvolumes[1].Size)
+
+			// invalid
+			assert.Panics(func() { pt.EnsureDirectorySizes(map[string]uint64{"invalid": uint64(300)}) })
+		}
+	}
+
+}
