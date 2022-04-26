@@ -2,7 +2,7 @@
   "fedora-34": {
     "dependencies": {
       "osbuild": {
-        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+        "commit": "9a0bbe6251bc2cbf94b4f4f2826ad4e6f50013bf"
       }
     },
     "repos": [
@@ -79,7 +79,7 @@
   "fedora-35": {
     "dependencies": {
       "osbuild": {
-        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+        "commit": "9a0bbe6251bc2cbf94b4f4f2826ad4e6f50013bf"
       }
     },
     "repos": [
@@ -156,21 +156,21 @@
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+        "commit": "9a0bbe6251bc2cbf94b4f4f2826ad4e6f50013bf"
       }
     }
   },
   "rhel-8.5": {
     "dependencies": {
       "osbuild": {
-        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+        "commit": "9a0bbe6251bc2cbf94b4f4f2826ad4e6f50013bf"
       }
     }
   },
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
-        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+        "commit": "9a0bbe6251bc2cbf94b4f4f2826ad4e6f50013bf"
       }
     },
     "repos": [
@@ -216,7 +216,7 @@
   "rhel-9.0": {
     "dependencies": {
       "osbuild": {
-        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+        "commit": "9a0bbe6251bc2cbf94b4f4f2826ad4e6f50013bf"
       }
     },
     "repos": [
@@ -262,14 +262,14 @@
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+        "commit": "9a0bbe6251bc2cbf94b4f4f2826ad4e6f50013bf"
       }
     }
   },
   "centos-9": {
     "dependencies": {
       "osbuild": {
-        "commit": "d8f36b55fa043002c6650a75fbeba5165cc0824b"
+        "commit": "9a0bbe6251bc2cbf94b4f4f2826ad4e6f50013bf"
       }
     }
   },
