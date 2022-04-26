@@ -63,26 +63,8 @@ class TestCaseGenerator:
     def __init__(self, test_case_request):
         self.test_case = test_case_request
 
-    def ensure_dnf_json(self):
-        if os.path.exists("/.dockerenv"):
-            if os.path.exists("/run/osbuild-dnf-json/api.sock"):
-                # assume we are good to go
-                return
-            print("running in container and no dnf-json socket found")
-            sys.exit(1)
-
-        command = ["systemctl", "is-active", "--quiet", "osbuild-dnf-json.socket"]
-        if not is_subprocess_succeeding(command):
-            print("osbuild-dnf-json.socket is not running, starting it up")
-            command = ["systemctl", "start", "osbuild-dnf-json.socket", "--quiet"]
-            if not is_subprocess_succeeding(command):
-                print("impossible to start osbuild-dnf-json.socket with systemd")
-                sys.exit(1)
-
     def get_test_case(self, no_image_info, store):
         compose_request = json.dumps(self.test_case["compose-request"])
-
-        self.ensure_dnf_json()
 
         pipeline_command = ["go", "run", "./cmd/osbuild-pipeline", "-"]
         self.test_case["manifest"] = json.loads(get_subprocess_stdout(pipeline_command, input=compose_request, encoding="utf-8"))
