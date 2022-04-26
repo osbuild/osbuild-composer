@@ -283,20 +283,6 @@ Image Tests:
           - aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
-Test Case Generation:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/generation.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/fedora-34-x86_64
-        INTERNAL_NETWORK: ["true"]
-
 OSTree:
   stage: test
   extends: .terraform/openstack
