@@ -1,6 +1,5 @@
 [Unit]
 Description=OSBuild Composer
-Requires=osbuild-dnf-json.socket
 After=network.target
 
 # Weldr API needs a local worker by default.

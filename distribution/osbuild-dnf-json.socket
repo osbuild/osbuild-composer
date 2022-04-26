@@ -1,9 +1,0 @@
-[Unit]
-Description=OSbuild dnf-json socket
-
-[Socket]
-Service=osbuild-dnf-json.service
-ListenStream=/run/osbuild-dnf-json/api.sock
-
-[Install]
-WantedBy=sockets.target
