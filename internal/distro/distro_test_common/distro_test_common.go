@@ -231,6 +231,17 @@ func GetTestingPackageSpecSets(packageName, arch string, pkgSetNames []string) m
 	return testPackageSpecSets
 }
 
+// GetTestingImagePackageSpecSets returns PackageSpecSets for all package sets
+// defined by the provided ImageType, which is useful for unit testing.
+func GetTestingImagePackageSpecSets(packageName string, i distro.ImageType) map[string][]rpmmd.PackageSpec {
+	arch := i.Arch().Name()
+	imagePackageSets := make([]string, 0, len(i.PackageSets(blueprint.Blueprint{})))
+	for pkgSetName := range i.PackageSets(blueprint.Blueprint{}) {
+		imagePackageSets = append(imagePackageSets, pkgSetName)
+	}
+	return GetTestingPackageSpecSets(packageName, arch, imagePackageSets)
+}
+
 // Ensure that all package sets defined in the package set chains are defined for the image type
 func TestImageType_PackageSetsChains(t *testing.T, d distro.Distro) {
 	distroName := d.Name()
