@@ -16,7 +16,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		}))
 	}
 	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
@@ -71,7 +71,7 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *dis
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
@@ -100,7 +100,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
@@ -129,7 +129,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	}
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	pipelines = append(pipelines, *treePipeline)
@@ -164,13 +164,12 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 // Note: the caller of this function has to append the `osbuild.NewSELinuxStage(selinuxStageOptions(false))` stage
 // as the last one to the returned pipeline. The stage is not appended on purpose, to allow caller to append
 // any additional stages to the pipeline, but before the SELinuxStage, which must be always the last one.
-func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
+func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 	c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string,
 	defaultTarget string, withRHUI bool, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
 	p.Build = "name:build"
-	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
@@ -359,11 +358,11 @@ func ec2BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 	return p, nil
 }
 
-func ec2X86_64BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec,
+func ec2X86_64BaseTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec,
 	c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string,
 	defaultTarget string, withRHUI bool, pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
 
-	treePipeline, err := ec2BaseTreePipeline(repos, packages, bpPackages, c, options, enabledServices, disabledServices, defaultTarget, withRHUI, pt)
+	treePipeline, err := ec2BaseTreePipeline(repos, packages, c, options, enabledServices, disabledServices, defaultTarget, withRHUI, pt)
 	if err != nil {
 		return nil, err
 	}
@@ -399,10 +398,10 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	switch arch := t.arch.Name(); arch {
 	// rhel-ec2-x86_64, rhel-ha-ec2
 	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, partitionTable)
+		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, partitionTable)
 	// rhel-ec2-aarch64
 	case distro.Aarch64ArchName:
-		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, partitionTable)
+		treePipeline, err = ec2BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2CommonPipelines: unsupported image architecture: %q", arch)
 	}
@@ -412,7 +411,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	// The last stage must be the SELinux stage
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
@@ -438,7 +437,7 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 	switch arch := t.arch.Name(); arch {
 	// rhel-sap-ec2
 	case distro.X86_64ArchName:
-		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, partitionTable)
+		treePipeline, err = ec2X86_64BaseTreePipeline(repos, packageSetSpecs[osPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget, withRHUI, partitionTable)
 	default:
 		return nil, fmt.Errorf("ec2SapPipelines: unsupported image architecture: %q", arch)
 	}
@@ -553,7 +552,7 @@ func ec2SapPipelines(t *imageType, customizations *blueprint.Customizations, opt
 
 	treePipeline = prependKernelCmdlineStage(treePipeline, t, partitionTable)
 	treePipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(partitionTable)))
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[blueprintPkgsKey], customizations.GetKernel().Name)
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
 	treePipeline.AddStage(bootloaderConfigStage(t, partitionTable, customizations.GetKernel(), kernelVer))
 	// The last stage must be the SELinux stage
 	treePipeline.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
@@ -603,7 +602,7 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
 	if err != nil {
 		return nil, err
 	}
@@ -640,7 +639,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options)
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +677,7 @@ func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, o
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey]))
 
-	treePipeline, err := ostreeTreePipeline(repos, packageSetSpecs[osPkgsKey], packageSetSpecs[blueprintPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
+	treePipeline, err := ostreeTreePipeline(repos, packageSetSpecs[osPkgsKey], customizations, options, t.enabledServices, t.disabledServices, t.defaultTarget)
 	if err != nil {
 		return nil, err
 	}
@@ -725,13 +724,11 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 func osPipeline(t *imageType,
 	repos []rpmmd.RepoConfig,
 	packages []rpmmd.PackageSpec,
-	bpPackages []rpmmd.PackageSpec,
 	c *blueprint.Customizations,
 	options distro.ImageOptions) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "os"
 	p.Build = "name:build"
-	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	language, keyboard := c.GetPrimaryLocale()
@@ -807,12 +804,11 @@ func osPipeline(t *imageType,
 	return p, nil
 }
 
-func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, bpPackages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
+func ostreeTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, c *blueprint.Customizations, options distro.ImageOptions, enabledServices, disabledServices []string, defaultTarget string) (*osbuild.Pipeline, error) {
 	p := new(osbuild.Pipeline)
 	p.Name = "ostree-tree"
 	p.Build = "name:build"
 
-	packages = append(packages, bpPackages...)
 	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
 	p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	language, keyboard := c.GetPrimaryLocale()
