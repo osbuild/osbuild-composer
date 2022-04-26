@@ -375,8 +375,6 @@ The dnf-json binary used by osbuild-composer and the workers.
 
 %files dnf-json
 %{_libexecdir}/osbuild-composer/dnf-json
-%{_unitdir}/osbuild-dnf-json.service
-%{_unitdir}/osbuild-dnf-json.socket
 
 %if %{with tests} || 0%{?rhel}
 

@@ -1,6 +1,6 @@
 [Unit]
 Description=OSBuild Composer Worker (%i)
-Requires=osbuild-local-worker.socket osbuild-dnf-json.socket
+Requires=osbuild-local-worker.socket
 After=network.target osbuild-local-worker.socket
 
 [Service]
