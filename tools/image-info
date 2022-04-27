@@ -421,8 +421,10 @@ def rpm_not_installed_docs(tree, is_ostree):
     # check not installed Docs (e.g. when RPMs are installed with --excludedocs)
     not_installed_docs = []
     cmd = ["rpm", "--root", tree, "-qad", "--state"]
-    if is_ostree:
+    if os.path.exists(os.path.join(tree, "usr/share/rpm")):
         cmd += ["--dbpath", "/usr/share/rpm"]
+    elif os.path.exists(os.path.join(tree, "var/lib/rpm")):
+        cmd += ["--dbpath", "/var/lib/rpm"]
     output = subprocess_check_output(cmd)
     for line in output.splitlines():
         if line.startswith("not installed"):
@@ -454,8 +456,11 @@ def rpm_packages(tree, is_ostree):
     ]
     """
     cmd = ["rpm", "--root", tree, "-qa"]
-    if is_ostree:
+    if os.path.exists(os.path.join(tree, "usr/share/rpm")):
         cmd += ["--dbpath", "/usr/share/rpm"]
+    elif os.path.exists(os.path.join(tree, "var/lib/rpm")):
+        cmd += ["--dbpath", "/var/lib/rpm"]
+    output = subprocess_check_output(cmd)
     pkgs = subprocess_check_output(cmd, str.split)
     return list(sorted(pkgs))
 
