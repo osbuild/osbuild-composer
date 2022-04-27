@@ -88,7 +88,13 @@
           "disabled": [
             "bluetooth.service"
           ]
-        }
+        },
+        "filesystem": [
+          {
+            "mountpoint": "/opt",
+            "minsize": 1073741824
+          }
+        ]
       }
     }
   },
@@ -2452,7 +2458,31 @@
                     }
                   },
                   {
+                    "id": "sha256:f8f8ef964d4ec1a1658495c03e7e20e646f1b31f1783d9df3fe907b0be608eb7",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:2421200cebe64b29ac142e2205ca2bac748b67db60d1a96518aa40484f1a67a4",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:6caee334370e41d5b836663ceb6167c12f6278063a3b4d663a0fe43abbaa4dbd",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:feafe31bdf5b647d4fe5bbbd1a8e55c750be2f966b20931ad3eda95649897113",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -3380,6 +3410,14 @@
                     }
                   },
                   {
+                    "id": "sha256:3bcb1ade26c217ead2da81c92b7ef78026c4a78383d28b6e825a7b840cae97fa",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:791e9574c613eed49b92680ff89cf786f7f3d7bac52bc5427b72b2ea5058dfab",
                     "options": {
                       "metadata": {
@@ -4181,6 +4219,22 @@
                   },
                   {
                     "id": "sha256:2ef9801e4453de316429be284d4f6cb12f4d7662e7c6224dbf2341e3cfc5fab6",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:31395864c2794678b8a118e8b3ec9752df2fa57240ae8d27f857f7a55ce0d2ef",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:545cc4c983498d5e98041123fc478a3ed37133df1b1191182c9038ec4e3ac539",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5759,7 +5813,9 @@
           },
           {
             "type": "org.osbuild.fix-bls",
-            "options": {}
+            "options": {
+              "prefix": ""
+            }
           },
           {
             "type": "org.osbuild.locale",
@@ -5864,6 +5920,18 @@
                   "options": "defaults"
                 },
                 {
+                  "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                  "vfs_type": "xfs",
+                  "path": "/opt",
+                  "options": "defaults"
+                },
+                {
+                  "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
+                  "vfs_type": "xfs",
+                  "path": "/boot",
+                  "options": "defaults"
+                },
+                {
                   "uuid": "7B77-95E7",
                   "vfs_type": "vfat",
                   "path": "/boot/efi",
@@ -5877,6 +5945,7 @@
             "type": "org.osbuild.grub2",
             "options": {
               "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "boot_fs_uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
               "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto debug",
               "uefi": {
                 "vendor": "centos"
@@ -5919,10 +5988,16 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 20764639,
-                  "start": 206848,
-                  "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+                  "size": 19716063,
+                  "start": 1255424,
+                  "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
+                },
+                {
+                  "size": 1048576,
+                  "start": 206848,
+                  "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
+                  "uuid": "a178892e-e285-4ce1-9114-55780875d64e"
                 }
               ]
             },
@@ -5931,6 +6006,32 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.lvm2.create",
+            "options": {
+              "volumes": [
+                {
+                  "name": "rootlv",
+                  "size": "3221225472B"
+                },
+                {
+                  "name": "optlv",
+                  "size": "1073741824B"
+                }
+              ]
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 1255424,
+                  "size": 19716063,
                   "lock": true
                 }
               }
@@ -5961,11 +6062,59 @@
             },
             "devices": {
               "device": {
+                "type": "org.osbuild.lvm2.lv",
+                "parent": "rootvgvg",
+                "options": {
+                  "volume": "rootlv"
+                }
+              },
+              "rootvgvg": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 1255424,
+                  "size": 19716063,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.mkfs.xfs",
+            "options": {
+              "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.lvm2.lv",
+                "parent": "rootvgvg",
+                "options": {
+                  "volume": "optlv"
+                }
+              },
+              "rootvgvg": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 1255424,
+                  "size": 19716063,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.mkfs.xfs",
+            "options": {
+              "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4"
+            },
+            "devices": {
+              "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
                   "start": 206848,
-                  "size": 20764639,
+                  "size": 1048576,
                   "lock": true
                 }
               }
@@ -5991,6 +6140,14 @@
               ]
             },
             "devices": {
+              "boot": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 206848,
+                  "size": 1048576
+                }
+              },
               "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
@@ -5999,12 +6156,26 @@
                   "size": 204800
                 }
               },
+              "opt": {
+                "type": "org.osbuild.lvm2.lv",
+                "parent": "rootvgvg",
+                "options": {
+                  "volume": "optlv"
+                }
+              },
               "root": {
+                "type": "org.osbuild.lvm2.lv",
+                "parent": "rootvgvg",
+                "options": {
+                  "volume": "rootlv"
+                }
+              },
+              "rootvgvg": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 206848,
-                  "size": 20764639
+                  "start": 1255424,
+                  "size": 19716063
                 }
               }
             },
@@ -6016,12 +6187,41 @@
                 "target": "/"
               },
               {
+                "name": "boot",
+                "type": "org.osbuild.xfs",
+                "source": "boot",
+                "target": "/boot"
+              },
+              {
                 "name": "boot.efi",
                 "type": "org.osbuild.fat",
                 "source": "boot.efi",
                 "target": "/boot/efi"
+              },
+              {
+                "name": "opt",
+                "type": "org.osbuild.xfs",
+                "source": "opt",
+                "target": "/opt"
               }
             ]
+          },
+          {
+            "type": "org.osbuild.lvm2.metadata",
+            "options": {
+              "vg_name": "rootvg"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 1255424,
+                  "size": 19716063,
+                  "lock": true
+                }
+              }
+            }
           }
         ]
       },
@@ -10404,6 +10604,26 @@
         "check_gpg": true
       },
       {
+        "name": "device-mapper-event",
+        "epoch": 8,
+        "version": "1.02.181",
+        "release": "3.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/device-mapper-event-1.02.181-3.el8.aarch64.rpm",
+        "checksum": "sha256:f8f8ef964d4ec1a1658495c03e7e20e646f1b31f1783d9df3fe907b0be608eb7",
+        "check_gpg": true
+      },
+      {
+        "name": "device-mapper-event-libs",
+        "epoch": 8,
+        "version": "1.02.181",
+        "release": "3.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/device-mapper-event-libs-1.02.181-3.el8.aarch64.rpm",
+        "checksum": "sha256:2421200cebe64b29ac142e2205ca2bac748b67db60d1a96518aa40484f1a67a4",
+        "check_gpg": true
+      },
+      {
         "name": "device-mapper-libs",
         "epoch": 8,
         "version": "1.02.181",
@@ -10411,6 +10631,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/device-mapper-libs-1.02.181-3.el8.aarch64.rpm",
         "checksum": "sha256:6caee334370e41d5b836663ceb6167c12f6278063a3b4d663a0fe43abbaa4dbd",
+        "check_gpg": true
+      },
+      {
+        "name": "device-mapper-persistent-data",
+        "epoch": 0,
+        "version": "0.9.0",
+        "release": "6.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/device-mapper-persistent-data-0.9.0-6.el8.aarch64.rpm",
+        "checksum": "sha256:feafe31bdf5b647d4fe5bbbd1a8e55c750be2f966b20931ad3eda95649897113",
         "check_gpg": true
       },
       {
@@ -11564,6 +11794,16 @@
         "check_gpg": true
       },
       {
+        "name": "libaio",
+        "epoch": 0,
+        "version": "0.3.112",
+        "release": "1.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/libaio-0.3.112-1.el8.aarch64.rpm",
+        "checksum": "sha256:3bcb1ade26c217ead2da81c92b7ef78026c4a78383d28b6e825a7b840cae97fa",
+        "check_gpg": true
+      },
+      {
         "name": "libappstream-glib",
         "epoch": 0,
         "version": "0.7.14",
@@ -12571,6 +12811,26 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/lua-libs-5.3.4-12.el8.aarch64.rpm",
         "checksum": "sha256:2ef9801e4453de316429be284d4f6cb12f4d7662e7c6224dbf2341e3cfc5fab6",
+        "check_gpg": true
+      },
+      {
+        "name": "lvm2",
+        "epoch": 8,
+        "version": "2.03.14",
+        "release": "3.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/lvm2-2.03.14-3.el8.aarch64.rpm",
+        "checksum": "sha256:31395864c2794678b8a118e8b3ec9752df2fa57240ae8d27f857f7a55ce0d2ef",
+        "check_gpg": true
+      },
+      {
+        "name": "lvm2-libs",
+        "epoch": 8,
+        "version": "2.03.14",
+        "release": "3.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/lvm2-libs-2.03.14-3.el8.aarch64.rpm",
+        "checksum": "sha256:545cc4c983498d5e98041123fc478a3ed37133df1b1191182c9038ec4e3ac539",
         "check_gpg": true
       },
       {
@@ -14538,8 +14798,8 @@
         "grub_class": "kernel",
         "grub_users": "$grub_users",
         "id": "centos-20220110131320-0-rescue-ffffffffffffffffffffffffffffffff",
-        "initrd": "/boot/initramfs-0-rescue-ffffffffffffffffffffffffffffffff.img",
-        "linux": "/boot/vmlinuz-0-rescue-ffffffffffffffffffffffffffffffff",
+        "initrd": "/initramfs-0-rescue-ffffffffffffffffffffffffffffffff.img",
+        "linux": "/vmlinuz-0-rescue-ffffffffffffffffffffffffffffffff",
         "options": "$kernelopts",
         "title": "CentOS Stream (0-rescue-ffffffffffffffffffffffffffffffff) 8",
         "version": "0-rescue-ffffffffffffffffffffffffffffffff"
@@ -14549,8 +14809,8 @@
         "grub_class": "kernel",
         "grub_users": "$grub_users",
         "id": "centos-20220110131320-4.18.0-358.el8.aarch64",
-        "initrd": "/boot/initramfs-4.18.0-358.el8.aarch64.img $tuned_initrd",
-        "linux": "/boot/vmlinuz-4.18.0-358.el8.aarch64",
+        "initrd": "/initramfs-4.18.0-358.el8.aarch64.img $tuned_initrd",
+        "linux": "/vmlinuz-4.18.0-358.el8.aarch64",
         "options": "$kernelopts $tuned_params",
         "title": "CentOS Stream (4.18.0-358.el8.aarch64) 8",
         "version": "4.18.0-358.el8.aarch64"
@@ -14732,12 +14992,28 @@
         "0"
       ],
       [
+        "UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+        "/opt",
+        "xfs",
+        "defaults",
+        "0",
+        "0"
+      ],
+      [
         "UUID=7B77-95E7",
         "/boot/efi",
         "vfat",
         "defaults,uid=0,gid=0,umask=077,shortname=winnt",
         "0",
         "2"
+      ],
+      [
+        "UUID=fb180daf-48a7-4ee0-b10d-394651850fd4",
+        "/boot",
+        "xfs",
+        "defaults",
+        "0",
+        "0"
       ]
     ],
     "groups": [
@@ -14892,7 +15168,10 @@
       "dejavu-fonts-common-2.35-7.el8.noarch",
       "dejavu-sans-mono-fonts-2.35-7.el8.noarch",
       "device-mapper-1.02.181-3.el8.aarch64",
+      "device-mapper-event-1.02.181-3.el8.aarch64",
+      "device-mapper-event-libs-1.02.181-3.el8.aarch64",
       "device-mapper-libs-1.02.181-3.el8.aarch64",
+      "device-mapper-persistent-data-0.9.0-6.el8.aarch64",
       "dhcp-client-4.3.6-47.el8.0.1.aarch64",
       "dhcp-common-4.3.6-47.el8.0.1.noarch",
       "dhcp-libs-4.3.6-47.el8.0.1.aarch64",
@@ -15017,6 +15296,7 @@
       "libXext-1.3.4-1.el8.aarch64",
       "libXrender-0.9.10-7.el8.aarch64",
       "libacl-2.2.53-1.el8.aarch64",
+      "libaio-0.3.112-1.el8.aarch64",
       "libappstream-glib-0.7.14-3.el8.aarch64",
       "libarchive-3.3.3-3.el8_5.aarch64",
       "libassuan-2.5.1-3.el8.aarch64",
@@ -15123,6 +15403,8 @@
       "lshw-B.02.19.2-6.el8.aarch64",
       "lsscsi-0.32-3.el8.aarch64",
       "lua-libs-5.3.4-12.el8.aarch64",
+      "lvm2-2.03.14-3.el8.aarch64",
+      "lvm2-libs-2.03.14-3.el8.aarch64",
       "lz4-libs-1.8.3-3.el8_4.aarch64",
       "lzo-2.08-14.el8.aarch64",
       "man-db-2.7.6.1-18.el8.aarch64",
@@ -15302,13 +15584,27 @@
     "partitions": [
       {
         "bootable": false,
-        "fstype": "xfs",
-        "label": "root",
+        "fstype": "LVM2_member",
+        "label": null,
+        "lvm": true,
+        "lvm.vg": "rootvg",
+        "lvm.volumes": {
+          "optlv": {
+            "fstype": "xfs",
+            "label": null,
+            "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+          },
+          "rootlv": {
+            "fstype": "xfs",
+            "label": "root",
+            "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+          }
+        },
         "partuuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-        "size": 10631495168,
-        "start": 105906176,
-        "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-        "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+        "size": 10094624256,
+        "start": 642777088,
+        "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
+        "uuid": "CPBxYA-Ffa5-41wc-eWnn-Nggm-VN0A-6GNpa9"
       },
       {
         "bootable": false,
@@ -15319,6 +15615,16 @@
         "start": 1048576,
         "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
         "uuid": "7B77-95E7"
+      },
+      {
+        "bootable": false,
+        "fstype": "xfs",
+        "label": null,
+        "partuuid": "A178892E-E285-4CE1-9114-55780875D64E",
+        "size": 536870912,
+        "start": 105906176,
+        "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
+        "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4"
       }
     ],
     "passwd": [
@@ -15381,6 +15687,7 @@
     },
     "services-disabled": [
       "arp-ethers.service",
+      "blk-availability.service",
       "chrony-dnssrv@.timer",
       "chrony-wait.service",
       "cockpit.socket",
@@ -15439,6 +15746,7 @@
       "dbus-org.fedoraproject.FirewallD1.service",
       "dbus-org.freedesktop.nm-dispatcher.service",
       "dbus-org.freedesktop.timedate1.service",
+      "dm-event.socket",
       "dnf-makecache.timer",
       "firewalld.service",
       "getty@.service",
@@ -15446,6 +15754,8 @@
       "irqbalance.service",
       "kdump.service",
       "loadmodules.service",
+      "lvm2-lvmpolld.socket",
+      "lvm2-monitor.service",
       "nfs-client.target",
       "nis-domainname.service",
       "qemu-guest-agent.service",
@@ -15624,6 +15934,10 @@
         ],
         "libselinux.conf": [
           "d /run/setrans 0755 root root"
+        ],
+        "lvm2.conf": [
+          "d /run/lock/lvm 0700 root root -",
+          "d /run/lvm 0700 root root -"
         ],
         "man-db.conf": [
           "d /var/cache/man 0755 root root 1w"
