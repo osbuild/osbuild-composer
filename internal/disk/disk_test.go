@@ -502,6 +502,121 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 	}
 }
 
+func TestMinimumSizes(t *testing.T) {
+	assert := assert.New(t)
+
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+	pt := testPartitionTables["plain"]
+
+	type testCase struct {
+		Blueprint        []blueprint.FilesystemCustomization
+		ExpectedMinSizes map[string]uint64
+	}
+
+	testCases := []testCase{
+		{ // specify small /usr -> / and /usr get default size
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/usr",
+					MinSize:    1 * MiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/usr": 2 * GiB,
+				"/":    1 * GiB,
+			},
+		},
+		{ // specify small / and /usr -> / and /usr get default size
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/",
+					MinSize:    1 * MiB,
+				},
+				{
+					Mountpoint: "/usr",
+					MinSize:    1 * KiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/usr": 2 * GiB,
+				"/":    1 * GiB,
+			},
+		},
+		{ // big /usr -> / gets default size
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/usr",
+					MinSize:    10 * GiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/usr": 10 * GiB,
+				"/":    1 * GiB,
+			},
+		},
+		{
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/",
+					MinSize:    10 * GiB,
+				},
+				{
+					Mountpoint: "/home",
+					MinSize:    1 * MiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/":     10 * GiB,
+				"/home": 1 * GiB,
+			},
+		},
+		{ // no separate /usr and no size for / -> / gets sum of default sizes for / and /usr
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/opt",
+					MinSize:    10 * GiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/opt": 10 * GiB,
+				"/":    3 * GiB,
+			},
+		},
+	}
+
+	for idx, tc := range testCases {
+		{ // without LVM
+			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), false, rng)
+			assert.NoError(err)
+			for mnt, minSize := range tc.ExpectedMinSizes {
+				path := entityPath(mpt, mnt)
+				assert.NotNil(path, "[%d] mountpoint %q not found", idx, mnt)
+				parent := path[1]
+				part, ok := parent.(*Partition)
+				assert.True(ok, "%q parent (%v) is not a partition", mnt, parent)
+				assert.GreaterOrEqual(part.GetSize(), minSize,
+					"[%d] %q size %d should be greater or equal to %d", idx, mnt, part.GetSize(), minSize)
+			}
+		}
+
+		{ // with LVM
+			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, rng)
+			assert.NoError(err)
+			for mnt, minSize := range tc.ExpectedMinSizes {
+				path := entityPath(mpt, mnt)
+				assert.NotNil(path, "[%d] mountpoint %q not found", idx, mnt)
+				parent := path[1]
+				part, ok := parent.(*LVMLogicalVolume)
+				assert.True(ok, "[%d] %q parent (%v) is not an LVM logical volume", idx, mnt, parent)
+				assert.GreaterOrEqual(part.GetSize(), minSize,
+					"[%d] %q size %d should be greater or equal to %d", idx, mnt, part.GetSize(), minSize)
+			}
+		}
+	}
+}
+
 func collectEntities(pt *PartitionTable) []Entity {
 	entities := make([]Entity, 0)
 	collector := func(ent Entity, path []Entity) error {
