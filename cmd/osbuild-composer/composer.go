@@ -74,6 +74,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	logrus.Infof("Loaded %d distros", len(c.distros.List()))
 
 	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
+	c.solver.SetDNFJSONPath(c.config.DNFJson)
 
 	var jobs jobqueue.JobQueue
 	if config.Worker.PGDatabase != "" {

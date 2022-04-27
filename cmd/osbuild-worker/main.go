@@ -22,6 +22,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -223,6 +224,7 @@ func main() {
 		} `toml:"authentication"`
 		RelaxTimeoutFactor uint   `toml:"RelaxTimeoutFactor"`
 		BasePath           string `toml:"base_path"`
+		DNFJson            string `toml:"dnf-json"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -396,11 +398,15 @@ func main() {
 
 	// depsolve jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
+	solver := dnfjson.NewBaseSolver(rpmmd_cache)
+	if config.DNFJson != "" {
+		solver.SetDNFJSONPath(config.DNFJson)
+	}
 	defer depsolveCtxCancel()
 	go func() {
 		jobImpls := map[string]JobImplementation{
 			"depsolve": &DepsolveJobImpl{
-				RPMMDCache: rpmmd_cache,
+				Solver: solver,
 			},
 		}
 		acceptedJobTypes := []string{}
