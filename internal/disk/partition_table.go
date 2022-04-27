@@ -38,6 +38,12 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 		}
 	}
 
+	// TODO: make these overrideable for each image type
+	newPT.EnsureDirectorySizes(map[string]uint64{
+		"/":    1073741824,
+		"/usr": 2147483648,
+	})
+
 	// Calculate partition table offsets and sizes
 	newPT.relayout(imageSize)
 
