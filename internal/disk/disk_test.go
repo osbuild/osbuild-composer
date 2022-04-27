@@ -363,25 +363,26 @@ var testPartitionTables = map[string]PartitionTable{
 	},
 }
 
-var bp = []blueprint.FilesystemCustomization{
-	{
-		Mountpoint: "/",
-		MinSize:    10 * GiB,
+var testBlueprints = map[string][]blueprint.FilesystemCustomization{
+	"bp1": {
+		{
+			Mountpoint: "/",
+			MinSize:    10 * GiB,
+		},
+		{
+			Mountpoint: "/home",
+			MinSize:    20 * GiB,
+		},
+		{
+			Mountpoint: "/opt",
+			MinSize:    7 * GiB,
+		},
 	},
-	{
-		Mountpoint: "/home",
-		MinSize:    20 * GiB,
-	},
-	{
-		Mountpoint: "/opt",
-		MinSize:    7 * GiB,
-	},
-}
-
-var bp2 = []blueprint.FilesystemCustomization{
-	{
-		Mountpoint: "/opt",
-		MinSize:    7 * GiB,
+	"bp2": {
+		{
+			Mountpoint: "/opt",
+			MinSize:    7 * GiB,
+		},
 	},
 }
 
@@ -411,7 +412,7 @@ func TestCreatePartitionTable(t *testing.T) {
 	rng := rand.New(rand.NewSource(13))
 	for name := range testPartitionTables {
 		pt := testPartitionTables[name]
-		mpt, err := NewPartitionTable(&pt, bp, uint64(13*MiB), false, rng)
+		mpt, err := NewPartitionTable(&pt, testBlueprints["bp1"], uint64(13*MiB), false, rng)
 		assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
 		assert.NotNil(mpt, "Partition table generation failed: %s (nil partition table)", name)
 		assert.Greater(mpt.GetSize(), uint64(37*GiB))
@@ -428,8 +429,7 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
-	blueprints := [][]blueprint.FilesystemCustomization{bp, bp2}
-	for _, tbp := range blueprints {
+	for _, tbp := range testBlueprints {
 		for name := range testPartitionTables {
 			pt := testPartitionTables[name]
 
