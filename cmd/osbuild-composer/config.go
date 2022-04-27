@@ -17,6 +17,7 @@ type ComposerConfigFile struct {
 	SyslogServer string          `toml:"syslog_server" env:"SYSLOG_SERVER"`
 	LogLevel     string          `toml:"log_level"`
 	LogFormat    string          `toml:"log_format"`
+	DNFJson      string          `toml:"dnf-json"`
 }
 
 type KojiAPIConfig struct {
@@ -116,6 +117,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 		},
 		LogLevel:  "info",
 		LogFormat: "text",
+		DNFJson:   "/usr/libexec/osbuild-composer/dnf-json",
 	}
 }
 
