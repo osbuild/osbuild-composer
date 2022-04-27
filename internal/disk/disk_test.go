@@ -9,6 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	KiB = 1024
+	MiB = 1024 * KiB
+	GiB = 1024 * MiB
+)
+
 func TestDisk_AlignUp(t *testing.T) {
 
 	pt := PartitionTable{}
@@ -35,7 +41,7 @@ func TestDisk_AlignUp(t *testing.T) {
 func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	mountpoints := []blueprint.FilesystemCustomization{
 		{
-			MinSize:    2147483648,
+			MinSize:    2 * GiB,
 			Mountpoint: "/usr",
 		},
 	}
@@ -63,7 +69,7 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 			},
 		},
 	}
-	var expectedSize uint64 = 2147483648
+	var expectedSize uint64 = 2 * GiB
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(0))
@@ -78,13 +84,13 @@ var testPartitionTables = map[string]PartitionTable{
 		Type: "gpt",
 		Partitions: []Partition{
 			{
-				Size:     1048576, // 1MB
+				Size:     1 * MiB,
 				Bootable: true,
 				Type:     BIOSBootPartitionGUID,
 				UUID:     BIOSBootPartitionUUID,
 			},
 			{
-				Size: 209715200, // 200 MB
+				Size: 200 * MiB,
 				Type: EFISystemPartitionGUID,
 				UUID: EFISystemPartitionUUID,
 				Payload: &Filesystem{
@@ -98,7 +104,7 @@ var testPartitionTables = map[string]PartitionTable{
 				},
 			},
 			{
-				Size: 1024000, // 500 MB
+				Size: 500 * MiB,
 				Type: FilesystemDataGUID,
 				UUID: FilesystemDataUUID,
 				Payload: &Filesystem{
@@ -130,13 +136,13 @@ var testPartitionTables = map[string]PartitionTable{
 		Type: "gpt",
 		Partitions: []Partition{
 			{
-				Size:     1048576, // 1MB
+				Size:     1 * MiB,
 				Bootable: true,
 				Type:     BIOSBootPartitionGUID,
 				UUID:     BIOSBootPartitionUUID,
 			},
 			{
-				Size: 209715200, // 200 MB
+				Size: 200 * MiB,
 				Type: EFISystemPartitionGUID,
 				UUID: EFISystemPartitionUUID,
 				Payload: &Filesystem{
@@ -169,13 +175,13 @@ var testPartitionTables = map[string]PartitionTable{
 		Type: "gpt",
 		Partitions: []Partition{
 			{
-				Size:     1048576, // 1MB
+				Size:     1 * MiB,
 				Bootable: true,
 				Type:     BIOSBootPartitionGUID,
 				UUID:     BIOSBootPartitionUUID,
 			},
 			{
-				Size: 209715200, // 200 MB
+				Size: 200 * MiB,
 				Type: EFISystemPartitionGUID,
 				UUID: EFISystemPartitionUUID,
 				Payload: &Filesystem{
@@ -189,7 +195,7 @@ var testPartitionTables = map[string]PartitionTable{
 				},
 			},
 			{
-				Size: 1024000, // 500 MB
+				Size: 500 * MiB,
 				Type: FilesystemDataGUID,
 				UUID: FilesystemDataUUID,
 				Payload: &Filesystem{
@@ -224,13 +230,13 @@ var testPartitionTables = map[string]PartitionTable{
 		Type: "gpt",
 		Partitions: []Partition{
 			{
-				Size:     1048576, // 1MB
+				Size:     1 * MiB,
 				Bootable: true,
 				Type:     BIOSBootPartitionGUID,
 				UUID:     BIOSBootPartitionUUID,
 			},
 			{
-				Size: 209715200, // 200 MB
+				Size: 200 * MiB,
 				Type: EFISystemPartitionGUID,
 				UUID: EFISystemPartitionUUID,
 				Payload: &Filesystem{
@@ -244,7 +250,7 @@ var testPartitionTables = map[string]PartitionTable{
 				},
 			},
 			{
-				Size: 1024000, // 500 MB
+				Size: 500 * MiB,
 				Type: FilesystemDataGUID,
 				UUID: FilesystemDataUUID,
 				Payload: &Filesystem{
@@ -259,7 +265,7 @@ var testPartitionTables = map[string]PartitionTable{
 			{
 				Type: FilesystemDataGUID,
 				UUID: RootPartitionUUID,
-				Size: 5 * 1024 * 1024 * 1024,
+				Size: 5 * GiB,
 				Payload: &LUKSContainer{
 					UUID: "",
 					Payload: &LVMVolumeGroup{
@@ -267,7 +273,7 @@ var testPartitionTables = map[string]PartitionTable{
 						Description: "",
 						LogicalVolumes: []LVMLogicalVolume{
 							{
-								Size: 2 * 1024 * 1024 * 1024,
+								Size: 2 * GiB,
 								Payload: &Filesystem{
 									Type:         "xfs",
 									Label:        "root",
@@ -278,7 +284,7 @@ var testPartitionTables = map[string]PartitionTable{
 								},
 							},
 							{
-								Size: 2 * 1024 * 1024 * 1024,
+								Size: 2 * GiB,
 								Payload: &Filesystem{
 									Type:         "xfs",
 									Label:        "root",
@@ -299,13 +305,13 @@ var testPartitionTables = map[string]PartitionTable{
 		Type: "gpt",
 		Partitions: []Partition{
 			{
-				Size:     1048576, // 1MB
+				Size:     1 * MiB,
 				Bootable: true,
 				Type:     BIOSBootPartitionGUID,
 				UUID:     BIOSBootPartitionUUID,
 			},
 			{
-				Size: 209715200, // 200 MB
+				Size: 200 * MiB,
 				Type: EFISystemPartitionGUID,
 				UUID: EFISystemPartitionUUID,
 				Payload: &Filesystem{
@@ -319,7 +325,7 @@ var testPartitionTables = map[string]PartitionTable{
 				},
 			},
 			{
-				Size: 1024000, // 500 MB
+				Size: 500 * MiB,
 				Type: FilesystemDataGUID,
 				UUID: FilesystemDataUUID,
 				Payload: &Filesystem{
@@ -334,7 +340,7 @@ var testPartitionTables = map[string]PartitionTable{
 			{
 				Type: FilesystemDataGUID,
 				UUID: RootPartitionUUID,
-				Size: 10 * 1024 * 1024 * 1024,
+				Size: 10 * GiB,
 				Payload: &Btrfs{
 					UUID:       "",
 					Label:      "",
@@ -346,7 +352,7 @@ var testPartitionTables = map[string]PartitionTable{
 							GroupID:    0,
 						},
 						{
-							Size:       5 * 1024 * 1024 * 1024,
+							Size:       5 * GiB,
 							Mountpoint: "/var",
 							GroupID:    0,
 						},
@@ -360,22 +366,22 @@ var testPartitionTables = map[string]PartitionTable{
 var bp = []blueprint.FilesystemCustomization{
 	{
 		Mountpoint: "/",
-		MinSize:    10 * 1024 * 1024 * 1024,
+		MinSize:    10 * GiB,
 	},
 	{
 		Mountpoint: "/home",
-		MinSize:    20 * 1024 * 1024 * 1024,
+		MinSize:    20 * GiB,
 	},
 	{
 		Mountpoint: "/opt",
-		MinSize:    7 * 1024 * 1024 * 1024,
+		MinSize:    7 * GiB,
 	},
 }
 
 var bp2 = []blueprint.FilesystemCustomization{
 	{
 		Mountpoint: "/opt",
-		MinSize:    7 * 1024 * 1024 * 1024,
+		MinSize:    7 * GiB,
 	},
 }
 
@@ -405,10 +411,10 @@ func TestCreatePartitionTable(t *testing.T) {
 	rng := rand.New(rand.NewSource(13))
 	for name := range testPartitionTables {
 		pt := testPartitionTables[name]
-		mpt, err := NewPartitionTable(&pt, bp, uint64(13*1024*1024), false, rng)
+		mpt, err := NewPartitionTable(&pt, bp, uint64(13*MiB), false, rng)
 		assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
 		assert.NotNil(mpt, "Partition table generation failed: %s (nil partition table)", name)
-		assert.Greater(mpt.GetSize(), uint64(37*1024*1024*1024))
+		assert.Greater(mpt.GetSize(), uint64(37*GiB))
 
 		assert.NotNil(mpt.Type, "Partition table generation failed: %s (nil partition table type)", name)
 
@@ -429,12 +435,12 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 
 			if name == "btrfs" || name == "luks" {
 				assert.Panics(func() {
-					_, _ = NewPartitionTable(&pt, tbp, uint64(13*1024*1024), true, rng)
+					_, _ = NewPartitionTable(&pt, tbp, uint64(13*MiB), true, rng)
 				})
 				continue
 			}
 
-			mpt, err := NewPartitionTable(&pt, tbp, uint64(13*1024*1024), true, rng)
+			mpt, err := NewPartitionTable(&pt, tbp, uint64(13*MiB), true, rng)
 			assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
 
 			rootPath := entityPath(mpt, "/")
@@ -587,7 +593,6 @@ func TestFindDirectoryPartition(t *testing.T) {
 func TestEnsureDirectorySizes(t *testing.T) {
 	assert := assert.New(t)
 
-	GiB := 1024 * 1024 * 1024
 	varSizes := map[string]uint64{
 		"/var/lib":         uint64(3 * GiB),
 		"/var/cache":       uint64(2 * GiB),
