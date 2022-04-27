@@ -12,7 +12,7 @@ import (
 )
 
 type DepsolveJobImpl struct {
-	RPMMDCache string
+	Solver *dnfjson.BaseSolver
 }
 
 // depsolve each package set in the pacakgeSets map.  The repositories defined
@@ -20,7 +20,7 @@ type DepsolveJobImpl struct {
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
 func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string, packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, packageSetsRepos map[string][]rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
-	solver := dnfjson.NewSolver(modulePlatformID, releasever, arch, impl.RPMMDCache)
+	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch)
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	// first depsolve package sets that are part of a chain
