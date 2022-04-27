@@ -3,6 +3,7 @@ package disk
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -384,6 +385,16 @@ var testBlueprints = map[string][]blueprint.FilesystemCustomization{
 			MinSize:    7 * GiB,
 		},
 	},
+	"small": {
+		{
+			Mountpoint: "/opt",
+			MinSize:    20 * MiB,
+		},
+		{
+			Mountpoint: "/home",
+			MinSize:    500 * MiB,
+		},
+	},
 }
 
 func TestDisk_ForEachEntity(t *testing.T) {
@@ -407,20 +418,48 @@ func TestDisk_ForEachEntity(t *testing.T) {
 
 func TestCreatePartitionTable(t *testing.T) {
 	assert := assert.New(t)
+
+	sizeCheckCB := func(mnt Mountable, path []Entity) error {
+		if strings.HasPrefix(mnt.GetMountpoint(), "/boot") {
+			// /boot and subdirectories is exempt from this rule
+			return nil
+		}
+		// go up the path and check every sizeable
+		for idx, ent := range path {
+			if sz, ok := ent.(Sizeable); ok {
+				size := sz.GetSize()
+				if size < 1*GiB {
+					return fmt.Errorf("entity %d in the path from %s is smaller than the minimum 1 GiB (%d)", idx, mnt.GetMountpoint(), size)
+				}
+			}
+		}
+		return nil
+	}
+
+	sumSizes := func(bp []blueprint.FilesystemCustomization) (sum uint64) {
+		for _, mnt := range bp {
+			sum += mnt.MinSize
+		}
+		return sum
+	}
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
-	for name := range testPartitionTables {
-		pt := testPartitionTables[name]
-		mpt, err := NewPartitionTable(&pt, testBlueprints["bp1"], uint64(13*MiB), false, rng)
-		assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
-		assert.NotNil(mpt, "Partition table generation failed: %s (nil partition table)", name)
-		assert.Greater(mpt.GetSize(), uint64(37*GiB))
+	for ptName := range testPartitionTables {
+		pt := testPartitionTables[ptName]
+		for bpName, bp := range testBlueprints {
+			mpt, err := NewPartitionTable(&pt, bp, uint64(13*MiB), false, rng)
+			assert.NoError(err, "Partition table generation failed: PT %q BP %q (%s)", ptName, bpName, err)
+			assert.NotNil(mpt, "Partition table generation failed: PT %q BP %q (nil partition table)", ptName, bpName)
+			assert.Greater(mpt.GetSize(), sumSizes(bp))
 
-		assert.NotNil(mpt.Type, "Partition table generation failed: %s (nil partition table type)", name)
+			assert.NotNil(mpt.Type, "Partition table generation failed: PT %q BP %q (nil partition table type)", ptName, bpName)
 
-		mnt := pt.FindMountable("/")
-		assert.NotNil(mnt, "Partition table '%s': failed to find root mountable", name)
+			mnt := pt.FindMountable("/")
+			assert.NotNil(mnt, "PT %q BP %q: failed to find root mountable", ptName, bpName)
+
+			assert.NoError(mpt.ForEachMountable(sizeCheckCB))
+		}
 	}
 }
 
