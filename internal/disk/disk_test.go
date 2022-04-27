@@ -395,6 +395,7 @@ var testBlueprints = map[string][]blueprint.FilesystemCustomization{
 			MinSize:    500 * MiB,
 		},
 	},
+	"empty": nil,
 }
 
 func TestDisk_ForEachEntity(t *testing.T) {
@@ -468,33 +469,35 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
-	for _, tbp := range testBlueprints {
-		for name := range testPartitionTables {
-			pt := testPartitionTables[name]
+	for bpName, tbp := range testBlueprints {
+		for ptName := range testPartitionTables {
+			pt := testPartitionTables[ptName]
 
-			if name == "btrfs" || name == "luks" {
+			if tbp != nil && (ptName == "btrfs" || ptName == "luks") {
 				assert.Panics(func() {
 					_, _ = NewPartitionTable(&pt, tbp, uint64(13*MiB), true, rng)
-				})
+				}, fmt.Sprintf("PT %q BP %q: should panic", ptName, bpName))
 				continue
 			}
 
 			mpt, err := NewPartitionTable(&pt, tbp, uint64(13*MiB), true, rng)
-			assert.NoError(err, "Partition table generation failed: %s (%s)", name, err)
+			assert.NoError(err, "PT %q BP %q: Partition table generation failed: (%s)", ptName, bpName, err)
 
 			rootPath := entityPath(mpt, "/")
 			if rootPath == nil {
-				panic("no root mountpoint for PartitionTable")
+				panic(fmt.Sprintf("PT %q BP %q: no root mountpoint", ptName, bpName))
 			}
 
 			bootPath := entityPath(mpt, "/boot")
-			if bootPath == nil {
-				panic("no boot mountpoint for PartitionTable")
+			if tbp != nil && bootPath == nil {
+				panic(fmt.Sprintf("PT %q BP %q: no boot mountpoint", ptName, bpName))
 			}
 
-			parent := rootPath[1]
-			_, ok := parent.(*LVMLogicalVolume)
-			assert.True(ok, "Partition table '%s': root's parent (%q) is not an LVM logical volume", name, parent)
+			if tbp != nil {
+				parent := rootPath[1]
+				_, ok := parent.(*LVMLogicalVolume)
+				assert.True(ok, "PT %q BP %q: root's parent (%q) is not an LVM logical volume", ptName, bpName, parent)
+			}
 		}
 	}
 }
