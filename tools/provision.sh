@@ -87,10 +87,11 @@ REPODIR=/etc/osbuild-composer/repositories
 sudo mkdir -p $REPODIR
 # Copy all fedora repo overrides
 sudo cp -a /usr/share/tests/osbuild-composer/repositories/{fedora,centos}-*.json "$REPODIR"
-# Copy RHEL point relese repos
+# Copy RHEL point release repos
 sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-85.json "$REPODIR"
 sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-86.json "$REPODIR"
 sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-90.json "$REPODIR"
+sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-91.json "$REPODIR"
 
 # RHEL nightly repos need to be overridden
 case "${ID}-${VERSION_ID}" in
