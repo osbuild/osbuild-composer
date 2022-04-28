@@ -90,6 +90,7 @@ sudo cp -a /usr/share/tests/osbuild-composer/repositories/{fedora,centos}-*.json
 # Copy RHEL point release repos
 sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-85.json "$REPODIR"
 sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-86.json "$REPODIR"
+sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-87.json "$REPODIR"
 sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-90.json "$REPODIR"
 sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-91.json "$REPODIR"
 
