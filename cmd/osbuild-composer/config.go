@@ -11,11 +11,12 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji      KojiAPIConfig   `toml:"koji"`
-	Worker    WorkerAPIConfig `toml:"worker"`
-	WeldrAPI  WeldrAPIConfig  `toml:"weldr_api"`
-	LogLevel  string          `toml:"log_level"`
-	LogFormat string          `toml:"log_format"`
+	Koji         KojiAPIConfig   `toml:"koji"`
+	Worker       WorkerAPIConfig `toml:"worker"`
+	WeldrAPI     WeldrAPIConfig  `toml:"weldr_api"`
+	SyslogServer string          `toml:"syslog_server" env:"SYSLOG_SERVER"`
+	LogLevel     string          `toml:"log_level"`
+	LogFormat    string          `toml:"log_format"`
 }
 
 type KojiAPIConfig struct {
