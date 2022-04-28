@@ -86,6 +86,18 @@ var distroMap = map[string]distribution{
 		runner:             "org.osbuild.rhel90",
 		defaultImageConfig: defaultDistroImageConfig,
 	},
+	"rhel-91": {
+		name:               "rhel-91",
+		product:            "Red Hat Enterprise Linux",
+		osVersion:          "9.1",
+		releaseVersion:     "9",
+		modulePlatformID:   "platform:el9",
+		vendor:             "redhat",
+		ostreeRefTmpl:      "rhel/9/%s/edge",
+		isolabelTmpl:       "RHEL-9-1-0-BaseOS-%s",
+		runner:             "org.osbuild.rhel91",
+		defaultImageConfig: defaultDistroImageConfig,
+	},
 	"centos-9": {
 		name:               "centos-9",
 		product:            "CentOS Stream",
@@ -624,6 +636,14 @@ func New() distro.Distro {
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("rhel-90")
+}
+
+func NewRHEL91() distro.Distro {
+	return newDistro("rhel-91")
+}
+
+func NewRHEL91HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro("rhel-91")
 }
 
 func NewCentos() distro.Distro {
