@@ -37,4 +37,5 @@ sudo ./tools/test-case-generators/generate-test-cases\
     --arch x86_64\
     --distro rhel-8\
     --image-type qcow2\
-    --store "$WORKDIR"
+    --store "$WORKDIR"\
+    --keep-image-info
