@@ -50,9 +50,16 @@ class Cli(contextlib.AbstractContextManager):
         self._parser.add_argument(
             "--composer-api-port",
             type=int,
-            default=443,
+            default=8080,
             dest="composer_api_port",
             help="Port which the composer-API listens on",
+        )
+        self._parser.add_argument(
+            "--composer-api-bind-address",
+            type=str,
+            default="::",
+            dest="composer_api_bind_address",
+            help="Bind the composer API to the specified address",
         )
 
         # --[no-]local-worker-api
@@ -81,6 +88,20 @@ class Cli(contextlib.AbstractContextManager):
             action="store_false",
             dest="remote_worker_api",
             help="Disable the remote-worker-API",
+        )
+        self._parser.add_argument(
+            "--remote-worker-api-port",
+            type=int,
+            default=8700,
+            dest="remote_worker_api_port",
+            help="Port which the remote-worker API listens on",
+        )
+        self._parser.add_argument(
+            "--remote-worker-api-bind-address",
+            type=str,
+            default="::",
+            dest="remote_worker_api_bind_address",
+            help="Bind the remote worker API to the specified address",
         )
 
         # --[no-]weldr-api
@@ -171,7 +192,7 @@ class Cli(contextlib.AbstractContextManager):
             self._exitstack.enter_context(contextlib.closing(sock))
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-            sock.bind(("::", self.args.composer_api_port))
+            sock.bind((self.args.composer_api_bind_address, self.args.composer_api_port))
             sock.listen()
             sockets.append(sock)
             names.append("osbuild-composer-api.socket")
@@ -194,12 +215,12 @@ class Cli(contextlib.AbstractContextManager):
 
         # osbuild-remote-worker.socket
         if self.args.remote_worker_api:
-            print("Create remote-worker-api socket", file=sys.stderr)
+            print(f"Create remote-worker-api socket on address [{self.args.remote_worker_api_bind_address}]:{self.args.remote_worker_api_port}", file=sys.stderr)
             sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
             self._exitstack.enter_context(contextlib.closing(sock))
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-            sock.bind(("::", 8700))
+            sock.bind((self.args.remote_worker_api_bind_address, self.args.remote_worker_api_port))
             sock.listen(256)
             sockets.append(sock)
             names.append("osbuild-remote-worker.socket")
