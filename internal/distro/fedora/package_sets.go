@@ -467,6 +467,7 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"rootfiles",
 			"rpm",
 			"selinux-policy-targeted",
+			"smartmontools-selinux",
 			"setup",
 			"shadow-utils",
 			"sudo",
