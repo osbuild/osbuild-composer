@@ -245,85 +245,10 @@ func aarch64UEFIBootPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 }
 
-// We need to unpack the 'fedora cloud server' group because of the dependency collision with fedora-release-identity
-// and the packages coming from the blueprint
-func fedoraCloudServerPackageSet(t *imageType) rpmmd.PackageSet {
-
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			// Mandatory packages
-			"@core",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"dracut-config-generic",
-			"grubby",
-			"rsync",
-			"tar",
-
-			// Default packages
-			"console-login-helper-messages-issuegen",
-			"console-login-helper-messages-motdgen",
-			"console-login-helper-messages-profile",
-		},
-		Exclude: []string{
-			"grubby-deprecated",
-			"extlinux-bootloader",
-		},
-	}
-
-	r, err := strconv.Atoi(t.Arch().Distro().Releasever())
-	if err != nil {
-		log.Errorf("failed to convert fedora release %s to string: %s", t.Arch().Distro().Releasever(), err)
-	}
-
-	switch t.Arch().Name() {
-	case distro.X86_64ArchName:
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"syslinux",
-				"syslinux-extlinux",
-				"syslinux-extlinux-nonlinux",
-				"syslinux-nonlinux",
-				"mtools",
-			},
-		})
-	}
-	if r > 34 {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"@Bootloader tools for Cloud images",
-				"libpng",
-				"graphite2",
-				"harfbuzz",
-				"freetype",
-				"grub2-tools-extra",
-			},
-		})
-		switch t.Arch().Name() {
-		case distro.X86_64ArchName:
-			ps = ps.Append(rpmmd.PackageSet{
-				Include: []string{
-					"efi-filesystem",
-					"efibootmgr",
-					"shim-ia32",
-					"shim-x64",
-					"grub2-efi-ia32",
-					"grub2-efi-x64",
-					"grub2-tools-efi",
-					"mokutil",
-					"efivar-libs",
-					"mtools",
-				},
-			})
-		}
-	}
-
-	return ps
-}
-
 func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
+			"@Fedora Cloud Server",
 			"chrony",
 			"systemd-udev",
 			"selinux-policy-targeted",
@@ -338,8 +263,10 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"gobject-introspection",
 			"plymouth",
 			"zram-generator-defaults",
+			"grubby-deprecated",
+			"extlinux-bootloader",
 		},
-	}.Append(bootPackageSet(t)).Append(fedoraCloudServerPackageSet(t))
+	}.Append(bootPackageSet(t))
 
 	return ps
 }
@@ -372,6 +299,7 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
+			"@Fedora Cloud Server",
 			"chrony",
 			"systemd-udev",
 			"selinux-policy-targeted",
@@ -386,8 +314,10 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"gobject-introspection",
 			"plymouth",
 			"zram-generator-defaults",
+			"grubby-deprecated",
+			"extlinux-bootloader",
 		},
-	}.Append(bootPackageSet(t)).Append(fedoraCloudServerPackageSet(t))
+	}.Append(bootPackageSet(t))
 
 	return ps
 }
