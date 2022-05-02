@@ -74,7 +74,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	}.Append(bootPackageSet(t))
 }
 
-// common edge image build package set
+// common iot image build package set
 func iotBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return distroBuildPackageSet(t).Append(
 		rpmmd.PackageSet{

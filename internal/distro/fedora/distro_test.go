@@ -530,7 +530,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
 			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "fedora-iot-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if imgTypeName == "fedora-iot-installer" {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")

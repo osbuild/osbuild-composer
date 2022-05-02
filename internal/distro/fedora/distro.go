@@ -83,7 +83,7 @@ var (
 			EnabledServices: iotServices,
 		},
 		rpmOstree:        true,
-		pipelines:        edgeCommitPipelines,
+		pipelines:        iotCommitPipelines,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"ostree-tree", "ostree-commit", "commit-archive"},
 		exports:          []string{"commit-archive"},
@@ -489,7 +489,7 @@ type imageType struct {
 
 	// bootISO: installable ISO
 	bootISO bool
-	// rpmOstree: edge/ostree
+	// rpmOstree: iot/ostree
 	rpmOstree bool
 	// bootable image
 	bootable bool
