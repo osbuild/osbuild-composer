@@ -76,6 +76,9 @@ var (
 			buildPkgsKey: iotBuildPackageSet,
 			osPkgsKey:    iotCommitPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: iotServices,
 		},
@@ -100,6 +103,9 @@ var (
 				}
 			},
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: iotServices,
 		},
@@ -121,6 +127,9 @@ var (
 			osPkgsKey:        iotCommitPackageSet,
 			installerPkgsKey: iotInstallerPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale:          "en_US.UTF-8",
 			EnabledServices: iotServices,
@@ -140,6 +149,9 @@ var (
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    qcow2CommonPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: "graphical.target",
@@ -166,6 +178,9 @@ var (
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    vhdCommonPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
@@ -197,6 +212,9 @@ var (
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    vmdkCommonPackageSet,
 		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
 			EnabledServices: []string{
@@ -222,6 +240,9 @@ var (
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey:    openstackCommonPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
@@ -258,6 +279,9 @@ var (
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultEc2ImageConfig,
 		kernelOptions:       "ro no_timer_check net.ifnames=0 console=tty1",
@@ -454,6 +478,7 @@ type imageType struct {
 	filename           string
 	mimeType           string
 	packageSets        map[string]packageSetFunc
+	packageSetChains   map[string][]string
 	defaultImageConfig *distro.ImageConfig
 	kernelOptions      string
 	defaultSize        uint64
@@ -589,6 +614,10 @@ func (t *imageType) PayloadPipelines() []string {
 
 func (t *imageType) PayloadPackageSets() []string {
 	return []string{blueprintPkgsKey}
+}
+
+func (t *imageType) PackageSetsChains() map[string][]string {
+	return t.packageSetChains
 }
 
 func (t *imageType) Exports() []string {
