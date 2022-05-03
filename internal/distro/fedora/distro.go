@@ -154,7 +154,7 @@ var (
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			DefaultTarget: "graphical.target",
+			DefaultTarget: "multi-user.target",
 			EnabledServices: []string{
 				"cloud-init.service",
 				"cloud-config.service",
@@ -188,7 +188,7 @@ var (
 				"sshd",
 				"waagent",
 			},
-			DefaultTarget: "graphical.target",
+			DefaultTarget: "multi-user.target",
 			DisabledServices: []string{
 				"proc-sys-fs-binfmt_misc.mount",
 				"loadmodules.service",
