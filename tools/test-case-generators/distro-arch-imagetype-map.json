@@ -201,6 +201,49 @@
             "tar"
         ]
     },
+    "rhel-87": {
+        "x86_64": [
+            "ami",
+            "azure-rhui",
+            "ec2",
+            "ec2-ha",
+            "ec2-sap",
+            "gce",
+            "gce-rhui",
+            "openstack",
+            "tar",
+            "qcow2",
+            "edge-commit",
+            "edge-container",
+            "edge-installer",
+            "edge-simplified-installer",
+            "image-installer",
+            "edge-simplified-installer",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "ec2",
+            "openstack",
+            "qcow2",
+            "edge-commit",
+            "edge-container",
+            "edge-installer",
+            "edge-simplified-installer",
+            "image-installer",
+            "edge-simplified-installer",
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ],
+        "s390x": [
+            "qcow2",
+            "tar"
+        ]
+    },
     "rhel-90-beta": {
         "x86_64": [
             "ami",
@@ -235,6 +278,47 @@
         ]
     },
     "rhel-90": {
+        "x86_64": [
+            "ami",
+            "ec2",
+            "ec2-ha",
+            "ec2-sap",
+            "gce",
+            "edge-commit",
+            "edge-container",
+            "edge-installer",
+            "edge-simplified-installer",
+            "image-installer",
+            "edge-simplified-installer",
+            "openstack",
+            "qcow2",
+            "tar",
+            "vhd",
+            "vmdk"
+        ],
+        "aarch64": [
+            "ami",
+            "ec2",
+            "edge-commit",
+            "edge-container",
+            "edge-installer",
+            "edge-simplified-installer",
+            "image-installer",
+            "edge-simplified-installer",
+            "openstack",
+            "qcow2",
+            "tar"
+        ],
+        "ppc64le": [
+            "qcow2",
+            "tar"
+        ],
+        "s390x": [
+            "qcow2",
+            "tar"
+        ]
+    },
+    "rhel-91": {
         "x86_64": [
             "ami",
             "ec2",
