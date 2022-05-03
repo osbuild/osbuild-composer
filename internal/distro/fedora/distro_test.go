@@ -195,14 +195,13 @@ func TestImageType_BuildPackages(t *testing.T) {
 		"dnf",
 		"dosfstools",
 		"e2fsprogs",
-		"grub2-efi-x64",
-		"grub2-pc",
 		"policycoreutils",
-		"shim-x64",
+		"qemu-img",
+		"selinux-policy-targeted",
 		"systemd",
 		"tar",
-		"qemu-img",
 		"xz",
+		"grub2-pc",
 	}
 	aarch64BuildPackages := []string{
 		"dnf",
@@ -210,6 +209,7 @@ func TestImageType_BuildPackages(t *testing.T) {
 		"e2fsprogs",
 		"policycoreutils",
 		"qemu-img",
+		"selinux-policy-targeted",
 		"systemd",
 		"tar",
 		"xz",
@@ -276,13 +276,13 @@ func TestImageType_Name(t *testing.T) {
 	for _, dist := range fedoraFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
-				if mapping.arch == "s390x" && dist.name == "centos" {
+				if mapping.arch == "s390x" {
 					continue
 				}
 				arch, err := dist.distro.GetArch(mapping.arch)
 				if assert.NoError(t, err) {
 					for _, imgName := range mapping.imgNames {
-						if imgName == "fedora-iot-commit" && dist.name == "centos" {
+						if imgName == "fedora-iot-commit" {
 							continue
 						}
 						imgType, err := arch.GetImageType(imgName)
@@ -394,7 +394,7 @@ func TestDistro_ManifestError(t *testing.T) {
 			imgOpts := distro.ImageOptions{
 				Size: imgType.Size(0),
 			}
-			testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
+			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, testPackageSpecSets, 0)
 			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
@@ -555,7 +555,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 		arch, _ := fedoraDistro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
+			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
 			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
@@ -588,7 +588,7 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 		arch, _ := fedoraDistro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
+			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
 			if strings.HasPrefix(imgTypeName, "fedora-iot-") {
 				continue
@@ -627,7 +627,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 		arch, _ := fedoraDistro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
+			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
 			if strings.HasPrefix(imgTypeName, "fedora-iot-") {
 				continue
@@ -720,7 +720,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 		arch, _ := fedoraDistro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingPackageSpecSets("kernel", arch.Name(), imgType.PayloadPackageSets())
+			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
 			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
