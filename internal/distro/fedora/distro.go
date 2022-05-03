@@ -264,8 +264,6 @@ var (
 
 	// default EC2 images config (common for all architectures)
 	defaultEc2ImageConfig = &distro.ImageConfig{
-		Locale:   "en_US",
-		Timezone: "UTC",
 		EnabledServices: []string{
 			"cloud-init.service",
 		},
@@ -902,5 +900,3 @@ func newDistro(distroName string) distro.Distro {
 	rd.addArches(x86_64, aarch64, s390x)
 	return &rd
 }
-
-// Shared Services
