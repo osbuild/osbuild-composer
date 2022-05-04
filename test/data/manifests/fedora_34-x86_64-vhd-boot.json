@@ -11400,7 +11400,7 @@
         "2.fedora.pool.ntp.org iburst"
       ]
     },
-    "default-target": "graphical.target",
+    "default-target": "multi-user.target",
     "dnf": {
       "dnf.conf": {
         "main": {
@@ -11647,7 +11647,6 @@
       "glibc-common-2.33-20.fc34.x86_64",
       "glibc-doc-2.33-20.fc34.noarch",
       "glibc-langpack-en-2.33-20.fc34.x86_64",
-      "glibc-minimal-langpack-2.33-20.fc34.x86_64",
       "gmp-6.2.0-6.fc34.x86_64",
       "gnupg2-2.2.27-4.fc34.x86_64",
       "gnupg2-smime-2.2.27-4.fc34.x86_64",
@@ -11913,7 +11912,7 @@
         "fstype": "ext4",
         "label": "root",
         "partuuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-        "size": 2148515328,
+        "size": 3222257152,
         "start": 736100352,
         "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
         "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"

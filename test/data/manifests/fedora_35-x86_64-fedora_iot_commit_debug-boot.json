@@ -4473,14 +4473,6 @@
                     }
                   },
                   {
-                    "id": "sha256:c53fdade18d58360854bf7129371b5e97819514977159ad9d05d3d861ecc5cc5",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:ac4b769464ccbbfed9c887287b0410c0517f1d3b918fa1d4324067b94ed2ccb5",
                     "options": {
                       "metadata": {
@@ -4489,7 +4481,15 @@
                     }
                   },
                   {
-                    "id": "sha256:bc094caaaacb96880fb4a98f6aac8c56064e7a957a76ce8096da445b73803fad",
+                    "id": "sha256:641c5b454f3cefa3c9da1b9970486bb931852945398efd977e744684d1da781c",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:a788fcf4b4145f95c9e1ef9d9119b5952eadd4596fcae90763319b079847af48",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6139,6 +6139,9 @@
           "sha256:63fe7aeec28feb0411fc2b0bc6ebb791ea5a372b96974a7fdb75b95666993eab": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/l/libdb-5.3.28-50.fc35.x86_64.rpm"
           },
+          "sha256:641c5b454f3cefa3c9da1b9970486bb931852945398efd977e744684d1da781c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/f/fedora-release-identity-iot-35-36.noarch.rpm"
+          },
           "sha256:65dec425b549db07bf854cb7412c180d7a103f40027e49c2ee9706fe427476cb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/l/libpwquality-1.4.4-6.fc35.x86_64.rpm"
           },
@@ -6510,6 +6513,9 @@
           },
           "sha256:a5ebce6a5c132f728e5e973b997b39f48962bc89f0e8aaab00db8a16dd7a89eb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/n/nss-softokn-freebl-3.73.0-1.fc35.x86_64.rpm"
+          },
+          "sha256:a788fcf4b4145f95c9e1ef9d9119b5952eadd4596fcae90763319b079847af48": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/f/fedora-release-iot-35-36.noarch.rpm"
           },
           "sha256:a79338ab8f828d8d2ab8fe48ecef18447ce4e57366614c5c277a89eff6dab4af": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/j/jq-1.6-10.fc35.x86_64.rpm"
@@ -12459,16 +12465,6 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release",
-        "epoch": 0,
-        "version": "35",
-        "release": "36",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/f/fedora-release-35-36.noarch.rpm",
-        "checksum": "sha256:c53fdade18d58360854bf7129371b5e97819514977159ad9d05d3d861ecc5cc5",
-        "check_gpg": true
-      },
-      {
         "name": "fedora-release-common",
         "epoch": 0,
         "version": "35",
@@ -12479,13 +12475,23 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release-identity-basic",
+        "name": "fedora-release-identity-iot",
         "epoch": 0,
         "version": "35",
         "release": "36",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/f/fedora-release-identity-basic-35-36.noarch.rpm",
-        "checksum": "sha256:bc094caaaacb96880fb4a98f6aac8c56064e7a957a76ce8096da445b73803fad",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/f/fedora-release-identity-iot-35-36.noarch.rpm",
+        "checksum": "sha256:641c5b454f3cefa3c9da1b9970486bb931852945398efd977e744684d1da781c",
+        "check_gpg": true
+      },
+      {
+        "name": "fedora-release-iot",
+        "epoch": 0,
+        "version": "35",
+        "release": "36",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/f/fedora-release-iot-35-36.noarch.rpm",
+        "checksum": "sha256:a788fcf4b4145f95c9e1ef9d9119b5952eadd4596fcae90763319b079847af48",
         "check_gpg": true
       },
       {
@@ -13851,14 +13857,16 @@
       "LOGO": "fedora-logo-icon",
       "NAME": "Fedora Linux",
       "PLATFORM_ID": "platform:f35",
-      "PRETTY_NAME": "Fedora Linux 35 (Thirty Five)",
+      "PRETTY_NAME": "Fedora Linux 35 (IoT Edition)",
       "PRIVACY_POLICY_URL": "https://fedoraproject.org/wiki/Legal:PrivacyPolicy",
       "REDHAT_BUGZILLA_PRODUCT": "Fedora",
       "REDHAT_BUGZILLA_PRODUCT_VERSION": "35",
       "REDHAT_SUPPORT_PRODUCT": "Fedora",
       "REDHAT_SUPPORT_PRODUCT_VERSION": "35",
       "SUPPORT_URL": "https://ask.fedoraproject.org/",
-      "VERSION": "35 (Thirty Five)",
+      "VARIANT": "IoT Edition",
+      "VARIANT_ID": "iot",
+      "VERSION": "35 (IoT Edition)",
       "VERSION_CODENAME": "",
       "VERSION_ID": "35"
     },
@@ -13947,9 +13955,9 @@
       "elfutils-libs-0.186-1.fc35.x86_64",
       "expat-2.4.1-2.fc35.x86_64",
       "fedora-gpg-keys-35-1.noarch",
-      "fedora-release-35-36.noarch",
       "fedora-release-common-35-36.noarch",
-      "fedora-release-identity-basic-35-36.noarch",
+      "fedora-release-identity-iot-35-36.noarch",
+      "fedora-release-iot-35-36.noarch",
       "fedora-repos-35-1.noarch",
       "file-5.40-9.fc35.x86_64",
       "file-libs-5.40-9.fc35.x86_64",

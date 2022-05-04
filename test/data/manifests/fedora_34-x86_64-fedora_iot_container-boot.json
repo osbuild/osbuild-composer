@@ -3899,14 +3899,6 @@
                     }
                   },
                   {
-                    "id": "sha256:3e69e8412d5914ec01c5e82264833698e92a1b88a7c7b5ed9b1f0351fc91f5d2",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:7f6376e3a393b2501d6c38a8b82b8ebc54265e9b4cf3bb54f3e164a9aaf078f0",
                     "options": {
                       "metadata": {
@@ -3915,7 +3907,15 @@
                     }
                   },
                   {
-                    "id": "sha256:6d1c024b295c423746b44f120cf36ceb0fd898f8ce5a276813d7c78a3c8ece52",
+                    "id": "sha256:323cf73160530491d2a25119c9b72ee26c0f23863b1bae71f8a04af1f471656b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c8ca801cddbe977065fe4d9bf73606f0a14532a74e4276e357698e316b7d4d73",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -7367,6 +7367,9 @@
           "sha256:31d2d856c7d90cd680f8c72f10bfa2a4a3607b054c39110e3ecef468ed0d3099": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/i/ignition-2.13.0-1.fc34.x86_64.rpm"
           },
+          "sha256:323cf73160530491d2a25119c9b72ee26c0f23863b1bae71f8a04af1f471656b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/f/fedora-release-identity-iot-34-39.noarch.rpm"
+          },
           "sha256:34441a7147eed87587bf5a6edbb6b495b3504db4b2438580dd353c97466b9534": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/c/crypto-policies-20210213-1.git5c710c0.fc34.noarch.rpm"
           },
@@ -8206,6 +8209,9 @@
           },
           "sha256:c889bbe80604f66c2b72175838c13d00203f8f0dcf0938f0b6c1fb24690a63b2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/l/libcurl-7.76.1-12.fc34.x86_64.rpm"
+          },
+          "sha256:c8ca801cddbe977065fe4d9bf73606f0a14532a74e4276e357698e316b7d4d73": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/f/fedora-release-iot-34-39.noarch.rpm"
           },
           "sha256:c8e0cdf3260afc4ce9c115f30df68182faaa02944cdaeeb5c20161430f82c8e5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/x/xz-libs-5.2.5-5.fc34.x86_64.rpm"
@@ -15078,16 +15084,6 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release",
-        "epoch": 0,
-        "version": "34",
-        "release": "39",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/f/fedora-release-34-39.noarch.rpm",
-        "checksum": "sha256:3e69e8412d5914ec01c5e82264833698e92a1b88a7c7b5ed9b1f0351fc91f5d2",
-        "check_gpg": true
-      },
-      {
         "name": "fedora-release-common",
         "epoch": 0,
         "version": "34",
@@ -15098,13 +15094,23 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release-identity-basic",
+        "name": "fedora-release-identity-iot",
         "epoch": 0,
         "version": "34",
         "release": "39",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/f/fedora-release-identity-basic-34-39.noarch.rpm",
-        "checksum": "sha256:6d1c024b295c423746b44f120cf36ceb0fd898f8ce5a276813d7c78a3c8ece52",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/f/fedora-release-identity-iot-34-39.noarch.rpm",
+        "checksum": "sha256:323cf73160530491d2a25119c9b72ee26c0f23863b1bae71f8a04af1f471656b",
+        "check_gpg": true
+      },
+      {
+        "name": "fedora-release-iot",
+        "epoch": 0,
+        "version": "34",
+        "release": "39",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/f/fedora-release-iot-34-39.noarch.rpm",
+        "checksum": "sha256:c8ca801cddbe977065fe4d9bf73606f0a14532a74e4276e357698e316b7d4d73",
         "check_gpg": true
       },
       {
@@ -17008,5 +17014,6 @@
         "check_gpg": true
       }
     ]
-  }
+  },
+  "image-info": {}
 }
