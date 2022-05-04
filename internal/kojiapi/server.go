@@ -131,7 +131,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			for idx, pkgSetName := range setNames {
 				chain[idx] = packageSets[pkgSetName]
 			}
-			res, err := solver.ChainDepsolve(chain, repositories, nil)
+			res, err := solver.Depsolve(chain, repositories, nil)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 			}

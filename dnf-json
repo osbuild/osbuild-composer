@@ -147,37 +147,7 @@ class Solver():
             "packages": packages
         }
 
-    def depsolve(self, package_spec, exclude_spec):
-        self.base.install_specs(package_spec, exclude_spec)
-        self.base.resolve()
-        dependencies = []
-        for tsi in self.base.transaction:
-            # Avoid using the install_set() helper, as it does not guarantee
-            # a stable order
-            if tsi.action not in dnf.transaction.FORWARD_ACTIONS:
-                continue
-            package = tsi.pkg
-
-            dependencies.append({
-                "name": package.name,
-                "epoch": package.epoch,
-                "version": package.version,
-                "release": package.release,
-                "arch": package.arch,
-                "repo_id": package.repoid,
-                "path": package.relativepath,
-                "remote_location": package.remote_location(),
-                "checksum": (
-                    f"{hawkey.chksum_name(package.chksum[0])}:"
-                    f"{package.chksum[1].hex()}"
-                )
-            })
-        return {
-            "checksums": self._repo_checksums(),
-            "dependencies": dependencies
-        }
-
-    def chain_depsolve(self, transactions):
+    def depsolve(self, transactions):
         last_transaction = []
 
         for idx, transaction in enumerate(transactions):
@@ -266,15 +236,8 @@ def solve(request, cache_dir):
                 result = solver.dump()
                 printe("dump success")
             elif command == "depsolve":
-                job = transactions[0]
-                result = solver.depsolve(
-                    job["package-specs"],
-                    job.get("exclude-specs", [])
-                )
+                result = solver.depsolve(transactions)
                 printe("depsolve success")
-            elif command == "chain-depsolve":
-                result = solver.chain_depsolve(transactions)
-                printe("chain-depsolve success")
 
         except dnf.exceptions.MarkingErrors as e:
             printe("error install_specs")
@@ -318,7 +281,7 @@ def respond(result):
 
 def validate_request(request):
     command = request.get("command")
-    valid_cmds = ("depsolve", "dump", "chain-depsolve")
+    valid_cmds = ("depsolve", "dump")
     if command not in valid_cmds:
         return {
             "kind": "InvalidRequest",
