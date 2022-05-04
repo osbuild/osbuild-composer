@@ -350,6 +350,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
+			"fedora-release-iot",
 			"glibc",
 			"glibc-minimal-langpack",
 			"nss-altfiles",
