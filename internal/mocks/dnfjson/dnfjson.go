@@ -54,7 +54,7 @@ func createBaseDepsolveFixture() []dnfjson.PackageSpec {
 			Version: "3.0.3",
 			Release: "1.fc30",
 			Arch:    "x86_64",
-			RepoID:  "0",
+			RepoID:  "REPOID", // added by mock-dnf-json
 		},
 		{
 			Name:    "dep-package1",
@@ -62,7 +62,7 @@ func createBaseDepsolveFixture() []dnfjson.PackageSpec {
 			Version: "1.33",
 			Release: "2.fc30",
 			Arch:    "x86_64",
-			RepoID:  "0",
+			RepoID:  "REPOID", // added by mock-dnf-json
 		},
 		{
 			Name:    "dep-package2",
@@ -70,7 +70,7 @@ func createBaseDepsolveFixture() []dnfjson.PackageSpec {
 			Version: "2.9",
 			Release: "1.fc30",
 			Arch:    "x86_64",
-			RepoID:  "0",
+			RepoID:  "REPOID", // added by mock-dnf-json
 		},
 	}
 }
@@ -111,14 +111,14 @@ type ResponseGenerator func(string) string
 func Base(tmpdir string) string {
 	deps := map[string]interface{}{
 		"checksums": map[string]string{
-			"0": "test:responsechecksum",
+			"REPOID": "test:responsechecksum",
 		},
 		"dependencies": createBaseDepsolveFixture(),
 	}
 
 	pkgs := map[string]interface{}{
 		"checksums": map[string]string{
-			"0": "test:responsechecksum",
+			"REPOID": "test:responsechecksum",
 		},
 		"packages": generatePackageList(),
 	}
@@ -152,7 +152,7 @@ func BadDepsolve(tmpdir string) string {
 	}
 	pkgs := map[string]interface{}{
 		"checksums": map[string]string{
-			"0": "test:responsechecksum",
+			"REPOID": "test:responsechecksum",
 		},
 		"packages": generatePackageList(),
 	}

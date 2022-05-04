@@ -165,7 +165,8 @@ class Solver():
             self.base.install_specs(
                 transaction.get("package-specs"),
                 transaction.get("exclude-specs"),
-                reponame=[str(rid) for rid in transaction.get("repo-ids")])
+                reponame=transaction.get("repo-ids"),
+            )
             self.base.resolve()
 
             # store the current transaction result
