@@ -282,7 +282,7 @@ var (
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultEc2ImageConfig,
-		kernelOptions:       "ro no_timer_check net.ifnames=0 console=tty1",
+		kernelOptions:       "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         6 * GigaByte,
