@@ -3899,14 +3899,6 @@
                     }
                   },
                   {
-                    "id": "sha256:3e69e8412d5914ec01c5e82264833698e92a1b88a7c7b5ed9b1f0351fc91f5d2",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:7f6376e3a393b2501d6c38a8b82b8ebc54265e9b4cf3bb54f3e164a9aaf078f0",
                     "options": {
                       "metadata": {
@@ -3915,7 +3907,15 @@
                     }
                   },
                   {
-                    "id": "sha256:6d1c024b295c423746b44f120cf36ceb0fd898f8ce5a276813d7c78a3c8ece52",
+                    "id": "sha256:323cf73160530491d2a25119c9b72ee26c0f23863b1bae71f8a04af1f471656b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c8ca801cddbe977065fe4d9bf73606f0a14532a74e4276e357698e316b7d4d73",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -7277,6 +7277,9 @@
           "sha256:3228a36807658c7e4d881013aa26f877353388bf3bac6c948984f751c264a359": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/x/xfsprogs-5.10.0-2.fc34.aarch64.rpm"
           },
+          "sha256:323cf73160530491d2a25119c9b72ee26c0f23863b1bae71f8a04af1f471656b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/f/fedora-release-identity-iot-34-39.noarch.rpm"
+          },
           "sha256:337b323f056294d726deaecafe0e3d2a983b807cbd715d7156184e0fa0c4fd1a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/n/ncurses-6.2-4.20200222.fc34.aarch64.rpm"
           },
@@ -8071,6 +8074,9 @@
           },
           "sha256:c82dee04d3abdcee304eb7a52b6faddcd3dbcc4a5d1c88b72e9f782c387a93c8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/b/bcm283x-overlays-20210714-1.7208c3d.fc34.aarch64.rpm"
+          },
+          "sha256:c8ca801cddbe977065fe4d9bf73606f0a14532a74e4276e357698e316b7d4d73": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/f/fedora-release-iot-34-39.noarch.rpm"
           },
           "sha256:c93635b4c74058a38ab8061f4fda9d8a3ba427eaf1f019277fa3812d87a5c3ab": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/p/pcre2-10.36-4.fc34.aarch64.rpm"
@@ -14915,16 +14921,6 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release",
-        "epoch": 0,
-        "version": "34",
-        "release": "39",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/f/fedora-release-34-39.noarch.rpm",
-        "checksum": "sha256:3e69e8412d5914ec01c5e82264833698e92a1b88a7c7b5ed9b1f0351fc91f5d2",
-        "check_gpg": true
-      },
-      {
         "name": "fedora-release-common",
         "epoch": 0,
         "version": "34",
@@ -14935,13 +14931,23 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release-identity-basic",
+        "name": "fedora-release-identity-iot",
         "epoch": 0,
         "version": "34",
         "release": "39",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/f/fedora-release-identity-basic-34-39.noarch.rpm",
-        "checksum": "sha256:6d1c024b295c423746b44f120cf36ceb0fd898f8ce5a276813d7c78a3c8ece52",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/f/fedora-release-identity-iot-34-39.noarch.rpm",
+        "checksum": "sha256:323cf73160530491d2a25119c9b72ee26c0f23863b1bae71f8a04af1f471656b",
+        "check_gpg": true
+      },
+      {
+        "name": "fedora-release-iot",
+        "epoch": 0,
+        "version": "34",
+        "release": "39",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/f/fedora-release-iot-34-39.noarch.rpm",
+        "checksum": "sha256:c8ca801cddbe977065fe4d9bf73606f0a14532a74e4276e357698e316b7d4d73",
         "check_gpg": true
       },
       {
