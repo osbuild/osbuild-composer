@@ -86,10 +86,10 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 							packages := imgType.PackageSets(blueprint.Blueprint{})
 
-							_, err = solver.Depsolve(packages["build"], repos[archStr])
+							_, err = solver.Depsolve([]rpmmd.PackageSet{packages["build"]}, repos[archStr], nil)
 							assert.NoError(t, err)
 
-							_, err = solver.Depsolve(packages["packages"], repos[archStr])
+							_, err = solver.Depsolve([]rpmmd.PackageSet{packages["packages"]}, repos[archStr], nil)
 							assert.NoError(t, err)
 						})
 					}
@@ -161,7 +161,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 					pkgSets[idx] = imagePkgSets[pkgSetName]
 					delete(imagePkgSets, pkgSetName) // will be depsolved here: remove from map
 				}
-				res, err := solver.ChainDepsolve(pkgSets, x86Repos, nil)
+				res, err := solver.Depsolve(pkgSets, x86Repos, nil)
 				if err != nil {
 					require.Nil(t, err)
 				}
@@ -170,7 +170,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 
 			// depsolve the rest of the package sets
 			for name, pkgSet := range imagePkgSets {
-				res, err := solver.ChainDepsolve([]rpmmd.PackageSet{pkgSet}, x86Repos, nil)
+				res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, x86Repos, nil)
 				if err != nil {
 					require.Nil(t, err)
 				}

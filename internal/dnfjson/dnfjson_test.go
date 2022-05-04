@@ -19,29 +19,10 @@ func TestDepsolver(t *testing.T) {
 	solver := NewSolver("platform:el9", "9", "x86_64", tmpdir)
 	solver.SetDNFJSONPath("../../dnf-json")
 
-	pkgset := rpmmd.PackageSet{Include: []string{"kernel", "vim-minimal", "tmux", "zsh"}} // everything you'll ever need
-	deps, err := solver.Depsolve(pkgset, []rpmmd.RepoConfig{s.RepoConfig})
-	if err != nil {
-		t.Fatal(err)
-	}
-	exp := expectedResult(s.Server.URL)
-	assert.Equal(deps, exp)
-}
-
-func TestChainDepsolver(t *testing.T) {
-	s := rpmrepo.NewTestServer()
-	defer s.Close()
-
-	assert := assert.New(t)
-
-	tmpdir := t.TempDir()
-	solver := NewSolver("platform:el9", "9", "x86_64", tmpdir)
-	solver.SetDNFJSONPath("../../dnf-json")
-
-	{ // single depsolve, but using chain function, should behave the same way as plain Depsolve
+	{ // single depsolve
 		pkgsets := []rpmmd.PackageSet{{Include: []string{"kernel", "vim-minimal", "tmux", "zsh"}}} // everything you'll ever need
 
-		deps, err := solver.ChainDepsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, nil)
+		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -54,7 +35,7 @@ func TestChainDepsolver(t *testing.T) {
 			{Include: []string{"kernel"}},
 			{Include: []string{"vim-minimal", "tmux", "zsh"}},
 		}
-		deps, err := solver.ChainDepsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, nil)
+		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -67,7 +48,7 @@ func TestChainDepsolver(t *testing.T) {
 			{Include: []string{"kernel"}},
 			{Include: []string{"vim-minimal", "tmux", "zsh"}},
 		}
-		deps, err := solver.ChainDepsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, [][]rpmmd.RepoConfig{nil, {s.RepoConfig}})
+		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, [][]rpmmd.RepoConfig{nil, {s.RepoConfig}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -76,7 +57,7 @@ func TestChainDepsolver(t *testing.T) {
 	}
 }
 
-func TestMakeChainDepsolveRequest(t *testing.T) {
+func TestMakeDepsolveRequest(t *testing.T) {
 	tests := []struct {
 		packageSets      []rpmmd.PackageSet
 		repos            []rpmmd.RepoConfig
@@ -464,7 +445,7 @@ func TestMakeChainDepsolveRequest(t *testing.T) {
 	solver := NewSolver("", "", "", "")
 	for idx, tt := range tests {
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-			req, err := solver.makeChainDepsolveRequest(tt.packageSets, tt.repos, tt.packageSetsRepos)
+			req, err := solver.makeDepsolveRequest(tt.packageSets, tt.repos, tt.packageSetsRepos)
 			if tt.err {
 				assert.NotNilf(t, err, "expected an error, but got 'nil' instead")
 				assert.Nilf(t, req, "got non-nill request, but expected an error")
