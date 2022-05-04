@@ -53,10 +53,6 @@ func parseResponse(resp []byte, command string) json.RawMessage {
 	parsedResponse := make(map[string]json.RawMessage)
 	err := json.Unmarshal(resp, &parsedResponse)
 	maybeFail(err)
-	if command == "chain-depsolve" {
-		// treat chain-depsolve and depsolve the same
-		command = "depsolve"
-	}
 	return parsedResponse[command]
 }
 

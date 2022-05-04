@@ -32,7 +32,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string, pac
 			psRepos = append(psRepos, packageSetsRepos[pkgSetName]) // will be nil if it doesn't exist
 			delete(packageSets, pkgSetName)                         // will be depsolved here: remove from map
 		}
-		res, err := solver.ChainDepsolve(pkgSets, repos, psRepos)
+		res, err := solver.Depsolve(pkgSets, repos, psRepos)
 		if err != nil {
 			return nil, err
 		}
@@ -41,7 +41,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string, pac
 
 	// depsolve the rest of the package sets
 	for name, pkgSet := range packageSets {
-		res, err := solver.ChainDepsolve([]rpmmd.PackageSet{pkgSet}, repos, [][]rpmmd.RepoConfig{packageSetsRepos[name]})
+		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, repos, [][]rpmmd.RepoConfig{packageSetsRepos[name]})
 		if err != nil {
 			return nil, err
 		}

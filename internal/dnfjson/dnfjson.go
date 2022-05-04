@@ -88,41 +88,17 @@ func NewSolver(modulePlatformID string, releaseVer string, arch string, cacheDir
 	return s.NewWithConfig(modulePlatformID, releaseVer, arch)
 }
 
-// ChainDepsolve the given packages with explicit excludes using the given configuration and repos
-func ChainDepsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, psRepos [][]rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (*DepsolveResult, error) {
-	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).ChainDepsolve(pkgSets, repos, psRepos)
+// Depsolve the given packages with explicit excludes using the given configuration and repos
+func Depsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, psRepos [][]rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (*DepsolveResult, error) {
+	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).Depsolve(pkgSets, repos, psRepos)
 }
 
-// ChainDepsolve the list of required package sets with explicit excludes using
+// Depsolve the list of required package sets with explicit excludes using
 // the given repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
-func (s *Solver) ChainDepsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, psRepos [][]rpmmd.RepoConfig) (*DepsolveResult, error) {
-	req, err := s.makeChainDepsolveRequest(pkgSets, repos, psRepos)
-	if err != nil {
-		return nil, err
-	}
-
-	output, err := run(s.dnfJsonCmd, req)
-	if err != nil {
-		return nil, err
-	}
-	var result *depsolveResult
-	if err := json.Unmarshal(output, &result); err != nil {
-		return nil, err
-	}
-
-	return resultToPublic(result, repos), nil
-}
-
-// Depsolve the given packages with explicit excludes using the given configuration and repos
-func Depsolve(pkgSets rpmmd.PackageSet, repos []rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (*DepsolveResult, error) {
-	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).Depsolve(pkgSets, repos)
-}
-
-// Depsolve the given packages with explicit excludes using the solver configuration and provided repos
-func (s *Solver) Depsolve(pkgSets rpmmd.PackageSet, repos []rpmmd.RepoConfig) (*DepsolveResult, error) {
-	req, err := s.makeDepsolveRequest(pkgSets, repos)
+func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, psRepos [][]rpmmd.RepoConfig) (*DepsolveResult, error) {
+	req, err := s.makeDepsolveRequest(pkgSets, repos, psRepos)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +204,7 @@ func (r *repoConfig) hash() string {
 	return fmt.Sprintf("%x", sha1.Sum([]byte(r.BaseURL+r.Metalink+r.MirrorList+r.GPGKey+fmt.Sprintf("%T", r.IgnoreSSL)+r.SSLCACert+r.SSLClientKey+r.SSLClientCert+r.MetadataExpire)))
 }
 
-// makeChainDepsolveRequest constructs an Request for a chain-depsolve job.
+// Helper function for creating a depsolve request payload.
 // The request defines a sequence of transactions, each depsolving one of the
 // elements of `pkgSets` in the order they appear.  The `repoConfigs` are used
 // as the base repositories for all transactions.  The extra repository configs
@@ -239,8 +215,7 @@ func (r *repoConfig) hash() string {
 // NOTE: Due to implementation limitations of DNF and dnf-json, each package set
 // in the chain must use all of the repositories used by its predecessor.
 // An error is returned if this requirement is not met.
-func (s *Solver) makeChainDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []rpmmd.RepoConfig, pkgsetsRepos [][]rpmmd.RepoConfig) (*Request, error) {
-
+func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []rpmmd.RepoConfig, pkgsetsRepos [][]rpmmd.RepoConfig) (*Request, error) {
 	// pkgsetsRepos must either be nil (empty) or the same length as the pkgSets array
 	if len(pkgsetsRepos) > 0 && len(pkgSets) != len(pkgsetsRepos) {
 		return nil, fmt.Errorf("depsolve: the number of package set repository configurations (%d) does not match the number of package sets (%d)", len(pkgsetsRepos), len(pkgSets))
@@ -325,43 +300,13 @@ func (s *Solver) makeChainDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfig
 	}
 
 	req := Request{
-		Command:          "chain-depsolve",
-		ModulePlatformID: s.modulePlatformID,
-		Arch:             s.arch,
-		CacheDir:         s.cacheDir,
-		Arguments:        args,
-	}
-
-	return &req, nil
-}
-
-// Helper function for creating a depsolve request payload
-func (s *Solver) makeDepsolveRequest(pkgSets rpmmd.PackageSet, repoConfigs []rpmmd.RepoConfig) (*Request, error) {
-	repos, err := s.reposFromRPMMD(repoConfigs)
-	if err != nil {
-		return nil, err
-	}
-	allRepoIDs := make([]int, len(repoConfigs))
-	for idx := range allRepoIDs {
-		allRepoIDs[idx] = idx
-	}
-	args := arguments{
-		Repos: repos,
-		Transactions: []transactionArgs{
-			{
-				PackageSpecs: pkgSets.Include,
-				ExcludeSpecs: pkgSets.Exclude,
-				RepoIDs:      allRepoIDs,
-			},
-		},
-	}
-	req := Request{
 		Command:          "depsolve",
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
 		CacheDir:         s.cacheDir,
 		Arguments:        args,
 	}
+
 	return &req, nil
 }
 
