@@ -80,7 +80,16 @@ func main() {
 	}
 
 	res := parseResponse(response, req.Command)
-	fmt.Print(string(parseResponse(response, req.Command)))
+
+	if req.Command == "depsolve" {
+		// add repo ID to packages
+		// just use the first
+		for _, repo := range req.Arguments.Repos {
+			res = bytes.ReplaceAll(res, []byte("REPOID"), []byte(repo.ID))
+			break
+		}
+	}
+	fmt.Print(string(res))
 
 	// check if we should return with error
 	if checkForError(res) {

@@ -26,7 +26,7 @@ func TestDepsolver(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		exp := expectedResult(s.Server.URL)
+		exp := expectedResult(s.RepoConfig)
 		assert.Equal(deps, exp)
 	}
 
@@ -39,7 +39,7 @@ func TestDepsolver(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		exp := expectedResult(s.Server.URL)
+		exp := expectedResult(s.RepoConfig)
 		assert.Equal(deps, exp)
 	}
 
@@ -52,12 +52,29 @@ func TestDepsolver(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		exp := expectedResult(s.Server.URL)
+		exp := expectedResult(s.RepoConfig)
 		assert.Equal(deps, exp)
 	}
 }
 
 func TestMakeDepsolveRequest(t *testing.T) {
+
+	baseOS := rpmmd.RepoConfig{
+		Name:    "baseos",
+		BaseURL: "https://example.org/baseos",
+	}
+	appstream := rpmmd.RepoConfig{
+		Name:    "appstream",
+		BaseURL: "https://example.org/appstream",
+	}
+	userRepo := rpmmd.RepoConfig{
+		Name:    "user-repo",
+		BaseURL: "https://example.org/user-repo",
+	}
+	userRepo2 := rpmmd.RepoConfig{
+		Name:    "user-repo-2",
+		BaseURL: "https://example.org/user-repo-2",
+	}
 	tests := []struct {
 		packageSets      []rpmmd.PackageSet
 		repos            []rpmmd.RepoConfig
@@ -75,30 +92,24 @@ func TestMakeDepsolveRequest(t *testing.T) {
 				},
 			},
 			repos: []rpmmd.RepoConfig{
-				{
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
-				},
-				{
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
-				},
+				baseOS,
+				appstream,
 			},
 			args: []transactionArgs{
 				{
 					PackageSpecs: []string{"pkg1"},
 					ExcludeSpecs: []string{"pkg2"},
-					RepoIDs:      []int{0, 1},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash()},
 				},
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      "0",
+					ID:      baseOS.Hash(),
 					Name:    "baseos",
 					BaseURL: "https://example.org/baseos",
 				},
 				{
-					ID:      "1",
+					ID:      appstream.Hash(),
 					Name:    "appstream",
 					BaseURL: "https://example.org/appstream",
 				},
@@ -115,49 +126,32 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Include: []string{"pkg3"},
 				},
 			},
-			repos: []rpmmd.RepoConfig{
-				{
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
-				},
-				{
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
-				},
-			},
-			packageSetsRepos: [][]rpmmd.RepoConfig{
-				nil,
-				{
-					{
-						Name:    "user-repo",
-						BaseURL: "https://example.org/user-repo",
-					},
-				},
-			},
+			repos:            []rpmmd.RepoConfig{baseOS, appstream},
+			packageSetsRepos: [][]rpmmd.RepoConfig{nil, {userRepo}},
 			args: []transactionArgs{
 				{
 					PackageSpecs: []string{"pkg1"},
 					ExcludeSpecs: []string{"pkg2"},
-					RepoIDs:      []int{0, 1},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash()},
 				},
 				{
 					PackageSpecs: []string{"pkg3"},
-					RepoIDs:      []int{0, 1, 2},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash(), userRepo.Hash()},
 				},
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      "0",
+					ID:      baseOS.Hash(),
 					Name:    "baseos",
 					BaseURL: "https://example.org/baseos",
 				},
 				{
-					ID:      "1",
+					ID:      appstream.Hash(),
 					Name:    "appstream",
 					BaseURL: "https://example.org/appstream",
 				},
 				{
-					ID:      "2",
+					ID:      userRepo.Hash(),
 					Name:    "user-repo",
 					BaseURL: "https://example.org/user-repo",
 				},
@@ -174,35 +168,26 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Include: []string{"pkg3"},
 				},
 			},
-			repos: []rpmmd.RepoConfig{
-				{
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
-				},
-				{
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
-				},
-			},
+			repos: []rpmmd.RepoConfig{baseOS, appstream},
 			args: []transactionArgs{
 				{
 					PackageSpecs: []string{"pkg1"},
 					ExcludeSpecs: []string{"pkg2"},
-					RepoIDs:      []int{0, 1},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash()},
 				},
 				{
 					PackageSpecs: []string{"pkg3"},
-					RepoIDs:      []int{0, 1},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash()},
 				},
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      "0",
+					ID:      baseOS.Hash(),
 					Name:    "baseos",
 					BaseURL: "https://example.org/baseos",
 				},
 				{
-					ID:      "1",
+					ID:      appstream.Hash(),
 					Name:    "appstream",
 					BaseURL: "https://example.org/appstream",
 				},
@@ -222,59 +207,36 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Include: []string{"pkg4"},
 				},
 			},
-			repos: []rpmmd.RepoConfig{
-				{
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
-				},
-				{
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
-				},
-			},
-			packageSetsRepos: [][]rpmmd.RepoConfig{
-				nil,
-				{
-					{
-						Name:    "user-repo",
-						BaseURL: "https://example.org/user-repo",
-					},
-				},
-				{
-					{
-						Name:    "user-repo",
-						BaseURL: "https://example.org/user-repo",
-					},
-				},
-			},
+			repos:            []rpmmd.RepoConfig{baseOS, appstream},
+			packageSetsRepos: [][]rpmmd.RepoConfig{nil, {userRepo}, {userRepo}},
 			args: []transactionArgs{
 				{
 					PackageSpecs: []string{"pkg1"},
 					ExcludeSpecs: []string{"pkg2"},
-					RepoIDs:      []int{0, 1},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash()},
 				},
 				{
 					PackageSpecs: []string{"pkg3"},
-					RepoIDs:      []int{0, 1, 2},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash(), userRepo.Hash()},
 				},
 				{
 					PackageSpecs: []string{"pkg4"},
-					RepoIDs:      []int{0, 1, 2},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash(), userRepo.Hash()},
 				},
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      "0",
+					ID:      baseOS.Hash(),
 					Name:    "baseos",
 					BaseURL: "https://example.org/baseos",
 				},
 				{
-					ID:      "1",
+					ID:      appstream.Hash(),
 					Name:    "appstream",
 					BaseURL: "https://example.org/appstream",
 				},
 				{
-					ID:      "2",
+					ID:      userRepo.Hash(),
 					Name:    "user-repo",
 					BaseURL: "https://example.org/user-repo",
 				},
@@ -295,68 +257,41 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Include: []string{"pkg4"},
 				},
 			},
-			repos: []rpmmd.RepoConfig{
-				{
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
-				},
-				{
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
-				},
-			},
-			packageSetsRepos: [][]rpmmd.RepoConfig{
-				nil,
-				{
-					{
-						Name:    "user-repo",
-						BaseURL: "https://example.org/user-repo",
-					},
-				},
-				{
-					{
-						Name:    "user-repo",
-						BaseURL: "https://example.org/user-repo",
-					},
-					{
-						Name:    "user-repo-2",
-						BaseURL: "https://example.org/user-repo-2",
-					},
-				},
-			},
+			repos:            []rpmmd.RepoConfig{baseOS, appstream},
+			packageSetsRepos: [][]rpmmd.RepoConfig{nil, {userRepo}, {userRepo, userRepo2}},
 			args: []transactionArgs{
 				{
 					PackageSpecs: []string{"pkg1"},
 					ExcludeSpecs: []string{"pkg2"},
-					RepoIDs:      []int{0, 1},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash()},
 				},
 				{
 					PackageSpecs: []string{"pkg3"},
-					RepoIDs:      []int{0, 1, 2},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash(), userRepo.Hash()},
 				},
 				{
 					PackageSpecs: []string{"pkg4"},
-					RepoIDs:      []int{0, 1, 2, 3},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash(), userRepo.Hash(), userRepo2.Hash()},
 				},
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      "0",
+					ID:      baseOS.Hash(),
 					Name:    "baseos",
 					BaseURL: "https://example.org/baseos",
 				},
 				{
-					ID:      "1",
+					ID:      appstream.Hash(),
 					Name:    "appstream",
 					BaseURL: "https://example.org/appstream",
 				},
 				{
-					ID:      "2",
+					ID:      userRepo.Hash(),
 					Name:    "user-repo",
 					BaseURL: "https://example.org/user-repo",
 				},
 				{
-					ID:      "3",
+					ID:      userRepo2.Hash(),
 					Name:    "user-repo-2",
 					BaseURL: "https://example.org/user-repo-2",
 				},
@@ -376,32 +311,9 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Include: []string{"pkg4"},
 				},
 			},
-			repos: []rpmmd.RepoConfig{
-				{
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
-				},
-				{
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
-				},
-			},
-			packageSetsRepos: [][]rpmmd.RepoConfig{
-				nil,
-				{
-					{
-						Name:    "user-repo",
-						BaseURL: "https://example.org/user-repo",
-					},
-				},
-				{
-					{
-						Name:    "user-repo2",
-						BaseURL: "https://example.org/user-repo2",
-					},
-				},
-			},
-			err: true,
+			repos:            []rpmmd.RepoConfig{baseOS, appstream},
+			packageSetsRepos: [][]rpmmd.RepoConfig{nil, {userRepo}, {userRepo2}},
+			err:              true,
 		},
 		// Error: 3 transactions but only 1 packageSetsRepos
 		{
@@ -417,35 +329,15 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Include: []string{"pkg4"},
 				},
 			},
-			repos: []rpmmd.RepoConfig{
-				{
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
-				},
-				{
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
-				},
-			},
-			packageSetsRepos: [][]rpmmd.RepoConfig{
-				{
-					{
-						Name:    "user-repo",
-						BaseURL: "https://example.org/user-repo",
-					},
-					{
-						Name:    "user-repo2",
-						BaseURL: "https://example.org/user-repo2",
-					},
-				},
-			},
-			err: true,
+			repos:            []rpmmd.RepoConfig{baseOS, appstream},
+			packageSetsRepos: [][]rpmmd.RepoConfig{{userRepo, userRepo2}},
+			err:              true,
 		},
 	}
 	solver := NewSolver("", "", "", "")
 	for idx, tt := range tests {
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-			req, err := solver.makeDepsolveRequest(tt.packageSets, tt.repos, tt.packageSetsRepos)
+			req, _, err := solver.makeDepsolveRequest(tt.packageSets, tt.repos, tt.packageSetsRepos)
 			if tt.err {
 				assert.NotNilf(t, err, "expected an error, but got 'nil' instead")
 				assert.Nilf(t, req, "got non-nill request, but expected an error")
@@ -460,10 +352,9 @@ func TestMakeDepsolveRequest(t *testing.T) {
 	}
 }
 
-func expectedResult(url string) *DepsolveResult {
-	// need to change the url for the RemoteLocation since the port is different each time and we don't want to have a fixed one
+func expectedResult(repo rpmmd.RepoConfig) *DepsolveResult {
+	// need to change the url for the RemoteLocation and the repo ID since the port is different each time and we don't want to have a fixed one
 	expectedTemplate := DepsolveResult{
-		Checksums: map[string]string{"0": "sha256:0cbe8e69f4c634b7e7ec43a8e165ec92d43767a28f8d16a046026a679d3f8442"},
 		Dependencies: []rpmmd.PackageSpec{
 			{Name: "acl", Epoch: 0, Version: "2.3.1", Release: "3.el9", Arch: "x86_64", RemoteLocation: "%s/Packages/acl-2.3.1-3.el9.x86_64.rpm", Checksum: "sha256:986044c3837eddbc9231d7be5e5fc517e245296978b988a803bc9f9172fe84ea", Secrets: "", CheckGPG: false},
 			{Name: "alternatives", Epoch: 0, Version: "1.20", Release: "2.el9", Arch: "x86_64", RemoteLocation: "%s/Packages/alternatives-1.20-2.el9.x86_64.rpm", Checksum: "sha256:1851d5f64ebaeac67c5c2d9e4adc1e73aa6433b44a167268a3510c3d056062db", Secrets: "", CheckGPG: false},
@@ -578,7 +469,8 @@ func expectedResult(url string) *DepsolveResult {
 	exp := DepsolveResult(expectedTemplate)
 	for idx := range exp.Dependencies {
 		urlTemplate := exp.Dependencies[idx].RemoteLocation
-		exp.Dependencies[idx].RemoteLocation = fmt.Sprintf(urlTemplate, url)
+		exp.Dependencies[idx].RemoteLocation = fmt.Sprintf(urlTemplate, repo.BaseURL)
 	}
+	exp.Checksums = map[string]string{repo.Hash(): "sha256:0cbe8e69f4c634b7e7ec43a8e165ec92d43767a28f8d16a046026a679d3f8442"}
 	return &exp
 }

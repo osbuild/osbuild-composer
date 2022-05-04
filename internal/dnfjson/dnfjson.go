@@ -16,13 +16,11 @@ package dnfjson
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"sort"
-	"strconv"
 
 	"github.com/osbuild/osbuild-composer/internal/rhsm"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -98,7 +96,7 @@ func Depsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, psRepos [][]
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
 func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, psRepos [][]rpmmd.RepoConfig) (*DepsolveResult, error) {
-	req, err := s.makeDepsolveRequest(pkgSets, repos, psRepos)
+	req, repoMap, err := s.makeDepsolveRequest(pkgSets, repos, psRepos)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +110,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, 
 		return nil, err
 	}
 
-	return resultToPublic(result, repos), nil
+	return resultToPublic(result, repoMap), nil
 }
 
 func FetchMetadata(repos []rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (*FetchMetadataResult, error) {
@@ -143,8 +141,8 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (*FetchMetadataResult, 
 	})
 	metadata.Packages = pkgs
 	namedChecksums := make(map[string]string)
-	for i, repo := range repos {
-		namedChecksums[repo.Name] = metadata.Checksums[strconv.Itoa(i)]
+	for _, repo := range repos {
+		namedChecksums[repo.Name] = metadata.Checksums[repo.Hash()]
 	}
 	metadata.Checksums = namedChecksums
 	return metadata, nil
@@ -153,9 +151,8 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (*FetchMetadataResult, 
 func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, error) {
 	dnfRepos := make([]repoConfig, len(rpmRepos))
 	for idx, rr := range rpmRepos {
-		id := strconv.Itoa(idx)
 		dr := repoConfig{
-			ID:             id,
+			ID:             rr.Hash(),
 			Name:           rr.Name,
 			BaseURL:        rr.BaseURL,
 			Metalink:       rr.Metalink,
@@ -175,7 +172,6 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			dr.SSLCACert = secrets.SSLCACert
 			dr.SSLClientKey = secrets.SSLClientKey
 			dr.SSLClientCert = secrets.SSLClientCert
-
 		}
 		dnfRepos[idx] = dr
 	}
@@ -198,12 +194,6 @@ type repoConfig struct {
 	MetadataExpire string `json:"metadata_expire,omitempty"`
 }
 
-// Calculate a hash that uniquely represents this repository configuration.
-// The ID and Name fields are not considered in the calculation.
-func (r *repoConfig) hash() string {
-	return fmt.Sprintf("%x", sha1.Sum([]byte(r.BaseURL+r.Metalink+r.MirrorList+r.GPGKey+fmt.Sprintf("%T", r.IgnoreSSL)+r.SSLCACert+r.SSLClientKey+r.SSLClientCert+r.MetadataExpire)))
-}
-
 // Helper function for creating a depsolve request payload.
 // The request defines a sequence of transactions, each depsolving one of the
 // elements of `pkgSets` in the order they appear.  The `repoConfigs` are used
@@ -215,30 +205,36 @@ func (r *repoConfig) hash() string {
 // NOTE: Due to implementation limitations of DNF and dnf-json, each package set
 // in the chain must use all of the repositories used by its predecessor.
 // An error is returned if this requirement is not met.
-func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []rpmmd.RepoConfig, pkgsetsRepos [][]rpmmd.RepoConfig) (*Request, error) {
+func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []rpmmd.RepoConfig, pkgsetsRepos [][]rpmmd.RepoConfig) (*Request, map[string]rpmmd.RepoConfig, error) {
 	// pkgsetsRepos must either be nil (empty) or the same length as the pkgSets array
 	if len(pkgsetsRepos) > 0 && len(pkgSets) != len(pkgsetsRepos) {
-		return nil, fmt.Errorf("depsolve: the number of package set repository configurations (%d) does not match the number of package sets (%d)", len(pkgsetsRepos), len(pkgSets))
+		return nil, nil, fmt.Errorf("depsolve: the number of package set repository configurations (%d) does not match the number of package sets (%d)", len(pkgsetsRepos), len(pkgSets))
 	}
 
-	// TODO: collect and arrange repositories into jobs before converting to
-	// avoid unnecessary multiple conversion of the same struct
-	baseRepos, err := s.reposFromRPMMD(repoConfigs)
-	if err != nil {
-		return nil, err
-	}
-
-	allRepos := make([]repoConfig, len(baseRepos))
-	copy(allRepos, baseRepos)
-	// keep a map of repos to IDs (indices) for quick lookups
-	// (basically, the inverse of the allRepos slice)
-	reposIDMap := make(map[string]int)
+	// dedupe repository configurations but maintain order
+	// the order in which repositories are added to the request affects the
+	// order of the dependencies in the result
+	repos := make([]rpmmd.RepoConfig, 0)
+	rpmRepoMap := make(map[string]rpmmd.RepoConfig)
 
 	// These repo IDs will be used for all transactions in the chain
-	baseRepoIDs := make([]int, len(repoConfigs))
-	for idx, baseRepo := range baseRepos {
-		baseRepoIDs[idx] = idx
-		reposIDMap[baseRepo.hash()] = idx
+	baseRepoIDs := make([]string, len(repoConfigs))
+	for idx, repo := range repoConfigs {
+		id := repo.Hash()
+		rpmRepoMap[id] = repo
+		baseRepoIDs[idx] = id
+		repos = append(repos, repo)
+	}
+
+	// extra repositories defined for specific package sets
+	for _, jobRepos := range pkgsetsRepos {
+		for _, repo := range jobRepos {
+			id := repo.Hash()
+			if _, ok := rpmRepoMap[id]; !ok {
+				rpmRepoMap[id] = repo
+				repos = append(repos, repo)
+			}
+		}
 	}
 
 	transactions := make([]transactionArgs, len(pkgSets))
@@ -254,48 +250,32 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []r
 			continue
 		}
 
-		// collect repositories specific to the depsolve job
-		dsRepos, err := s.reposFromRPMMD(pkgsetsRepos[dsIdx])
-		if err != nil {
-			return nil, err
+		for _, jobRepo := range pkgsetsRepos[dsIdx] {
+			transactions[dsIdx].RepoIDs = append(transactions[dsIdx].RepoIDs, jobRepo.Hash())
 		}
-
-		for _, dsRepo := range dsRepos {
-			if repoIdx, ok := reposIDMap[dsRepo.hash()]; ok {
-				// repo config already in in allRepos: append index
-				transactions[dsIdx].RepoIDs = append(transactions[dsIdx].RepoIDs, repoIdx)
-			} else {
-				// new repo config: add to allRepos and append new index
-				newIdx := len(reposIDMap)
-				// fix repo ID
-				dsRepo.ID = strconv.Itoa(newIdx)
-				reposIDMap[dsRepo.hash()] = newIdx
-				allRepos = append(allRepos, dsRepo)
-				transactions[dsIdx].RepoIDs = append(transactions[dsIdx].RepoIDs, newIdx)
-			}
-		}
-
-		// Sort the slice of repo IDs to make it easier to compare
-		sort.Ints(transactions[dsIdx].RepoIDs)
 
 		// If more than one transaction, ensure that the transaction uses
 		// all of the repos from its predecessor
 		if dsIdx > 0 {
 			prevRepoIDs := transactions[dsIdx-1].RepoIDs
 			if len(transactions[dsIdx].RepoIDs) < len(prevRepoIDs) {
-				return nil, fmt.Errorf("chained packageSet %d does not use all of the repos used by its predecessor", dsIdx)
+				return nil, nil, fmt.Errorf("chained packageSet %d does not use all of the repos used by its predecessor", dsIdx)
 			}
 
 			for idx, repoID := range prevRepoIDs {
 				if repoID != transactions[dsIdx].RepoIDs[idx] {
-					return nil, fmt.Errorf("chained packageSet %d does not use all of the repos used by its predecessor", dsIdx)
+					return nil, nil, fmt.Errorf("chained packageSet %d does not use all of the repos used by its predecessor", dsIdx)
 				}
 			}
 		}
 	}
 
+	dnfRepoMap, err := s.reposFromRPMMD(repos)
+	if err != nil {
+		return nil, nil, err
+	}
 	args := arguments{
-		Repos:        allRepos,
+		Repos:        dnfRepoMap,
 		Transactions: transactions,
 	}
 
@@ -307,7 +287,7 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []r
 		Arguments:        args,
 	}
 
-	return &req, nil
+	return &req, rpmRepoMap, nil
 }
 
 // Helper function for creating a dump request payload
@@ -329,7 +309,7 @@ func (s *Solver) makeDumpRequest(repos []rpmmd.RepoConfig) (*Request, error) {
 }
 
 // convert an internal depsolveResult to a public DepsolveResult.
-func resultToPublic(result *depsolveResult, repos []rpmmd.RepoConfig) *DepsolveResult {
+func resultToPublic(result *depsolveResult, repos map[string]rpmmd.RepoConfig) *DepsolveResult {
 	return &DepsolveResult{
 		Checksums:    result.Checksums,
 		Dependencies: depsToRPMMD(result.Dependencies, repos),
@@ -338,14 +318,13 @@ func resultToPublic(result *depsolveResult, repos []rpmmd.RepoConfig) *DepsolveR
 
 // convert internal a list of PackageSpecs to the rpmmd equivalent and attach
 // key and subscription information based on the repository configs.
-func depsToRPMMD(dependencies []PackageSpec, repos []rpmmd.RepoConfig) []rpmmd.PackageSpec {
+func depsToRPMMD(dependencies []PackageSpec, repos map[string]rpmmd.RepoConfig) []rpmmd.PackageSpec {
 	rpmDependencies := make([]rpmmd.PackageSpec, len(dependencies))
 	for i, dep := range dependencies {
-		id, err := strconv.Atoi(dep.RepoID)
-		if err != nil {
-			panic(err)
+		repo, ok := repos[dep.RepoID]
+		if !ok {
+			panic("dependency repo ID not found in repositories")
 		}
-		repo := repos[id]
 		dep := dependencies[i]
 		rpmDependencies[i].Name = dep.Name
 		rpmDependencies[i].Epoch = dep.Epoch
@@ -397,7 +376,7 @@ type transactionArgs struct {
 	ExcludeSpecs []string `json:"exclude-specs"`
 
 	// IDs of repositories to use for this depsolve
-	RepoIDs []int `json:"repo-ids"`
+	RepoIDs []string `json:"repo-ids"`
 }
 
 // Private version of the depsolve result.  Uses a slightly different

@@ -1,6 +1,7 @@
 package rpmmd
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -37,6 +38,16 @@ type RepoConfig struct {
 	MetadataExpire string
 	RHSM           bool
 	ImageTypeTags  []string
+}
+
+// Hash calculates an ID string that uniquely represents a repository
+// configuration.  The Name and ImageTypeTags fields are not considered in the
+// calculation.
+func (r *RepoConfig) Hash() string {
+	bts := func(b bool) string {
+		return fmt.Sprintf("%T", b)
+	}
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(r.BaseURL+r.Metalink+r.MirrorList+r.GPGKey+bts(r.CheckGPG)+bts(r.IgnoreSSL)+r.MetadataExpire+bts(r.RHSM))))
 }
 
 type DistrosRepoConfigs map[string]map[string][]RepoConfig
