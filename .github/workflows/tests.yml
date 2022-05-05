@@ -43,13 +43,13 @@ jobs:
     container:
       image: docker.io/library/fedora:35
     steps:
-    - uses: actions/checkout@v2.4.0
-    - name: Install dependencies
-      run: |
-        dnf -y install python3-pylint
-    - name: Analysing the code with pylint
-      run: |
-        python3 -m pylint dnf-json
+      - uses: actions/checkout@v2.4.0
+      - name: Install dependencies
+        run: |
+          dnf -y install python3-pylint
+      - name: Analysing the code with pylint
+        run: |
+          python3 -m pylint dnf-json
 
   lint:
     name: "⌨ Lint"
