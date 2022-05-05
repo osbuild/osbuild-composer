@@ -67,7 +67,7 @@ const (
 		FROM jobs
 		WHERE id = $1`
 	sqlQueryJobStatus = `
-		SELECT type, result, queued_at, started_at, finished_at, canceled
+		SELECT type, channel, result, queued_at, started_at, finished_at, canceled
 		FROM jobs
 		WHERE id = $1`
 	sqlQueryRunningId = `
@@ -473,7 +473,7 @@ func (q *DBJobQueue) CancelJob(id uuid.UUID) error {
 	return nil
 }
 
-func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error) {
+func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return
@@ -483,7 +483,7 @@ func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, result json.RawMes
 	// Use double pointers for timestamps because they might be NULL, which would result in *time.Time == nil
 	var sp, fp *time.Time
 	var rp pgtype.JSON
-	err = conn.QueryRow(context.Background(), sqlQueryJobStatus, id).Scan(&jobType, &rp, &queued, &sp, &fp, &canceled)
+	err = conn.QueryRow(context.Background(), sqlQueryJobStatus, id).Scan(&jobType, &channel, &rp, &queued, &sp, &fp, &canceled)
 	if err != nil {
 		return
 	}

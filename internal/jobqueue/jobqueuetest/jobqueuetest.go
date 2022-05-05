@@ -212,7 +212,7 @@ func testDependencies(t *testing.T, q jobqueue.JobQueue) {
 		require.ElementsMatch(t, []uuid.UUID{one, two}, r)
 
 		j := pushTestJob(t, q, "test", nil, []uuid.UUID{one, two}, "")
-		jobType, _, queued, started, finished, canceled, deps, err := q.JobStatus(j)
+		jobType, _, _, queued, started, finished, canceled, deps, err := q.JobStatus(j)
 		require.NoError(t, err)
 		require.Equal(t, jobType, "test")
 		require.True(t, !queued.IsZero())
@@ -223,7 +223,7 @@ func testDependencies(t *testing.T, q jobqueue.JobQueue) {
 
 		require.Equal(t, j, finishNextTestJob(t, q, "test", testResult{}, []uuid.UUID{one, two}))
 
-		jobType, result, queued, started, finished, canceled, deps, err := q.JobStatus(j)
+		jobType, _, result, queued, started, finished, canceled, deps, err := q.JobStatus(j)
 		require.NoError(t, err)
 		require.Equal(t, jobType, "test")
 		require.True(t, !queued.IsZero())
@@ -241,7 +241,7 @@ func testDependencies(t *testing.T, q jobqueue.JobQueue) {
 		two := pushTestJob(t, q, "test", nil, nil, "")
 
 		j := pushTestJob(t, q, "test", nil, []uuid.UUID{one, two}, "")
-		jobType, _, queued, started, finished, canceled, deps, err := q.JobStatus(j)
+		jobType, _, _, queued, started, finished, canceled, deps, err := q.JobStatus(j)
 		require.NoError(t, err)
 		require.Equal(t, jobType, "test")
 		require.True(t, !queued.IsZero())
@@ -257,7 +257,7 @@ func testDependencies(t *testing.T, q jobqueue.JobQueue) {
 
 		require.Equal(t, j, finishNextTestJob(t, q, "test", testResult{}, []uuid.UUID{one, two}))
 
-		jobType, result, queued, started, finished, canceled, deps, err := q.JobStatus(j)
+		jobType, _, result, queued, started, finished, canceled, deps, err := q.JobStatus(j)
 		require.NoError(t, err)
 		require.Equal(t, jobType, "test")
 		require.True(t, !queued.IsZero())
@@ -353,7 +353,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	require.NotEmpty(t, id)
 	err = q.CancelJob(id)
 	require.NoError(t, err)
-	jobType, result, _, _, _, canceled, _, err := q.JobStatus(id)
+	jobType, _, result, _, _, _, canceled, _, err := q.JobStatus(id)
 	require.NoError(t, err)
 	require.Equal(t, jobType, "clownfish")
 	require.True(t, canceled)
@@ -373,7 +373,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, json.RawMessage("null"), args)
 	err = q.CancelJob(id)
 	require.NoError(t, err)
-	jobType, result, _, _, _, canceled, _, err = q.JobStatus(id)
+	jobType, _, result, _, _, _, canceled, _, err = q.JobStatus(id)
 	require.NoError(t, err)
 	require.Equal(t, jobType, "clownfish")
 	require.True(t, canceled)
@@ -396,7 +396,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	err = q.CancelJob(id)
 	require.Error(t, err)
 	require.Equal(t, jobqueue.ErrNotRunning, err)
-	jobType, result, _, _, _, canceled, _, err = q.JobStatus(id)
+	jobType, _, result, _, _, _, canceled, _, err = q.JobStatus(id)
 	require.NoError(t, err)
 	require.Equal(t, jobType, "clownfish")
 	require.False(t, canceled)
@@ -613,7 +613,7 @@ func test100dequeuers(t *testing.T, q jobqueue.JobQueue) {
 	// try to do some other operations on the jobqueue
 	id := pushTestJob(t, q, "clownfish", nil, nil, "")
 
-	_, _, _, _, _, _, _, err := q.JobStatus(id)
+	_, _, _, _, _, _, _, _, err := q.JobStatus(id)
 	require.NoError(t, err)
 
 	finishNextTestJob(t, q, "clownfish", testResult{}, nil)

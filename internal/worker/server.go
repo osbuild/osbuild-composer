@@ -133,7 +133,7 @@ func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID, 
 }
 
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
-	prometheus.EnqueueJobMetrics(jobType)
+	prometheus.EnqueueJobMetrics(jobType, channel)
 	return s.jobs.Enqueue(jobType, job, dependencies, channel)
 }
 
@@ -166,7 +166,7 @@ func (s *Server) CheckBuildDependencies(dep uuid.UUID, jobErr *clienterrors.Erro
 }
 
 func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobStatus, []uuid.UUID, error) {
-	jobType, status, deps, err := s.jobStatus(id, result)
+	jobType, _, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -194,7 +194,7 @@ func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobS
 }
 
 func (s *Server) OSBuildKojiJobStatus(id uuid.UUID, result *OSBuildKojiJobResult) (*JobStatus, []uuid.UUID, error) {
-	jobType, status, deps, err := s.jobStatus(id, result)
+	jobType, _, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -217,7 +217,7 @@ func (s *Server) OSBuildKojiJobStatus(id uuid.UUID, result *OSBuildKojiJobResult
 }
 
 func (s *Server) KojiInitJobStatus(id uuid.UUID, result *KojiInitJobResult) (*JobStatus, []uuid.UUID, error) {
-	jobType, status, deps, err := s.jobStatus(id, result)
+	jobType, _, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -234,7 +234,7 @@ func (s *Server) KojiInitJobStatus(id uuid.UUID, result *KojiInitJobResult) (*Jo
 }
 
 func (s *Server) KojiFinalizeJobStatus(id uuid.UUID, result *KojiFinalizeJobResult) (*JobStatus, []uuid.UUID, error) {
-	jobType, status, deps, err := s.jobStatus(id, result)
+	jobType, _, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -251,7 +251,7 @@ func (s *Server) KojiFinalizeJobStatus(id uuid.UUID, result *KojiFinalizeJobResu
 }
 
 func (s *Server) DepsolveJobStatus(id uuid.UUID, result *DepsolveJobResult) (*JobStatus, []uuid.UUID, error) {
-	jobType, status, deps, err := s.jobStatus(id, result)
+	jobType, _, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -272,7 +272,7 @@ func (s *Server) DepsolveJobStatus(id uuid.UUID, result *DepsolveJobResult) (*Jo
 }
 
 func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) (*JobStatus, []uuid.UUID, error) {
-	jobType, status, deps, err := s.jobStatus(id, result)
+	jobType, _, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -284,20 +284,20 @@ func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) 
 	return status, deps, nil
 }
 
-func (s *Server) jobStatus(id uuid.UUID, result interface{}) (string, *JobStatus, []uuid.UUID, error) {
-	jobType, rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
+func (s *Server) jobStatus(id uuid.UUID, result interface{}) (string, string, *JobStatus, []uuid.UUID, error) {
+	jobType, channel, rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
 	if err != nil {
-		return "", nil, nil, err
+		return "", "", nil, nil, err
 	}
 
 	if result != nil && !finished.IsZero() && !canceled {
 		err = json.Unmarshal(rawResult, result)
 		if err != nil {
-			return "", nil, nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
+			return "", "", nil, nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
 		}
 	}
 
-	return jobType, &JobStatus{
+	return jobType, channel, &JobStatus{
 		Queued:   queued,
 		Started:  started,
 		Finished: finished,
@@ -350,11 +350,11 @@ func (s *Server) JobType(id uuid.UUID) (string, error) {
 }
 
 func (s *Server) Cancel(id uuid.UUID) error {
-	jobType, status, _, err := s.jobStatus(id, nil)
+	jobType, channel, status, _, err := s.jobStatus(id, nil)
 	if err != nil {
 		logrus.Errorf("error getting job status: %v", err)
 	} else {
-		prometheus.CancelJobMetrics(status.Started, jobType)
+		prometheus.CancelJobMetrics(status.Started, jobType, channel)
 	}
 	return s.jobs.CancelJob(id)
 }
@@ -366,7 +366,7 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 		return nil, 0, errors.New("Artifacts not enabled")
 	}
 
-	_, status, _, err := s.jobStatus(id, nil)
+	_, _, status, _, err := s.jobStatus(id, nil)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -395,7 +395,7 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 		return errors.New("Artifacts not enabled")
 	}
 
-	_, status, _, err := s.jobStatus(id, nil)
+	_, _, status, _, err := s.jobStatus(id, nil)
 	if err != nil {
 		return err
 	}
@@ -449,10 +449,11 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		return
 	}
 
-	jobType, status, _, err := s.jobStatus(jobId, nil)
+	jobType, channel, status, _, err := s.jobStatus(jobId, nil)
 	if err != nil {
 		logrus.Errorf("error retrieving job status: %v", err)
-		return
+	} else {
+		prometheus.DequeueJobMetrics(status.Queued, status.Started, jobType, channel)
 	}
 
 	// Record how long the job has been pending for, that is either how
@@ -465,7 +466,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		// TODO: include type of arguments
 		var result json.RawMessage
 		var finished time.Time
-		_, result, _, _, finished, _, _, err = s.jobs.JobStatus(depID)
+		_, _, result, _, _, finished, _, _, err = s.jobs.JobStatus(depID)
 		if err != nil {
 			return
 		}
@@ -484,7 +485,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 
 	// TODO: Drop the ':$architecture' for metrics too, first prometheus queries for alerts and
 	// dashboards need to be adjusted.
-	prometheus.DequeueJobMetrics(pending, status.Started, jobType)
+	prometheus.DequeueJobMetrics(pending, status.Started, jobType, channel)
 	if jobType == "osbuild:"+arch {
 		jobType = "osbuild"
 	} else if jobType == "osbuild-koji:"+arch {
@@ -516,12 +517,12 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	}
 
 	var jobResult JobResult
-	jobType, status, _, err := s.jobStatus(jobId, &jobResult)
+	jobType, channel, status, _, err := s.jobStatus(jobId, &jobResult)
 	if err != nil {
 		logrus.Errorf("error finding job status: %v", err)
 	} else {
 		statusCode := clienterrors.GetStatusCode(jobResult.JobError)
-		prometheus.FinishJobMetrics(status.Started, status.Finished, status.Canceled, jobType, statusCode)
+		prometheus.FinishJobMetrics(status.Started, status.Finished, status.Canceled, jobType, channel, statusCode)
 	}
 
 	// Move artifacts from the temporary location to the final job
@@ -664,7 +665,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 
 	h.server.jobs.RefreshHeartbeat(token)
 
-	_, status, _, err := h.server.jobStatus(jobId, nil)
+	_, _, status, _, err := h.server.jobStatus(jobId, nil)
 	if err != nil {
 		return api.HTTPErrorWithInternal(api.ErrorRetrievingJobStatus, err)
 	}
