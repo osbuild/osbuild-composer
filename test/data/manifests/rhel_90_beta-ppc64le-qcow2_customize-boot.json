@@ -26,11 +26,7 @@
         }
       ],
       "modules": [],
-      "groups": [
-        {
-          "name": "core"
-        }
-      ],
+      "groups": [],
       "customizations": {
         "hostname": "my-host",
         "kernel": {
@@ -86,7 +82,13 @@
           "disabled": [
             "bluetooth.service"
           ]
-        }
+        },
+        "filesystem": [
+          {
+            "mountpoint": "/opt",
+            "minsize": 1073741824
+          }
+        ]
       }
     }
   },
@@ -976,9 +978,6 @@
                     "id": "sha256:801658ec87aea1aa100fa9fd9b650101069543e81c1b175a86b95d9b152ebd4c"
                   },
                   {
-                    "id": "sha256:730c72a542dadecb4340b2945ed065c7d8ce29b6636b3499fbbf07cff06f2670"
-                  },
-                  {
                     "id": "sha256:e92c6ffa7a3290e18741ab57fccac771eab950583ec073ea3bd1812f5009200f"
                   },
                   {
@@ -1016,12 +1015,6 @@
                   },
                   {
                     "id": "sha256:95607cb0a3d5a3af855b602a0849e5c14f3b7586e0fa670294848feeef5a68cd"
-                  },
-                  {
-                    "id": "sha256:07eb1022b6714993c5766a6e837454f183f9055f4b3f6a6885e207d96f1fda94"
-                  },
-                  {
-                    "id": "sha256:760f1dd0874f50605065f6f64d83d1c7de774b202bb73d4c8a95b2b201c3a62e"
                   },
                   {
                     "id": "sha256:43965a857236fbabc4f2396e4e1d4b3e2d8c4bf8081cf8c4f762612fa12e4381"
@@ -1135,16 +1128,7 @@
                     "id": "sha256:85f37fe55cbfe2d2a59e85a2929a035e1043ebf34e417d7eb3cdfefba023a017"
                   },
                   {
-                    "id": "sha256:b0c856be6c68aef3e840509d2224e00b6d00ff3ed3fc5595a6693abfbcd68bf4"
-                  },
-                  {
-                    "id": "sha256:9099533e88ce43667d6bc39d474b59eb382b6043ca6241f01f47d8796bc54742"
-                  },
-                  {
                     "id": "sha256:32c8e4560946ed91f204f8c95cd89d3970cd083f6ba77d90d6e29dab96a2fa0b"
-                  },
-                  {
-                    "id": "sha256:d16533b017e0463f51a6bb4fad8405d5374d07a9d827d147d6269a3ea0721f78"
                   },
                   {
                     "id": "sha256:5aa8dc9c73d25f4584d7973b1d77aa5307308d971e3b4e6adeb55dd21bb7bfc3"
@@ -1340,9 +1324,6 @@
                   },
                   {
                     "id": "sha256:66c409a00d340854654419de95c51ef21f79453b15777eef8b6d2a49cbf1f023"
-                  },
-                  {
-                    "id": "sha256:9f9c956f5559fa5886882c759229c0fc61ba084f45a89c74463d0ca66b8006b0"
                   },
                   {
                     "id": "sha256:1c7a4316aebf1846233ff8ed4995aa67fe51055639ce84c3ba2449d10c876232"
@@ -1552,9 +1533,6 @@
                     "id": "sha256:ec2f834f8f11ea069878f0e438903e9772c5ac508ce92ed9815b1b0e19dcb6a9"
                   },
                   {
-                    "id": "sha256:1ce97f643caba989371db08201884a6501b95631ab8caf9516c4d6c5a7b4c69d"
-                  },
-                  {
                     "id": "sha256:0f29767b7e9f604e5597e42e391dcd5f273c23dc1ae1b9fcc03e7fe866e2c3f8"
                   },
                   {
@@ -1684,9 +1662,6 @@
                     "id": "sha256:7c270cf1e635bd54e8bcd27ac61d07fff17065dfdb05466cd6759e5469429f1d"
                   },
                   {
-                    "id": "sha256:b27c3a866393dd8f14c355fe560b79094e99f12f0c53b7b994fb37372fc731df"
-                  },
-                  {
                     "id": "sha256:8c5fb18d2f26d3e82be19231b17e6bdd6db66fb25532ffa2237888eb081013c9"
                   },
                   {
@@ -1718,9 +1693,6 @@
                   },
                   {
                     "id": "sha256:197d9d41ec31972a450bfdcc5690c2c477a90ddfb81fa2b226dcabd105410979"
-                  },
-                  {
-                    "id": "sha256:355ca718fa5de5f74efb31a18832658d8434a1872f761e94f97b27ee26cdd720"
                   },
                   {
                     "id": "sha256:79c7910846847854327267392fb69f14a37532ccb18feebe8ca061f2f135c6f6"
@@ -2402,6 +2374,12 @@
                   "vfs_type": "xfs",
                   "path": "/",
                   "options": "defaults"
+                },
+                {
+                  "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                  "vfs_type": "xfs",
+                  "path": "/opt",
+                  "options": "defaults"
                 }
               ]
             }
@@ -2448,7 +2426,11 @@
                   "type": "41"
                 },
                 {
-                  "size": 20961180,
+                  "size": 18864028,
+                  "start": 2107392
+                },
+                {
+                  "size": 2097152,
                   "start": 10240
                 }
               ]
@@ -2473,8 +2455,25 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
+                  "start": 2107392,
+                  "size": 18864028,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.mkfs.xfs",
+            "options": {
+              "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
                   "start": 10240,
-                  "size": 20961180,
+                  "size": 2097152,
                   "lock": true
                 }
               }
@@ -2500,12 +2499,20 @@
               ]
             },
             "devices": {
-              "root": {
+              "opt": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
                   "start": 10240,
-                  "size": 20961180
+                  "size": 2097152
+                }
+              },
+              "root": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 2107392,
+                  "size": 18864028
                 }
               }
             },
@@ -2515,6 +2522,12 @@
                 "type": "org.osbuild.xfs",
                 "source": "root",
                 "target": "/"
+              },
+              {
+                "name": "opt",
+                "type": "org.osbuild.xfs",
+                "source": "opt",
+                "target": "/opt"
               }
             ]
           },
@@ -2621,9 +2634,6 @@
           "sha256:0769f5c09d383c6d175871f047c088e570007604dd26b03777c1b5b8a4aa47ad": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/perl-Term-ANSIColor-5.01-461.el9.noarch.rpm"
           },
-          "sha256:07eb1022b6714993c5766a6e837454f183f9055f4b3f6a6885e207d96f1fda94": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/firewalld-1.0.0-2.el9.noarch.rpm"
-          },
           "sha256:0800836e59b0b52d5ebdd3eb3cea714396f584a8221fbaceceb8d245d20d466c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/libpcap-1.10.0-4.el9.ppc64le.rpm"
           },
@@ -2728,9 +2738,6 @@
           },
           "sha256:1cdf61c77417b3da38356949e02e142c17ed0ab4530f12fdc6f0818710dfe6a0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/perl-subs-1.03-479.el9.noarch.rpm"
-          },
-          "sha256:1ce97f643caba989371db08201884a6501b95631ab8caf9516c4d6c5a7b4c69d": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/nftables-0.9.8-7.el9.ppc64le.rpm"
           },
           "sha256:1d13a6197be3c3b38404a13f41372fbe95c4d0e0b02694b6823035bf1b45abc5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/opal-prd-6.7.1-6.el9.ppc64le.rpm"
@@ -2854,9 +2861,6 @@
           },
           "sha256:34ca171bdb22191a1d0fdd2645921243b4571e5220ffb03b13b050a4a5144470": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/libsigsegv-2.13-4.el9.ppc64le.rpm"
-          },
-          "sha256:355ca718fa5de5f74efb31a18832658d8434a1872f761e94f97b27ee26cdd720": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-nftables-0.9.8-7.el9.ppc64le.rpm"
           },
           "sha256:358692ad703c563bf27b31d8a619b4dc09173fb1feb1f3a0c7fb28ac75ff7d0d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/python3-configobj-5.0.6-25.el9.noarch.rpm"
@@ -3224,9 +3228,6 @@
           "sha256:7131745431a75519af729bd5dc8dc896b322c7555341023e2555b8dabc4bb2d7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/python3-jinja2-2.11.3-4.el9.noarch.rpm"
           },
-          "sha256:730c72a542dadecb4340b2945ed065c7d8ce29b6636b3499fbbf07cff06f2670": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/dracut-config-rescue-055-10.git20210824.el9.ppc64le.rpm"
-          },
           "sha256:744d09f0bfdcb3254c091d9a6ae5e1b0729c3a63f76c8a97f50d8998bb7a3fcd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/libeconf-0.4.1-2.el9.ppc64le.rpm"
           },
@@ -3235,9 +3236,6 @@
           },
           "sha256:74e2d2a0e0fb2632c2921929c3072d6aeae30e3539b7046561046b7cf4efd8d5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/virt-what-1.21-2.el9.2.ppc64le.rpm"
-          },
-          "sha256:760f1dd0874f50605065f6f64d83d1c7de774b202bb73d4c8a95b2b201c3a62e": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/firewalld-filesystem-1.0.0-2.el9.noarch.rpm"
           },
           "sha256:7667e25a98dbc9430c7acaf54c921c9965576574f5257e1de3c337c96c0cf538": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/perl-Pod-Escapes-1.07-460.el9.noarch.rpm"
@@ -3425,9 +3423,6 @@
           "sha256:901d146cb637bf3fa395c788c5a2cd0ac95ad4b63bf51fc2679b93421747ccc6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/perl-Getopt-Std-1.12-479.el9.noarch.rpm"
           },
-          "sha256:9099533e88ce43667d6bc39d474b59eb382b6043ca6241f01f47d8796bc54742": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/ipset-libs-7.11-5.el9.ppc64le.rpm"
-          },
           "sha256:90d1d28814f7a74dfbfea7b6f41ab7f975841e2ccd5c1f7375ee8535b4576b63": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/shared-mime-info-2.1-4.el9.ppc64le.rpm"
           },
@@ -3512,9 +3507,6 @@
           "sha256:9f0cb9fc44f091dd4eeffa60ee959f48ead6a4cbb4c7f4c1fe978791dfc4d0e9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/json-c-0.14-10.el9.ppc64le.rpm"
           },
-          "sha256:9f9c956f5559fa5886882c759229c0fc61ba084f45a89c74463d0ca66b8006b0": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/libnftnl-1.1.9-4.el9.ppc64le.rpm"
-          },
           "sha256:9fc539c202ce82bb118ccc58700cf4d0c63b7bb0abe3cae90c3bfeaa0a8504dd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/hostname-3.23-6.el9.ppc64le.rpm"
           },
@@ -3593,9 +3585,6 @@
           "sha256:b05c587e8b44decc2b52c7d16668f3290f1c518cbfa130ed1a74a7c02979d2f5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/sudo-1.9.5p2-7.el9.ppc64le.rpm"
           },
-          "sha256:b0c856be6c68aef3e840509d2224e00b6d00ff3ed3fc5595a6693abfbcd68bf4": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/ipset-7.11-5.el9.ppc64le.rpm"
-          },
           "sha256:b0cb8bcc244fbd00d467de1a4ac90cdc85076238eafc83af80801e5f4359b071": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/nettle-3.7.3-2.el9.ppc64le.rpm"
           },
@@ -3625,9 +3614,6 @@
           },
           "sha256:b249b54cf2608a1c819542572d78f53e9ee20a0fa392b1a3f7cdf9672da607d6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/ca-certificates-2020.2.50-93.el9.noarch.rpm"
-          },
-          "sha256:b27c3a866393dd8f14c355fe560b79094e99f12f0c53b7b994fb37372fc731df": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-firewall-1.0.0-2.el9.noarch.rpm"
           },
           "sha256:b2838ae766a4f0a22c2888fc885de99c541e4799430a2ba02f54861352cc46e2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-dnf-plugins-core-4.0.21-2.el9.noarch.rpm"
@@ -3784,9 +3770,6 @@
           },
           "sha256:d15e19d9032709af0d00d783a222bf5c64b4a7597b1615a300abf3cbc38030dd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/perl-overloading-0.02-479.el9.noarch.rpm"
-          },
-          "sha256:d16533b017e0463f51a6bb4fad8405d5374d07a9d827d147d6269a3ea0721f78": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/iptables-nft-1.8.7-23.el9.ppc64le.rpm"
           },
           "sha256:d1d3c17744e35c176f1f29bc8a007045c490cf1fe8dc00c4f84bfa281670ba27": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20210930/Packages/xorriso-1.5.4-3.el9.ppc64le.rpm"
@@ -6569,15 +6552,6 @@
         "checksum": "sha256:801658ec87aea1aa100fa9fd9b650101069543e81c1b175a86b95d9b152ebd4c"
       },
       {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "10.git20210824.el9",
-        "arch": "ppc64le",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/dracut-config-rescue-055-10.git20210824.el9.ppc64le.rpm",
-        "checksum": "sha256:730c72a542dadecb4340b2945ed065c7d8ce29b6636b3499fbbf07cff06f2670"
-      },
-      {
         "name": "dracut-network",
         "epoch": 0,
         "version": "055",
@@ -6693,24 +6667,6 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/findutils-4.8.0-5.el9.ppc64le.rpm",
         "checksum": "sha256:95607cb0a3d5a3af855b602a0849e5c14f3b7586e0fa670294848feeef5a68cd"
-      },
-      {
-        "name": "firewalld",
-        "epoch": 0,
-        "version": "1.0.0",
-        "release": "2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/firewalld-1.0.0-2.el9.noarch.rpm",
-        "checksum": "sha256:07eb1022b6714993c5766a6e837454f183f9055f4b3f6a6885e207d96f1fda94"
-      },
-      {
-        "name": "firewalld-filesystem",
-        "epoch": 0,
-        "version": "1.0.0",
-        "release": "2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/firewalld-filesystem-1.0.0-2.el9.noarch.rpm",
-        "checksum": "sha256:760f1dd0874f50605065f6f64d83d1c7de774b202bb73d4c8a95b2b201c3a62e"
       },
       {
         "name": "fonts-filesystem",
@@ -7046,24 +7002,6 @@
         "checksum": "sha256:85f37fe55cbfe2d2a59e85a2929a035e1043ebf34e417d7eb3cdfefba023a017"
       },
       {
-        "name": "ipset",
-        "epoch": 0,
-        "version": "7.11",
-        "release": "5.el9",
-        "arch": "ppc64le",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/ipset-7.11-5.el9.ppc64le.rpm",
-        "checksum": "sha256:b0c856be6c68aef3e840509d2224e00b6d00ff3ed3fc5595a6693abfbcd68bf4"
-      },
-      {
-        "name": "ipset-libs",
-        "epoch": 0,
-        "version": "7.11",
-        "release": "5.el9",
-        "arch": "ppc64le",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/ipset-libs-7.11-5.el9.ppc64le.rpm",
-        "checksum": "sha256:9099533e88ce43667d6bc39d474b59eb382b6043ca6241f01f47d8796bc54742"
-      },
-      {
         "name": "iptables-libs",
         "epoch": 0,
         "version": "1.8.7",
@@ -7071,15 +7009,6 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/iptables-libs-1.8.7-23.el9.ppc64le.rpm",
         "checksum": "sha256:32c8e4560946ed91f204f8c95cd89d3970cd083f6ba77d90d6e29dab96a2fa0b"
-      },
-      {
-        "name": "iptables-nft",
-        "epoch": 0,
-        "version": "1.8.7",
-        "release": "23.el9",
-        "arch": "ppc64le",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/iptables-nft-1.8.7-23.el9.ppc64le.rpm",
-        "checksum": "sha256:d16533b017e0463f51a6bb4fad8405d5374d07a9d827d147d6269a3ea0721f78"
       },
       {
         "name": "iputils",
@@ -7665,15 +7594,6 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/libnfsidmap-2.5.4-5.el9.ppc64le.rpm",
         "checksum": "sha256:66c409a00d340854654419de95c51ef21f79453b15777eef8b6d2a49cbf1f023"
-      },
-      {
-        "name": "libnftnl",
-        "epoch": 0,
-        "version": "1.1.9",
-        "release": "4.el9",
-        "arch": "ppc64le",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/libnftnl-1.1.9-4.el9.ppc64le.rpm",
-        "checksum": "sha256:9f9c956f5559fa5886882c759229c0fc61ba084f45a89c74463d0ca66b8006b0"
       },
       {
         "name": "libnghttp2",
@@ -8297,15 +8217,6 @@
         "checksum": "sha256:ec2f834f8f11ea069878f0e438903e9772c5ac508ce92ed9815b1b0e19dcb6a9"
       },
       {
-        "name": "nftables",
-        "epoch": 1,
-        "version": "0.9.8",
-        "release": "7.el9",
-        "arch": "ppc64le",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/nftables-0.9.8-7.el9.ppc64le.rpm",
-        "checksum": "sha256:1ce97f643caba989371db08201884a6501b95631ab8caf9516c4d6c5a7b4c69d"
-      },
-      {
         "name": "npth",
         "epoch": 0,
         "version": "1.6",
@@ -8693,15 +8604,6 @@
         "checksum": "sha256:7c270cf1e635bd54e8bcd27ac61d07fff17065dfdb05466cd6759e5469429f1d"
       },
       {
-        "name": "python3-firewall",
-        "epoch": 0,
-        "version": "1.0.0",
-        "release": "2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-firewall-1.0.0-2.el9.noarch.rpm",
-        "checksum": "sha256:b27c3a866393dd8f14c355fe560b79094e99f12f0c53b7b994fb37372fc731df"
-      },
-      {
         "name": "python3-gobject-base",
         "epoch": 0,
         "version": "3.40.1",
@@ -8799,15 +8701,6 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-libxml2-2.9.12-4.el9.ppc64le.rpm",
         "checksum": "sha256:197d9d41ec31972a450bfdcc5690c2c477a90ddfb81fa2b226dcabd105410979"
-      },
-      {
-        "name": "python3-nftables",
-        "epoch": 1,
-        "version": "0.9.8",
-        "release": "7.el9",
-        "arch": "ppc64le",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20210930/Packages/python3-nftables-0.9.8-7.el9.ppc64le.rpm",
-        "checksum": "sha256:355ca718fa5de5f74efb31a18832658d8434a1872f761e94f97b27ee26cdd720"
       },
       {
         "name": "python3-pexpect",

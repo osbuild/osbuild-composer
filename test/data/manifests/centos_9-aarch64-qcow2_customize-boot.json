@@ -28,11 +28,7 @@
         }
       ],
       "modules": [],
-      "groups": [
-        {
-          "name": "core"
-        }
-      ],
+      "groups": [],
       "customizations": {
         "hostname": "my-host",
         "kernel": {
@@ -2769,14 +2765,6 @@
                     }
                   },
                   {
-                    "id": "sha256:1e1cfb72b1111ad7b16b35966dc624c659e2b5521d3041fa1e063f6365bfc538",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:c17542cdd49f973058d76682b3af022646d642159b6a39c4fe43962dc29a3892",
                     "options": {
                       "metadata": {
@@ -2898,22 +2886,6 @@
                   },
                   {
                     "id": "sha256:3ae59472d5b58715c452f74cb865dbe4058d155ed30d3908a96c51ccccaf4e82",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:7ea2dd761b06f236e1c2854963e9c50eff7abeadc9a079305c61e1ead3b5bcc6",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:056fae6f82f8774992b18984bded0832c1591f4b3f9a22b59d23b218ce5ace34",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -3217,31 +3189,7 @@
                     }
                   },
                   {
-                    "id": "sha256:c6c3e1fcd1dc355b1a28b82631e45370dae6561bdef0897f25db992b0d4e9aa2",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:553c4f713938b18b78c24f7cc97cad9d76c4c5bda1d8238da008105d5804868a",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:eb8d7cfa408ff109b8edc2f5df900fd9e2ddc21e31dab6a12ce636b8bb74c5ff",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:ac00d87884f7230b90378b1b0db37a82883b704cb47a97f18762c019a3add4f9",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -3801,14 +3749,6 @@
                     }
                   },
                   {
-                    "id": "sha256:3aaeaf9be0c5d4a4b92ff72e9fcaa0d4d2522a39d4561dfa59730f8b0a00b853",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:702abf0c5b1574b828132e4dbea17ad7099034db18f47fd1ac84b4d9534dcfea",
                     "options": {
                       "metadata": {
@@ -4345,14 +4285,6 @@
                     }
                   },
                   {
-                    "id": "sha256:65dd51385ca5cd3abe7ca621affc79765bb2f283b56e5559767a291aa3cc1a9f",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:95bd797672d70a8752fb881c4ff04ccc14234842dfd9de6bc48373dd96c1ec81",
                     "options": {
                       "metadata": {
@@ -4625,14 +4557,6 @@
                     }
                   },
                   {
-                    "id": "sha256:33e5a5b2185cd56e02cd6a4b39dd223d74c3104b43f0d6b307a3d6d2ede4ba5c",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:44258e1c374c0de6f06b549a0ac8983d8240b435542ced9d7a1facee9dd0c605",
                     "options": {
                       "metadata": {
@@ -4698,14 +4622,6 @@
                   },
                   {
                     "id": "sha256:7cac88d9d9aab97a341b1b80d32f22917e79babc600fbf895c65550be399d7d6",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:234ad49bef653d335768bd71bf3d44577da1a82fffa404ae2b7bfef47d5008f3",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5752,9 +5668,6 @@
           "sha256:0524c9cd96db4d57a5c190165ee2f8ade91854e21c19c61c6bd3504030ca24fa": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/linux-firmware-20211216-124.el9.noarch.rpm"
           },
-          "sha256:056fae6f82f8774992b18984bded0832c1591f4b3f9a22b59d23b218ce5ace34": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/firewalld-filesystem-1.0.0-2.el9.noarch.rpm"
-          },
           "sha256:062e1bf69331fdf85948d6fb9c91fe60af2417ea349c7f2b31bfb08514cb0553": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/efibootmgr-16-12.el9.aarch64.rpm"
           },
@@ -5872,9 +5785,6 @@
           "sha256:1d4815615490cc6c8c0e5352860970859fcf6f52c9f772c38d696f42f7d51948": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/libisofs-1.5.4-3.el9.aarch64.rpm"
           },
-          "sha256:1e1cfb72b1111ad7b16b35966dc624c659e2b5521d3041fa1e063f6365bfc538": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.aarch64.rpm"
-          },
           "sha256:1e58565c513e5251cd9ee9cf75e0a8e02e961f8285f355418493f689e28a985b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/shared-mime-info-2.1-4.el9.aarch64.rpm"
           },
@@ -5895,9 +5805,6 @@
           },
           "sha256:21d61c46a3b0b74bef5d3806b6fe4ee15a325ad081576758096ebcf7466aac5e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/sos-4.2-13.el9.noarch.rpm"
-          },
-          "sha256:234ad49bef653d335768bd71bf3d44577da1a82fffa404ae2b7bfef47d5008f3": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/python3-nftables-0.9.8-10.el9.aarch64.rpm"
           },
           "sha256:23a8033dae909a6b87db199e04ecbc9798820b1b939e12d51733fed4554b9279": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/jansson-2.14-1.el9.aarch64.rpm"
@@ -6001,9 +5908,6 @@
           "sha256:33bdf571a62cb8b7d659617e9278e46043aa936f8e963202750d19463a805f60": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/grep-3.6-5.el9.aarch64.rpm"
           },
-          "sha256:33e5a5b2185cd56e02cd6a4b39dd223d74c3104b43f0d6b307a3d6d2ede4ba5c": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/python3-firewall-1.0.0-2.el9.noarch.rpm"
-          },
           "sha256:342bff93c6d89387fa15cd4e8d18e61926c5a8ce8691a964af599e034589bce6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/selinux-policy-targeted-34.1.23-1.el9.noarch.rpm"
           },
@@ -6030,9 +5934,6 @@
           },
           "sha256:3a5e4fcc77cf90b825e093b2e7a89d46db95912bf8c8c3617e5066f8330bc6ad": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libsss_nss_idmap-2.6.2-2.el9.aarch64.rpm"
-          },
-          "sha256:3aaeaf9be0c5d4a4b92ff72e9fcaa0d4d2522a39d4561dfa59730f8b0a00b853": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libnftnl-1.1.9-4.el9.aarch64.rpm"
           },
           "sha256:3ae59472d5b58715c452f74cb865dbe4058d155ed30d3908a96c51ccccaf4e82": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/findutils-4.8.0-5.el9.aarch64.rpm"
@@ -6181,9 +6082,6 @@
           "sha256:552b00342d07059dd6f070c6d773a7c4f1b775aebab9bdff087cadfdb6f6c9e7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libsolv-0.7.20-2.el9.aarch64.rpm"
           },
-          "sha256:553c4f713938b18b78c24f7cc97cad9d76c4c5bda1d8238da008105d5804868a": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/ipset-libs-7.11-6.el9.aarch64.rpm"
-          },
           "sha256:55b1849e6e83bb39bceb3c9b3b6620aba7bf15b5049617ed4cd38b2b1964981d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/python3-kickstart-3.32.2-2.el9.noarch.rpm"
           },
@@ -6252,9 +6150,6 @@
           },
           "sha256:65cd8c3813afc69dd2ea9eeb6e2fc7db4a7d626b51efe376b8000dfdaa10402a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libutempter-1.2.1-6.el9.aarch64.rpm"
-          },
-          "sha256:65dd51385ca5cd3abe7ca621affc79765bb2f283b56e5559767a291aa3cc1a9f": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/nftables-0.9.8-10.el9.aarch64.rpm"
           },
           "sha256:66105c0910b86fde1607dff6bf2e47f3f91e9f7ce0b51311cd21d77aa1be1c86": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/python3-configobj-5.0.6-25.el9.noarch.rpm"
@@ -6390,9 +6285,6 @@
           },
           "sha256:7e4f0780e83658590efcff68a21588344a89b4d4387dd708cbe9f8f7bcad0e60": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libcurl-7.76.1-14.el9.aarch64.rpm"
-          },
-          "sha256:7ea2dd761b06f236e1c2854963e9c50eff7abeadc9a079305c61e1ead3b5bcc6": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/firewalld-1.0.0-2.el9.noarch.rpm"
           },
           "sha256:7ebb88f2eb86ae915c1fc83f6983b8dca6348a6264c68166ee14541b99bfbcdc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/sqlite-libs-3.34.1-5.el9.aarch64.rpm"
@@ -6613,9 +6505,6 @@
           "sha256:ab903592c2bef36d992c581320da7ae73463a3bd01c29bb46304d0dabc76a010": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libgcrypt-1.10.0-1.el9.aarch64.rpm"
           },
-          "sha256:ac00d87884f7230b90378b1b0db37a82883b704cb47a97f18762c019a3add4f9": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/iptables-nft-1.8.7-26.el9.aarch64.rpm"
-          },
           "sha256:ae16592cb76e374b7e4ddf06c6d1a3a46098f246015170b01a6e5246e4de8de4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libss-1.46.5-2.el9.aarch64.rpm"
           },
@@ -6726,9 +6615,6 @@
           },
           "sha256:c598c070ef91b7539ab4bc2f96f25eef50fa7869042474d32155725b0385a7be": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libyaml-0.2.5-7.el9.aarch64.rpm"
-          },
-          "sha256:c6c3e1fcd1dc355b1a28b82631e45370dae6561bdef0897f25db992b0d4e9aa2": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/ipset-7.11-6.el9.aarch64.rpm"
           },
           "sha256:c6d1e061541f65f38e984d39045d4cddbdc1e8e2192c3ac33baceef6aa460eb6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libbpf-0.5.0-3.el9.aarch64.rpm"
@@ -10312,16 +10198,6 @@
         "check_gpg": true
       },
       {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "10.git20210824.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.aarch64.rpm",
-        "checksum": "sha256:1e1cfb72b1111ad7b16b35966dc624c659e2b5521d3041fa1e063f6365bfc538",
-        "check_gpg": true
-      },
-      {
         "name": "dracut-network",
         "epoch": 0,
         "version": "055",
@@ -10479,26 +10355,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/findutils-4.8.0-5.el9.aarch64.rpm",
         "checksum": "sha256:3ae59472d5b58715c452f74cb865dbe4058d155ed30d3908a96c51ccccaf4e82",
-        "check_gpg": true
-      },
-      {
-        "name": "firewalld",
-        "epoch": 0,
-        "version": "1.0.0",
-        "release": "2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/firewalld-1.0.0-2.el9.noarch.rpm",
-        "checksum": "sha256:7ea2dd761b06f236e1c2854963e9c50eff7abeadc9a079305c61e1ead3b5bcc6",
-        "check_gpg": true
-      },
-      {
-        "name": "firewalld-filesystem",
-        "epoch": 0,
-        "version": "1.0.0",
-        "release": "2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/firewalld-filesystem-1.0.0-2.el9.noarch.rpm",
-        "checksum": "sha256:056fae6f82f8774992b18984bded0832c1591f4b3f9a22b59d23b218ce5ace34",
         "check_gpg": true
       },
       {
@@ -10872,26 +10728,6 @@
         "check_gpg": true
       },
       {
-        "name": "ipset",
-        "epoch": 0,
-        "version": "7.11",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/ipset-7.11-6.el9.aarch64.rpm",
-        "checksum": "sha256:c6c3e1fcd1dc355b1a28b82631e45370dae6561bdef0897f25db992b0d4e9aa2",
-        "check_gpg": true
-      },
-      {
-        "name": "ipset-libs",
-        "epoch": 0,
-        "version": "7.11",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/ipset-libs-7.11-6.el9.aarch64.rpm",
-        "checksum": "sha256:553c4f713938b18b78c24f7cc97cad9d76c4c5bda1d8238da008105d5804868a",
-        "check_gpg": true
-      },
-      {
         "name": "iptables-libs",
         "epoch": 0,
         "version": "1.8.7",
@@ -10899,16 +10735,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/iptables-libs-1.8.7-26.el9.aarch64.rpm",
         "checksum": "sha256:eb8d7cfa408ff109b8edc2f5df900fd9e2ddc21e31dab6a12ce636b8bb74c5ff",
-        "check_gpg": true
-      },
-      {
-        "name": "iptables-nft",
-        "epoch": 0,
-        "version": "1.8.7",
-        "release": "26.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/iptables-nft-1.8.7-26.el9.aarch64.rpm",
-        "checksum": "sha256:ac00d87884f7230b90378b1b0db37a82883b704cb47a97f18762c019a3add4f9",
         "check_gpg": true
       },
       {
@@ -11602,16 +11428,6 @@
         "check_gpg": true
       },
       {
-        "name": "libnftnl",
-        "epoch": 0,
-        "version": "1.1.9",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/libnftnl-1.1.9-4.el9.aarch64.rpm",
-        "checksum": "sha256:3aaeaf9be0c5d4a4b92ff72e9fcaa0d4d2522a39d4561dfa59730f8b0a00b853",
-        "check_gpg": true
-      },
-      {
         "name": "libnghttp2",
         "epoch": 0,
         "version": "1.43.0",
@@ -12282,16 +12098,6 @@
         "check_gpg": true
       },
       {
-        "name": "nftables",
-        "epoch": 1,
-        "version": "0.9.8",
-        "release": "10.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/nftables-0.9.8-10.el9.aarch64.rpm",
-        "checksum": "sha256:65dd51385ca5cd3abe7ca621affc79765bb2f283b56e5559767a291aa3cc1a9f",
-        "check_gpg": true
-      },
-      {
         "name": "npth",
         "epoch": 0,
         "version": "1.6",
@@ -12632,16 +12438,6 @@
         "check_gpg": true
       },
       {
-        "name": "python3-firewall",
-        "epoch": 0,
-        "version": "1.0.0",
-        "release": "2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/python3-firewall-1.0.0-2.el9.noarch.rpm",
-        "checksum": "sha256:33e5a5b2185cd56e02cd6a4b39dd223d74c3104b43f0d6b307a3d6d2ede4ba5c",
-        "check_gpg": true
-      },
-      {
         "name": "python3-gobject-base",
         "epoch": 0,
         "version": "3.40.1",
@@ -12729,16 +12525,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/python3-linux-procfs-0.7.0-1.el9.noarch.rpm",
         "checksum": "sha256:7cac88d9d9aab97a341b1b80d32f22917e79babc600fbf895c65550be399d7d6",
-        "check_gpg": true
-      },
-      {
-        "name": "python3-nftables",
-        "epoch": 1,
-        "version": "0.9.8",
-        "release": "10.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/python3-nftables-0.9.8-10.el9.aarch64.rpm",
-        "checksum": "sha256:234ad49bef653d335768bd71bf3d44577da1a82fffa404ae2b7bfef47d5008f3",
         "check_gpg": true
       },
       {
