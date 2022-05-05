@@ -368,6 +368,31 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
+    # case: check running container with podman (non-root)
+    - name: run ubi8 image with non-root
+      command: podman run ubi8:latest cat /etc/redhat-release
+      register: podman_result
+      retries: 30  # due to https://github.com/osbuild/osbuild-composer/issues/2492
+      delay: 2
+      until: podman_result is success
+      ignore_errors: yes
+
+    - name: run container test
+      block:
+        - assert:
+            that:
+              - podman_result is succeeded
+              - "'Red Hat Enterprise Linux release' in podman_result.stdout"
+            fail_msg: "failed run container with podman (non-root)"
+            success_msg: "running container with podman (non-root) successed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
     # case: check dnf package and it should not be installed
     # https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/rhel8/distro.go#L642
     - name: dnf should not be installed
