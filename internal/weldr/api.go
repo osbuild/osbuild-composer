@@ -1261,7 +1261,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
 		for i := range packageInfos {
 			pkgName := packageInfos[i].Name
-			solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}}}, repos, nil)
+			solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}}}, repos)
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1339,11 +1339,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
-	deps, err := solver.Depsolve(
-		[]rpmmd.PackageSet{{Include: names}},
-		repos,
-		nil,
-	)
+	deps, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names}}, repos)
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
@@ -2145,23 +2141,23 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 		packageSetsRepos[name] = payloadRepos
 	}
 
-	packageSets := imageType.PackageSets(bp)
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-
 	platformID := imageType.Arch().Distro().ModulePlatformID()
 	releasever := imageType.Arch().Distro().Releasever()
 	solver := api.solver.NewWithConfig(platformID, releasever, api.archName)
-	psRepos := make([][]rpmmd.RepoConfig, 0)
 
+	packageSets := imageType.PackageSets(bp)
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	// first depsolve package sets that are part of a chain
 	for specName, setNames := range imageType.PackageSetsChains() {
 		pkgSets := make([]rpmmd.PackageSet, len(setNames))
+
+		// add package-set-specific repositories to each set if one is defined
 		for idx, pkgSetName := range setNames {
 			pkgSets[idx] = packageSets[pkgSetName]
-			psRepos = append(psRepos, packageSetsRepos[pkgSetName]) // will be nil if it doesn't exist
-			delete(packageSets, pkgSetName)                         // will be depsolved here: remove from map
+			pkgSets[idx].Repositories = packageSetsRepos[pkgSetName] // will be nil if it doesn't exist
+			delete(packageSets, pkgSetName)                          // will be depsolved here: remove from map
 		}
-		res, err := solver.Depsolve(pkgSets, imageTypeRepos, psRepos)
+		res, err := solver.Depsolve(pkgSets, imageTypeRepos)
 		if err != nil {
 			return nil, err
 		}
@@ -2170,7 +2166,8 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 
 	// depsolve the rest of the package sets
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, imageTypeRepos, [][]rpmmd.RepoConfig{packageSetsRepos[name]})
+		pkgSet.Repositories = packageSetsRepos[name]
+		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, imageTypeRepos)
 		if err != nil {
 			return nil, err
 		}
@@ -3209,7 +3206,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
-	solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages()}}, repos, nil)
+	solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages()}}, repos)
 	if err != nil {
 		return nil, err
 	}

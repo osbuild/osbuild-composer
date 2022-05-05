@@ -143,7 +143,7 @@ func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint,
 	solver := dnfjson.NewSolver(imageType.Arch().Distro().ModulePlatformID(), imageType.Arch().Distro().Releasever(), imageType.Arch().Name(), cacheDir)
 	imgPackageSpecSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range imgPackageSets {
-		res, err := solver.Depsolve([]rpmmd.PackageSet{packages}, repos, nil)
+		res, err := solver.Depsolve([]rpmmd.PackageSet{packages}, repos)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}

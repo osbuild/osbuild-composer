@@ -22,7 +22,7 @@ func TestDepsolver(t *testing.T) {
 	{ // single depsolve
 		pkgsets := []rpmmd.PackageSet{{Include: []string{"kernel", "vim-minimal", "tmux", "zsh"}}} // everything you'll ever need
 
-		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, nil)
+		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -35,7 +35,7 @@ func TestDepsolver(t *testing.T) {
 			{Include: []string{"kernel"}},
 			{Include: []string{"vim-minimal", "tmux", "zsh"}},
 		}
-		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, nil)
+		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -48,7 +48,8 @@ func TestDepsolver(t *testing.T) {
 			{Include: []string{"kernel"}},
 			{Include: []string{"vim-minimal", "tmux", "zsh"}},
 		}
-		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig}, [][]rpmmd.RepoConfig{nil, {s.RepoConfig}})
+		pkgsets[1].Repositories = []rpmmd.RepoConfig{s.RepoConfig}
+		deps, err := solver.Depsolve(pkgsets, []rpmmd.RepoConfig{s.RepoConfig})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -123,11 +124,11 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Exclude: []string{"pkg2"},
 				},
 				{
-					Include: []string{"pkg3"},
+					Include:      []string{"pkg3"},
+					Repositories: []rpmmd.RepoConfig{userRepo},
 				},
 			},
-			repos:            []rpmmd.RepoConfig{baseOS, appstream},
-			packageSetsRepos: [][]rpmmd.RepoConfig{nil, {userRepo}},
+			repos: []rpmmd.RepoConfig{baseOS, appstream},
 			args: []transactionArgs{
 				{
 					PackageSpecs: []string{"pkg1"},
@@ -201,14 +202,15 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Exclude: []string{"pkg2"},
 				},
 				{
-					Include: []string{"pkg3"},
+					Include:      []string{"pkg3"},
+					Repositories: []rpmmd.RepoConfig{userRepo},
 				},
 				{
-					Include: []string{"pkg4"},
+					Include:      []string{"pkg4"},
+					Repositories: []rpmmd.RepoConfig{userRepo},
 				},
 			},
-			repos:            []rpmmd.RepoConfig{baseOS, appstream},
-			packageSetsRepos: [][]rpmmd.RepoConfig{nil, {userRepo}, {userRepo}},
+			repos: []rpmmd.RepoConfig{baseOS, appstream},
 			args: []transactionArgs{
 				{
 					PackageSpecs: []string{"pkg1"},
@@ -251,14 +253,15 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Exclude: []string{"pkg2"},
 				},
 				{
-					Include: []string{"pkg3"},
+					Include:      []string{"pkg3"},
+					Repositories: []rpmmd.RepoConfig{userRepo},
 				},
 				{
-					Include: []string{"pkg4"},
+					Include:      []string{"pkg4"},
+					Repositories: []rpmmd.RepoConfig{userRepo, userRepo2},
 				},
 			},
-			repos:            []rpmmd.RepoConfig{baseOS, appstream},
-			packageSetsRepos: [][]rpmmd.RepoConfig{nil, {userRepo}, {userRepo, userRepo2}},
+			repos: []rpmmd.RepoConfig{baseOS, appstream},
 			args: []transactionArgs{
 				{
 					PackageSpecs: []string{"pkg1"},
@@ -305,17 +308,18 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Exclude: []string{"pkg2"},
 				},
 				{
-					Include: []string{"pkg3"},
+					Include:      []string{"pkg3"},
+					Repositories: []rpmmd.RepoConfig{userRepo},
 				},
 				{
-					Include: []string{"pkg4"},
+					Include:      []string{"pkg4"},
+					Repositories: []rpmmd.RepoConfig{userRepo2},
 				},
 			},
-			repos:            []rpmmd.RepoConfig{baseOS, appstream},
-			packageSetsRepos: [][]rpmmd.RepoConfig{nil, {userRepo}, {userRepo2}},
-			err:              true,
+			repos: []rpmmd.RepoConfig{baseOS, appstream},
+			err:   true,
 		},
-		// Error: 3 transactions but only 1 packageSetsRepos
+		// Error: 3 transactions but last one doesn't specify user repos in 2nd
 		{
 			packageSets: []rpmmd.PackageSet{
 				{
@@ -323,21 +327,21 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Exclude: []string{"pkg2"},
 				},
 				{
-					Include: []string{"pkg3"},
+					Include:      []string{"pkg3"},
+					Repositories: []rpmmd.RepoConfig{userRepo, userRepo2},
 				},
 				{
 					Include: []string{"pkg4"},
 				},
 			},
-			repos:            []rpmmd.RepoConfig{baseOS, appstream},
-			packageSetsRepos: [][]rpmmd.RepoConfig{{userRepo, userRepo2}},
-			err:              true,
+			repos: []rpmmd.RepoConfig{baseOS, appstream},
+			err:   true,
 		},
 	}
 	solver := NewSolver("", "", "", "")
 	for idx, tt := range tests {
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-			req, _, err := solver.makeDepsolveRequest(tt.packageSets, tt.repos, tt.packageSetsRepos)
+			req, _, err := solver.makeDepsolveRequest(tt.packageSets, tt.repos)
 			if tt.err {
 				assert.NotNilf(t, err, "expected an error, but got 'nil' instead")
 				assert.Nilf(t, req, "got non-nill request, but expected an error")
