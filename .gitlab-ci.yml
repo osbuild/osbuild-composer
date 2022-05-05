@@ -297,7 +297,6 @@ OSTree:
   extends: .terraform/openstack
   rules:
     - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
@@ -343,6 +342,12 @@ OSTree simplified installer:
 OSTree raw image:
   stage: test
   extends: OSTree
+  rules:
+    # run only this edge test on nightly to have some testing for sign-off
+    # but still reduce duplication with virt-qe Jenkins and increase nightly
+    # pipelines stability
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
