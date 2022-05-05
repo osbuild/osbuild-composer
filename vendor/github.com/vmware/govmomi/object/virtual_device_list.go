@@ -64,6 +64,7 @@ func EthernetCardTypes() VirtualDeviceList {
 		&types.VirtualE1000e{},
 		&types.VirtualVmxnet2{},
 		&types.VirtualVmxnet3{},
+		&types.VirtualVmxnet3Vrdma{},
 		&types.VirtualPCNet32{},
 		&types.VirtualSriovEthernetCard{},
 	}).Select(func(device types.BaseVirtualDevice) bool {
@@ -156,6 +157,25 @@ func (l VirtualDeviceList) SelectByBackingInfo(backing types.BaseVirtualDeviceBa
 		case types.BaseVirtualDeviceFileBackingInfo:
 			b := backing.(types.BaseVirtualDeviceFileBackingInfo)
 			return a.GetVirtualDeviceFileBackingInfo().FileName == b.GetVirtualDeviceFileBackingInfo().FileName
+		case *types.VirtualPCIPassthroughVmiopBackingInfo:
+			b := backing.(*types.VirtualPCIPassthroughVmiopBackingInfo)
+			return a.Vgpu == b.Vgpu
+		case *types.VirtualPCIPassthroughDynamicBackingInfo:
+			b := backing.(*types.VirtualPCIPassthroughDynamicBackingInfo)
+			if b.CustomLabel != "" && b.CustomLabel != a.CustomLabel {
+				return false
+			}
+			if len(b.AllowedDevice) == 0 {
+				return true
+			}
+			for _, x := range a.AllowedDevice {
+				for _, y := range b.AllowedDevice {
+					if x.DeviceId == y.DeviceId && x.VendorId == y.VendorId {
+						return true
+					}
+				}
+			}
+			return false
 		default:
 			return false
 		}
@@ -919,25 +939,9 @@ func (l VirtualDeviceList) ConfigSpec(op types.VirtualDeviceConfigSpecOperation)
 	var res []types.BaseVirtualDeviceConfigSpec
 	for _, device := range l {
 		config := &types.VirtualDeviceConfigSpec{
-			Device:    device,
-			Operation: op,
-		}
-
-		if disk, ok := device.(*types.VirtualDisk); ok {
-			config.FileOperation = fop
-
-			// Special case to attach an existing disk
-			if op == types.VirtualDeviceConfigSpecOperationAdd && disk.CapacityInKB == 0 {
-				childDisk := false
-				if b, ok := disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo); ok {
-					childDisk = b.Parent != nil
-				}
-
-				if !childDisk {
-					// Existing disk, clear file operation
-					config.FileOperation = ""
-				}
-			}
+			Device:        device,
+			Operation:     op,
+			FileOperation: diskFileOperation(op, fop, device),
 		}
 
 		res = append(res, config)
