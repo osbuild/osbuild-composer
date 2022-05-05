@@ -152,7 +152,7 @@ func main() {
 			pkgSets[idx] = packageSets[pkgSetName]
 			delete(packageSets, pkgSetName) // will be depsolved here: remove from map
 		}
-		res, err := solver.Depsolve(pkgSets, repos, nil)
+		res, err := solver.Depsolve(pkgSets, repos)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}
@@ -161,7 +161,7 @@ func main() {
 
 	// depsolve the rest of the package sets
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, repos, nil)
+		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, repos)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}
