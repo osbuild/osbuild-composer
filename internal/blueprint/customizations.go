@@ -22,6 +22,7 @@ type Customizations struct {
 	Filesystem         []FilesystemCustomization `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
 	InstallationDevice string                    `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
 	FDO                *FDOCustomization         `json:"fdo,omitempty" toml:"fdo,omitempty"`
+	OpenSCAP           *OpenSCAPCustomization    `json:"openscap,omitempty" toml:"openscap,omitempty"`
 }
 
 type FDOCustomization struct {
@@ -88,6 +89,11 @@ type ServicesCustomization struct {
 type FilesystemCustomization struct {
 	Mountpoint string `json:"mountpoint,omitempty" toml:"mountpoint,omitempty"`
 	MinSize    uint64 `json:"minsize,omitempty" toml:"size,omitempty"`
+}
+
+type OpenSCAPCustomization struct {
+	DataStream string `json:"datastream,omitempty" toml:"datastream,omitempty"`
+	ProfileID  string `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
 }
 
 func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
@@ -366,4 +372,11 @@ func (c *Customizations) GetFDO() *FDOCustomization {
 		return nil
 	}
 	return c.FDO
+}
+
+func (c *Customizations) GetOpenSCAP() *OpenSCAPCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.OpenSCAP
 }
