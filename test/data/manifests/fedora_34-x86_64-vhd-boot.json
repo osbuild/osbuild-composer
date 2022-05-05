@@ -1861,7 +1861,7 @@
             "type": "org.osbuild.kernel-cmdline",
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-              "kernel_opts": "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0"
+              "kernel_opts": "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
             }
           },
           {
@@ -11387,7 +11387,7 @@
         "grub_users": "$grub_users",
         "initrd": "/initramfs-5.15.13-100.fc34.x86_64.img",
         "linux": "/vmlinuz-5.15.13-100.fc34.x86_64",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
+        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0",
         "title": "Fedora (5.15.13-100.fc34.x86_64) 34 (Thirty Four)",
         "version": "5.15.13-100.fc34.x86_64"
       }
