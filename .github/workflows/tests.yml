@@ -14,25 +14,25 @@ jobs:
   unit-tests:
     name: "🛃 Unit tests"
     runs-on: ubuntu-20.04
-    steps:
+    container:
+      image: registry.fedoraproject.org/fedora:latest
 
-      - name: Set up Go 1.16
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.16
-        id: go
+    steps:
+        # krb5-devel is needed to test internal/upload/koji package
+        # gcc is needed to build the mock dnf-json binary for the unit tests
+      - name: Install build and test dependencies
+        run: dnf -y install krb5-devel gcc git-core go
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-        # This is needed to test internal/upload/koji package
-      - name: Install kerberos devel package
-        run: sudo apt-get install -y libkrb5-dev
-
       - name: Run unit tests
         run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
+
+      - name: Run dnfjson tests with force-dnf to make sure it's not skipped for any reason
+        run: go test -race ./internal/dnfjson/... -force-dnf
 
       - name: Send coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
@@ -41,12 +41,17 @@ jobs:
     name: "🐍 Lint (dnf-json)"
     runs-on: ubuntu-latest
     container:
-      image: docker.io/library/fedora:35
+      image: registry.fedoraproject.org/fedora:latest
     steps:
-      - uses: actions/checkout@v2.4.0
-      - name: Install dependencies
-        run: |
-          dnf -y install python3-pylint
+
+      - name: Install build and test dependencies
+        run: dnf -y install python3-pylint git-core
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
       - name: Analysing the code with pylint
         run: |
           python3 -m pylint dnf-json
