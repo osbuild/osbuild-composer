@@ -21,18 +21,17 @@ type DepsolveJobImpl struct {
 // (matching map keys).
 func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string, packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, packageSetsRepos map[string][]rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
 	solver := dnfjson.NewSolver(modulePlatformID, releasever, arch, impl.RPMMDCache)
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-	psRepos := make([][]rpmmd.RepoConfig, 0)
 
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	// first depsolve package sets that are part of a chain
 	for specName, setNames := range packageSetsChains {
 		pkgSets := make([]rpmmd.PackageSet, len(setNames))
 		for idx, pkgSetName := range setNames {
 			pkgSets[idx] = packageSets[pkgSetName]
-			psRepos = append(psRepos, packageSetsRepos[pkgSetName]) // will be nil if it doesn't exist
-			delete(packageSets, pkgSetName)                         // will be depsolved here: remove from map
+			pkgSets[idx].Repositories = packageSetsRepos[pkgSetName]
+			delete(packageSets, pkgSetName) // will be depsolved here: remove from map
 		}
-		res, err := solver.Depsolve(pkgSets, repos, psRepos)
+		res, err := solver.Depsolve(pkgSets, repos)
 		if err != nil {
 			return nil, err
 		}
@@ -41,7 +40,8 @@ func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string, pac
 
 	// depsolve the rest of the package sets
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, repos, [][]rpmmd.RepoConfig{packageSetsRepos[name]})
+		pkgSet.Repositories = packageSetsRepos[name]
+		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, repos)
 		if err != nil {
 			return nil, err
 		}

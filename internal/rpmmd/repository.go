@@ -97,11 +97,13 @@ func (pkg Package) ToPackageInfo() PackageInfo {
 	}
 }
 
-// The inputs to depsolve, a set of packages to include and a set of
-// packages to exclude.
+// The inputs to depsolve, a set of packages to include and a set of packages
+// to exclude. The Repositories are used when depsolving this package set in
+// addition to the base repositories.
 type PackageSet struct {
-	Include []string
-	Exclude []string
+	Include      []string
+	Exclude      []string
+	Repositories []RepoConfig
 }
 
 // Append the Include and Exclude package list from another PackageSet and

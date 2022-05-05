@@ -87,16 +87,16 @@ func NewSolver(modulePlatformID string, releaseVer string, arch string, cacheDir
 }
 
 // Depsolve the given packages with explicit excludes using the given configuration and repos
-func Depsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, psRepos [][]rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (*DepsolveResult, error) {
-	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).Depsolve(pkgSets, repos, psRepos)
+func Depsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (*DepsolveResult, error) {
+	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).Depsolve(pkgSets, repos)
 }
 
 // Depsolve the list of required package sets with explicit excludes using
 // the given repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
-func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, repos []rpmmd.RepoConfig, psRepos [][]rpmmd.RepoConfig) (*DepsolveResult, error) {
-	req, repoMap, err := s.makeDepsolveRequest(pkgSets, repos, psRepos)
+func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, baseRepos []rpmmd.RepoConfig) (*DepsolveResult, error) {
+	req, repoMap, err := s.makeDepsolveRequest(pkgSets, baseRepos)
 	if err != nil {
 		return nil, err
 	}
@@ -205,11 +205,7 @@ type repoConfig struct {
 // NOTE: Due to implementation limitations of DNF and dnf-json, each package set
 // in the chain must use all of the repositories used by its predecessor.
 // An error is returned if this requirement is not met.
-func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []rpmmd.RepoConfig, pkgsetsRepos [][]rpmmd.RepoConfig) (*Request, map[string]rpmmd.RepoConfig, error) {
-	// pkgsetsRepos must either be nil (empty) or the same length as the pkgSets array
-	if len(pkgsetsRepos) > 0 && len(pkgSets) != len(pkgsetsRepos) {
-		return nil, nil, fmt.Errorf("depsolve: the number of package set repository configurations (%d) does not match the number of package sets (%d)", len(pkgsetsRepos), len(pkgSets))
-	}
+func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, baseRepos []rpmmd.RepoConfig) (*Request, map[string]rpmmd.RepoConfig, error) {
 
 	// dedupe repository configurations but maintain order
 	// the order in which repositories are added to the request affects the
@@ -218,17 +214,15 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []r
 	rpmRepoMap := make(map[string]rpmmd.RepoConfig)
 
 	// These repo IDs will be used for all transactions in the chain
-	baseRepoIDs := make([]string, len(repoConfigs))
-	for idx, repo := range repoConfigs {
+	baseRepoIDs := make([]string, len(baseRepos))
+	for idx, repo := range baseRepos {
 		id := repo.Hash()
 		rpmRepoMap[id] = repo
 		baseRepoIDs[idx] = id
 		repos = append(repos, repo)
 	}
-
-	// extra repositories defined for specific package sets
-	for _, jobRepos := range pkgsetsRepos {
-		for _, repo := range jobRepos {
+	for _, ps := range pkgSets {
+		for _, repo := range ps.Repositories {
 			id := repo.Hash()
 			if _, ok := rpmRepoMap[id]; !ok {
 				rpmRepoMap[id] = repo
@@ -245,12 +239,7 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, repoConfigs []r
 			RepoIDs:      baseRepoIDs, // due to its capacity, the slice will be copied when appended to
 		}
 
-		if len(pkgsetsRepos) == 0 {
-			// nothing to do
-			continue
-		}
-
-		for _, jobRepo := range pkgsetsRepos[dsIdx] {
+		for _, jobRepo := range pkgSet.Repositories {
 			transactions[dsIdx].RepoIDs = append(transactions[dsIdx].RepoIDs, jobRepo.Hash())
 		}
 
