@@ -16,7 +16,7 @@ var (
 		Namespace: namespace,
 		Subsystem: workerSubsystem,
 		Help:      "Total jobs",
-	}, []string{"type", "status"})
+	}, []string{"type", "status", "tenant"})
 )
 
 var (
@@ -25,7 +25,7 @@ var (
 		Namespace: namespace,
 		Subsystem: workerSubsystem,
 		Help:      "Currently pending jobs",
-	}, []string{"type"})
+	}, []string{"type", "tenant"})
 )
 
 var (
@@ -34,7 +34,7 @@ var (
 		Namespace: namespace,
 		Subsystem: workerSubsystem,
 		Help:      "Currently running jobs",
-	}, []string{"type"})
+	}, []string{"type", "tenant"})
 )
 
 var (
@@ -44,7 +44,7 @@ var (
 		Subsystem: workerSubsystem,
 		Help:      "Duration spent by workers on a job.",
 		Buckets:   []float64{.1, .2, .5, 1, 2, 4, 8, 16, 32, 40, 48, 64, 96, 128, 160, 192, 224, 256, 320, 382, 448, 512, 640, 768, 896, 1024, 1280, 1536, 1792, 2049},
-	}, []string{"type", "status"})
+	}, []string{"type", "status", "tenant"})
 )
 
 var (
@@ -54,35 +54,35 @@ var (
 		Subsystem: workerSubsystem,
 		Help:      "Duration a job spends on the queue.",
 		Buckets:   []float64{.1, .2, .5, 1, 2, 4, 8, 16, 32, 40, 48, 64, 96, 128, 160, 192, 224, 256, 320, 382, 448, 512, 640, 768, 896, 1024, 1280, 1536, 1792, 2049},
-	}, []string{"type"})
+	}, []string{"type", "tenant"})
 )
 
-func EnqueueJobMetrics(jobType string) {
-	PendingJobs.WithLabelValues(jobType).Inc()
+func EnqueueJobMetrics(jobType, tenant string) {
+	PendingJobs.WithLabelValues(jobType, tenant).Inc()
 }
 
-func DequeueJobMetrics(pending time.Time, started time.Time, jobType string) {
+func DequeueJobMetrics(pending time.Time, started time.Time, jobType, tenant string) {
 	if !started.IsZero() && !pending.IsZero() {
 		diff := started.Sub(pending).Seconds()
-		JobWaitDuration.WithLabelValues(jobType).Observe(diff)
-		PendingJobs.WithLabelValues(jobType).Dec()
-		RunningJobs.WithLabelValues(jobType).Inc()
+		JobWaitDuration.WithLabelValues(jobType, tenant).Observe(diff)
+		PendingJobs.WithLabelValues(jobType, tenant).Dec()
+		RunningJobs.WithLabelValues(jobType, tenant).Inc()
 	}
 }
 
-func CancelJobMetrics(started time.Time, jobType string) {
+func CancelJobMetrics(started time.Time, jobType string, tenant string) {
 	if !started.IsZero() {
-		RunningJobs.WithLabelValues(jobType).Dec()
+		RunningJobs.WithLabelValues(jobType, tenant).Dec()
 	} else {
-		PendingJobs.WithLabelValues(jobType).Dec()
+		PendingJobs.WithLabelValues(jobType, tenant).Dec()
 	}
 }
 
-func FinishJobMetrics(started time.Time, finished time.Time, canceled bool, jobType string, status clienterrors.StatusCode) {
+func FinishJobMetrics(started time.Time, finished time.Time, canceled bool, jobType, tenant string, status clienterrors.StatusCode) {
 	if !finished.IsZero() && !canceled {
 		diff := finished.Sub(started).Seconds()
-		JobDuration.WithLabelValues(jobType, status.ToString()).Observe(diff)
-		TotalJobs.WithLabelValues(jobType, status.ToString()).Inc()
-		RunningJobs.WithLabelValues(jobType).Dec()
+		JobDuration.WithLabelValues(jobType, status.ToString(), tenant).Observe(diff)
+		TotalJobs.WithLabelValues(jobType, status.ToString(), tenant).Inc()
+		RunningJobs.WithLabelValues(jobType, tenant).Dec()
 	}
 }
