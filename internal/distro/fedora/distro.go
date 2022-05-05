@@ -39,6 +39,9 @@ const (
 	fedora34Distribution = "fedora-34"
 	fedora35Distribution = "fedora-35"
 	fedora36Distribution = "fedora-36"
+
+	//Kernel options for ami, qcow2, openstack, vhd and vmdk types
+	defaultKernelOptions = "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
 )
 
 var (
@@ -162,6 +165,7 @@ var (
 				"cloud-init-local.service",
 			},
 		},
+		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
 		pipelines:           qcow2Pipelines,
@@ -194,7 +198,7 @@ var (
 				"loadmodules.service",
 			},
 		},
-		kernelOptions:       "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
+		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
 		pipelines:           vhdPipelines,
@@ -224,6 +228,7 @@ var (
 				"cloud-init-local.service",
 			},
 		},
+		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
 		pipelines:           vmdkPipelines,
@@ -253,6 +258,7 @@ var (
 				"cloud-init-local.service",
 			},
 		},
+		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
 		pipelines:           openstackPipelines,
@@ -282,7 +288,7 @@ var (
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultEc2ImageConfig,
-		kernelOptions:       "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0",
+		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         6 * GigaByte,
