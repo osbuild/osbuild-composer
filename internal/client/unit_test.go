@@ -31,7 +31,7 @@ import (
 var testState *TestState
 var dnfjsonPath string
 
-func init() {
+func setupDNFJSON() string {
 	// compile the mock-dnf-json binary to speed up tests
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
@@ -42,6 +42,7 @@ func init() {
 	if err := cmd.Run(); err != nil {
 		panic(err)
 	}
+	return tmpdir
 }
 
 func executeTests(m *testing.M) int {
@@ -111,5 +112,7 @@ func executeTests(m *testing.M) int {
 }
 
 func TestMain(m *testing.M) {
+	tmpdir := setupDNFJSON()
+	defer os.RemoveAll(tmpdir)
 	os.Exit(executeTests(m))
 }
