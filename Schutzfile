@@ -170,7 +170,7 @@
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
-        "commit": "b57376d1607587d3739eb2c754ba6b27e272198a"
+        "commit": "e51d08ba9ee84036d18b19d4af70d3f8a063e2c0"
       }
     },
     "repos": [
@@ -216,7 +216,7 @@
   "rhel-9.0": {
     "dependencies": {
       "osbuild": {
-        "commit": "b57376d1607587d3739eb2c754ba6b27e272198a"
+        "commit": "e51d08ba9ee84036d18b19d4af70d3f8a063e2c0"
       }
     },
     "repos": [
@@ -262,14 +262,14 @@
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "b57376d1607587d3739eb2c754ba6b27e272198a"
+        "commit": "e51d08ba9ee84036d18b19d4af70d3f8a063e2c0"
       }
     }
   },
   "centos-9": {
     "dependencies": {
       "osbuild": {
-        "commit": "b57376d1607587d3739eb2c754ba6b27e272198a"
+        "commit": "e51d08ba9ee84036d18b19d4af70d3f8a063e2c0"
       }
     }
   },
