@@ -648,6 +648,26 @@ func osPipeline(t *imageType,
 		p.AddStage(bootloader)
 	}
 
+	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
+		if t.rpmOstree {
+			return nil, fmt.Errorf("unexpected oscap options for ostree image type")
+		}
+		var datastream string
+		if t.arch.distro.isRHEL() {
+			datastream = rhelDatastream
+		} else {
+			datastream = centosDatastream
+		}
+		remediationOptions := osbuild.NewOscapRemediationStageOptions(
+			&oscapConfig.DataDir,
+			osbuild.OscapConfig{
+				Datastream: datastream,
+				ProfileID:  oscapConfig.ProfileID,
+			},
+		)
+		p.AddStage(osbuild.NewOscapRemediationStage(remediationOptions))
+	}
+
 	if !imageConfig.NoSElinux {
 		p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	}

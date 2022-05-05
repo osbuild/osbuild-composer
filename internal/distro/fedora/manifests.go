@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
@@ -348,6 +349,19 @@ func osPipeline(m *manifest.Manifest,
 
 	if imageConfig.NoSElinux {
 		pl.SElinux = ""
+	}
+
+	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
+		if t.rpmOstree {
+			panic("unexpected oscap options for ostree image type")
+		}
+		pl.OpenSCAPConfig = osbuild2.NewOscapRemediationStageOptions(
+			&oscapConfig.DataDir,
+			osbuild2.OscapConfig{
+				Datastream: oscapDatastream,
+				ProfileID:  oscapConfig.ProfileID,
+			},
+		)
 	}
 
 	pl.Grub2Config = imageConfig.Grub2Config

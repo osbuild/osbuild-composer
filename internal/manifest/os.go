@@ -75,23 +75,24 @@ type OS struct {
 	Users    []blueprint.UserCustomization
 	Firewall *blueprint.FirewallCustomization
 	// TODO: drop osbuild2 types from the API
-	Grub2Config   *osbuild2.GRUB2Config
-	Sysconfig     []*osbuild2.SysconfigStageOptions
-	SystemdLogind []*osbuild2.SystemdLogindStageOptions
-	CloudInit     []*osbuild2.CloudInitStageOptions
-	Modprobe      []*osbuild2.ModprobeStageOptions
-	DracutConf    []*osbuild2.DracutConfStageOptions
-	SystemdUnit   []*osbuild2.SystemdUnitStageOptions
-	Authselect    *osbuild2.AuthselectStageOptions
-	SELinuxConfig *osbuild2.SELinuxConfigStageOptions
-	Tuned         *osbuild2.TunedStageOptions
-	Tmpfilesd     []*osbuild2.TmpfilesdStageOptions
-	PamLimitsConf []*osbuild2.PamLimitsConfStageOptions
-	Sysctld       []*osbuild2.SysctldStageOptions
-	DNFConfig     []*osbuild2.DNFConfigStageOptions
-	SshdConfig    *osbuild2.SshdConfigStageOptions
-	AuthConfig    *osbuild2.AuthconfigStageOptions
-	PwQuality     *osbuild2.PwqualityConfStageOptions
+	Grub2Config    *osbuild2.GRUB2Config
+	Sysconfig      []*osbuild2.SysconfigStageOptions
+	SystemdLogind  []*osbuild2.SystemdLogindStageOptions
+	CloudInit      []*osbuild2.CloudInitStageOptions
+	Modprobe       []*osbuild2.ModprobeStageOptions
+	DracutConf     []*osbuild2.DracutConfStageOptions
+	SystemdUnit    []*osbuild2.SystemdUnitStageOptions
+	Authselect     *osbuild2.AuthselectStageOptions
+	SELinuxConfig  *osbuild2.SELinuxConfigStageOptions
+	Tuned          *osbuild2.TunedStageOptions
+	Tmpfilesd      []*osbuild2.TmpfilesdStageOptions
+	PamLimitsConf  []*osbuild2.PamLimitsConfStageOptions
+	Sysctld        []*osbuild2.SysctldStageOptions
+	DNFConfig      []*osbuild2.DNFConfigStageOptions
+	SshdConfig     *osbuild2.SshdConfigStageOptions
+	AuthConfig     *osbuild2.AuthconfigStageOptions
+	PwQuality      *osbuild2.PwqualityConfStageOptions
+	OpenSCAPConfig *osbuild2.OscapRemediationStageOptions
 
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
@@ -141,6 +142,10 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 
 	if len(p.NTPServers) > 0 {
 		packages = append(packages, "chrony")
+	}
+
+	if p.OpenSCAPConfig != nil {
+		packages = append(packages, "openscap-scanner", "scap-security-guide")
 	}
 
 	if p.SElinux != "" {
@@ -406,6 +411,10 @@ func (p *OS) serialize() osbuild2.Pipeline {
 		}
 
 		pipeline.AddStage(bootloader)
+	}
+
+	if p.OpenSCAPConfig != nil {
+		pipeline.AddStage(osbuild2.NewOscapRemediationStage(p.OpenSCAPConfig))
 	}
 
 	if p.SElinux != "" {

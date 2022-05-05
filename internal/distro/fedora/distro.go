@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
@@ -41,11 +42,20 @@ const (
 
 	//Kernel options for ami, qcow2, openstack, vhd and vmdk types
 	defaultKernelOptions = "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
+
+	// datastream for OpenSCAP remediation
+	oscapDatastream = "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
 )
 
 var (
 	mountpointAllowList = []string{
 		"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
+	}
+
+	oscapProfileAllowList = []oscap.Profile{
+		oscap.Ospp,
+		oscap.PciDss,
+		oscap.Standard,
 	}
 
 	// Services
@@ -706,6 +716,19 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	if len(invalidMountpoints) > 0 {
 		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
+	if osc := customizations.GetOpenSCAP(); osc != nil {
+		supported := oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList)
+		if !supported {
+			return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
+		}
+		if t.rpmOstree {
+			return fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
+		}
+		if osc.ProfileID == "" {
+			return fmt.Errorf("OpenSCAP profile cannot be empty")
+		}
 	}
 
 	return nil

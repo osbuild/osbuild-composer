@@ -371,3 +371,19 @@ func TestGetFilesystemsMinSizeNonSectorSize(t *testing.T) {
 
 	assert.EqualValues(t, uint64(5632), retFilesystemsSize)
 }
+
+func TestGetOpenSCAPConfig(t *testing.T) {
+
+	expectedOscap := OpenSCAPCustomization{
+		DataDir:   "/var/tmp",
+		ProfileID: "test_profile",
+	}
+
+	TestCustomizations := Customizations{
+		OpenSCAP: &expectedOscap,
+	}
+
+	retOpenSCAPCustomiztions := TestCustomizations.GetOpenSCAP()
+
+	assert.EqualValues(t, expectedOscap, *retOpenSCAPCustomiztions)
+}
