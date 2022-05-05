@@ -30,7 +30,7 @@ import (
 
 var dnfjsonPath string
 
-func init() {
+func setupDNFJSON() {
 	// compile the mock-dnf-json binary to speed up tests
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
@@ -572,4 +572,11 @@ func TestJobTypeValidation(t *testing.T) {
 		resp, _ = json.Marshal(map[string]string{"message": msg})
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/composer-koji/v1/compose/%s%s", badID, path), ``, http.StatusNotFound, string(resp))
 	}
+}
+
+func TestMain(m *testing.M) {
+	setupDNFJSON()
+	defer os.RemoveAll(dnfjsonPath)
+	code := m.Run()
+	os.Exit(code)
 }

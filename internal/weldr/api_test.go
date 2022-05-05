@@ -39,7 +39,7 @@ import (
 
 var dnfjsonPath string
 
-func init() {
+func setupDNFJSON() {
 	// compile the mock-dnf-json binary to speed up tests
 	tmpdir, err := os.MkdirTemp("", "")
 	if err != nil {
@@ -1842,4 +1842,11 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
 		}
 	}
+}
+
+func TestMain(m *testing.M) {
+	setupDNFJSON()
+	defer os.RemoveAll(dnfjsonPath)
+	code := m.Run()
+	os.Exit(code)
 }
