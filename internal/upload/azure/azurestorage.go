@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -189,6 +190,33 @@ func (c StorageClient) CreateStorageContainerIfNotExist(ctx context.Context, sto
 			return nil
 		}
 		return fmt.Errorf("cannot create a storage container: %v", err)
+	}
+
+	return nil
+}
+
+// Taken from https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags#request-body
+var tagKeyRegexp = regexp.MustCompile(`^[a-zA-Z0-9 +-./:=_]{1,256}$`)
+var tagValueRegexp = regexp.MustCompile(`^[a-zA-Z0-9 +-./:=_]{0,256}$`)
+
+func (c StorageClient) TagBlob(ctx context.Context, metadata BlobMetadata, tags map[string]string) error {
+	for key, value := range tags {
+		if !tagKeyRegexp.MatchString(key) {
+			return fmt.Errorf("tag key `%s` doesn't match the format accepted by Azure", key)
+		}
+		if !tagValueRegexp.MatchString(key) {
+			return fmt.Errorf("tag value `%s` of key `%s` doesn't match the format accepted by Azure", value, key)
+		}
+	}
+
+	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", metadata.StorageAccount, metadata.ContainerName))
+	containerURL := azblob.NewContainerURL(*URL, c.pipeline)
+
+	blobURL := containerURL.NewPageBlobURL(metadata.BlobName)
+
+	_, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, tags)
+	if err != nil {
+		return fmt.Errorf("cannot tag the blob: %v", err)
 	}
 
 	return nil
