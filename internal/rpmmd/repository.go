@@ -38,6 +38,7 @@ type RepoConfig struct {
 	MetadataExpire string
 	RHSM           bool
 	ImageTypeTags  []string
+	PackageSets    []string
 }
 
 // Hash calculates an ID string that uniquely represents a repository

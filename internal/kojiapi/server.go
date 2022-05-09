@@ -124,21 +124,18 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		solver := h.server.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch.Name())
-		packageSets := imageType.PackageSets(*bp)
-		packageSpecSets := make(map[string][]rpmmd.PackageSpec)
-		for specName, setNames := range imageType.PackageSetsChains() {
-			chain := make([]rpmmd.PackageSet, len(setNames))
-			for idx, pkgSetName := range setNames {
-				chain[idx] = packageSets[pkgSetName]
-			}
-			res, err := solver.Depsolve(chain, repositories)
+		packageSets := imageType.PackageSets(*bp, repositories)
+		depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
+
+		for name, pkgSet := range packageSets {
+			res, err := solver.Depsolve(pkgSet)
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 			}
-			packageSpecSets[specName] = res.Dependencies
+			depsolvedSets[name] = res.Dependencies
 		}
 
-		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, packageSpecSets, manifestSeed)
+		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, depsolvedSets, manifestSeed)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadGateway, fmt.Sprintf("Failed to get manifest for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}

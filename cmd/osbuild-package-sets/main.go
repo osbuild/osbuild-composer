@@ -41,6 +41,6 @@ func main() {
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	pkgset := image.PackageSets(blueprint.Blueprint{})
+	pkgset := image.PackageSets(blueprint.Blueprint{}, nil)
 	_ = encoder.Encode(pkgset)
 }

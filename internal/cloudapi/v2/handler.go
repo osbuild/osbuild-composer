@@ -107,12 +107,11 @@ func splitExtension(filename string) string {
 }
 
 type imageRequest struct {
-	imageType               distro.ImageType
-	arch                    distro.Arch
-	repositories            []rpmmd.RepoConfig
-	packageSetsRepositories map[string][]rpmmd.RepoConfig
-	imageOptions            distro.ImageOptions
-	target                  *target.Target
+	imageType    distro.ImageType
+	arch         distro.Arch
+	repositories []rpmmd.RepoConfig
+	imageOptions distro.ImageOptions
+	target       *target.Target
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -238,7 +237,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			return HTTPError(ErrorUnsupportedImageType)
 		}
 
-		repos, pkgSetsRepos, err := collectRepos(ir.Repositories, payloadRepositories, imageType.PayloadPackageSets())
+		repos, err := convertRepos(ir.Repositories, payloadRepositories, imageType.PayloadPackageSets())
 		if err != nil {
 			return err
 		}
@@ -428,12 +427,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		irs = append(irs, imageRequest{
-			imageType:               imageType,
-			arch:                    arch,
-			repositories:            repos,
-			imageOptions:            imageOptions,
-			packageSetsRepositories: pkgSetsRepos,
-			target:                  irTarget,
+			imageType:    imageType,
+			arch:         arch,
+			repositories: repos,
+			imageOptions: imageOptions,
+			target:       irTarget,
 		})
 	}
 
@@ -974,38 +972,32 @@ func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-func collectRepos(irRepos, payloadRepositories []Repository, payloadPackageSets []string) ([]rpmmd.RepoConfig, map[string][]rpmmd.RepoConfig, error) {
-	// build package set repository map and base repository set based on repository package sets
-	// No package_sets -> base set
-	mainRepoConfigs := make([]rpmmd.RepoConfig, 0, len(irRepos))
-	pkgSetsRepoConfigs := make(map[string][]rpmmd.RepoConfig, len(irRepos))
+// Converts repositories in the request to the internal rpmmd.RepoConfig representation
+func convertRepos(irRepos, payloadRepositories []Repository, payloadPackageSets []string) ([]rpmmd.RepoConfig, error) {
+	repos := make([]rpmmd.RepoConfig, 0, len(irRepos)+len(payloadRepositories))
 
-	for _, irRepo := range irRepos {
-		repo, err := genRepoConfig(irRepo)
+	for idx := range irRepos {
+		r, err := genRepoConfig(irRepos[idx])
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		if pkgSets := irRepo.PackageSets; pkgSets != nil && len(*irRepo.PackageSets) > 0 {
-			for _, pkgSet := range *pkgSets {
-				pkgSetsRepoConfigs[pkgSet] = append(pkgSetsRepoConfigs[pkgSet], *repo)
-			}
-		} else {
-			mainRepoConfigs = append(mainRepoConfigs, *repo)
-		}
+		repos = append(repos, *r)
 	}
 
-	// add user custom repos to all payload package sets
-	for _, plRepo := range payloadRepositories {
-		for _, payloadName := range payloadPackageSets {
-			repo, err := genRepoConfig(plRepo)
-			if err != nil {
-				return nil, nil, err
-			}
-			pkgSetsRepoConfigs[payloadName] = append(pkgSetsRepoConfigs[payloadName], *repo)
+	for idx := range payloadRepositories {
+		// the PackageSets (package_sets) field for these repositories is
+		// ignored (see openapi.v2.yml description for payload_repositories)
+		// and we replace any value in it with the names of the payload package
+		// sets
+		r, err := genRepoConfig(payloadRepositories[idx])
+		if err != nil {
+			return nil, err
 		}
+		r.PackageSets = payloadPackageSets
+		repos = append(repos, *r)
 	}
 
-	return mainRepoConfigs, pkgSetsRepoConfigs, nil
+	return repos, nil
 }
 
 func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
@@ -1035,6 +1027,10 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 
 	if repoConfig.CheckGPG && repoConfig.GPGKey == "" {
 		return nil, HTTPError(ErrorNoGPGKey)
+	}
+
+	if repo.PackageSets != nil {
+		repoConfig.PackageSets = *repo.PackageSets
 	}
 
 	return repoConfig, nil

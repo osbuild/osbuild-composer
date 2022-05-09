@@ -105,7 +105,7 @@ type ImageType interface {
 	// Returns the sets of packages to include and exclude when building the image.
 	// Indexed by a string label. How each set is labeled and used depends on the
 	// image type.
-	PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet
+	PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet
 
 	// Returns the names of the pipelines that set up the build environment (buildroot).
 	BuildPipelines() []string
@@ -274,4 +274,56 @@ func ExportsFallback() []string {
 
 func PayloadPackageSets() []string {
 	return []string{}
+}
+
+func MakePackageSetChains(t ImageType, packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+	allSetNames := make([]string, len(packageSets))
+	idx := 0
+	for setName := range packageSets {
+		allSetNames[idx] = setName
+		idx++
+	}
+
+	// map repository PackageSets to the list of repo configs
+	packageSetsRepos := make(map[string][]rpmmd.RepoConfig)
+	for idx := range repos {
+		repo := repos[idx]
+		if len(repo.PackageSets) == 0 {
+			// repos that don't specify package sets get used everywhere
+			repo.PackageSets = allSetNames
+		}
+		for _, name := range repo.PackageSets {
+			psRepos := packageSetsRepos[name]
+			psRepos = append(psRepos, repo)
+			packageSetsRepos[name] = psRepos
+		}
+	}
+
+	chainedSets := make(map[string][]rpmmd.PackageSet)
+	addedSets := make(map[string]bool)
+	// first collect package sets that are part of a chain
+	for specName, setNames := range t.PackageSetsChains() {
+		pkgSets := make([]rpmmd.PackageSet, len(setNames))
+
+		// add package-set-specific repositories to each set if one is defined
+		for idx, pkgSetName := range setNames {
+			pkgSets[idx] = packageSets[pkgSetName]
+			pkgSets[idx].Repositories = packageSetsRepos[pkgSetName]
+			addedSets[pkgSetName] = true
+		}
+		chainedSets[specName] = pkgSets
+	}
+
+	// add the rest of the package sets
+	for name, pkgSet := range packageSets {
+		if addedSets[name] {
+			// already added
+			continue
+		}
+		pkgSet.Repositories = packageSetsRepos[name]
+		chainedSets[name] = []rpmmd.PackageSet{pkgSet}
+		addedSets[name] = true // NOTE: not really necessary but good book-keeping in case this function gets expanded
+	}
+
+	return chainedSets
 }

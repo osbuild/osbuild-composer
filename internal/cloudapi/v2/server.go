@@ -133,13 +133,10 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	ir := irs[0]
 
 	depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
-		PackageSetsChains: ir.imageType.PackageSetsChains(),
-		PackageSets:       ir.imageType.PackageSets(bp),
-		Repos:             ir.repositories,
-		ModulePlatformID:  distribution.ModulePlatformID(),
-		Arch:              ir.arch.Name(),
-		Releasever:        distribution.Releasever(),
-		PackageSetsRepos:  ir.packageSetsRepositories,
+		PackageSets:      ir.imageType.PackageSets(bp, ir.repositories),
+		ModulePlatformID: distribution.ModulePlatformID(),
+		Arch:             ir.arch.Name(),
+		Releasever:       distribution.Releasever(),
 	}, channel)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -189,12 +186,10 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	var buildIDs []uuid.UUID
 	for _, ir := range irs {
 		depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
-			PackageSets:      ir.imageType.PackageSets(bp),
-			Repos:            ir.repositories,
+			PackageSets:      ir.imageType.PackageSets(bp, ir.repositories),
 			ModulePlatformID: distribution.ModulePlatformID(),
 			Arch:             ir.arch.Name(),
 			Releasever:       distribution.Releasever(),
-			PackageSetsRepos: ir.packageSetsRepositories,
 		}, channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)

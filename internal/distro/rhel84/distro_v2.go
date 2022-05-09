@@ -113,21 +113,27 @@ func (t *imageTypeS2) BuildPackages() []string {
 	return buildPackages
 }
 
-func (t *imageTypeS2) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
-	sets := map[string]rpmmd.PackageSet{
-		"build-packages": {
-			Include: t.BuildPackages(),
-		},
+func (t *imageTypeS2) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+	sets := map[string][]rpmmd.PackageSet{
+		"build-packages": {{
+			Include:      t.BuildPackages(),
+			Repositories: repos,
+		}},
 	}
-	for name, pkgSet := range t.packageSets {
+	for name := range t.packageSets {
 		if name == "packages" {
 			// treat base packages separately to combine with blueprint
-			packages := new(rpmmd.PackageSet)
-			packages.Include, packages.Exclude = t.Packages(bp)
-			sets[name] = *packages
+			include, exclude := t.Packages(bp)
+			sets[name] = []rpmmd.PackageSet{{
+				Include:      include,
+				Exclude:      exclude,
+				Repositories: repos,
+			}}
 			continue
 		}
-		sets[name] = pkgSet
+		pkgSet := t.packageSets[name]
+		pkgSet.Repositories = repos
+		sets[name] = []rpmmd.PackageSet{pkgSet}
 	}
 	return sets
 }
