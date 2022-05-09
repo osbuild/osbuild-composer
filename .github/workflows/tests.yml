@@ -132,7 +132,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Create SRPM
-        run: make srpm
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          make srpm
 
       - name: Run rpmlint
         run: rpmlint rpmbuild/SRPMS/*
