@@ -185,25 +185,29 @@ func (t *TestImageType) PartitionType() string {
 	return ""
 }
 
-func (t *TestImageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
-	return map[string]rpmmd.PackageSet{
-		buildPkgsKey: {
+func (t *TestImageType) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+	return map[string][]rpmmd.PackageSet{
+		buildPkgsKey: {{
 			Include: []string{
 				"dep-package1",
 				"dep-package2",
 				"dep-package3",
 			},
+			Repositories: repos,
 		},
-		blueprintPkgsKey: {
-			Include: bp.GetPackages(),
 		},
-		osPkgsKey: {
+		blueprintPkgsKey: {{
+			Include:      bp.GetPackages(),
+			Repositories: repos,
+		}},
+		osPkgsKey: {{
 			Include: []string{
 				"dep-package1",
 				"dep-package2",
 				"dep-package3",
 			},
-		},
+			Repositories: repos,
+		}},
 	}
 }
 

@@ -140,28 +140,14 @@ func main() {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
 
-	packageSets := imageType.PackageSets(composeRequest.Blueprint)
-
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), path.Join(home, ".cache/osbuild-composer/rpmmd"))
 	solver.SetDNFJSONPath(findDnfJsonBin())
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-	// first depsolve package sets that are part of a chain
-	for specName, setNames := range imageType.PackageSetsChains() {
-		pkgSets := make([]rpmmd.PackageSet, len(setNames))
-		for idx, pkgSetName := range setNames {
-			pkgSets[idx] = packageSets[pkgSetName]
-			delete(packageSets, pkgSetName) // will be depsolved here: remove from map
-		}
-		res, err := solver.Depsolve(pkgSets, repos)
-		if err != nil {
-			panic("Could not depsolve: " + err.Error())
-		}
-		depsolvedSets[specName] = res.Dependencies
-	}
 
-	// depsolve the rest of the package sets
+	packageSets := imageType.PackageSets(composeRequest.Blueprint, repos)
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, repos)
+		res, err := solver.Depsolve(pkgSet)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}

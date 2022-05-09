@@ -19,11 +19,11 @@ import (
 )
 
 func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, cacheDir string, repos []rpmmd.RepoConfig) (distro.Manifest, []rpmmd.PackageSpec) {
-	packageSets := t.PackageSets(bp)
+	packageSets := t.PackageSets(bp, repos)
 	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), cacheDir)
 	for name, packages := range packageSets {
-		res, err := solver.Depsolve([]rpmmd.PackageSet{packages}, repos)
+		res, err := solver.Depsolve(packages)
 		if err != nil {
 			panic(err)
 		}

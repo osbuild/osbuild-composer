@@ -19,29 +19,12 @@ type DepsolveJobImpl struct {
 // in repos are used for all package sets, whereas the repositories in
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSetsChains map[string][]string, packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig, packageSetsRepos map[string][]rpmmd.RepoConfig, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
+func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch)
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-	// first depsolve package sets that are part of a chain
-	for specName, setNames := range packageSetsChains {
-		pkgSets := make([]rpmmd.PackageSet, len(setNames))
-		for idx, pkgSetName := range setNames {
-			pkgSets[idx] = packageSets[pkgSetName]
-			pkgSets[idx].Repositories = packageSetsRepos[pkgSetName]
-			delete(packageSets, pkgSetName) // will be depsolved here: remove from map
-		}
-		res, err := solver.Depsolve(pkgSets, repos)
-		if err != nil {
-			return nil, err
-		}
-		depsolvedSets[specName] = res.Dependencies
-	}
-
-	// depsolve the rest of the package sets
 	for name, pkgSet := range packageSets {
-		pkgSet.Repositories = packageSetsRepos[name]
-		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, repos)
+		res, err := solver.Depsolve(pkgSet)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +42,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.DepsolveJobResult
-	result.PackageSpecs, err = impl.depsolve(args.PackageSetsChains, args.PackageSets, args.Repos, args.PackageSetsRepos, args.ModulePlatformID, args.Arch, args.Releasever)
+	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
 		switch e := err.(type) {
 		case *dnfjson.Error:

@@ -261,9 +261,10 @@ func TestImageType_BuildPackages(t *testing.T) {
 					if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
 						continue
 					}
-					buildPkgs := itStruct.PackageSets(blueprint.Blueprint{})["build"]
+					buildPkgs := itStruct.PackageSets(blueprint.Blueprint{}, nil)["build"]
 					assert.NotNil(t, buildPkgs)
-					assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs.Include)
+					assert.Len(t, buildPkgs, 1)
+					assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs[0].Include)
 				}
 			}
 		})

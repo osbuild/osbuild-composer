@@ -1261,7 +1261,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
 		for i := range packageInfos {
 			pkgName := packageInfos[i].Name
-			solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}}}, repos)
+			solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}})
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1339,7 +1339,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
-	deps, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names}}, repos)
+	deps, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names, Repositories: repos}})
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
@@ -2132,42 +2132,19 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 		return nil, fmt.Errorf("Blueprint distro %s does not match imageType distro %s", bp.Distro, imageType.Arch().Distro().Name())
 	}
 
-	imageTypeRepos, payloadRepos, err := api.allRepositoriesByImageType(imageType)
+	imageTypeRepos, err := api.allRepositoriesByImageType(imageType)
 	if err != nil {
 		return nil, err
 	}
-	packageSetsRepos := make(map[string][]rpmmd.RepoConfig, len(imageType.PayloadPackageSets()))
-	for _, name := range imageType.PayloadPackageSets() {
-		packageSetsRepos[name] = payloadRepos
-	}
-
 	platformID := imageType.Arch().Distro().ModulePlatformID()
 	releasever := imageType.Arch().Distro().Releasever()
 	solver := api.solver.NewWithConfig(platformID, releasever, api.archName)
 
-	packageSets := imageType.PackageSets(bp)
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-	// first depsolve package sets that are part of a chain
-	for specName, setNames := range imageType.PackageSetsChains() {
-		pkgSets := make([]rpmmd.PackageSet, len(setNames))
+	packageSets := imageType.PackageSets(bp, imageTypeRepos)
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
 
-		// add package-set-specific repositories to each set if one is defined
-		for idx, pkgSetName := range setNames {
-			pkgSets[idx] = packageSets[pkgSetName]
-			pkgSets[idx].Repositories = packageSetsRepos[pkgSetName] // will be nil if it doesn't exist
-			delete(packageSets, pkgSetName)                          // will be depsolved here: remove from map
-		}
-		res, err := solver.Depsolve(pkgSets, imageTypeRepos)
-		if err != nil {
-			return nil, err
-		}
-		depsolvedSets[specName] = res.Dependencies
-	}
-
-	// depsolve the rest of the package sets
 	for name, pkgSet := range packageSets {
-		pkgSet.Repositories = packageSetsRepos[name]
-		res, err := solver.Depsolve([]rpmmd.PackageSet{pkgSet}, imageTypeRepos)
+		res, err := solver.Depsolve(pkgSet)
 		if err != nil {
 			return nil, err
 		}
@@ -2319,7 +2296,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	seed := bigSeed.Int64()
 
-	imageRepos, payloadRepos, err := api.allRepositoriesByImageType(imageType)
+	imageRepos, err := api.allRepositoriesByImageType(imageType)
 	// this should not happen if the api.depsolveBlueprintForImageType() call above worked
 	if err != nil {
 		errors := responseError{
@@ -2329,7 +2306,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		statusResponseError(writer, http.StatusInternalServerError, errors)
 		return
 	}
-	imageRepos = append(imageRepos, payloadRepos...)
 
 	manifest, err := imageType.Manifest(bp.Customizations,
 		distro.ImageOptions{
@@ -3166,15 +3142,20 @@ func (api *API) payloadRepositories(distroName string) []rpmmd.RepoConfig {
 // The difference from allRepositories() is that this method may return additional repositories,
 // which are needed to build the specific image type. The allRepositories() can't do this, because
 // it is used in places where image types are not considered.
-func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, []rpmmd.RepoConfig, error) {
+func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
 	repos, err := api.repoRegistry.ReposByImageType(imageType)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	payloadRepos := api.payloadRepositories(imageType.Arch().Distro().Name())
+	// tag payload repositories with the payload package set names and add them to list of repos
+	for _, pr := range payloadRepos {
+		pr.ImageTypeTags = imageType.PayloadPackageSets()
+		repos = append(repos, pr)
+	}
 
-	return repos, payloadRepos, nil
+	return repos, nil
 }
 
 // Returns all configured repositories (base + sources) as rpmmd.RepoConfig
@@ -3206,7 +3187,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
-	solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages()}}, repos)
+	solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}})
 	if err != nil {
 		return nil, err
 	}

@@ -304,7 +304,7 @@ func (t *imageType) getPackages(name string) rpmmd.PackageSet {
 	return getter(t)
 }
 
-func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
+func (t *imageType) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
 	// merge package sets that appear in the image type with the package sets
 	// of the same name from the distro and arch
 	mergedSets := make(map[string]rpmmd.PackageSet)
@@ -357,8 +357,8 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.Package
 
 	// add bp kernel to main OS package set to avoid duplicate kernels
 	mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kernel}})
-	return mergedSets
 
+	return distro.MakePackageSetChains(t, mergedSets, repos)
 }
 
 func (t *imageType) BuildPipelines() []string {
