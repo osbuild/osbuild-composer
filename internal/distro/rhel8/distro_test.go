@@ -127,9 +127,10 @@ func TestImageType_BuildPackages(t *testing.T) {
 			if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
 				continue
 			}
-			buildPkgs := itStruct.PackageSets(blueprint.Blueprint{})["build-packages"]
+			buildPkgs := itStruct.PackageSets(blueprint.Blueprint{}, nil)["build-packages"]
 			assert.NotNil(t, buildPkgs)
-			assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs.Include)
+			assert.Len(t, buildPkgs, 1)
+			assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs[0].Include)
 		}
 	}
 }
@@ -342,16 +343,17 @@ func TestImageType_BasePackages(t *testing.T) {
 	for _, pkgMap := range pkgMaps {
 		imgType, err := arch.GetImageType(pkgMap.name)
 		assert.NoError(t, err)
-		packages := imgType.PackageSets(blueprint.Blueprint{})["packages"]
+		packages := imgType.PackageSets(blueprint.Blueprint{}, nil)["packages"]
 		assert.NotNil(t, packages)
+		assert.Len(t, packages, 1)
 		assert.Equalf(
 			t,
 			append(pkgMap.basePackages, pkgMap.bootloaderPackages...),
-			packages.Include,
+			packages[0].Include,
 			"image type: %s",
 			pkgMap.name,
 		)
-		assert.Equalf(t, pkgMap.excludedPackages, packages.Exclude, "image type: %s", pkgMap.name)
+		assert.Equalf(t, pkgMap.excludedPackages, packages[0].Exclude, "image type: %s", pkgMap.name)
 	}
 }
 

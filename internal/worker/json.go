@@ -105,19 +105,16 @@ func (pn *PipelineNames) All() []string {
 	return append(pn.Build, pn.Payload...)
 }
 
-// DepsolveJob defines the parameters of one or more depsolve jobs.  Each
-// package set is meant to be depsolved separately.  The repositories defined
-// in Repos are used for all package sets, whereas the repositories defined in
-// PackageSetsRepos are only used by the package sets that share the same name
-// (map key).
+// DepsolveJob defines the parameters of one or more depsolve jobs.  Each named
+// list of package sets defines a separate job.  Lists with multiple package
+// sets are depsolved in a chain, combining the results of sequential depsolves
+// into a single PackageSpec list in the result.  Each PackageSet defines the
+// repositories it will be depsolved against.
 type DepsolveJob struct {
-	PackageSetsChains map[string][]string           `json:"package_sets_chains"`
-	PackageSets       map[string]rpmmd.PackageSet   `json:"package_sets"`
-	Repos             []rpmmd.RepoConfig            `json:"repos"`
-	ModulePlatformID  string                        `json:"module_platform_id"`
-	Arch              string                        `json:"arch"`
-	Releasever        string                        `json:"releasever"`
-	PackageSetsRepos  map[string][]rpmmd.RepoConfig `json:"package_sets_repositories,omitempty"`
+	PackageSets      map[string][]rpmmd.PackageSet `json:"package_sets"`
+	ModulePlatformID string                        `json:"module_platform_id"`
+	Arch             string                        `json:"arch"`
+	Releasever       string                        `json:"releasever"`
 }
 
 type ErrorType string

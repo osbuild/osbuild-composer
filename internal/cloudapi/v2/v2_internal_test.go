@@ -51,7 +51,7 @@ func TestCollectRepos(t *testing.T) {
 			Baseurl: common.StringToPtr("http://example.com/appstream"), // empty field -> all package sets
 		},
 		{
-			Baseurl:     common.StringToPtr("http://example.com/baseos-rhel7"), // only build
+			Baseurl:     common.StringToPtr("http://example.com/baseos-rhel7"), // build only
 			PackageSets: &[]string{"build"},
 		},
 		{
@@ -59,63 +59,28 @@ func TestCollectRepos(t *testing.T) {
 			PackageSets: &[]string{"build", "archive"},
 		},
 		{
-			Baseurl:     common.StringToPtr("http://example.com/custom-os-stuff"), // blueprint -> merge with custom
+			Baseurl:     common.StringToPtr("http://example.com/custom-os-stuff"), // blueprint only
 			PackageSets: &[]string{"blueprint"},
 		},
 	}
 
-	expectedPkgSetRepos := map[string][]rpmmd.RepoConfig{
-		"build": {
-			{
-				BaseURL: "http://example.com/baseos-rhel7",
-			},
-			{
-				BaseURL: "http://example.com/extra-tools",
-			},
-		},
-		"archive": {
-			{
-				BaseURL: "http://example.com/extra-tools",
-			},
-		},
-		"blueprint": {
-			{
-				BaseURL: "http://example.com/custom-os-stuff",
-			},
-			{
-				BaseURL: "http://example.com/repoone",
-			},
-			{
-				BaseURL: "http://example.com/repotwo",
-			},
-		},
+	expectedRepos := []rpmmd.RepoConfig{
+		{BaseURL: "http://example.com/baseos", PackageSets: nil},
+		{BaseURL: "http://example.com/appstream", PackageSets: nil},
+		{BaseURL: "http://example.com/baseos-rhel7", PackageSets: []string{"build"}},
+		{BaseURL: "http://example.com/extra-tools", PackageSets: []string{"build", "archive"}},
+		{BaseURL: "http://example.com/custom-os-stuff", PackageSets: []string{"blueprint"}},
+		{BaseURL: "http://example.com/repoone", PackageSets: []string{"blueprint"}},
+		{BaseURL: "http://example.com/repotwo", PackageSets: []string{"blueprint"}},
 	}
 
 	payloadPkgSets := []string{"blueprint"}
 
-	baseRepos, pkgSetRepos, err := collectRepos(irRepos, customRepos, payloadPkgSets)
+	repos, err := convertRepos(irRepos, customRepos, payloadPkgSets)
 
 	// check lengths
 	assert.NoError(err)
-	assert.Len(baseRepos, 2)
-	assert.Len(pkgSetRepos, 3)
-
-	// check tags in package set repo map
-	for _, tag := range []string{"blueprint", "build", "archive"} {
-		assert.Contains(pkgSetRepos, tag)
-	}
-	assert.NotContains(pkgSetRepos, "should-be-ignored")
-
-	// check URLs
-	baseRepoURLs := make([]string, len(baseRepos))
-	for idx, baseRepo := range baseRepos {
-		baseRepoURLs[idx] = baseRepo.BaseURL
-	}
-	for _, url := range []string{"http://example.com/baseos", "http://example.com/appstream"} {
-		assert.Contains(baseRepoURLs, url)
-	}
-
-	assert.Equal(pkgSetRepos, expectedPkgSetRepos)
+	assert.Equal(repos, expectedRepos)
 }
 
 func TestRepoConfigConversion(t *testing.T) {

@@ -219,16 +219,18 @@ func (t *imageType) BuildPackages() []string {
 	return packages
 }
 
-func (t *imageType) PackageSets(bp blueprint.Blueprint) map[string]rpmmd.PackageSet {
+func (t *imageType) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
 	includePackages, excludePackages := t.Packages(bp)
-	return map[string]rpmmd.PackageSet{
-		"packages": {
-			Include: includePackages,
-			Exclude: excludePackages,
-		},
-		"build-packages": {
-			Include: t.BuildPackages(),
-		},
+	return map[string][]rpmmd.PackageSet{
+		"packages": {{
+			Include:      includePackages,
+			Exclude:      excludePackages,
+			Repositories: repos,
+		}},
+		"build-packages": {{
+			Include:      t.BuildPackages(),
+			Repositories: repos,
+		}},
 	}
 }
 

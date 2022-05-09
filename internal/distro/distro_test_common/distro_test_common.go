@@ -138,26 +138,28 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 }
 
 func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint, repos []rpmmd.RepoConfig, cacheDir, dnfJsonPath string) map[string][]rpmmd.PackageSpec {
-	imgPackageSets := imageType.PackageSets(bp)
+	imgPackageSets := imageType.PackageSets(bp, repos)
 
 	solver := dnfjson.NewSolver(imageType.Arch().Distro().ModulePlatformID(), imageType.Arch().Distro().Releasever(), imageType.Arch().Name(), cacheDir)
-	imgPackageSpecSets := make(map[string][]rpmmd.PackageSpec)
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range imgPackageSets {
-		res, err := solver.Depsolve([]rpmmd.PackageSet{packages}, repos)
+		res, err := solver.Depsolve(packages)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}
-		imgPackageSpecSets[name] = res.Dependencies
+		depsolvedSets[name] = res.Dependencies
 	}
 
-	return imgPackageSpecSets
+	return depsolvedSets
 }
 
 func isOSTree(imgType distro.ImageType) bool {
-	packageSets := imgType.PackageSets(blueprint.Blueprint{})
-	for _, pkg := range packageSets["build-packages"].Include {
-		if pkg == "rpm-ostree" {
-			return true
+	packageSets := imgType.PackageSets(blueprint.Blueprint{}, nil)
+	for _, set := range packageSets["build-packages"] {
+		for _, pkg := range set.Include {
+			if pkg == "rpm-ostree" {
+				return true
+			}
 		}
 	}
 	return false
@@ -167,14 +169,26 @@ var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
 
 // Returns the number of known kernels in the package list
 func kernelCount(imgType distro.ImageType) int {
-	sets := imgType.PackageSets(blueprint.Blueprint{})
-	pkgs := sets["packages"].Append(sets["blueprint"]).Include
+	sets := imgType.PackageSets(blueprint.Blueprint{}, nil)
 	n := 0
-	for _, pkg := range pkgs {
-		for _, kernel := range knownKernels {
-			if kernel == pkg {
-				n++
+	for _, pset := range sets["packages"] {
+		for _, pkg := range pset.Include {
+			for _, kernel := range knownKernels {
+				if kernel == pkg {
+					n++
+				}
 			}
+
+		}
+	}
+	for _, bset := range sets["blueprint"] {
+		for _, pkg := range bset.Include {
+			for _, kernel := range knownKernels {
+				if kernel == pkg {
+					n++
+				}
+			}
+
 		}
 	}
 	return n
@@ -231,32 +245,9 @@ func GetTestingPackageSpecSets(packageName, arch string, pkgSetNames []string) m
 // defined by the provided ImageType, which is useful for unit testing.
 func GetTestingImagePackageSpecSets(packageName string, i distro.ImageType) map[string][]rpmmd.PackageSpec {
 	arch := i.Arch().Name()
-	imagePackageSets := make([]string, 0, len(i.PackageSets(blueprint.Blueprint{})))
-	for pkgSetName := range i.PackageSets(blueprint.Blueprint{}) {
+	imagePackageSets := make([]string, 0, len(i.PackageSets(blueprint.Blueprint{}, nil)))
+	for pkgSetName := range i.PackageSets(blueprint.Blueprint{}, nil) {
 		imagePackageSets = append(imagePackageSets, pkgSetName)
 	}
 	return GetTestingPackageSpecSets(packageName, arch, imagePackageSets)
-}
-
-// Ensure that all package sets defined in the package set chains are defined for the image type
-func TestImageType_PackageSetsChains(t *testing.T, d distro.Distro) {
-	distroName := d.Name()
-	for _, archName := range d.ListArches() {
-		arch, err := d.GetArch(archName)
-		require.Nil(t, err)
-		for _, imageTypeName := range arch.ListImageTypes() {
-			t.Run(fmt.Sprintf("%s/%s/%s", distroName, archName, imageTypeName), func(t *testing.T) {
-				imageType, err := arch.GetImageType(imageTypeName)
-				require.Nil(t, err)
-
-				imagePkgSets := imageType.PackageSets(blueprint.Blueprint{})
-				for _, pkgSetsChain := range imageType.PackageSetsChains() {
-					for _, packageSetName := range pkgSetsChain {
-						_, ok := imagePkgSets[packageSetName]
-						assert.Truef(t, ok, "package set %q defined in a package set chain is not present in the image package sets", packageSetName)
-					}
-				}
-			})
-		}
-	}
 }
