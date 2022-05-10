@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math"
 	"math/big"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -38,14 +39,15 @@ type S3Configuration struct {
 }
 
 type OSBuildJobImpl struct {
-	Store       string
-	Output      string
-	KojiServers map[string]koji.GSSAPICredentials
-	GCPCreds    string
-	AzureCreds  *azure.Credentials
-	AWSCreds    string
-	AWSBucket   string
-	S3Config    S3Configuration
+	Store                  string
+	Output                 string
+	KojiServers            map[string]koji.GSSAPICredentials
+	KojiRelaxTimeoutFactor uint
+	GCPCreds               string
+	AzureCreds             *azure.Credentials
+	AWSCreds               string
+	AWSBucket              string
+	S3Config               S3Configuration
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -690,6 +692,54 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, target.NewAzureImageTargetResult(&target.AzureImageTargetResultOptions{
 				ImageName: args.Targets[0].ImageName,
+			}))
+
+			osbuildJobResult.Success = true
+			osbuildJobResult.UploadStatus = "success"
+		case *target.KojiTargetOptions:
+			kojiServerURL, err := url.Parse(options.Server)
+			if err != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to parse Koji server URL: %v", err))
+				return nil
+			}
+
+			creds, exists := impl.KojiServers[kojiServerURL.Hostname()]
+			if !exists {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("Koji server has not been configured: %s", kojiServerURL.Hostname()))
+				return nil
+			}
+
+			kojiTransport := koji.CreateKojiTransport(impl.KojiRelaxTimeoutFactor)
+
+			kojiAPI, err := koji.NewFromGSSAPI(options.Server, &creds, kojiTransport)
+			if err != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to authenticate with Koji server %q: %v", kojiServerURL.Hostname(), err))
+				return nil
+			}
+			logWithId.Infof("[Koji] 🔑 Authenticated with %q", kojiServerURL.Hostname())
+			defer func() {
+				err := kojiAPI.Logout()
+				if err != nil {
+					logWithId.Warnf("[Koji] logout failed: %v", err)
+				}
+			}()
+			file, err := os.Open(path.Join(outputDirectory, exportPath, args.ImageName))
+			if err != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, fmt.Sprintf("failed to open the image for reading: %v", err))
+				return nil
+			}
+			defer file.Close()
+
+			logWithId.Info("[Koji] ⬆ Uploading the image")
+			imageHash, imageSize, err := kojiAPI.Upload(file, options.UploadDirectory, options.Filename)
+			if err != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
+			}
+			logWithId.Info("[Koji] 🎉 Image successfully uploaded")
+
+			osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+				ImageMD5:  imageHash,
+				ImageSize: imageSize,
 			}))
 
 			osbuildJobResult.Success = true

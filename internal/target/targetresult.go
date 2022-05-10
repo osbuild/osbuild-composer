@@ -53,6 +53,8 @@ func UnmarshalTargetResultOptions(trName string, rawOptions json.RawMessage) (Ta
 		options = new(GCPTargetResultOptions)
 	case "org.osbuild.azure.image":
 		options = new(AzureImageTargetResultOptions)
+	case "org.osbuild.koji":
+		options = new(KojiTargetResultOptions)
 	case "org.osbuild.oci":
 		options = new(OCITargetResultOptions)
 	default:
