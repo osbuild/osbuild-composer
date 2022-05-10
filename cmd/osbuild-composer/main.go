@@ -79,6 +79,8 @@ func main() {
 		logrus.Fatalf("Could not get listening sockets: " + err.Error())
 	}
 
+	hasAPISocket := false
+
 	if l, exists := listeners["osbuild-composer.socket"]; exists {
 		if len(l) != 1 {
 			logrus.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain only one socket.")
@@ -88,6 +90,7 @@ func main() {
 		if err != nil {
 			logrus.Fatalf("Error initializing weldr API: %v", err)
 		}
+		hasAPISocket = true
 	}
 
 	if l, exists := listeners["osbuild-local-worker.socket"]; exists {
@@ -107,6 +110,7 @@ func main() {
 		if err != nil {
 			logrus.Fatalf("Error initializing koji API: %v", err)
 		}
+		hasAPISocket = true
 	}
 
 	if l, exists := listeners["osbuild-remote-worker.socket"]; exists {
@@ -118,6 +122,10 @@ func main() {
 		if err != nil {
 			logrus.Fatalf("Error initializing worker API: %v", err)
 		}
+	}
+
+	if !hasAPISocket {
+		logrus.Fatal("No API socket is enabled! Run 'systemctl enable --now osbuild-composer.socket'.")
 	}
 
 	err = composer.Start()
