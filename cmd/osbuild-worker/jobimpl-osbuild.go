@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math"
 	"math/big"
 	"os"
@@ -701,8 +700,8 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				return nil
 			}
-			log.Print("[OCI] 🔑 Logged in OCI")
-			log.Print("[OCI] ⬆ Uploading the image")
+			logWithId.Info("[OCI] 🔑 Logged in OCI")
+			logWithId.Info("[OCI] ⬆ Uploading the image")
 			file, err := os.Open(path.Join(outputDirectory, exportPath, options.FileName))
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
@@ -722,7 +721,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				return nil
 			}
-			log.Print("[OCI] 🎉 Image uploaded and registered!")
+			logWithId.Info("[OCI] 🎉 Image uploaded and registered!")
 
 			osbuildJobResult.TargetResults = append(
 				osbuildJobResult.TargetResults,
