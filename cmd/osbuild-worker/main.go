@@ -105,7 +105,7 @@ func setProtection(protected bool) {
 		return
 	}
 
-	svc := autoscaling.New(awsSession)
+	svc := autoscaling.New(awsSession, aws.NewConfig().WithRegion(identity.Region))
 
 	// get the autoscaling group info for the auto scaling group name
 	asInstanceInput := &autoscaling.DescribeAutoScalingInstancesInput{
