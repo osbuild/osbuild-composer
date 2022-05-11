@@ -78,7 +78,7 @@ type OSBuildKojiJobResult struct {
 	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`
 	ImageHash     string          `json:"image_hash"`
 	ImageSize     uint64          `json:"image_size"`
-	KojiError     string          `json:"koji_error"`
+	KojiError     string          `json:"koji_error"` // not set by any code other than unit tests
 	JobResult
 }
 
