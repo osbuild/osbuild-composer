@@ -206,17 +206,20 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			ir.arch.Name(),
 			splitExtension(ir.imageType.Filename()),
 		)
-		buildID, err := s.workers.EnqueueOSBuildKojiAsDependency(ir.arch.Name(), &worker.OSBuildKojiJob{
+		buildID, err := s.workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{
 			ImageName: ir.imageType.Filename(),
 			Exports:   ir.imageType.Exports(),
 			PipelineNames: &worker.PipelineNames{
 				Build:   ir.imageType.BuildPipelines(),
 				Payload: ir.imageType.PayloadPipelines(),
 			},
-			KojiServer:    server,
-			KojiDirectory: kojiDirectory,
-			KojiFilename:  kojiFilename,
-		}, manifestJobID, initID, channel)
+			Targets: []*target.Target{target.NewKojiTarget(&target.KojiTargetOptions{
+				Server:          server,
+				UploadDirectory: kojiDirectory,
+				Filename:        kojiFilename,
+			})},
+			ManifestDynArgsIdx: common.IntToPtr(1),
+		}, []uuid.UUID{initID, manifestJobID}, channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}

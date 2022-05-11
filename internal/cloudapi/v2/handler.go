@@ -596,11 +596,11 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
-		var buildJobResults []worker.OSBuildKojiJobResult
+		var buildJobResults []worker.OSBuildJobResult
 		var buildJobStatuses []ImageStatus
 		for i := 1; i < len(deps); i++ {
-			var buildJobResult worker.OSBuildKojiJobResult
-			buildJobStatus, _, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &buildJobResult)
+			var buildJobResult worker.OSBuildJobResult
+			buildJobStatus, _, err := h.server.workers.OSBuildJobStatus(deps[i], &buildJobResult)
 			if err != nil {
 				return HTTPError(ErrorMalformedOSBuildJobResult)
 			}
@@ -668,7 +668,7 @@ func imageStatusFromOSBuildJobStatus(js *worker.JobStatus, result *worker.OSBuil
 	return ImageStatusValueFailure
 }
 
-func imageStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResult *worker.OSBuildKojiJobResult) ImageStatusValue {
+func imageStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResult *worker.OSBuildJobResult) ImageStatusValue {
 	if js.Canceled {
 		return ImageStatusValueFailure
 	}
@@ -712,7 +712,7 @@ func composeStatusFromOSBuildJobStatus(js *worker.JobStatus, result *worker.OSBu
 	return ComposeStatusValueFailure
 }
 
-func composeStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResults []worker.OSBuildKojiJobResult, result *worker.KojiFinalizeJobResult) ComposeStatusValue {
+func composeStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiInitJobResult, buildResults []worker.OSBuildJobResult, result *worker.KojiFinalizeJobResult) ComposeStatusValue {
 	if js.Canceled {
 		return ComposeStatusValueFailure
 	}
@@ -866,6 +866,7 @@ func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
 	}
 
 	var buildResultBlobs []interface{}
+
 	resp := &ComposeLogs{
 		ObjectReference: ObjectReference{
 			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", jobId),
@@ -889,12 +890,33 @@ func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
 		}
 
 		for i := 1; i < len(deps); i++ {
-			var buildResult worker.OSBuildKojiJobResult
-			_, _, err = h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
+			buildJobType, err := h.server.workers.JobType(deps[i])
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
-			buildResultBlobs = append(buildResultBlobs, buildResult)
+
+			switch buildJobType {
+			// TODO: remove eventually. Kept for backward compatibility
+			case worker.JobTypeOSBuildKoji:
+				var buildResult worker.OSBuildKojiJobResult
+				_, _, err = h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+				}
+				buildResultBlobs = append(buildResultBlobs, buildResult)
+
+			case worker.JobTypeOSBuild:
+				var buildResult worker.OSBuildJobResult
+				_, _, err = h.server.workers.OSBuildJobStatus(deps[i], &buildResult)
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+				}
+				buildResultBlobs = append(buildResultBlobs, buildResult)
+
+			default:
+				return HTTPErrorWithInternal(ErrorInvalidJobType,
+					fmt.Errorf("unexpected job type in koji compose dependencies: %q", buildJobType))
+			}
 		}
 
 		resp.Koji = &KojiLogs{
@@ -964,25 +986,60 @@ func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
 		}
 
 		for i := 1; i < len(deps); i++ {
-			var buildJob worker.OSBuildKojiJob
-			err = h.server.workers.OSBuildKojiJob(deps[i], &buildJob)
+			buildJobType, err := h.server.workers.JobType(deps[i])
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
 
 			var manifest distro.Manifest
-			if len(buildJob.Manifest) != 0 {
-				manifest = buildJob.Manifest
-			} else {
-				_, buildDeps, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &worker.OSBuildKojiJobResult{})
+
+			switch buildJobType {
+			// TODO: remove eventually. Kept for backward compatibility
+			case worker.JobTypeOSBuildKoji:
+				var buildJob worker.OSBuildKojiJob
+				err = h.server.workers.OSBuildKojiJob(deps[i], &buildJob)
 				if err != nil {
 					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 				}
-				manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildDeps)
-				if err != nil {
-					return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
+
+				if len(buildJob.Manifest) != 0 {
+					manifest = buildJob.Manifest
+				} else {
+					_, buildDeps, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &worker.OSBuildKojiJobResult{})
+					if err != nil {
+						return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+					}
+					manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildDeps)
+					if err != nil {
+						return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
+					}
+					manifest = manifestResult.Manifest
 				}
-				manifest = manifestResult.Manifest
+
+			case worker.JobTypeOSBuild:
+				var buildJob worker.OSBuildJob
+				err = h.server.workers.OSBuildJob(deps[i], &buildJob)
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+				}
+
+				if len(buildJob.Manifest) != 0 {
+					manifest = buildJob.Manifest
+				} else {
+					_, buildDeps, err := h.server.workers.OSBuildJobStatus(deps[i], &worker.OSBuildJobResult{})
+					if err != nil {
+						return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+					}
+					manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildDeps)
+					if err != nil {
+						return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
+					}
+					manifest = manifestResult.Manifest
+				}
+
+			default:
+				return HTTPErrorWithInternal(ErrorInvalidJobType,
+					fmt.Errorf("unexpected job type in koji compose dependencies: %q", buildJobType))
 			}
 			manifestBlobs = append(manifestBlobs, manifest)
 		}

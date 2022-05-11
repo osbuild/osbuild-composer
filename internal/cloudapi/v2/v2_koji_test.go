@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -34,7 +35,7 @@ func TestKojiCompose(t *testing.T) {
 
 	type kojiCase struct {
 		initResult       worker.KojiInitJobResult
-		buildResult      worker.OSBuildKojiJobResult
+		buildResult      worker.OSBuildJobResult
 		finalizeResult   worker.KojiFinalizeJobResult
 		composeReplyCode int
 		composeReply     string
@@ -48,11 +49,13 @@ func TestKojiCompose(t *testing.T) {
 				BuildID: 42,
 				Token:   `"foobar"`,
 			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
+			buildResult: worker.OSBuildJobResult{
+				Arch:   test_distro.TestArchName,
+				HostOS: test_distro.TestDistroName,
+				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+					ImageMD5:  "browns",
+					ImageSize: 42,
+				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
@@ -83,11 +86,13 @@ func TestKojiCompose(t *testing.T) {
 			initResult: worker.KojiInitJobResult{
 				KojiError: "failure",
 			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
+			buildResult: worker.OSBuildJobResult{
+				Arch:   test_distro.TestArchName,
+				HostOS: test_distro.TestDistroName,
+				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+					ImageMD5:  "browns",
+					ImageSize: 42,
+				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
@@ -118,11 +123,13 @@ func TestKojiCompose(t *testing.T) {
 					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, "Koji init error"),
 				},
 			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
+			buildResult: worker.OSBuildJobResult{
+				Arch:   test_distro.TestArchName,
+				HostOS: test_distro.TestDistroName,
+				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+					ImageMD5:  "browns",
+					ImageSize: 42,
+				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
@@ -152,11 +159,13 @@ func TestKojiCompose(t *testing.T) {
 				BuildID: 42,
 				Token:   `"foobar"`,
 			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
+			buildResult: worker.OSBuildJobResult{
+				Arch:   test_distro.TestArchName,
+				HostOS: test_distro.TestDistroName,
+				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+					ImageMD5:  "browns",
+					ImageSize: 42,
+				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: false,
 				},
@@ -188,58 +197,13 @@ func TestKojiCompose(t *testing.T) {
 				BuildID: 42,
 				Token:   `"foobar"`,
 			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
-				OSBuildOutput: &osbuild.Result{
-					Success: true,
-				},
-				KojiError: "failure",
-			},
-			composeReplyCode: http.StatusCreated,
-			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
-			composeStatus: `{
-				"kind": "ComposeStatus",
-				"image_status": {
-					"status": "failure",
-					"error": {
-						"details": null,
-						"id": 18,
-						"reason": "failure"
-					}
-				},
-				"image_statuses": [
-					{
-						"status": "failure",
-						"error": {
-							"details": null,
-							"id": 18,
-							"reason": "failure"
-						}
-					},
-					{
-						"status": "success"
-					}
-				],
-				"koji_status": {
-					"build_id": 42
-				},
-				"status": "failure"
-			}`,
-		},
-		// #5
-		{
-			initResult: worker.KojiInitJobResult{
-				BuildID: 42,
-				Token:   `"foobar"`,
-			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
+			buildResult: worker.OSBuildJobResult{
+				Arch:   test_distro.TestArchName,
+				HostOS: test_distro.TestDistroName,
+				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+					ImageMD5:  "browns",
+					ImageSize: 42,
+				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
@@ -278,17 +242,19 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
-		// #6
+		// #5
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
 				Token:   `"foobar"`,
 			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
+			buildResult: worker.OSBuildJobResult{
+				Arch:   test_distro.TestArchName,
+				HostOS: test_distro.TestDistroName,
+				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+					ImageMD5:  "browns",
+					ImageSize: 42,
+				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
@@ -317,17 +283,19 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
-		// #7
+		// #6
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
 				Token:   `"foobar"`,
 			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
+			buildResult: worker.OSBuildJobResult{
+				Arch:   test_distro.TestArchName,
+				HostOS: test_distro.TestDistroName,
+				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+					ImageMD5:  "browns",
+					ImageSize: 42,
+				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
@@ -358,17 +326,19 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
-		// #8
+		// #7
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
 				Token:   `"foobar"`,
 			},
-			buildResult: worker.OSBuildKojiJobResult{
-				Arch:      test_distro.TestArchName,
-				HostOS:    test_distro.TestDistroName,
-				ImageHash: "browns",
-				ImageSize: 42,
+			buildResult: worker.OSBuildJobResult{
+				Arch:   test_distro.TestArchName,
+				HostOS: test_distro.TestDistroName,
+				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
+					ImageMD5:  "browns",
+					ImageSize: 42,
+				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
@@ -497,16 +467,17 @@ func TestKojiCompose(t *testing.T) {
 
 			// handle build jobs
 			for i := 0; i < len(buildJobIDs); i++ {
-				jobID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuildKoji}, []string{""})
+				jobID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
 				require.NoError(t, err)
-				require.Equal(t, worker.JobTypeOSBuildKoji, jobType)
+				require.Equal(t, worker.JobTypeOSBuild, jobType)
 
-				var osbuildJob worker.OSBuildKojiJob
+				var osbuildJob worker.OSBuildJob
 				err = json.Unmarshal(rawJob, &osbuildJob)
 				require.NoError(t, err)
-				require.Equal(t, "koji.example.com", osbuildJob.KojiServer)
+				jobTarget := osbuildJob.Targets[0].Options.(*target.KojiTargetOptions)
+				require.Equal(t, "koji.example.com", jobTarget.Server)
 				require.Equal(t, "test.img", osbuildJob.ImageName)
-				require.NotEmpty(t, osbuildJob.KojiDirectory)
+				require.NotEmpty(t, jobTarget.UploadDirectory)
 
 				var buildJobResult string
 				switch jobID {
@@ -618,16 +589,18 @@ func TestKojiJobTypeValidation(t *testing.T) {
 	manifest, err := json.Marshal(osbuild2.Manifest{})
 	require.NoErrorf(t, err, "error marshalling empty Manifest to JSON")
 
-	buildJobs := make([]worker.OSBuildKojiJob, nImages)
+	buildJobs := make([]worker.OSBuildJob, nImages)
 	buildJobIDs := make([]uuid.UUID, nImages)
 	filenames := make([]string, nImages)
 	for idx := 0; idx < nImages; idx++ {
 		fname := fmt.Sprintf("image-file-%04d", idx)
-		buildJob := worker.OSBuildKojiJob{
-			ImageName:     fmt.Sprintf("build-job-%04d", idx),
-			KojiServer:    "test-server",
-			KojiDirectory: "koji-server-test-dir",
-			KojiFilename:  fname,
+		buildJob := worker.OSBuildJob{
+			ImageName: fmt.Sprintf("build-job-%04d", idx),
+			Targets: []*target.Target{target.NewKojiTarget(&target.KojiTargetOptions{
+				Server:          "test-server",
+				UploadDirectory: "koji-server-test-dir",
+				Filename:        fname,
+			})},
 			// Add an empty manifest as a static job argument to make the test pass.
 			// Becasue of a bug in the API, the test was passing even without
 			// any manifest being attached to the job (static or dynamic).
@@ -635,7 +608,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 			// TODO: use dependent depsolve and manifests jobs instead
 			Manifest: manifest,
 		}
-		buildID, err := workers.EnqueueOSBuildKoji(fmt.Sprintf("fake-arch-%d", idx), &buildJob, initID, "")
+		buildID, err := workers.EnqueueOSBuildAsDependency(fmt.Sprintf("fake-arch-%d", idx), &buildJob, []uuid.UUID{initID}, "")
 		require.NoError(t, err)
 
 		buildJobs[idx] = buildJob
@@ -669,7 +642,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s%s", initID, path), ``, http.StatusNotFound, `{"code":"IMAGE-BUILDER-COMPOSER-26","href":"/api/image-builder-composer/v2/errors/26","id":"26","kind":"Error","reason":"Requested job has invalid type"}`, `operation_id`)
 
 		for _, buildID := range buildJobIDs {
-			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s%s", buildID, path), ``, http.StatusNotFound, `{"code":"IMAGE-BUILDER-COMPOSER-26","href":"/api/image-builder-composer/v2/errors/26","id":"26","kind":"Error","reason":"Requested job has invalid type"}`, `operation_id`)
+			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s%s", buildID, path), ``, http.StatusOK, "*")
 		}
 
 		badID := uuid.New()
