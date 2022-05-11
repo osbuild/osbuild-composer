@@ -153,7 +153,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 			Build:   ir.imageType.BuildPipelines(),
 			Payload: ir.imageType.PayloadPipelines(),
 		},
-	}, manifestJobID, channel)
+	}, []uuid.UUID{manifestJobID}, channel)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
