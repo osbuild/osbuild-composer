@@ -104,8 +104,8 @@ func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob, channel string) (u
 	return s.enqueue("osbuild:"+arch, job, nil, channel)
 }
 
-func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, manifestID uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue("osbuild:"+arch, job, []uuid.UUID{manifestID}, channel)
+func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue("osbuild:"+arch, job, dependencies, channel)
 }
 
 func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID, channel string) (uuid.UUID, error) {
