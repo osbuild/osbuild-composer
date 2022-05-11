@@ -45,8 +45,8 @@ require (
 	github.com/vmware/govmomi v0.28.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
-	google.golang.org/api v0.75.0
-	google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
+	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6
+	google.golang.org/api v0.79.0
+	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3
 	gopkg.in/ini.v1 v1.66.4
 )
