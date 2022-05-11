@@ -56,12 +56,10 @@ const DefaultUploadThreads = 16
 // UploadPageBlob takes the metadata and credentials required to upload the image specified by `fileName`
 // It can speed up the upload by using goroutines. The number of parallel goroutines is bounded by
 // the `threads` argument.
+//
+// Note that if you want to create an image out of the page blob, make sure that metadata.BlobName
+// has a .vhd extension, see EnsureVHDExtension.
 func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, threads int) error {
-	// Azure cannot create an image from a storage blob without .vhd extension
-	if !strings.HasSuffix(metadata.BlobName, ".vhd") {
-		metadata.BlobName = metadata.BlobName + ".vhd"
-	}
-
 	// get storage account blob service URL endpoint.
 	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", metadata.StorageAccount, metadata.ContainerName))
 
@@ -204,4 +202,14 @@ func RandomStorageAccountName(prefix string) string {
 	id = strings.ReplaceAll(id, "-", "")
 
 	return (prefix + id)[:24]
+}
+
+// EnsureVHDExtension returns the given string with .vhd suffix if it already
+// doesn't have one.
+func EnsureVHDExtension(s string) string {
+	if strings.HasSuffix(s, ".vhd") {
+		return s
+	}
+
+	return s + ".vhd"
 }

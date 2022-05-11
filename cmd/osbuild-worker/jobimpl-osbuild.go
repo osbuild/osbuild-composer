@@ -527,10 +527,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return err
 			}
 
+			// Azure cannot create an image from a blob without .vhd extension
+			blobName := azure.EnsureVHDExtension(args.Targets[0].ImageName)
 			metadata := azure.BlobMetadata{
 				StorageAccount: options.StorageAccount,
 				ContainerName:  options.Container,
-				BlobName:       args.Targets[0].ImageName,
+				BlobName:       blobName,
 			}
 
 			const azureMaxUploadGoroutines = 4
@@ -677,10 +679,8 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			blobName := args.Targets[0].ImageName
-			if !strings.HasSuffix(blobName, ".vhd") {
-				blobName += ".vhd"
-			}
+			// Azure cannot create an image from a blob without .vhd extension
+			blobName := azure.EnsureVHDExtension(args.Targets[0].ImageName)
 
 			logWithId.Info("[Azure] ⬆ Uploading the image")
 			err = azureStorageClient.UploadPageBlob(

@@ -43,10 +43,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	blobName := azure.EnsureVHDExtension(path.Base(fileName))
+
 	err = c.UploadPageBlob(
 		azure.BlobMetadata{
 			StorageAccount: storageAccount,
-			BlobName:       path.Base(fileName),
+			BlobName:       blobName,
 			ContainerName:  containerName,
 		},
 		fileName,
