@@ -148,6 +148,9 @@ objects:
           emptyDir: {}
         - name: cache-directory
           emptyDir: {}
+        - name: fluentd-config
+          configMap:
+            name: fluentd-config
         initContainers:
         - name: composer-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"
