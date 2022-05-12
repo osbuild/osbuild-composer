@@ -189,7 +189,7 @@ objects:
   metadata:
     name: image-builder
   imagePullSecrets:
-  - name: default-dockercfg-8bg88
+  - name: quay.io
 
 - apiVersion: v1
   kind: Service
