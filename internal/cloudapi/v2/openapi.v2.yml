@@ -893,23 +893,21 @@ components:
           type: boolean
           example: true
     User:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - type: object
-        required:
-          - name
-        properties:
-          name:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "user1"
+        groups:
+          type: array
+          items:
             type: string
-            example: "user1"
-          groups:
-            type: array
-            items:
-              type: string
-              example: "group1"
-          key:
-            type: string
-            example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
+            example: "group1"
+        key:
+          type: string
+          example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
     Koji:
       type: object
       required:
