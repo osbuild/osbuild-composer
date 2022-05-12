@@ -111,7 +111,7 @@ objects:
             mountPath: "/var/lib/osbuild-composer"
           - name: cache-directory
             mountPath: "/var/cache/osbuild-composer"
-        - image: "fluentd-hec:1.2.13"
+        - image: "quay.io/app-sre/fluentd-hec:1.2.13"
           name: fluentd-sidecar
           resources:
             requests:
