@@ -20,13 +20,13 @@ const (
 	ErrorInvalidConfig        ClientErrorCode = 17
 	ErrorOldResultCompatible  ClientErrorCode = 18
 	ErrorEmptyManifest        ClientErrorCode = 19
-
-	ErrorDNFDepsolveError  ClientErrorCode = 20
-	ErrorDNFMarkingErrors  ClientErrorCode = 21
-	ErrorDNFOtherError     ClientErrorCode = 22
-	ErrorRPMMDError        ClientErrorCode = 23
-	ErrorEmptyPackageSpecs ClientErrorCode = 24
-	ErrorDNFRepoError      ClientErrorCode = 25
+	ErrorDNFDepsolveError     ClientErrorCode = 20
+	ErrorDNFMarkingErrors     ClientErrorCode = 21
+	ErrorDNFOtherError        ClientErrorCode = 22
+	ErrorRPMMDError           ClientErrorCode = 23
+	ErrorEmptyPackageSpecs    ClientErrorCode = 24
+	ErrorDNFRepoError         ClientErrorCode = 25
+	ErrorJobDependency        ClientErrorCode = 26
 )
 
 type ClientErrorCode int
@@ -72,6 +72,8 @@ func GetStatusCode(err *Error) StatusCode {
 		return JobStatusUserInputError
 	case ErrorManifestDependency:
 		return JobStatusUserInputError
+	case ErrorJobDependency:
+		return JobStatusUserInputError
 	case ErrorEmptyPackageSpecs:
 		return JobStatusUserInputError
 	case ErrorEmptyManifest:
@@ -86,6 +88,8 @@ func (e *Error) HasDependencyError() bool {
 	case ErrorDepsolveDependency:
 		return true
 	case ErrorManifestDependency:
+		return true
+	case ErrorJobDependency:
 		return true
 	default:
 		return false

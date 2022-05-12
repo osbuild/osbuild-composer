@@ -310,6 +310,23 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			return nil
 		}
 	}
+
+	// Explicitly check that none of the job dependencies failed.
+	// This covers mainly the case when there are more than one job dependencies.
+	for idx := 0; idx < job.NDynamicArgs(); idx++ {
+		var jobResult worker.JobResult
+		err = job.DynamicArgs(idx, &jobResult)
+		if err != nil {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args")
+			return err
+		}
+
+		if jobResult.JobError != nil {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorJobDependency, "Job dependency failed")
+			return nil
+		}
+	}
+
 	// copy pipeline info to the result
 	osbuildJobResult.PipelineNames = args.PipelineNames
 
