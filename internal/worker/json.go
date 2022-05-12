@@ -16,9 +16,11 @@ import (
 //
 
 type OSBuildJob struct {
-	Manifest  distro.Manifest  `json:"manifest,omitempty"`
-	Targets   []*target.Target `json:"targets,omitempty"`
-	ImageName string           `json:"image_name,omitempty"`
+	Manifest distro.Manifest `json:"manifest,omitempty"`
+	// Index of the ManifestJobByIDResult instance in the job's dynamic arguments slice
+	ManifestDynArgsIdx *int             `json:"manifest_dyn_args_idx,omitempty"`
+	Targets            []*target.Target `json:"targets,omitempty"`
+	ImageName          string           `json:"image_name,omitempty"`
 
 	// TODO: Delete this after "some" time (kept for backward compatibility)
 	StreamOptimized bool `json:"stream_optimized,omitempty"`
