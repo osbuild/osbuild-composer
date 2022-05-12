@@ -281,7 +281,17 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	if len(args.Manifest) == 0 {
 		if job.NDynamicArgs() > 0 {
 			var manifestJR worker.ManifestJobByIDResult
-			err = job.DynamicArgs(0, &manifestJR)
+			if job.NDynamicArgs() == 1 {
+				// Classic case of a compose request with the ManifestJobByID job as the single dependency
+				err = job.DynamicArgs(0, &manifestJR)
+			} else if job.NDynamicArgs() > 1 && args.ManifestDynArgsIdx != nil {
+				// Case when the job has multiple dependencies, but the manifest is not part of the static job arguments,
+				// but rather in the dynamic arguments (e.g. from ManifestJobByID job).
+				if *args.ManifestDynArgsIdx > job.NDynamicArgs()-1 {
+					panic("ManifestDynArgsIdx is out of range of the number of dynamic job arguments")
+				}
+				err = job.DynamicArgs(*args.ManifestDynArgsIdx, &manifestJR)
+			}
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args")
 				return err
@@ -293,11 +303,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 			args.Manifest = manifestJR.Manifest
-			if len(args.Manifest) == 0 {
-				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyManifest, "Received empty manifest")
-				return nil
-			}
-		} else {
+		}
+
+		if len(args.Manifest) == 0 {
 			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyManifest, "Job has no manifest")
 			return nil
 		}
