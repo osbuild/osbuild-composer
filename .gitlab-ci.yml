@@ -452,13 +452,19 @@ cross-distro.sh:
   variables:
     SCRIPT: cross-distro.sh
 
+oci.sh:
+  extends: .integration
+  variables:
+    SCRIPT: oci.sh
+
 .API_TESTS: &API_TESTS
   IMAGE_TYPE:
-    - aws
-    - azure
-    - edge-commit
-    - gcp
-    - vsphere
+    #    - aws
+    #- azure
+    #- edge-commit
+    #- gcp
+    #- vsphere
+    - oci
 
 API:
   stage: test
@@ -475,8 +481,8 @@ API:
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-nightly-x86_64
+         # - aws/rhel-8.6-nightly-x86_64
+         # - aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["edge-commit"]
         RUNNER:
