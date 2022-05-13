@@ -594,6 +594,10 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewYumReposStage(yumRepo))
 	}
 
+	if udevRules := imageConfig.UdevRules; udevRules != nil {
+		p.AddStage(osbuild.NewUdevRulesStage(udevRules))
+	}
+
 	if pt != nil {
 		kernelOptions := osbuild.GenImageKernelOptions(pt)
 		if t.kernelOptions != "" {

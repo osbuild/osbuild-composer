@@ -602,6 +602,10 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewYumReposStage(yumRepo))
 	}
 
+	if udevRules := imageConfig.UdevRules; udevRules != nil {
+		p.AddStage(osbuild.NewUdevRulesStage(udevRules))
+	}
+
 	if pt != nil {
 		p = prependKernelCmdlineStage(p, t, pt)
 		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
