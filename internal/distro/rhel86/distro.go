@@ -1025,6 +1025,26 @@ func newDistro(distroName string) distro.Distro {
 				Serial:         "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
 				Timeout:        10,
 			},
+			UdevRules: &osbuild.UdevRulesStageOptions{
+				Filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
+				Rules: osbuild.UdevRules{
+					osbuild.UdevRuleComment{
+						Comment: []string{
+							"Accelerated Networking on Azure exposes a new SRIOV interface to the VM.",
+							"This interface is transparently bonded to the synthetic interface,",
+							"so NetworkManager should just ignore any SRIOV interfaces.",
+						},
+					},
+					osbuild.NewUdevRule(
+						[]osbuild.UdevKV{
+							{K: "SUBSYSTEM", O: "==", V: "net"},
+							{K: "DRIVERS", O: "==", V: "hv_pci"},
+							{K: "ACTION", O: "==", V: "add"},
+							{K: "ENV", A: "NM_UNMANAGED", O: "=", V: "1"},
+						},
+					),
+				},
+			},
 			DefaultTarget: "multi-user.target",
 		},
 		kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300",

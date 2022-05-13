@@ -5,29 +5,29 @@ import (
 	"regexp"
 )
 
-type OpType int
+type udevOpType int
 
 const (
-	OpMatch  OpType = 0
-	OpAssign OpType = 1
+	udevOpMatch  udevOpType = 0
+	udevOpAssign udevOpType = 1
 )
 
-var ops = map[string]OpType{
-	"=":  OpAssign,
-	"+=": OpAssign,
-	"-=": OpAssign,
-	":=": OpAssign,
-	"==": OpMatch,
-	"!=": OpMatch,
+var ops = map[string]udevOpType{
+	"=":  udevOpAssign,
+	"+=": udevOpAssign,
+	"-=": udevOpAssign,
+	":=": udevOpAssign,
+	"==": udevOpMatch,
+	"!=": udevOpMatch,
 }
 
-type KeyType struct {
+type udevKeyType struct {
 	Arg    bool
 	Assign bool
 	Match  bool
 }
 
-var keys = map[string]KeyType{
+var keys = map[string]udevKeyType{
 	"ACTION":     {Match: true},
 	"DEVPATH":    {Match: true},
 	"KERNEL":     {Match: true},
@@ -62,7 +62,7 @@ var keys = map[string]KeyType{
 	"IMPORT":   {Arg: true, Assign: true},
 }
 
-func validate_op(key, op, val, arg string) error {
+func udevOpValidate(key, op, val, arg string) error {
 	if key == "" {
 		return fmt.Errorf("key is required")
 	}
@@ -89,8 +89,8 @@ func validate_op(key, op, val, arg string) error {
 		return fmt.Errorf("'%s' operator is not supported", op)
 	}
 
-	if (opType == OpMatch && !keyInfo.Match) ||
-		(opType == OpAssign && !keyInfo.Assign) {
+	if (opType == udevOpMatch && !keyInfo.Match) ||
+		(opType == udevOpAssign && !keyInfo.Assign) {
 		return fmt.Errorf("key '%s' does not support '%s'", key, op)
 	}
 
@@ -182,7 +182,7 @@ type UdevOpSimple struct {
 }
 
 func (o UdevOpSimple) validate() error {
-	err := validate_op(o.Key, o.Op, o.Value, "")
+	err := udevOpValidate(o.Key, o.Op, o.Value, "")
 	if err != nil {
 		err = fmt.Errorf("invalid op: %v", err)
 	}
@@ -201,7 +201,7 @@ type UdevOpArg struct {
 func (UdevOpArg) isUdevOp() {}
 
 func (o UdevOpArg) validate() error {
-	err := validate_op(o.Key.Name, o.Op, o.Value, o.Key.Arg)
+	err := udevOpValidate(o.Key.Name, o.Op, o.Value, o.Key.Arg)
 	if err != nil {
 		err = fmt.Errorf("invalid op: %v", err)
 	}

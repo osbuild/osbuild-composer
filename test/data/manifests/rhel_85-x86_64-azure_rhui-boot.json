@@ -2865,6 +2865,46 @@
             }
           },
           {
+            "type": "org.osbuild.udev.rules",
+            "options": {
+              "filename": "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
+              "rules": [
+                {
+                  "comment": [
+                    "Accelerated Networking on Azure exposes a new SRIOV interface to the VM.",
+                    "This interface is transparently bonded to the synthetic interface,",
+                    "so NetworkManager should just ignore any SRIOV interfaces."
+                  ]
+                },
+                [
+                  {
+                    "key": "SUBSYSTEM",
+                    "op": "==",
+                    "val": "net"
+                  },
+                  {
+                    "key": "DRIVERS",
+                    "op": "==",
+                    "val": "hv_pci"
+                  },
+                  {
+                    "key": "ACTION",
+                    "op": "==",
+                    "val": "add"
+                  },
+                  {
+                    "key": {
+                      "name": "ENV",
+                      "arg": "NM_UNMANAGED"
+                    },
+                    "op": "=",
+                    "val": "1"
+                  }
+                ]
+              ]
+            }
+          },
+          {
             "type": "org.osbuild.fstab",
             "options": {
               "filesystems": [
