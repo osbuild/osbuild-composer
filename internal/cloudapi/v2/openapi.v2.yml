@@ -686,11 +686,17 @@ components:
             Naming package sets for a repository assigns it to a specific part
             (pipeline) of the build process.
     UploadOptions:
-      oneOf:
+      anyOf:
       - $ref: '#/components/schemas/AWSEC2UploadOptions'
       - $ref: '#/components/schemas/AWSS3UploadOptions'
       - $ref: '#/components/schemas/GCPUploadOptions'
       - $ref: '#/components/schemas/AzureUploadOptions'
+      description: |
+        This should really be oneOf but AWSS3UploadOptions is a subset of
+        AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
+        are also valid AWSS3UploadOptionas objects which violates the oneOf
+        rules. Therefore, we have to use anyOf here but be aware that it isn't
+        possible to mix and match more schemas together.
     AWSEC2UploadOptions:
       type: object
       required:
