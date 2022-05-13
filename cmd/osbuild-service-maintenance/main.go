@@ -26,6 +26,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	maxCReqs, err := strconv.Atoi(conf.MaxConcurrentRequests)
 	if err != nil {
 		panic(err)
@@ -43,6 +44,11 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		if !conf.EnableAWSMaintenance {
+			logrus.Info("AWS maintenance not enabled, skipping")
+			return
+		}
+
 		logrus.Info("Cleaning up AWS")
 		err := AWSCleanup(maxCReqs, dryRun, conf.AWSAccessKeyID, conf.AWSSecretAccessKey, "us-east-1", cutoff)
 		if err != nil {
@@ -53,6 +59,11 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		if !conf.EnableGCPMaintenance {
+			logrus.Info("GCP maintenance not enabled, skipping")
+			return
+		}
+
 		logrus.Info("Cleaning up GCP")
 		var gcpConf GCPCredentialsConfig
 		err := LoadConfigFromEnv(&gcpConf)
@@ -81,8 +92,8 @@ func main() {
 	wg.Wait()
 	logrus.Info("🦀🦀🦀 cloud cleanup done 🦀🦀🦀")
 
-	if conf.PGHost == "" {
-		logrus.Info("🦀🦀🦀 db host not defined, skipping db cleanup 🦀🦀🦀")
+	if !conf.EnableDBMaintenance {
+		logrus.Info("🦀🦀🦀 DB maintenance not enabled, skipping  🦀🦀🦀")
 		return
 	}
 

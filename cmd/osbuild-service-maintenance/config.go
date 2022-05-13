@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
 )
 
 // Do not write this config to logs or stdout, it contains secrets!
 type Config struct {
 	DryRun                string `env:"DRY_RUN"`
 	MaxConcurrentRequests string `env:"MAX_CONCURRENT_REQUESTS"`
+	EnableDBMaintenance   bool   `env:"ENABLE_DB_MAINTENANCE"`
+	EnableGCPMaintenance  bool   `env:"ENABLE_GCP_MAINTENANCE"`
+	EnableAWSMaintenance  bool   `env:"ENABLE_AWS_MAINTENANCE"`
 	PGHost                string `env:"PGHOST"`
 	PGPort                string `env:"PGPORT"`
 	PGDatabase            string `env:"PGDATABASE"`
@@ -51,13 +55,14 @@ func LoadConfigFromEnv(intf interface{}) error {
 		kind := fieldV.Kind()
 		if ok {
 			switch kind {
-			case reflect.Ptr:
-				if fieldT.Type.Elem().Kind() != reflect.String {
-					return fmt.Errorf("Unsupported type")
-				}
-				fieldV.Set(reflect.ValueOf(&confV))
 			case reflect.String:
 				fieldV.SetString(confV)
+			case reflect.Bool:
+				value, err := strconv.ParseBool(confV)
+				if err != nil {
+					return err
+				}
+				fieldV.SetBool(value)
 			default:
 				return fmt.Errorf("Unsupported type")
 			}
