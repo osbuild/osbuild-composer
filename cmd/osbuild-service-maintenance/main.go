@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -24,20 +23,15 @@ func main() {
 	var conf Config
 	err := LoadConfigFromEnv(&conf)
 	if err != nil {
-		panic(err)
+		logrus.Fatal(err)
 	}
 
-	maxCReqs, err := strconv.Atoi(conf.MaxConcurrentRequests)
-	if err != nil {
-		panic(err)
-	}
-	dryRun, err := strconv.ParseBool(conf.DryRun)
-	if err != nil {
-		panic(err)
-	}
-
-	if dryRun {
+	if conf.DryRun {
 		logrus.Info("Dry run, no state will be changed")
+	}
+
+	if conf.MaxConcurrentRequests == 0 {
+		logrus.Fatal("Max concurrent requests is 0")
 	}
 
 	var wg sync.WaitGroup
@@ -50,7 +44,7 @@ func main() {
 		}
 
 		logrus.Info("Cleaning up AWS")
-		err := AWSCleanup(maxCReqs, dryRun, conf.AWSAccessKeyID, conf.AWSSecretAccessKey, "us-east-1", cutoff)
+		err := AWSCleanup(conf.MaxConcurrentRequests, conf.DryRun, conf.AWSAccessKeyID, conf.AWSSecretAccessKey, "us-east-1", cutoff)
 		if err != nil {
 			logrus.Errorf("AWS cleanup failed: %v", err)
 		}
@@ -83,7 +77,7 @@ func main() {
 			return
 		}
 
-		err = GCPCleanup(creds, maxCReqs, dryRun, cutoff)
+		err = GCPCleanup(creds, conf.MaxConcurrentRequests, conf.DryRun, cutoff)
 		if err != nil {
 			logrus.Errorf("GCP Cleanup failed: %v", err)
 		}
@@ -123,7 +117,7 @@ func main() {
 
 	for k, v := range jobsByType {
 		logrus.Infof("Deleting jobs and their dependencies of type %v", k)
-		if dryRun {
+		if conf.DryRun {
 			logrus.Infof("Dry run, skipping deletion of jobs: %v", v)
 			continue
 		}

@@ -9,8 +9,8 @@ import (
 
 // Do not write this config to logs or stdout, it contains secrets!
 type Config struct {
-	DryRun                string `env:"DRY_RUN"`
-	MaxConcurrentRequests string `env:"MAX_CONCURRENT_REQUESTS"`
+	DryRun                bool   `env:"DRY_RUN"`
+	MaxConcurrentRequests int    `env:"MAX_CONCURRENT_REQUESTS"`
 	EnableDBMaintenance   bool   `env:"ENABLE_DB_MAINTENANCE"`
 	EnableGCPMaintenance  bool   `env:"ENABLE_GCP_MAINTENANCE"`
 	EnableAWSMaintenance  bool   `env:"ENABLE_AWS_MAINTENANCE"`
@@ -57,6 +57,12 @@ func LoadConfigFromEnv(intf interface{}) error {
 			switch kind {
 			case reflect.String:
 				fieldV.SetString(confV)
+			case reflect.Int:
+				value, err := strconv.ParseInt(confV, 10, 64)
+				if err != nil {
+					return err
+				}
+				fieldV.SetInt(value)
 			case reflect.Bool:
 				value, err := strconv.ParseBool(confV)
 				if err != nil {
