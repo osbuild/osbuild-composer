@@ -368,6 +368,12 @@ objects:
                     key: secret_access_key
               - name: DRY_RUN
                 value: "${MAINTENANCE_DRY_RUN}"
+              - name: ENABLE_AWS_MAINTENANCE
+                value: "${ENABLE_AWS_MAINTENANCE}"
+              - name: ENABLE_GCP_MAINTENANCE
+                value: "${ENABLE_GCP_MAINTENANCE}"
+              - name: ENABLE_DB_MAINTENANCE
+                value: "${ENABLE_DB_MAINTENANCE}"
               - name: MAX_CONCURRENT_REQUESTS
                 value: "${MAINTENANCE_MAX_CONCURRENT_REQUESTS}"
 
@@ -439,6 +445,21 @@ parameters:
     name: MAINTENANCE_DRY_RUN
     # don't change this value, overwrite it in app-interface for a specific namespace
     value: "true"
+    required: true
+  - description: Enable AWS maintenance
+    name: ENABLE_AWS_MAINTENANCE
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "false"
+    required: true
+  - description: Enable GPC maintenance
+    name: ENABLE_GCP_MAINTENANCE
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "false"
+    required: true
+  - description: Enable DB maintenance
+    name: ENABLE_DB_MAINTENANCE
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "false"
     required: true
   - description: composer-maintenance max concurrent requests
     name: MAINTENANCE_MAX_CONCURRENT_REQUESTS
