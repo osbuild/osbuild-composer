@@ -41,7 +41,7 @@ jobs:
     name: "🐍 Lint (dnf-json)"
     runs-on: ubuntu-latest
     container:
-      image: docker.io/library/fedora:latest
+      image: docker.io/library/fedora:35
     steps:
     - uses: actions/checkout@v2.4.0
     - name: Install dependencies
