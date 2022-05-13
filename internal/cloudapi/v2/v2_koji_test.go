@@ -419,7 +419,8 @@ func TestKojiCompose(t *testing.T) {
 				"server": "koji.example.com",
 				"name":"foo",
 				"version":"1",
-				"release":"2"
+				"release":"2",
+				"task_id": 42
 			}
 		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage)),
 			c.composeReplyCode, c.composeReply, "id", "operation_id")
