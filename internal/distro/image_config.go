@@ -46,6 +46,7 @@ type ImageConfig struct {
 	DNFAutomaticConfig *osbuild2.DNFAutomaticConfigStageOptions
 	YUMRepos           []*osbuild2.YumReposStageOptions
 	Firewall           *osbuild2.FirewallStageOptions
+	UdevRules          *osbuild2.UdevRulesStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -136,6 +137,9 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.Firewall == nil {
 			finalConfig.Firewall = parentConfig.Firewall
+		}
+		if finalConfig.UdevRules == nil {
+			finalConfig.UdevRules = parentConfig.UdevRules
 		}
 	}
 	return &finalConfig
