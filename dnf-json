@@ -5,7 +5,6 @@
 A JSON-based interface for depsolving using DNF.
 
 Reads a request through stdin and prints the result to stdout.
-Status messages are always printed to stderr.
 In case of error, a structured error is printed to stdout as well.
 """
 
@@ -234,10 +233,8 @@ def solve(request, cache_dir):
             )
             if command == "dump":
                 result = solver.dump()
-                printe("dump success")
             elif command == "depsolve":
                 result = solver.depsolve(transactions)
-                printe("depsolve success")
 
         except dnf.exceptions.MarkingErrors as e:
             printe("error install_specs")
