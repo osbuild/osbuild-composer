@@ -16,7 +16,7 @@ if [ "$ARCH" != "x86_64" ] || [ "$ID" != rhel ] || ! sudo subscription-manager s
     exit 0
 fi
 
-# Provision the software under test.                                                                                                                                                                              
+# Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
 function get_build_info() {
