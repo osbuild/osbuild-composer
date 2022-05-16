@@ -1388,11 +1388,14 @@ function verifyInGCP() {
   # resource ID can have max 62 characters, the $GCP_TEST_ID_HASH contains 56 characters
   GCP_INSTANCE_NAME="vm-$GCP_TEST_ID_HASH"
 
+  # Ensure that we use random GCP region with available 'IN_USE_ADDRESSES' quota
+  # We use the CI variable "GCP_REGION" as the base for expression to filter regions.
+  # It works best if the "GCP_REGION" is set to a storage multi-region, such as "us"
+  local GCP_COMPUTE_REGION
+  GCP_COMPUTE_REGION=$($GCP_CMD compute regions list --filter="name:$GCP_REGION* AND status=UP" | jq -r '.[] | select(.quotas[] as $quota | $quota.metric == "IN_USE_ADDRESSES" and $quota.limit > $quota.usage) | .name' | shuf -n1)
+
   # Randomize the used GCP zone to prevent hitting "exhausted resources" error on each test re-run
-  # disable Shellcheck error as the suggested alternatives are less readable for this use case
-  # shellcheck disable=SC2207
-  local GCP_ZONES=($($GCP_CMD compute zones list --filter="region=$GCP_REGION" | jq '.[] | select(.status == "UP") | .name' | tr -d '"' | tr '\n' ' '))
-  GCP_ZONE=${GCP_ZONES[$((RANDOM % ${#GCP_ZONES[@]}))]}
+  GCP_ZONE=$($GCP_CMD compute zones list --filter="region=$GCP_COMPUTE_REGION AND status=UP" | jq -r '.[].name' | shuf -n1)
 
   $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
     --zone="$GCP_ZONE" \
