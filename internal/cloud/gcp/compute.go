@@ -7,6 +7,7 @@ import (
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 )
@@ -335,35 +336,20 @@ func (g *GCP) ComputeDiskDelete(ctx context.Context, zone, disk string) error {
 	return err
 }
 
-// ComputeZonesInRegion returns list of zones within the given GCE Region, which are "UP".
+// ComputeUpZonesInRegion returns list of zones within the given GCE Region, which are "UP".
 //
 // Uses:
 //  - Compute Engine API
-func (g *GCP) ComputeZonesInRegion(ctx context.Context, region string) ([]string, error) {
-	var zones []string
+func (g *GCP) ComputeUpZonesInRegion(ctx context.Context, region *computepb.Region) ([]*computepb.Zone, error) {
+	var zones []*computepb.Zone
 
-	regionsClient, err := compute.NewRegionsRESTClient(ctx, option.WithCredentials(g.creds))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Compute Engine Regions client: %v", err)
-	}
-	defer regionsClient.Close()
 	zonesClient, err := compute.NewZonesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Compute Engine Zones client: %v", err)
 	}
 	defer zonesClient.Close()
 
-	// Get available zones in the given region
-	getRegionReq := &computepb.GetRegionRequest{
-		Project: g.GetProjectID(),
-		Region:  region,
-	}
-	regionObj, err := regionsClient.Get(ctx, getRegionReq)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get information about Compute Engine region '%s': %v", region, err)
-	}
-
-	for _, zoneURL := range regionObj.Zones {
+	for _, zoneURL := range region.Zones {
 		// zone URL example - "https://www.googleapis.com/compute/v1/projects/<PROJECT_ID>/zones/us-central1-a"
 		zoneNameSs := strings.Split(zoneURL, "/")
 		zoneName := zoneNameSs[len(zoneNameSs)-1]
@@ -372,16 +358,50 @@ func (g *GCP) ComputeZonesInRegion(ctx context.Context, region string) ([]string
 			Project: g.GetProjectID(),
 			Zone:    zoneName,
 		}
-		zoneObj, err := zonesClient.Get(ctx, getZoneReq)
+		zone, err := zonesClient.Get(ctx, getZoneReq)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get information about Compute Engine zone '%s': %v", zoneName, err)
 		}
 
 		// Make sure to return only Zones, which can be used
-		if zoneObj.GetStatus() == computepb.Zone_UP.String() {
-			zones = append(zones, zoneName)
+		if zone.GetStatus() == computepb.Zone_UP.String() {
+			zones = append(zones, zone)
 		}
 	}
 
 	return zones, nil
+}
+
+// ComputeRegionsList returns list of GCE regions based on the provided filter.
+//
+// Uses:
+//  - Compute Engine API
+func (g *GCP) ComputeRegionsList(ctx context.Context, filter string) ([]*computepb.Region, error) {
+	var regions []*computepb.Region
+
+	regionsClient, err := compute.NewRegionsRESTClient(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get GCE regions client: %v", err)
+	}
+	defer regionsClient.Close()
+
+	listRegionsReq := &computepb.ListRegionsRequest{
+		Project: g.GetProjectID(),
+		Filter:  common.StringToPtr(filter),
+	}
+	regionsIter := regionsClient.List(ctx, listRegionsReq)
+
+	for {
+		resp, err := regionsIter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error while iterating over GCE regions: %v", err)
+		}
+
+		regions = append(regions, resp)
+	}
+
+	return regions, nil
 }

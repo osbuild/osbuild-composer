@@ -22,7 +22,7 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 
 	log.Println("[GCP] Running clean up")
 
-	GCPRegion, ok := os.LookupEnv("GCP_REGION")
+	GCPRegionName, ok := os.LookupEnv("GCP_REGION")
 	if !ok {
 		log.Println("[GCP] Error: 'GCP_REGION' is not set in the environment.")
 		return
@@ -61,25 +61,31 @@ func cleanupGCP(testID string, wg *sync.WaitGroup) {
 	ctx := context.Background()
 
 	// Try to delete potentially running instance
-	// api.sh chooses a random GCP Zone from the set Region. Since we
-	// don't know which one it is, iterate over all Zones in the Region
-	// and try to delete the instance. Unless the instance has set
-	// "VmDnsSetting:ZonalOnly", which we don't do, this is safe and the
-	// instance name must be unique for the whole GCP project.
-	GCPZones, err := g.ComputeZonesInRegion(ctx, GCPRegion)
+	// api.sh chooses a random GCP Zone from regions which names start with the
+	// `GCPRegionName` value. Since we don't know which one it is, iterate over
+	// all Regions and Zones in them and try to delete the instance. Unless the
+	// instance has set "VmDnsSetting:ZonalOnly", which we don't do, this is
+	// safe and the instance name must be unique for the whole GCP project.
+	GCPRegions, err := g.ComputeRegionsList(ctx, fmt.Sprintf("name:%s* AND status=UP", GCPRegionName))
 	if err != nil {
-		log.Printf("[GCP] Error: Failed to get available Zones for the '%s' Region: %v", GCPRegion, err)
-		return
+		log.Printf("[GCP] Error: Failed to list GCE regions starting with %q: %v", GCPRegionName, err)
 	}
-	for _, GCPZone := range GCPZones {
-		log.Printf("[GCP] 🧹 Deleting VM instance %s in %s. "+
-			"This should fail if the test succeeded.", GCPInstance, GCPZone)
-		err = g.ComputeInstanceDelete(ctx, GCPZone, GCPInstance)
-		if err == nil {
-			// If an instance with the given name was successfully deleted in one of the Zones, we are done.
+	for _, GCPRegion := range GCPRegions {
+		GCPZones, err := g.ComputeUpZonesInRegion(ctx, GCPRegion)
+		if err != nil {
+			log.Printf("[GCP] Error: Failed to get available Zones for the '%s' Region: %v", GCPRegionName, err)
 			break
-		} else {
-			log.Printf("[GCP] Error: %v", err)
+		}
+		for _, GCPZone := range GCPZones {
+			log.Printf("[GCP] 🧹 Deleting VM instance %s in %s. "+
+				"This should fail if the test succeeded.", GCPInstance, GCPZone.GetName())
+			err = g.ComputeInstanceDelete(ctx, GCPZone.GetName(), GCPInstance)
+			if err == nil {
+				// If an instance with the given name was successfully deleted in one of the Zones, we are done.
+				break
+			} else {
+				log.Printf("[GCP] Error: %v", err)
+			}
 		}
 	}
 
