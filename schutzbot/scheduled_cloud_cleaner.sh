@@ -69,12 +69,8 @@ STORAGE_ACCOUNT_COUNT=$(echo "$STORAGE_ACCOUNT_LIST" | jq .[].name | wc -l)
 DELETE_TIME=$(date -d "- $HOURS_BACK hours" +%s)
 for i in $(seq 0 $(("$STORAGE_ACCOUNT_COUNT"-1))); do
     STORAGE_ACCOUNT_NAME=$(echo "$STORAGE_ACCOUNT_LIST" | jq .["$i"].name | tr -d '"')
-    if [ "$AZURE_STORAGE_ACCOUNT" = "$STORAGE_ACCOUNT_NAME" ]; then
-        echo "Not checking default storage account $AZURE_STORAGE_ACCOUNT in other storage account script."
-        continue
-    fi
-
     echo "Checking storage account $STORAGE_ACCOUNT_NAME for old blobs."
+    
     CONTAINER_LIST=$(az storage container list --account-name "$STORAGE_ACCOUNT_NAME")
     CONTAINER_COUNT=$(echo "$CONTAINER_LIST" | jq .[].name | wc -l)
     for i2 in $(seq 0 $(("$CONTAINER_COUNT"-1))); do
