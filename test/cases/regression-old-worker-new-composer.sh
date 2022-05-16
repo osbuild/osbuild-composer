@@ -1,16 +1,23 @@
 #!/bin/bash
 
-# Verify that an older worker (v33) is still compatible with this composer
+# Verify that an older worker (v51) is still compatible with this composer
 # version.
 #
 # Any tweaks to the worker api need to be backwards compatible.
 
 set -exuo pipefail
 
+# Colorful timestamped output.
+function greenprint {
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
+}
+
+ARTIFACTS=ci-artifacts
+mkdir -p "${ARTIFACTS}"
+
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-# Only run this on x86 and rhel8 GA; since the container is based on the ubi
-# container, and we use the weldr api
+# Only run this on x86 and rhel8 GA
 if [ "$ARCH" != "x86_64" ] || [ "$ID" != rhel ] || ! sudo subscription-manager status; then
     echo "Test only supported on GA RHEL."
     exit 0
@@ -19,24 +26,22 @@ fi
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
+WORKER_VERSION=67727d1e5cb3f1f86eafd890541381834d001743
+WORKER_RPM=osbuild-composer-worker-51-1.20220504git67727d1.el8.x86_64
 
-WORKER_VERSION=8f21f0b873420a38a261d78a7df130f28b8e2867
-WORKER_RPM=osbuild-composer-worker-33-1.20210830git8f21f0b.el8.x86_64
+# Container image used for cloud provider CLI tools
+CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 
-# grab the repos from the test rpms
+greenprint "Copying repository configs from test rpms"
 REPOS=$(mktemp -d)
 sudo dnf -y install osbuild-composer-tests
 sudo cp -a /usr/share/tests/osbuild-composer/repositories "$REPOS/repositories"
 
-# Remove the "new" worker
+greenprint "Stop and disable all services and sockets"
+sudo systemctl stop osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service osbuild-dnf-json.service osbuild-dnf-json.socket
+sudo systemctl disable osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service osbuild-dnf-json.service osbuild-dnf-json.socket
+
+greenprint "Removing latest worker"
 sudo dnf remove -y osbuild-composer osbuild-composer-worker osbuild-composer-tests
 
 function setup_repo {
@@ -54,123 +59,362 @@ priority=${priority}
 EOF
 }
 
-# Composer v33
+# Composer v51
+greenprint "Installing osbuild-composer-worker from commit ${WORKER_VERSION}"
 setup_repo osbuild-composer "$WORKER_VERSION" 20
-sudo dnf install -y osbuild-composer-worker podman composer-cli
+sudo dnf install -y osbuild-composer-worker osbuild-composer-dnf-json podman composer-cli
 
 # verify the right worker is installed just to be sure
 rpm -q "$WORKER_RPM"
 
-# run container
-WELDR_DIR="$(mktemp -d)"
-WELDR_SOCK="$WELDR_DIR/api.socket"
-DNF_DIR="$(mktemp -d)"
-DNF_SOCK="$DNF_DIR/api.sock"
+if which podman 2>/dev/null >&2; then
+  CONTAINER_RUNTIME=podman
+elif which docker 2>/dev/null >&2; then
+  CONTAINER_RUNTIME=docker
+else
+  echo No container runtime found, install podman or docker.
+  exit 2
+fi
 
-sudo podman pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
+
+# Container image used for cloud provider CLI tools
+CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+
+greenprint "Pulling and running composer container for this commit"
+sudo ${CONTAINER_RUNTIME} pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
+
+cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+log_level = "debug"
+[koji]
+allowed_domains = [ "localhost", "client.osbuild.org" ]
+ca = "/etc/osbuild-composer/ca-crt.pem"
+[koji.aws_config]
+bucket = "${AWS_BUCKET}"
+[worker]
+allowed_domains = [ "localhost", "worker.osbuild.org" ]
+ca = "/etc/osbuild-composer/ca-crt.pem"
+EOF
 
 # The host entitlement doesn't get picked up by composer
 # see https://github.com/osbuild/osbuild-composer/issues/1845
-sudo podman run  \
+sudo ${CONTAINER_RUNTIME} run  \
      --name=composer \
      -d \
      -v /etc/osbuild-composer:/etc/osbuild-composer:Z \
      -v /etc/rhsm:/etc/rhsm:Z \
      -v /etc/pki/entitlement:/etc/pki/entitlement:Z \
      -v "$REPOS/repositories":/usr/share/osbuild-composer/repositories:Z \
-     -v "$WELDR_DIR:/run/weldr/":Z \
-     -v "$DNF_DIR:/run/osbuild-dnf-json/":Z \
-     -e OVERWRITE_CACHE_DIR="/var/cache/dnf-json" \
      -p 8700:8700 \
+     -p 8080:8080 \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}" \
-     --weldr-api --dnf-json --remote-worker-api \
-     --no-local-worker-api --no-composer-api
+     --remote-worker-api --no-local-worker-api
 
-# try starting a worker
+greenprint "Wait for composer API"
+while ! openapi=$(curl  --silent  --show-error  --cacert /etc/osbuild-composer/ca-crt.pem  --key /etc/osbuild-composer/client-key.pem  --cert /etc/osbuild-composer/client-crt.pem  https://localhost:8080/api/image-builder-composer/v2/openapi); do
+    sleep 10
+done
+jq . <<< "${openapi}"
+
+
+greenprint "Starting osbuild-remote-worker service and dnf-json socket"
 set +e
-sudo systemctl start osbuild-remote-worker@localhost:8700.service
+# reload in case there were changes in units
+sudo systemctl daemon-reload
+sudo systemctl enable --now osbuild-remote-worker@localhost:8700.service
 while ! sudo systemctl --quiet is-active osbuild-remote-worker@localhost:8700.service; do
     sudo systemctl status osbuild-remote-worker@localhost:8700.service
     sleep 1
-    sudo systemctl start osbuild-remote-worker@localhost:8700.service
+    sudo systemctl enable --now osbuild-remote-worker@localhost:8700.service
+done
+sudo systemctl enable --now osbuild-dnf-json.socket
+while ! sudo systemctl --quiet is-active osbuild-dnf-json.socket; do
+    sudo systemctl status osbuild-dnf-json.socket
+    sleep 1
+    sudo systemctl enable --now osbuild-dnf-json.socket
 done
 set -e
 
-function log_on_exit() {
-    sudo podman logs composer
+# Check that needed variables are set to access AWS.
+printenv AWS_REGION AWS_BUCKET V2_AWS_ACCESS_KEY_ID V2_AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
+
+# Check that needed variables are set to register to RHSM
+printenv API_TEST_SUBSCRIPTION_ORG_ID API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2 > /dev/null
+
+function cleanupAWSS3() {
+  local S3_URL
+  S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+
+  # extract filename component from URL
+  local S3_FILENAME
+  S3_FILENAME=$(echo "${S3_URL}" | grep -oP '(?<=/)[^/]+(?=\?)')
+
+  # prepend bucket
+  local S3_URI
+  S3_URI="s3://${AWS_BUCKET}/${S3_FILENAME}"
+
+  # since this function can be called at any time, ensure that we don't expand unbound variables
+  AWS_CMD="${AWS_CMD:-}"
+
+  if [ -n "$AWS_CMD" ]; then
+    $AWS_CMD s3 rm "${S3_URI}"
+  fi
 }
 
-trap log_on_exit EXIT
+# Set up cleanup functions
+# Create a temporary directory and ensure it gets deleted when this script
+# terminates in any way.
+WORKDIR=$(mktemp -d)
+KILL_PIDS=()
+function cleanup() {
+  set +eu
+  cleanupAWSS3
 
-BLUEPRINT_FILE=$(mktemp)
-COMPOSE_START=$(mktemp)
-COMPOSE_INFO=$(mktemp)
-tee "$BLUEPRINT_FILE" > /dev/null << EOF2
-name = "simple"
-version = "0.0.1"
+  sudo ${CONTAINER_RUNTIME} kill composer
+  sudo ${CONTAINER_RUNTIME} rm composer
 
-[customizations]
-hostname = "simple"
-EOF2
+  sudo rm -rf "$WORKDIR"
 
-sudo composer-cli -s "$WELDR_SOCK" blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli -s "$WELDR_SOCK" blueprints depsolve simple
-sudo composer-cli -s "$WELDR_SOCK" --json compose start simple qcow2 | tee "${COMPOSE_START}"
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+  for P in "${KILL_PIDS[@]}"; do
+      sudo pkill -P "$P"
+  done
+  set -eu
+}
+trap cleanup EXIT
 
-# Wait for the compose to finish.
-echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli -s "$WELDR_SOCK" --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
+greenprint "Creating dummy rpm and repository to test payload_repositories"
+sudo dnf install -y rpm-build createrepo
+DUMMYRPMDIR=$(mktemp -d)
+DUMMYSPECFILE="$DUMMYRPMDIR/dummy.spec"
+PAYLOAD_REPO_PORT="9999"
+PAYLOAD_REPO_URL="http://localhost:9999"
+pushd "$DUMMYRPMDIR"
 
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
+cat <<EOF > "$DUMMYSPECFILE"
+#----------- spec file starts ---------------
+Name:                   dummy
+Version:                1.0.0
+Release:                0
+BuildArch:              noarch
+Vendor:                 dummy
+Summary:                Provides %{name}
+License:                BSD
+Provides:               dummy
+%description
+%{summary}
+%files
+EOF
 
-    # Wait 30 seconds and try again.
-    sleep 30
-done
+mkdir -p "DUMMYRPMDIR/rpmbuild"
+rpmbuild --quiet --define "_topdir $DUMMYRPMDIR/rpmbuild" -bb "$DUMMYSPECFILE"
 
-sudo composer-cli -s "$WELDR_SOCK" compose delete "${COMPOSE_ID}" >/dev/null
+mkdir -p "$DUMMYRPMDIR/repo"
+cp "$DUMMYRPMDIR"/rpmbuild/RPMS/noarch/*rpm "$DUMMYRPMDIR/repo"
+pushd "$DUMMYRPMDIR/repo"
+createrepo .
+sudo python3 -m http.server "$PAYLOAD_REPO_PORT" &
+KILL_PIDS+=("$!")
+popd
+popd
 
-sudo journalctl -u osbuild-remote-worker@localhost:8700.service
-# Verify that the remote worker finished a job
-sudo journalctl -u osbuild-remote-worker@localhost:8700.service |
-    grep -qE "Job [0-9a-fA-F-]+ finished"
+greenprint "Installing aws client tools"
+if ! hash aws; then
+  echo "Using 'awscli' from a container"
+  sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
-# Did the compose finish with success?
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
-    echo "Something went wrong with the compose. 😢"
-    exit 1
+  AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+    -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
+    -e AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
+    -v ${WORKDIR}:${WORKDIR}:Z \
+    ${CONTAINER_IMAGE_CLOUD_TOOLS} aws --region $AWS_REGION --output json --color on"
+else
+  echo "Using pre-installed 'aws' from the system"
+  AWS_CMD="aws --region $AWS_REGION --output json --color on"
 fi
+$AWS_CMD --version
 
-tee "dnf-json-request.json" <<EOF
+greenprint "Preparing request"
+REQUEST_FILE="${WORKDIR}/request.json"
+ARCH=$(uname -m)
+CLOUD_PROVIDER="aws.s3"
+IMAGE_TYPE="guest-image"
+
+# This removes dot from VERSION_ID.
+# ID == rhel   && VERSION_ID == 8.6 => DISTRO == rhel-86
+# ID == centos && VERSION_ID == 8   => DISTRO == centos-8
+# ID == fedora && VERSION_ID == 35  => DISTRO == fedora-35
+DISTRO="$ID-${VERSION_ID//./}"
+
+cat > "$REQUEST_FILE" << EOF
 {
-    "command": "dump",
-    "arguments": {
-        "repos": [
-            {
-                "name": "fedora",
-                "id": "blep-2",
-                "metalink": "https://mirrors.fedoraproject.org/metalink?repo=fedora-35&arch=x86_64",
-                "check_gpg": true
-            }
-        ],
-        "arch": "x86_64",
-        "module_platform_id": "platform:f35"
+  "distribution": "$DISTRO",
+  "customizations": {
+    "payload_repositories": [
+      {
+        "baseurl": "$PAYLOAD_REPO_URL"
+      }
+    ],
+    "packages": [
+      "postgresql",
+      "dummy"
+    ],
+    "users": [
+      {
+        "name": "user1",
+        "groups": ["wheel"]
+      },
+      {
+        "name": "user2"
+      }
+    ]
+  },
+  "image_request": {
+    "architecture": "$ARCH",
+    "image_type": "${IMAGE_TYPE}",
+    "repositories": $(jq ".\"$ARCH\" | .[] | select((has(\"image_type_tags\") | not) or (.\"image_type_tags\" | index(\"${IMAGE_TYPE}\")))" "${REPOS}/repositories/${DISTRO}".json | jq -s .),
+    "upload_options": {
+      "region": "${AWS_REGION}"
     }
+  }
 }
 EOF
 
-DNF_JSON_OUT=$(sudo curl -d"@dnf-json-request.json" --unix-socket "$DNF_SOCK" http:/dump | jq '.packages | length')
-# expect more than 1 package
-if [ ! "$DNF_JSON_OUT" -gt "1" ]; then
-    echo "dnf-json endpoint didn't return list of packages"
-    exit 1
-fi
+greenprint "Request data"
+cat "${REQUEST_FILE}"
 
-echo "Test passed!"
+#
+# Send the request and wait for the job to finish.
+#
+# Separate `curl` and `jq` commands here, because piping them together hides
+# the server's response in case of an error.
+#
+
+function sendCompose() {
+    OUTPUT=$(mktemp)
+    HTTPSTATUS=$(curl \
+                 --silent \
+                 --show-error \
+                 --cacert /etc/osbuild-composer/ca-crt.pem \
+                 --key /etc/osbuild-composer/client-key.pem \
+                 --cert /etc/osbuild-composer/client-crt.pem \
+                 --header 'Content-Type: application/json' \
+                 --request POST \
+                 --data @"$1" \
+                 --write-out '%{http_code}' \
+                 --output "$OUTPUT" \
+                 https://localhost:8080/api/image-builder-composer/v2/compose)
+
+    test "$HTTPSTATUS" = "201"
+    COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
+}
+
+function waitForState() {
+    local DESIRED_STATE="${1:-success}"
+
+    while true
+    do
+        OUTPUT=$(curl \
+                     --silent \
+                     --show-error \
+                     --cacert /etc/osbuild-composer/ca-crt.pem \
+                     --key /etc/osbuild-composer/client-key.pem \
+                     --cert /etc/osbuild-composer/client-crt.pem \
+                     "https://localhost:8080/api/image-builder-composer/v2/composes/$COMPOSE_ID")
+
+        COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
+        UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
+        UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
+        UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
+
+        case "$COMPOSE_STATUS" in
+            "$DESIRED_STATE")
+                break
+                ;;
+            # all valid status values for a compose which hasn't finished yet
+            "pending"|"building"|"uploading"|"registering")
+                ;;
+            # default undesired state
+            "failure")
+                echo "Image compose failed"
+                exit 1
+                ;;
+            *)
+                echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
+                exit 1
+                ;;
+        esac
+
+        sleep 30
+    done
+}
+
+greenprint "Sending compose request to composer"
+sendCompose "$REQUEST_FILE"
+greenprint "Waiting for success"
+waitForState success
+
+test "$UPLOAD_STATUS" = "success"
+test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
+
+# Verify upload options
+S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+
+# S3 URL contains region and bucket name
+echo "$S3_URL" | grep -F "$AWS_BUCKET" -
+echo "$S3_URL" | grep -F "$AWS_REGION" -
+
+# verify S3 blob
+S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+greenprint "Verifying S3 object at ${S3_URL}"
+
+# Tag the resource as a test file
+S3_FILENAME=$(echo "${S3_URL}" | grep -oP '(?<=/)[^/]+(?=\?)')
+
+# tag the object, also verifying that it exists in the bucket as expected
+$AWS_CMD s3api put-object-tagging \
+    --bucket "${AWS_BUCKET}" \
+    --key "${S3_FILENAME}" \
+    --tagging '{"TagSet": [{ "Key": "gitlab-ci-test", "Value": "true" }]}'
+
+greenprint "✅ Successfully tagged S3 object"
+
+greenprint "Installing osbuild-composer-tests for image-info"
+sudo dnf install -y osbuild-composer-tests
+
+curl "${S3_URL}" --output "${WORKDIR}/disk.qcow2"
+
+# Verify image blobs from s3
+function verifyDisk() {
+    filename="$1"
+    greenprint "Verifying contents of ${filename}"
+
+    infofile="${filename}-info.json"
+    sudo /usr/libexec/osbuild-composer-test/image-info "${filename}" | tee "${infofile}" > /dev/null
+
+    # save image info to artifacts
+    cp -v "${infofile}" "${ARTIFACTS}/image-info.json"
+
+    # check compose request users in passwd
+    if ! jq .passwd "${infofile}" | grep -q "user1"; then
+        greenprint "❌ user1 not found in passwd file"
+        exit 1
+    fi
+    if ! jq .passwd "${infofile}" | grep -q "user2"; then
+        greenprint "❌ user2 not found in passwd file"
+        exit 1
+    fi
+    # check packages for postgresql
+    if ! jq .packages "${infofile}" | grep -q "postgresql"; then
+        greenprint "❌ postgresql not found in packages"
+        exit 1
+    fi
+
+    greenprint "✅ ${filename} image info verified"
+}
+
+
+verifyDisk "${WORKDIR}/disk.qcow2"
+greenprint "✅ Successfully verified S3 object"
+
+greenprint "Test passed!"
 exit 0
