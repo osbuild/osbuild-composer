@@ -13,7 +13,10 @@ data:
         "list": [
           {
             "builtIn": 1,
-            "datasource": "-- Grafana --",
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
             "enable": true,
             "hide": true,
             "iconColor": "rgba(0, 211, 255, 1)",
@@ -29,14 +32,18 @@ data:
         ]
       },
       "editable": true,
-      "gnetId": null,
+      "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "iteration": 1647253765879,
+      "id": 32,
+      "iteration": 1652788493737,
       "links": [],
+      "liveNow": false,
       "panels": [
         {
           "collapsed": false,
-          "datasource": null,
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "gridPos": {
             "h": 1,
             "w": 24,
@@ -49,7 +56,9 @@ data:
           "type": "row"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "The percentage of successful compose requests for the selected time range",
           "fieldConfig": {
             "defaults": {
@@ -123,7 +132,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.2.1",
+          "pluginVersion": "8.5.2",
           "targets": [
             {
               "exemplar": true,
@@ -137,7 +146,9 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "The number of total compose requests for the selected date range",
           "fieldConfig": {
             "defaults": {
@@ -180,7 +191,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.2.1",
+          "pluginVersion": "8.5.2",
           "targets": [
             {
               "exemplar": true,
@@ -194,7 +205,9 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "The throughput rate of Compose errors and non-errors over time for the selected time range",
           "fieldConfig": {
             "defaults": {
@@ -273,7 +286,8 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "targets": [
@@ -298,7 +312,9 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "The number of compose errors (as a percentage) over time for the selected time range",
           "fieldConfig": {
             "defaults": {
@@ -362,7 +378,8 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "targets": [
@@ -379,7 +396,9 @@ data:
         },
         {
           "cacheTimeout": 1,
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
           "fieldConfig": {
             "defaults": {
@@ -438,7 +457,6 @@ data:
             "y": 9
           },
           "id": 115,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "options": {
@@ -458,7 +476,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.2.1",
+          "pluginVersion": "8.5.2",
           "targets": [
             {
               "exemplar": true,
@@ -470,14 +488,13 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Error Budget Remaining",
           "type": "stat"
         },
         {
-          "cacheTimeout": null,
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "The percentage of error budget consumed for the selected time range. ",
           "fieldConfig": {
             "defaults": {
@@ -554,7 +571,8 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "pluginVersion": "8.2.1",
@@ -569,14 +587,14 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Error Budget Consumed",
           "type": "timeseries"
         },
         {
           "collapsed": false,
-          "datasource": null,
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "gridPos": {
             "h": 1,
             "w": 24,
@@ -589,7 +607,9 @@ data:
           "type": "row"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "The percentage of successful compose requests for the selected time range",
           "fieldConfig": {
             "defaults": {
@@ -663,7 +683,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.2.1",
+          "pluginVersion": "8.5.2",
           "targets": [
             {
               "exemplar": true,
@@ -677,7 +697,9 @@ data:
           "type": "stat"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "The request latency for composer requests over the selected date range",
           "fieldConfig": {
             "defaults": {
@@ -855,7 +877,8 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "targets": [
@@ -887,7 +910,9 @@ data:
           "type": "timeseries"
         },
         {
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "Percent of requests exceeding latency allowed by SLO",
           "fieldConfig": {
             "defaults": {
@@ -956,7 +981,8 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "targets": [
@@ -973,7 +999,9 @@ data:
         },
         {
           "cacheTimeout": 1,
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
           "fieldConfig": {
             "defaults": {
@@ -1032,7 +1060,6 @@ data:
             "y": 26
           },
           "id": 198,
-          "interval": null,
           "links": [],
           "maxDataPoints": 100,
           "options": {
@@ -1052,7 +1079,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.2.1",
+          "pluginVersion": "8.5.2",
           "targets": [
             {
               "exemplar": true,
@@ -1064,14 +1091,13 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Error Budget Remaining",
           "type": "stat"
         },
         {
-          "cacheTimeout": null,
-          "datasource": "${datasource}",
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "description": "The percentage of error budget consumed for the selected time range. ",
           "fieldConfig": {
             "defaults": {
@@ -1147,7 +1173,8 @@ data:
               "placement": "bottom"
             },
             "tooltip": {
-              "mode": "single"
+              "mode": "single",
+              "sort": "none"
             }
           },
           "pluginVersion": "8.2.1",
@@ -1162,14 +1189,12 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Error Budget Consumed",
           "type": "timeseries"
         }
       ],
       "refresh": false,
-      "schemaVersion": 30,
+      "schemaVersion": 36,
       "style": "dark",
       "tags": [],
       "templating": {
@@ -1180,11 +1205,8 @@ data:
               "text": "app-sre-prod-04-prometheus",
               "value": "app-sre-prod-04-prometheus"
             },
-            "description": null,
-            "error": null,
             "hide": 0,
             "includeAll": false,
-            "label": null,
             "multi": false,
             "name": "datasource",
             "options": [],
@@ -1200,14 +1222,11 @@ data:
             "auto_count": 30,
             "auto_min": "10s",
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "14d",
               "value": "14d"
             },
-            "description": null,
-            "error": null,
             "hide": 0,
-            "label": null,
             "name": "interval",
             "options": [
               {
@@ -1269,9 +1288,7 @@ data:
           },
           {
             "description": "Compose stability SLO target",
-            "error": null,
             "hide": 2,
-            "label": null,
             "name": "stability_slo",
             "query": "0.95",
             "skipUrlSync": false,
@@ -1279,9 +1296,7 @@ data:
           },
           {
             "description": "Compose latency SLO target",
-            "error": null,
             "hide": 2,
-            "label": null,
             "name": "latency_slo",
             "query": "0.95",
             "skipUrlSync": false,
@@ -1321,5 +1336,6 @@ data:
       "timezone": "",
       "title": "Image Builder Composer",
       "uid": "image-builder-composer",
-      "version": 4
+      "version": 4,
+      "weekStart": ""
     }
