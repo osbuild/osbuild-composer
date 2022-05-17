@@ -35,7 +35,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 32,
-      "iteration": 1652788675671,
+      "iteration": 1652788675673,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -1222,8 +1222,8 @@ data:
             "auto_min": "10s",
             "current": {
               "selected": false,
-              "text": "14d",
-              "value": "14d"
+              "text": "6h",
+              "value": "6h"
             },
             "hide": 0,
             "name": "interval",
@@ -1244,7 +1244,7 @@ data:
                 "value": "1h"
               },
               {
-                "selected": false,
+                "selected": true,
                 "text": "6h",
                 "value": "6h"
               },
@@ -1267,19 +1267,9 @@ data:
                 "selected": false,
                 "text": "7d",
                 "value": "7d"
-              },
-              {
-                "selected": true,
-                "text": "14d",
-                "value": "14d"
-              },
-              {
-                "selected": false,
-                "text": "28d",
-                "value": "28d"
               }
             ],
-            "query": "5m,30m,1h,6h,12h,1d,3d,7d,14d,28d",
+            "query": "5m,30m,1h,6h,12h,1d,3d,7d",
             "queryValue": "",
             "refresh": 2,
             "skipUrlSync": false,
