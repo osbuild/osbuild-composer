@@ -899,6 +899,7 @@ components:
           example: 'subscription.rhsm.redhat.com'
         base_url:
           type: string
+          format: uri
           example: 'http://cdn.redhat.com/'
         insights:
           type: boolean
