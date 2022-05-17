@@ -35,7 +35,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 32,
-      "iteration": 1652788675677,
+      "iteration": 1652788675679,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -602,7 +602,7 @@ data:
           },
           "id": 129,
           "panels": [],
-          "title": "Compose Latency",
+          "title": "Request Latency",
           "type": "row"
         },
         {
@@ -692,14 +692,14 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Compose Latency",
+          "title": "Request Latency",
           "type": "stat"
         },
         {
           "datasource": {
             "uid": "${datasource}"
           },
-          "description": "The request latency for composer requests over the selected date range",
+          "description": "The request latency for http requests over the selected date range",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -843,7 +843,7 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Compose Request Latency",
+          "title": "Request Latency",
           "type": "timeseries"
         },
         {
