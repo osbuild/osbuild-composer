@@ -66,7 +66,7 @@ def pytest_runtest_makereport(item, call):
     report.description = description_text
 
     # Fill "Error Message" column
-    setattr(item, 'rep_' + report.when, report)
+    setattr(item, 'rep_call', report)
     report.error_message = str(call.excinfo.value) if call.excinfo else ''
     if report.when == 'teardown':
         message = item.rep_call.error_message.split(' assert ')[0]
