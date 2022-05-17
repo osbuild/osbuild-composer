@@ -758,88 +758,28 @@ data:
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "99p"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "red",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "95p"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "blue",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "90p"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "yellow",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "50p"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "blue",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "p90"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "yellow",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
                   "options": "p99"
                 },
                 "properties": [
                   {
                     "id": "color",
                     "value": {
-                      "fixedColor": "red",
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p95"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "yellow",
                       "mode": "fixed"
                     }
                   }
@@ -854,7 +794,7 @@ data:
                   {
                     "id": "color",
                     "value": {
-                      "fixedColor": "blue",
+                      "fixedColor": "light-red",
                       "mode": "fixed"
                     }
                   }
@@ -883,26 +823,28 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le))",
-              "interval": "",
-              "legendFormat": "p50",
-              "refId": "A"
-            },
-            {
-              "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "p90",
-              "refId": "B"
-            },
-            {
-              "exemplar": true,
               "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
               "refId": "C"
+            },
+            {
+              "editorMode": "code",
+              "exemplar": true,
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "p95",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_http_duration_seconds_bucket[$interval])) by (le))",
+              "interval": "",
+              "legendFormat": "p50",
+              "refId": "A"
             }
           ],
           "title": "Compose Request Latency",
