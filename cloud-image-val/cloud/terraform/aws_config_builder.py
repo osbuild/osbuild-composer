@@ -1,3 +1,5 @@
+import uuid
+
 from cloud.terraform.base_config_builder import BaseConfigBuilder
 
 
@@ -35,13 +37,13 @@ class AWSConfigBuilder(BaseConfigBuilder):
         self.resources_tf['resource']['aws_instance'] = {}
 
         for instance in self.resources_dict['instances']:
-            self.__new_aws_key_pair(instance['region'])
-            self.__new_aws_instance(instance)
+            key_name = self.__new_aws_key_pair(instance['region'])
+            self.__new_aws_instance(instance, key_name)
 
         return self.resources_tf
 
-    def __new_aws_key_pair(self, region):
-        key_name = f'{region}-key'
+    def __new_aws_key_pair(self, region) -> str:
+        key_name = f'{region}-key-{uuid.uuid4()}'
 
         new_key_pair = {
             'provider': f'aws.{region}',
@@ -50,8 +52,9 @@ class AWSConfigBuilder(BaseConfigBuilder):
         }
 
         self.resources_tf['resource']['aws_key_pair'][key_name] = new_key_pair
+        return key_name
 
-    def __new_aws_instance(self, instance):
+    def __new_aws_instance(self, instance, key_name):
         if not instance['instance_type']:
             instance['instance_type'] = 't2.micro'
 
@@ -60,8 +63,6 @@ class AWSConfigBuilder(BaseConfigBuilder):
         aliases = [provider['alias'] for provider in self.providers_tf['provider'][self.cloud_name]]
         if instance['region'] not in aliases:
             raise Exception('Cannot add an instance if region provider is not set up')
-
-        key_name = f'{instance["region"]}-key'
 
         new_instance = {
             'instance_type': instance['instance_type'],
