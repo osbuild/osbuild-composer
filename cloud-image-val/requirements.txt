@@ -9,3 +9,4 @@ sshconf
 flake8
 argparse
 py
+paramiko
