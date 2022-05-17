@@ -1,5 +1,6 @@
 import os
 import json
+import time
 
 
 class TerraformController:
@@ -22,6 +23,10 @@ class TerraformController:
         if cmd_output:
             print('terraform apply command failed, check configuration')
             exit(1)
+
+        # HUGE HACK! Something like polling ssh-keyscan should be used instead.
+        print('waiting 2 minutes for the ssh servers in the instances to be ready')
+        time.sleep(120)
 
     def get_instances(self):
         output = os.popen('terraform show --json')
