@@ -629,7 +629,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1668,7 +1668,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -2212,7 +2212,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$__range])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"

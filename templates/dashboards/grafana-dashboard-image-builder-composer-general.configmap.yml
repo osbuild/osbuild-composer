@@ -686,7 +686,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.9, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le)) * 1000",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_composer_http_duration_seconds_bucket[$__range])) by (le)) * 1000",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
