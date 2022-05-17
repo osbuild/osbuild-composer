@@ -73,7 +73,6 @@ AWS_INSTANCE_JSON=${TEMPDIR}/aws-instance.json
 COMPOSE_START=${TEMPDIR}/compose-start-${TEST_ID}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${TEST_ID}.json
 AMI_DATA=${TEMPDIR}/ami-data-${TEST_ID}.json
-INSTANCE_DATA=${TEMPDIR}/instance-data-${TEST_ID}.json
 INSTANCE_CONSOLE=${TEMPDIR}/instance-console-${TEST_ID}.json
 
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
@@ -135,7 +134,6 @@ get_compose_metadata () {
 
 # Get the console screenshot from the AWS instance.
 store_instance_screenshot () {
-    INSTANCE_ID=${1}
     LOOP_COUNTER=${2}
     SCREENSHOT_FILE=${WORKSPACE}/console-screenshot-${ID}-${VERSION_ID}-${LOOP_COUNTER}.jpg
 
@@ -261,77 +259,41 @@ tee "$AWS_INSTANCE_JSON" > /dev/null << EOF
 }
 EOF
 
-# Build instance in AWS with our image.
-greenprint "👷🏻 Building instance in AWS"
-$AWS_CMD ec2 run-instances \
-    --associate-public-ip-address \
-    --image-id "${AMI_IMAGE_ID}" \
-    --instance-type t3a.micro \
-    --user-data file://"${SSH_DATA_DIR}"/user-data \
-    --cli-input-json file://"${AWS_INSTANCE_JSON}" > /dev/null
-
-# Wait for the instance to finish building.
-greenprint "⏱ Waiting for AWS instance to be marked as running"
-while true; do
-    $AWS_CMD ec2 describe-instances \
-        --filters Name=image-id,Values="${AMI_IMAGE_ID}" \
-        | tee "$INSTANCE_DATA" > /dev/null
-
-    INSTANCE_STATUS=$(jq -r '.Reservations[].Instances[].State.Name' "$INSTANCE_DATA")
-
-    # Break the loop if our instance is running.
-    if [[ $INSTANCE_STATUS == running ]]; then
-        break
-    fi
-
-    # Sleep for 10 seconds and try again.
-    sleep 10
-
-done
-
-# Get data about the instance we built.
-INSTANCE_ID=$(jq -r '.Reservations[].Instances[].InstanceId' "$INSTANCE_DATA")
-PUBLIC_IP=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$INSTANCE_DATA")
-
-# Wait for the node to come online.
-greenprint "⏱ Waiting for AWS instance to respond to ssh"
-for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan "$PUBLIC_IP" > /dev/null 2>&1; then
-        echo "SSH is up!"
-        ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
-        break
-    fi
-
-    # Get a screenshot of the instance console.
-    echo "Getting instance screenshot..."
-    store_instance_screenshot "$INSTANCE_ID" "$LOOP_COUNTER" || true
-
-    # ssh-keyscan has a 5 second timeout by default, so the pause per loop
-    # is 10 seconds when you include the following `sleep`.
-    echo "Retrying in 5 seconds..."
-    sleep 5
-done
-
-# Check for our smoke test file.
-greenprint "🛃 Checking for smoke test file"
-for LOOP_COUNTER in {0..10}; do
-    RESULTS="$(smoke_test_check "$PUBLIC_IP")"
-    if [[ $RESULTS == 1 ]]; then
-        echo "Smoke test passed! 🥳"
-        break
-    fi
-    sleep 5
-done
-
-# Ensure the image was properly tagged.
-IMAGE_TAG=$($AWS_CMD ec2 describe-images --image-ids "${AMI_IMAGE_ID}" | jq -r '.Images[0].Tags[] | select(.Key=="Name") | .Value')
-if [[ ! $IMAGE_TAG == "${TEST_ID}" ]]; then
-    RESULTS=0
+if [[ "$ID" == "fedora" ]]; then
+  # fedora uses fedora
+  SSH_USER="fedora"
+else
+  # RHEL and centos use ec2-user
+  SSH_USER="ec2-user"
 fi
 
-# Clean up our mess.
-greenprint "🧼 Cleaning up"
-$AWS_CMD ec2 terminate-instances --instance-id "${INSTANCE_ID}"
+pushd cloud-image-val
+    sudo dnf install -y python3-pip unzip make
+    curl -LO https://releases.hashicorp.com/terraform/1.1.9/terraform_1.1.9_linux_amd64.zip
+    unzip terraform_1.1.9_linux_amd64.zip
+    # yolo
+    sudo mv terraform /usr/bin/
+
+    sudo pip3 install -r requirements.txt
+    tee "resource-file.json" <<EOF
+{
+    "provider": "aws",
+    "instances": [
+        {
+            "ami": "$AMI_IMAGE_ID",
+            "region": "us-east-1",
+            "instance_type": "t3a.micro",
+            "username": "$SSH_USER",
+            "name": "testing-image"
+        }
+    ]
+}
+EOF
+    AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
+    AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
+    python3 cloud-image-val.py -r resource-file.json -d -o output.xml && RESULTS=1 || RESULTS=0
+    cat output.xml
+popd
 $AWS_CMD ec2 deregister-image --image-id "${AMI_IMAGE_ID}"
 $AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
 

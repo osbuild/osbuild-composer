@@ -1,0 +1,9 @@
+*/.pytest_cache/
+*/__pycache__/
+*/*/__pycache__/
+.idea
+.terraform*
+*.tfstate*
+.vscode/
+.coverage
+*.tf.json

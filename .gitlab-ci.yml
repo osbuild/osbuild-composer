@@ -421,41 +421,11 @@ Rebase OSTree:
       - *fedora_runners
       - *rhel_runners
 
-koji.sh:
-  extends: .integration
-  variables:
-    SCRIPT: koji.sh
 
 aws.sh:
   extends: .integration
   variables:
     SCRIPT: aws.sh
-
-azure.sh:
-  extends: .integration
-  variables:
-    SCRIPT: azure.sh
-
-# The required GCE image type is not supported on Fedora
-gcp.sh:
-  extends: .integration_rhel
-  variables:
-    SCRIPT: gcp.sh
-
-vmware.sh:
-  extends: .integration
-  variables:
-    SCRIPT: vmware.sh
-
-filesystem.sh:
-  extends: .integration
-  variables:
-    SCRIPT: filesystem.sh
-
-cross-distro.sh:
-  extends: .integration
-  variables:
-    SCRIPT: cross-distro.sh
 
 .API_TESTS: &API_TESTS
   IMAGE_TYPE:
@@ -464,28 +434,6 @@ cross-distro.sh:
     - edge-commit
     - gcp
     - vsphere
-
-API:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-    # note: cloud API is not supported for on-prem installations so
-    # don't run this test case for nightly trees
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
-  parallel:
-    matrix:
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - IMAGE_TYPE: ["edge-commit"]
-        RUNNER:
-          - aws/fedora-35-x86_64
 
 .libvirt_integration:
   stage: test
@@ -504,69 +452,6 @@ API:
           - rhos-01/rhel-8.6-nightly-x86_64
           - rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
-
-libvirt.sh:
-  extends: .libvirt_integration
-  variables:
-    SCRIPT: libvirt.sh
-
-generic_s3.sh:
-  extends: .libvirt_integration
-  variables:
-    SCRIPT: generic_s3.sh
-
-aws_s3.sh:
-  extends: .libvirt_integration
-  variables:
-    SCRIPT: aws_s3.sh
-
-RHEL 9 on 8:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/koji.sh
-  variables:
-    RUNNER: aws/rhel-8.5-ga-x86_64
-    INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-90
-
-Multi-tenancy:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/multi-tenancy.sh
-  variables:
-    RUNNER: aws/rhel-8.5-ga-x86_64
-    INTERNAL_NETWORK: "true"
-
-Upgrade:
-  stage: test
-  extends: .terraform/openstack
-  rules:
-    - !reference [.nightly_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
-  variables:
-    RUNNER: rhos-01/rhel-9.0-nightly-x86_64
-  artifacts:
-    paths:
-      - journal-log.gpg
-      - ci-artifacts
-      - install_console.log
-      - upgrade_console.log
-      - leapp-preupgrade.log
-      - leapp-upgrade.log
-      - leapp-report.txt
-      - osbuild-upgrade8to9.log
-      - osbuild-upgrade8to9.json
-    when: always
 
 NIGHTLY_FAIL:
   stage: finish
@@ -587,22 +472,6 @@ NIGHTLY_SUCCESS:
   script:
     - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
 
-Installer:
-  stage: test
-  extends: .terraform/openstack
-  rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/installers.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64
-          - rhos-01/rhel-9.0-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
   tags:
@@ -615,18 +484,6 @@ SCHEDULED_CLOUD_CLEANER:
   script:
     - schutzbot/deploy.sh
     - schutzbot/scheduled_cloud_cleaner.sh
-
-SonarQube:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == "main"'
-  script:
-    - schutzbot/sonarqube.sh
-  variables:
-    RUNNER: aws/centos-stream-8-x86_64
-    INTERNAL_NETWORK: "true"
-    GIT_DEPTH: 0
 
 finish:
   stage: finish

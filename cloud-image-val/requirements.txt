@@ -1,0 +1,11 @@
+pytest
+pytest-mock
+pytest-cov
+pytest-testinfra
+pytest-xdist
+pytest-rerunfailures
+pytest-html
+sshconf
+flake8
+argparse
+py

@@ -1,0 +1,32 @@
+{
+  "subscription_id": "8d026bb1-2a65-454d-a88f-c896db94c4f8",
+  "resource_group": "cloud-experience",
+  "provider": "azure",
+  "instances": [
+    {
+      "image_uri": "/subscriptions/8d026bb1-2a65-454d-a88f-c896db94c4f8/resourceGroups/image-uploads/providers/Microsoft.Compute/images/ImageAzureTest",
+      "location": "West Europe",
+      "name": "sample-name-1"
+    },
+    {
+      "image_definition": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04-LTS",
+            "version": "latest"
+        },
+      "location": "West Europe",
+      "name": "sample-name-2"
+    },
+    {
+      "image_definition": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04-LTS",
+            "version": "latest"
+        },
+      "location": "East US",
+      "name": "sample-name-3"
+    }
+  ]
+}
