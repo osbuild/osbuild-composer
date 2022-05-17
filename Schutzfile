@@ -46,14 +46,14 @@
           {
             "title": "updates",
             "name": "updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220504"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220519"
           }
         ],
         "aarch64": [
           {
             "title": "updates",
             "name": "updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220504"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220519"
           }
         ]
       },
@@ -63,14 +63,14 @@
           {
             "title": "updates-modular",
             "name": "updates-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-modular-20220504"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-modular-20220519"
           }
         ],
         "aarch64": [
           {
             "title": "updates-modular",
             "name": "updates-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-modular-20220504"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-modular-20220519"
           }
         ]
       }
@@ -123,14 +123,14 @@
           {
             "title": "updates",
             "name": "updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220504"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220519"
           }
         ],
         "aarch64": [
           {
             "title": "updates",
             "name": "updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220504"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220519"
           }
         ]
       },
@@ -140,14 +140,14 @@
           {
             "title": "updates-modular",
             "name": "updates-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-modular-20220504"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-modular-20220519"
           }
         ],
         "aarch64": [
           {
             "title": "updates-modular",
             "name": "updates-modular",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-modular-20220504"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-modular-20220519"
           }
         ]
       }
