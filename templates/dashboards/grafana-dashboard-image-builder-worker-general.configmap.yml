@@ -35,7 +35,7 @@ data:
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
       "id": 33,
-      "iteration": 1652780554050,
+      "iteration": 1652780554054,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -2713,7 +2713,7 @@ data:
             "description": "Compose Duration SLO target",
             "hide": 2,
             "name": "latency_slo",
-            "query": "0.9",
+            "query": "0.95",
             "skipUrlSync": false,
             "type": "constant"
           }
