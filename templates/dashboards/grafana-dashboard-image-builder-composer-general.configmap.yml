@@ -1232,7 +1232,7 @@ data:
         ]
       },
       "time": {
-        "from": "now-7d",
+        "from": "now-28d",
         "to": "now"
       },
       "timepicker": {
