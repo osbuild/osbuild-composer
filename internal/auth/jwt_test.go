@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/stretchr/testify/require"
 
