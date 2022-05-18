@@ -15,6 +15,7 @@ import (
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
+	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -510,7 +511,7 @@ func TestKojiCompose(t *testing.T) {
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", finalizeID), ``, http.StatusOK, c.composeStatus, `href`, `id`)
 
 		// get the manifests
-		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", finalizeID), ``, http.StatusOK, `{"manifests":[null,null],"kind":"ComposeManifests"}`, `href`, `id`)
+		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", finalizeID), ``, http.StatusOK, `{"manifests":[{"pipeline":{},"sources":{}},{"pipeline":{},"sources":{}}],"kind":"ComposeManifests"}`, `href`, `id`)
 
 		// get the logs
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", finalizeID), ``, http.StatusOK, `{"kind":"ComposeLogs"}`, `koji`, `image_builds`, `href`, `id`)
@@ -565,6 +566,9 @@ func TestKojiJobTypeValidation(t *testing.T) {
 	initID, err := workers.EnqueueKojiInit(&initJob, "")
 	require.NoError(t, err)
 
+	manifest, err := json.Marshal(osbuild2.Manifest{})
+	require.NoErrorf(t, err, "error marshalling empty Manifest to JSON")
+
 	buildJobs := make([]worker.OSBuildKojiJob, nImages)
 	buildJobIDs := make([]uuid.UUID, nImages)
 	filenames := make([]string, nImages)
@@ -575,6 +579,12 @@ func TestKojiJobTypeValidation(t *testing.T) {
 			KojiServer:    "test-server",
 			KojiDirectory: "koji-server-test-dir",
 			KojiFilename:  fname,
+			// Add an empty manifest as a static job argument to make the test pass.
+			// Becasue of a bug in the API, the test was passing even without
+			// any manifest being attached to the job (static or dynamic).
+			// In reality, cloudapi never adds the manifest as a static job argument.
+			// TODO: use dependent depsolve and manifests jobs instead
+			Manifest: manifest,
 		}
 		buildID, err := workers.EnqueueOSBuildKoji(fmt.Sprintf("fake-arch-%d", idx), &buildJob, initID, "")
 		require.NoError(t, err)
@@ -599,6 +609,9 @@ func TestKojiJobTypeValidation(t *testing.T) {
 
 	// ----- Jobs queued - Test API endpoints (status, manifests, logs) ----- //
 
+	t.Logf("%q job ID: %s", worker.JobTypeKojiInit, initID)
+	t.Logf("%q job ID: %s", worker.JobTypeKojiFinalize, finalizeID)
+	t.Logf("%q job IDs: %v", worker.JobTypeOSBuildKoji, buildJobIDs)
 	for _, path := range []string{"", "/manifests", "/logs"} {
 		// should return OK - actual result should be tested elsewhere
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s%s", finalizeID, path), ``, http.StatusOK, "*")
