@@ -593,7 +593,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 
 	res, err := json.Marshal(&worker.OSBuildJobResult{
 		Success:       true,
-		OSBuildOutput: &osbuild2.Result{},
+		OSBuildOutput: &osbuild2.Result{Success: true},
 	})
 	require.NoError(t, err)
 
@@ -616,6 +616,36 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"code": "IMAGE-BUILDER-COMPOSER-1012",
 		"reason": "OSBuildJobResult does not have expected fields set"
 	}`, "operation_id")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v/logs",
+		"id": "%v",
+		"kind": "ComposeLogs",
+		"image_builds": [
+			{
+				"arch": "",
+				"host_os": "",
+				"osbuild_output": {
+					"log": null,
+					"metadata": null,
+					"success": true,
+					"type": ""
+				},
+				"pipeline_names": {
+					"build": [
+						"build"
+					],
+					"payload": [
+						"os",
+						"assembler"
+					]
+				},
+				"success": true,
+				"upload_status": ""
+			}
+		]
+	}`, jobId, jobId))
 }
 
 func TestComposeStatusFailure(t *testing.T) {

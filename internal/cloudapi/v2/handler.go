@@ -861,49 +861,59 @@ func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
 		return HTTPError(ErrorComposeNotFound)
 	}
 
-	// TODO: support non-koji builds
-	if jobType != worker.JobTypeKojiFinalize {
-		return HTTPError(ErrorInvalidJobType)
-	}
-
-	var finalizeResult worker.KojiFinalizeJobResult
-	_, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
-	if err != nil {
-		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-	}
-
-	var initResult worker.KojiInitJobResult
-	_, _, err = h.server.workers.KojiInitJobStatus(deps[0], &initResult)
-	if err != nil {
-		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-	}
-
 	var buildResultBlobs []interface{}
-	for i := 1; i < len(deps); i++ {
-		var buildResult worker.OSBuildKojiJobResult
-		_, _, err = h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
-		if err != nil {
-			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-		}
-		buildResultBlobs = append(buildResultBlobs, buildResult)
-	}
-
-	// Return the OSBuildJobResults as-is for now. The contents of ImageLogs
-	// is not part of the API. It's meant for a human to be able to access
-	// the logs, which just happen to be in JSON.
 	resp := &ComposeLogs{
 		ObjectReference: ObjectReference{
 			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", jobId),
 			Id:   jobId.String(),
 			Kind: "ComposeLogs",
 		},
-		Koji: &KojiLogs{
-			Init:   initResult,
-			Import: finalizeResult,
-		},
-		ImageBuilds: buildResultBlobs,
 	}
 
+	switch jobType {
+	case worker.JobTypeKojiFinalize:
+		var finalizeResult worker.KojiFinalizeJobResult
+		_, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+		}
+
+		var initResult worker.KojiInitJobResult
+		_, _, err = h.server.workers.KojiInitJobStatus(deps[0], &initResult)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+		}
+
+		for i := 1; i < len(deps); i++ {
+			var buildResult worker.OSBuildKojiJobResult
+			_, _, err = h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
+			if err != nil {
+				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+			}
+			buildResultBlobs = append(buildResultBlobs, buildResult)
+		}
+
+		resp.Koji = &KojiLogs{
+			Init:   initResult,
+			Import: finalizeResult,
+		}
+
+	case worker.JobTypeOSBuild:
+		var buildResult worker.OSBuildJobResult
+		_, _, err = h.server.workers.OSBuildJobStatus(jobId, &buildResult)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+		}
+		buildResultBlobs = append(buildResultBlobs, buildResult)
+
+	default:
+		return HTTPError(ErrorInvalidJobType)
+	}
+
+	// Return the OSBuildJobResults as-is for now. The contents of ImageBuilds
+	// is not part of the API. It's meant for a human to be able to access
+	// the logs, which just happen to be in JSON.
+	resp.ImageBuilds = buildResultBlobs
 	return ctx.JSON(http.StatusOK, resp)
 }
 
