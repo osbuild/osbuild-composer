@@ -399,6 +399,7 @@ components:
             type: string
           operation_id:
             type: string
+          details: {}
 
     ErrorList:
       allOf:

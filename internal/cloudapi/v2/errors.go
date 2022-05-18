@@ -43,7 +43,7 @@ const (
 	ErrorInvalidOSTreeParams          ServiceErrorCode = 27
 	ErrorTenantNotFound               ServiceErrorCode = 28
 	ErrorNoGPGKey                     ServiceErrorCode = 29
-	ErrorInvalidRequest               ServiceErrorCode = 30
+	ErrorValidationFailed             ServiceErrorCode = 30
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -111,7 +111,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidOSTreeParams, http.StatusBadRequest, "Invalid OSTree parameters or parameter combination"},
 		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
 		serviceError{ErrorNoGPGKey, http.StatusBadRequest, "Invalid repository, when check_gpg is set, gpgkey must be specified"},
-		serviceError{ErrorInvalidRequest, http.StatusBadRequest, "Request could not be validated"},
+		serviceError{ErrorValidationFailed, http.StatusBadRequest, "Request could not be validated"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
@@ -155,7 +155,22 @@ func HTTPError(code ServiceErrorCode) error {
 // echo.HTTPError has a message interface{} field, which can be used to include the ServiceErrorCode
 func HTTPErrorWithInternal(code ServiceErrorCode, internalErr error) error {
 	se := find(code)
-	he := echo.NewHTTPError(se.httpStatus, se.code)
+	he := echo.NewHTTPError(se.httpStatus, detailsError{code, ""})
+	if internalErr != nil {
+		he.Internal = internalErr
+	}
+	return he
+}
+
+type detailsError struct {
+	errorCode ServiceErrorCode
+	details   interface{}
+}
+
+// instead of sending a ServiceErrorCode as he.Message, send the validation error string (see above)
+func HTTPErrorWithDetails(code ServiceErrorCode, internalErr error, details string) error {
+	se := find(code)
+	he := echo.NewHTTPError(se.httpStatus, detailsError{code, details})
 	if internalErr != nil {
 		he.Internal = internalErr
 	}
@@ -164,7 +179,7 @@ func HTTPErrorWithInternal(code ServiceErrorCode, internalErr error) error {
 
 // Convert a ServiceErrorCode into an Error as defined in openapi.v2.yml
 // serviceError is optional, prevents multiple find() calls
-func APIError(code ServiceErrorCode, serviceError *serviceError, c echo.Context) *Error {
+func APIError(code ServiceErrorCode, serviceError *serviceError, c echo.Context, details *interface{}) *Error {
 	se := serviceError
 	if se == nil {
 		se = find(code)
@@ -184,6 +199,7 @@ func APIError(code ServiceErrorCode, serviceError *serviceError, c echo.Context)
 		Code:        fmt.Sprintf("%s%d", ErrorCodePrefix, se.code),
 		OperationId: operationID, // set operation id from context
 		Reason:      se.reason,
+		Details:     details,
 	}
 }
 
@@ -214,7 +230,7 @@ func APIErrorList(page int, pageSize int, c echo.Context) *ErrorList {
 	for _, e := range errs {
 		// Implicit memory alasing doesn't couse any bug in this case
 		/* #nosec G601 */
-		list.Items = append(list.Items, *APIError(e.code, &e, c))
+		list.Items = append(list.Items, *APIError(e.code, &e, c, nil))
 	}
 	list.Size = len(list.Items)
 	return list
@@ -235,11 +251,12 @@ func apiErrorFromEchoError(echoError *echo.HTTPError) ServiceErrorCode {
 
 // Convert an echo error into an AOC compliant one so we send a correct json error response
 func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
-	doResponse := func(code ServiceErrorCode, c echo.Context, internal error) {
+	doResponse := func(details *interface{}, code ServiceErrorCode, c echo.Context, internal error) {
+		// don't anticipate serviceerrorcode, instead check what type it is
 		if !c.Response().Committed {
 			var err error
 			sec := find(code)
-			apiErr := APIError(code, sec, c)
+			apiErr := APIError(code, sec, c, details)
 
 			if sec.httpStatus == http.StatusInternalServerError {
 				errMsg := fmt.Sprintf("Internal server error. Code: %s, OperationId: %s", apiErr.Code, apiErr.OperationId)
@@ -267,7 +284,7 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 	he, ok := echoError.(*echo.HTTPError)
 	if !ok {
 		c.Logger().Errorf("ErrorNotHTTPError %v", echoError)
-		doResponse(ErrorNotHTTPError, c, echoError)
+		doResponse(nil, ErrorNotHTTPError, c, echoError)
 		return
 	}
 
@@ -278,11 +295,15 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 		}
 	}
 
-	sec, ok := he.Message.(ServiceErrorCode)
+	err, ok := he.Message.(detailsError)
 	if !ok {
 		// No service code was set, so Echo threw this error
-		doResponse(apiErrorFromEchoError(he), c, he.Internal)
+		doResponse(nil, apiErrorFromEchoError(he), c, he.Internal)
 		return
 	}
-	doResponse(sec, c, he.Internal)
+	var det *interface{}
+	if err.details != nil {
+		det = &err.details
+	}
+	doResponse(det, err.errorCode, c, he.Internal)
 }

@@ -74,7 +74,12 @@ func (s *Server) ValidateRequest(next echo.HandlerFunc) echo.HandlerFunc {
 
 		ctx := request.Context()
 		if err := openapi3filter.ValidateRequest(ctx, input); err != nil {
-			return HTTPErrorWithInternal(ErrorInvalidRequest, err)
+			details := ""
+			re, ok := err.(*openapi3filter.RequestError)
+			if ok {
+				details = re.Error()
+			}
+			return HTTPErrorWithDetails(ErrorValidationFailed, err, details)
 		}
 
 		return next(c)

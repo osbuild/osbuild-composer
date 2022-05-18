@@ -85,7 +85,7 @@ func TestUnknownRoute(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-21",
 		"reason": "Requested resource doesn't exist"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 }
 
 func TestGetError(t *testing.T) {
@@ -99,7 +99,7 @@ func TestGetError(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-4",
 		"reason": "Unsupported distribution"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors/3000", ``, http.StatusNotFound, `
 	{
@@ -108,7 +108,7 @@ func TestGetError(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-17",
 		"reason": "Error with given id not found"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 }
 
 func TestGetErrorList(t *testing.T) {
@@ -127,7 +127,7 @@ func TestGetErrorList(t *testing.T) {
 			"code": "IMAGE-BUILDER-COMPOSER-4",
 			"reason": "Unsupported distribution"
 		 }]
-	}`, "operation_id", "total")
+	}`, "operation_id", "total", "details")
 }
 
 func TestCompose(t *testing.T) {
@@ -163,7 +163,7 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-30",
 		"reason": "Request could not be validated"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	// unsupported architecture
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -187,7 +187,7 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-5",
 		"reason": "Unsupported architecture"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	// unsupported imagetype
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -211,7 +211,7 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-30",
 		"reason": "Request could not be validated"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	// Returns 404, but should be 405; see https://github.com/labstack/echo/issues/1981
 	// test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -434,7 +434,7 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-10",
 		"reason": "Error resolving OSTree repo"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	// bad ref
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -461,7 +461,7 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-9",
 		"reason": "Invalid OSTree ref"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	// bad parent ref
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -490,7 +490,7 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-9",
 		"reason": "Invalid OSTree ref"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	// incorrect ref for URL
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -518,7 +518,7 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-10",
 		"reason": "Error resolving OSTree repo"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	// parent ref without URL
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -545,7 +545,7 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-27",
 		"reason": "Invalid OSTree parameters or parameter combination"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 }
 
 func TestComposeStatusSuccess(t *testing.T) {
@@ -615,7 +615,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-1012",
 		"reason": "OSBuildJobResult does not have expected fields set"
-	}`, "operation_id")
+	}`, "operation_id", "details")
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
@@ -658,7 +658,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 				"sources": {}
 			}
 		]
-	}`, jobId, jobId))
+	}`, jobId, jobId), "details")
 }
 
 func TestComposeStatusFailure(t *testing.T) {
