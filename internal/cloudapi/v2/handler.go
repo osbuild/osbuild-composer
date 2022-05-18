@@ -917,6 +917,26 @@ func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
 	return ctx.JSON(http.StatusOK, resp)
 }
 
+func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.ManifestJobByIDResult, error) {
+	var manifestResult worker.ManifestJobByIDResult
+
+	for i := 0; i < len(deps); i++ {
+		depType, err := w.JobType(deps[i])
+		if err != nil {
+			return nil, err
+		}
+		if depType == worker.JobTypeManifestIDOnly {
+			_, _, err = w.ManifestJobStatus(deps[i], &manifestResult)
+			if err != nil {
+				return nil, err
+			}
+			return &manifestResult, nil
+		}
+	}
+
+	return nil, fmt.Errorf("no %q job found in the dependencies", worker.JobTypeManifestIDOnly)
+}
+
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
 func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
@@ -929,43 +949,65 @@ func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
 		return HTTPError(ErrorComposeNotFound)
 	}
 
-	// TODO: support non-koji builds
-	if jobType != worker.JobTypeKojiFinalize {
-		return HTTPError(ErrorInvalidJobType)
-	}
-
-	var finalizeResult worker.KojiFinalizeJobResult
-	_, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
-	if err != nil {
-		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-	}
-
 	var manifestBlobs []interface{}
-	for _, id := range deps[1:] {
-		var buildJob worker.OSBuildKojiJob
-		err = h.server.workers.OSBuildKojiJob(id, &buildJob)
+
+	switch jobType {
+	case worker.JobTypeKojiFinalize:
+		var finalizeResult worker.KojiFinalizeJobResult
+		_, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
+
+		for i := 1; i < len(deps); i++ {
+			var buildJob worker.OSBuildKojiJob
+			err = h.server.workers.OSBuildKojiJob(deps[i], &buildJob)
+			if err != nil {
+				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+			}
+
+			var manifest distro.Manifest
+			if len(buildJob.Manifest) != 0 {
+				manifest = buildJob.Manifest
+			} else {
+				_, buildDeps, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &worker.OSBuildKojiJobResult{})
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+				}
+				manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildDeps)
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
+				}
+				manifest = manifestResult.Manifest
+			}
+			manifestBlobs = append(manifestBlobs, manifest)
+		}
+
+	case worker.JobTypeOSBuild:
+		var buildJob worker.OSBuildJob
+		err = h.server.workers.OSBuildJob(jobId, &buildJob)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+		}
+
 		var manifest distro.Manifest
-		if len(buildJob.Manifest) == 0 {
+		if len(buildJob.Manifest) != 0 {
 			manifest = buildJob.Manifest
 		} else {
-			_, deps, err := h.server.workers.OSBuildKojiJobStatus(id, nil)
+			_, deps, err := h.server.workers.OSBuildJobStatus(jobId, &worker.OSBuildJobResult{})
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
-			if len(deps) < 2 {
-				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-			}
-			var manifestResult worker.ManifestJobByIDResult
-			_, _, err = h.server.workers.ManifestJobStatus(deps[1], &manifestResult)
+			manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, deps)
 			if err != nil {
-				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+				return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
 			}
 			manifest = manifestResult.Manifest
 		}
 		manifestBlobs = append(manifestBlobs, manifest)
+
+	default:
+		return HTTPError(ErrorInvalidJobType)
 	}
 
 	resp := &ComposeManifests{
