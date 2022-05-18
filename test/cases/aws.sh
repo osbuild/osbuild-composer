@@ -291,8 +291,8 @@ pushd cloud-image-val
 EOF
     AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
     AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
-    python3 cloud-image-val.py -r resource-file.json -d -o output.xml && RESULTS=1 || RESULTS=0
-    cat output.xml
+    python3 cloud-image-val.py -r resource-file.json -d -o report.xml && RESULTS=1 || RESULTS=0
+    cat report.xml
 popd
 $AWS_CMD ec2 deregister-image --image-id "${AMI_IMAGE_ID}"
 $AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"

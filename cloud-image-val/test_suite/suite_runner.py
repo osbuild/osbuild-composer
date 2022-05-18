@@ -38,6 +38,7 @@ class SuiteRunner:
             f'--ssh-config {self.ssh_config}',
             f'--junit-xml {output_filepath}',
             f'--html {output_filepath.replace("xml", "html")}',
+            '--self-contained-html',
         ]
 
         if test_filter:
