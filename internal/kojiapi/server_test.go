@@ -352,9 +352,9 @@ func TestCompose(t *testing.T) {
 		wg.Add(1)
 
 		go func(t *testing.T, result worker.KojiInitJobResult) {
-			_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-init"}, []string{""})
+			_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{worker.JobTypeKojiInit}, []string{""})
 			require.NoError(t, err)
-			require.Equal(t, "koji-init", jobType)
+			require.Equal(t, worker.JobTypeKojiInit, jobType)
 
 			var initJob worker.KojiInitJob
 			err = json.Unmarshal(rawJob, &initJob)
@@ -405,9 +405,9 @@ func TestCompose(t *testing.T) {
 			c.composeReplyCode, c.composeReply, "id")
 		wg.Wait()
 
-		_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"}, []string{""})
+		_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{worker.JobTypeOSBuildKoji}, []string{""})
 		require.NoError(t, err)
-		require.Equal(t, "osbuild-koji", jobType)
+		require.Equal(t, worker.JobTypeOSBuildKoji, jobType)
 
 		var osbuildJob worker.OSBuildKojiJob
 		err = json.Unmarshal(rawJob, &osbuildJob)
@@ -421,9 +421,9 @@ func TestCompose(t *testing.T) {
 		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK,
 			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
-		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"osbuild-koji"}, []string{""})
+		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{worker.JobTypeOSBuildKoji}, []string{""})
 		require.NoError(t, err)
-		require.Equal(t, "osbuild-koji", jobType)
+		require.Equal(t, worker.JobTypeOSBuildKoji, jobType)
 
 		err = json.Unmarshal(rawJob, &osbuildJob)
 		require.NoError(t, err)
@@ -444,9 +444,9 @@ func TestCompose(t *testing.T) {
 		}`, test_distro.TestArchName, test_distro.TestDistroName), http.StatusOK,
 			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
-		finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{"koji-finalize"}, []string{""})
+		finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArchName, []string{worker.JobTypeKojiFinalize}, []string{""})
 		require.NoError(t, err)
-		require.Equal(t, "koji-finalize", jobType)
+		require.Equal(t, worker.JobTypeKojiFinalize, jobType)
 
 		var kojiFinalizeJob worker.KojiFinalizeJob
 		err = json.Unmarshal(rawJob, &kojiFinalizeJob)

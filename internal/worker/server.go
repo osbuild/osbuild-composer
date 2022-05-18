@@ -28,6 +28,15 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
+const (
+	JobTypeOSBuild        string = "osbuild"
+	JobTypeOSBuildKoji    string = "osbuild-koji"
+	JobTypeKojiInit       string = "koji-init"
+	JobTypeKojiFinalize   string = "koji-finalize"
+	JobTypeDepsolve       string = "depsolve"
+	JobTypeManifestIDOnly string = "manifest-id-only"
+)
+
 type Server struct {
 	jobs   jobqueue.JobQueue
 	logger *log.Logger
@@ -101,35 +110,35 @@ func (s *Server) WatchHeartbeats() {
 }
 
 func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob, channel string) (uuid.UUID, error) {
-	return s.enqueue("osbuild:"+arch, job, nil, channel)
+	return s.enqueue(JobTypeOSBuild+":"+arch, job, nil, channel)
 }
 
 func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue("osbuild:"+arch, job, dependencies, channel)
+	return s.enqueue(JobTypeOSBuild+":"+arch, job, dependencies, channel)
 }
 
 func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID}, channel)
+	return s.enqueue(JobTypeOSBuildKoji+":"+arch, job, []uuid.UUID{initID}, channel)
 }
 
 func (s *Server) EnqueueOSBuildKojiAsDependency(arch string, job *OSBuildKojiJob, manifestID, initID uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue("osbuild-koji:"+arch, job, []uuid.UUID{initID, manifestID}, channel)
+	return s.enqueue(JobTypeOSBuildKoji+":"+arch, job, []uuid.UUID{initID, manifestID}, channel)
 }
 
 func (s *Server) EnqueueKojiInit(job *KojiInitJob, channel string) (uuid.UUID, error) {
-	return s.enqueue("koji-init", job, nil, channel)
+	return s.enqueue(JobTypeKojiInit, job, nil, channel)
 }
 
 func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue("koji-finalize", job, append([]uuid.UUID{initID}, buildIDs...), channel)
+	return s.enqueue(JobTypeKojiFinalize, job, append([]uuid.UUID{initID}, buildIDs...), channel)
 }
 
 func (s *Server) EnqueueDepsolve(job *DepsolveJob, channel string) (uuid.UUID, error) {
-	return s.enqueue("depsolve", job, nil, channel)
+	return s.enqueue(JobTypeDepsolve, job, nil, channel)
 }
 
 func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue("manifest-id-only", job, []uuid.UUID{parent}, channel)
+	return s.enqueue(JobTypeManifestIDOnly, job, []uuid.UUID{parent}, channel)
 }
 
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
@@ -171,8 +180,8 @@ func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobS
 		return nil, nil, err
 	}
 
-	if !strings.HasPrefix(jobType, "osbuild:") { // Build jobs get automatic arch suffix: Check prefix
-		return nil, nil, fmt.Errorf("expected osbuild:*, found %q job instead", jobType)
+	if !strings.HasPrefix(jobType, JobTypeOSBuild+":") { // Build jobs get automatic arch suffix: Check prefix
+		return nil, nil, fmt.Errorf("expected \"%s:*\", found %q job instead", JobTypeOSBuild, jobType)
 	}
 
 	if result.JobError == nil && !status.Finished.IsZero() {
@@ -199,8 +208,8 @@ func (s *Server) OSBuildKojiJobStatus(id uuid.UUID, result *OSBuildKojiJobResult
 		return nil, nil, err
 	}
 
-	if !strings.HasPrefix(jobType, "osbuild-koji:") { // Build jobs get automatic arch suffix: Check prefix
-		return nil, nil, fmt.Errorf("expected \"osbuild-koji:*\", found %q job instead", jobType)
+	if !strings.HasPrefix(jobType, JobTypeOSBuildKoji+":") { // Build jobs get automatic arch suffix: Check prefix
+		return nil, nil, fmt.Errorf("expected \"%s:*\", found %q job instead", JobTypeOSBuildKoji, jobType)
 	}
 
 	if result.JobError == nil && !status.Finished.IsZero() {
@@ -222,8 +231,8 @@ func (s *Server) KojiInitJobStatus(id uuid.UUID, result *KojiInitJobResult) (*Jo
 		return nil, nil, err
 	}
 
-	if jobType != "koji-init" {
-		return nil, nil, fmt.Errorf("expected \"koji-init\", found %q job instead", jobType)
+	if jobType != JobTypeKojiInit {
+		return nil, nil, fmt.Errorf("expected %q, found %q job instead", JobTypeKojiInit, jobType)
 	}
 
 	if result.JobError == nil && result.KojiError != "" {
@@ -239,8 +248,8 @@ func (s *Server) KojiFinalizeJobStatus(id uuid.UUID, result *KojiFinalizeJobResu
 		return nil, nil, err
 	}
 
-	if jobType != "koji-finalize" {
-		return nil, nil, fmt.Errorf("expected \"koji-finalize\", found %q job instead", jobType)
+	if jobType != JobTypeKojiFinalize {
+		return nil, nil, fmt.Errorf("expected %q, found %q job instead", JobTypeKojiFinalize, jobType)
 	}
 
 	if result.JobError == nil && result.KojiError != "" {
@@ -256,8 +265,8 @@ func (s *Server) DepsolveJobStatus(id uuid.UUID, result *DepsolveJobResult) (*Jo
 		return nil, nil, err
 	}
 
-	if jobType != "depsolve" {
-		return nil, nil, fmt.Errorf("expected \"depsolve\", found %q job instead", jobType)
+	if jobType != JobTypeDepsolve {
+		return nil, nil, fmt.Errorf("expected %q, found %q job instead", JobTypeDepsolve, jobType)
 	}
 
 	if result.JobError == nil && result.Error != "" {
@@ -277,8 +286,8 @@ func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) 
 		return nil, nil, err
 	}
 
-	if jobType != "manifest-id-only" {
-		return nil, nil, fmt.Errorf("expected \"manifest-id-only\", found %q job instead", jobType)
+	if jobType != JobTypeManifestIDOnly {
+		return nil, nil, fmt.Errorf("expected %q, found %q job instead", JobTypeManifestIDOnly, jobType)
 	}
 
 	return status, deps, nil
@@ -312,8 +321,8 @@ func (s *Server) OSBuildJob(id uuid.UUID, job *OSBuildJob) error {
 		return err
 	}
 
-	if !strings.HasPrefix(jobType, "osbuild:") { // Build jobs get automatic arch suffix: Check prefix
-		return fmt.Errorf("expected osbuild:*, found %q job instead for job '%s'", jobType, id)
+	if !strings.HasPrefix(jobType, JobTypeOSBuild+":") { // Build jobs get automatic arch suffix: Check prefix
+		return fmt.Errorf("expected %s:*, found %q job instead for job '%s'", JobTypeOSBuild, jobType, id)
 	}
 
 	if err := json.Unmarshal(rawArgs, job); err != nil {
@@ -330,8 +339,8 @@ func (s *Server) OSBuildKojiJob(id uuid.UUID, job *OSBuildKojiJob) error {
 		return err
 	}
 
-	if !strings.HasPrefix(jobType, "osbuild-koji:") { // Build jobs get automatic arch suffix: Check prefix
-		return fmt.Errorf("expected osbuild-koji:*, found %q job instead for job '%s'", jobType, id)
+	if !strings.HasPrefix(jobType, JobTypeOSBuildKoji+":") { // Build jobs get automatic arch suffix: Check prefix
+		return fmt.Errorf("expected %s:*, found %q job instead for job '%s'", JobTypeOSBuildKoji, jobType, id)
 	}
 
 	if err := json.Unmarshal(rawArgs, job); err != nil {
@@ -422,10 +431,10 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	// restriction: arch for osbuild jobs.
 	jts := []string{}
 	for _, t := range jobTypes {
-		if t == "osbuild" || t == "osbuild-koji" {
+		if t == JobTypeOSBuild || t == JobTypeOSBuildKoji {
 			t = t + ":" + arch
 		}
-		if t == "manifest-id-only" {
+		if t == JobTypeManifestIDOnly {
 			return uuid.Nil, uuid.Nil, "", nil, nil, ErrInvalidJobType
 		}
 		jts = append(jts, t)
@@ -486,10 +495,10 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	// TODO: Drop the ':$architecture' for metrics too, first prometheus queries for alerts and
 	// dashboards need to be adjusted.
 	prometheus.DequeueJobMetrics(pending, status.Started, jobType, channel)
-	if jobType == "osbuild:"+arch {
-		jobType = "osbuild"
-	} else if jobType == "osbuild-koji:"+arch {
-		jobType = "osbuild-koji"
+	if jobType == JobTypeOSBuild+":"+arch {
+		jobType = JobTypeOSBuild
+	} else if jobType == JobTypeOSBuildKoji+":"+arch {
+		jobType = JobTypeOSBuildKoji
 	}
 
 	return

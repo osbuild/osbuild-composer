@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/test"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 func kojiRequest() string {
@@ -121,14 +122,20 @@ func jobRequest() string {
 	return fmt.Sprintf(`
 		{
 			"types": [
-				"koji-init",
-				"osbuild",
-				"osbuild-koji",
-				"koji-finalize",
-				"depsolve"
+				%q,
+				%q,
+				%q,
+				%q,
+				%q
 			],
-			"arch": "%s"
-		}`, test_distro.TestArch3Name)
+			"arch": %q
+		}`,
+		worker.JobTypeKojiInit,
+		worker.JobTypeOSBuild,
+		worker.JobTypeOSBuildKoji,
+		worker.JobTypeKojiFinalize,
+		worker.JobTypeDepsolve,
+		test_distro.TestArch3Name)
 }
 
 func runNextJob(t *testing.T, jobs []uuid.UUID, workerHandler http.Handler, orgID string) {

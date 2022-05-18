@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
@@ -17,7 +18,7 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 
 	// The results of these jobs take up the most space and can contain sensitive data. Delete
 	// them after a while.
-	jobsByType, err := jobs.JobsUptoByType([]string{"manifest-id-only", "depsolve"}, cutoff)
+	jobsByType, err := jobs.JobsUptoByType([]string{worker.JobTypeManifestIDOnly, worker.JobTypeDepsolve}, cutoff)
 	if err != nil {
 		return fmt.Errorf("Error querying jobs: %v", err)
 	}

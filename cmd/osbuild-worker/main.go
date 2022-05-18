@@ -170,7 +170,7 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 
 	// Depsolve requests needs reactivity, since setting the protection can take up to 6s to timeout if the worker isn't
 	// in an AWS env, disable this setting for them.
-	if job.Type() != "depsolve" {
+	if job.Type() != worker.JobTypeDepsolve {
 		setProtection(true)
 		defer setProtection(false)
 	}
@@ -420,7 +420,7 @@ func main() {
 	defer depsolveCtxCancel()
 	go func() {
 		jobImpls := map[string]JobImplementation{
-			"depsolve": &DepsolveJobImpl{
+			worker.JobTypeDepsolve: &DepsolveJobImpl{
 				Solver: solver,
 			},
 		}
@@ -448,7 +448,7 @@ func main() {
 
 	// non-depsolve job
 	jobImpls := map[string]JobImplementation{
-		"osbuild": &OSBuildJobImpl{
+		worker.JobTypeOSBuild: &OSBuildJobImpl{
 			Store:                  store,
 			Output:                 output,
 			KojiServers:            kojiServers,
@@ -466,17 +466,17 @@ func main() {
 				SkipSSLVerification: genericS3SkipSSLVerification,
 			},
 		},
-		"osbuild-koji": &OSBuildKojiJobImpl{
+		worker.JobTypeOSBuildKoji: &OSBuildKojiJobImpl{
 			Store:              store,
 			Output:             output,
 			KojiServers:        kojiServers,
 			relaxTimeoutFactor: config.RelaxTimeoutFactor,
 		},
-		"koji-init": &KojiInitJobImpl{
+		worker.JobTypeKojiInit: &KojiInitJobImpl{
 			KojiServers:        kojiServers,
 			relaxTimeoutFactor: config.RelaxTimeoutFactor,
 		},
-		"koji-finalize": &KojiFinalizeJobImpl{
+		worker.JobTypeKojiFinalize: &KojiFinalizeJobImpl{
 			KojiServers:        kojiServers,
 			relaxTimeoutFactor: config.RelaxTimeoutFactor,
 		},
