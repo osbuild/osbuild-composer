@@ -79,7 +79,7 @@ func (h *apiHandlers) GetError(ctx echo.Context, id string) error {
 		return HTTPError(ErrorInvalidErrorId)
 	}
 
-	apiError := APIError(ServiceErrorCode(errorId), nil, ctx)
+	apiError := APIError(ServiceErrorCode(errorId), nil, ctx, nil)
 	// If the service error wasn't found, it's a 404 in this instance
 	if apiError.Id == fmt.Sprintf("%d", ErrorServiceErrorNotFound) {
 		return HTTPError(ErrorErrorNotFound)
