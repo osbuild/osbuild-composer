@@ -40,7 +40,7 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
+	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 
@@ -82,7 +82,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
 	require.NoError(t, err)
 
-	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{"osbuild"}, []string{""})
+	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 

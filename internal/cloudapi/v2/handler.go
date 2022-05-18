@@ -508,7 +508,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		return HTTPError(ErrorComposeNotFound)
 	}
 
-	if jobType == "osbuild" {
+	if jobType == worker.JobTypeOSBuild {
 		var result worker.OSBuildJobResult
 		status, deps, err := h.server.workers.OSBuildJobStatus(jobId, &result)
 		if err != nil {
@@ -584,7 +584,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 				UploadStatus: us,
 			},
 		})
-	} else if jobType == "koji-finalize" {
+	} else if jobType == worker.JobTypeKojiFinalize {
 		var result worker.KojiFinalizeJobResult
 		finalizeStatus, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &result)
 		if err != nil {
@@ -751,7 +751,7 @@ func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
 	}
 
 	// TODO: support koji builds
-	if jobType != "osbuild" {
+	if jobType != worker.JobTypeOSBuild {
 		return HTTPError(ErrorInvalidJobType)
 	}
 
@@ -862,7 +862,7 @@ func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
 	}
 
 	// TODO: support non-koji builds
-	if jobType != "koji-finalize" {
+	if jobType != worker.JobTypeKojiFinalize {
 		return HTTPError(ErrorInvalidJobType)
 	}
 
@@ -920,7 +920,7 @@ func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
 	}
 
 	// TODO: support non-koji builds
-	if jobType != "koji-finalize" {
+	if jobType != worker.JobTypeKojiFinalize {
 		return HTTPError(ErrorInvalidJobType)
 	}
 

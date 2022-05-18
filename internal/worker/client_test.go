@@ -92,7 +92,7 @@ func TestOAuth(t *testing.T) {
 		BasePath:     "/api/image-builder-worker/v1",
 	})
 	require.NoError(t, err)
-	job, err := client.RequestJob([]string{"osbuild"}, "arch")
+	job, err := client.RequestJob([]string{worker.JobTypeOSBuild}, "arch")
 	require.NoError(t, err)
 	r := strings.NewReader("artifact contents")
 	require.NoError(t, job.UploadArtifact("some-artifact", r))
@@ -120,7 +120,7 @@ func TestProxy(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	job, err := client.RequestJob([]string{"osbuild"}, "arch")
+	job, err := client.RequestJob([]string{worker.JobTypeOSBuild}, "arch")
 	require.NoError(t, err)
 	r := strings.NewReader("artifact contents")
 	require.NoError(t, job.UploadArtifact("some-artifact", r))

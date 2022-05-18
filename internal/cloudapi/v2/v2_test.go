@@ -47,7 +47,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	go func() {
 		defer wg.Done()
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestDistroName, []string{"depsolve"}, depsolveChannels)
+			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestDistroName, []string{worker.JobTypeDepsolve}, depsolveChannels)
 			select {
 			case <-depsolveContext.Done():
 				return
@@ -572,9 +572,9 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
+	jobId, token, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
 	require.NoError(t, err)
-	require.Equal(t, "osbuild", jobType)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
 	var osbuildJob worker.OSBuildJob
 	err = json.Unmarshal(args, &osbuildJob)
@@ -642,9 +642,9 @@ func TestComposeStatusFailure(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
 	require.NoError(t, err)
-	require.Equal(t, "osbuild", jobType)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
@@ -698,9 +698,9 @@ func TestComposeLegacyError(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
 	require.NoError(t, err)
-	require.Equal(t, "osbuild", jobType)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
@@ -757,9 +757,9 @@ func TestComposeJobError(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
 	require.NoError(t, err)
-	require.Equal(t, "osbuild", jobType)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
@@ -819,9 +819,9 @@ func TestComposeDependencyError(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{"osbuild"}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
 	require.NoError(t, err)
-	require.Equal(t, "osbuild", jobType)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
