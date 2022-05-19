@@ -2,6 +2,7 @@ package worker
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -111,10 +112,79 @@ func (pn *PipelineNames) All() []string {
 // into a single PackageSpec list in the result.  Each PackageSet defines the
 // repositories it will be depsolved against.
 type DepsolveJob struct {
-	PackageSets      map[string][]rpmmd.PackageSet `json:"package_sets"`
+	PackageSets      map[string][]rpmmd.PackageSet `json:"grouped_package_sets"`
 	ModulePlatformID string                        `json:"module_platform_id"`
 	Arch             string                        `json:"arch"`
 	Releasever       string                        `json:"releasever"`
+}
+
+// Custom marshaller for keeping compatibility with older workers.  The
+// serialised format encompasses both the old and new DepsolveJob formats.  It
+// is meant to be temporarily used to transition from the old to the new
+// format.
+func (ds DepsolveJob) MarshalJSON() ([]byte, error) {
+	// NOTE: Common, top level repositories aren't used because in the new
+	// format they don't exist; putting all required repositories on all
+	// package sets as PackageSetsRepos should produce the same behaviour so
+	// there's no need to try and figure out the "common" ones.
+	// This also makes it possible to use old workers for new image types that
+	// are incompatible with having common repos for all package sets (RHEL 7.9).
+	compatJob := struct {
+		// new format
+		GroupedPackageSets map[string][]rpmmd.PackageSet `json:"grouped_package_sets"`
+		ModulePlatformID   string                        `json:"module_platform_id"`
+		Arch               string                        `json:"arch"`
+		Releasever         string                        `json:"releasever"`
+
+		// old format elements
+		PackageSetsChains map[string][]string           `json:"package_sets_chains"`
+		PackageSets       map[string]rpmmd.PackageSet   `json:"package_sets"`
+		PackageSetsRepos  map[string][]rpmmd.RepoConfig `json:"package_sets_repositories,omitempty"`
+	}{
+		// new format substruct
+		GroupedPackageSets: ds.PackageSets,
+		ModulePlatformID:   ds.ModulePlatformID,
+		Arch:               ds.Arch,
+		Releasever:         ds.Releasever,
+	}
+
+	// build equivalent old format substruct
+	pkgSetRepos := make(map[string][]rpmmd.RepoConfig)
+	pkgSets := make(map[string]rpmmd.PackageSet)
+	chains := make(map[string][]string)
+	for chainName, pkgSetChain := range ds.PackageSets {
+		if len(pkgSetChain) == 1 {
+			// single element "chain" (i.e., not a chain)
+			pkgSets[chainName] = rpmmd.PackageSet{
+				Include: pkgSetChain[0].Include,
+				Exclude: pkgSetChain[0].Exclude,
+			}
+			pkgSetRepos[chainName] = pkgSetChain[0].Repositories
+			continue
+		}
+		chain := make([]string, len(pkgSetChain))
+		for idx, set := range pkgSetChain {
+			// the names of the individual sets in the chain don't matter, as long
+			// as they match the keys for the repo configs
+			setName := fmt.Sprintf("%s-%d", chainName, idx)
+			// the package set (without repos)
+			pkgSets[setName] = rpmmd.PackageSet{
+				Include: set.Include,
+				Exclude: set.Exclude,
+			}
+			// set repositories
+			pkgSetRepos[setName] = set.Repositories
+			// add name to the chain
+			chain[idx] = setName
+		}
+		chains[chainName] = chain
+	}
+
+	compatJob.PackageSets = pkgSets
+	compatJob.PackageSetsChains = chains
+	compatJob.PackageSetsRepos = pkgSetRepos
+
+	return json.Marshal(compatJob)
 }
 
 type ErrorType string
