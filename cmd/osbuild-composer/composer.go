@@ -128,7 +128,6 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 
 func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, enableJWT bool, l net.Listener) error {
 	config := v2.ServerConfig{
-		AWSBucket:            c.config.Koji.AWS.Bucket,
 		JWTEnabled:           c.config.Koji.EnableJWT,
 		TenantProviderFields: c.config.Koji.JWTTenantProviderFields,
 	}

@@ -259,8 +259,6 @@ objects:
       jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs", "${MAS_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
-      [koji.aws_config]
-      bucket = "${COMPOSER_CONFIG_BUCKET_NAME}"
       [worker]
       request_job_timeout = "20s"
       base_path = "/api/image-builder-worker/v1"
@@ -419,10 +417,6 @@ parameters:
     name: COMPOSER_CONFIG_DIR
     required: true
     value: "/etc/osbuild-composer"
-  - description: Bucket to store aws artifacts
-    name: COMPOSER_CONFIG_BUCKET_NAME
-    required: true
-    value: "imagebuilder.service.staging"
   - description: Allowed tenants based on org id
     name: ACL_ORG_ID_TENANTS
     value: "15842261|15877963|15885990|16057323"

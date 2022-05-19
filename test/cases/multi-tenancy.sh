@@ -71,8 +71,6 @@ jwt_keys_urls = ["https://localhost:8082/certs"]
 jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
 jwt_acl_file = ""
 jwt_tenant_provider_fields = ["rh-org-id"]
-[koji.aws_config]
-bucket = "${AWS_BUCKET}"
 [worker]
 enable_artifacts = false
 enable_tls = true
@@ -99,6 +97,7 @@ principal = "osbuild-krb@LOCAL"
 keytab = "/etc/osbuild-worker/client.keytab"
 
 [aws]
+bucket = "${AWS_BUCKET}"
 credentials = "/etc/osbuild-worker/aws-credentials.toml"
 EOF
 

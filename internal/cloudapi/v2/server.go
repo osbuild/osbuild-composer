@@ -42,7 +42,6 @@ type Server struct {
 }
 
 type ServerConfig struct {
-	AWSBucket            string
 	TenantProviderFields []string
 	JWTEnabled           bool
 }

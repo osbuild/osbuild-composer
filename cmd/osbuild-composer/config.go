@@ -20,20 +20,15 @@ type ComposerConfigFile struct {
 }
 
 type KojiAPIConfig struct {
-	AllowedDomains          []string  `toml:"allowed_domains"`
-	CA                      string    `toml:"ca"`
-	EnableTLS               bool      `toml:"enable_tls"`
-	EnableMTLS              bool      `toml:"enable_mtls"`
-	EnableJWT               bool      `toml:"enable_jwt"`
-	JWTKeysURLs             []string  `toml:"jwt_keys_urls"`
-	JWTKeysCA               string    `toml:"jwt_ca_file"`
-	JWTACLFile              string    `toml:"jwt_acl_file"`
-	JWTTenantProviderFields []string  `toml:"jwt_tenant_provider_fields"`
-	AWS                     AWSConfig `toml:"aws_config"`
-}
-
-type AWSConfig struct {
-	Bucket string `toml:"bucket"`
+	AllowedDomains          []string `toml:"allowed_domains"`
+	CA                      string   `toml:"ca"`
+	EnableTLS               bool     `toml:"enable_tls"`
+	EnableMTLS              bool     `toml:"enable_mtls"`
+	EnableJWT               bool     `toml:"enable_jwt"`
+	JWTKeysURLs             []string `toml:"jwt_keys_urls"`
+	JWTKeysCA               string   `toml:"jwt_ca_file"`
+	JWTACLFile              string   `toml:"jwt_acl_file"`
+	JWTTenantProviderFields []string `toml:"jwt_tenant_provider_fields"`
 }
 
 type WorkerAPIConfig struct {
@@ -89,9 +84,6 @@ func GetDefaultConfig() *ComposerConfigFile {
 			EnableTLS:  true,
 			EnableMTLS: true,
 			EnableJWT:  false,
-			AWS: AWSConfig{
-				Bucket: "image-builder.service",
-			},
 		},
 		Worker: WorkerAPIConfig{
 			RequestJobTimeout: "0",
