@@ -78,6 +78,7 @@ EOF
 
 [aws]
 credentials = "/etc/osbuild-worker/aws-credentials.toml"
+bucket = "${AWS_BUCKET}"
 EOF
     set -x
 fi

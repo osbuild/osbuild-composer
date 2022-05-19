@@ -318,7 +318,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t := target.NewAWSTarget(&target.AWSTargetOptions{
 					Filename:          imageType.Filename(),
 					Region:            awsUploadOptions.Region,
-					Bucket:            h.server.config.AWSBucket,
 					Key:               key,
 					ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
 				})
@@ -354,7 +353,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
 					Filename: imageType.Filename(),
 					Region:   awsS3UploadOptions.Region,
-					Bucket:   h.server.config.AWSBucket,
 					Key:      key,
 				})
 				t.ImageName = key

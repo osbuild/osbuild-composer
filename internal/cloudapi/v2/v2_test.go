@@ -33,7 +33,6 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	require.NotNil(t, distros)
 
 	config := v2.ServerConfig{
-		AWSBucket:            "image-builder.service",
 		JWTEnabled:           enableJWT,
 		TenantProviderFields: []string{"rh-org-id", "account_id"},
 	}

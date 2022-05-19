@@ -82,8 +82,6 @@ log_level = "debug"
 [koji]
 allowed_domains = [ "localhost", "client.osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
-[koji.aws_config]
-bucket = "${AWS_BUCKET}"
 [worker]
 allowed_domains = [ "localhost", "worker.osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
