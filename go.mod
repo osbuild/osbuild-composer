@@ -14,28 +14,26 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/BurntSushi/toml v1.1.0
-	github.com/aws/aws-sdk-go v1.44.4
-	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
+	github.com/aws/aws-sdk-go v1.44.18
 	github.com/coreos/go-semver v0.3.0
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/deepmap/oapi-codegen v1.8.2
 	github.com/getkin/kin-openapi v0.93.0
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/gobwas/glob v0.2.3
-	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang/glog v1.0.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/gophercloud/gophercloud v0.24.0
 	github.com/hashicorp/go-retryablehttp v0.7.1
-	github.com/jackc/pgtype v1.10.0
-	github.com/jackc/pgx/v4 v4.15.0
+	github.com/jackc/pgtype v1.11.0
+	github.com/jackc/pgx/v4 v4.16.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/labstack/gommon v0.3.1
-	github.com/openshift-online/ocm-sdk-go v0.1.214
+	github.com/openshift-online/ocm-sdk-go v0.1.266
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/segmentio/ksuid v1.0.4
