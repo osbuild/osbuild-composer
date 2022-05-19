@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -16,6 +17,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -893,4 +895,122 @@ func TestMixedOSBuildKojiJobErrors(t *testing.T) {
 	_, _, err = server.OSBuildKojiJobStatus(newJobID, newJobResultRead)
 	require.NoError(err)
 	require.Equal(newJobResult, newJobResultRead)
+}
+
+// old depsolve job format kept here to test compatibility with older workers
+type oldDepsolveJob struct {
+	PackageSetsChains map[string][]string           `json:"package_sets_chains"`
+	PackageSets       map[string]rpmmd.PackageSet   `json:"package_sets"`
+	Repos             []rpmmd.RepoConfig            `json:"repos"`
+	ModulePlatformID  string                        `json:"module_platform_id"`
+	Arch              string                        `json:"arch"`
+	Releasever        string                        `json:"releasever"`
+	PackageSetsRepos  map[string][]rpmmd.RepoConfig `json:"package_sets_repositories,omitempty"`
+}
+
+func TestDepsolveJobArgsCompat(t *testing.T) {
+	// Test depsolve job argument transition compatibility
+	//
+	// NOTE: This test should be removed once all cloud workers are updated to
+	// use the new structure.
+	assert := assert.New(t)
+
+	// common elements
+	baseos := rpmmd.RepoConfig{
+		Name:    "baseos",
+		BaseURL: "https://example.com/baseos",
+	}
+	appstream := rpmmd.RepoConfig{
+		Name:    "appstream",
+		BaseURL: "https://example.com/appstream",
+	}
+	user1 := rpmmd.RepoConfig{
+		Name:    "user1",
+		BaseURL: "https://example.com/user/1",
+	}
+	user2 := rpmmd.RepoConfig{
+		Name:    "user2",
+		BaseURL: "https://example.com/user/2",
+	}
+
+	osIncludes := []string{"os1", "os2", "os3"}
+	bpIncludes := []string{"bp1", "bp2"}
+	buildIncludes := []string{"build1", "build2", "build3"}
+
+	excludes := []string{"nope1", "nope2"}
+
+	newJob := worker.DepsolveJob{
+		PackageSets: map[string][]rpmmd.PackageSet{
+			"os": {
+				{
+					Include:      osIncludes,
+					Exclude:      excludes,
+					Repositories: []rpmmd.RepoConfig{baseos, appstream},
+				},
+				{
+					Include:      bpIncludes,
+					Repositories: []rpmmd.RepoConfig{baseos, appstream, user1, user2},
+				},
+			},
+			"build": {{
+				Include:      buildIncludes,
+				Exclude:      excludes,
+				Repositories: []rpmmd.RepoConfig{baseos, appstream},
+			}},
+		},
+		ModulePlatformID: "el9",
+		Arch:             "x86_64",
+		Releasever:       "9",
+	}
+
+	oldJob := oldDepsolveJob{
+		PackageSetsChains: map[string][]string{
+			"os": {"os-0", "os-1"},
+		},
+		PackageSets: map[string]rpmmd.PackageSet{
+			"os-0": {
+				Include: osIncludes,
+				Exclude: excludes,
+			},
+			"os-1": {
+				Include: bpIncludes,
+			},
+			"build": {
+				Include: buildIncludes,
+				Exclude: excludes,
+			},
+		},
+		ModulePlatformID: "el9",
+		Arch:             "x86_64",
+		Releasever:       "9",
+		PackageSetsRepos: map[string][]rpmmd.RepoConfig{
+			"os-0":  {baseos, appstream},
+			"os-1":  {baseos, appstream, user1, user2},
+			"build": {baseos, appstream},
+		},
+	}
+
+	{ // old in, old out (not really useful, but let's cover all bases)
+		oldArgs, err := json.Marshal(oldJob)
+		assert.NoError(err)
+		var oldJobW oldDepsolveJob
+		assert.NoError(json.Unmarshal(oldArgs, &oldJobW))
+		assert.Equal(oldJob, oldJobW)
+	}
+
+	{ // new in, old out (the important scenario)
+		newArgs, err := json.Marshal(newJob)
+		assert.NoError(err)
+		var oldJobW oldDepsolveJob
+		assert.NoError(json.Unmarshal(newArgs, &oldJobW))
+		assert.Equal(oldJob, oldJobW)
+	}
+
+	{ // new in, new out (check if the serialised format also unmarshals back into the new format)
+		newArgs, err := json.Marshal(newJob)
+		assert.NoError(err)
+		var newJobW worker.DepsolveJob
+		assert.NoError(json.Unmarshal(newArgs, &newJobW))
+		assert.Equal(newJob, newJobW)
+	}
 }
