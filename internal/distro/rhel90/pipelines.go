@@ -618,6 +618,8 @@ func osPipeline(t *imageType,
 				if grub2.Config != nil {
 					cfg.Default = grub2.Config.Default
 				}
+
+				grub2.Config = cfg
 			}
 		}
 
