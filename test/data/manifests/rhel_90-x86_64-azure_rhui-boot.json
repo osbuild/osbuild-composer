@@ -2131,6 +2131,9 @@
                     "id": "sha256:fa79287a2dbe7ccce1ac973db8f85efcd64a8dcd9567a62aac02fa1d284a60c4"
                   },
                   {
+                    "id": "sha256:4dbba39a63fecb36ae944e066e797ad2ac55293dbcbc1d77a30e914ec60b9cb1"
+                  },
+                  {
                     "id": "sha256:0d711b3a0b3443b0c125ad206bb20dc4143cce4c92fc0f3cbbebd9367f8eb988"
                   },
                   {
@@ -2856,7 +2859,17 @@
               "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64",
               "write_cmdline": false,
               "config": {
-                "default": "saved"
+                "default": "saved",
+                "terminal_input": [
+                  "serial",
+                  "console"
+                ],
+                "terminal_output": [
+                  "serial",
+                  "console"
+                ],
+                "timeout": 10,
+                "serial": "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
               }
             }
           },
@@ -3866,6 +3879,9 @@
           },
           "sha256:4da11286bb79e5b384e611328bb12ba654de4b0ad0548faf5a33572f6e9f9b8a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/cloud-init-21.1-16.el9.noarch.rpm"
+          },
+          "sha256:4dbba39a63fecb36ae944e066e797ad2ac55293dbcbc1d77a30e914ec60b9cb1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/NetworkManager-cloud-setup-1.36.0-0.7.el9.x86_64.rpm"
           },
           "sha256:4e043ddd072da12c7fe806ad547a480724e2b4a73e7c943154496b90d29e4898": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/vim-enhanced-8.2.2637-11.el9.x86_64.rpm"
@@ -12255,6 +12271,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/zstd-1.5.0-2.el9.x86_64.rpm",
         "checksum": "sha256:fa79287a2dbe7ccce1ac973db8f85efcd64a8dcd9567a62aac02fa1d284a60c4"
+      },
+      {
+        "name": "NetworkManager-cloud-setup",
+        "epoch": 1,
+        "version": "1.36.0",
+        "release": "0.7.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/NetworkManager-cloud-setup-1.36.0-0.7.el9.x86_64.rpm",
+        "checksum": "sha256:4dbba39a63fecb36ae944e066e797ad2ac55293dbcbc1d77a30e914ec60b9cb1"
       },
       {
         "name": "PackageKit",

@@ -536,6 +536,7 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"langpacks-en",
 			"lvm2",
 			"NetworkManager",
+			"NetworkManager-cloud-setup",
 			"nvme-cli",
 			"patch",
 			"rhc",
