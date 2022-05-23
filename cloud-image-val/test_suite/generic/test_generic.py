@@ -160,18 +160,18 @@ class TestsGeneric:
             pytest.skip('Not run in atomic images')
 
         cloud_image_name = instance_data['name']
-        product_version = host.system_info.release
+        product_version = float(host.system_info.release)
 
         release_file = 'redhat-release'
         if host.system_info.distribution == 'fedora':
             release_file = 'fedora-release'
 
         with host.sudo():
-            package_release_version = host.check_output("rpm -q --qf '%{VERSION}' --whatprovides " + release_file)
+            package_release_version = float(host.check_output("rpm -q --qf '%{VERSION}' --whatprovides " + release_file))
 
         assert product_version == package_release_version, \
             f'product version ({product_version}) does not match package release version'
-        assert product_version.replace('.', '-') in cloud_image_name, 'product version is not in image name'
+        assert str(product_version).replace('.', '-') in cloud_image_name, 'product version is not in image name'
 
 
 class TestsCloudInit:
