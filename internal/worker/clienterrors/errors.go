@@ -83,7 +83,8 @@ func GetStatusCode(err *Error) StatusCode {
 	}
 }
 
-func (e *Error) HasDependencyError() bool {
+// IsDependencyError returns true if the error means that a dependency of a job failed
+func (e *Error) IsDependencyError() bool {
 	switch e.ID {
 	case ErrorDepsolveDependency:
 		return true

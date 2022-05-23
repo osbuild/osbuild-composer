@@ -515,7 +515,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
 
-		if result.JobError != nil && result.JobError.HasDependencyError() {
+		if result.JobError != nil && result.JobError.IsDependencyError() {
 			err = h.server.workers.CheckBuildDependencies(deps[0], result.JobError)
 			if err != nil {
 				return HTTPError(ErrorGettingBuildDependencyStatus)
@@ -606,7 +606,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 			if err != nil {
 				return HTTPError(ErrorMalformedOSBuildJobResult)
 			}
-			if buildJobResult.JobError != nil && buildJobResult.JobError.HasDependencyError() {
+			if buildJobResult.JobError != nil && buildJobResult.JobError.IsDependencyError() {
 				err = h.server.workers.CheckBuildDependencies(buildDeps[1], buildJobResult.JobError)
 				if err != nil {
 					return HTTPError(ErrorGettingBuildDependencyStatus)
