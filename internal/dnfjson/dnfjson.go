@@ -87,7 +87,7 @@ func NewSolver(modulePlatformID string, releaseVer string, arch string, cacheDir
 }
 
 // Depsolve the given packages with explicit excludes using the given configuration and repos
-func Depsolve(pkgSets []rpmmd.PackageSet, modulePlatformID string, releaseVer string, arch string, cacheDir string) (*DepsolveResult, error) {
+func Depsolve(pkgSets []rpmmd.PackageSet, modulePlatformID string, releaseVer string, arch string, cacheDir string) ([]rpmmd.PackageSpec, error) {
 	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).Depsolve(pkgSets)
 }
 
@@ -95,7 +95,7 @@ func Depsolve(pkgSets []rpmmd.PackageSet, modulePlatformID string, releaseVer st
 // their associated repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
-func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) (*DepsolveResult, error) {
+func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, error) {
 	req, repoMap, err := s.makeDepsolveRequest(pkgSets)
 	if err != nil {
 		return nil, err
@@ -105,19 +105,19 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) (*DepsolveResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result *depsolveResult
+	var result []PackageSpec
 	if err := json.Unmarshal(output, &result); err != nil {
 		return nil, err
 	}
 
-	return resultToPublic(result, repoMap), nil
+	return depsToRPMMD(result, repoMap), nil
 }
 
-func FetchMetadata(repos []rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (*FetchMetadataResult, error) {
+func FetchMetadata(repos []rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (rpmmd.PackageList, error) {
 	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).FetchMetadata(repos)
 }
 
-func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (*FetchMetadataResult, error) {
+func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
 	req, err := s.makeDumpRequest(repos)
 	if err != nil {
 		return nil, err
@@ -127,25 +127,18 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (*FetchMetadataResult, 
 		return nil, err
 	}
 
-	metadata := new(FetchMetadataResult)
-	if err := json.Unmarshal(result, metadata); err != nil {
+	var pkgs rpmmd.PackageList
+	if err := json.Unmarshal(result, &pkgs); err != nil {
 		return nil, err
 	}
 
 	sortID := func(pkg rpmmd.Package) string {
 		return fmt.Sprintf("%s-%s-%s", pkg.Name, pkg.Version, pkg.Release)
 	}
-	pkgs := metadata.Packages
 	sort.Slice(pkgs, func(i, j int) bool {
 		return sortID(pkgs[i]) < sortID(pkgs[j])
 	})
-	metadata.Packages = pkgs
-	namedChecksums := make(map[string]string)
-	for _, repo := range repos {
-		namedChecksums[repo.Name] = metadata.Checksums[repo.Hash()]
-	}
-	metadata.Checksums = namedChecksums
-	return metadata, nil
+	return pkgs, nil
 }
 
 func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, error) {
@@ -288,14 +281,6 @@ func (s *Solver) makeDumpRequest(repos []rpmmd.RepoConfig) (*Request, error) {
 	return &req, nil
 }
 
-// convert an internal depsolveResult to a public DepsolveResult.
-func resultToPublic(result *depsolveResult, repos map[string]rpmmd.RepoConfig) *DepsolveResult {
-	return &DepsolveResult{
-		Checksums:    result.Checksums,
-		Dependencies: depsToRPMMD(result.Dependencies, repos),
-	}
-}
-
 // convert internal a list of PackageSpecs to the rpmmd equivalent and attach
 // key and subscription information based on the repository configs.
 func depsToRPMMD(dependencies []PackageSpec, repos map[string]rpmmd.RepoConfig) []rpmmd.PackageSpec {
@@ -357,31 +342,6 @@ type transactionArgs struct {
 
 	// IDs of repositories to use for this depsolve
 	RepoIDs []string `json:"repo-ids"`
-}
-
-// Private version of the depsolve result.  Uses a slightly different
-// PackageSpec than the public one that uses the rpmmd type.
-type depsolveResult struct {
-	// Repository checksums
-	Checksums map[string]string `json:"checksums"`
-
-	// Resolved package dependencies
-	Dependencies []PackageSpec `json:"dependencies"`
-}
-
-// DepsolveResult is the result returned from a Depsolve call.
-type DepsolveResult struct {
-	// Repository checksums
-	Checksums map[string]string
-
-	// Resolved package dependencies
-	Dependencies []rpmmd.PackageSpec
-}
-
-// FetchMetadataResult is the result returned from a FetchMetadata call.
-type FetchMetadataResult struct {
-	Checksums map[string]string `json:"checksums"`
-	Packages  rpmmd.PackageList `json:"packages"`
 }
 
 // Package specification

@@ -28,7 +28,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 		if err != nil {
 			return nil, err
 		}
-		depsolvedSets[name] = res.Dependencies
+		depsolvedSets[name] = res
 	}
 	return depsolvedSets, nil
 }

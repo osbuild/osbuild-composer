@@ -109,23 +109,9 @@ func BaseDeps() []rpmmd.PackageSpec {
 type ResponseGenerator func(string) string
 
 func Base(tmpdir string) string {
-	deps := map[string]interface{}{
-		"checksums": map[string]string{
-			"REPOID": "test:responsechecksum",
-		},
-		"dependencies": createBaseDepsolveFixture(),
-	}
-
-	pkgs := map[string]interface{}{
-		"checksums": map[string]string{
-			"REPOID": "test:responsechecksum",
-		},
-		"packages": generatePackageList(),
-	}
-
 	data := map[string]interface{}{
-		"depsolve": deps,
-		"dump":     pkgs,
+		"depsolve": createBaseDepsolveFixture(),
+		"dump":     generatePackageList(),
 	}
 	path := filepath.Join(tmpdir, "base.json")
 	write(data, path)
@@ -150,16 +136,10 @@ func BadDepsolve(tmpdir string) string {
 		Kind:   "DepsolveError",
 		Reason: "There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch",
 	}
-	pkgs := map[string]interface{}{
-		"checksums": map[string]string{
-			"REPOID": "test:responsechecksum",
-		},
-		"packages": generatePackageList(),
-	}
 
 	data := map[string]interface{}{
 		"depsolve": deps,
-		"dump":     pkgs,
+		"dump":     generatePackageList(),
 	}
 	path := filepath.Join(tmpdir, "baddepsolve.json")
 	write(data, path)
