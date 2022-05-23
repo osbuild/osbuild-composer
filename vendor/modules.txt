@@ -35,7 +35,7 @@ github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2018-05-01/resources
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources
 github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2017-10-01/storage
 github.com/Azure/azure-sdk-for-go/version
-# github.com/Azure/azure-storage-blob-go v0.14.0
+# github.com/Azure/azure-storage-blob-go v0.15.0
 ## explicit
 github.com/Azure/azure-storage-blob-go/azblob
 # github.com/Azure/go-autorest v14.2.0+incompatible
