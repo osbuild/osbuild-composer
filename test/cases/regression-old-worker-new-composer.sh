@@ -38,8 +38,9 @@ sudo dnf -y install osbuild-composer-tests
 sudo cp -a /usr/share/tests/osbuild-composer/repositories "$REPOS/repositories"
 
 greenprint "Stop and disable all services and sockets"
-sudo systemctl stop osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service osbuild-dnf-json.service osbuild-dnf-json.socket
-sudo systemctl disable osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service osbuild-dnf-json.service osbuild-dnf-json.socket
+# ignore any errors here
+sudo systemctl stop osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service osbuild-dnf-json.service osbuild-dnf-json.socket || true
+sudo systemctl disable osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service osbuild-dnf-json.service osbuild-dnf-json.socket || true
 
 greenprint "Removing latest worker"
 sudo dnf remove -y osbuild-composer osbuild-composer-worker osbuild-composer-tests
