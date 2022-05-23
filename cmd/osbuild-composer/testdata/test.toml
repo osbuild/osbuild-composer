@@ -1,6 +1,8 @@
 [koji]
 allowed_domains = [ "osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
+server_key_file = "/etc/osbuild-composer/certs/composer-key.pem"
+server_cert_file = "/etc/osbuild-composer/certs/composer-crt.pem"
 enable_jwt = false
 jwt_keys_urls = ["https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"]
 jwt_acl_file = "/var/lib/osbuild-composer/acl"
@@ -8,6 +10,8 @@ jwt_acl_file = "/var/lib/osbuild-composer/acl"
 [worker]
 allowed_domains = [ "osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"
+server_key_file = "/etc/osbuild-composer/certs/composer-key.pem"
+server_cert_file = "/etc/osbuild-composer/certs/composer-crt.pem"
 pg_database = "overwrite-me-db"
 
 [weldr_api.distros."*"]

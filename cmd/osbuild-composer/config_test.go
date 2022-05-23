@@ -36,6 +36,8 @@ func TestDefaultConfig(t *testing.T) {
 		AWS: AWSConfig{
 			Bucket: "image-builder.service",
 		},
+		ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
+		ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
 	}, defaultConfig.Koji)
 
 	require.Equal(t, WorkerAPIConfig{
@@ -45,6 +47,8 @@ func TestDefaultConfig(t *testing.T) {
 		EnableTLS:         true,
 		EnableMTLS:        true,
 		EnableJWT:         false,
+		ServerCertFile:    "/etc/osbuild-composer/composer-crt.pem",
+		ServerKeyFile:     "/etc/osbuild-composer/composer-key.pem",
 	}, defaultConfig.Worker)
 
 	expectedWeldrAPIConfig := WeldrAPIConfig{
@@ -72,9 +76,13 @@ func TestConfig(t *testing.T) {
 
 	require.Equal(t, config.Koji.AllowedDomains, []string{"osbuild.org"})
 	require.Equal(t, config.Koji.CA, "/etc/osbuild-composer/ca-crt.pem")
+	require.Equal(t, config.Koji.ServerKeyFile, "/etc/osbuild-composer/certs/composer-key.pem")
+	require.Equal(t, config.Koji.ServerCertFile, "/etc/osbuild-composer/certs/composer-crt.pem")
 
 	require.Equal(t, config.Worker.AllowedDomains, []string{"osbuild.org"})
 	require.Equal(t, config.Worker.CA, "/etc/osbuild-composer/ca-crt.pem")
+	require.Equal(t, config.Worker.ServerKeyFile, "/etc/osbuild-composer/certs/composer-key.pem")
+	require.Equal(t, config.Worker.ServerCertFile, "/etc/osbuild-composer/certs/composer-crt.pem")
 
 	require.Equal(t, []string{"qcow2", "vmdk"}, config.WeldrAPI.DistroConfigs["*"].ImageTypeDenyList)
 	require.Equal(t, []string{"qcow2"}, config.WeldrAPI.DistroConfigs["rhel-84"].ImageTypeDenyList)

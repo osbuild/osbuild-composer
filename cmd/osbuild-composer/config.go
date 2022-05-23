@@ -22,6 +22,8 @@ type ComposerConfigFile struct {
 type KojiAPIConfig struct {
 	AllowedDomains          []string  `toml:"allowed_domains"`
 	CA                      string    `toml:"ca"`
+	ServerKeyFile           string    `toml:"server_key_file"`
+	ServerCertFile          string    `toml:"server_cert_file"`
 	EnableTLS               bool      `toml:"enable_tls"`
 	EnableMTLS              bool      `toml:"enable_mtls"`
 	EnableJWT               bool      `toml:"enable_jwt"`
@@ -39,6 +41,8 @@ type AWSConfig struct {
 type WorkerAPIConfig struct {
 	AllowedDomains          []string `toml:"allowed_domains"`
 	CA                      string   `toml:"ca"`
+	ServerKeyFile           string   `toml:"server_key_file"`
+	ServerCertFile          string   `toml:"server_cert_file"`
 	RequestJobTimeout       string   `toml:"request_job_timeout"`
 	BasePath                string   `toml:"base_path"`
 	EnableArtifacts         bool     `toml:"enable_artifacts"`
@@ -92,6 +96,8 @@ func GetDefaultConfig() *ComposerConfigFile {
 			AWS: AWSConfig{
 				Bucket: "image-builder.service",
 			},
+			ServerCertFile: "/etc/osbuild-composer/composer-crt.pem",
+			ServerKeyFile:  "/etc/osbuild-composer/composer-key.pem",
 		},
 		Worker: WorkerAPIConfig{
 			RequestJobTimeout: "0",
@@ -100,6 +106,8 @@ func GetDefaultConfig() *ComposerConfigFile {
 			EnableTLS:         true,
 			EnableMTLS:        true,
 			EnableJWT:         false,
+			ServerCertFile:    "/etc/osbuild-composer/composer-crt.pem",
+			ServerKeyFile:     "/etc/osbuild-composer/composer-key.pem",
 		},
 		WeldrAPI: WeldrAPIConfig{
 			map[string]WeldrDistroConfig{
