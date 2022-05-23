@@ -154,7 +154,7 @@ func (s *Server) CheckBuildDependencies(dep uuid.UUID, jobErr *clienterrors.Erro
 	}
 
 	if manifestJobErr := manifestJR.JobError; manifestJobErr != nil {
-		if !manifestJobErr.HasDependencyError() {
+		if !manifestJobErr.IsDependencyError() {
 			jobErr.Details = manifestJobErr
 			return nil
 		}
