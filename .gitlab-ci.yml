@@ -83,8 +83,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
           - aws/rhel-8.5-ga-x86_64
@@ -164,8 +162,6 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
           - aws/rhel-8.5-ga-x86_64
@@ -208,8 +204,6 @@ Manifests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-34-x86_64
-          - aws/fedora-34-aarch64
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
           - aws/centos-stream-8-x86_64
@@ -391,7 +385,6 @@ Rebase OSTree:
 
 .fedora_runners: &fedora_runners
     RUNNER:
-      - aws/fedora-34-x86_64
       - aws/fedora-35-x86_64
 
 .integration_fedora:
