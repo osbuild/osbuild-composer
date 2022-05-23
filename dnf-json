@@ -7,9 +7,6 @@ A JSON-based interface for depsolving using DNF.
 Reads a request through stdin and prints the result to stdout.
 In case of error, a structured error is printed to stdout as well.
 """
-
-
-import hashlib
 import json
 import os
 import sys
@@ -97,30 +94,6 @@ class Solver():
 
         return repo
 
-    def _repo_checksums(self):
-        checksums = {}
-        for repo in self.base.repos.iter_enabled():
-            # Uses the same algorithm as libdnf to find cache dir:
-            #   https://github.com/rpm-software-management/libdnf/blob/master/libdnf/repo/Repo.cpp#L1288
-            if repo.metalink:
-                url = repo.metalink
-            elif repo.mirrorlist:
-                url = repo.mirrorlist
-            elif repo.baseurl:
-                url = repo.baseurl[0]
-            else:
-                assert False
-
-            digest = hashlib.sha256(url.encode()).hexdigest()[:16]
-
-            repomd_file = f"{repo.id}-{digest}/repodata/repomd.xml"
-            with open(f"{self.base.conf.cachedir}/{repomd_file}", "rb") as f:
-                repomd = f.read()
-
-            checksums[repo.id] = "sha256:" + hashlib.sha256(repomd).hexdigest()
-
-        return checksums
-
     @staticmethod
     def _timestamp_to_rfc3339(timestamp):
         return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -141,10 +114,7 @@ class Solver():
                 "buildtime": self._timestamp_to_rfc3339(package.buildtime),
                 "license": package.license
             })
-        return {
-            "checksums": self._repo_checksums(),
-            "packages": packages
-        }
+        return packages
 
     def depsolve(self, transactions):
         last_transaction = []
@@ -195,10 +165,7 @@ class Solver():
                 )
             })
 
-        return {
-            "checksums": self._repo_checksums(),
-            "dependencies": dependencies
-        }
+        return dependencies
 
 
 def setup_cachedir(request):

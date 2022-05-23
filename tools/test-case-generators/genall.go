@@ -201,7 +201,7 @@ func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprin
 		if err != nil {
 			return nil, err
 		}
-		depsolvedSets[name] = res.Dependencies
+		depsolvedSets[name] = res
 	}
 	return depsolvedSets, nil
 }

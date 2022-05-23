@@ -151,7 +151,7 @@ func main() {
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}
-		depsolvedSets[name] = res.Dependencies
+		depsolvedSets[name] = res
 	}
 
 	var bytes []byte

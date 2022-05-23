@@ -147,7 +147,7 @@ func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint,
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}
-		depsolvedSets[name] = res.Dependencies
+		depsolvedSets[name] = res
 	}
 
 	return depsolvedSets
