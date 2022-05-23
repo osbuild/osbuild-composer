@@ -132,7 +132,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 			}
-			depsolvedSets[name] = res.Dependencies
+			depsolvedSets[name] = res
 		}
 
 		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, depsolvedSets, manifestSeed)

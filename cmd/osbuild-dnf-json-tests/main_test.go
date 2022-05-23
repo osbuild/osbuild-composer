@@ -5,8 +5,6 @@
 package main
 
 import (
-	"net/http"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,37 +16,7 @@ import (
 	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel86"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/test"
 )
-
-func TestFetchChecksum(t *testing.T) {
-	dir, err := test.SetUpTemporaryRepository()
-	fs := http.FileServer(http.Dir(dir))
-	go func() {
-		err := http.ListenAndServe(":9000", fs)
-		assert.Nilf(t, err, "Could not start the http server: %v", err)
-	}()
-	defer func(dir string) {
-		err := test.TearDownTemporaryRepository(dir)
-		assert.Nil(t, err, "Failed to clean up temporary repository.")
-	}(dir)
-	assert.Nilf(t, err, "Failed to set up temporary repository: %v", err)
-
-	repoCfg := rpmmd.RepoConfig{
-		Name:      "repo",
-		BaseURL:   "http://localhost:9000",
-		IgnoreSSL: true,
-	}
-
-	solver := dnfjson.NewSolver("platform:f31", "31", "x86_64", path.Join(dir, "rpmmd"))
-	// use a fullpath to dnf-json, this allows this test to have an arbitrary
-	// working directory
-	solver.SetDNFJSONPath("/usr/libexec/osbuild-composer/dnf-json")
-	res, err := solver.FetchMetadata([]rpmmd.RepoConfig{repoCfg})
-	assert.Nilf(t, err, "Failed to fetch checksum: %v", err)
-	c := res.Checksums
-	assert.NotEqual(t, "", c["repo"], "The checksum is empty")
-}
 
 // This test loads all the repositories available in /repositories directory
 // and tries to run depsolve for each architecture. With N architectures available
@@ -147,7 +115,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 				return expectedPkgSpecsSetNames
 			}(imagePkgSets, imagePkgSetChains)
 
-			gotPackageSpecsSets := make(map[string]*dnfjson.DepsolveResult, len(imagePkgSets))
+			gotPackageSpecsSets := make(map[string][]rpmmd.PackageSpec, len(imagePkgSets))
 
 			for name, pkgSet := range imagePkgSets {
 				res, err := solver.Depsolve(pkgSet)

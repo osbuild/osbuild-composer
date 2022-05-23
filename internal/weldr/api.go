@@ -1270,7 +1270,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 				statusResponseError(writer, http.StatusBadRequest, errors)
 				return
 			}
-			packageInfos[i].Dependencies = solved.Dependencies
+			packageInfos[i].Dependencies = solved
 		}
 	}
 
@@ -1348,9 +1348,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	err = json.NewEncoder(writer).Encode(reply{
-		Projects: deps.Dependencies,
-	})
+	err = json.NewEncoder(writer).Encode(reply{Projects: deps})
 	common.PanicOnError(err)
 }
 
@@ -2148,7 +2146,7 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 		if err != nil {
 			return nil, err
 		}
-		depsolvedSets[name] = res.Dependencies
+		depsolvedSets[name] = res
 	}
 	return depsolvedSets, nil
 }
@@ -3122,7 +3120,7 @@ func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 	if err != nil {
 		return nil, err
 	}
-	return packages.Packages, nil
+	return packages, nil
 }
 
 // Returns only user-defined repositories, which should be used only for
@@ -3192,8 +3190,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		return nil, err
 	}
 
-	packages := solved.Dependencies
-	return packages, nil
+	return solved, nil
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
