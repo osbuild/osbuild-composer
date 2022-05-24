@@ -47,6 +47,7 @@ fi
 
 TEMPDIR=$(mktemp -d)
 function cleanup() {
+    greenprint "== Script execution stopped or finished - Cleaning up =="
     sudo rm -rf "$TEMPDIR"
 }
 trap cleanup EXIT

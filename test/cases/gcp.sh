@@ -67,7 +67,7 @@ function cleanupGCP() {
 
 TEMPDIR=$(mktemp -d)
 function cleanup() {
-    greenprint "🧼 Cleaning up"
+    greenprint "== Script execution stopped or finished - Cleaning up =="
     cleanupGCP
     sudo rm -rf "$TEMPDIR"
 }

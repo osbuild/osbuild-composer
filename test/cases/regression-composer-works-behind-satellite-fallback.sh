@@ -110,6 +110,7 @@ case "${ID}" in
 esac
 
 function cleanup {
+    greenprint "== Script execution stopped or finished - Cleaning up =="
     # Make the cleanup function best effort
     set +eu
 

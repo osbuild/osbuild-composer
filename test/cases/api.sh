@@ -323,6 +323,7 @@ function dump_db() {
 WORKDIR=$(mktemp -d)
 KILL_PIDS=()
 function cleanup() {
+  greenprint "== Script execution stopped or finished - Cleaning up =="
   set +eu
   case $CLOUD_PROVIDER in
     "$CLOUD_PROVIDER_AWS")
@@ -1188,7 +1189,7 @@ function verifyDisk() {
 
     infofile="${filename}-info.json"
     sudo /usr/libexec/osbuild-composer-test/image-info "${filename}" | tee "${infofile}" > /dev/null
-    
+
     # save image info to artifacts
     cp -v "${infofile}" "${ARTIFACTS}/image-info.json"
 
