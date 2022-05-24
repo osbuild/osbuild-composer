@@ -86,11 +86,6 @@ func NewSolver(modulePlatformID string, releaseVer string, arch string, cacheDir
 	return s.NewWithConfig(modulePlatformID, releaseVer, arch)
 }
 
-// Depsolve the given packages with explicit excludes using the given configuration and repos
-func Depsolve(pkgSets []rpmmd.PackageSet, modulePlatformID string, releaseVer string, arch string, cacheDir string) ([]rpmmd.PackageSpec, error) {
-	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).Depsolve(pkgSets)
-}
-
 // Depsolve the list of required package sets with explicit excludes using
 // their associated repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
@@ -111,10 +106,6 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, erro
 	}
 
 	return result.toRPMMD(repoMap), nil
-}
-
-func FetchMetadata(repos []rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (rpmmd.PackageList, error) {
-	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).FetchMetadata(repos)
 }
 
 func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
