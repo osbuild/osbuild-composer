@@ -394,18 +394,26 @@ function verifyDisk() {
     # save image info to artifacts
     cp -v "${infofile}" "${ARTIFACTS}/image-info.json"
 
-    # check compose request users in passwd
-    if ! jq .passwd "${infofile}" | grep -q "user1"; then
+    # extract passwd and packages into separate files
+    jq .passwd "${infofile}" > passwd.info
+    jq .packages "${infofile}" > packages.info
+
+    # check passwd for blueprint users (user1 and user2)
+    if ! grep -q "user1" passwd.info; then
         greenprint "❌ user1 not found in passwd file"
         exit 1
     fi
-    if ! jq .passwd "${infofile}" | grep -q "user2"; then
+    if ! grep -q "user2" passwd.info; then
         greenprint "❌ user2 not found in passwd file"
         exit 1
     fi
-    # check packages for postgresql
-    if ! jq .packages "${infofile}" | grep -q "postgresql"; then
+    # check package list for blueprint packages (postgresql and dummy)
+    if ! grep -q "postgresql" packages.info; then
         greenprint "❌ postgresql not found in packages"
+        exit 1
+    fi
+    if ! grep -q "dummy" packages.info; then
+        greenprint "❌ dummy not found in packages"
         exit 1
     fi
 
