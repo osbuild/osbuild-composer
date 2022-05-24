@@ -29,15 +29,24 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
+type S3Configuration struct {
+	Creds               string
+	Endpoint            string
+	Region              string
+	Bucket              string
+	CABundle            string
+	SkipSSLVerification bool
+}
+
 type OSBuildJobImpl struct {
-	Store          string
-	Output         string
-	KojiServers    map[string]koji.GSSAPICredentials
-	GCPCreds       string
-	AzureCreds     *azure.Credentials
-	AWSCreds       string
-	AWSBucket      string
-	GenericS3Creds string
+	Store       string
+	Output      string
+	KojiServers map[string]koji.GSSAPICredentials
+	GCPCreds    string
+	AzureCreds  *azure.Credentials
+	AWSCreds    string
+	AWSBucket   string
+	S3Config    S3Configuration
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -53,14 +62,66 @@ func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string
 	}
 }
 
-func (impl *OSBuildJobImpl) getAWSForEndpoint(options *target.GenericS3TargetOptions) (*awscloud.AWS, error) {
+func (impl *OSBuildJobImpl) getAWSForS3TargetFromOptions(options *target.AWSS3TargetOptions) (*awscloud.AWS, error) {
 	if options.AccessKeyID != "" && options.SecretAccessKey != "" {
 		return awscloud.NewForEndpoint(options.Endpoint, options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken, options.CABundle, options.SkipSSLVerification)
 	}
-	if impl.GenericS3Creds != "" {
-		return awscloud.NewForEndpointFromFile(impl.GenericS3Creds, options.Endpoint, options.Region, options.CABundle, options.SkipSSLVerification)
+	if impl.S3Config.Creds != "" {
+		return awscloud.NewForEndpointFromFile(impl.S3Config.Creds, options.Endpoint, options.Region, options.CABundle, options.SkipSSLVerification)
 	}
 	return nil, fmt.Errorf("no credentials found")
+}
+
+func (impl *OSBuildJobImpl) getAWSForS3TargetFromConfig() (*awscloud.AWS, string, error) {
+	err := impl.verifyS3TargetConfiguration()
+	if err != nil {
+		return nil, "", err
+	}
+	aws, err := awscloud.NewForEndpointFromFile(impl.S3Config.Creds, impl.S3Config.Endpoint, impl.S3Config.Region, impl.S3Config.CABundle, impl.S3Config.SkipSSLVerification)
+	return aws, impl.S3Config.Bucket, err
+}
+
+func (impl *OSBuildJobImpl) verifyS3TargetConfiguration() error {
+	if impl.S3Config.Endpoint == "" {
+		return fmt.Errorf("no default endpoint for S3 was set")
+	}
+
+	if impl.S3Config.Region == "" {
+		return fmt.Errorf("no default region for S3 was set")
+	}
+
+	if impl.S3Config.Bucket == "" {
+		return fmt.Errorf("no default bucket for S3 was set")
+	}
+
+	if impl.S3Config.Creds == "" {
+		return fmt.Errorf("no default credentials for S3 was set")
+	}
+
+	return nil
+}
+
+func (impl *OSBuildJobImpl) getAWSForS3Target(options *target.AWSS3TargetOptions) (*awscloud.AWS, string, error) {
+	var aws *awscloud.AWS = nil
+	var err error
+
+	bucket := options.Bucket
+
+	// Endpoint == "" && Region != "" => AWS (Weldr and Composer)
+	if options.Endpoint == "" && options.Region != "" {
+		aws, err = impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
+		if impl.AWSBucket != "" {
+			bucket = impl.AWSBucket
+		}
+	} else if options.Endpoint != "" && options.Region != "" { // Endpoint != "" && Region != "" => Generic S3 Weldr API
+		aws, err = impl.getAWSForS3TargetFromOptions(options)
+	} else if options.Endpoint == "" && options.Region == "" { // Endpoint == "" && Region == "" => Generic S3 Composer API
+		aws, bucket, err = impl.getAWSForS3TargetFromConfig()
+	} else {
+		err = fmt.Errorf("s3 server configuration is incomplete")
+	}
+
+	return aws, bucket, err
 }
 
 // getGCP returns an *gcp.GCP object using credentials based on the following
@@ -113,7 +174,7 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	result.Success = true
 }
 
-func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, osbuildJobResult *worker.OSBuildJobResult, genericS3 bool, streamOptimized bool, streamOptimizedPath string) (err error) {
+func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, osbuildJobResult *worker.OSBuildJobResult, streamOptimized bool, streamOptimizedPath string) (err error) {
 	imagePath := path.Join(outputDirectory, exportPath, filename)
 
 	// TODO: delete the stream-optimized handling after "some" time (kept for backward compatibility)
@@ -159,13 +220,7 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 		return
 	}
 
-	var targetResult *target.TargetResult
-	if genericS3 {
-		targetResult = target.NewGenericS3TargetResult(&target.GenericS3TargetResultOptions{URL: url})
-	} else {
-		targetResult = target.NewAWSS3TargetResult(&target.AWSS3TargetResultOptions{URL: url})
-	}
-	osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, targetResult)
+	osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, target.NewAWSS3TargetResult(&target.AWSS3TargetResultOptions{URL: url}))
 
 	osbuildJobResult.Success = true
 	osbuildJobResult.UploadStatus = "success"
@@ -421,29 +476,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
 		case *target.AWSS3TargetOptions:
-			a, err := impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
+			a, bucket, err := impl.getAWSForS3Target(options)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				return nil
 			}
 
-			bucket := options.Bucket
-			if impl.AWSBucket != "" {
-				bucket = impl.AWSBucket
-			}
-
-			err = uploadToS3(a, outputDirectory, exportPath, bucket, options.Key, options.Filename, osbuildJobResult, false, args.StreamOptimized, streamOptimizedPath)
-			if err != nil {
-				return nil
-			}
-		case *target.GenericS3TargetOptions:
-			a, err := impl.getAWSForEndpoint(options)
-			if err != nil {
-				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
-				return nil
-			}
-
-			err = uploadToS3(a, outputDirectory, exportPath, options.Bucket, options.Key, options.Filename, osbuildJobResult, true, args.StreamOptimized, streamOptimizedPath)
+			err = uploadToS3(a, outputDirectory, exportPath, bucket, options.Key, options.Filename, osbuildJobResult, args.StreamOptimized, streamOptimizedPath)
 			if err != nil {
 				return nil
 			}

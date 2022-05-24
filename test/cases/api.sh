@@ -12,15 +12,68 @@
 # from a run on a remote continuous integration system.
 #
 
-if (( $# != 1 )); then
-    echo "$0 requires exactly one argument"
-    echo "Please specify an image type to build"
+#
+# Cloud provider / target names
+#
+
+CLOUD_PROVIDER_AWS="aws"
+CLOUD_PROVIDER_GCP="gcp"
+CLOUD_PROVIDER_AZURE="azure"
+CLOUD_PROVIDER_AWS_S3="aws.s3"
+CLOUD_PROVIDER_GENERIC_S3="generic.s3"
+
+#
+# Supported Image type names
+#
+IMAGE_TYPE_AWS="aws"
+IMAGE_TYPE_AZURE="azure"
+IMAGE_TYPE_EDGE_COMMIT="edge-commit"
+IMAGE_TYPE_EDGE_CONTAINER="edge-container"
+IMAGE_TYPE_EDGE_INSTALLER="edge-installer"
+IMAGE_TYPE_GCP="gcp"
+IMAGE_TYPE_IMAGE_INSTALLER="image-installer"
+IMAGE_TYPE_GUEST="guest-image"
+IMAGE_TYPE_VSPHERE="vsphere"
+
+if (( $# > 2 )); then
+    echo "$0 does not support more than two arguments"
+    exit 1
+fi
+
+if (( $# == 0 )); then
+    echo "$0 requires that you set the image type to build"
     exit 1
 fi
 
 set -euxo pipefail
 
 IMAGE_TYPE="$1"
+
+# select cloud provider based on image type
+#
+# the supported image types are listed in the api spec (internal/cloudapi/v2/openapi.v2.yml)
+case ${IMAGE_TYPE} in
+    "$IMAGE_TYPE_AWS")
+        CLOUD_PROVIDER="${CLOUD_PROVIDER_AWS}"
+        ;;
+    "$IMAGE_TYPE_AZURE")
+        CLOUD_PROVIDER="${CLOUD_PROVIDER_AZURE}"
+        ;;
+    "$IMAGE_TYPE_GCP")
+        CLOUD_PROVIDER="${CLOUD_PROVIDER_GCP}"
+        ;;
+    "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_VSPHERE")
+        # blobby image types: upload to s3 and provide download link
+        CLOUD_PROVIDER="${2:-$CLOUD_PROVIDER_AWS_S3}"
+        if [ "${CLOUD_PROVIDER}" != "${CLOUD_PROVIDER_AWS_S3}" ] && [ "${CLOUD_PROVIDER}" != "${CLOUD_PROVIDER_GENERIC_S3}" ]; then
+            echo "${IMAGE_TYPE} can only be uploaded to either ${CLOUD_PROVIDER_AWS_S3} or ${CLOUD_PROVIDER_GENERIC_S3}"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Unknown image type: ${IMAGE_TYPE}"
+        exit 1
+esac
 
 # Colorful timestamped output.
 function greenprint {
@@ -95,51 +148,6 @@ pg_max_conns = 10
 EOF
 
 sudo systemctl restart osbuild-composer
-
-#
-# Cloud provider / target names
-#
-
-CLOUD_PROVIDER_AWS="aws"
-CLOUD_PROVIDER_GCP="gcp"
-CLOUD_PROVIDER_AZURE="azure"
-CLOUD_PROVIDER_AWS_S3="aws.s3"
-
-#
-# Supported Image type names
-#
-IMAGE_TYPE_AWS="aws"
-IMAGE_TYPE_AZURE="azure"
-IMAGE_TYPE_EDGE_COMMIT="edge-commit"
-IMAGE_TYPE_EDGE_CONTAINER="edge-container"
-IMAGE_TYPE_EDGE_INSTALLER="edge-installer"
-IMAGE_TYPE_GCP="gcp"
-IMAGE_TYPE_IMAGE_INSTALLER="image-installer"
-IMAGE_TYPE_GUEST="guest-image"
-IMAGE_TYPE_VSPHERE="vsphere"
-
-# select cloud provider based on image type
-#
-# the supported image types are listed in the api spec (internal/cloudapi/v2/openapi.v2.yml)
-
-case ${IMAGE_TYPE} in
-    "$IMAGE_TYPE_AWS")
-        CLOUD_PROVIDER="${CLOUD_PROVIDER_AWS}"
-        ;;
-    "$IMAGE_TYPE_AZURE")
-        CLOUD_PROVIDER="${CLOUD_PROVIDER_AZURE}"
-        ;;
-    "$IMAGE_TYPE_GCP")
-        CLOUD_PROVIDER="${CLOUD_PROVIDER_GCP}"
-        ;;
-    "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_VSPHERE")
-        # blobby image types: upload to s3 and provide download link
-        CLOUD_PROVIDER="${CLOUD_PROVIDER_AWS_S3}"
-        ;;
-    *)
-        echo "Unknown image type: ${IMAGE_TYPE}"
-        exit 1
-esac
 
 greenprint "Using Cloud Provider / Target ${CLOUD_PROVIDER} for Image Type ${IMAGE_TYPE}"
 
@@ -305,6 +313,13 @@ function cleanupVSphere() {
         "${VSPHERE_VM_NAME}"
 }
 
+function cleanupGenericS3() {
+  MINIO_CONTAINER_NAME="${MINIO_CONTAINER_NAME:-}"
+  if [ -n "${MINIO_CONTAINER_NAME}" ]; then
+    sudo ${CONTAINER_RUNTIME} kill "${MINIO_CONTAINER_NAME}"
+  fi
+}
+
 function dump_db() {
   # Disable -x for these commands to avoid printing the whole result and manifest into the log
   set +x
@@ -337,6 +352,10 @@ function cleanup() {
     "$CLOUD_PROVIDER_AZURE")
       cleanupAzure
       ;;
+    "$CLOUD_PROVIDER_GENERIC_S3")
+      cleanupGenericS3
+      [[ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]] && cleanupVSphere
+    ;;
   esac
 
   # dump the DB here to ensure that it gets dumped even if the test fails
@@ -472,6 +491,81 @@ function installClientVSphere() {
     $GOVC_CMD version
 }
 
+function installGenericS3() {
+  local CONTAINER_MINIO_SERVER="quay.io/minio/minio:latest"
+  MINIO_CONTAINER_NAME="minio-server"
+  MINIO_ENDPOINT="http://localhost:9000"
+  local MINIO_ROOT_USER="X29DU5Q6C5NKDQ8PLGVT"
+  local MINIO_ROOT_PASSWORD
+  MINIO_ROOT_PASSWORD=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
+  MINIO_BUCKET="ci-test"
+  local MINIO_REGION="us-east-1"
+  local MINIO_CREDENTIALS_FILE="/etc/osbuild-worker/minio-creds"
+
+  sudo ${CONTAINER_RUNTIME} run --rm -d \
+    --name ${MINIO_CONTAINER_NAME} \
+    -p 9000:9000 \
+    -e MINIO_BROWSER=off \
+    -e MINIO_ROOT_USER="${MINIO_ROOT_USER}" \
+    -e MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD}" \
+    ${CONTAINER_MINIO_SERVER} server /data
+
+  if ! hash aws; then
+    echo "Using 'awscli' from a container"
+    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+
+    AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+      -e AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER} \
+      -e AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD} \
+      -v ${WORKDIR}:${WORKDIR}:Z \
+      --network host \
+      ${CONTAINER_IMAGE_CLOUD_TOOLS} aws"
+  else
+    echo "Using pre-installed 'aws' from the system"
+    AWS_CMD="AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER} \
+      AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD} \
+      aws"
+  fi
+  AWS_CMD+=" --region $MINIO_REGION --output json --color on --endpoint-url $MINIO_ENDPOINT"
+  $AWS_CMD --version
+
+  # Configure the local server (retry until the service is up)
+  MINIO_CONFIGURE_RETRY=0
+  MINIO_CONFIGURE_MAX_RETRY=5
+  MINIO_RETRY_INTERVAL=15
+  until [ "${MINIO_CONFIGURE_RETRY}" -ge "${MINIO_CONFIGURE_MAX_RETRY}" ]
+  do
+      ${AWS_CMD} s3 ls && break
+      MINIO_CONFIGURE_RETRY=$((MINIO_CONFIGURE_RETRY + 1))
+    echo "Retrying [${MINIO_CONFIGURE_RETRY}/${MINIO_CONFIGURE_MAX_RETRY}] in ${MINIO_RETRY_INTERVAL}(s) "
+    sleep ${MINIO_RETRY_INTERVAL}
+  done
+
+  if [ "${MINIO_CONFIGURE_RETRY}" -ge "${MINIO_CONFIGURE_MAX_RETRY}" ]; then
+    echo "Failed to communicate with the MinIO server after ${MINIO_CONFIGURE_MAX_RETRY} attempts!"
+    exit 1
+  fi
+
+  # Create the bucket
+  ${AWS_CMD} s3 mb s3://${MINIO_BUCKET}
+
+  cat <<EOF | sudo tee "${MINIO_CREDENTIALS_FILE}"
+[default]
+aws_access_key_id = ${MINIO_ROOT_USER}
+aws_secret_access_key = ${MINIO_ROOT_PASSWORD}
+EOF
+
+  cat <<EOF | sudo tee "/etc/osbuild-worker/osbuild-worker.toml"
+[generic_s3]
+credentials = "${MINIO_CREDENTIALS_FILE}"
+endpoint = "${MINIO_ENDPOINT}"
+region = "${MINIO_REGION}"
+bucket = "${MINIO_BUCKET}"
+EOF
+
+  sudo systemctl restart "osbuild-worker@1"
+}
+
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS" | "$CLOUD_PROVIDER_AWS_S3")
     installClientAWS
@@ -482,6 +576,10 @@ case $CLOUD_PROVIDER in
     ;;
   "$CLOUD_PROVIDER_AZURE")
     installClientAzure
+    ;;
+  "$CLOUD_PROVIDER_GENERIC_S3")
+    installGenericS3
+    [[ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]] && installClientVSphere
     ;;
 esac
 
@@ -607,7 +705,8 @@ EOF
 #
 OSTREE_REF="test/rhel/8/edge"
 
-function createReqFileAWSS3() {
+function createReqFileS3() {
+  local IMAGE_REQUEST_REGION=${1:-""}
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
@@ -641,7 +740,7 @@ function createReqFileAWSS3() {
       "ref": "${OSTREE_REF}"
     },
     "upload_options": {
-      "region": "${AWS_REGION}"
+      "region": "${IMAGE_REQUEST_REGION}"
     }
   }
 }
@@ -650,7 +749,8 @@ EOF
 
 # the VSphere test case does not create any additional users,
 # since this is not supported by the service UI
-function createReqFileAWSS3VSphere() {
+function createReqFileS3VSphere() {
+  local IMAGE_REQUEST_REGION=${1:-""}
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
@@ -670,7 +770,7 @@ function createReqFileAWSS3VSphere() {
     "image_type": "${IMAGE_TYPE}",
     "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
     "upload_options": {
-      "region": "${AWS_REGION}"
+      "region": "${IMAGE_REQUEST_REGION}"
     }
   }
 }
@@ -767,9 +867,9 @@ case $CLOUD_PROVIDER in
     ;;
   "$CLOUD_PROVIDER_AWS_S3")
     if [[ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]]; then
-      createReqFileAWSS3VSphere
+      createReqFileS3VSphere "${AWS_REGION}"
     else
-      createReqFileAWSS3
+      createReqFileS3 "${AWS_REGION}"
     fi
     ;;
   "$CLOUD_PROVIDER_GCP")
@@ -777,6 +877,13 @@ case $CLOUD_PROVIDER in
     ;;
   "$CLOUD_PROVIDER_AZURE")
     createReqFileAzure
+    ;;
+  "$CLOUD_PROVIDER_GENERIC_S3")
+    if [[ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]]; then
+      createReqFileS3VSphere
+    else
+      createReqFileS3
+    fi
     ;;
 esac
 
@@ -879,7 +986,11 @@ waitForState
 SUBS_COMPOSES="$(collectMetrics)"
 
 test "$UPLOAD_STATUS" = "success"
-test "$UPLOAD_TYPE" = "$CLOUD_PROVIDER"
+EXPECTED_UPLOAD_TYPE="$CLOUD_PROVIDER"
+if [ "${CLOUD_PROVIDER}" == "${CLOUD_PROVIDER_GENERIC_S3}" ]; then
+  EXPECTED_UPLOAD_TYPE="${CLOUD_PROVIDER_AWS_S3}"
+fi
+test "$UPLOAD_TYPE" = "$EXPECTED_UPLOAD_TYPE"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
 
 #
@@ -925,6 +1036,15 @@ function checkUploadStatusOptionsAzure() {
   test "$IMAGE_NAME" = "$AZURE_IMAGE_NAME"
 }
 
+function checkUploadStatusOptionsGenericS3() {
+  local S3_URL
+  S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+
+  # S3 URL contains endpoint and bucket name
+  echo "$S3_URL" | grep -F "$MINIO_ENDPOINT" -
+  echo "$S3_URL" | grep -F "$MINIO_BUCKET" -
+}
+
 case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS")
     checkUploadStatusOptionsAWS
@@ -937,6 +1057,9 @@ case $CLOUD_PROVIDER in
     ;;
   "$CLOUD_PROVIDER_AZURE")
     checkUploadStatusOptionsAzure
+    ;;
+  "$CLOUD_PROVIDER_GENERIC_S3")
+    checkUploadStatusOptionsGenericS3
     ;;
 esac
 
@@ -1313,7 +1436,8 @@ function verifyInVSphere() {
 }
 
 # Verify s3 blobs
-function verifyInAWSS3() {
+function verifyInS3() {
+    local BUCKET_NAME=${1}
     local S3_URL
     S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
     greenprint "Verifying S3 object at ${S3_URL}"
@@ -1324,7 +1448,7 @@ function verifyInAWSS3() {
 
     # tag the object, also verifying that it exists in the bucket as expected
     $AWS_CMD s3api put-object-tagging \
-        --bucket "${AWS_BUCKET}" \
+        --bucket "${BUCKET_NAME}" \
         --key "${S3_FILENAME}" \
         --tagging '{"TagSet": [{ "Key": "gitlab-ci-test", "Value": "true" }]}'
 
@@ -1481,13 +1605,16 @@ case $CLOUD_PROVIDER in
     verifyInAWS
     ;;
   "$CLOUD_PROVIDER_AWS_S3")
-    verifyInAWSS3
+    verifyInS3 "${AWS_BUCKET}"
     ;;
   "$CLOUD_PROVIDER_GCP")
     verifyInGCP
     ;;
   "$CLOUD_PROVIDER_AZURE")
     verifyInAzure
+    ;;
+  "$CLOUD_PROVIDER_GENERIC_S3")
+    verifyInS3 "${MINIO_BUCKET}"
     ;;
 esac
 

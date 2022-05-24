@@ -40,12 +40,15 @@ type awsUploadSettings struct {
 func (awsUploadSettings) isUploadSettings() {}
 
 type awsS3UploadSettings struct {
-	Region          string `json:"region"`
-	AccessKeyID     string `json:"accessKeyID,omitempty"`
-	SecretAccessKey string `json:"secretAccessKey,omitempty"`
-	SessionToken    string `json:"sessionToken,omitempty"`
-	Bucket          string `json:"bucket"`
-	Key             string `json:"key"`
+	Region              string `json:"region"`
+	AccessKeyID         string `json:"accessKeyID,omitempty"`
+	SecretAccessKey     string `json:"secretAccessKey,omitempty"`
+	SessionToken        string `json:"sessionToken,omitempty"`
+	Bucket              string `json:"bucket"`
+	Key                 string `json:"key"`
+	Endpoint            string `json:"endpoint"`
+	CABundle            string `json:"ca_bundle"`
+	SkipSSLVerification bool   `json:"skip_ssl_verification"`
 }
 
 func (awsS3UploadSettings) isUploadSettings() {}
@@ -94,15 +97,6 @@ type ociUploadSettings struct {
 
 func (ociUploadSettings) isUploadSettings() {}
 
-type genericS3UploadSettings struct {
-	awsS3UploadSettings
-	Endpoint            string `json:"endpoint"`
-	CABundle            string `json:"ca_bundle"`
-	SkipSSLVerification bool   `json:"skip_ssl_verification"`
-}
-
-func (genericS3UploadSettings) isUploadSettings() {}
-
 type uploadRequest struct {
 	Provider  string         `json:"provider"`
 	ImageName string         `json:"image_name"`
@@ -137,7 +131,9 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 	case "oci":
 		settings = new(ociUploadSettings)
 	case "generic.s3":
-		settings = new(genericS3UploadSettings)
+		// While the API still accepts provider type "generic.s3", the request is handled
+		// in the same way as for a request with provider type "aws.s3"
+		settings = new(awsS3UploadSettings)
 	default:
 		return errors.New("unexpected provider name")
 	}
@@ -227,20 +223,6 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 				// AccessKeyID and SecretAccessKey are intentionally not included.
 			}
 			uploads = append(uploads, upload)
-		case *target.GenericS3TargetOptions:
-			upload.ProviderName = "generic.s3"
-			upload.Settings = &genericS3UploadSettings{
-				awsS3UploadSettings: awsS3UploadSettings{
-					Region: options.Region,
-					Bucket: options.Bucket,
-					Key:    options.Key,
-					// AccessKeyID and SecretAccessKey are intentionally not included.
-				},
-				Endpoint:            options.Endpoint,
-				CABundle:            options.CABundle,
-				SkipSSLVerification: options.SkipSSLVerification,
-			}
-			uploads = append(uploads, upload)
 		}
 	}
 
@@ -270,13 +252,16 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 	case *awsS3UploadSettings:
 		t.Name = "org.osbuild.aws.s3"
 		t.Options = &target.AWSS3TargetOptions{
-			Filename:        imageType.Filename(),
-			Region:          options.Region,
-			AccessKeyID:     options.AccessKeyID,
-			SecretAccessKey: options.SecretAccessKey,
-			SessionToken:    options.SessionToken,
-			Bucket:          options.Bucket,
-			Key:             options.Key,
+			Filename:            imageType.Filename(),
+			Region:              options.Region,
+			AccessKeyID:         options.AccessKeyID,
+			SecretAccessKey:     options.SecretAccessKey,
+			SessionToken:        options.SessionToken,
+			Bucket:              options.Bucket,
+			Key:                 options.Key,
+			Endpoint:            options.Endpoint,
+			CABundle:            options.CABundle,
+			SkipSSLVerification: options.SkipSSLVerification,
 		}
 	case *azureUploadSettings:
 		t.Name = "org.osbuild.azure"
@@ -336,22 +321,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Bucket:      options.Bucket,
 			Namespace:   options.Namespace,
 			Compartment: options.Compartment,
-		}
-	case *genericS3UploadSettings:
-		t.Name = "org.osbuild.generic.s3"
-		t.Options = &target.GenericS3TargetOptions{
-			AWSS3TargetOptions: target.AWSS3TargetOptions{
-				Filename:        imageType.Filename(),
-				Region:          options.Region,
-				AccessKeyID:     options.AccessKeyID,
-				SecretAccessKey: options.SecretAccessKey,
-				SessionToken:    options.SessionToken,
-				Bucket:          options.Bucket,
-				Key:             options.Key,
-			},
-			Endpoint:            options.Endpoint,
-			CABundle:            options.CABundle,
-			SkipSSLVerification: options.SkipSSLVerification,
 		}
 	}
 

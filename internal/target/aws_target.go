@@ -29,13 +29,16 @@ func NewAWSTargetResult(options *AWSTargetResultOptions) *TargetResult {
 }
 
 type AWSS3TargetOptions struct {
-	Filename        string `json:"filename"`
-	Region          string `json:"region"`
-	AccessKeyID     string `json:"accessKeyID"`
-	SecretAccessKey string `json:"secretAccessKey"`
-	SessionToken    string `json:"sessionToken"`
-	Bucket          string `json:"bucket"`
-	Key             string `json:"key"`
+	Filename            string `json:"filename"`
+	Region              string `json:"region"`
+	AccessKeyID         string `json:"accessKeyID"`
+	SecretAccessKey     string `json:"secretAccessKey"`
+	SessionToken        string `json:"sessionToken"`
+	Bucket              string `json:"bucket"`
+	Key                 string `json:"key"`
+	Endpoint            string `json:"endpoint"`
+	CABundle            string `json:"ca_bundle"`
+	SkipSSLVerification bool   `json:"skip_ssl_verification"`
 }
 
 func (AWSS3TargetOptions) isTargetOptions() {}

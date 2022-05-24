@@ -450,6 +450,7 @@ cross-distro.sh:
     - edge-commit
     - gcp
     - vsphere
+    - edge-commit generic.s3
 
 API:
   stage: test
