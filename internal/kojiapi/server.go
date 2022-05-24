@@ -133,14 +133,14 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 			res, err := solver.ChainDepsolve(chain, repositories, nil)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to depsolve base packages for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 			}
 			packageSpecSets[specName] = res.Dependencies
 		}
 
 		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, packageSpecSets, manifestSeed)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadGateway, fmt.Sprintf("Failed to get manifest for for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
+			return echo.NewHTTPError(http.StatusBadGateway, fmt.Sprintf("Failed to get manifest for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}
 
 		imageRequests[i].manifest = manifest
