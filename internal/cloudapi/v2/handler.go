@@ -510,16 +510,14 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 
 	if jobType == worker.JobTypeOSBuild {
 		var result worker.OSBuildJobResult
-		status, deps, err := h.server.workers.OSBuildJobStatus(jobId, &result)
+		status, _, err := h.server.workers.OSBuildJobStatus(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
 
-		if result.JobError != nil && result.JobError.IsDependencyError() {
-			err = h.server.workers.CheckBuildDependencies(deps[0], result.JobError)
-			if err != nil {
-				return HTTPError(ErrorGettingBuildDependencyStatus)
-			}
+		jobError, err := h.server.workers.JobDependencyChainErrors(jobId)
+		if err != nil {
+			return HTTPError(ErrorGettingBuildDependencyStatus)
 		}
 
 		var us *UploadStatus
@@ -580,7 +578,7 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 			Status: composeStatusFromOSBuildJobStatus(status, &result),
 			ImageStatus: ImageStatus{
 				Status:       imageStatusFromOSBuildJobStatus(status, &result),
-				Error:        composeStatusErrorFromJobError(result.JobError),
+				Error:        composeStatusErrorFromJobError(jobError),
 				UploadStatus: us,
 			},
 		})
@@ -602,20 +600,18 @@ func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 		var buildJobStatuses []ImageStatus
 		for i := 1; i < len(deps); i++ {
 			var buildJobResult worker.OSBuildKojiJobResult
-			buildJobStatus, buildDeps, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &buildJobResult)
+			buildJobStatus, _, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &buildJobResult)
 			if err != nil {
 				return HTTPError(ErrorMalformedOSBuildJobResult)
 			}
-			if buildJobResult.JobError != nil && buildJobResult.JobError.IsDependencyError() {
-				err = h.server.workers.CheckBuildDependencies(buildDeps[1], buildJobResult.JobError)
-				if err != nil {
-					return HTTPError(ErrorGettingBuildDependencyStatus)
-				}
+			buildJobError, err := h.server.workers.JobDependencyChainErrors(deps[i])
+			if err != nil {
+				return HTTPError(ErrorGettingBuildDependencyStatus)
 			}
 			buildJobResults = append(buildJobResults, buildJobResult)
 			buildJobStatuses = append(buildJobStatuses, ImageStatus{
 				Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildJobResult),
-				Error:  composeStatusErrorFromJobError(buildJobResult.JobError),
+				Error:  composeStatusErrorFromJobError(buildJobError),
 			})
 		}
 		response := ComposeStatus{
