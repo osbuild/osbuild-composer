@@ -90,6 +90,8 @@ func (e *Error) IsDependencyError() bool {
 		return true
 	case ErrorManifestDependency:
 		return true
+	case ErrorKojiFailedDependency:
+		return true
 	case ErrorJobDependency:
 		return true
 	default:
