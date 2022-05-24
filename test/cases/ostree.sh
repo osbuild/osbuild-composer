@@ -310,6 +310,10 @@ groups = []
 [[packages]]
 name = "python3"
 version = "*"
+
+[[packages]]
+name = "sssd"
+version = "*"
 EOF
 
 # RHEL 8.5 and later support user configuration in blueprint for edge-commit image
@@ -470,6 +474,10 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
 version = "*"
 
 [[packages]]
