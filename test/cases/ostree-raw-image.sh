@@ -288,6 +288,10 @@ groups = []
 name = "python3"
 version = "*"
 
+[[packages]]
+name = "sssd"
+version = "*"
+
 [customizations.kernel]
 name = "kernel-rt"
 
@@ -547,6 +551,10 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
 version = "*"
 
 [[packages]]

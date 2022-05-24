@@ -370,6 +370,10 @@ groups = []
 name = "python3"
 version = "*"
 
+[[packages]]
+name = "sssd"
+version = "*"
+
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -616,6 +620,10 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
 version = "*"
 
 [[packages]]
