@@ -174,6 +174,94 @@ func (s *Server) CheckBuildDependencies(dep uuid.UUID, jobErr *clienterrors.Erro
 	return nil
 }
 
+// DependencyChainErrors recursively gathers all errors from job's dependencies,
+// which caused it to fail. If the job didn't fail, `nil` is returned.
+func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, error) {
+	jobType, err := s.JobType(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var jobResult *JobResult
+	var jobDeps []uuid.UUID
+	switch jobType {
+	case JobTypeOSBuild:
+		var osbuildJR OSBuildJobResult
+		_, jobDeps, err = s.OSBuildJobStatus(id, &osbuildJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &osbuildJR.JobResult
+
+	case JobTypeDepsolve:
+		var depsolveJR DepsolveJobResult
+		_, jobDeps, err = s.DepsolveJobStatus(id, &depsolveJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &depsolveJR.JobResult
+
+	case JobTypeManifestIDOnly:
+		var manifestJR ManifestJobByIDResult
+		_, jobDeps, err = s.ManifestJobStatus(id, &manifestJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &manifestJR.JobResult
+
+	case JobTypeKojiInit:
+		var kojiInitJR KojiInitJobResult
+		_, jobDeps, err = s.KojiInitJobStatus(id, &kojiInitJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &kojiInitJR.JobResult
+
+	case JobTypeOSBuildKoji:
+		var osbuildKojiJR OSBuildKojiJobResult
+		_, jobDeps, err = s.OSBuildKojiJobStatus(id, &osbuildKojiJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &osbuildKojiJR.JobResult
+
+	case JobTypeKojiFinalize:
+		var kojiFinalizeJR KojiFinalizeJobResult
+		_, jobDeps, err = s.KojiFinalizeJobStatus(id, &kojiFinalizeJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &kojiFinalizeJR.JobResult
+
+	default:
+		return nil, fmt.Errorf("unexpected job type: %s", jobType)
+	}
+
+	if jobError := jobResult.JobError; jobError != nil {
+		depErrors := []*clienterrors.Error{}
+		if jobError.IsDependencyError() {
+			// check job's dependencies
+			for _, dep := range jobDeps {
+				depError, err := s.JobDependencyChainErrors(dep)
+				if err != nil {
+					return nil, err
+				}
+				if depError != nil {
+					depErrors = append(depErrors, depError)
+				}
+			}
+		}
+
+		if len(depErrors) > 0 {
+			jobError.Details = depErrors
+		}
+
+		return jobError, nil
+	}
+
+	return nil, nil
+}
+
 func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobStatus, []uuid.UUID, error) {
 	jobType, _, status, deps, err := s.jobStatus(id, result)
 	if err != nil {
