@@ -151,10 +151,15 @@ function verifyInGCP() {
     # Randomize the used GCP zone to prevent hitting "exhausted resources" error on each test re-run
     GCP_ZONE=$($GCP_CMD compute zones list --filter="region=$GCP_COMPUTE_REGION AND status=UP" | jq -r '.[].name' | shuf -n1)
 
+    # Pick the smallest '^n\d-standard-\d$' machine type from those available in the zone
+    local GCP_MACHINE_TYPE
+    GCP_MACHINE_TYPE=$($GCP_CMD compute machine-types list --filter="zone=$GCP_ZONE AND name~^n\d-standard-\d$" | jq -r '.[].name' | sort | head -1)
+
     $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
         --zone="$GCP_ZONE" \
         --image-project="$GCP_PROJECT" \
         --image="$GCP_IMAGE_NAME" \
+        --machine-type="$GCP_MACHINE_TYPE" \
         --labels=gitlab-ci-test=true
 
     HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
