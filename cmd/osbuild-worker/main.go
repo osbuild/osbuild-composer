@@ -214,7 +214,12 @@ func main() {
 			Bucket      string `toml:"bucket"`
 		} `toml:"aws"`
 		GenericS3 *struct {
-			Credentials string `toml:"credentials"`
+			Credentials         string `toml:"credentials"`
+			Endpoint            string `toml:"endpoint"`
+			Region              string `toml:"region"`
+			Bucket              string `toml:"bucket"`
+			CABundle            string `toml:"ca_bundle"`
+			SkipSSLVerification bool   `toml:"skip_ssl_verification"`
 		} `toml:"generic_s3"`
 		Authentication *struct {
 			OAuthURL         string `toml:"oauth_url"`
@@ -392,8 +397,18 @@ func main() {
 	}
 
 	var genericS3Credentials = ""
+	var genericS3Endpoint = ""
+	var genericS3Region = ""
+	var genericS3Bucket = ""
+	var genericS3CABundle = ""
+	var genericS3SkipSSLVerification = false
 	if config.GenericS3 != nil {
 		genericS3Credentials = config.GenericS3.Credentials
+		genericS3Endpoint = config.GenericS3.Endpoint
+		genericS3Region = config.GenericS3.Region
+		genericS3Bucket = config.GenericS3.Bucket
+		genericS3CABundle = config.GenericS3.CABundle
+		genericS3SkipSSLVerification = config.GenericS3.SkipSSLVerification
 	}
 
 	// depsolve jobs can be done during other jobs
@@ -434,14 +449,21 @@ func main() {
 	// non-depsolve job
 	jobImpls := map[string]JobImplementation{
 		"osbuild": &OSBuildJobImpl{
-			Store:          store,
-			Output:         output,
-			KojiServers:    kojiServers,
-			GCPCreds:       gcpCredentials,
-			AzureCreds:     azureCredentials,
-			AWSCreds:       awsCredentials,
-			AWSBucket:      awsBucket,
-			GenericS3Creds: genericS3Credentials,
+			Store:       store,
+			Output:      output,
+			KojiServers: kojiServers,
+			GCPCreds:    gcpCredentials,
+			AzureCreds:  azureCredentials,
+			AWSCreds:    awsCredentials,
+			AWSBucket:   awsBucket,
+			S3Config: S3Configuration{
+				Creds:               genericS3Credentials,
+				Endpoint:            genericS3Endpoint,
+				Region:              genericS3Region,
+				Bucket:              genericS3Bucket,
+				CABundle:            genericS3CABundle,
+				SkipSSLVerification: genericS3SkipSSLVerification,
+			},
 		},
 		"osbuild-koji": &OSBuildKojiJobImpl{
 			Store:              store,

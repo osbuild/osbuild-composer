@@ -83,8 +83,6 @@ func UnmarshalTargetOptions(targetName string, rawOptions json.RawMessage) (Targ
 		options = new(VMWareTargetOptions)
 	case "org.osbuild.oci":
 		options = new(OCITargetOptions)
-	case "org.osbuild.generic.s3":
-		options = new(GenericS3TargetOptions)
 	default:
 		return nil, errors.New("unexpected target name")
 	}
