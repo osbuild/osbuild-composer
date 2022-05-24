@@ -61,6 +61,17 @@ init:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
+Container:
+  stage: rpmbuild
+  extends: .terraform
+  rules:
+    - !reference [.build_rules, rules]
+  script:
+    - sh "schutzbot/containerbuild.sh"
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.5-ga-x86_64
 
 RPM:
   stage: rpmbuild
