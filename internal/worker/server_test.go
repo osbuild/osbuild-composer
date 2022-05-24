@@ -1014,3 +1014,705 @@ func TestDepsolveJobArgsCompat(t *testing.T) {
 		assert.Equal(newJob, newJobW)
 	}
 }
+
+type testJob struct {
+	main   interface{}
+	deps   []testJob
+	result interface{}
+}
+
+func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uuid.UUID, error) {
+	ids := []uuid.UUID{}
+
+	for _, dep := range deps {
+		var depUUIDs []uuid.UUID
+		var err error
+		if len(dep.deps) > 0 {
+			depUUIDs, err = enqueueAndFinishTestJobDependencies(s, dep.deps)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		var id uuid.UUID
+		switch dep.main.(type) {
+		case *worker.OSBuildJob:
+			job := dep.main.(*worker.OSBuildJob)
+			id, err = s.EnqueueOSBuildAsDependency(distro.X86_64ArchName, job, depUUIDs, "")
+			if err != nil {
+				return nil, err
+			}
+
+		case *worker.ManifestJobByID:
+			job := dep.main.(*worker.ManifestJobByID)
+			if len(depUUIDs) != 1 {
+				return nil, fmt.Errorf("exactly one dependency is expected for ManifestJobByID, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueManifestJobByID(job, depUUIDs[0], "")
+			if err != nil {
+				return nil, err
+			}
+
+		case *worker.DepsolveJob:
+			job := dep.main.(*worker.DepsolveJob)
+			if len(depUUIDs) != 0 {
+				return nil, fmt.Errorf("dependencies are not supported for DepsolveJob, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueDepsolve(job, "")
+			if err != nil {
+				return nil, err
+			}
+
+		case *worker.KojiInitJob:
+			job := dep.main.(*worker.KojiInitJob)
+			if len(depUUIDs) != 0 {
+				return nil, fmt.Errorf("dependencies are not supported for KojiInitJob, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueKojiInit(job, "")
+			if err != nil {
+				return nil, err
+			}
+
+		case *worker.OSBuildKojiJob:
+			job := dep.main.(*worker.OSBuildKojiJob)
+			if len(depUUIDs) != 2 {
+				return nil, fmt.Errorf("exactly two dependency is expected for OSBuildKojiJob, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueOSBuildKojiAsDependency(distro.X86_64ArchName, job, depUUIDs[1], depUUIDs[0], "")
+			if err != nil {
+				return nil, err
+			}
+
+		case *worker.KojiFinalizeJob:
+			job := dep.main.(*worker.KojiFinalizeJob)
+			if len(depUUIDs) < 2 {
+				return nil, fmt.Errorf("at least two dependencies are expected for KojiFinalizeJob, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueKojiFinalize(job, depUUIDs[0], depUUIDs[1:], "")
+			if err != nil {
+				return nil, err
+			}
+
+		default:
+			return nil, fmt.Errorf("unexpected job type")
+		}
+
+		// request the previously added Job
+		_, token, _, _, _, err := s.RequestJobById(context.Background(), distro.X86_64ArchName, id)
+		if err != nil {
+			return nil, err
+		}
+		result, err := json.Marshal(dep.result)
+		if err != nil {
+			return nil, err
+		}
+		// mark the job as finished using the defined job result
+		err = s.FinishJob(token, result)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+func TestJobDependencyChainErrors(t *testing.T) {
+	var cases = []struct {
+		job           testJob
+		expectedError *clienterrors.Error
+	}{
+		// osbuild + manifest + depsolve
+		// failed depsolve
+		{
+			job: testJob{
+				main: &worker.OSBuildJob{},
+				deps: []testJob{
+					{
+						main: &worker.ManifestJobByID{},
+						deps: []testJob{
+							{
+								main: &worker.DepsolveJob{},
+								result: &worker.DepsolveJobResult{
+									JobResult: worker.JobResult{
+										JobError: &clienterrors.Error{
+											ID:     clienterrors.ErrorDNFDepsolveError,
+											Reason: "package X not found",
+										},
+									},
+								},
+							},
+						},
+						result: &worker.ManifestJobByIDResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorDepsolveDependency,
+									Reason: "depsolve dependency job failed",
+								},
+							},
+						},
+					},
+				},
+				result: &worker.OSBuildJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorManifestDependency,
+							Reason: "manifest dependency job failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorManifestDependency,
+				Reason: "manifest dependency job failed",
+				Details: []*clienterrors.Error{
+					{
+						ID:     clienterrors.ErrorDepsolveDependency,
+						Reason: "depsolve dependency job failed",
+						Details: []*clienterrors.Error{
+							{
+								ID:     clienterrors.ErrorDNFDepsolveError,
+								Reason: "package X not found",
+							},
+						},
+					},
+				},
+			},
+		},
+		// osbuild + manifest + depsolve
+		// failed manifest
+		{
+			job: testJob{
+				main: &worker.OSBuildJob{},
+				deps: []testJob{
+					{
+						main: &worker.ManifestJobByID{},
+						deps: []testJob{
+							{
+								main:   &worker.DepsolveJob{},
+								result: &worker.DepsolveJobResult{},
+							},
+						},
+						result: &worker.ManifestJobByIDResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorManifestGeneration,
+									Reason: "failed to generate manifest",
+								},
+							},
+						},
+					},
+				},
+				result: &worker.OSBuildJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorManifestDependency,
+							Reason: "manifest dependency job failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorManifestDependency,
+				Reason: "manifest dependency job failed",
+				Details: []*clienterrors.Error{
+					{
+						ID:     clienterrors.ErrorManifestGeneration,
+						Reason: "failed to generate manifest",
+					},
+				},
+			},
+		},
+		// osbuild + manifest + depsolve
+		// failed osbuild
+		{
+			job: testJob{
+				main: &worker.OSBuildJob{},
+				deps: []testJob{
+					{
+						main: &worker.ManifestJobByID{},
+						deps: []testJob{
+							{
+								main:   &worker.DepsolveJob{},
+								result: &worker.DepsolveJobResult{},
+							},
+						},
+						result: &worker.ManifestJobByIDResult{
+							JobResult: worker.JobResult{},
+						},
+					},
+				},
+				result: &worker.OSBuildJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorEmptyManifest,
+							Reason: "empty manifest received",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorEmptyManifest,
+				Reason: "empty manifest received",
+			},
+		},
+		// koji-init + osbuild-koji + manifest + depsolve
+		// failed depsolve
+		{
+			job: testJob{
+				main: &worker.OSBuildKojiJob{},
+				deps: []testJob{
+					{
+						main:   &worker.KojiInitJob{},
+						result: &worker.KojiInitJobResult{},
+					},
+					{
+						main: &worker.ManifestJobByID{},
+						deps: []testJob{
+							{
+								main: &worker.DepsolveJob{},
+								result: &worker.DepsolveJobResult{
+									JobResult: worker.JobResult{
+										JobError: &clienterrors.Error{
+											ID:     clienterrors.ErrorDNFDepsolveError,
+											Reason: "package X not found",
+										},
+									},
+								},
+							},
+						},
+						result: &worker.ManifestJobByIDResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorDepsolveDependency,
+									Reason: "depsolve dependency job failed",
+								},
+							},
+						},
+					},
+				},
+				result: &worker.OSBuildKojiJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorManifestDependency,
+							Reason: "manifest dependency job failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorManifestDependency,
+				Reason: "manifest dependency job failed",
+				Details: []*clienterrors.Error{
+					{
+						ID:     clienterrors.ErrorDepsolveDependency,
+						Reason: "depsolve dependency job failed",
+						Details: []*clienterrors.Error{
+							{
+								ID:     clienterrors.ErrorDNFDepsolveError,
+								Reason: "package X not found",
+							},
+						},
+					},
+				},
+			},
+		},
+		// koji-init + (osbuild-koji + manifest + depsolve) + (osbuild-koji + manifest + depsolve) + koji-finalize
+		// failed one depsolve
+		{
+			job: testJob{
+				main: &worker.KojiFinalizeJob{},
+				deps: []testJob{
+					{
+						main:   &worker.KojiInitJob{},
+						result: &worker.KojiInitJobResult{},
+					},
+					// failed build
+					{
+						main: &worker.OSBuildKojiJob{},
+						deps: []testJob{
+							{
+								main:   &worker.KojiInitJob{},
+								result: &worker.KojiInitJobResult{},
+							},
+							{
+								main: &worker.ManifestJobByID{},
+								deps: []testJob{
+									{
+										main: &worker.DepsolveJob{},
+										result: &worker.DepsolveJobResult{
+											JobResult: worker.JobResult{
+												JobError: &clienterrors.Error{
+													ID:     clienterrors.ErrorDNFDepsolveError,
+													Reason: "package X not found",
+												},
+											},
+										},
+									},
+								},
+								result: &worker.ManifestJobByIDResult{
+									JobResult: worker.JobResult{
+										JobError: &clienterrors.Error{
+											ID:     clienterrors.ErrorDepsolveDependency,
+											Reason: "depsolve dependency job failed",
+										},
+									},
+								},
+							},
+						},
+						result: &worker.OSBuildKojiJobResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorManifestDependency,
+									Reason: "manifest dependency job failed",
+								},
+							},
+						},
+					},
+					// passed build
+					{
+						main: &worker.OSBuildKojiJob{},
+						deps: []testJob{
+							{
+								main:   &worker.KojiInitJob{},
+								result: &worker.KojiInitJobResult{},
+							},
+							{
+								main: &worker.ManifestJobByID{},
+								deps: []testJob{
+									{
+										main:   &worker.DepsolveJob{},
+										result: &worker.DepsolveJobResult{},
+									},
+								},
+								result: &worker.ManifestJobByIDResult{},
+							},
+						},
+						result: &worker.OSBuildKojiJobResult{
+							OSBuildOutput: &osbuild2.Result{},
+						},
+					},
+				},
+				result: &worker.KojiFinalizeJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorKojiFailedDependency,
+							Reason: "one build failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorKojiFailedDependency,
+				Reason: "one build failed",
+				Details: []*clienterrors.Error{
+					{
+						ID:     clienterrors.ErrorManifestDependency,
+						Reason: "manifest dependency job failed",
+						Details: []*clienterrors.Error{
+							{
+								ID:     clienterrors.ErrorDepsolveDependency,
+								Reason: "depsolve dependency job failed",
+								Details: []*clienterrors.Error{
+									{
+										ID:     clienterrors.ErrorDNFDepsolveError,
+										Reason: "package X not found",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// koji-init + (osbuild-koji + manifest + depsolve) + (osbuild-koji + manifest + depsolve) + koji-finalize
+		// failed both depsolve
+		{
+			job: testJob{
+				main: &worker.KojiFinalizeJob{},
+				deps: []testJob{
+					{
+						main:   &worker.KojiInitJob{},
+						result: &worker.KojiInitJobResult{},
+					},
+					// failed build
+					{
+						main: &worker.OSBuildKojiJob{},
+						deps: []testJob{
+							{
+								main:   &worker.KojiInitJob{},
+								result: &worker.KojiInitJobResult{},
+							},
+							{
+								main: &worker.ManifestJobByID{},
+								deps: []testJob{
+									{
+										main: &worker.DepsolveJob{},
+										result: &worker.DepsolveJobResult{
+											JobResult: worker.JobResult{
+												JobError: &clienterrors.Error{
+													ID:     clienterrors.ErrorDNFDepsolveError,
+													Reason: "package X not found",
+												},
+											},
+										},
+									},
+								},
+								result: &worker.ManifestJobByIDResult{
+									JobResult: worker.JobResult{
+										JobError: &clienterrors.Error{
+											ID:     clienterrors.ErrorDepsolveDependency,
+											Reason: "depsolve dependency job failed",
+										},
+									},
+								},
+							},
+						},
+						result: &worker.OSBuildKojiJobResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorManifestDependency,
+									Reason: "manifest dependency job failed",
+								},
+							},
+						},
+					},
+					// failed build
+					{
+						main: &worker.OSBuildKojiJob{},
+						deps: []testJob{
+							{
+								main:   &worker.KojiInitJob{},
+								result: &worker.KojiInitJobResult{},
+							},
+							{
+								main: &worker.ManifestJobByID{},
+								deps: []testJob{
+									{
+										main: &worker.DepsolveJob{},
+										result: &worker.DepsolveJobResult{
+											JobResult: worker.JobResult{
+												JobError: &clienterrors.Error{
+													ID:     clienterrors.ErrorDNFDepsolveError,
+													Reason: "package Y not found",
+												},
+											},
+										},
+									},
+								},
+								result: &worker.ManifestJobByIDResult{
+									JobResult: worker.JobResult{
+										JobError: &clienterrors.Error{
+											ID:     clienterrors.ErrorDepsolveDependency,
+											Reason: "depsolve dependency job failed",
+										},
+									},
+								},
+							},
+						},
+						result: &worker.OSBuildKojiJobResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorManifestDependency,
+									Reason: "manifest dependency job failed",
+								},
+							},
+						},
+					},
+				},
+				result: &worker.KojiFinalizeJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorKojiFailedDependency,
+							Reason: "two builds failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorKojiFailedDependency,
+				Reason: "two builds failed",
+				Details: []*clienterrors.Error{
+					{
+						ID:     clienterrors.ErrorManifestDependency,
+						Reason: "manifest dependency job failed",
+						Details: []*clienterrors.Error{
+							{
+								ID:     clienterrors.ErrorDepsolveDependency,
+								Reason: "depsolve dependency job failed",
+								Details: []*clienterrors.Error{
+									{
+										ID:     clienterrors.ErrorDNFDepsolveError,
+										Reason: "package X not found",
+									},
+								},
+							},
+						},
+					},
+					{
+						ID:     clienterrors.ErrorManifestDependency,
+						Reason: "manifest dependency job failed",
+						Details: []*clienterrors.Error{
+							{
+								ID:     clienterrors.ErrorDepsolveDependency,
+								Reason: "depsolve dependency job failed",
+								Details: []*clienterrors.Error{
+									{
+										ID:     clienterrors.ErrorDNFDepsolveError,
+										Reason: "package Y not found",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// koji-init + (osbuild-koji + manifest + depsolve) + (osbuild-koji + manifest + depsolve) + koji-finalize
+		// failed koji-finalize
+		{
+			job: testJob{
+				main: &worker.KojiFinalizeJob{},
+				deps: []testJob{
+					{
+						main:   &worker.KojiInitJob{},
+						result: &worker.KojiInitJobResult{},
+					},
+					// passed build
+					{
+						main: &worker.OSBuildKojiJob{},
+						deps: []testJob{
+							{
+								main:   &worker.KojiInitJob{},
+								result: &worker.KojiInitJobResult{},
+							},
+							{
+								main: &worker.ManifestJobByID{},
+								deps: []testJob{
+									{
+										main:   &worker.DepsolveJob{},
+										result: &worker.DepsolveJobResult{},
+									},
+								},
+								result: &worker.ManifestJobByIDResult{},
+							},
+						},
+						result: &worker.OSBuildKojiJobResult{
+							OSBuildOutput: &osbuild2.Result{},
+						},
+					},
+					// passed build
+					{
+						main: &worker.OSBuildKojiJob{},
+						deps: []testJob{
+							{
+								main:   &worker.KojiInitJob{},
+								result: &worker.KojiInitJobResult{},
+							},
+							{
+								main: &worker.ManifestJobByID{},
+								deps: []testJob{
+									{
+										main:   &worker.DepsolveJob{},
+										result: &worker.DepsolveJobResult{},
+									},
+								},
+								result: &worker.ManifestJobByIDResult{},
+							},
+						},
+						result: &worker.OSBuildKojiJobResult{
+							OSBuildOutput: &osbuild2.Result{},
+						},
+					},
+				},
+				result: &worker.KojiFinalizeJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorKojiFinalize,
+							Reason: "koji-finalize failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorKojiFinalize,
+				Reason: "koji-finalize failed",
+			},
+		},
+		// koji-init + (osbuild-koji + manifest + depsolve) + (osbuild-koji + manifest + depsolve) + koji-finalize
+		// all passed
+		{
+			job: testJob{
+				main: &worker.KojiFinalizeJob{},
+				deps: []testJob{
+					{
+						main:   &worker.KojiInitJob{},
+						result: &worker.KojiInitJobResult{},
+					},
+					// passed build
+					{
+						main: &worker.OSBuildKojiJob{},
+						deps: []testJob{
+							{
+								main:   &worker.KojiInitJob{},
+								result: &worker.KojiInitJobResult{},
+							},
+							{
+								main: &worker.ManifestJobByID{},
+								deps: []testJob{
+									{
+										main:   &worker.DepsolveJob{},
+										result: &worker.DepsolveJobResult{},
+									},
+								},
+								result: &worker.ManifestJobByIDResult{},
+							},
+						},
+						result: &worker.OSBuildKojiJobResult{
+							OSBuildOutput: &osbuild2.Result{},
+						},
+					},
+					// passed build
+					{
+						main: &worker.OSBuildKojiJob{},
+						deps: []testJob{
+							{
+								main:   &worker.KojiInitJob{},
+								result: &worker.KojiInitJobResult{},
+							},
+							{
+								main: &worker.ManifestJobByID{},
+								deps: []testJob{
+									{
+										main:   &worker.DepsolveJob{},
+										result: &worker.DepsolveJobResult{},
+									},
+								},
+								result: &worker.ManifestJobByIDResult{},
+							},
+						},
+						result: &worker.OSBuildKojiJobResult{
+							OSBuildOutput: &osbuild2.Result{},
+						},
+					},
+				},
+				result: &worker.KojiFinalizeJobResult{
+					JobResult: worker.JobResult{},
+				},
+			},
+			expectedError: nil,
+		},
+	}
+
+	for idx, c := range cases {
+		t.Logf("Test case #%d", idx)
+		server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1")
+		ids, err := enqueueAndFinishTestJobDependencies(server, []testJob{c.job})
+		require.Nil(t, err)
+		require.Len(t, ids, 1)
+
+		mainJobID := ids[0]
+		errors, err := server.JobDependencyChainErrors(mainJobID)
+		require.Nil(t, err)
+		assert.EqualValues(t, c.expectedError, errors)
+	}
+}
