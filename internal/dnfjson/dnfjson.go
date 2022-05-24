@@ -86,11 +86,6 @@ func NewSolver(modulePlatformID string, releaseVer string, arch string, cacheDir
 	return s.NewWithConfig(modulePlatformID, releaseVer, arch)
 }
 
-// Depsolve the given packages with explicit excludes using the given configuration and repos
-func Depsolve(pkgSets []rpmmd.PackageSet, modulePlatformID string, releaseVer string, arch string, cacheDir string) ([]rpmmd.PackageSpec, error) {
-	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).Depsolve(pkgSets)
-}
-
 // Depsolve takes a list of required package sets (included and excluded), which should be depsolved
 // as separate transactions, list of repositories, platform ID for modularity, architecture and release version.
 // It returns a list of all packages (with solved dependencies) that will be installed into the system.
@@ -110,10 +105,6 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, erro
 	}
 
 	return depsToRPMMD(result, repoMap), nil
-}
-
-func FetchMetadata(repos []rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (rpmmd.PackageList, error) {
-	return NewSolver(modulePlatformID, releaseVer, arch, cacheDir).FetchMetadata(repos)
 }
 
 func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
