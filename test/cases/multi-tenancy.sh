@@ -26,6 +26,7 @@ function greenprint {
 greenprint "Registering clean ups"
 KILL_PIDS=()
 function cleanup() {
+  greenprint "== Script execution stopped or finished - Cleaning up =="
   set +eu
   greenprint "Stopping containers"
   sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh stop

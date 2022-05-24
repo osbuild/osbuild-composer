@@ -4,6 +4,7 @@ set -euxo pipefail
 
 WORKSPACE=$(mktemp -d)
 function cleanup() {
+    echo "== Script execution stopped or finished - Cleaning up =="
     rm -rf "$WORKSPACE"
 }
 trap cleanup EXIT

@@ -167,6 +167,7 @@ function cleanupAWSS3() {
 WORKDIR=$(mktemp -d)
 KILL_PIDS=()
 function cleanup() {
+  greenprint "== Script execution stopped or finished - Cleaning up =="
   set +eu
   cleanupAWSS3
 
