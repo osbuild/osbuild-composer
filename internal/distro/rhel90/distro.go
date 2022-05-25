@@ -884,7 +884,7 @@ func newDistro(distroName string) distro.Distro {
 		kernelOptions:       "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:            true,
 		defaultSize:         4 * GigaByte,
-		pipelines:           vhdPipelines,
+		pipelines:           vhdPipelines(false),
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vpc"},
 		exports:             []string{"vpc"},
@@ -893,8 +893,8 @@ func newDistro(distroName string) distro.Distro {
 
 	azureRhuiImgType := imageType{
 		name:     "azure-rhui",
-		filename: "disk.vhd",
-		mimeType: "application/x-vhd",
+		filename: "disk.vhd.xz",
+		mimeType: "application/xz",
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    azureRhuiCommonPackageSet,
@@ -1050,10 +1050,10 @@ func newDistro(distroName string) distro.Distro {
 		kernelOptions:       "ro console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300",
 		bootable:            true,
 		defaultSize:         68719476736,
-		pipelines:           vhdPipelines,
+		pipelines:           vhdPipelines(true),
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "vpc"},
-		exports:             []string{"vpc"},
+		payloadPipelines:    []string{"os", "image", "vpc", "archive"},
+		exports:             []string{"archive"},
 		basePartitionTables: azureRhuiBasePartitionTables,
 	}
 
