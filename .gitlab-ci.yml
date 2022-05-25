@@ -411,7 +411,17 @@ aws.sh:
   extends: .integration
   variables:
     SCRIPT: aws.sh
-
+  artifacts:
+    paths:
+      - cloud-image-val/report.html
+      - journal-log.gpg
+      - ci-artifacts
+      - ci-details-before-run
+      - ci-details-after-run
+      - "*.repo"
+      - COMPOSER_NVR
+    when: always
+    
 azure.sh:
   extends: .integration
   variables:
