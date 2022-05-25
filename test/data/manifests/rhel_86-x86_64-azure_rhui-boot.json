@@ -3439,6 +3439,29 @@
             }
           }
         ]
+      },
+      {
+        "name": "archive",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.xz",
+            "inputs": {
+              "file": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.pipeline",
+                "references": {
+                  "name:vpc": {
+                    "file": "disk.vhd"
+                  }
+                }
+              }
+            },
+            "options": {
+              "filename": "disk.vhd.xz"
+            }
+          }
+        ]
       }
     ],
     "sources": {

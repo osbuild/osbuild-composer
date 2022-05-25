@@ -100,8 +100,8 @@ func TestFilenameFromType(t *testing.T) {
 			name: "azure-rhui",
 			args: args{"azure-rhui"},
 			want: wantResult{
-				filename: "disk.vhd",
-				mimeType: "application/x-vhd",
+				filename: "disk.vhd.xz",
+				mimeType: "application/xz",
 			},
 		},
 		{
