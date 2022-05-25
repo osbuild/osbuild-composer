@@ -105,12 +105,12 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, erro
 	if err != nil {
 		return nil, err
 	}
-	var result []PackageSpec
+	var result packageSpecs
 	if err := json.Unmarshal(output, &result); err != nil {
 		return nil, err
 	}
 
-	return depsToRPMMD(result, repoMap), nil
+	return result.toRPMMD(repoMap), nil
 }
 
 func FetchMetadata(repos []rpmmd.RepoConfig, modulePlatformID string, releaseVer string, arch string, cacheDir string) (rpmmd.PackageList, error) {
@@ -283,14 +283,14 @@ func (s *Solver) makeDumpRequest(repos []rpmmd.RepoConfig) (*Request, error) {
 
 // convert internal a list of PackageSpecs to the rpmmd equivalent and attach
 // key and subscription information based on the repository configs.
-func depsToRPMMD(dependencies []PackageSpec, repos map[string]rpmmd.RepoConfig) []rpmmd.PackageSpec {
-	rpmDependencies := make([]rpmmd.PackageSpec, len(dependencies))
-	for i, dep := range dependencies {
+func (pkgs packageSpecs) toRPMMD(repos map[string]rpmmd.RepoConfig) []rpmmd.PackageSpec {
+	rpmDependencies := make([]rpmmd.PackageSpec, len(pkgs))
+	for i, dep := range pkgs {
 		repo, ok := repos[dep.RepoID]
 		if !ok {
 			panic("dependency repo ID not found in repositories")
 		}
-		dep := dependencies[i]
+		dep := pkgs[i]
 		rpmDependencies[i].Name = dep.Name
 		rpmDependencies[i].Epoch = dep.Epoch
 		rpmDependencies[i].Version = dep.Version
@@ -343,6 +343,8 @@ type transactionArgs struct {
 	// IDs of repositories to use for this depsolve
 	RepoIDs []string `json:"repo-ids"`
 }
+
+type packageSpecs []PackageSpec
 
 // Package specification
 type PackageSpec struct {
