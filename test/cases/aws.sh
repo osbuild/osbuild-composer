@@ -70,15 +70,9 @@ fi
 # Set up temporary files.
 AWS_CONFIG=${TEMPDIR}/aws.toml
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
-AWS_INSTANCE_JSON=${TEMPDIR}/aws-instance.json
 COMPOSE_START=${TEMPDIR}/compose-start-${TEST_ID}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${TEST_ID}.json
 AMI_DATA=${TEMPDIR}/ami-data-${TEST_ID}.json
-INSTANCE_DATA=${TEMPDIR}/instance-data-${TEST_ID}.json
-INSTANCE_CONSOLE=${TEMPDIR}/instance-console-${TEST_ID}.json
-
-SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
-SSH_KEY=${SSH_DATA_DIR}/id_rsa
 
 # We need awscli to talk to AWS.
 if ! hash aws; then
@@ -89,24 +83,12 @@ if ! hash aws; then
         -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
         -e AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
         -v ${TEMPDIR}:${TEMPDIR}:Z \
-        -v ${SSH_DATA_DIR}:${SSH_DATA_DIR}:Z \
         ${CONTAINER_IMAGE_CLOUD_TOOLS} aws --region $AWS_REGION --output json --color on"
 else
     echo "Using pre-installed 'aws' from the system"
     AWS_CMD="aws --region $AWS_REGION --output json --color on"
 fi
 $AWS_CMD --version
-
-# Check for the smoke test file on the AWS instance that we start.
-smoke_test_check () {
-    # Ensure the ssh key has restricted permissions.
-    SMOKE_TEST=$(sudo ssh -i "${SSH_KEY}" redhat@"${1}" 'cat /etc/smoke-test.txt')
-    if [[ $SMOKE_TEST == smoke-test ]]; then
-        echo 1
-    else
-        echo 0
-    fi
-}
 
 # Get the compose log.
 get_compose_log () {
@@ -132,16 +114,6 @@ get_compose_metadata () {
 
     # Move the JSON file into place.
     sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
-}
-
-# Get the console screenshot from the AWS instance.
-store_instance_screenshot () {
-    INSTANCE_ID=${1}
-    LOOP_COUNTER=${2}
-    SCREENSHOT_FILE=${WORKSPACE}/console-screenshot-${ID}-${VERSION_ID}-${LOOP_COUNTER}.jpg
-
-    $AWS_CMD ec2 get-console-screenshot --instance-id "${1}" > "$INSTANCE_CONSOLE"
-    jq -r '.ImageData' "$INSTANCE_CONSOLE" | base64 -d - > "$SCREENSHOT_FILE"
 }
 
 is_weldr_client_installed () {
@@ -239,100 +211,56 @@ $AWS_CMD ec2 create-tags \
     --resources "${SNAPSHOT_ID}" "${AMI_IMAGE_ID}" \
     --tags Key=gitlab-ci-test,Value=true
 
-# NOTE(mhayden): Getting TagSpecifications to play along with bash's
-# parsing of curly braces and square brackets is nuts, so we just write some
-# json and pass it to the aws command.
-tee "$AWS_INSTANCE_JSON" > /dev/null << EOF
+if [[ "$ID" == "fedora" ]]; then
+  # fedora uses fedora
+  SSH_USER="fedora"
+  DISTRO_HASHICORP_REPO="fedora"
+else
+  # RHEL and centos use ec2-user
+  SSH_USER="ec2-user"
+  DISTRO_HASHICORP_REPO="RHEL"
+fi
+
+greenprint "Cloning cloud-image-val from upstream"
+
+release_version="v0.1.0"
+git clone https://github.com/osbuild/cloud-image-val --branch "${release_version}"
+
+greenprint "Running cloud-image-val on generated image"
+
+pushd cloud-image-val
+
+sudo dnf install -y python3-pip unzip make dnf-plugins-core
+
+sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/"${DISTRO_HASHICORP_REPO}"/hashicorp.repo
+sudo dnf -y install terraform
+
+sudo pip3 install --upgrade pip
+sudo pip3 install -r requirements.txt
+
+tee "resource-file.json" <<EOF
 {
-    "TagSpecifications": [
+    "provider": "aws",
+    "instances": [
         {
-            "ResourceType": "instance",
-            "Tags": [
-                {
-                    "Key": "Name",
-                    "Value": "${TEST_ID}"
-                },
-                {
-                    "Key": "gitlab-ci-test",
-                    "Value": "true"
-                }
-            ]
+            "ami": "$AMI_IMAGE_ID",
+            "region": "us-east-1",
+            "instance_type": "t3a.micro",
+            "username": "$SSH_USER",
+            "name": "testing-image"
         }
     ]
 }
 EOF
 
-# Build instance in AWS with our image.
-greenprint "👷🏻 Building instance in AWS"
-$AWS_CMD ec2 run-instances \
-    --associate-public-ip-address \
-    --image-id "${AMI_IMAGE_ID}" \
-    --instance-type t3a.micro \
-    --user-data file://"${SSH_DATA_DIR}"/user-data \
-    --cli-input-json file://"${AWS_INSTANCE_JSON}" > /dev/null
+AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
+AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
+python3 cloud-image-val.py -r resource-file.json -d -o report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
 
-# Wait for the instance to finish building.
-greenprint "⏱ Waiting for AWS instance to be marked as running"
-while true; do
-    $AWS_CMD ec2 describe-instances \
-        --filters Name=image-id,Values="${AMI_IMAGE_ID}" \
-        | tee "$INSTANCE_DATA" > /dev/null
-
-    INSTANCE_STATUS=$(jq -r '.Reservations[].Instances[].State.Name' "$INSTANCE_DATA")
-
-    # Break the loop if our instance is running.
-    if [[ $INSTANCE_STATUS == running ]]; then
-        break
-    fi
-
-    # Sleep for 10 seconds and try again.
-    sleep 10
-
-done
-
-# Get data about the instance we built.
-INSTANCE_ID=$(jq -r '.Reservations[].Instances[].InstanceId' "$INSTANCE_DATA")
-PUBLIC_IP=$(jq -r '.Reservations[].Instances[].PublicIpAddress' "$INSTANCE_DATA")
-
-# Wait for the node to come online.
-greenprint "⏱ Waiting for AWS instance to respond to ssh"
-for LOOP_COUNTER in {0..30}; do
-    if ssh-keyscan "$PUBLIC_IP" > /dev/null 2>&1; then
-        echo "SSH is up!"
-        ssh-keyscan "$PUBLIC_IP" | sudo tee -a /root/.ssh/known_hosts
-        break
-    fi
-
-    # Get a screenshot of the instance console.
-    echo "Getting instance screenshot..."
-    store_instance_screenshot "$INSTANCE_ID" "$LOOP_COUNTER" || true
-
-    # ssh-keyscan has a 5 second timeout by default, so the pause per loop
-    # is 10 seconds when you include the following `sleep`.
-    echo "Retrying in 5 seconds..."
-    sleep 5
-done
-
-# Check for our smoke test file.
-greenprint "🛃 Checking for smoke test file"
-for LOOP_COUNTER in {0..10}; do
-    RESULTS="$(smoke_test_check "$PUBLIC_IP")"
-    if [[ $RESULTS == 1 ]]; then
-        echo "Smoke test passed! 🥳"
-        break
-    fi
-    sleep 5
-done
-
-# Ensure the image was properly tagged.
-IMAGE_TAG=$($AWS_CMD ec2 describe-images --image-ids "${AMI_IMAGE_ID}" | jq -r '.Images[0].Tags[] | select(.Key=="Name") | .Value')
-if [[ ! $IMAGE_TAG == "${TEST_ID}" ]]; then
-    RESULTS=0
-fi
+popd
 
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
-$AWS_CMD ec2 terminate-instances --instance-id "${INSTANCE_ID}"
 $AWS_CMD ec2 deregister-image --image-id "${AMI_IMAGE_ID}"
 $AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
 
