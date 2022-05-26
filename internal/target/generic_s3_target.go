@@ -2,7 +2,9 @@ package target
 
 type GenericS3TargetOptions struct {
 	AWSS3TargetOptions
-	Endpoint string `json:"endpoint"`
+	Endpoint            string `json:"endpoint"`
+	CABundle            string `json:"ca_bundle"`
+	SkipSSLVerification bool   `json:"skip_ssl_verification"`
 }
 
 func (GenericS3TargetOptions) isTargetOptions() {}

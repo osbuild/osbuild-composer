@@ -5,9 +5,9 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 TEST_ID=${1}
 S3_PROVIDER_CONFIG_FILE=${2}
-S3_CHECK_CMD=${3}
-S3_GET_URL_CMD=${4}
-S3_DELETE_CMD=${5:-""}
+S3_CMD=${3}
+IMAGE_OBJECT_KEY=${4}
+S3_CA_BUNDLE=${5:-""}
 
 # Colorful output.
 function greenprint {
@@ -126,20 +126,18 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 
 # Find the image that we made in the AWS Bucket
 greenprint "🔍 Search for created image"
-if ! bash -c "${S3_CHECK_CMD}"; then
+if ! bash -c "${S3_CMD} ls ${IMAGE_OBJECT_KEY}"; then
     echo "Failed to find the image in the S3 Bucket"
     exit 1
 fi
 
 function removeImageFromS3() {
-    bash -c "${S3_DELETE_CMD}"
+    bash -c "${S3_CMD} rm s3://${IMAGE_OBJECT_KEY}"
 }
-if [ -n "${S3_DELETE_CMD}" ]; then
-    trap removeImageFromS3 EXIT
-fi
+trap removeImageFromS3 EXIT
 
 # Generate a URL for the image
-QCOW2_IMAGE_URL=$(bash -c "${S3_GET_URL_CMD}")
+QCOW2_IMAGE_URL=$(bash -c "${S3_CMD} presign ${IMAGE_OBJECT_KEY}")
 
 # Run the image on KVM
-/usr/libexec/osbuild-composer-test/libvirt_test.sh qcow2 bios "${QCOW2_IMAGE_URL}"
+/usr/libexec/osbuild-composer-test/libvirt_test.sh qcow2 bios "${QCOW2_IMAGE_URL}" "${S3_CA_BUNDLE}"

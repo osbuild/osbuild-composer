@@ -2,7 +2,7 @@
 set -euo pipefail
 
 #
-# tests that guest images are buildable using composer-cli and and verifies 
+# tests that guest images are buildable using composer-cli and and verifies
 # they boot with cloud-init using libvirt
 #
 
@@ -19,6 +19,8 @@ IMAGE_TYPE=${1:-qcow2}
 BOOT_TYPE=${2:-bios}
 # Take the image from the url passes to the script or build it by default if nothing
 LIBVIRT_IMAGE_URL=${3:-""}
+# When downloading the image, if provided, use this CA bundle, or skip verification
+LIBVIRT_IMAGE_URL_CA_BUNDLE=${4:-""}
 
 # Select the file extension based on the image that we are building.
 IMAGE_EXTENSION=$IMAGE_TYPE
@@ -214,7 +216,15 @@ EOF
 else
     pushd "${BIG_TEMP_DIR}"
     LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.${IMAGE_EXTENSION}
-    sudo curl -o "${LIBVIRT_IMAGE_PATH}" "${LIBVIRT_IMAGE_URL}"
+    if [ -n "${LIBVIRT_IMAGE_URL_CA_BUNDLE}" ]; then
+        if [ "${LIBVIRT_IMAGE_URL_CA_BUNDLE}" == "skip" ]; then
+            sudo curl -o "${LIBVIRT_IMAGE_PATH}" -k "${LIBVIRT_IMAGE_URL}"
+        else
+            sudo curl -o "${LIBVIRT_IMAGE_PATH}" --cacert "${LIBVIRT_IMAGE_URL_CA_BUNDLE}" "${LIBVIRT_IMAGE_URL}"
+        fi
+    else
+        sudo curl -o "${LIBVIRT_IMAGE_PATH}" "${LIBVIRT_IMAGE_URL}"
+    fi
     popd
 fi
 
