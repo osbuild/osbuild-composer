@@ -82,4 +82,4 @@ EOF
 
 IMAGE_OBJECT_KEY="${AWS_BUCKET}/${TEST_ID}-disk.qcow2"
 
-/usr/libexec/osbuild-composer-test/s3_test.sh "${TEST_ID}" "${AWS_S3_PROVIDER_CONFIG}" "${AWS_CMD} s3 ls ${IMAGE_OBJECT_KEY}" "${AWS_CMD} s3 presign ${IMAGE_OBJECT_KEY}" "${AWS_CMD} s3 rm s3://${IMAGE_OBJECT_KEY}"
+/usr/libexec/osbuild-composer-test/s3_test.sh "${TEST_ID}" "${AWS_S3_PROVIDER_CONFIG}" "${AWS_CMD} s3" "${IMAGE_OBJECT_KEY}"

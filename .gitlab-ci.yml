@@ -510,10 +510,20 @@ libvirt.sh:
   variables:
     SCRIPT: libvirt.sh
 
-generic_s3.sh:
+generic_s3_http.sh:
   extends: .libvirt_integration
   variables:
-    SCRIPT: generic_s3.sh
+    SCRIPT: generic_s3_http.sh
+
+generic_s3_https_secure.sh:
+  extends: .libvirt_integration
+  variables:
+    SCRIPT: generic_s3_https_secure.sh
+
+generic_s3_https_insecure.sh:
+  extends: .libvirt_integration
+  variables:
+    SCRIPT: generic_s3_https_insecure.sh
 
 aws_s3.sh:
   extends: .libvirt_integration

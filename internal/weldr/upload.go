@@ -96,7 +96,9 @@ func (ociUploadSettings) isUploadSettings() {}
 
 type genericS3UploadSettings struct {
 	awsS3UploadSettings
-	Endpoint string `json:"endpoint"`
+	Endpoint            string `json:"endpoint"`
+	CABundle            string `json:"ca_bundle"`
+	SkipSSLVerification bool   `json:"skip_ssl_verification"`
 }
 
 func (genericS3UploadSettings) isUploadSettings() {}
@@ -234,7 +236,9 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 					Key:    options.Key,
 					// AccessKeyID and SecretAccessKey are intentionally not included.
 				},
-				Endpoint: options.Endpoint,
+				Endpoint:            options.Endpoint,
+				CABundle:            options.CABundle,
+				SkipSSLVerification: options.SkipSSLVerification,
 			}
 			uploads = append(uploads, upload)
 		}
@@ -345,7 +349,9 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 				Bucket:          options.Bucket,
 				Key:             options.Key,
 			},
-			Endpoint: options.Endpoint,
+			Endpoint:            options.Endpoint,
+			CABundle:            options.CABundle,
+			SkipSSLVerification: options.SkipSSLVerification,
 		}
 	}
 
