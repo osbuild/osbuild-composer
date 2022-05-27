@@ -425,10 +425,10 @@ parameters:
     value: "imagebuilder.service.staging"
   - description: Allowed tenants based on org id
     name: ACL_ORG_ID_TENANTS
-    value: "15842261|15877963|15885990"
+    value: "15842261|15877963|15885990|16057323"
   - description: Allowed tenants based on account id
     name: ACL_ACCOUNT_ID_TENANTS
-    value: "15842261"
+    value: "15842261|16057323"
   - description: composer-api port
     name: COMPOSER_API_PORT
     required: true
