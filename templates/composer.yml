@@ -36,6 +36,15 @@ objects:
           app: composer
       spec:
         serviceAccountName: image-builder
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: composer
+                topologyKey: kubernetes.io/hostname
         containers:
         - image: "${IMAGE_NAME}:${IMAGE_TAG}"
           name: composer
