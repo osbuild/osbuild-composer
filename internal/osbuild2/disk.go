@@ -3,6 +3,7 @@ package osbuild2
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 )
 
@@ -28,7 +29,40 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *SfdiskStageOptions {
 	return stageOptions
 }
 
-func GenImagePrepareStages(pt *disk.PartitionTable, filename string) []*Stage {
+// sgdiskStageOptions creates the options and devices properties for an
+// org.osbuild.sgdisk stage based on a partition table description
+func sgdiskStageOptions(pt *disk.PartitionTable) *SgdiskStageOptions {
+	partitions := make([]SgdiskPartition, len(pt.Partitions))
+	for idx, p := range pt.Partitions {
+		partitions[idx] = SgdiskPartition{
+			Bootable: p.Bootable,
+			Start:    pt.BytesToSectors(p.Start),
+			Size:     pt.BytesToSectors(p.Size),
+			Type:     p.Type,
+		}
+
+		if p.UUID != "" {
+			u := uuid.MustParse(p.UUID)
+			partitions[idx].UUID = &u
+		}
+	}
+
+	stageOptions := &SgdiskStageOptions{
+		UUID:       uuid.MustParse(pt.UUID),
+		Partitions: partitions,
+	}
+
+	return stageOptions
+}
+
+type PartTool string
+
+const (
+	PTSfdisk PartTool = "sfdisk"
+	PTSgdisk PartTool = "sgdisk"
+)
+
+func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool PartTool) []*Stage {
 	stages := make([]*Stage, 0)
 
 	// create an empty file of the given size via `org.osbuild.truncate`
@@ -41,7 +75,6 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string) []*Stage {
 	stages = append(stages, stage)
 
 	// create the partition layout in the empty file
-	sfOptions := sfdiskStageOptions(pt)
 	loopback := NewLoopbackDevice(
 		&LoopbackDeviceOptions{
 			Filename: filename,
@@ -49,8 +82,17 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string) []*Stage {
 		},
 	)
 
-	sfdisk := NewSfdiskStage(sfOptions, loopback)
-	stages = append(stages, sfdisk)
+	if partTool == PTSfdisk {
+		sfOptions := sfdiskStageOptions(pt)
+		sfdisk := NewSfdiskStage(sfOptions, loopback)
+		stages = append(stages, sfdisk)
+	} else if partTool == PTSgdisk {
+		sgOptions := sgdiskStageOptions(pt)
+		sgdisk := NewSgdiskStage(sgOptions, loopback)
+		stages = append(stages, sgdisk)
+	} else {
+		panic("programming error: unknown PartTool: " + partTool)
+	}
 
 	// Generate all the needed "devices", like LUKS2 and LVM2
 	s := GenDeviceCreationStages(pt, filename)

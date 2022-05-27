@@ -619,7 +619,7 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 	p.Name = "image"
 	p.Build = "name:build"
 
-	for _, stage := range osbuild.GenImagePrepareStages(pt, outputFilename) {
+	for _, stage := range osbuild.GenImagePrepareStages(pt, outputFilename, osbuild.PTSfdisk) {
 		p.AddStage(stage)
 	}
 
