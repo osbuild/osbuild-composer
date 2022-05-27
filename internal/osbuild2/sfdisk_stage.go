@@ -10,13 +10,13 @@ type SfdiskStageOptions struct {
 	UUID string `json:"uuid"`
 
 	// Partition layout
-	Partitions []Partition `json:"partitions,omitempty"`
+	Partitions []SfdiskPartition `json:"partitions,omitempty"`
 }
 
 func (SfdiskStageOptions) isStageOptions() {}
 
 // Description of a partition
-type Partition struct {
+type SfdiskPartition struct {
 	// Mark the partition as bootable (dos)
 	Bootable bool `json:"bootable,omitempty"`
 

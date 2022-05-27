@@ -8,7 +8,7 @@ import (
 
 func TestNewSfdiskStage(t *testing.T) {
 
-	partition := Partition{
+	partition := SfdiskPartition{
 		Bootable: true,
 		Name:     "root",
 		Size:     2097152,
@@ -20,7 +20,7 @@ func TestNewSfdiskStage(t *testing.T) {
 	options := SfdiskStageOptions{
 		Label:      "gpt",
 		UUID:       "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Partitions: []Partition{partition},
+		Partitions: []SfdiskPartition{partition},
 	}
 
 	device := NewLoopbackDevice(&LoopbackDeviceOptions{Filename: "disk.raw"})

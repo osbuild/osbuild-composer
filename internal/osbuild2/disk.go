@@ -9,9 +9,9 @@ import (
 // sfdiskStageOptions creates the options and devices properties for an
 // org.osbuild.sfdisk stage based on a partition table description
 func sfdiskStageOptions(pt *disk.PartitionTable) *SfdiskStageOptions {
-	partitions := make([]Partition, len(pt.Partitions))
+	partitions := make([]SfdiskPartition, len(pt.Partitions))
 	for idx, p := range pt.Partitions {
-		partitions[idx] = Partition{
+		partitions[idx] = SfdiskPartition{
 			Bootable: p.Bootable,
 			Start:    pt.BytesToSectors(p.Start),
 			Size:     pt.BytesToSectors(p.Size),
