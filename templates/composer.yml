@@ -164,6 +164,13 @@ objects:
         - name: composer-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"
           command: [ "/opt/migrate/tern", "migrate", "-m", "/opt/migrate/schemas" ]
+          resources:
+            requests:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: "${MEMORY_LIMIT}"
           env:
           - name: PGHOST
             valueFrom:
