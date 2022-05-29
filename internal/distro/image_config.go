@@ -44,6 +44,7 @@ type ImageConfig struct {
 	WAAgentConfig      *osbuild2.WAAgentConfStageOptions
 	Grub2Config        *osbuild2.GRUB2Config
 	DNFAutomaticConfig *osbuild2.DNFAutomaticConfigStageOptions
+	YumConfig          *osbuild2.YumConfigStageOptions
 	YUMRepos           []*osbuild2.YumReposStageOptions
 	Firewall           *osbuild2.FirewallStageOptions
 	UdevRules          *osbuild2.UdevRulesStageOptions
@@ -131,6 +132,9 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.DNFAutomaticConfig == nil {
 			finalConfig.DNFAutomaticConfig = parentConfig.DNFAutomaticConfig
+		}
+		if finalConfig.YumConfig == nil {
+			finalConfig.YumConfig = parentConfig.YumConfig
 		}
 		if finalConfig.YUMRepos == nil {
 			finalConfig.YUMRepos = parentConfig.YUMRepos
