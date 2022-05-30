@@ -1272,6 +1272,10 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 			}
 			packageInfos[i].Dependencies = solved
 		}
+		if err := solver.CleanCache(); err != nil {
+			// log and ignore
+			log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
+		}
 	}
 
 	if modulesRequested {
@@ -1347,6 +1351,10 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
+	}
+	if err := solver.CleanCache(); err != nil {
+		// log and ignore
+		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
 	err = json.NewEncoder(writer).Encode(reply{Projects: deps})
 	common.PanicOnError(err)
@@ -2147,6 +2155,10 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 			return nil, err
 		}
 		depsolvedSets[name] = res
+	}
+	if err := solver.CleanCache(); err != nil {
+		// log and ignore
+		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
 	return depsolvedSets, nil
 }
@@ -3120,6 +3132,10 @@ func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := solver.CleanCache(); err != nil {
+		// log and ignore
+		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
+	}
 	return packages, nil
 }
 
@@ -3190,6 +3206,10 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		return nil, err
 	}
 
+	if err := solver.CleanCache(); err != nil {
+		// log and ignore
+		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
+	}
 	return solved, nil
 }
 

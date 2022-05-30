@@ -34,6 +34,8 @@ type BaseSolver struct {
 
 	// Path to the dnf-json binary and optional args (default: "/usr/libexec/osbuild-composer/dnf-json")
 	dnfJsonCmd []string
+
+	maxCacheSize uint64
 }
 
 // Create a new unconfigured BaseSolver (without platform information). It can
@@ -45,7 +47,12 @@ func NewBaseSolver(cacheDir string) *BaseSolver {
 		cacheDir:      cacheDir,
 		subscriptions: subscriptions,
 		dnfJsonCmd:    []string{"/usr/libexec/osbuild-composer/dnf-json"},
+		maxCacheSize:  524288000, // 500 MiB
 	}
+}
+
+func (s *BaseSolver) SetMaxCacheSize(size uint64) {
+	s.maxCacheSize = size
 }
 
 // SetDNFJSONPath sets the path to the dnf-json binary and optionally any command line arguments.

@@ -30,6 +30,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 		}
 		depsolvedSets[name] = res
 	}
+
 	return depsolvedSets, nil
 }
 
@@ -65,6 +66,10 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, err.Error())
 			logWithId.Errorf("rpmmd error in depsolve job: %v", err)
 		}
+	}
+	if err := impl.Solver.CleanCache(); err != nil {
+		// log and ignore
+		logWithId.Errorf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
 
 	err = job.Update(&result)
