@@ -925,6 +925,8 @@ func newDistro(distroName string) distro.Distro {
 			},
 			EnabledServices: []string{
 				"firewalld",
+				"nm-cloud-setup.service",
+				"nm-cloud-setup.timer",
 				"sshd",
 				"systemd-resolved",
 				"waagent",
@@ -1055,6 +1057,17 @@ func newDistro(distroName string) distro.Distro {
 							{K: "ENV", A: "NM_UNMANAGED", O: "=", V: "1"},
 						},
 					),
+				},
+			},
+			SystemdUnit: []*osbuild.SystemdUnitStageOptions{
+				{
+					Unit:   "nm-cloud-setup.service",
+					Dropin: "10-rh-enable-for-azure.conf",
+					Config: osbuild.SystemdServiceUnitDropin{
+						Service: &osbuild.SystemdUnitServiceSection{
+							Environment: "NM_CLOUD_SETUP_AZURE=yes",
+						},
+					},
 				},
 			},
 			DefaultTarget: "multi-user.target",
