@@ -493,6 +493,8 @@ func newDistro(distroName string) distro.Distro {
 
 	x86_64.addImageTypes(
 		qcow2ImgType,
+		vhdImgType,
+		azureRhuiImgType,
 	)
 
 	rd.addArches(
