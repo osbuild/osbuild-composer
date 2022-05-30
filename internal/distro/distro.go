@@ -307,8 +307,12 @@ func MakePackageSetChains(t ImageType, packageSets map[string]rpmmd.PackageSet, 
 
 		// add package-set-specific repositories to each set if one is defined
 		for idx, pkgSetName := range setNames {
-			pkgSets[idx] = packageSets[pkgSetName]
-			pkgSets[idx].Repositories = packageSetsRepos[pkgSetName]
+			pkgSet, ok := packageSets[pkgSetName]
+			if !ok {
+				panic(fmt.Sprintf("image type %q specifies chained package set %q but no package set with that name exists", t.Name(), pkgSetName))
+			}
+			pkgSet.Repositories = packageSetsRepos[pkgSetName]
+			pkgSets[idx] = pkgSet
 			addedSets[pkgSetName] = true
 		}
 		chainedSets[specName] = pkgSets
