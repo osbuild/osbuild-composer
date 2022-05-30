@@ -145,6 +145,37 @@
       }
     ]
   },
+  "rhel-7": {
+    "x86_64": [
+      {
+        "name": "server",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530"
+      },
+      {
+        "name": "server-extras",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-extras-r7.9-20220530"
+      },
+      {
+        "name": "server-optional",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-optional-r7.9-20220530"
+      },
+      {
+        "name": "server-dotnet",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-dotnet-r1.1-20220530"
+      },
+      {
+        "name": "rhel-eng",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530",
+        "package-sets": [
+          "build"
+        ]
+      },
+      {
+        "name": "azure-rhui-7",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20220530"
+      }
+    ]
+  },
   "rhel-8": {
     "aarch64": [
       {
