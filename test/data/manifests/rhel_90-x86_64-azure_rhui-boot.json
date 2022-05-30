@@ -2629,6 +2629,8 @@
             "options": {
               "enabled_services": [
                 "firewalld",
+                "nm-cloud-setup.service",
+                "nm-cloud-setup.timer",
                 "sshd",
                 "waagent"
               ],
@@ -2748,6 +2750,18 @@
                   "modulename": "intel_cstate"
                 }
               ]
+            }
+          },
+          {
+            "type": "org.osbuild.systemd.unit",
+            "options": {
+              "unit": "nm-cloud-setup.service",
+              "dropin": "10-rh-enable-for-azure.conf",
+              "config": {
+                "Service": {
+                  "Environment": "NM_CLOUD_SETUP_AZURE=yes"
+                }
+              }
             }
           },
           {
