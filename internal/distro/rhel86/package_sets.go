@@ -346,6 +346,7 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		Include: []string{
 			"@Server",
 			"NetworkManager",
+			"NetworkManager-cloud-setup",
 			"kernel",
 			"kernel-core",
 			"kernel-modules",

@@ -2328,6 +2328,9 @@
                     "id": "sha256:43a4f1c39b2a8b212d50af73d0d510adfdc4ac61be8ecdc6bd718f6cab0e5afc"
                   },
                   {
+                    "id": "sha256:071bac3dd97dc1e6942a93f0d77d41c218a381ef02608dafce633441ca1f7d79"
+                  },
+                  {
                     "id": "sha256:a842bbdfe4e3f24ef55acd0ed6930639ccaa5980a2774235bc4c6c2a95ab421c"
                   },
                   {
@@ -2748,6 +2751,8 @@
             "options": {
               "enabled_services": [
                 "firewalld",
+                "nm-cloud-setup.service",
+                "nm-cloud-setup.timer",
                 "sshd",
                 "systemd-resolved",
                 "waagent"
@@ -2868,6 +2873,18 @@
                   "modulename": "intel_cstate"
                 }
               ]
+            }
+          },
+          {
+            "type": "org.osbuild.systemd.unit",
+            "options": {
+              "unit": "nm-cloud-setup.service",
+              "dropin": "10-rh-enable-for-azure.conf",
+              "config": {
+                "Service": {
+                  "Environment": "NM_CLOUD_SETUP_AZURE=yes"
+                }
+              }
             }
           },
           {
@@ -3526,6 +3543,9 @@
           },
           "sha256:06f6a82e268aa006507fb1f82f01893f996fd47ad1cfa5f839c7861e8fd317cf": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/grub2-pc-2.02-106.el8.x86_64.rpm"
+          },
+          "sha256:071bac3dd97dc1e6942a93f0d77d41c218a381ef02608dafce633441ca1f7d79": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/NetworkManager-cloud-setup-1.36.0-0.4.el8.x86_64.rpm"
           },
           "sha256:07203935df37fa76185f71ab353897ad31276cc5535ad5c604848425a3b8f477": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/psacct-6.6.3-4.el8.x86_64.rpm"
@@ -12177,6 +12197,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/zlib-1.2.11-17.el8.x86_64.rpm",
         "checksum": "sha256:43a4f1c39b2a8b212d50af73d0d510adfdc4ac61be8ecdc6bd718f6cab0e5afc"
+      },
+      {
+        "name": "NetworkManager-cloud-setup",
+        "epoch": 1,
+        "version": "1.36.0",
+        "release": "0.4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/NetworkManager-cloud-setup-1.36.0-0.4.el8.x86_64.rpm",
+        "checksum": "sha256:071bac3dd97dc1e6942a93f0d77d41c218a381ef02608dafce633441ca1f7d79"
       },
       {
         "name": "PackageKit",
