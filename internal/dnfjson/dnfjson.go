@@ -33,13 +33,11 @@ import (
 type BaseSolver struct {
 	subscriptions *rhsm.Subscriptions
 
-	// Cache directory for the DNF metadata
-	cacheDir string
+	// Cache information
+	cache *rpmCache
 
 	// Path to the dnf-json binary and optional args (default: "/usr/libexec/osbuild-composer/dnf-json")
 	dnfJsonCmd []string
-
-	maxCacheSize uint64
 }
 
 // Create a new unconfigured BaseSolver (without platform information). It can
@@ -48,10 +46,9 @@ type BaseSolver struct {
 func NewBaseSolver(cacheDir string) *BaseSolver {
 	subscriptions, _ := rhsm.LoadSystemSubscriptions()
 	return &BaseSolver{
-		cacheDir:      cacheDir,
+		cache:         newRPMCache(cacheDir, 524288000), // 500 MiB
 		subscriptions: subscriptions,
 		dnfJsonCmd:    []string{"/usr/libexec/osbuild-composer/dnf-json"},
-		maxCacheSize:  524288000, // 500 MiB
 	}
 }
 
@@ -59,7 +56,7 @@ func NewBaseSolver(cacheDir string) *BaseSolver {
 // cache. This is the maximum size of the cache after a CleanCache()
 // call. Cache cleanup is never performed automatically.
 func (s *BaseSolver) SetMaxCacheSize(size uint64) {
-	s.maxCacheSize = size
+	s.cache.maxSize = size
 }
 
 // SetDNFJSONPath sets the path to the dnf-json binary and optionally any command line arguments.
@@ -76,6 +73,10 @@ func (bs *BaseSolver) NewWithConfig(modulePlatformID string, releaseVer string, 
 	s.arch = arch
 	s.releaseVer = releaseVer
 	return s
+}
+
+func (bs *BaseSolver) CleanCache() error {
+	return bs.cache.clean()
 }
 
 // Solver is configured with system information in order to resolve
@@ -263,7 +264,7 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[
 		Command:          "depsolve",
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
-		CacheDir:         s.cacheDir,
+		CacheDir:         s.cache.root,
 		Arguments:        args,
 	}
 
@@ -280,7 +281,7 @@ func (s *Solver) makeDumpRequest(repos []rpmmd.RepoConfig) (*Request, error) {
 		Command:          "dump",
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
-		CacheDir:         s.cacheDir,
+		CacheDir:         s.cache.root,
 		Arguments: arguments{
 			Repos: dnfRepos,
 		},
