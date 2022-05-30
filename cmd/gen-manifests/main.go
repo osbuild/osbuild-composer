@@ -92,14 +92,13 @@ func loadFormatRequestMap() formatRequestMap {
 
 type manifestJob func(chan string) error
 
-func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, distribution distro.Distro, archName string, seedArg int64, path string) (manifestJob, string) {
+func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, distribution distro.Distro, archName string, seedArg int64, path string) manifestJob {
 	distroName := distribution.Name()
 	u := func(s string) string {
 		return strings.Replace(s, "-", "_", -1)
 	}
 	filename := fmt.Sprintf("%s-%s-%s-boot.json", u(distroName), u(archName), u(name))
-	workerName := archName + distribution.Name()
-	cacheDir := filepath.Join("/tmp", "rpmmd", workerName)
+	cacheDir := filepath.Join("/tmp", "rpmmd", archName+distribution.Name())
 
 	options := distro.ImageOptions{Size: 0}
 	if cr.OSTree != nil {
@@ -144,7 +143,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		}
 		return save(manifest, packageSpecs, request, path, filename)
 	}
-	return job, workerName
+	return job
 }
 
 type DistroArchRepoMap map[string]map[string][]repository
@@ -362,7 +361,7 @@ func main() {
 					composeReq := req.ComposeRequest
 					composeReq.Repositories = filterRepos(repos, imgTypeName)
 
-					job, _ := makeManifestJob(jobName, imgType, composeReq, distribution, archName, seedArg, outputDir)
+					job := makeManifestJob(jobName, imgType, composeReq, distribution, archName, seedArg, outputDir)
 					jobs = append(jobs, job)
 				}
 			}
