@@ -60,13 +60,8 @@ func (wq *workerQueue) start() {
 	}
 }
 
-func (wq *workerQueue) wait() []error {
-	wq.finish()
-	return wq.errors
-}
-
 // close all queues and wait for waitgroups
-func (wq *workerQueue) finish() {
+func (wq *workerQueue) wait() []error {
 	// close job channel and wait for workers to finish
 	close(wq.jobQueue)
 	wq.workerWG.Wait()
@@ -75,6 +70,7 @@ func (wq *workerQueue) finish() {
 	close(wq.msgQueue)
 	close(wq.errQueue)
 	wq.utilWG.Wait()
+	return wq.errors
 }
 
 func (wq *workerQueue) startWorker(idx uint32) {
