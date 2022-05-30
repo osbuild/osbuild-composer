@@ -224,6 +224,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Could not initialize build with koji: %v", initResult.JobError.Reason))
 	}
 
+	if err := h.server.solver.CleanCache(); err != nil {
+		// log and ignore
+		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
+	}
+
 	return ctx.JSON(http.StatusCreated, &api.ComposeResponse{
 		Id:          id.String(),
 		KojiBuildId: int(initResult.BuildID),

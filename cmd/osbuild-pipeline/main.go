@@ -143,6 +143,11 @@ func main() {
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), path.Join(home, ".cache/osbuild-composer/rpmmd"))
 	solver.SetDNFJSONPath(findDnfJsonBin())
 
+	// Set cache size to 3 GiB
+	// osbuild-pipeline is often used to generate a lot of manifests in a row
+	// let the cache grow to fit much more repository metadata than we usually allow
+	solver.SetMaxCacheSize(3 * 1024 * 1024 * 1024)
+
 	packageSets := imageType.PackageSets(composeRequest.Blueprint, repos)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 
@@ -189,4 +194,8 @@ func main() {
 		}
 	}
 	os.Stdout.Write(bytes)
+	if err := solver.CleanCache(); err != nil {
+		// print to stderr but don't exit with error
+		fmt.Fprintf(os.Stderr, "Error during rpm repo cache cleanup: %s", err.Error())
+	}
 }
