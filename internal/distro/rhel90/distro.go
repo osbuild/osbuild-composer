@@ -950,18 +950,6 @@ func newDistro(distroName string) distro.Distro {
 						osbuild.NewModprobeConfigCmdBlacklist("floppy"),
 					},
 				},
-				{
-					Filename: "blacklist-skylake-edac.conf",
-					Commands: osbuild.ModprobeConfigCmdList{
-						osbuild.NewModprobeConfigCmdBlacklist("skx_edac"),
-					},
-				},
-				{
-					Filename: "blacklist-intel-cstate.conf",
-					Commands: osbuild.ModprobeConfigCmdList{
-						osbuild.NewModprobeConfigCmdBlacklist("intel_cstate"),
-					},
-				},
 			},
 			CloudInit: []*osbuild.CloudInitStageOptions{
 				{
