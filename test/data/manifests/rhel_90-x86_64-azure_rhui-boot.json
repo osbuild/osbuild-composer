@@ -2729,30 +2729,6 @@
             }
           },
           {
-            "type": "org.osbuild.modprobe",
-            "options": {
-              "filename": "blacklist-skylake-edac.conf",
-              "commands": [
-                {
-                  "command": "blacklist",
-                  "modulename": "skx_edac"
-                }
-              ]
-            }
-          },
-          {
-            "type": "org.osbuild.modprobe",
-            "options": {
-              "filename": "blacklist-intel-cstate.conf",
-              "commands": [
-                {
-                  "command": "blacklist",
-                  "modulename": "intel_cstate"
-                }
-              ]
-            }
-          },
-          {
             "type": "org.osbuild.systemd.unit",
             "options": {
               "unit": "nm-cloud-setup.service",
