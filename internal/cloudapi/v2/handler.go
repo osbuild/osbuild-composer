@@ -689,6 +689,10 @@ func imageStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.KojiI
 		return ImageStatusValueFailure
 	}
 
+	if buildResult.OSBuildOutput != nil && !buildResult.OSBuildOutput.Success {
+		return ImageStatusValueFailure
+	}
+
 	return ImageStatusValueSuccess
 }
 
@@ -723,6 +727,10 @@ func composeStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.Koj
 
 	for _, buildResult := range buildResults {
 		if buildResult.JobError != nil {
+			return ComposeStatusValueFailure
+		}
+
+		if buildResult.OSBuildOutput != nil && !buildResult.OSBuildOutput.Success {
 			return ComposeStatusValueFailure
 		}
 	}

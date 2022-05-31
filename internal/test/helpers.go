@@ -75,16 +75,8 @@ func dropFields(obj interface{}, fields ...string) {
 	switch v := obj.(type) {
 	// if the interface type is a map attempt to delete the fields
 	case map[string]interface{}:
-		for i, field := range fields {
-			if _, ok := v[field]; ok {
-				delete(v, field)
-				// if the field is found remove it from the fields slice
-				if len(fields) < i-1 {
-					fields = append(fields[:i], fields[i+1:]...)
-				} else {
-					fields = fields[:i]
-				}
-			}
+		for _, field := range fields {
+			delete(v, field)
 		}
 		// call dropFields on the remaining elements since they may contain a map containing the field
 		for _, val := range v {
@@ -102,13 +94,20 @@ func dropFields(obj interface{}, fields ...string) {
 
 func TestRoute(t *testing.T, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) {
 	t.Helper()
+	_ = TestRouteWithReply(t, api, external, method, path, body, expectedStatus, expectedJSON, ignoreFields...)
+}
+
+// TestRouteWithReply tests the given API endpoint and if the test passes, it returns the raw JSON reply.
+func TestRouteWithReply(t *testing.T, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) (replyJSON []byte) {
+	t.Helper()
 
 	resp := SendHTTP(api, external, method, path, body)
 	if resp == nil {
 		t.Skip("This test is for internal testing only")
 	}
 
-	replyJSON, err := ioutil.ReadAll(resp.Body)
+	var err error
+	replyJSON, err = ioutil.ReadAll(resp.Body)
 	require.NoErrorf(t, err, "%s: could not read response body", path)
 
 	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s: %v", path, string(replyJSON))
@@ -136,6 +135,8 @@ func TestRoute(t *testing.T, api http.Handler, external bool, method, path, body
 	dropFields(expected, ignoreFields...)
 
 	require.Equal(t, expected, reply)
+
+	return
 }
 
 func TestTOMLRoute(t *testing.T, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedTOML string, ignoreFields ...string) {

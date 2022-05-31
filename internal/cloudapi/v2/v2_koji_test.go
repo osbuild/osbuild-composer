@@ -42,6 +42,7 @@ func TestKojiCompose(t *testing.T) {
 	}
 
 	var cases = []kojiCase{
+		// #0
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
@@ -77,6 +78,7 @@ func TestKojiCompose(t *testing.T) {
 				"status": "success"
 			}`,
 		},
+		// #1
 		{
 			initResult: worker.KojiInitJobResult{
 				KojiError: "failure",
@@ -109,6 +111,7 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
+		// #2
 		{
 			initResult: worker.KojiInitJobResult{
 				JobResult: worker.JobResult{
@@ -143,6 +146,7 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
+		// #3
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
@@ -158,7 +162,7 @@ func TestKojiCompose(t *testing.T) {
 				},
 			},
 			composeReplyCode: http.StatusCreated,
-			composeReply:     `"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"`,
+			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
 			composeStatus: `{
 				"kind": "ComposeStatus",
 				"image_status": {
@@ -178,6 +182,7 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
+		// #4
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
@@ -194,15 +199,25 @@ func TestKojiCompose(t *testing.T) {
 				KojiError: "failure",
 			},
 			composeReplyCode: http.StatusCreated,
-			composeReply:     `"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"`,
+			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
 			composeStatus: `{
 				"kind": "ComposeStatus",
 				"image_status": {
-					"status": "failure"
+					"status": "failure",
+					"error": {
+						"details": null,
+						"id": 18,
+						"reason": "failure"
+					}
 				},
 				"image_statuses": [
 					{
-						"status": "failure"
+						"status": "failure",
+						"error": {
+							"details": null,
+							"id": 18,
+							"reason": "failure"
+						}
 					},
 					{
 						"status": "success"
@@ -214,6 +229,7 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
+		// #5
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
@@ -232,15 +248,25 @@ func TestKojiCompose(t *testing.T) {
 				},
 			},
 			composeReplyCode: http.StatusCreated,
-			composeReply:     `"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"`,
+			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
 			composeStatus: `{
 				"kind": "ComposeStatus",
 				"image_status": {
-					"status": "failure"
+					"status": "failure",
+					"error": {
+						"details": null,
+						"id": 10,
+						"reason": "Koji build error"
+					}
 				},
 				"image_statuses": [
 					{
-						"status": "failure"
+						"status": "failure",
+						"error": {
+							"details": null,
+							"id": 10,
+							"reason": "Koji build error"
+						}
 					},
 					{
 						"status": "success"
@@ -252,6 +278,7 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
+		// #6
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
@@ -270,7 +297,7 @@ func TestKojiCompose(t *testing.T) {
 				KojiError: "failure",
 			},
 			composeReplyCode: http.StatusCreated,
-			composeReply:     `"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"`,
+			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
 			composeStatus: `{
 				"kind": "ComposeStatus",
 				"image_status": {
@@ -290,6 +317,7 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
+		// #7
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
@@ -310,7 +338,7 @@ func TestKojiCompose(t *testing.T) {
 				},
 			},
 			composeReplyCode: http.StatusCreated,
-			composeReply:     `"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"`,
+			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
 			composeStatus: `{
 				"kind": "ComposeStatus",
 				"image_status": {
@@ -330,6 +358,7 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
+		// #8
 		{
 			initResult: worker.KojiInitJobResult{
 				BuildID: 42,
@@ -355,27 +384,33 @@ func TestKojiCompose(t *testing.T) {
 				},
 			},
 			composeReplyCode: http.StatusCreated,
-			composeReply:     `"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"`,
+			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
 			composeStatus: `{
 				"kind": "ComposeStatus",
 				"image_status": {
 					"error": {
-						"details": {
-							"id": 22,
-							"reason": "DNF Error"
-						},
+						"details": [
+							{
+								"id": 22,
+								"details": null,
+								"reason": "DNF Error"
+							}
+						],
 						"id": 9,
 						"reason": "Manifest dependency failed"
 					},
-					"status": "failure",
+					"status": "failure"
 				},
 				"image_statuses": [
 					{
 						"error": {
-							"details": {
-								"id": 22,
-								"reason": "Error in depsolve job"
-							},
+							"details": [
+								{
+									"id": 22,
+									"details": null,
+									"reason": "DNF Error"
+								}
+							],
 							"id": 9,
 							"reason": "Manifest dependency failed"
 						},
@@ -392,8 +427,9 @@ func TestKojiCompose(t *testing.T) {
 			}`,
 		},
 	}
-	for _, c := range cases[2:3] {
-		test.TestRoute(t, handler, false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	for idx, c := range cases {
+		t.Run(fmt.Sprintf("Test case #%d", idx), func(t *testing.T) {
+			composeRawReply := test.TestRouteWithReply(t, handler, false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 		{
 			"distribution":"%[1]s",
 			"image_requests": [
@@ -424,97 +460,110 @@ func TestKojiCompose(t *testing.T) {
 				"task_id": 42
 			}
 		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage)),
-			c.composeReplyCode, c.composeReply, "id", "operation_id")
+				c.composeReplyCode, c.composeReply, "id", "operation_id")
 
-		// handle koji-init
-		_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiInit}, []string{""})
-		require.NoError(t, err)
-		require.Equal(t, worker.JobTypeKojiInit, jobType)
+			// determine the compose ID from the reply
+			var composeReply v2.ComposeId
+			err := json.Unmarshal(composeRawReply, &composeReply)
+			require.NoError(t, err)
+			composeId, err := uuid.Parse(composeReply.Id)
+			require.NoError(t, err)
 
-		var initJob worker.KojiInitJob
-		err = json.Unmarshal(rawJob, &initJob)
-		require.NoError(t, err)
-		require.Equal(t, "koji.example.com", initJob.Server)
-		require.Equal(t, "foo", initJob.Name)
-		require.Equal(t, "1", initJob.Version)
-		require.Equal(t, "2", initJob.Release)
+			// handle koji-init
+			_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiInit}, []string{""})
+			require.NoError(t, err)
+			require.Equal(t, worker.JobTypeKojiInit, jobType)
 
-		initJobResult, err := json.Marshal(&jobResult{Result: c.initResult})
-		require.NoError(t, err)
-		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(initJobResult), http.StatusOK,
-			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
+			var initJob worker.KojiInitJob
+			err = json.Unmarshal(rawJob, &initJob)
+			require.NoError(t, err)
+			require.Equal(t, "koji.example.com", initJob.Server)
+			require.Equal(t, "foo", initJob.Name)
+			require.Equal(t, "1", initJob.Version)
+			require.Equal(t, "2", initJob.Release)
 
-		// handle osbuild-koji #1
-		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuildKoji}, []string{""})
-		require.NoError(t, err)
-		require.Equal(t, worker.JobTypeOSBuildKoji, jobType)
+			initJobResult, err := json.Marshal(&jobResult{Result: c.initResult})
+			require.NoError(t, err)
+			test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(initJobResult), http.StatusOK,
+				fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
-		var osbuildJob worker.OSBuildKojiJob
-		err = json.Unmarshal(rawJob, &osbuildJob)
-		require.NoError(t, err)
-		require.Equal(t, "koji.example.com", osbuildJob.KojiServer)
-		require.Equal(t, "test.img", osbuildJob.ImageName)
-		require.NotEmpty(t, osbuildJob.KojiDirectory)
+			// Finishing of the goroutine handling the manifest job is not deterministic and as a result, we may get
+			// the second osbuild job first.
+			// The build jobs ID is determined from the dependencies of the koji-finalize job dependencies.
+			_, finalizeJobDeps, err := workerServer.KojiFinalizeJobStatus(composeId, &worker.KojiFinalizeJobResult{})
+			require.NoError(t, err)
+			buildJobIDs := finalizeJobDeps[1:]
+			require.Len(t, buildJobIDs, 2)
 
-		buildJobResult, err := json.Marshal(&jobResult{Result: c.buildResult})
-		require.NoError(t, err)
-		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(buildJobResult), http.StatusOK,
-			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
+			// handle build jobs
+			for i := 0; i < len(buildJobIDs); i++ {
+				jobID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuildKoji}, []string{""})
+				require.NoError(t, err)
+				require.Equal(t, worker.JobTypeOSBuildKoji, jobType)
 
-		// handle osbuild-koji #2
-		_, token, jobType, rawJob, _, err = workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuildKoji}, []string{""})
-		require.NoError(t, err)
-		require.Equal(t, worker.JobTypeOSBuildKoji, jobType)
+				var osbuildJob worker.OSBuildKojiJob
+				err = json.Unmarshal(rawJob, &osbuildJob)
+				require.NoError(t, err)
+				require.Equal(t, "koji.example.com", osbuildJob.KojiServer)
+				require.Equal(t, "test.img", osbuildJob.ImageName)
+				require.NotEmpty(t, osbuildJob.KojiDirectory)
 
-		err = json.Unmarshal(rawJob, &osbuildJob)
-		require.NoError(t, err)
-		require.Equal(t, "koji.example.com", osbuildJob.KojiServer)
-		require.Equal(t, "test.img", osbuildJob.ImageName)
-		require.NotEmpty(t, osbuildJob.KojiDirectory)
-
-		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), fmt.Sprintf(`{
-				"result": {
-					"arch": "%s",
-					"host_os": "%s",
-					"image_hash": "browns",
-					"image_size": 42,
-					"osbuild_output": {
-						"success": true
-					}
+				var buildJobResult string
+				switch jobID {
+				// use the build job result from the test case only for the first job
+				case buildJobIDs[0]:
+					buildJobResultBytes, err := json.Marshal(&jobResult{Result: c.buildResult})
+					require.NoError(t, err)
+					buildJobResult = string(buildJobResultBytes)
+				default:
+					buildJobResult = fmt.Sprintf(`{
+						"result": {
+							"arch": "%s",
+							"host_os": "%s",
+							"image_hash": "browns",
+							"image_size": 42,
+							"osbuild_output": {
+								"success": true
+							}
+						}
+					}`, test_distro.TestArch3Name, test_distro.TestDistroName)
 				}
-			}`, test_distro.TestArch3Name, test_distro.TestDistroName), http.StatusOK,
-			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
-		// handle koji-finalize
-		finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiFinalize}, []string{""})
-		require.NoError(t, err)
-		require.Equal(t, worker.JobTypeKojiFinalize, jobType)
+				test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), buildJobResult, http.StatusOK,
+					fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
+			}
 
-		var kojiFinalizeJob worker.KojiFinalizeJob
-		err = json.Unmarshal(rawJob, &kojiFinalizeJob)
-		require.NoError(t, err)
-		require.Equal(t, "koji.example.com", kojiFinalizeJob.Server)
-		require.Equal(t, "1", kojiFinalizeJob.Version)
-		require.Equal(t, "2", kojiFinalizeJob.Release)
-		require.ElementsMatch(t, []string{
-			fmt.Sprintf("foo-1-2.%s.img", test_distro.TestArch3Name),
-			fmt.Sprintf("foo-1-2.%s.img", test_distro.TestArch3Name),
-		}, kojiFinalizeJob.KojiFilenames)
-		require.NotEmpty(t, kojiFinalizeJob.KojiDirectory)
+			// handle koji-finalize
+			finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiFinalize}, []string{""})
+			require.NoError(t, err)
+			require.Equal(t, worker.JobTypeKojiFinalize, jobType)
 
-		finalizeResult, err := json.Marshal(&jobResult{Result: c.finalizeResult})
-		require.NoError(t, err)
-		test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(finalizeResult), http.StatusOK,
-			fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
+			var kojiFinalizeJob worker.KojiFinalizeJob
+			err = json.Unmarshal(rawJob, &kojiFinalizeJob)
+			require.NoError(t, err)
+			require.Equal(t, "koji.example.com", kojiFinalizeJob.Server)
+			require.Equal(t, "1", kojiFinalizeJob.Version)
+			require.Equal(t, "2", kojiFinalizeJob.Release)
+			require.ElementsMatch(t, []string{
+				fmt.Sprintf("foo-1-2.%s.img", test_distro.TestArch3Name),
+				fmt.Sprintf("foo-1-2.%s.img", test_distro.TestArch3Name),
+			}, kojiFinalizeJob.KojiFilenames)
+			require.NotEmpty(t, kojiFinalizeJob.KojiDirectory)
 
-		// get the status
-		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", finalizeID), ``, http.StatusOK, c.composeStatus, `href`, `id`)
+			finalizeResult, err := json.Marshal(&jobResult{Result: c.finalizeResult})
+			require.NoError(t, err)
+			test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), string(finalizeResult), http.StatusOK,
+				fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%v","id":"%v","kind":"UpdateJobResponse"}`, token, token))
 
-		// get the manifests
-		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", finalizeID), ``, http.StatusOK, `{"manifests":[{"pipeline":{},"sources":{}},{"pipeline":{},"sources":{}}],"kind":"ComposeManifests"}`, `href`, `id`)
+			// get the status
+			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", finalizeID), ``, http.StatusOK, c.composeStatus, `href`, `id`)
 
-		// get the logs
-		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", finalizeID), ``, http.StatusOK, `{"kind":"ComposeLogs"}`, `koji`, `image_builds`, `href`, `id`)
+			// get the manifests
+			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", finalizeID), ``, http.StatusOK, `{"manifests":[{"pipeline":{},"sources":{}},{"pipeline":{},"sources":{}}],"kind":"ComposeManifests"}`, `href`, `id`)
+
+			// get the logs
+			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", finalizeID), ``, http.StatusOK, `{"kind":"ComposeLogs"}`, `koji`, `image_builds`, `href`, `id`)
+		})
 	}
 }
 
