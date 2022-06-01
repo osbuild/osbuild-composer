@@ -6,11 +6,11 @@ import (
 )
 
 type TargetResult struct {
-	Name    string              `json:"name"`
+	Name    TargetName          `json:"name"`
 	Options TargetResultOptions `json:"options"`
 }
 
-func newTargetResult(name string, options TargetResultOptions) *TargetResult {
+func newTargetResult(name TargetName, options TargetResultOptions) *TargetResult {
 	return &TargetResult{
 		Name:    name,
 		Options: options,
@@ -22,7 +22,7 @@ type TargetResultOptions interface {
 }
 
 type rawTargetResult struct {
-	Name    string          `json:"name"`
+	Name    TargetName      `json:"name"`
 	Options json.RawMessage `json:"options"`
 }
 
@@ -42,20 +42,20 @@ func (targetResult *TargetResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func UnmarshalTargetResultOptions(trName string, rawOptions json.RawMessage) (TargetResultOptions, error) {
+func UnmarshalTargetResultOptions(trName TargetName, rawOptions json.RawMessage) (TargetResultOptions, error) {
 	var options TargetResultOptions
 	switch trName {
-	case "org.osbuild.aws":
+	case TargetNameAWS:
 		options = new(AWSTargetResultOptions)
-	case "org.osbuild.aws.s3":
+	case TargetNameAWSS3:
 		options = new(AWSS3TargetResultOptions)
-	case "org.osbuild.gcp":
+	case TargetNameGCP:
 		options = new(GCPTargetResultOptions)
-	case "org.osbuild.azure.image":
+	case TargetNameAzureImage:
 		options = new(AzureImageTargetResultOptions)
-	case "org.osbuild.koji":
+	case TargetNameKoji:
 		options = new(KojiTargetResultOptions)
-	case "org.osbuild.oci":
+	case TargetNameOCI:
 		options = new(OCITargetResultOptions)
 	default:
 		return nil, fmt.Errorf("unexpected target result name: %s", trName)

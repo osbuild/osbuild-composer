@@ -703,7 +703,7 @@ func TestCompose(t *testing.T) {
 			Manifest:    manifest,
 			Targets: []*target.Target{
 				{
-					Name:      "org.osbuild.aws",
+					Name:      target.TargetNameAWS,
 					Status:    common.IBWaiting,
 					ImageName: "test_upload",
 					Options: &target.AWSTargetOptions{

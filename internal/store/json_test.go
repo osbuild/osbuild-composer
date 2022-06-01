@@ -1016,7 +1016,7 @@ func Test_newComposeV0(t *testing.T) {
 						{
 							Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 							ImageName: "",
-							Name:      "org.osbuild.local",
+							Name:      target.TargetNameLocal,
 							Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 							Status:    common.IBWaiting,
 							Options: target.LocalTargetOptions{
@@ -1045,7 +1045,7 @@ func Test_newComposeV0(t *testing.T) {
 							{
 								Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 								ImageName: "",
-								Name:      "org.osbuild.local",
+								Name:      target.TargetNameLocal,
 								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 								Status:    common.IBWaiting,
 								Options: target.LocalTargetOptions{
@@ -1118,7 +1118,7 @@ func Test_newComposeFromV0(t *testing.T) {
 							{
 								Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 								ImageName: "",
-								Name:      "org.osbuild.local",
+								Name:      target.TargetNameLocal,
 								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 								Status:    common.IBWaiting,
 								Options: target.LocalTargetOptions{
@@ -1147,7 +1147,7 @@ func Test_newComposeFromV0(t *testing.T) {
 						{
 							Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 							ImageName: "",
-							Name:      "org.osbuild.local",
+							Name:      target.TargetNameLocal,
 							Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 							Status:    common.IBWaiting,
 							Options: target.LocalTargetOptions{
@@ -1213,7 +1213,7 @@ func Test_newComposesV0(t *testing.T) {
 							{
 								Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 								ImageName: "",
-								Name:      "org.osbuild.local",
+								Name:      target.TargetNameLocal,
 								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 								Status:    common.IBWaiting,
 								Options: target.LocalTargetOptions{
@@ -1241,7 +1241,7 @@ func Test_newComposesV0(t *testing.T) {
 							{
 								Uuid:      uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
 								ImageName: "",
-								Name:      "org.osbuild.local",
+								Name:      target.TargetNameLocal,
 								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 								Status:    common.IBWaiting,
 								Options: target.LocalTargetOptions{
@@ -1272,7 +1272,7 @@ func Test_newComposesV0(t *testing.T) {
 								{
 									Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 									ImageName: "",
-									Name:      "org.osbuild.local",
+									Name:      target.TargetNameLocal,
 									Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 									Status:    common.IBWaiting,
 									Options: target.LocalTargetOptions{
@@ -1303,7 +1303,7 @@ func Test_newComposesV0(t *testing.T) {
 								{
 									Uuid:      uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
 									ImageName: "",
-									Name:      "org.osbuild.local",
+									Name:      target.TargetNameLocal,
 									Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 									Status:    common.IBWaiting,
 									Options: target.LocalTargetOptions{
@@ -1375,7 +1375,7 @@ func Test_newComposesFromV0(t *testing.T) {
 								{
 									Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 									ImageName: "",
-									Name:      "org.osbuild.local",
+									Name:      target.TargetNameLocal,
 									Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 									Status:    common.IBWaiting,
 									Options: target.LocalTargetOptions{
@@ -1405,7 +1405,7 @@ func Test_newComposesFromV0(t *testing.T) {
 								{
 									Uuid:      uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
 									ImageName: "",
-									Name:      "org.osbuild.local",
+									Name:      target.TargetNameLocal,
 									Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 									Status:    common.IBWaiting,
 									Options: target.LocalTargetOptions{
@@ -1436,7 +1436,7 @@ func Test_newComposesFromV0(t *testing.T) {
 							{
 								Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 								ImageName: "",
-								Name:      "org.osbuild.local",
+								Name:      target.TargetNameLocal,
 								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 								Status:    common.IBWaiting,
 								Options: target.LocalTargetOptions{
@@ -1465,7 +1465,7 @@ func Test_newComposesFromV0(t *testing.T) {
 							{
 								Uuid:      uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"),
 								ImageName: "",
-								Name:      "org.osbuild.local",
+								Name:      target.TargetNameLocal,
 								Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 								Status:    common.IBWaiting,
 								Options: target.LocalTargetOptions{
@@ -1527,7 +1527,7 @@ func Test_newImageBuildFromV0(t *testing.T) {
 					{
 						Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 						ImageName: "",
-						Name:      "org.osbuild.local",
+						Name:      target.TargetNameLocal,
 						Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 						Status:    common.IBWaiting,
 						Options: target.LocalTargetOptions{
@@ -1552,7 +1552,7 @@ func Test_newImageBuildFromV0(t *testing.T) {
 					{
 						Uuid:      uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"),
 						ImageName: "",
-						Name:      "org.osbuild.local",
+						Name:      target.TargetNameLocal,
 						Created:   MustParseTime("2020-08-12T09:21:44.427717205-07:00"),
 						Status:    common.IBWaiting,
 						Options: target.LocalTargetOptions{

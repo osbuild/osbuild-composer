@@ -1,5 +1,7 @@
 package target
 
+const TargetNameKoji TargetName = "org.osbuild.koji"
+
 type KojiTargetOptions struct {
 	// Filename of the image as produced by osbuild for a given export
 	Filename        string `json:"filename"`
@@ -10,7 +12,7 @@ type KojiTargetOptions struct {
 func (KojiTargetOptions) isTargetOptions() {}
 
 func NewKojiTarget(options *KojiTargetOptions) *Target {
-	return newTarget("org.osbuild.koji", options)
+	return newTarget(TargetNameKoji, options)
 }
 
 type KojiTargetResultOptions struct {
@@ -21,5 +23,5 @@ type KojiTargetResultOptions struct {
 func (KojiTargetResultOptions) isTargetResultOptions() {}
 
 func NewKojiTargetResult(options *KojiTargetResultOptions) *TargetResult {
-	return newTargetResult("org.osbuild.koji", options)
+	return newTargetResult(TargetNameKoji, options)
 }

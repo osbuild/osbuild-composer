@@ -1,5 +1,7 @@
 package target
 
+const TargetNameAzureImage TargetName = "org.osbuild.azure.image"
+
 type AzureImageTargetOptions struct {
 	Filename       string `json:"filename"`
 	TenantID       string `json:"tenant_id"`
@@ -29,7 +31,7 @@ func (AzureImageTargetOptions) isTargetOptions() {}
 // If you need to just upload a PageBlob into Azure Storage, see the
 // org.osbuild.azure target.
 func NewAzureImageTarget(options *AzureImageTargetOptions) *Target {
-	return newTarget("org.osbuild.azure.image", options)
+	return newTarget(TargetNameAzureImage, options)
 }
 
 type AzureImageTargetResultOptions struct {
@@ -39,5 +41,5 @@ type AzureImageTargetResultOptions struct {
 func (AzureImageTargetResultOptions) isTargetResultOptions() {}
 
 func NewAzureImageTargetResult(options *AzureImageTargetResultOptions) *TargetResult {
-	return newTargetResult("org.osbuild.azure.image", options)
+	return newTargetResult(TargetNameAzureImage, options)
 }

@@ -1,5 +1,7 @@
 package target
 
+const TargetNameOCI TargetName = "org.osbuild.oci"
+
 type OCITargetOptions struct {
 	User        string `json:"user"`
 	Tenancy     string `json:"tenancy"`
@@ -15,7 +17,7 @@ type OCITargetOptions struct {
 func (OCITargetOptions) isTargetOptions() {}
 
 func NewOCITarget(options *OCITargetOptions) *Target {
-	return newTarget("org.osbuild.oci", options)
+	return newTarget(TargetNameOCI, options)
 }
 
 type OCITargetResultOptions struct {
@@ -26,5 +28,5 @@ type OCITargetResultOptions struct {
 func (OCITargetResultOptions) isTargetResultOptions() {}
 
 func NewOCITargetResult(options *OCITargetResultOptions) *TargetResult {
-	return newTargetResult("org.osbuild.oci", options)
+	return newTargetResult(TargetNameOCI, options)
 }

@@ -2,23 +2,25 @@ package target
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
+type TargetName string
+
 type Target struct {
 	Uuid      uuid.UUID              `json:"uuid"`
 	ImageName string                 `json:"image_name"` // Desired name of the image in the target environment
-	Name      string                 `json:"name"`       // Name of the specific target type
+	Name      TargetName             `json:"name"`       // Name of the specific target type
 	Created   time.Time              `json:"created"`
 	Status    common.ImageBuildState `json:"status"`
 	Options   TargetOptions          `json:"options"` // Target type specific options
 }
 
-func newTarget(name string, options TargetOptions) *Target {
+func newTarget(name TargetName, options TargetOptions) *Target {
 	return &Target{
 		Uuid:    uuid.New(),
 		Name:    name,
@@ -35,7 +37,7 @@ type TargetOptions interface {
 type rawTarget struct {
 	Uuid      uuid.UUID              `json:"uuid"`
 	ImageName string                 `json:"image_name"`
-	Name      string                 `json:"name"`
+	Name      TargetName             `json:"name"`
 	Created   time.Time              `json:"created"`
 	Status    common.ImageBuildState `json:"status"`
 	Options   json.RawMessage        `json:"options"`
@@ -62,31 +64,31 @@ func (target *Target) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func UnmarshalTargetOptions(targetName string, rawOptions json.RawMessage) (TargetOptions, error) {
+func UnmarshalTargetOptions(targetName TargetName, rawOptions json.RawMessage) (TargetOptions, error) {
 	var options TargetOptions
 	switch targetName {
-	case "org.osbuild.azure":
+	case TargetNameAzure:
 		options = new(AzureTargetOptions)
-	case "org.osbuild.aws":
+	case TargetNameAWS:
 		options = new(AWSTargetOptions)
-	case "org.osbuild.aws.s3":
+	case TargetNameAWSS3:
 		options = new(AWSS3TargetOptions)
-	case "org.osbuild.gcp":
+	case TargetNameGCP:
 		options = new(GCPTargetOptions)
-	case "org.osbuild.azure.image":
+	case TargetNameAzureImage:
 		options = new(AzureImageTargetOptions)
-	case "org.osbuild.local":
+	case TargetNameLocal:
 		options = new(LocalTargetOptions)
-	case "org.osbuild.koji":
+	case TargetNameKoji:
 		options = new(KojiTargetOptions)
-	case "org.osbuild.vmware":
+	case TargetNameVMWare:
 		options = new(VMWareTargetOptions)
-	case "org.osbuild.oci":
+	case TargetNameOCI:
 		options = new(OCITargetOptions)
-	case "org.osbuild.container":
+	case TargetNameContainer:
 		options = new(ContainerTargetOptions)
 	default:
-		return nil, errors.New("unexpected target name")
+		return nil, fmt.Errorf("unexpected target name: %s", targetName)
 	}
 	err := json.Unmarshal(rawOptions, options)
 

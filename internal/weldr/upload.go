@@ -250,7 +250,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 
 	switch options := u.Settings.(type) {
 	case *awsUploadSettings:
-		t.Name = "org.osbuild.aws"
+		t.Name = target.TargetNameAWS
 		t.Options = &target.AWSTargetOptions{
 			Filename:        imageType.Filename(),
 			Region:          options.Region,
@@ -261,7 +261,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Key:             options.Key,
 		}
 	case *awsS3UploadSettings:
-		t.Name = "org.osbuild.aws.s3"
+		t.Name = target.TargetNameAWSS3
 		t.Options = &target.AWSS3TargetOptions{
 			Filename:            imageType.Filename(),
 			Region:              options.Region,
@@ -275,7 +275,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			SkipSSLVerification: options.SkipSSLVerification,
 		}
 	case *azureUploadSettings:
-		t.Name = "org.osbuild.azure"
+		t.Name = target.TargetNameAzure
 		t.Options = &target.AzureTargetOptions{
 			Filename:         imageType.Filename(),
 			StorageAccount:   options.StorageAccount,
@@ -283,7 +283,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Container:        options.Container,
 		}
 	case *gcpUploadSettings:
-		t.Name = "org.osbuild.gcp"
+		t.Name = target.TargetNameGCP
 
 		var gcpCredentials []byte
 		var err error
@@ -310,7 +310,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Credentials: gcpCredentials,
 		}
 	case *vmwareUploadSettings:
-		t.Name = "org.osbuild.vmware"
+		t.Name = target.TargetNameVMWare
 		t.Options = &target.VMWareTargetOptions{
 			Filename:   imageType.Filename(),
 			Username:   options.Username,
@@ -321,7 +321,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Datastore:  options.Datastore,
 		}
 	case *ociUploadSettings:
-		t.Name = "org.osbuild.oci"
+		t.Name = target.TargetNameOCI
 		t.Options = &target.OCITargetOptions{
 			User:        options.User,
 			Tenancy:     options.Tenancy,
@@ -334,7 +334,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Compartment: options.Compartment,
 		}
 	case *containerUploadSettings:
-		t.Name = "org.osbuild.container"
+		t.Name = target.TargetNameContainer
 		t.Options = &target.ContainerTargetOptions{
 			Username: options.Username,
 			Password: options.Password,

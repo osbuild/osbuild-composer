@@ -1,5 +1,10 @@
 package target
 
+const (
+	TargetNameAWS   TargetName = "org.osbuild.aws"
+	TargetNameAWSS3 TargetName = "org.osbuild.aws.s3"
+)
+
 type AWSTargetOptions struct {
 	Filename          string   `json:"filename"`
 	Region            string   `json:"region"`
@@ -14,7 +19,7 @@ type AWSTargetOptions struct {
 func (AWSTargetOptions) isTargetOptions() {}
 
 func NewAWSTarget(options *AWSTargetOptions) *Target {
-	return newTarget("org.osbuild.aws", options)
+	return newTarget(TargetNameAWS, options)
 }
 
 type AWSTargetResultOptions struct {
@@ -25,7 +30,7 @@ type AWSTargetResultOptions struct {
 func (AWSTargetResultOptions) isTargetResultOptions() {}
 
 func NewAWSTargetResult(options *AWSTargetResultOptions) *TargetResult {
-	return newTargetResult("org.osbuild.aws", options)
+	return newTargetResult(TargetNameAWS, options)
 }
 
 type AWSS3TargetOptions struct {
@@ -44,7 +49,7 @@ type AWSS3TargetOptions struct {
 func (AWSS3TargetOptions) isTargetOptions() {}
 
 func NewAWSS3Target(options *AWSS3TargetOptions) *Target {
-	return newTarget("org.osbuild.aws.s3", options)
+	return newTarget(TargetNameAWSS3, options)
 }
 
 type AWSS3TargetResultOptions struct {
@@ -54,5 +59,5 @@ type AWSS3TargetResultOptions struct {
 func (AWSS3TargetResultOptions) isTargetResultOptions() {}
 
 func NewAWSS3TargetResult(options *AWSS3TargetResultOptions) *TargetResult {
-	return newTargetResult("org.osbuild.aws.s3", options)
+	return newTargetResult(TargetNameAWSS3, options)
 }
