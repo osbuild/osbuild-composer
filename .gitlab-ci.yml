@@ -402,9 +402,16 @@ Rebase OSTree:
       - *fedora_runners
       - *rhel_runners
 
-koji.sh:
+koji.sh (cloudapi):
   extends: .integration
   variables:
+    SCRIPT: koji.sh
+
+# internal composer still uses kojiapi, so keep testing it for now
+koji.sh (kojiapi):
+  extends: .integration
+  variables:
+    COMPOSER_API: "false"
     SCRIPT: koji.sh
 
 aws.sh:
