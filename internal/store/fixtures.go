@@ -28,7 +28,7 @@ func FixtureBase() *Store {
 
 	var localTarget = &target.Target{
 		Uuid:      uuid.MustParse("20000000-0000-0000-0000-000000000000"),
-		Name:      "org.osbuild.local",
+		Name:      target.TargetNameLocal,
 		ImageName: "localimage",
 		Created:   date,
 		Status:    common.IBWaiting,
@@ -37,7 +37,7 @@ func FixtureBase() *Store {
 
 	var awsTarget = &target.Target{
 		Uuid:      uuid.MustParse("10000000-0000-0000-0000-000000000000"),
-		Name:      "org.osbuild.aws",
+		Name:      target.TargetNameAWS,
 		ImageName: "awsimage",
 		Created:   date,
 		Status:    common.IBWaiting,
@@ -163,7 +163,7 @@ func FixtureFinished() *Store {
 
 	var localTarget = &target.Target{
 		Uuid:      uuid.MustParse("20000000-0000-0000-0000-000000000000"),
-		Name:      "org.osbuild.local",
+		Name:      target.TargetNameLocal,
 		ImageName: "localimage",
 		Created:   date,
 		Status:    common.IBWaiting,
@@ -172,7 +172,7 @@ func FixtureFinished() *Store {
 
 	var awsTarget = &target.Target{
 		Uuid:      uuid.MustParse("10000000-0000-0000-0000-000000000000"),
-		Name:      "org.osbuild.aws",
+		Name:      target.TargetNameAWS,
 		ImageName: "awsimage",
 		Created:   date,
 		Status:    common.IBWaiting,

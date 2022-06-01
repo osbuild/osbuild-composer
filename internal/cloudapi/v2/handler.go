@@ -549,27 +549,27 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			var uploadOptions interface{}
 
 			switch tr.Name {
-			case "org.osbuild.aws":
+			case target.TargetNameAWS:
 				uploadType = UploadTypesAws
 				awsOptions := tr.Options.(*target.AWSTargetResultOptions)
 				uploadOptions = AWSEC2UploadStatus{
 					Ami:    awsOptions.Ami,
 					Region: awsOptions.Region,
 				}
-			case "org.osbuild.aws.s3":
+			case target.TargetNameAWSS3:
 				uploadType = UploadTypesAwsS3
 				awsOptions := tr.Options.(*target.AWSS3TargetResultOptions)
 				uploadOptions = AWSS3UploadStatus{
 					Url: awsOptions.URL,
 				}
-			case "org.osbuild.gcp":
+			case target.TargetNameGCP:
 				uploadType = UploadTypesGcp
 				gcpOptions := tr.Options.(*target.GCPTargetResultOptions)
 				uploadOptions = GCPUploadStatus{
 					ImageName: gcpOptions.ImageName,
 					ProjectId: gcpOptions.ProjectID,
 				}
-			case "org.osbuild.azure.image":
+			case target.TargetNameAzureImage:
 				uploadType = UploadTypesAzure
 				gcpOptions := tr.Options.(*target.AzureImageTargetResultOptions)
 				uploadOptions = AzureUploadStatus{

@@ -1,5 +1,7 @@
 package target
 
+const TargetNameContainer TargetName = "org.osbuild.container"
+
 type ContainerTargetOptions struct {
 	Filename  string `json:"filename"`
 	Reference string `json:"reference"`
@@ -13,5 +15,5 @@ type ContainerTargetOptions struct {
 func (ContainerTargetOptions) isTargetOptions() {}
 
 func NewContainerTarget(options *ContainerTargetOptions) *Target {
-	return newTarget("org.osbuild.container", options)
+	return newTarget(TargetNameContainer, options)
 }
