@@ -938,16 +938,22 @@ func newDistro(distroName string) distro.Distro {
 			},
 			Modprobe: []*osbuild.ModprobeStageOptions{
 				{
-					Filename: "blacklist-nouveau.conf",
+					Filename: "blacklist-amdgpu.conf",
 					Commands: osbuild.ModprobeConfigCmdList{
-						osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
-						osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
+						osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
 					},
 				},
 				{
 					Filename: "blacklist-floppy.conf",
 					Commands: osbuild.ModprobeConfigCmdList{
 						osbuild.NewModprobeConfigCmdBlacklist("floppy"),
+					},
+				},
+				{
+					Filename: "blacklist-nouveau.conf",
+					Commands: osbuild.ModprobeConfigCmdList{
+						osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
+						osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
 					},
 				},
 			},
