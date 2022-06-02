@@ -64,10 +64,10 @@ init:
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-8.6-nightly-x86_64
-    - aws/rhel-8.6-nightly-aarch64
-    - aws/rhel-9.0-nightly-x86_64
-    - aws/rhel-9.0-nightly-aarch64
+    #- aws/rhel-8.6-nightly-x86_64
+    #- aws/rhel-8.6-nightly-aarch64
+    #- aws/rhel-9.0-nightly-x86_64
+    #- aws/rhel-9.0-nightly-aarch64
     - aws/centos-stream-9-x86_64
     - aws/centos-stream-9-aarch64
 
@@ -171,10 +171,10 @@ Base:
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-8.6-nightly-aarch64
-          - aws/rhel-9.0-nightly-x86_64
-          - aws/rhel-9.0-nightly-aarch64
+          #- aws/rhel-8.6-nightly-x86_64
+          #- aws/rhel-8.6-nightly-aarch64
+          #- aws/rhel-9.0-nightly-x86_64
+          #- aws/rhel-9.0-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -213,10 +213,10 @@ Manifests:
       - RUNNER:
           - aws/rhel-8.5-ga-x86_64
           - aws/rhel-8.5-ga-aarch64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-8.6-nightly-aarch64
-          - aws/rhel-9.0-nightly-x86_64
-          - aws/rhel-9.0-nightly-aarch64
+          #- aws/rhel-8.6-nightly-x86_64
+          #- aws/rhel-8.6-nightly-aarch64
+          #- aws/rhel-9.0-nightly-x86_64
+          #- aws/rhel-9.0-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -272,11 +272,11 @@ Image Tests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-8.6-nightly-aarch64
+          #- aws/rhel-8.6-nightly-x86_64
+          #- aws/rhel-8.6-nightly-aarch64
           # See https://github.com/osbuild/osbuild-composer/issues/1819 and related issues
-          - aws/rhel-9.0-nightly-x86_64
-          - aws/rhel-9.0-nightly-aarch64
+          #- aws/rhel-9.0-nightly-x86_64
+          #- aws/rhel-9.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 OSTree:
@@ -292,8 +292,8 @@ OSTree:
       - RUNNER:
           - rhos-01/fedora-35-x86_64
           - rhos-01/rhel-8.5-ga-x86_64
-          - rhos-01/rhel-8.6-nightly-x86_64-large
-          - rhos-01/rhel-9.0-nightly-x86_64
+          #- rhos-01/rhel-8.6-nightly-x86_64-large
+          #- rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -307,8 +307,8 @@ New OSTree:
     matrix:
       - RUNNER:
           - rhos-01/fedora-35-x86_64-large
-          - rhos-01/rhel-8.6-nightly-x86_64-large
-          - rhos-01/rhel-9.0-nightly-x86_64-large
+          #- rhos-01/rhel-8.6-nightly-x86_64-large
+          #- rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
@@ -321,9 +321,9 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64-large
+          #- rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/rhel-9.0-nightly-x86_64-large
+          #- rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
 OSTree raw image:
@@ -341,9 +341,9 @@ OSTree raw image:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64-large
+          #- rhos-01/rhel-8.6-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/rhel-9.0-nightly-x86_64-large
+          #- rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
 Rebase OSTree:
@@ -355,8 +355,8 @@ Rebase OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64-large
-          - rhos-01/rhel-9.0-nightly-x86_64-large
+          #- rhos-01/rhel-8.6-nightly-x86_64-large
+          #- rhos-01/rhel-9.0-nightly-x86_64-large
           - rhos-01/centos-stream-8-x86_64-large
           - rhos-01/centos-stream-9-x86_64-large
 
@@ -374,8 +374,8 @@ Rebase OSTree:
     RUNNER:
       - aws/centos-stream-8-x86_64
       - aws/rhel-8.5-ga-x86_64
-      - aws/rhel-8.6-nightly-x86_64
-      - aws/rhel-9.0-nightly-x86_64
+      #- aws/rhel-8.6-nightly-x86_64
+      #- aws/rhel-9.0-nightly-x86_64
       - aws/centos-stream-9-x86_64
     INTERNAL_NETWORK: ["true"]
 
@@ -462,8 +462,8 @@ API:
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8.5-ga-x86_64
-          - aws/rhel-8.6-nightly-x86_64
-          - aws/rhel-9.0-nightly-x86_64
+          #- aws/rhel-8.6-nightly-x86_64
+          #- aws/rhel-9.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["edge-commit"]
         RUNNER:
@@ -483,8 +483,8 @@ API:
       - RUNNER:
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/rhel-8.5-ga-x86_64
-          - rhos-01/rhel-8.6-nightly-x86_64
-          - rhos-01/rhel-9.0-nightly-x86_64
+          #- rhos-01/rhel-8.6-nightly-x86_64
+          #- rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 libvirt.sh:
@@ -591,8 +591,8 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.6-nightly-x86_64
-          - rhos-01/rhel-9.0-nightly-x86_64
+          #- rhos-01/rhel-8.6-nightly-x86_64
+          #- rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 SCHEDULED_CLOUD_CLEANER:
