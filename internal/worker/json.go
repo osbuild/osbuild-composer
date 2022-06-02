@@ -38,6 +38,10 @@ type OSBuildJobResult struct {
 	TargetErrors  []string               `json:"target_errors,omitempty"`
 	UploadStatus  string                 `json:"upload_status"`
 	PipelineNames *PipelineNames         `json:"pipeline_names,omitempty"`
+	// Host OS of the worker which handled the job
+	HostOS string `json:"host_os"`
+	// Architecture of the worker which handled the job
+	Arch string `json:"arch"`
 	JobResult
 }
 

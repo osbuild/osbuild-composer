@@ -236,7 +236,15 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			Success: false,
 		},
 		UploadStatus: "failure",
+		Arch:         common.CurrentArch(),
 	}
+
+	hostOS, err := common.GetRedHatRelease()
+	if err != nil {
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, err.Error())
+		return nil
+	}
+	osbuildJobResult.HostOS = hostOS
 
 	var outputDirectory string
 
@@ -255,7 +263,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		}
 	}()
 
-	outputDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-*")
+	outputDirectory, err = ioutil.TempDir(impl.Output, job.Id().String()+"-*")
 	if err != nil {
 		return fmt.Errorf("error creating temporary output directory: %v", err)
 	}
