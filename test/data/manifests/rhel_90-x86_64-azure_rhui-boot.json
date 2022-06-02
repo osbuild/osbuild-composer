@@ -2703,15 +2703,11 @@
           {
             "type": "org.osbuild.modprobe",
             "options": {
-              "filename": "blacklist-nouveau.conf",
+              "filename": "blacklist-amdgpu.conf",
               "commands": [
                 {
                   "command": "blacklist",
-                  "modulename": "nouveau"
-                },
-                {
-                  "command": "blacklist",
-                  "modulename": "lbm-nouveau"
+                  "modulename": "amdgpu"
                 }
               ]
             }
@@ -2724,6 +2720,22 @@
                 {
                   "command": "blacklist",
                   "modulename": "floppy"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.modprobe",
+            "options": {
+              "filename": "blacklist-nouveau.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "nouveau"
+                },
+                {
+                  "command": "blacklist",
+                  "modulename": "lbm-nouveau"
                 }
               ]
             }

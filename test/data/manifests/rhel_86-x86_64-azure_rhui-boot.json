@@ -2826,15 +2826,23 @@
           {
             "type": "org.osbuild.modprobe",
             "options": {
-              "filename": "blacklist-nouveau.conf",
+              "filename": "blacklist-amdgpu.conf",
               "commands": [
                 {
                   "command": "blacklist",
-                  "modulename": "nouveau"
-                },
+                  "modulename": "amdgpu"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.modprobe",
+            "options": {
+              "filename": "blacklist-intel-cstate.conf",
+              "commands": [
                 {
                   "command": "blacklist",
-                  "modulename": "lbm-nouveau"
+                  "modulename": "intel_cstate"
                 }
               ]
             }
@@ -2854,11 +2862,15 @@
           {
             "type": "org.osbuild.modprobe",
             "options": {
-              "filename": "blacklist-skylake-edac.conf",
+              "filename": "blacklist-nouveau.conf",
               "commands": [
                 {
                   "command": "blacklist",
-                  "modulename": "skx_edac"
+                  "modulename": "nouveau"
+                },
+                {
+                  "command": "blacklist",
+                  "modulename": "lbm-nouveau"
                 }
               ]
             }
@@ -2866,11 +2878,11 @@
           {
             "type": "org.osbuild.modprobe",
             "options": {
-              "filename": "blacklist-intel-cstate.conf",
+              "filename": "blacklist-skylake-edac.conf",
               "commands": [
                 {
                   "command": "blacklist",
-                  "modulename": "intel_cstate"
+                  "modulename": "skx_edac"
                 }
               ]
             }

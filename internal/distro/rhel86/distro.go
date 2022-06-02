@@ -938,10 +938,15 @@ func newDistro(distroName string) distro.Distro {
 			},
 			Modprobe: []*osbuild.ModprobeStageOptions{
 				{
-					Filename: "blacklist-nouveau.conf",
+					Filename: "blacklist-amdgpu.conf",
 					Commands: osbuild.ModprobeConfigCmdList{
-						osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
-						osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
+						osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
+					},
+				},
+				{
+					Filename: "blacklist-intel-cstate.conf",
+					Commands: osbuild.ModprobeConfigCmdList{
+						osbuild.NewModprobeConfigCmdBlacklist("intel_cstate"),
 					},
 				},
 				{
@@ -951,15 +956,16 @@ func newDistro(distroName string) distro.Distro {
 					},
 				},
 				{
-					Filename: "blacklist-skylake-edac.conf",
+					Filename: "blacklist-nouveau.conf",
 					Commands: osbuild.ModprobeConfigCmdList{
-						osbuild.NewModprobeConfigCmdBlacklist("skx_edac"),
+						osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
+						osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
 					},
 				},
 				{
-					Filename: "blacklist-intel-cstate.conf",
+					Filename: "blacklist-skylake-edac.conf",
 					Commands: osbuild.ModprobeConfigCmdList{
-						osbuild.NewModprobeConfigCmdBlacklist("intel_cstate"),
+						osbuild.NewModprobeConfigCmdBlacklist("skx_edac"),
 					},
 				},
 			},
