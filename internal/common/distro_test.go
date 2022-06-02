@@ -1,4 +1,4 @@
-package distro
+package common
 
 import (
 	"reflect"

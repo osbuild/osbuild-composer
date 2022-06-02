@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
@@ -69,7 +70,7 @@ func NewDefault() *Registry {
 	// If there was an error, then the hostDistroName will be an empty string
 	// and as a result, the hostDistro will have a nil value when calling New().
 	// Getting the host distro later using FromHost() will return nil as well.
-	hostDistroName, hostDistroIsBeta, hostDistroIsStream, _ := distro.GetHostDistroName()
+	hostDistroName, hostDistroIsBeta, hostDistroIsStream, _ := common.GetHostDistroName()
 
 	for _, supportedDistro := range supportedDistros {
 		distro := supportedDistro.defaultDistro()

@@ -151,7 +151,7 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		logger = log.New(os.Stdout, "", 0)
 	}
 
-	hostDistroName, _, _, err := distro.GetHostDistroName()
+	hostDistroName, _, _, err := common.GetHostDistroName()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read host distro information")
 	}

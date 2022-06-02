@@ -10,7 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -101,7 +100,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 	}
 
 	result.Arch = common.CurrentArch()
-	result.HostOS, err = distro.GetRedHatRelease()
+	result.HostOS, err = common.GetRedHatRelease()
 	if err != nil {
 		return err
 	}
