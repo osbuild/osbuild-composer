@@ -182,7 +182,8 @@ func (q *DBJobQueue) listen(ctx context.Context, ready chan<- struct{}) {
 		panic(fmt.Errorf("error connecting to database: %v", err))
 	}
 	defer func() {
-		_, err := conn.Exec(ctx, sqlUnlisten)
+		// use the empty context as the listening context is already cancelled at this point
+		_, err := conn.Exec(context.Background(), sqlUnlisten)
 		if err != nil && !errors.Is(err, context.DeadlineExceeded) {
 			logrus.Error("Error unlistening for jobs in dequeue: ", err)
 		}
