@@ -320,6 +320,33 @@ objects:
                   cpu: "${CPU_LIMIT}"
                   memory: "${MEMORY_LIMIT}"
               env:
+              - name: PGHOST
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.host
+              - name: PGPORT
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.port
+              - name: PGDATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.name
+              - name: PGUSER
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.user
+              - name: PGPASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.password
+              - name: PGSSLMODE
+                value: "${PGSSLMODE}"
               - name: GCP_AUTH_PROVIDER_X509_CERT_URL
                 valueFrom:
                   secretKeyRef:
