@@ -16,6 +16,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
@@ -446,7 +447,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
-	ctx.Logger().Infof("Job ID %s enqueued for operationID %s", id, ctx.Get("operationID"))
+	ctx.Logger().Infof("Job ID %s enqueued for operationID %s", id, ctx.Get(common.OperationIDKey))
 
 	return ctx.JSON(http.StatusCreated, &ComposeId{
 		ObjectReference: ObjectReference{
