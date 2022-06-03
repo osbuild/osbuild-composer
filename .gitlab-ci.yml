@@ -179,20 +179,20 @@ Base:
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
 
-Manifests:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/manifest_tests.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-9.0-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
+#Manifests:
+#  stage: test
+#  extends: .terraform
+#  rules:
+#    - !reference [.upstream_rules, rules]
+#    - !reference [.nightly_rules, rules]
+#  script:
+#    - schutzbot/deploy.sh
+#    - /usr/libexec/tests/osbuild-composer/manifest_tests.sh
+#  parallel:
+#    matrix:
+#      - RUNNER:
+#          - aws/rhel-9.0-nightly-x86_64
+#        INTERNAL_NETWORK: ["true"]
 
 .regression:
   stage: test
@@ -261,23 +261,23 @@ regression-no-explicit-rootfs-definition:
   variables:
     SCRIPT: regression-no-explicit-rootfs-definition.sh
 
-Image Tests:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.nightly_rules, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/image_tests.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          #- aws/rhel-8.6-nightly-x86_64
-          #- aws/rhel-8.6-nightly-aarch64
-          # See https://github.com/osbuild/osbuild-composer/issues/1819 and related issues
-          #- aws/rhel-9.0-nightly-x86_64
-          #- aws/rhel-9.0-nightly-aarch64
-        INTERNAL_NETWORK: ["true"]
+#Image Tests:
+#  stage: test
+#  extends: .terraform
+#  rules:
+#    - !reference [.nightly_rules, rules]
+#  script:
+#    - schutzbot/deploy.sh
+#    - /usr/libexec/tests/osbuild-composer/image_tests.sh
+#  parallel:
+#    matrix:
+#      - RUNNER:
+#          #- aws/rhel-8.6-nightly-x86_64
+#          #- aws/rhel-8.6-nightly-aarch64
+#          # See https://github.com/osbuild/osbuild-composer/issues/1819 and related issues
+#          #- aws/rhel-9.0-nightly-x86_64
+#          #- aws/rhel-9.0-nightly-aarch64
+#        INTERNAL_NETWORK: ["true"]
 
 OSTree:
   stage: test
