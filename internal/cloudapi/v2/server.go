@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
 	"github.com/google/uuid"
@@ -89,34 +88,6 @@ func (s *Server) Handler(path string) http.Handler {
 	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware, s.ValidateRequest), &handler)
 
 	return e
-}
-
-func (s *Server) ValidateRequest(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		request := c.Request()
-
-		// extract route and parameters from request
-		route, params, err := s.router.FindRoute(request)
-		if err != nil {
-			return HTTPErrorWithInternal(ErrorResourceNotFound, err)
-		}
-
-		input := &openapi3filter.RequestValidationInput{
-			Request:    request,
-			PathParams: params,
-			Route:      route,
-			Options: &openapi3filter.Options{
-				AuthenticationFunc: openapi3filter.NoopAuthenticationFunc,
-			},
-		}
-
-		ctx := request.Context()
-		if err := openapi3filter.ValidateRequest(ctx, input); err != nil {
-			return HTTPErrorWithInternal(ErrorInvalidRequest, err)
-		}
-
-		return next(c)
-	}
 }
 
 func (s *Server) Shutdown() {
