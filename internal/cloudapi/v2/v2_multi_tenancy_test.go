@@ -267,6 +267,7 @@ func TestMultitenancy(t *testing.T) {
 		resp := test.APICall{
 			Handler:        handler,
 			Method:         http.MethodGet,
+			Context:        reqContext(c.orgID),
 			Path:           "/api/image-builder-composer/v2/composes/" + c.id.String(),
 			ExpectedStatus: http.StatusOK,
 		}.Do(t)

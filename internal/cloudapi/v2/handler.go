@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -123,15 +122,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	// channel is empty if JWT is not enabled
-	var channel string
-	if h.server.config.JWTEnabled {
-		tenant, err := auth.GetFromClaims(ctx.Request().Context(), h.server.config.TenantProviderFields)
-		if err != nil {
-			return HTTPErrorWithInternal(ErrorTenantNotFound, err)
-		}
-
-		// prefix the tenant to prevent collisions if support for specifying channels in a request is ever added
-		channel = "org-" + tenant
+	channel, err := h.server.getTenantChannel(ctx)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorTenantNotFound, err)
 	}
 
 	distribution := h.server.distros.GetDistro(request.Distribution)
