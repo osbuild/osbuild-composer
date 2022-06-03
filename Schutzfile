@@ -93,28 +93,28 @@
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
-        "commit": "e51d08ba9ee84036d18b19d4af70d3f8a063e2c0"
+        "commit": "7b0e1fe5fdcf1d769a7bf1df0be7694eea28b24c"
       }
     }
   },
   "rhel-9.0": {
     "dependencies": {
       "osbuild": {
-        "commit": "e51d08ba9ee84036d18b19d4af70d3f8a063e2c0"
+        "commit": "7b0e1fe5fdcf1d769a7bf1df0be7694eea28b24c"
       }
     }
   },
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "e51d08ba9ee84036d18b19d4af70d3f8a063e2c0"
+        "commit": "7b0e1fe5fdcf1d769a7bf1df0be7694eea28b24c"
       }
     }
   },
   "centos-9": {
     "dependencies": {
       "osbuild": {
-        "commit": "e51d08ba9ee84036d18b19d4af70d3f8a063e2c0"
+        "commit": "7b0e1fe5fdcf1d769a7bf1df0be7694eea28b24c"
       }
     }
   },
