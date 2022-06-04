@@ -6,10 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/gobwas/glob"
 )
+
+// global cache locker
+var cacheLocks sync.Map
 
 // A collection of directory paths, their total size, and their most recent
 // modification time.
@@ -34,14 +38,28 @@ type rpmCache struct {
 
 	// max cache size
 	maxSize uint64
+
+	// locker for this cache directory
+	locker *sync.RWMutex
 }
 
 func newRPMCache(path string, maxSize uint64) *rpmCache {
+	absPath, err := filepath.Abs(path) // convert to abs if it's not already
+	if err != nil {
+		panic(err) // can only happen if the CWD does not exist and the path isn't already absolute
+	}
+	path = absPath
+	locker := new(sync.RWMutex)
+	if l, loaded := cacheLocks.LoadOrStore(path, locker); loaded {
+		// value existed and was loaded
+		locker = l.(*sync.RWMutex)
+	}
 	r := &rpmCache{
 		root:         path,
 		repoElements: make(map[string]pathInfo),
 		size:         0,
 		maxSize:      maxSize,
+		locker:       locker,
 	}
 	// collect existing cache paths and timestamps
 	r.updateInfo()
@@ -121,6 +139,9 @@ func (r *rpmCache) updateInfo() {
 }
 
 func (r *rpmCache) shrink() error {
+	r.locker.Lock()
+	defer r.locker.Unlock()
+
 	// start deleting until we drop below r.maxSize
 	nDeleted := 0
 	for idx := 0; idx < len(r.repoRecency) && r.size >= r.maxSize; idx++ {
