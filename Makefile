@@ -195,6 +195,9 @@ worker-key-pair: ca
 	# delete the request
 	rm /etc/osbuild-composer/worker-csr.pem
 
+.PHONY: rpm-spec-bundle
+rpm-spec-bundle:
+	./tools/rpm_spec_add_provides_bundle.sh
 
 #
 # Building packages

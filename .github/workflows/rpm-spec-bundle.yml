@@ -1,0 +1,38 @@
+name: "Update Provides bundle list in the RPM spec"
+
+on:
+  pull_request:
+    branches:
+      - "*"
+    paths:
+      - "go.mod"
+
+jobs:
+  rpm-spec-bundle:
+    name: "Update the RPM Spec with the new provides bundle list"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Checkout PR
+        uses: dawidd6/action-checkout-pr@v1
+        with:
+          pr: ${{ github.event.pull_request.number }}
+
+      - name: Update the the packages list
+        run: make rpm-spec-bundle
+
+      - name: Push changes if needed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "$(git status --porcelain osbuild-composer.spec)" ]; then
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add osbuild-composer.spec
+            git commit -m"Update RPM deploy spec"
+            git push
+          else
+            echo ""
+          fi
