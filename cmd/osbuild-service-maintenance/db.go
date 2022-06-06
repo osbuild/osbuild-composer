@@ -28,12 +28,21 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 			logrus.Info("Dry run, skipping deletion of jobs")
 			continue
 		}
-		rows, err := jobs.DeleteJobResult(v)
-		if err != nil {
-			logrus.Errorf("Error deleting results for jobs: %v, %d rows affected", rows, err)
-			continue
+
+		// Delete results in chunks to avoid starving the rds instance
+		for i := 0; i < len(v); i += 100 {
+			max := i + 100
+			if max > len(v) {
+				max = len(v)
+			}
+
+			rows, err := jobs.DeleteJobResult(v[i:max])
+			if err != nil {
+				logrus.Errorf("Error deleting results for jobs: %v, %d rows affected", rows, err)
+				continue
+			}
+			logrus.Infof("Deleted results from %d jobs out of %d job ids", rows, len(v))
 		}
-		logrus.Infof("Deleted results from %d jobs out of %d job ids", rows, len(v))
 	}
 
 	return nil
