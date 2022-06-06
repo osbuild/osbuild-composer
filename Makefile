@@ -214,6 +214,7 @@ RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
 	git show HEAD:osbuild-composer.spec > $(RPM_SPECFILE)
+	./tools/rpm_spec_add_provides_bundle.sh $(RPM_SPECFILE)
 
 $(RPM_TARBALL):
 	mkdir -p $(CURDIR)/rpmbuild/SOURCES

@@ -103,6 +103,7 @@ template_override
 
 greenprint "🔧 Building source RPM"
 git archive --prefix "osbuild-composer-${COMMIT}/" --output "osbuild-composer-${COMMIT}.tar.gz" HEAD
+./tools/rpm_spec_add_provides_bundle.sh
 sudo mock -r "$MOCK_CONFIG" --buildsrpm \
   --define "commit ${COMMIT}" \
   --spec ./osbuild-composer.spec \
