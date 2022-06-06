@@ -1,7 +1,10 @@
 package v2
 
 import (
+	"fmt"
+
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 )
@@ -19,6 +22,35 @@ func (s *Server) getTenantChannel(ctx echo.Context) (string, error) {
 		channel = "org-" + tenant
 	}
 	return channel, nil
+}
+
+type ComposeHandlerFunc func(ctx echo.Context, id string) error
+
+// Ensures that the job's channel matches the JWT cannel set in the echo.Context
+func (s *Server) EnsureJobChannel(next ComposeHandlerFunc) ComposeHandlerFunc {
+	return func(c echo.Context, id string) error {
+		jobId, err := uuid.Parse(id)
+		if err != nil {
+			return HTTPError(ErrorInvalidComposeId)
+		}
+
+		ctxChannel, err := s.getTenantChannel(c)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorTenantNotFound, err)
+		}
+
+		jobChannel, err := s.workers.JobChannel(jobId)
+		if err != nil {
+			fmt.Println(err)
+			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+		}
+
+		if jobChannel != ctxChannel {
+			return HTTPError(ErrorComposeNotFound)
+		}
+
+		return next(c, id)
+	}
 }
 
 func (s *Server) ValidateRequest(next echo.HandlerFunc) echo.HandlerFunc {

@@ -410,6 +410,11 @@ func (s *Server) OSBuildKojiJob(id uuid.UUID, job *OSBuildKojiJob) error {
 	return nil
 }
 
+func (s *Server) JobChannel(id uuid.UUID) (string, error) {
+	_, _, _, channel, err := s.jobs.Job(id)
+	return channel, err
+}
+
 // JobType returns the type of the job
 func (s *Server) JobType(id uuid.UUID) (string, error) {
 	jobType, _, _, _, err := s.jobs.Job(id)
