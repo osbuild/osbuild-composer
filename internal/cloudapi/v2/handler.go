@@ -492,6 +492,10 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 }
 
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.getComposeStatusImpl)(ctx, id)
+}
+
+func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
@@ -738,6 +742,10 @@ func composeStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.Koj
 
 // ComposeMetadata handles a /composes/{id}/metadata GET request
 func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.getComposeMetadataImpl)(ctx, id)
+}
+
+func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
@@ -849,6 +857,11 @@ func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadat
 
 // Get logs for a compose
 func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.getComposeLogsImpl)(ctx, id)
+}
+
+func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
+
 	jobId, err := uuid.Parse(id)
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
@@ -959,6 +972,10 @@ func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.
 
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
 func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.getComposeManifestsImpl)(ctx, id)
+}
+
+func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error {
 	jobId, err := uuid.Parse(id)
 	if err != nil {
 		return HTTPError(ErrorInvalidComposeId)
