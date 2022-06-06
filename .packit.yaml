@@ -16,6 +16,7 @@ upstream_tag_template: v{version}
 srpm_build_deps: []
 actions:
   get-current-version: bash -c "git describe --tags --abbrev=0 | sed 's|v||'"
+  post-upstream-clone: "./tools/rpm_spec_add_provides_bundle.sh"
 
 jobs:
 - job: koji_build

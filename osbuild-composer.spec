@@ -42,34 +42,9 @@ BuildRequires:  make
 %if 0%{?fedora}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
-BuildRequires:  golang(github.com/aws/aws-sdk-go)
-BuildRequires:  golang(github.com/Azure/azure-sdk-for-go)
-BuildRequires:  golang(github.com/Azure/azure-storage-blob-go/azblob)
-BuildRequires:  golang(github.com/BurntSushi/toml)
-BuildRequires:  golang(github.com/coreos/go-semver/semver)
-BuildRequires:  golang(github.com/coreos/go-systemd/activation)
-BuildRequires:  golang(github.com/deepmap/oapi-codegen/pkg/codegen)
-BuildRequires:  golang(github.com/go-chi/chi)
-BuildRequires:  golang(github.com/golang-jwt/jwt/v4)
-BuildRequires:  golang(github.com/google/uuid)
-BuildRequires:  golang(github.com/hashicorp/go-retryablehttp)
-BuildRequires:  golang(github.com/jackc/pgx/v4)
-BuildRequires:  golang(github.com/julienschmidt/httprouter)
-BuildRequires:  golang(github.com/getkin/kin-openapi/openapi3)
-BuildRequires:  golang(github.com/kolo/xmlrpc)
-BuildRequires:  golang(github.com/labstack/echo/v4)
-BuildRequires:  golang(github.com/gobwas/glob)
-BuildRequires:  golang(github.com/google/go-cmp/cmp)
-BuildRequires:  golang(github.com/gophercloud/gophercloud)
-BuildRequires:  golang(github.com/prometheus/client_golang/prometheus/promhttp)
-BuildRequires:  golang(github.com/openshift-online/ocm-sdk-go)
-BuildRequires:  golang(github.com/segmentio/ksuid)
-BuildRequires:  golang(github.com/stretchr/testify/assert)
-BuildRequires:  golang(github.com/ubccr/kerby)
-BuildRequires:  golang(github.com/vmware/govmomi)
-BuildRequires:  golang(github.com/oracle/oci-go-sdk/v54)
-BuildRequires:  golang(cloud.google.com/go)
-BuildRequires:  golang(gopkg.in/ini.v1)
+# DO NOT REMOVE the BUNDLE_START and BUNDLE_END markers as they are used by 'tools/rpm_spec_add_provides_bundle.sh' to generate the Provides: bundled list
+# BUNDLE_START
+# BUNDLE_END
 %endif
 
 Requires: %{name}-core = %{version}-%{release}
@@ -99,7 +74,7 @@ Obsoletes: osbuild-composer-koji <= 23
 %if 0%{?rhel}
 %forgeautosetup -p1
 %else
-%goprep
+%goprep -k
 %endif
 
 %build
