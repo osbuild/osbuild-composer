@@ -276,5 +276,45 @@ func TestMultitenancy(t *testing.T) {
 		}
 		require.NoError(t, json.Unmarshal(resp.Body, &result))
 		require.NotEqual(t, "pending", result.Status)
+
+		composeEndpoints := []string{"", "logs", "manifests", "metadata"}
+		// Verify that all compose endpoints work with the appropriate orgID
+		for _, endpoint := range composeEndpoints {
+			// TODO: "metadata" endpoint is not supported for Koji composes
+			jobType, err := workerServer.JobType(c.id)
+			require.NoError(t, err)
+			if jobType == worker.JobTypeKojiFinalize && endpoint == "metadata" {
+				continue
+			}
+
+			path := "/api/image-builder-composer/v2/composes/" + c.id.String()
+			if endpoint != "" {
+				path = path + "/" + endpoint
+			}
+
+			_ = test.APICall{
+				Handler:        handler,
+				Method:         http.MethodGet,
+				Context:        reqContext(c.orgID),
+				Path:           path,
+				ExpectedStatus: http.StatusOK,
+			}.Do(t)
+		}
+
+		// Verify that no compose endpoints are accessible with wrong orgID
+		for _, endpoint := range composeEndpoints {
+			path := "/api/image-builder-composer/v2/composes/" + c.id.String()
+			if endpoint != "" {
+				path = path + "/" + endpoint
+			}
+
+			_ = test.APICall{
+				Handler:        handler,
+				Method:         http.MethodGet,
+				Context:        reqContext("bad-org"),
+				Path:           path,
+				ExpectedStatus: http.StatusNotFound,
+			}.Do(t)
+		}
 	}
 }
