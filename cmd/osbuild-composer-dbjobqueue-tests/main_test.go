@@ -74,7 +74,7 @@ func setFinishedAt(t *testing.T, q *dbjobqueue.DBJobQueue, id uuid.UUID, finishe
 	started := finished.Add(-time.Second)
 	queued := started.Add(-time.Second)
 
-	_, err = conn.Exec(context.Background(), "UPDATE jobs SET queued_at = $1, started_at = $2, finished_at = $3 WHERE id = $4", queued, started, finished, id)
+	_, err = conn.Exec(context.Background(), "UPDATE jobs SET queued_at = $1, started_at = $2, finished_at = $3, result = '{\"result\": \"success\" }' WHERE id = $4", queued, started, finished, id)
 	require.NoError(t, err)
 }
 

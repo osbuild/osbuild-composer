@@ -104,7 +104,7 @@ const (
 	sqlQueryJobsUptoByType = `
                 SELECT array_agg(id), type
                 FROM jobs
-                WHERE type = ANY($1) AND finished_at < $2
+                WHERE type = ANY($1) AND finished_at < $2 AND result IS NOT NULL
                 GROUP BY type`
 	sqlDeleteJobResult = `
                 UPDATE jobs
