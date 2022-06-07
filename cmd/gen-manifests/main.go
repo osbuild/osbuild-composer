@@ -24,6 +24,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const cacheRoot = "/tmp/rpmmd"
+
 type repository struct {
 	Name           string   `json:"name"`
 	BaseURL        string   `json:"baseurl,omitempty"`
@@ -98,7 +100,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		return strings.Replace(s, "-", "_", -1)
 	}
 	filename := fmt.Sprintf("%s-%s-%s-boot.json", u(distroName), u(archName), u(name))
-	cacheDir := filepath.Join("/tmp", "rpmmd", archName+distribution.Name())
+	cacheDir := filepath.Join(cacheRoot, archName+distribution.Name())
 
 	options := distro.ImageOptions{Size: 0}
 	if cr.OSTree != nil {
@@ -378,11 +380,14 @@ func main() {
 		wq.submitJob(j)
 	}
 	errs := wq.wait()
+	exit := 0
 	if len(errs) > 0 {
 		fmt.Printf("Encountered %d errors:\n", len(errs))
 		for idx, err := range errs {
 			fmt.Printf("%3d: %s\n", idx, err.Error())
 		}
-		os.Exit(1)
+		exit = 1
 	}
+	fmt.Printf("RPM metadata cache kept in %s\n", cacheRoot)
+	os.Exit(exit)
 }
