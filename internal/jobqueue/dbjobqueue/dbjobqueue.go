@@ -110,6 +110,14 @@ const (
                 UPDATE jobs
                 SET result = NULL
                 WHERE id = ANY($1)`
+	sqlVacuumAnalyze = `
+                VACUUM ANALYZE`
+	sqlVacuumStats = `
+                SELECT relname, pg_size_pretty(pg_total_relation_size(relid)),
+                    n_tup_ins, n_tup_upd, n_tup_del, n_live_tup, n_dead_tup,
+                    vacuum_count, autovacuum_count, analyze_count, autoanalyze_count,
+                    last_vacuum, last_autovacuum, last_analyze, last_autoanalyze
+                 FROM pg_stat_user_tables`
 )
 
 type DBJobQueue struct {
@@ -657,4 +665,71 @@ func (q *DBJobQueue) DeleteJobResult(jobIds []uuid.UUID) (int64, error) {
 		return tag.RowsAffected(), fmt.Errorf("Error deleting results from jobs: %v", err)
 	}
 	return tag.RowsAffected(), nil
+}
+
+func (q *DBJobQueue) VacuumAnalyze() error {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer conn.Release()
+
+	_, err = conn.Exec(context.Background(), sqlVacuumAnalyze)
+	if err != nil {
+		return fmt.Errorf("Error running VACUUM ANALYZE: %v", err)
+	}
+
+	return nil
+}
+
+func (q *DBJobQueue) LogVacuumStats() error {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return fmt.Errorf("error connecting to database: %v", err)
+	}
+	defer conn.Release()
+
+	rows, err := conn.Query(context.Background(), sqlVacuumStats)
+	if err != nil {
+		return fmt.Errorf("Error querying vacuum stats: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var relName, relSize string
+		var ins, upd, del, live, dead, vc, avc, ac, aac int64
+		var lvc, lavc, lan, laan *time.Time
+
+		err = rows.Scan(&relName, &relSize, &ins, &upd, &del, &live, &dead,
+			&vc, &avc, &ac, &aac,
+			&lvc, &lavc, &lan, &laan)
+		if err != nil {
+			return err
+		}
+
+		logrus.Infof("Stats for table %s", relName)
+		logrus.Infof("  Total table size: %s", relSize)
+		logrus.Info("  Tuples:")
+		logrus.Infof("    Inserted: %d", ins)
+		logrus.Infof("    Updated: %d", upd)
+		logrus.Infof("    Deleted: %d", del)
+		logrus.Infof("    Live: %d", live)
+		logrus.Infof("    Dead: %d", dead)
+		logrus.Info("  Vacuum stats:")
+		logrus.Infof("    Vacuum count: %d", vc)
+		logrus.Infof("    AutoVacuum count: %d", avc)
+		logrus.Infof("    Last vacuum: %v", lvc)
+		logrus.Infof("    Last autovacuum: %v", lavc)
+		logrus.Info("  Analyze stats:")
+		logrus.Infof("    Analyze count: %d", ac)
+		logrus.Infof("    AutoAnalyze count: %d", aac)
+		logrus.Infof("    Last analyze: %v", lan)
+		logrus.Infof("    Last autoanalyze: %v", laan)
+		logrus.Info("---")
+	}
+	if rows.Err() != nil {
+		return rows.Err()
+	}
+	return nil
+
 }

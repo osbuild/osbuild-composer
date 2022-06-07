@@ -22,6 +22,11 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 		return fmt.Errorf("Error querying jobs: %v", err)
 	}
 
+	err = jobs.LogVacuumStats()
+	if err != nil {
+		logrus.Errorf("Error running vacuum stats: %v", err)
+	}
+
 	for k, v := range jobsByType {
 		logrus.Infof("Deleting results from %d %s jobs", len(v), k)
 		if dryRun {
@@ -42,7 +47,16 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 				continue
 			}
 			logrus.Infof("Deleted results from %d jobs out of %d job ids", rows, len(v))
+			err = jobs.VacuumAnalyze()
+			if err != nil {
+				logrus.Errorf("Error running vacuum analyze: %v", err)
+			}
 		}
+	}
+
+	err = jobs.LogVacuumStats()
+	if err != nil {
+		logrus.Errorf("Error running vacuum stats: %v", err)
 	}
 
 	return nil
