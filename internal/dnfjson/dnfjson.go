@@ -26,6 +26,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+// BaseSolver defines the basic solver configuration without platform
+// information. It can be used to create configured Solver instances with the
+// NewWithConfig() method. A BaseSolver maintains the global repository cache
+// directory and system subscription information.
 type BaseSolver struct {
 	subscriptions *rhsm.Subscriptions
 
@@ -51,6 +55,9 @@ func NewBaseSolver(cacheDir string) *BaseSolver {
 	}
 }
 
+// SetMaxCacheSize sets the maximum size for the global repository metadata
+// cache. This is the maximum size of the cache after a CleanCache()
+// call. Cache cleanup is never performed automatically.
 func (s *BaseSolver) SetMaxCacheSize(size uint64) {
 	s.maxCacheSize = size
 }
@@ -115,6 +122,8 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, erro
 	return result.toRPMMD(repoMap), nil
 }
 
+// FetchMetadata returns the list of all the available packages in repos and
+// their info.
 func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
 	req, err := s.makeDumpRequest(repos)
 	if err != nil {
