@@ -1666,8 +1666,9 @@ jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
 jwt_tenant_provider_fields = ["rh-org-id"]
 EOF
 
+REFRESH_TOKEN="offlineToken"
 cat <<EOF | sudo tee "/etc/osbuild-worker/token"
-offlineToken
+$REFRESH_TOKEN
 EOF
 
 cat <<EOF | sudo tee "/etc/osbuild-worker/osbuild-worker.toml"
@@ -1689,7 +1690,14 @@ sudo systemctl restart osbuild-composer
 until curl --output /dev/null --silent --fail localhost:8081/token; do
     sleep 0.5
 done
-TOKEN="$(curl localhost:8081/token | jq -r .access_token)"
+
+TOKEN="$(curl --request POST \
+        --data "refresh_token=$REFRESH_TOKEN" \
+        --header "Content-Type: application/x-www-form-urlencoded" \
+        --silent \
+        --show-error \
+        --fail \
+        localhost:8081/token | jq -r .access_token)"
 
 [ "$(curl \
         --silent \
@@ -1707,7 +1715,7 @@ TOKEN="$(curl localhost:8081/token | jq -r .access_token)"
         http://localhost:443/api/image-builder-composer/v2/openapi)" = "200" ]
 
 
-# /composes/$ID does doesn't need auth
+# /composes/$ID does need auth
 [ "$(curl \
         --silent \
         --output /dev/null \
