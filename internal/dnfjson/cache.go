@@ -48,17 +48,6 @@ func newRPMCache(path string, maxSize uint64) *rpmCache {
 	return r
 }
 
-func (r *rpmCache) clean() error {
-	curSize, err := dirSize(r.root)
-	if err != nil {
-		return err
-	}
-	if curSize > r.maxSize {
-		return os.RemoveAll(r.root)
-	}
-	return nil
-}
-
 // updateInfo updates the repoPaths and repoRecency fields of the rpmCache.
 func (r *rpmCache) updateInfo() {
 	cacheEntries, _ := os.ReadDir(r.root)
