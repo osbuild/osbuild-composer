@@ -129,7 +129,7 @@ func testDeleteJobResult(t *testing.T, q *dbjobqueue.DBJobQueue) {
 	err = q.FinishJob(id, res)
 	require.NoError(t, err)
 
-	_,r,_,_,_,_,_,err := q.JobStatus(id)
+	_, _, r, _, _, _, _, _, err := q.JobStatus(id)
 	require.NoError(t, err)
 
 	var r1 Result
@@ -140,7 +140,7 @@ func testDeleteJobResult(t *testing.T, q *dbjobqueue.DBJobQueue) {
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
-	_,r,_,_,_,_,_,err = q.JobStatus(id)
+	_, _, r, _, _, _, _, _, err = q.JobStatus(id)
 	require.NoError(t, err)
 	require.Nil(t, r)
 }
