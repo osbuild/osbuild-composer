@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/rhsm"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -75,8 +76,11 @@ func (bs *BaseSolver) NewWithConfig(modulePlatformID string, releaseVer string, 
 	return s
 }
 
+// CleanCache deletes the least recently used repository metadata caches until
+// the total size of the cache falls below the configured maximum size (see
+// SetMaxCacheSize()).
 func (bs *BaseSolver) CleanCache() error {
-	return bs.cache.clean()
+	return bs.cache.shrink()
 }
 
 // Solver is configured with system information in order to resolve
@@ -115,6 +119,14 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, erro
 	if err != nil {
 		return nil, err
 	}
+	// touch repos to now
+	now := time.Now().Local()
+	for _, r := range repoMap {
+		// ignore errors
+		_ = s.cache.touchRepo(r.Hash(), now)
+	}
+	s.cache.updateInfo()
+
 	var result packageSpecs
 	if err := json.Unmarshal(output, &result); err != nil {
 		return nil, err
@@ -134,6 +146,14 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 	if err != nil {
 		return nil, err
 	}
+
+	// touch repos to now
+	now := time.Now().Local()
+	for _, r := range repos {
+		// ignore errors
+		_ = s.cache.touchRepo(r.Hash(), now)
+	}
+	s.cache.updateInfo()
 
 	var pkgs rpmmd.PackageList
 	if err := json.Unmarshal(result, &pkgs); err != nil {
