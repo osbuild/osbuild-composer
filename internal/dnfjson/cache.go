@@ -136,7 +136,13 @@ func (r *rpmCache) shrink() error {
 	nDeleted := 0
 	for idx := 0; idx < len(r.repoRecency) && r.size >= r.maxSize; idx++ {
 		repoID := r.repoRecency[idx]
-		repo := r.repoElements[repoID]
+		nDeleted++
+		repo, ok := r.repoElements[repoID]
+		if !ok {
+			// cache inconsistency?
+			// ignore and let the ID be removed from the recency list
+			continue
+		}
 		for _, gPath := range repo.paths {
 			if err := os.RemoveAll(gPath); err != nil {
 				return err
@@ -144,7 +150,6 @@ func (r *rpmCache) shrink() error {
 		}
 		r.size -= repo.size
 		delete(r.repoElements, repoID)
-		nDeleted++
 	}
 
 	// update recency list
