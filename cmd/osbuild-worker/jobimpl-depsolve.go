@@ -46,7 +46,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
 		switch e := err.(type) {
-		case *dnfjson.Error:
+		case dnfjson.Error:
 			// Error originates from dnf-json
 			switch e.Kind {
 			case "DepsolveError":
