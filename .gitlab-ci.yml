@@ -14,7 +14,6 @@ stages:
     - schutzbot/ci_details.sh > ci-details-after-run || true
     - schutzbot/update_github_status.sh update || true
     - schutzbot/save_journal.sh || true
-    - schutzbot/run_cloud_cleaner.sh || true
   interruptible: true
   tags:
     - terraform
