@@ -483,3 +483,68 @@ func expectedResult(repo rpmmd.RepoConfig) []rpmmd.PackageSpec {
 	}
 	return exp
 }
+
+func TestErrorRepoInfo(t *testing.T) {
+	if !*forceDNF {
+		// dnf tests aren't forced: skip them if the dnf sniff check fails
+		if !dnfInstalled() {
+			t.Skip()
+		}
+	}
+
+	assert := assert.New(t)
+
+	type testCase struct {
+		repo   rpmmd.RepoConfig
+		expMsg string
+	}
+
+	testCases := []testCase{
+		{
+			repo: rpmmd.RepoConfig{
+				Name:     "",
+				BaseURL:  "https://0.0.0.0/baseos/repo",
+				Metalink: "https://0.0.0.0/baseos/metalink",
+			},
+			expMsg: "[https://0.0.0.0/baseos/repo]",
+		},
+		{
+			repo: rpmmd.RepoConfig{
+				Name:     "baseos",
+				BaseURL:  "https://0.0.0.0/baseos/repo",
+				Metalink: "https://0.0.0.0/baseos/metalink",
+			},
+			expMsg: "[baseos: https://0.0.0.0/baseos/repo]",
+		},
+		{
+			repo: rpmmd.RepoConfig{
+				Name:     "fedora",
+				Metalink: "https://0.0.0.0/f35/metalink",
+			},
+			expMsg: "[fedora: https://0.0.0.0/f35/metalink]",
+		},
+		{
+			repo: rpmmd.RepoConfig{
+				Name:       "",
+				MirrorList: "https://0.0.0.0/baseos/mirrors",
+			},
+			expMsg: "[https://0.0.0.0/baseos/mirrors]",
+		},
+	}
+
+	solver := NewSolver("f36", "36", "x86_64", "/tmp/cache")
+	solver.SetDNFJSONPath("../../dnf-json")
+	for idx, tc := range testCases {
+		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
+			_, err := solver.Depsolve([]rpmmd.PackageSet{
+				{
+					Include:      []string{"osbuild"},
+					Exclude:      nil,
+					Repositories: []rpmmd.RepoConfig{tc.repo},
+				},
+			})
+			assert.Error(err)
+			assert.Contains(err.Error(), tc.expMsg)
+		})
+	}
+}
