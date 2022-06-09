@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/osbuild/osbuild-composer/internal/rhsm"
@@ -407,8 +408,10 @@ func (err Error) Error() string {
 	return fmt.Sprintf("DNF error occurred: %s: %s", err.Kind, err.Reason)
 }
 
-// parseError parses the response from dnf-json into the Error type.
-func parseError(data []byte) Error {
+// parseError parses the response from dnf-json into the Error type and appends
+// the name and URL of a repository to all detected repository IDs in the
+// message.
+func parseError(data []byte, repos []repoConfig) Error {
 	var e Error
 	if err := json.Unmarshal(data, &e); err != nil {
 		// dumping the error into the Reason can get noisy, but it's good for troubleshooting
@@ -417,6 +420,25 @@ func parseError(data []byte) Error {
 			Reason: fmt.Sprintf("Failed to unmarshal dnf-json error output %q: %s", string(data), err.Error()),
 		}
 	}
+
+	// append to any instance of a repository ID the URL (or metalink, mirrorlist, etc)
+	for _, repo := range repos {
+		idstr := fmt.Sprintf("'%s'", repo.ID)
+		var nameURL string
+		if len(repo.BaseURL) > 0 {
+			nameURL = repo.BaseURL
+		} else if len(repo.Metalink) > 0 {
+			nameURL = repo.Metalink
+		} else if len(repo.MirrorList) > 0 {
+			nameURL = repo.MirrorList
+		}
+
+		if len(repo.Name) > 0 {
+			nameURL = fmt.Sprintf("%s: %s", repo.Name, nameURL)
+		}
+		e.Reason = strings.Replace(e.Reason, idstr, fmt.Sprintf("%s [%s]", idstr, nameURL), -1)
+	}
+
 	return e
 }
 
@@ -453,7 +475,7 @@ func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
 	err = cmd.Wait()
 	output := stdout.Bytes()
 	if runError, ok := err.(*exec.ExitError); ok && runError.ExitCode() != 0 {
-		return nil, parseError(output)
+		return nil, parseError(output, req.Arguments.Repos)
 	}
 
 	return output, nil
