@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 	"github.com/stretchr/testify/require"
 )
 

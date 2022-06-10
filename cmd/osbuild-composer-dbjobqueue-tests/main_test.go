@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v4"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/jobqueuetest"
 )
 

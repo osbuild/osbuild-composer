@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/stretchr/testify/require"
-
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 )
 
 type MakeJobQueue func() (q jobqueue.JobQueue, stop func(), err error)

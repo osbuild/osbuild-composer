@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	logrus "github.com/sirupsen/logrus"
 
@@ -24,8 +26,6 @@ import (
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue/dbjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/weldr"

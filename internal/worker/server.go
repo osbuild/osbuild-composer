@@ -17,11 +17,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
