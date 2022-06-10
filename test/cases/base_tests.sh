@@ -18,7 +18,6 @@ TEST_CASES=(
   "osbuild-dnf-json-tests"
   "osbuild-composer-cli-tests"
   "osbuild-auth-tests"
-  "osbuild-composer-dbjobqueue-tests"
 )
 
 # Print out a nice test divider so we know when tests stop and start.
@@ -47,27 +46,6 @@ run_test_case () {
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
-
-# Set up a basic postgres db
-sudo dnf install -y go postgresql postgresql-server postgresql-contrib
-PWFILE=$(sudo -u postgres mktemp)
-cat <<EOF | sudo -u postgres tee "$PWFILE"
-foobar
-EOF
-PGSETUP_INITDB_OPTIONS="-A password -U postgres --pwfile=$PWFILE" \
-    sudo -E postgresql-setup --initdb --unit postgresql
-sudo systemctl start postgresql
-PGUSER=postgres PGPASSWORD=foobar PGHOST=localhost PGPORT=5432 \
-    sudo -E -u postgres psql -c "CREATE DATABASE osbuildcomposer;"
-
-# Initialize a module in a temp dir so we can get tern without introducing
-# vendoring inconsistency
-pushd "$(mktemp -d)"
-go mod init temp
-go get github.com/jackc/tern
-PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PGPORT=5432 \
-      go run github.com/jackc/tern migrate -m /usr/share/tests/osbuild-composer/schemas
-popd
 
 # Change to the working directory.
 cd $WORKING_DIRECTORY
