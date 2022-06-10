@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"

@@ -3,9 +3,9 @@ package fsjobqueue_test
 import (
 	"testing"
 
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/jobqueuetest"
 )

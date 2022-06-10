@@ -18,10 +18,9 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	logrus "github.com/sirupsen/logrus"
-
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 )
 
 const (

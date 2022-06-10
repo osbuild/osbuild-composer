@@ -8,11 +8,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/stretchr/testify/require"
 
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"

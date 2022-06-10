@@ -11,11 +11,11 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
-	"github.com/osbuild/osbuild-composer/internal/jobqueue"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )

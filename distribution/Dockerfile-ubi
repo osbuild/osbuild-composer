@@ -19,7 +19,7 @@ COPY --from=builder /opt/app-root/src/go/bin/osbuild-composer /usr/libexec/osbui
 COPY ./containers/osbuild-composer/entrypoint.py /opt/entrypoint.py
 COPY ./dnf-json /usr/libexec/osbuild-composer/
 
-COPY ./internal/jobqueue/dbjobqueue/schemas /opt/migrate/schemas
+COPY ./pkg/jobqueue/dbjobqueue/schemas /opt/migrate/schemas
 COPY --from=builder2 /opt/app-root/src/go/bin/tern /opt/migrate/
 
 EXPOSE 8080 8700
