@@ -37,7 +37,6 @@ type OSBuildJobResult struct {
 	Success       bool                   `json:"success"`
 	OSBuildOutput *osbuild.Result        `json:"osbuild_output,omitempty"`
 	TargetResults []*target.TargetResult `json:"target_results,omitempty"`
-	TargetErrors  []string               `json:"target_errors,omitempty"`
 	UploadStatus  string                 `json:"upload_status"`
 	PipelineNames *PipelineNames         `json:"pipeline_names,omitempty"`
 	// Host OS of the worker which handled the job

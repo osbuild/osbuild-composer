@@ -258,8 +258,6 @@ func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobS
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")
 		} else if len(result.OSBuildOutput.Error) > 0 {
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, string(result.OSBuildOutput.Error))
-		} else if len(result.TargetErrors) > 0 {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.TargetErrors[0])
 		}
 	}
 	// For backwards compatibility: OSBuildJobResult didn't use to have a

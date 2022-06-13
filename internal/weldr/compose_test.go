@@ -44,7 +44,14 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 
-	jobResult := worker.OSBuildJobResult{TargetErrors: []string{"Upload error"}}
+	jobResult := worker.OSBuildJobResult{
+		JobResult: worker.JobResult{
+			JobError: &clienterrors.Error{
+				ID:     clienterrors.ErrorUploadingImage,
+				Reason: "Upload error",
+			},
+		},
+	}
 	rawResult, err := json.Marshal(jobResult)
 	require.NoError(t, err)
 	err = api.workers.FinishJob(token, rawResult)
