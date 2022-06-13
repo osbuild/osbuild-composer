@@ -17,3 +17,7 @@ func (ContainerTargetOptions) isTargetOptions() {}
 func NewContainerTarget(options *ContainerTargetOptions) *Target {
 	return newTarget(TargetNameContainer, options)
 }
+
+func NewContainerTargetResult() *TargetResult {
+	return newTargetResult(TargetNameContainer, nil)
+}

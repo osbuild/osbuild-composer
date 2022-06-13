@@ -24,3 +24,7 @@ func (AzureTargetOptions) isTargetOptions() {}
 func NewAzureTarget(options *AzureTargetOptions) *Target {
 	return newTarget(TargetNameAzure, options)
 }
+
+func NewAzureTargetResult() *TargetResult {
+	return newTargetResult(TargetNameAzure, nil)
+}

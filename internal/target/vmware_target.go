@@ -17,3 +17,7 @@ func (VMWareTargetOptions) isTargetOptions() {}
 func NewVMWareTarget(options *VMWareTargetOptions) *Target {
 	return newTarget(TargetNameVMWare, options)
 }
+
+func NewVMWareTargetResult() *TargetResult {
+	return newTargetResult(TargetNameVMWare, nil)
+}

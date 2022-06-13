@@ -9,7 +9,7 @@ import (
 
 type TargetResult struct {
 	Name        TargetName          `json:"name"`
-	Options     TargetResultOptions `json:"options"`
+	Options     TargetResultOptions `json:"options,omitempty"`
 	TargetError *clienterrors.Error `json:"target_error,omitempty"`
 }
 
@@ -26,7 +26,7 @@ type TargetResultOptions interface {
 
 type rawTargetResult struct {
 	Name        TargetName          `json:"name"`
-	Options     json.RawMessage     `json:"options"`
+	Options     json.RawMessage     `json:"options,omitempty"`
 	TargetError *clienterrors.Error `json:"target_error,omitempty"`
 }
 
@@ -36,9 +36,14 @@ func (targetResult *TargetResult) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	options, err := UnmarshalTargetResultOptions(rawTR.Name, rawTR.Options)
-	if err != nil {
-		return err
+	var options TargetResultOptions
+	// No options may be set if there was a target error.
+	// In addition, some targets don't set any options.
+	if len(rawTR.Options) > 0 {
+		options, err = UnmarshalTargetResultOptions(rawTR.Name, rawTR.Options)
+		if err != nil {
+			return err
+		}
 	}
 
 	targetResult.Name = rawTR.Name
