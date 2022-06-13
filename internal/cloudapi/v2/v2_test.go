@@ -717,65 +717,6 @@ func TestComposeStatusFailure(t *testing.T) {
 	}`, jobId, jobId))
 }
 
-func TestComposeLegacyError(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
-	defer cancel()
-
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
-	{
-		"distribution": "%s",
-		"image_request":{
-			"architecture": "%s",
-			"image_type": "aws",
-			"repositories": [{
-				"baseurl": "somerepo.org",
-				"rhsm": false
-			}],
-			"upload_options": {
-				"region": "eu-central-1"
-			}
-		 }
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
-	{
-		"href": "/api/image-builder-composer/v2/compose",
-		"kind": "ComposeId"
-	}`, "id")
-
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
-	require.NoError(t, err)
-	require.Equal(t, worker.JobTypeOSBuild, jobType)
-
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
-	{
-		"href": "/api/image-builder-composer/v2/composes/%v",
-		"kind": "ComposeStatus",
-		"id": "%v",
-		"image_status": {"status": "building"},
-		"status": "pending"
-	}`, jobId, jobId))
-
-	jobResult, err := json.Marshal(worker.OSBuildJobResult{TargetErrors: []string{"Osbuild failed"}})
-	require.NoError(t, err)
-
-	err = wrksrv.FinishJob(token, jobResult)
-	require.NoError(t, err)
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
-	{
-		"href": "/api/image-builder-composer/v2/composes/%v",
-		"kind": "ComposeStatus",
-		"id": "%v",
-		"image_status": {
-			"error": {
-				"id": 10,
-				"details": null,
-				"reason": "osbuild build failed"
-			},
-			"status": "failure"
-		},
-		"status": "failure"
-	}`, jobId, jobId))
-}
-
 func TestComposeJobError(t *testing.T) {
 	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
 	defer cancel()
