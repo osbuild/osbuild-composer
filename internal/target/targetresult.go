@@ -3,11 +3,14 @@ package target
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 type TargetResult struct {
-	Name    TargetName          `json:"name"`
-	Options TargetResultOptions `json:"options"`
+	Name        TargetName          `json:"name"`
+	Options     TargetResultOptions `json:"options"`
+	TargetError *clienterrors.Error `json:"target_error,omitempty"`
 }
 
 func newTargetResult(name TargetName, options TargetResultOptions) *TargetResult {
@@ -22,8 +25,9 @@ type TargetResultOptions interface {
 }
 
 type rawTargetResult struct {
-	Name    TargetName      `json:"name"`
-	Options json.RawMessage `json:"options"`
+	Name        TargetName          `json:"name"`
+	Options     json.RawMessage     `json:"options"`
+	TargetError *clienterrors.Error `json:"target_error,omitempty"`
 }
 
 func (targetResult *TargetResult) UnmarshalJSON(data []byte) error {
@@ -39,6 +43,7 @@ func (targetResult *TargetResult) UnmarshalJSON(data []byte) error {
 
 	targetResult.Name = rawTR.Name
 	targetResult.Options = options
+	targetResult.TargetError = rawTR.TargetError
 	return nil
 }
 
