@@ -175,7 +175,7 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	result.Success = true
 }
 
-func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, osbuildJobResult *worker.OSBuildJobResult, streamOptimized bool, streamOptimizedPath string) (err error) {
+func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, streamOptimized bool, streamOptimizedPath string) (string, *clienterrors.Error) {
 	imagePath := path.Join(outputDirectory, exportPath, filename)
 
 	// TODO: delete the stream-optimized handling after "some" time (kept for backward compatibility)
@@ -187,19 +187,17 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 		// If the streamOptimizedPath is empty, the conversion was not done
 		if streamOptimizedPath == "" {
 			var f *os.File
-			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
+			f, err := vmware.OpenAsStreamOptimizedVmdk(imagePath)
 			if err != nil {
-				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
-				return nil
+				return "", clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 			}
 			streamOptimizedPath = f.Name()
 			f.Close()
 		}
 		// Replace the original file by the stream-optimized one
-		err = os.Rename(streamOptimizedPath, imagePath)
+		err := os.Rename(streamOptimizedPath, imagePath)
 		if err != nil {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
-			return nil
+			return "", clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 		}
 	}
 	// *** SPECIAL VMDK HANDLING END ***
@@ -209,24 +207,18 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 	}
 	key += "-" + filename
 
-	_, err = a.Upload(imagePath, bucket, key)
+	_, err := a.Upload(imagePath, bucket, key)
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
-		return
+		return "", clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
+
 	}
 
 	url, err := a.S3ObjectPresignedURL(bucket, key)
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
-		return
+		return "", clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 	}
 
-	osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, target.NewAWSS3TargetResult(&target.AWSS3TargetResultOptions{URL: url}))
-
-	osbuildJobResult.Success = true
-	osbuildJobResult.UploadStatus = "success"
-
-	return
+	return url, nil
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
@@ -516,10 +508,16 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			err = uploadToS3(a, outputDirectory, exportPath, bucket, options.Key, options.Filename, osbuildJobResult, args.StreamOptimized, streamOptimizedPath)
-			if err != nil {
+			url, targetError := uploadToS3(a, outputDirectory, exportPath, bucket, options.Key, options.Filename, args.StreamOptimized, streamOptimizedPath)
+			if targetError != nil {
+				osbuildJobResult.JobError = targetError
 				return nil
 			}
+
+			osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, target.NewAWSS3TargetResult(&target.AWSS3TargetResultOptions{URL: url}))
+
+			osbuildJobResult.Success = true
+			osbuildJobResult.UploadStatus = "success"
 		case *target.AzureTargetOptions:
 			azureStorageClient, err := azure.NewStorageClient(options.StorageAccount, options.StorageAccessKey)
 			if err != nil {
