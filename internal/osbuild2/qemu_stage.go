@@ -85,6 +85,9 @@ func (o VDIOptions) formatType() QEMUFormat {
 type VPCOptions struct {
 	// The type of the format must be 'vpc'
 	Type QEMUFormat `json:"type"`
+
+	// VPC related options
+	ForceSize *bool `json:"force_size,omitempty"`
 }
 
 func (VPCOptions) isQEMUFormatOptions() {}
