@@ -839,9 +839,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		}
 		osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, targetResult)
 
-		if targetResult.TargetError != nil {
-			// for now just duplicate the Target error into the Job result's error to keep backward compatibility
-			osbuildJobResult.JobError = targetResult.TargetError
+		targetErrors := osbuildJobResult.TargetErrors()
+		if len(targetErrors) != 0 {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "at least one target failed", targetErrors)
 		} else {
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
