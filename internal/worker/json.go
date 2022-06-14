@@ -46,6 +46,25 @@ type OSBuildJobResult struct {
 	JobResult
 }
 
+// TargetErrors returns a slice of *clienterrors.Error gathered
+// from the job result's target results. If there were no target errors
+// then the returned slice will be empty.
+func (j *OSBuildJobResult) TargetErrors() []*clienterrors.Error {
+	targetErrors := []*clienterrors.Error{}
+
+	for _, targetResult := range j.TargetResults {
+		if targetResult.TargetError != nil {
+			targetError := targetResult.TargetError
+			// Add the target name to the error details, because the error reason
+			// may not contain any information to determine the type of the target
+			// which failed.
+			targetErrors = append(targetErrors, clienterrors.WorkerClientError(targetError.ID, targetError.Reason, targetResult.Name))
+		}
+	}
+
+	return targetErrors
+}
+
 type KojiInitJob struct {
 	Server  string `json:"server"`
 	Name    string `json:"name"`

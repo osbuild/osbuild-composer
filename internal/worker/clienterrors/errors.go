@@ -28,6 +28,7 @@ const (
 	ErrorDNFRepoError         ClientErrorCode = 25
 	ErrorJobDependency        ClientErrorCode = 26
 	ErrorJobMissingHeartbeat  ClientErrorCode = 27
+	ErrorTargetError          ClientErrorCode = 28
 )
 
 type ClientErrorCode int
@@ -68,6 +69,8 @@ func GetStatusCode(err *Error) StatusCode {
 	case ErrorSharingTarget:
 		return JobStatusUserInputError
 	case ErrorInvalidTarget:
+		return JobStatusUserInputError
+	case ErrorTargetError:
 		return JobStatusUserInputError
 	case ErrorDepsolveDependency:
 		return JobStatusUserInputError
