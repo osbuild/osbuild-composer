@@ -21,12 +21,8 @@ type OSBuildJob struct {
 	ManifestDynArgsIdx *int             `json:"manifest_dyn_args_idx,omitempty"`
 	Targets            []*target.Target `json:"targets,omitempty"`
 	ImageName          string           `json:"image_name,omitempty"`
-
-	// TODO: Delete this after "some" time (kept for backward compatibility)
-	StreamOptimized bool `json:"stream_optimized,omitempty"`
-
-	Exports       []string       `json:"export_stages,omitempty"`
-	PipelineNames *PipelineNames `json:"pipeline_names,omitempty"`
+	Exports            []string         `json:"export_stages,omitempty"`
+	PipelineNames      *PipelineNames   `json:"pipeline_names,omitempty"`
 }
 
 type JobResult struct {

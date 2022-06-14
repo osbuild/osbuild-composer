@@ -175,32 +175,8 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	result.Success = true
 }
 
-func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, streamOptimized bool, streamOptimizedPath string) (string, *clienterrors.Error) {
+func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string) (string, *clienterrors.Error) {
 	imagePath := path.Join(outputDirectory, exportPath, filename)
-
-	// TODO: delete the stream-optimized handling after "some" time (kept for backward compatibility)
-	// *** SPECIAL VMDK HANDLING START ***
-	// Upload the VMDK image as stream-optimized.
-	// The VMDK conversion is applied only when the job was submitted by Weldr API,
-	// therefore we need to do the conversion here explicitly if it was not done.
-	if streamOptimized {
-		// If the streamOptimizedPath is empty, the conversion was not done
-		if streamOptimizedPath == "" {
-			var f *os.File
-			f, err := vmware.OpenAsStreamOptimizedVmdk(imagePath)
-			if err != nil {
-				return "", clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
-			}
-			streamOptimizedPath = f.Name()
-			f.Close()
-		}
-		// Replace the original file by the stream-optimized one
-		err := os.Rename(streamOptimizedPath, imagePath)
-		if err != nil {
-			return "", clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
-		}
-	}
-	// *** SPECIAL VMDK HANDLING END ***
 
 	if key == "" {
 		key = uuid.New().String()
@@ -368,28 +344,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return nil
 	}
 
-	// TODO: delete the stream-optimized handling after "some" time (kept for backward compatibility)
-	streamOptimizedPath := ""
-
-	// NOTE: Currently OSBuild supports multiple exports, but this isn't used
-	// by any of the image types and it can't be specified during the request.
-	// Use the first (and presumably only) export for the imagePath.
 	exportPath := exports[0]
 	if osbuildJobResult.OSBuildOutput.Success && args.ImageName != "" {
 		var f *os.File
 		imagePath := path.Join(outputDirectory, exportPath, args.ImageName)
-		// TODO: delete the stream-optimized handling after "some" time (kept for backward compatibility)
-		if args.StreamOptimized {
-			f, err = vmware.OpenAsStreamOptimizedVmdk(imagePath)
-			if err != nil {
-				return err
-			}
-			streamOptimizedPath = f.Name()
-		} else {
-			f, err = os.Open(imagePath)
-			if err != nil {
-				return err
-			}
+		f, err = os.Open(imagePath)
+		if err != nil {
+			return err
 		}
 		err = job.UploadArtifact(args.ImageName, f)
 		if err != nil {
@@ -429,15 +390,8 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			imageName := t.ImageName + ".vmdk"
 			imagePath := path.Join(tempDirectory, imageName)
 
-			// New version of composer is already generating manifest with stream-optimized VMDK and is not setting
-			// the args.StreamOptimized option. In such case, the image itself is already stream optimized.
-			// Simulate the case as if it was converted by the worker. This makes it simpler to reuse the rest of
-			// the existing code below.
-			if !args.StreamOptimized {
-				streamOptimizedPath = path.Join(outputDirectory, exportPath, options.Filename)
-			}
-
-			err = os.Symlink(streamOptimizedPath, imagePath)
+			exportedImagePath := path.Join(outputDirectory, exportPath, options.Filename)
+			err = os.Symlink(exportedImagePath, imagePath)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				break
@@ -495,7 +449,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			url, targetError := uploadToS3(a, outputDirectory, exportPath, bucket, options.Key, options.Filename, args.StreamOptimized, streamOptimizedPath)
+			url, targetError := uploadToS3(a, outputDirectory, exportPath, bucket, options.Key, options.Filename)
 			if targetError != nil {
 				targetResult.TargetError = targetError
 				break
