@@ -5,7 +5,7 @@ RUN go install ./cmd/osbuild-worker
 
 FROM fedora
 RUN dnf update -y && dnf upgrade -y
-RUN dnf install -y qemu-img osbuild osbuild-ostree
+RUN dnf install -y libxcrypt-compat qemu-img osbuild osbuild-ostree
 RUN mkdir -p "/usr/libexec/osbuild-composer"
 RUN mkdir -p "/etc/osbuild-composer/"
 RUN mkdir -p "/run/osbuild-composer/"
