@@ -622,6 +622,21 @@ Installer:
           #- rhos-01/rhel-9.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
+Manifest-diff:
+  stage: test
+  extends: .terraform
+  rules:
+    # don't run on main
+    - if: '$CI_COMMIT_BRANCH != "main"'
+  script:
+    - ./test/cases/diff-manifests.sh
+  variables:
+    RUNNER: aws/rhel-9.0-ga-x86_64
+    INTERNAL_NETWORK: "true"
+    GIT_STRATEGY: "clone"
+    GIT_CHECKOUT: "true"
+    GIT_DEPTH: 500
+
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
   tags:
