@@ -759,6 +759,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			imageHash, imageSize, err := kojiAPI.Upload(file, options.UploadDirectory, options.Filename)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
+				return nil
 			}
 			logWithId.Info("[Koji] 🎉 Image successfully uploaded")
 
