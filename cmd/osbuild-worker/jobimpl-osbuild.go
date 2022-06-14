@@ -322,14 +322,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// copy pipeline info to the result
 	osbuildJobResult.PipelineNames = args.PipelineNames
 
-	// The specification allows multiple upload targets because it is an array, but we don't support it.
-	// Return an error to osbuild-composer.
-	if len(args.Targets) > 1 {
-		logrus.Warnf("The job specification contains more than one upload target. This is not supported any more. " +
-			"This might indicate a deployment of incompatible osbuild-worker and osbuild-composer versions.")
-		return nil
-	}
-
 	exports := args.Exports
 	if len(exports) == 0 {
 		// job did not define exports, likely coming from an older version of composer
@@ -406,13 +398,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		f.Close()
 	}
 
-	if len(args.Targets) == 0 {
-		// There is no upload target, mark this job a success.
-		osbuildJobResult.Success = true
-		osbuildJobResult.UploadStatus = "success"
-	} else if len(args.Targets) == 1 {
+	for _, t := range args.Targets {
 		var targetResult *target.TargetResult
-		switch options := args.Targets[0].Options.(type) {
+		switch options := t.Options.(type) {
 		case *target.VMWareTargetOptions:
 			targetResult = target.NewVMWareTargetResult()
 			credentials := vmware.Credentials{
@@ -438,7 +426,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}()
 
 			// create a symlink so that uploaded image has the name specified by user
-			imageName := args.Targets[0].ImageName + ".vmdk"
+			imageName := t.ImageName + ".vmdk"
 			imagePath := path.Join(tempDirectory, imageName)
 
 			// New version of composer is already generating manifest with stream-optimized VMDK and is not setting
@@ -484,7 +472,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			ami, err := a.Register(args.Targets[0].ImageName, bucket, key, options.ShareWithAccounts, common.CurrentArch())
+			ami, err := a.Register(t.ImageName, bucket, key, options.ShareWithAccounts, common.CurrentArch())
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, err.Error())
 				break
@@ -523,7 +511,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			// Azure cannot create an image from a blob without .vhd extension
-			blobName := azure.EnsureVHDExtension(args.Targets[0].ImageName)
+			blobName := azure.EnsureVHDExtension(t.ImageName)
 			metadata := azure.BlobMetadata{
 				StorageAccount: options.StorageAccount,
 				ContainerName:  options.Container,
@@ -554,15 +542,15 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			logWithId.Infof("[GCP] 🚀 Uploading image to: %s/%s", options.Bucket, options.Object)
 			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, exportPath, options.Filename),
-				options.Bucket, options.Object, map[string]string{gcp.MetadataKeyImageName: args.Targets[0].ImageName})
+				options.Bucket, options.Object, map[string]string{gcp.MetadataKeyImageName: t.ImageName})
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				break
 			}
 
-			logWithId.Infof("[GCP] 📥 Importing image into Compute Engine as '%s'", args.Targets[0].ImageName)
+			logWithId.Infof("[GCP] 📥 Importing image into Compute Engine as '%s'", t.ImageName)
 
-			_, importErr := g.ComputeImageInsert(ctx, options.Bucket, options.Object, args.Targets[0].ImageName, []string{options.Region}, gcp.GuestOsFeaturesByDistro(options.Os))
+			_, importErr := g.ComputeImageInsert(ctx, options.Bucket, options.Object, t.ImageName, []string{options.Region}, gcp.GuestOsFeaturesByDistro(options.Os))
 			if importErr == nil {
 				logWithId.Infof("[GCP] 🎉 Image import finished successfully")
 			}
@@ -578,18 +566,18 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, importErr.Error())
 				break
 			}
-			logWithId.Infof("[GCP] 💿 Image URL: %s", g.ComputeImageURL(args.Targets[0].ImageName))
+			logWithId.Infof("[GCP] 💿 Image URL: %s", g.ComputeImageURL(t.ImageName))
 
 			if len(options.ShareWithAccounts) > 0 {
 				logWithId.Infof("[GCP] 🔗 Sharing the image with: %+v", options.ShareWithAccounts)
-				err = g.ComputeImageShare(ctx, args.Targets[0].ImageName, options.ShareWithAccounts)
+				err = g.ComputeImageShare(ctx, t.ImageName, options.ShareWithAccounts)
 				if err != nil {
 					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, err.Error())
 					break
 				}
 			}
 			targetResult.Options = &target.GCPTargetResultOptions{
-				ImageName: args.Targets[0].ImageName,
+				ImageName: t.ImageName,
 				ProjectID: g.GetProjectID(),
 			}
 
@@ -672,7 +660,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			// Azure cannot create an image from a blob without .vhd extension
-			blobName := azure.EnsureVHDExtension(args.Targets[0].ImageName)
+			blobName := azure.EnsureVHDExtension(t.ImageName)
 
 			logWithId.Info("[Azure] ⬆ Uploading the image")
 			err = azureStorageClient.UploadPageBlob(
@@ -697,7 +685,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				storageAccount,
 				storageContainer,
 				blobName,
-				args.Targets[0].ImageName,
+				t.ImageName,
 				options.Location,
 			)
 			if err != nil {
@@ -706,7 +694,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Info("[Azure] 🎉 Image uploaded and registered!")
 			targetResult.Options = &target.AzureImageTargetResultOptions{
-				ImageName: args.Targets[0].ImageName,
+				ImageName: t.ImageName,
 			}
 
 		case *target.KojiTargetOptions:
@@ -746,7 +734,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			defer file.Close()
 
 			logWithId.Info("[Koji] ⬆ Uploading the image")
-			imageHash, imageSize, err := kojiAPI.Upload(file, options.UploadDirectory, args.Targets[0].ImageName)
+			imageHash, imageSize, err := kojiAPI.Upload(file, options.UploadDirectory, t.ImageName)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				break
@@ -787,7 +775,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				options.Namespace,
 				file,
 				options.Compartment,
-				args.Targets[0].ImageName,
+				t.ImageName,
 			)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
@@ -798,7 +786,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 		case *target.ContainerTargetOptions:
 			targetResult = target.NewContainerTargetResult()
-			destination := args.Targets[0].ImageName
+			destination := t.ImageName
 
 			logWithId.Printf("[container] ⬆ Uploading the image to %s", destination)
 
@@ -829,7 +817,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			logWithId.Printf("[container] 🎉 Image uploaded (%s)!", digest.String())
 
 		default:
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTarget, fmt.Sprintf("invalid target type: %s", args.Targets[0].Name))
+			// TODO: we may not want to return completely here with multiple targets, because then no TargetErrors will be added to the JobError details
+			// Nevertheless, all target errors will be still in the OSBuildJobResult.
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTarget, fmt.Sprintf("invalid target type: %s", t.Name))
 			return nil
 		}
 
@@ -838,14 +828,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			panic("target results object not created by the target handling code")
 		}
 		osbuildJobResult.TargetResults = append(osbuildJobResult.TargetResults, targetResult)
+	}
 
-		targetErrors := osbuildJobResult.TargetErrors()
-		if len(targetErrors) != 0 {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "at least one target failed", targetErrors)
-		} else {
-			osbuildJobResult.Success = true
-			osbuildJobResult.UploadStatus = "success"
-		}
+	targetErrors := osbuildJobResult.TargetErrors()
+	if len(targetErrors) != 0 {
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "at least one target failed", targetErrors)
+	} else {
+		osbuildJobResult.Success = true
+		osbuildJobResult.UploadStatus = "success"
 	}
 
 	return nil
