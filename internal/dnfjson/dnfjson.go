@@ -7,8 +7,7 @@
 //
 // Alternatively, a BaseSolver can be created which represents an un-configured
 // Solver. This type can't be used for depsolving, but can be used to create
-// configured Solver instances sharing the same cache directory and
-// subscription credentials.
+// configured Solver instances sharing the same cache directory.
 //
 // This package relies on the types defined in rpmmd to describe RPM package
 // metadata.
@@ -31,10 +30,8 @@ import (
 // BaseSolver defines the basic solver configuration without platform
 // information. It can be used to create configured Solver instances with the
 // NewWithConfig() method. A BaseSolver maintains the global repository cache
-// directory and system subscription information.
+// directory.
 type BaseSolver struct {
-	subscriptions *rhsm.Subscriptions
-
 	// Cache information
 	cache *rpmCache
 
@@ -44,13 +41,11 @@ type BaseSolver struct {
 
 // Create a new unconfigured BaseSolver (without platform information). It can
 // be used to create configured Solver instances with the NewWithConfig()
-// method. Creating a BaseSolver also loads system subscription information.
+// method.
 func NewBaseSolver(cacheDir string) *BaseSolver {
-	subscriptions, _ := rhsm.LoadSystemSubscriptions()
 	return &BaseSolver{
-		cache:         newRPMCache(cacheDir, 524288000), // 500 MiB
-		subscriptions: subscriptions,
-		dnfJsonCmd:    []string{"/usr/libexec/osbuild-composer/dnf-json"},
+		cache:      newRPMCache(cacheDir, 524288000), // 500 MiB
+		dnfJsonCmd: []string{"/usr/libexec/osbuild-composer/dnf-json"},
 	}
 }
 
@@ -68,12 +63,15 @@ func (s *BaseSolver) SetDNFJSONPath(cmd string, args ...string) {
 
 // NewWithConfig initialises a Solver with the platform information and the
 // BaseSolver's subscription info, cache directory, and dnf-json path.
+// Also loads system subscription information.
 func (bs *BaseSolver) NewWithConfig(modulePlatformID string, releaseVer string, arch string) *Solver {
 	s := new(Solver)
 	s.BaseSolver = *bs
 	s.modulePlatformID = modulePlatformID
 	s.arch = arch
 	s.releaseVer = releaseVer
+	subs, _ := rhsm.LoadSystemSubscriptions()
+	s.subscriptions = subs
 	return s
 }
 
@@ -98,6 +96,8 @@ type Solver struct {
 	// Release version of the distro. This is used in repo files on the host
 	// system and required for subscription support.
 	releaseVer string
+
+	subscriptions *rhsm.Subscriptions
 }
 
 // Create a new Solver with the given configuration. Initialising a Solver also loads system subscription information.
