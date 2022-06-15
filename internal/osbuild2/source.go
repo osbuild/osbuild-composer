@@ -3,6 +3,9 @@ package osbuild2
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/osbuild/osbuild-composer/internal/ostree"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 // A Sources map contains all the sources made available to an osbuild run
@@ -48,4 +51,47 @@ func (sources *Sources) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSource, inlineData []string) Sources {
+	sources := Sources{}
+	curl := &CurlSource{
+		Items: make(map[string]CurlSourceItem),
+	}
+	for _, pkg := range packages {
+		item := new(CurlSourceOptions)
+		item.URL = pkg.RemoteLocation
+		if pkg.Secrets == "org.osbuild.rhsm" {
+			item.Secrets = &URLSecrets{
+				Name: "org.osbuild.rhsm",
+			}
+		}
+		curl.Items[pkg.Checksum] = item
+	}
+	if len(curl.Items) > 0 {
+		sources["org.osbuild.curl"] = curl
+	}
+
+	ostree := &OSTreeSource{
+		Items: make(map[string]OSTreeSourceItem),
+	}
+	for _, commit := range ostreeCommits {
+		item := new(OSTreeSourceItem)
+		item.Remote.URL = commit.URL
+		ostree.Items[commit.Checksum] = *item
+	}
+	if len(ostree.Items) > 0 {
+		sources["org.osbuild.ostree"] = ostree
+	}
+
+	if len(inlineData) > 0 {
+		ils := NewInlineSource()
+		for _, data := range inlineData {
+			ils.AddItem(data)
+		}
+
+		sources["org.osbuild.inline"] = ils
+	}
+
+	return sources
 }
