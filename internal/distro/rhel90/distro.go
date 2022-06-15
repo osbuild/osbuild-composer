@@ -503,7 +503,7 @@ func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostree
 		Items: make(map[string]osbuild.CurlSourceItem),
 	}
 	for _, pkg := range packages {
-		item := new(osbuild.URLWithSecrets)
+		item := new(osbuild.CurlSourceOptions)
 		item.URL = pkg.RemoteLocation
 		if pkg.Secrets == "org.osbuild.rhsm" {
 			item.Secrets = &osbuild.URLSecrets{
