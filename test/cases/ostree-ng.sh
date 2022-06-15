@@ -114,11 +114,11 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_OSNAME=fedora
         OS_VARIANT="fedora35"
         ;;
-    "rhel-8.6")
+    "rhel-8.7")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         ;;
-    "rhel-9.0")
+    "rhel-9.1")
         OSTREE_REF="test/rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         ;;
