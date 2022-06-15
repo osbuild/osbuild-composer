@@ -26,15 +26,6 @@ func FixtureBase() *Store {
 
 	var date = time.Date(2019, 11, 27, 13, 19, 0, 0, time.FixedZone("UTC+1", 60*60))
 
-	var localTarget = &target.Target{
-		Uuid:      uuid.MustParse("20000000-0000-0000-0000-000000000000"),
-		Name:      target.TargetNameLocal,
-		ImageName: "localimage",
-		Created:   date,
-		Status:    common.IBWaiting,
-		Options:   &target.LocalTargetOptions{},
-	}
-
 	var awsTarget = &target.Target{
 		Uuid:      uuid.MustParse("10000000-0000-0000-0000-000000000000"),
 		Name:      target.TargetNameAWS,
@@ -88,7 +79,7 @@ func FixtureBase() *Store {
 				QueueStatus: common.IBWaiting,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget, awsTarget},
+				Targets:     []*target.Target{awsTarget},
 				JobCreated:  date,
 			},
 			Packages: []rpmmd.PackageSpec{},
@@ -99,7 +90,7 @@ func FixtureBase() *Store {
 				QueueStatus: common.IBRunning,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget},
+				Targets:     []*target.Target{},
 				JobCreated:  date,
 				JobStarted:  date,
 			},
@@ -111,7 +102,7 @@ func FixtureBase() *Store {
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget, awsTarget},
+				Targets:     []*target.Target{awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 				JobFinished: date,
@@ -124,7 +115,7 @@ func FixtureBase() *Store {
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget, awsTarget},
+				Targets:     []*target.Target{awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 				JobFinished: date,
@@ -137,7 +128,7 @@ func FixtureBase() *Store {
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget, awsTarget},
+				Targets:     []*target.Target{awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 				JobFinished: date,
@@ -161,13 +152,13 @@ func FixtureFinished() *Store {
 
 	var date = time.Date(2019, 11, 27, 13, 19, 0, 0, time.FixedZone("UTC+1", 60*60))
 
-	var localTarget = &target.Target{
+	var gcpTarget = &target.Target{
 		Uuid:      uuid.MustParse("20000000-0000-0000-0000-000000000000"),
-		Name:      target.TargetNameLocal,
+		Name:      target.TargetNameGCP,
 		ImageName: "localimage",
 		Created:   date,
 		Status:    common.IBWaiting,
-		Options:   &target.LocalTargetOptions{},
+		Options:   &target.GCPTargetOptions{},
 	}
 
 	var awsTarget = &target.Target{
@@ -223,7 +214,7 @@ func FixtureFinished() *Store {
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget, awsTarget},
+				Targets:     []*target.Target{gcpTarget, awsTarget},
 				JobCreated:  date,
 			},
 			Packages: []rpmmd.PackageSpec{},
@@ -234,7 +225,7 @@ func FixtureFinished() *Store {
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget},
+				Targets:     []*target.Target{gcpTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 			},
@@ -246,7 +237,7 @@ func FixtureFinished() *Store {
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget, awsTarget},
+				Targets:     []*target.Target{gcpTarget, awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 				JobFinished: date,
@@ -259,7 +250,7 @@ func FixtureFinished() *Store {
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    manifest,
-				Targets:     []*target.Target{localTarget},
+				Targets:     []*target.Target{gcpTarget},
 				JobCreated:  date,
 				JobStarted:  date,
 			},
