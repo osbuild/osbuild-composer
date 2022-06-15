@@ -18,6 +18,12 @@ type RequestParams struct {
 	Parent string `json:"parent"`
 }
 
+// CommitSource defines the source URL from which to fetch a specific commit.
+type CommitSource struct {
+	Checksum string
+	URL      string
+}
+
 func VerifyRef(ref string) bool {
 	return len(ref) > 0 && ostreeRefRE.MatchString(ref)
 }
