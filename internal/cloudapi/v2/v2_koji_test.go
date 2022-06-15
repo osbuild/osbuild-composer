@@ -398,6 +398,7 @@ func TestKojiCompose(t *testing.T) {
 		},
 	}
 	for idx, c := range cases {
+		name, version, release := "foo", "1", "2"
 		t.Run(fmt.Sprintf("Test case #%d", idx), func(t *testing.T) {
 			composeRawReply := test.TestRouteWithReply(t, handler, false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 		{
@@ -424,12 +425,12 @@ func TestKojiCompose(t *testing.T) {
 			],
 			"koji": {
 				"server": "koji.example.com",
-				"name":"foo",
-				"version":"1",
-				"release":"2",
+				"name":"%[4]s",
+				"version":"%[5]s",
+				"release":"%[6]s",
 				"task_id": 42
 			}
-		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage)),
+		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage), name, version, release),
 				c.composeReplyCode, c.composeReply, "id", "operation_id")
 
 			// determine the compose ID from the reply
@@ -476,7 +477,9 @@ func TestKojiCompose(t *testing.T) {
 				require.NoError(t, err)
 				jobTarget := osbuildJob.Targets[0].Options.(*target.KojiTargetOptions)
 				require.Equal(t, "koji.example.com", jobTarget.Server)
-				require.Equal(t, "test.img", osbuildJob.ImageName)
+				require.Equal(t, "test.img", jobTarget.Filename)
+				require.Equal(t, fmt.Sprintf("%s-%s-%s.%s.img", name, version, release, test_distro.TestArch3Name),
+					osbuildJob.Targets[0].ImageName)
 				require.NotEmpty(t, jobTarget.UploadDirectory)
 
 				var buildJobResult string
