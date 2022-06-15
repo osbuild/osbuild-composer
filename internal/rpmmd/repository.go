@@ -22,6 +22,7 @@ type repository struct {
 	MirrorList     string   `json:"mirrorlist,omitempty"`
 	GPGKey         string   `json:"gpgkey,omitempty"`
 	CheckGPG       bool     `json:"check_gpg,omitempty"`
+	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
