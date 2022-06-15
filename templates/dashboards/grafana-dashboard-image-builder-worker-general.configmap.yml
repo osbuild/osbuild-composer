@@ -34,8 +34,8 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 33,
-      "iteration": 1652780554062,
+      "id": 434,
+      "iteration": 1657885396463,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -57,6 +57,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The percentage of successful osbuild jobs for the selected time range",
@@ -133,11 +134,15 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.1",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -148,6 +153,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The throughput rate of osbuild job errors and non-errors over time for the selected time range",
@@ -234,16 +240,24 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval])) OR on() vector(0))\n- \n(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval])) OR on() vector(0))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0))\n- \n(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "success/sec",
               "refId": "A"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval])) OR on() vector(0))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "errors/sec",
@@ -255,6 +269,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The number of osbuild job errors (as a percentage) over time for the selected time range",
@@ -326,8 +341,12 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
+              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -337,8 +356,8 @@ data:
           "type": "timeseries"
         },
         {
-          "cacheTimeout": 1,
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
@@ -419,11 +438,15 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.1",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo)\n/ \n(\n  (\n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[28d]))\n    / \n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
+              "expr": "28 * 24 * (1 - $stability_slo)\n/ \n(\n  (\n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[28d]))\n    / \n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -436,6 +459,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The percentage of error budget consumed for the selected time range. ",
@@ -520,8 +544,12 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      (\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\"}[28d]))\n        /\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\"}[28d]))\n      ) OR on() vector(0) # set fallback for empty query result\n    ) \n  ) \n)\n/ \n(1 - $stability_slo)",
+              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      (\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[28d]))\n        /\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[28d]))\n      ) OR on() vector(0) # set fallback for empty query result\n    ) \n  ) \n)\n/ \n(1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -550,6 +578,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The duration of 95% of osbuild jobs",
@@ -625,11 +654,15 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.1",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -640,6 +673,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The request Duration for osbuild jobs over the selected date range",
@@ -761,17 +795,25 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
               "refId": "C"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p95",
@@ -779,8 +821,12 @@ data:
               "refId": "B"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "refId": "A"
@@ -791,6 +837,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "Percent of requests exceeding Duration allowed by SLO",
@@ -867,8 +914,12 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[$interval]))/sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[$interval]))",
+              "expr": "1 - sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval]))/sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -878,8 +929,8 @@ data:
           "type": "timeseries"
         },
         {
-          "cacheTimeout": 1,
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
@@ -916,8 +967,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -962,8 +1012,12 @@ data:
           "pluginVersion": "8.5.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) \n/ \n( \n  1.001 - ( \n    (\n      sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[$__range]))\n      /\n      sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[$__range]))\n    )  OR on() vector(1) # set fallback incase the above query result is empty\n  )\n)",
+              "expr": "28 * 24 * (1 - $latency_slo) \n/ \n( \n  1.001 - ( \n    (\n      sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$__range]))\n      /\n      sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$__range]))\n    )  OR on() vector(1) # set fallback incase the above query result is empty\n  )\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -976,6 +1030,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The percentage of error budget consumed for the selected time range. ",
@@ -1021,8 +1076,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -1060,8 +1114,12 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\"}[28d]))\n      /\n      sum(increase(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\"}[28d])) \n    ) OR on() vector(1)  \n  ) - $latency_slo\n)\n/\n(1 - $latency_slo)",
+              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\", tenant=~\"$tenant\"}[28d]))\n      /\n      sum(increase(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[28d])) \n    ) OR on() vector(1)  \n  ) - $latency_slo\n)\n/\n(1 - $latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1090,6 +1148,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The percentage of successful depsolve jobs for the selected time range",
@@ -1115,8 +1174,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -1168,8 +1226,12 @@ data:
           "pluginVersion": "8.5.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\", tenant=~\"$tenant\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\", tenant=~\"$tenant\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1180,6 +1242,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The throughput rate of depsolve job errors and non-errors over time for the selected time range",
@@ -1221,8 +1284,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   }
                 ]
               },
@@ -1266,16 +1328,24 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$interval])) OR on() vector(0)) \n- \n(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval])) OR on() vector(0))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0)) \n- \n(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "success/sec",
               "refId": "A"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval])) OR on() vector(0))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "errors/sec",
@@ -1287,6 +1357,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The number of depsolve job errors (as a percentage) over time for the selected time range",
@@ -1330,8 +1401,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   }
                 ]
               },
@@ -1359,8 +1429,12 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[$interval]))\n  / \n  sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
+              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\", tenant=~\"$tenant\"}[$interval]))\n  / \n  sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\", tenant=~\"$tenant\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
               "instant": false,
               "interval": "",
               "legendFormat": "",
@@ -1371,8 +1445,8 @@ data:
           "type": "timeseries"
         },
         {
-          "cacheTimeout": 1,
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
@@ -1410,8 +1484,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -1456,8 +1529,12 @@ data:
           "pluginVersion": "8.5.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo) \n/ \n(\n  (\n    sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[28d]))\n    / \n    sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
+              "expr": "28 * 24 * (1 - $stability_slo) \n/ \n(\n  (\n    sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\", tenant=~\"$tenant\"}[28d]))\n    / \n    sum(rate(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\", tenant=~\"$tenant\"}[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1470,6 +1547,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The percentage of error budget consumed for the selected time range. ",
@@ -1516,8 +1594,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -1555,8 +1632,12 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      ( \n        sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\"}[28d]))\n        /\n        sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\"}[28d]))\n      ) OR on() vector(0)\n    )\n  )\n)\n/ \n(1 - $stability_slo)",
+              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      ( \n        sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status=\"5xx\", tenant=~\"$tenant\"}[28d]))\n        /\n        sum(increase(image_builder_worker_total_jobs{type=\"depsolve\", status!=\"4xx\", tenant=~\"$tenant\"}[28d]))\n      ) OR on() vector(0)\n    )\n  )\n)\n/ \n(1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -1585,6 +1666,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The duration of 95% of depsolve jobs",
@@ -1610,8 +1692,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -1663,8 +1744,12 @@ data:
           "pluginVersion": "8.5.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\", tenant=~\"$tenant\"}[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1675,6 +1760,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The request Duration for depsolve jobs over the selected date range",
@@ -1717,8 +1803,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "dark-purple",
@@ -1796,17 +1881,25 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\", tenant=~\"$tenant\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
               "refId": "C"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\", tenant=~\"$tenant\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p95",
@@ -1814,8 +1907,12 @@ data:
               "refId": "B"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=\"depsolve\", tenant=~\"$tenant\"}[$interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "refId": "A"
@@ -1826,6 +1923,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "Percent of requests exceeding Duration allowed by SLO",
@@ -1868,8 +1966,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1901,8 +1998,12 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[$interval]))/sum(rate(image_builder_worker_job_duration_seconds_count{type=\"depsolve\"}[$interval]))",
+              "expr": "1 - sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\", tenant=~\"$tenant\"}[$interval]))/sum(rate(image_builder_worker_job_duration_seconds_count{type=\"depsolve\", tenant=~\"$tenant\"}[$interval]))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1912,8 +2013,8 @@ data:
           "type": "timeseries"
         },
         {
-          "cacheTimeout": 1,
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
@@ -1950,8 +2051,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -1996,8 +2096,12 @@ data:
           "pluginVersion": "8.5.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) \n/ \n(\n  1.001 - (\n    (\n      sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"32\",type=\"depsolve\"}[$__range]))\n      /\n      sum(rate(image_builder_worker_job_duration_seconds_count{type=\"depsolve\"}[$__range]))\n    ) OR on() vector(1) # set fallback incase the above query result is empty\n  )\n)",
+              "expr": "28 * 24 * (1 - $latency_slo) \n/ \n(\n  1.001 - (\n    (\n      sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"32\",type=\"depsolve\", tenant=~\"$tenant\"}[$__range]))\n      /\n      sum(rate(image_builder_worker_job_duration_seconds_count{type=\"depsolve\", tenant=~\"$tenant\"}[$__range]))\n    ) OR on() vector(1) # set fallback incase the above query result is empty\n  )\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -2010,6 +2114,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The percentage of error budget consumed for the selected time range. ",
@@ -2056,8 +2161,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -2095,8 +2199,12 @@ data:
           "pluginVersion": "8.1.5",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\"}[28d]))\n      /\n      sum(increase(image_builder_worker_job_duration_seconds_count{type=\"depsolve\"}[28d])) \n    ) OR on() vector(1)\n  ) - $latency_slo\n)\n/ (1 - $latency_slo)",
+              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_worker_job_duration_seconds_bucket{le=\"32\", type=\"depsolve\", tenant=~\"$tenant\"}[28d]))\n      /\n      sum(increase(image_builder_worker_job_duration_seconds_count{type=\"depsolve\", tenant=~\"$tenant\"}[28d])) \n    ) OR on() vector(1)\n  ) - $latency_slo\n)\n/ (1 - $latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -2108,7 +2216,7 @@ data:
           "type": "timeseries"
         },
         {
-          "collapsed": false,
+          "collapsed": true,
           "datasource": {
             "uid": "${datasource}"
           },
@@ -2119,342 +2227,340 @@ data:
             "y": 68
           },
           "id": 207,
-          "panels": [],
-          "title": "Job Wait Duration",
-          "type": "row"
-        },
-        {
-          "datasource": {
-            "uid": "${datasource}"
-          },
-          "description": "The duration of 95% of jobs waiting for execution in the job queue",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
+          "panels": [
+            {
+              "datasource": {
+                "uid": "${datasource}"
               },
-              "decimals": 0,
+              "description": "The duration of 95% of jobs waiting for execution in the job queue",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "decimals": 0,
+                  "mappings": [
+                    {
+                      "options": {
+                        "match": "null",
+                        "result": {
+                          "index": 0,
+                          "text": "N/A"
+                        }
+                      },
+                      "type": "special"
+                    }
+                  ],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      },
+                      {
+                        "color": "#EAB839",
+                        "value": "1228"
+                      },
+                      {
+                        "color": "red",
+                        "value": "1536"
+                      }
+                    ]
+                  },
+                  "unit": "s"
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 5,
+                "x": 0,
+                "y": 5
+              },
+              "id": 208,
               "mappings": [
                 {
                   "options": {
                     "match": "null",
                     "result": {
-                      "index": 0,
                       "text": "N/A"
                     }
                   },
                   "type": "special"
                 }
               ],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": "1228"
-                  },
-                  {
-                    "color": "red",
-                    "value": "1536"
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 5,
-            "x": 0,
-            "y": 69
-          },
-          "id": 208,
-          "mappings": [
-            {
               "options": {
-                "match": "null",
-                "result": {
-                  "text": "N/A"
-                }
+                "colorMode": "value",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "text": {},
+                "textMode": "auto"
               },
-              "type": "special"
-            }
-          ],
-          "options": {
-            "colorMode": "value",
-            "graphMode": "none",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
+              "pluginVersion": "8.5.2",
+              "targets": [
+                {
+                  "exemplar": true,
+                  "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$__range])) by (le))",
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
               ],
-              "fields": "",
-              "values": false
+              "title": "Job Wait Duration",
+              "type": "stat"
             },
-            "text": {},
-            "textMode": "auto"
-          },
-          "pluginVersion": "8.5.2",
-          "targets": [
             {
-              "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$__range])) by (le))",
-              "interval": "",
-              "legendFormat": "",
-              "refId": "A"
+              "datasource": {
+                "uid": "${datasource}"
+              },
+              "description": "The  duration for jobs waiting in the job queue over the selected date range",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "axisLabel": "seconds",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "drawStyle": "line",
+                    "fillOpacity": 35,
+                    "gradientMode": "scheme",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 3,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "never",
+                    "spanNulls": true,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "mappings": [],
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      },
+                      {
+                        "color": "#EAB839",
+                        "value": "175"
+                      },
+                      {
+                        "color": "red",
+                        "value": "200"
+                      }
+                    ]
+                  },
+                  "unit": "s"
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "p50"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "light-red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "p95"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "yellow",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "p99"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 11,
+                "x": 5,
+                "y": 5
+              },
+              "id": 209,
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "bottom"
+                },
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "targets": [
+                {
+                  "exemplar": true,
+                  "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+                  "hide": false,
+                  "interval": "",
+                  "legendFormat": "p99",
+                  "refId": "C"
+                },
+                {
+                  "editorMode": "code",
+                  "exemplar": true,
+                  "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+                  "hide": false,
+                  "interval": "",
+                  "legendFormat": "p95",
+                  "range": true,
+                  "refId": "B"
+                },
+                {
+                  "exemplar": true,
+                  "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+                  "interval": "",
+                  "legendFormat": "p50",
+                  "refId": "A"
+                }
+              ],
+              "title": "Job Wait Duration",
+              "type": "timeseries"
+            },
+            {
+              "datasource": {
+                "uid": "${datasource}"
+              },
+              "description": "Percent of requests exceeding duration allowed by SLO",
+              "fieldConfig": {
+                "defaults": {
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "mappings": [],
+                  "max": 1,
+                  "min": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green"
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  },
+                  "unit": "percentunit"
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 5
+              },
+              "id": 204,
+              "options": {
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "hidden",
+                  "placement": "bottom"
+                },
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "targets": [
+                {
+                  "exemplar": true,
+                  "expr": "1 - sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{le=\"1536\"}[$interval]))/sum(rate(image_builder_worker_job_wait_duration_seconds_count[$interval]))",
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "title": "Slow Request Rate",
+              "type": "timeseries"
             }
           ],
           "title": "Job Wait Duration",
-          "type": "stat"
-        },
-        {
-          "datasource": {
-            "uid": "${datasource}"
-          },
-          "description": "The  duration for jobs waiting in the job queue over the selected date range",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "axisLabel": "seconds",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 35,
-                "gradientMode": "scheme",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 3,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": true,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": "175"
-                  },
-                  {
-                    "color": "red",
-                    "value": "200"
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "p50"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "light-red",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "p95"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "yellow",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "p99"
-                },
-                "properties": [
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "blue",
-                      "mode": "fixed"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 11,
-            "x": 5,
-            "y": 69
-          },
-          "id": 209,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "p99",
-              "refId": "C"
-            },
-            {
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
-              "hide": false,
-              "interval": "",
-              "legendFormat": "p95",
-              "range": true,
-              "refId": "B"
-            },
-            {
-              "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
-              "interval": "",
-              "legendFormat": "p50",
-              "refId": "A"
-            }
-          ],
-          "title": "Job Wait Duration",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "${datasource}"
-          },
-          "description": "Percent of requests exceeding duration allowed by SLO",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "max": 1,
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 8,
-            "x": 16,
-            "y": 69
-          },
-          "id": 204,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "hidden",
-              "placement": "bottom"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{le=\"1536\"}[$interval]))/sum(rate(image_builder_worker_job_wait_duration_seconds_count[$interval]))",
-              "interval": "",
-              "legendFormat": "",
-              "refId": "A"
-            }
-          ],
-          "title": "Slow Request Rate",
-          "type": "timeseries"
+          "type": "row"
         }
       ],
       "refresh": false,
@@ -2555,6 +2661,53 @@ data:
             "query": "0.95",
             "skipUrlSync": false,
             "type": "constant"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "org-15885990"
+              ],
+              "value": [
+                "org-15885990"
+              ]
+            },
+            "hide": 0,
+            "includeAll": true,
+            "multi": true,
+            "name": "tenant",
+            "options": [
+              {
+                "selected": false,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "org-15842261",
+                "value": "org-15842261"
+              },
+              {
+                "selected": false,
+                "text": "org-15877963",
+                "value": "org-15877963"
+              },
+              {
+                "selected": true,
+                "text": "org-15885990",
+                "value": "org-15885990"
+              },
+              {
+                "selected": false,
+                "text": "org-16057323",
+                "value": "org-16057323"
+              }
+            ],
+            "query": "org-15842261, org-15877963, org-15885990, org-16057323",
+            "queryValue": "",
+            "skipUrlSync": false,
+            "type": "custom"
           }
         ]
       },
@@ -2590,6 +2743,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 6,
+      "version": 7,
       "weekStart": ""
     }
