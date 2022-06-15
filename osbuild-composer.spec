@@ -42,34 +42,31 @@ BuildRequires:  make
 %if 0%{?fedora}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
-BuildRequires:  golang(github.com/aws/aws-sdk-go)
-BuildRequires:  golang(github.com/Azure/azure-sdk-for-go)
-BuildRequires:  golang(github.com/Azure/azure-storage-blob-go/azblob)
-BuildRequires:  golang(github.com/BurntSushi/toml)
-BuildRequires:  golang(github.com/coreos/go-semver/semver)
-BuildRequires:  golang(github.com/coreos/go-systemd/activation)
-BuildRequires:  golang(github.com/deepmap/oapi-codegen/pkg/codegen)
-BuildRequires:  golang(github.com/go-chi/chi)
-BuildRequires:  golang(github.com/golang-jwt/jwt/v4)
-BuildRequires:  golang(github.com/google/uuid)
-BuildRequires:  golang(github.com/hashicorp/go-retryablehttp)
-BuildRequires:  golang(github.com/jackc/pgx/v4)
-BuildRequires:  golang(github.com/julienschmidt/httprouter)
-BuildRequires:  golang(github.com/getkin/kin-openapi/openapi3)
-BuildRequires:  golang(github.com/kolo/xmlrpc)
-BuildRequires:  golang(github.com/labstack/echo/v4)
-BuildRequires:  golang(github.com/gobwas/glob)
-BuildRequires:  golang(github.com/google/go-cmp/cmp)
-BuildRequires:  golang(github.com/gophercloud/gophercloud)
-BuildRequires:  golang(github.com/prometheus/client_golang/prometheus/promhttp)
-BuildRequires:  golang(github.com/openshift-online/ocm-sdk-go)
-BuildRequires:  golang(github.com/segmentio/ksuid)
-BuildRequires:  golang(github.com/stretchr/testify/assert)
-BuildRequires:  golang(github.com/ubccr/kerby)
-BuildRequires:  golang(github.com/vmware/govmomi)
-BuildRequires:  golang(github.com/oracle/oci-go-sdk/v54)
-BuildRequires:  golang(cloud.google.com/go)
-BuildRequires:  golang(gopkg.in/ini.v1)
+%{lua:
+local function starts_with(s, subs)
+    return string.sub(s, 0, string.len(subs)) == subs
+end
+
+local function split_line(s, delimiter)
+    result = {};
+    for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+        table.insert(result, match);
+    end
+    return result;
+end
+
+local function process_file(file)
+    for line in io.lines(file) do
+        if starts_with(line, "# ") then
+            module_version = split_line(string.sub(line, 3, string.len(line)), " ")
+            module_version[2] = string.gsub(module_version[2], "-", "_")
+            print("Provides: bundled(golang("..module_version[1]..")) = "..module_version[2].."\n")
+        end
+    end
+end
+
+process_file("vendor/modules.txt")
+}
 %endif
 
 Requires: %{name}-core = %{version}-%{release}
@@ -99,7 +96,7 @@ Obsoletes: osbuild-composer-koji <= 23
 %if 0%{?rhel}
 %forgeautosetup -p1
 %else
-%goprep
+%goprep -k
 %endif
 
 %build
