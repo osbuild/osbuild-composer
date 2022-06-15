@@ -66,6 +66,7 @@ func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSourc
 				Name: "org.osbuild.rhsm",
 			}
 		}
+		item.Insecure = pkg.IgnoreSSL
 		curl.Items[pkg.Checksum] = item
 	}
 	if len(curl.Items) > 0 {
