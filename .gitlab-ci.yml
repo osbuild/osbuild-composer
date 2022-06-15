@@ -255,6 +255,17 @@ regression-old-worker-new-composer:
   variables:
     SCRIPT: regression-old-worker-new-composer.sh
 
+regression-insecure-repo:
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-9.0-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+  extends: .regression
+  variables:
+    SCRIPT: regression-insecure-repo.sh
+
+
 regression-no-explicit-rootfs-definition:
   extends: .regression
   variables:
