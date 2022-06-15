@@ -1,6 +1,7 @@
 package target
 
 type KojiTargetOptions struct {
+	// Filename of the image as produced by osbuild for a given export
 	Filename        string `json:"filename"`
 	UploadDirectory string `json:"upload_directory"`
 	Server          string `json:"server"`
