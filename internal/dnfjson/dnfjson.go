@@ -337,6 +337,7 @@ func (pkgs packageSpecs) toRPMMD(repos map[string]rpmmd.RepoConfig) []rpmmd.Pack
 		rpmDependencies[i].RemoteLocation = dep.RemoteLocation
 		rpmDependencies[i].Checksum = dep.Checksum
 		rpmDependencies[i].CheckGPG = repo.CheckGPG
+		rpmDependencies[i].IgnoreSSL = repo.IgnoreSSL
 		if repo.RHSM {
 			rpmDependencies[i].Secrets = "org.osbuild.rhsm"
 		}
