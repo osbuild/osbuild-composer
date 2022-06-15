@@ -12,7 +12,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -682,12 +684,6 @@ func (t *imageType) PartitionType() string {
 	return basePartitionTable.Type
 }
 
-// local type for ostree commit metadata used to define commit sources
-type ostreeCommit struct {
-	Checksum string
-	URL      string
-}
-
 func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
@@ -715,9 +711,9 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	}
 
 	// handle OSTree commit inputs
-	var commits []ostreeCommit
+	var commits []ostree.CommitSource
 	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		commits = []ostreeCommit{{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}}
+		commits = []ostree.CommitSource{{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}}
 	}
 
 	// handle inline sources
@@ -732,52 +728,9 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   t.sources(allPackageSpecs, commits, inlineData),
+			Sources:   osbuild2.GenSources(allPackageSpecs, commits, inlineData),
 		},
 	)
-}
-
-func (t *imageType) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostreeCommit, inlineData []string) osbuild.Sources {
-	sources := osbuild.Sources{}
-	curl := &osbuild.CurlSource{
-		Items: make(map[string]osbuild.CurlSourceItem),
-	}
-	for _, pkg := range packages {
-		item := new(osbuild.CurlSourceOptions)
-		item.URL = pkg.RemoteLocation
-		if pkg.Secrets == "org.osbuild.rhsm" {
-			item.Secrets = &osbuild.URLSecrets{
-				Name: "org.osbuild.rhsm",
-			}
-		}
-		curl.Items[pkg.Checksum] = item
-	}
-	if len(curl.Items) > 0 {
-		sources["org.osbuild.curl"] = curl
-	}
-
-	ostree := &osbuild.OSTreeSource{
-		Items: make(map[string]osbuild.OSTreeSourceItem),
-	}
-	for _, commit := range ostreeCommits {
-		item := new(osbuild.OSTreeSourceItem)
-		item.Remote.URL = commit.URL
-		ostree.Items[commit.Checksum] = *item
-	}
-	if len(ostree.Items) > 0 {
-		sources["org.osbuild.ostree"] = ostree
-	}
-
-	if len(inlineData) > 0 {
-		ils := osbuild.NewInlineSource()
-		for _, data := range inlineData {
-			ils.AddItem(data)
-		}
-
-		sources["org.osbuild.inline"] = ils
-	}
-
-	return sources
 }
 
 func isMountpointAllowed(mountpoint string) bool {
