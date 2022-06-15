@@ -77,6 +77,7 @@ func UnmarshalTargetOptions(targetName TargetName, rawOptions json.RawMessage) (
 		options = new(GCPTargetOptions)
 	case TargetNameAzureImage:
 		options = new(AzureImageTargetOptions)
+	// Kept for backward compatibility
 	case TargetNameLocal:
 		options = new(LocalTargetOptions)
 	case TargetNameKoji:
