@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -183,57 +184,18 @@ func (t *imageTypeS2) Manifest(c *blueprint.Customizations,
 		allPackageSpecs = append(allPackageSpecs, specs...)
 	}
 
-	var commits []ostreeCommit
+	var commits []ostree.CommitSource
 	if t.bootISO && options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		commit := ostreeCommit{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}
-		commits = []ostreeCommit{commit}
+		commit := ostree.CommitSource{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}
+		commits = []ostree.CommitSource{commit}
 	}
 	return json.Marshal(
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   t.sources(allPackageSpecs, commits),
+			Sources:   osbuild.GenSources(allPackageSpecs, commits, nil),
 		},
 	)
-}
-
-// local type for ostree commit metadata used to define commit sources
-type ostreeCommit struct {
-	Checksum string
-	URL      string
-}
-
-func (t *imageTypeS2) sources(packages []rpmmd.PackageSpec, ostreeCommits []ostreeCommit) osbuild.Sources {
-	sources := osbuild.Sources{}
-	curl := &osbuild.CurlSource{
-		Items: make(map[string]osbuild.CurlSourceItem),
-	}
-	for _, pkg := range packages {
-		item := new(osbuild.CurlSourceOptions)
-		item.URL = pkg.RemoteLocation
-		if pkg.Secrets == "org.osbuild.rhsm" {
-			item.Secrets = &osbuild.URLSecrets{
-				Name: "org.osbuild.rhsm",
-			}
-		}
-		curl.Items[pkg.Checksum] = item
-	}
-	if len(curl.Items) > 0 {
-		sources["org.osbuild.curl"] = curl
-	}
-
-	ostree := &osbuild.OSTreeSource{
-		Items: make(map[string]osbuild.OSTreeSourceItem),
-	}
-	for _, commit := range ostreeCommits {
-		item := new(osbuild.OSTreeSourceItem)
-		item.Remote.URL = commit.URL
-		ostree.Items[commit.Checksum] = *item
-	}
-	if len(ostree.Items) > 0 {
-		sources["org.osbuild.ostree"] = ostree
-	}
-	return sources
 }
 
 func edgePipelines(t *imageTypeS2, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
