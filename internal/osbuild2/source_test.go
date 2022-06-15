@@ -65,8 +65,8 @@ func TestSource_UnmarshalJSON(t *testing.T) {
 				Type: "org.osbuild.curl",
 				Source: &CurlSource{
 					Items: map[string]CurlSourceItem{
-						"checksum1": URLWithSecrets{URL: "url1", Secrets: &URLSecrets{Name: "org.osbuild.rhsm"}},
-						"checksum2": URLWithSecrets{URL: "url2", Secrets: &URLSecrets{Name: "whatever"}},
+						"checksum1": CurlSourceOptions{URL: "url1", Secrets: &URLSecrets{Name: "org.osbuild.rhsm"}},
+						"checksum2": CurlSourceOptions{URL: "url2", Secrets: &URLSecrets{Name: "whatever"}},
 					}},
 			},
 			args: args{

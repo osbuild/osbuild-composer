@@ -21,12 +21,12 @@ type URL string
 
 func (URL) isCurlSourceItem() {}
 
-type URLWithSecrets struct {
+type CurlSourceOptions struct {
 	URL     string      `json:"url"`
 	Secrets *URLSecrets `json:"secrets,omitempty"`
 }
 
-func (URLWithSecrets) isCurlSourceItem() {}
+func (CurlSourceOptions) isCurlSourceItem() {}
 
 type URLSecrets struct {
 	Name string `json:"name"`
@@ -51,7 +51,7 @@ func (cs *CurlSource) UnmarshalJSON(data []byte) (err error) {
 	}
 
 	type csWithSecrets struct {
-		Items map[string]URLWithSecrets `json:"items"`
+		Items map[string]CurlSourceOptions `json:"items"`
 	}
 	withSecrets := new(csWithSecrets)
 	b.Reset(data)
