@@ -326,7 +326,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			User:        options.User,
 			Tenancy:     options.Tenancy,
 			Region:      options.Region,
-			FileName:    imageType.Filename(),
+			Filename:    imageType.Filename(),
 			PrivateKey:  options.PrivateKey,
 			Fingerprint: options.Fingerprint,
 			Bucket:      options.Bucket,

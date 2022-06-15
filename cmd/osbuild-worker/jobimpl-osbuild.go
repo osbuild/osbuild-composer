@@ -716,7 +716,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Info("[OCI] 🔑 Logged in OCI")
 			logWithId.Info("[OCI] ⬆ Uploading the image")
-			file, err := os.Open(path.Join(outputDirectory, exportPath, options.FileName))
+			file, err := os.Open(path.Join(outputDirectory, exportPath, options.Filename))
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				break

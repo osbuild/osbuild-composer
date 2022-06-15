@@ -6,7 +6,7 @@ type OCITargetOptions struct {
 	User        string `json:"user"`
 	Tenancy     string `json:"tenancy"`
 	Region      string `json:"region"`
-	FileName    string `json:"filename"`
+	Filename    string `json:"filename"`
 	Fingerprint string `json:"fingerprint"`
 	PrivateKey  string `json:"private_key"`
 	Bucket      string `json:"bucket"`
