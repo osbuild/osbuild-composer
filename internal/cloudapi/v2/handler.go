@@ -193,6 +193,25 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	if request.Customizations != nil && request.Customizations.Services != nil {
+		servicesCustomization := &blueprint.ServicesCustomization{}
+		if request.Customizations.Services.Enabled != nil {
+			servicesCustomization.Enabled = make([]string, len(*request.Customizations.Services.Enabled))
+			copy(servicesCustomization.Enabled, *request.Customizations.Services.Enabled)
+		}
+		if request.Customizations.Services.Disabled != nil {
+			servicesCustomization.Disabled = make([]string, len(*request.Customizations.Services.Disabled))
+			copy(servicesCustomization.Disabled, *request.Customizations.Services.Disabled)
+		}
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Services: servicesCustomization,
+			}
+		} else {
+			bp.Customizations.Services = servicesCustomization
+		}
+	}
+
 	// add the user-defined repositories only to the depsolve job for the
 	// payload (the packages for the final image)
 	var payloadRepositories []Repository

@@ -931,7 +931,15 @@ func TestComposeCustomizations(t *testing.T) {
 				"check_gpg": false,
 				"ignore_ssl": false,
 				"gpg_key": "some-gpg-key"
-			}]
+			}],
+			"services": {
+				"enabled": [
+					"nftables"
+				],
+				"disabled": [
+					"firewalld"
+				]
+			}
 		},
 		"image_request":{
 			"architecture": "%s",
