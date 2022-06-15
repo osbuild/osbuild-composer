@@ -22,8 +22,9 @@ type URL string
 func (URL) isCurlSourceItem() {}
 
 type CurlSourceOptions struct {
-	URL     string      `json:"url"`
-	Secrets *URLSecrets `json:"secrets,omitempty"`
+	URL      string      `json:"url"`
+	Secrets  *URLSecrets `json:"secrets,omitempty"`
+	Insecure bool        `json:"insecure,omitempty"`
 }
 
 func (CurlSourceOptions) isCurlSourceItem() {}
