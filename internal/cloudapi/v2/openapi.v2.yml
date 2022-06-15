@@ -851,6 +851,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Filesystem'
+        services:
+          type: object
+          additionalProperties: false
+          properties:
+            enabled:
+              description: List of services to enable by default
+              type: array
+              minItems: 1
+              items:
+                type: string
+                example: "nftables"
+            disabled:
+              description: List of services to disable by default
+              type: array
+              minItems: 1
+              items:
+                type: string
+                example: "firewalld"
     Filesystem:
       type: object
       required:
