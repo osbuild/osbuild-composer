@@ -96,7 +96,7 @@
     - rpmcopy
   ansible.posix.synchronize:
     mode: push
-    src: "{{ playbook_dir }}/roles/common/files/rpmbuild/RPMS"
+    src: "{{ playbook_dir }}/roles/common/files/rpmbuild/{{ ansible_architecture }}/RPMS"
     dest: /tmp/rpmbuild
 
 - name: Add repo config

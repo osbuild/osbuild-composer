@@ -3,7 +3,16 @@
   become: yes
   remote_user: ec2-user
   hosts: rpmbuilder
+  gather_facts: no
   tasks:
+
+  - name: Wait for hosts to be reachable
+    ansible.builtin.wait_for_connection:
+      delay: 60
+      timeout: 400
+
+  - name: Gather facts
+    ansible.builtin.setup:
 
   - name: Add EPEL
     dnf:
@@ -72,7 +81,7 @@
   - name: Mockbuild osbuild
     shell: >-
         mock
-        -r "rhel-8-x86_64"
+        -r "rhel-8-{{ ansible_architecture }}"
         --rebuild
         --define "commit {{ OSBUILD_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
@@ -91,7 +100,7 @@
   - name: Mockbuild osbuild-composer
     shell: >-
         mock
-        -r "rhel-8-x86_64"
+        -r "rhel-8-{{ ansible_architecture }}"
         --rebuild
         --define "commit {{ COMPOSER_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
@@ -105,4 +114,4 @@
     ansible.posix.synchronize:
       mode: pull
       src: /home/ec2-user/rpmbuild/RPMS
-      dest: /osbuild-composer/templates/packer/ansible/roles/common/files/rpmbuild
+      dest: /osbuild-composer/templates/packer/ansible/roles/common/files/rpmbuild/{{ ansible_architecture }}
