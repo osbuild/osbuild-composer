@@ -65,7 +65,7 @@ local function process_file(file)
     end
 end
 
-process_file(rpm.expand("%{_builddir}/vendor/modules.txt"))
+process_file("vendor/modules.txt")
 }
 %endif
 
