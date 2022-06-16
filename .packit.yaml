@@ -5,6 +5,7 @@ specfile_path: osbuild-composer.spec
 synced_files:
     - osbuild-composer.spec
     - .packit.yaml
+    - vendor/modules.txt
 
 upstream_package_name: osbuild-composer
 downstream_package_name: osbuild-composer
