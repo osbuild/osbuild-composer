@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -794,11 +793,8 @@ func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name 
 	request := ctx.Request()
 
 	if h.server.config.ArtifactsDir == "" {
-		_, err := io.Copy(ioutil.Discard, request.Body)
-		if err != nil {
-			return api.HTTPErrorWithInternal(api.ErrorDiscardingArtifact, err)
-		}
-		return ctx.NoContent(http.StatusOK)
+		// indicate to the worker that the server is not accepting any artifacts
+		return ctx.NoContent(http.StatusBadRequest)
 	}
 
 	f, err := os.Create(path.Join(h.server.config.ArtifactsDir, "tmp", token.String(), name))
