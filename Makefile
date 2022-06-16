@@ -209,7 +209,12 @@ worker-key-pair: ca
 #
 
 RPM_SPECFILE=rpmbuild/SPECS/osbuild-composer.spec
+GO_MODULES_FILE=rpmbuild/SPECS/go-vendor-modules.txt
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
+
+$(GO_MODULES_FILE):
+	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	git show HEAD:vendor/modules.txt > $(GO_MODULES_FILE)
 
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
@@ -220,7 +225,7 @@ $(RPM_TARBALL):
 	git archive --prefix=osbuild-composer-$(COMMIT)/ --format=tar.gz HEAD > $(RPM_TARBALL)
 
 .PHONY: srpm
-srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+srpm: $(RPM_SPECFILE) $(GO_MODULES_FILE) $(RPM_TARBALL)
 	rpmbuild -bs \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--define "commit $(COMMIT)" \
@@ -228,7 +233,7 @@ srpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		$(RPM_SPECFILE)
 
 .PHONY: rpm
-rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
+rpm: $(RPM_SPECFILE) $(GO_MODULES_FILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--define "commit $(COMMIT)" \
@@ -236,7 +241,7 @@ rpm: $(RPM_SPECFILE) $(RPM_TARBALL)
 		$(RPM_SPECFILE)
 
 .PHONY: scratch
-scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
+scratch: $(RPM_SPECFILE) $(GO_MODULES_FILE) $(RPM_TARBALL)
 	rpmbuild -bb \
 		--define "_topdir $(CURDIR)/rpmbuild" \
 		--define "commit $(COMMIT)" \

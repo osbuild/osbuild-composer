@@ -65,7 +65,7 @@ local function process_file(file)
     end
 end
 
-process_file(rpm.expand("%{_topdir}/modules.txt"))
+process_file(rpm.expand("%{_specdir}/go-vendor-modules.txt"))
 }
 %endif
 
