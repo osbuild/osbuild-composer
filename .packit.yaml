@@ -16,7 +16,7 @@ upstream_tag_template: v{version}
 srpm_build_deps: []
 actions:
   get-current-version: bash -c "git describe --tags --abbrev=0 | sed 's|v||'"
-  post-upstream-clone: bash -c "mkdir -p $HOME/rpmbuild && cp vendor/modules.txt $HOME/rpmbuild/modules.txt"
+  post-upstream-clone: bash -c "mkdir -p $HOME/build && cp vendor/modules.txt $HOME/build/modules.txt"
 
 jobs:
 - job: koji_build
