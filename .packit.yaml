@@ -16,9 +16,7 @@ upstream_tag_template: v{version}
 srpm_build_deps: []
 actions:
   get-current-version: bash -c "git describe --tags --abbrev=0 | sed 's|v||'"
-  post-upstream-clone: bash -c "pwd && ls -l vendor/modules.txt"
-  create-patches: bash -c "pwd"
-  fix-spec-file: bash -c "pwd"
+  post-upstream-clone: bash -c "printenv"
 
 jobs:
 - job: koji_build
