@@ -65,7 +65,22 @@ local function process_file(file)
     end
 end
 
-process_file(rpm.expand("%{_specdir}/go-vendor-modules.txt"))
+local function find_file()
+    local files = {
+        rpm.expand("%{_specdir}/go-vendor-modules.txt"),
+        "vendor/modules.txt"
+    }
+    for index, file in ipairs(files) do
+        local f = io.open(file, "r")
+        if f ~= nil then
+            io.close(f)
+            return file
+        end
+    end
+    return ""
+end
+
+process_file(find_file())
 }
 %endif
 
