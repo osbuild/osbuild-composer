@@ -21,13 +21,13 @@ get_data_files
 tee /etc/leapp/files/leapp_upgrade_repositories.repo > /dev/null << EOF
 [APPSTREAM]
 name=APPSTREAM
-baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.0.0/compose/AppStream/x86_64/os/
+baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.1.0/compose/AppStream/x86_64/os/
 enabled=0
 gpgcheck=0
 
 [BASEOS]
 name=BASEOS
-baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.0.0/compose/BaseOS/x86_64/os/
+baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.1.0/compose/BaseOS/x86_64/os/
 enabled=0
 gpgcheck=0
 EOF
