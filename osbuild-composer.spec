@@ -69,6 +69,7 @@ local function find_file()
     local files = {
         rpm.expand("%{_specdir}/go-vendor-modules.txt"),
         rpm.expand("%{_specdir}/vendor/modules.txt"),
+        rpm.expand("%{_sourcedir}/vendor/modules.txt"),
         "vendor/modules.txt"
     }
     for index, file in ipairs(files) do
