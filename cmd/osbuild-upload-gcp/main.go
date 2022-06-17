@@ -45,7 +45,7 @@ func main() {
 	flag.StringVar(&imageFile, "image", "", "Image file to upload")
 	flag.Var(&shareWith, "share-with", "Accounts to share the image with. Can be set multiple times. Allowed values are 'user:{emailid}' / 'serviceAccount:{emailid}' / 'group:{emailid}' / 'domain:{domain}'.")
 	flag.BoolVar(&skipUpload, "skip-upload", false, "Use to skip Image Upload step")
-	flag.BoolVar(&skipImport, "skip-import", false, "Use to skup Image Import step")
+	flag.BoolVar(&skipImport, "skip-import", false, "Use to skip Image Import step")
 	flag.Parse()
 
 	var guestOSFeatures []*computepb.GuestOsFeature
