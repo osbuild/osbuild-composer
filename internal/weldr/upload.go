@@ -243,6 +243,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 
 	t.Uuid = uuid.New()
 	t.ImageName = u.ImageName
+	t.OsbuildArtifact.ExportFilename = imageType.Filename()
 	t.Status = common.IBWaiting
 	t.Created = time.Now()
 
@@ -250,7 +251,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 	case *awsUploadSettings:
 		t.Name = target.TargetNameAWS
 		t.Options = &target.AWSTargetOptions{
-			Filename:        imageType.Filename(),
 			Region:          options.Region,
 			AccessKeyID:     options.AccessKeyID,
 			SecretAccessKey: options.SecretAccessKey,
@@ -261,7 +261,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 	case *awsS3UploadSettings:
 		t.Name = target.TargetNameAWSS3
 		t.Options = &target.AWSS3TargetOptions{
-			Filename:            imageType.Filename(),
 			Region:              options.Region,
 			AccessKeyID:         options.AccessKeyID,
 			SecretAccessKey:     options.SecretAccessKey,
@@ -275,7 +274,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 	case *azureUploadSettings:
 		t.Name = target.TargetNameAzure
 		t.Options = &target.AzureTargetOptions{
-			Filename:         imageType.Filename(),
 			StorageAccount:   options.StorageAccount,
 			StorageAccessKey: options.StorageAccessKey,
 			Container:        options.Container,
@@ -300,7 +298,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 		}
 
 		t.Options = &target.GCPTargetOptions{
-			Filename:    imageType.Filename(),
 			Region:      options.Region,
 			Os:          imageType.Arch().Distro().Name(),
 			Bucket:      options.Bucket,
@@ -310,7 +307,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 	case *vmwareUploadSettings:
 		t.Name = target.TargetNameVMWare
 		t.Options = &target.VMWareTargetOptions{
-			Filename:   imageType.Filename(),
 			Username:   options.Username,
 			Password:   options.Password,
 			Host:       options.Host,
@@ -324,7 +320,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			User:        options.User,
 			Tenancy:     options.Tenancy,
 			Region:      options.Region,
-			Filename:    imageType.Filename(),
 			PrivateKey:  options.PrivateKey,
 			Fingerprint: options.Fingerprint,
 			Bucket:      options.Bucket,
@@ -337,7 +332,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Username: options.Username,
 			Password: options.Password,
 
-			Filename:  imageType.Filename(),
 			TlsVerify: options.TlsVerify,
 		}
 	}

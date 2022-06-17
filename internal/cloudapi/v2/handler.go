@@ -328,7 +328,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				// an extra tag should be added.
 				key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 				t := target.NewAWSTarget(&target.AWSTargetOptions{
-					Filename:          imageType.Filename(),
 					Region:            awsUploadOptions.Region,
 					Key:               key,
 					ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
@@ -338,6 +337,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				} else {
 					t.ImageName = key
 				}
+				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
 			case ImageTypesGuestImage:
@@ -363,11 +363,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 				key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 				t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
-					Filename: imageType.Filename(),
-					Region:   awsS3UploadOptions.Region,
-					Key:      key,
+					Region: awsS3UploadOptions.Region,
+					Key:    key,
 				})
 				t.ImageName = key
+				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
 			case ImageTypesGcp:
@@ -388,10 +388,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 				imageName := fmt.Sprintf("composer-api-%s", uuid.New().String())
 				t := target.NewGCPTarget(&target.GCPTargetOptions{
-					Filename: imageType.Filename(),
-					Region:   gcpUploadOptions.Region,
-					Os:       imageType.Arch().Distro().Name(), // not exposed in cloudapi
-					Bucket:   gcpUploadOptions.Bucket,
+					Region: gcpUploadOptions.Region,
+					Os:     imageType.Arch().Distro().Name(), // not exposed in cloudapi
+					Bucket: gcpUploadOptions.Bucket,
 					// the uploaded object must have a valid extension
 					Object:            fmt.Sprintf("%s.tar.gz", imageName),
 					ShareWithAccounts: share,
@@ -402,6 +401,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				} else {
 					t.ImageName = imageName
 				}
+				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
 			case ImageTypesAzure:
@@ -417,7 +417,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
 				t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
-					Filename:       imageType.Filename(),
 					TenantID:       azureUploadOptions.TenantId,
 					Location:       azureUploadOptions.Location,
 					SubscriptionID: azureUploadOptions.SubscriptionId,
@@ -430,6 +429,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					// if ImageName wasn't given, generate a random one
 					t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
 				}
+				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
 			default:

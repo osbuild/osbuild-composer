@@ -106,7 +106,6 @@ func main() {
 	}
 	awsTarget := target.NewAWSTarget(
 		&target.AWSTargetOptions{
-			Filename:        "image.ami",
 			Region:          "far-away-1",
 			AccessKeyID:     "MyKey",
 			SecretAccessKey: "MySecret",
@@ -117,6 +116,7 @@ func main() {
 	awsTarget.Uuid = id1
 	awsTarget.ImageName = "My Image"
 	awsTarget.Created = time.Now()
+	awsTarget.OsbuildArtifact.ExportFilename = "image.ami"
 
 	d := fedora.NewF35()
 	a, err := d.GetArch(distro.X86_64ArchName)
