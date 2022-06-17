@@ -62,10 +62,9 @@ type azureUploadSettings struct {
 func (azureUploadSettings) isUploadSettings() {}
 
 type gcpUploadSettings struct {
-	Filename string `json:"filename"`
-	Region   string `json:"region"`
-	Bucket   string `json:"bucket"`
-	Object   string `json:"object"`
+	Region string `json:"region"`
+	Bucket string `json:"bucket"`
+	Object string `json:"object"`
 
 	// base64 encoded GCP credentials JSON file
 	Credentials string `json:"credentials,omitempty"`
@@ -208,10 +207,9 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 		case *target.GCPTargetOptions:
 			upload.ProviderName = "gcp"
 			upload.Settings = &gcpUploadSettings{
-				Filename: options.Filename,
-				Region:   options.Region,
-				Bucket:   options.Bucket,
-				Object:   options.Object,
+				Region: options.Region,
+				Bucket: options.Bucket,
+				Object: options.Object,
 				// Credentials are intentionally not included.
 			}
 			uploads = append(uploads, upload)
