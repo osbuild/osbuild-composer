@@ -3,7 +3,6 @@ package target
 const TargetNameAzureImage TargetName = "org.osbuild.azure.image"
 
 type AzureImageTargetOptions struct {
-	Filename       string `json:"filename"`
 	TenantID       string `json:"tenant_id"`
 	Location       string `json:"location"`
 	SubscriptionID string `json:"subscription_id"`

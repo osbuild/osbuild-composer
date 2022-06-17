@@ -706,8 +706,10 @@ func TestCompose(t *testing.T) {
 					Name:      target.TargetNameAWS,
 					Status:    common.IBWaiting,
 					ImageName: "test_upload",
+					OsbuildArtifact: target.OsbuildArtifact{
+						ExportFilename: imgType.Filename(),
+					},
 					Options: &target.AWSTargetOptions{
-						Filename:        "test.img",
 						Region:          "frankfurt",
 						AccessKeyID:     "accesskey",
 						SecretAccessKey: "secretkey",

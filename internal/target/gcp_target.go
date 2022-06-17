@@ -3,7 +3,6 @@ package target
 const TargetNameGCP TargetName = "org.osbuild.gcp"
 
 type GCPTargetOptions struct {
-	Filename          string   `json:"filename"`
 	Region            string   `json:"region"`
 	Os                string   `json:"os"` // not exposed in cloudapi for now
 	Bucket            string   `json:"bucket"`

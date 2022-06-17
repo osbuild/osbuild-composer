@@ -181,8 +181,8 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		kojiTarget := target.NewKojiTarget(&target.KojiTargetOptions{
 			Server:          server,
 			UploadDirectory: kojiDirectory,
-			Filename:        ir.imageType.Filename(),
 		})
+		kojiTarget.OsbuildArtifact.ExportFilename = ir.imageType.Filename()
 		kojiTarget.ImageName = kojiFilename
 
 		buildID, err := s.workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{

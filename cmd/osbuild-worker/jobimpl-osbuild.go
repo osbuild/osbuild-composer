@@ -390,7 +390,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			imageName := jobTarget.ImageName + ".vmdk"
 			imagePath := path.Join(tempDirectory, imageName)
 
-			exportedImagePath := path.Join(outputDirectory, exportPath, targetOptions.Filename)
+			exportedImagePath := path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename)
 			err = os.Symlink(exportedImagePath, imagePath)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
@@ -420,7 +420,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if impl.AWSBucket != "" {
 				bucket = impl.AWSBucket
 			}
-			_, err = a.Upload(path.Join(outputDirectory, exportPath, targetOptions.Filename), bucket, key)
+			_, err = a.Upload(path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename), bucket, key)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				break
@@ -449,7 +449,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			url, targetError := uploadToS3(a, outputDirectory, exportPath, bucket, targetOptions.Key, targetOptions.Filename)
+			url, targetError := uploadToS3(a, outputDirectory, exportPath, bucket, targetOptions.Key, jobTarget.OsbuildArtifact.ExportFilename)
 			if targetError != nil {
 				targetResult.TargetError = targetError
 				break
@@ -475,7 +475,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			const azureMaxUploadGoroutines = 4
 			err = azureStorageClient.UploadPageBlob(
 				metadata,
-				path.Join(outputDirectory, exportPath, targetOptions.Filename),
+				path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename),
 				azureMaxUploadGoroutines,
 			)
 
@@ -495,7 +495,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			logWithId.Infof("[GCP] 🚀 Uploading image to: %s/%s", targetOptions.Bucket, targetOptions.Object)
-			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, exportPath, targetOptions.Filename),
+			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename),
 				targetOptions.Bucket, targetOptions.Object, map[string]string{gcp.MetadataKeyImageName: jobTarget.ImageName})
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
@@ -623,7 +623,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 					ContainerName:  storageContainer,
 					BlobName:       blobName,
 				},
-				path.Join(outputDirectory, exportPath, targetOptions.Filename),
+				path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename),
 				azure.DefaultUploadThreads,
 			)
 			if err != nil {
@@ -680,7 +680,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				}
 			}()
 
-			file, err := os.Open(path.Join(outputDirectory, exportPath, targetOptions.Filename))
+			file, err := os.Open(path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename))
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, fmt.Sprintf("failed to open the image for reading: %v", err))
 				break
@@ -716,7 +716,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Info("[OCI] 🔑 Logged in OCI")
 			logWithId.Info("[OCI] ⬆ Uploading the image")
-			file, err := os.Open(path.Join(outputDirectory, exportPath, targetOptions.Filename))
+			file, err := os.Open(path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename))
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				break
@@ -758,7 +758,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				client.TlsVerify = *targetOptions.TlsVerify
 			}
 
-			sourcePath := path.Join(outputDirectory, exportPath, targetOptions.Filename)
+			sourcePath := path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename)
 
 			// TODO: get the container type from the metadata of the osbuild job
 			sourceRef := fmt.Sprintf("oci-archive:%s", sourcePath)

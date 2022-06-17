@@ -3,7 +3,6 @@ package target
 const TargetNameAzure TargetName = "org.osbuild.azure"
 
 type AzureTargetOptions struct {
-	Filename         string `json:"filename"`
 	StorageAccount   string `json:"storageAccount"`
 	StorageAccessKey string `json:"storageAccessKey"`
 	Container        string `json:"container"`

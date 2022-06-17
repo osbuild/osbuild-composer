@@ -3,7 +3,6 @@ package target
 const TargetNameVMWare TargetName = "org.osbuild.vmware"
 
 type VMWareTargetOptions struct {
-	Filename   string `json:"filename"`
 	Host       string `json:"host"`
 	Username   string `json:"username"`
 	Password   string `json:"password"`

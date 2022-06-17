@@ -3,7 +3,6 @@ package target
 const TargetNameContainer TargetName = "org.osbuild.container"
 
 type ContainerTargetOptions struct {
-	Filename  string `json:"filename"`
 	Reference string `json:"reference"`
 
 	Username string `json:"username,omitempty"`

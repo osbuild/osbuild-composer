@@ -6,7 +6,6 @@ const (
 )
 
 type AWSTargetOptions struct {
-	Filename          string   `json:"filename"`
 	Region            string   `json:"region"`
 	AccessKeyID       string   `json:"accessKeyID"`
 	SecretAccessKey   string   `json:"secretAccessKey"`
@@ -34,7 +33,6 @@ func NewAWSTargetResult(options *AWSTargetResultOptions) *TargetResult {
 }
 
 type AWSS3TargetOptions struct {
-	Filename            string `json:"filename"`
 	Region              string `json:"region"`
 	AccessKeyID         string `json:"accessKeyID"`
 	SecretAccessKey     string `json:"secretAccessKey"`
