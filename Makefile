@@ -208,16 +208,17 @@ worker-key-pair: ca
 # ./rpmbuild, using rpmbuild's usual directory structure.
 #
 
-RPM_SPECFILE=rpmbuild/SPECS/osbuild-composer.spec
-GO_MODULES_FILE=rpmbuild/SPECS/go-vendor-modules.txt
+SPECS_DIR=rpmbuild/SPECS
+RPM_SPECFILE=$(SPECS_DIR)/osbuild-composer.spec
+GO_MODULES_FILE=$(SPECS_DIR)/vendor/modules.txt
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
 
 $(GO_MODULES_FILE):
-	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	mkdir -p $(CURDIR)/$(SPECS_DIR)/vendor
 	git show HEAD:vendor/modules.txt > $(GO_MODULES_FILE)
 
 $(RPM_SPECFILE):
-	mkdir -p $(CURDIR)/rpmbuild/SPECS
+	mkdir -p $(CURDIR)/$(SPECS_DIR)
 	git show HEAD:osbuild-composer.spec > $(RPM_SPECFILE)
 
 $(RPM_TARBALL):
