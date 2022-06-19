@@ -68,6 +68,7 @@ end
 local function find_file()
     local files = {
         rpm.expand("%{_specdir}/vendor/modules.txt"),
+        "vendor/modules.txt"
     }
     for index, file in ipairs(files) do
         local f = io.open(file, "r")
