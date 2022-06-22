@@ -82,6 +82,8 @@ RPM:
       - RUNNER:
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
+          - aws/fedora-36-x86_64
+          - aws/fedora-36-aarch64
           - aws/rhel-8.6-ga-x86_64
           - aws/rhel-8.6-ga-aarch64
           - aws/rhel-9.0-ga-x86_64
