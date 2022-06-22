@@ -47,14 +47,6 @@ func TestFilenameFromType(t *testing.T) {
 			},
 		},
 		{
-			name: "vhd",
-			args: args{"vhd"},
-			want: wantResult{
-				filename: "disk.vhd",
-				mimeType: "application/x-vhd",
-			},
-		},
-		{
 			name: "azure-rhui",
 			args: args{"azure-rhui"},
 			want: wantResult{
@@ -144,7 +136,6 @@ func TestImageType_Name(t *testing.T) {
 			arch: "x86_64",
 			imgNames: []string{
 				"qcow2",
-				"vhd",
 				"azure-rhui",
 			},
 		},
@@ -203,7 +194,6 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 			arch: "x86_64",
 			imgNames: []string{
 				"qcow2",
-				"vhd",
 				"azure-rhui",
 			},
 		},

@@ -251,11 +251,6 @@ func (t *imageType) OSTreeRef() string {
 }
 
 func (t *imageType) Size(size uint64) uint64 {
-	const MegaByte = 1024 * 1024
-	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
-	if t.name == "vhd" && size%MegaByte != 0 {
-		size = (size/MegaByte + 1) * MegaByte
-	}
 	if size == 0 {
 		size = t.defaultSize
 	}
@@ -493,7 +488,6 @@ func newDistro(distroName string) distro.Distro {
 
 	x86_64.addImageTypes(
 		qcow2ImgType,
-		vhdImgType,
 		azureRhuiImgType,
 	)
 
