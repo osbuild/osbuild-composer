@@ -11,33 +11,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			// Defaults
-			"@Core",
-			"langpacks-en",
-
-			// From the lorax kickstart
-			"chrony",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"gdisk",
-			"net-tools",
-			"python3",
-			"selinux-policy-targeted",
-			"WALinuxAgent",
-
-			// removed from defaults but required to boot in azure
-			"dhcp-client",
-		},
-		Exclude: []string{
-			"dracut-config-rescue",
-			"rng-tools",
-		},
-	}.Append(bootPackageSet(t))
-}
-
 func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
@@ -236,34 +209,6 @@ func vhdPipelines(compress bool) pipelinesFunc {
 	}
 }
 
-var vhdImgType = imageType{
-	name:     "vhd",
-	filename: "disk.vhd",
-	mimeType: "application/x-vhd",
-	packageSets: map[string]packageSetFunc{
-		buildPkgsKey: distroBuildPackageSet,
-		osPkgsKey:    vhdCommonPackageSet,
-	},
-	packageSetChains: map[string][]string{
-		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-	},
-	defaultImageConfig: &distro.ImageConfig{
-		EnabledServices: []string{
-			"sshd",
-			"waagent",
-		},
-		DefaultTarget: "multi-user.target",
-	},
-	kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y",
-	bootable:            true,
-	defaultSize:         4 * GigaByte,
-	pipelines:           vhdPipelines(false),
-	buildPipelines:      []string{"build"},
-	payloadPipelines:    []string{"os", "image", "vpc"},
-	exports:             []string{"vpc"},
-	basePartitionTables: defaultBasePartitionTables,
-}
-
 var azureRhuiImgType = imageType{
 	name:     "azure-rhui",
 	filename: "disk.vhd.xz",
@@ -441,7 +386,7 @@ var azureRhuiImgType = imageType{
 		},
 		DefaultTarget: "multi-user.target",
 	},
-	kernelOptions:       vhdImgType.kernelOptions,
+	kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y",
 	bootable:            true,
 	defaultSize:         68719476736,
 	pipelines:           vhdPipelines(true),
