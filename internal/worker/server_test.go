@@ -225,17 +225,19 @@ func TestArgs(t *testing.T) {
 
 	job := worker.OSBuildJob{
 		Manifest: manifest,
-		Exports:  []string{"assembler"},
 		PipelineNames: &worker.PipelineNames{
 			Build:   []string{"b"},
 			Payload: []string{"x", "y", "z"},
 		},
 		Targets: []*target.Target{
 			{
-				Name:           target.TargetNameWorkerServer,
-				ImageName:      "test-image",
-				ExportFilename: "test-image",
-				Options:        &target.WorkerServerTargetOptions{},
+				Name:      target.TargetNameWorkerServer,
+				ImageName: "test-image",
+				OsbuildArtifact: target.OsbuildArtifact{
+					ExportFilename: "test-image",
+					ExportName:     "assembler",
+				},
+				Options: &target.WorkerServerTargetOptions{},
 			},
 		},
 	}
@@ -409,13 +411,15 @@ func TestMixedOSBuildJob(t *testing.T) {
 
 	oldJob := worker.OSBuildJob{
 		Manifest: emptyManifestV2,
-		Exports:  []string{"assembler"},
 		Targets: []*target.Target{
 			{
-				Name:           target.TargetNameWorkerServer,
-				ImageName:      "no-pipeline-names",
-				ExportFilename: "no-pipeline-names",
-				Options:        &target.WorkerServerTargetOptions{},
+				Name:      target.TargetNameWorkerServer,
+				ImageName: "no-pipeline-names",
+				OsbuildArtifact: target.OsbuildArtifact{
+					ExportFilename: "no-pipeline-names",
+					ExportName:     "assembler",
+				},
+				Options: &target.WorkerServerTargetOptions{},
 			},
 		},
 	}
@@ -424,17 +428,19 @@ func TestMixedOSBuildJob(t *testing.T) {
 
 	newJob := worker.OSBuildJob{
 		Manifest: emptyManifestV2,
-		Exports:  []string{"assembler"},
 		PipelineNames: &worker.PipelineNames{
 			Build:   []string{"build"},
 			Payload: []string{"other", "pipelines"},
 		},
 		Targets: []*target.Target{
 			{
-				Name:           target.TargetNameWorkerServer,
-				ImageName:      "with-pipeline-names",
-				ExportFilename: "with-pipeline-names",
-				Options:        &target.WorkerServerTargetOptions{},
+				Name:      target.TargetNameWorkerServer,
+				ImageName: "with-pipeline-names",
+				OsbuildArtifact: target.OsbuildArtifact{
+					ExportFilename: "with-pipeline-names",
+					ExportName:     "assembler",
+				},
+				Options: &target.WorkerServerTargetOptions{},
 			},
 		},
 	}

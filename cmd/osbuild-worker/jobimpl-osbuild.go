@@ -298,7 +298,8 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// copy pipeline info to the result
 	osbuildJobResult.PipelineNames = jobArgs.PipelineNames
 
-	exports := jobArgs.Exports
+	// get exports for all job's targets
+	exports := jobArgs.OsbuildExports()
 	if len(exports) == 0 {
 		// job did not define exports, likely coming from an older version of composer
 		// fall back to default "assembler"
@@ -344,14 +345,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return nil
 	}
 
-	exportPath := exports[0]
 	for _, jobTarget := range jobArgs.Targets {
 		var targetResult *target.TargetResult
 		switch targetOptions := jobTarget.Options.(type) {
 		case *target.WorkerServerTargetOptions:
 			targetResult = target.NewWorkerServerTargetResult()
 			var f *os.File
-			imagePath := path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename)
+			imagePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
 			f, err = os.Open(imagePath)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, err.Error())
@@ -392,7 +392,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			imageName := jobTarget.ImageName + ".vmdk"
 			imagePath := path.Join(tempDirectory, imageName)
 
-			exportedImagePath := path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename)
+			exportedImagePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
 			err = os.Symlink(exportedImagePath, imagePath)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
@@ -422,7 +422,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if impl.AWSBucket != "" {
 				bucket = impl.AWSBucket
 			}
-			_, err = a.Upload(path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename), bucket, key)
+			_, err = a.Upload(path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename), bucket, key)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				break
@@ -451,7 +451,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			url, targetError := uploadToS3(a, outputDirectory, exportPath, bucket, targetOptions.Key, jobTarget.OsbuildArtifact.ExportFilename)
+			url, targetError := uploadToS3(a, outputDirectory, jobTarget.OsbuildArtifact.ExportName, bucket, targetOptions.Key, jobTarget.OsbuildArtifact.ExportFilename)
 			if targetError != nil {
 				targetResult.TargetError = targetError
 				break
@@ -477,7 +477,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			const azureMaxUploadGoroutines = 4
 			err = azureStorageClient.UploadPageBlob(
 				metadata,
-				path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename),
+				path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename),
 				azureMaxUploadGoroutines,
 			)
 
@@ -497,7 +497,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			logWithId.Infof("[GCP] 🚀 Uploading image to: %s/%s", targetOptions.Bucket, targetOptions.Object)
-			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename),
+			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename),
 				targetOptions.Bucket, targetOptions.Object, map[string]string{gcp.MetadataKeyImageName: jobTarget.ImageName})
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
@@ -625,7 +625,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 					ContainerName:  storageContainer,
 					BlobName:       blobName,
 				},
-				path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename),
+				path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename),
 				azure.DefaultUploadThreads,
 			)
 			if err != nil {
@@ -682,7 +682,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				}
 			}()
 
-			file, err := os.Open(path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename))
+			file, err := os.Open(path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, fmt.Sprintf("failed to open the image for reading: %v", err))
 				break
@@ -718,7 +718,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Info("[OCI] 🔑 Logged in OCI")
 			logWithId.Info("[OCI] ⬆ Uploading the image")
-			file, err := os.Open(path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename))
+			file, err := os.Open(path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				break
@@ -760,7 +760,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				client.TlsVerify = *targetOptions.TlsVerify
 			}
 
-			sourcePath := path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename)
+			sourcePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
 
 			// TODO: get the container type from the metadata of the osbuild job
 			sourceRef := fmt.Sprintf("oci-archive:%s", sourcePath)

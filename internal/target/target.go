@@ -16,6 +16,8 @@ type TargetName string
 type OsbuildArtifact struct {
 	// Filename of the image as produced by osbuild for a given export
 	ExportFilename string `json:"export_filename"`
+	// Name of the osbuild pipeline, which should be exported for this target
+	ExportName string `json:"export_name"`
 }
 
 type Target struct {

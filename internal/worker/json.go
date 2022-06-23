@@ -20,8 +20,23 @@ type OSBuildJob struct {
 	// Index of the ManifestJobByIDResult instance in the job's dynamic arguments slice
 	ManifestDynArgsIdx *int             `json:"manifest_dyn_args_idx,omitempty"`
 	Targets            []*target.Target `json:"targets,omitempty"`
-	Exports            []string         `json:"export_stages,omitempty"`
 	PipelineNames      *PipelineNames   `json:"pipeline_names,omitempty"`
+}
+
+// OsbuildExports returns a slice of osbuild pipeline names, which should be
+// exported as part of running osbuild image build for the job. The pipeline
+// names are gathered from the targets specified in the job.
+func (j OSBuildJob) OsbuildExports() []string {
+	exports := []string{}
+	seenExports := map[string]bool{}
+	for _, target := range j.Targets {
+		exists := seenExports[target.OsbuildArtifact.ExportName]
+		if !exists {
+			seenExports[target.OsbuildArtifact.ExportName] = true
+			exports = append(exports, target.OsbuildArtifact.ExportName)
+		}
+	}
+	return exports
 }
 
 type JobResult struct {
@@ -239,19 +254,62 @@ type updateJobRequest struct {
 func (j *OSBuildJob) UnmarshalJSON(data []byte) error {
 	// handles unmarshalling old jobs in the queue that don't contain newer fields
 	// adds default/fallback values to missing data
-	type aliastype OSBuildJob
-	var alias aliastype
-	if err := json.Unmarshal(data, &alias); err != nil {
+	type aliasType OSBuildJob
+	type compatType struct {
+		aliasType
+		// Deprecated: Exports should not be used. The export is set in the `Target.OsbuildExport`
+		Exports []string `json:"export_stages,omitempty"`
+	}
+	var compat compatType
+	if err := json.Unmarshal(data, &compat); err != nil {
 		return err
 	}
-	if alias.PipelineNames == nil {
-		alias.PipelineNames = &PipelineNames{
+	if compat.PipelineNames == nil {
+		compat.PipelineNames = &PipelineNames{
 			Build:   distro.BuildPipelinesFallback(),
 			Payload: distro.PayloadPipelinesFallback(),
 		}
 	}
-	*j = OSBuildJob(alias)
+
+	// Exports used to be specified in the job, but there could be always only a single export specified.
+	if len(compat.Exports) != 0 {
+		if len(compat.Exports) > 1 {
+			return fmt.Errorf("osbuild job has more than one exports specified")
+		}
+		export := compat.Exports[0]
+		// add the single export to each target
+		for idx := range compat.Targets {
+			target := compat.Targets[idx]
+			if target.OsbuildArtifact.ExportName == "" {
+				target.OsbuildArtifact.ExportName = export
+			} else if target.OsbuildArtifact.ExportName != export {
+				return fmt.Errorf("osbuild job has different global exports and export in the target specified at the same time")
+			}
+			compat.Targets[idx] = target
+		}
+	}
+
+	*j = OSBuildJob(compat.aliasType)
 	return nil
+}
+
+func (j OSBuildJob) MarshalJSON() ([]byte, error) {
+	type aliasType OSBuildJob
+	type compatType struct {
+		aliasType
+		// Depredated: Exports should not be used. The export is set in the `Target.OsbuildExport`
+		Exports []string `json:"export_stages,omitempty"`
+	}
+	compat := compatType{
+		aliasType: aliasType(j),
+	}
+	compat.Exports = j.OsbuildExports()
+
+	data, err := json.Marshal(&compat)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (j *OSBuildJobResult) UnmarshalJSON(data []byte) error {

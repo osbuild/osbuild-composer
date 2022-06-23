@@ -244,6 +244,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 	t.Uuid = uuid.New()
 	t.ImageName = u.ImageName
 	t.OsbuildArtifact.ExportFilename = imageType.Filename()
+	t.OsbuildArtifact.ExportName = imageType.Exports()[0]
 	t.Status = common.IBWaiting
 	t.Created = time.Now()
 

@@ -119,7 +119,6 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 
 	id, err = s.workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{
 		Targets: []*target.Target{ir.target},
-		Exports: ir.imageType.Exports(),
 		PipelineNames: &worker.PipelineNames{
 			Build:   ir.imageType.BuildPipelines(),
 			Payload: ir.imageType.PayloadPipelines(),
@@ -183,10 +182,10 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			UploadDirectory: kojiDirectory,
 		})
 		kojiTarget.OsbuildArtifact.ExportFilename = ir.imageType.Filename()
+		kojiTarget.OsbuildArtifact.ExportName = ir.imageType.Exports()[0]
 		kojiTarget.ImageName = kojiFilename
 
 		buildID, err := s.workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{
-			Exports: ir.imageType.Exports(),
 			PipelineNames: &worker.PipelineNames{
 				Build:   ir.imageType.BuildPipelines(),
 				Payload: ir.imageType.PayloadPipelines(),
