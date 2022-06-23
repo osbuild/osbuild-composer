@@ -400,9 +400,9 @@ func main() {
 	errs := wq.wait()
 	exit := 0
 	if len(errs) > 0 {
-		fmt.Printf("Encountered %d errors:\n", len(errs))
+		fmt.Fprintf(os.Stderr, "Encountered %d errors:\n", len(errs))
 		for idx, err := range errs {
-			fmt.Printf("%3d: %s\n", idx, err.Error())
+			fmt.Fprintf(os.Stderr, "%3d: %s\n", idx, err.Error())
 		}
 		exit = 1
 	}
