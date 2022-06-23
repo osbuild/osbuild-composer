@@ -435,6 +435,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			default:
 				return HTTPError(ErrorUnsupportedImageType)
 			}
+
+			irTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
 		}
 
 		irs = append(irs, imageRequest{

@@ -2251,6 +2251,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	workerServerTarget := target.NewWorkerServerTarget()
 	workerServerTarget.ImageName = imageType.Filename()
 	workerServerTarget.OsbuildArtifact.ExportFilename = imageType.Filename()
+	workerServerTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
 	targets = append(targets, workerServerTarget)
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
 		t := uploadRequestToTarget(*cr.Upload, imageType)
@@ -2356,7 +2357,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		jobId, err = api.workers.EnqueueOSBuild(api.archName, &worker.OSBuildJob{
 			Manifest: manifest,
 			Targets:  targets,
-			Exports:  imageType.Exports(),
 			PipelineNames: &worker.PipelineNames{
 				Build:   imageType.BuildPipelines(),
 				Payload: imageType.PayloadPipelines(),

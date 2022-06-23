@@ -212,7 +212,7 @@ func TestTargetOptionsFilenameCompatibilityMarshal(t *testing.T) {
 		target     *Target
 	}{
 		{
-			targetJSON: []byte(`{"uuid":"00000000-0000-0000-0000-000000000000","image_name":"my-image","name":"org.osbuild.aws","created":"0001-01-01T00:00:00Z","status":"WAITING","options":{"region":"us","accessKeyID":"id","secretAccessKey":"key","sessionToken":"token","bucket":"bkt","key":"key","shareWithAccounts":["123456789"],"filename":"image.qcow2"},"osbuild_artifact":{"export_filename":"image.qcow2"}}`),
+			targetJSON: []byte(`{"uuid":"00000000-0000-0000-0000-000000000000","image_name":"my-image","name":"org.osbuild.aws","created":"0001-01-01T00:00:00Z","status":"WAITING","options":{"region":"us","accessKeyID":"id","secretAccessKey":"key","sessionToken":"token","bucket":"bkt","key":"key","shareWithAccounts":["123456789"],"filename":"image.qcow2"},"osbuild_artifact":{"export_filename":"image.qcow2","export_name":""}}`),
 			target: &Target{
 				ImageName: "my-image",
 				OsbuildArtifact: OsbuildArtifact{

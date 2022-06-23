@@ -690,6 +690,7 @@ func TestCompose(t *testing.T) {
 					ImageName: imgType.Filename(),
 					OsbuildArtifact: target.OsbuildArtifact{
 						ExportFilename: imgType.Filename(),
+						ExportName:     imgType.Exports()[0],
 					},
 					Name:    target.TargetNameWorkerServer,
 					Options: &target.WorkerServerTargetOptions{},
@@ -716,6 +717,7 @@ func TestCompose(t *testing.T) {
 					ImageName: imgType.Filename(),
 					OsbuildArtifact: target.OsbuildArtifact{
 						ExportFilename: imgType.Filename(),
+						ExportName:     imgType.Exports()[0],
 					},
 					Name:    target.TargetNameWorkerServer,
 					Options: &target.WorkerServerTargetOptions{},
@@ -726,6 +728,7 @@ func TestCompose(t *testing.T) {
 					ImageName: "test_upload",
 					OsbuildArtifact: target.OsbuildArtifact{
 						ExportFilename: imgType.Filename(),
+						ExportName:     imgType.Exports()[0],
 					},
 					Options: &target.AWSTargetOptions{
 						Region:          "frankfurt",
@@ -757,6 +760,7 @@ func TestCompose(t *testing.T) {
 					ImageName: imgType.Filename(),
 					OsbuildArtifact: target.OsbuildArtifact{
 						ExportFilename: imgType.Filename(),
+						ExportName:     imgType.Exports()[0],
 					},
 					Name:    target.TargetNameWorkerServer,
 					Options: &target.WorkerServerTargetOptions{},
@@ -793,6 +797,7 @@ func TestCompose(t *testing.T) {
 					ImageName: imgType2.Filename(),
 					OsbuildArtifact: target.OsbuildArtifact{
 						ExportFilename: imgType2.Filename(),
+						ExportName:     imgType2.Exports()[0],
 					},
 					Name:    target.TargetNameWorkerServer,
 					Options: &target.WorkerServerTargetOptions{},
@@ -1733,6 +1738,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 					ImageName: imgType.Filename(),
 					OsbuildArtifact: target.OsbuildArtifact{
 						ExportFilename: imgType.Filename(),
+						ExportName:     imgType.Exports()[0],
 					},
 					Name:    target.TargetNameWorkerServer,
 					Options: &target.WorkerServerTargetOptions{},
@@ -1760,6 +1766,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 					ImageName: imgType2.Filename(),
 					OsbuildArtifact: target.OsbuildArtifact{
 						ExportFilename: imgType2.Filename(),
+						ExportName:     imgType2.Exports()[0],
 					},
 					Name:    target.TargetNameWorkerServer,
 					Options: &target.WorkerServerTargetOptions{},
