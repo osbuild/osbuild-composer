@@ -25,6 +25,18 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+type multiValue []string
+
+func (mv *multiValue) String() string {
+	return strings.Join(*mv, ", ")
+}
+
+func (mv *multiValue) Set(v string) error {
+	split := strings.Split(v, ",")
+	*mv = split
+	return nil
+}
+
 type repository struct {
 	Name           string   `json:"name"`
 	BaseURL        string   `json:"baseurl,omitempty"`
@@ -323,16 +335,24 @@ func mergeOverrides(base, overrides composeRequest) composeRequest {
 }
 
 func main() {
+	// common args
 	var outputDir, cacheRoot string
 	var nWorkers int
 	flag.StringVar(&outputDir, "output", "test/data/manifests.plain/", "manifest store directory")
 	flag.IntVar(&nWorkers, "workers", 16, "number of workers to run concurrently")
 	flag.StringVar(&cacheRoot, "cache", "/tmp/rpmmd", "rpm metadata cache directory")
+
+	// manifest selection args
+	var arches, distros, imgTypes multiValue
+	flag.Var(&arches, "arches", "comma-separated list of architectures")
+	flag.Var(&distros, "distros", "comma-separated list of distributions")
+	flag.Var(&imgTypes, "images", "comma-separated list of image types")
+
 	flag.Parse()
 
 	seedArg := int64(0)
 	darm := readRepos()
-	distros := distroregistry.NewDefault()
+	distroReg := distroregistry.NewDefault()
 	jobs := make([]manifestJob, 0)
 
 	requestMap := loadFormatRequestMap()
@@ -343,17 +363,33 @@ func main() {
 	}
 
 	fmt.Println("Collecting jobs")
-	for _, distroName := range distros.List() {
-		distribution := distros.GetDistro(distroName)
-		for _, archName := range distribution.ListArches() {
+	if len(distros) == 0 {
+		distros = distroReg.List()
+	}
+	for _, distroName := range distros {
+		distribution := distroReg.GetDistro(distroName)
+		if distribution == nil {
+			panic(fmt.Sprintf("invalid distro name %q\n", distroName))
+		}
+
+		distroArches := arches
+		if len(distroArches) == 0 {
+			distroArches = distribution.ListArches()
+		}
+		for _, archName := range distroArches {
 			arch, err := distribution.GetArch(archName)
 			if err != nil {
-				panic(fmt.Sprintf("distro %q lists arch %q but GetArch() failed: %s", distroName, archName, err.Error()))
+				panic(fmt.Sprintf("invalid arch name %q for distro %q: %s", archName, distroName, err.Error()))
 			}
-			for _, imgTypeName := range arch.ListImageTypes() {
+
+			daImgTypes := imgTypes
+			if len(daImgTypes) == 0 {
+				daImgTypes = arch.ListImageTypes()
+			}
+			for _, imgTypeName := range daImgTypes {
 				imgType, err := arch.GetImageType(imgTypeName)
 				if err != nil {
-					panic(fmt.Sprintf("distro %q (%q) lists image type %q but GetImageType() failed: %s\n", distroName, archName, imgTypeName, err.Error()))
+					panic(fmt.Sprintf("invalid image type %q for distro %q and arch %q: %s", imgTypeName, distroName, archName, err.Error()))
 				}
 
 				// get repositories
