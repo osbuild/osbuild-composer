@@ -11,13 +11,18 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	pipeline "github.com/osbuild/osbuild-composer/internal/distro/pipelines"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
+	buildPipeline.Repos = repos
+	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
@@ -54,7 +59,11 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, kernelOptions string,
 
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
+	buildPipeline.Repos = repos
+	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
@@ -79,7 +88,11 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
+	buildPipeline.Repos = repos
+	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
@@ -104,7 +117,11 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 
 func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
+	buildPipeline.Repos = repos
+	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
@@ -131,7 +148,11 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
 	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
+	buildPipeline.Repos = repos
+	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
@@ -164,7 +185,12 @@ func makeISORootPath(p string) string {
 
 func iotInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
+	buildPipeline.Repos = repos
+	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	pipelines = append(pipelines, buildPipeline.Serialize())
+
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	d := t.arch.distro
 	archName := t.Arch().Name()
@@ -177,15 +203,22 @@ func iotInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	}
 	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "IoT", ksUsers))
+
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, payloadStages))
+
 	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, archName, false))
+
 	return pipelines, nil
 }
 
 func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
+	buildPipeline.Repos = repos
+	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
 	if err != nil {
@@ -193,6 +226,7 @@ func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, op
 	}
 
 	pipelines = append(pipelines, *treePipeline)
+
 	pipelines = append(pipelines, *ostreeCommitPipeline(options, t.arch.distro.osVersion))
 
 	return pipelines, nil
@@ -223,15 +257,6 @@ func iotContainerPipelines(t *imageType, customizations *blueprint.Customization
 	pipelines = append(pipelines, *containerTreePipeline(repos, packageSetSpecs[containerPkgsKey], options, customizations, nginxConfigPath, httpPort))
 	pipelines = append(pipelines, *containerPipeline(t, nginxConfigPath, httpPort))
 	return pipelines, nil
-}
-
-func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSpec, runner string) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "build"
-	p.Runner = runner
-	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(buildPackageSpecs)))
-	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(true)))
-	return p
 }
 
 func osPipeline(t *imageType,
