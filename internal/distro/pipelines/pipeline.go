@@ -4,6 +4,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
+type BootLoader uint64
+
+const (
+	BOOTLOADER_GRUB BootLoader = iota
+	BOOTLOADER_ZIPL
+)
+
 type Pipeline struct {
 	name   string
 	runner *string

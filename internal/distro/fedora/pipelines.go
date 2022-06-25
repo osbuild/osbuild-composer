@@ -5,10 +5,8 @@ import (
 	"math/rand"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	pipeline "github.com/osbuild/osbuild-composer/internal/distro/pipelines"
@@ -29,15 +27,15 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
-	pipelines = append(pipelines, *treePipeline)
+	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "1.1"})
@@ -70,15 +68,15 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
-	pipelines = append(pipelines, *treePipeline)
+	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVPC, nil)
@@ -99,15 +97,15 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
-	pipelines = append(pipelines, *treePipeline)
+	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{Subformat: osbuild.VMDKSubformatStreamOptimized})
@@ -128,15 +126,15 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
-	pipelines = append(pipelines, *treePipeline)
+	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, nil)
@@ -159,14 +157,14 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
-	pipelines = append(pipelines, *treePipeline)
+	pipelines = append(pipelines, treePipeline.Serialize())
 
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
 	pipelines = append(pipelines, *imagePipeline)
 	return pipelines, nil
 }
@@ -220,12 +218,12 @@ func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, op
 	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	pipelines = append(pipelines, *treePipeline)
+	pipelines = append(pipelines, treePipeline.Serialize())
 
 	pipelines = append(pipelines, *ostreeCommitPipeline(options, t.arch.distro.osVersion))
 
@@ -259,213 +257,117 @@ func iotContainerPipelines(t *imageType, customizations *blueprint.Customization
 	return pipelines, nil
 }
 
-func osPipeline(t *imageType,
+func osPipeline(buildPipeline *pipeline.BuildPipeline,
+	t *imageType,
 	repos []rpmmd.RepoConfig,
 	packages []rpmmd.PackageSpec,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
-	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
+	pt *disk.PartitionTable) (pipeline.OSPipeline, error) {
+
 	imageConfig := t.getDefaultImageConfig()
-	p := new(osbuild.Pipeline)
-	if t.rpmOstree {
-		p.Name = "ostree-tree"
+
+	pl := pipeline.NewOSPipeline(buildPipeline, t.rpmOstree)
+
+	pl.PartitionTable = pt
+
+	if t.Arch().Name() == distro.S390xArchName {
+		pl.BootLoader = pipeline.BOOTLOADER_ZIPL
 	} else {
-		p.Name = "os"
-	}
-	p.Build = "name:build"
-
-	if t.rpmOstree && options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
+		pl.BootLoader = pipeline.BOOTLOADER_GRUB
 	}
 
-	rpmOptions := osbuild.NewRPMStageOptions(repos)
-	rpmOptions.GPGKeysFromTree = imageConfig.GPGKeyFiles
-	p.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(packages)))
+	pl.UEFI = t.supportsUEFI()
+	pl.GRUBLegacy = t.arch.legacy
+	pl.Vendor = t.arch.distro.vendor
 
-	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-	if pt == nil || pt.FindMountable("/boot") == nil {
-		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
-	} else {
-		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+	var kernelOptions []string
+	if t.kernelOptions != "" {
+		kernelOptions = append(kernelOptions, t.kernelOptions)
 	}
+	if bpKernel := c.GetKernel(); bpKernel.Append != "" {
+		kernelOptions = append(kernelOptions, bpKernel.Append)
+	}
+	pl.KernelOptionsAppend = kernelOptions
+	pl.KernelName = c.GetKernel().Name
 
-	language, keyboard := c.GetPrimaryLocale()
-	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
-	}
-	if keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
-	} else if imageConfig.Keyboard != nil {
-		p.AddStage(osbuild.NewKeymapStage(imageConfig.Keyboard))
-	}
+	pl.OSTreeParent = options.OSTree.Parent
+	pl.OSTreeURL = options.OSTree.URL
 
-	if hostname := c.GetHostname(); hostname != nil {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: *hostname}))
-	} else {
-		p.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: "localhost.localdomain"}))
-	}
-
-	timezone, ntpServers := c.GetTimezoneSettings()
-	if timezone != nil {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
-	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
-	}
-
-	if len(ntpServers) > 0 {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
-	} else if imageConfig.TimeSynchronization != nil {
-		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
-	}
+	pl.Repos = repos
+	pl.PackageSpecs = packages
+	pl.GPGKeyFiles = imageConfig.GPGKeyFiles
 
 	if !t.bootISO {
 		// don't put users and groups in the payload of an installer
 		// add them via kickstart instead
-		if groups := c.GetGroups(); len(groups) > 0 {
-			p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
-		}
-
-		if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
-			return nil, err
-		} else if userOptions != nil {
-			if t.rpmOstree {
-				// for ostree, writing the key during user creation is
-				// redundant and can cause issues so create users without keys
-				// and write them on first boot
-				userOptionsSansKeys, err := osbuild.NewUsersStageOptions(c.GetUsers(), true)
-				if err != nil {
-					return nil, err
-				}
-				p.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
-				p.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
-			} else {
-				p.AddStage(osbuild.NewUsersStage(userOptions))
-			}
-		}
+		pl.Groups = c.GetGroups()
+		pl.Users = c.GetUsers()
 	}
 
-	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
-		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
-		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
-			imageConfig.EnabledServices,
-			imageConfig.DisabledServices,
-			services,
-			imageConfig.DefaultTarget,
-		)))
+	services := &blueprint.ServicesCustomization{
+		Enabled:  imageConfig.EnabledServices,
+		Disabled: imageConfig.DisabledServices,
+	}
+	if extraServices := c.GetServices(); extraServices != nil {
+		services.Enabled = append(services.Enabled, extraServices.Enabled...)
+		services.Disabled = append(services.Disabled, extraServices.Disabled...)
+	}
+	pl.EnabledServices = services.Enabled
+	pl.DisabledServices = services.Disabled
+	pl.DefaultTarget = imageConfig.DefaultTarget
+
+	pl.Firewall = c.GetFirewall()
+
+	language, keyboard := c.GetPrimaryLocale()
+	if language != nil {
+		pl.Language = *language
+	} else {
+		pl.Language = imageConfig.Locale
+	}
+	if keyboard != nil {
+		pl.Keyboard = keyboard
+	} else if imageConfig.Keyboard != nil {
+		pl.Keyboard = &imageConfig.Keyboard.Keymap
 	}
 
-	if firewall := c.GetFirewall(); firewall != nil {
-		p.AddStage(osbuild.NewFirewallStage(firewallStageOptions(firewall)))
+	if hostname := c.GetHostname(); hostname != nil {
+		pl.Hostname = *hostname
 	}
 
-	for _, sysconfigConfig := range imageConfig.Sysconfig {
-		p.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
+	timezone, ntpServers := c.GetTimezoneSettings()
+	if timezone != nil {
+		pl.Timezone = *timezone
+	} else {
+		pl.Timezone = imageConfig.Timezone
 	}
 
-	for _, systemdLogindConfig := range imageConfig.SystemdLogind {
-		p.AddStage(osbuild.NewSystemdLogindStage(systemdLogindConfig))
+	if len(ntpServers) > 0 {
+		pl.NTPServers = ntpServers
+	} else if imageConfig.TimeSynchronization != nil {
+		pl.NTPServers = imageConfig.TimeSynchronization.Timeservers
 	}
 
-	for _, cloudInitConfig := range imageConfig.CloudInit {
-		p.AddStage(osbuild.NewCloudInitStage(cloudInitConfig))
-	}
+	pl.Grub2Config = imageConfig.Grub2Config
+	pl.Sysconfig = imageConfig.Sysconfig
+	pl.SystemdLogind = imageConfig.SystemdLogind
+	pl.CloudInit = imageConfig.CloudInit
+	pl.Modprobe = imageConfig.Modprobe
+	pl.DracutConf = imageConfig.DracutConf
+	pl.SystemdUnit = imageConfig.SystemdUnit
+	pl.Authselect = imageConfig.Authselect
+	pl.SELinuxConfig = imageConfig.SELinuxConfig
+	pl.Tuned = imageConfig.Tuned
+	pl.Tmpfilesd = imageConfig.Tmpfilesd
+	pl.PamLimitsConf = imageConfig.PamLimitsConf
+	pl.Sysctld = imageConfig.Sysctld
+	pl.DNFConfig = imageConfig.DNFConfig
+	pl.SshdConfig = imageConfig.SshdConfig
+	pl.AuthConfig = imageConfig.Authconfig
+	pl.PwQuality = imageConfig.PwQuality
+	pl.WAAgentConfig = imageConfig.WAAgentConfig
 
-	for _, modprobeConfig := range imageConfig.Modprobe {
-		p.AddStage(osbuild.NewModprobeStage(modprobeConfig))
-	}
-
-	for _, dracutConfConfig := range imageConfig.DracutConf {
-		p.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
-	}
-
-	for _, systemdUnitConfig := range imageConfig.SystemdUnit {
-		p.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
-	}
-
-	if authselectConfig := imageConfig.Authselect; authselectConfig != nil {
-		p.AddStage(osbuild.NewAuthselectStage(authselectConfig))
-	}
-
-	if seLinuxConfig := imageConfig.SELinuxConfig; seLinuxConfig != nil {
-		p.AddStage(osbuild.NewSELinuxConfigStage(seLinuxConfig))
-	}
-
-	if tunedConfig := imageConfig.Tuned; tunedConfig != nil {
-		p.AddStage(osbuild.NewTunedStage(tunedConfig))
-	}
-
-	for _, tmpfilesdConfig := range imageConfig.Tmpfilesd {
-		p.AddStage(osbuild.NewTmpfilesdStage(tmpfilesdConfig))
-	}
-
-	for _, pamLimitsConfConfig := range imageConfig.PamLimitsConf {
-		p.AddStage(osbuild.NewPamLimitsConfStage(pamLimitsConfConfig))
-	}
-
-	for _, sysctldConfig := range imageConfig.Sysctld {
-		p.AddStage(osbuild.NewSysctldStage(sysctldConfig))
-	}
-
-	for _, dnfConfig := range imageConfig.DNFConfig {
-		p.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
-	}
-
-	if sshdConfig := imageConfig.SshdConfig; sshdConfig != nil {
-		p.AddStage((osbuild.NewSshdConfigStage(sshdConfig)))
-	}
-
-	if authConfig := imageConfig.Authconfig; authConfig != nil {
-		p.AddStage(osbuild.NewAuthconfigStage(authConfig))
-	}
-
-	if pwQuality := imageConfig.PwQuality; pwQuality != nil {
-		p.AddStage(osbuild.NewPwqualityConfStage(pwQuality))
-	}
-
-	if waConfig := imageConfig.WAAgentConfig; waConfig != nil {
-		p.AddStage(osbuild.NewWAAgentConfStage(waConfig))
-	}
-
-	if pt != nil {
-		kernelOptions := osbuild.GenImageKernelOptions(pt)
-		if t.kernelOptions != "" {
-			kernelOptions = append(kernelOptions, t.kernelOptions)
-		}
-		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
-			kernelOptions = append(kernelOptions, bpKernel.Append)
-		}
-		p = prependKernelCmdlineStage(p, strings.Join(kernelOptions, " "), pt)
-		p.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
-		kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packages, c.GetKernel().Name)
-		bootloader := bootloaderConfigStage(t, *pt, kernelVer, false, false)
-
-		if cfg := imageConfig.Grub2Config; cfg != nil {
-			if grub2, ok := bootloader.Options.(*osbuild.GRUB2StageOptions); ok {
-				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`
-				// and thus we need to preserve it
-				if grub2.Config != nil {
-					cfg.Default = grub2.Config.Default
-				}
-			}
-		}
-
-		p.AddStage(bootloader)
-	}
-
-	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
-
-	if t.rpmOstree {
-		p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
-			EtcGroupMembers: []string{
-				// NOTE: We may want to make this configurable.
-				"wheel", "docker",
-			},
-		}))
-	}
-
-	return p, nil
+	return pl, nil
 }
 
 func ostreeCommitPipeline(options distro.ImageOptions, osVersion string) *osbuild.Pipeline {
@@ -673,20 +575,6 @@ func qemuPipeline(inputPipelineName, inputFilename, outputFilename string, forma
 	)
 	p.AddStage(qemuStage)
 	return p
-}
-
-func bootloaderConfigStage(t *imageType, partitionTable disk.PartitionTable, kernelVer string, install, greenboot bool) *osbuild.Stage {
-	if t.Arch().Name() == distro.S390xArchName {
-		return osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
-	}
-
-	uefi := t.supportsUEFI()
-	legacy := t.arch.legacy
-
-	options := osbuild.NewGrub2StageOptionsUnified(&partitionTable, kernelVer, uefi, legacy, t.arch.distro.vendor, install)
-	options.Greenboot = greenboot
-
-	return osbuild.NewGRUB2Stage(options)
 }
 
 func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.Devices, mounts *osbuild.Mounts, disk *osbuild.Device) *osbuild.Stage {
