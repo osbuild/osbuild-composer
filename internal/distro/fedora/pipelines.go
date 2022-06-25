@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"path"
-	"path/filepath"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -42,17 +41,6 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines = append(pipelines, qemuPipeline.Serialize())
 
 	return pipelines, nil
-}
-
-func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, kernelOptions string, pt *disk.PartitionTable) *osbuild.Pipeline {
-	rootFs := pt.FindMountable("/")
-	if rootFs == nil {
-		panic("root filesystem must be defined for kernel-cmdline stage, this is a programming error")
-	}
-	rootFsUUID := rootFs.GetFSSpec().UUID
-	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFsUUID, kernelOptions))
-	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
-	return pipeline
 }
 
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
@@ -210,50 +198,46 @@ func iotInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	return pipelines, nil
 }
 
-func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-
+func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec) (*pipeline.BuildPipeline, *pipeline.OSPipeline, *pipeline.OSTreeCommitPipeline, error) {
 	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
 	buildPipeline.Repos = repos
 	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
-	pipelines = append(pipelines, buildPipeline.Serialize())
-
 	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
+	commitPipeline := ostreeCommitPipeline(&buildPipeline, &treePipeline, options, t.arch.distro.osVersion)
 
-	pipelines = append(pipelines, treePipeline.Serialize())
-
-	pipelines = append(pipelines, *ostreeCommitPipeline(options, t.arch.distro.osVersion))
-
-	return pipelines, nil
+	return &buildPipeline, &treePipeline, &commitPipeline, nil
 }
 
 func iotCommitPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines, err := iotCorePipelines(t, customizations, options, repos, packageSetSpecs)
+	pipelines := make([]osbuild.Pipeline, 0)
+
+	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetSpecs)
 	if err != nil {
 		return nil, err
 	}
-	tarPipeline := osbuild.Pipeline{
-		Name:  "commit-archive",
-		Build: "name:build",
-	}
-	tarPipeline.AddStage(tarStage("ostree-commit", t.Filename()))
-	pipelines = append(pipelines, tarPipeline)
+	tarPipeline := pipeline.NewTarPipeline(buildPipeline, &commitPipeline.Pipeline, "commit-archive")
+	tarPipeline.Filename = t.Filename()
+	pipelines = append(pipelines, buildPipeline.Serialize(), treePipeline.Serialize(), commitPipeline.Serialize(), tarPipeline.Serialize())
 	return pipelines, nil
 }
 
 func iotContainerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines, err := iotCorePipelines(t, customizations, options, repos, packageSetSpecs)
+	pipelines := make([]osbuild.Pipeline, 0)
+
+	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetSpecs)
 	if err != nil {
 		return nil, err
 	}
 
 	nginxConfigPath := "/etc/nginx.conf"
 	httpPort := "8080"
-	pipelines = append(pipelines, *containerTreePipeline(repos, packageSetSpecs[containerPkgsKey], options, customizations, nginxConfigPath, httpPort))
-	pipelines = append(pipelines, *containerPipeline(t, nginxConfigPath, httpPort))
+	containerTreePipeline := containerTreePipeline(buildPipeline, commitPipeline, repos, packageSetSpecs[containerPkgsKey], options, customizations, nginxConfigPath, httpPort)
+	containerPipeline := containerPipeline(buildPipeline, &containerTreePipeline.Pipeline, t, nginxConfigPath, httpPort)
+
+	pipelines = append(pipelines, buildPipeline.Serialize(), treePipeline.Serialize(), commitPipeline.Serialize(), containerTreePipeline.Serialize(), containerPipeline.Serialize())
 	return pipelines, nil
 }
 
@@ -370,84 +354,33 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 	return pl, nil
 }
 
-func ostreeCommitPipeline(options distro.ImageOptions, osVersion string) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "ostree-commit"
-	p.Build = "name:build"
-	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/repo"}))
-
-	commitStageInput := new(osbuild.OSTreeCommitStageInput)
-	commitStageInput.Type = "org.osbuild.tree"
-	commitStageInput.Origin = "org.osbuild.pipeline"
-	commitStageInput.References = osbuild.OSTreeCommitStageReferences{"name:ostree-tree"}
-
-	p.AddStage(osbuild.NewOSTreeCommitStage(
-		&osbuild.OSTreeCommitStageOptions{
-			Ref:       options.OSTree.Ref,
-			OSVersion: osVersion,
-			Parent:    options.OSTree.Parent,
-		},
-		&osbuild.OSTreeCommitStageInputs{Tree: commitStageInput}),
-	)
+func ostreeCommitPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.OSPipeline, options distro.ImageOptions, osVersion string) pipeline.OSTreeCommitPipeline {
+	p := pipeline.NewOSTreeCommitPipeline(buildPipeline, treePipeline)
+	p.Ref = options.OSTree.Ref
+	p.OSVersion = osVersion
+	p.Parent = options.OSTree.Parent
 	return p
 }
 
-func tarStage(source, filename string) *osbuild.Stage {
-	tree := new(osbuild.TarStageInput)
-	tree.Type = "org.osbuild.tree"
-	tree.Origin = "org.osbuild.pipeline"
-	tree.References = []string{"name:" + source}
-	return osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: filename}, &osbuild.TarStageInputs{Tree: tree})
-}
-
-func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations, nginxConfigPath, listenPort string) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "container-tree"
-	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
+func containerTreePipeline(buildPipeline *pipeline.BuildPipeline, commitPipeline *pipeline.OSTreeCommitPipeline, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations, nginxConfigPath, listenPort string) pipeline.OSTreeCommitServerTreePipeline {
+	p := pipeline.NewOSTreeCommitServerTreePipeline(buildPipeline, commitPipeline)
+	p.Repos = repos
+	p.PackageSpecs = packages
+	p.NginxConfigPath = nginxConfigPath
+	p.ListenPort = listenPort
 	language, _ := c.GetPrimaryLocale()
 	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US"}))
+		p.Language = *language
 	}
-
-	htmlRoot := "/usr/share/nginx/html"
-	repoPath := filepath.Join(htmlRoot, "repo")
-	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: repoPath}))
-
-	p.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: repoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.Ref),
-	))
-
-	// make nginx log and lib directories world writeable, otherwise nginx can't start in
-	// an unprivileged container
-	p.AddStage(osbuild.NewChmodStage(chmodStageOptions("/var/log/nginx", "a+rwX", true)))
-	p.AddStage(osbuild.NewChmodStage(chmodStageOptions("/var/lib/nginx", "a+rwX", true)))
-
-	p.AddStage(osbuild.NewNginxConfigStage(nginxConfigStageOptions(nginxConfigPath, htmlRoot, listenPort)))
 	return p
 }
 
-func containerPipeline(t *imageType, nginxConfigPath, listenPort string) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "container"
-	p.Build = "name:build"
-	options := &osbuild.OCIArchiveStageOptions{
-		Architecture: t.Arch().Name(),
-		Filename:     t.Filename(),
-		Config: &osbuild.OCIArchiveConfig{
-			Cmd:          []string{"nginx", "-c", nginxConfigPath},
-			ExposedPorts: []string{listenPort},
-		},
-	}
-	baseInput := new(osbuild.OCIArchiveStageInput)
-	baseInput.Type = "org.osbuild.tree"
-	baseInput.Origin = "org.osbuild.pipeline"
-	baseInput.References = []string{"name:container-tree"}
-	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}
-	p.AddStage(osbuild.NewOCIArchiveStage(options, inputs))
+func containerPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.Pipeline, t *imageType, nginxConfigPath, listenPort string) pipeline.OCIContainerPipeline {
+	p := pipeline.NewOCIContainerPipeline(buildPipeline, treePipeline)
+	p.Architecture = t.Arch().Name()
+	p.Filename = t.Filename()
+	p.Cmd = []string{"nginx", "-c", nginxConfigPath}
+	p.ExposedPorts = []string{listenPort}
 	return p
 }
 
