@@ -35,11 +35,11 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	pipelines = append(pipelines, imagePipeline.Serialize())
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "1.1"})
-	pipelines = append(pipelines, *qemuPipeline)
+	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "1.1"})
+	pipelines = append(pipelines, qemuPipeline.Serialize())
 
 	return pipelines, nil
 }
@@ -76,11 +76,11 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	pipelines = append(pipelines, imagePipeline.Serialize())
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVPC, nil)
-	pipelines = append(pipelines, *qemuPipeline)
+	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatVPC, nil)
+	pipelines = append(pipelines, qemuPipeline.Serialize())
 	return pipelines, nil
 }
 
@@ -105,11 +105,11 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	pipelines = append(pipelines, imagePipeline.Serialize())
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{Subformat: osbuild.VMDKSubformatStreamOptimized})
-	pipelines = append(pipelines, *qemuPipeline)
+	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{Subformat: osbuild.VMDKSubformatStreamOptimized})
+	pipelines = append(pipelines, qemuPipeline.Serialize())
 	return pipelines, nil
 }
 
@@ -134,11 +134,11 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 	diskfile := "disk.img"
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	pipelines = append(pipelines, imagePipeline.Serialize())
 
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, nil)
-	pipelines = append(pipelines, *qemuPipeline)
+	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatQCOW2, nil)
+	pipelines = append(pipelines, qemuPipeline.Serialize())
 	return pipelines, nil
 }
 
@@ -164,8 +164,8 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name(), diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	pipelines = append(pipelines, imagePipeline.Serialize())
 	return pipelines, nil
 }
 
@@ -541,51 +541,30 @@ func bootISOPipeline(filename, isolabel, arch string, isolinux bool) *osbuild.Pi
 	return p
 }
 
-func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk.PartitionTable, arch *architecture, kernelVer string) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "image"
-	p.Build = "name:build"
+func liveImagePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.OSPipeline, outputFilename string, pt *disk.PartitionTable, arch *architecture, kernelVer string) pipeline.LiveImgPipeline {
+	p := pipeline.NewLiveImgPipeline(buildPipeline, treePipeline)
 
-	for _, stage := range osbuild.GenImagePrepareStages(pt, outputFilename, osbuild.PTSfdisk) {
-		p.AddStage(stage)
-	}
-
-	inputName := "root-tree"
-	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, inputPipelineName, outputFilename, pt)
-	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, inputPipelineName)
-	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
-
-	for _, stage := range osbuild.GenImageFinishStages(pt, outputFilename) {
-		p.AddStage(stage)
-	}
-
-	loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: outputFilename})
-	p.AddStage(bootloaderInstStage(outputFilename, pt, arch, kernelVer, copyDevices, copyMounts, loopback))
-	return p
-}
-
-func qemuPipeline(inputPipelineName, inputFilename, outputFilename string, format osbuild.QEMUFormat, formatOptions osbuild.QEMUFormatOptions) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = string(format)
-	p.Build = "name:build"
-
-	qemuStage := osbuild.NewQEMUStage(
-		osbuild.NewQEMUStageOptions(outputFilename, format, formatOptions),
-		osbuild.NewQemuStagePipelineFilesInputs(inputPipelineName, inputFilename),
-	)
-	p.AddStage(qemuStage)
-	return p
-}
-
-func bootloaderInstStage(filename string, pt *disk.PartitionTable, arch *architecture, kernelVer string, devices *osbuild.Devices, mounts *osbuild.Mounts, disk *osbuild.Device) *osbuild.Stage {
-	platform := arch.legacy
-	if platform != "" {
-		return osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(filename, pt, platform))
-	}
+	p.Filename = outputFilename
 
 	if arch.name == distro.S390xArchName {
-		return osbuild.NewZiplInstStage(osbuild.NewZiplInstStageOptions(kernelVer, pt), disk, devices, mounts)
+		p.BootLoader = pipeline.BOOTLOADER_ZIPL
+	} else {
+		p.BootLoader = pipeline.BOOTLOADER_GRUB
+		p.GRUBLegacy = arch.legacy
 	}
 
-	return nil
+	p.KernelVer = kernelVer
+	p.PartitionTable = *pt
+
+	return p
+}
+
+func qemuPipeline(buildPipeline *pipeline.BuildPipeline, imagePipeline *pipeline.LiveImgPipeline, inputFilename, outputFilename string, format osbuild.QEMUFormat, formatOptions osbuild.QEMUFormatOptions) pipeline.QemuPipeline {
+	p := pipeline.NewQemuPipeline(buildPipeline, imagePipeline, string(format))
+	p.InputFilename = inputFilename
+	p.OutputFilename = outputFilename
+	p.Format = format
+	p.FormatOptions = formatOptions
+
+	return p
 }
