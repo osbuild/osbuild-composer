@@ -19,8 +19,7 @@ type AnacondaPipeline struct {
 	// name network devices when booting the installer. This may affect
 	// the naming of network devices on the target system.
 	Biosdevname bool
-	// Variant is the variant of the product being installed.
-	// TODO: what should be the default value?
+	// Variant is the variant of the product being installed, if applicable.
 	Variant string
 
 	repos        []rpmmd.RepoConfig

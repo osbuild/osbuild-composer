@@ -11,16 +11,17 @@ import (
 
 type ISOTreePipeline struct {
 	Pipeline
-	anacondaPipeline *AnacondaPipeline
-	Vendor           string
-	OSName           string
-	Release          string
-	Users            []blueprint.UserCustomization
-	Groups           []blueprint.GroupCustomization
-	OSTreeParent     string
-	OSTreeRef        string
+	// TODO: review optional and mandatory fields and their meaning
+	UEFIVendor   string
+	OSName       string
+	Release      string
+	Users        []blueprint.UserCustomization
+	Groups       []blueprint.GroupCustomization
+	OSTreeParent string
+	OSTreeRef    string
 
-	isoLabel string
+	anacondaPipeline *AnacondaPipeline
+	isoLabel         string
 }
 
 func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *AnacondaPipeline, isoLabelTmpl string) ISOTreePipeline {
@@ -44,7 +45,7 @@ func (p ISOTreePipeline) Serialize() osbuild2.Pipeline {
 	kspath := "/osbuild.ks"
 	ostreeRepoPath := "/ostree/repo"
 
-	pipeline.AddStage(osbuild2.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.KernelVer(), p.anacondaPipeline.Arch(), p.Vendor, p.anacondaPipeline.Product(), p.anacondaPipeline.Version(), p.ISOLabel(), kspath), osbuild2.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
+	pipeline.AddStage(osbuild2.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.KernelVer(), p.anacondaPipeline.Arch(), p.UEFIVendor, p.anacondaPipeline.Product(), p.anacondaPipeline.Version(), p.ISOLabel(), kspath), osbuild2.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
 
 	kickstartOptions, err := osbuild2.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.OSTreeRef, p.OSName)
 	if err != nil {

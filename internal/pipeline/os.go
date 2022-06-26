@@ -25,9 +25,9 @@ type OSPipeline struct {
 	Pipeline
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
-	// UEFI indicates whether or not the OS should support UEFI
-	UEFI   bool
-	Vendor string
+	// UEFIVendor indicates whether or not the OS should support UEFI and
+	// if set namespaces the UEFI binaries with this string.
+	UEFIVendor string
 	// GPGKeyFiles are a list of filenames in the OS which will be imported
 	// as GPG keys into the RPM database.
 	GPGKeyFiles      []string
@@ -103,7 +103,9 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 		bootLoader:     bootLoader,
 		grubLegacy:     grubLegacy,
 		kernelVer:      kernelVer,
+		Language:       "C.UTF-8",
 		Hostname:       "localhost.localdomain",
+		Timezone:       "UTC",
 	}
 }
 
@@ -284,7 +286,7 @@ func (p OSPipeline) Serialize() osbuild2.Pipeline {
 		var bootloader *osbuild2.Stage
 		switch p.BootLoader() {
 		case BOOTLOADER_GRUB:
-			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFI, p.GRUBLegacy(), p.Vendor, false)
+			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFIVendor != "", p.GRUBLegacy(), p.UEFIVendor, false)
 			if cfg := p.Grub2Config; cfg != nil {
 				// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
 				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`

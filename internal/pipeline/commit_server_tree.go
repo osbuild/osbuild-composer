@@ -10,27 +10,37 @@ import (
 
 type OSTreeCommitServerTreePipeline struct {
 	Pipeline
-	commitPipeline *OSTreeCommitPipeline
-	Repos          []rpmmd.RepoConfig
-	PackageSpecs   []rpmmd.PackageSpec
 	// TODO: should this be configurable?
-	Language        string
-	NginxConfigPath string
-	ListenPort      string
+	Language string
+
+	repos           []rpmmd.RepoConfig
+	packageSpecs    []rpmmd.PackageSpec
+	commitPipeline  *OSTreeCommitPipeline
+	nginxConfigPath string
+	listenPort      string
 }
 
-func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline, commitPipeline *OSTreeCommitPipeline) OSTreeCommitServerTreePipeline {
+func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
+	repos []rpmmd.RepoConfig,
+	packageSpecs []rpmmd.PackageSpec,
+	commitPipeline *OSTreeCommitPipeline,
+	nginxConfigPath,
+	listenPort string) OSTreeCommitServerTreePipeline {
 	return OSTreeCommitServerTreePipeline{
-		Pipeline:       New("container-tree", buildPipeline, nil),
-		commitPipeline: commitPipeline,
-		Language:       "en_US",
+		Pipeline:        New("container-tree", buildPipeline, nil),
+		repos:           repos,
+		packageSpecs:    packageSpecs,
+		commitPipeline:  commitPipeline,
+		nginxConfigPath: nginxConfigPath,
+		listenPort:      listenPort,
+		Language:        "en_US",
 	}
 }
 
 func (p OSTreeCommitServerTreePipeline) Serialize() osbuild2.Pipeline {
 	pipeline := p.Pipeline.Serialize()
 
-	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.Repos), osbuild2.NewRpmStageSourceFilesInputs(p.PackageSpecs)))
+	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild2.NewLocaleStage(&osbuild2.LocaleStageOptions{Language: p.Language}))
 
 	htmlRoot := "/usr/share/nginx/html"
@@ -47,7 +57,7 @@ func (p OSTreeCommitServerTreePipeline) Serialize() osbuild2.Pipeline {
 	pipeline.AddStage(osbuild2.NewChmodStage(chmodStageOptions("/var/log/nginx", "a+rwX", true)))
 	pipeline.AddStage(osbuild2.NewChmodStage(chmodStageOptions("/var/lib/nginx", "a+rwX", true)))
 
-	pipeline.AddStage(osbuild2.NewNginxConfigStage(nginxConfigStageOptions(p.NginxConfigPath, htmlRoot, p.ListenPort)))
+	pipeline.AddStage(osbuild2.NewNginxConfigStage(nginxConfigStageOptions(p.nginxConfigPath, htmlRoot, p.listenPort)))
 
 	return pipeline
 }
