@@ -14,17 +14,13 @@ import (
 
 type OSPipeline struct {
 	Pipeline
-	osTree              bool
 	OSTreeParent        string
 	OSTreeURL           string
-	KernelName          string
 	KernelOptionsAppend []string
 	BootLoader          BootLoader
 	UEFI                bool
 	GRUBLegacy          string
 	Vendor              string
-	Repos               []rpmmd.RepoConfig
-	PackageSpecs        []rpmmd.PackageSpec
 	GPGKeyFiles         []string
 	PartitionTable      *disk.PartitionTable
 	Language            string
@@ -58,18 +54,31 @@ type OSPipeline struct {
 	AuthConfig    *osbuild2.AuthconfigStageOptions
 	PwQuality     *osbuild2.PwqualityConfStageOptions
 	WAAgentConfig *osbuild2.WAAgentConfStageOptions
+
+	osTree       bool
+	repos        []rpmmd.RepoConfig
+	packageSpecs []rpmmd.PackageSpec
+	kernelVer    string
 }
 
-func NewOSPipeline(buildPipeline *BuildPipeline, osTree bool) OSPipeline {
+func NewOSPipeline(buildPipeline *BuildPipeline, osTree bool, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelName string) OSPipeline {
 	name := "os"
 	if osTree {
 		name = "ostree-tree"
 	}
+	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
 	return OSPipeline{
-		Pipeline: New(name, &buildPipeline.Pipeline),
-		osTree:   osTree,
-		Hostname: "localhost.localdomain",
+		Pipeline:     New(name, buildPipeline, nil),
+		osTree:       osTree,
+		repos:        repos,
+		packageSpecs: packages,
+		kernelVer:    kernelVer,
+		Hostname:     "localhost.localdomain",
 	}
+}
+
+func (p OSPipeline) KernelVer() string {
+	return p.kernelVer
 }
 
 func (p OSPipeline) Serialize() osbuild2.Pipeline {
@@ -79,9 +88,9 @@ func (p OSPipeline) Serialize() osbuild2.Pipeline {
 		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.OSTreeParent))
 	}
 
-	rpmOptions := osbuild2.NewRPMStageOptions(p.Repos)
+	rpmOptions := osbuild2.NewRPMStageOptions(p.repos)
 	rpmOptions.GPGKeysFromTree = p.GPGKeyFiles
-	pipeline.AddStage(osbuild2.NewRPMStage(rpmOptions, osbuild2.NewRpmStageSourceFilesInputs(p.PackageSpecs)))
+	pipeline.AddStage(osbuild2.NewRPMStage(rpmOptions, osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
 	if p.PartitionTable == nil || p.PartitionTable.FindMountable("/boot") == nil {
@@ -229,8 +238,7 @@ func (p OSPipeline) Serialize() osbuild2.Pipeline {
 		var bootloader *osbuild2.Stage
 		switch p.BootLoader {
 		case BOOTLOADER_GRUB:
-			kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(p.PackageSpecs, p.KernelName)
-			options := osbuild2.NewGrub2StageOptionsUnified(p.PartitionTable, kernelVer, p.UEFI, p.GRUBLegacy, p.Vendor, false)
+			options := osbuild2.NewGrub2StageOptionsUnified(p.PartitionTable, p.kernelVer, p.UEFI, p.GRUBLegacy, p.Vendor, false)
 			if cfg := p.Grub2Config; cfg != nil {
 				// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
 				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`

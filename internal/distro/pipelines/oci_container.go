@@ -15,7 +15,7 @@ type OCIContainerPipeline struct {
 
 func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *Pipeline) OCIContainerPipeline {
 	return OCIContainerPipeline{
-		Pipeline:     New("container", &buildPipeline.Pipeline),
+		Pipeline:     New("container", buildPipeline, nil),
 		treePipeline: treePipeline,
 	}
 }

@@ -12,7 +12,7 @@ type TarPipeline struct {
 
 func NewTarPipeline(buildPipeline *BuildPipeline, inputPipeline *Pipeline, name string) TarPipeline {
 	return TarPipeline{
-		Pipeline:      New(name, &buildPipeline.Pipeline),
+		Pipeline:      New(name, buildPipeline, nil),
 		inputPipeline: inputPipeline,
 	}
 }

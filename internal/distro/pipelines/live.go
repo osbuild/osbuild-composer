@@ -10,15 +10,14 @@ type LiveImgPipeline struct {
 	PartitionTable disk.PartitionTable
 	BootLoader     BootLoader
 	GRUBLegacy     string
-	KernelVer      string
-	treePipeline   *Pipeline
+	treePipeline   *OSPipeline
 	Filename       string
 }
 
 func NewLiveImgPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline) LiveImgPipeline {
 	return LiveImgPipeline{
-		Pipeline:     New("image", &buildPipeline.Pipeline),
-		treePipeline: &treePipeline.Pipeline,
+		Pipeline:     New("image", buildPipeline, nil),
+		treePipeline: treePipeline,
 	}
 }
 
@@ -45,7 +44,7 @@ func (p LiveImgPipeline) Serialize() osbuild2.Pipeline {
 		}
 	case BOOTLOADER_ZIPL:
 		loopback := osbuild2.NewLoopbackDevice(&osbuild2.LoopbackDeviceOptions{Filename: p.Filename})
-		pipeline.AddStage(osbuild2.NewZiplInstStage(osbuild2.NewZiplInstStageOptions(p.KernelVer, &p.PartitionTable), loopback, copyDevices, copyMounts))
+		pipeline.AddStage(osbuild2.NewZiplInstStage(osbuild2.NewZiplInstStageOptions(p.treePipeline.KernelVer(), &p.PartitionTable), loopback, copyDevices, copyMounts))
 	}
 
 	return pipeline

@@ -1,23 +1,20 @@
 package fedora
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	pipeline "github.com/osbuild/osbuild-composer/internal/distro/pipelines"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/pipeline"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 
-	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
-	buildPipeline.Repos = repos
-	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
@@ -32,8 +29,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
 	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "1.1"})
@@ -45,9 +41,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 
-	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
-	buildPipeline.Repos = repos
-	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
@@ -62,8 +56,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
 	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatVPC, nil)
@@ -74,9 +67,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 
-	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
-	buildPipeline.Repos = repos
-	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
@@ -91,8 +82,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
 	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{Subformat: osbuild.VMDKSubformatStreamOptimized})
@@ -103,9 +93,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 
-	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
-	buildPipeline.Repos = repos
-	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
@@ -120,8 +108,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
 	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatQCOW2, nil)
@@ -134,9 +121,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 
-	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
-	buildPipeline.Repos = repos
-	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
@@ -150,8 +135,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	}
 	pipelines = append(pipelines, treePipeline.Serialize())
 
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch, kernelVer)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 	return pipelines, nil
 }
@@ -164,29 +148,22 @@ func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, option
 func iotInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 
-	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
-	buildPipeline.Repos = repos
-	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	d := t.arch.distro
-	archName := t.Arch().Name()
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
-	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 
-	anacondaTreePipeline := anacondaTreePipeline(&buildPipeline, repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "IoT", ksUsers)
-	isoTreePipeline := bootISOTreePipeline(&buildPipeline, &anacondaTreePipeline.Pipeline, options, kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, customizations.GetUsers(), customizations.GetGroups())
-	isoPipeline := bootISOPipeline(&buildPipeline, &isoTreePipeline, t.Filename(), isolabel, false)
+	anacondaTreePipeline := anacondaTreePipeline(&buildPipeline, repos, installerPackages, t.Arch().Name(), d.product, d.osVersion, "IoT", ksUsers)
+	isoTreePipeline := bootISOTreePipeline(&buildPipeline, &anacondaTreePipeline, options, d.vendor, d.isolabelTmpl, customizations.GetUsers(), customizations.GetGroups())
+	isoPipeline := bootISOPipeline(&buildPipeline, &isoTreePipeline, t.Filename(), false)
 
 	return append(pipelines, anacondaTreePipeline.Serialize(), isoTreePipeline.Serialize(), isoPipeline.Serialize()), nil
 }
 
 func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec) (*pipeline.BuildPipeline, *pipeline.OSPipeline, *pipeline.OSTreeCommitPipeline, error) {
-	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner)
-	buildPipeline.Repos = repos
-	buildPipeline.PackageSpecs = packageSetSpecs[buildPkgsKey]
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, nil, nil, err
@@ -236,7 +213,7 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 
 	imageConfig := t.getDefaultImageConfig()
 
-	pl := pipeline.NewOSPipeline(buildPipeline, t.rpmOstree)
+	pl := pipeline.NewOSPipeline(buildPipeline, t.rpmOstree, repos, packages, c.GetKernel().Name)
 
 	pl.PartitionTable = pt
 
@@ -258,13 +235,9 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 		kernelOptions = append(kernelOptions, bpKernel.Append)
 	}
 	pl.KernelOptionsAppend = kernelOptions
-	pl.KernelName = c.GetKernel().Name
 
 	pl.OSTreeParent = options.OSTree.Parent
 	pl.OSTreeURL = options.OSTree.URL
-
-	pl.Repos = repos
-	pl.PackageSpecs = packages
 	pl.GPGKeyFiles = imageConfig.GPGKeyFiles
 
 	if !t.bootISO {
@@ -340,8 +313,7 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 }
 
 func ostreeCommitPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.OSPipeline, options distro.ImageOptions, osVersion string) pipeline.OSTreeCommitPipeline {
-	p := pipeline.NewOSTreeCommitPipeline(buildPipeline, treePipeline)
-	p.Ref = options.OSTree.Ref
+	p := pipeline.NewOSTreeCommitPipeline(buildPipeline, treePipeline, options.OSTree.Ref)
 	p.OSVersion = osVersion
 	p.Parent = options.OSTree.Parent
 	return p
@@ -369,30 +341,19 @@ func containerPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipe
 	return p
 }
 
-func anacondaTreePipeline(buildPipeline *pipeline.BuildPipeline, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string, users bool) pipeline.AnacondaPipeline {
-	p := pipeline.NewAnacondaPipeline(buildPipeline)
-	p.Repos = repos
-	p.PackageSpecs = packages
+func anacondaTreePipeline(buildPipeline *pipeline.BuildPipeline, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, arch, product, osVersion, variant string, users bool) pipeline.AnacondaPipeline {
+	p := pipeline.NewAnacondaPipeline(buildPipeline, repos, packages, "kernel", arch, product, osVersion)
 	p.Users = users
-	p.KernelVer = kernelVer
-	p.Arch = arch
-	p.Product = product
-	p.OSVersion = osVersion
 	p.Variant = variant
-	p.Biosdevname = (p.Arch == distro.X86_64ArchName)
+	p.Biosdevname = (arch == distro.X86_64ArchName)
 	return p
 }
 
-func bootISOTreePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.Pipeline, options distro.ImageOptions, kernelVer, arch, vendor, product, osVersion, isolabel string, users []blueprint.UserCustomization, groups []blueprint.GroupCustomization) pipeline.ISOTreePipeline {
-	p := pipeline.NewISOTreePipeline(buildPipeline, treePipeline)
-	p.KernelVer = kernelVer
-	p.Arch = arch
+func bootISOTreePipeline(buildPipeline *pipeline.BuildPipeline, anacondaPipeline *pipeline.AnacondaPipeline, options distro.ImageOptions, vendor, isoLabelTempl string, users []blueprint.UserCustomization, groups []blueprint.GroupCustomization) pipeline.ISOTreePipeline {
+	p := pipeline.NewISOTreePipeline(buildPipeline, anacondaPipeline, isoLabelTempl)
 	p.Release = "202010217.n.0"
-	p.Vendor = vendor
-	p.Product = product
 	p.OSName = "fedora"
-	p.OSVersion = osVersion
-	p.ISOLabel = isolabel
+	p.Vendor = vendor
 	p.Users = users
 	p.Groups = groups
 	p.OSTreeRef = options.OSTree.Ref
@@ -401,15 +362,14 @@ func bootISOTreePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pi
 	return p
 }
 
-func bootISOPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.ISOTreePipeline, filename, isolabel string, isolinux bool) pipeline.ISOPipeline {
+func bootISOPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.ISOTreePipeline, filename string, isolinux bool) pipeline.ISOPipeline {
 	p := pipeline.NewISOPipeline(buildPipeline, treePipeline)
 	p.Filename = filename
-	p.ISOLabel = isolabel
 	p.ISOLinux = isolinux
 	return p
 }
 
-func liveImagePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.OSPipeline, outputFilename string, pt *disk.PartitionTable, arch *architecture, kernelVer string) pipeline.LiveImgPipeline {
+func liveImagePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.OSPipeline, outputFilename string, pt *disk.PartitionTable, arch *architecture) pipeline.LiveImgPipeline {
 	p := pipeline.NewLiveImgPipeline(buildPipeline, treePipeline)
 
 	p.Filename = outputFilename
@@ -421,7 +381,6 @@ func liveImagePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipe
 		p.GRUBLegacy = arch.legacy
 	}
 
-	p.KernelVer = kernelVer
 	p.PartitionTable = *pt
 
 	return p

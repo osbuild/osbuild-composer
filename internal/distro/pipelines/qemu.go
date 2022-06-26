@@ -16,7 +16,7 @@ type QemuPipeline struct {
 
 func NewQemuPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, name string) QemuPipeline {
 	return QemuPipeline{
-		Pipeline:    New(name, &buildPipeline.Pipeline),
+		Pipeline:    New(name, buildPipeline, nil),
 		imgPipeline: &imgPipeline.Pipeline,
 	}
 }
