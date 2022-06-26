@@ -4,6 +4,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
+// An ISOPipeline represents a bootable ISO file created from an
+// an existing ISOTreePipeline.
 type ISOPipeline struct {
 	Pipeline
 	ISOLinux bool

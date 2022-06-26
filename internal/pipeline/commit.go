@@ -4,14 +4,18 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
+// OSTreeCommitPipeline represents an ostree with one commit.
 type OSTreeCommitPipeline struct {
 	Pipeline
-	treePipeline *OSPipeline
-	OSVersion    string
+	OSVersion string
 
-	ref string
+	treePipeline *OSPipeline
+	ref          string
 }
 
+// NewOSTreeCommitPipeline creates a new OSTree commit pipeline. The
+// treePipeline is the tree representing the content of the commit.
+// ref is the ref to create the commit under.
 func NewOSTreeCommitPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, ref string) OSTreeCommitPipeline {
 	return OSTreeCommitPipeline{
 		Pipeline:     New("ostree-commit", buildPipeline, nil),
@@ -20,6 +24,7 @@ func NewOSTreeCommitPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipel
 	}
 }
 
+// Ref returns the OSTree ref of the commit.
 func (p OSTreeCommitPipeline) Ref() string {
 	return p.ref
 }

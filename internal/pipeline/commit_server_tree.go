@@ -8,6 +8,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+// An OSTreeCommitServerTreePipeline contains an nginx server serving
+// an embedded ostree commit.
 type OSTreeCommitServerTreePipeline struct {
 	Pipeline
 	// TODO: should this be configurable?
@@ -20,6 +22,11 @@ type OSTreeCommitServerTreePipeline struct {
 	listenPort      string
 }
 
+// NewOSTreeCommitServerTreePipeline creates a new pipeline. The content
+// is built from repos and packages, which must contain nginx. commitPipeline
+// is a pipeline producing an ostree commit to be served. nginxConfigPath
+// is the path to the main nginx config file and listenPort is the port
+// nginx will be listening on.
 func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	repos []rpmmd.RepoConfig,
 	packageSpecs []rpmmd.PackageSpec,
