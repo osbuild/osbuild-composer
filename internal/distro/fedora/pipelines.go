@@ -17,19 +17,14 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
 	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "1.1"})
@@ -44,19 +39,14 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
 	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatVPC, nil)
@@ -70,19 +60,14 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
 	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{Subformat: osbuild.VMDKSubformatStreamOptimized})
@@ -96,19 +81,14 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
 	pipelines = append(pipelines, treePipeline.Serialize())
 
 	diskfile := "disk.img"
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
 	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, diskfile, t.filename, osbuild.QEMUFormatQCOW2, nil)
@@ -124,18 +104,13 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	pipelines = append(pipelines, buildPipeline.Serialize())
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
 	pipelines = append(pipelines, treePipeline.Serialize())
 
-	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, partitionTable, t.arch)
+	imagePipeline := liveImagePipeline(&buildPipeline, &treePipeline, diskfile, t.arch)
 	pipelines = append(pipelines, imagePipeline.Serialize())
 	return pipelines, nil
 }
@@ -209,13 +184,21 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 	packages []rpmmd.PackageSpec,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
-	pt *disk.PartitionTable) (pipeline.OSPipeline, error) {
+	rng *rand.Rand) (pipeline.OSPipeline, error) {
 
 	imageConfig := t.getDefaultImageConfig()
 
-	pl := pipeline.NewOSPipeline(buildPipeline, t.rpmOstree, repos, packages, c.GetKernel().Name)
+	var pt *disk.PartitionTable
+	if t.bootable {
+		// TODO: should there always be a partition table?
+		var err error
+		pt, err = t.getPartitionTable(c.GetFilesystems(), options, rng)
+		if err != nil {
+			return pipeline.OSPipeline{}, err
+		}
+	}
 
-	pl.PartitionTable = pt
+	pl := pipeline.NewOSPipeline(buildPipeline, t.rpmOstree, repos, packages, pt, c.GetKernel().Name)
 
 	if t.Arch().Name() == distro.S390xArchName {
 		pl.BootLoader = pipeline.BOOTLOADER_ZIPL
@@ -369,7 +352,7 @@ func bootISOPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeli
 	return p
 }
 
-func liveImagePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.OSPipeline, outputFilename string, pt *disk.PartitionTable, arch *architecture) pipeline.LiveImgPipeline {
+func liveImagePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.OSPipeline, outputFilename string, arch *architecture) pipeline.LiveImgPipeline {
 	p := pipeline.NewLiveImgPipeline(buildPipeline, treePipeline)
 
 	p.Filename = outputFilename
@@ -380,8 +363,6 @@ func liveImagePipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipe
 		p.BootLoader = pipeline.BOOTLOADER_GRUB
 		p.GRUBLegacy = arch.legacy
 	}
-
-	p.PartitionTable = *pt
 
 	return p
 }
