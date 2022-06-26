@@ -4,6 +4,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
+// An OCIContainerPipeline represents an OCI container, containing a filesystem
+// tree created by another Pipeline.
 type OCIContainerPipeline struct {
 	Pipeline
 	Cmd          []string

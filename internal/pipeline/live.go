@@ -4,6 +4,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
+// A LiveImgPipeline represents a raw image file which can be booted in a
+// hypervisor. It is created from an existing OSPipeline.
 type LiveImgPipeline struct {
 	Pipeline
 	treePipeline *OSPipeline

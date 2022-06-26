@@ -9,6 +9,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
+// An ISOTreePipeline represents a tree containing the anaconda installer,
+// configuration in terms of a kickstart file, as well as an embedded
+// payload to be installed.
 type ISOTreePipeline struct {
 	Pipeline
 	// TODO: review optional and mandatory fields and their meaning
