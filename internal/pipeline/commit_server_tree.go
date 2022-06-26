@@ -10,9 +10,10 @@ import (
 
 type OSTreeCommitServerTreePipeline struct {
 	Pipeline
-	commitPipeline  *OSTreeCommitPipeline
-	Repos           []rpmmd.RepoConfig
-	PackageSpecs    []rpmmd.PackageSpec
+	commitPipeline *OSTreeCommitPipeline
+	Repos          []rpmmd.RepoConfig
+	PackageSpecs   []rpmmd.PackageSpec
+	// TODO: should this be configurable?
 	Language        string
 	NginxConfigPath string
 	ListenPort      string

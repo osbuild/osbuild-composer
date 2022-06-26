@@ -10,13 +10,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
-type BootLoader uint64
-
-const (
-	BOOTLOADER_GRUB BootLoader = iota
-	BOOTLOADER_ZIPL
-)
-
 // A Pipeline represents the core functionality shared between each of the pipeline
 // implementations, and the Pipeline struct must be embedded in each of them.
 type Pipeline struct {
