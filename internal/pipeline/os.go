@@ -264,7 +264,9 @@ func (p OSPipeline) Serialize() osbuild2.Pipeline {
 		pipeline.AddStage(bootloader)
 	}
 
-	pipeline.AddStage(osbuild2.NewSELinuxStage(selinuxStageOptions(false)))
+	pipeline.AddStage(osbuild2.NewSELinuxStage(&osbuild2.SELinuxStageOptions{
+		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+	}))
 
 	if p.osTree {
 		pipeline.AddStage(osbuild2.NewOSTreePrepTreeStage(&osbuild2.OSTreePrepTreeStageOptions{
