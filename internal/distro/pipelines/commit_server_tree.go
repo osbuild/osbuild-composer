@@ -20,7 +20,7 @@ type OSTreeCommitServerTreePipeline struct {
 
 func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline, commitPipeline *OSTreeCommitPipeline) OSTreeCommitServerTreePipeline {
 	return OSTreeCommitServerTreePipeline{
-		Pipeline:       New("container-tree", &buildPipeline.Pipeline),
+		Pipeline:       New("container-tree", buildPipeline, nil),
 		commitPipeline: commitPipeline,
 		Language:       "en_US",
 	}
@@ -38,7 +38,7 @@ func (p OSTreeCommitServerTreePipeline) Serialize() osbuild2.Pipeline {
 
 	pipeline.AddStage(osbuild2.NewOSTreePullStage(
 		&osbuild2.OSTreePullStageOptions{Repo: repoPath},
-		osbuild2.NewOstreePullStageInputs("org.osbuild.pipeline", "name:"+p.commitPipeline.Name(), p.commitPipeline.Ref),
+		osbuild2.NewOstreePullStageInputs("org.osbuild.pipeline", "name:"+p.commitPipeline.Name(), p.commitPipeline.Ref()),
 	))
 
 	// make nginx log and lib directories world writeable, otherwise nginx can't start in

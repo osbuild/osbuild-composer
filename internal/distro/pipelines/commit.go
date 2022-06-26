@@ -7,16 +7,22 @@ import (
 type OSTreeCommitPipeline struct {
 	Pipeline
 	treePipeline *OSPipeline
-	Ref          string
 	OSVersion    string
 	Parent       string
+
+	ref string
 }
 
-func NewOSTreeCommitPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline) OSTreeCommitPipeline {
+func NewOSTreeCommitPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, ref string) OSTreeCommitPipeline {
 	return OSTreeCommitPipeline{
-		Pipeline:     New("ostree-commit", &buildPipeline.Pipeline),
+		Pipeline:     New("ostree-commit", buildPipeline, nil),
 		treePipeline: treePipeline,
+		ref:          ref,
 	}
+}
+
+func (p OSTreeCommitPipeline) Ref() string {
+	return p.ref
 }
 
 func (p OSTreeCommitPipeline) Serialize() osbuild2.Pipeline {
@@ -31,7 +37,7 @@ func (p OSTreeCommitPipeline) Serialize() osbuild2.Pipeline {
 
 	pipeline.AddStage(osbuild2.NewOSTreeCommitStage(
 		&osbuild2.OSTreeCommitStageOptions{
-			Ref:       p.Ref,
+			Ref:       p.Ref(),
 			OSVersion: p.OSVersion,
 			Parent:    p.Parent,
 		},
