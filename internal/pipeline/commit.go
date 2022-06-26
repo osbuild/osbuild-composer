@@ -8,7 +8,6 @@ type OSTreeCommitPipeline struct {
 	Pipeline
 	treePipeline *OSPipeline
 	OSVersion    string
-	Parent       string
 
 	ref string
 }
@@ -39,7 +38,7 @@ func (p OSTreeCommitPipeline) Serialize() osbuild2.Pipeline {
 		&osbuild2.OSTreeCommitStageOptions{
 			Ref:       p.Ref(),
 			OSVersion: p.OSVersion,
-			Parent:    p.Parent,
+			Parent:    p.treePipeline.OSTreeParent(),
 		},
 		&osbuild2.OSTreeCommitStageInputs{Tree: commitStageInput}),
 	)

@@ -12,24 +12,33 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+type BootLoader uint64
+
+const (
+	BOOTLOADER_GRUB BootLoader = iota
+	BOOTLOADER_ZIPL
+)
+
+// OSPipeline represents the filesystem tree of the target image. This roughly
+// correpsonds to the root filesystem once an instance of the image is running.
 type OSPipeline struct {
 	Pipeline
-	OSTreeParent        string
-	OSTreeURL           string
+	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
-	BootLoader          BootLoader
-	UEFI                bool
-	GRUBLegacy          string
-	Vendor              string
-	GPGKeyFiles         []string
-	Language            string
-	Keyboard            *string
-	Hostname            string
-	Timezone            string
-	NTPServers          []string
-	EnabledServices     []string
-	DisabledServices    []string
-	DefaultTarget       string
+	// UEFI indicates whether or not the OS should support UEFI
+	UEFI   bool
+	Vendor string
+	// GPGKeyFiles are a list of filenames in the OS which will be imported
+	// as GPG keys into the RPM database.
+	GPGKeyFiles      []string
+	Language         string
+	Keyboard         *string
+	Hostname         string
+	Timezone         string
+	NTPServers       []string
+	EnabledServices  []string
+	DisabledServices []string
+	DefaultTarget    string
 	// TODO: drop blueprint types from the API
 	Groups   []blueprint.GroupCustomization
 	Users    []blueprint.UserCustomization
@@ -55,13 +64,30 @@ type OSPipeline struct {
 	WAAgentConfig *osbuild2.WAAgentConfStageOptions
 
 	osTree         bool
+	osTreeParent   string
 	repos          []rpmmd.RepoConfig
 	packageSpecs   []rpmmd.PackageSpec
 	partitionTable *disk.PartitionTable
+	bootLoader     BootLoader
+	grubLegacy     string
 	kernelVer      string
 }
 
-func NewOSPipeline(buildPipeline *BuildPipeline, osTree bool, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, pt *disk.PartitionTable, kernelName string) OSPipeline {
+// NewOSPipeline creates a new OS pipeline. osTree indicates whether or not the
+// system is ostree based. osTreeParent indicates (for ostree systems) what the
+// parent commit is. repos are the reposotories to install RPMs from. packages
+// are the depsolved pacakges to be installed into the tree. partitionTable
+// represents the disk layout of the target system. kernelName is the name of the
+// kernel package that will be used on the target system.
+func NewOSPipeline(buildPipeline *BuildPipeline,
+	osTree bool,
+	osTreeParent string,
+	repos []rpmmd.RepoConfig,
+	packages []rpmmd.PackageSpec,
+	partitionTable *disk.PartitionTable,
+	bootLoader BootLoader,
+	grubLegacy string,
+	kernelName string) OSPipeline {
 	name := "os"
 	if osTree {
 		name = "ostree-tree"
@@ -70,12 +96,19 @@ func NewOSPipeline(buildPipeline *BuildPipeline, osTree bool, repos []rpmmd.Repo
 	return OSPipeline{
 		Pipeline:       New(name, buildPipeline, nil),
 		osTree:         osTree,
+		osTreeParent:   osTreeParent,
 		repos:          repos,
 		packageSpecs:   packages,
-		partitionTable: pt,
+		partitionTable: partitionTable,
+		bootLoader:     bootLoader,
+		grubLegacy:     grubLegacy,
 		kernelVer:      kernelVer,
 		Hostname:       "localhost.localdomain",
 	}
+}
+
+func (p OSPipeline) OSTreeParent() string {
+	return p.osTreeParent
 }
 
 func (p OSPipeline) KernelVer() string {
@@ -86,11 +119,19 @@ func (p OSPipeline) PartitionTable() *disk.PartitionTable {
 	return p.partitionTable
 }
 
+func (p OSPipeline) BootLoader() BootLoader {
+	return p.bootLoader
+}
+
+func (p OSPipeline) GRUBLegacy() string {
+	return p.grubLegacy
+}
+
 func (p OSPipeline) Serialize() osbuild2.Pipeline {
 	pipeline := p.Pipeline.Serialize()
 
-	if p.osTree && p.OSTreeParent != "" && p.OSTreeURL != "" {
-		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.OSTreeParent))
+	if p.osTree && p.OSTreeParent() != "" {
+		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.OSTreeParent()))
 	}
 
 	rpmOptions := osbuild2.NewRPMStageOptions(p.repos)
@@ -241,9 +282,9 @@ func (p OSPipeline) Serialize() osbuild2.Pipeline {
 		pipeline.AddStage(osbuild2.NewFSTabStage(osbuild2.NewFSTabStageOptions(pt)))
 
 		var bootloader *osbuild2.Stage
-		switch p.BootLoader {
+		switch p.BootLoader() {
 		case BOOTLOADER_GRUB:
-			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFI, p.GRUBLegacy, p.Vendor, false)
+			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFI, p.GRUBLegacy(), p.Vendor, false)
 			if cfg := p.Grub2Config; cfg != nil {
 				// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
 				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`
