@@ -6,17 +6,20 @@ import (
 
 type OCIContainerPipeline struct {
 	Pipeline
-	treePipeline *Pipeline
-	Architecture string
-	Filename     string
 	Cmd          []string
 	ExposedPorts []string
+
+	treePipeline *Pipeline
+	architecture string
+	filename     string
 }
 
-func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *Pipeline) OCIContainerPipeline {
+func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *Pipeline, architecture, filename string) OCIContainerPipeline {
 	return OCIContainerPipeline{
 		Pipeline:     New("container", buildPipeline, nil),
 		treePipeline: treePipeline,
+		architecture: architecture,
+		filename:     filename,
 	}
 }
 
@@ -24,8 +27,8 @@ func (p OCIContainerPipeline) Serialize() osbuild2.Pipeline {
 	pipeline := p.Pipeline.Serialize()
 
 	options := &osbuild2.OCIArchiveStageOptions{
-		Architecture: p.Architecture,
-		Filename:     p.Filename,
+		Architecture: p.architecture,
+		Filename:     p.filename,
 		Config: &osbuild2.OCIArchiveConfig{
 			Cmd:          p.Cmd,
 			ExposedPorts: p.ExposedPorts,

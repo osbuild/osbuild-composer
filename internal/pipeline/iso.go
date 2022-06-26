@@ -6,23 +6,25 @@ import (
 
 type ISOPipeline struct {
 	Pipeline
+	ISOLinux bool
+
 	treePipeline *ISOTreePipeline
-	Filename     string
-	ISOLinux     bool
+	filename     string
 }
 
-func NewISOPipeline(buildPipeline *BuildPipeline, treePipeline *ISOTreePipeline) ISOPipeline {
+func NewISOPipeline(buildPipeline *BuildPipeline, treePipeline *ISOTreePipeline, filename string) ISOPipeline {
 	return ISOPipeline{
 		Pipeline:     New("bootiso", buildPipeline, nil),
 		treePipeline: treePipeline,
+		filename:     filename,
 	}
 }
 
 func (p ISOPipeline) Serialize() osbuild2.Pipeline {
 	pipeline := p.Pipeline.Serialize()
 
-	pipeline.AddStage(osbuild2.NewXorrisofsStage(xorrisofsStageOptions(p.Filename, p.treePipeline.ISOLabel(), p.ISOLinux), osbuild2.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))
-	pipeline.AddStage(osbuild2.NewImplantisomd5Stage(&osbuild2.Implantisomd5StageOptions{Filename: p.Filename}))
+	pipeline.AddStage(osbuild2.NewXorrisofsStage(xorrisofsStageOptions(p.filename, p.treePipeline.ISOLabel(), p.ISOLinux), osbuild2.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))
+	pipeline.AddStage(osbuild2.NewImplantisomd5Stage(&osbuild2.Implantisomd5StageOptions{Filename: p.filename}))
 
 	return pipeline
 }

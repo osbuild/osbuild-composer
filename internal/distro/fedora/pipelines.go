@@ -202,8 +202,9 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 
 	pl := pipeline.NewOSPipeline(buildPipeline, t.rpmOstree, options.OSTree.Parent, repos, packages, pt, bootLoader, t.arch.legacy, c.GetKernel().Name)
 
-	pl.UEFI = t.supportsUEFI()
-	pl.Vendor = t.arch.distro.vendor
+	if t.supportsUEFI() {
+		pl.UEFIVendor = t.arch.distro.vendor
+	}
 
 	var kernelOptions []string
 	if t.kernelOptions != "" {
@@ -295,11 +296,7 @@ func ostreeCommitPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *p
 }
 
 func containerTreePipeline(buildPipeline *pipeline.BuildPipeline, commitPipeline *pipeline.OSTreeCommitPipeline, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations, nginxConfigPath, listenPort string) pipeline.OSTreeCommitServerTreePipeline {
-	p := pipeline.NewOSTreeCommitServerTreePipeline(buildPipeline, commitPipeline)
-	p.Repos = repos
-	p.PackageSpecs = packages
-	p.NginxConfigPath = nginxConfigPath
-	p.ListenPort = listenPort
+	p := pipeline.NewOSTreeCommitServerTreePipeline(buildPipeline, repos, packages, commitPipeline, nginxConfigPath, listenPort)
 	language, _ := c.GetPrimaryLocale()
 	if language != nil {
 		p.Language = *language
@@ -308,9 +305,7 @@ func containerTreePipeline(buildPipeline *pipeline.BuildPipeline, commitPipeline
 }
 
 func containerPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.Pipeline, t *imageType, nginxConfigPath, listenPort string) pipeline.OCIContainerPipeline {
-	p := pipeline.NewOCIContainerPipeline(buildPipeline, treePipeline)
-	p.Architecture = t.Arch().Name()
-	p.Filename = t.Filename()
+	p := pipeline.NewOCIContainerPipeline(buildPipeline, treePipeline, t.Arch().Name(), t.Filename())
 	p.Cmd = []string{"nginx", "-c", nginxConfigPath}
 	p.ExposedPorts = []string{listenPort}
 	return p
@@ -328,7 +323,7 @@ func bootISOTreePipeline(buildPipeline *pipeline.BuildPipeline, anacondaPipeline
 	p := pipeline.NewISOTreePipeline(buildPipeline, anacondaPipeline, isoLabelTempl)
 	p.Release = "202010217.n.0"
 	p.OSName = "fedora"
-	p.Vendor = vendor
+	p.UEFIVendor = vendor
 	p.Users = users
 	p.Groups = groups
 	p.OSTreeRef = options.OSTree.Ref
@@ -338,8 +333,7 @@ func bootISOTreePipeline(buildPipeline *pipeline.BuildPipeline, anacondaPipeline
 }
 
 func bootISOPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.ISOTreePipeline, filename string, isolinux bool) pipeline.ISOPipeline {
-	p := pipeline.NewISOPipeline(buildPipeline, treePipeline)
-	p.Filename = filename
+	p := pipeline.NewISOPipeline(buildPipeline, treePipeline, filename)
 	p.ISOLinux = isolinux
 	return p
 }
