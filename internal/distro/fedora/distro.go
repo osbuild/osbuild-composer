@@ -12,7 +12,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -728,7 +727,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   osbuild2.GenSources(allPackageSpecs, commits, inlineData),
+			Sources:   osbuild.GenSources(allPackageSpecs, commits, inlineData),
 		},
 	)
 }
