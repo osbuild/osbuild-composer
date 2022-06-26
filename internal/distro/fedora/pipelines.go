@@ -26,8 +26,9 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	imagePipeline := pipeline.NewLiveImgPipeline(&buildPipeline, &treePipeline, "disk.img")
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
-	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "1.1"})
-	pipelines = append(pipelines, qemuPipeline.Serialize())
+	qcow2Pipeline := pipeline.NewQCOW2Pipeline(&buildPipeline, &imagePipeline, t.filename)
+	qcow2Pipeline.Compat = "1.1"
+	pipelines = append(pipelines, qcow2Pipeline.Serialize())
 
 	return pipelines, nil
 }
@@ -47,8 +48,8 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	imagePipeline := pipeline.NewLiveImgPipeline(&buildPipeline, &treePipeline, "disk.img")
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
-	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, t.filename, osbuild.QEMUFormatVPC, nil)
-	pipelines = append(pipelines, qemuPipeline.Serialize())
+	vpcPipeline := pipeline.NewVPCPipeline(&buildPipeline, &imagePipeline, t.filename)
+	pipelines = append(pipelines, vpcPipeline.Serialize())
 	return pipelines, nil
 }
 
@@ -67,8 +68,8 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	imagePipeline := pipeline.NewLiveImgPipeline(&buildPipeline, &treePipeline, "disk.img")
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
-	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, t.filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{Subformat: osbuild.VMDKSubformatStreamOptimized})
-	pipelines = append(pipelines, qemuPipeline.Serialize())
+	vmdkPipeline := pipeline.NewVMDKPipeline(&buildPipeline, &imagePipeline, t.filename)
+	pipelines = append(pipelines, vmdkPipeline.Serialize())
 	return pipelines, nil
 }
 
@@ -87,8 +88,8 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	imagePipeline := pipeline.NewLiveImgPipeline(&buildPipeline, &treePipeline, "disk.img")
 	pipelines = append(pipelines, imagePipeline.Serialize())
 
-	qemuPipeline := qemuPipeline(&buildPipeline, &imagePipeline, t.filename, osbuild.QEMUFormatQCOW2, nil)
-	pipelines = append(pipelines, qemuPipeline.Serialize())
+	qcow2Pipeline := pipeline.NewQCOW2Pipeline(&buildPipeline, &imagePipeline, t.filename)
+	pipelines = append(pipelines, qcow2Pipeline.Serialize())
 	return pipelines, nil
 }
 
@@ -335,13 +336,5 @@ func bootISOTreePipeline(buildPipeline *pipeline.BuildPipeline, anacondaPipeline
 func bootISOPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeline.ISOTreePipeline, filename string, isolinux bool) pipeline.ISOPipeline {
 	p := pipeline.NewISOPipeline(buildPipeline, treePipeline, filename)
 	p.ISOLinux = isolinux
-	return p
-}
-
-func qemuPipeline(buildPipeline *pipeline.BuildPipeline, imagePipeline *pipeline.LiveImgPipeline, outputFilename string, format osbuild.QEMUFormat, formatOptions osbuild.QEMUFormatOptions) pipeline.QemuPipeline {
-	p := pipeline.NewQemuPipeline(buildPipeline, imagePipeline, string(format), outputFilename)
-	p.Format = format
-	p.FormatOptions = formatOptions
-
 	return p
 }
