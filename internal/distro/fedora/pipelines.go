@@ -217,6 +217,7 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 	pl.KernelOptionsAppend = kernelOptions
 
 	pl.GPGKeyFiles = imageConfig.GPGKeyFiles
+	pl.ExcludeDocs = imageConfig.ExcludeDocs
 
 	if !t.bootISO {
 		// don't put users and groups in the payload of an installer
