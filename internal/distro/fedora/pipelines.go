@@ -268,6 +268,10 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 		pl.NTPServers = imageConfig.TimeSynchronization.Timeservers
 	}
 
+	if imageConfig.NoSElinux {
+		pl.SElinux = ""
+	}
+
 	pl.Grub2Config = imageConfig.Grub2Config
 	pl.Sysconfig = imageConfig.Sysconfig
 	pl.SystemdLogind = imageConfig.SystemdLogind

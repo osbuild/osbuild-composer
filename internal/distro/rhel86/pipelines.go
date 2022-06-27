@@ -643,7 +643,9 @@ func osPipeline(t *imageType,
 		p.AddStage(bootloader)
 	}
 
-	p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+	if !imageConfig.NoSElinux {
+		p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
+	}
 
 	if t.rpmOstree {
 		p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
