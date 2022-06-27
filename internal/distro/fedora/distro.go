@@ -128,11 +128,7 @@ var (
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey:     iotInstallerBuildPackageSet,
-			osPkgsKey:        iotCommitPackageSet,
 			installerPkgsKey: iotInstallerPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale:          "en_US.UTF-8",
