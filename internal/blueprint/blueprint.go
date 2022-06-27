@@ -94,6 +94,10 @@ func (b *Blueprint) BumpVersion(old string) {
 // packages, modules, and groups all resolve to rpm packages right now. This
 // function returns a combined list of "name-version" strings.
 func (b *Blueprint) GetPackages() []string {
+	return b.GetPackagesEx(true)
+}
+
+func (b *Blueprint) GetPackagesEx(bootable bool) []string {
 	packages := []string{}
 	for _, pkg := range b.Packages {
 		packages = append(packages, pkg.ToNameVersion())
@@ -105,9 +109,11 @@ func (b *Blueprint) GetPackages() []string {
 		packages = append(packages, "@"+group.Name)
 	}
 
-	kc := b.Customizations.GetKernel()
-	kpkg := Package{Name: kc.Name}
-	packages = append(packages, kpkg.ToNameVersion())
+	if bootable {
+		kc := b.Customizations.GetKernel()
+		kpkg := Package{Name: kc.Name}
+		packages = append(packages, kpkg.ToNameVersion())
+	}
 
 	return packages
 }
