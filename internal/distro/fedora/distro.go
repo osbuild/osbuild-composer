@@ -571,7 +571,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig
 	}
 
 	// blueprint packages
-	bpPackages := bp.GetPackages()
+	bpPackages := bp.GetPackagesEx(t.bootable)
 	timezone, _ := bp.Customizations.GetTimezoneSettings()
 	if timezone != nil {
 		bpPackages = append(bpPackages, "chrony")
