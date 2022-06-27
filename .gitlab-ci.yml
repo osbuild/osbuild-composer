@@ -673,6 +673,16 @@ SonarQube:
     INTERNAL_NETWORK: "true"
     GIT_DEPTH: 0
 
+ContainerUpload:
+  stage: test
+  extends: .terraform
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/container-upload.sh
+  variables:
+    RUNNER: aws/fedora-35-x86_64
+    INTERNAL_NETWORK: "false"
+
 finish:
   stage: finish
   dependencies: []
