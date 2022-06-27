@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -7,7 +7,7 @@ import (
 
 // An AnacondaPipeline represents the installer tree as found on an ISO.
 type AnacondaPipeline struct {
-	Pipeline
+	BasePipeline
 	// Users indicate whether or not the user spoke should be enabled in
 	// anaconda. If it is, users specified in a kickstart will be configured,
 	// and in case no users are provided in a kickstart the user will be
@@ -45,7 +45,7 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	version string) AnacondaPipeline {
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
 	return AnacondaPipeline{
-		Pipeline:     New("anaconda-tree", buildPipeline, nil),
+		BasePipeline: NewBasePipeline("anaconda-tree", buildPipeline, nil),
 		repos:        repos,
 		packageSpecs: packages,
 		kernelVer:    kernelVer,
@@ -53,6 +53,10 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 		product:      product,
 		version:      version,
 	}
+}
+
+func (p AnacondaPipeline) getPackages() []rpmmd.PackageSpec {
+	return p.packageSpecs
 }
 
 // KernelVer returns the NEVRA of the kernel package the installer will use at
@@ -76,8 +80,8 @@ func (p AnacondaPipeline) Version() string {
 	return p.version
 }
 
-func (p AnacondaPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p AnacondaPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild2.NewBuildstampStage(&osbuild2.BuildstampStageOptions{

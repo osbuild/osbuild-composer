@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -13,7 +13,7 @@ import (
 // build pipeline, we do use the build host's filesystem, this means we should
 // make minimal assumptions about what's available there.
 type BuildPipeline struct {
-	Pipeline
+	BasePipeline
 
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
@@ -23,15 +23,19 @@ type BuildPipeline struct {
 // and the specified packages.
 func NewBuildPipeline(runner string, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec) BuildPipeline {
 	pipeline := BuildPipeline{
-		Pipeline:     New("build", nil, &runner),
+		BasePipeline: NewBasePipeline("build", nil, &runner),
 		repos:        repos,
 		packageSpecs: packages,
 	}
 	return pipeline
 }
 
-func (p BuildPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p BuildPipeline) getPackages() []rpmmd.PackageSpec {
+	return p.packageSpecs
+}
+
+func (p BuildPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild2.NewSELinuxStage(&osbuild2.SELinuxStageOptions{

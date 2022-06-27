@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"path/filepath"
@@ -11,7 +11,7 @@ import (
 // An OSTreeCommitServerTreePipeline contains an nginx server serving
 // an embedded ostree commit.
 type OSTreeCommitServerTreePipeline struct {
-	Pipeline
+	BasePipeline
 	// TODO: should this be configurable?
 	Language string
 
@@ -34,7 +34,7 @@ func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	nginxConfigPath,
 	listenPort string) OSTreeCommitServerTreePipeline {
 	return OSTreeCommitServerTreePipeline{
-		Pipeline:        New("container-tree", buildPipeline, nil),
+		BasePipeline:    NewBasePipeline("container-tree", buildPipeline, nil),
 		repos:           repos,
 		packageSpecs:    packageSpecs,
 		commitPipeline:  commitPipeline,
@@ -44,8 +44,12 @@ func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	}
 }
 
-func (p OSTreeCommitServerTreePipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p OSTreeCommitServerTreePipeline) getPackages() []rpmmd.PackageSpec {
+	return p.packageSpecs
+}
+
+func (p OSTreeCommitServerTreePipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild2.NewLocaleStage(&osbuild2.LocaleStageOptions{Language: p.Language}))

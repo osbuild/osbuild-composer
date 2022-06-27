@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -7,7 +7,7 @@ import (
 // An ISOPipeline represents a bootable ISO file created from an
 // an existing ISOTreePipeline.
 type ISOPipeline struct {
-	Pipeline
+	BasePipeline
 	ISOLinux bool
 
 	treePipeline *ISOTreePipeline
@@ -16,14 +16,14 @@ type ISOPipeline struct {
 
 func NewISOPipeline(buildPipeline *BuildPipeline, treePipeline *ISOTreePipeline, filename string) ISOPipeline {
 	return ISOPipeline{
-		Pipeline:     New("bootiso", buildPipeline, nil),
+		BasePipeline: NewBasePipeline("bootiso", buildPipeline, nil),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
 }
 
-func (p ISOPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p ISOPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewXorrisofsStage(xorrisofsStageOptions(p.filename, p.treePipeline.ISOLabel(), p.ISOLinux), osbuild2.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))
 	pipeline.AddStage(osbuild2.NewImplantisomd5Stage(&osbuild2.Implantisomd5StageOptions{Filename: p.filename}))

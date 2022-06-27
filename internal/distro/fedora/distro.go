@@ -1,7 +1,6 @@
 package fedora
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -12,8 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -492,7 +490,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error)
+type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -726,33 +724,13 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		return distro.Manifest{}, err
 	}
 
-	// flatten spec sets for sources
-	allPackageSpecs := make([]rpmmd.PackageSpec, 0)
-	for _, specs := range packageSpecSets {
-		allPackageSpecs = append(allPackageSpecs, specs...)
+	manifest := manifest.New()
+	for _, pipeline := range pipelines {
+		// TODO: make this implicit on pipeline creation to enforce manifest validitiy
+		manifest.AddPipeline(pipeline)
 	}
 
-	// handle OSTree commit inputs
-	var commits []ostree.CommitSource
-	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		commits = []ostree.CommitSource{{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}}
-	}
-
-	// handle inline sources
-	inlineData := []string{}
-
-	// FDO root certs, if any, are transmitted via an inline source
-	if fdo := customizations.GetFDO(); fdo != nil && fdo.DiunPubKeyRootCerts != "" {
-		inlineData = append(inlineData, fdo.DiunPubKeyRootCerts)
-	}
-
-	return json.Marshal(
-		osbuild.Manifest{
-			Version:   "2",
-			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(allPackageSpecs, commits, inlineData),
-		},
-	)
+	return manifest.Serialize()
 }
 
 func isMountpointAllowed(mountpoint string) bool {
