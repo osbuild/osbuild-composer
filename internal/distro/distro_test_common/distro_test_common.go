@@ -192,6 +192,16 @@ func kernelCount(imgType distro.ImageType) int {
 
 		}
 	}
+	for _, iset := range sets["installer"] {
+		for _, pkg := range iset.Include {
+			for _, kernel := range knownKernels {
+				if kernel == pkg {
+					n++
+				}
+			}
+
+		}
+	}
 	return n
 }
 

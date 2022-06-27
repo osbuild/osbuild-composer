@@ -51,11 +51,10 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 							packages := imgType.PackageSets(blueprint.Blueprint{}, repos[archStr])
 
-							_, err = solver.Depsolve(packages["build"])
-							assert.NoError(t, err)
-
-							_, err = solver.Depsolve(packages["packages"])
-							assert.NoError(t, err)
+							for _, set := range packages {
+								_, err = solver.Depsolve(set)
+								assert.NoError(t, err)
+							}
 						})
 					}
 				})
