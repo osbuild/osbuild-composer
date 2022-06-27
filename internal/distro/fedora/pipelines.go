@@ -348,3 +348,21 @@ func bootISOPipeline(buildPipeline *pipeline.BuildPipeline, treePipeline *pipeli
 	p.ISOLinux = isolinux
 	return p
 }
+
+func containerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines := make([]osbuild.Pipeline, 0)
+
+	buildPipeline := pipeline.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
+	pipelines = append(pipelines, buildPipeline.Serialize())
+
+	treePipeline, err := osPipeline(&buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
+	if err != nil {
+		return nil, err
+	}
+	pipelines = append(pipelines, treePipeline.Serialize())
+
+	ociPipeline := pipeline.NewOCIContainerPipeline(&buildPipeline, &treePipeline.Pipeline, t.Arch().Name(), t.Filename())
+	pipelines = append(pipelines, ociPipeline.Serialize())
+
+	return pipelines, nil
+}

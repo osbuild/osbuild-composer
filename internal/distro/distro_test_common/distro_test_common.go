@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -202,6 +203,10 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 			imgType, err := arch.GetImageType(typeName)
 			assert.NoError(t, err)
 			nk := kernelCount(imgType)
+			// No kernel packages in containers
+			if strings.HasSuffix(typeName, "container") {
+				continue
+			}
 			// at least one kernel for general image types
 			// exactly one kernel for OSTree commits
 			if nk < 1 || (isOSTree(imgType) && nk != 1) {

@@ -28,6 +28,17 @@
       "x86_64"
     ]
   },
+  "container": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "container",
+      "repositories": [],
+      "filename": "container.tar",
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "ec2": {
     "compose-request": {
       "distro": "",
