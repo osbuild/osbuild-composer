@@ -201,7 +201,12 @@ func osPipeline(buildPipeline *pipeline.BuildPipeline,
 		bootLoader = pipeline.BOOTLOADER_GRUB
 	}
 
-	pl := pipeline.NewOSPipeline(buildPipeline, t.rpmOstree, options.OSTree.Parent, repos, packages, pt, bootLoader, t.arch.legacy, c.GetKernel().Name)
+	var kernelName string
+	if t.bootable {
+		kernelName = c.GetKernel().Name
+	}
+
+	pl := pipeline.NewOSPipeline(buildPipeline, t.rpmOstree, options.OSTree.Parent, repos, packages, pt, bootLoader, t.arch.legacy, kernelName)
 
 	if t.supportsUEFI() {
 		pl.UEFIVendor = t.arch.distro.vendor
