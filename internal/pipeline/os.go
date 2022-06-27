@@ -44,6 +44,9 @@ type OSPipeline struct {
 	// selected profile
 	SElinux string
 
+	// Do not install documentation
+	ExcludeDocs bool
+
 	// TODO: drop blueprint types from the API
 	Groups   []blueprint.GroupCustomization
 	Users    []blueprint.UserCustomization
@@ -143,6 +146,12 @@ func (p OSPipeline) Serialize() osbuild2.Pipeline {
 	}
 
 	rpmOptions := osbuild2.NewRPMStageOptions(p.repos)
+	if p.ExcludeDocs {
+		if rpmOptions.Exclude == nil {
+			rpmOptions.Exclude = &osbuild2.Exclude{}
+		}
+		rpmOptions.Exclude.Docs = true
+	}
 	rpmOptions.GPGKeysFromTree = p.GPGKeyFiles
 	pipeline.AddStage(osbuild2.NewRPMStage(rpmOptions, osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
