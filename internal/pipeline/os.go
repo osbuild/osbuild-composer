@@ -39,6 +39,11 @@ type OSPipeline struct {
 	EnabledServices  []string
 	DisabledServices []string
 	DefaultTarget    string
+
+	// SELinux policy, when set it enables the labeling of the tree with the
+	// selected profile
+	SElinux string
+
 	// TODO: drop blueprint types from the API
 	Groups   []blueprint.GroupCustomization
 	Users    []blueprint.UserCustomization
@@ -106,6 +111,7 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 		Language:       "C.UTF-8",
 		Hostname:       "localhost.localdomain",
 		Timezone:       "UTC",
+		SElinux:        "targeted",
 	}
 }
 
@@ -307,9 +313,11 @@ func (p OSPipeline) Serialize() osbuild2.Pipeline {
 		pipeline.AddStage(bootloader)
 	}
 
-	pipeline.AddStage(osbuild2.NewSELinuxStage(&osbuild2.SELinuxStageOptions{
-		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
-	}))
+	if p.SElinux != "" {
+		pipeline.AddStage(osbuild2.NewSELinuxStage(&osbuild2.SELinuxStageOptions{
+			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
+		}))
+	}
 
 	if p.osTree {
 		pipeline.AddStage(osbuild2.NewOSTreePrepTreeStage(&osbuild2.OSTreePrepTreeStageOptions{
