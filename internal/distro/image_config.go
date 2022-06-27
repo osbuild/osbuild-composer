@@ -23,6 +23,9 @@ type ImageConfig struct {
 	// List of files from which to import GPG keys into the RPM database
 	GPGKeyFiles []string
 
+	// Disable SELinux labelling
+	NoSElinux bool
+
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
 	RHSMConfig         map[RHSMSubscriptionStatus]*osbuild2.RHSMStageOptions
