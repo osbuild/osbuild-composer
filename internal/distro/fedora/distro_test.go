@@ -114,6 +114,14 @@ func TestFilenameFromType(t *testing.T) {
 				mimeType: "application/x-tar",
 			},
 		},
+		{
+			name: "container",
+			args: args{"container"},
+			want: wantResult{
+				filename: "container.tar",
+				mimeType: "application/x-tar",
+			},
+		},
 		// Alias
 		{
 			name: "iot-container",
@@ -426,6 +434,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"fedora-iot-container",
 				"fedora-iot-installer",
 				"oci",
+				"container",
 			},
 		},
 		{
@@ -438,6 +447,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"fedora-iot-container",
 				"fedora-iot-installer",
 				"oci",
+				"container",
 			},
 		},
 	}

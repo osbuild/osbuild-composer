@@ -299,6 +299,30 @@ var (
 		exports:             []string{"image"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
+
+	containerImgType = imageType{
+		name:     "container",
+		filename: "container.tar",
+		mimeType: "application/x-tar",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    containerPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
+		defaultImageConfig: &distro.ImageConfig{
+			NoSElinux:   true,
+			ExcludeDocs: true,
+			Locale:      "C.UTF-8",
+			Timezone:    "Etc/UTC",
+		},
+		pipelines:        containerPipelines,
+		bootable:         false,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "container"},
+		exports:          []string{"container"},
+	}
 )
 
 type distribution struct {
@@ -571,7 +595,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig
 	}
 
 	// blueprint packages
-	bpPackages := bp.GetPackagesEx(t.bootable)
+	bpPackages := bp.GetPackagesEx(t.rpmOstree || t.bootable)
 	timezone, _ := bp.Customizations.GetTimezoneSettings()
 	if timezone != nil {
 		bpPackages = append(bpPackages, "chrony")
@@ -579,7 +603,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig
 
 	// if we have file system customization that will need to a new mount point
 	// the layout is converted to LVM so we need to corresponding packages
-	if !t.rpmOstree {
+	if t.bootable && !t.rpmOstree {
 
 		pt, exists := t.basePartitionTables[t.arch.Name()]
 		if !exists {
@@ -603,8 +627,11 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig
 	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
 	kernel := bp.Customizations.GetKernel().Name
 
-	// add bp kernel to main OS package set to avoid duplicate kernels
-	mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kernel}})
+	// add bp kernel to main OS package set to avoid duplicate kernels,
+	// but we don't want to add the kernel for the container artefact
+	if t.rpmOstree || t.bootable {
+		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kernel}})
+	}
 	return distro.MakePackageSetChains(t, mergedSets, repos)
 
 }
@@ -834,6 +861,7 @@ func newDistro(distroName string) distro.Distro {
 
 	x86_64.addImageTypes(
 		amiImgType,
+		containerImgType,
 		qcow2ImgType,
 		openstackImgType,
 		vhdImgType,
@@ -845,6 +873,7 @@ func newDistro(distroName string) distro.Distro {
 	)
 	aarch64.addImageTypes(
 		amiImgType,
+		containerImgType,
 		qcow2ImgType,
 		openstackImgType,
 		ociImgType,

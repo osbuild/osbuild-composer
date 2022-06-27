@@ -730,3 +730,64 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 func iotInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	return anacondaPackageSet(t)
 }
+
+func containerPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := rpmmd.PackageSet{
+		Include: []string{
+			"bash",
+			"coreutils",
+			"dnf-yum",
+			"dnf",
+			"fedora-release-container",
+			"fedora-repos-modular",
+			"glibc-minimal-langpack",
+			"rootfiles",
+			"rpm",
+			"sudo",
+			"tar",
+			"vim-minimal",
+		},
+		Exclude: []string{
+			"crypto-policies-scripts",
+			"dbus-broker",
+			"deltarpm",
+			"dosfstools",
+			"e2fsprogs",
+			"elfutils-debuginfod-client",
+			"fuse-libs",
+			"gawk-all-langpacks",
+			"glibc-gconv-extra",
+			"glibc-langpack-en",
+			"gnupg2-smime",
+			"grubby",
+			"kernel-core",
+			"kernel-debug-core",
+			"kernel",
+			"langpacks-en_GB",
+			"langpacks-en",
+			"libss",
+			"libxcrypt-compat",
+			"nano",
+			"openssl-pkcs11",
+			"pinentry",
+			"python3-unbound",
+			"shared-mime-info",
+			"sssd-client",
+			"sudo-python-plugin",
+			"systemd",
+			"trousers",
+			"whois-nls",
+			"xkeyboard-config",
+		},
+	}
+
+	// util-linux-core was created in Fedora 35 as a smaller
+	// version of util-linux
+	if t.arch.distro.releaseVersion == "34" {
+		ps.Include = append(ps.Include, "util-linux")
+	} else {
+		ps.Include = append(ps.Include, "util-linux-core")
+	}
+
+	return ps
+}

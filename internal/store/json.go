@@ -374,6 +374,7 @@ var imageTypeCompatMapping = map[string]string{
 	"oci":                            "oci",
 	"gce":                            "GCP",
 	"gce-rhui":                       "GCE RHUI",
+	"container":                      "container",
 }
 
 func imageTypeToCompatString(imgType distro.ImageType) string {
