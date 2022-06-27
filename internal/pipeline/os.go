@@ -100,7 +100,10 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 	if osTree {
 		name = "ostree-tree"
 	}
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
+	var kernelVer string
+	if kernelName != "" {
+		kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
+	}
 	return OSPipeline{
 		Pipeline:       New(name, buildPipeline, nil),
 		osTree:         osTree,
