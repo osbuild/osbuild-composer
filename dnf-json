@@ -212,9 +212,13 @@ def solve(request, cache_dir):
             }
         except dnf.exceptions.DepsolveError as e:
             printe("error depsolve")
+            # collect list of packages for error
+            pkgs = []
+            for t in transactions:
+                pkgs.extend(t["package-specs"])
             return None, {
                 "kind": "DepsolveError",
-                "reason": f"There was a problem depsolving {arguments['package-specs']}: {e}"
+                "reason": f"There was a problem depsolving {', '.join(pkgs)}: {e}"
             }
         except dnf.exceptions.RepoError as e:
             return None, {
