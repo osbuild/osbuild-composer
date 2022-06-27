@@ -26,6 +26,9 @@ type ImageConfig struct {
 	// Disable SELinux labelling
 	NoSElinux bool
 
+	// Disable documentation
+	ExcludeDocs bool
+
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
 	RHSMConfig         map[RHSMSubscriptionStatus]*osbuild2.RHSMStageOptions
