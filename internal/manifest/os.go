@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ const (
 // OSPipeline represents the filesystem tree of the target image. This roughly
 // correpsonds to the root filesystem once an instance of the image is running.
 type OSPipeline struct {
-	Pipeline
+	BasePipeline
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
 	// UEFIVendor indicates whether or not the OS should support UEFI and
@@ -73,6 +73,7 @@ type OSPipeline struct {
 
 	osTree         bool
 	osTreeParent   string
+	osTreeURL      string
 	repos          []rpmmd.RepoConfig
 	packageSpecs   []rpmmd.PackageSpec
 	partitionTable *disk.PartitionTable
@@ -90,6 +91,7 @@ type OSPipeline struct {
 func NewOSPipeline(buildPipeline *BuildPipeline,
 	osTree bool,
 	osTreeParent string,
+	osTreeURL string,
 	repos []rpmmd.RepoConfig,
 	packages []rpmmd.PackageSpec,
 	partitionTable *disk.PartitionTable,
@@ -105,9 +107,10 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 		kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
 	}
 	return OSPipeline{
-		Pipeline:       New(name, buildPipeline, nil),
+		BasePipeline:   NewBasePipeline(name, buildPipeline, nil),
 		osTree:         osTree,
 		osTreeParent:   osTreeParent,
+		osTreeURL:      osTreeURL,
 		repos:          repos,
 		packageSpecs:   packages,
 		partitionTable: partitionTable,
@@ -119,6 +122,21 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 		Timezone:       "UTC",
 		SElinux:        "targeted",
 	}
+}
+
+func (p OSPipeline) getOSTreeCommits() []osTreeCommit {
+	commits := []osTreeCommit{}
+	if p.osTreeParent != "" && p.osTreeURL != "" {
+		commits = append(commits, osTreeCommit{
+			checksum: p.osTreeParent,
+			url:      p.osTreeURL,
+		})
+	}
+	return commits
+}
+
+func (p OSPipeline) getPackages() []rpmmd.PackageSpec {
+	return p.packageSpecs
 }
 
 func (p OSPipeline) OSTreeParent() string {
@@ -141,8 +159,8 @@ func (p OSPipeline) GRUBLegacy() string {
 	return p.grubLegacy
 }
 
-func (p OSPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p OSPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	if p.osTree && p.OSTreeParent() != "" {
 		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.OSTreeParent()))

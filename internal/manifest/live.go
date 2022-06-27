@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -7,7 +7,7 @@ import (
 // A LiveImgPipeline represents a raw image file which can be booted in a
 // hypervisor. It is created from an existing OSPipeline.
 type LiveImgPipeline struct {
-	Pipeline
+	BasePipeline
 	treePipeline *OSPipeline
 
 	filename string
@@ -15,7 +15,7 @@ type LiveImgPipeline struct {
 
 func NewLiveImgPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, filename string) LiveImgPipeline {
 	return LiveImgPipeline{
-		Pipeline:     New("image", buildPipeline, nil),
+		BasePipeline: NewBasePipeline("image", buildPipeline, nil),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
@@ -25,8 +25,8 @@ func (p LiveImgPipeline) Filename() string {
 	return p.filename
 }
 
-func (p LiveImgPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p LiveImgPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pt := p.treePipeline.PartitionTable()
 	if pt == nil {

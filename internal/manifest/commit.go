@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -6,7 +6,7 @@ import (
 
 // OSTreeCommitPipeline represents an ostree with one commit.
 type OSTreeCommitPipeline struct {
-	Pipeline
+	BasePipeline
 	OSVersion string
 
 	treePipeline *OSPipeline
@@ -18,7 +18,7 @@ type OSTreeCommitPipeline struct {
 // ref is the ref to create the commit under.
 func NewOSTreeCommitPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, ref string) OSTreeCommitPipeline {
 	return OSTreeCommitPipeline{
-		Pipeline:     New("ostree-commit", buildPipeline, nil),
+		BasePipeline: NewBasePipeline("ostree-commit", buildPipeline, nil),
 		treePipeline: treePipeline,
 		ref:          ref,
 	}
@@ -29,8 +29,8 @@ func (p OSTreeCommitPipeline) Ref() string {
 	return p.ref
 }
 
-func (p OSTreeCommitPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p OSTreeCommitPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewOSTreeInitStage(&osbuild2.OSTreeInitStageOptions{Path: "/repo"}))
 

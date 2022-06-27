@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -6,7 +6,7 @@ import (
 
 // A VPCPipeline turns a raw image file into qemu-based image format, such as qcow2.
 type VPCPipeline struct {
-	Pipeline
+	BasePipeline
 
 	imgPipeline *LiveImgPipeline
 	filename    string
@@ -17,14 +17,14 @@ type VPCPipeline struct {
 // of the produced image.
 func NewVPCPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) VPCPipeline {
 	return VPCPipeline{
-		Pipeline:    New("vpc", buildPipeline, nil),
-		imgPipeline: imgPipeline,
-		filename:    filename,
+		BasePipeline: NewBasePipeline("vpc", buildPipeline, nil),
+		imgPipeline:  imgPipeline,
+		filename:     filename,
 	}
 }
 
-func (p VPCPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p VPCPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(
 		osbuild2.NewQEMUStageOptions(p.filename, osbuild2.QEMUFormatVPC, nil),

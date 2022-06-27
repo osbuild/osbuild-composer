@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -7,26 +7,26 @@ import (
 // An OCIContainerPipeline represents an OCI container, containing a filesystem
 // tree created by another Pipeline.
 type OCIContainerPipeline struct {
-	Pipeline
+	BasePipeline
 	Cmd          []string
 	ExposedPorts []string
 
-	treePipeline *Pipeline
+	treePipeline *BasePipeline
 	architecture string
 	filename     string
 }
 
-func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *Pipeline, architecture, filename string) OCIContainerPipeline {
+func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *BasePipeline, architecture, filename string) OCIContainerPipeline {
 	return OCIContainerPipeline{
-		Pipeline:     New("container", buildPipeline, nil),
+		BasePipeline: NewBasePipeline("container", buildPipeline, nil),
 		treePipeline: treePipeline,
 		architecture: architecture,
 		filename:     filename,
 	}
 }
 
-func (p OCIContainerPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p OCIContainerPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	options := &osbuild2.OCIArchiveStageOptions{
 		Architecture: p.architecture,

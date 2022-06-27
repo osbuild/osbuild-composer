@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -6,7 +6,7 @@ import (
 
 // A QCOW2Pipeline turns a raw image file into qcow2 image.
 type QCOW2Pipeline struct {
-	Pipeline
+	BasePipeline
 	Compat string
 
 	imgPipeline *LiveImgPipeline
@@ -18,14 +18,14 @@ type QCOW2Pipeline struct {
 // of the produced qcow2 image.
 func NewQCOW2Pipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) QCOW2Pipeline {
 	return QCOW2Pipeline{
-		Pipeline:    New("qcow2", buildPipeline, nil),
-		imgPipeline: imgPipeline,
-		filename:    filename,
+		BasePipeline: NewBasePipeline("qcow2", buildPipeline, nil),
+		imgPipeline:  imgPipeline,
+		filename:     filename,
 	}
 }
 
-func (p QCOW2Pipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p QCOW2Pipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(
 		osbuild2.NewQEMUStageOptions(p.filename,

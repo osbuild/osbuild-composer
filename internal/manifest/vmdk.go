@@ -1,4 +1,4 @@
-package pipeline
+package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
@@ -6,7 +6,7 @@ import (
 
 // A VMDKPipeline turns a raw image file into vmdk image.
 type VMDKPipeline struct {
-	Pipeline
+	BasePipeline
 
 	imgPipeline *LiveImgPipeline
 	filename    string
@@ -16,14 +16,14 @@ type VMDKPipeline struct {
 // raw image. Filename is the name of the produced image.
 func NewVMDKPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) VMDKPipeline {
 	return VMDKPipeline{
-		Pipeline:    New("vmdk", buildPipeline, nil),
-		imgPipeline: imgPipeline,
-		filename:    filename,
+		BasePipeline: NewBasePipeline("vmdk", buildPipeline, nil),
+		imgPipeline:  imgPipeline,
+		filename:     filename,
 	}
 }
 
-func (p VMDKPipeline) Serialize() osbuild2.Pipeline {
-	pipeline := p.Pipeline.Serialize()
+func (p VMDKPipeline) serialize() osbuild2.Pipeline {
+	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(
 		osbuild2.NewQEMUStageOptions(p.filename, osbuild2.QEMUFormatVMDK, osbuild2.VMDKOptions{
