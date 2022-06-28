@@ -38,7 +38,8 @@ type connectionConfig struct {
 }
 
 type kojiServer struct {
-	creds koji.GSSAPICredentials
+	creds              koji.GSSAPICredentials
+	relaxTimeoutFactor uint
 }
 
 // Represents the implementation of a job type as defined by the worker API.
@@ -206,6 +207,7 @@ func main() {
 				Principal string `toml:"principal"`
 				KeyTab    string `toml:"keytab"`
 			} `toml:"kerberos,omitempty"`
+			RelaxTimeoutFactor uint `toml:"relax_timeout_factor"`
 		} `toml:"koji"`
 		GCP *struct {
 			Credentials string `toml:"credentials"`
@@ -231,9 +233,8 @@ func main() {
 			ClientId         string `toml:"client_id"`
 			ClientSecretPath string `toml:"client_secret"`
 		} `toml:"authentication"`
-		RelaxTimeoutFactor uint   `toml:"RelaxTimeoutFactor"` // Should be moved under 'koji' section
-		BasePath           string `toml:"base_path"`
-		DNFJson            string `toml:"dnf-json"`
+		BasePath string `toml:"base_path"`
+		DNFJson  string `toml:"dnf-json"`
 	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
@@ -287,6 +288,7 @@ func main() {
 				Principal: kojiConfig.Kerberos.Principal,
 				KeyTab:    kojiConfig.Kerberos.KeyTab,
 			},
+			relaxTimeoutFactor: kojiConfig.RelaxTimeoutFactor,
 		}
 	}
 
@@ -455,14 +457,13 @@ func main() {
 	// non-depsolve job
 	jobImpls := map[string]JobImplementation{
 		worker.JobTypeOSBuild: &OSBuildJobImpl{
-			Store:                  store,
-			Output:                 output,
-			KojiServers:            kojiServers,
-			KojiRelaxTimeoutFactor: config.RelaxTimeoutFactor,
-			GCPCreds:               gcpCredentials,
-			AzureCreds:             azureCredentials,
-			AWSCreds:               awsCredentials,
-			AWSBucket:              awsBucket,
+			Store:       store,
+			Output:      output,
+			KojiServers: kojiServers,
+			GCPCreds:    gcpCredentials,
+			AzureCreds:  azureCredentials,
+			AWSCreds:    awsCredentials,
+			AWSBucket:   awsBucket,
 			S3Config: S3Configuration{
 				Creds:               genericS3Credentials,
 				Endpoint:            genericS3Endpoint,
@@ -473,18 +474,15 @@ func main() {
 			},
 		},
 		worker.JobTypeOSBuildKoji: &OSBuildKojiJobImpl{
-			Store:              store,
-			Output:             output,
-			KojiServers:        kojiServers,
-			relaxTimeoutFactor: config.RelaxTimeoutFactor,
+			Store:       store,
+			Output:      output,
+			KojiServers: kojiServers,
 		},
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
-			KojiServers:        kojiServers,
-			relaxTimeoutFactor: config.RelaxTimeoutFactor,
+			KojiServers: kojiServers,
 		},
 		worker.JobTypeKojiFinalize: &KojiFinalizeJobImpl{
-			KojiServers:        kojiServers,
-			relaxTimeoutFactor: config.RelaxTimeoutFactor,
+			KojiServers: kojiServers,
 		},
 	}
 

@@ -16,14 +16,12 @@ import (
 )
 
 type OSBuildKojiJobImpl struct {
-	Store              string
-	Output             string
-	KojiServers        map[string]kojiServer
-	relaxTimeoutFactor uint
+	Store       string
+	Output      string
+	KojiServers map[string]kojiServer
 }
 
 func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, filename string) (string, uint64, error) {
-	transport := koji.CreateKojiTransport(impl.relaxTimeoutFactor)
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -31,6 +29,7 @@ func (impl *OSBuildKojiJobImpl) kojiUpload(file *os.File, server, directory, fil
 	}
 
 	kojiServer, exists := impl.KojiServers[serverURL.Hostname()]
+	transport := koji.CreateKojiTransport(kojiServer.relaxTimeoutFactor)
 	if !exists {
 		return "", 0, fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
