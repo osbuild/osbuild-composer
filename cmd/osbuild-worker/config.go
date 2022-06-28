@@ -7,41 +7,57 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type composerConfig struct {
+	Proxy string `toml:"proxy"`
+}
+
+type kerberosConfig struct {
+	Principal string `toml:"principal"`
+	KeyTab    string `toml:"keytab"`
+}
+
+type kojiServerConfig struct {
+	Kerberos           *kerberosConfig `toml:"kerberos,omitempty"`
+	RelaxTimeoutFactor uint            `toml:"relax_timeout_factor"`
+}
+
+type gcpConfig struct {
+	Credentials string `toml:"credentials"`
+}
+
+type azureConfig struct {
+	Credentials string `toml:"credentials"`
+}
+
+type awsConfig struct {
+	Credentials string `toml:"credentials"`
+	Bucket      string `toml:"bucket"`
+}
+
+type genericS3Config struct {
+	Credentials         string `toml:"credentials"`
+	Endpoint            string `toml:"endpoint"`
+	Region              string `toml:"region"`
+	Bucket              string `toml:"bucket"`
+	CABundle            string `toml:"ca_bundle"`
+	SkipSSLVerification bool   `toml:"skip_ssl_verification"`
+}
+
+type authenticationConfig struct {
+	OAuthURL         string `toml:"oauth_url"`
+	OfflineTokenPath string `toml:"offline_token"`
+	ClientId         string `toml:"client_id"`
+	ClientSecretPath string `toml:"client_secret"`
+}
+
 type workerConfig struct {
-	Composer *struct {
-		Proxy string `toml:"proxy"`
-	} `toml:"composer"`
-	Koji map[string]struct {
-		Kerberos *struct {
-			Principal string `toml:"principal"`
-			KeyTab    string `toml:"keytab"`
-		} `toml:"kerberos,omitempty"`
-		RelaxTimeoutFactor uint `toml:"relax_timeout_factor"`
-	} `toml:"koji"`
-	GCP *struct {
-		Credentials string `toml:"credentials"`
-	} `toml:"gcp"`
-	Azure *struct {
-		Credentials string `toml:"credentials"`
-	} `toml:"azure"`
-	AWS *struct {
-		Credentials string `toml:"credentials"`
-		Bucket      string `toml:"bucket"`
-	} `toml:"aws"`
-	GenericS3 *struct {
-		Credentials         string `toml:"credentials"`
-		Endpoint            string `toml:"endpoint"`
-		Region              string `toml:"region"`
-		Bucket              string `toml:"bucket"`
-		CABundle            string `toml:"ca_bundle"`
-		SkipSSLVerification bool   `toml:"skip_ssl_verification"`
-	} `toml:"generic_s3"`
-	Authentication *struct {
-		OAuthURL         string `toml:"oauth_url"`
-		OfflineTokenPath string `toml:"offline_token"`
-		ClientId         string `toml:"client_id"`
-		ClientSecretPath string `toml:"client_secret"`
-	} `toml:"authentication"`
+	Composer       *composerConfig             `toml:"composer"`
+	Koji           map[string]kojiServerConfig `toml:"koji"`
+	GCP            *gcpConfig                  `toml:"gcp"`
+	Azure          *azureConfig                `toml:"azure"`
+	AWS            *awsConfig                  `toml:"aws"`
+	GenericS3      *genericS3Config            `toml:"generic_s3"`
+	Authentication *authenticationConfig       `toml:"authentication"`
 	// default value: /api/worker/v1
 	BasePath string `toml:"base_path"`
 	DNFJson  string `toml:"dnf-json"`
