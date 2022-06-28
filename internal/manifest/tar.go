@@ -15,11 +15,13 @@ type TarPipeline struct {
 // filesystem tree which will be the contents of the tar file. The pipelinename
 // is the name of the pipeline. The filename is the name of the output tar file.
 func NewTarPipeline(buildPipeline *BuildPipeline, inputPipeline *BasePipeline, pipelinename, filename string) *TarPipeline {
-	return &TarPipeline{
+	p := &TarPipeline{
 		BasePipeline:  NewBasePipeline(pipelinename, buildPipeline, nil),
 		inputPipeline: inputPipeline,
 		filename:      filename,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *TarPipeline) serialize() osbuild2.Pipeline {

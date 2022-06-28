@@ -32,7 +32,7 @@ func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *Anaconda
 	// TODO: replace isoLabelTmpl with more high-level properties
 	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.arch)
 
-	return &ISOTreePipeline{
+	p := &ISOTreePipeline{
 		BasePipeline:     NewBasePipeline("bootiso-tree", buildPipeline, nil),
 		anacondaPipeline: anacondaPipeline,
 		isoLabel:         isoLabel,
@@ -40,6 +40,8 @@ func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *Anaconda
 		osTreeURL:        osTreeURL,
 		osTreeRef:        osTreeRef,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *ISOTreePipeline) getOSTreeCommits() []osTreeCommit {

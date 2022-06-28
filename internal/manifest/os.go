@@ -106,7 +106,7 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 	if kernelName != "" {
 		kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
 	}
-	return &OSPipeline{
+	p := &OSPipeline{
 		BasePipeline:   NewBasePipeline(name, buildPipeline, nil),
 		osTree:         osTree,
 		osTreeParent:   osTreeParent,
@@ -122,6 +122,8 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 		Timezone:       "UTC",
 		SElinux:        "targeted",
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *OSPipeline) getOSTreeCommits() []osTreeCommit {

@@ -17,11 +17,13 @@ type OSTreeCommitPipeline struct {
 // treePipeline is the tree representing the content of the commit.
 // ref is the ref to create the commit under.
 func NewOSTreeCommitPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, ref string) *OSTreeCommitPipeline {
-	return &OSTreeCommitPipeline{
+	p := &OSTreeCommitPipeline{
 		BasePipeline: NewBasePipeline("ostree-commit", buildPipeline, nil),
 		treePipeline: treePipeline,
 		ref:          ref,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *OSTreeCommitPipeline) serialize() osbuild2.Pipeline {

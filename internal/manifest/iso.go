@@ -15,11 +15,13 @@ type ISOPipeline struct {
 }
 
 func NewISOPipeline(buildPipeline *BuildPipeline, treePipeline *ISOTreePipeline, filename string) *ISOPipeline {
-	return &ISOPipeline{
+	p := &ISOPipeline{
 		BasePipeline: NewBasePipeline("bootiso", buildPipeline, nil),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *ISOPipeline) serialize() osbuild2.Pipeline {

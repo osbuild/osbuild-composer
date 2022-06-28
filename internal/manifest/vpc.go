@@ -16,11 +16,13 @@ type VPCPipeline struct {
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced image.
 func NewVPCPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) *VPCPipeline {
-	return &VPCPipeline{
+	p := &VPCPipeline{
 		BasePipeline: NewBasePipeline("vpc", buildPipeline, nil),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *VPCPipeline) serialize() osbuild2.Pipeline {

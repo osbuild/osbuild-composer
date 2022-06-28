@@ -17,11 +17,13 @@ type QCOW2Pipeline struct {
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced qcow2 image.
 func NewQCOW2Pipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) *QCOW2Pipeline {
-	return &QCOW2Pipeline{
+	p := &QCOW2Pipeline{
 		BasePipeline: NewBasePipeline("qcow2", buildPipeline, nil),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *QCOW2Pipeline) serialize() osbuild2.Pipeline {

@@ -15,11 +15,13 @@ type VMDKPipeline struct {
 // NewVMDKPipeline creates a new VMDK pipeline. imgPipeline is the pipeline producing the
 // raw image. Filename is the name of the produced image.
 func NewVMDKPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) *VMDKPipeline {
-	return &VMDKPipeline{
+	p := &VMDKPipeline{
 		BasePipeline: NewBasePipeline("vmdk", buildPipeline, nil),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *VMDKPipeline) serialize() osbuild2.Pipeline {
