@@ -1757,10 +1757,45 @@ func newDistro(distroName string) distro.Distro {
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType)
-	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
-	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
-	s390x.addImageTypes(qcow2ImgType, tarImgType)
+	x86_64.addImageTypes(
+		amiImgTypeX86_64,
+		edgeCommitImgType,
+		edgeInstallerImgType,
+		edgeOCIImgType,
+		edgeRawImgType,
+		edgeSimplifiedInstallerImgType,
+		gceImgType,
+		imageInstaller,
+		ociImgType,
+		openstackImgType,
+		qcow2ImgType,
+		tarImgType,
+		vhdImgType,
+		vmdkImgType,
+	)
+
+	aarch64.addImageTypes(
+		amiImgTypeAarch64,
+		edgeCommitImgType,
+		edgeInstallerImgType,
+		edgeOCIImgType,
+		edgeRawImgType,
+		edgeSimplifiedInstallerImgType,
+		imageInstaller,
+		openstackImgType,
+		qcow2ImgType,
+		tarImgType,
+	)
+
+	ppc64le.addImageTypes(
+		qcow2ImgType,
+		tarImgType,
+	)
+
+	s390x.addImageTypes(
+		qcow2ImgType,
+		tarImgType,
+	)
 
 	if rd.isRHEL() {
 		// add azure to RHEL distro only
