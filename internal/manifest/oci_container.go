@@ -17,12 +17,14 @@ type OCIContainerPipeline struct {
 }
 
 func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *BasePipeline, architecture, filename string) *OCIContainerPipeline {
-	return &OCIContainerPipeline{
+	p := &OCIContainerPipeline{
 		BasePipeline: NewBasePipeline("container", buildPipeline, nil),
 		treePipeline: treePipeline,
 		architecture: architecture,
 		filename:     filename,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *OCIContainerPipeline) serialize() osbuild2.Pipeline {

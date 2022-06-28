@@ -13,6 +13,7 @@ import (
 
 type Pipeline interface {
 	Name() string
+	getBuildPackages() []string
 	getPackageSetChain() []rpmmd.PackageSet
 	serialize() osbuild2.Pipeline
 	getPackageSpecs() []rpmmd.PackageSpec
@@ -33,6 +34,10 @@ type BasePipeline struct {
 // or for exporting them.
 func (p BasePipeline) Name() string {
 	return p.name
+}
+
+func (p BasePipeline) getBuildPackages() []string {
+	return []string{}
 }
 
 func (p BasePipeline) getPackageSetChain() []rpmmd.PackageSet {

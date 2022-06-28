@@ -14,11 +14,13 @@ type LiveImgPipeline struct {
 }
 
 func NewLiveImgPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, filename string) *LiveImgPipeline {
-	return &LiveImgPipeline{
+	p := &LiveImgPipeline{
 		BasePipeline: NewBasePipeline("image", buildPipeline, nil),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *LiveImgPipeline) serialize() osbuild2.Pipeline {

@@ -33,7 +33,7 @@ func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	commitPipeline *OSTreeCommitPipeline,
 	nginxConfigPath,
 	listenPort string) *OSTreeCommitServerTreePipeline {
-	return &OSTreeCommitServerTreePipeline{
+	p := &OSTreeCommitServerTreePipeline{
 		BasePipeline:    NewBasePipeline("container-tree", buildPipeline, nil),
 		repos:           repos,
 		packageSpecs:    packageSpecs,
@@ -42,6 +42,8 @@ func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 		listenPort:      listenPort,
 		Language:        "en_US",
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *OSTreeCommitServerTreePipeline) getPackageSpecs() []rpmmd.PackageSpec {

@@ -44,7 +44,7 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	product,
 	version string) *AnacondaPipeline {
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
-	return &AnacondaPipeline{
+	p := &AnacondaPipeline{
 		BasePipeline: NewBasePipeline("anaconda-tree", buildPipeline, nil),
 		repos:        repos,
 		packageSpecs: packages,
@@ -53,6 +53,8 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 		product:      product,
 		version:      version,
 	}
+	buildPipeline.addDependent(p)
+	return p
 }
 
 func (p *AnacondaPipeline) getPackageSpecs() []rpmmd.PackageSpec {

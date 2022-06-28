@@ -15,6 +15,7 @@ import (
 type BuildPipeline struct {
 	BasePipeline
 
+	dependents   []Pipeline
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
 }
@@ -24,10 +25,30 @@ type BuildPipeline struct {
 func NewBuildPipeline(runner string, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec) *BuildPipeline {
 	pipeline := &BuildPipeline{
 		BasePipeline: NewBasePipeline("build", nil, &runner),
+		dependents:   make([]Pipeline, 0),
 		repos:        repos,
 		packageSpecs: packages,
 	}
 	return pipeline
+}
+
+func (p *BuildPipeline) addDependent(dep Pipeline) {
+	p.dependents = append(p.dependents, dep)
+}
+
+func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
+	packages := []string{}
+
+	for _, pipeline := range p.dependents {
+		packages = append(packages, pipeline.getBuildPackages()...)
+	}
+
+	return []rpmmd.PackageSet{
+		{
+			Include:      packages,
+			Repositories: p.repos,
+		},
+	}
 }
 
 func (p *BuildPipeline) getPackageSpecs() []rpmmd.PackageSpec {
