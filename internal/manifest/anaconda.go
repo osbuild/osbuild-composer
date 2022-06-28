@@ -59,36 +59,15 @@ func (p AnacondaPipeline) getPackages() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-// KernelVer returns the NEVRA of the kernel package the installer will use at
-// install time.
-func (p AnacondaPipeline) KernelVer() string {
-	return p.kernelVer
-}
-
-// Arch returns the supported architecture.
-func (p AnacondaPipeline) Arch() string {
-	return p.arch
-}
-
-// Product returns the product being installed.
-func (p AnacondaPipeline) Product() string {
-	return p.product
-}
-
-// Version returns the version of the product being installed.
-func (p AnacondaPipeline) Version() string {
-	return p.version
-}
-
 func (p AnacondaPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild2.NewBuildstampStage(&osbuild2.BuildstampStageOptions{
-		Arch:    p.Arch(),
-		Product: p.Product(),
+		Arch:    p.arch,
+		Product: p.product,
 		Variant: p.Variant,
-		Version: p.Version(),
+		Version: p.version,
 		Final:   true,
 	}))
 	pipeline.AddStage(osbuild2.NewLocaleStage(&osbuild2.LocaleStageOptions{Language: "en_US.UTF-8"}))
@@ -121,9 +100,9 @@ func (p AnacondaPipeline) serialize() osbuild2.Pipeline {
 	pipeline.AddStage(osbuild2.NewAnacondaStage(osbuild2.NewAnacondaStageOptions(p.Users)))
 	pipeline.AddStage(osbuild2.NewLoraxScriptStage(&osbuild2.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
-		BaseArch: p.Arch(),
+		BaseArch: p.arch,
 	}))
-	pipeline.AddStage(osbuild2.NewDracutStage(dracutStageOptions(p.KernelVer(), p.Biosdevname, []string{
+	pipeline.AddStage(osbuild2.NewDracutStage(dracutStageOptions(p.kernelVer, p.Biosdevname, []string{
 		"anaconda",
 		"rdma",
 		"rngd",

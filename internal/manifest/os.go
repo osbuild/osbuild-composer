@@ -139,31 +139,11 @@ func (p OSPipeline) getPackages() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p OSPipeline) OSTreeParent() string {
-	return p.osTreeParent
-}
-
-func (p OSPipeline) KernelVer() string {
-	return p.kernelVer
-}
-
-func (p OSPipeline) PartitionTable() *disk.PartitionTable {
-	return p.partitionTable
-}
-
-func (p OSPipeline) BootLoader() BootLoader {
-	return p.bootLoader
-}
-
-func (p OSPipeline) GRUBLegacy() string {
-	return p.grubLegacy
-}
-
 func (p OSPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
-	if p.osTree && p.OSTreeParent() != "" {
-		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.OSTreeParent()))
+	if p.osTree && p.osTreeParent != "" {
+		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.osTreeParent))
 	}
 
 	rpmOptions := osbuild2.NewRPMStageOptions(p.repos)
@@ -177,7 +157,7 @@ func (p OSPipeline) serialize() osbuild2.Pipeline {
 	pipeline.AddStage(osbuild2.NewRPMStage(rpmOptions, osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-	if p.PartitionTable() == nil || p.PartitionTable().FindMountable("/boot") == nil {
+	if p.partitionTable == nil || p.partitionTable.FindMountable("/boot") == nil {
 		pipeline.AddStage(osbuild2.NewFixBLSStage(&osbuild2.FixBLSStageOptions{}))
 	} else {
 		pipeline.AddStage(osbuild2.NewFixBLSStage(&osbuild2.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
@@ -312,17 +292,17 @@ func (p OSPipeline) serialize() osbuild2.Pipeline {
 		pipeline.AddStage(osbuild2.NewWAAgentConfStage(p.WAAgentConfig))
 	}
 
-	if pt := p.PartitionTable(); pt != nil {
-		kernelOptions := osbuild2.GenImageKernelOptions(p.PartitionTable())
+	if pt := p.partitionTable; pt != nil {
+		kernelOptions := osbuild2.GenImageKernelOptions(p.partitionTable)
 		kernelOptions = append(kernelOptions, p.KernelOptionsAppend...)
 		pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
 
 		pipeline.AddStage(osbuild2.NewFSTabStage(osbuild2.NewFSTabStageOptions(pt)))
 
 		var bootloader *osbuild2.Stage
-		switch p.BootLoader() {
+		switch p.bootLoader {
 		case BOOTLOADER_GRUB:
-			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFIVendor != "", p.GRUBLegacy(), p.UEFIVendor, false)
+			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFIVendor != "", p.grubLegacy, p.UEFIVendor, false)
 			if cfg := p.Grub2Config; cfg != nil {
 				// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
 				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`

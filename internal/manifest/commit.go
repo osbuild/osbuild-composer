@@ -24,11 +24,6 @@ func NewOSTreeCommitPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipel
 	}
 }
 
-// Ref returns the OSTree ref of the commit.
-func (p OSTreeCommitPipeline) Ref() string {
-	return p.ref
-}
-
 func (p OSTreeCommitPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
@@ -41,9 +36,9 @@ func (p OSTreeCommitPipeline) serialize() osbuild2.Pipeline {
 
 	pipeline.AddStage(osbuild2.NewOSTreeCommitStage(
 		&osbuild2.OSTreeCommitStageOptions{
-			Ref:       p.Ref(),
+			Ref:       p.ref,
 			OSVersion: p.OSVersion,
-			Parent:    p.treePipeline.OSTreeParent(),
+			Parent:    p.treePipeline.osTreeParent,
 		},
 		&osbuild2.OSTreeCommitStageInputs{Tree: commitStageInput}),
 	)

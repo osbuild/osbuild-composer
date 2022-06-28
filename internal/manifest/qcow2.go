@@ -33,7 +33,7 @@ func (p QCOW2Pipeline) serialize() osbuild2.Pipeline {
 			osbuild2.QCOW2Options{
 				Compat: p.Compat,
 			}),
-		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename()),
+		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.filename),
 	))
 
 	return pipeline

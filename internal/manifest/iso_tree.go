@@ -30,7 +30,7 @@ type ISOTreePipeline struct {
 
 func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *AnacondaPipeline, osTreeCommit, osTreeURL, osTreeRef, isoLabelTmpl string) ISOTreePipeline {
 	// TODO: replace isoLabelTmpl with more high-level properties
-	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.Arch())
+	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.arch)
 
 	return ISOTreePipeline{
 		BasePipeline:     NewBasePipeline("bootiso-tree", buildPipeline, nil),
@@ -51,17 +51,13 @@ func (p ISOTreePipeline) getOSTreeCommits() []osTreeCommit {
 	}
 }
 
-func (p ISOTreePipeline) ISOLabel() string {
-	return p.isoLabel
-}
-
 func (p ISOTreePipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	kspath := "/osbuild.ks"
 	ostreeRepoPath := "/ostree/repo"
 
-	pipeline.AddStage(osbuild2.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.KernelVer(), p.anacondaPipeline.Arch(), p.UEFIVendor, p.anacondaPipeline.Product(), p.anacondaPipeline.Version(), p.ISOLabel(), kspath), osbuild2.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
+	pipeline.AddStage(osbuild2.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.kernelVer, p.anacondaPipeline.arch, p.UEFIVendor, p.anacondaPipeline.product, p.anacondaPipeline.version, p.isoLabel, kspath), osbuild2.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
 
 	kickstartOptions, err := osbuild2.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
 	if err != nil {
@@ -70,7 +66,7 @@ func (p ISOTreePipeline) serialize() osbuild2.Pipeline {
 
 	pipeline.AddStage(osbuild2.NewKickstartStage(kickstartOptions))
 	pipeline.AddStage(osbuild2.NewDiscinfoStage(&osbuild2.DiscinfoStageOptions{
-		BaseArch: p.anacondaPipeline.Arch(),
+		BaseArch: p.anacondaPipeline.arch,
 		Release:  p.Release,
 	}))
 

@@ -28,7 +28,7 @@ func (p VPCPipeline) serialize() osbuild2.Pipeline {
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(
 		osbuild2.NewQEMUStageOptions(p.filename, osbuild2.QEMUFormatVPC, nil),
-		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename()),
+		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.filename),
 	))
 
 	return pipeline

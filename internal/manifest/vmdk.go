@@ -29,7 +29,7 @@ func (p VMDKPipeline) serialize() osbuild2.Pipeline {
 		osbuild2.NewQEMUStageOptions(p.filename, osbuild2.QEMUFormatVMDK, osbuild2.VMDKOptions{
 			Subformat: osbuild2.VMDKSubformatStreamOptimized,
 		}),
-		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename()),
+		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.filename),
 	))
 
 	return pipeline
