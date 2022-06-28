@@ -35,7 +35,11 @@ func New() Manifest {
 }
 
 func (m *Manifest) AddPipeline(p Pipeline) {
-	// TODO: enforce uniqueness - pipelines should have a back pointer to the manifest
+	for _, pipeline := range m.pipelines {
+		if pipeline.Name() == p.Name() {
+			panic("duplicate pipeline name in manifest")
+		}
+	}
 	m.pipelines = append(m.pipelines, p)
 	m.addPackages(p.getPackages())
 	m.addOSTreeCommits(p.getOSTreeCommits())
