@@ -60,7 +60,7 @@ func (p OSTreeCommitServerTreePipeline) serialize() osbuild2.Pipeline {
 
 	pipeline.AddStage(osbuild2.NewOSTreePullStage(
 		&osbuild2.OSTreePullStageOptions{Repo: repoPath},
-		osbuild2.NewOstreePullStageInputs("org.osbuild.pipeline", "name:"+p.commitPipeline.Name(), p.commitPipeline.Ref()),
+		osbuild2.NewOstreePullStageInputs("org.osbuild.pipeline", "name:"+p.commitPipeline.Name(), p.commitPipeline.ref),
 	))
 
 	// make nginx log and lib directories world writeable, otherwise nginx can't start in
