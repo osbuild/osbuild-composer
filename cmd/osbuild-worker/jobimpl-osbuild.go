@@ -41,7 +41,7 @@ type S3Configuration struct {
 type OSBuildJobImpl struct {
 	Store                  string
 	Output                 string
-	KojiServers            map[string]koji.GSSAPICredentials
+	KojiServers            map[string]kojiServer
 	KojiRelaxTimeoutFactor uint
 	GCPCreds               string
 	AzureCreds             *azure.Credentials
@@ -728,7 +728,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			creds, exists := impl.KojiServers[kojiServerURL.Hostname()]
+			kojiServer, exists := impl.KojiServers[kojiServerURL.Hostname()]
 			if !exists {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("Koji server has not been configured: %s", kojiServerURL.Hostname()))
 				return nil
@@ -736,7 +736,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			kojiTransport := koji.CreateKojiTransport(impl.KojiRelaxTimeoutFactor)
 
-			kojiAPI, err := koji.NewFromGSSAPI(options.Server, &creds, kojiTransport)
+			kojiAPI, err := koji.NewFromGSSAPI(options.Server, &kojiServer.creds, kojiTransport)
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to authenticate with Koji server %q: %v", kojiServerURL.Hostname(), err))
 				return nil
