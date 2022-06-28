@@ -196,7 +196,7 @@ func main() {
 	var config struct {
 		Composer *struct {
 			Proxy string `toml:"proxy"`
-		}
+		} `toml:"composer"`
 		Koji map[string]struct {
 			Kerberos *struct {
 				Principal string `toml:"principal"`
