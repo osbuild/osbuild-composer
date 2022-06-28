@@ -58,6 +58,16 @@ func (m *Manifest) addInline(data []string) {
 	m.inlineData = append(m.inlineData, data...)
 }
 
+func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
+	chains := make(map[string][]rpmmd.PackageSet)
+
+	for _, pipeline := range m.pipelines {
+		chains[pipeline.Name()] = pipeline.getPackageSetChain()
+	}
+
+	return chains
+}
+
 func (m Manifest) Serialize() (distro.Manifest, error) {
 	var commits []ostree.CommitSource
 	for _, commit := range m.osTreeCommits {
