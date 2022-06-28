@@ -13,15 +13,15 @@ type LiveImgPipeline struct {
 	filename string
 }
 
-func NewLiveImgPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, filename string) LiveImgPipeline {
-	return LiveImgPipeline{
+func NewLiveImgPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, filename string) *LiveImgPipeline {
+	return &LiveImgPipeline{
 		BasePipeline: NewBasePipeline("image", buildPipeline, nil),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
 }
 
-func (p LiveImgPipeline) serialize() osbuild2.Pipeline {
+func (p *LiveImgPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pt := p.treePipeline.partitionTable

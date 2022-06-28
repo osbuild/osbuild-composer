@@ -32,8 +32,8 @@ func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	packageSpecs []rpmmd.PackageSpec,
 	commitPipeline *OSTreeCommitPipeline,
 	nginxConfigPath,
-	listenPort string) OSTreeCommitServerTreePipeline {
-	return OSTreeCommitServerTreePipeline{
+	listenPort string) *OSTreeCommitServerTreePipeline {
+	return &OSTreeCommitServerTreePipeline{
 		BasePipeline:    NewBasePipeline("container-tree", buildPipeline, nil),
 		repos:           repos,
 		packageSpecs:    packageSpecs,
@@ -44,11 +44,11 @@ func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	}
 }
 
-func (p OSTreeCommitServerTreePipeline) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *OSTreeCommitServerTreePipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p OSTreeCommitServerTreePipeline) serialize() osbuild2.Pipeline {
+func (p *OSTreeCommitServerTreePipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))

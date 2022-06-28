@@ -14,15 +14,15 @@ type ISOPipeline struct {
 	filename     string
 }
 
-func NewISOPipeline(buildPipeline *BuildPipeline, treePipeline *ISOTreePipeline, filename string) ISOPipeline {
-	return ISOPipeline{
+func NewISOPipeline(buildPipeline *BuildPipeline, treePipeline *ISOTreePipeline, filename string) *ISOPipeline {
+	return &ISOPipeline{
 		BasePipeline: NewBasePipeline("bootiso", buildPipeline, nil),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
 }
 
-func (p ISOPipeline) serialize() osbuild2.Pipeline {
+func (p *ISOPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewXorrisofsStage(xorrisofsStageOptions(p.filename, p.treePipeline.isoLabel, p.ISOLinux), osbuild2.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))

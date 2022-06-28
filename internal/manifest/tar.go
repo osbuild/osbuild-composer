@@ -14,15 +14,15 @@ type TarPipeline struct {
 // NewTarPipeline creates a new TarPipeline. The inputPipeline represents the
 // filesystem tree which will be the contents of the tar file. The pipelinename
 // is the name of the pipeline. The filename is the name of the output tar file.
-func NewTarPipeline(buildPipeline *BuildPipeline, inputPipeline *BasePipeline, pipelinename, filename string) TarPipeline {
-	return TarPipeline{
+func NewTarPipeline(buildPipeline *BuildPipeline, inputPipeline *BasePipeline, pipelinename, filename string) *TarPipeline {
+	return &TarPipeline{
 		BasePipeline:  NewBasePipeline(pipelinename, buildPipeline, nil),
 		inputPipeline: inputPipeline,
 		filename:      filename,
 	}
 }
 
-func (p TarPipeline) serialize() osbuild2.Pipeline {
+func (p *TarPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	tree := new(osbuild2.TarStageInput)

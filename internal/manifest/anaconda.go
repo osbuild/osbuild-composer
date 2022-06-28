@@ -42,9 +42,9 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	kernelName,
 	arch,
 	product,
-	version string) AnacondaPipeline {
+	version string) *AnacondaPipeline {
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
-	return AnacondaPipeline{
+	return &AnacondaPipeline{
 		BasePipeline: NewBasePipeline("anaconda-tree", buildPipeline, nil),
 		repos:        repos,
 		packageSpecs: packages,
@@ -55,11 +55,11 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	}
 }
 
-func (p AnacondaPipeline) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *AnacondaPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p AnacondaPipeline) serialize() osbuild2.Pipeline {
+func (p *AnacondaPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))

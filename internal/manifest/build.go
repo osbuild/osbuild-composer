@@ -21,8 +21,8 @@ type BuildPipeline struct {
 
 // NewBuildPipeline creates a new build pipeline from the repositories in repos
 // and the specified packages.
-func NewBuildPipeline(runner string, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec) BuildPipeline {
-	pipeline := BuildPipeline{
+func NewBuildPipeline(runner string, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec) *BuildPipeline {
+	pipeline := &BuildPipeline{
 		BasePipeline: NewBasePipeline("build", nil, &runner),
 		repos:        repos,
 		packageSpecs: packages,
@@ -30,11 +30,11 @@ func NewBuildPipeline(runner string, repos []rpmmd.RepoConfig, packages []rpmmd.
 	return pipeline
 }
 
-func (p BuildPipeline) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *BuildPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p BuildPipeline) serialize() osbuild2.Pipeline {
+func (p *BuildPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
