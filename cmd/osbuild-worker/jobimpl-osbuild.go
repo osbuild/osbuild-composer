@@ -39,15 +39,14 @@ type S3Configuration struct {
 }
 
 type OSBuildJobImpl struct {
-	Store                  string
-	Output                 string
-	KojiServers            map[string]kojiServer
-	KojiRelaxTimeoutFactor uint
-	GCPCreds               string
-	AzureCreds             *azure.Credentials
-	AWSCreds               string
-	AWSBucket              string
-	S3Config               S3Configuration
+	Store       string
+	Output      string
+	KojiServers map[string]kojiServer
+	GCPCreds    string
+	AzureCreds  *azure.Credentials
+	AWSCreds    string
+	AWSBucket   string
+	S3Config    S3Configuration
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -734,7 +733,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 
-			kojiTransport := koji.CreateKojiTransport(impl.KojiRelaxTimeoutFactor)
+			kojiTransport := koji.CreateKojiTransport(kojiServer.relaxTimeoutFactor)
 
 			kojiAPI, err := koji.NewFromGSSAPI(options.Server, &kojiServer.creds, kojiTransport)
 			if err != nil {
