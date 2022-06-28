@@ -28,11 +28,11 @@ type ISOTreePipeline struct {
 	osTreeRef        string
 }
 
-func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *AnacondaPipeline, osTreeCommit, osTreeURL, osTreeRef, isoLabelTmpl string) ISOTreePipeline {
+func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *AnacondaPipeline, osTreeCommit, osTreeURL, osTreeRef, isoLabelTmpl string) *ISOTreePipeline {
 	// TODO: replace isoLabelTmpl with more high-level properties
 	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.arch)
 
-	return ISOTreePipeline{
+	return &ISOTreePipeline{
 		BasePipeline:     NewBasePipeline("bootiso-tree", buildPipeline, nil),
 		anacondaPipeline: anacondaPipeline,
 		isoLabel:         isoLabel,
@@ -42,7 +42,7 @@ func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *Anaconda
 	}
 }
 
-func (p ISOTreePipeline) getOSTreeCommits() []osTreeCommit {
+func (p *ISOTreePipeline) getOSTreeCommits() []osTreeCommit {
 	return []osTreeCommit{
 		{
 			checksum: p.osTreeCommit,
@@ -51,7 +51,7 @@ func (p ISOTreePipeline) getOSTreeCommits() []osTreeCommit {
 	}
 }
 
-func (p ISOTreePipeline) serialize() osbuild2.Pipeline {
+func (p *ISOTreePipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	kspath := "/osbuild.ks"

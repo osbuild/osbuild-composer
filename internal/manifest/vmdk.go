@@ -14,15 +14,15 @@ type VMDKPipeline struct {
 
 // NewVMDKPipeline creates a new VMDK pipeline. imgPipeline is the pipeline producing the
 // raw image. Filename is the name of the produced image.
-func NewVMDKPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) VMDKPipeline {
-	return VMDKPipeline{
+func NewVMDKPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) *VMDKPipeline {
+	return &VMDKPipeline{
 		BasePipeline: NewBasePipeline("vmdk", buildPipeline, nil),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}
 }
 
-func (p VMDKPipeline) serialize() osbuild2.Pipeline {
+func (p *VMDKPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(

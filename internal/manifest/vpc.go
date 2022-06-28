@@ -15,15 +15,15 @@ type VPCPipeline struct {
 // NewVPCPipeline createsa new Qemu pipeline. imgPipeline is the pipeline producing the
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced image.
-func NewVPCPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) VPCPipeline {
-	return VPCPipeline{
+func NewVPCPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) *VPCPipeline {
+	return &VPCPipeline{
 		BasePipeline: NewBasePipeline("vpc", buildPipeline, nil),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}
 }
 
-func (p VPCPipeline) serialize() osbuild2.Pipeline {
+func (p *VPCPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(

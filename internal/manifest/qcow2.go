@@ -16,15 +16,15 @@ type QCOW2Pipeline struct {
 // NewQCOW2Pipeline createsa new QCOW2 pipeline. imgPipeline is the pipeline producing the
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced qcow2 image.
-func NewQCOW2Pipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) QCOW2Pipeline {
-	return QCOW2Pipeline{
+func NewQCOW2Pipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) *QCOW2Pipeline {
+	return &QCOW2Pipeline{
 		BasePipeline: NewBasePipeline("qcow2", buildPipeline, nil),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}
 }
 
-func (p QCOW2Pipeline) serialize() osbuild2.Pipeline {
+func (p *QCOW2Pipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(

@@ -16,8 +16,8 @@ type OCIContainerPipeline struct {
 	filename     string
 }
 
-func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *BasePipeline, architecture, filename string) OCIContainerPipeline {
-	return OCIContainerPipeline{
+func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *BasePipeline, architecture, filename string) *OCIContainerPipeline {
+	return &OCIContainerPipeline{
 		BasePipeline: NewBasePipeline("container", buildPipeline, nil),
 		treePipeline: treePipeline,
 		architecture: architecture,
@@ -25,7 +25,7 @@ func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *BasePip
 	}
 }
 
-func (p OCIContainerPipeline) serialize() osbuild2.Pipeline {
+func (p *OCIContainerPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	options := &osbuild2.OCIArchiveStageOptions{

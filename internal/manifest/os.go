@@ -97,7 +97,7 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 	partitionTable *disk.PartitionTable,
 	bootLoader BootLoader,
 	grubLegacy string,
-	kernelName string) OSPipeline {
+	kernelName string) *OSPipeline {
 	name := "os"
 	if osTree {
 		name = "ostree-tree"
@@ -106,7 +106,7 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 	if kernelName != "" {
 		kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
 	}
-	return OSPipeline{
+	return &OSPipeline{
 		BasePipeline:   NewBasePipeline(name, buildPipeline, nil),
 		osTree:         osTree,
 		osTreeParent:   osTreeParent,
@@ -124,7 +124,7 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 	}
 }
 
-func (p OSPipeline) getOSTreeCommits() []osTreeCommit {
+func (p *OSPipeline) getOSTreeCommits() []osTreeCommit {
 	commits := []osTreeCommit{}
 	if p.osTreeParent != "" && p.osTreeURL != "" {
 		commits = append(commits, osTreeCommit{
@@ -135,11 +135,11 @@ func (p OSPipeline) getOSTreeCommits() []osTreeCommit {
 	return commits
 }
 
-func (p OSPipeline) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *OSPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p OSPipeline) serialize() osbuild2.Pipeline {
+func (p *OSPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
 	if p.osTree && p.osTreeParent != "" {
