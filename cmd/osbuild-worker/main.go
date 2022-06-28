@@ -198,44 +198,6 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 }
 
 func main() {
-	var config struct {
-		Composer *struct {
-			Proxy string `toml:"proxy"`
-		} `toml:"composer"`
-		Koji map[string]struct {
-			Kerberos *struct {
-				Principal string `toml:"principal"`
-				KeyTab    string `toml:"keytab"`
-			} `toml:"kerberos,omitempty"`
-			RelaxTimeoutFactor uint `toml:"relax_timeout_factor"`
-		} `toml:"koji"`
-		GCP *struct {
-			Credentials string `toml:"credentials"`
-		} `toml:"gcp"`
-		Azure *struct {
-			Credentials string `toml:"credentials"`
-		} `toml:"azure"`
-		AWS *struct {
-			Credentials string `toml:"credentials"`
-			Bucket      string `toml:"bucket"`
-		} `toml:"aws"`
-		GenericS3 *struct {
-			Credentials         string `toml:"credentials"`
-			Endpoint            string `toml:"endpoint"`
-			Region              string `toml:"region"`
-			Bucket              string `toml:"bucket"`
-			CABundle            string `toml:"ca_bundle"`
-			SkipSSLVerification bool   `toml:"skip_ssl_verification"`
-		} `toml:"generic_s3"`
-		Authentication *struct {
-			OAuthURL         string `toml:"oauth_url"`
-			OfflineTokenPath string `toml:"offline_token"`
-			ClientId         string `toml:"client_id"`
-			ClientSecretPath string `toml:"client_secret"`
-		} `toml:"authentication"`
-		BasePath string `toml:"base_path"`
-		DNFJson  string `toml:"dnf-json"`
-	}
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
 
@@ -252,7 +214,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	_, err := toml.DecodeFile(configFile, &config)
+	config, err := parseConfig(configFile)
 	if err == nil {
 		logrus.Info("Composer configuration:")
 		encoder := toml.NewEncoder(logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
@@ -260,12 +222,8 @@ func main() {
 		if err != nil {
 			logrus.Fatalf("Could not print config: %v", err)
 		}
-	} else if !os.IsNotExist(err) {
+	} else {
 		logrus.Fatalf("Could not load config file '%s': %v", configFile, err)
-	}
-
-	if config.BasePath == "" {
-		config.BasePath = "/api/worker/v1"
 	}
 
 	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
