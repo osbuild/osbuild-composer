@@ -13,6 +13,7 @@ import (
 
 type Pipeline interface {
 	Name() string
+	getPackageSetChain() []rpmmd.PackageSet
 	serialize() osbuild2.Pipeline
 	getPackageSpecs() []rpmmd.PackageSpec
 	getOSTreeCommits() []osTreeCommit
@@ -32,6 +33,10 @@ type BasePipeline struct {
 // or for exporting them.
 func (p BasePipeline) Name() string {
 	return p.name
+}
+
+func (p BasePipeline) getPackageSetChain() []rpmmd.PackageSet {
+	return []rpmmd.PackageSet{}
 }
 
 func (p BasePipeline) getPackageSpecs() []rpmmd.PackageSpec {
