@@ -64,7 +64,11 @@ type workerConfig struct {
 }
 
 func parseConfig(file string) (*workerConfig, error) {
-	var config workerConfig
+	// set defaults
+	config := workerConfig{
+		BasePath: "/api/worker/v1",
+	}
+
 	_, err := toml.DecodeFile(file, &config)
 	if err != nil {
 		// Return error only when we failed to decode the file.
@@ -74,9 +78,6 @@ func parseConfig(file string) (*workerConfig, error) {
 		}
 
 		logrus.Info("Configuration file not found, using defaults")
-	}
-	if config.BasePath == "" {
-		config.BasePath = "/api/worker/v1"
 	}
 
 	return &config, nil
