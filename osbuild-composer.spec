@@ -39,6 +39,9 @@ BuildRequires:  systemd
 BuildRequires:  krb5-devel
 BuildRequires:  python3-docutils
 BuildRequires:  make
+# Build requirements of 'theproglottis/gpgme' package
+BuildRequires:  gpgme-devel
+BuildRequires:  libassuan-devel
 %if 0%{?fedora}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
