@@ -97,6 +97,15 @@ type ociUploadSettings struct {
 
 func (ociUploadSettings) isUploadSettings() {}
 
+type containerUploadSettings struct {
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
+
+	TlsVerify *bool `json:"tls_verify,omitempty"`
+}
+
+func (containerUploadSettings) isUploadSettings() {}
+
 type uploadRequest struct {
 	Provider  string         `json:"provider"`
 	ImageName string         `json:"image_name"`
@@ -134,6 +143,8 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 		// While the API still accepts provider type "generic.s3", the request is handled
 		// in the same way as for a request with provider type "aws.s3"
 		settings = new(awsS3UploadSettings)
+	case "container":
+		settings = new(containerUploadSettings)
 	default:
 		return errors.New("unexpected provider name")
 	}
@@ -321,6 +332,15 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Bucket:      options.Bucket,
 			Namespace:   options.Namespace,
 			Compartment: options.Compartment,
+		}
+	case *containerUploadSettings:
+		t.Name = "org.osbuild.container"
+		t.Options = &target.ContainerTargetOptions{
+			Username: options.Username,
+			Password: options.Password,
+
+			Filename:  imageType.Filename(),
+			TlsVerify: options.TlsVerify,
 		}
 	}
 

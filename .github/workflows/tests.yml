@@ -20,8 +20,9 @@ jobs:
     steps:
         # krb5-devel is needed to test internal/upload/koji package
         # gcc is needed to build the mock dnf-json binary for the unit tests
+        # gpgme-devel is needed for container upload dependencies
       - name: Install build and test dependencies
-        run: dnf -y install krb5-devel gcc git-core go
+        run: dnf -y install krb5-devel gcc git-core go gpgme-devel
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
@@ -78,6 +79,10 @@ jobs:
         # This is needed to lint internal/upload/koji package
       - name: Install kerberos devel package
         run: sudo apt-get install -y libkrb5-dev
+
+      # This is needed for the container upload dependencies
+      - name: Install libgpgme devel package
+        run: sudo apt-get install -y libgpgme-dev
 
       - name: Run golangci-lint
         run: $(go env GOPATH)/bin/golangci-lint run --timeout 5m0s

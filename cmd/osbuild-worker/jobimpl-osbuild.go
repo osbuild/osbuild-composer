@@ -12,6 +12,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 
 	"github.com/google/uuid"
@@ -813,6 +814,38 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			)
 			osbuildJobResult.Success = true
 			osbuildJobResult.UploadStatus = "success"
+
+		case *target.ContainerTargetOptions:
+			destination := args.Targets[0].ImageName
+
+			logWithId.Printf("[container] ⬆ Uploading the image to %s", destination)
+
+			ctx := context.Background()
+			client, err := container.NewClient(destination)
+			if err != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
+				return nil
+			}
+
+			client.Auth.Username = options.Username
+			client.Auth.Password = options.Password
+
+			if options.TlsVerify != nil {
+				client.TlsVerify = *options.TlsVerify
+			}
+
+			sourcePath := path.Join(outputDirectory, exportPath, options.Filename)
+
+			// TODO: get the container type from the metadata of the osbuild job
+			sourceRef := fmt.Sprintf("oci-archive:%s", sourcePath)
+
+			digest, err := client.UploadImage(ctx, sourceRef, "")
+			if err != nil {
+				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
+				return nil
+			}
+			logWithId.Printf("[container] 🎉 Image uploaded (%s)!", digest.String())
+
 		default:
 			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTarget, fmt.Sprintf("invalid target type: %s", args.Targets[0].Name))
 			return nil
