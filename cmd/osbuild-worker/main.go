@@ -215,15 +215,15 @@ func main() {
 	}
 
 	config, err := parseConfig(configFile)
-	if err == nil {
-		logrus.Info("Composer configuration:")
-		encoder := toml.NewEncoder(logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
-		err := encoder.Encode(&config)
-		if err != nil {
-			logrus.Fatalf("Could not print config: %v", err)
-		}
-	} else {
+	if err != nil {
 		logrus.Fatalf("Could not load config file '%s': %v", configFile, err)
+	}
+
+	logrus.Info("Composer configuration:")
+	encoder := toml.NewEncoder(logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
+	err = encoder.Encode(&config)
+	if err != nil {
+		logrus.Fatalf("Could not print config: %v", err)
 	}
 
 	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")
