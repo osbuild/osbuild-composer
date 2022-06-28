@@ -44,7 +44,7 @@ func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	}
 }
 
-func (p OSTreeCommitServerTreePipeline) getPackages() []rpmmd.PackageSpec {
+func (p OSTreeCommitServerTreePipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 

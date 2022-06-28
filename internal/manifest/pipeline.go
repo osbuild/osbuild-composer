@@ -14,7 +14,7 @@ import (
 type Pipeline interface {
 	Name() string
 	serialize() osbuild2.Pipeline
-	getPackages() []rpmmd.PackageSpec
+	getPackageSpecs() []rpmmd.PackageSpec
 	getOSTreeCommits() []osTreeCommit
 	getInline() []string
 }
@@ -34,7 +34,7 @@ func (p BasePipeline) Name() string {
 	return p.name
 }
 
-func (p BasePipeline) getPackages() []rpmmd.PackageSpec {
+func (p BasePipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return []rpmmd.PackageSpec{}
 }
 

@@ -55,7 +55,7 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	}
 }
 
-func (p AnacondaPipeline) getPackages() []rpmmd.PackageSpec {
+func (p AnacondaPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 

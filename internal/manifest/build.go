@@ -30,7 +30,7 @@ func NewBuildPipeline(runner string, repos []rpmmd.RepoConfig, packages []rpmmd.
 	return pipeline
 }
 
-func (p BuildPipeline) getPackages() []rpmmd.PackageSpec {
+func (p BuildPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 

@@ -135,7 +135,7 @@ func (p OSPipeline) getOSTreeCommits() []osTreeCommit {
 	return commits
 }
 
-func (p OSPipeline) getPackages() []rpmmd.PackageSpec {
+func (p OSPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
