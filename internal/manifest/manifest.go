@@ -41,7 +41,7 @@ func (m *Manifest) AddPipeline(p Pipeline) {
 		}
 	}
 	m.pipelines = append(m.pipelines, p)
-	m.addPackages(p.getPackages())
+	m.addPackages(p.getPackageSpecs())
 	m.addOSTreeCommits(p.getOSTreeCommits())
 	m.addInline(p.getInline())
 }
