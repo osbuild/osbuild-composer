@@ -24,8 +24,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-const cacheRoot = "/tmp/rpmmd"
-
 type repository struct {
 	Name           string   `json:"name"`
 	BaseURL        string   `json:"baseurl,omitempty"`
@@ -94,7 +92,7 @@ func loadFormatRequestMap() formatRequestMap {
 
 type manifestJob func(chan string) error
 
-func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, distribution distro.Distro, archName string, seedArg int64, path string) manifestJob {
+func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, distribution distro.Distro, archName string, seedArg int64, path string, cacheRoot string) manifestJob {
 	distroName := distribution.Name()
 	u := func(s string) string {
 		return strings.Replace(s, "-", "_", -1)
@@ -309,10 +307,12 @@ func mergeOverrides(base, overrides composeRequest) composeRequest {
 func main() {
 	outputDirFlag := flag.String("output", "test/data/manifests.plain/", "")
 	nWorkersFlag := flag.Int("workers", 16, "")
+	cacheRootFlag := flag.String("cache", "/tmp/rpmmd", "")
 	flag.Parse()
 
 	outputDir := *outputDirFlag
 	nWorkers := *nWorkersFlag
+	cacheRoot := *cacheRootFlag
 
 	seedArg := int64(0)
 	darm := readRepos()
@@ -363,7 +363,7 @@ func main() {
 					composeReq := req.ComposeRequest
 					composeReq.Repositories = filterRepos(repos, imgTypeName)
 
-					job := makeManifestJob(jobName, imgType, composeReq, distribution, archName, seedArg, outputDir)
+					job := makeManifestJob(jobName, imgType, composeReq, distribution, archName, seedArg, outputDir, cacheRoot)
 					jobs = append(jobs, job)
 				}
 			}
