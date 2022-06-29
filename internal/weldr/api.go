@@ -2128,7 +2128,7 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 // depsolveBlueprintForImageType handles depsolving the blueprint package list and
 // the packages required for the image type.
 // NOTE: The imageType *must* be from the same distribution as the blueprint.
-func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
+func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, options distro.ImageOptions, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
 	// Depsolve using the host distro if none has been specified
 	if bp.Distro == "" {
 		bp.Distro = api.hostDistroName
@@ -2146,7 +2146,7 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, imageType 
 	releasever := imageType.Arch().Distro().Releasever()
 	solver := api.solver.NewWithConfig(platformID, releasever, api.archName)
 
-	packageSets := imageType.PackageSets(bp, imageTypeRepos)
+	packageSets := imageType.PackageSets(bp, options, imageTypeRepos)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
 
 	for name, pkgSet := range packageSets {
@@ -2286,16 +2286,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		cr.OSTree = ostreeParams
 	}
 
-	packageSets, err := api.depsolveBlueprintForImageType(*bp, imageType)
-	if err != nil {
-		errors := responseError{
-			ID:  "DepsolveError",
-			Msg: err.Error(),
-		}
-		statusResponseError(writer, http.StatusInternalServerError, errors)
-		return
-	}
-
 	var size uint64
 
 	// check if filesytem customizations have been set.
@@ -2313,6 +2303,25 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	seed := bigSeed.Int64()
 
+	options := distro.ImageOptions{
+		Size: size,
+		OSTree: ostree.RequestParams{
+			Ref:    cr.OSTree.Ref,
+			Parent: cr.OSTree.Parent,
+			URL:    cr.OSTree.URL,
+		},
+	}
+
+	packageSets, err := api.depsolveBlueprintForImageType(*bp, options, imageType)
+	if err != nil {
+		errors := responseError{
+			ID:  "DepsolveError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
 	imageRepos, err := api.allRepositoriesByImageType(imageType)
 	// this should not happen if the api.depsolveBlueprintForImageType() call above worked
 	if err != nil {
@@ -2325,14 +2334,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	manifest, err := imageType.Manifest(bp.Customizations,
-		distro.ImageOptions{
-			Size: size,
-			OSTree: ostree.RequestParams{
-				Ref:    cr.OSTree.Ref,
-				Parent: cr.OSTree.Parent,
-				URL:    cr.OSTree.URL,
-			},
-		},
+		options,
 		imageRepos,
 		packageSets,
 		seed)

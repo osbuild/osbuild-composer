@@ -1,5 +1,6 @@
 // This package contains tests related to dnf-json and rpmmd package.
 
+//go:build integration
 // +build integration
 
 package main
@@ -15,6 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -49,7 +51,15 @@ func TestCrossArchDepsolve(t *testing.T) {
 							imgType, err := arch.GetImageType(imgTypeStr)
 							require.NoError(t, err)
 
-							packages := imgType.PackageSets(blueprint.Blueprint{}, repos[archStr])
+							packages := imgType.PackageSets(blueprint.Blueprint{},
+								distro.ImageOptions{
+									OSTree: ostree.RequestParams{
+										URL:    "foo",
+										Ref:    "bar",
+										Parent: "baz",
+									},
+								},
+								repos[archStr])
 
 							for _, set := range packages {
 								_, err = solver.Depsolve(set)
@@ -92,7 +102,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 			qcow2Image, err := x86Arch.GetImageType(qcow2ImageTypeName)
 			require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, distroStruct.Name(), distro.X86_64ArchName)
 
-			imagePkgSets := qcow2Image.PackageSets(blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, x86Repos)
+			imagePkgSets := qcow2Image.PackageSets(blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, distro.ImageOptions{}, x86Repos)
 			imagePkgSetChains := qcow2Image.PackageSetsChains()
 			require.NotEmptyf(t, imagePkgSetChains, "the %q image has no package set chains defined", qcow2ImageTypeName)
 

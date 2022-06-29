@@ -266,7 +266,7 @@ func (t *imageType) getPackages(name string) rpmmd.PackageSet {
 	return getter(t)
 }
 
-func (t *imageType) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
 	// merge package sets that appear in the image type with the package sets
 	// of the same name from the distro and arch
 	mergedSets := make(map[string]rpmmd.PackageSet)

@@ -96,6 +96,13 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				imgPackageSpecSets = getImageTypePkgSpecSets(
 					imageType,
 					*tt.ComposeRequest.Blueprint,
+					distro.ImageOptions{
+						OSTree: ostree.RequestParams{
+							URL:    "foo",
+							Ref:    "bar",
+							Parent: "baz",
+						},
+					},
 					repos,
 					dnfCacheDir,
 					dnfJsonPath,
@@ -138,8 +145,8 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 	}
 }
 
-func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint, repos []rpmmd.RepoConfig, cacheDir, dnfJsonPath string) map[string][]rpmmd.PackageSpec {
-	imgPackageSets := imageType.PackageSets(bp, repos)
+func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, cacheDir, dnfJsonPath string) map[string][]rpmmd.PackageSpec {
+	imgPackageSets := imageType.PackageSets(bp, options, repos)
 
 	solver := dnfjson.NewSolver(imageType.Arch().Distro().ModulePlatformID(), imageType.Arch().Distro().Releasever(), imageType.Arch().Name(), cacheDir)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
@@ -155,7 +162,13 @@ func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint,
 }
 
 func isOSTree(imgType distro.ImageType) bool {
-	packageSets := imgType.PackageSets(blueprint.Blueprint{}, nil)
+	packageSets := imgType.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
+		OSTree: ostree.RequestParams{
+			URL:    "foo",
+			Ref:    "bar",
+			Parent: "baz",
+		},
+	}, nil)
 	for _, set := range packageSets["build-packages"] {
 		for _, pkg := range set.Include {
 			if pkg == "rpm-ostree" {
@@ -170,7 +183,13 @@ var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
 
 // Returns the number of known kernels in the package list
 func kernelCount(imgType distro.ImageType) int {
-	sets := imgType.PackageSets(blueprint.Blueprint{}, nil)
+	sets := imgType.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
+		OSTree: ostree.RequestParams{
+			URL:    "foo",
+			Ref:    "bar",
+			Parent: "baz",
+		},
+	}, nil)
 	n := 0
 	for _, pset := range sets["packages"] {
 		for _, pkg := range pset.Include {
@@ -182,6 +201,7 @@ func kernelCount(imgType distro.ImageType) int {
 
 		}
 	}
+	// TODO: is this not included in the above?
 	for _, bset := range sets["blueprint"] {
 		for _, pkg := range bset.Include {
 			for _, kernel := range knownKernels {
@@ -192,15 +212,22 @@ func kernelCount(imgType distro.ImageType) int {
 
 		}
 	}
+	m := 0
 	for _, iset := range sets["installer"] {
 		for _, pkg := range iset.Include {
 			for _, kernel := range knownKernels {
 				if kernel == pkg {
-					n++
+					m++
 				}
 			}
 
 		}
+	}
+	// TODO: fix this! some installers mistakenly include other
+	// package sets. These are however not used in building the image
+	// until this is fixed, count the installers separately.
+	if m > 0 {
+		return m
 	}
 	return n
 }
@@ -260,8 +287,20 @@ func GetTestingPackageSpecSets(packageName, arch string, pkgSetNames []string) m
 // defined by the provided ImageType, which is useful for unit testing.
 func GetTestingImagePackageSpecSets(packageName string, i distro.ImageType) map[string][]rpmmd.PackageSpec {
 	arch := i.Arch().Name()
-	imagePackageSets := make([]string, 0, len(i.PackageSets(blueprint.Blueprint{}, nil)))
-	for pkgSetName := range i.PackageSets(blueprint.Blueprint{}, nil) {
+	imagePackageSets := make([]string, 0, len(i.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
+		OSTree: ostree.RequestParams{
+			URL:    "foo",
+			Ref:    "bar",
+			Parent: "baz",
+		},
+	}, nil)))
+	for pkgSetName := range i.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
+		OSTree: ostree.RequestParams{
+			URL:    "foo",
+			Ref:    "bar",
+			Parent: "baz",
+		},
+	}, nil) {
 		imagePackageSets = append(imagePackageSets, pkgSetName)
 	}
 	return GetTestingPackageSpecSets(packageName, arch, imagePackageSets)
