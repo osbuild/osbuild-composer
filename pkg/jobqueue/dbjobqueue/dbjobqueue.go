@@ -18,10 +18,9 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-
+	"github.com/osbuild/osbuild-composer/internal/common/slogger"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
-
-	logrus "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -106,6 +105,7 @@ const (
 )
 
 type DBJobQueue struct {
+	logger       jobqueue.SimpleLogger
 	pool         *pgxpool.Pool
 	dequeuers    *dequeuers
 	stopListener func()
@@ -153,8 +153,24 @@ func (d *dequeuers) notifyAll() {
 	}
 }
 
-// Create a new DBJobQueue object for `url`.
+// Config allows more detailed customization of queue behavior
+type Config struct {
+	// Logger is used for all logging of the queue, when not provided, the stanard
+	// global logger (logrus) is used.
+	Logger jobqueue.SimpleLogger
+}
+
+// New creates a new DBJobQueue object for `url` with default configuration.
 func New(url string) (*DBJobQueue, error) {
+	stdLogger := slogger.NewLogrusLogger(logrus.StandardLogger())
+	config := Config{
+		Logger: stdLogger,
+	}
+	return NewWithConfig(url, config)
+}
+
+// NewWithLogger creates a new DBJobQueue object for `url` with specific configuration.
+func NewWithConfig(url string, config Config) (*DBJobQueue, error) {
 	pool, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("error establishing connection: %v", err)
@@ -162,6 +178,7 @@ func New(url string) (*DBJobQueue, error) {
 
 	listenContext, cancel := context.WithCancel(context.Background())
 	q := &DBJobQueue{
+		logger:       config.Logger,
 		pool:         pool,
 		dequeuers:    newDequeuers(),
 		stopListener: cancel,
@@ -185,7 +202,7 @@ func (q *DBJobQueue) listen(ctx context.Context, ready chan<- struct{}) {
 		// use the empty context as the listening context is already cancelled at this point
 		_, err := conn.Exec(context.Background(), sqlUnlisten)
 		if err != nil && !errors.Is(err, context.DeadlineExceeded) {
-			logrus.Error("Error unlistening for jobs in dequeue: ", err)
+			q.logger.Error(err, "Error unlistening for jobs in dequeue")
 		}
 		conn.Release()
 	}()
@@ -202,13 +219,13 @@ func (q *DBJobQueue) listen(ctx context.Context, ready chan<- struct{}) {
 		if err != nil {
 			// shutdown the listener if the context is canceled
 			if errors.Is(err, context.Canceled) {
-				logrus.Info("Shutting down the listener")
+				q.logger.Info("Shutting down the listener")
 				return
 			}
 
 			// otherwise, just log the error and continue, there might just
 			// be a temporary networking issue
-			logrus.Debugf("error waiting for notification on jobs channel: %v", err)
+			q.logger.Error(err, "Error waiting for notification on jobs channel")
 			continue
 		}
 
@@ -236,7 +253,7 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	defer func() {
 		err := tx.Rollback(context.Background())
 		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
-			logrus.Error("error rolling back enqueue transaction: ", err)
+			q.logger.Error(err, "Error rolling back enqueue transaction")
 		}
 	}()
 
@@ -263,7 +280,7 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 		return uuid.Nil, fmt.Errorf("unable to commit database transaction: %v", err)
 	}
 
-	logrus.Infof("Enqueued job of type %s with ID %s(dependencies %v)", jobType, id, dependencies)
+	q.logger.Info("Enqueued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
 
 	return id, nil
 }
@@ -318,7 +335,7 @@ func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []
 		return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error querying the job's dependencies: %v", err)
 	}
 
-	logrus.Infof("Dequeued job of type %v with ID %s", jobType, id)
+	q.logger.Info("Dequeued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
 
 	return id, token, dependencies, jobType, args, nil
 }
@@ -372,7 +389,7 @@ func (q *DBJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, 
 		return uuid.Nil, nil, "", nil, fmt.Errorf("error querying the job's dependencies: %v", err)
 	}
 
-	logrus.Infof("Dequeued job of type %v with ID %s", jobType, id)
+	q.logger.Info("Dequeued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
 
 	return token, dependencies, jobType, args, nil
 }
@@ -391,7 +408,7 @@ func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	defer func() {
 		err = tx.Rollback(context.Background())
 		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
-			logrus.Errorf("error rolling back finish job transaction for job %s: %v", id, err)
+			q.logger.Error(err, "Error rolling back finish job transaction", "job_id", id.String())
 		}
 
 	}()
@@ -440,7 +457,7 @@ func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 		return fmt.Errorf("unable to commit database transaction: %v", err)
 	}
 
-	logrus.Infof("Finished job with ID %s", id)
+	q.logger.Info("Finished job", "job_type", jobType, "job_id", id.String())
 
 	return nil
 }
@@ -462,7 +479,7 @@ func (q *DBJobQueue) CancelJob(id uuid.UUID) error {
 		return fmt.Errorf("error canceling job %s: %v", id, err)
 	}
 
-	logrus.Infof("Cancelled job with ID %s", id)
+	q.logger.Info("Cancelled job", "job_type", jobType, "job_id", id.String())
 
 	return nil
 }
@@ -560,13 +577,13 @@ func (q *DBJobQueue) Heartbeats(olderThan time.Duration) (tokens []uuid.UUID) {
 		err = rows.Scan(&t)
 		if err != nil {
 			// Log the error and try to continue with the next row
-			logrus.Error("Unable to read token from heartbeats: ", err)
+			q.logger.Error(err, "Unable to read token from heartbeats")
 			continue
 		}
 		tokens = append(tokens, t)
 	}
 	if rows.Err() != nil {
-		logrus.Error("Error reading tokens from heartbeats: ", rows.Err())
+		q.logger.Error(rows.Err(), "Error reading tokens from heartbeats")
 	}
 
 	return
@@ -582,10 +599,10 @@ func (q *DBJobQueue) RefreshHeartbeat(token uuid.UUID) {
 
 	tag, err := conn.Exec(context.Background(), sqlRefreshHeartbeat, token)
 	if err != nil {
-		logrus.Error("Error refreshing heartbeat: ", err)
+		q.logger.Error(err, "Error refreshing heartbeat")
 	}
 	if tag.RowsAffected() != 1 {
-		logrus.Error("No rows affected when refreshing heartbeat for ", token)
+		q.logger.Error(nil, "No rows affected when refreshing heartbeat", "job_token", token.String())
 	}
 }
 
