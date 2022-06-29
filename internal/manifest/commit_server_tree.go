@@ -32,14 +32,12 @@ type OSTreeCommitServerTreePipeline struct {
 // nginx will be listening on.
 func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	repos []rpmmd.RepoConfig,
-	packageSpecs []rpmmd.PackageSpec,
 	commitPipeline *OSTreeCommitPipeline,
 	nginxConfigPath,
 	listenPort string) *OSTreeCommitServerTreePipeline {
 	p := &OSTreeCommitServerTreePipeline{
 		BasePipeline:    NewBasePipeline("container-tree", buildPipeline, nil),
 		repos:           repos,
-		packageSpecs:    packageSpecs,
 		commitPipeline:  commitPipeline,
 		nginxConfigPath: nginxConfigPath,
 		listenPort:      listenPort,
@@ -63,7 +61,24 @@ func (p *OSTreeCommitServerTreePipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
+func (p *OSTreeCommitServerTreePipeline) serializeStart(packages []rpmmd.PackageSpec) {
+	if len(p.packageSpecs) > 0 {
+		panic("double call to serializeStart()")
+	}
+	p.packageSpecs = packages
+}
+
+func (p *OSTreeCommitServerTreePipeline) serializeEnd() {
+	if len(p.packageSpecs) == 0 {
+		panic("serializeEnd() call when serialization not in progress")
+	}
+	p.packageSpecs = nil
+}
+
 func (p *OSTreeCommitServerTreePipeline) serialize() osbuild2.Pipeline {
+	if len(p.packageSpecs) == 0 {
+		panic("serialization not started")
+	}
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))

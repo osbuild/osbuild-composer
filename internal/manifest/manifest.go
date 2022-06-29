@@ -19,18 +19,12 @@ type osTreeCommit struct {
 type OSBuildManifest []byte
 
 type Manifest struct {
-	pipelines     []Pipeline
-	packageSpecs  []rpmmd.PackageSpec
-	osTreeCommits []osTreeCommit
-	inlineData    []string
+	pipelines []Pipeline
 }
 
 func New() Manifest {
 	return Manifest{
-		pipelines:     make([]Pipeline, 0),
-		packageSpecs:  make([]rpmmd.PackageSpec, 0),
-		osTreeCommits: make([]osTreeCommit, 0),
-		inlineData:    make([]string, 0),
+		pipelines: make([]Pipeline, 0),
 	}
 }
 
@@ -41,21 +35,6 @@ func (m *Manifest) AddPipeline(p Pipeline) {
 		}
 	}
 	m.pipelines = append(m.pipelines, p)
-	m.addPackages(p.getPackageSpecs())
-	m.addOSTreeCommits(p.getOSTreeCommits())
-	m.addInline(p.getInline())
-}
-
-func (m *Manifest) addPackages(packages []rpmmd.PackageSpec) {
-	m.packageSpecs = append(m.packageSpecs, packages...)
-}
-
-func (m *Manifest) addOSTreeCommits(commits []osTreeCommit) {
-	m.osTreeCommits = append(m.osTreeCommits, commits...)
-}
-
-func (m *Manifest) addInline(data []string) {
-	m.inlineData = append(m.inlineData, data...)
 }
 
 func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
@@ -70,22 +49,23 @@ func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
 	return chains
 }
 
-func (m Manifest) Serialize() (distro.Manifest, error) {
-	var commits []ostree.CommitSource
-	for _, commit := range m.osTreeCommits {
-		commits = []ostree.CommitSource{
-			{
-				Checksum: commit.checksum, URL: commit.url,
-			},
-		}
-	}
-
+func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (distro.Manifest, error) {
 	pipelines := make([]osbuild2.Pipeline, 0)
+	packages := make([]rpmmd.PackageSpec, 0)
+	commits := make([]ostree.CommitSource, 0)
+	inline := make([]string, 0)
 	for _, pipeline := range m.pipelines {
-		pipeline.serializeStart()
+		pipeline.serializeStart(packageSets[pipeline.Name()])
 	}
 	for _, pipeline := range m.pipelines {
+		for _, commit := range pipeline.getOSTreeCommits() {
+			commits = append(commits, ostree.CommitSource{
+				Checksum: commit.checksum, URL: commit.url,
+			})
+		}
 		pipelines = append(pipelines, pipeline.serialize())
+		packages = append(packages, packageSets[pipeline.Name()]...)
+		inline = append(inline, pipeline.getInline()...)
 	}
 	for _, pipeline := range m.pipelines {
 		pipeline.serializeEnd()
@@ -95,7 +75,7 @@ func (m Manifest) Serialize() (distro.Manifest, error) {
 		osbuild2.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   osbuild2.GenSources(m.packageSpecs, commits, m.inlineData),
+			Sources:   osbuild2.GenSources(packages, commits, inline),
 		},
 	)
 }

@@ -42,7 +42,6 @@ type AnacondaPipeline struct {
 // installer for.
 func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	repos []rpmmd.RepoConfig,
-	packages []rpmmd.PackageSpec,
 	kernelName,
 	arch,
 	product,
@@ -50,7 +49,6 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	p := &AnacondaPipeline{
 		BasePipeline: NewBasePipeline("anaconda-tree", buildPipeline, nil),
 		repos:        repos,
-		packageSpecs: packages,
 		kernelName:   kernelName,
 		arch:         arch,
 		product:      product,
@@ -74,21 +72,28 @@ func (p *AnacondaPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *AnacondaPipeline) serializeStart() {
-	if p.kernelVer != "" {
+func (p *AnacondaPipeline) serializeStart(packages []rpmmd.PackageSpec) {
+	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
-	p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
+	p.packageSpecs = packages
+	if p.kernelName != "" {
+		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
+	}
 }
 
 func (p *AnacondaPipeline) serializeEnd() {
-	if p.kernelVer == "" {
+	if len(p.packageSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.kernelVer = ""
+	p.packageSpecs = nil
 }
 
 func (p *AnacondaPipeline) serialize() osbuild2.Pipeline {
+	if len(p.packageSpecs) == 0 {
+		panic("serialization not started")
+	}
 	pipeline := p.BasePipeline.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))

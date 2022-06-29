@@ -10,13 +10,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
+	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos)
 	pipelines = append(pipelines, buildPipeline)
 
-	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(buildPipeline, t, repos, customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +44,13 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	return pipelines, nil
 }
 
-func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
+	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos)
 	pipelines = append(pipelines, buildPipeline)
 
-	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(buildPipeline, t, repos, customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -76,13 +76,13 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	return pipelines, nil
 }
 
-func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
+	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos)
 	pipelines = append(pipelines, buildPipeline)
 
-	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(buildPipeline, t, repos, customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -108,13 +108,13 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	return pipelines, nil
 }
 
-func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
+	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos)
 	pipelines = append(pipelines, buildPipeline)
 
-	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(buildPipeline, t, repos, customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -142,14 +142,13 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
 	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
-	packageSetSpecs map[string][]rpmmd.PackageSpec,
 	rng *rand.Rand, diskfile string) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
+	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos)
 	pipelines = append(pipelines, buildPipeline)
 
-	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(buildPipeline, t, repos, customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -175,23 +174,22 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 // ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
 func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
 	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
-	packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
-	return ec2CommonPipelines(t, customizations, options, repos, packageSetChains, packageSetSpecs, rng, t.Filename())
+	rng *rand.Rand) ([]manifest.Pipeline, error) {
+	return ec2CommonPipelines(t, customizations, options, repos, packageSetChains, rng, t.Filename())
 }
 
 func iotInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec,
+	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
 	rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
+	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos)
 	pipelines = append(pipelines, buildPipeline)
 
-	installerPackages := packageSetSpecs[installerPkgsKey]
 	d := t.arch.distro
 	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
 
-	anacondaTreePipeline := anacondaTreePipeline(buildPipeline, repos, installerPackages, t.Arch().Name(), d.product, d.osVersion, "IoT", ksUsers)
+	anacondaTreePipeline := anacondaTreePipeline(buildPipeline, repos, t.Arch().Name(), d.product, d.osVersion, "IoT", ksUsers)
 	installerChain := packageSetChains[installerPkgsKey]
 	if len(installerChain) >= 1 {
 		anacondaTreePipeline.ExtraPackages = installerChain[0].Include
@@ -206,10 +204,9 @@ func iotInstallerPipelines(t *imageType, customizations *blueprint.Customization
 }
 
 func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
-	packageSetSpecs map[string][]rpmmd.PackageSpec) (*manifest.BuildPipeline, *manifest.OSPipeline, *manifest.OSTreeCommitPipeline, error) {
-	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
-	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
+	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet) (*manifest.BuildPipeline, *manifest.OSPipeline, *manifest.OSTreeCommitPipeline, error) {
+	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos)
+	treePipeline, err := osPipeline(buildPipeline, t, repos, customizations, options, nil)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -232,10 +229,10 @@ func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, op
 
 func iotCommitPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
 	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
-	packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+	rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetChains, packageSetSpecs)
+	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetChains)
 	if err != nil {
 		return nil, err
 	}
@@ -246,17 +243,17 @@ func iotCommitPipelines(t *imageType, customizations *blueprint.Customizations, 
 
 func iotContainerPipelines(t *imageType, customizations *blueprint.Customizations,
 	options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
-	packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+	rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetChains, packageSetSpecs)
+	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetChains)
 	if err != nil {
 		return nil, err
 	}
 
 	nginxConfigPath := "/etc/nginx.conf"
 	httpPort := "8080"
-	containerTreePipeline := containerTreePipeline(buildPipeline, commitPipeline, repos, packageSetSpecs[containerPkgsKey], options, customizations, nginxConfigPath, httpPort)
+	containerTreePipeline := containerTreePipeline(buildPipeline, commitPipeline, repos, options, customizations, nginxConfigPath, httpPort)
 	containerChain := packageSetChains[osPkgsKey]
 	if len(containerChain) >= 1 {
 		containerTreePipeline.ExtraPackages = containerChain[0].Include
@@ -273,7 +270,6 @@ func iotContainerPipelines(t *imageType, customizations *blueprint.Customization
 func osPipeline(buildPipeline *manifest.BuildPipeline,
 	t *imageType,
 	repos []rpmmd.RepoConfig,
-	packages []rpmmd.PackageSpec,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
 	rng *rand.Rand) (*manifest.OSPipeline, error) {
@@ -302,7 +298,7 @@ func osPipeline(buildPipeline *manifest.BuildPipeline,
 		kernelName = c.GetKernel().Name
 	}
 
-	pl := manifest.NewOSPipeline(buildPipeline, t.rpmOstree, options.OSTree.Parent, options.OSTree.URL, repos, packages, pt, bootLoader, t.arch.legacy, kernelName)
+	pl := manifest.NewOSPipeline(buildPipeline, t.rpmOstree, options.OSTree.Parent, options.OSTree.URL, repos, pt, bootLoader, t.arch.legacy, kernelName)
 
 	if t.supportsUEFI() {
 		pl.UEFIVendor = t.arch.distro.vendor
@@ -402,8 +398,8 @@ func ostreeCommitPipeline(buildPipeline *manifest.BuildPipeline, treePipeline *m
 	return p
 }
 
-func containerTreePipeline(buildPipeline *manifest.BuildPipeline, commitPipeline *manifest.OSTreeCommitPipeline, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations, nginxConfigPath, listenPort string) *manifest.OSTreeCommitServerTreePipeline {
-	p := manifest.NewOSTreeCommitServerTreePipeline(buildPipeline, repos, packages, commitPipeline, nginxConfigPath, listenPort)
+func containerTreePipeline(buildPipeline *manifest.BuildPipeline, commitPipeline *manifest.OSTreeCommitPipeline, repos []rpmmd.RepoConfig, options distro.ImageOptions, c *blueprint.Customizations, nginxConfigPath, listenPort string) *manifest.OSTreeCommitServerTreePipeline {
+	p := manifest.NewOSTreeCommitServerTreePipeline(buildPipeline, repos, commitPipeline, nginxConfigPath, listenPort)
 	language, _ := c.GetPrimaryLocale()
 	if language != nil {
 		p.Language = *language
@@ -418,8 +414,8 @@ func containerPipeline(buildPipeline *manifest.BuildPipeline, treePipeline *mani
 	return p
 }
 
-func anacondaTreePipeline(buildPipeline *manifest.BuildPipeline, repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, arch, product, osVersion, variant string, users bool) *manifest.AnacondaPipeline {
-	p := manifest.NewAnacondaPipeline(buildPipeline, repos, packages, "kernel", arch, product, osVersion)
+func anacondaTreePipeline(buildPipeline *manifest.BuildPipeline, repos []rpmmd.RepoConfig, arch, product, osVersion, variant string, users bool) *manifest.AnacondaPipeline {
+	p := manifest.NewAnacondaPipeline(buildPipeline, repos, "kernel", arch, product, osVersion)
 	p.Users = users
 	p.Variant = variant
 	p.Biosdevname = (arch == distro.X86_64ArchName)
@@ -443,13 +439,13 @@ func bootISOPipeline(buildPipeline *manifest.BuildPipeline, treePipeline *manife
 	return p
 }
 
-func containerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func containerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
+	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos)
 	pipelines = append(pipelines, buildPipeline)
 
-	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(buildPipeline, t, repos, customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
