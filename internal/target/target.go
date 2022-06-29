@@ -87,6 +87,8 @@ func (target *Target) UnmarshalJSON(data []byte) error {
 		options = new(OCITargetOptions)
 	case TargetNameContainer:
 		options = new(ContainerTargetOptions)
+	case TargetNameWorkerServer:
+		options = new(WorkerServerTargetOptions)
 	default:
 		return fmt.Errorf("unexpected target name: %s", rawTarget.Name)
 	}
@@ -253,6 +255,12 @@ func (target Target) MarshalJSON() ([]byte, error) {
 				Filename:               target.OsbuildArtifact.ExportFilename,
 			}
 			rawOptions, err = json.Marshal(compat)
+
+		case *WorkerServerTargetOptions:
+			// WorkerServer target does not handle the backward compatibility
+			// for the Filename in target options, because it was added after
+			// the incompatible change.
+			rawOptions, err = json.Marshal(target.Options)
 
 		default:
 			return nil, fmt.Errorf("unexpected target options type: %t", t)
