@@ -345,20 +345,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	exportPath := exports[0]
-	if osbuildJobResult.OSBuildOutput.Success && jobArgs.ImageName != "" {
-		var f *os.File
-		imagePath := path.Join(outputDirectory, exportPath, jobArgs.ImageName)
-		f, err = os.Open(imagePath)
-		if err != nil {
-			return err
-		}
-		err = job.UploadArtifact(jobArgs.ImageName, f)
-		if err != nil {
-			return err
-		}
-		f.Close()
-	}
-
 	for _, jobTarget := range jobArgs.Targets {
 		var targetResult *target.TargetResult
 		switch targetOptions := jobTarget.Options.(type) {
