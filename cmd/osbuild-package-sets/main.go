@@ -22,11 +22,16 @@ func main() {
 	flag.StringVar(&imageName, "image", "", "Image name")
 	flag.Parse()
 
+	if distroName == "" || archName == "" || imageName == "" {
+		flag.Usage()
+		os.Exit(1)
+	}
+
 	dr := distroregistry.NewDefault()
 
 	distro := dr.GetDistro(distroName)
 	if distro == nil {
-		panic(fmt.Errorf("Distro %q does not exist", distro))
+		panic(fmt.Errorf("Distro %q does not exist", distroName))
 	}
 
 	arch, err := distro.GetArch(archName)
