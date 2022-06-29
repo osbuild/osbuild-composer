@@ -685,6 +685,16 @@ func TestCompose(t *testing.T) {
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
 			Manifest:    manifest,
+			Targets: []*target.Target{
+				{
+					ImageName: imgType.Filename(),
+					OsbuildArtifact: target.OsbuildArtifact{
+						ExportFilename: imgType.Filename(),
+					},
+					Name:    target.TargetNameWorkerServer,
+					Options: &target.WorkerServerTargetOptions{},
+				},
+			},
 		},
 		Packages: dnfjson_mock.BaseDeps(),
 	}
@@ -702,6 +712,14 @@ func TestCompose(t *testing.T) {
 			ImageType:   imgType,
 			Manifest:    manifest,
 			Targets: []*target.Target{
+				{
+					ImageName: imgType.Filename(),
+					OsbuildArtifact: target.OsbuildArtifact{
+						ExportFilename: imgType.Filename(),
+					},
+					Name:    target.TargetNameWorkerServer,
+					Options: &target.WorkerServerTargetOptions{},
+				},
 				{
 					Name:      target.TargetNameAWS,
 					Status:    common.IBWaiting,
@@ -734,6 +752,16 @@ func TestCompose(t *testing.T) {
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
 			Manifest:    manifest,
+			Targets: []*target.Target{
+				{
+					ImageName: imgType.Filename(),
+					OsbuildArtifact: target.OsbuildArtifact{
+						ExportFilename: imgType.Filename(),
+					},
+					Name:    target.TargetNameWorkerServer,
+					Options: &target.WorkerServerTargetOptions{},
+				},
+			},
 		},
 		Packages: dnfjson_mock.BaseDeps(),
 	}
@@ -760,6 +788,16 @@ func TestCompose(t *testing.T) {
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType2,
 			Manifest:    manifest2,
+			Targets: []*target.Target{
+				{
+					ImageName: imgType2.Filename(),
+					OsbuildArtifact: target.OsbuildArtifact{
+						ExportFilename: imgType2.Filename(),
+					},
+					Name:    target.TargetNameWorkerServer,
+					Options: &target.WorkerServerTargetOptions{},
+				},
+			},
 		},
 		Packages: dnfjson_mock.BaseDeps(),
 	}
@@ -1690,6 +1728,16 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
 			Manifest:    manifest,
+			Targets: []*target.Target{
+				{
+					ImageName: imgType.Filename(),
+					OsbuildArtifact: target.OsbuildArtifact{
+						ExportFilename: imgType.Filename(),
+					},
+					Name:    target.TargetNameWorkerServer,
+					Options: &target.WorkerServerTargetOptions{},
+				},
+			},
 		},
 		Packages: dnfjson_mock.BaseDeps(),
 	}
@@ -1707,6 +1755,16 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType2,
 			Manifest:    manifest,
+			Targets: []*target.Target{
+				{
+					ImageName: imgType2.Filename(),
+					OsbuildArtifact: target.OsbuildArtifact{
+						ExportFilename: imgType2.Filename(),
+					},
+					Name:    target.TargetNameWorkerServer,
+					Options: &target.WorkerServerTargetOptions{},
+				},
+			},
 		},
 		Packages: dnfjson_mock.BaseDeps(),
 	}
