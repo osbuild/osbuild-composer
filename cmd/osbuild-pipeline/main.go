@@ -9,12 +9,12 @@ import (
 	"os"
 	"path"
 
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -137,6 +137,20 @@ func main() {
 		}
 	}
 
+	if composeRequest.OSTree.Ref == "" {
+		// use default OSTreeRef for image type
+		composeRequest.OSTree.Ref = imageType.OSTreeRef()
+	}
+
+	options := distro.ImageOptions{
+		Size: imageType.Size(0),
+		OSTree: ostree.RequestParams{
+			Ref:    composeRequest.OSTree.Ref,
+			Parent: composeRequest.OSTree.Parent,
+			URL:    composeRequest.OSTree.URL,
+		},
+	}
+
 	home, err := os.UserHomeDir()
 	if err != nil {
 		panic("os.UserHomeDir(): " + err.Error())
@@ -150,7 +164,7 @@ func main() {
 	// let the cache grow to fit much more repository metadata than we usually allow
 	solver.SetMaxCacheSize(3 * 1024 * 1024 * 1024)
 
-	packageSets := imageType.PackageSets(composeRequest.Blueprint, repos)
+	packageSets := imageType.PackageSets(composeRequest.Blueprint, options, repos)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 
 	for name, pkgSet := range packageSets {
@@ -168,21 +182,8 @@ func main() {
 			panic(err)
 		}
 	} else {
-
-		if composeRequest.OSTree.Ref == "" {
-			// use default OSTreeRef for image type
-			composeRequest.OSTree.Ref = imageType.OSTreeRef()
-		}
-
 		manifest, err := imageType.Manifest(composeRequest.Blueprint.Customizations,
-			distro.ImageOptions{
-				Size: imageType.Size(0),
-				OSTree: ostree.RequestParams{
-					Ref:    composeRequest.OSTree.Ref,
-					Parent: composeRequest.OSTree.Parent,
-					URL:    composeRequest.OSTree.URL,
-				},
-			},
+			options,
 			repos,
 			depsolvedSets,
 			seedArg)

@@ -123,8 +123,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			panic("Could not initialize empty blueprint.")
 		}
 
+		options := distro.ImageOptions{Size: imageType.Size(0)}
+
 		solver := h.server.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch.Name())
-		packageSets := imageType.PackageSets(*bp, repositories)
+		packageSets := imageType.PackageSets(*bp, options, repositories)
 		depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
 
 		for name, pkgSet := range packageSets {
@@ -135,7 +137,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			depsolvedSets[name] = res
 		}
 
-		manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, repositories, depsolvedSets, manifestSeed)
+		manifest, err := imageType.Manifest(nil, options, repositories, depsolvedSets, manifestSeed)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadGateway, fmt.Sprintf("Failed to get manifest for %s/%s/%s: %s", ir.ImageType, ir.Architecture, request.Distribution, err))
 		}

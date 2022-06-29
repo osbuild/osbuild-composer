@@ -114,7 +114,7 @@ func (t *imageTypeS2) BuildPackages() []string {
 	return buildPackages
 }
 
-func (t *imageTypeS2) PackageSets(bp blueprint.Blueprint, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+func (t *imageTypeS2) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
 	sets := map[string][]rpmmd.PackageSet{
 		"build-packages": {{
 			Include:      t.BuildPackages(),
