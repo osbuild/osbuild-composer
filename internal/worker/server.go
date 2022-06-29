@@ -100,7 +100,17 @@ func (s *Server) WatchHeartbeats() {
 		for _, token := range s.jobs.Heartbeats(time.Second * 120) {
 			id, _ := s.jobs.IdFromToken(token)
 			logrus.Infof("Removing unresponsive job: %s\n", id)
-			err := s.FinishJob(token, nil)
+
+			missingHeartbeatResult := JobResult{
+				JobError: clienterrors.WorkerClientError(clienterrors.ErrorJobMissingHeartbeat, "Worker running this job stopped responding."),
+			}
+
+			resJson, err := json.Marshal(missingHeartbeatResult)
+			if err != nil {
+				logrus.Panicf("Cannot marshal the heartbeat error: %v", err)
+			}
+
+			err = s.FinishJob(token, resJson)
 			if err != nil {
 				logrus.Errorf("Error finishing unresponsive job: %v", err)
 			}
