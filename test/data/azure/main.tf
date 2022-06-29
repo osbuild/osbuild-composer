@@ -58,6 +58,9 @@ resource "azurerm_storage_blob" "testBlob" {
 # Create vm image
 resource "azurerm_image" "testimage" {
   name                = join("-", ["image", var.TEST_ID])
+  tags = {
+    gitlab-ci-test = "true"
+  }
   location            = data.azurerm_resource_group.testResourceGroup.location
   resource_group_name = data.azurerm_resource_group.testResourceGroup.name
   hyper_v_generation = var.HYPER_V_GEN
@@ -73,6 +76,9 @@ resource "azurerm_image" "testimage" {
 # Create virtual network
 resource "azurerm_virtual_network" "testterraformnetwork" {
     name                = join("-", ["vnet", var.TEST_ID])
+    tags = {
+      gitlab-ci-test = "true"
+    }
     address_space       = ["10.0.0.0/16"]
     location            = data.azurerm_resource_group.testResourceGroup.location
     resource_group_name = data.azurerm_resource_group.testResourceGroup.name
@@ -90,6 +96,9 @@ resource "azurerm_subnet" "testterraformsubnet" {
 # Create public IPs
 resource "azurerm_public_ip" "testterraformpublicip" {
     name                         = join("-", ["ip", var.TEST_ID])
+    tags = {
+      gitlab-ci-test = "true"
+    }
     location                     = data.azurerm_resource_group.testResourceGroup.location
     resource_group_name          = data.azurerm_resource_group.testResourceGroup.name
     allocation_method            = "Dynamic"
@@ -99,6 +108,9 @@ resource "azurerm_public_ip" "testterraformpublicip" {
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "testterraformnsg" {
     name                = join("-", ["nsg", var.TEST_ID])
+    tags = {
+      gitlab-ci-test = "true"
+    }
     location            = data.azurerm_resource_group.testResourceGroup.location
     resource_group_name = data.azurerm_resource_group.testResourceGroup.name
 
@@ -119,6 +131,9 @@ resource "azurerm_network_security_group" "testterraformnsg" {
 # Create network interface
 resource "azurerm_network_interface" "testterraformnic" {
     name                      = join("-", ["iface", var.TEST_ID])
+    tags = {
+      gitlab-ci-test = "true"
+    }
     location                  = data.azurerm_resource_group.testResourceGroup.location
     resource_group_name       = data.azurerm_resource_group.testResourceGroup.name
 
@@ -142,6 +157,7 @@ resource "tls_private_key" "test_ssh" {
   algorithm = "RSA"
   rsa_bits = 4096
 }
+
 output "tls_private_key" {
     value = tls_private_key.test_ssh.private_key_pem
     sensitive = true
@@ -150,6 +166,9 @@ output "tls_private_key" {
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "testterraformvm" {
     name                  = join("-", ["vm", var.TEST_ID])
+    tags = {
+      gitlab-ci-test = "true"
+    }
     location              = data.azurerm_resource_group.testResourceGroup.location
     resource_group_name   = data.azurerm_resource_group.testResourceGroup.name
     network_interface_ids = [azurerm_network_interface.testterraformnic.id]

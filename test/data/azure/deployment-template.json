@@ -47,6 +47,9 @@
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "gitlab-ci-test": "true"
+      },
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
@@ -77,6 +80,9 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2019-02-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "gitlab-ci-test": "true"
+      },
       "properties": {
         "securityRules": [
           {
@@ -100,6 +106,9 @@
       "type": "Microsoft.Network/virtualNetworks",
       "apiVersion": "2019-09-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "gitlab-ci-test": "true"
+      },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -121,6 +130,9 @@
       "type": "Microsoft.Network/publicIpAddresses",
       "apiVersion": "2019-02-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "gitlab-ci-test": "true"
+      },
       "properties": {
         "publicIpAllocationMethod": "Dynamic"
       },
@@ -133,6 +145,9 @@
       "type": "Microsoft.Compute/images",
       "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "gitlab-ci-test": "true"
+      },
       "properties": {
         "hyperVGeneration": "V2",
         "storageProfile": {
@@ -149,6 +164,9 @@
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2019-07-01",
       "location": "[parameters('location')]",
+      "tags": {
+        "gitlab-ci-test": "true"
+      },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
         "[concat('Microsoft.Compute/images/', parameters('imageName'))]"

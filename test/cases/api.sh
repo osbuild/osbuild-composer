@@ -1547,16 +1547,17 @@ function verifyInAzure() {
   $AZURE_CMD login --service-principal --username "${V2_AZURE_CLIENT_ID}" --password "${V2_AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
   set -x
 
-  # verify that the image exists
+  # verify that the image exists and tag it
   $AZURE_CMD image show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}"
+  $AZURE_CMD image update --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}" --tags gitlab-ci-test=true
 
   # Verify that the image boots and have customizations applied
   # Create SSH keys to use
   AZURE_SSH_KEY="$WORKDIR/id_azure"
   ssh-keygen -t rsa-sha2-512 -f "$AZURE_SSH_KEY" -C "$SSH_USER" -N ""
 
-  # Create network resources with predictable names
-  $AZURE_CMD network nsg create --resource-group "$AZURE_RESOURCE_GROUP" --name "nsg-$TEST_ID" --location "$AZURE_LOCATION"
+  # Create network resources with predictable names and tag
+  $AZURE_CMD network nsg create --resource-group "$AZURE_RESOURCE_GROUP" --name "nsg-$TEST_ID" --location "$AZURE_LOCATION" --tags gitlab-ci-test=true
   $AZURE_CMD network nsg rule create --resource-group "$AZURE_RESOURCE_GROUP" \
       --nsg-name "nsg-$TEST_ID" \
       --name SSH \
@@ -1567,15 +1568,20 @@ function verifyInAzure() {
       --destination-port-ranges 22 \
       --source-port-ranges '*' \
       --source-address-prefixes '*'
-  $AZURE_CMD network vnet create --resource-group "$AZURE_RESOURCE_GROUP" --name "vnet-$TEST_ID" --subnet-name "snet-$TEST_ID" --location "$AZURE_LOCATION"
-  $AZURE_CMD network public-ip create --resource-group "$AZURE_RESOURCE_GROUP" --name "ip-$TEST_ID" --location "$AZURE_LOCATION"
+  $AZURE_CMD network vnet create --resource-group "$AZURE_RESOURCE_GROUP" \
+      --name "vnet-$TEST_ID" \
+      --subnet-name "snet-$TEST_ID" \
+      --location "$AZURE_LOCATION" \
+      --tags gitlab-ci-test=true
+  $AZURE_CMD network public-ip create --resource-group "$AZURE_RESOURCE_GROUP" --name "ip-$TEST_ID" --location "$AZURE_LOCATION" --tags gitlab-ci-test=true
   $AZURE_CMD network nic create --resource-group "$AZURE_RESOURCE_GROUP" \
       --name "iface-$TEST_ID" \
       --subnet "snet-$TEST_ID" \
       --vnet-name "vnet-$TEST_ID" \
       --network-security-group "nsg-$TEST_ID" \
       --public-ip-address "ip-$TEST_ID" \
-      --location "$AZURE_LOCATION"
+      --location "$AZURE_LOCATION" \
+      --tags gitlab-ci-test=true
 
   # create the instance
   AZURE_INSTANCE_NAME="vm-$TEST_ID"
@@ -1588,7 +1594,8 @@ function verifyInAzure() {
     --authentication-type "ssh" \
     --location "$AZURE_LOCATION" \
     --nics "iface-$TEST_ID" \
-    --os-disk-name "disk-$TEST_ID"
+    --os-disk-name "disk-$TEST_ID" \
+    --tags gitlab-ci-test=true
   $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
   HOST=$(jq -r '.publicIps' "$WORKDIR/vm_details.json")
 
