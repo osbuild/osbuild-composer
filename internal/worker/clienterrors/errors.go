@@ -27,6 +27,7 @@ const (
 	ErrorEmptyPackageSpecs    ClientErrorCode = 24
 	ErrorDNFRepoError         ClientErrorCode = 25
 	ErrorJobDependency        ClientErrorCode = 26
+	ErrorJobMissingHeartbeat  ClientErrorCode = 27
 )
 
 type ClientErrorCode int
