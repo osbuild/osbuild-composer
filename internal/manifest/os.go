@@ -70,23 +70,24 @@ type OSCustomizations struct {
 	Users    []blueprint.UserCustomization
 	Firewall *blueprint.FirewallCustomization
 	// TODO: drop osbuild types from the API
-	Grub2Config   *osbuild.GRUB2Config
-	Sysconfig     []*osbuild.SysconfigStageOptions
-	SystemdLogind []*osbuild.SystemdLogindStageOptions
-	CloudInit     []*osbuild.CloudInitStageOptions
-	Modprobe      []*osbuild.ModprobeStageOptions
-	DracutConf    []*osbuild.DracutConfStageOptions
-	SystemdUnit   []*osbuild.SystemdUnitStageOptions
-	Authselect    *osbuild.AuthselectStageOptions
-	SELinuxConfig *osbuild.SELinuxConfigStageOptions
-	Tuned         *osbuild.TunedStageOptions
-	Tmpfilesd     []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf []*osbuild.PamLimitsConfStageOptions
-	Sysctld       []*osbuild.SysctldStageOptions
-	DNFConfig     []*osbuild.DNFConfigStageOptions
-	SshdConfig    *osbuild.SshdConfigStageOptions
-	AuthConfig    *osbuild.AuthconfigStageOptions
-	PwQuality     *osbuild.PwqualityConfStageOptions
+	Grub2Config    *osbuild.GRUB2Config
+	Sysconfig      []*osbuild.SysconfigStageOptions
+	SystemdLogind  []*osbuild.SystemdLogindStageOptions
+	CloudInit      []*osbuild.CloudInitStageOptions
+	Modprobe       []*osbuild.ModprobeStageOptions
+	DracutConf     []*osbuild.DracutConfStageOptions
+	SystemdUnit    []*osbuild.SystemdUnitStageOptions
+	Authselect     *osbuild.AuthselectStageOptions
+	SELinuxConfig  *osbuild.SELinuxConfigStageOptions
+	Tuned          *osbuild.TunedStageOptions
+	Tmpfilesd      []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf  []*osbuild.PamLimitsConfStageOptions
+	Sysctld        []*osbuild.SysctldStageOptions
+	DNFConfig      []*osbuild.DNFConfigStageOptions
+	SshdConfig     *osbuild.SshdConfigStageOptions
+	AuthConfig     *osbuild.AuthconfigStageOptions
+	PwQuality      *osbuild.PwqualityConfStageOptions
+	OpenSCAPConfig *osbuild.OscapRemediationStageOptions
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -416,6 +417,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 
 		pipeline.AddStage(bootloader)
+	}
+
+	if p.OpenSCAPConfig != nil {
+		pipeline.AddStage(osbuild.NewOscapRemediationStage(p.OpenSCAPConfig))
 	}
 
 	if p.SElinux != "" {
