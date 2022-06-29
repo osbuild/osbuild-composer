@@ -12,6 +12,9 @@ import (
 // an embedded ostree commit.
 type OSTreeCommitServerTreePipeline struct {
 	BasePipeline
+	// Packages to install in addition to the ones required by the
+	// pipeline.
+	ExtraPackages []string
 	// TODO: should this be configurable?
 	Language string
 
@@ -44,6 +47,16 @@ func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
 	}
 	buildPipeline.addDependent(p)
 	return p
+}
+
+func (p *OSTreeCommitServerTreePipeline) getPackageSetChain() []rpmmd.PackageSet {
+	packages := []string{}
+	return []rpmmd.PackageSet{
+		{
+			Include:      append(packages, p.ExtraPackages...),
+			Repositories: p.repos,
+		},
+	}
 }
 
 func (p *OSTreeCommitServerTreePipeline) getPackageSpecs() []rpmmd.PackageSpec {

@@ -23,6 +23,19 @@ const (
 // correpsonds to the root filesystem once an instance of the image is running.
 type OSPipeline struct {
 	BasePipeline
+	// Packages to install in addition to the ones required by the
+	// pipeline.
+	ExtraBasePackages []string
+	// Packages to exclude from the base package set. This is useful in
+	// case of weak dependencies, comps groups, or where multiple packages
+	// can satisfy a dependency. Must not conflict with the included base
+	// package set.
+	ExcludeBasePackages []string
+	// Packages to install on top of the base packages in a seconadry dnf
+	// transaction.
+	UserPackages []string
+	// Repositories to install the user packages from.
+	UserRepos []rpmmd.RepoConfig
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
 	// UEFIVendor indicates whether or not the OS should support UEFI and
@@ -124,6 +137,26 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 	}
 	buildPipeline.addDependent(p)
 	return p
+}
+
+func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
+	packages := []string{}
+	chain := []rpmmd.PackageSet{
+		{
+			Include:      append(packages, p.ExtraBasePackages...),
+			Exclude:      p.ExcludeBasePackages,
+			Repositories: p.repos,
+		},
+	}
+
+	if len(p.UserPackages) > 0 {
+		chain = append(chain, rpmmd.PackageSet{
+			Include:      p.UserPackages,
+			Repositories: append(p.repos, p.UserRepos...),
+		})
+	}
+
+	return chain
 }
 
 func (p *OSPipeline) getOSTreeCommits() []osTreeCommit {
