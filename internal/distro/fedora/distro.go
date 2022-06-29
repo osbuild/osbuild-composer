@@ -490,7 +490,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error)
+type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -626,8 +626,38 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	if t.rpmOstree || t.bootable {
 		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kernel}})
 	}
-	return distro.MakePackageSetChains(t, mergedSets, repos)
 
+	// create a manifest object and instantiate it with the computed packageSetChains
+	manifest, err := t.initializeManifest(bp.Customizations, options, repos, distro.MakePackageSetChains(t, mergedSets, repos), nil, 0)
+	if err != nil {
+		// TODO: handle manifest initialization errors more gracefully, we
+		// refuse to initialize manifests with invalid config.
+		return nil
+	}
+
+	manifestChains := manifest.GetPackageSetChains()
+	// the returned package set chains are indexed by pipeline
+	// name, we need to reindex by package set name
+	distroChains := make(map[string][]rpmmd.PackageSet)
+	for name, chain := range manifestChains {
+		switch name {
+		case "os":
+			name = osPkgsKey
+		case "ostree-tree":
+			name = osPkgsKey
+		case "container-tree":
+			name = containerPkgsKey
+		case "anaconda-tree":
+			name = installerPkgsKey
+		case "build":
+			name = buildPkgsKey
+		default:
+			panic(fmt.Sprintf("unknown pacakge set name: %s", name))
+		}
+		distroChains[name] = chain
+	}
+
+	return distroChains
 }
 
 func (t *imageType) BuildPipelines() []string {
@@ -704,14 +734,15 @@ func (t *imageType) PartitionType() string {
 	return basePartitionTable.Type
 }
 
-func (t *imageType) Manifest(customizations *blueprint.Customizations,
+func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
+	packageSetChains map[string][]rpmmd.PackageSet,
 	packageSpecSets map[string][]rpmmd.PackageSpec,
-	seed int64) (distro.Manifest, error) {
+	seed int64) (*manifest.Manifest, error) {
 
 	if err := t.checkOptions(customizations, options); err != nil {
-		return distro.Manifest{}, err
+		return nil, err
 	}
 
 	source := rand.NewSource(seed)
@@ -719,15 +750,29 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	pipelines, err := t.pipelines(t, customizations, options, repos, packageSpecSets, rng)
+	pipelines, err := t.pipelines(t, customizations, options, repos, packageSetChains, packageSpecSets, rng)
 	if err != nil {
-		return distro.Manifest{}, err
+		return nil, err
 	}
 
 	manifest := manifest.New()
 	for _, pipeline := range pipelines {
 		// TODO: make this implicit on pipeline creation to enforce manifest validitiy
 		manifest.AddPipeline(pipeline)
+	}
+
+	return &manifest, nil
+}
+
+func (t *imageType) Manifest(customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	repos []rpmmd.RepoConfig,
+	packageSpecSets map[string][]rpmmd.PackageSpec,
+	seed int64) (distro.Manifest, error) {
+
+	manifest, err := t.initializeManifest(customizations, options, repos, nil, packageSpecSets, seed)
+	if err != nil {
+		return distro.Manifest{}, err
 	}
 
 	return manifest.Serialize()

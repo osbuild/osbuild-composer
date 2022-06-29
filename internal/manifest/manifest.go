@@ -62,7 +62,9 @@ func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
 	chains := make(map[string][]rpmmd.PackageSet)
 
 	for _, pipeline := range m.pipelines {
-		chains[pipeline.Name()] = pipeline.getPackageSetChain()
+		if chain := pipeline.getPackageSetChain(); chain != nil {
+			chains[pipeline.Name()] = chain
+		}
 	}
 
 	return chains
