@@ -362,6 +362,22 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	for _, jobTarget := range jobArgs.Targets {
 		var targetResult *target.TargetResult
 		switch targetOptions := jobTarget.Options.(type) {
+		case *target.WorkerServerTargetOptions:
+			targetResult = target.NewWorkerServerTargetResult()
+			var f *os.File
+			imagePath := path.Join(outputDirectory, exportPath, jobTarget.OsbuildArtifact.ExportFilename)
+			f, err = os.Open(imagePath)
+			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, err.Error())
+				break
+			}
+			defer f.Close()
+			err = job.UploadArtifact(jobTarget.ImageName, f)
+			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
+				break
+			}
+
 		case *target.VMWareTargetOptions:
 			targetResult = target.NewVMWareTargetResult()
 			credentials := vmware.Credentials{
