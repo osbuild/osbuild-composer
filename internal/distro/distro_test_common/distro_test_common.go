@@ -201,33 +201,14 @@ func kernelCount(imgType distro.ImageType) int {
 
 		}
 	}
-	// TODO: is this not included in the above?
-	for _, bset := range sets["blueprint"] {
-		for _, pkg := range bset.Include {
+	for _, iset := range sets["installer"] {
+		for _, pkg := range iset.Include {
 			for _, kernel := range knownKernels {
 				if kernel == pkg {
 					n++
 				}
 			}
-
 		}
-	}
-	m := 0
-	for _, iset := range sets["installer"] {
-		for _, pkg := range iset.Include {
-			for _, kernel := range knownKernels {
-				if kernel == pkg {
-					m++
-				}
-			}
-
-		}
-	}
-	// TODO: fix this! some installers mistakenly include other
-	// package sets. These are however not used in building the image
-	// until this is fixed, count the installers separately.
-	if m > 0 {
-		return m
 	}
 	return n
 }

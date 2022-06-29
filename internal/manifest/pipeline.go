@@ -43,7 +43,7 @@ func (p BasePipeline) getBuildPackages() []string {
 }
 
 func (p BasePipeline) getPackageSetChain() []rpmmd.PackageSet {
-	return []rpmmd.PackageSet{}
+	return nil
 }
 
 func (p BasePipeline) getPackageSpecs() []rpmmd.PackageSpec {

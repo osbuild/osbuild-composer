@@ -10,7 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
 	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
@@ -19,6 +19,18 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
+	}
+	osChain := packageSetChains[osPkgsKey]
+	if len(osChain) >= 1 {
+		treePipeline.ExtraBasePackages = osChain[0].Include
+		treePipeline.ExcludeBasePackages = osChain[0].Exclude
+	}
+	if len(osChain) >= 2 {
+		treePipeline.UserPackages = osChain[0].Include
+		treePipeline.UserRepos = osChain[0].Repositories
+	}
+	if len(osChain) > 2 {
+		panic("unexpected number of package sets in os chain")
 	}
 	pipelines = append(pipelines, treePipeline)
 
@@ -32,7 +44,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	return pipelines, nil
 }
 
-func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func vhdPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
 	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
@@ -41,6 +53,18 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
+	}
+	osChain := packageSetChains[osPkgsKey]
+	if len(osChain) >= 1 {
+		treePipeline.ExtraBasePackages = osChain[0].Include
+		treePipeline.ExcludeBasePackages = osChain[0].Exclude
+	}
+	if len(osChain) >= 2 {
+		treePipeline.UserPackages = osChain[0].Include
+		treePipeline.UserRepos = osChain[0].Repositories
+	}
+	if len(osChain) > 2 {
+		panic("unexpected number of package sets in os chain")
 	}
 	pipelines = append(pipelines, treePipeline)
 
@@ -52,7 +76,7 @@ func vhdPipelines(t *imageType, customizations *blueprint.Customizations, option
 	return pipelines, nil
 }
 
-func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
 	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
@@ -61,6 +85,18 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
+	}
+	osChain := packageSetChains[osPkgsKey]
+	if len(osChain) >= 1 {
+		treePipeline.ExtraBasePackages = osChain[0].Include
+		treePipeline.ExcludeBasePackages = osChain[0].Exclude
+	}
+	if len(osChain) >= 2 {
+		treePipeline.UserPackages = osChain[0].Include
+		treePipeline.UserRepos = osChain[0].Repositories
+	}
+	if len(osChain) > 2 {
+		panic("unexpected number of package sets in os chain")
 	}
 	pipelines = append(pipelines, treePipeline)
 
@@ -72,7 +108,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	return pipelines, nil
 }
 
-func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
 	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
@@ -81,6 +117,18 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
+	}
+	osChain := packageSetChains[osPkgsKey]
+	if len(osChain) >= 1 {
+		treePipeline.ExtraBasePackages = osChain[0].Include
+		treePipeline.ExcludeBasePackages = osChain[0].Exclude
+	}
+	if len(osChain) >= 2 {
+		treePipeline.UserPackages = osChain[0].Include
+		treePipeline.UserRepos = osChain[0].Repositories
+	}
+	if len(osChain) > 2 {
+		panic("unexpected number of package sets in os chain")
 	}
 	pipelines = append(pipelines, treePipeline)
 
@@ -93,7 +141,8 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 }
 
 func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
+	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
+	packageSetSpecs map[string][]rpmmd.PackageSpec,
 	rng *rand.Rand, diskfile string) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
@@ -104,6 +153,18 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	if err != nil {
 		return nil, err
 	}
+	osChain := packageSetChains[osPkgsKey]
+	if len(osChain) >= 1 {
+		treePipeline.ExtraBasePackages = osChain[0].Include
+		treePipeline.ExcludeBasePackages = osChain[0].Exclude
+	}
+	if len(osChain) >= 2 {
+		treePipeline.UserPackages = osChain[0].Include
+		treePipeline.UserRepos = osChain[0].Repositories
+	}
+	if len(osChain) > 2 {
+		panic("unexpected number of package sets in os chain")
+	}
 	pipelines = append(pipelines, treePipeline)
 
 	imagePipeline := manifest.NewLiveImgPipeline(buildPipeline, treePipeline, diskfile)
@@ -112,11 +173,15 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 }
 
 // ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
-func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
-	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, t.Filename())
+func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
+	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
+	packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+	return ec2CommonPipelines(t, customizations, options, repos, packageSetChains, packageSetSpecs, rng, t.Filename())
 }
 
-func iotInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func iotInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
+	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec,
+	rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
 	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
@@ -127,27 +192,50 @@ func iotInstallerPipelines(t *imageType, customizations *blueprint.Customization
 	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
 
 	anacondaTreePipeline := anacondaTreePipeline(buildPipeline, repos, installerPackages, t.Arch().Name(), d.product, d.osVersion, "IoT", ksUsers)
+	installerChain := packageSetChains[installerPkgsKey]
+	if len(installerChain) >= 1 {
+		anacondaTreePipeline.ExtraPackages = installerChain[0].Include
+	}
+	if len(installerChain) > 1 {
+		panic("unexpected number of package sets in installer chain")
+	}
 	isoTreePipeline := bootISOTreePipeline(buildPipeline, anacondaTreePipeline, options, d.vendor, d.isolabelTmpl, customizations.GetUsers(), customizations.GetGroups())
 	isoPipeline := bootISOPipeline(buildPipeline, isoTreePipeline, t.Filename(), false)
 
 	return append(pipelines, anacondaTreePipeline, isoTreePipeline, isoPipeline), nil
 }
 
-func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec) (*manifest.BuildPipeline, *manifest.OSPipeline, *manifest.OSTreeCommitPipeline, error) {
+func iotCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
+	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
+	packageSetSpecs map[string][]rpmmd.PackageSpec) (*manifest.BuildPipeline, *manifest.OSPipeline, *manifest.OSTreeCommitPipeline, error) {
 	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
 	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+	osChain := packageSetChains[osPkgsKey]
+	if len(osChain) >= 1 {
+		treePipeline.ExtraBasePackages = osChain[0].Include
+		treePipeline.ExcludeBasePackages = osChain[0].Exclude
+	}
+	if len(osChain) >= 2 {
+		treePipeline.UserPackages = osChain[0].Include
+		treePipeline.UserRepos = osChain[0].Repositories
+	}
+	if len(osChain) > 2 {
+		panic("unexpected number of package sets in os chain")
 	}
 	commitPipeline := ostreeCommitPipeline(buildPipeline, treePipeline, options, t.arch.distro.osVersion)
 
 	return buildPipeline, treePipeline, commitPipeline, nil
 }
 
-func iotCommitPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func iotCommitPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
+	repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
+	packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetSpecs)
+	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetChains, packageSetSpecs)
 	if err != nil {
 		return nil, err
 	}
@@ -156,10 +244,12 @@ func iotCommitPipelines(t *imageType, customizations *blueprint.Customizations, 
 	return pipelines, nil
 }
 
-func iotContainerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func iotContainerPipelines(t *imageType, customizations *blueprint.Customizations,
+	options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet,
+	packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
-	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetSpecs)
+	buildPipeline, treePipeline, commitPipeline, err := iotCorePipelines(t, customizations, options, repos, packageSetChains, packageSetSpecs)
 	if err != nil {
 		return nil, err
 	}
@@ -167,6 +257,13 @@ func iotContainerPipelines(t *imageType, customizations *blueprint.Customization
 	nginxConfigPath := "/etc/nginx.conf"
 	httpPort := "8080"
 	containerTreePipeline := containerTreePipeline(buildPipeline, commitPipeline, repos, packageSetSpecs[containerPkgsKey], options, customizations, nginxConfigPath, httpPort)
+	containerChain := packageSetChains[osPkgsKey]
+	if len(containerChain) >= 1 {
+		containerTreePipeline.ExtraPackages = containerChain[0].Include
+	}
+	if len(containerChain) > 2 {
+		panic("unexpected number of package sets in os chain")
+	}
 	containerPipeline := containerPipeline(buildPipeline, &containerTreePipeline.BasePipeline, t, nginxConfigPath, httpPort)
 
 	pipelines = append(pipelines, buildPipeline, treePipeline, commitPipeline, containerTreePipeline, containerPipeline)
@@ -346,7 +443,7 @@ func bootISOPipeline(buildPipeline *manifest.BuildPipeline, treePipeline *manife
 	return p
 }
 
-func containerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
+func containerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error) {
 	pipelines := make([]manifest.Pipeline, 0)
 
 	buildPipeline := manifest.NewBuildPipeline(t.arch.distro.runner, repos, packageSetSpecs[buildPkgsKey])
@@ -355,6 +452,18 @@ func containerPipelines(t *imageType, customizations *blueprint.Customizations, 
 	treePipeline, err := osPipeline(buildPipeline, t, repos, packageSetSpecs[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil, err
+	}
+	osChain := packageSetChains[osPkgsKey]
+	if len(osChain) >= 1 {
+		treePipeline.ExtraBasePackages = osChain[0].Include
+		treePipeline.ExcludeBasePackages = osChain[0].Exclude
+	}
+	if len(osChain) >= 2 {
+		treePipeline.UserPackages = osChain[0].Include
+		treePipeline.UserRepos = osChain[0].Repositories
+	}
+	if len(osChain) > 2 {
+		panic("unexpected number of package sets in os chain")
 	}
 	pipelines = append(pipelines, treePipeline)
 
