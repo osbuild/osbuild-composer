@@ -18,6 +18,36 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+// Returns true if the version represented by the first argument is
+// semantically older than the second.
+// Meant to be used for comparing RHEL versions for differences between minor
+// releases.
+// Evaluates to false if a and b are equal.
+// Assumes any missing components are 0, so 8 < 8.1.
+func versionLessThan(a, b string) bool {
+	aParts := strings.Split(a, ".")
+	bParts := strings.Split(b, ".")
+
+	// pad shortest argument with zeroes
+	for len(aParts) < len(bParts) {
+		aParts = append(aParts, "0")
+	}
+	for len(bParts) < len(aParts) {
+		bParts = append(bParts, "0")
+	}
+
+	for idx := 0; idx < len(aParts); idx++ {
+		if aParts[idx] < bParts[idx] {
+			return true
+		} else if aParts[idx] > bParts[idx] {
+			return false
+		}
+	}
+
+	// equal
+	return false
+}
+
 const (
 	// package set names
 
@@ -1762,8 +1792,6 @@ func newDistro(distroName string) distro.Distro {
 		edgeCommitImgType,
 		edgeInstallerImgType,
 		edgeOCIImgType,
-		edgeRawImgType,
-		edgeSimplifiedInstallerImgType,
 		gceImgType,
 		imageInstaller,
 		ociImgType,
@@ -1779,8 +1807,6 @@ func newDistro(distroName string) distro.Distro {
 		edgeCommitImgType,
 		edgeInstallerImgType,
 		edgeOCIImgType,
-		edgeRawImgType,
-		edgeSimplifiedInstallerImgType,
 		imageInstaller,
 		openstackImgType,
 		qcow2ImgType,
@@ -1802,7 +1828,15 @@ func newDistro(distroName string) distro.Distro {
 		x86_64.addImageTypes(azureRhuiImgType)
 
 		// add ec2 image types to RHEL distro only
-		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
+		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64)
+		if !versionLessThan(rd.osVersion, "8.6") {
+			x86_64.addImageTypes(ec2SapImgTypeX86_64)
+
+			// edge simplified installer is only available on 8.6 and later on RHEL
+			x86_64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
+			aarch64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
+		}
+
 		aarch64.addImageTypes(ec2ImgTypeAarch64)
 
 		// add GCE RHUI image to RHEL only
@@ -1810,6 +1844,9 @@ func newDistro(distroName string) distro.Distro {
 
 		// add s390x to RHEL distro only
 		rd.addArches(s390x)
+	} else {
+		x86_64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
+		aarch64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
 	}
 	rd.addArches(x86_64, aarch64, ppc64le)
 	return &rd

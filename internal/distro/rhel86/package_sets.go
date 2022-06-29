@@ -760,7 +760,6 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"glibc-minimal-langpack",
 			"gnupg2",
 			"greenboot",
-			"greenboot-default-health-checks",
 			"gzip",
 			"hostname",
 			"ima-evm-utils",
@@ -806,9 +805,6 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"vim-minimal",
 			"wpa_supplicant",
 			"xz",
-
-			"fdo-client",
-			"fdo-owner-cli",
 		},
 		Exclude: []string{"rng-tools"},
 	}
@@ -821,6 +817,26 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 
 	case distro.Aarch64ArchName:
 		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
+	}
+
+	if t.arch.distro.isRHEL() && versionLessThan(t.arch.distro.osVersion, "8.6") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"greenboot-grub2",
+				"greenboot-reboot",
+				"greenboot-rpm-ostree-grub2",
+				"greenboot-status",
+			},
+		})
+	} else {
+		// 8.6+ and CS8
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"fdo-client",
+				"fdo-owner-cli",
+				"greenboot-default-health-checks",
+			},
+		})
 	}
 
 	return ps
