@@ -20,6 +20,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -223,11 +224,19 @@ func TestArgs(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
 
 	job := worker.OSBuildJob{
-		Manifest:  manifest,
-		ImageName: "test-image",
+		Manifest: manifest,
+		Exports:  []string{"assembler"},
 		PipelineNames: &worker.PipelineNames{
 			Build:   []string{"b"},
 			Payload: []string{"x", "y", "z"},
+		},
+		Targets: []*target.Target{
+			{
+				Name:           target.TargetNameWorkerServer,
+				ImageName:      "test-image",
+				ExportFilename: "test-image",
+				Options:        &target.WorkerServerTargetOptions{},
+			},
 		},
 	}
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &job, "")
@@ -399,18 +408,34 @@ func TestMixedOSBuildJob(t *testing.T) {
 	fbPipelines := &worker.PipelineNames{Build: distro.BuildPipelinesFallback(), Payload: distro.PayloadPipelinesFallback()}
 
 	oldJob := worker.OSBuildJob{
-		Manifest:  emptyManifestV2,
-		ImageName: "no-pipeline-names",
+		Manifest: emptyManifestV2,
+		Exports:  []string{"assembler"},
+		Targets: []*target.Target{
+			{
+				Name:           target.TargetNameWorkerServer,
+				ImageName:      "no-pipeline-names",
+				ExportFilename: "no-pipeline-names",
+				Options:        &target.WorkerServerTargetOptions{},
+			},
+		},
 	}
 	oldJobID, err := server.EnqueueOSBuild("x", &oldJob, "")
 	require.NoError(err)
 
 	newJob := worker.OSBuildJob{
-		Manifest:  emptyManifestV2,
-		ImageName: "with-pipeline-names",
+		Manifest: emptyManifestV2,
+		Exports:  []string{"assembler"},
 		PipelineNames: &worker.PipelineNames{
 			Build:   []string{"build"},
 			Payload: []string{"other", "pipelines"},
+		},
+		Targets: []*target.Target{
+			{
+				Name:           target.TargetNameWorkerServer,
+				ImageName:      "with-pipeline-names",
+				ExportFilename: "with-pipeline-names",
+				Options:        &target.WorkerServerTargetOptions{},
+			},
 		},
 	}
 	newJobID, err := server.EnqueueOSBuild("x", &newJob, "")
@@ -423,7 +448,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 	// OldJob gets default pipeline names when read
 	require.Equal(fbPipelines, oldJobRead.PipelineNames)
 	require.Equal(oldJob.Manifest, oldJobRead.Manifest)
-	require.Equal(oldJob.ImageName, oldJobRead.ImageName)
+	require.Equal(oldJob.Targets, oldJobRead.Targets)
 	// Not entirely equal
 	require.NotEqual(oldJob, oldJobRead)
 

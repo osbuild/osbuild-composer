@@ -20,7 +20,6 @@ type OSBuildJob struct {
 	// Index of the ManifestJobByIDResult instance in the job's dynamic arguments slice
 	ManifestDynArgsIdx *int             `json:"manifest_dyn_args_idx,omitempty"`
 	Targets            []*target.Target `json:"targets,omitempty"`
-	ImageName          string           `json:"image_name,omitempty"`
 	Exports            []string         `json:"export_stages,omitempty"`
 	PipelineNames      *PipelineNames   `json:"pipeline_names,omitempty"`
 }
