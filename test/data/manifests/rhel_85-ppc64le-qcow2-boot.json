@@ -2396,7 +2396,9 @@
               "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
               "legacy": "powerpc-ieee1275",
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-299.1.el8.ppc64le",
-              "config": {}
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {
@@ -2431,7 +2433,7 @@
                   "type": "41"
                 },
                 {
-                  "size": 20961180,
+                  "size": 20961280,
                   "start": 10240
                 }
               ]
@@ -2457,7 +2459,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 10240,
-                  "size": 20961180,
+                  "size": 20961280,
                   "lock": true
                 }
               }
@@ -2488,7 +2490,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 10240,
-                  "size": 20961180
+                  "size": 20961280
                 }
               }
             },

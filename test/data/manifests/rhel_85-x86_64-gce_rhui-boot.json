@@ -1804,6 +1804,9 @@
                     "id": "sha256:6103a6b9eb69f8b79999371c124bdc21f1bedd64c8d67a73a06daf2f6307956f"
                   },
                   {
+                    "id": "sha256:6ac86e716545bfde2c56ca9632aa35d211386a94251aecd44749f3998dbe4732"
+                  },
+                  {
                     "id": "sha256:ca00963bae82fdd87827009ab2e1be386729f374f767ba40f9da1e4b4b2c71cb"
                   },
                   {
@@ -1817,6 +1820,9 @@
                   },
                   {
                     "id": "sha256:4ad66a3a1dd79384852669609567108dcc429607d40ca8adc5f1dbe6a9d6bdde"
+                  },
+                  {
+                    "id": "sha256:de870435340bf30620406df41b79e43adaf7d0a277db1635a0fae710df993fc0"
                   },
                   {
                     "id": "sha256:d94ea399f82d4f9537af1098a588c5cc9a80454ba7c1de9b26dd11cb5c730d8a"
@@ -2021,6 +2027,9 @@
                   },
                   {
                     "id": "sha256:09c61ef07a48cc48b2c8ab3247a93a5bd1d834b37e32345341eb4ba7b86e0f0a"
+                  },
+                  {
+                    "id": "sha256:606a1f63731d99f3814dbcb232f63b4776d389c3301f702e2be15acac163be58"
                   },
                   {
                     "id": "sha256:38affe91361bf56b84490d97c7e3f815965cf8d2bbb222c6c045af4bf2dff736"
@@ -2389,7 +2398,9 @@
                 "vendor": "redhat"
               },
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-348.el8.x86_64",
-              "config": {}
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {
@@ -2431,7 +2442,7 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 41734044,
+                  "size": 41734111,
                   "start": 208896,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
@@ -2477,7 +2488,7 @@
                 "options": {
                   "filename": "disk.raw",
                   "start": 208896,
-                  "size": 41734044,
+                  "size": 41734111,
                   "lock": true
                 }
               }
@@ -2516,7 +2527,7 @@
                 "options": {
                   "filename": "disk.raw",
                   "start": 208896,
-                  "size": 41734044
+                  "size": 41734111
                 }
               }
             },
@@ -3120,6 +3131,9 @@
           "sha256:5ffaf4869bdd844266a156b9f1fda9d64e4f79db592384a145bf064aaca47b41": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/lshw-B.02.19.2-6.el8.x86_64.rpm"
           },
+          "sha256:606a1f63731d99f3814dbcb232f63b4776d389c3301f702e2be15acac163be58": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/insights-client-3.1.5-1.el8.noarch.rpm"
+          },
           "sha256:6103a6b9eb69f8b79999371c124bdc21f1bedd64c8d67a73a06daf2f6307956f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-linux-procfs-0.6.3-1.el8.noarch.rpm"
           },
@@ -3161,6 +3175,9 @@
           },
           "sha256:6aab23e22ca99314106df2068464bec8a2d78cf59cb1335ae9b63b3a06e808f8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/openssl-1.1.1k-4.el8.x86_64.rpm"
+          },
+          "sha256:6ac86e716545bfde2c56ca9632aa35d211386a94251aecd44749f3998dbe4732": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-magic-5.33-20.el8.noarch.rpm"
           },
           "sha256:6b52102af0aab3b41a5d410b7717713aef3adc48c41015a745c9c5a2ba7b814f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libdb-utils-5.3.28-42.el8_4.x86_64.rpm"
@@ -3806,6 +3823,9 @@
           },
           "sha256:dc874028a25d78374ffa470d7cba5f0eb89d543a486a645f51cde3aafb6efc93": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/rhc-0.2.0-3.el8.x86_64.rpm"
+          },
+          "sha256:de870435340bf30620406df41b79e43adaf7d0a277db1635a0fae710df993fc0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-pyyaml-3.12-12.el8.x86_64.rpm"
           },
           "sha256:deb0d0ad2726988b4dfb9c12c7217f868269b45fee929431e2b32e1d4c772a77": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-rpm-4.14.3-19.el8.x86_64.rpm"
@@ -9147,6 +9167,15 @@
         "checksum": "sha256:6103a6b9eb69f8b79999371c124bdc21f1bedd64c8d67a73a06daf2f6307956f"
       },
       {
+        "name": "python3-magic",
+        "epoch": 0,
+        "version": "5.33",
+        "release": "20.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-magic-5.33-20.el8.noarch.rpm",
+        "checksum": "sha256:6ac86e716545bfde2c56ca9632aa35d211386a94251aecd44749f3998dbe4732"
+      },
+      {
         "name": "python3-nftables",
         "epoch": 1,
         "version": "0.9.3",
@@ -9190,6 +9219,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-pyudev-0.21.0-7.el8.noarch.rpm",
         "checksum": "sha256:4ad66a3a1dd79384852669609567108dcc429607d40ca8adc5f1dbe6a9d6bdde"
+      },
+      {
+        "name": "python3-pyyaml",
+        "epoch": 0,
+        "version": "3.12",
+        "release": "12.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-pyyaml-3.12-12.el8.x86_64.rpm",
+        "checksum": "sha256:de870435340bf30620406df41b79e43adaf7d0a277db1635a0fae710df993fc0"
       },
       {
         "name": "python3-requests",
@@ -9802,6 +9840,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/gpm-libs-1.20.7-17.el8.x86_64.rpm",
         "checksum": "sha256:09c61ef07a48cc48b2c8ab3247a93a5bd1d834b37e32345341eb4ba7b86e0f0a"
+      },
+      {
+        "name": "insights-client",
+        "epoch": 0,
+        "version": "3.1.5",
+        "release": "1.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/insights-client-3.1.5-1.el8.noarch.rpm",
+        "checksum": "sha256:606a1f63731d99f3814dbcb232f63b4776d389c3301f702e2be15acac163be58"
       },
       {
         "name": "langpacks-en",

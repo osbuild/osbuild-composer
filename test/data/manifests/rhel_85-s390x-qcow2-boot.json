@@ -2526,7 +2526,7 @@
               "partitions": [
                 {
                   "bootable": true,
-                  "size": 20969372,
+                  "size": 20969472,
                   "start": 2048
                 }
               ]
@@ -2552,7 +2552,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 20969372,
+                  "size": 20969472,
                   "lock": true
                 }
               }
@@ -2589,7 +2589,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 20969372
+                  "size": 20969472
                 }
               }
             },
@@ -2620,7 +2620,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 20969372
+                  "size": 20969472
                 }
               }
             },

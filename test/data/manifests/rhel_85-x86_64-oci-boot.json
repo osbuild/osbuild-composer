@@ -2253,7 +2253,9 @@
                 "vendor": "redhat"
               },
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-348.el8.x86_64",
-              "config": {}
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {
@@ -2295,7 +2297,7 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 20762524,
+                  "size": 20762591,
                   "start": 208896,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
@@ -2341,7 +2343,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 208896,
-                  "size": 20762524,
+                  "size": 20762591,
                   "lock": true
                 }
               }
@@ -2380,7 +2382,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 208896,
-                  "size": 20762524
+                  "size": 20762591
                 }
               }
             },

@@ -5036,7 +5036,7 @@
               "product": "Red Hat Enterprise Linux",
               "version": "8.5",
               "final": true,
-              "variant": "edge",
+              "variant": "BaseOS",
               "bugurl": ""
             }
           },
@@ -5098,8 +5098,6 @@
                 "systemd-initrd",
                 "modsign",
                 "nss-softokn",
-                "rdma",
-                "rngd",
                 "i18n",
                 "convertfs",
                 "network-manager",
@@ -5119,14 +5117,8 @@
                 "livenet",
                 "lvm",
                 "mdraid",
-                "multipath",
                 "qemu",
                 "qemu-net",
-                "fcoe",
-                "fcoe-uefi",
-                "iscsi",
-                "lunmask",
-                "nfs",
                 "resume",
                 "rootfs-block",
                 "terminfo",
@@ -5140,11 +5132,25 @@
                 "shutdown",
                 "uefi-lib",
                 "biosdevname",
-                "anaconda"
+                "anaconda",
+                "rdma",
+                "rngd",
+                "multipath",
+                "fcoe",
+                "fcoe-uefi",
+                "iscsi",
+                "lunmask",
+                "nfs"
               ],
               "install": [
                 "/.buildstamp"
               ]
+            }
+          },
+          {
+            "type": "org.osbuild.selinux.config",
+            "options": {
+              "state": "permissive"
             }
           }
         ]
@@ -5273,7 +5279,8 @@
                 "catalog": "isolinux/boot.cat"
               },
               "efi": "images/efiboot.img",
-              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin"
+              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin",
+              "isolevel": 3
             }
           },
           {

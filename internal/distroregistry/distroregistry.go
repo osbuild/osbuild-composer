@@ -11,7 +11,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel7"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel85"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel86"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel90beta"
@@ -26,8 +25,8 @@ var supportedDistros = []supportedDistro{
 	{rhel7.New, rhel7.NewHostDistro},
 	{rhel8.New, rhel8.NewHostDistro},
 	{rhel84.New, rhel84.NewHostDistro},
-	{rhel85.New, rhel85.NewHostDistro},
 	{rhel86.New, rhel86.NewHostDistro},
+	{rhel86.NewRHEL85, rhel86.NewRHEL85HostDistro},
 	{rhel86.NewRHEL87, rhel86.NewRHEL87HostDistro},
 	{rhel86.NewCentos, rhel86.NewCentosHostDistro},
 	{rhel90beta.New, rhel90beta.NewHostDistro},

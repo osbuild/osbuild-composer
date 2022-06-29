@@ -2535,7 +2535,9 @@
                 "vendor": "redhat"
               },
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-348.el8.x86_64",
-              "config": {}
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {
@@ -2577,7 +2579,7 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 19713948,
+                  "size": 19714015,
                   "start": 1257472,
                   "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
@@ -2624,7 +2626,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1257472,
-                  "size": 19713948,
+                  "size": 19714015,
                   "lock": true
                 }
               }
@@ -2666,7 +2668,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1257472,
-                  "size": 19713948,
+                  "size": 19714015,
                   "lock": true
                 }
               }
@@ -2690,7 +2692,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1257472,
-                  "size": 19713948,
+                  "size": 19714015,
                   "lock": true
                 }
               }
@@ -2714,7 +2716,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1257472,
-                  "size": 19713948,
+                  "size": 19714015,
                   "lock": true
                 }
               }
@@ -2785,7 +2787,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1257472,
-                  "size": 19713948
+                  "size": 19714015
                 }
               },
               "usr": {
@@ -2847,7 +2849,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1257472,
-                  "size": 19713948,
+                  "size": 19714015,
                   "lock": true
                 }
               }

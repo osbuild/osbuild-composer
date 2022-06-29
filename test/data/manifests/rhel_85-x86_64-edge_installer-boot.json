@@ -3515,8 +3515,6 @@
                 "systemd-initrd",
                 "modsign",
                 "nss-softokn",
-                "rdma",
-                "rngd",
                 "i18n",
                 "convertfs",
                 "network-manager",
@@ -3536,14 +3534,8 @@
                 "livenet",
                 "lvm",
                 "mdraid",
-                "multipath",
                 "qemu",
                 "qemu-net",
-                "fcoe",
-                "fcoe-uefi",
-                "iscsi",
-                "lunmask",
-                "nfs",
                 "resume",
                 "rootfs-block",
                 "terminfo",
@@ -3557,11 +3549,25 @@
                 "shutdown",
                 "uefi-lib",
                 "biosdevname",
-                "anaconda"
+                "anaconda",
+                "rdma",
+                "rngd",
+                "multipath",
+                "fcoe",
+                "fcoe-uefi",
+                "iscsi",
+                "lunmask",
+                "nfs"
               ],
               "install": [
                 "/.buildstamp"
               ]
+            }
+          },
+          {
+            "type": "org.osbuild.selinux.config",
+            "options": {
+              "state": "permissive"
             }
           }
         ]
@@ -3674,7 +3680,8 @@
               "filename": "installer.iso",
               "volid": "RHEL-8-5-0-BaseOS-x86_64",
               "sysid": "LINUX",
-              "efi": "images/efiboot.img"
+              "efi": "images/efiboot.img",
+              "isolevel": 3
             }
           },
           {
