@@ -600,10 +600,10 @@ func TestKojiJobTypeValidation(t *testing.T) {
 			Server:          "test-server",
 			UploadDirectory: "koji-server-test-dir",
 		})
-		kojiTarget.OsbuildArtifact.ExportFilename = fmt.Sprintf("image-file-%04d", idx)
+		kojiTarget.OsbuildArtifact.ExportFilename = "test.img"
+		kojiTarget.ImageName = fmt.Sprintf("image-file-%04d", idx)
 		buildJob := worker.OSBuildJob{
-			ImageName: fmt.Sprintf("build-job-%04d", idx),
-			Targets:   []*target.Target{kojiTarget},
+			Targets: []*target.Target{kojiTarget},
 			// Add an empty manifest as a static job argument to make the test pass.
 			// Becasue of a bug in the API, the test was passing even without
 			// any manifest being attached to the job (static or dynamic).
