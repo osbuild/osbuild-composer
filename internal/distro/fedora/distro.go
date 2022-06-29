@@ -490,7 +490,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error)
+type pipelinesFunc func(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -750,15 +750,10 @@ func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	pipelines, err := t.pipelines(t, customizations, options, repos, packageSetChains, rng)
+	manifest := manifest.New()
+	_, err := t.pipelines(&manifest, t, customizations, options, repos, packageSetChains, rng)
 	if err != nil {
 		return nil, err
-	}
-
-	manifest := manifest.New()
-	for _, pipeline := range pipelines {
-		// TODO: make this implicit on pipeline creation to enforce manifest validitiy
-		manifest.AddPipeline(pipeline)
 	}
 
 	return &manifest, nil

@@ -25,12 +25,13 @@ type BuildPipeline struct {
 
 // NewBuildPipeline creates a new build pipeline from the repositories in repos
 // and the specified packages.
-func NewBuildPipeline(runner string, repos []rpmmd.RepoConfig) *BuildPipeline {
+func NewBuildPipeline(m *Manifest, runner string, repos []rpmmd.RepoConfig) *BuildPipeline {
 	pipeline := &BuildPipeline{
-		BasePipeline: NewBasePipeline("build", nil, &runner),
+		BasePipeline: NewBasePipeline(m, "build", nil, &runner),
 		dependents:   make([]Pipeline, 0),
 		repos:        repos,
 	}
+	m.addPipeline(pipeline)
 	return pipeline
 }
 

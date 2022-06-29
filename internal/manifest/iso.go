@@ -14,13 +14,20 @@ type ISOPipeline struct {
 	filename     string
 }
 
-func NewISOPipeline(buildPipeline *BuildPipeline, treePipeline *ISOTreePipeline, filename string) *ISOPipeline {
+func NewISOPipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
+	treePipeline *ISOTreePipeline,
+	filename string) *ISOPipeline {
 	p := &ISOPipeline{
-		BasePipeline: NewBasePipeline("bootiso", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "bootiso", buildPipeline, nil),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
 	buildPipeline.addDependent(p)
+	if treePipeline.BasePipeline.manifest != m {
+		panic("tree pipeline from different manifest")
+	}
+	m.addPipeline(p)
 	return p
 }
 

@@ -15,13 +15,20 @@ type VPCPipeline struct {
 // NewVPCPipeline createsa new Qemu pipeline. imgPipeline is the pipeline producing the
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced image.
-func NewVPCPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) *VPCPipeline {
+func NewVPCPipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
+	imgPipeline *LiveImgPipeline,
+	filename string) *VPCPipeline {
 	p := &VPCPipeline{
-		BasePipeline: NewBasePipeline("vpc", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "vpc", buildPipeline, nil),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}
+	if imgPipeline.BasePipeline.manifest != m {
+		panic("live image pipeline from different manifest")
+	}
 	buildPipeline.addDependent(p)
+	m.addPipeline(p)
 	return p
 }
 

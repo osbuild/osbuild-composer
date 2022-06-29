@@ -102,7 +102,8 @@ type OSPipeline struct {
 // are the depsolved pacakges to be installed into the tree. partitionTable
 // represents the disk layout of the target system. kernelName is the name of the
 // kernel package that will be used on the target system.
-func NewOSPipeline(buildPipeline *BuildPipeline,
+func NewOSPipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
 	osTree bool,
 	osTreeParent string,
 	osTreeURL string,
@@ -116,7 +117,7 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 		name = "ostree-tree"
 	}
 	p := &OSPipeline{
-		BasePipeline:   NewBasePipeline(name, buildPipeline, nil),
+		BasePipeline:   NewBasePipeline(m, name, buildPipeline, nil),
 		osTree:         osTree,
 		osTreeParent:   osTreeParent,
 		osTreeURL:      osTreeURL,
@@ -131,6 +132,7 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 		SElinux:        "targeted",
 	}
 	buildPipeline.addDependent(p)
+	m.addPipeline(p)
 	return p
 }
 

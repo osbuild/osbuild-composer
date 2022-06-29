@@ -30,20 +30,25 @@ type OSTreeCommitServerTreePipeline struct {
 // is a pipeline producing an ostree commit to be served. nginxConfigPath
 // is the path to the main nginx config file and listenPort is the port
 // nginx will be listening on.
-func NewOSTreeCommitServerTreePipeline(buildPipeline *BuildPipeline,
+func NewOSTreeCommitServerTreePipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
 	repos []rpmmd.RepoConfig,
 	commitPipeline *OSTreeCommitPipeline,
 	nginxConfigPath,
 	listenPort string) *OSTreeCommitServerTreePipeline {
 	p := &OSTreeCommitServerTreePipeline{
-		BasePipeline:    NewBasePipeline("container-tree", buildPipeline, nil),
+		BasePipeline:    NewBasePipeline(m, "container-tree", buildPipeline, nil),
 		repos:           repos,
 		commitPipeline:  commitPipeline,
 		nginxConfigPath: nginxConfigPath,
 		listenPort:      listenPort,
 		Language:        "en_US",
 	}
+	if commitPipeline.BasePipeline.manifest != m {
+		panic("commit pipeline from different manifest")
+	}
 	buildPipeline.addDependent(p)
+	m.addPipeline(p)
 	return p
 }
 
