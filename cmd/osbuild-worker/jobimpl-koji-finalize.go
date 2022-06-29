@@ -230,7 +230,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 				return fmt.Errorf("error: Koji compose OSBuild job result doesn't contain exactly one target result")
 			}
 			kojiTarget := buildArgs.TargetResults[0]
-			kojiTargetOptions := kojiTarget.Options.(target.KojiTargetResultOptions)
+			kojiTargetOptions := kojiTarget.Options.(*target.KojiTargetResultOptions)
 
 			buildRoots = append(buildRoots, koji.BuildRoot{
 				ID: uint64(i),
