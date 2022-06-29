@@ -105,6 +105,18 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 
 // distribution objects without the arches > image types
 var distroMap = map[string]distribution{
+	"rhel-85": {
+		name:               "rhel-85",
+		product:            "Red Hat Enterprise Linux",
+		osVersion:          "8.5",
+		releaseVersion:     "8",
+		modulePlatformID:   "platform:el8",
+		vendor:             "redhat",
+		ostreeRefTmpl:      "rhel/8/%s/edge",
+		isolabelTmpl:       "RHEL-8-5-0-BaseOS-%s",
+		runner:             "org.osbuild.rhel85",
+		defaultImageConfig: defaultDistroImageConfig,
+	},
 	"rhel-86": {
 		name:               "rhel-86",
 		product:            "Red Hat Enterprise Linux",
@@ -618,6 +630,15 @@ func New() distro.Distro {
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("rhel-86")
+}
+
+// New creates a new distro object, defining the supported architectures and image types
+func NewRHEL85() distro.Distro {
+	return newDistro("rhel-85")
+}
+
+func NewRHEL85HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro("rhel-85")
 }
 
 // New creates a new distro object, defining the supported architectures and image types

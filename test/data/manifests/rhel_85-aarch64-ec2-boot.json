@@ -2139,17 +2139,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd-logind",
-            "options": {
-              "filename": "00-getty-fixes.conf",
-              "config": {
-                "Login": {
-                  "NAutoVTs": 0
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -2171,6 +2160,30 @@
                     "type": "Ethernet",
                     "userctl": true
                   }
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.rhsm",
+            "options": {
+              "subscription-manager": {
+                "rhsm": {
+                  "manage_repos": false
+                },
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd-logind",
+            "options": {
+              "filename": "00-getty-fixes.conf",
+              "config": {
+                "Login": {
+                  "NAutoVTs": 0
                 }
               }
             }
@@ -2230,19 +2243,6 @@
             }
           },
           {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.sshd.config",
             "options": {
               "config": {
@@ -2286,7 +2286,9 @@
                 "vendor": "redhat"
               },
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-348.el8.aarch64",
-              "config": {}
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {
@@ -2327,7 +2329,7 @@
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 19511196,
+                  "size": 19511263,
                   "start": 1460224,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
@@ -2390,7 +2392,7 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 1460224,
-                  "size": 19511196,
+                  "size": 19511263,
                   "lock": true
                 }
               }
@@ -2437,7 +2439,7 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 1460224,
-                  "size": 19511196
+                  "size": 19511263
                 }
               }
             },

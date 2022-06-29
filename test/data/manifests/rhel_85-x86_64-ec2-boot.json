@@ -2069,17 +2069,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd-logind",
-            "options": {
-              "filename": "00-getty-fixes.conf",
-              "config": {
-                "Login": {
-                  "NAutoVTs": 0
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -2101,6 +2090,30 @@
                     "type": "Ethernet",
                     "userctl": true
                   }
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.rhsm",
+            "options": {
+              "subscription-manager": {
+                "rhsm": {
+                  "manage_repos": false
+                },
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd-logind",
+            "options": {
+              "filename": "00-getty-fixes.conf",
+              "config": {
+                "Login": {
+                  "NAutoVTs": 0
                 }
               }
             }
@@ -2142,6 +2155,18 @@
             }
           },
           {
+            "type": "org.osbuild.dracut.conf",
+            "options": {
+              "filename": "ec2.conf",
+              "config": {
+                "add_drivers": [
+                  "nvme",
+                  "xen-blkfront"
+                ]
+              }
+            }
+          },
+          {
             "type": "org.osbuild.systemd.unit",
             "options": {
               "unit": "nm-cloud-setup.service",
@@ -2160,35 +2185,10 @@
             }
           },
           {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.sshd.config",
             "options": {
               "config": {
                 "PasswordAuthentication": false
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.dracut.conf",
-            "options": {
-              "filename": "ec2.conf",
-              "config": {
-                "add_drivers": [
-                  "nvme",
-                  "xen-blkfront"
-                ]
               }
             }
           },
@@ -2212,7 +2212,9 @@
               "kernel_opts": "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
               "legacy": "i386-pc",
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-348.el8.x86_64",
-              "config": {}
+              "config": {
+                "default": "saved"
+              }
             }
           },
           {
@@ -2248,7 +2250,7 @@
                   "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
                 },
                 {
-                  "size": 20967324,
+                  "size": 20967391,
                   "start": 4096,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
@@ -2277,7 +2279,7 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 4096,
-                  "size": 20967324,
+                  "size": 20967391,
                   "lock": true
                 }
               }
@@ -2308,7 +2310,7 @@
                 "options": {
                   "filename": "image.raw",
                   "start": 4096,
-                  "size": 20967324
+                  "size": 20967391
                 }
               }
             },

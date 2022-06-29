@@ -2777,7 +2777,7 @@
               "partitions": [
                 {
                   "bootable": true,
-                  "size": 19920796,
+                  "size": 19920896,
                   "start": 1050624,
                   "type": "8e"
                 },
@@ -2821,7 +2821,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1050624,
-                  "size": 19920796,
+                  "size": 19920896,
                   "lock": true
                 }
               }
@@ -2845,7 +2845,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1050624,
-                  "size": 19920796,
+                  "size": 19920896,
                   "lock": true
                 }
               }
@@ -2869,7 +2869,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1050624,
-                  "size": 19920796,
+                  "size": 19920896,
                   "lock": true
                 }
               }
@@ -2893,7 +2893,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1050624,
-                  "size": 19920796,
+                  "size": 19920896,
                   "lock": true
                 }
               }
@@ -2962,7 +2962,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1050624,
-                  "size": 19920796
+                  "size": 19920896
                 }
               },
               "usr": {
@@ -3018,7 +3018,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1050624,
-                  "size": 19920796,
+                  "size": 19920896,
                   "lock": true
                 }
               }
@@ -3057,7 +3057,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1050624,
-                  "size": 19920796
+                  "size": 19920896
                 }
               },
               "usr": {
