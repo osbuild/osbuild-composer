@@ -80,7 +80,13 @@ func (m Manifest) Serialize() (distro.Manifest, error) {
 
 	pipelines := make([]osbuild2.Pipeline, 0)
 	for _, pipeline := range m.pipelines {
+		pipeline.serializeStart()
+	}
+	for _, pipeline := range m.pipelines {
 		pipelines = append(pipelines, pipeline.serialize())
+	}
+	for _, pipeline := range m.pipelines {
+		pipeline.serializeEnd()
 	}
 
 	return json.Marshal(

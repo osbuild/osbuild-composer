@@ -15,6 +15,8 @@ type Pipeline interface {
 	Name() string
 	getBuildPackages() []string
 	getPackageSetChain() []rpmmd.PackageSet
+	serializeStart()
+	serializeEnd()
 	serialize() osbuild2.Pipeline
 	getPackageSpecs() []rpmmd.PackageSpec
 	getOSTreeCommits() []osTreeCommit
@@ -77,6 +79,16 @@ func NewBasePipeline(name string, build *BuildPipeline, runner *string) BasePipe
 		panic("neither build pipeline nor runner specified")
 	}
 	return p
+}
+
+// serializeStart must be called exactly once before each call
+// to serialize().
+func (p BasePipeline) serializeStart() {
+}
+
+// serializeEnd must be called exactly once after each call to
+// serialize().
+func (p BasePipeline) serializeEnd() {
 }
 
 // Serialize turns a given pipeline into an osbuild2.Pipeline object. This object is

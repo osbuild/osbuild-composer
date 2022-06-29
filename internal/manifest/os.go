@@ -92,6 +92,7 @@ type OSPipeline struct {
 	partitionTable *disk.PartitionTable
 	bootLoader     BootLoader
 	grubLegacy     string
+	kernelName     string
 	kernelVer      string
 }
 
@@ -115,10 +116,6 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 	if osTree {
 		name = "ostree-tree"
 	}
-	var kernelVer string
-	if kernelName != "" {
-		kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
-	}
 	p := &OSPipeline{
 		BasePipeline:   NewBasePipeline(name, buildPipeline, nil),
 		osTree:         osTree,
@@ -129,7 +126,7 @@ func NewOSPipeline(buildPipeline *BuildPipeline,
 		partitionTable: partitionTable,
 		bootLoader:     bootLoader,
 		grubLegacy:     grubLegacy,
-		kernelVer:      kernelVer,
+		kernelName:     kernelName,
 		Language:       "C.UTF-8",
 		Hostname:       "localhost.localdomain",
 		Timezone:       "UTC",
@@ -172,6 +169,26 @@ func (p *OSPipeline) getOSTreeCommits() []osTreeCommit {
 
 func (p *OSPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
+}
+
+func (p *OSPipeline) serializeStart() {
+	if p.kernelName == "" {
+		return
+	}
+	if p.kernelVer != "" {
+		panic("double call to serializeStart()")
+	}
+	p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
+}
+
+func (p *OSPipeline) serializeEnd() {
+	if p.kernelName == "" {
+		return
+	}
+	if p.kernelVer == "" {
+		panic("serializeEnd() call when serialization not in progress")
+	}
+	p.kernelVer = ""
 }
 
 func (p *OSPipeline) serialize() osbuild2.Pipeline {

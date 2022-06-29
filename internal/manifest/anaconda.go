@@ -27,6 +27,7 @@ type AnacondaPipeline struct {
 
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
+	kernelName   string
 	kernelVer    string
 	arch         string
 	product      string
@@ -46,12 +47,11 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	arch,
 	product,
 	version string) *AnacondaPipeline {
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packages, kernelName)
 	p := &AnacondaPipeline{
 		BasePipeline: NewBasePipeline("anaconda-tree", buildPipeline, nil),
 		repos:        repos,
 		packageSpecs: packages,
-		kernelVer:    kernelVer,
+		kernelName:   kernelName,
 		arch:         arch,
 		product:      product,
 		version:      version,
@@ -72,6 +72,20 @@ func (p *AnacondaPipeline) getPackageSetChain() []rpmmd.PackageSet {
 
 func (p *AnacondaPipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
+}
+
+func (p *AnacondaPipeline) serializeStart() {
+	if p.kernelVer != "" {
+		panic("double call to serializeStart()")
+	}
+	p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
+}
+
+func (p *AnacondaPipeline) serializeEnd() {
+	if p.kernelVer == "" {
+		panic("serializeEnd() call when serialization not in progress")
+	}
+	p.kernelVer = ""
 }
 
 func (p *AnacondaPipeline) serialize() osbuild2.Pipeline {
