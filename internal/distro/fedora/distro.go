@@ -490,7 +490,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]manifest.Pipeline, error)
+type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -628,7 +628,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	}
 
 	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, err := t.initializeManifest(bp.Customizations, options, repos, distro.MakePackageSetChains(t, mergedSets, repos), nil, 0)
+	manifest, err := t.initializeManifest(bp.Customizations, options, repos, distro.MakePackageSetChains(t, mergedSets, repos), 0)
 	if err != nil {
 		// TODO: handle manifest initialization errors more gracefully, we
 		// refuse to initialize manifests with invalid config.
@@ -638,6 +638,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	manifestChains := manifest.GetPackageSetChains()
 	// the returned package set chains are indexed by pipeline
 	// name, we need to reindex by package set name
+	// TODO: drop translation, see Manifest()
 	distroChains := make(map[string][]rpmmd.PackageSet)
 	for name, chain := range manifestChains {
 		switch name {
@@ -738,7 +739,6 @@ func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSetChains map[string][]rpmmd.PackageSet,
-	packageSpecSets map[string][]rpmmd.PackageSpec,
 	seed int64) (*manifest.Manifest, error) {
 
 	if err := t.checkOptions(customizations, options); err != nil {
@@ -750,7 +750,7 @@ func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	pipelines, err := t.pipelines(t, customizations, options, repos, packageSetChains, packageSpecSets, rng)
+	pipelines, err := t.pipelines(t, customizations, options, repos, packageSetChains, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -767,15 +767,33 @@ func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSpecSets map[string][]rpmmd.PackageSpec,
+	distroPackageSets map[string][]rpmmd.PackageSpec,
 	seed int64) (distro.Manifest, error) {
 
-	manifest, err := t.initializeManifest(customizations, options, repos, nil, packageSpecSets, seed)
+	manifest, err := t.initializeManifest(customizations, options, repos, nil, seed)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
 
-	return manifest.Serialize()
+	// TODO: drop transaltion, see GetPackageSets()
+	manifestPackageSets := make(map[string][]rpmmd.PackageSpec)
+	for name, set := range distroPackageSets {
+		switch name {
+		case osPkgsKey:
+			manifestPackageSets["os"] = set
+			manifestPackageSets["ostree-tree"] = set
+		case containerPkgsKey:
+			manifestPackageSets["container-tree"] = set
+		case installerPkgsKey:
+			manifestPackageSets["anaconda-tree"] = set
+		case buildPkgsKey:
+			manifestPackageSets["build"] = set
+		default:
+			panic(fmt.Sprintf("unknown pacakge set name: %s", name))
+		}
+	}
+
+	return manifest.Serialize(manifestPackageSets)
 }
 
 func isMountpointAllowed(mountpoint string) bool {

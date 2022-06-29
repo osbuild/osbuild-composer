@@ -15,7 +15,7 @@ type Pipeline interface {
 	Name() string
 	getBuildPackages() []string
 	getPackageSetChain() []rpmmd.PackageSet
-	serializeStart()
+	serializeStart([]rpmmd.PackageSpec)
 	serializeEnd()
 	serialize() osbuild2.Pipeline
 	getPackageSpecs() []rpmmd.PackageSpec
@@ -83,7 +83,7 @@ func NewBasePipeline(name string, build *BuildPipeline, runner *string) BasePipe
 
 // serializeStart must be called exactly once before each call
 // to serialize().
-func (p BasePipeline) serializeStart() {
+func (p BasePipeline) serializeStart([]rpmmd.PackageSpec) {
 }
 
 // serializeEnd must be called exactly once after each call to
