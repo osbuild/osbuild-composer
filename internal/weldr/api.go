@@ -2247,10 +2247,16 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	composeID := uuid.New()
 
 	var targets []*target.Target
+	// Always instruct the worker to upload the artifact back to the server
+	workerServerTarget := target.NewWorkerServerTarget()
+	workerServerTarget.ImageName = imageType.Filename()
+	workerServerTarget.OsbuildArtifact.ExportFilename = imageType.Filename()
+	targets = append(targets, workerServerTarget)
 	if isRequestVersionAtLeast(params, 1) && cr.Upload != nil {
 		t := uploadRequestToTarget(*cr.Upload, imageType)
 		targets = append(targets, t)
 	}
+
 	// Check for test parameter
 	q, err := url.ParseQuery(request.URL.RawQuery)
 	if err != nil {
@@ -2348,10 +2354,9 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		var jobId uuid.UUID
 
 		jobId, err = api.workers.EnqueueOSBuild(api.archName, &worker.OSBuildJob{
-			Manifest:  manifest,
-			Targets:   targets,
-			ImageName: imageType.Filename(),
-			Exports:   imageType.Exports(),
+			Manifest: manifest,
+			Targets:  targets,
+			Exports:  imageType.Exports(),
 			PipelineNames: &worker.PipelineNames{
 				Build:   imageType.BuildPipelines(),
 				Payload: imageType.PayloadPipelines(),
