@@ -14,13 +14,20 @@ type VMDKPipeline struct {
 
 // NewVMDKPipeline creates a new VMDK pipeline. imgPipeline is the pipeline producing the
 // raw image. Filename is the name of the produced image.
-func NewVMDKPipeline(buildPipeline *BuildPipeline, imgPipeline *LiveImgPipeline, filename string) *VMDKPipeline {
+func NewVMDKPipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
+	imgPipeline *LiveImgPipeline,
+	filename string) *VMDKPipeline {
 	p := &VMDKPipeline{
-		BasePipeline: NewBasePipeline("vmdk", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "vmdk", buildPipeline, nil),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}
+	if imgPipeline.BasePipeline.manifest != m {
+		panic("live image pipeline from different manifest")
+	}
 	buildPipeline.addDependent(p)
+	m.addPipeline(p)
 	return p
 }
 

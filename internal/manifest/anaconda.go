@@ -40,14 +40,15 @@ type AnacondaPipeline struct {
 // name of the kernel package the intsaller will use. arch is the supported
 // architecture. Product and version refers to the product the installer is the
 // installer for.
-func NewAnacondaPipeline(buildPipeline *BuildPipeline,
+func NewAnacondaPipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
 	repos []rpmmd.RepoConfig,
 	kernelName,
 	arch,
 	product,
 	version string) *AnacondaPipeline {
 	p := &AnacondaPipeline{
-		BasePipeline: NewBasePipeline("anaconda-tree", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "anaconda-tree", buildPipeline, nil),
 		repos:        repos,
 		kernelName:   kernelName,
 		arch:         arch,
@@ -55,6 +56,7 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 		version:      version,
 	}
 	buildPipeline.addDependent(p)
+	m.addPipeline(p)
 	return p
 }
 

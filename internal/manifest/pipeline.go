@@ -26,9 +26,10 @@ type Pipeline interface {
 // A BasePipeline represents the core functionality shared between each of the pipeline
 // implementations, and the BasePipeline struct must be embedded in each of them.
 type BasePipeline struct {
-	name   string
-	runner string
-	build  *BuildPipeline
+	manifest *Manifest
+	name     string
+	runner   string
+	build    *BuildPipeline
 }
 
 // Name returns the name of the pipeline. The name must be unique for a given manifest.
@@ -65,10 +66,11 @@ func (p BasePipeline) getInline() []string {
 // provided, except for int he build pipeline itself. When a build pipeline is not provided
 // the build host's filesystem is used as the build root, and in this case a runner must be
 // specified which knows how to interpret the host filesystem as a build root.
-func NewBasePipeline(name string, build *BuildPipeline, runner *string) BasePipeline {
+func NewBasePipeline(m *Manifest, name string, build *BuildPipeline, runner *string) BasePipeline {
 	p := BasePipeline{
-		name:  name,
-		build: build,
+		manifest: m,
+		name:     name,
+		build:    build,
 	}
 	if runner != nil {
 		if build != nil {
@@ -77,6 +79,10 @@ func NewBasePipeline(name string, build *BuildPipeline, runner *string) BasePipe
 		p.runner = *runner
 	} else if build == nil {
 		panic("neither build pipeline nor runner specified")
+	} else {
+		if build.BasePipeline.manifest != m {
+			panic("build pipeline from a different manifest")
+		}
 	}
 	return p
 }

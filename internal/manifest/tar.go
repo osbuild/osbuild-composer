@@ -14,13 +14,21 @@ type TarPipeline struct {
 // NewTarPipeline creates a new TarPipeline. The inputPipeline represents the
 // filesystem tree which will be the contents of the tar file. The pipelinename
 // is the name of the pipeline. The filename is the name of the output tar file.
-func NewTarPipeline(buildPipeline *BuildPipeline, inputPipeline *BasePipeline, pipelinename, filename string) *TarPipeline {
+func NewTarPipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
+	inputPipeline *BasePipeline,
+	pipelinename,
+	filename string) *TarPipeline {
 	p := &TarPipeline{
-		BasePipeline:  NewBasePipeline(pipelinename, buildPipeline, nil),
+		BasePipeline:  NewBasePipeline(m, pipelinename, buildPipeline, nil),
 		inputPipeline: inputPipeline,
 		filename:      filename,
 	}
+	if inputPipeline.manifest != m {
+		panic("tree pipeline from different manifest")
+	}
 	buildPipeline.addDependent(p)
+	m.addPipeline(p)
 	return p
 }
 

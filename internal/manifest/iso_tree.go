@@ -28,12 +28,18 @@ type ISOTreePipeline struct {
 	osTreeRef        string
 }
 
-func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *AnacondaPipeline, osTreeCommit, osTreeURL, osTreeRef, isoLabelTmpl string) *ISOTreePipeline {
+func NewISOTreePipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
+	anacondaPipeline *AnacondaPipeline,
+	osTreeCommit,
+	osTreeURL,
+	osTreeRef,
+	isoLabelTmpl string) *ISOTreePipeline {
 	// TODO: replace isoLabelTmpl with more high-level properties
 	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.arch)
 
 	p := &ISOTreePipeline{
-		BasePipeline:     NewBasePipeline("bootiso-tree", buildPipeline, nil),
+		BasePipeline:     NewBasePipeline(m, "bootiso-tree", buildPipeline, nil),
 		anacondaPipeline: anacondaPipeline,
 		isoLabel:         isoLabel,
 		osTreeCommit:     osTreeCommit,
@@ -41,6 +47,10 @@ func NewISOTreePipeline(buildPipeline *BuildPipeline, anacondaPipeline *Anaconda
 		osTreeRef:        osTreeRef,
 	}
 	buildPipeline.addDependent(p)
+	if anacondaPipeline.BasePipeline.manifest != m {
+		panic("anaconda pipeline from different manifest")
+	}
+	m.addPipeline(p)
 	return p
 }
 

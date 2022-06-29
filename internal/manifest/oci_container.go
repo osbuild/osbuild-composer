@@ -16,14 +16,22 @@ type OCIContainerPipeline struct {
 	filename     string
 }
 
-func NewOCIContainerPipeline(buildPipeline *BuildPipeline, treePipeline *BasePipeline, architecture, filename string) *OCIContainerPipeline {
+func NewOCIContainerPipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
+	treePipeline *BasePipeline,
+	architecture,
+	filename string) *OCIContainerPipeline {
 	p := &OCIContainerPipeline{
-		BasePipeline: NewBasePipeline("container", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "container", buildPipeline, nil),
 		treePipeline: treePipeline,
 		architecture: architecture,
 		filename:     filename,
 	}
+	if treePipeline.build.BasePipeline.manifest != m {
+		panic("tree pipeline from different manifest")
+	}
 	buildPipeline.addDependent(p)
+	m.addPipeline(p)
 	return p
 }
 

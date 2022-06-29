@@ -13,13 +13,20 @@ type LiveImgPipeline struct {
 	filename string
 }
 
-func NewLiveImgPipeline(buildPipeline *BuildPipeline, treePipeline *OSPipeline, filename string) *LiveImgPipeline {
+func NewLiveImgPipeline(m *Manifest,
+	buildPipeline *BuildPipeline,
+	treePipeline *OSPipeline,
+	filename string) *LiveImgPipeline {
 	p := &LiveImgPipeline{
-		BasePipeline: NewBasePipeline("image", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "image", buildPipeline, nil),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
 	buildPipeline.addDependent(p)
+	if treePipeline.BasePipeline.manifest != m {
+		panic("tree pipeline from different manifest")
+	}
+	m.addPipeline(p)
 	return p
 }
 

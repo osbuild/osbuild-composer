@@ -28,7 +28,7 @@ func New() Manifest {
 	}
 }
 
-func (m *Manifest) AddPipeline(p Pipeline) {
+func (m *Manifest) addPipeline(p Pipeline) {
 	for _, pipeline := range m.pipelines {
 		if pipeline.Name() == p.Name() {
 			panic("duplicate pipeline name in manifest")
