@@ -8,6 +8,9 @@ import (
 // An AnacondaPipeline represents the installer tree as found on an ISO.
 type AnacondaPipeline struct {
 	BasePipeline
+	// Packages to install in addition to the ones required by the
+	// pipeline.
+	ExtraPackages []string
 	// Users indicate whether or not the user spoke should be enabled in
 	// anaconda. If it is, users specified in a kickstart will be configured,
 	// and in case no users are provided in a kickstart the user will be
@@ -55,6 +58,16 @@ func NewAnacondaPipeline(buildPipeline *BuildPipeline,
 	}
 	buildPipeline.addDependent(p)
 	return p
+}
+
+func (p *AnacondaPipeline) getPackageSetChain() []rpmmd.PackageSet {
+	packages := []string{}
+	return []rpmmd.PackageSet{
+		{
+			Include:      append(packages, p.ExtraPackages...),
+			Repositories: p.repos,
+		},
+	}
 }
 
 func (p *AnacondaPipeline) getPackageSpecs() []rpmmd.PackageSpec {
