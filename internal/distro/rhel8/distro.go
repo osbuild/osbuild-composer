@@ -116,6 +116,18 @@ var distroMap = map[string]distribution{
 		runner:             "org.osbuild.rhel86",
 		defaultImageConfig: defaultDistroImageConfig,
 	},
+	"rhel-84": {
+		name:               "rhel-84",
+		product:            "Red Hat Enterprise Linux",
+		osVersion:          "8.4",
+		releaseVersion:     "8",
+		modulePlatformID:   "platform:el8",
+		vendor:             "redhat",
+		ostreeRefTmpl:      "rhel/8/%s/edge",
+		isolabelTmpl:       "RHEL-8-4-0-BaseOS-%s",
+		runner:             "org.osbuild.rhel84",
+		defaultImageConfig: defaultDistroImageConfig,
+	},
 	"rhel-85": {
 		name:               "rhel-85",
 		product:            "Red Hat Enterprise Linux",
@@ -622,6 +634,14 @@ func New() distro.Distro {
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("rhel-8")
+}
+
+func NewRHEL84() distro.Distro {
+	return newDistro("rhel-84")
+}
+
+func NewRHEL84HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro("rhel-84")
 }
 
 func NewRHEL85() distro.Distro {
