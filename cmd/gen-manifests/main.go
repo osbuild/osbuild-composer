@@ -49,6 +49,7 @@ type crBlueprint struct {
 	Packages       []blueprint.Package       `json:"packages,omitempty"`
 	Modules        []blueprint.Package       `json:"modules,omitempty"`
 	Groups         []blueprint.Group         `json:"groups,omitempty"`
+	Containers     []blueprint.Container     `json:"containers,omitempty"`
 	Customizations *blueprint.Customizations `json:"customizations,omitempty"`
 	Distro         string                    `json:"distro,omitempty"`
 }
