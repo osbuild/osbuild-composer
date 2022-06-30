@@ -9,7 +9,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel7"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel86"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
@@ -22,7 +21,6 @@ var supportedDistros = []supportedDistro{
 	{fedora.NewF35, fedora.NewHostDistro},
 	{fedora.NewF36, fedora.NewHostDistro},
 	{rhel7.New, rhel7.NewHostDistro},
-	{rhel8.New, rhel8.NewHostDistro},
 	{rhel84.New, rhel84.NewHostDistro},
 	{rhel86.New, rhel86.NewHostDistro},
 	{rhel86.NewRHEL85, rhel86.NewRHEL85HostDistro},
