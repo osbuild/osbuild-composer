@@ -79,7 +79,7 @@ mkdir -p "$RPMBUILD_DIR"
 aws ec2 create-key-pair --key-name "$KEY_NAME" --query 'KeyMaterial' --output text > /osbuild-composer/keypair.pem
 chmod 600 /osbuild-composer/keypair.pem
 # rhel 8.5 AMI
-aws ec2 run-instances --image-id ami-06f1e6f8b3457ae7c --instance-type c5.large --key-name "$KEY_NAME" \
+aws ec2 run-instances --image-id ami-03debf3ebf61b20cd --instance-type c5.large --key-name "$KEY_NAME" \
     --tag-specifications "ResourceType=instance,Tags=[{Key=commit,Value=$COMMIT_SHA},{Key=name,Value=rpm-builder-$COMMIT_SHA}]" \
     > ./rpminstance.json
 AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "rpminstance.json")
@@ -104,7 +104,7 @@ ansible-playbook \
     -i /osbuild-composer/tools/appsre-ansible/inventory \
     /osbuild-composer/tools/appsre-ansible/rpmbuild.yml \
     -e "COMPOSER_COMMIT=$COMMIT_SHA" \
-    -e "OSBUILD_COMMIT=$(jq -r '.["rhel-8.5"].dependencies.osbuild.commit' /osbuild-composer/Schutzfile)" \
+    -e "OSBUILD_COMMIT=$(jq -r '.["rhel-8.6"].dependencies.osbuild.commit' /osbuild-composer/Schutzfile)" \
     -e "RH_ACTIVATION_KEY=$RH_ACTIVATION_KEY" \
     -e "RH_ORG_ID=$RH_ORG_ID"
 EOF
@@ -165,7 +165,7 @@ EOF
         # get distro name for schutzfile
         local schutzfile_distro="$distro"
         if [[ $schutzfile_distro == rhel-8 ]]; then
-            schutzfile_distro=rhel-8.5
+            schutzfile_distro=rhel-8.6
         fi
 
         # get osbuild_commit from schutzfile

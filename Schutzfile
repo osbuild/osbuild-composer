@@ -153,20 +153,6 @@
       }
     ]
   },
-  "rhel-8.4": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "86123da599efa117c0a8c079212becb54b304724"
-      }
-    }
-  },
-  "rhel-8.5": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "86123da599efa117c0a8c079212becb54b304724"
-      }
-    }
-  },
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
