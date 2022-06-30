@@ -11,18 +11,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-// BUILD PACKAGE SETS
-
-// distro-wide build package set
-func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{}
-}
-
-// common ec2 image build package set
-func ec2BuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{}
-}
-
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
@@ -43,15 +31,6 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"zram-generator-defaults",
 		},
 	}.Append(bootPackageSet(t))
-}
-
-// common iot image build package set
-func iotBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{}
-}
-
-func iotInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{}
 }
 
 // BOOT PACKAGE SETS

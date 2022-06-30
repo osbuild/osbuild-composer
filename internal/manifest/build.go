@@ -14,9 +14,6 @@ import (
 // make minimal assumptions about what's available there.
 type BuildPipeline struct {
 	BasePipeline
-	// Packages to install in addition to the ones required by the
-	// pipeline.
-	ExtraPackages []string
 
 	dependents   []Pipeline
 	repos        []rpmmd.RepoConfig
@@ -59,7 +56,7 @@ func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
 
 	return []rpmmd.PackageSet{
 		{
-			Include:      append(packages, p.ExtraPackages...),
+			Include:      packages,
 			Repositories: p.repos,
 		},
 	}
