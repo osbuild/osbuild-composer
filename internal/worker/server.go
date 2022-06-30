@@ -35,6 +35,8 @@ const (
 	JobTypeDepsolve         string = "depsolve"
 	JobTypeManifestIDOnly   string = "manifest-id-only"
 	JobTypeContainerResolve string = "container-resolve"
+	JobTypeAWSEC2Copy       string = "aws-ec2-copy"
+	JobTypeAWSEC2Share      string = "aws-ec2-share"
 )
 
 type Server struct {
@@ -155,6 +157,14 @@ func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, dependencies []uui
 
 func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel string) (uuid.UUID, error) {
 	return s.enqueue(JobTypeContainerResolve, job, nil, channel)
+}
+
+func (s *Server) EnqueueAWSEC2CopyJob(job *AWSEC2CopyJob, parent uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeAWSEC2Copy, job, []uuid.UUID{parent}, channel)
+}
+
+func (s *Server) EnqueueAWSEC2ShareJob(job *AWSEC2ShareJob, parent uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel)
 }
 
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
@@ -354,6 +364,32 @@ func (s *Server) ContainerResolveJobInfo(id uuid.UUID, result *ContainerResolveJ
 
 	if jobInfo.JobType != JobTypeContainerResolve {
 		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeDepsolve, jobInfo.JobType)
+	}
+
+	return jobInfo, nil
+}
+
+func (s *Server) AWSEC2CopyJobInfo(id uuid.UUID, result *AWSEC2CopyJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
+	if err != nil {
+		return nil, err
+	}
+
+	if jobInfo.JobType != JobTypeAWSEC2Copy {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeAWSEC2Copy, jobInfo.JobType)
+	}
+
+	return jobInfo, nil
+}
+
+func (s *Server) AWSEC2ShareJobInfo(id uuid.UUID, result *AWSEC2ShareJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
+	if err != nil {
+		return nil, err
+	}
+
+	if jobInfo.JobType != JobTypeAWSEC2Share {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeAWSEC2Share, jobInfo.JobType)
 	}
 
 	return jobInfo, nil
@@ -624,6 +660,20 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 			return err
 		}
 		jobResult = &kojiFinalizeJR.JobResult
+	case JobTypeAWSEC2Copy:
+		var awsEC2CopyJR AWSEC2CopyJobResult
+		jobInfo, err = s.AWSEC2CopyJobInfo(jobId, &awsEC2CopyJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &awsEC2CopyJR.JobResult
+	case JobTypeAWSEC2Share:
+		var awsEC2ShareJR AWSEC2ShareJobResult
+		jobInfo, err = s.AWSEC2ShareJobInfo(jobId, &awsEC2ShareJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &awsEC2ShareJR.JobResult
 
 	case JobTypeContainerResolve:
 		var containerResolveJR ContainerResolveJobResult

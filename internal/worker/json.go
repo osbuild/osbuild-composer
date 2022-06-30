@@ -256,6 +256,33 @@ type ContainerResolveJobResult struct {
 	JobResult
 }
 
+type AWSEC2ShareJob struct {
+	Ami               string   `json:"ami"`
+	Region            string   `json:"region"`
+	ShareWithAccounts []string `json:"shareWithAccounts"`
+}
+
+type AWSEC2ShareJobResult struct {
+	JobResult
+
+	Ami    string `json:"ami"`
+	Region string `json:"region"`
+}
+
+type AWSEC2CopyJob struct {
+	Ami          string `json:"ami"`
+	SourceRegion string `json:"source_region"`
+	TargetRegion string `json:"target_region"`
+	TargetName   string `json:"target_name"`
+}
+
+type AWSEC2CopyJobResult struct {
+	JobResult
+
+	Ami    string `json:"ami"`
+	Region string `json:"region"`
+}
+
 //
 // JSON-serializable types for the client
 //
