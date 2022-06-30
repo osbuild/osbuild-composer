@@ -1,12 +1,13 @@
 package distroregistry
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
+	rhel8 "github.com/osbuild/osbuild-composer/internal/distro/rhel86"
 )
 
 // Test that all distros are registered properly and that Registry.List() works.
@@ -108,14 +109,16 @@ func TestRegistry_FromHost(t *testing.T) {
 	})
 
 	t.Run("host distro not nil", func(t *testing.T) {
-		mangledName := mangleHostDistroName("rhel-8", true, false)
-		hostDistro := rhel8.NewHostDistro(mangledName, "", "")
+		// NOTE(akoutsou): The arguments to NewHostDistro are ignored since RHEL 8.6
+		// The function signature will change in the near future.
+		hostDistro := rhel8.NewHostDistro("", "", "")
+		fmt.Println(hostDistro.Name())
 		registry, err := New(hostDistro, distros...)
 		require.Nil(t, err)
 		require.NotNil(t, registry)
 
 		gotDistro := registry.FromHost()
 		require.NotNil(t, gotDistro)
-		require.Equal(t, gotDistro.Name(), mangledName)
+		require.Equal(t, gotDistro.Name(), hostDistro.Name())
 	})
 }
