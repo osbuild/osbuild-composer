@@ -44,6 +44,10 @@ const (
 	ErrorTenantNotFound               ServiceErrorCode = 28
 	ErrorNoGPGKey                     ServiceErrorCode = 29
 	ErrorValidationFailed             ServiceErrorCode = 30
+	ErrorComposeBadState              ServiceErrorCode = 31
+	ErrorUnsupportedImage             ServiceErrorCode = 32
+	ErrorInvalidImageFromComposeId    ServiceErrorCode = 33
+	ErrorImageNotFound                ServiceErrorCode = 34
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -63,6 +67,9 @@ const (
 	ErrorDepsolveJobCanceled                      ServiceErrorCode = 1014
 	ErrorUnexpectedNumberOfImageBuilds            ServiceErrorCode = 1015
 	ErrorGettingBuildDependencyStatus             ServiceErrorCode = 1016
+	ErrorGettingOSBuildJobStatus                  ServiceErrorCode = 1017
+	ErrorGettingAWSEC2JobStatus                   ServiceErrorCode = 1018
+	ErrorGettingJobType                           ServiceErrorCode = 1019
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -106,12 +113,16 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorMethodNotAllowed, http.StatusMethodNotAllowed, "Requested method isn't supported for resource"},
 		serviceError{ErrorNotAcceptable, http.StatusNotAcceptable, "Only 'application/json' content is supported"},
 		serviceError{ErrorNoBaseURLInPayloadRepository, http.StatusBadRequest, "BaseURL must be specified for payload repositories"},
-		serviceError{ErrorInvalidJobType, http.StatusNotFound, "Requested job has invalid type"},
+		serviceError{ErrorInvalidJobType, http.StatusNotFound, "Job with given id has an invalid type"},
 		serviceError{ErrorInvalidNumberOfImageBuilds, http.StatusBadRequest, "Compose request has unsupported number of image builds"},
 		serviceError{ErrorInvalidOSTreeParams, http.StatusBadRequest, "Invalid OSTree parameters or parameter combination"},
 		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
 		serviceError{ErrorNoGPGKey, http.StatusBadRequest, "Invalid repository, when check_gpg is set, gpgkey must be specified"},
 		serviceError{ErrorValidationFailed, http.StatusBadRequest, "Request could not be validated"},
+		serviceError{ErrorComposeBadState, http.StatusBadRequest, "Compose is running or has failed"},
+		serviceError{ErrorUnsupportedImage, http.StatusBadRequest, "This compose doesn't support the creation of multiple images"},
+		serviceError{ErrorInvalidImageFromComposeId, http.StatusBadRequest, "Invalid format for image id"},
+		serviceError{ErrorImageNotFound, http.StatusBadRequest, "Image with given id not found"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
@@ -130,6 +141,9 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorDepsolveJobCanceled, http.StatusInternalServerError, "Depsolve job was cancelled"},
 		serviceError{ErrorUnexpectedNumberOfImageBuilds, http.StatusInternalServerError, "Compose has unexpected number of image builds"},
 		serviceError{ErrorGettingBuildDependencyStatus, http.StatusInternalServerError, "Error checking status of build job dependencies"},
+		serviceError{ErrorGettingOSBuildJobStatus, http.StatusInternalServerError, "Unable to get osbuild job status"},
+		serviceError{ErrorGettingAWSEC2JobStatus, http.StatusInternalServerError, "Unable to get ec2 job status"},
+		serviceError{ErrorGettingJobType, http.StatusInternalServerError, "Unable to get job type of existing job"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},

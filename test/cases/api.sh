@@ -284,7 +284,8 @@ curl \
 # Prepare a request to be sent to the composer API.
 #
 
-REQUEST_FILE="${WORKDIR}/request.json"
+REQUEST_FILE="${WORKDIR}/compose_request.json"
+IMG_COMPOSE_REQ_FILE="${WORKDIR}/img_compose_request.json"
 ARCH=$(uname -m)
 SSH_USER=
 TEST_ID="$(uuidgen)"
@@ -418,6 +419,64 @@ function waitForState() {
     export UPLOAD_OPTIONS
 }
 
+function sendImgFromCompose() {
+    OUTPUT=$(mktemp)
+    HTTPSTATUS=$(curl \
+                 --silent \
+                 --show-error \
+                 --cacert /etc/osbuild-composer/ca-crt.pem \
+                 --key /etc/osbuild-composer/client-key.pem \
+                 --cert /etc/osbuild-composer/client-crt.pem \
+                 --header 'Content-Type: application/json' \
+                 --request POST \
+                 --data @"$1" \
+                 --write-out '%{http_code}' \
+                 --output "$OUTPUT" \
+                 https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"/clone)
+
+    test "$HTTPSTATUS" = "201"
+    IMG_ID=$(jq -r '.id' "$OUTPUT")
+}
+
+function waitForImgState() {
+    while true
+    do
+        OUTPUT=$(curl \
+                     --silent \
+                     --show-error \
+                     --cacert /etc/osbuild-composer/ca-crt.pem \
+                     --key /etc/osbuild-composer/client-key.pem \
+                     --cert /etc/osbuild-composer/client-crt.pem \
+                     "https://localhost/api/image-builder-composer/v2/clones/$IMG_ID")
+
+        IMG_UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.status')
+        IMG_UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.options')
+
+        case "$IMG_UPLOAD_STATUS" in
+            "success")
+                break
+                ;;
+            # all valid status values for a compose which hasn't finished yet
+            "pending"|"running")
+                ;;
+            # default undesired state
+            "failure")
+                echo "Image compose failed"
+                exit 1
+                ;;
+            *)
+                echo "API returned unexpected image status value: '$IMG_UPLOAD_STATUS'"
+                exit 1
+                ;;
+        esac
+
+        sleep 30
+    done
+
+    # export for use in subcases
+    export IMG_UPLOAD_OPTIONS
+}
+
 #
 # Make sure that requesting a non existing paquet results in failure
 #
@@ -426,7 +485,6 @@ jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE
 
 sendCompose "$REQUEST_FILE2"
 waitForState "failure"
-
 
 # crashed/stopped/killed worker should result in a failed state
 sendCompose "$REQUEST_FILE"
@@ -448,6 +506,12 @@ if [ "${CLOUD_PROVIDER}" == "${CLOUD_PROVIDER_GENERIC_S3}" ]; then
 fi
 test "$UPLOAD_TYPE" = "$EXPECTED_UPLOAD_TYPE"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
+
+
+if [ -s "$IMG_COMPOSE_REQ_FILE" ]; then
+    sendImgFromCompose "$IMG_COMPOSE_REQ_FILE"
+    waitForImgState
+fi
 
 #
 # Verify the Cloud-provider specific upload_status options

@@ -13,12 +13,17 @@ function cleanup() {
   AWS_INSTANCE_ID="${AWS_INSTANCE_ID:-}"
   AMI_IMAGE_ID="${AMI_IMAGE_ID:-}"
   AWS_SNAPSHOT_ID="${AWS_SNAPSHOT_ID:-}"
+  AMI_ID_2="${AMI_ID_2:-}"
+  SNAPSHOT_ID_2="${SNAPSHOT_ID_2:-}"
 
   if [ -n "$AWS_CMD" ]; then
     $AWS_CMD ec2 terminate-instances --instance-ids "$AWS_INSTANCE_ID"
     $AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
     $AWS_CMD ec2 delete-snapshot --snapshot-id "$AWS_SNAPSHOT_ID"
     $AWS_CMD ec2 delete-key-pair --key-name "key-for-$AMI_IMAGE_ID"
+
+    $AWS_CMD ec2 deregister-image --region "$REGION_2" --image-id "$AMI_2"
+    $AWS_CMD ec2 delete-snapshot --region "$REGION_2" --snapshot-id "$SNAPSHOT_ID_2"
   fi
 }
 
@@ -67,6 +72,13 @@ function createReqFile() {
         "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
     }
   }
+}
+EOF
+
+  cat > "$IMG_COMPOSE_REQ_FILE" <<EOF
+{
+  "region": "${AWS_REGION_2}",
+  "share_with_accounts":  ["${AWS_API_TEST_SHARE_ACCOUNT_2}"]
 }
 EOF
 }
@@ -120,6 +132,38 @@ function verify() {
   if [ "$SHARE_OK" != 1 ]; then
     echo "EC2 snapshot wasn't shared with the AWS_API_TEST_SHARE_ACCOUNT. 😢"
     exit 1
+  fi
+
+  # Verify that the 2nd image from the same compose was copied and shared with existing and new account
+  AMI_ID_2=$(echo "$IMG_UPLOAD_OPTIONS" | jq -r .ami)
+  REGION_2=$(echo "$IMG_UPLOAD_OPTIONS" | jq -r .region)
+  $AWS_CMD ec2 describe-images --owners self --region "$REGION_2" --image-ids "$AMI_ID_2" \
+           > "$WORKDIR/ami2.json"
+
+  SNAPSHOT_ID_2=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami2.json")
+  $AWS_CMD ec2 describe-snapshot-attribute --region "$REGION_2" --snapshot-id "$SNAPSHOT_ID_2" \
+           --attribute createVolumePermission > "$WORKDIR/snapshot-attributes2.json"
+  SHARED_ID_2=$(jq -r ".CreateVolumePermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT\").UserId" "$WORKDIR/snapshot-attributes2.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID_2" ]; then
+      echo "EC2 Snapshot wasn't shared with AWS_API_TEST_SHARE_ACCOUNT"
+      exit 1
+  fi
+  SHARED_ID_2=$(jq -r ".CreateVolumePermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT_2\").UserId" "$WORKDIR/snapshot-attributes2.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT_2" != "$SHARED_ID_2" ]; then
+      echo "EC2 Snapshot wasn't shared with AWS_API_TEST_SHARE_ACCOUNT_2"
+      exit 1
+  fi
+
+  $AWS_CMD ec2 describe-image-attribute --attribute launchPermission --region "$REGION_2" --image-id "$AMI_ID_2" > "$WORKDIR/ami-attributes2.json"
+  SHARED_ID_2=$(jq -r ".LaunchPermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT\").UserId" "$WORKDIR/ami-attributes2.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID_2" ]; then
+      echo "EC2 ami wasn't shared with AWS_API_TEST_SHARE_ACCOUNT"
+      exit 1
+  fi
+  SHARED_ID_2=$(jq -r ".LaunchPermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT_2\").UserId" "$WORKDIR/ami-attributes2.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT_2" != "$SHARED_ID_2" ]; then
+      echo "EC2 ami wasn't shared with AWS_API_TEST_SHARE_ACCOUNT_2"
+      exit 1
   fi
 
   # Create key-pair
