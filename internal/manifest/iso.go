@@ -31,6 +31,13 @@ func NewISOPipeline(m *Manifest,
 	return p
 }
 
+func (p *ISOPipeline) getBuildPackages() []string {
+	return []string{
+		"isomd5sum",
+		"xorriso",
+	}
+}
+
 func (p *ISOPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
