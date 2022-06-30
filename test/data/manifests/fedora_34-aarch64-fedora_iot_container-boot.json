@@ -10637,7 +10637,7 @@
         "check_gpg": true
       }
     ],
-    "container": [
+    "container-tree": [
       {
         "name": "acl",
         "epoch": 0,
@@ -12419,7 +12419,7 @@
         "check_gpg": true
       }
     ],
-    "packages": [
+    "ostree-tree": [
       {
         "name": "acl",
         "epoch": 0,

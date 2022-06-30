@@ -8852,7 +8852,7 @@
         "check_gpg": true
       }
     ],
-    "packages": [
+    "os": [
       {
         "name": "ModemManager-glib",
         "epoch": 0,

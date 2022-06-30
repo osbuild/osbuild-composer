@@ -5941,7 +5941,7 @@
         "check_gpg": true
       }
     ],
-    "packages": [
+    "os": [
       {
         "name": "alternatives",
         "epoch": 0,
