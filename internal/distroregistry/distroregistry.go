@@ -13,7 +13,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel84"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel86"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel90beta"
 )
 
 // When adding support for a new distribution, add it here.
@@ -29,7 +28,6 @@ var supportedDistros = []supportedDistro{
 	{rhel86.NewRHEL85, rhel86.NewRHEL85HostDistro},
 	{rhel86.NewRHEL87, rhel86.NewRHEL87HostDistro},
 	{rhel86.NewCentos, rhel86.NewCentosHostDistro},
-	{rhel90beta.New, rhel90beta.NewHostDistro},
 	{rhel90.New, rhel90.NewHostDistro},
 	{rhel90.NewRHEL91, rhel90.NewRHEL91HostDistro},
 	{rhel90.NewCentos, rhel90.NewCentosHostDistro},
