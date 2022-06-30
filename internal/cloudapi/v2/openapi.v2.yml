@@ -211,6 +211,101 @@ paths:
               schema:
                 type: string
 
+  /composes/{id}/clone:
+    post:
+      operationId: postCloneCompose
+      summary: Clone an existing compose
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of the compose
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloneComposeBody'
+      responses:
+        '201':
+          description: The new image is being created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneComposeResponse'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /clones/{id}:
+    get:
+      operationId: getCloneStatus
+      summary: The status of a cloned compose
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+          required: true
+          description: ID of image status to get
+      description: |-
+        Get the status of a running or completed image from a compose.
+        This includes whether or not the image creation succeeded.
+      responses:
+        '200':
+          description: image status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloneStatus'
+        '400':
+          description: Invalid compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /compose:
     post:
       operationId: postCompose
@@ -1029,6 +1124,40 @@ components:
             type: string
             format: uuid
             example: '123e4567-e89b-12d3-a456-426655440000'
+
+    CloneComposeBody:
+      oneOf:
+      - $ref: '#/components/schemas/AWSEC2CloneCompose'
+
+    AWSEC2CloneCompose:
+      type: object
+      required:
+        - region
+      properties:
+        region:
+          type: string
+        share_with_accounts:
+          type: array
+          example: ['123456789012']
+          items:
+            type: string
+
+    CloneComposeResponse:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - id
+        properties:
+          id:
+            type: string
+            format: uuid
+            example: '123e4567-e89b-12d3-a456-426655440000'
+
+    CloneStatus:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/UploadStatus'
 
   parameters:
     page:

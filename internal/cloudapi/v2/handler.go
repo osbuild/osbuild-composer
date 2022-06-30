@@ -641,8 +641,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			if err != nil {
 				return HTTPError(ErrorUnknownUploadTarget)
 			}
-			// TODO: determine upload status based on the target results, not job results
-			us.Status = UploadStatusValue(result.UploadStatus)
+			us.Status = uploadStatusFromJobStatus(jobInfo.JobStatus, result.JobError)
 		}
 
 		return ctx.JSON(http.StatusOK, ComposeStatus{
@@ -698,8 +697,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 					if err != nil {
 						return HTTPError(ErrorUnknownUploadTarget)
 					}
-					// TODO: determine upload status based on the target results, not job results
-					us.Status = UploadStatusValue(buildJobResult.UploadStatus)
+					us.Status = uploadStatusFromJobStatus(buildInfo.JobStatus, result.JobError)
 				}
 			}
 
@@ -1226,4 +1224,228 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 	}
 
 	return repoConfig, nil
+}
+
+func (h *apiHandlers) PostCloneCompose(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.postCloneComposeImpl)(ctx, id)
+}
+
+func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
+	channel, err := h.server.getTenantChannel(ctx)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorTenantNotFound, err)
+	}
+
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		return HTTPError(ErrorInvalidComposeId)
+	}
+
+	jobType, err := h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+
+	if jobType != worker.JobTypeOSBuild {
+		return HTTPError(ErrorInvalidJobType)
+	}
+
+	var osbuildResult worker.OSBuildJobResult
+	osbuildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &osbuildResult)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorGettingOSBuildJobStatus, err)
+	}
+
+	if osbuildInfo.JobStatus.Finished.IsZero() || !osbuildResult.Success {
+		return HTTPError(ErrorComposeBadState)
+	}
+
+	if osbuildResult.TargetResults == nil {
+		return HTTPError(ErrorMalformedOSBuildJobResult)
+	}
+	// Only single upload target is allowed, therefore only a single upload target result is allowed as well
+	if len(osbuildResult.TargetResults) != 1 {
+		return HTTPError(ErrorSeveralUploadTargets)
+	}
+	var us *UploadStatus
+	us, err = targetResultToUploadStatus(osbuildResult.TargetResults[0])
+	if err != nil {
+		return HTTPError(ErrorUnknownUploadTarget)
+	}
+
+	var osbuildJob worker.OSBuildJob
+	err = h.server.workers.OSBuildJob(jobId, &osbuildJob)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+	}
+
+	if len(osbuildJob.Targets) != 1 {
+		return HTTPError(ErrorSeveralUploadTargets)
+	}
+
+	// the id of the last job in the dependency chain which users should wait on
+	finalJob := jobId
+	// look at the upload status of the osbuild dependency to decide what to do
+	if us.Type == UploadTypesAws {
+		options := us.Options.(AWSEC2UploadStatus)
+		var img AWSEC2CloneCompose
+		err := ctx.Bind(&img)
+		if err != nil {
+			return err
+		}
+
+		shareAmi := options.Ami
+		shareRegion := img.Region
+		if img.Region != options.Region {
+			// Let the share job use dynArgs
+			shareAmi = ""
+			shareRegion = ""
+
+			// Check dependents if we need to do a copyjob
+			foundDep := false
+			for _, d := range osbuildInfo.Dependents {
+				jt, err := h.server.workers.JobType(d)
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorGettingJobType, err)
+				}
+				if jt == worker.JobTypeAWSEC2Copy {
+					var cjResult worker.AWSEC2CopyJobResult
+					_, err := h.server.workers.AWSEC2CopyJobInfo(d, &cjResult)
+					if err != nil {
+						return HTTPErrorWithInternal(ErrorGettingAWSEC2JobStatus, err)
+					}
+
+					if cjResult.JobError == nil && options.Region == cjResult.Region {
+						finalJob = d
+						foundDep = true
+						break
+					}
+				}
+			}
+
+			if !foundDep {
+				copyJob := &worker.AWSEC2CopyJob{
+					Ami:          options.Ami,
+					SourceRegion: options.Region,
+					TargetRegion: img.Region,
+					TargetName:   fmt.Sprintf("composer-api-%s", uuid.New().String()),
+				}
+				finalJob, err = h.server.workers.EnqueueAWSEC2CopyJob(copyJob, finalJob, channel)
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+				}
+			}
+		}
+
+		var shares []string
+		awsT, ok := (osbuildJob.Targets[0].Options).(*target.AWSTargetOptions)
+		if !ok {
+			return HTTPError(ErrorUnknownUploadTarget)
+		}
+		if len(awsT.ShareWithAccounts) > 0 {
+			shares = append(shares, awsT.ShareWithAccounts...)
+		}
+		if img.ShareWithAccounts != nil && len(*img.ShareWithAccounts) > 0 {
+			shares = append(shares, (*img.ShareWithAccounts)...)
+		}
+		if len(shares) > 0 {
+			shareJob := &worker.AWSEC2ShareJob{
+				Ami:               shareAmi,
+				Region:            shareRegion,
+				ShareWithAccounts: shares,
+			}
+			finalJob, err = h.server.workers.EnqueueAWSEC2ShareJob(shareJob, finalJob, channel)
+			if err != nil {
+				return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+			}
+		}
+	} else {
+		return HTTPError(ErrorUnsupportedImage)
+	}
+
+	return ctx.JSON(http.StatusCreated, CloneComposeResponse{
+		ObjectReference: ObjectReference{
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/clone", jobId),
+			Id:   finalJob.String(),
+			Kind: "CloneComposeId",
+		},
+		Id: finalJob.String(),
+	})
+}
+
+func (h *apiHandlers) GetCloneStatus(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.getCloneStatus)(ctx, id)
+}
+
+func (h *apiHandlers) getCloneStatus(ctx echo.Context, id string) error {
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		return HTTPError(ErrorInvalidComposeId)
+	}
+
+	jobType, err := h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+
+	var us UploadStatus
+	switch jobType {
+	case worker.JobTypeAWSEC2Copy:
+		var result worker.AWSEC2CopyJobResult
+		info, err := h.server.workers.AWSEC2CopyJobInfo(jobId, &result)
+		if err != nil {
+			return HTTPError(ErrorGettingAWSEC2JobStatus)
+		}
+
+		us = UploadStatus{
+			Status: uploadStatusFromJobStatus(info.JobStatus, result.JobError),
+			Type:   UploadTypesAws,
+			Options: AWSEC2UploadStatus{
+				Ami:    result.Ami,
+				Region: result.Region,
+			},
+		}
+	case worker.JobTypeAWSEC2Share:
+		var result worker.AWSEC2ShareJobResult
+		info, err := h.server.workers.AWSEC2ShareJobInfo(jobId, &result)
+		if err != nil {
+			return HTTPError(ErrorGettingAWSEC2JobStatus)
+		}
+
+		us = UploadStatus{
+			Status: uploadStatusFromJobStatus(info.JobStatus, result.JobError),
+			Type:   UploadTypesAws,
+			Options: AWSEC2UploadStatus{
+				Ami:    result.Ami,
+				Region: result.Region,
+			},
+		}
+	default:
+		return HTTPError(ErrorInvalidJobType)
+	}
+
+	return ctx.JSON(http.StatusOK, CloneStatus{
+		ObjectReference: ObjectReference{
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/clones/%v", jobId),
+			Id:   jobId.String(),
+			Kind: "CloneComposeStatus",
+		},
+		UploadStatus: us,
+	})
+}
+
+// TODO: determine upload status based on the target results, not job results
+func uploadStatusFromJobStatus(js *worker.JobStatus, je *clienterrors.Error) UploadStatusValue {
+	if je != nil || js.Canceled {
+		return UploadStatusValueFailure
+	}
+
+	if js.Started.IsZero() {
+		return UploadStatusValuePending
+	}
+
+	if js.Finished.IsZero() {
+		return UploadStatusValueRunning
+	}
+	return UploadStatusValueSuccess
 }

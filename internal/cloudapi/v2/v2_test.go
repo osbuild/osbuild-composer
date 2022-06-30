@@ -951,7 +951,7 @@ func TestComposeTargetErrors(t *testing.T) {
 					"ami": "",
 					"region": ""
 				},
-				"status": "",
+				"status": "failure",
 				"type": "aws"
 			}
 		},
@@ -1197,4 +1197,133 @@ func TestImageTypes(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
+}
+
+func TestImageFromCompose(t *testing.T) {
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building"},
+		"status": "pending"
+	}`, jobId, jobId))
+
+	tr := target.NewAWSTargetResult(&target.AWSTargetResultOptions{
+		Ami:    "ami-abc123",
+		Region: "eu-central-1",
+	})
+	res, err := json.Marshal(&worker.OSBuildJobResult{
+		Success:       true,
+		OSBuildOutput: &osbuild.Result{Success: true},
+		TargetResults: []*target.TargetResult{
+			tr,
+		},
+	})
+	require.NoError(t, err)
+
+	err = wrksrv.FinishJob(token, res)
+	require.NoError(t, err)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"status": "success",
+		"image_status": {
+			"status": "success",
+			"upload_status": {
+				"type": "aws",
+				"status": "success",
+				"options": {
+					"ami": "ami-abc123",
+					"region": "eu-central-1"
+				}
+			}
+		}
+	}`, jobId, jobId))
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/clone", jobId), `
+	{
+		"region": "eu-central-2",
+                "share_with_accounts": ["123456789012"]
+	}`, http.StatusCreated, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v/clone",
+		"kind": "CloneComposeId"
+	}`, jobId), "id")
+
+	_, token, jobType, _, _, err = wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeAWSEC2Copy}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeAWSEC2Copy, jobType)
+
+	res, err = json.Marshal(&worker.AWSEC2CopyJobResult{
+		Ami:    "ami-def456",
+		Region: "eu-central-2",
+	})
+	require.NoError(t, err)
+	err = wrksrv.FinishJob(token, res)
+	require.NoError(t, err)
+
+	imgJobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeAWSEC2Share}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeAWSEC2Share, jobType)
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/clones/%v", imgJobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/clones/%v",
+		"kind": "CloneComposeStatus",
+		"id": "%v",
+		"status": "running",
+		"type": "aws"
+	}`, imgJobId, imgJobId), "options")
+
+	res, err = json.Marshal(&worker.AWSEC2ShareJobResult{
+		Ami:    "ami-def456",
+		Region: "eu-central-2",
+	})
+	require.NoError(t, err)
+	err = wrksrv.FinishJob(token, res)
+	require.NoError(t, err)
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/clones/%v", imgJobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/clones/%v",
+		"kind": "CloneComposeStatus",
+		"id": "%v",
+		"status": "success",
+		"type": "aws",
+		"options": {
+			"ami": "ami-def456",
+			"region": "eu-central-2"
+		}
+	}`, imgJobId, imgJobId))
 }
