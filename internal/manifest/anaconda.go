@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"fmt"
+
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -58,6 +60,49 @@ func NewAnacondaPipeline(m *Manifest,
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
 	return p
+}
+
+// TODO: refactor - what is required to boot and what to build, and
+// do they all belong in this pipeline?
+func (p *AnacondaPipeline) anacondaBootPackageSet() []string {
+	packages := []string{
+		"grub2-tools",
+		"grub2-tools-extra",
+		"grub2-tools-minimal",
+		"efibootmgr",
+	}
+
+	// TODO: use constants for architectures
+	switch p.arch {
+	case "x86_64":
+		packages = append(packages,
+			"grub2-efi-x64",
+			"grub2-efi-x64-cdboot",
+			"grub2-pc",
+			"grub2-pc-modules",
+			"shim-x64",
+			"syslinux",
+			"syslinux-nonlinux",
+		)
+	case "aarch64":
+		packages = append(packages,
+			"grub2-efi-aa64-cdboot",
+			"grub2-efi-aa64",
+			"shim-aa64",
+		)
+	default:
+		panic(fmt.Sprintf("unsupported arch: %s", p.arch))
+	}
+
+	return packages
+}
+
+func (p *AnacondaPipeline) getBuildPackages() []string {
+	packages := p.anacondaBootPackageSet()
+	packages = append(packages,
+		"lorax-templates-generic",
+	)
+	return packages
 }
 
 func (p *AnacondaPipeline) getPackageSetChain() []rpmmd.PackageSet {
