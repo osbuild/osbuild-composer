@@ -103,21 +103,8 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
-func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"squashfs-tools",
-			"lorax-templates-generic",
-		},
-	}
-
-	ps = ps.Append(anacondaBootPackageSet(t))
-
-	return ps
-}
-
 func iotInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return anacondaBuildPackageSet(t)
+	return rpmmd.PackageSet{}
 }
 
 // BOOT PACKAGE SETS

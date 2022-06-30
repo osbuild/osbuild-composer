@@ -66,6 +66,7 @@ func (p *ISOTreePipeline) getOSTreeCommits() []osTreeCommit {
 func (p *ISOTreePipeline) getBuildPackages() []string {
 	packages := []string{
 		"rpm-ostree",
+		"squashfs-tools",
 	}
 	return packages
 }
