@@ -1,14 +1,9 @@
 #!/usr/bin/bash
 
-# Check that needed variables are set to access AWS.
-function checkEnv() {
-  printenv AWS_REGION AWS_BUCKET V2_AWS_ACCESS_KEY_ID V2_AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
-}
-
 function installClient() {
   if ! hash aws; then
     echo "Using 'awscli' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_IMAGE_CLOUD_TOOLS}"
 
     AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
       -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
@@ -20,4 +15,19 @@ function installClient() {
     AWS_CMD="aws --region $AWS_REGION --output json --color on"
   fi
   $AWS_CMD --version
+
+  if ! hash govc; then
+    greenprint "Installing govc"
+    pushd "${WORKDIR}" || exit 1
+    curl -Ls --retry 5 --output govc.gz \
+         https://github.com/vmware/govmomi/releases/download/v0.24.0/govc_linux_amd64.gz
+    gunzip -f govc.gz
+    GOVC_CMD="${WORKDIR}/govc"
+    chmod +x "${GOVC_CMD}"
+    popd || exit 1
+  else
+     echo "Using pre-installed 'govc' from the system"
+     GOVC_CMD="govc"
+  fi
+  $GOVC_CMD version
 }

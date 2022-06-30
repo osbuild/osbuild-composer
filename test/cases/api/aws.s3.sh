@@ -1,12 +1,21 @@
 #!/usr/bin/bash
 
 source /usr/libexec/tests/osbuild-composer/api/common/aws.sh
+source /usr/libexec/tests/osbuild-composer/api/common/common.sh
+source /usr/libexec/tests/osbuild-composer/api/common/s3.sh
 
-#
+# Check that needed variables are set to access AWS.
+function checkEnv() {
+    printenv AWS_REGION AWS_BUCKET V2_AWS_ACCESS_KEY_ID V2_AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
+
+    if [ "${IMAGE_TYPE}" = "${IMAGE_TYPE_VSPHERE}" ]; then
+        printenv GOVMOMI_USERNAME GOVMOMI_PASSWORD GOVMOMI_URL GOVMOMI_CLUSTER GOVC_DATACENTER GOVMOMI_DATASTORE GOVMOMI_FOLDER GOVMOMI_NETWORK  > /dev/null
+    fi
+}
+
 # Global var for ostree ref
-#
-
 OSTREE_REF="test/rhel/8/edge"
+
 function cleanup() {
   local S3_URL
   S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
@@ -28,46 +37,21 @@ function cleanup() {
 }
 
 function createReqFile() {
-  cat > "$REQUEST_FILE" << EOF
-{
-  "distribution": "$DISTRO",
-  "customizations": {
-    "payload_repositories": [
-      {
-        "baseurl": "$PAYLOAD_REPO_URL"
-      }
-    ],
-    "packages": [
-      "postgresql",
-      "dummy"
-    ]${SUBSCRIPTION_BLOCK},
-    "users":[
-      {
-        "name": "user1",
-        "groups": ["wheel"],
-        "key": "$(cat "${WORKDIR}/usertest.pub")"
-      },
-      {
-        "name": "user2",
-        "key": "$(cat "${WORKDIR}/usertest.pub")"
-      }
-    ]
-  },
-  "image_request": {
-    "architecture": "$ARCH",
-    "image_type": "${IMAGE_TYPE}",
-    "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
-    "ostree": {
-      "ref": "${OSTREE_REF}"
-    },
-    "upload_options": {
-      "region": "${AWS_REGION}"
-    }
-  }
+    case ${IMAGE_TYPE} in
+        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER")
+            createReqFileEdge
+            ;;
+        "$IMAGE_TYPE_VSPHERE")
+            createReqFileGuest
+            ;;
+        "$IMAGE_TYPE_VSPHERE")
+            createReqFileVSphere
+            ;;
+        *)
+            echo "Unknown s3 image type for: ${IMAGE_TYPE}"
+            exit 1
+    esac
 }
-EOF
-}
-
 
 function checkUploadStatusOptions() {
   local S3_URL
@@ -177,7 +161,7 @@ function verify() {
 
         "${IMAGE_TYPE_VSPHERE}")
             curl "${S3_URL}" --output "${WORKDIR}/disk.vmdk"
-            verifyDisk "${WORKDIR}/disk.vmdk"
+            verifyInVSphere "${WORKDIR}/disk.vmdk"
             ;;
         *)
             greenprint "No validation method for image type ${IMAGE_TYPE}"

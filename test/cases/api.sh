@@ -25,15 +25,15 @@ CLOUD_PROVIDER_GENERIC_S3="generic.s3"
 #
 # Supported Image type names
 #
-IMAGE_TYPE_AWS="aws"
-IMAGE_TYPE_AZURE="azure"
-IMAGE_TYPE_EDGE_COMMIT="edge-commit"
-IMAGE_TYPE_EDGE_CONTAINER="edge-container"
-IMAGE_TYPE_EDGE_INSTALLER="edge-installer"
-IMAGE_TYPE_GCP="gcp"
-IMAGE_TYPE_IMAGE_INSTALLER="image-installer"
-IMAGE_TYPE_GUEST="guest-image"
-IMAGE_TYPE_VSPHERE="vsphere"
+export IMAGE_TYPE_AWS="aws"
+export IMAGE_TYPE_AZURE="azure"
+export IMAGE_TYPE_EDGE_COMMIT="edge-commit"
+export IMAGE_TYPE_EDGE_CONTAINER="edge-container"
+export IMAGE_TYPE_EDGE_INSTALLER="edge-installer"
+export IMAGE_TYPE_GCP="gcp"
+export IMAGE_TYPE_IMAGE_INSTALLER="image-installer"
+export IMAGE_TYPE_GUEST="guest-image"
+export IMAGE_TYPE_VSPHERE="vsphere"
 
 if (( $# > 2 )); then
     echo "$0 does not support more than two arguments"
@@ -86,7 +86,7 @@ mkdir -p "${ARTIFACTS}"
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 # Container image used for cloud provider CLI tools
-CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 
 #
 # Provision the software under test.
@@ -166,12 +166,18 @@ case $CLOUD_PROVIDER in
   "$CLOUD_PROVIDER_AWS_S3")
     source /usr/libexec/tests/osbuild-composer/api/aws.s3.sh
     ;;
+  "$CLOUD_PROVIDER_GENERIC_S3")
+      source /usr/libexec/tests/osbuild-composer/api/generic.s3.sh
+      ;;
   "$CLOUD_PROVIDER_GCP")
     source /usr/libexec/tests/osbuild-composer/api/gcp.sh
     ;;
   "$CLOUD_PROVIDER_AZURE")
     source /usr/libexec/tests/osbuild-composer/api/azure.sh
     ;;
+  *)
+    echo "Unknown cloud provider: ${CLOUD_PROVIDER}"
+    exit 1
 esac
 
 # Verify that this script is running in the right environment.
@@ -218,8 +224,8 @@ trap cleanups EXIT
 sudo dnf install -y rpm-build createrepo
 DUMMYRPMDIR=$(mktemp -d)
 DUMMYSPECFILE="$DUMMYRPMDIR/dummy.spec"
-PAYLOAD_REPO_PORT="9999"
-PAYLOAD_REPO_URL="http://localhost:9999"
+export PAYLOAD_REPO_PORT="9999"
+export PAYLOAD_REPO_URL="http://localhost:9999"
 pushd "$DUMMYRPMDIR"
 
 cat <<EOF > "$DUMMYSPECFILE"
@@ -275,6 +281,7 @@ curl \
 REQUEST_FILE="${WORKDIR}/request.json"
 ARCH=$(uname -m)
 SSH_USER=
+TEST_ID="$(uuidgen)"
 
 # Generate a string, which can be used as a predictable resource name,
 # especially when running the test in CI where we may need to clean up
@@ -283,10 +290,8 @@ CI="${CI:-false}"
 if [[ "$CI" == true ]]; then
   # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
   TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
-else
-  # if not running in Jenkins, generate ID not relying on specific env variables
-  TEST_ID=$(uuidgen);
 fi
+export TEST_ID
 
 if [[ "$ID" == "fedora" ]]; then
   # fedora uses fedora for everything
@@ -298,12 +303,14 @@ else
   # RHEL and centos use cloud-user for other clouds
   SSH_USER="cloud-user"
 fi
+export SSH_USER
 
 # This removes dot from VERSION_ID.
 # ID == rhel   && VERSION_ID == 8.6 => DISTRO == rhel-86
 # ID == centos && VERSION_ID == 8   => DISTRO == centos-8
 # ID == fedora && VERSION_ID == 35  => DISTRO == fedora-35
-DISTRO="$ID-${VERSION_ID//./}"
+export DISTRO="$ID-${VERSION_ID//./}"
+SUBSCRIPTION_BLOCK=
 
 # Only RHEL need subscription block.
 if [[ "$ID" == "rhel" ]]; then
@@ -318,9 +325,8 @@ if [[ "$ID" == "rhel" ]]; then
     }
 EndOfMessage
 )
-else
-  SUBSCRIPTION_BLOCK=''
 fi
+export SUBSCRIPTION_BLOCK
 
 # generate a temp key for user tests
 ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
@@ -401,6 +407,9 @@ function waitForState() {
 
         sleep 30
     done
+
+    # export for use in subcases
+    export UPLOAD_OPTIONS
 }
 
 #
@@ -411,6 +420,7 @@ jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE
 
 sendCompose "$REQUEST_FILE2"
 waitForState "failure"
+
 
 # crashed/stopped/killed worker should result in a failed state
 sendCompose "$REQUEST_FILE"

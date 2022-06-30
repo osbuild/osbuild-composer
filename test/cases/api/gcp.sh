@@ -24,7 +24,7 @@ function cleanup() {
 function installClient() {
   if ! hash gcloud; then
     echo "Using 'gcloud' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_IMAGE_CLOUD_TOOLS}"
 
     # directory mounted to the container, in which gcloud stores the credentials after logging in
     GCP_CMD_CREDS_DIR="${WORKDIR}/gcloud_credentials"
@@ -131,32 +131,37 @@ function verify() {
   # Create SSH keys to use
   GCP_SSH_KEY="$WORKDIR/id_google_compute_engine"
   ssh-keygen -t rsa-sha2-512 -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
-  GCP_SSH_METADATA_FILE="$WORKDIR/gcp-ssh-keys-metadata"
-
-  echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
 
   # create the instance
   # resource ID can have max 62 characters, the $GCP_TEST_ID_HASH contains 56 characters
   GCP_INSTANCE_NAME="vm-$GCP_TEST_ID_HASH"
 
+  # Ensure that we use random GCP region with available 'IN_USE_ADDRESSES' quota
+  # We use the CI variable "GCP_REGION" as the base for expression to filter regions.
+  # It works best if the "GCP_REGION" is set to a storage multi-region, such as "us"
+  local GCP_COMPUTE_REGION
+  GCP_COMPUTE_REGION=$($GCP_CMD compute regions list --filter="name:$GCP_REGION* AND status=UP" | jq -r '.[] | select(.quotas[] as $quota | $quota.metric == "IN_USE_ADDRESSES" and $quota.limit > $quota.usage) | .name' | shuf -n1)
+
   # Randomize the used GCP zone to prevent hitting "exhausted resources" error on each test re-run
-  # disable Shellcheck error as the suggested alternatives are less readable for this use case
-  # shellcheck disable=SC2207
-  local GCP_ZONES=($($GCP_CMD compute zones list --filter="region=$GCP_REGION" | jq '.[] | select(.status == "UP") | .name' | tr -d '"' | tr '\n' ' '))
-  GCP_ZONE=${GCP_ZONES[$((RANDOM % ${#GCP_ZONES[@]}))]}
+  GCP_ZONE=$($GCP_CMD compute zones list --filter="region=$GCP_COMPUTE_REGION AND status=UP" | jq -r '.[].name' | shuf -n1)
+
+  # Pick the smallest '^n\d-standard-\d$' machine type from those available in the zone
+  local GCP_MACHINE_TYPE
+  GCP_MACHINE_TYPE=$($GCP_CMD compute machine-types list --filter="zone=$GCP_ZONE AND name~^n\d-standard-\d$" | jq -r '.[].name' | sort | head -1)
 
   $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
     --zone="$GCP_ZONE" \
     --image-project="$GCP_PROJECT" \
     --image="$GCP_IMAGE_NAME" \
-    --labels=gitlab-ci-test=true \
-    --metadata-from-file=ssh-keys="$GCP_SSH_METADATA_FILE"
+    --machine-type="$GCP_MACHINE_TYPE" \
+    --labels=gitlab-ci-test=true
+
   HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 
   echo "⏱ Waiting for GCP instance to respond to ssh"
   _instanceWaitSSH "$HOST"
 
   # Verify image
-  _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
+  _ssh="$GCP_CMD compute ssh --strict-host-key-checking=no --ssh-key-file=$GCP_SSH_KEY --zone=$GCP_ZONE --quiet $SSH_USER@$GCP_INSTANCE_NAME --"
   _instanceCheck "$_ssh"
 }

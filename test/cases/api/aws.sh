@@ -3,6 +3,10 @@
 source /usr/libexec/tests/osbuild-composer/api/common/aws.sh
 source /usr/libexec/tests/osbuild-composer/api/common/common.sh
 
+function checkEnv() {
+  printenv AWS_REGION AWS_BUCKET V2_AWS_ACCESS_KEY_ID V2_AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
+}
+
 function cleanup() {
   # since this function can be called at any time, ensure that we don't expand unbound variables
   AWS_CMD="${AWS_CMD:-}"
