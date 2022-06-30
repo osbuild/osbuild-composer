@@ -691,8 +691,14 @@ func newDistro(distroName string) distro.Distro {
 
 	// Shared Services
 	edgeServices := []string{
+		"NetworkManager.service", "firewalld.service", "sshd.service",
+	}
+
+	if !(rd.isRHEL() && versionLessThan(rd.osVersion, "8.6")) {
+		// enable fdo-client only on RHEL 8.6+ and CS8
+
 		// TODO(runcom): move fdo-client-linuxapp.service to presets?
-		"NetworkManager.service", "firewalld.service", "sshd.service", "fdo-client-linuxapp.service",
+		edgeServices = append(edgeServices, "fdo-client-linuxapp.service")
 	}
 
 	// Image Definitions
