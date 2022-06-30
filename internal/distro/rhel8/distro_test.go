@@ -1,4 +1,4 @@
-package rhel86_test
+package rhel8_test
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel86"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 )
 
 type rhelFamilyDistro struct {
@@ -22,7 +22,7 @@ type rhelFamilyDistro struct {
 var rhelFamilyDistros = []rhelFamilyDistro{
 	{
 		name:   "rhel",
-		distro: rhel86.New(),
+		distro: rhel8.New(),
 	},
 }
 
@@ -436,7 +436,7 @@ func TestImageTypeAliases(t *testing.T) {
 func TestDistro_ManifestError(t *testing.T) {
 	// Currently, the only unsupported configuration is OSTree commit types
 	// with Kernel boot options
-	r8distro := rhel86.New()
+	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Kernel: &blueprint.KernelCustomization{
@@ -548,12 +548,12 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 	}
 }
 
-func TestRhel86_ListArches(t *testing.T) {
-	arches := rhel86.New().ListArches()
+func TestRHEL8_ListArches(t *testing.T) {
+	arches := rhel8.New().ListArches()
 	assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
 }
 
-func TestRhel86_GetArch(t *testing.T) {
+func TestRHEL8_GetArch(t *testing.T) {
 	arches := []struct {
 		name                  string
 		errorExpected         bool
@@ -594,21 +594,21 @@ func TestRhel86_GetArch(t *testing.T) {
 }
 
 func TestRhel86_Name(t *testing.T) {
-	distro := rhel86.New()
+	distro := rhel8.New()
 	assert.Equal(t, "rhel-86", distro.Name())
 }
 
 func TestRhel86_ModulePlatformID(t *testing.T) {
-	distro := rhel86.New()
+	distro := rhel8.New()
 	assert.Equal(t, "platform:el8", distro.ModulePlatformID())
 }
 
 func TestRhel86_KernelOption(t *testing.T) {
-	distro_test_common.TestDistro_KernelOption(t, rhel86.New())
+	distro_test_common.TestDistro_KernelOption(t, rhel8.New())
 }
 
 func TestDistro_CustomFileSystemManifestError(t *testing.T) {
-	r8distro := rhel86.New()
+	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -636,7 +636,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 }
 
 func TestDistro_TestRootMountPoint(t *testing.T) {
-	r8distro := rhel86.New()
+	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -665,7 +665,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 }
 
 func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
-	r8distro := rhel86.New()
+	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -696,7 +696,7 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 }
 
 func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
-	r8distro := rhel86.New()
+	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -735,7 +735,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 }
 
 func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
-	r8distro := rhel86.New()
+	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -769,7 +769,7 @@ func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
 }
 
 func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
-	r8distro := rhel86.New()
+	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -801,7 +801,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 }
 
 func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
-	r8distro := rhel86.New()
+	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{

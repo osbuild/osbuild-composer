@@ -13,7 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
-	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel86"
+	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )

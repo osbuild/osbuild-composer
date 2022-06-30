@@ -1,4 +1,4 @@
-package rhel86
+package rhel8
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/disk"

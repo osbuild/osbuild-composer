@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	rhel8 "github.com/osbuild/osbuild-composer/internal/distro/rhel86"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 )
 
 // Test that all distros are registered properly and that Registry.List() works.
