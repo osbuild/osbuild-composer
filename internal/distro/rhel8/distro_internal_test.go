@@ -1,4 +1,4 @@
-package rhel86
+package rhel8
 
 import (
 	"math/rand"
