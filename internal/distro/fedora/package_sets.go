@@ -103,15 +103,6 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
-func installerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"isomd5sum",
-			"xorriso",
-		},
-	}
-}
-
 func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
@@ -120,7 +111,6 @@ func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}
 
-	ps = ps.Append(installerBuildPackageSet(t))
 	ps = ps.Append(anacondaBootPackageSet(t))
 
 	return ps
