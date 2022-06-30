@@ -126,6 +126,19 @@ func TestImageType_PackageSetsChains(t *testing.T) {
 					}, nil)
 					for packageSetName := range imageType.PackageSetsChains() {
 						_, ok := imagePkgSets[packageSetName]
+						if !ok {
+							// in the new pipeline generation logic the name of the package
+							// set chains are taken from the pipelines and do not match the
+							// package set names.
+							// TODO: redefine package set chains to make this unneccesary
+							switch packageSetName {
+							case "packages":
+								_, ok = imagePkgSets["os"]
+								if !ok {
+									_, ok = imagePkgSets["ostree-tree"]
+								}
+							}
+						}
 						assert.Truef(t, ok, "package set %q defined in a package set chain is not present in the image package sets", packageSetName)
 					}
 				})

@@ -9256,7 +9256,7 @@
         "check_gpg": true
       }
     ],
-    "packages": [
+    "ostree-tree": [
       {
         "name": "acl",
         "epoch": 0,

@@ -191,23 +191,27 @@ func kernelCount(imgType distro.ImageType) int {
 		},
 	}, nil)
 	n := 0
-	for _, pset := range sets["packages"] {
-		for _, pkg := range pset.Include {
-			for _, kernel := range knownKernels {
-				if kernel == pkg {
-					n++
+	for _, name := range []string{
+		"os", "ostree-tree", "anaconda-tree",
+		"packages", "installer",
+	} {
+		for _, pset := range sets[name] {
+			for _, pkg := range pset.Include {
+				for _, kernel := range knownKernels {
+					if kernel == pkg {
+						n++
+					}
 				}
-			}
 
-		}
-	}
-	for _, iset := range sets["installer"] {
-		for _, pkg := range iset.Include {
-			for _, kernel := range knownKernels {
-				if kernel == pkg {
-					n++
-				}
 			}
+		}
+		if n > 0 {
+			// BUG: some RHEL image types contain both 'packages'
+			// and 'installer' even though only 'installer' is used
+			// this counts the kernel package twice. None of these
+			// sets should appear more than once, so return the count
+			// for the first one that has a kernel.
+			return n
 		}
 	}
 	return n

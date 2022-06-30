@@ -635,30 +635,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		return nil
 	}
 
-	manifestChains := manifest.GetPackageSetChains()
-	// the returned package set chains are indexed by pipeline
-	// name, we need to reindex by package set name
-	// TODO: drop translation, see Manifest()
-	distroChains := make(map[string][]rpmmd.PackageSet)
-	for name, chain := range manifestChains {
-		switch name {
-		case "os":
-			name = osPkgsKey
-		case "ostree-tree":
-			name = osPkgsKey
-		case "container-tree":
-			name = containerPkgsKey
-		case "anaconda-tree":
-			name = installerPkgsKey
-		case "build":
-			name = buildPkgsKey
-		default:
-			panic(fmt.Sprintf("unknown pacakge set name: %s", name))
-		}
-		distroChains[name] = chain
-	}
-
-	return distroChains
+	return manifest.GetPackageSetChains()
 }
 
 func (t *imageType) BuildPipelines() []string {
@@ -762,7 +739,7 @@ func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	distroPackageSets map[string][]rpmmd.PackageSpec,
+	packageSets map[string][]rpmmd.PackageSpec,
 	seed int64) (distro.Manifest, error) {
 
 	manifest, err := t.initializeManifest(customizations, options, repos, nil, seed)
@@ -770,25 +747,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		return distro.Manifest{}, err
 	}
 
-	// TODO: drop transaltion, see GetPackageSets()
-	manifestPackageSets := make(map[string][]rpmmd.PackageSpec)
-	for name, set := range distroPackageSets {
-		switch name {
-		case osPkgsKey:
-			manifestPackageSets["os"] = set
-			manifestPackageSets["ostree-tree"] = set
-		case containerPkgsKey:
-			manifestPackageSets["container-tree"] = set
-		case installerPkgsKey:
-			manifestPackageSets["anaconda-tree"] = set
-		case buildPkgsKey:
-			manifestPackageSets["build"] = set
-		default:
-			panic(fmt.Sprintf("unknown pacakge set name: %s", name))
-		}
-	}
-
-	return manifest.Serialize(manifestPackageSets)
+	return manifest.Serialize(packageSets)
 }
 
 func isMountpointAllowed(mountpoint string) bool {

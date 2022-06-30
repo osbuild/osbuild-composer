@@ -11128,7 +11128,7 @@
         "check_gpg": true
       }
     ],
-    "container": [
+    "container-tree": [
       {
         "name": "alternatives",
         "epoch": 0,
@@ -12870,7 +12870,7 @@
         "check_gpg": true
       }
     ],
-    "packages": [
+    "ostree-tree": [
       {
         "name": "ModemManager",
         "epoch": 0,

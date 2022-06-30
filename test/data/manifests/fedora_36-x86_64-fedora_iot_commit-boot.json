@@ -9802,7 +9802,7 @@
         "check_gpg": true
       }
     ],
-    "packages": [
+    "ostree-tree": [
       {
         "name": "ModemManager",
         "epoch": 0,
