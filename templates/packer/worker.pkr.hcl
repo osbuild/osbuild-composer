@@ -28,8 +28,8 @@ build {
   source "amazon-ebs.image_builder" {
     name = "rhel-8-x86_64"
 
-    # Use a static RHEL 8.5 Cloud Access Image.
-    source_ami = "ami-06f1e6f8b3457ae7c"
+    # Use a static RHEL 8.6 Cloud Access Image.
+    source_ami = "ami-03debf3ebf61b20cd"
     ssh_username = "ec2-user"
     instance_type = "c6a.large"
 
