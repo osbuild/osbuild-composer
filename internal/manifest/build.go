@@ -40,7 +40,18 @@ func (p *BuildPipeline) addDependent(dep Pipeline) {
 }
 
 func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
-	packages := []string{}
+	// TODO: break apart into individual pipelines
+	packages := []string{
+		"dnf",
+		"dosfstools",
+		"e2fsprogs",
+		"policycoreutils",
+		"qemu-img",
+		"selinux-policy-targeted",
+		"systemd",
+		"tar",
+		"xz",
+	}
 
 	for _, pipeline := range p.dependents {
 		packages = append(packages, pipeline.getBuildPackages()...)

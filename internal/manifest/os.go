@@ -156,6 +156,14 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	return chain
 }
 
+func (p *OSPipeline) getBuildPackages() []string {
+	packages := []string{}
+	if p.grubLegacy != "" {
+		packages = append(packages, "grub2-pc")
+	}
+	return packages
+}
+
 func (p *OSPipeline) getOSTreeCommits() []osTreeCommit {
 	commits := []osTreeCommit{}
 	if p.osTreeParent != "" && p.osTreeURL != "" {

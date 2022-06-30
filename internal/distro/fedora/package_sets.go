@@ -15,41 +15,12 @@ import (
 
 // distro-wide build package set
 func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"dnf",
-			"dosfstools",
-			"e2fsprogs",
-			"policycoreutils",
-			"qemu-img",
-			"selinux-policy-targeted",
-			"systemd",
-			"tar",
-			"xz",
-		},
-	}
-
-	switch t.Arch().Name() {
-
-	case distro.X86_64ArchName:
-		ps = ps.Append(x8664BuildPackageSet(t))
-	}
-
-	return ps
-}
-
-// x86_64 build package set
-func x8664BuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"grub2-pc",
-		},
-	}
+	return rpmmd.PackageSet{}
 }
 
 // common ec2 image build package set
 func ec2BuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t)
+	return rpmmd.PackageSet{}
 }
 
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
@@ -76,12 +47,11 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 
 // common iot image build package set
 func iotBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{
-				"rpm-ostree",
-			},
-		})
+	return rpmmd.PackageSet{
+		Include: []string{
+			"rpm-ostree",
+		},
+	}
 }
 
 // installer boot package sets, needed for booting and
@@ -138,13 +108,12 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func installerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{
-				"isomd5sum",
-				"xorriso",
-			},
-		})
+	return rpmmd.PackageSet{
+		Include: []string{
+			"isomd5sum",
+			"xorriso",
+		},
+	}
 }
 
 func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
