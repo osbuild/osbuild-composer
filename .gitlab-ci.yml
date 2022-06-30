@@ -676,6 +676,8 @@ SonarQube:
 ContainerUpload:
   stage: test
   extends: .terraform
+  rules:
+    - !reference [.upstream_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-upload.sh
