@@ -33,6 +33,13 @@ func NewOSTreeCommitPipeline(m *Manifest,
 	return p
 }
 
+func (p *OSTreeCommitPipeline) getBuildPackages() []string {
+	packages := []string{
+		"rpm-ostree",
+	}
+	return packages
+}
+
 func (p *OSTreeCommitPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 

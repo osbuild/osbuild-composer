@@ -62,6 +62,13 @@ func (p *OSTreeCommitServerTreePipeline) getPackageSetChain() []rpmmd.PackageSet
 	}
 }
 
+func (p *OSTreeCommitServerTreePipeline) getBuildPackages() []string {
+	packages := []string{
+		"rpm-ostree",
+	}
+	return packages
+}
+
 func (p *OSTreeCommitServerTreePipeline) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
