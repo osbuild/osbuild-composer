@@ -106,7 +106,7 @@ func (p *AnacondaPipeline) getBuildPackages() []string {
 }
 
 func (p *AnacondaPipeline) getPackageSetChain() []rpmmd.PackageSet {
-	packages := []string{}
+	packages := p.anacondaBootPackageSet()
 	return []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraPackages...),
