@@ -19,9 +19,6 @@ const (
 	GigaByte = 1024 * 1024 * 1024
 	// package set names
 
-	// build package set name
-	buildPkgsKey = "build"
-
 	// main/common os image package set name
 	osPkgsKey = "packages"
 
@@ -75,8 +72,7 @@ var (
 		filename:    "commit.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: iotBuildPackageSet,
-			osPkgsKey:    iotCommitPackageSet,
+			osPkgsKey: iotCommitPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -97,8 +93,7 @@ var (
 		filename:    "container.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: iotBuildPackageSet,
-			osPkgsKey:    iotCommitPackageSet,
+			osPkgsKey: iotCommitPackageSet,
 			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
 				return rpmmd.PackageSet{
 					Include: []string{"nginx"},
@@ -125,7 +120,6 @@ var (
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey:     iotInstallerBuildPackageSet,
 			installerPkgsKey: iotInstallerPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
@@ -145,8 +139,7 @@ var (
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    qcow2CommonPackageSet,
+			osPkgsKey: qcow2CommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -175,8 +168,7 @@ var (
 		filename: "disk.vhd",
 		mimeType: "application/x-vhd",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    vhdCommonPackageSet,
+			osPkgsKey: vhdCommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -208,8 +200,7 @@ var (
 		filename: "disk.vmdk",
 		mimeType: "application/x-vmdk",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    vmdkCommonPackageSet,
+			osPkgsKey: vmdkCommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -238,8 +229,7 @@ var (
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    openstackCommonPackageSet,
+			osPkgsKey: openstackCommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -276,8 +266,7 @@ var (
 		filename: "image.raw",
 		mimeType: "application/octet-stream",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    ec2CommonPackageSet,
+			osPkgsKey: ec2CommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -299,8 +288,7 @@ var (
 		filename: "container.tar",
 		mimeType: "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    containerPackageSet,
+			osPkgsKey: containerPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -581,11 +569,6 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	if _, hasPackages := imageSets[osPkgsKey]; !hasPackages {
 		// should this be possible??
 		mergedSets[osPkgsKey] = rpmmd.PackageSet{}
-	}
-
-	// every image type must define a 'build' package set
-	if _, hasBuild := imageSets[buildPkgsKey]; !hasBuild {
-		panic(fmt.Sprintf("'%s' image type has no '%s' package set defined", t.name, buildPkgsKey))
 	}
 
 	// blueprint packages
