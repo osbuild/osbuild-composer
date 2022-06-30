@@ -64,25 +64,25 @@ func (p BasePipeline) getInline() []string {
 // The build argument is a pipeline representing a build root in which the rest of the
 // pipeline is built. In order to ensure reproducibility a build pipeline must always be
 // provided, except for int he build pipeline itself. When a build pipeline is not provided
-// the build host's filesystem is used as the build root, and in this case a runner must be
-// specified which knows how to interpret the host filesystem as a build root.
+// the build host's filesystem is used as the build root. The runner specifies how to use this
+// pipeline as a build pipeline, by naming the distro it contains. When the host system is used
+// as a build root, then the necessary runner is autodetected.
 func NewBasePipeline(m *Manifest, name string, build *BuildPipeline, runner *string) BasePipeline {
 	p := BasePipeline{
 		manifest: m,
 		name:     name,
 		build:    build,
 	}
-	if runner != nil {
-		if build != nil {
-			panic("both runner and build pipeline specified")
-		}
-		p.runner = *runner
-	} else if build == nil {
-		panic("neither build pipeline nor runner specified")
-	} else {
+	if build != nil {
 		if build.BasePipeline.manifest != m {
 			panic("build pipeline from a different manifest")
 		}
+		if build.BasePipeline.runner == "" {
+			panic("build pipeline does not have runner")
+		}
+	}
+	if runner != nil {
+		p.runner = *runner
 	}
 	return p
 }
