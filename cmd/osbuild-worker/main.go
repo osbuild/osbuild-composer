@@ -464,6 +464,12 @@ func main() {
 		worker.JobTypeContainerResolve: &ContainerResolveJobImpl{
 			AuthFilePath: containersAuthFilePath,
 		},
+		worker.JobTypeAWSEC2Copy: &AWSEC2CopyJobImpl{
+			AWSCreds: awsCredentials,
+		},
+		worker.JobTypeAWSEC2Share: &AWSEC2ShareJobImpl{
+			AWSCreds: awsCredentials,
+		},
 	}
 
 	acceptedJobTypes := []string{}

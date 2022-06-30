@@ -266,29 +266,6 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 
 	snapshotID := importOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
 
-	if len(shareWith) > 0 {
-		logrus.Info("[AWS] 🎥 Sharing ec2 snapshot")
-		var userIds []*string
-		for _, v := range shareWith {
-			// Implicit memory alasing doesn't couse any bug in this case
-			/* #nosec G601 */
-			userIds = append(userIds, &v)
-		}
-		_, err := a.ec2.ModifySnapshotAttribute(
-			&ec2.ModifySnapshotAttributeInput{
-				Attribute:     aws.String("createVolumePermission"),
-				OperationType: aws.String("add"),
-				SnapshotId:    snapshotID,
-				UserIds:       userIds,
-			},
-		)
-		if err != nil {
-			logrus.Warnf("[AWS] 📨 Error sharing ec2 snapshot: %v", err)
-			return nil, err
-		}
-		logrus.Info("[AWS] 📨 Shared ec2 snapshot")
-	}
-
 	// Tag the snapshot with the image name.
 	req, _ := a.ec2.CreateTagsRequest(
 		&ec2.CreateTagsInput{
@@ -348,31 +325,190 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 	}
 
 	if len(shareWith) > 0 {
-		logrus.Info("[AWS] 💿 Sharing ec2 AMI")
-		var launchPerms []*ec2.LaunchPermission
-		for _, id := range shareWith {
-			launchPerms = append(launchPerms, &ec2.LaunchPermission{
-				// Implicit memory alasing doesn't couse any bug in this case
-				/* #nosec G601 */
-				UserId: &id,
-			})
-		}
-		_, err := a.ec2.ModifyImageAttribute(
-			&ec2.ModifyImageAttributeInput{
-				ImageId: registerOutput.ImageId,
-				LaunchPermission: &ec2.LaunchPermissionModifications{
-					Add: launchPerms,
-				},
-			},
-		)
+		err = a.shareSnapshot(snapshotID, shareWith)
 		if err != nil {
-			logrus.Warnf("[AWS] 📨 Error sharing AMI: %v", err)
 			return nil, err
 		}
-		logrus.Info("[AWS] 💿 Shared AMI")
+		err = a.shareImage(registerOutput.ImageId, shareWith)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return registerOutput.ImageId, nil
+}
+
+// target region is determined by the region configured in the aws session
+func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
+	result, err := a.ec2.CopyImage(
+		&ec2.CopyImageInput{
+			Name:          aws.String(name),
+			SourceImageId: aws.String(ami),
+			SourceRegion:  aws.String(sourceRegion),
+		},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	dIInput := &ec2.DescribeImagesInput{
+		ImageIds: []*string{result.ImageId},
+	}
+
+	// Custom waiter which waits indefinitely until a final state
+	w := request.Waiter{
+		Name:        "WaitUntilImageAvailable",
+		MaxAttempts: 0,
+		Delay:       request.ConstantWaiterDelay(15 * time.Second),
+		Acceptors: []request.WaiterAcceptor{
+			{
+				State:   request.SuccessWaiterState,
+				Matcher: request.PathAllWaiterMatch, Argument: "Images[].State",
+				Expected: "available",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "Images[].State",
+				Expected: "failed",
+			},
+		},
+		Logger: a.ec2.Config.Logger,
+		NewRequest: func(opts []request.Option) (*request.Request, error) {
+			var inCpy *ec2.DescribeImagesInput
+			if dIInput != nil {
+				tmp := *dIInput
+				inCpy = &tmp
+			}
+			req, _ := a.ec2.DescribeImagesRequest(inCpy)
+			req.SetContext(aws.BackgroundContext())
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+	err = w.WaitWithContext(aws.BackgroundContext())
+	if err != nil {
+		return *result.ImageId, err
+	}
+
+	// Tag image with name
+	_, err = a.ec2.CreateTags(&ec2.CreateTagsInput{
+		Resources: []*string{result.ImageId},
+		Tags: []*ec2.Tag{
+			{
+				Key:   aws.String("Name"),
+				Value: aws.String(name),
+			},
+		},
+	})
+
+	if err != nil {
+		return *result.ImageId, err
+	}
+
+	imgs, err := a.ec2.DescribeImages(dIInput)
+	if err != nil {
+		return *result.ImageId, err
+	}
+	if len(imgs.Images) == 0 {
+		return *result.ImageId, fmt.Errorf("Unable to find image with id: %v", ami)
+	}
+
+	// Tag snapshot with name
+	for _, bdm := range imgs.Images[0].BlockDeviceMappings {
+		_, err = a.ec2.CreateTags(&ec2.CreateTagsInput{
+			Resources: []*string{bdm.Ebs.SnapshotId},
+			Tags: []*ec2.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String(name),
+				},
+			},
+		})
+		if err != nil {
+			return *result.ImageId, err
+		}
+	}
+
+	return *result.ImageId, nil
+}
+
+func (a *AWS) ShareImage(ami string, userIds []string) error {
+	imgs, err := a.ec2.DescribeImages(
+		&ec2.DescribeImagesInput{
+			ImageIds: []*string{aws.String(ami)},
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if len(imgs.Images) == 0 {
+		return fmt.Errorf("Unable to find image with id: %v", ami)
+	}
+
+	for _, bdm := range imgs.Images[0].BlockDeviceMappings {
+		err = a.shareSnapshot(bdm.Ebs.SnapshotId, userIds)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = a.shareImage(aws.String(ami), userIds)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *AWS) shareImage(ami *string, userIds []string) error {
+	logrus.Info("[AWS] 🎥 Sharing ec2 snapshot")
+	var uIds []*string
+	for i := range userIds {
+		uIds = append(uIds, &userIds[i])
+	}
+
+	logrus.Info("[AWS] 💿 Sharing ec2 AMI")
+	var launchPerms []*ec2.LaunchPermission
+	for _, id := range uIds {
+		launchPerms = append(launchPerms, &ec2.LaunchPermission{
+			UserId: id,
+		})
+	}
+	_, err := a.ec2.ModifyImageAttribute(
+		&ec2.ModifyImageAttributeInput{
+			ImageId: ami,
+			LaunchPermission: &ec2.LaunchPermissionModifications{
+				Add: launchPerms,
+			},
+		},
+	)
+	if err != nil {
+		logrus.Warnf("[AWS] 📨 Error sharing AMI: %v", err)
+		return err
+	}
+	logrus.Info("[AWS] 💿 Shared AMI")
+	return nil
+}
+
+func (a *AWS) shareSnapshot(snapshotId *string, userIds []string) error {
+	logrus.Info("[AWS] 🎥 Sharing ec2 snapshot")
+	var uIds []*string
+	for i := range userIds {
+		uIds = append(uIds, &userIds[i])
+	}
+	_, err := a.ec2.ModifySnapshotAttribute(
+		&ec2.ModifySnapshotAttributeInput{
+			Attribute:     aws.String(ec2.SnapshotAttributeNameCreateVolumePermission),
+			OperationType: aws.String("add"),
+			SnapshotId:    snapshotId,
+			UserIds:       uIds,
+		},
+	)
+	if err != nil {
+		logrus.Warnf("[AWS] 📨 Error sharing ec2 snapshot: %v", err)
+		return err
+	}
+	logrus.Info("[AWS] 📨 Shared ec2 snapshot")
+	return nil
 }
 
 func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2.Image) error {
