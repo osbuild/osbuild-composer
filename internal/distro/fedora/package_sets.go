@@ -50,59 +50,6 @@ func iotBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{}
 }
 
-// installer boot package sets, needed for booting and
-// also in the build host
-
-func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{}
-
-	grubCommon := rpmmd.PackageSet{
-		Include: []string{
-			"grub2-tools",
-			"grub2-tools-extra",
-			"grub2-tools-minimal",
-		},
-	}
-
-	efiCommon := rpmmd.PackageSet{
-		Include: []string{
-			"efibootmgr",
-		},
-	}
-
-	switch t.Arch().Name() {
-	case distro.X86_64ArchName:
-		ps = ps.Append(grubCommon)
-		ps = ps.Append(efiCommon)
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"grub2-efi-x64",
-				"grub2-efi-x64-cdboot",
-				"grub2-pc",
-				"grub2-pc-modules",
-				"shim-x64",
-				"syslinux",
-				"syslinux-nonlinux",
-			},
-		})
-	case distro.Aarch64ArchName:
-		ps = ps.Append(grubCommon)
-		ps = ps.Append(efiCommon)
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"grub2-efi-aa64-cdboot",
-				"grub2-efi-aa64",
-				"shim-aa64",
-			},
-		})
-
-	default:
-		panic(fmt.Sprintf("unsupported arch: %s", t.Arch().Name()))
-	}
-
-	return ps
-}
-
 func iotInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{}
 }
@@ -627,8 +574,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"xz",
 		},
 	})
-
-	ps = ps.Append(anacondaBootPackageSet(t))
 
 	r, err := strconv.Atoi(t.Arch().Distro().Releasever())
 	if err != nil {
