@@ -46,7 +46,7 @@ function cleanup() {
 function installClient() {
   if ! hash az; then
     echo "Using 'azure-cli' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_IMAGE_CLOUD_TOOLS}"
 
     # directory mounted to the container, in which azure-cli stores the credentials after logging in
     AZURE_CMD_CREDS_DIR="${WORKDIR}/azure-cli_credentials"
