@@ -63,6 +63,13 @@ func (p *ISOTreePipeline) getOSTreeCommits() []osTreeCommit {
 	}
 }
 
+func (p *ISOTreePipeline) getBuildPackages() []string {
+	packages := []string{
+		"rpm-ostree",
+	}
+	return packages
+}
+
 func (p *ISOTreePipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 

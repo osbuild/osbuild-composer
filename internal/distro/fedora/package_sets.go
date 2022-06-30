@@ -47,11 +47,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 
 // common iot image build package set
 func iotBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"rpm-ostree",
-		},
-	}
+	return rpmmd.PackageSet{}
 }
 
 // installer boot package sets, needed for booting and
@@ -131,9 +127,7 @@ func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func iotInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return anacondaBuildPackageSet(t).Append(
-		iotBuildPackageSet(t),
-	)
+	return anacondaBuildPackageSet(t)
 }
 
 // BOOT PACKAGE SETS

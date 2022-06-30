@@ -161,6 +161,9 @@ func (p *OSPipeline) getBuildPackages() []string {
 	if p.grubLegacy != "" {
 		packages = append(packages, "grub2-pc")
 	}
+	if p.osTree {
+		packages = append(packages, "rpm-ostree")
+	}
 	return packages
 }
 
