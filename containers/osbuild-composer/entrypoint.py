@@ -14,6 +14,7 @@ import signal
 import socket
 import subprocess
 import sys
+import time
 
 
 class Cli(contextlib.AbstractContextManager):
@@ -32,6 +33,14 @@ class Cli(contextlib.AbstractContextManager):
             argument_default=None,
             description="Containerized OSBuild Composer",
             prog="container/osbuild-composer",
+        )
+
+        self._parser.add_argument(
+            "--shutdown-wait-period",
+            type=int,
+            default=0,
+            dest="shutdown_wait_period",
+            help="Wait period in seconds before terminating child processes",
         )
 
         # --[no-]composer-api
@@ -325,6 +334,8 @@ class Cli(contextlib.AbstractContextManager):
         sockets = self._prepare_sockets()
 
         def handler(signum, frame):
+            if self.args.shutdown_wait_period:
+                time.sleep(self.args.shutdown_wait_period)
             proc_composer.terminate()
             proc_worker.terminate()
             proc_dnf_json.terminate()
