@@ -185,12 +185,18 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		kojiTarget.OsbuildArtifact.ExportName = ir.imageType.Exports()[0]
 		kojiTarget.ImageName = kojiFilename
 
+		targets := []*target.Target{kojiTarget}
+		// add any cloud upload target if defined
+		if ir.target != nil {
+			targets = append(targets, ir.target)
+		}
+
 		buildID, err := s.workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{
 			PipelineNames: &worker.PipelineNames{
 				Build:   ir.imageType.BuildPipelines(),
 				Payload: ir.imageType.PayloadPipelines(),
 			},
-			Targets:            []*target.Target{kojiTarget},
+			Targets:            targets,
 			ManifestDynArgsIdx: common.IntToPtr(1),
 		}, []uuid.UUID{initID, manifestJobID}, channel)
 		if err != nil {
