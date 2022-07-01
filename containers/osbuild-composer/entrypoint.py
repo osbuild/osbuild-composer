@@ -127,34 +127,12 @@ class Cli(contextlib.AbstractContextManager):
             help="Disable the weldr-API",
         )
 
-        # --[no-]dnf-json
-        self._parser.add_argument(
-            "--dnf-json",
-            action="store_true",
-            dest="dnf_json",
-            help="Enable  dnf-json",
-        )
-        self._parser.add_argument(
-            "--no-dnf-json",
-            action="store_false",
-            dest="dnf_json",
-            help="Disable dnf-json",
-        )
-        self._parser.add_argument(
-            "--dnf-json-port",
-            type=int,
-            default=0,
-            dest="dnf_json_port",
-            help="Specify the port dnf-json should listen on",
-        )
-
         self._parser.set_defaults(
             builtin_worker=False,
             composer_api=False,
             local_worker_api=False,
             remote_worker_api=False,
             weldr_api=False,
-            dnf_json=False,
         )
 
         return self._parser.parse_args(self._argv[1:])
@@ -292,44 +270,11 @@ class Cli(contextlib.AbstractContextManager):
             preexec_fn=preexec_setenv,
         )
 
-    def _spawn_dnf_json(self):
-        cmd = [
-            "/usr/libexec/osbuild-composer/dnf-json",
-        ]
-
-        if self.args.dnf_json_port:
-            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-            self._exitstack.enter_context(contextlib.closing(sock))
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-            sock.bind(("::", self.args.dnf_json_port))
-            sock.listen()
-        else:
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self._exitstack.enter_context(contextlib.closing(sock))
-            os.makedirs("/run/osbuild-dnf-json/", exist_ok=True)
-            sock.bind("/run/osbuild-dnf-json/api.sock")
-            sock.listen()
-
-        dnfenv = os.environ.copy()
-        dnfenv["LISTEN_FDS"] = "1"
-        dnfenv["LISTEN_FD"] = str(sock.fileno())
-
-        return subprocess.Popen(
-            cmd,
-            cwd="/usr/libexec/osbuild-composer",
-            stdin=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-            env=dnfenv,
-            pass_fds=[sock.fileno()]
-        )
-
     def run(self):
         """Program Runtime"""
 
         proc_composer = None
         proc_worker = None
-        proc_dnf_json = None
         res = 0
         sockets = self._prepare_sockets()
 
@@ -338,7 +283,6 @@ class Cli(contextlib.AbstractContextManager):
                 time.sleep(self.args.shutdown_wait_period)
             proc_composer.terminate()
             proc_worker.terminate()
-            proc_dnf_json.terminate()
 
         signal.signal(signal.SIGTERM, handler)
 
@@ -349,9 +293,6 @@ class Cli(contextlib.AbstractContextManager):
         try:
             if self.args.builtin_worker:
                 proc_worker = self._spawn_worker()
-
-            if self.args.dnf_json:
-                proc_dnf_json = self._spawn_dnf_json()
 
             if any([self.args.weldr_api, self.args.composer_api, self.args.local_worker_api, self.args.remote_worker_api]):
                 proc_composer = self._spawn_composer(sockets)
@@ -364,11 +305,6 @@ class Cli(contextlib.AbstractContextManager):
                     proc_worker.terminate()
                 proc_worker.wait()
 
-            if proc_dnf_json:
-                if proc_composer:
-                    proc_dnf_json.terminate()
-                proc_dnf_json.wait()
-
         except KeyboardInterrupt:
             if proc_composer:
                 proc_composer.terminate()
@@ -376,14 +312,9 @@ class Cli(contextlib.AbstractContextManager):
             if proc_worker:
                 proc_worker.terminate()
                 proc_worker.wait()
-            if proc_dnf_json:
-                proc_dnf_json.terminate()
-                proc_dnf_json.wait()
         except:
             if proc_worker:
                 proc_worker.kill()
-            if proc_dnf_json:
-                proc_dnf_json.kill()
             if proc_composer:
                 proc_composer.kill()
             raise
