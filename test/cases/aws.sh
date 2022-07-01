@@ -209,32 +209,20 @@ $AWS_CMD ec2 create-tags \
 if [[ "$ID" == "fedora" ]]; then
   # fedora uses fedora
   SSH_USER="fedora"
-  DISTRO_HASHICORP_REPO="fedora"
 else
   # RHEL and centos use ec2-user
   SSH_USER="ec2-user"
-  DISTRO_HASHICORP_REPO="RHEL"
 fi
 
-greenprint "Cloning cloud-image-val from upstream"
+greenprint "Pulling cloud-image-val container"
 
-release_version="v0.2.3"
-git clone https://github.com/osbuild/cloud-image-val --branch "${release_version}"
+CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:latest"
+
+sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_CLOUD_IMAGE_VAL}
 
 greenprint "Running cloud-image-val on generated image"
 
-pushd cloud-image-val
-
-sudo dnf install -y python3-pip unzip make dnf-plugins-core
-
-sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/"${DISTRO_HASHICORP_REPO}"/hashicorp.repo
-sudo dnf -y install terraform
-
-sudo pip3 install --upgrade pip
-# pytest 7.1.1 requires Python >= 3.7 which isn't available on RHEL 8
-#sudo pip3 install -r requirements.txt
-
-tee "resource-file.json" <<EOF
+tee "${TEMPDIR}/resource-file.json" <<EOF
 {
     "provider": "aws",
     "instances": [
@@ -243,22 +231,22 @@ tee "resource-file.json" <<EOF
             "region": "us-east-1",
             "instance_type": "t3a.micro",
             "username": "$SSH_USER",
-            "name": "testing-image"
+            "name": "civ-testing-image"
         }
     ]
 }
 EOF
 
-# disabled b/c of dependency issues
-RESULTS=1
-# AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
-# AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
-# python3 cloud-image-val.py -r resource-file.json -d -o report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
+sudo ${CONTAINER_RUNTIME} run \
+    -a stdout -a stderr \
+    -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
+    -e AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY}" \
+    -e AWS_REGION="${AWS_REGION}" \
+    -v "${TEMPDIR}":/tmp:Z \
+    ${CONTAINER_CLOUD_IMAGE_VAL} \
+    python cloud-image-val.py -r /tmp/resource-file.json -d -o /tmp/report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
 
-# copy the report to artifacts folder
-#cp report.html "${ARTIFACTS}"
-
-popd
+mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
 
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
