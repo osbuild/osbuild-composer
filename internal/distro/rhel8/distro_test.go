@@ -593,12 +593,12 @@ func TestRHEL8_GetArch(t *testing.T) {
 	}
 }
 
-func TestRhel86_Name(t *testing.T) {
+func TestRhel8_Name(t *testing.T) {
 	distro := rhel8.New()
-	assert.Equal(t, "rhel-86", distro.Name())
+	assert.Equal(t, "rhel-8", distro.Name())
 }
 
-func TestRhel86_ModulePlatformID(t *testing.T) {
+func TestRhel8_ModulePlatformID(t *testing.T) {
 	distro := rhel8.New()
 	assert.Equal(t, "platform:el8", distro.ModulePlatformID())
 }
