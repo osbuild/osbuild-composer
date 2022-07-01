@@ -301,12 +301,8 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// get exports for all job's targets
 	exports := jobArgs.OsbuildExports()
 	if len(exports) == 0 {
-		// job did not define exports, likely coming from an older version of composer
-		// fall back to default "assembler"
-		exports = []string{"assembler"}
-	} else if len(exports) > 1 {
-		// this worker only supports returning one (1) export
-		return fmt.Errorf("at most one build artifact can be exported")
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "no osbuild export specified for the job")
+		return nil
 	}
 
 	// Run osbuild and handle two kinds of errors
