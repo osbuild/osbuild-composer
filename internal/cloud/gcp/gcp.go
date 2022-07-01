@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1"
 	compute "cloud.google.com/go/compute/apiv1"
@@ -63,29 +62,6 @@ func NewFromFile(path string) (*GCP, error) {
 		return nil, fmt.Errorf("cannot load GCP credentials from file %q: %v", path, err)
 	}
 	return New(gcpCredentials)
-}
-
-// GetCredentialsFromEnv reads the service account credentials JSON file from
-// the path pointed to by the environment variable name stored in
-// 'GCPCredentialsEnvName'. If the content of the JSON file was read successfully,
-// its content is returned as []byte, otherwise nil is returned with proper error.
-func GetCredentialsFromEnv() ([]byte, error) {
-	credsPath, exists := os.LookupEnv(GCPCredentialsEnvName)
-
-	if !exists {
-		return nil, fmt.Errorf("'%s' env variable is not set", GCPCredentialsEnvName)
-	}
-	if credsPath == "" {
-		return nil, fmt.Errorf("'%s' env variable is empty", GCPCredentialsEnvName)
-	}
-
-	var err error
-	credentials, err := ioutil.ReadFile(credsPath)
-	if err != nil {
-		return nil, fmt.Errorf("Error while reading credentials file: %s", err)
-	}
-
-	return credentials, nil
 }
 
 // GetProjectID returns a string with the Project ID of the project, used for
