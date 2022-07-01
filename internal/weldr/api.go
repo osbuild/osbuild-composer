@@ -2347,12 +2347,21 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	var packages []rpmmd.PackageSpec
+	// TODO: introduce a way to query these from the manifest / image type
+	// BUG: installer/container image types will have empty package sets
+	if packages = packageSets["packages"]; len(packages) == 0 {
+		if packages = packageSets["os"]; len(packages) == 0 {
+			packages = packageSets["ostree-tree"]
+		}
+	}
+
 	if testMode == "1" {
 		// Create a failed compose
-		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false, packageSets["packages"])
+		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false, packages)
 	} else if testMode == "2" {
 		// Create a successful compose
-		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, true, packageSets["packages"])
+		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, true, packages)
 	} else {
 		var jobId uuid.UUID
 
@@ -2365,7 +2374,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			},
 		}, "")
 		if err == nil {
-			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId, packageSets["packages"])
+			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId, packages)
 		}
 	}
 
