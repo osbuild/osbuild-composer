@@ -26,7 +26,11 @@
         }
       ],
       "modules": [],
-      "groups": [],
+      "groups": [
+        {
+          "name": "core"
+        }
+      ],
       "customizations": {
         "hostname": "my-host",
         "kernel": {
@@ -1224,6 +1228,9 @@
                     "id": "sha256:6847df0f848640e440e8439003ab71bcfd36298af45ec0228d08a86a5a02a8ba"
                   },
                   {
+                    "id": "sha256:e87ba3e040f1cd2644c94c7b01bf708862bff63ccb75eff0ff938dc306b74aa8"
+                  },
+                  {
                     "id": "sha256:96b688b61ae8fe4ce6c0562b359826ec05941d2259212600455b34ef119446cc"
                   },
                   {
@@ -1264,6 +1271,12 @@
                   },
                   {
                     "id": "sha256:7b8b3d31e3ddd80fd39bf396122bb4b38582f090889b7d465e0db9eb8d6a7bf2"
+                  },
+                  {
+                    "id": "sha256:8fc3ad5da21ae091841aa3d0b83e7a810f8ced5b8b39e46ed74c6695d11036f9"
+                  },
+                  {
+                    "id": "sha256:4b65b967f3bb1f46a7197b7ec1cf69c2980afd5d299a8927822b699312dd727f"
                   },
                   {
                     "id": "sha256:8f358e94ac789a4718858107e7aa191e8b64566c9731c0d1d9b557c6fe3f8bec"
@@ -1371,7 +1384,64 @@
                     "id": "sha256:9ca4a4312d07837a306777aa24401b8826be4a859683ba324c0744c6a26e6a4a"
                   },
                   {
+                    "id": "sha256:c6f01a5eb0dd53a66f0e433c27349a5d026fbc6d5fb267381c279e187b39f0d6"
+                  },
+                  {
+                    "id": "sha256:737dae9229a5bcb2777a483dbb2bd6dfec4d49cc484c1eebf8975651f665b0c1"
+                  },
+                  {
+                    "id": "sha256:4cc5783b8a274fdf5fffae65bc6d799e414c695b6c700bc426f7f89cb6195618"
+                  },
+                  {
+                    "id": "sha256:b8405d31d166d748ba06bc6cb413f6b8fbe4c1c897fba9ff21541efb782bf4e8"
+                  },
+                  {
+                    "id": "sha256:ad144b7e196d24b22f2cf03d9f2d43174c90adb7e29868413bd3ae3dab37b310"
+                  },
+                  {
+                    "id": "sha256:c884a538dac3f5cd57b1a256ad57320d3057f34eb44aea7cbd7c0facef8a0039"
+                  },
+                  {
                     "id": "sha256:5a8849d6663507918d05b92372ee57415c609050b80040b896bf952322a9159c"
+                  },
+                  {
+                    "id": "sha256:4087c798c3ba556b589a37f172c0de42fbb53dbb1930726d87aef3f5fe45a4a0"
+                  },
+                  {
+                    "id": "sha256:3e8e2a991ffed874a3f454d23eb3082744db8459257bfcf47f542f9edcf1ecb4"
+                  },
+                  {
+                    "id": "sha256:0403842bda6dbbde303e9551f5b32c09d262cc8a7938b442e62bc5981f4a3f40"
+                  },
+                  {
+                    "id": "sha256:bd5aa8dd6e421f4184293c1d6458c8785939930505d988eb4f4c72d5932c30e6"
+                  },
+                  {
+                    "id": "sha256:40a65199323b655501868b99dd331647627333d4e797080fbf59d05a1e302dcd"
+                  },
+                  {
+                    "id": "sha256:5ee54ba9a16859ab501b65e05773c6160ed32b7af77a07ba455a32acd588310f"
+                  },
+                  {
+                    "id": "sha256:ceb21038ee98497eac986fc41b745946cd1147b0455530a4fff7d6f1e14ade57"
+                  },
+                  {
+                    "id": "sha256:6a3900586d0a4c739e815266dc0000e4c52fcf45c1a4e5fce5c261b1f951b6ab"
+                  },
+                  {
+                    "id": "sha256:1f97d015b42e723f26331f8dc9d5a8a679bf62da0249dab28a9c1128a2a5080f"
+                  },
+                  {
+                    "id": "sha256:45369f88290727e93a36487d1a2fbcbffee55aa61f24075d10bb92fffdc403e8"
+                  },
+                  {
+                    "id": "sha256:9f1e0817bceecb7eb648088aaeeb7c60b43b6d33738809c1b9f567f83b94b267"
+                  },
+                  {
+                    "id": "sha256:2bad17b14cc7cdf2ef2cdf2e7efa2ed59f0324f062c7995f63c24cd20eb223d0"
+                  },
+                  {
+                    "id": "sha256:5794bfa8281feb973580057303330ec867575261e95ebe40f4bee15c6e5f4072"
                   },
                   {
                     "id": "sha256:2fcefb5065b07006f745af625c46065558508dee77f6c2eb80b15f57eece8253"
@@ -1545,7 +1615,16 @@
                     "id": "sha256:7c37dcbae4e2c9b462b0b7e80e9035223b35d66624a63be0f35628aecb49efca"
                   },
                   {
+                    "id": "sha256:3ad1949d822bdd27ec8728bee2eb687a54c06f8db9ebc83219a2358010d61414"
+                  },
+                  {
+                    "id": "sha256:7bd2cee99c823ad346c468f13d3a4135c7f3da30ec23277a3eaff5aff62f0c7f"
+                  },
+                  {
                     "id": "sha256:8894b94817b92b4aba9aa1dad80b3a5fac2ecb684944ef3cb807df0fe96ee136"
+                  },
+                  {
+                    "id": "sha256:07b9c5686f4dc461ff93c6399599552d58c63d8017fc6996ecd2ad575438ea22"
                   },
                   {
                     "id": "sha256:ab3803bc2d76675bee7cb0b6a6cb0cf3b43aa6866c5ce020f249e9e97c479633"
@@ -1771,6 +1850,9 @@
                   },
                   {
                     "id": "sha256:dd433817f0c1c6a81b103208cb587490ee93d74888a4df8e5f585e2df6087a40"
+                  },
+                  {
+                    "id": "sha256:6d7462af7a992e2e54b38042dcb97465f2d049db0cfbba41b8f71a8d5e98b845"
                   },
                   {
                     "id": "sha256:e2e45f9ad3fa2d15b62b0d166975cf7c1ba94791cbfa305ab22086ceedff8867"
@@ -2013,6 +2095,9 @@
                     "id": "sha256:3812274c6d408e9b35b0c43f29004e451eee2aaeb57914129b9447dab62879e6"
                   },
                   {
+                    "id": "sha256:ad49ef3c8c1e3bf2f8ec04b22a7778074550087ec5ba6068f0783b8d10f45382"
+                  },
+                  {
                     "id": "sha256:43a35014f2f99cf98913ba38f7513627c93329e279903cd471b632dce7a75bd3"
                   },
                   {
@@ -2061,6 +2146,9 @@
                     "id": "sha256:6ac86e716545bfde2c56ca9632aa35d211386a94251aecd44749f3998dbe4732"
                   },
                   {
+                    "id": "sha256:d86a77e7a52c5d4ee31ed37c29cf4712400555f616f54cc86b51906ae28ff1e5"
+                  },
+                  {
                     "id": "sha256:3446bbd5d26c3a1b8cd64c077ae4bbeea8ef2ef349c590297bbe2a53e18ce9e6"
                   },
                   {
@@ -2101,6 +2189,12 @@
                   },
                   {
                     "id": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
+                  },
+                  {
+                    "id": "sha256:7f2436df92ce3dacaf5a52d988e65b2cbfc6af8be917bdc14119940480efd7bb"
+                  },
+                  {
+                    "id": "sha256:96b090a6696ca4c8b3f701c3a7b95b91c892db389e023c4b2d500a5162e43e8d"
                   },
                   {
                     "id": "sha256:c8d1642d73c0f48e46bbaff9866bdc60ea70531c8793724eb9f36eedc5d8b98e"
@@ -2398,6 +2492,15 @@
                   },
                   {
                     "id": "sha256:6ed9fed1c5b4845fd82faf0e4a40c9478ac33878508487113801c4580e30baf1"
+                  },
+                  {
+                    "id": "sha256:8432482ac22177c4598c8bb899a698b353c0c833907fce1a04f6fd3551439025"
+                  },
+                  {
+                    "id": "sha256:7f7ce92ab65d55a9dd3bd83b387e2f7d5af71516048e4538718ab5001110024e"
+                  },
+                  {
+                    "id": "sha256:6f366eb623287dfcd9f6d3bc7a6bffcceccf7f4f9842b20fabc6b0dc2443261e"
                   },
                   {
                     "id": "sha256:e888454f4620debf3bdd76b59444e30ef5c2c8f81912ac6a37f525dc3eae7810"
@@ -2967,6 +3070,9 @@
           "sha256:0213cdcd7a4c7ac19173595b122392bbe16af8f1bb9941dd3c8726155efd6ea0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/numactl-libs-2.0.12-13.el8.s390x.rpm"
           },
+          "sha256:0403842bda6dbbde303e9551f5b32c09d262cc8a7938b442e62bc5981f4a3f40": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl105-firmware-18.168.6.1-105.el8.1.noarch.rpm"
+          },
           "sha256:042abcbf2f597461530a1519a2c13bcc3ab9ecfde8d25983fe1a544784fe838b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/policycoreutils-2.9-18.el8.s390x.rpm"
           },
@@ -2984,6 +3090,9 @@
           },
           "sha256:076bdcf066fabe9c611ceee12665d735136ecd306ec4c1e608bb1e0a4704ae55": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/python3-prettytable-0.7.2-14.el8.noarch.rpm"
+          },
+          "sha256:07b9c5686f4dc461ff93c6399599552d58c63d8017fc6996ecd2ad575438ea22": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libnftnl-1.1.5-5.el8.s390x.rpm"
           },
           "sha256:08178dfd67abc7e7984e94e62289d78ce84ead317c512ccb6596f7a752984dc7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libevent-2.1.8-5.el8.s390x.rpm"
@@ -3141,6 +3250,9 @@
           "sha256:1eeea441a0bf032ae4252a32b2780418f11248cfab14027adbde3c3dd6d94c71": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/python3-unbound-1.7.3-17.el8.s390x.rpm"
           },
+          "sha256:1f97d015b42e723f26331f8dc9d5a8a679bf62da0249dab28a9c1128a2a5080f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl5150-firmware-8.24.2.2-105.el8.1.noarch.rpm"
+          },
           "sha256:2020a1fe4a1643ebdd76f6ae3a0942f115e80279625d54a783f804711915e5a3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/cracklib-2.9.6-15.el8.s390x.rpm"
           },
@@ -3225,6 +3337,9 @@
           "sha256:2a45920a9540e5057920f7c987d3daf910240a6d1ee63d1fa80fcdf3cee4fd71": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/xz-libs-5.2.4-3.el8.s390x.rpm"
           },
+          "sha256:2bad17b14cc7cdf2ef2cdf2e7efa2ed59f0324f062c7995f63c24cd20eb223d0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl6050-firmware-41.28.5.1-105.el8.1.noarch.rpm"
+          },
           "sha256:2cd240f59d6570295931d54dfb392604f524572cfe252b1b1c8cec7793736e4d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/perl-threads-shared-1.58-2.el8.s390x.rpm"
           },
@@ -3306,6 +3421,9 @@
           "sha256:3a9aede6732c73278d74c413ad9559c1ccf0c0bbdfd1b61734cf984e75d20367": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-configobj-5.0.6-11.el8.noarch.rpm"
           },
+          "sha256:3ad1949d822bdd27ec8728bee2eb687a54c06f8db9ebc83219a2358010d61414": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libnetfilter_conntrack-1.0.6-5.el8.s390x.rpm"
+          },
           "sha256:3b1f1d599412fa0dc473e9ab4a37d295941d2493dabea4c0af2bb9ddd72844fb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/rhsm-icons-1.28.25-1.el8.noarch.rpm"
           },
@@ -3323,6 +3441,9 @@
           },
           "sha256:3e1977c9b662e295f67e2114694d4a11d87215346cd7836c8fe8b9cec050f357": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/readline-7.0-10.el8.s390x.rpm"
+          },
+          "sha256:3e8e2a991ffed874a3f454d23eb3082744db8459257bfcf47f542f9edcf1ecb4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl1000-firmware-39.31.5.1-105.el8.1.noarch.rpm"
           },
           "sha256:3e9dff1e55f3d4121bb4d85839f0e26a05bb95ed652abbe15535167528226414": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/python3-pyserial-3.1.1-8.el8.noarch.rpm"
@@ -3348,6 +3469,12 @@
           "sha256:4019e427bf69ed70e3a3cdfdcdd6771bcee1484f8e83bb69539a9e6530baddf1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/perl-Time-Local-1.280-1.el8.noarch.rpm"
           },
+          "sha256:4087c798c3ba556b589a37f172c0de42fbb53dbb1930726d87aef3f5fe45a4a0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl100-firmware-39.31.5.1-105.el8.1.noarch.rpm"
+          },
+          "sha256:40a65199323b655501868b99dd331647627333d4e797080fbf59d05a1e302dcd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl2000-firmware-18.168.6.1-105.el8.1.noarch.rpm"
+          },
           "sha256:40e39bd372ee233258f6c0b64ae62f5065d3c7bff91c891f2e0949b2ffa6e277": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/glib-networking-2.56.1-1.1.el8.s390x.rpm"
           },
@@ -3371,6 +3498,9 @@
           },
           "sha256:4413f313143884c82c5ac86609da4b9b9b174dc68ed7ff3e82b4d0cca132cf01": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/openldap-2.4.46-18.el8.s390x.rpm"
+          },
+          "sha256:45369f88290727e93a36487d1a2fbcbffee55aa61f24075d10bb92fffdc403e8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl6000-firmware-9.221.4.1-105.el8.1.noarch.rpm"
           },
           "sha256:4682cfac60ce5f220640c3f7468c39fa2805bcc281cf464fc98c273bace1e579": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libksba-1.3.5-7.el8.s390x.rpm"
@@ -3411,8 +3541,14 @@
           "sha256:4b12fc6f2004fb899b0c06c462bee1932fef97112267e3784e8519ebb42ddede": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libverto-0.3.0-5.el8.s390x.rpm"
           },
+          "sha256:4b65b967f3bb1f46a7197b7ec1cf69c2980afd5d299a8927822b699312dd727f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/firewalld-filesystem-0.9.3-11.el8.noarch.rpm"
+          },
           "sha256:4ba3cf1eca6f6176c4e45dfa058f4055292d80d6712b4c008257d397f7f1cf92": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/which-2.21-17.el8.s390x.rpm"
+          },
+          "sha256:4cc5783b8a274fdf5fffae65bc6d799e414c695b6c700bc426f7f89cb6195618": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/ipset-libs-7.1-1.el8.s390x.rpm"
           },
           "sha256:4d1f1a45a34e3eab4b663c895b8378a3b672fd408b3d67a31c522f1661fc98f3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/python3-kickstart-3.16.14-1.el8.noarch.rpm"
@@ -3465,6 +3601,9 @@
           "sha256:56cf527ee4042faa47a078eebc00e9a58e6b634db2ec55413451d542ca3b95d3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/mariadb-connector-c-3.1.11-2.el8_3.s390x.rpm"
           },
+          "sha256:5794bfa8281feb973580057303330ec867575261e95ebe40f4bee15c6e5f4072": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl7260-firmware-25.30.13.0-105.el8.1.noarch.rpm"
+          },
           "sha256:589fa333c866d9a59bc607ec6c45b7df30c8602c80c16b2aac2c0f916ebed6e7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-decorator-4.2.1-2.el8.noarch.rpm"
           },
@@ -3512,6 +3651,9 @@
           },
           "sha256:5eb62b94a6f31bde8e6d571fb4f45e98fc93b2a2d10543d28afb9e275088951d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/cairo-gobject-1.15.12-3.el8.s390x.rpm"
+          },
+          "sha256:5ee54ba9a16859ab501b65e05773c6160ed32b7af77a07ba455a32acd588310f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl2030-firmware-18.168.6.1-105.el8.1.noarch.rpm"
           },
           "sha256:5f036118e9f0968aadee27fc9842f9b42d94be05b1800d1d9c7877d036775d3e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/usermode-1.113-2.el8.s390x.rpm"
@@ -3591,11 +3733,17 @@
           "sha256:6a02319eab48fc1a09e0d6a907d0e558972365bd2dde9c6393f013bb3ff3f5f7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/kpartx-0.8.4-21.el8.s390x.rpm"
           },
+          "sha256:6a3900586d0a4c739e815266dc0000e4c52fcf45c1a4e5fce5c261b1f951b6ab": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl5000-firmware-8.83.5.1_1-105.el8.1.noarch.rpm"
+          },
           "sha256:6a708fabbb203a272de368b9e65bfbe58c1d1a2a48fc235b0993abf2c9a0afbe": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/gnupg2-2.2.20-2.el8.s390x.rpm"
           },
           "sha256:6ac86e716545bfde2c56ca9632aa35d211386a94251aecd44749f3998dbe4732": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-magic-5.33-20.el8.noarch.rpm"
+          },
+          "sha256:6d7462af7a992e2e54b38042dcb97465f2d049db0cfbba41b8f71a8d5e98b845": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/nftables-0.9.3-24.el8.s390x.rpm"
           },
           "sha256:6e00d3ad28b8ade5203d2b7712e1ea50e846817dac775f6ebbbce0bbb6463fa0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/sudo-1.8.29-8.el8.s390x.rpm"
@@ -3606,11 +3754,17 @@
           "sha256:6ed9fed1c5b4845fd82faf0e4a40c9478ac33878508487113801c4580e30baf1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/pixman-0.38.4-1.el8.s390x.rpm"
           },
+          "sha256:6f366eb623287dfcd9f6d3bc7a6bffcceccf7f4f9842b20fabc6b0dc2443261e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/plymouth-scripts-0.9.4-10.20200615git1e36e30.el8.s390x.rpm"
+          },
           "sha256:6f89d0fcdfc2a3c90d110ae8ccab67ef48c0ac80dc90fe201196e9731b513990": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libsss_autofs-2.6.2-3.el8.s390x.rpm"
           },
           "sha256:70d76d9f1ed43efa346f634d5237c8a533b7e6209c36a9c6f0754afd1ddfc539": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/dhcp-common-4.3.6-47.el8.noarch.rpm"
+          },
+          "sha256:737dae9229a5bcb2777a483dbb2bd6dfec4d49cc484c1eebf8975651f665b0c1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/ipset-7.1-1.el8.s390x.rpm"
           },
           "sha256:7384fbd11d7c2f701e7e6b6e4005d8020d78428f547a946a80c571424e5c0396": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/gdisk-1.0.3-8.el8.s390x.rpm"
@@ -3678,6 +3832,9 @@
           "sha256:7b8b3d31e3ddd80fd39bf396122bb4b38582f090889b7d465e0db9eb8d6a7bf2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/findutils-4.6.0-20.el8.s390x.rpm"
           },
+          "sha256:7bd2cee99c823ad346c468f13d3a4135c7f3da30ec23277a3eaff5aff62f0c7f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libnfnetlink-1.0.1-13.el8.s390x.rpm"
+          },
           "sha256:7c37700693bc781506a06eafc18ab1cb4a7f6b7559f0595c97f60a4f88390233": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/perl-Unicode-Normalize-1.25-396.el8.s390x.rpm"
           },
@@ -3710,6 +3867,12 @@
           },
           "sha256:7ef1767b5b980953420841d9543627fa9de7852df39e44a8858ba0aacfd5a64a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/sssd-kcm-2.6.2-3.el8.s390x.rpm"
+          },
+          "sha256:7f2436df92ce3dacaf5a52d988e65b2cbfc6af8be917bdc14119940480efd7bb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-slip-0.6.4-11.el8.noarch.rpm"
+          },
+          "sha256:7f7ce92ab65d55a9dd3bd83b387e2f7d5af71516048e4538718ab5001110024e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/plymouth-core-libs-0.9.4-10.20200615git1e36e30.el8.s390x.rpm"
           },
           "sha256:7f97a748a033ca6da465cdb7a861bd844523de3c7a186248bf559f0f64db0952": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libgpg-error-1.31-1.el8.s390x.rpm"
@@ -3746,6 +3909,9 @@
           },
           "sha256:82f36244bf29111473619a3565e69d3e8213e829d8eaf3e141c6c397d574ccf3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/dejavu-fonts-common-2.35-7.el8.noarch.rpm"
+          },
+          "sha256:8432482ac22177c4598c8bb899a698b353c0c833907fce1a04f6fd3551439025": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/plymouth-0.9.4-10.20200615git1e36e30.el8.s390x.rpm"
           },
           "sha256:864886a6a374f7926459fece1fe5647b7cb283c0126e1b12316eda3edfe37915": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/dbus-1.12.8-18.el8.s390x.rpm"
@@ -3813,6 +3979,9 @@
           "sha256:8fc160f7ba599f9a5a5739fd32cabf08050c58909cb6a6c6f87aacd93399bdd7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/setroubleshoot-server-3.3.26-1.el8.s390x.rpm"
           },
+          "sha256:8fc3ad5da21ae091841aa3d0b83e7a810f8ced5b8b39e46ed74c6695d11036f9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/firewalld-0.9.3-11.el8.noarch.rpm"
+          },
           "sha256:8feb2ad7758487b1fa632fbc353cb4f93d2bdaf4d29262b9498baee122aa9502": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/cloud-utils-growpart-0.31-3.el8.noarch.rpm"
           },
@@ -3839,6 +4008,9 @@
           },
           "sha256:96a719d66743f225ff687e27430c2efd8e78c03b9e274c6959a47cd3bf871361": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libseccomp-2.5.2-1.el8.s390x.rpm"
+          },
+          "sha256:96b090a6696ca4c8b3f701c3a7b95b91c892db389e023c4b2d500a5162e43e8d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-slip-dbus-0.6.4-11.el8.noarch.rpm"
           },
           "sha256:96b688b61ae8fe4ce6c0562b359826ec05941d2259212600455b34ef119446cc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/dracut-network-049-191.git20210920.el8.s390x.rpm"
@@ -3905,6 +4077,9 @@
           },
           "sha256:9ee041eadd639ab6d9187f164c7f7b7954bdb4bf5f228555176207528e84fb1f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/perl-Socket-2.027-3.el8.s390x.rpm"
+          },
+          "sha256:9f1e0817bceecb7eb648088aaeeb7c60b43b6d33738809c1b9f567f83b94b267": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl6000g2a-firmware-18.168.6.1-105.el8.1.noarch.rpm"
           },
           "sha256:9f314529e89b7d38e0e05637b1a59d1cc1e51c9133ef2bf8b121d4d461251a5c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/systemd-libs-239-56.el8.s390x.rpm"
@@ -4002,6 +4177,12 @@
           "sha256:ad060f60303b6764e08657436147cc24cfc4bb1ccc1431796407ba005a7bcec0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/rootfiles-8.1-22.el8.noarch.rpm"
           },
+          "sha256:ad144b7e196d24b22f2cf03d9f2d43174c90adb7e29868413bd3ae3dab37b310": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iptables-ebtables-1.8.4-22.el8.s390x.rpm"
+          },
+          "sha256:ad49ef3c8c1e3bf2f8ec04b22a7778074550087ec5ba6068f0783b8d10f45382": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-firewall-0.9.3-11.el8.noarch.rpm"
+          },
           "sha256:ae3acca48fb15a14ab71dbc719ef46bd3a8372f303ead085be7b664127f9d488": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/dbus-tools-1.12.8-18.el8.s390x.rpm"
           },
@@ -4065,6 +4246,9 @@
           "sha256:b7ae7ca814ae169e2ba7122e7ea202fb1c5099cb2b47830e90ac82e33eec71d8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libsmartcols-2.32.1-32.el8.s390x.rpm"
           },
+          "sha256:b8405d31d166d748ba06bc6cb413f6b8fbe4c1c897fba9ff21541efb782bf4e8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iptables-1.8.4-22.el8.s390x.rpm"
+          },
           "sha256:b9584e6823ffe9ccf79282bd57ee076a1e3a71c4c1020a20b5e1975141a50f14": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/basesystem-11-5.el8.noarch.rpm"
           },
@@ -4100,6 +4284,9 @@
           },
           "sha256:bce8cbc50f5872bcee1bed9ff041bebfae10169f007cf97b268819e78b9d8835": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/python3-jsonpatch-1.21-2.el8.noarch.rpm"
+          },
+          "sha256:bd5aa8dd6e421f4184293c1d6458c8785939930505d988eb4f4c72d5932c30e6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl135-firmware-18.168.6.1-105.el8.1.noarch.rpm"
           },
           "sha256:bd68976b961d85908794efb93401fbd145c2bbb93306130e6a3558f35e3a5bf5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/s390utils-ziomon-2.19.0-1.el8.s390x.rpm"
@@ -4137,8 +4324,14 @@
           "sha256:c60aede8488f68a001f3495bd6e6d894fc3a44bb488f4550b5970ab5904d0a1e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/geolite2-country-20180605-1.el8.noarch.rpm"
           },
+          "sha256:c6f01a5eb0dd53a66f0e433c27349a5d026fbc6d5fb267381c279e187b39f0d6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iprutils-2.4.19-1.el8.s390x.rpm"
+          },
           "sha256:c8653e199fdea0852a124ed24df2f7b3aa7e0aa6a1258147d89c39692a420c84": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-linux-procfs-0.7.0-1.el8.noarch.rpm"
+          },
+          "sha256:c884a538dac3f5cd57b1a256ad57320d3057f34eb44aea7cbd7c0facef8a0039": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iptables-libs-1.8.4-22.el8.s390x.rpm"
           },
           "sha256:c8d1642d73c0f48e46bbaff9866bdc60ea70531c8793724eb9f36eedc5d8b98e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-subscription-manager-rhsm-1.28.25-1.el8.s390x.rpm"
@@ -4172,6 +4365,9 @@
           },
           "sha256:ce85692cf63754ed7e2afa66f0c68138a74301bbac0223913c7d46aab5ede69d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/lmdb-libs-0.9.24-1.el8.s390x.rpm"
+          },
+          "sha256:ceb21038ee98497eac986fc41b745946cd1147b0455530a4fff7d6f1e14ade57": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl3160-firmware-25.30.13.0-105.el8.1.noarch.rpm"
           },
           "sha256:d05b84d3b2126b91834bd388af680b10a73595363d138cd05920eb4ca8c0f03e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/xz-5.2.4-3.el8.s390x.rpm"
@@ -4226,6 +4422,9 @@
           },
           "sha256:d79dde60bb7fe9e3c939dfca402077fb09b760982d14f4b91d0ed2c983a420e7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/nettle-3.4.1-7.el8.s390x.rpm"
+          },
+          "sha256:d86a77e7a52c5d4ee31ed37c29cf4712400555f616f54cc86b51906ae28ff1e5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-nftables-0.9.3-24.el8.s390x.rpm"
           },
           "sha256:d8e9066adc54e9d972ea126fd7e712b8dff951851608afab130a66661f796d4f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libkcapi-1.2.0-2.el8.s390x.rpm"
@@ -4346,6 +4545,9 @@
           },
           "sha256:e8351d791129841cb2347e482a8b12a0c04df5f494e95dac5865e5767bfaac36": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/sssd-common-2.6.2-3.el8.s390x.rpm"
+          },
+          "sha256:e87ba3e040f1cd2644c94c7b01bf708862bff63ccb75eff0ff938dc306b74aa8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/dracut-config-rescue-049-191.git20210920.el8.s390x.rpm"
           },
           "sha256:e888454f4620debf3bdd76b59444e30ef5c2c8f81912ac6a37f525dc3eae7810": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/python3-babel-2.5.1-7.el8.noarch.rpm"
@@ -7716,6 +7918,15 @@
         "checksum": "sha256:6847df0f848640e440e8439003ab71bcfd36298af45ec0228d08a86a5a02a8ba"
       },
       {
+        "name": "dracut-config-rescue",
+        "epoch": 0,
+        "version": "049",
+        "release": "191.git20210920.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/dracut-config-rescue-049-191.git20210920.el8.s390x.rpm",
+        "checksum": "sha256:e87ba3e040f1cd2644c94c7b01bf708862bff63ccb75eff0ff938dc306b74aa8"
+      },
+      {
         "name": "dracut-network",
         "epoch": 0,
         "version": "049",
@@ -7840,6 +8051,24 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/findutils-4.6.0-20.el8.s390x.rpm",
         "checksum": "sha256:7b8b3d31e3ddd80fd39bf396122bb4b38582f090889b7d465e0db9eb8d6a7bf2"
+      },
+      {
+        "name": "firewalld",
+        "epoch": 0,
+        "version": "0.9.3",
+        "release": "11.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/firewalld-0.9.3-11.el8.noarch.rpm",
+        "checksum": "sha256:8fc3ad5da21ae091841aa3d0b83e7a810f8ced5b8b39e46ed74c6695d11036f9"
+      },
+      {
+        "name": "firewalld-filesystem",
+        "epoch": 0,
+        "version": "0.9.3",
+        "release": "11.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/firewalld-filesystem-0.9.3-11.el8.noarch.rpm",
+        "checksum": "sha256:4b65b967f3bb1f46a7197b7ec1cf69c2980afd5d299a8927822b699312dd727f"
       },
       {
         "name": "fontconfig",
@@ -8157,6 +8386,60 @@
         "checksum": "sha256:9ca4a4312d07837a306777aa24401b8826be4a859683ba324c0744c6a26e6a4a"
       },
       {
+        "name": "iprutils",
+        "epoch": 0,
+        "version": "2.4.19",
+        "release": "1.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iprutils-2.4.19-1.el8.s390x.rpm",
+        "checksum": "sha256:c6f01a5eb0dd53a66f0e433c27349a5d026fbc6d5fb267381c279e187b39f0d6"
+      },
+      {
+        "name": "ipset",
+        "epoch": 0,
+        "version": "7.1",
+        "release": "1.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/ipset-7.1-1.el8.s390x.rpm",
+        "checksum": "sha256:737dae9229a5bcb2777a483dbb2bd6dfec4d49cc484c1eebf8975651f665b0c1"
+      },
+      {
+        "name": "ipset-libs",
+        "epoch": 0,
+        "version": "7.1",
+        "release": "1.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/ipset-libs-7.1-1.el8.s390x.rpm",
+        "checksum": "sha256:4cc5783b8a274fdf5fffae65bc6d799e414c695b6c700bc426f7f89cb6195618"
+      },
+      {
+        "name": "iptables",
+        "epoch": 0,
+        "version": "1.8.4",
+        "release": "22.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iptables-1.8.4-22.el8.s390x.rpm",
+        "checksum": "sha256:b8405d31d166d748ba06bc6cb413f6b8fbe4c1c897fba9ff21541efb782bf4e8"
+      },
+      {
+        "name": "iptables-ebtables",
+        "epoch": 0,
+        "version": "1.8.4",
+        "release": "22.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iptables-ebtables-1.8.4-22.el8.s390x.rpm",
+        "checksum": "sha256:ad144b7e196d24b22f2cf03d9f2d43174c90adb7e29868413bd3ae3dab37b310"
+      },
+      {
+        "name": "iptables-libs",
+        "epoch": 0,
+        "version": "1.8.4",
+        "release": "22.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iptables-libs-1.8.4-22.el8.s390x.rpm",
+        "checksum": "sha256:c884a538dac3f5cd57b1a256ad57320d3057f34eb44aea7cbd7c0facef8a0039"
+      },
+      {
         "name": "iputils",
         "epoch": 0,
         "version": "20180629",
@@ -8164,6 +8447,123 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iputils-20180629-8.el8.s390x.rpm",
         "checksum": "sha256:5a8849d6663507918d05b92372ee57415c609050b80040b896bf952322a9159c"
+      },
+      {
+        "name": "iwl100-firmware",
+        "epoch": 0,
+        "version": "39.31.5.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl100-firmware-39.31.5.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:4087c798c3ba556b589a37f172c0de42fbb53dbb1930726d87aef3f5fe45a4a0"
+      },
+      {
+        "name": "iwl1000-firmware",
+        "epoch": 1,
+        "version": "39.31.5.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl1000-firmware-39.31.5.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:3e8e2a991ffed874a3f454d23eb3082744db8459257bfcf47f542f9edcf1ecb4"
+      },
+      {
+        "name": "iwl105-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl105-firmware-18.168.6.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:0403842bda6dbbde303e9551f5b32c09d262cc8a7938b442e62bc5981f4a3f40"
+      },
+      {
+        "name": "iwl135-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl135-firmware-18.168.6.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:bd5aa8dd6e421f4184293c1d6458c8785939930505d988eb4f4c72d5932c30e6"
+      },
+      {
+        "name": "iwl2000-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl2000-firmware-18.168.6.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:40a65199323b655501868b99dd331647627333d4e797080fbf59d05a1e302dcd"
+      },
+      {
+        "name": "iwl2030-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl2030-firmware-18.168.6.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:5ee54ba9a16859ab501b65e05773c6160ed32b7af77a07ba455a32acd588310f"
+      },
+      {
+        "name": "iwl3160-firmware",
+        "epoch": 1,
+        "version": "25.30.13.0",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl3160-firmware-25.30.13.0-105.el8.1.noarch.rpm",
+        "checksum": "sha256:ceb21038ee98497eac986fc41b745946cd1147b0455530a4fff7d6f1e14ade57"
+      },
+      {
+        "name": "iwl5000-firmware",
+        "epoch": 0,
+        "version": "8.83.5.1_1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl5000-firmware-8.83.5.1_1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:6a3900586d0a4c739e815266dc0000e4c52fcf45c1a4e5fce5c261b1f951b6ab"
+      },
+      {
+        "name": "iwl5150-firmware",
+        "epoch": 0,
+        "version": "8.24.2.2",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl5150-firmware-8.24.2.2-105.el8.1.noarch.rpm",
+        "checksum": "sha256:1f97d015b42e723f26331f8dc9d5a8a679bf62da0249dab28a9c1128a2a5080f"
+      },
+      {
+        "name": "iwl6000-firmware",
+        "epoch": 0,
+        "version": "9.221.4.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl6000-firmware-9.221.4.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:45369f88290727e93a36487d1a2fbcbffee55aa61f24075d10bb92fffdc403e8"
+      },
+      {
+        "name": "iwl6000g2a-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl6000g2a-firmware-18.168.6.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:9f1e0817bceecb7eb648088aaeeb7c60b43b6d33738809c1b9f567f83b94b267"
+      },
+      {
+        "name": "iwl6050-firmware",
+        "epoch": 0,
+        "version": "41.28.5.1",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl6050-firmware-41.28.5.1-105.el8.1.noarch.rpm",
+        "checksum": "sha256:2bad17b14cc7cdf2ef2cdf2e7efa2ed59f0324f062c7995f63c24cd20eb223d0"
+      },
+      {
+        "name": "iwl7260-firmware",
+        "epoch": 1,
+        "version": "25.30.13.0",
+        "release": "105.el8.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/iwl7260-firmware-25.30.13.0-105.el8.1.noarch.rpm",
+        "checksum": "sha256:5794bfa8281feb973580057303330ec867575261e95ebe40f4bee15c6e5f4072"
       },
       {
         "name": "jansson",
@@ -8679,6 +9079,24 @@
         "checksum": "sha256:7c37dcbae4e2c9b462b0b7e80e9035223b35d66624a63be0f35628aecb49efca"
       },
       {
+        "name": "libnetfilter_conntrack",
+        "epoch": 0,
+        "version": "1.0.6",
+        "release": "5.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libnetfilter_conntrack-1.0.6-5.el8.s390x.rpm",
+        "checksum": "sha256:3ad1949d822bdd27ec8728bee2eb687a54c06f8db9ebc83219a2358010d61414"
+      },
+      {
+        "name": "libnfnetlink",
+        "epoch": 0,
+        "version": "1.0.1",
+        "release": "13.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libnfnetlink-1.0.1-13.el8.s390x.rpm",
+        "checksum": "sha256:7bd2cee99c823ad346c468f13d3a4135c7f3da30ec23277a3eaff5aff62f0c7f"
+      },
+      {
         "name": "libnfsidmap",
         "epoch": 1,
         "version": "2.3.3",
@@ -8686,6 +9104,15 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libnfsidmap-2.3.3-48.el8.s390x.rpm",
         "checksum": "sha256:8894b94817b92b4aba9aa1dad80b3a5fac2ecb684944ef3cb807df0fe96ee136"
+      },
+      {
+        "name": "libnftnl",
+        "epoch": 0,
+        "version": "1.1.5",
+        "release": "5.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/libnftnl-1.1.5-5.el8.s390x.rpm",
+        "checksum": "sha256:07b9c5686f4dc461ff93c6399599552d58c63d8017fc6996ecd2ad575438ea22"
       },
       {
         "name": "libnghttp2",
@@ -9361,6 +9788,15 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/nfs-utils-2.3.3-48.el8.s390x.rpm",
         "checksum": "sha256:dd433817f0c1c6a81b103208cb587490ee93d74888a4df8e5f585e2df6087a40"
+      },
+      {
+        "name": "nftables",
+        "epoch": 1,
+        "version": "0.9.3",
+        "release": "24.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/nftables-0.9.3-24.el8.s390x.rpm",
+        "checksum": "sha256:6d7462af7a992e2e54b38042dcb97465f2d049db0cfbba41b8f71a8d5e98b845"
       },
       {
         "name": "npth",
@@ -10083,6 +10519,15 @@
         "checksum": "sha256:3812274c6d408e9b35b0c43f29004e451eee2aaeb57914129b9447dab62879e6"
       },
       {
+        "name": "python3-firewall",
+        "epoch": 0,
+        "version": "0.9.3",
+        "release": "11.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-firewall-0.9.3-11.el8.noarch.rpm",
+        "checksum": "sha256:ad49ef3c8c1e3bf2f8ec04b22a7778074550087ec5ba6068f0783b8d10f45382"
+      },
+      {
         "name": "python3-gobject-base",
         "epoch": 0,
         "version": "3.28.3",
@@ -10227,6 +10672,15 @@
         "checksum": "sha256:6ac86e716545bfde2c56ca9632aa35d211386a94251aecd44749f3998dbe4732"
       },
       {
+        "name": "python3-nftables",
+        "epoch": 1,
+        "version": "0.9.3",
+        "release": "24.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-nftables-0.9.3-24.el8.s390x.rpm",
+        "checksum": "sha256:d86a77e7a52c5d4ee31ed37c29cf4712400555f616f54cc86b51906ae28ff1e5"
+      },
+      {
         "name": "python3-oauthlib",
         "epoch": 0,
         "version": "2.1.0",
@@ -10351,6 +10805,24 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-six-1.11.0-8.el8.noarch.rpm",
         "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
+      },
+      {
+        "name": "python3-slip",
+        "epoch": 0,
+        "version": "0.6.4",
+        "release": "11.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-slip-0.6.4-11.el8.noarch.rpm",
+        "checksum": "sha256:7f2436df92ce3dacaf5a52d988e65b2cbfc6af8be917bdc14119940480efd7bb"
+      },
+      {
+        "name": "python3-slip-dbus",
+        "epoch": 0,
+        "version": "0.6.4",
+        "release": "11.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.6-20220201/Packages/python3-slip-dbus-0.6.4-11.el8.noarch.rpm",
+        "checksum": "sha256:96b090a6696ca4c8b3f701c3a7b95b91c892db389e023c4b2d500a5162e43e8d"
       },
       {
         "name": "python3-subscription-manager-rhsm",
@@ -11242,6 +11714,33 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/pixman-0.38.4-1.el8.s390x.rpm",
         "checksum": "sha256:6ed9fed1c5b4845fd82faf0e4a40c9478ac33878508487113801c4580e30baf1"
+      },
+      {
+        "name": "plymouth",
+        "epoch": 0,
+        "version": "0.9.4",
+        "release": "10.20200615git1e36e30.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/plymouth-0.9.4-10.20200615git1e36e30.el8.s390x.rpm",
+        "checksum": "sha256:8432482ac22177c4598c8bb899a698b353c0c833907fce1a04f6fd3551439025"
+      },
+      {
+        "name": "plymouth-core-libs",
+        "epoch": 0,
+        "version": "0.9.4",
+        "release": "10.20200615git1e36e30.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/plymouth-core-libs-0.9.4-10.20200615git1e36e30.el8.s390x.rpm",
+        "checksum": "sha256:7f7ce92ab65d55a9dd3bd83b387e2f7d5af71516048e4538718ab5001110024e"
+      },
+      {
+        "name": "plymouth-scripts",
+        "epoch": 0,
+        "version": "0.9.4",
+        "release": "10.20200615git1e36e30.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.6-20220201/Packages/plymouth-scripts-0.9.4-10.20200615git1e36e30.el8.s390x.rpm",
+        "checksum": "sha256:6f366eb623287dfcd9f6d3bc7a6bffcceccf7f4f9842b20fabc6b0dc2443261e"
       },
       {
         "name": "python3-babel",
