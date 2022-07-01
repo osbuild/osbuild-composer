@@ -10,7 +10,6 @@ import (
 	"os"
 
 	"cloud.google.com/go/storage"
-	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -97,54 +96,4 @@ func (g *GCP) StorageObjectDelete(ctx context.Context, bucket, object string) er
 	}
 
 	return nil
-}
-
-// StorageListObjectsByMetadata searches specified Storage bucket for objects matching the provided
-// metadata. The provided metadata is used for filtering the bucket's content. Therefore if the provided
-// metadata is nil, then all objects present in the bucket will be returned.
-//
-// Matched objects are returned as a list of ObjectAttrs.
-//
-// Uses:
-//	- Storage API
-func (g *GCP) StorageListObjectsByMetadata(ctx context.Context, bucket string, metadata map[string]string) ([]*storage.ObjectAttrs, error) {
-	var matchedObjectAttr []*storage.ObjectAttrs
-
-	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Storage client: %v", err)
-	}
-	defer storageClient.Close()
-
-	objects := storageClient.Bucket(bucket).Objects(ctx, nil)
-	for {
-		obj, err := objects.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("failure while iterating over bucket objects: %v", err)
-		}
-
-		// check if the object's Metadata match the provided values
-		metadataMatch := true
-		for key, value := range metadata {
-			objMetadataValue, ok := obj.Metadata[key]
-			if !ok {
-				metadataMatch = false
-				break
-			}
-			if objMetadataValue != value {
-				metadataMatch = false
-				break
-			}
-		}
-
-		if metadataMatch {
-			matchedObjectAttr = append(matchedObjectAttr, obj)
-		}
-
-	}
-
-	return matchedObjectAttr, nil
 }
