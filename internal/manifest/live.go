@@ -51,14 +51,14 @@ func (p *LiveImgPipeline) serialize() osbuild2.Pipeline {
 		pipeline.AddStage(stage)
 	}
 
-	switch p.treePipeline.bootLoader {
-	case BOOTLOADER_GRUB:
+	switch p.treePipeline.arch {
+	case ARCH_S390X:
+		loopback := osbuild2.NewLoopbackDevice(&osbuild2.LoopbackDeviceOptions{Filename: p.filename})
+		pipeline.AddStage(osbuild2.NewZiplInstStage(osbuild2.NewZiplInstStageOptions(p.treePipeline.kernelVer, pt), loopback, copyDevices, copyMounts))
+	default:
 		if grubLegacy := p.treePipeline.BIOSPlatform; grubLegacy != "" {
 			pipeline.AddStage(osbuild2.NewGrub2InstStage(osbuild2.NewGrub2InstStageOption(p.filename, pt, grubLegacy)))
 		}
-	case BOOTLOADER_ZIPL:
-		loopback := osbuild2.NewLoopbackDevice(&osbuild2.LoopbackDeviceOptions{Filename: p.filename})
-		pipeline.AddStage(osbuild2.NewZiplInstStage(osbuild2.NewZiplInstStageOptions(p.treePipeline.kernelVer, pt), loopback, copyDevices, copyMounts))
 	}
 
 	return pipeline

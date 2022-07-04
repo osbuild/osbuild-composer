@@ -9,6 +9,15 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+type Arch uint64
+
+const (
+	ARCH_X86_64 Arch = iota
+	ARCH_AARCH64
+	ARCH_S390X
+	ARCH_PPC64LE
+)
+
 type osTreeCommit struct {
 	checksum string
 	url      string

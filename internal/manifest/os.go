@@ -12,13 +12,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-type BootLoader uint64
-
-const (
-	BOOTLOADER_GRUB BootLoader = iota
-	BOOTLOADER_ZIPL
-)
-
 type OSPipelineOSTree struct {
 	Parent *OSPipelineOSTreeParent
 }
@@ -49,6 +42,9 @@ type OSPipeline struct {
 	OSTree *OSPipelineOSTree
 	// Partition table, if nil the tree cannot be put on a partioned disk
 	PartitionTable *disk.PartitionTable
+	// KernelName indicates that a kernel is installed, and names the kernel
+	// package.
+	KernelName string
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
 	// UEFIVendor indicates whether or not the image should support UEFI and
@@ -102,8 +98,7 @@ type OSPipeline struct {
 
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
-	bootLoader   BootLoader
-	kernelName   string
+	arch         Arch
 	kernelVer    string
 }
 
@@ -115,14 +110,11 @@ type OSPipeline struct {
 // kernel package that will be used on the target system.
 func NewOSPipeline(m *Manifest,
 	buildPipeline *BuildPipeline,
-	repos []rpmmd.RepoConfig,
-	bootLoader BootLoader,
-	kernelName string) *OSPipeline {
+	arch Arch,
+	repos []rpmmd.RepoConfig) *OSPipeline {
 	p := &OSPipeline{
 		BasePipeline: NewBasePipeline(m, "os", buildPipeline, nil),
 		repos:        repos,
-		bootLoader:   bootLoader,
-		kernelName:   kernelName,
 		Language:     "C.UTF-8",
 		Hostname:     "localhost.localdomain",
 		Timezone:     "UTC",
@@ -184,8 +176,8 @@ func (p *OSPipeline) serializeStart(packages []rpmmd.PackageSpec) {
 		panic("double call to serializeStart()")
 	}
 	p.packageSpecs = packages
-	if p.kernelName != "" {
-		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
+	if p.KernelName != "" {
+		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.KernelName)
 	}
 }
 
@@ -362,8 +354,10 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 		pipeline.AddStage(osbuild2.NewFSTabStage(osbuild2.NewFSTabStageOptions(pt)))
 
 		var bootloader *osbuild2.Stage
-		switch p.bootLoader {
-		case BOOTLOADER_GRUB:
+		switch p.arch {
+		case ARCH_S390X:
+			bootloader = osbuild2.NewZiplStage(new(osbuild2.ZiplStageOptions))
+		default:
 			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFIVendor != "", p.BIOSPlatform, p.UEFIVendor, false)
 			if cfg := p.Grub2Config; cfg != nil {
 				// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
@@ -376,10 +370,6 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 				options.Config = cfg
 			}
 			bootloader = osbuild2.NewGRUB2Stage(options)
-		case BOOTLOADER_ZIPL:
-			bootloader = osbuild2.NewZiplStage(new(osbuild2.ZiplStageOptions))
-		default:
-			panic("unknown bootloader")
 		}
 
 		pipeline.AddStage(bootloader)
