@@ -43,6 +43,10 @@ func (p *OSTreeCommitPipeline) getBuildPackages() []string {
 func (p *OSTreeCommitPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
+	if p.treePipeline.OSTree == nil {
+		panic("tree is not ostree")
+	}
+
 	pipeline.AddStage(osbuild2.NewOSTreeInitStage(&osbuild2.OSTreeInitStageOptions{Path: "/repo"}))
 
 	commitStageInput := new(osbuild2.OSTreeCommitStageInput)
@@ -50,11 +54,15 @@ func (p *OSTreeCommitPipeline) serialize() osbuild2.Pipeline {
 	commitStageInput.Origin = "org.osbuild.pipeline"
 	commitStageInput.References = osbuild2.OSTreeCommitStageReferences{"name:" + p.treePipeline.Name()}
 
+	var parent string
+	if p.treePipeline.OSTree.Parent != nil {
+		parent = p.treePipeline.OSTree.Parent.Checksum
+	}
 	pipeline.AddStage(osbuild2.NewOSTreeCommitStage(
 		&osbuild2.OSTreeCommitStageOptions{
 			Ref:       p.ref,
 			OSVersion: p.OSVersion,
-			Parent:    p.treePipeline.osTreeParent,
+			Parent:    parent,
 		},
 		&osbuild2.OSTreeCommitStageInputs{Tree: commitStageInput}),
 	)

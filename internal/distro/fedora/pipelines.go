@@ -221,7 +221,20 @@ func osPipeline(m *manifest.Manifest,
 		kernelName = c.GetKernel().Name
 	}
 
-	pl := manifest.NewOSPipeline(m, buildPipeline, t.rpmOstree, options.OSTree.Parent, options.OSTree.URL, repos, pt, bootLoader, t.arch.legacy, kernelName)
+	pl := manifest.NewOSPipeline(m, buildPipeline, repos, pt, bootLoader, t.arch.legacy, kernelName)
+
+	if t.rpmOstree {
+		var parent *manifest.OSPipelineOSTreeParent
+		if options.OSTree.Parent != "" && options.OSTree.URL != "" {
+			parent = &manifest.OSPipelineOSTreeParent{
+				Checksum: options.OSTree.Parent,
+				URL:      options.OSTree.URL,
+			}
+		}
+		pl.OSTree = &manifest.OSPipelineOSTree{
+			Parent: parent,
+		}
+	}
 
 	if len(osChain) >= 1 {
 		pl.ExtraBasePackages = osChain[0].Include
