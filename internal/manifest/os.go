@@ -19,6 +19,15 @@ const (
 	BOOTLOADER_ZIPL
 )
 
+type OSPipelineOSTree struct {
+	Parent *OSPipelineOSTreeParent
+}
+
+type OSPipelineOSTreeParent struct {
+	Checksum string
+	URL      string
+}
+
 // OSPipeline represents the filesystem tree of the target image. This roughly
 // correpsonds to the root filesystem once an instance of the image is running.
 type OSPipeline struct {
@@ -36,6 +45,8 @@ type OSPipeline struct {
 	UserPackages []string
 	// Repositories to install the user packages from.
 	UserRepos []rpmmd.RepoConfig
+	// OSTree configuration, if nil the tree cannot be in an OSTree commit
+	OSTree *OSPipelineOSTree
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
 	// UEFIVendor indicates whether or not the OS should support UEFI and
@@ -84,9 +95,6 @@ type OSPipeline struct {
 	PwQuality     *osbuild2.PwqualityConfStageOptions
 	WAAgentConfig *osbuild2.WAAgentConfStageOptions
 
-	osTree         bool
-	osTreeParent   string
-	osTreeURL      string
 	repos          []rpmmd.RepoConfig
 	packageSpecs   []rpmmd.PackageSpec
 	partitionTable *disk.PartitionTable
@@ -104,9 +112,6 @@ type OSPipeline struct {
 // kernel package that will be used on the target system.
 func NewOSPipeline(m *Manifest,
 	buildPipeline *BuildPipeline,
-	osTree bool,
-	osTreeParent string,
-	osTreeURL string,
 	repos []rpmmd.RepoConfig,
 	partitionTable *disk.PartitionTable,
 	bootLoader BootLoader,
@@ -114,9 +119,6 @@ func NewOSPipeline(m *Manifest,
 	kernelName string) *OSPipeline {
 	p := &OSPipeline{
 		BasePipeline:   NewBasePipeline(m, "os", buildPipeline, nil),
-		osTree:         osTree,
-		osTreeParent:   osTreeParent,
-		osTreeURL:      osTreeURL,
 		repos:          repos,
 		partitionTable: partitionTable,
 		bootLoader:     bootLoader,
@@ -157,7 +159,7 @@ func (p *OSPipeline) getBuildPackages() []string {
 	if p.grubLegacy != "" {
 		packages = append(packages, "grub2-pc")
 	}
-	if p.osTree {
+	if p.OSTree != nil {
 		packages = append(packages, "rpm-ostree")
 	}
 	return packages
@@ -165,10 +167,10 @@ func (p *OSPipeline) getBuildPackages() []string {
 
 func (p *OSPipeline) getOSTreeCommits() []osTreeCommit {
 	commits := []osTreeCommit{}
-	if p.osTreeParent != "" && p.osTreeURL != "" {
+	if p.OSTree != nil && p.OSTree.Parent != nil {
 		commits = append(commits, osTreeCommit{
-			checksum: p.osTreeParent,
-			url:      p.osTreeURL,
+			checksum: p.OSTree.Parent.Checksum,
+			url:      p.OSTree.Parent.URL,
 		})
 	}
 	return commits
@@ -203,8 +205,8 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 
 	pipeline := p.BasePipeline.serialize()
 
-	if p.osTree && p.osTreeParent != "" {
-		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.osTreeParent))
+	if p.OSTree != nil && p.OSTree.Parent != nil {
+		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.OSTree.Parent.Checksum))
 	}
 
 	rpmOptions := osbuild2.NewRPMStageOptions(p.repos)
@@ -247,7 +249,7 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 			// TODO: move encryption into weldr
 			panic("password encryption failed")
 		}
-		if p.osTree {
+		if p.OSTree != nil {
 			// for ostree, writing the key during user creation is
 			// redundant and can cause issues so create users without keys
 			// and write them on first boot
@@ -390,7 +392,7 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 		}))
 	}
 
-	if p.osTree {
+	if p.OSTree != nil {
 		pipeline.AddStage(osbuild2.NewOSTreePrepTreeStage(&osbuild2.OSTreePrepTreeStageOptions{
 			EtcGroupMembers: []string{
 				// NOTE: We may want to make this configurable.
