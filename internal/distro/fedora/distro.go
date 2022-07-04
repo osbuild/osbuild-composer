@@ -83,7 +83,7 @@ var (
 		rpmOstree:        true,
 		pipelines:        iotCommitPipelines,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"ostree-tree", "ostree-commit", "commit-archive"},
+		payloadPipelines: []string{"os", "ostree-commit", "commit-archive"},
 		exports:          []string{"commit-archive"},
 	}
 
