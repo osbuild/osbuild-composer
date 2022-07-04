@@ -1225,22 +1225,6 @@
                     }
                   },
                   {
-                    "id": "sha256:d999a3002712972253f264814ccc4cf2b0959a121c3cdd7e10a7c8423f4b6d32",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:7c274d3c094f73d2ee7bebc3b9b854b3303330eac9fa2d1f4461fd7460b34605",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:5a4b0cc50d9929ef558617fecd879f80a459379047ec77bcc238e5b305258bf5",
                     "options": {
                       "metadata": {
@@ -3391,9 +3375,6 @@
           "sha256:7b574e38bfd9854f3a4411a73df63c32d65cd0511577461cc2596049501a3725": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/t/tar-1.34-1.fc34.x86_64.rpm"
           },
-          "sha256:7c274d3c094f73d2ee7bebc3b9b854b3303330eac9fa2d1f4461fd7460b34605": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/g/grub2-pc-modules-2.06-9.fc34.noarch.rpm"
-          },
           "sha256:7d59ff94c9fa323e68c6f9d5b0ccc06075847d77775211f4acbee8f54d8975ae": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/s/sudo-1.9.5p2-1.fc34.x86_64.rpm"
           },
@@ -3690,9 +3671,6 @@
           },
           "sha256:d6762e1d533b1ca2ccc787d7394fd9ddeeb73845cdf55a5d1f93fbc53b716d8e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/libsolv-0.7.17-3.fc34.x86_64.rpm"
-          },
-          "sha256:d999a3002712972253f264814ccc4cf2b0959a121c3cdd7e10a7c8423f4b6d32": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/g/grub2-pc-2.06-9.fc34.x86_64.rpm"
           },
           "sha256:da676955f475492f17c573bc526d47c37e34919d2a6ed33ec4573a4de0cab2a7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/l/lz4-libs-1.9.3-2.fc34.x86_64.rpm"
@@ -5261,26 +5239,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/g/grub2-common-2.06-9.fc34.noarch.rpm",
         "checksum": "sha256:9d3e2e24cce87a77671ec717b3c7d9a8aa584768af441c86b0aa7565d6691fdc",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "9.fc34",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/g/grub2-pc-2.06-9.fc34.x86_64.rpm",
-        "checksum": "sha256:d999a3002712972253f264814ccc4cf2b0959a121c3cdd7e10a7c8423f4b6d32",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc-modules",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "9.fc34",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-updates-released-20220113/Packages/g/grub2-pc-modules-2.06-9.fc34.noarch.rpm",
-        "checksum": "sha256:7c274d3c094f73d2ee7bebc3b9b854b3303330eac9fa2d1f4461fd7460b34605",
         "check_gpg": true
       },
       {

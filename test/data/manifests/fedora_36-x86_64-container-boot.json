@@ -555,22 +555,6 @@
                     }
                   },
                   {
-                    "id": "sha256:45d7bed87c83512634879d2519527be7c5184c2d516d146654abeb7d4907c09c",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:f30f4de190e9762199192165577e250d6a1b8936fdd99a7a14646c4154ece10f",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:ca6570e80b38f61221d622cab52390fa65a1fe9abfb402cc4ce4990a83f8d0f3",
                     "options": {
                       "metadata": {
@@ -3358,9 +3342,6 @@
           "sha256:44b8073e409d9b3d681fb39183db23496a0825503987de3db78a57be4b551e16": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/d/dnf-4.11.1-1.fc37.noarch.rpm"
           },
-          "sha256:45d7bed87c83512634879d2519527be7c5184c2d516d146654abeb7d4907c09c": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/g/grub2-pc-2.06-28.fc37.x86_64.rpm"
-          },
           "sha256:4771a6fe8a310ca1cc93c10030909c526423d114dc5cc74c0332282d3f4ab914": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/p/python-unversioned-command-3.10.3-1.fc37.noarch.rpm"
           },
@@ -3834,9 +3815,6 @@
           },
           "sha256:f2ba36563c305ae503625074dc41e6bac19b91846597db7e2d113e30b321800f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/l/libffi-3.4.2-8.fc36.x86_64.rpm"
-          },
-          "sha256:f30f4de190e9762199192165577e250d6a1b8936fdd99a7a14646c4154ece10f": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/g/grub2-pc-modules-2.06-28.fc37.noarch.rpm"
           },
           "sha256:f3550aa734404646dc0d050bbe645960113ac7696f35a99cfcf4d6924a350af0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/s/systemd-resolved-250.4-2.fc37.x86_64.rpm"
@@ -4522,26 +4500,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/g/grub2-common-2.06-28.fc37.noarch.rpm",
         "checksum": "sha256:5bb35ae3935a110f929aacbe0e1b8c2176072fb9260a1bc1881a4ce8c578cb2e",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "28.fc37",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/g/grub2-pc-2.06-28.fc37.x86_64.rpm",
-        "checksum": "sha256:45d7bed87c83512634879d2519527be7c5184c2d516d146654abeb7d4907c09c",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc-modules",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "28.fc37",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/g/grub2-pc-modules-2.06-28.fc37.noarch.rpm",
-        "checksum": "sha256:f30f4de190e9762199192165577e250d6a1b8936fdd99a7a14646c4154ece10f",
         "check_gpg": true
       },
       {
