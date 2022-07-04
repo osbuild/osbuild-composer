@@ -33,7 +33,7 @@ func NewLiveImgPipeline(m *Manifest,
 func (p *LiveImgPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
-	pt := p.treePipeline.partitionTable
+	pt := p.treePipeline.PartitionTable
 	if pt == nil {
 		panic("no partition table in live image")
 	}
@@ -53,7 +53,7 @@ func (p *LiveImgPipeline) serialize() osbuild2.Pipeline {
 
 	switch p.treePipeline.bootLoader {
 	case BOOTLOADER_GRUB:
-		if grubLegacy := p.treePipeline.grubLegacy; grubLegacy != "" {
+		if grubLegacy := p.treePipeline.BIOSPlatform; grubLegacy != "" {
 			pipeline.AddStage(osbuild2.NewGrub2InstStage(osbuild2.NewGrub2InstStageOption(p.filename, pt, grubLegacy)))
 		}
 	case BOOTLOADER_ZIPL:
