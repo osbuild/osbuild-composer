@@ -209,19 +209,19 @@ func osPipeline(m *manifest.Manifest,
 		}
 	}
 
-	var bootLoader manifest.BootLoader
-	if t.Arch().Name() == distro.S390xArchName {
-		bootLoader = manifest.BOOTLOADER_ZIPL
-	} else {
-		bootLoader = manifest.BOOTLOADER_GRUB
+	var arch manifest.Arch
+	switch t.Arch().Name() {
+	case distro.X86_64ArchName:
+		arch = manifest.ARCH_X86_64
+	case distro.Aarch64ArchName:
+		arch = manifest.ARCH_AARCH64
+	case distro.Ppc64leArchName:
+		arch = manifest.ARCH_PPC64LE
+	case distro.S390xArchName:
+		arch = manifest.ARCH_S390X
 	}
 
-	var kernelName string
-	if t.bootable {
-		kernelName = c.GetKernel().Name
-	}
-
-	pl := manifest.NewOSPipeline(m, buildPipeline, repos, bootLoader, kernelName)
+	pl := manifest.NewOSPipeline(m, buildPipeline, arch, repos)
 	pl.PartitionTable = pt
 
 	if t.rpmOstree {
@@ -254,6 +254,10 @@ func osPipeline(m *manifest.Manifest,
 	}
 
 	pl.BIOSPlatform = t.arch.legacy
+
+	if t.bootable {
+		pl.KernelName = c.GetKernel().Name
+	}
 
 	var kernelOptions []string
 	if t.kernelOptions != "" {

@@ -31,7 +31,7 @@ func MyManifest(m *manifest.Manifest, options *MyOptions, repos []rpmmd.RepoConf
 	build := manifest.NewBuildPipeline(m, runner, repos)
 
 	// create a non-bootable OS tree containing the `core` comps group
-	os := manifest.NewOSPipeline(m, build, repos, manifest.BOOTLOADER_GRUB, "")
+	os := manifest.NewOSPipeline(m, build, manifest.ARCH_X86_64, repos)
 	os.ExtraBasePackages = []string{
 		"@core",
 	}
