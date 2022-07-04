@@ -112,12 +112,8 @@ func NewOSPipeline(m *Manifest,
 	bootLoader BootLoader,
 	grubLegacy string,
 	kernelName string) *OSPipeline {
-	name := "os"
-	if osTree {
-		name = "ostree-tree"
-	}
 	p := &OSPipeline{
-		BasePipeline:   NewBasePipeline(m, name, buildPipeline, nil),
+		BasePipeline:   NewBasePipeline(m, "os", buildPipeline, nil),
 		osTree:         osTree,
 		osTreeParent:   osTreeParent,
 		osTreeURL:      osTreeURL,
