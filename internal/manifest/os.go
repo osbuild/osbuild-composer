@@ -47,11 +47,16 @@ type OSPipeline struct {
 	UserRepos []rpmmd.RepoConfig
 	// OSTree configuration, if nil the tree cannot be in an OSTree commit
 	OSTree *OSPipelineOSTree
+	// Partition table, if nil the tree cannot be put on a partioned disk
+	PartitionTable *disk.PartitionTable
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
-	// UEFIVendor indicates whether or not the OS should support UEFI and
+	// UEFIVendor indicates whether or not the image should support UEFI and
 	// if set namespaces the UEFI binaries with this string.
 	UEFIVendor string
+	// BIOSPlatform indicates whether or not the image should support BIOS
+	// booting and if set, the name of the platform, e.g., i386-pc
+	BIOSPlatform string
 	// GPGKeyFiles are a list of filenames in the OS which will be imported
 	// as GPG keys into the RPM database.
 	GPGKeyFiles      []string
@@ -95,13 +100,11 @@ type OSPipeline struct {
 	PwQuality     *osbuild2.PwqualityConfStageOptions
 	WAAgentConfig *osbuild2.WAAgentConfStageOptions
 
-	repos          []rpmmd.RepoConfig
-	packageSpecs   []rpmmd.PackageSpec
-	partitionTable *disk.PartitionTable
-	bootLoader     BootLoader
-	grubLegacy     string
-	kernelName     string
-	kernelVer      string
+	repos        []rpmmd.RepoConfig
+	packageSpecs []rpmmd.PackageSpec
+	bootLoader   BootLoader
+	kernelName   string
+	kernelVer    string
 }
 
 // NewOSPipeline creates a new OS pipeline. osTree indicates whether or not the
@@ -113,21 +116,17 @@ type OSPipeline struct {
 func NewOSPipeline(m *Manifest,
 	buildPipeline *BuildPipeline,
 	repos []rpmmd.RepoConfig,
-	partitionTable *disk.PartitionTable,
 	bootLoader BootLoader,
-	grubLegacy string,
 	kernelName string) *OSPipeline {
 	p := &OSPipeline{
-		BasePipeline:   NewBasePipeline(m, "os", buildPipeline, nil),
-		repos:          repos,
-		partitionTable: partitionTable,
-		bootLoader:     bootLoader,
-		grubLegacy:     grubLegacy,
-		kernelName:     kernelName,
-		Language:       "C.UTF-8",
-		Hostname:       "localhost.localdomain",
-		Timezone:       "UTC",
-		SElinux:        "targeted",
+		BasePipeline: NewBasePipeline(m, "os", buildPipeline, nil),
+		repos:        repos,
+		bootLoader:   bootLoader,
+		kernelName:   kernelName,
+		Language:     "C.UTF-8",
+		Hostname:     "localhost.localdomain",
+		Timezone:     "UTC",
+		SElinux:      "targeted",
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -156,7 +155,7 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 
 func (p *OSPipeline) getBuildPackages() []string {
 	packages := []string{}
-	if p.grubLegacy != "" {
+	if p.BIOSPlatform != "" {
 		packages = append(packages, "grub2-pc")
 	}
 	if p.OSTree != nil {
@@ -220,7 +219,7 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 	pipeline.AddStage(osbuild2.NewRPMStage(rpmOptions, osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-	if p.partitionTable == nil || p.partitionTable.FindMountable("/boot") == nil {
+	if p.PartitionTable == nil || p.PartitionTable.FindMountable("/boot") == nil {
 		pipeline.AddStage(osbuild2.NewFixBLSStage(&osbuild2.FixBLSStageOptions{}))
 	} else {
 		pipeline.AddStage(osbuild2.NewFixBLSStage(&osbuild2.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
@@ -355,8 +354,8 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 		pipeline.AddStage(osbuild2.NewWAAgentConfStage(p.WAAgentConfig))
 	}
 
-	if pt := p.partitionTable; pt != nil {
-		kernelOptions := osbuild2.GenImageKernelOptions(p.partitionTable)
+	if pt := p.PartitionTable; pt != nil {
+		kernelOptions := osbuild2.GenImageKernelOptions(p.PartitionTable)
 		kernelOptions = append(kernelOptions, p.KernelOptionsAppend...)
 		pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
 
@@ -365,7 +364,7 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 		var bootloader *osbuild2.Stage
 		switch p.bootLoader {
 		case BOOTLOADER_GRUB:
-			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFIVendor != "", p.grubLegacy, p.UEFIVendor, false)
+			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFIVendor != "", p.BIOSPlatform, p.UEFIVendor, false)
 			if cfg := p.Grub2Config; cfg != nil {
 				// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
 				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`

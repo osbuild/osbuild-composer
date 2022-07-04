@@ -221,7 +221,8 @@ func osPipeline(m *manifest.Manifest,
 		kernelName = c.GetKernel().Name
 	}
 
-	pl := manifest.NewOSPipeline(m, buildPipeline, repos, pt, bootLoader, t.arch.legacy, kernelName)
+	pl := manifest.NewOSPipeline(m, buildPipeline, repos, bootLoader, kernelName)
+	pl.PartitionTable = pt
 
 	if t.rpmOstree {
 		var parent *manifest.OSPipelineOSTreeParent
@@ -251,6 +252,8 @@ func osPipeline(m *manifest.Manifest,
 	if t.supportsUEFI() {
 		pl.UEFIVendor = t.arch.distro.vendor
 	}
+
+	pl.BIOSPlatform = t.arch.legacy
 
 	var kernelOptions []string
 	if t.kernelOptions != "" {
