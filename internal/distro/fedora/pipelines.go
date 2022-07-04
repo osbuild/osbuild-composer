@@ -4,7 +4,6 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -199,16 +198,6 @@ func osPipeline(m *manifest.Manifest,
 
 	imageConfig := t.getDefaultImageConfig()
 
-	var pt *disk.PartitionTable
-	if t.bootable {
-		// TODO: should there always be a partition table?
-		var err error
-		pt, err = t.getPartitionTable(c.GetFilesystems(), options, rng)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	var arch manifest.Arch
 	switch t.Arch().Name() {
 	case distro.X86_64ArchName:
@@ -222,7 +211,32 @@ func osPipeline(m *manifest.Manifest,
 	}
 
 	pl := manifest.NewOSPipeline(m, buildPipeline, arch, repos)
-	pl.PartitionTable = pt
+
+	if t.bootable {
+		var err error
+		pt, err := t.getPartitionTable(c.GetFilesystems(), options, rng)
+		if err != nil {
+			return nil, err
+		}
+		pl.PartitionTable = pt
+
+		if t.supportsUEFI() {
+			pl.UEFIVendor = t.arch.distro.vendor
+		}
+
+		pl.BIOSPlatform = t.arch.legacy
+
+		pl.KernelName = c.GetKernel().Name
+
+		var kernelOptions []string
+		if t.kernelOptions != "" {
+			kernelOptions = append(kernelOptions, t.kernelOptions)
+		}
+		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
+			kernelOptions = append(kernelOptions, bpKernel.Append)
+		}
+		pl.KernelOptionsAppend = kernelOptions
+	}
 
 	if t.rpmOstree {
 		var parent *manifest.OSPipelineOSTreeParent
@@ -248,25 +262,6 @@ func osPipeline(m *manifest.Manifest,
 	if len(osChain) > 2 {
 		panic("unexpected number of package sets in os chain")
 	}
-
-	if t.supportsUEFI() {
-		pl.UEFIVendor = t.arch.distro.vendor
-	}
-
-	pl.BIOSPlatform = t.arch.legacy
-
-	if t.bootable {
-		pl.KernelName = c.GetKernel().Name
-	}
-
-	var kernelOptions []string
-	if t.kernelOptions != "" {
-		kernelOptions = append(kernelOptions, t.kernelOptions)
-	}
-	if bpKernel := c.GetKernel(); bpKernel.Append != "" {
-		kernelOptions = append(kernelOptions, bpKernel.Append)
-	}
-	pl.KernelOptionsAppend = kernelOptions
 
 	pl.GPGKeyFiles = imageConfig.GPGKeyFiles
 	pl.ExcludeDocs = imageConfig.ExcludeDocs

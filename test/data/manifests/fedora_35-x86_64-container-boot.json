@@ -1513,22 +1513,6 @@
                     }
                   },
                   {
-                    "id": "sha256:bd422838b08aee333b919798924814148118cd1d2ec7051a3d01f0161eec4184",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:59525eff25d7e8c661f3d2a5308d431234cbd5e4a70c4150c3a71639d0e0e136",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:94104f196a74be27358ac696a3f6063d45f7c33df2785a42454b988141760564",
                     "options": {
                       "metadata": {
@@ -3366,9 +3350,6 @@
           "sha256:52598fdd27be8d3ca7587b81ce86f03d1f17c66c0c8fd81ca3274cb7712a400e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/d/diffutils-3.8-1.fc35.x86_64.rpm"
           },
-          "sha256:59525eff25d7e8c661f3d2a5308d431234cbd5e4a70c4150c3a71639d0e0e136": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-modules-2.06-10.fc35.noarch.rpm"
-          },
           "sha256:59d8bf9aefb00d5ec8317c30561e05b9bd50d946ad3c9d5beaa4ec7c7d9a478d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/l/libverto-0.3.2-2.fc35.x86_64.rpm"
           },
@@ -3626,9 +3607,6 @@
           },
           "sha256:bcc4edb810df0371fa4a1ca69b143386542505009eff4a1a0a806d13093e5c9d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/s/sqlite-libs-3.36.0-3.fc35.x86_64.rpm"
-          },
-          "sha256:bd422838b08aee333b919798924814148118cd1d2ec7051a3d01f0161eec4184": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-2.06-10.fc35.x86_64.rpm"
           },
           "sha256:bdd8ac8d916149edaaa5790d444e9b18f9679854e06add58f3693e5500adbb56": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/d/dnf-4.9.0-1.fc35.noarch.rpm"
@@ -5647,26 +5625,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-common-2.06-10.fc35.noarch.rpm",
         "checksum": "sha256:2a3580b96d36668085e21a9d6e11cc2a7d254bfba9855c66fbfc663ea1f211c8",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "10.fc35",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-2.06-10.fc35.x86_64.rpm",
-        "checksum": "sha256:bd422838b08aee333b919798924814148118cd1d2ec7051a3d01f0161eec4184",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc-modules",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "10.fc35",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-modules-2.06-10.fc35.noarch.rpm",
-        "checksum": "sha256:59525eff25d7e8c661f3d2a5308d431234cbd5e4a70c4150c3a71639d0e0e136",
         "check_gpg": true
       },
       {
