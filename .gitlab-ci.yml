@@ -199,7 +199,7 @@ Manifests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/centos-stream-9-x86_64
+          - aws/rhel-9.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .regression:
