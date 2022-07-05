@@ -454,6 +454,15 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(extraPkgs)
 	}
 
+	// if oscap customizations are enabled we need to add `openscap-scanner`
+	// and `scap-security-guides` packages to build root
+	if bp.Customizations.GetOpenSCAP() != nil {
+		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(rpmmd.PackageSet{Include: []string{
+			"openscap-scanner",
+			"scap-security-guide",
+		}})
+	}
+
 	// depsolve bp packages separately
 	// bp packages aren't restricted by exclude lists
 	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}

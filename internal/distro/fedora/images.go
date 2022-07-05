@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
@@ -88,6 +89,18 @@ func osCustomizations(
 
 	if !imageConfig.NoSElinux {
 		osc.SElinux = "targeted"
+	}
+
+	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
+		if t.rpmOstree {
+			panic("unexpected oscap options for ostree image type")
+		}
+		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(
+			osbuild.OscapConfig{
+				Datastream: oscapConfig.DataStream,
+				ProfileID:  oscapConfig.ProfileID,
+			},
+		)
 	}
 
 	osc.Grub2Config = imageConfig.Grub2Config

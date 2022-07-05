@@ -673,6 +673,19 @@ func osPipeline(t *imageType,
 		p.AddStage(bootloader)
 	}
 
+	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
+		if t.rpmOstree {
+			return nil, fmt.Errorf("unexpected oscap options for ostree image type")
+		}
+		remediationOptions := osbuild.NewOscapRemediationStageOptions(
+			osbuild.OscapConfig{
+				Datastream: oscapConfig.DataStream,
+				ProfileID:  oscapConfig.ProfileID,
+			},
+		)
+		p.AddStage(osbuild.NewOscapRemediationStage(remediationOptions))
+	}
+
 	if !imageConfig.NoSElinux {
 		p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	}
