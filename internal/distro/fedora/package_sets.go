@@ -16,7 +16,6 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 		Include: []string{
 			"@core",
 			"chrony",
-			"selinux-policy-targeted",
 			"langpacks-en",
 			"libxcrypt-compat",
 			"xfsprogs",
@@ -39,7 +38,6 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"@Fedora Cloud Server",
 			"chrony",
 			"systemd-udev",
-			"selinux-policy-targeted",
 			"langpacks-en",
 		},
 		Exclude: []string{
@@ -64,7 +62,6 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		Include: []string{
 			"@core",
 			"chrony",
-			"selinux-policy-targeted",
 			"langpacks-en",
 			"net-tools",
 			"ntfsprogs",
@@ -90,7 +87,6 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"@Fedora Cloud Server",
 			"chrony",
 			"systemd-udev",
-			"selinux-policy-targeted",
 			"langpacks-en",
 		},
 		Exclude: []string{
@@ -115,7 +111,6 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		Include: []string{
 			"@core",
 			"chrony",
-			"selinux-policy-targeted",
 			"spice-vdagent",
 			"qemu-guest-agent",
 			"xen-libs",
@@ -184,7 +179,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"procps-ng",
 			"rootfiles",
 			"rpm",
-			"selinux-policy-targeted",
 			"smartmontools-selinux",
 			"setup",
 			"shadow-utils",
