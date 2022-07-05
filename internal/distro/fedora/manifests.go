@@ -229,7 +229,9 @@ func osPipeline(m *manifest.Manifest,
 			return nil, err
 		}
 		pl.PartitionTable = pt
+	}
 
+	if t.bootable || t.rpmOstree {
 		if t.supportsUEFI() {
 			pl.UEFIVendor = t.arch.distro.vendor
 		}

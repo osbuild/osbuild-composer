@@ -1545,6 +1545,22 @@
                     }
                   },
                   {
+                    "id": "sha256:bd422838b08aee333b919798924814148118cd1d2ec7051a3d01f0161eec4184",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:59525eff25d7e8c661f3d2a5308d431234cbd5e4a70c4150c3a71639d0e0e136",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:94104f196a74be27358ac696a3f6063d45f7c33df2785a42454b988141760564",
                     "options": {
                       "metadata": {
@@ -10365,6 +10381,26 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-common-2.06-10.fc35.noarch.rpm",
         "checksum": "sha256:2a3580b96d36668085e21a9d6e11cc2a7d254bfba9855c66fbfc663ea1f211c8",
+        "check_gpg": true
+      },
+      {
+        "name": "grub2-pc",
+        "epoch": 1,
+        "version": "2.06",
+        "release": "10.fc35",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-2.06-10.fc35.x86_64.rpm",
+        "checksum": "sha256:bd422838b08aee333b919798924814148118cd1d2ec7051a3d01f0161eec4184",
+        "check_gpg": true
+      },
+      {
+        "name": "grub2-pc-modules",
+        "epoch": 1,
+        "version": "2.06",
+        "release": "10.fc35",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-modules-2.06-10.fc35.noarch.rpm",
+        "checksum": "sha256:59525eff25d7e8c661f3d2a5308d431234cbd5e4a70c4150c3a71639d0e0e136",
         "check_gpg": true
       },
       {
