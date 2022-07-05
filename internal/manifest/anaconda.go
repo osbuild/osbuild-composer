@@ -13,6 +13,8 @@ type AnacondaPipeline struct {
 	// Packages to install in addition to the ones required by the
 	// pipeline.
 	ExtraPackages []string
+	// Extra repositories to install packages from
+	ExtraRepos []rpmmd.RepoConfig
 	// Users indicate whether or not the user spoke should be enabled in
 	// anaconda. If it is, users specified in a kickstart will be configured,
 	// and in case no users are provided in a kickstart the user will be
@@ -110,7 +112,7 @@ func (p *AnacondaPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	return []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraPackages...),
-			Repositories: p.repos,
+			Repositories: append(p.repos, p.ExtraRepos...),
 		},
 	}
 }

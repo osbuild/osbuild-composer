@@ -75,9 +75,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: iotCommitPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: iotServices,
 		},
@@ -100,9 +97,6 @@ var (
 					Include: []string{"nginx"},
 				}
 			},
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: iotServices,
@@ -142,9 +136,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: qcow2CommonPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: "multi-user.target",
 			EnabledServices: []string{
@@ -170,9 +161,6 @@ var (
 		mimeType: "application/x-vhd",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: vhdCommonPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
@@ -203,9 +191,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: vmdkCommonPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
 			EnabledServices: []string{
@@ -231,9 +216,6 @@ var (
 		mimeType: "application/x-qemu-disk",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: openstackCommonPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: "en_US.UTF-8",
@@ -269,9 +251,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: ec2CommonPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultEc2ImageConfig,
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
@@ -289,9 +268,6 @@ var (
 		mimeType: "application/x-tar",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: containerPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			NoSElinux:   true,
@@ -477,7 +453,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type manifestFunc func(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) error
+type manifestFunc func(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSets map[string]rpmmd.PackageSet, rng *rand.Rand) error
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -489,7 +465,6 @@ type imageType struct {
 	filename           string
 	mimeType           string
 	packageSets        map[string]packageSetFunc
-	packageSetChains   map[string][]string
 	defaultImageConfig *distro.ImageConfig
 	kernelOptions      string
 	defaultSize        uint64
@@ -544,44 +519,39 @@ func (t *imageType) Size(size uint64) uint64 {
 	return size
 }
 
-func (t *imageType) getPackages(name string) rpmmd.PackageSet {
-	getter := t.packageSets[name]
-	if getter == nil {
-		return rpmmd.PackageSet{}
-	}
-
-	return getter(t)
-}
-
 func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
 	// merge package sets that appear in the image type with the package sets
 	// of the same name from the distro and arch
-	mergedSets := make(map[string]rpmmd.PackageSet)
+	packageSets := make(map[string]rpmmd.PackageSet)
 
-	imageSets := t.packageSets
-
-	for name := range imageSets {
-		mergedSets[name] = t.getPackages(name)
-	}
-
-	if _, hasPackages := imageSets[osPkgsKey]; !hasPackages {
-		// should this be possible??
-		mergedSets[osPkgsKey] = rpmmd.PackageSet{}
-	}
-
-	// do not include the kernel package, this is added in the pipelines
-	bpPackages := bp.GetPackagesEx(false)
-	timezone, _ := bp.Customizations.GetTimezoneSettings()
-	if timezone != nil {
-		bpPackages = append(bpPackages, "chrony")
+	for name, getter := range t.packageSets {
+		packageSets[name] = getter(t)
 	}
 
 	// depsolve bp packages separately
 	// bp packages aren't restricted by exclude lists
-	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
+	// do not include the kernel package as it is included from the pipeline
+	packageSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bp.GetPackagesEx(false)}
+
+	// amend with repository information
+	globalRepos := make([]rpmmd.RepoConfig, 0)
+	for _, repo := range repos {
+		if len(repo.PackageSets) > 0 {
+			// only apply the repo to the listed package sets
+			for _, psName := range repo.PackageSets {
+				ps := packageSets[psName]
+				ps.Repositories = append(ps.Repositories, repo)
+				packageSets[psName] = ps
+			}
+		} else {
+			// no package sets were listed, so apply the repo
+			// to all package sets
+			globalRepos = append(globalRepos, repo)
+		}
+	}
 
 	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, err := t.initializeManifest(bp.Customizations, options, repos, distro.MakePackageSetChains(t, mergedSets, repos), 0)
+	manifest, err := t.initializeManifest(bp.Customizations, options, globalRepos, packageSets, 0)
 	if err != nil {
 		// TODO: handle manifest initialization errors more gracefully, we
 		// refuse to initialize manifests with invalid config.
@@ -604,7 +574,7 @@ func (t *imageType) PayloadPackageSets() []string {
 }
 
 func (t *imageType) PackageSetsChains() map[string][]string {
-	return t.packageSetChains
+	return make(map[string][]string)
 }
 
 func (t *imageType) Exports() []string {
@@ -653,7 +623,7 @@ func (t *imageType) PartitionType() string {
 func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSetChains map[string][]rpmmd.PackageSet,
+	packageSets map[string]rpmmd.PackageSet,
 	seed int64) (*manifest.Manifest, error) {
 
 	if err := t.checkOptions(customizations, options); err != nil {
@@ -666,7 +636,7 @@ func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 	rng := rand.New(source)
 
 	manifest := manifest.New()
-	err := t.manifest(&manifest, t, customizations, options, repos, packageSetChains, rng)
+	err := t.manifest(&manifest, t, customizations, options, repos, packageSets, rng)
 	if err != nil {
 		return nil, err
 	}

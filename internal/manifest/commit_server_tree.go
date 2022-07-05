@@ -15,6 +15,8 @@ type OSTreeCommitServerTreePipeline struct {
 	// Packages to install in addition to the ones required by the
 	// pipeline.
 	ExtraPackages []string
+	// Extra repositories to install packages from
+	ExtraRepos []rpmmd.RepoConfig
 	// TODO: should this be configurable?
 	Language string
 
@@ -57,7 +59,7 @@ func (p *OSTreeCommitServerTreePipeline) getPackageSetChain() []rpmmd.PackageSet
 	return []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraPackages...),
-			Repositories: p.repos,
+			Repositories: append(p.repos, p.ExtraRepos...),
 		},
 	}
 }
