@@ -84,6 +84,8 @@ RPM:
           - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-ga-x86_64
           - aws/rhel-8.6-ga-aarch64
           - aws/rhel-9.0-ga-x86_64
@@ -167,6 +169,8 @@ Base:
       - RUNNER:
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-ga-x86_64
           - aws/rhel-8.6-ga-aarch64
           - aws/rhel-9.0-ga-x86_64
@@ -214,6 +218,8 @@ Manifests:
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-ga-x86_64
           - aws/rhel-8.6-ga-aarch64
           - aws/rhel-9.0-ga-x86_64
@@ -289,6 +295,8 @@ Image Tests:
   parallel:
     matrix:
       - RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.7-nightly-x86_64
           - aws/rhel-8.7-nightly-aarch64
           - aws/rhel-9.1-nightly-x86_64
@@ -307,6 +315,7 @@ OSTree:
     matrix:
       - RUNNER:
           - rhos-01/fedora-35-x86_64
+          - rhos-01/rhel-8.4-ga-x86_64
           - rhos-01/rhel-8.6-ga-x86_64
           - rhos-01/rhel-9.0-ga-x86_64
           - rhos-01/rhel-8.7-nightly-x86_64-large
@@ -390,6 +399,7 @@ Rebase OSTree:
 .rhel_runners: &rhel_runners
     RUNNER:
       - aws/centos-stream-8-x86_64
+      - aws/rhel-8.4-ga-x86_64
       - aws/rhel-8.6-ga-x86_64
       - aws/rhel-9.0-ga-x86_64
       - aws/rhel-8.7-nightly-x86_64
@@ -446,7 +456,7 @@ aws.sh:
       - "*.repo"
       - COMPOSER_NVR
     when: always
-    
+
 azure.sh:
   extends: .integration
   variables:
