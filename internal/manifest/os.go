@@ -125,14 +125,8 @@ func NewOSPipeline(m *Manifest,
 
 func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	packages := p.platform.GetPackages()
-	userPackages := []string{}
 
 	if p.KernelName != "" {
-		userPackages = append(packages, p.KernelName)
-
-		// include the kernel also in the base packages to
-		// avoid ending up with two kernels
-		// TODO: only include the kernel here
 		packages = append(packages, p.KernelName)
 	}
 
@@ -150,14 +144,12 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		_ = p.PartitionTable.ForEachEntity(isLVM)
 
 		if hasLVM {
-			// TODO: put this in the base packages instead
-			userPackages = append(userPackages, "lvm2")
+			packages = append(packages, "lvm2")
 		}
 	}
 
 	if len(p.NTPServers) > 0 {
-		// TODO: move to base packages
-		userPackages = append(userPackages, "chrony")
+		packages = append(packages, "chrony")
 	}
 
 	chain := []rpmmd.PackageSet{
@@ -168,10 +160,9 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		},
 	}
 
-	userPackages = append(userPackages, p.UserPackages...)
-	if len(userPackages) > 0 {
+	if len(p.UserPackages) > 0 {
 		chain = append(chain, rpmmd.PackageSet{
-			Include:      userPackages,
+			Include:      p.UserPackages,
 			Repositories: append(p.repos, p.UserRepos...),
 		})
 	}
