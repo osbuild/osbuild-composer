@@ -186,6 +186,9 @@ func (p *OS) getBuildPackages() []string {
 		packages = append(packages, "policycoreutils")
 		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
 	}
+	if p.OpenSCAPConfig != nil {
+		packages = append(packages, "openscap-scanner", "scap-security-guide")
+	}
 	return packages
 }
 
