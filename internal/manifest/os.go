@@ -123,6 +123,26 @@ func NewOSPipeline(m *Manifest,
 
 func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	packages := p.platform.GetPackages()
+	userPackages := []string{}
+
+	// If we have a logical volume we need to include the lvm2 package
+	if p.PartitionTable != nil && p.OSTree == nil {
+		hasLVM := false
+
+		isLVM := func(e disk.Entity, path []disk.Entity) error {
+			switch e.(type) {
+			case *disk.LVMLogicalVolume:
+				hasLVM = true
+			}
+			return nil
+		}
+		_ = p.PartitionTable.ForEachEntity(isLVM)
+
+		if hasLVM {
+			// TODO: put this in the base packages instead
+			userPackages = append(userPackages, "lvm2")
+		}
+	}
 
 	chain := []rpmmd.PackageSet{
 		{
@@ -132,9 +152,10 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		},
 	}
 
-	if len(p.UserPackages) > 0 {
+	userPackages = append(userPackages, p.UserPackages...)
+	if len(userPackages) > 0 {
 		chain = append(chain, rpmmd.PackageSet{
-			Include:      p.UserPackages,
+			Include:      userPackages,
 			Repositories: append(p.repos, p.UserRepos...),
 		})
 	}
