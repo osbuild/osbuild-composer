@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -37,9 +38,33 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-var mountpointAllowList = []string{
-	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
-}
+var (
+	mountpointAllowList = []string{
+		"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
+	}
+
+	// rhel9 & cs9 share the same list
+	// of allowed profiles so a single
+	// allow list can be used
+	oscapProfileAllowList = []oscap.Profile{
+		oscap.AnssiBp28Enhanced,
+		oscap.AnssiBp28High,
+		oscap.AnssiBp28Intermediary,
+		oscap.AnssiBp28Minimal,
+		oscap.Cis,
+		oscap.CisServerL1,
+		oscap.CisWorkstationL1,
+		oscap.CisWorkstationL2,
+		oscap.Cui,
+		oscap.E8,
+		oscap.Hippa,
+		oscap.IsmO,
+		oscap.Ospp,
+		oscap.PciDss,
+		oscap.Stig,
+		oscap.StigGui,
+	}
+)
 
 type distribution struct {
 	name               string
@@ -578,6 +603,24 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	if len(invalidMountpoints) > 0 {
 		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
+	if osc := customizations.GetOpenSCAP(); osc != nil {
+		if t.arch.distro.osVersion == "9.0" {
+			return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.arch.distro.osVersion))
+		}
+		if !oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList) {
+			return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
+		}
+		if t.rpmOstree {
+			return fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
+		}
+		if osc.DataStream == "" {
+			return fmt.Errorf("OpenSCAP datastream cannot be empty")
+		}
+		if osc.ProfileID == "" {
+			return fmt.Errorf("OpenSCAP profile cannot be empty")
+		}
 	}
 
 	return nil

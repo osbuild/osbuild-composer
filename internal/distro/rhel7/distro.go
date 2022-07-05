@@ -448,6 +448,10 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
 	}
 
+	if osc := customizations.GetOpenSCAP(); osc != nil {
+		return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.arch.distro.osVersion))
+	}
+
 	return nil
 }
 
