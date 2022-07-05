@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -49,12 +50,6 @@ type OSPipeline struct {
 	KernelOptionsAppend []string
 	// UEFIVendor indicates whether or not the image should support UEFI and
 	// if set namespaces the UEFI binaries with this string.
-	UEFIVendor string
-	// BIOSPlatform indicates whether or not the image should support BIOS
-	// booting and if set, the name of the platform, e.g., i386-pc
-	BIOSPlatform string
-	// GPGKeyFiles are a list of filenames in the OS which will be imported
-	// as GPG keys into the RPM database.
 	GPGKeyFiles      []string
 	Language         string
 	Keyboard         *string
@@ -98,7 +93,7 @@ type OSPipeline struct {
 
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
-	arch         Arch
+	platform     platform.Platform
 	kernelVer    string
 }
 
@@ -110,12 +105,12 @@ type OSPipeline struct {
 // kernel package that will be used on the target system.
 func NewOSPipeline(m *Manifest,
 	buildPipeline *BuildPipeline,
-	arch Arch,
+	platform platform.Platform,
 	repos []rpmmd.RepoConfig) *OSPipeline {
 	p := &OSPipeline{
 		BasePipeline: NewBasePipeline(m, "os", buildPipeline, nil),
 		repos:        repos,
-		arch:         arch,
+		platform:     platform,
 		Language:     "C.UTF-8",
 		Hostname:     "localhost.localdomain",
 		Timezone:     "UTC",
@@ -127,34 +122,7 @@ func NewOSPipeline(m *Manifest,
 }
 
 func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
-	packages := []string{}
-
-	switch p.arch {
-	case ARCH_X86_64:
-		if p.BIOSPlatform != "" {
-			packages = append(packages,
-				"dracut-config-generic",
-				"grub2-pc")
-		}
-		if p.UEFIVendor != "" {
-			packages = append(packages,
-				"dracut-config-generic",
-				"efibootmgr",
-				"grub2-efi-x64",
-				"shim-x64")
-		}
-	case ARCH_AARCH64:
-		if p.UEFIVendor != "" {
-			packages = append(packages,
-				"dracut-config-generic",
-				"efibootmgr",
-				"grub2-efi-aa64",
-				"grub2-tools",
-				"shim-aa64")
-		}
-	default:
-		panic("unsupported architecture")
-	}
+	packages := p.platform.GetPackages()
 
 	chain := []rpmmd.PackageSet{
 		{
@@ -175,10 +143,7 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 }
 
 func (p *OSPipeline) getBuildPackages() []string {
-	packages := []string{}
-	if p.BIOSPlatform != "" {
-		packages = append(packages, "grub2-pc")
-	}
+	packages := p.platform.GetBuildPackages()
 	if p.OSTree != nil {
 		packages = append(packages, "rpm-ostree")
 	}
@@ -383,11 +348,15 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 		pipeline.AddStage(osbuild2.NewFSTabStage(osbuild2.NewFSTabStageOptions(pt)))
 
 		var bootloader *osbuild2.Stage
-		switch p.arch {
-		case ARCH_S390X:
+		switch p.platform.GetArch() {
+		case platform.ARCH_S390X:
 			bootloader = osbuild2.NewZiplStage(new(osbuild2.ZiplStageOptions))
 		default:
-			options := osbuild2.NewGrub2StageOptionsUnified(pt, p.kernelVer, p.UEFIVendor != "", p.BIOSPlatform, p.UEFIVendor, false)
+			options := osbuild2.NewGrub2StageOptionsUnified(pt,
+				p.kernelVer,
+				p.platform.GetUEFIVendor() != "",
+				p.platform.GetBIOSPlatform(),
+				p.platform.GetUEFIVendor(), false)
 			if cfg := p.Grub2Config; cfg != nil {
 				// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
 				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`
