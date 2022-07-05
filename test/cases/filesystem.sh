@@ -169,6 +169,26 @@ size = 131072000
 [[customizations.filesystem]]
 mountpoint = "/var/tmp"
 size = 131072000
+
+[[customizations.filesystem]]
+mountpoint = "/home"
+size = 131072000
+
+[[customizations.filesystem]]
+mountpoint = "/opt"
+size = 131072000
+
+[[customizations.filesystem]]
+mountpoint = "/srv"
+size = 131072000
+
+[[customizations.filesystem]]
+mountpoint = "/app"
+size = 131072000
+
+[[customizations.filesystem]]
+mountpoint = "/data"
+size = 131072000
 EOF
 
 build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem qcow2 false
@@ -182,7 +202,7 @@ greenprint "💬 Checking mountpoints"
 INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
 FAILED_MOUNTPOINTS=()
 
-for MOUNTPOINT in '/' '/var' '/var/log' '/var/log/audit' '/var/tmp' '/usr' '/tmp'; do
+for MOUNTPOINT in '/' '/var' '/var/log' '/var/log/audit' '/var/tmp' '/usr' '/tmp' '/home' '/opt' '/srv' '/app' '/data'; do
   EXISTS=$(jq -e --arg m "$MOUNTPOINT" 'any(.fstab[] | .[] == $m; .)' <<< "${INFO}")
   if $EXISTS; then
     greenprint "INFO: mountpoint $MOUNTPOINT exists"
