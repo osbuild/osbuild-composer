@@ -34,10 +34,12 @@ type OSPipeline struct {
 	// can satisfy a dependency. Must not conflict with the included base
 	// package set.
 	ExcludeBasePackages []string
+	// Additional repos to install the base packages from.
+	ExtraBaseRepos []rpmmd.RepoConfig
 	// Packages to install on top of the base packages in a seconadry dnf
 	// transaction.
 	UserPackages []string
-	// Repositories to install the user packages from.
+	// Additional repos to install the user packages from.
 	UserRepos []rpmmd.RepoConfig
 	// OSTree configuration, if nil the tree cannot be in an OSTree commit
 	OSTree *OSPipelineOSTree
@@ -153,11 +155,16 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		}
 	}
 
+	if len(p.NTPServers) > 0 {
+		// TODO: move to base packages
+		userPackages = append(userPackages, "chrony")
+	}
+
 	chain := []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraBasePackages...),
 			Exclude:      p.ExcludeBasePackages,
-			Repositories: p.repos,
+			Repositories: append(p.repos, p.ExtraBaseRepos...),
 		},
 	}
 
