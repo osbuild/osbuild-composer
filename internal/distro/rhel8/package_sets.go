@@ -606,7 +606,6 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 		"@Server",
 		// SAP System Roles
 		// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-		"ansible-core", // RHBZ#2077356
 		"rhel-system-roles-sap",
 		// RHBZ#1959813
 		"bind-utils",
@@ -641,6 +640,17 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 		// RHUI client
 		"rh-amazon-rhui-client-sap-bundle-e4s",
 	)
+
+	if t.arch.distro.osVersion == "8.4" {
+		ec2SapPackageSet = ec2SapPackageSet.Append(rpmmd.PackageSet{
+			Include: []string{"ansible"},
+		})
+	} else {
+		// 8.6+ and CS8 (image type does not exist on 8.5)
+		ec2SapPackageSet = ec2SapPackageSet.Append(rpmmd.PackageSet{
+			Include: []string{"ansible-core"}, // RHBZ#2077356
+		})
+	}
 	return ec2SapPackageSet
 }
 

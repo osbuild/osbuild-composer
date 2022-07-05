@@ -1869,20 +1869,26 @@ func newDistro(distroName string) distro.Distro {
 	)
 
 	if rd.isRHEL() {
+		if !versionLessThan(rd.osVersion, "8.6") {
+			// image types only available on 8.6 and later on RHEL
+			// These edge image types require FDO which aren't available on older versions
+			x86_64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
+			aarch64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
+		}
+
 		// add azure to RHEL distro only
 		x86_64.addImageTypes(azureRhuiImgType)
 
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64)
-		if !versionLessThan(rd.osVersion, "8.6") {
-			x86_64.addImageTypes(ec2SapImgTypeX86_64)
-
-			// edge simplified installer is only available on 8.6 and later on RHEL
-			x86_64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
-			aarch64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
-		}
-
 		aarch64.addImageTypes(ec2ImgTypeAarch64)
+
+		if rd.osVersion != "8.5" {
+			// NOTE: RHEL 8.5 is going away and these image types require some
+			// work to get working, so we just disable them here until the
+			// whole distro gets deleted
+			x86_64.addImageTypes(ec2SapImgTypeX86_64)
+		}
 
 		// add GCE RHUI image to RHEL only
 		x86_64.addImageTypes(gceRhuiImgType)
