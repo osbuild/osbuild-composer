@@ -568,8 +568,8 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		mergedSets[osPkgsKey] = rpmmd.PackageSet{}
 	}
 
-	// blueprint packages
-	bpPackages := bp.GetPackagesEx(t.rpmOstree || t.bootable)
+	// do not include the kernel package, this is added in the pipelines
+	bpPackages := bp.GetPackagesEx(false)
 	timezone, _ := bp.Customizations.GetTimezoneSettings()
 	if timezone != nil {
 		bpPackages = append(bpPackages, "chrony")
@@ -578,13 +578,6 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	// depsolve bp packages separately
 	// bp packages aren't restricted by exclude lists
 	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
-	kernel := bp.Customizations.GetKernel().Name
-
-	// add bp kernel to main OS package set to avoid duplicate kernels,
-	// but we don't want to add the kernel for the container artefact
-	if t.rpmOstree || t.bootable {
-		mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kernel}})
-	}
 
 	// create a manifest object and instantiate it with the computed packageSetChains
 	manifest, err := t.initializeManifest(bp.Customizations, options, repos, distro.MakePackageSetChains(t, mergedSets, repos), 0)
