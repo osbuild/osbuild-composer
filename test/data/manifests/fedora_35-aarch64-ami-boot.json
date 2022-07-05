@@ -4893,6 +4893,10 @@
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "uefi": {
+                "vendor": "fedora",
+                "unified": true
+              },
               "saved_entry": "ffffffffffffffffffffffffffffffff-5.15.13-200.fc35.aarch64",
               "write_cmdline": false,
               "config": {
