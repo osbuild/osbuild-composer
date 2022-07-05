@@ -152,6 +152,10 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		packages = append(packages, "chrony")
 	}
 
+	if p.SElinux != "" {
+		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	}
+
 	chain := []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraBasePackages...),
