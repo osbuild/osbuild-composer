@@ -81,7 +81,7 @@ var (
 			EnabledServices: iotServices,
 		},
 		rpmOstree:        true,
-		pipelines:        iotCommitPipelines,
+		manifest:         iotCommitManifest,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "ostree-commit", "commit-archive"},
 		exports:          []string{"commit-archive"},
@@ -108,7 +108,7 @@ var (
 		},
 		rpmOstree:        true,
 		bootISO:          false,
-		pipelines:        iotContainerPipelines,
+		manifest:         iotContainerManifest,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "container"},
 		exports:          []string{"container"},
@@ -128,7 +128,7 @@ var (
 		},
 		rpmOstree:        true,
 		bootISO:          true,
-		pipelines:        iotInstallerPipelines,
+		manifest:         iotInstallerManifest,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
@@ -156,7 +156,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
-		pipelines:           qcow2Pipelines,
+		manifest:            qcow2Manifest,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
@@ -188,7 +188,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
-		pipelines:           vhdPipelines,
+		manifest:            vhdManifest,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vpc"},
 		exports:             []string{"vpc"},
@@ -217,7 +217,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
-		pipelines:           vmdkPipelines,
+		manifest:            vmdkManifest,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk"},
 		exports:             []string{"vmdk"},
@@ -246,7 +246,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
-		pipelines:           openstackPipelines,
+		manifest:            openstackManifest,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
@@ -276,7 +276,7 @@ var (
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         6 * GigaByte,
-		pipelines:           ec2Pipelines,
+		manifest:            ec2Manifest,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
@@ -299,7 +299,7 @@ var (
 			Locale:      "C.UTF-8",
 			Timezone:    "Etc/UTC",
 		},
-		pipelines:        containerPipelines,
+		manifest:         containerManifest,
 		bootable:         false,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "container"},
@@ -478,7 +478,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type pipelinesFunc func(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) ([]manifest.Pipeline, error)
+type manifestFunc func(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetChains map[string][]rpmmd.PackageSet, rng *rand.Rand) error
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -496,7 +496,7 @@ type imageType struct {
 	buildPipelines     []string
 	payloadPipelines   []string
 	exports            []string
-	pipelines          pipelinesFunc
+	manifest           manifestFunc
 
 	// bootISO: installable ISO
 	bootISO bool
@@ -711,7 +711,7 @@ func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 	rng := rand.New(source)
 
 	manifest := manifest.New()
-	_, err := t.pipelines(&manifest, t, customizations, options, repos, packageSetChains, rng)
+	err := t.manifest(&manifest, t, customizations, options, repos, packageSetChains, rng)
 	if err != nil {
 		return nil, err
 	}
