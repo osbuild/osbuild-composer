@@ -208,19 +208,7 @@ func osPipeline(m *manifest.Manifest,
 
 	imageConfig := t.getDefaultImageConfig()
 
-	var arch manifest.Arch
-	switch t.Arch().Name() {
-	case distro.X86_64ArchName:
-		arch = manifest.ARCH_X86_64
-	case distro.Aarch64ArchName:
-		arch = manifest.ARCH_AARCH64
-	case distro.Ppc64leArchName:
-		arch = manifest.ARCH_PPC64LE
-	case distro.S390xArchName:
-		arch = manifest.ARCH_S390X
-	}
-
-	pl := manifest.NewOSPipeline(m, buildPipeline, arch, repos)
+	pl := manifest.NewOSPipeline(m, buildPipeline, t.platform, repos)
 
 	if t.bootable {
 		var err error
@@ -232,12 +220,6 @@ func osPipeline(m *manifest.Manifest,
 	}
 
 	if t.bootable || t.rpmOstree {
-		if t.supportsUEFI() {
-			pl.UEFIVendor = t.arch.distro.vendor
-		}
-
-		pl.BIOSPlatform = t.arch.legacy
-
 		pl.KernelName = c.GetKernel().Name
 
 		var kernelOptions []string

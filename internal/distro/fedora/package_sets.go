@@ -235,44 +235,9 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"iwlax2xx-firmware",
 		},
 	}
-	switch t.Arch().Name() {
-	case distro.X86_64ArchName:
-		ps = ps.Append(x8664IOTCommitPackageSet())
-
-	case distro.Aarch64ArchName:
-		ps = ps.Append(aarch64IOTCommitPackageSet())
-	}
 
 	return ps
 
-}
-
-func x8664IOTCommitPackageSet() rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"microcode_ctl",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6050-firmware",
-		},
-	}
-}
-
-func aarch64IOTCommitPackageSet() rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"uboot-images-armv8",
-			"bcm283x-firmware",
-			"arm-image-installer"},
-	}
 }
 
 // INSTALLER PACKAGE SET

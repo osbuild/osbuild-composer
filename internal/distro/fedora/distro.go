@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -274,7 +275,6 @@ var (
 		defaultImageConfig:  defaultEc2ImageConfig,
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
-		bootType:            distro.LegacyBootType,
 		defaultSize:         6 * GigaByte,
 		manifest:            ec2Manifest,
 		buildPipelines:      []string{"build"},
@@ -422,8 +422,6 @@ type architecture struct {
 	name             string
 	imageTypes       map[string]distro.ImageType
 	imageTypeAliases map[string]string
-	legacy           string
-	bootType         distro.BootType
 }
 
 func (a *architecture) Name() string {
@@ -454,13 +452,14 @@ func (a *architecture) GetImageType(name string) (distro.ImageType, error) {
 	return t, nil
 }
 
-func (a *architecture) addImageTypes(imageTypes ...imageType) {
+func (a *architecture) addImageTypes(platform platform.Platform, imageTypes ...imageType) {
 	if a.imageTypes == nil {
 		a.imageTypes = map[string]distro.ImageType{}
 	}
 	for idx := range imageTypes {
 		it := imageTypes[idx]
 		it.arch = a
+		it.platform = platform
 		a.imageTypes[it.name] = &it
 		for _, alias := range it.nameAliases {
 			if a.imageTypeAliases == nil {
@@ -484,6 +483,7 @@ type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
 type imageType struct {
 	arch               *architecture
+	platform           platform.Platform
 	name               string
 	nameAliases        []string
 	filename           string
@@ -504,8 +504,6 @@ type imageType struct {
 	rpmOstree bool
 	// bootable image
 	bootable bool
-	// If set to a value, it is preferred over the architecture value
-	bootType distro.BootType
 	// List of valid arches for the image type
 	basePartitionTables distro.BasePartitionTableMap
 }
@@ -582,9 +580,9 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	// the layout is converted to LVM so we need to corresponding packages
 	if t.bootable && !t.rpmOstree {
 
-		pt, exists := t.basePartitionTables[t.arch.Name()]
+		pt, exists := t.basePartitionTables[t.platform.GetArch().String()]
 		if !exists {
-			panic(fmt.Sprintf("unknown architecture with boot type: %s %s", t.arch.Name(), t.bootType))
+			panic(fmt.Sprintf("unknown no partition table for architecture %s", t.platform.GetArch().String()))
 		}
 		haveNewMountpoint := false
 
@@ -642,23 +640,6 @@ func (t *imageType) Exports() []string {
 		return t.exports
 	}
 	return []string{"assembler"}
-}
-
-// getBootType returns the BootType which should be used for this particular
-// combination of architecture and image type.
-func (t *imageType) getBootType() distro.BootType {
-	bootType := t.arch.bootType
-	if t.bootType != distro.UnsetBootType {
-		if bootType == distro.HybridBootType {
-			bootType = t.bootType
-		}
-	}
-	return bootType
-}
-
-func (t *imageType) supportsUEFI() bool {
-	bootType := t.getBootType()
-	return bootType == distro.HybridBootType || bootType == distro.UEFIBootType
 }
 
 func (t *imageType) getPartitionTable(
@@ -814,51 +795,99 @@ func newDistro(distroName string) distro.Distro {
 
 	// Architecture definitions
 	x86_64 := architecture{
-		name:     distro.X86_64ArchName,
-		distro:   &rd,
-		legacy:   "i386-pc",
-		bootType: distro.HybridBootType,
+		name:   distro.X86_64ArchName,
+		distro: &rd,
 	}
 
 	aarch64 := architecture{
-		name:     distro.Aarch64ArchName,
-		distro:   &rd,
-		bootType: distro.UEFIBootType,
+		name:   distro.Aarch64ArchName,
+		distro: &rd,
 	}
 
 	s390x := architecture{
-		distro:   &rd,
-		name:     distro.S390xArchName,
-		bootType: distro.LegacyBootType,
+		distro: &rd,
+		name:   distro.S390xArchName,
 	}
 
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
 	x86_64.addImageTypes(
-		amiImgType,
-		containerImgType,
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: "fedora",
+		},
 		qcow2ImgType,
 		openstackImgType,
 		vhdImgType,
 		vmdkImgType,
 		ociImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS: true,
+		},
+		amiImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{},
+		containerImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
+				FirmwarePackages: []string{
+					"microcode_ctl", // ??
+					"iwl1000-firmware",
+					"iwl100-firmware",
+					"iwl105-firmware",
+					"iwl135-firmware",
+					"iwl2000-firmware",
+					"iwl2030-firmware",
+					"iwl3160-firmware",
+					"iwl5000-firmware",
+					"iwl5150-firmware",
+					"iwl6000-firmware",
+					"iwl6050-firmware",
+				},
+			},
+			BIOS:       true,
+			UEFIVendor: "fedora",
+		},
 		iotOCIImgType,
 		iotCommitImgType,
 		iotInstallerImgType,
 	)
 	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: "fedora",
+		},
 		amiImgType,
-		containerImgType,
 		qcow2ImgType,
 		openstackImgType,
 		ociImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{},
+		containerImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			BasePlatform: platform.BasePlatform{
+				FirmwarePackages: []string{
+					"uboot-images-armv8", // ??
+					"bcm283x-firmware",
+					"arm-image-installer", // ??
+				},
+			},
+			UEFIVendor: "fedora",
+		},
 		iotCommitImgType,
 		iotOCIImgType,
 		iotInstallerImgType,
 	)
 
-	s390x.addImageTypes()
+	s390x.addImageTypes(nil)
 
 	rd.addArches(x86_64, aarch64, s390x)
 	return &rd
