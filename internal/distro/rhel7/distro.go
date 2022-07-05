@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"path"
 	"sort"
 	"strings"
 
@@ -427,25 +426,6 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	)
 }
 
-func isMountpointAllowed(mountpoint string) bool {
-	for _, allowed := range mountpointAllowList {
-		match, _ := path.Match(allowed, mountpoint)
-		if match {
-			return true
-		}
-		// ensure that only clean mountpoints
-		// are valid
-		if strings.Contains(mountpoint, "//") {
-			return false
-		}
-		match = strings.HasPrefix(mountpoint, allowed+"/")
-		if allowed != "/" && match {
-			return true
-		}
-	}
-	return false
-}
-
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
 
@@ -453,7 +433,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
-		if !isMountpointAllowed(m.Mountpoint) {
+		if !distro.IsMountpointAllowed(m.Mountpoint, mountpointAllowList) {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
 		}
 	}
