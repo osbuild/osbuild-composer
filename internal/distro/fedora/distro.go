@@ -649,7 +649,9 @@ func (t *imageType) Exports() []string {
 func (t *imageType) getBootType() distro.BootType {
 	bootType := t.arch.bootType
 	if t.bootType != distro.UnsetBootType {
-		bootType = t.bootType
+		if bootType == distro.HybridBootType {
+			bootType = t.bootType
+		}
 	}
 	return bootType
 }
