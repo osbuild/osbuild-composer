@@ -115,6 +115,7 @@ func NewOSPipeline(m *Manifest,
 	p := &OSPipeline{
 		BasePipeline: NewBasePipeline(m, "os", buildPipeline, nil),
 		repos:        repos,
+		arch:         arch,
 		Language:     "C.UTF-8",
 		Hostname:     "localhost.localdomain",
 		Timezone:     "UTC",
@@ -127,6 +128,34 @@ func NewOSPipeline(m *Manifest,
 
 func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	packages := []string{}
+
+	switch p.arch {
+	case ARCH_X86_64:
+		if p.BIOSPlatform != "" {
+			packages = append(packages,
+				"dracut-config-generic",
+				"grub2-pc")
+		}
+		if p.UEFIVendor != "" {
+			packages = append(packages,
+				"dracut-config-generic",
+				"efibootmgr",
+				"grub2-efi-x64",
+				"shim-x64")
+		}
+	case ARCH_AARCH64:
+		if p.UEFIVendor != "" {
+			packages = append(packages,
+				"dracut-config-generic",
+				"efibootmgr",
+				"grub2-efi-aa64",
+				"grub2-tools",
+				"shim-aa64")
+		}
+	default:
+		panic("unsupported architecture")
+	}
+
 	chain := []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraBasePackages...),

@@ -30,84 +30,6 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"geolite2-country",
 			"zram-generator-defaults",
 		},
-	}.Append(bootPackageSet(t))
-}
-
-// BOOT PACKAGE SETS
-
-func bootPackageSet(t *imageType) rpmmd.PackageSet {
-	if !t.bootable {
-		return rpmmd.PackageSet{}
-	}
-
-	var addLegacyBootPkg bool
-	var addUEFIBootPkg bool
-
-	switch bt := t.getBootType(); bt {
-	case distro.LegacyBootType:
-		addLegacyBootPkg = true
-	case distro.UEFIBootType:
-		addUEFIBootPkg = true
-	case distro.HybridBootType:
-		addLegacyBootPkg = true
-		addUEFIBootPkg = true
-	default:
-		panic(fmt.Sprintf("unsupported boot type: %q", bt))
-	}
-
-	ps := rpmmd.PackageSet{}
-
-	switch t.Arch().Name() {
-	case distro.X86_64ArchName:
-		if addLegacyBootPkg {
-			ps = ps.Append(x8664LegacyBootPackageSet(t))
-		}
-		if addUEFIBootPkg {
-			ps = ps.Append(x8664UEFIBootPackageSet(t))
-		}
-
-	case distro.Aarch64ArchName:
-		ps = ps.Append(aarch64UEFIBootPackageSet(t))
-
-	default:
-		panic(fmt.Sprintf("unsupported boot arch: %s", t.Arch().Name()))
-	}
-
-	return ps
-}
-
-// x86_64 Legacy arch-specific boot package set
-func x8664LegacyBootPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"dracut-config-generic",
-			"grub2-pc",
-		},
-	}
-}
-
-// x86_64 UEFI arch-specific boot package set
-func x8664UEFIBootPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"dracut-config-generic",
-			"efibootmgr",
-			"grub2-efi-x64",
-			"shim-x64",
-		},
-	}
-}
-
-// aarch64 UEFI arch-specific boot package set
-func aarch64UEFIBootPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"dracut-config-generic",
-			"efibootmgr",
-			"grub2-efi-aa64",
-			"grub2-tools",
-			"shim-aa64",
-		},
 	}
 }
 
@@ -132,7 +54,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"grubby-deprecated",
 			"extlinux-bootloader",
 		},
-	}.Append(bootPackageSet(t))
+	}
 
 	return ps
 }
@@ -157,7 +79,7 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"geolite2-country",
 			"zram-generator-defaults",
 		},
-	}.Append(bootPackageSet(t))
+	}
 
 	return ps
 }
@@ -183,7 +105,7 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"grubby-deprecated",
 			"extlinux-bootloader",
 		},
-	}.Append(bootPackageSet(t))
+	}
 
 	return ps
 }
@@ -207,7 +129,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"geolite2-country",
 			"zram-generator-defaults",
 		},
-	}.Append(bootPackageSet(t))
+	}
 
 	return ps
 }
@@ -223,7 +145,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"sssd-client",
 			"libsss_sudo",
 			"shadow-utils",
-			"dracut-config-generic",
 			"dracut-network",
 			"polkit",
 			"lvm2",
@@ -329,10 +250,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 func x8664IOTCommitPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"grub2",
-			"grub2-efi-x64",
-			"efibootmgr",
-			"shim-x64",
 			"microcode_ctl",
 			"iwl1000-firmware",
 			"iwl100-firmware",
@@ -352,10 +269,6 @@ func x8664IOTCommitPackageSet() rpmmd.PackageSet {
 func aarch64IOTCommitPackageSet() rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"grub2",
-			"grub2-efi-aa64",
-			"efibootmgr",
-			"shim-aa64",
 			"uboot-images-armv8",
 			"bcm283x-firmware",
 			"arm-image-installer"},
