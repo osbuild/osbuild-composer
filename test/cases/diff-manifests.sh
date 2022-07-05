@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+artifacts="ci-artifacts"
+mkdir -p "${artifacts}"
+
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
@@ -67,9 +70,11 @@ if (( err == 0 )); then
 fi
 
 greenprint "Manifests differ"
-echo "${diff}"
+echo "${diff}" > "${artifacts}/manifests.diff"
+greenprint "Saved diff in job artifacts"
+
 cat > "${review_data_file}" << EOF
-{"body":"⚠️ This PR introduces changes in at least one manifest (when comparing PR HEAD ${head} with the main merge-base ${mergebase}).  Please review the changes.","event":"COMMENT"}
+{"body":"⚠️ This PR introduces changes in at least one manifest (when comparing PR HEAD ${head} with the main merge-base ${mergebase}).  Please review the changes.  The changes can be found in the job artifacts of the \`Manifest-diff\` job as \`manifests.diff\`","event":"COMMENT"}
 EOF
 
 greenprint "Posting review comment"
