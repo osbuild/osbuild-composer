@@ -575,27 +575,6 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		bpPackages = append(bpPackages, "chrony")
 	}
 
-	// if we have file system customization that will need to a new mount point
-	// the layout is converted to LVM so we need to corresponding packages
-	if t.bootable && !t.rpmOstree {
-
-		pt, exists := t.basePartitionTables[t.platform.GetArch().String()]
-		if !exists {
-			panic(fmt.Sprintf("unknown no partition table for architecture %s", t.platform.GetArch().String()))
-		}
-		haveNewMountpoint := false
-
-		if fs := bp.Customizations.GetFilesystems(); fs != nil {
-			for i := 0; !haveNewMountpoint && i < len(fs); i++ {
-				haveNewMountpoint = !pt.ContainsMountpoint(fs[i].Mountpoint)
-			}
-		}
-
-		if haveNewMountpoint {
-			bpPackages = append(bpPackages, "lvm2")
-		}
-	}
-
 	// depsolve bp packages separately
 	// bp packages aren't restricted by exclude lists
 	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
