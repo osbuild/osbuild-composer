@@ -43,7 +43,6 @@ func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		"dosfstools",
 		"e2fsprogs",
 		"policycoreutils",
-		"qemu-img",
 		"selinux-policy-targeted",
 		"systemd",
 		"tar",

@@ -43,3 +43,7 @@ func (p *VMDKPipeline) serialize() osbuild2.Pipeline {
 
 	return pipeline
 }
+
+func (p *VMDKPipeline) getBuildPackages() []string {
+	return []string{"qemu-img"}
+}

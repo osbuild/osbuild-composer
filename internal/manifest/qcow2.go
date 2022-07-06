@@ -47,3 +47,7 @@ func (p *QCOW2Pipeline) serialize() osbuild2.Pipeline {
 
 	return pipeline
 }
+
+func (p *QCOW2Pipeline) getBuildPackages() []string {
+	return []string{"qemu-img"}
+}
