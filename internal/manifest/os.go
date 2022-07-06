@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
 type OSPipelineOSTree struct {
@@ -36,11 +37,8 @@ type OSPipeline struct {
 	ExcludeBasePackages []string
 	// Additional repos to install the base packages from.
 	ExtraBaseRepos []rpmmd.RepoConfig
-	// Packages to install on top of the base packages in a seconadry dnf
-	// transaction.
-	UserPackages []string
-	// Additional repos to install the user packages from.
-	UserRepos []rpmmd.RepoConfig
+	// Workload to install on top of the base system
+	Workload workload.Workload
 	// OSTree configuration, if nil the tree cannot be in an OSTree commit
 	OSTree *OSPipelineOSTree
 	// Partition table, if nil the tree cannot be put on a partioned disk
@@ -194,10 +192,10 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		},
 	}
 
-	if len(p.UserPackages) > 0 {
+	if p.Workload != nil {
 		chain = append(chain, rpmmd.PackageSet{
-			Include:      p.UserPackages,
-			Repositories: append(p.repos, p.UserRepos...),
+			Include:      p.Workload.GetPackages(),
+			Repositories: append(p.repos, p.Workload.GetRepos()...),
 		})
 	}
 
@@ -312,11 +310,17 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 		}
 	}
 
-	if p.EnabledServices != nil ||
-		p.DisabledServices != nil || p.DefaultTarget != "" {
+	enabledServices := []string{}
+	enabledServices = append(enabledServices, p.EnabledServices...)
+	enabledServices = append(enabledServices, p.Workload.GetServices()...)
+	disabledServices := []string{}
+	disabledServices = append(disabledServices, p.DisabledServices...)
+	disabledServices = append(disabledServices, p.Workload.GetDisabledServices()...)
+	if len(enabledServices) != 0 ||
+		len(disabledServices) != 0 || p.DefaultTarget != "" {
 		pipeline.AddStage(osbuild2.NewSystemdStage(&osbuild2.SystemdStageOptions{
-			EnabledServices:  p.EnabledServices,
-			DisabledServices: p.DisabledServices,
+			EnabledServices:  enabledServices,
+			DisabledServices: disabledServices,
 			DefaultTarget:    p.DefaultTarget,
 		}))
 	}
