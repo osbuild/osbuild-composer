@@ -94,9 +94,7 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: iotCommitPackageSet,
 			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
-				return rpmmd.PackageSet{
-					Include: []string{"nginx"},
-				}
+				return rpmmd.PackageSet{}
 			},
 		},
 		defaultImageConfig: &distro.ImageConfig{

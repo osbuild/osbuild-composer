@@ -55,7 +55,7 @@ func NewOSTreeCommitServerTreePipeline(m *Manifest,
 }
 
 func (p *OSTreeCommitServerTreePipeline) getPackageSetChain() []rpmmd.PackageSet {
-	packages := []string{}
+	packages := []string{"nginx"}
 	return []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraPackages...),
