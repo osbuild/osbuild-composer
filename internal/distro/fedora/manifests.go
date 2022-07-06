@@ -7,9 +7,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
 func qcow2Manifest(m *manifest.Manifest,
+	workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -18,7 +20,7 @@ func qcow2Manifest(m *manifest.Manifest,
 	rng *rand.Rand) error {
 
 	buildPipeline := manifest.NewBuildPipeline(m, t.arch.distro.runner, repos)
-	treePipeline, err := osPipeline(m, buildPipeline, t, repos, packageSets[osPkgsKey], packageSets[blueprintPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(m, buildPipeline, workload, t, repos, packageSets[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return err
 	}
@@ -30,6 +32,7 @@ func qcow2Manifest(m *manifest.Manifest,
 }
 
 func vhdManifest(m *manifest.Manifest,
+	workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -38,7 +41,7 @@ func vhdManifest(m *manifest.Manifest,
 	rng *rand.Rand) error {
 
 	buildPipeline := manifest.NewBuildPipeline(m, t.arch.distro.runner, repos)
-	treePipeline, err := osPipeline(m, buildPipeline, t, repos, packageSets[osPkgsKey], packageSets[blueprintPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(m, buildPipeline, workload, t, repos, packageSets[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return err
 	}
@@ -49,6 +52,7 @@ func vhdManifest(m *manifest.Manifest,
 }
 
 func vmdkManifest(m *manifest.Manifest,
+	workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -57,7 +61,7 @@ func vmdkManifest(m *manifest.Manifest,
 	rng *rand.Rand) error {
 
 	buildPipeline := manifest.NewBuildPipeline(m, t.arch.distro.runner, repos)
-	treePipeline, err := osPipeline(m, buildPipeline, t, repos, packageSets[osPkgsKey], packageSets[blueprintPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(m, buildPipeline, workload, t, repos, packageSets[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return err
 	}
@@ -68,6 +72,7 @@ func vmdkManifest(m *manifest.Manifest,
 }
 
 func openstackManifest(m *manifest.Manifest,
+	workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -76,7 +81,7 @@ func openstackManifest(m *manifest.Manifest,
 	rng *rand.Rand) error {
 
 	buildPipeline := manifest.NewBuildPipeline(m, t.arch.distro.runner, repos)
-	treePipeline, err := osPipeline(m, buildPipeline, t, repos, packageSets[osPkgsKey], packageSets[blueprintPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(m, buildPipeline, workload, t, repos, packageSets[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return err
 	}
@@ -87,6 +92,7 @@ func openstackManifest(m *manifest.Manifest,
 }
 
 func ec2CommonManifest(m *manifest.Manifest,
+	workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -96,7 +102,7 @@ func ec2CommonManifest(m *manifest.Manifest,
 	diskfile string) error {
 
 	buildPipeline := manifest.NewBuildPipeline(m, t.arch.distro.runner, repos)
-	treePipeline, err := osPipeline(m, buildPipeline, t, repos, packageSets[osPkgsKey], packageSets[blueprintPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(m, buildPipeline, workload, t, repos, packageSets[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return nil
 	}
@@ -106,13 +112,19 @@ func ec2CommonManifest(m *manifest.Manifest,
 }
 
 // ec2Manifest returns a manifest which produce uncompressed EC2 images which are expected to use RHSM for content
-func ec2Manifest(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSets map[string]rpmmd.PackageSet,
+func ec2Manifest(m *manifest.Manifest,
+	workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	repos []rpmmd.RepoConfig,
+	packageSets map[string]rpmmd.PackageSet,
 	rng *rand.Rand) error {
-	return ec2CommonManifest(m, t, customizations, options, repos, packageSets, rng, t.Filename())
+	return ec2CommonManifest(m, workload, t, customizations, options, repos, packageSets, rng, t.Filename())
 }
 
 func iotInstallerManifest(m *manifest.Manifest,
+	workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -133,6 +145,7 @@ func iotInstallerManifest(m *manifest.Manifest,
 }
 
 func iotCorePipelines(m *manifest.Manifest,
+	workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -141,7 +154,7 @@ func iotCorePipelines(m *manifest.Manifest,
 	*manifest.OSTreeCommitPipeline,
 	error) {
 	buildPipeline := manifest.NewBuildPipeline(m, t.arch.distro.runner, repos)
-	treePipeline, err := osPipeline(m, buildPipeline, t, repos, packageSets[osPkgsKey], packageSets[blueprintPkgsKey], customizations, options, nil)
+	treePipeline, err := osPipeline(m, buildPipeline, workload, t, repos, packageSets[osPkgsKey], customizations, options, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -150,11 +163,16 @@ func iotCorePipelines(m *manifest.Manifest,
 	return buildPipeline, commitPipeline, nil
 }
 
-func iotCommitManifest(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSets map[string]rpmmd.PackageSet,
+func iotCommitManifest(m *manifest.Manifest,
+	workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	repos []rpmmd.RepoConfig,
+	packageSets map[string]rpmmd.PackageSet,
 	rng *rand.Rand) error {
 
-	buildPipeline, commitPipeline, err := iotCorePipelines(m, t, customizations, options, repos, packageSets)
+	buildPipeline, commitPipeline, err := iotCorePipelines(m, workload, t, customizations, options, repos, packageSets)
 	if err != nil {
 		return err
 	}
@@ -163,10 +181,15 @@ func iotCommitManifest(m *manifest.Manifest, t *imageType, customizations *bluep
 	return nil
 }
 
-func iotContainerManifest(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations,
-	options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSets map[string]rpmmd.PackageSet,
+func iotContainerManifest(m *manifest.Manifest,
+	workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	repos []rpmmd.RepoConfig,
+	packageSets map[string]rpmmd.PackageSet,
 	rng *rand.Rand) error {
-	buildPipeline, commitPipeline, err := iotCorePipelines(m, t, customizations, options, repos, packageSets)
+	buildPipeline, commitPipeline, err := iotCorePipelines(m, workload, t, customizations, options, repos, packageSets)
 	if err != nil {
 		return err
 	}
@@ -180,6 +203,7 @@ func iotContainerManifest(m *manifest.Manifest, t *imageType, customizations *bl
 }
 
 func containerManifest(m *manifest.Manifest,
+	workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -188,7 +212,7 @@ func containerManifest(m *manifest.Manifest,
 	rng *rand.Rand) error {
 
 	buildPipeline := manifest.NewBuildPipeline(m, t.arch.distro.runner, repos)
-	treePipeline, err := osPipeline(m, buildPipeline, t, repos, packageSets[osPkgsKey], packageSets[blueprintPkgsKey], customizations, options, rng)
+	treePipeline, err := osPipeline(m, buildPipeline, workload, t, repos, packageSets[osPkgsKey], customizations, options, rng)
 	if err != nil {
 		return err
 	}
@@ -199,10 +223,10 @@ func containerManifest(m *manifest.Manifest,
 
 func osPipeline(m *manifest.Manifest,
 	buildPipeline *manifest.BuildPipeline,
+	workload workload.Workload,
 	t *imageType,
 	repos []rpmmd.RepoConfig,
 	osPackageSet rpmmd.PackageSet,
-	blueprintPackageSet rpmmd.PackageSet,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
 	rng *rand.Rand) (*manifest.OSPipeline, error) {
@@ -210,6 +234,7 @@ func osPipeline(m *manifest.Manifest,
 	imageConfig := t.getDefaultImageConfig()
 
 	pl := manifest.NewOSPipeline(m, buildPipeline, t.platform, repos)
+	pl.Workload = workload
 
 	if t.bootable {
 		var err error
@@ -249,8 +274,6 @@ func osPipeline(m *manifest.Manifest,
 	pl.ExtraBasePackages = osPackageSet.Include
 	pl.ExcludeBasePackages = osPackageSet.Exclude
 	pl.ExtraBaseRepos = osPackageSet.Repositories
-	pl.UserPackages = blueprintPackageSet.Include
-	pl.UserRepos = blueprintPackageSet.Repositories
 
 	pl.GPGKeyFiles = imageConfig.GPGKeyFiles
 	pl.ExcludeDocs = imageConfig.ExcludeDocs
@@ -262,16 +285,8 @@ func osPipeline(m *manifest.Manifest,
 		pl.Users = c.GetUsers()
 	}
 
-	services := &blueprint.ServicesCustomization{
-		Enabled:  imageConfig.EnabledServices,
-		Disabled: imageConfig.DisabledServices,
-	}
-	if extraServices := c.GetServices(); extraServices != nil {
-		services.Enabled = append(services.Enabled, extraServices.Enabled...)
-		services.Disabled = append(services.Disabled, extraServices.Disabled...)
-	}
-	pl.EnabledServices = services.Enabled
-	pl.DisabledServices = services.Disabled
+	pl.EnabledServices = imageConfig.EnabledServices
+	pl.DisabledServices = imageConfig.DisabledServices
 	pl.DefaultTarget = imageConfig.DefaultTarget
 
 	pl.Firewall = c.GetFirewall()

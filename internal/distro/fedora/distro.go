@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
 const (
@@ -453,7 +454,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type manifestFunc func(m *manifest.Manifest, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSets map[string]rpmmd.PackageSet, rng *rand.Rand) error
+type manifestFunc func(m *manifest.Manifest, workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSets map[string]rpmmd.PackageSet, rng *rand.Rand) error
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -528,11 +529,6 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		packageSets[name] = getter(t)
 	}
 
-	// depsolve bp packages separately
-	// bp packages aren't restricted by exclude lists
-	// do not include the kernel package as it is included from the pipeline
-	packageSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bp.GetPackagesEx(false)}
-
 	// amend with repository information
 	globalRepos := make([]rpmmd.RepoConfig, 0)
 	for _, repo := range repos {
@@ -551,7 +547,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	}
 
 	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, err := t.initializeManifest(bp.Customizations, options, globalRepos, packageSets, 0)
+	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, 0)
 	if err != nil {
 		// TODO: handle manifest initialization errors more gracefully, we
 		// refuse to initialize manifests with invalid config.
@@ -620,14 +616,27 @@ func (t *imageType) PartitionType() string {
 	return basePartitionTable.Type
 }
 
-func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
+func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSets map[string]rpmmd.PackageSet,
 	seed int64) (*manifest.Manifest, error) {
 
-	if err := t.checkOptions(customizations, options); err != nil {
+	if err := t.checkOptions(bp.Customizations, options); err != nil {
 		return nil, err
+	}
+
+	// TODO: let image types specify valid workloads, rather than
+	// always assume Custom.
+	w := &workload.Custom{
+		BaseWorkload: workload.BaseWorkload{
+			Repos: packageSets[blueprintPkgsKey].Repositories,
+		},
+		Packages: bp.GetPackagesEx(false),
+	}
+	if services := bp.Customizations.GetServices(); services != nil {
+		w.Services = services.Enabled
+		w.DisabledServices = services.Disabled
 	}
 
 	source := rand.NewSource(seed)
@@ -636,7 +645,7 @@ func (t *imageType) initializeManifest(customizations *blueprint.Customizations,
 	rng := rand.New(source)
 
 	manifest := manifest.New()
-	err := t.manifest(&manifest, t, customizations, options, repos, packageSets, rng)
+	err := t.manifest(&manifest, w, t, bp.Customizations, options, repos, packageSets, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -650,7 +659,14 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	packageSets map[string][]rpmmd.PackageSpec,
 	seed int64) (distro.Manifest, error) {
 
-	manifest, err := t.initializeManifest(customizations, options, repos, nil, seed)
+	bp := &blueprint.Blueprint{}
+	err := bp.Initialize()
+	if err != nil {
+		panic("could not initialize empty blueprint: " + err.Error())
+	}
+	bp.Customizations = customizations
+
+	manifest, err := t.initializeManifest(bp, options, repos, nil, seed)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
