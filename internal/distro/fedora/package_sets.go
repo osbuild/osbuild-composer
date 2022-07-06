@@ -18,7 +18,6 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"chrony",
 			"langpacks-en",
 			"libxcrypt-compat",
-			"xfsprogs",
 			"cloud-init",
 			"checkpolicy",
 			"net-tools",
