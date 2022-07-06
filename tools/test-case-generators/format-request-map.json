@@ -16,13 +16,8 @@
       "arch": "",
       "image-type": "azure-rhui",
       "repositories": [],
-      "filename": "disk.vhd",
+      "filename": "disk.vhd.xz",
       "blueprint": {}
-    },
-    "overrides": {
-      "rhel-85": {
-        "distro": "rhel-86"
-      }
     },
     "supported_arches": [
       "x86_64"
@@ -348,7 +343,7 @@
     },
     "no-image-info": true,
     "overrides": {}
-  },  
+  },
   "openstack": {
     "boot": {
       "type": "openstack"
@@ -558,7 +553,7 @@
     "no-image-info": true,
     "overrides": {
       "rhel-85": {
-        "blueprint":{
+        "blueprint": {
           "customizations": {
             "installation_device": "/dev/vda"
           }
