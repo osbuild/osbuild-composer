@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -166,7 +167,6 @@ var (
 			Locale: "en_US.UTF-8",
 			EnabledServices: []string{
 				"sshd",
-				"waagent",
 			},
 			DefaultTarget: "multi-user.target",
 			DisabledServices: []string{
@@ -182,6 +182,7 @@ var (
 		payloadPipelines:    []string{"os", "image", "vpc"},
 		exports:             []string{"vpc"},
 		basePartitionTables: defaultBasePartitionTables,
+		environment:         &environment.Azure{},
 	}
 
 	vmdkImgType = imageType{
@@ -238,9 +239,6 @@ var (
 
 	// default EC2 images config (common for all architectures)
 	defaultEc2ImageConfig = &distro.ImageConfig{
-		EnabledServices: []string{
-			"cloud-init.service",
-		},
 		DefaultTarget: "multi-user.target",
 	}
 
@@ -260,6 +258,7 @@ var (
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
 		basePartitionTables: defaultBasePartitionTables,
+		environment:         &environment.EC2{},
 	}
 
 	containerImgType = imageType{
@@ -460,6 +459,7 @@ type packageSetFunc func(t *imageType) rpmmd.PackageSet
 type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
+	environment        environment.Environment
 	name               string
 	nameAliases        []string
 	filename           string
