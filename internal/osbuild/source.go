@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -53,7 +54,7 @@ func (sources *Sources) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSource, inlineData []string) Sources {
+func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSource, inlineData []string, containers []container.Spec) Sources {
 	sources := Sources{}
 	curl := &CurlSource{
 		Items: make(map[string]CurlSourceItem),
@@ -92,6 +93,15 @@ func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSourc
 		}
 
 		sources["org.osbuild.inline"] = ils
+	}
+
+	skopeo := NewSkopeoSource()
+	for _, c := range containers {
+		skopeo.AddItem(c.Source, c.Digest, c.ImageID, c.TLSVerify)
+	}
+
+	if len(skopeo.Items) > 0 {
+		sources["org.osbuild.skopeo"] = skopeo
 	}
 
 	return sources

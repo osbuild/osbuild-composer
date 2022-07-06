@@ -84,7 +84,7 @@ func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (distro.
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(packages, commits, inline),
+			Sources:   osbuild.GenSources(packages, commits, inline, nil),
 		},
 	)
 }

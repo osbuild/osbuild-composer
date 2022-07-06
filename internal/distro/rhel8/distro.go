@@ -554,7 +554,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(allPackageSpecs, commits, inlineData),
+			Sources:   osbuild.GenSources(allPackageSpecs, commits, inlineData, containers),
 		},
 	)
 }
