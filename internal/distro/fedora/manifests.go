@@ -234,6 +234,7 @@ func osPipeline(m *manifest.Manifest,
 	imageConfig := t.getDefaultImageConfig()
 
 	pl := manifest.NewOSPipeline(m, buildPipeline, t.platform, repos)
+	pl.Environment = t.environment
 	pl.Workload = workload
 
 	if t.bootable {
@@ -341,7 +342,6 @@ func osPipeline(m *manifest.Manifest,
 	pl.SshdConfig = imageConfig.SshdConfig
 	pl.AuthConfig = imageConfig.Authconfig
 	pl.PwQuality = imageConfig.PwQuality
-	pl.WAAgentConfig = imageConfig.WAAgentConfig
 
 	return pl, nil
 }

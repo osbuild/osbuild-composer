@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
+	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -37,6 +38,8 @@ type OSPipeline struct {
 	ExcludeBasePackages []string
 	// Additional repos to install the base packages from.
 	ExtraBaseRepos []rpmmd.RepoConfig
+	// Environment the system will run in
+	Environment environment.Environment
 	// Workload to install on top of the base system
 	Workload workload.Workload
 	// OSTree configuration, if nil the tree cannot be in an OSTree commit
@@ -89,7 +92,6 @@ type OSPipeline struct {
 	SshdConfig    *osbuild2.SshdConfigStageOptions
 	AuthConfig    *osbuild2.AuthconfigStageOptions
 	PwQuality     *osbuild2.PwqualityConfStageOptions
-	WAAgentConfig *osbuild2.WAAgentConfStageOptions
 
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
@@ -174,6 +176,10 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		if hasEXT4 {
 			packages = append(packages, "e2fsprogs")
 		}
+	}
+
+	if p.Environment != nil {
+		packages = append(packages, p.Environment.GetPackages()...)
 	}
 
 	if len(p.NTPServers) > 0 {
@@ -311,11 +317,16 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 	}
 
 	enabledServices := []string{}
-	enabledServices = append(enabledServices, p.EnabledServices...)
-	enabledServices = append(enabledServices, p.Workload.GetServices()...)
 	disabledServices := []string{}
+	enabledServices = append(enabledServices, p.EnabledServices...)
 	disabledServices = append(disabledServices, p.DisabledServices...)
-	disabledServices = append(disabledServices, p.Workload.GetDisabledServices()...)
+	if p.Environment != nil {
+		enabledServices = append(enabledServices, p.Environment.GetServices()...)
+	}
+	if p.Workload != nil {
+		enabledServices = append(enabledServices, p.Workload.GetServices()...)
+		disabledServices = append(disabledServices, p.Workload.GetDisabledServices()...)
+	}
 	if len(enabledServices) != 0 ||
 		len(disabledServices) != 0 || p.DefaultTarget != "" {
 		pipeline.AddStage(osbuild2.NewSystemdStage(&osbuild2.SystemdStageOptions{
@@ -400,10 +411,6 @@ func (p *OSPipeline) serialize() osbuild2.Pipeline {
 
 	if p.PwQuality != nil {
 		pipeline.AddStage(osbuild2.NewPwqualityConfStage(p.PwQuality))
-	}
-
-	if p.WAAgentConfig != nil {
-		pipeline.AddStage(osbuild2.NewWAAgentConfStage(p.WAAgentConfig))
 	}
 
 	if pt := p.PartitionTable; pt != nil {
