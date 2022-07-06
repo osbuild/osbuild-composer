@@ -9,13 +9,14 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -24,7 +25,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, kernelOptions string,
 }
 
 func vhdPipelines(compress bool) pipelinesFunc {
-	return func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	return func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 		pipelines := make([]osbuild.Pipeline, 0)
 		pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -62,7 +63,7 @@ func vhdPipelines(compress bool) pipelinesFunc {
 			return nil, err
 		}
 
-		treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+		treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +93,7 @@ func vhdPipelines(compress bool) pipelinesFunc {
 	}
 }
 
-func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -101,7 +102,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	return pipelines, nil
 }
 
-func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -126,7 +127,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +144,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 }
 
 func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec,
+	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec,
 	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
@@ -153,7 +154,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -166,15 +167,15 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 }
 
 // ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
-func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, t.Filename())
+func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, containers, rng, t.Filename())
 }
 
 // rhelEc2Pipelines returns pipelines which produce XZ-compressed EC2 images which are expected to use RHUI for content
-func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	rawImageFilename := "image.raw"
 
-	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, rng, rawImageFilename)
+	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, containers, rng, rawImageFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +186,7 @@ func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, op
 	return pipelines, nil
 }
 
-func gcePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func gcePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -194,7 +195,7 @@ func gcePipelines(t *imageType, customizations *blueprint.Customizations, option
 		return nil, err
 	}
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
 	if err != nil {
 		return nil, err
 	}
@@ -219,11 +220,11 @@ func gcePipelines(t *imageType, customizations *blueprint.Customizations, option
 	return pipelines, nil
 }
 
-func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +241,7 @@ func makeISORootPath(p string) string {
 	return fmt.Sprintf("file://%s", fullpath)
 }
 
-func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 	installerPackages := packageSetSpecs[installerPkgsKey]
@@ -261,11 +262,11 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	return pipelines, nil
 }
 
-func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -301,11 +302,11 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	return pipelines, nil
 }
 
-func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec) ([]osbuild.Pipeline, error) {
+func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, nil)
+	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -316,8 +317,8 @@ func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, o
 	return pipelines, nil
 }
 
-func edgeCommitPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines, err := edgeCorePipelines(t, customizations, options, repos, packageSetSpecs)
+func edgeCommitPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines, err := edgeCorePipelines(t, customizations, options, repos, packageSetSpecs, containers)
 	if err != nil {
 		return nil, err
 	}
@@ -326,8 +327,8 @@ func edgeCommitPipelines(t *imageType, customizations *blueprint.Customizations,
 	return pipelines, nil
 }
 
-func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines, err := edgeCorePipelines(t, customizations, options, repos, packageSetSpecs)
+func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+	pipelines, err := edgeCorePipelines(t, customizations, options, repos, packageSetSpecs, containers)
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +365,7 @@ func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptio
 	return pipelines, xzPipeline.Name, nil
 }
 
-func edgeRawImagePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func edgeRawImagePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
@@ -393,6 +394,7 @@ func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSp
 func osPipeline(t *imageType,
 	repos []rpmmd.RepoConfig,
 	packages []rpmmd.PackageSpec,
+	containers []container.Spec,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
 	pt *disk.PartitionTable) (*osbuild.Pipeline, error) {
@@ -425,6 +427,12 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	} else {
 		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+	}
+
+	if len(containers) > 0 {
+		images := osbuild.NewContainersInputForSources(containers)
+		skopeo := osbuild.NewSkopeoStage(images, "")
+		p.AddStage(skopeo)
 	}
 
 	language, keyboard := c.GetPrimaryLocale()
@@ -750,7 +758,7 @@ func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*
 	return stages
 }
 
-func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
+func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 	installerPackages := packageSetSpecs[installerPkgsKey]
