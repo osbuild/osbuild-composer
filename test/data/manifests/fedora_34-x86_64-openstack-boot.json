@@ -2027,6 +2027,14 @@
                     }
                   },
                   {
+                    "id": "sha256:509a2067a88eb29ddc4b66078401bbbe6c938c968b876bcb2d74c469e7327fcb",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:377d141bf5e1dca120216e9cc478c31fceace604f0ba2b2bc51497efbf00b7df",
                     "options": {
                       "metadata": {
@@ -8764,6 +8772,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/diffutils-3.7-8.fc34.x86_64.rpm",
         "checksum": "sha256:c58752e2529cf0ea4aabb0476ef53ca7748091aa936513affc1245928ae5b1b8",
+        "check_gpg": true
+      },
+      {
+        "name": "dosfstools",
+        "epoch": 0,
+        "version": "4.2",
+        "release": "1.fc34",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-x86_64-fedora-20210512/Packages/d/dosfstools-4.2-1.fc34.x86_64.rpm",
+        "checksum": "sha256:509a2067a88eb29ddc4b66078401bbbe6c938c968b876bcb2d74c469e7327fcb",
         "check_gpg": true
       },
       {

@@ -2264,6 +2264,14 @@
                     }
                   },
                   {
+                    "id": "sha256:381b19a26bb015f90280580e6a821505e976ae5f057bf85fed8cca88845cdb77",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:82cdca13a5e2316a3a7531160681641cc656161b11cebcd9198a3adbef155280",
                     "options": {
                       "metadata": {
@@ -9070,6 +9078,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/d/dnf-plugins-core-4.1.0-1.fc37.noarch.rpm",
         "checksum": "sha256:2e4be96198f5c29e6e38a9ed3c70a8fb7b23072d4aaecf20c66bf17b0aa523a6",
+        "check_gpg": true
+      },
+      {
+        "name": "dosfstools",
+        "epoch": 0,
+        "version": "4.2",
+        "release": "3.fc36",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/d/dosfstools-4.2-3.fc36.x86_64.rpm",
+        "checksum": "sha256:381b19a26bb015f90280580e6a821505e976ae5f057bf85fed8cca88845cdb77",
         "check_gpg": true
       },
       {

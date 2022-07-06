@@ -2162,6 +2162,14 @@
                     }
                   },
                   {
+                    "id": "sha256:ecd02f2a2fb547997c394c73642da7322670d4b64f51156f5e31661d61ed16a9",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:e99f5ce0f6d485bb5f8de26507df2a3b93fb5d5f863848f2291b230379a7652c",
                     "options": {
                       "metadata": {
@@ -8805,6 +8813,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/d/dnf-data-4.9.0-1.fc35.noarch.rpm",
         "checksum": "sha256:a206d0ea77ae99368f6230f0337ffa0b5f4e4549f0d362f55abbae3aaf7e3adc",
+        "check_gpg": true
+      },
+      {
+        "name": "dosfstools",
+        "epoch": 0,
+        "version": "4.2",
+        "release": "2.fc35",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/d/dosfstools-4.2-2.fc35.x86_64.rpm",
+        "checksum": "sha256:ecd02f2a2fb547997c394c73642da7322670d4b64f51156f5e31661d61ed16a9",
         "check_gpg": true
       },
       {

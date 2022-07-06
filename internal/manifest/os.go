@@ -133,18 +133,48 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	// If we have a logical volume we need to include the lvm2 package
 	if p.PartitionTable != nil && p.OSTree == nil {
 		hasLVM := false
+		hasBtrfs := false
+		hasXFS := false
+		hasFAT := false
+		hasEXT4 := false
 
-		isLVM := func(e disk.Entity, path []disk.Entity) error {
-			switch e.(type) {
+		introspectPT := func(e disk.Entity, path []disk.Entity) error {
+			switch ent := e.(type) {
 			case *disk.LVMLogicalVolume:
 				hasLVM = true
+			case *disk.Btrfs:
+				hasBtrfs = true
+			case *disk.Filesystem:
+				switch ent.GetFSType() {
+				case "vfat":
+					hasFAT = true
+				case "btrfs":
+					hasBtrfs = true
+				case "xfs":
+					hasXFS = true
+				case "ext4":
+					hasEXT4 = true
+				}
 			}
 			return nil
 		}
-		_ = p.PartitionTable.ForEachEntity(isLVM)
+		_ = p.PartitionTable.ForEachEntity(introspectPT)
 
+		// TODO: LUKS
 		if hasLVM {
 			packages = append(packages, "lvm2")
+		}
+		if hasBtrfs {
+			packages = append(packages, "btrfs-progs")
+		}
+		if hasXFS {
+			packages = append(packages, "xfsprogs")
+		}
+		if hasFAT {
+			packages = append(packages, "dosfstools")
+		}
+		if hasEXT4 {
+			packages = append(packages, "e2fsprogs")
 		}
 	}
 
