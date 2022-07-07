@@ -10,11 +10,24 @@ import (
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
-	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
+
+var ImageTypes = make(map[string]ImageType)
+
+type ImageType interface {
+	Name() string
+	InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner string) error
+	GetExports() []string
+	GetCheckpoints() []string
+}
+
+func AddImageType(img ImageType) {
+	ImageTypes[img.Name()] = img
+}
 
 // osbuild-playground is a utility command and is often run from within the
 // source tree.  Find the dnf-json binary in case the osbuild-composer package
@@ -34,17 +47,25 @@ func findDnfJsonBin() string {
 }
 
 func main() {
-	// Path to MyOptions or '-' for stdin
-	myOptionsArg := flag.Arg(0)
+	var distroArg string
+	flag.StringVar(&distroArg, "distro", "", "distro to build from")
+	var archArg string
+	flag.StringVar(&archArg, "arch", common.CurrentArch(), "architecture to build for")
+	var imageTypeArg string
+	flag.StringVar(&imageTypeArg, "type", "my-image", "image type to build")
+	flag.Parse()
 
-	myOptions := &MyOptions{}
-	if myOptionsArg != "" {
+	// Path to options or '-' for stdin
+	optionsArg := flag.Arg(0)
+
+	img := ImageTypes[imageTypeArg]
+	if optionsArg != "" {
 		var reader io.Reader
-		if myOptionsArg == "-" {
+		if optionsArg == "-" {
 			reader = os.Stdin
 		} else {
 			var err error
-			reader, err = os.Open(myOptionsArg)
+			reader, err = os.Open(optionsArg)
 			if err != nil {
 				panic("Could not open path to image options: " + err.Error())
 			}
@@ -53,21 +74,29 @@ func main() {
 		if err != nil {
 			panic("Could not read image options: " + err.Error())
 		}
-		err = json.Unmarshal(file, &myOptions)
+		err = json.Unmarshal(file, img)
 		if err != nil {
 			panic("Could not parse image options: " + err.Error())
 		}
 	}
 
 	distros := distroregistry.NewDefault()
-	d := distros.FromHost()
-	if d == nil {
-		panic("host distro not supported")
+	var d distro.Distro
+	if distroArg != "" {
+		d = distros.GetDistro(distroArg)
+		if d == nil {
+			panic(fmt.Sprintf("distro '%s' not supported\n", distroArg))
+		}
+	} else {
+		d = distros.FromHost()
+		if d == nil {
+			panic("host distro not supported")
+		}
 	}
 
-	arch, err := d.GetArch(common.CurrentArch())
+	arch, err := d.GetArch(archArg)
 	if err != nil {
-		panic("host arch not supported")
+		panic(fmt.Sprintf("arch '%s' not supported\n", archArg))
 	}
 
 	repos, err := rpmmd.LoadRepositories([]string{"./"}, d.Name())
@@ -80,37 +109,7 @@ func main() {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
 
-	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), path.Join(home, ".cache/osbuild-playground/rpmmd"))
-	solver.SetDNFJSONPath(findDnfJsonBin())
+	state_dir := path.Join(home, ".local/share/osbuild-playground/")
 
-	// Set cache size to 3 GiB
-	solver.SetMaxCacheSize(1 * 1024 * 1024 * 1024)
-
-	manifest := manifest.New()
-
-	// TODO: figure out the runner situation
-	err = MyManifest(&manifest, myOptions, repos[arch.Name()], "org.osbuild.fedora36")
-	if err != nil {
-		panic("MyManifest() failed: " + err.Error())
-	}
-
-	packageSpecs := make(map[string][]rpmmd.PackageSpec)
-	for name, chain := range manifest.GetPackageSetChains() {
-		packages, err := solver.Depsolve(chain)
-		if err != nil {
-			panic(fmt.Sprintf("failed to depsolve for pipeline %s: %s\n", name, err.Error()))
-		}
-		packageSpecs[name] = packages
-	}
-
-	bytes, err := manifest.Serialize(packageSpecs)
-	if err != nil {
-		panic("failed to serialize manifest: " + err.Error())
-	}
-
-	os.Stdout.Write(bytes)
-	if err := solver.CleanCache(); err != nil {
-		// print to stderr but don't exit with error
-		fmt.Fprintf(os.Stderr, "could not clean dnf cache: %s", err.Error())
-	}
+	RunPlayground(img, d, arch, repos, state_dir)
 }
