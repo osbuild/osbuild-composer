@@ -102,6 +102,7 @@ func (p *AnacondaPipeline) anacondaBootPackageSet() []string {
 func (p *AnacondaPipeline) getBuildPackages() []string {
 	packages := p.anacondaBootPackageSet()
 	packages = append(packages,
+		"rpm",
 		"lorax-templates-generic",
 	)
 	return packages

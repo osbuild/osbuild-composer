@@ -167,6 +167,7 @@ func (p *OSPipeline) getPackageSetChain() []rpmmd.PackageSet {
 
 func (p *OSPipeline) getBuildPackages() []string {
 	packages := p.platform.GetBuildPackages()
+	packages = append(packages, "rpm")
 	if p.OSTree != nil {
 		packages = append(packages, "rpm-ostree")
 	}
