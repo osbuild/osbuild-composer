@@ -455,14 +455,6 @@
                     }
                   },
                   {
-                    "id": "sha256:30eee02314cec35c28cbecbc721eefbb02ff49aeceb6c9710b50d24400fd3d3e",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:cc2a6c0297288b79259c96e6a7da5472eade3b7338fc45cd51758cb8e9569e24",
                     "options": {
                       "metadata": {
@@ -744,14 +736,6 @@
                   },
                   {
                     "id": "sha256:b85fe67b8aee772469e8257bfa5488ded6ce9ab05ba47b23fb3b26e26235fd8a",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:120206a3de178a7362d9e40ab54718a6368e1c331b9dfa1c6404e66854fecb87",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -1239,14 +1223,6 @@
                     }
                   },
                   {
-                    "id": "sha256:91014381674db9bec0b8344f6ceccc1e6ce29f4309853a2b4fe03f3fcd60bcc8",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:e42d8de952be0c83d441ece7c1ec56a5b6e3e82f3971e49a43a50bf53033f267",
                     "options": {
                       "metadata": {
@@ -1360,14 +1336,6 @@
                   },
                   {
                     "id": "sha256:403aad57974b80c82a56d8ee11f270252e78fef498b6b467a9ad979b390eb331",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:ad022321f0a562a8a5da1f841f71193166c67500deb7b54c905808b227e54589",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -2096,14 +2064,6 @@
                   },
                   {
                     "id": "sha256:f3c4ecb4440cef3f0151ef6a756edf54c790c56a1ff7d018b51fa27454199348",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:17fce9df2309a10bc24fb311924d9b5618a54f8f25758f594ebc80d1b581ae82",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -9921,9 +9881,6 @@
           "sha256:11fea790c5e62176df8f4f6c3ec3f2e0664e345a3f7c72979d522bb95ee3d5c6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/l/libselinux-utils-3.2-1.fc34.aarch64.rpm"
           },
-          "sha256:120206a3de178a7362d9e40ab54718a6368e1c331b9dfa1c6404e66854fecb87": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/l/liburing-0.7-4.fc34.aarch64.rpm"
-          },
           "sha256:1250ec04fc90ca039585aad4a1e42833f471df3e6abd92a01c90ccdc23bca015": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/f/fxload-2008_10_13-19.fc34.aarch64.rpm"
           },
@@ -9980,9 +9937,6 @@
           },
           "sha256:17cc5cb54568bbed5823c97054f7ef95a57f07386e626d661e129567ef0de02b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/u/usbutils-014-1.fc34.aarch64.rpm"
-          },
-          "sha256:17fce9df2309a10bc24fb311924d9b5618a54f8f25758f594ebc80d1b581ae82": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/q/qemu-img-5.2.0-8.fc34.aarch64.rpm"
           },
           "sha256:180abbc01174d20536db8e7e5f0d8d39aee7429b90ecc00fbbc2217d011ed559": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/l/libisoburn-1.5.4-2.fc34.aarch64.rpm"
@@ -21960,16 +21914,6 @@
         "check_gpg": true
       },
       {
-        "name": "libaio",
-        "epoch": 0,
-        "version": "0.3.111",
-        "release": "11.fc34",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/l/libaio-0.3.111-11.fc34.aarch64.rpm",
-        "checksum": "sha256:30eee02314cec35c28cbecbc721eefbb02ff49aeceb6c9710b50d24400fd3d3e",
-        "check_gpg": true
-      },
-      {
         "name": "libargon2",
         "epoch": 0,
         "version": "20171227",
@@ -22327,16 +22271,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/l/libunistring-0.9.10-10.fc34.aarch64.rpm",
         "checksum": "sha256:b85fe67b8aee772469e8257bfa5488ded6ce9ab05ba47b23fb3b26e26235fd8a",
-        "check_gpg": true
-      },
-      {
-        "name": "liburing",
-        "epoch": 0,
-        "version": "0.7",
-        "release": "4.fc34",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/l/liburing-0.7-4.fc34.aarch64.rpm",
-        "checksum": "sha256:120206a3de178a7362d9e40ab54718a6368e1c331b9dfa1c6404e66854fecb87",
         "check_gpg": true
       },
       {
@@ -22940,16 +22874,6 @@
         "check_gpg": true
       },
       {
-        "name": "tar",
-        "epoch": 2,
-        "version": "1.34",
-        "release": "1.fc34",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-fedora-20210512/Packages/t/tar-1.34-1.fc34.aarch64.rpm",
-        "checksum": "sha256:91014381674db9bec0b8344f6ceccc1e6ce29f4309853a2b4fe03f3fcd60bcc8",
-        "check_gpg": true
-      },
-      {
         "name": "trousers",
         "epoch": 0,
         "version": "0.3.15",
@@ -23097,16 +23021,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/d/dbus-broker-29-2.fc34.aarch64.rpm",
         "checksum": "sha256:403aad57974b80c82a56d8ee11f270252e78fef498b6b467a9ad979b390eb331",
-        "check_gpg": true
-      },
-      {
-        "name": "dnf",
-        "epoch": 0,
-        "version": "4.9.0",
-        "release": "1.fc34",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/d/dnf-4.9.0-1.fc34.noarch.rpm",
-        "checksum": "sha256:ad022321f0a562a8a5da1f841f71193166c67500deb7b54c905808b227e54589",
         "check_gpg": true
       },
       {
@@ -24017,16 +23931,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/p/python3-urllib3-1.25.10-5.fc34.noarch.rpm",
         "checksum": "sha256:f3c4ecb4440cef3f0151ef6a756edf54c790c56a1ff7d018b51fa27454199348",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-img",
-        "epoch": 2,
-        "version": "5.2.0",
-        "release": "8.fc34",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f34/f34-aarch64-updates-released-20220113/Packages/q/qemu-img-5.2.0-8.fc34.aarch64.rpm",
-        "checksum": "sha256:17fce9df2309a10bc24fb311924d9b5618a54f8f25758f594ebc80d1b581ae82",
         "check_gpg": true
       },
       {

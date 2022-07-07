@@ -297,14 +297,6 @@
                     }
                   },
                   {
-                    "id": "sha256:44b8073e409d9b3d681fb39183db23496a0825503987de3db78a57be4b551e16",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:d584746b939fac19b467c3067d15ee911b249a1da91a7e531b5ef0177bf0cf18",
                     "options": {
                       "metadata": {
@@ -905,14 +897,6 @@
                     }
                   },
                   {
-                    "id": "sha256:1193d714b5bc5f3212b2f4ec6a9cbeb85ea7f88ea2a38d817354543e35f122ef",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:ca678e16c32fe14846114ba1c27d59b67c474b6b97f39c3f82c5392660d4b2e4",
                     "options": {
                       "metadata": {
@@ -1482,14 +1466,6 @@
                   },
                   {
                     "id": "sha256:325d3cdf0db2867b4fe2c3789084f1b579cf8f0a2ccb99606286e06cb2016a96",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:fe124f5d7fe40dc14304ff5ab31e6593458d3dcf0278da0e080fee4438c06c6c",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -2226,14 +2202,6 @@
                   },
                   {
                     "id": "sha256:d095a8e1f18bf89caebe49bd25a7d10cc28dfe6e2c475f0eb08d06d43f89a4d4",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:5739c39b512119917acdafd53fcfad106b8a939515618c8d5e9dcf8acfe06e17",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -11966,9 +11934,6 @@
           "sha256:573078ea55cf0e1a58dc29c75b1f72d6ddebf14ff6539d7da6a96e1cbae2190d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/p/perl-File-Temp-0.231.100-479.fc36.noarch.rpm"
           },
-          "sha256:5739c39b512119917acdafd53fcfad106b8a939515618c8d5e9dcf8acfe06e17": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/q/qemu-img-6.2.0-5.fc37.x86_64.rpm"
-          },
           "sha256:5768d2860adfb7798fa048a10053d151b0ce3916f522b6358d11cbb5c86f2a65": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/i/iproute-5.17.0-1.fc37.x86_64.rpm"
           },
@@ -13891,9 +13856,6 @@
           },
           "sha256:fd03c888a957d6e2b4c8b8e2270ee57c282df70d621102810aad37fa79ec95c6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/l/libcom_err-1.46.5-2.fc36.x86_64.rpm"
-          },
-          "sha256:fe124f5d7fe40dc14304ff5ab31e6593458d3dcf0278da0e080fee4438c06c6c": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/l/liburing-2.0-3.fc36.x86_64.rpm"
           },
           "sha256:fee330aeb273fa504f1d3185dd574de6cc706f387025c9867c423da23214dc76": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/n/nss-util-3.75.0-1.fc36.x86_64.rpm"
@@ -24233,16 +24195,6 @@
         "check_gpg": true
       },
       {
-        "name": "dnf",
-        "epoch": 0,
-        "version": "4.11.1",
-        "release": "1.fc37",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/d/dnf-4.11.1-1.fc37.noarch.rpm",
-        "checksum": "sha256:44b8073e409d9b3d681fb39183db23496a0825503987de3db78a57be4b551e16",
-        "check_gpg": true
-      },
-      {
         "name": "dnf-data",
         "epoch": 0,
         "version": "4.11.1",
@@ -24993,16 +24945,6 @@
         "check_gpg": true
       },
       {
-        "name": "libaio",
-        "epoch": 0,
-        "version": "0.3.111",
-        "release": "13.fc36",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/l/libaio-0.3.111-13.fc36.x86_64.rpm",
-        "checksum": "sha256:1193d714b5bc5f3212b2f4ec6a9cbeb85ea7f88ea2a38d817354543e35f122ef",
-        "check_gpg": true
-      },
-      {
         "name": "libarchive",
         "epoch": 0,
         "version": "3.6.0",
@@ -25720,16 +25662,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/l/libunistring-1.0-1.fc36.x86_64.rpm",
         "checksum": "sha256:325d3cdf0db2867b4fe2c3789084f1b579cf8f0a2ccb99606286e06cb2016a96",
-        "check_gpg": true
-      },
-      {
-        "name": "liburing",
-        "epoch": 0,
-        "version": "2.0",
-        "release": "3.fc36",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/l/liburing-2.0-3.fc36.x86_64.rpm",
-        "checksum": "sha256:fe124f5d7fe40dc14304ff5ab31e6593458d3dcf0278da0e080fee4438c06c6c",
         "check_gpg": true
       },
       {
@@ -26650,16 +26582,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/p/python3-urllib3-1.26.8-2.fc36.noarch.rpm",
         "checksum": "sha256:d095a8e1f18bf89caebe49bd25a7d10cc28dfe6e2c475f0eb08d06d43f89a4d4",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-img",
-        "epoch": 2,
-        "version": "6.2.0",
-        "release": "5.fc37",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-rawhide-20220324/Packages/q/qemu-img-6.2.0-5.fc37.x86_64.rpm",
-        "checksum": "sha256:5739c39b512119917acdafd53fcfad106b8a939515618c8d5e9dcf8acfe06e17",
         "check_gpg": true
       },
       {
