@@ -31,6 +31,10 @@ func NewLiveImgPipeline(m *Manifest,
 	return p
 }
 
+func (p *LiveImgPipeline) getBuildPackages() []string {
+	return p.treePipeline.PartitionTable.GetBuildPackages()
+}
+
 func (p *LiveImgPipeline) serialize() osbuild2.Pipeline {
 	pipeline := p.BasePipeline.serialize()
 
