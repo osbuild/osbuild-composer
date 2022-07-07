@@ -2,7 +2,7 @@
   "compose-request": {
     "distro": "rhel-91",
     "arch": "x86_64",
-    "image-type": "gce",
+    "image-type": "gce-rhui",
     "repositories": [
       {
         "name": "baseos",
@@ -5176,6 +5176,9 @@
                     "id": "sha256:2b5574f535a3f3c337b8b1961cfb2a5ff06a36c9969ff5258df7ae1ffbe56e41"
                   },
                   {
+                    "id": "sha256:92edd5aa48d52929de6725b944840f14d3e1d9288dd2ca8ae083e78815fd89a7"
+                  },
+                  {
                     "id": "sha256:87c6d9bd4811b2ef1582f81e8fb30301dd56e067d0358a2cdadd15b4b07424c9"
                   }
                 ]
@@ -5256,6 +5259,9 @@
             "type": "org.osbuild.rhsm",
             "options": {
               "subscription-manager": {
+                "rhsm": {
+                  "manage_repos": false
+                },
                 "rhsmcertd": {
                   "auto_registration": true
                 }
@@ -6389,6 +6395,9 @@
           },
           "sha256:9263006f87ad08c9bc0ebd5796d781b13de43cdf6731db7a1e445f61f318348d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/kernel-modules-5.14.0-73.el9.x86_64.rpm"
+          },
+          "sha256:92edd5aa48d52929de6725b944840f14d3e1d9288dd2ca8ae083e78815fd89a7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20220617/Packages/92edd5aa48d52929de6725b944840f14d3e1d9288dd2ca8ae083e78815fd89a7-google-rhui-client-rhel9-4.1-1.noarch.rpm"
           },
           "sha256:936b9e4932c221747cebb011eba7dd47437211d20356e04321692097244536e2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/python3-3.9.10-2.el9.x86_64.rpm"
@@ -13312,6 +13321,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20220617/Packages/2b5574f535a3f3c337b8b1961cfb2a5ff06a36c9969ff5258df7ae1ffbe56e41-google-osconfig-agent-20220606.00-g1.el9.x86_64.rpm",
         "checksum": "sha256:2b5574f535a3f3c337b8b1961cfb2a5ff06a36c9969ff5258df7ae1ffbe56e41"
+      },
+      {
+        "name": "google-rhui-client-rhel9",
+        "epoch": 0,
+        "version": "4.1",
+        "release": "1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20220617/Packages/92edd5aa48d52929de6725b944840f14d3e1d9288dd2ca8ae083e78815fd89a7-google-rhui-client-rhel9-4.1-1.noarch.rpm",
+        "checksum": "sha256:92edd5aa48d52929de6725b944840f14d3e1d9288dd2ca8ae083e78815fd89a7"
       },
       {
         "name": "google-cloud-sdk",
