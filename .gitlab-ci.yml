@@ -605,6 +605,20 @@ Multi-tenancy:
     RUNNER: aws/rhel-8.6-ga-x86_64
     INTERNAL_NETWORK: "true"
 
+OpenSCAP:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/oscap.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - rhos-01/rhel-8.7-nightly-x86_64-large
+          - rhos-01/rhel-9.1-nightly-x86_64-large
+
 Upgrade:
   stage: test
   extends: .terraform/openstack
