@@ -1,14 +1,12 @@
-package main
+package osbuild2
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
-
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
 // Run an instance of osbuild, returning a parsed osbuild.Result.
@@ -16,26 +14,36 @@ import (
 // Note that osbuild returns non-zero when the pipeline fails. This function
 // does not return an error in this case. Instead, the failure is communicated
 // with its corresponding logs through osbuild.Result.
-func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports []string, errorWriter io.Writer) (*osbuild.Result, error) {
+func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpoints []string, result bool, errorWriter io.Writer) (*Result, error) {
+	var stdoutBuffer bytes.Buffer
+	var res Result
+
 	cmd := exec.Command(
 		"osbuild",
 		"--store", store,
 		"--output-directory", outputDirectory,
-		"--json", "-",
+		"-",
 	)
 
 	for _, export := range exports {
 		cmd.Args = append(cmd.Args, "--export", export)
 	}
-	cmd.Stderr = errorWriter
 
+	for _, checkpoint := range checkpoints {
+		cmd.Args = append(cmd.Args, "--checkpoint", checkpoint)
+	}
+
+	if result {
+		cmd.Args = append(cmd.Args, "--json")
+		cmd.Stdout = &stdoutBuffer
+	} else {
+		cmd.Stdout = os.Stdout
+	}
+	cmd.Stderr = errorWriter
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, fmt.Errorf("error setting up stdin for osbuild: %v", err)
 	}
-
-	var stdoutBuffer bytes.Buffer
-	cmd.Stdout = &stdoutBuffer
 
 	err = cmd.Start()
 	if err != nil {
@@ -54,11 +62,12 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 
 	err = cmd.Wait()
 
-	// try to decode the output even though the job could have failed
-	var result osbuild.Result
-	decodeErr := json.Unmarshal(stdoutBuffer.Bytes(), &result)
-	if decodeErr != nil {
-		return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, stdoutBuffer.String())
+	if result {
+		// try to decode the output even though the job could have failed
+		decodeErr := json.Unmarshal(stdoutBuffer.Bytes(), &res)
+		if decodeErr != nil {
+			return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, stdoutBuffer.String())
+		}
 	}
 
 	if err != nil {
@@ -68,5 +77,5 @@ func RunOSBuild(manifest distro.Manifest, store, outputDirectory string, exports
 		}
 	}
 
-	return &result, nil
+	return &res, nil
 }
