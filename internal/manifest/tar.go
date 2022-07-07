@@ -45,3 +45,7 @@ func (p *TarPipeline) serialize() osbuild2.Pipeline {
 
 	return pipeline
 }
+
+func (p *TarPipeline) getBuildPackages() []string {
+	return []string{"tar"}
+}

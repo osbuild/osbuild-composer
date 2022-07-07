@@ -43,7 +43,6 @@ func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		"selinux-policy-targeted",
 		"coreutils",
 		"systemd",
-		"tar",
 		"xz",
 	}
 
