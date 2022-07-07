@@ -42,8 +42,6 @@ func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
 		"dnf",
 		"selinux-policy-targeted",
 		"coreutils",
-		"dosfstools",
-		"e2fsprogs",
 		"systemd",
 		"tar",
 		"xz",

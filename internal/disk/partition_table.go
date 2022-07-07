@@ -571,3 +571,54 @@ func (pt *PartitionTable) ensureLVM() error {
 
 	return nil
 }
+
+func (pt *PartitionTable) GetBuildPackages() []string {
+	packages := []string{}
+
+	hasLVM := false
+	hasBtrfs := false
+	hasXFS := false
+	hasFAT := false
+	hasEXT4 := false
+
+	introspectPT := func(e Entity, path []Entity) error {
+		switch ent := e.(type) {
+		case *LVMLogicalVolume:
+			hasLVM = true
+		case *Btrfs:
+			hasBtrfs = true
+		case *Filesystem:
+			switch ent.GetFSType() {
+			case "vfat":
+				hasFAT = true
+			case "btrfs":
+				hasBtrfs = true
+			case "xfs":
+				hasXFS = true
+			case "ext4":
+				hasEXT4 = true
+			}
+		}
+		return nil
+	}
+	_ = pt.ForEachEntity(introspectPT)
+
+	// TODO: LUKS
+	if hasLVM {
+		packages = append(packages, "lvm2")
+	}
+	if hasBtrfs {
+		packages = append(packages, "btrfs-progs")
+	}
+	if hasXFS {
+		packages = append(packages, "xfsprogs")
+	}
+	if hasFAT {
+		packages = append(packages, "dosfstools")
+	}
+	if hasEXT4 {
+		packages = append(packages, "e2fsprogs")
+	}
+
+	return packages
+}
