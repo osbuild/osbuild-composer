@@ -712,6 +712,19 @@ func newDistro(distroName string) distro.Distro {
 		"NetworkManager.service", "firewalld.service", "sshd.service",
 	}
 
+	if rd.osVersion == "8.4" {
+		// greenboot services aren't enabled by default in 8.4
+		edgeServices = append(edgeServices,
+			"greenboot-grub2-set-counter",
+			"greenboot-grub2-set-success",
+			"greenboot-healthcheck",
+			"greenboot-rpm-ostree-grub2-check-fallback",
+			"greenboot-status",
+			"greenboot-task-runner",
+			"redboot-auto-reboot",
+			"redboot-task-runner")
+	}
+
 	if !(rd.isRHEL() && versionLessThan(rd.osVersion, "8.6")) {
 		// enable fdo-client only on RHEL 8.6+ and CS8
 
