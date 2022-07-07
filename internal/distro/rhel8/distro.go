@@ -723,6 +723,7 @@ func newDistro(distroName string) distro.Distro {
 			"greenboot-task-runner",
 			"redboot-auto-reboot",
 			"redboot-task-runner")
+
 	}
 
 	if !(rd.isRHEL() && versionLessThan(rd.osVersion, "8.6")) {
@@ -1727,6 +1728,19 @@ func newDistro(distroName string) distro.Distro {
 				},
 			},
 		},
+	}
+
+	if rd.osVersion == "8.4" {
+		// NOTE(akoutsou): these are enabled in the package preset, but for
+		// some reason do not get enabled on 8.4.
+		// the reason is unknown and deeply myserious
+		defaultGceByosImageConfig.EnabledServices = append(defaultGceByosImageConfig.EnabledServices,
+			"google-oslogin-cache.timer",
+			"google-guest-agent.service",
+			"google-shutdown-scripts.service",
+			"google-startup-scripts.service",
+			"google-osconfig-agent.service",
+		)
 	}
 
 	gceImgType := imageType{
