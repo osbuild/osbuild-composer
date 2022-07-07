@@ -483,6 +483,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-raw-image",
 				"edge-simplified-installer",
 				"gce",
+				"gce-rhui",
 				"tar",
 				"image-installer",
 				"oci",

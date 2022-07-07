@@ -1639,6 +1639,54 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
+	defaultGceRhuiImageConfig := &distro.ImageConfig{
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					Rhsm: &osbuild.SubManConfigRHSMSection{
+						ManageRepos: common.BoolToPtr(false),
+					},
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+	}
+	defaultGceRhuiImageConfig = defaultGceRhuiImageConfig.InheritFrom(defaultGceImageConfig)
+
+	gceRhuiImgType := imageType{
+		name:     "gce-rhui",
+		filename: "image.tar.gz",
+		mimeType: "application/gzip",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: distroBuildPackageSet,
+			osPkgsKey:    gceRhuiPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
+		defaultImageConfig:  defaultGceRhuiImageConfig,
+		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d",
+		bootable:            true,
+		bootType:            distro.UEFIBootType,
+		defaultSize:         20 * GigaByte,
+		pipelines:           gcePipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
+		exports:             []string{"archive"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -1696,6 +1744,9 @@ func newDistro(distroName string) distro.Distro {
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
 		aarch64.addImageTypes(ec2ImgTypeAarch64)
+
+		// add GCE RHUI image to RHEL only
+		x86_64.addImageTypes(gceRhuiImgType)
 	}
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
