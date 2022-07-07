@@ -55,3 +55,7 @@ func (p *OCIContainerPipeline) serialize() osbuild2.Pipeline {
 
 	return pipeline
 }
+
+func (p *OCIContainerPipeline) getBuildPackages() []string {
+	return []string{"tar"}
+}
