@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -144,7 +145,7 @@ func (impl *OSBuildKojiJobImpl) Run(job worker.Job) error {
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, err.Error())
 			return err
 		}
-		result.OSBuildOutput, err = RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, os.Stderr)
+		result.OSBuildOutput, err = osbuild2.RunOSBuild(args.Manifest, impl.Store, outputDirectory, exports, nil, true, os.Stderr)
 		if err != nil {
 			return err
 		}
