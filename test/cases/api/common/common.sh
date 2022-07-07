@@ -38,6 +38,13 @@ function _instanceCheck() {
     set -eu
     [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]
 
+
+    # Verify that insights-client is registered
+    if ! sudo insights-client --status; then
+        echo "Insights-client is not registered"
+        exit 1
+    fi
+
     # Unregister subscription
     $_ssh sudo subscription-manager unregister
   else
