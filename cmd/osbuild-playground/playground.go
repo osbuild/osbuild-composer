@@ -1,44 +1,56 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"path"
+
+	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/platform"
+	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-// MyOptions contains the arguments passed in as a JSON blob.
-// You can replace them with whatever you want to use to
-// configure your image. In the current example they are
-// unused.
-type MyOptions struct {
-	MyOption string `json:"my_option"`
-}
+func RunPlayground(img ImageType, d distro.Distro, arch distro.Arch, repos map[string][]rpmmd.RepoConfig, state_dir string) {
 
-// Build your manifest by attaching pipelines to it
-//
-// @m is the manifest you are constructing
-// @options are what was passed in on the commandline
-// @repos are the default repositories for the host OS/arch
-// @runner is needed by any build pipelines
-//
-// Return nil when you are done, or an error if something
-// went wrong. Your manifest will be streamed to stdout and
-// can be piped directly to either jq for inspection or
-// osbuild for building.
-func MyManifest(m *manifest.Manifest, options *MyOptions, repos []rpmmd.RepoConfig, runner string) error {
-	// Let's create a simple OCI container!
+	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), path.Join(state_dir, "rpmmd"))
+	solver.SetDNFJSONPath(findDnfJsonBin())
 
-	// configure a build pipeline
-	build := manifest.NewBuildPipeline(m, runner, repos)
+	// Set cache size to 3 GiB
+	solver.SetMaxCacheSize(1 * 1024 * 1024 * 1024)
 
-	// create a non-bootable OS tree containing the `core` comps group
-	os := manifest.NewOSPipeline(m, build, &platform.X86{}, repos)
-	os.ExtraBasePackages = []string{
-		"@core",
+	manifest := manifest.New()
+
+	// TODO: figure out the runner situation
+	err := img.InstantiateManifest(&manifest, repos[arch.Name()], "org.osbuild.fedora36")
+	if err != nil {
+		panic("InstantiateManifest() failed: " + err.Error())
 	}
 
-	// create an OCI container containing the OS tree created above
-	manifest.NewOCIContainerPipeline(m, build, &os.BasePipeline, "x86_64", "my-container.tar")
+	packageSpecs := make(map[string][]rpmmd.PackageSpec)
+	for name, chain := range manifest.GetPackageSetChains() {
+		packages, err := solver.Depsolve(chain)
+		if err != nil {
+			panic(fmt.Sprintf("failed to depsolve for pipeline %s: %s\n", name, err.Error()))
+		}
+		packageSpecs[name] = packages
+	}
 
-	return nil
+	if err := solver.CleanCache(); err != nil {
+		// print to stderr but don't exit with error
+		fmt.Fprintf(os.Stderr, "could not clean dnf cache: %s", err.Error())
+	}
+
+	bytes, err := manifest.Serialize(packageSpecs)
+	if err != nil {
+		panic("failed to serialize manifest: " + err.Error())
+	}
+
+	store := path.Join(state_dir, "osbuild-store")
+
+	_, err = osbuild2.RunOSBuild(bytes, store, "./", img.GetExports(), []string{"build"}, false, os.Stdout)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could not run osbuild: %s", err.Error())
+	}
 }
