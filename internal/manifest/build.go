@@ -40,6 +40,7 @@ func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	// TODO: break apart into individual pipelines
 	packages := []string{
 		"dnf",
+		"coreutils",
 		"dosfstools",
 		"e2fsprogs",
 		"policycoreutils",
