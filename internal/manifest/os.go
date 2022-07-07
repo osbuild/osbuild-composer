@@ -213,6 +213,10 @@ func (p *OSPipeline) getBuildPackages() []string {
 	if p.OSTree != nil {
 		packages = append(packages, "rpm-ostree")
 	}
+	if p.SElinux != "" {
+		packages = append(packages, "policycoreutils")
+		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	}
 	return packages
 }
 
