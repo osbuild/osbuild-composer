@@ -37,12 +37,15 @@ func (p *BuildPipeline) addDependent(dep Pipeline) {
 }
 
 func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
-	// TODO: break apart into individual pipelines
+	// TODO: have a runner abstraction that provides the necessary packages
+	// TODO: make the /usr/bin/cp dependency conditional
+	// TODO: make the /usr/bin/xz dependency conditional
 	packages := []string{
-		"selinux-policy-targeted",
-		"coreutils",
-		"systemd",
-		"xz",
+		"selinux-policy-targeted", // needed to build the build pipeline
+		"coreutils",               // /usr/bin/cp - used all over
+		"glibc",                   // ldconfig - used in the runner
+		"systemd",                 // systemd-tmpfiles and systemd-sysusers - used in the runner
+		"xz",                      // usage unclear
 	}
 
 	for _, pipeline := range p.dependents {
@@ -85,6 +88,7 @@ func (p *BuildPipeline) serialize() osbuild2.Pipeline {
 	pipeline.AddStage(osbuild2.NewSELinuxStage(&osbuild2.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 		Labels: map[string]string{
+			// TODO: make conditional
 			"/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
 		},
 	},
