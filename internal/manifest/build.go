@@ -39,7 +39,6 @@ func (p *BuildPipeline) addDependent(dep Pipeline) {
 func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	// TODO: break apart into individual pipelines
 	packages := []string{
-		"dnf",
 		"selinux-policy-targeted",
 		"coreutils",
 		"systemd",
