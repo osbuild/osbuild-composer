@@ -7,10 +7,10 @@ import (
 // A QCOW2 turns a raw image file into qcow2 image.
 type QCOW2 struct {
 	Base
-	Compat string
+	Filename string
+	Compat   string
 
 	imgPipeline *RawImage
-	filename    string
 }
 
 // NewQCOW2 createsa new QCOW2 pipeline. imgPipeline is the pipeline producing the
@@ -18,12 +18,11 @@ type QCOW2 struct {
 // of the produced qcow2 image.
 func NewQCOW2(m *Manifest,
 	buildPipeline *Build,
-	imgPipeline *RawImage,
-	filename string) *QCOW2 {
+	imgPipeline *RawImage) *QCOW2 {
 	p := &QCOW2{
 		Base:        NewBase(m, "qcow2", buildPipeline),
 		imgPipeline: imgPipeline,
-		filename:    filename,
+		Filename:    "image.qcow2",
 	}
 	if imgPipeline.Base.manifest != m {
 		panic("live image pipeline from different manifest")
@@ -37,12 +36,12 @@ func (p *QCOW2) serialize() osbuild2.Pipeline {
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(
-		osbuild2.NewQEMUStageOptions(p.filename,
+		osbuild2.NewQEMUStageOptions(p.Filename,
 			osbuild2.QEMUFormatQCOW2,
 			osbuild2.QCOW2Options{
 				Compat: p.Compat,
 			}),
-		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.filename),
+		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
 	))
 
 	return pipeline

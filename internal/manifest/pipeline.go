@@ -8,6 +8,7 @@ package manifest
 
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -36,6 +37,10 @@ type Base struct {
 // or for exporting them.
 func (p Base) Name() string {
 	return p.name
+}
+
+func (p Base) GetManifest() *Manifest {
+	return p.manifest
 }
 
 func (p Base) getBuildPackages() []string {
@@ -101,4 +106,10 @@ func (p Base) serialize() osbuild2.Pipeline {
 		pipeline.Build = "name:" + p.build.Name()
 	}
 	return pipeline
+}
+
+type Tree interface {
+	Name() string
+	GetManifest() *Manifest
+	GetPlatform() platform.Platform
 }

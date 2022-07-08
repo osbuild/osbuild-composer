@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
@@ -24,8 +25,9 @@ func qcow2Manifest(m *manifest.Manifest,
 	if err != nil {
 		return err
 	}
-	imagePipeline := manifest.NewRawImage(m, buildPipeline, treePipeline, "disk.img")
-	qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, imagePipeline, t.filename)
+	imagePipeline := manifest.NewRawImage(m, buildPipeline, treePipeline)
+	qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, imagePipeline)
+	qcow2Pipeline.Filename = t.filename
 	qcow2Pipeline.Compat = "1.1"
 
 	return nil
@@ -45,8 +47,9 @@ func vhdManifest(m *manifest.Manifest,
 	if err != nil {
 		return err
 	}
-	imagePipeline := manifest.NewRawImage(m, buildPipeline, treePipeline, "disk.img")
-	manifest.NewVPC(m, buildPipeline, imagePipeline, t.filename)
+	imagePipeline := manifest.NewRawImage(m, buildPipeline, treePipeline)
+	p := manifest.NewVPC(m, buildPipeline, imagePipeline)
+	p.Filename = t.filename
 
 	return nil
 }
@@ -65,8 +68,9 @@ func vmdkManifest(m *manifest.Manifest,
 	if err != nil {
 		return err
 	}
-	imagePipeline := manifest.NewRawImage(m, buildPipeline, treePipeline, "disk.img")
-	manifest.NewVMDK(m, buildPipeline, imagePipeline, t.filename)
+	imagePipeline := manifest.NewRawImage(m, buildPipeline, treePipeline)
+	p := manifest.NewVMDK(m, buildPipeline, imagePipeline)
+	p.Filename = t.filename
 
 	return nil
 }
@@ -85,8 +89,9 @@ func openstackManifest(m *manifest.Manifest,
 	if err != nil {
 		return err
 	}
-	imagePipeline := manifest.NewRawImage(m, buildPipeline, treePipeline, "disk.img")
-	manifest.NewQCOW2(m, buildPipeline, imagePipeline, t.filename)
+	imagePipeline := manifest.NewRawImage(m, buildPipeline, treePipeline)
+	p := manifest.NewQCOW2(m, buildPipeline, imagePipeline)
+	p.Filename = t.filename
 
 	return nil
 }
@@ -106,7 +111,8 @@ func ec2CommonManifest(m *manifest.Manifest,
 	if err != nil {
 		return nil
 	}
-	manifest.NewRawImage(m, buildPipeline, treePipeline, diskfile)
+	p := manifest.NewRawImage(m, buildPipeline, treePipeline)
+	p.Filename = diskfile
 
 	return nil
 }
@@ -137,7 +143,15 @@ func iotInstallerManifest(m *manifest.Manifest,
 	d := t.arch.distro
 	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
 
-	anacondaTreePipeline := anacondaTreePipeline(m, buildPipeline, repos, packageSets[installerPkgsKey], t.Arch().Name(), d.product, d.osVersion, "IoT", ksUsers)
+	anacondaTreePipeline := anacondaTreePipeline(m,
+		buildPipeline,
+		t.platform,
+		repos,
+		packageSets[installerPkgsKey],
+		d.product,
+		d.osVersion,
+		"IoT",
+		ksUsers)
 	isoTreePipeline := bootISOTreePipeline(m, buildPipeline, anacondaTreePipeline, options, d.vendor, d.isolabelTmpl, customizations.GetUsers(), customizations.GetGroups())
 	bootISOPipeline(m, buildPipeline, isoTreePipeline, t.Filename(), false)
 
@@ -176,7 +190,8 @@ func iotCommitManifest(m *manifest.Manifest,
 	if err != nil {
 		return err
 	}
-	manifest.NewTar(m, buildPipeline, &commitPipeline.Base, "commit-archive", t.Filename())
+	p := manifest.NewTar(m, buildPipeline, &commitPipeline.Base, "commit-archive")
+	p.Filename = t.Filename()
 
 	return nil
 }
@@ -196,8 +211,17 @@ func iotContainerManifest(m *manifest.Manifest,
 
 	nginxConfigPath := "/etc/nginx.conf"
 	httpPort := "8080"
-	containerTreePipeline := containerTreePipeline(m, buildPipeline, commitPipeline, repos, packageSets[containerPkgsKey], options, customizations, nginxConfigPath, httpPort)
-	containerPipeline(m, buildPipeline, &containerTreePipeline.Base, t, nginxConfigPath, httpPort)
+	containerTreePipeline := containerTreePipeline(m,
+		buildPipeline,
+		commitPipeline,
+		t.platform,
+		repos,
+		packageSets[containerPkgsKey],
+		options,
+		customizations,
+		nginxConfigPath,
+		httpPort)
+	containerPipeline(m, buildPipeline, containerTreePipeline, t, nginxConfigPath, httpPort)
 
 	return nil
 }
@@ -216,7 +240,8 @@ func containerManifest(m *manifest.Manifest,
 	if err != nil {
 		return err
 	}
-	manifest.NewOCIContainer(m, buildPipeline, &treePipeline.Base, t.Arch().Name(), t.Filename())
+	ociPipeline := manifest.NewOCIContainer(m, buildPipeline, treePipeline)
+	ociPipeline.Filename = t.Filename()
 
 	return nil
 }
@@ -260,14 +285,14 @@ func osPipeline(m *manifest.Manifest,
 	}
 
 	if t.rpmOstree {
-		var parent *manifest.OSPipelineOSTreeParent
+		var parent *manifest.OSTreeParent
 		if options.OSTree.Parent != "" && options.OSTree.URL != "" {
-			parent = &manifest.OSPipelineOSTreeParent{
+			parent = &manifest.OSTreeParent{
 				Checksum: options.OSTree.Parent,
 				URL:      options.OSTree.URL,
 			}
 		}
-		pl.OSTree = &manifest.OSPipelineOSTree{
+		pl.OSTree = &manifest.OSTree{
 			Parent: parent,
 		}
 	}
@@ -359,13 +384,14 @@ func ostreeCommitPipeline(m *manifest.Manifest,
 func containerTreePipeline(m *manifest.Manifest,
 	buildPipeline *manifest.Build,
 	commitPipeline *manifest.OSTreeCommit,
+	platform platform.Platform,
 	repos []rpmmd.RepoConfig,
 	containerPackageSet rpmmd.PackageSet,
 	options distro.ImageOptions,
 	c *blueprint.Customizations,
 	nginxConfigPath,
 	listenPort string) *manifest.OSTreeCommitServer {
-	p := manifest.NewOSTreeCommitServer(m, buildPipeline, repos, commitPipeline, nginxConfigPath, listenPort)
+	p := manifest.NewOSTreeCommitServer(m, buildPipeline, platform, repos, commitPipeline, nginxConfigPath, listenPort)
 	p.ExtraPackages = containerPackageSet.Include
 	p.ExtraRepos = containerPackageSet.Repositories
 	language, _ := c.GetPrimaryLocale()
@@ -377,11 +403,12 @@ func containerTreePipeline(m *manifest.Manifest,
 
 func containerPipeline(m *manifest.Manifest,
 	buildPipeline *manifest.Build,
-	treePipeline *manifest.Base,
+	treePipeline manifest.Tree,
 	t *imageType,
 	nginxConfigPath,
 	listenPort string) *manifest.OCIContainer {
-	p := manifest.NewOCIContainer(m, buildPipeline, treePipeline, t.Arch().Name(), t.Filename())
+	p := manifest.NewOCIContainer(m, buildPipeline, treePipeline)
+	p.Filename = t.Filename()
 	p.Cmd = []string{"nginx", "-c", nginxConfigPath}
 	p.ExposedPorts = []string{listenPort}
 	return p
@@ -389,17 +416,18 @@ func containerPipeline(m *manifest.Manifest,
 
 func anacondaTreePipeline(m *manifest.Manifest,
 	buildPipeline *manifest.Build,
+	pf platform.Platform,
 	repos []rpmmd.RepoConfig,
 	installerPackageSet rpmmd.PackageSet,
-	arch, product, osVersion, variant string,
+	product, osVersion, variant string,
 	users bool) *manifest.Anaconda {
-	p := manifest.NewAnaconda(m, buildPipeline, repos, "kernel", arch, product, osVersion)
+	p := manifest.NewAnaconda(m, buildPipeline, pf, repos, "kernel", product, osVersion)
 	p.ExtraPackages = installerPackageSet.Include
 	p.ExtraRepos = installerPackageSet.Repositories
 
 	p.Users = users
 	p.Variant = variant
-	p.Biosdevname = (arch == distro.X86_64ArchName)
+	p.Biosdevname = (pf.GetArch() == platform.ARCH_X86_64)
 	return p
 }
 
@@ -426,7 +454,8 @@ func bootISOPipeline(m *manifest.Manifest,
 	treePipeline *manifest.ISOTree,
 	filename string,
 	isolinux bool) *manifest.ISO {
-	p := manifest.NewISO(m, buildPipeline, treePipeline, filename)
+	p := manifest.NewISO(m, buildPipeline, treePipeline)
 	p.ISOLinux = isolinux
+	p.Filename = filename
 	return p
 }

@@ -9,19 +9,18 @@ import (
 type ISO struct {
 	Base
 	ISOLinux bool
+	Filename string
 
 	treePipeline *ISOTree
-	filename     string
 }
 
 func NewISO(m *Manifest,
 	buildPipeline *Build,
-	treePipeline *ISOTree,
-	filename string) *ISO {
+	treePipeline *ISOTree) *ISO {
 	p := &ISO{
 		Base:         NewBase(m, "bootiso", buildPipeline),
 		treePipeline: treePipeline,
-		filename:     filename,
+		Filename:     "image.iso",
 	}
 	buildPipeline.addDependent(p)
 	if treePipeline.Base.manifest != m {
@@ -41,8 +40,8 @@ func (p *ISO) getBuildPackages() []string {
 func (p *ISO) serialize() osbuild2.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild2.NewXorrisofsStage(xorrisofsStageOptions(p.filename, p.treePipeline.isoLabel, p.ISOLinux), osbuild2.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))
-	pipeline.AddStage(osbuild2.NewImplantisomd5Stage(&osbuild2.Implantisomd5StageOptions{Filename: p.filename}))
+	pipeline.AddStage(osbuild2.NewXorrisofsStage(xorrisofsStageOptions(p.Filename, p.treePipeline.isoLabel, p.ISOLinux), osbuild2.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))
+	pipeline.AddStage(osbuild2.NewImplantisomd5Stage(&osbuild2.Implantisomd5StageOptions{Filename: p.Filename}))
 
 	return pipeline
 }

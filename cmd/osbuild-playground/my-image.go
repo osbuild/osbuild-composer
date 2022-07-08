@@ -1,78 +1,62 @@
 package main
 
 import (
+	"math/rand"
+
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
-func init() {
-	AddImageType(&MyImage{})
-}
-
-// MyImage contains the arguments passed in as a JSON blob.
-// You can replace them with whatever you want to use to
-// configure your image. In the current example they are
-// unused.
 type MyImage struct {
 	MyOption string `json:"my_option"`
-	Filename string `json:"filename"`
 }
 
-// Name returns the name of the image type, used to select what kind
-// of image to build.
 func (img *MyImage) Name() string {
 	return "my-image"
 }
 
-// Build your manifest by attaching pipelines to it
-//
-// @m is the manifest you are constructing
-// @options are what was passed in on the commandline
-// @repos are the default repositories for the host OS/arch
-// @runner is needed by any build pipelines
-//
-// Return nil when you are done, or an error if something
-// went wrong. Your manifest will be streamed to osbuild
-// for building.
+func init() {
+	AddImageType(&MyImage{})
+}
+
 func (img *MyImage) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner runner.Runner) error {
-	// Let's create a simple OCI container!
+	// Let's create a simple raw image!
 
 	// configure a build pipeline
 	build := manifest.NewBuild(m, runner, repos)
 
-	// create a non-bootable OS tree containing the `core` comps group
-	os := manifest.NewOS(m, build, &platform.X86{}, repos)
-	os.ExtraBasePackages = []string{
-		"@core",
+	// create an x86_64 platform with bios boot
+	platform := &platform.X86{
+		BIOS: true,
 	}
 
-	filename := "my-container.tar"
-	if img.Filename != "" {
-		filename = img.Filename
+	// TODO: add helper
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	pt, err := disk.NewPartitionTable(&basePT, nil, 0, false, rand.New(rand.NewSource(0)))
+	if err != nil {
+		panic(err)
 	}
-	// create an OCI container containing the OS tree created above
-	manifest.NewOCIContainer(m, build, &os.Base, "x86_64", filename)
+
+	// create a minimal bootable OS tree
+	os := manifest.NewOS(m, build, platform, repos)
+	os.PartitionTable = pt   // we need a partition table
+	os.KernelName = "kernel" // use the default fedora kernel
+
+	// create a raw image containing the OS tree created above
+	manifest.NewRawImage(m, build, os)
 
 	return nil
 }
 
-// GetExports returns a list of the pipelines osbuild should export.
-// These are the pipelines containing the artefact you want returned.
-//
-// TODO: Move this to be implemented in terms ofthe Manifest package.
-//       We should not need to know the pipeline names.
+// TODO: make internal
 func (img *MyImage) GetExports() []string {
-	return []string{"container"}
+	return []string{"image"}
 }
 
-// GetCheckpoints returns a list of the pipelines osbuild should
-// checkpoint. These are the pipelines likely to be reusable in
-// future runs.
-//
-// TODO: Move this to be implemented in terms ofthe Manifest package.
-//       We should not need to know the pipeline names.
 func (img *MyImage) GetCheckpoints() []string {
 	return []string{"build"}
 }

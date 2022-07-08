@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -29,11 +30,11 @@ type Anaconda struct {
 	// Variant is the variant of the product being installed, if applicable.
 	Variant string
 
+	platform     platform.Platform
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
 	kernelName   string
 	kernelVer    string
-	arch         string
 	product      string
 	version      string
 }
@@ -46,16 +47,16 @@ type Anaconda struct {
 // installer for.
 func NewAnaconda(m *Manifest,
 	buildPipeline *Build,
+	platform platform.Platform,
 	repos []rpmmd.RepoConfig,
 	kernelName,
-	arch,
 	product,
 	version string) *Anaconda {
 	p := &Anaconda{
 		Base:       NewBase(m, "anaconda-tree", buildPipeline),
+		platform:   platform,
 		repos:      repos,
 		kernelName: kernelName,
-		arch:       arch,
 		product:    product,
 		version:    version,
 	}
@@ -74,9 +75,8 @@ func (p *Anaconda) anacondaBootPackageSet() []string {
 		"efibootmgr",
 	}
 
-	// TODO: use constants for architectures
-	switch p.arch {
-	case "x86_64":
+	switch p.platform.GetArch() {
+	case platform.ARCH_X86_64:
 		packages = append(packages,
 			"grub2-efi-x64",
 			"grub2-efi-x64-cdboot",
@@ -86,14 +86,14 @@ func (p *Anaconda) anacondaBootPackageSet() []string {
 			"syslinux",
 			"syslinux-nonlinux",
 		)
-	case "aarch64":
+	case platform.ARCH_AARCH64:
 		packages = append(packages,
 			"grub2-efi-aa64-cdboot",
 			"grub2-efi-aa64",
 			"shim-aa64",
 		)
 	default:
-		panic(fmt.Sprintf("unsupported arch: %s", p.arch))
+		panic(fmt.Sprintf("unsupported arch: %s", p.platform.GetArch()))
 	}
 
 	return packages
@@ -148,7 +148,7 @@ func (p *Anaconda) serialize() osbuild2.Pipeline {
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild2.NewBuildstampStage(&osbuild2.BuildstampStageOptions{
-		Arch:    p.arch,
+		Arch:    p.platform.GetArch().String(),
 		Product: p.product,
 		Variant: p.Variant,
 		Version: p.version,
@@ -184,7 +184,7 @@ func (p *Anaconda) serialize() osbuild2.Pipeline {
 	pipeline.AddStage(osbuild2.NewAnacondaStage(osbuild2.NewAnacondaStageOptions(p.Users)))
 	pipeline.AddStage(osbuild2.NewLoraxScriptStage(&osbuild2.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
-		BaseArch: p.arch,
+		BaseArch: p.platform.GetArch().String(),
 	}))
 	pipeline.AddStage(osbuild2.NewDracutStage(dracutStageOptions(p.kernelVer, p.Biosdevname, []string{
 		"anaconda",
@@ -254,4 +254,8 @@ func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []
 		Modules: modules,
 		Install: []string{"/.buildstamp"},
 	}
+}
+
+func (p *Anaconda) GetPlatform() platform.Platform {
+	return p.platform
 }

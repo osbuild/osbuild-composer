@@ -49,11 +49,11 @@ func findDnfJsonBin() string {
 
 func main() {
 	var distroArg string
-	flag.StringVar(&distroArg, "distro", "", "distro to build from")
+	flag.StringVar(&distroArg, "distro", "host", "distro to build from")
 	var archArg string
 	flag.StringVar(&archArg, "arch", common.CurrentArch(), "architecture to build for")
 	var imageTypeArg string
-	flag.StringVar(&imageTypeArg, "type", "my-image", "image type to build")
+	flag.StringVar(&imageTypeArg, "type", "my-container", "image type to build")
 	flag.Parse()
 
 	// Path to options or '-' for stdin
@@ -83,15 +83,15 @@ func main() {
 
 	distros := distroregistry.NewDefault()
 	var d distro.Distro
-	if distroArg != "" {
-		d = distros.GetDistro(distroArg)
-		if d == nil {
-			panic(fmt.Sprintf("distro '%s' not supported\n", distroArg))
-		}
-	} else {
+	if distroArg == "host" {
 		d = distros.FromHost()
 		if d == nil {
 			panic("host distro not supported")
+		}
+	} else {
+		d = distros.GetDistro(distroArg)
+		if d == nil {
+			panic(fmt.Sprintf("distro '%s' not supported\n", distroArg))
 		}
 	}
 
