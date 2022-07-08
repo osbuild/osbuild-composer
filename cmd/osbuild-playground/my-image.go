@@ -40,10 +40,10 @@ func (img *MyImage) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.Repo
 	// Let's create a simple OCI container!
 
 	// configure a build pipeline
-	build := manifest.NewBuildPipeline(m, runner, repos)
+	build := manifest.NewBuild(m, runner, repos)
 
 	// create a non-bootable OS tree containing the `core` comps group
-	os := manifest.NewOSPipeline(m, build, &platform.X86{}, repos)
+	os := manifest.NewOS(m, build, &platform.X86{}, repos)
 	os.ExtraBasePackages = []string{
 		"@core",
 	}
@@ -53,7 +53,7 @@ func (img *MyImage) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.Repo
 		filename = img.Filename
 	}
 	// create an OCI container containing the OS tree created above
-	manifest.NewOCIContainerPipeline(m, build, &os.BasePipeline, "x86_64", filename)
+	manifest.NewOCIContainer(m, build, &os.Base, "x86_64", filename)
 
 	return nil
 }

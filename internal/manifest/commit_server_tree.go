@@ -8,10 +8,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-// An OSTreeCommitServerTreePipeline contains an nginx server serving
+// An OSTreeCommitServer contains an nginx server serving
 // an embedded ostree commit.
-type OSTreeCommitServerTreePipeline struct {
-	BasePipeline
+type OSTreeCommitServer struct {
+	Base
 	// Packages to install in addition to the ones required by the
 	// pipeline.
 	ExtraPackages []string
@@ -22,31 +22,31 @@ type OSTreeCommitServerTreePipeline struct {
 
 	repos           []rpmmd.RepoConfig
 	packageSpecs    []rpmmd.PackageSpec
-	commitPipeline  *OSTreeCommitPipeline
+	commitPipeline  *OSTreeCommit
 	nginxConfigPath string
 	listenPort      string
 }
 
-// NewOSTreeCommitServerTreePipeline creates a new pipeline. The content
+// NewOSTreeCommitServer creates a new pipeline. The content
 // is built from repos and packages, which must contain nginx. commitPipeline
 // is a pipeline producing an ostree commit to be served. nginxConfigPath
 // is the path to the main nginx config file and listenPort is the port
 // nginx will be listening on.
-func NewOSTreeCommitServerTreePipeline(m *Manifest,
-	buildPipeline *BuildPipeline,
+func NewOSTreeCommitServer(m *Manifest,
+	buildPipeline *Build,
 	repos []rpmmd.RepoConfig,
-	commitPipeline *OSTreeCommitPipeline,
+	commitPipeline *OSTreeCommit,
 	nginxConfigPath,
-	listenPort string) *OSTreeCommitServerTreePipeline {
-	p := &OSTreeCommitServerTreePipeline{
-		BasePipeline:    NewBasePipeline(m, "container-tree", buildPipeline),
+	listenPort string) *OSTreeCommitServer {
+	p := &OSTreeCommitServer{
+		Base:            NewBase(m, "container-tree", buildPipeline),
 		repos:           repos,
 		commitPipeline:  commitPipeline,
 		nginxConfigPath: nginxConfigPath,
 		listenPort:      listenPort,
 		Language:        "en_US",
 	}
-	if commitPipeline.BasePipeline.manifest != m {
+	if commitPipeline.Base.manifest != m {
 		panic("commit pipeline from different manifest")
 	}
 	buildPipeline.addDependent(p)
@@ -54,7 +54,7 @@ func NewOSTreeCommitServerTreePipeline(m *Manifest,
 	return p
 }
 
-func (p *OSTreeCommitServerTreePipeline) getPackageSetChain() []rpmmd.PackageSet {
+func (p *OSTreeCommitServer) getPackageSetChain() []rpmmd.PackageSet {
 	packages := []string{"nginx"}
 	return []rpmmd.PackageSet{
 		{
@@ -64,7 +64,7 @@ func (p *OSTreeCommitServerTreePipeline) getPackageSetChain() []rpmmd.PackageSet
 	}
 }
 
-func (p *OSTreeCommitServerTreePipeline) getBuildPackages() []string {
+func (p *OSTreeCommitServer) getBuildPackages() []string {
 	packages := []string{
 		"rpm",
 		"rpm-ostree",
@@ -72,29 +72,29 @@ func (p *OSTreeCommitServerTreePipeline) getBuildPackages() []string {
 	return packages
 }
 
-func (p *OSTreeCommitServerTreePipeline) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *OSTreeCommitServer) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *OSTreeCommitServerTreePipeline) serializeStart(packages []rpmmd.PackageSpec) {
+func (p *OSTreeCommitServer) serializeStart(packages []rpmmd.PackageSpec) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
 	p.packageSpecs = packages
 }
 
-func (p *OSTreeCommitServerTreePipeline) serializeEnd() {
+func (p *OSTreeCommitServer) serializeEnd() {
 	if len(p.packageSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.packageSpecs = nil
 }
 
-func (p *OSTreeCommitServerTreePipeline) serialize() osbuild2.Pipeline {
+func (p *OSTreeCommitServer) serialize() osbuild2.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
-	pipeline := p.BasePipeline.serialize()
+	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild2.NewLocaleStage(&osbuild2.LocaleStageOptions{Language: p.Language}))

@@ -4,26 +4,26 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
-// A VMDKPipeline turns a raw image file into vmdk image.
-type VMDKPipeline struct {
-	BasePipeline
+// A VMDK turns a raw image file into vmdk image.
+type VMDK struct {
+	Base
 
-	imgPipeline *LiveImgPipeline
+	imgPipeline *RawImage
 	filename    string
 }
 
-// NewVMDKPipeline creates a new VMDK pipeline. imgPipeline is the pipeline producing the
+// NewVMDK creates a new VMDK pipeline. imgPipeline is the pipeline producing the
 // raw image. Filename is the name of the produced image.
-func NewVMDKPipeline(m *Manifest,
-	buildPipeline *BuildPipeline,
-	imgPipeline *LiveImgPipeline,
-	filename string) *VMDKPipeline {
-	p := &VMDKPipeline{
-		BasePipeline: NewBasePipeline(m, "vmdk", buildPipeline),
-		imgPipeline:  imgPipeline,
-		filename:     filename,
+func NewVMDK(m *Manifest,
+	buildPipeline *Build,
+	imgPipeline *RawImage,
+	filename string) *VMDK {
+	p := &VMDK{
+		Base:        NewBase(m, "vmdk", buildPipeline),
+		imgPipeline: imgPipeline,
+		filename:    filename,
 	}
-	if imgPipeline.BasePipeline.manifest != m {
+	if imgPipeline.Base.manifest != m {
 		panic("live image pipeline from different manifest")
 	}
 	buildPipeline.addDependent(p)
@@ -31,8 +31,8 @@ func NewVMDKPipeline(m *Manifest,
 	return p
 }
 
-func (p *VMDKPipeline) serialize() osbuild2.Pipeline {
-	pipeline := p.BasePipeline.serialize()
+func (p *VMDK) serialize() osbuild2.Pipeline {
+	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(
 		osbuild2.NewQEMUStageOptions(p.filename, osbuild2.QEMUFormatVMDK, osbuild2.VMDKOptions{
@@ -44,6 +44,6 @@ func (p *VMDKPipeline) serialize() osbuild2.Pipeline {
 	return pipeline
 }
 
-func (p *VMDKPipeline) getBuildPackages() []string {
+func (p *VMDK) getBuildPackages() []string {
 	return []string{"qemu-img"}
 }

@@ -6,15 +6,15 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
-// A BuildPipeline represents the build environment for other pipelines. As a
+// A Build represents the build environment for other pipelines. As a
 // general rule, tools required to build pipelines are used from the build
 // environment, rather than from the pipeline itself. Without a specified
 // build environment, the build host's root filesystem would be used, which
 // is not predictable nor reproducible. For the purposes of building the
 // build pipeline, we do use the build host's filesystem, this means we should
 // make minimal assumptions about what's available there.
-type BuildPipeline struct {
-	BasePipeline
+type Build struct {
+	Base
 
 	runner       runner.Runner
 	dependents   []Pipeline
@@ -22,24 +22,24 @@ type BuildPipeline struct {
 	packageSpecs []rpmmd.PackageSpec
 }
 
-// NewBuildPipeline creates a new build pipeline from the repositories in repos
+// NewBuild creates a new build pipeline from the repositories in repos
 // and the specified packages.
-func NewBuildPipeline(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig) *BuildPipeline {
-	pipeline := &BuildPipeline{
-		BasePipeline: NewBasePipeline(m, "build", nil),
-		runner:       runner,
-		dependents:   make([]Pipeline, 0),
-		repos:        repos,
+func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig) *Build {
+	pipeline := &Build{
+		Base:       NewBase(m, "build", nil),
+		runner:     runner,
+		dependents: make([]Pipeline, 0),
+		repos:      repos,
 	}
 	m.addPipeline(pipeline)
 	return pipeline
 }
 
-func (p *BuildPipeline) addDependent(dep Pipeline) {
+func (p *Build) addDependent(dep Pipeline) {
 	p.dependents = append(p.dependents, dep)
 }
 
-func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
+func (p *Build) getPackageSetChain() []rpmmd.PackageSet {
 	// TODO: make the /usr/bin/cp dependency conditional
 	// TODO: make the /usr/bin/xz dependency conditional
 	packages := []string{
@@ -62,29 +62,29 @@ func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
 	}
 }
 
-func (p *BuildPipeline) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *Build) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *BuildPipeline) serializeStart(packages []rpmmd.PackageSpec) {
+func (p *Build) serializeStart(packages []rpmmd.PackageSpec) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
 	p.packageSpecs = packages
 }
 
-func (p *BuildPipeline) serializeEnd() {
+func (p *Build) serializeEnd() {
 	if len(p.packageSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.packageSpecs = nil
 }
 
-func (p *BuildPipeline) serialize() osbuild2.Pipeline {
+func (p *Build) serialize() osbuild2.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
-	pipeline := p.BasePipeline.serialize()
+	pipeline := p.Base.serialize()
 	pipeline.Runner = p.runner.String()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))

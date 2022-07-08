@@ -4,28 +4,28 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
-// A QCOW2Pipeline turns a raw image file into qcow2 image.
-type QCOW2Pipeline struct {
-	BasePipeline
+// A QCOW2 turns a raw image file into qcow2 image.
+type QCOW2 struct {
+	Base
 	Compat string
 
-	imgPipeline *LiveImgPipeline
+	imgPipeline *RawImage
 	filename    string
 }
 
-// NewQCOW2Pipeline createsa new QCOW2 pipeline. imgPipeline is the pipeline producing the
+// NewQCOW2 createsa new QCOW2 pipeline. imgPipeline is the pipeline producing the
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced qcow2 image.
-func NewQCOW2Pipeline(m *Manifest,
-	buildPipeline *BuildPipeline,
-	imgPipeline *LiveImgPipeline,
-	filename string) *QCOW2Pipeline {
-	p := &QCOW2Pipeline{
-		BasePipeline: NewBasePipeline(m, "qcow2", buildPipeline),
-		imgPipeline:  imgPipeline,
-		filename:     filename,
+func NewQCOW2(m *Manifest,
+	buildPipeline *Build,
+	imgPipeline *RawImage,
+	filename string) *QCOW2 {
+	p := &QCOW2{
+		Base:        NewBase(m, "qcow2", buildPipeline),
+		imgPipeline: imgPipeline,
+		filename:    filename,
 	}
-	if imgPipeline.BasePipeline.manifest != m {
+	if imgPipeline.Base.manifest != m {
 		panic("live image pipeline from different manifest")
 	}
 	buildPipeline.addDependent(p)
@@ -33,8 +33,8 @@ func NewQCOW2Pipeline(m *Manifest,
 	return p
 }
 
-func (p *QCOW2Pipeline) serialize() osbuild2.Pipeline {
-	pipeline := p.BasePipeline.serialize()
+func (p *QCOW2) serialize() osbuild2.Pipeline {
+	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild2.NewQEMUStage(
 		osbuild2.NewQEMUStageOptions(p.filename,
@@ -48,6 +48,6 @@ func (p *QCOW2Pipeline) serialize() osbuild2.Pipeline {
 	return pipeline
 }
 
-func (p *QCOW2Pipeline) getBuildPackages() []string {
+func (p *QCOW2) getBuildPackages() []string {
 	return []string{"qemu-img"}
 }
