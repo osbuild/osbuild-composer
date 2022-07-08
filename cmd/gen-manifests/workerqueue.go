@@ -85,7 +85,6 @@ func (wq *workerQueue) startWorker(idx uint32) {
 			}
 		}
 	}()
-	wq.msgQueue <- fmt.Sprintf("Worker %d started", idx)
 }
 
 func (wq *workerQueue) startMessagePrinter() {
