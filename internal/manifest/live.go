@@ -19,7 +19,7 @@ func NewLiveImgPipeline(m *Manifest,
 	treePipeline *OSPipeline,
 	filename string) *LiveImgPipeline {
 	p := &LiveImgPipeline{
-		BasePipeline: NewBasePipeline(m, "image", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "image", buildPipeline),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}

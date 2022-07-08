@@ -19,7 +19,7 @@ func NewVMDKPipeline(m *Manifest,
 	imgPipeline *LiveImgPipeline,
 	filename string) *VMDKPipeline {
 	p := &VMDKPipeline{
-		BasePipeline: NewBasePipeline(m, "vmdk", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "vmdk", buildPipeline),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}

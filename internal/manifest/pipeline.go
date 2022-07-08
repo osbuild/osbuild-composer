@@ -28,7 +28,6 @@ type Pipeline interface {
 type BasePipeline struct {
 	manifest *Manifest
 	name     string
-	runner   string
 	build    *BuildPipeline
 }
 
@@ -67,7 +66,7 @@ func (p BasePipeline) getInline() []string {
 // the build host's filesystem is used as the build root. The runner specifies how to use this
 // pipeline as a build pipeline, by naming the distro it contains. When the host system is used
 // as a build root, then the necessary runner is autodetected.
-func NewBasePipeline(m *Manifest, name string, build *BuildPipeline, runner *string) BasePipeline {
+func NewBasePipeline(m *Manifest, name string, build *BuildPipeline) BasePipeline {
 	p := BasePipeline{
 		manifest: m,
 		name:     name,
@@ -77,12 +76,6 @@ func NewBasePipeline(m *Manifest, name string, build *BuildPipeline, runner *str
 		if build.BasePipeline.manifest != m {
 			panic("build pipeline from a different manifest")
 		}
-		if build.BasePipeline.runner == "" {
-			panic("build pipeline does not have runner")
-		}
-	}
-	if runner != nil {
-		p.runner = *runner
 	}
 	return p
 }
@@ -101,13 +94,11 @@ func (p BasePipeline) serializeEnd() {
 // meant to be treated as opaque and not to be modified further outside of the pipeline
 // package.
 func (p BasePipeline) serialize() osbuild2.Pipeline {
-	var buildName string
+	pipeline := osbuild2.Pipeline{
+		Name: p.name,
+	}
 	if p.build != nil {
-		buildName = "name:" + p.build.Name()
+		pipeline.Build = "name:" + p.build.Name()
 	}
-	return osbuild2.Pipeline{
-		Name:   p.name,
-		Runner: p.runner,
-		Build:  buildName,
-	}
+	return pipeline
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/runner"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
@@ -289,7 +290,7 @@ type distribution struct {
 	vendor             string
 	ostreeRefTmpl      string
 	isolabelTmpl       string
-	runner             string
+	runner             runner.Runner
 	arches             map[string]distro.Arch
 	defaultImageConfig *distro.ImageConfig
 }
@@ -311,7 +312,7 @@ var distroMap = map[string]distribution{
 		vendor:             "fedora",
 		ostreeRefTmpl:      "fedora/34/%s/iot",
 		isolabelTmpl:       "Fedora-34-BaseOS-%s",
-		runner:             "org.osbuild.fedora34",
+		runner:             &runner.Fedora{Version: 34},
 		defaultImageConfig: defaultDistroImageConfig,
 	},
 	fedora35Distribution: {
@@ -323,7 +324,7 @@ var distroMap = map[string]distribution{
 		vendor:             "fedora",
 		ostreeRefTmpl:      "fedora/35/%s/iot",
 		isolabelTmpl:       "Fedora-35-BaseOS-%s",
-		runner:             "org.osbuild.fedora35",
+		runner:             &runner.Fedora{Version: 35},
 		defaultImageConfig: defaultDistroImageConfig,
 	},
 	fedora36Distribution: {
@@ -335,7 +336,7 @@ var distroMap = map[string]distribution{
 		vendor:             "fedora",
 		ostreeRefTmpl:      "fedora/36/%s/iot",
 		isolabelTmpl:       "Fedora-36-BaseOS-%s",
-		runner:             "org.osbuild.fedora36",
+		runner:             &runner.Fedora{Version: 36},
 		defaultImageConfig: defaultDistroImageConfig,
 	},
 }

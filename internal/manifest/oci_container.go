@@ -22,7 +22,7 @@ func NewOCIContainerPipeline(m *Manifest,
 	architecture,
 	filename string) *OCIContainerPipeline {
 	p := &OCIContainerPipeline{
-		BasePipeline: NewBasePipeline(m, "container", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "container", buildPipeline),
 		treePipeline: treePipeline,
 		architecture: architecture,
 		filename:     filename,

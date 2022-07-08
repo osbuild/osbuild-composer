@@ -19,7 +19,7 @@ func NewISOPipeline(m *Manifest,
 	treePipeline *ISOTreePipeline,
 	filename string) *ISOPipeline {
 	p := &ISOPipeline{
-		BasePipeline: NewBasePipeline(m, "bootiso", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "bootiso", buildPipeline),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
