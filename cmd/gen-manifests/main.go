@@ -122,8 +122,14 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			Parent: cr.OSTree.Parent,
 		}
 	}
-	job := func(msgq chan string) error {
-		defer func() { msgq <- fmt.Sprintf("Finished job %s", filename) }()
+	job := func(msgq chan string) (err error) {
+		defer func() {
+			msg := fmt.Sprintf("Finished job %s", filename)
+			if err != nil {
+				msg += " [failed]"
+			}
+			msgq <- msg
+		}()
 		msgq <- fmt.Sprintf("Starting job %s", filename)
 		repos := convertRepos(cr.Repositories)
 		var bp blueprint.Blueprint
@@ -139,10 +145,12 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 
 		packageSpecs, err := depsolve(cacheDir, imgType, bp, options, repos, distribution, archName)
 		if err != nil {
-			return fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
+			err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
+			return
 		}
 		if packageSpecs == nil {
-			return fmt.Errorf("[%s] nil package specs", filename)
+			err = fmt.Errorf("[%s] nil package specs", filename)
+			return
 		}
 		if options.OSTree.Ref == "" {
 			// use default OSTreeRef for image type
@@ -150,7 +158,8 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		}
 		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
 		if err != nil {
-			return fmt.Errorf("[%s] failed: %s", filename, err)
+			err = fmt.Errorf("[%s] failed: %s", filename, err)
+			return
 		}
 		request := composeRequest{
 			Distro:       distribution.Name(),
@@ -161,7 +170,8 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			Blueprint:    cr.Blueprint,
 			OSTree:       cr.OSTree,
 		}
-		return save(manifest, packageSpecs, request, path, filename)
+		err = save(manifest, packageSpecs, request, path, filename)
+		return
 	}
 	return job
 }
