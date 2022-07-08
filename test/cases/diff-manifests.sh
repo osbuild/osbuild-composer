@@ -87,8 +87,10 @@ greenprint "Manifests differ"
 echo "${diff}" > "${artifacts}/manifests.diff"
 greenprint "Saved diff in job artifacts"
 
+artifacts_url="${CI_JOB_URL}/artifacts/browse/ci-artifacts"
+
 cat > "${review_data_file}" << EOF
-{"body":"⚠️ This PR introduces changes in at least one manifest (when comparing PR HEAD ${head} with the main merge-base ${mergebase}).  Please review the changes.  The changes can be found in the job artifacts of the \`Manifest-diff\` job as \`manifests.diff\`","event":"COMMENT"}
+{"body":"⚠️ This PR introduces changes in at least one manifest (when comparing PR HEAD ${head} with the main merge-base ${mergebase}).  Please review the changes.  The changes can be found in the [artifacts of the \`Manifest-diff\` job [0]](${artifacts_url}) as \`manifests.diff\`.\n\n[0] ${artifacts_url}","event":"COMMENT"}
 EOF
 
 greenprint "Posting review comment"
