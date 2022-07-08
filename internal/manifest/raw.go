@@ -5,38 +5,38 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
-// A LiveImgPipeline represents a raw image file which can be booted in a
+// A RawImage represents a raw image file which can be booted in a
 // hypervisor. It is created from an existing OSPipeline.
-type LiveImgPipeline struct {
-	BasePipeline
-	treePipeline *OSPipeline
+type RawImage struct {
+	Base
+	treePipeline *OS
 
 	filename string
 }
 
-func NewLiveImgPipeline(m *Manifest,
-	buildPipeline *BuildPipeline,
-	treePipeline *OSPipeline,
-	filename string) *LiveImgPipeline {
-	p := &LiveImgPipeline{
-		BasePipeline: NewBasePipeline(m, "image", buildPipeline),
+func NewRawImage(m *Manifest,
+	buildPipeline *Build,
+	treePipeline *OS,
+	filename string) *RawImage {
+	p := &RawImage{
+		Base:         NewBase(m, "image", buildPipeline),
 		treePipeline: treePipeline,
 		filename:     filename,
 	}
 	buildPipeline.addDependent(p)
-	if treePipeline.BasePipeline.manifest != m {
+	if treePipeline.Base.manifest != m {
 		panic("tree pipeline from different manifest")
 	}
 	m.addPipeline(p)
 	return p
 }
 
-func (p *LiveImgPipeline) getBuildPackages() []string {
+func (p *RawImage) getBuildPackages() []string {
 	return p.treePipeline.PartitionTable.GetBuildPackages()
 }
 
-func (p *LiveImgPipeline) serialize() osbuild2.Pipeline {
-	pipeline := p.BasePipeline.serialize()
+func (p *RawImage) serialize() osbuild2.Pipeline {
+	pipeline := p.Base.serialize()
 
 	pt := p.treePipeline.PartitionTable
 	if pt == nil {

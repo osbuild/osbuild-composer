@@ -4,23 +4,23 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
-// A TarPipeline represents the contents of another pipeline in a tar file
-type TarPipeline struct {
-	BasePipeline
-	inputPipeline *BasePipeline
+// A Tar represents the contents of another pipeline in a tar file
+type Tar struct {
+	Base
+	inputPipeline *Base
 	filename      string
 }
 
-// NewTarPipeline creates a new TarPipeline. The inputPipeline represents the
+// NewTar creates a new TarPipeline. The inputPipeline represents the
 // filesystem tree which will be the contents of the tar file. The pipelinename
 // is the name of the pipeline. The filename is the name of the output tar file.
-func NewTarPipeline(m *Manifest,
-	buildPipeline *BuildPipeline,
-	inputPipeline *BasePipeline,
+func NewTar(m *Manifest,
+	buildPipeline *Build,
+	inputPipeline *Base,
 	pipelinename,
-	filename string) *TarPipeline {
-	p := &TarPipeline{
-		BasePipeline:  NewBasePipeline(m, pipelinename, buildPipeline),
+	filename string) *Tar {
+	p := &Tar{
+		Base:          NewBase(m, pipelinename, buildPipeline),
 		inputPipeline: inputPipeline,
 		filename:      filename,
 	}
@@ -32,8 +32,8 @@ func NewTarPipeline(m *Manifest,
 	return p
 }
 
-func (p *TarPipeline) serialize() osbuild2.Pipeline {
-	pipeline := p.BasePipeline.serialize()
+func (p *Tar) serialize() osbuild2.Pipeline {
+	pipeline := p.Base.serialize()
 
 	tree := new(osbuild2.TarStageInput)
 	tree.Type = "org.osbuild.tree"
@@ -46,6 +46,6 @@ func (p *TarPipeline) serialize() osbuild2.Pipeline {
 	return pipeline
 }
 
-func (p *TarPipeline) getBuildPackages() []string {
+func (p *Tar) getBuildPackages() []string {
 	return []string{"tar"}
 }

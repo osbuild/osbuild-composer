@@ -4,28 +4,28 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
-// OSTreeCommitPipeline represents an ostree with one commit.
-type OSTreeCommitPipeline struct {
-	BasePipeline
+// OSTreeCommit represents an ostree with one commit.
+type OSTreeCommit struct {
+	Base
 	OSVersion string
 
-	treePipeline *OSPipeline
+	treePipeline *OS
 	ref          string
 }
 
-// NewOSTreeCommitPipeline creates a new OSTree commit pipeline. The
+// NewOSTreeCommit creates a new OSTree commit pipeline. The
 // treePipeline is the tree representing the content of the commit.
 // ref is the ref to create the commit under.
-func NewOSTreeCommitPipeline(m *Manifest,
-	buildPipeline *BuildPipeline,
-	treePipeline *OSPipeline,
-	ref string) *OSTreeCommitPipeline {
-	p := &OSTreeCommitPipeline{
-		BasePipeline: NewBasePipeline(m, "ostree-commit", buildPipeline),
+func NewOSTreeCommit(m *Manifest,
+	buildPipeline *Build,
+	treePipeline *OS,
+	ref string) *OSTreeCommit {
+	p := &OSTreeCommit{
+		Base:         NewBase(m, "ostree-commit", buildPipeline),
 		treePipeline: treePipeline,
 		ref:          ref,
 	}
-	if treePipeline.BasePipeline.manifest != m {
+	if treePipeline.Base.manifest != m {
 		panic("tree pipeline from different manifest")
 	}
 	buildPipeline.addDependent(p)
@@ -33,15 +33,15 @@ func NewOSTreeCommitPipeline(m *Manifest,
 	return p
 }
 
-func (p *OSTreeCommitPipeline) getBuildPackages() []string {
+func (p *OSTreeCommit) getBuildPackages() []string {
 	packages := []string{
 		"rpm-ostree",
 	}
 	return packages
 }
 
-func (p *OSTreeCommitPipeline) serialize() osbuild2.Pipeline {
-	pipeline := p.BasePipeline.serialize()
+func (p *OSTreeCommit) serialize() osbuild2.Pipeline {
+	pipeline := p.Base.serialize()
 
 	if p.treePipeline.OSTree == nil {
 		panic("tree is not ostree")

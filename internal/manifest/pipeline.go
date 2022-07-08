@@ -23,42 +23,42 @@ type Pipeline interface {
 	getInline() []string
 }
 
-// A BasePipeline represents the core functionality shared between each of the pipeline
-// implementations, and the BasePipeline struct must be embedded in each of them.
-type BasePipeline struct {
+// A Base represents the core functionality shared between each of the pipeline
+// implementations, and the Base struct must be embedded in each of them.
+type Base struct {
 	manifest *Manifest
 	name     string
-	build    *BuildPipeline
+	build    *Build
 }
 
 // Name returns the name of the pipeline. The name must be unique for a given manifest.
 // Pipeline names are used to refer to pipelines either as dependencies between pipelines
 // or for exporting them.
-func (p BasePipeline) Name() string {
+func (p Base) Name() string {
 	return p.name
 }
 
-func (p BasePipeline) getBuildPackages() []string {
+func (p Base) getBuildPackages() []string {
 	return []string{}
 }
 
-func (p BasePipeline) getPackageSetChain() []rpmmd.PackageSet {
+func (p Base) getPackageSetChain() []rpmmd.PackageSet {
 	return nil
 }
 
-func (p BasePipeline) getPackageSpecs() []rpmmd.PackageSpec {
+func (p Base) getPackageSpecs() []rpmmd.PackageSpec {
 	return []rpmmd.PackageSpec{}
 }
 
-func (p BasePipeline) getOSTreeCommits() []osTreeCommit {
+func (p Base) getOSTreeCommits() []osTreeCommit {
 	return []osTreeCommit{}
 }
 
-func (p BasePipeline) getInline() []string {
+func (p Base) getInline() []string {
 	return []string{}
 }
 
-// NewBasePipeline returns a generic Pipeline object. The name is mandatory, immutable and must
+// NewBase returns a generic Pipeline object. The name is mandatory, immutable and must
 // be unique among all the pipelines used in a manifest, which is currently not enforced.
 // The build argument is a pipeline representing a build root in which the rest of the
 // pipeline is built. In order to ensure reproducibility a build pipeline must always be
@@ -66,14 +66,14 @@ func (p BasePipeline) getInline() []string {
 // the build host's filesystem is used as the build root. The runner specifies how to use this
 // pipeline as a build pipeline, by naming the distro it contains. When the host system is used
 // as a build root, then the necessary runner is autodetected.
-func NewBasePipeline(m *Manifest, name string, build *BuildPipeline) BasePipeline {
-	p := BasePipeline{
+func NewBase(m *Manifest, name string, build *Build) Base {
+	p := Base{
 		manifest: m,
 		name:     name,
 		build:    build,
 	}
 	if build != nil {
-		if build.BasePipeline.manifest != m {
+		if build.Base.manifest != m {
 			panic("build pipeline from a different manifest")
 		}
 	}
@@ -82,18 +82,18 @@ func NewBasePipeline(m *Manifest, name string, build *BuildPipeline) BasePipelin
 
 // serializeStart must be called exactly once before each call
 // to serialize().
-func (p BasePipeline) serializeStart([]rpmmd.PackageSpec) {
+func (p Base) serializeStart([]rpmmd.PackageSpec) {
 }
 
 // serializeEnd must be called exactly once after each call to
 // serialize().
-func (p BasePipeline) serializeEnd() {
+func (p Base) serializeEnd() {
 }
 
 // Serialize turns a given pipeline into an osbuild2.Pipeline object. This object is
 // meant to be treated as opaque and not to be modified further outside of the pipeline
 // package.
-func (p BasePipeline) serialize() osbuild2.Pipeline {
+func (p Base) serialize() osbuild2.Pipeline {
 	pipeline := osbuild2.Pipeline{
 		Name: p.name,
 	}

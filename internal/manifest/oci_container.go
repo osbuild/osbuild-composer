@@ -4,30 +4,30 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
-// An OCIContainerPipeline represents an OCI container, containing a filesystem
+// An OCIContainer represents an OCI container, containing a filesystem
 // tree created by another Pipeline.
-type OCIContainerPipeline struct {
-	BasePipeline
+type OCIContainer struct {
+	Base
 	Cmd          []string
 	ExposedPorts []string
 
-	treePipeline *BasePipeline
+	treePipeline *Base
 	architecture string
 	filename     string
 }
 
-func NewOCIContainerPipeline(m *Manifest,
-	buildPipeline *BuildPipeline,
-	treePipeline *BasePipeline,
+func NewOCIContainer(m *Manifest,
+	buildPipeline *Build,
+	treePipeline *Base,
 	architecture,
-	filename string) *OCIContainerPipeline {
-	p := &OCIContainerPipeline{
-		BasePipeline: NewBasePipeline(m, "container", buildPipeline),
+	filename string) *OCIContainer {
+	p := &OCIContainer{
+		Base:         NewBase(m, "container", buildPipeline),
 		treePipeline: treePipeline,
 		architecture: architecture,
 		filename:     filename,
 	}
-	if treePipeline.build.BasePipeline.manifest != m {
+	if treePipeline.build.Base.manifest != m {
 		panic("tree pipeline from different manifest")
 	}
 	buildPipeline.addDependent(p)
@@ -35,8 +35,8 @@ func NewOCIContainerPipeline(m *Manifest,
 	return p
 }
 
-func (p *OCIContainerPipeline) serialize() osbuild2.Pipeline {
-	pipeline := p.BasePipeline.serialize()
+func (p *OCIContainer) serialize() osbuild2.Pipeline {
+	pipeline := p.Base.serialize()
 
 	options := &osbuild2.OCIArchiveStageOptions{
 		Architecture: p.architecture,
@@ -56,6 +56,6 @@ func (p *OCIContainerPipeline) serialize() osbuild2.Pipeline {
 	return pipeline
 }
 
-func (p *OCIContainerPipeline) getBuildPackages() []string {
+func (p *OCIContainer) getBuildPackages() []string {
 	return []string{"tar"}
 }

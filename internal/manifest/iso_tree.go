@@ -9,11 +9,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 )
 
-// An ISOTreePipeline represents a tree containing the anaconda installer,
+// An ISOTree represents a tree containing the anaconda installer,
 // configuration in terms of a kickstart file, as well as an embedded
 // payload to be installed.
-type ISOTreePipeline struct {
-	BasePipeline
+type ISOTree struct {
+	Base
 	// TODO: review optional and mandatory fields and their meaning
 	UEFIVendor string
 	OSName     string
@@ -21,25 +21,25 @@ type ISOTreePipeline struct {
 	Users      []blueprint.UserCustomization
 	Groups     []blueprint.GroupCustomization
 
-	anacondaPipeline *AnacondaPipeline
+	anacondaPipeline *Anaconda
 	isoLabel         string
 	osTreeCommit     string
 	osTreeURL        string
 	osTreeRef        string
 }
 
-func NewISOTreePipeline(m *Manifest,
-	buildPipeline *BuildPipeline,
-	anacondaPipeline *AnacondaPipeline,
+func NewISOTree(m *Manifest,
+	buildPipeline *Build,
+	anacondaPipeline *Anaconda,
 	osTreeCommit,
 	osTreeURL,
 	osTreeRef,
-	isoLabelTmpl string) *ISOTreePipeline {
+	isoLabelTmpl string) *ISOTree {
 	// TODO: replace isoLabelTmpl with more high-level properties
 	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.arch)
 
-	p := &ISOTreePipeline{
-		BasePipeline:     NewBasePipeline(m, "bootiso-tree", buildPipeline),
+	p := &ISOTree{
+		Base:             NewBase(m, "bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
 		isoLabel:         isoLabel,
 		osTreeCommit:     osTreeCommit,
@@ -47,14 +47,14 @@ func NewISOTreePipeline(m *Manifest,
 		osTreeRef:        osTreeRef,
 	}
 	buildPipeline.addDependent(p)
-	if anacondaPipeline.BasePipeline.manifest != m {
+	if anacondaPipeline.Base.manifest != m {
 		panic("anaconda pipeline from different manifest")
 	}
 	m.addPipeline(p)
 	return p
 }
 
-func (p *ISOTreePipeline) getOSTreeCommits() []osTreeCommit {
+func (p *ISOTree) getOSTreeCommits() []osTreeCommit {
 	return []osTreeCommit{
 		{
 			checksum: p.osTreeCommit,
@@ -63,7 +63,7 @@ func (p *ISOTreePipeline) getOSTreeCommits() []osTreeCommit {
 	}
 }
 
-func (p *ISOTreePipeline) getBuildPackages() []string {
+func (p *ISOTree) getBuildPackages() []string {
 	packages := []string{
 		"rpm-ostree",
 		"squashfs-tools",
@@ -71,8 +71,8 @@ func (p *ISOTreePipeline) getBuildPackages() []string {
 	return packages
 }
 
-func (p *ISOTreePipeline) serialize() osbuild2.Pipeline {
-	pipeline := p.BasePipeline.serialize()
+func (p *ISOTree) serialize() osbuild2.Pipeline {
+	pipeline := p.Base.serialize()
 
 	kspath := "/osbuild.ks"
 	ostreeRepoPath := "/ostree/repo"
