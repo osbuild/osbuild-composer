@@ -56,13 +56,13 @@ sudo dnf build-dep -y osbuild-composer.spec
 manifestdir=$(mktemp -d)
 
 greenprint "Generating all manifests for HEAD (PR #${prnum})"
-go run ./cmd/gen-manifests --output "${manifestdir}/PR" --workers 50 > /dev/null
+go run ./cmd/gen-manifests --output "${manifestdir}/PR" --workers 50
 
 greenprint "Checking out merge-base ${mergebase}"
 git checkout "${mergebase}"
 
 greenprint "Generating all manifests for merge-base (${mergebase})"
-go run ./cmd/gen-manifests --output "${manifestdir}/${mergebase}" --workers 50 > /dev/null
+go run ./cmd/gen-manifests --output "${manifestdir}/${mergebase}" --workers 50
 
 greenprint "Diff: ${manifestdir}/${mergebase} ${manifestdir}/PR"
 err=0
