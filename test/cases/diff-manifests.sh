@@ -57,11 +57,19 @@ manifestdir=$(mktemp -d)
 
 greenprint "Generating all manifests for HEAD (PR #${prnum})"
 go run ./cmd/gen-manifests --output "${manifestdir}/PR" --workers 50
+err=$?
+if (( err != 0 )); then
+    greenprint "Manifest generation on PR HEAD failed"
+    exit 1
+fi
 
 greenprint "Checking out merge-base ${mergebase}"
 git checkout "${mergebase}"
 
 greenprint "Generating all manifests for merge-base (${mergebase})"
+# NOTE: it's not an error if this task fails; manifest generation on main can
+# be broken in a PR that fixes it.
+# As long as the generation on the PR HEAD succeeds, the job should succeed.
 go run ./cmd/gen-manifests --output "${manifestdir}/${mergebase}" --workers 50
 
 greenprint "Diff: ${manifestdir}/${mergebase} ${manifestdir}/PR"
