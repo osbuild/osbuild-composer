@@ -441,6 +441,7 @@ func main() {
 	for _, j := range jobs {
 		wq.submitJob(j)
 	}
+	fmt.Println("done")
 	errs := wq.wait()
 	exit := 0
 	if len(errs) > 0 {
