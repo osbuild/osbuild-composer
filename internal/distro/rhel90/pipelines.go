@@ -527,6 +527,9 @@ func osPipeline(t *imageType,
 				fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", options.Subscription.Organization, options.Subscription.ActivationKey, options.Subscription.ServerUrl, options.Subscription.BaseUrl),
 			}
 			if options.Subscription.Insights {
+				commands = append(commands, "/usr/bin/insights-client --status || true")
+			}
+			if options.Subscription.Insights {
 				commands = append(commands, "/usr/bin/insights-client --register")
 			}
 			p.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
