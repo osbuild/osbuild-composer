@@ -7,8 +7,9 @@ import (
 // A Tar represents the contents of another pipeline in a tar file
 type Tar struct {
 	Base
+	Filename string
+
 	inputPipeline *Base
-	filename      string
 }
 
 // NewTar creates a new TarPipeline. The inputPipeline represents the
@@ -17,12 +18,11 @@ type Tar struct {
 func NewTar(m *Manifest,
 	buildPipeline *Build,
 	inputPipeline *Base,
-	pipelinename,
-	filename string) *Tar {
+	pipelinename string) *Tar {
 	p := &Tar{
 		Base:          NewBase(m, pipelinename, buildPipeline),
 		inputPipeline: inputPipeline,
-		filename:      filename,
+		Filename:      "image.tar",
 	}
 	if inputPipeline.manifest != m {
 		panic("tree pipeline from different manifest")
@@ -39,7 +39,7 @@ func (p *Tar) serialize() osbuild2.Pipeline {
 	tree.Type = "org.osbuild.tree"
 	tree.Origin = "org.osbuild.pipeline"
 	tree.References = []string{"name:" + p.inputPipeline.Name()}
-	tarStage := osbuild2.NewTarStage(&osbuild2.TarStageOptions{Filename: p.filename}, &osbuild2.TarStageInputs{Tree: tree})
+	tarStage := osbuild2.NewTarStage(&osbuild2.TarStageOptions{Filename: p.Filename}, &osbuild2.TarStageInputs{Tree: tree})
 
 	pipeline.AddStage(tarStage)
 

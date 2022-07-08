@@ -8,26 +8,22 @@ import (
 // tree created by another Pipeline.
 type OCIContainer struct {
 	Base
+	Filename     string
 	Cmd          []string
 	ExposedPorts []string
 
-	treePipeline *Base
-	architecture string
-	filename     string
+	treePipeline Tree
 }
 
 func NewOCIContainer(m *Manifest,
 	buildPipeline *Build,
-	treePipeline *Base,
-	architecture,
-	filename string) *OCIContainer {
+	treePipeline Tree) *OCIContainer {
 	p := &OCIContainer{
 		Base:         NewBase(m, "container", buildPipeline),
 		treePipeline: treePipeline,
-		architecture: architecture,
-		filename:     filename,
+		Filename:     "oci-archive.tar",
 	}
-	if treePipeline.build.Base.manifest != m {
+	if treePipeline.GetManifest() != m {
 		panic("tree pipeline from different manifest")
 	}
 	buildPipeline.addDependent(p)
@@ -39,8 +35,8 @@ func (p *OCIContainer) serialize() osbuild2.Pipeline {
 	pipeline := p.Base.serialize()
 
 	options := &osbuild2.OCIArchiveStageOptions{
-		Architecture: p.architecture,
-		Filename:     p.filename,
+		Architecture: p.treePipeline.GetPlatform().GetArch().String(),
+		Filename:     p.Filename,
 		Config: &osbuild2.OCIArchiveConfig{
 			Cmd:          p.Cmd,
 			ExposedPorts: p.ExposedPorts,

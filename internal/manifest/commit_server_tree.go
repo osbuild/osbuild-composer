@@ -5,6 +5,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -20,6 +21,7 @@ type OSTreeCommitServer struct {
 	// TODO: should this be configurable?
 	Language string
 
+	platform        platform.Platform
 	repos           []rpmmd.RepoConfig
 	packageSpecs    []rpmmd.PackageSpec
 	commitPipeline  *OSTreeCommit
@@ -34,12 +36,14 @@ type OSTreeCommitServer struct {
 // nginx will be listening on.
 func NewOSTreeCommitServer(m *Manifest,
 	buildPipeline *Build,
+	platform platform.Platform,
 	repos []rpmmd.RepoConfig,
 	commitPipeline *OSTreeCommit,
 	nginxConfigPath,
 	listenPort string) *OSTreeCommitServer {
 	p := &OSTreeCommitServer{
 		Base:            NewBase(m, "container-tree", buildPipeline),
+		platform:        platform,
 		repos:           repos,
 		commitPipeline:  commitPipeline,
 		nginxConfigPath: nginxConfigPath,
@@ -138,4 +142,8 @@ func chmodStageOptions(path, mode string, recursive bool) *osbuild2.ChmodStageOp
 			path: {Mode: mode, Recursive: recursive},
 		},
 	}
+}
+
+func (p *OSTreeCommitServer) GetPlatform() platform.Platform {
+	return p.platform
 }

@@ -36,7 +36,7 @@ func NewISOTree(m *Manifest,
 	osTreeRef,
 	isoLabelTmpl string) *ISOTree {
 	// TODO: replace isoLabelTmpl with more high-level properties
-	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.arch)
+	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.platform.GetArch())
 
 	p := &ISOTree{
 		Base:             NewBase(m, "bootiso-tree", buildPipeline),
@@ -77,7 +77,14 @@ func (p *ISOTree) serialize() osbuild2.Pipeline {
 	kspath := "/osbuild.ks"
 	ostreeRepoPath := "/ostree/repo"
 
-	pipeline.AddStage(osbuild2.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.kernelVer, p.anacondaPipeline.arch, p.UEFIVendor, p.anacondaPipeline.product, p.anacondaPipeline.version, p.isoLabel, kspath), osbuild2.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
+	pipeline.AddStage(osbuild2.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.kernelVer,
+		p.anacondaPipeline.platform.GetArch().String(),
+		p.UEFIVendor,
+		p.anacondaPipeline.product,
+		p.anacondaPipeline.version,
+		p.isoLabel,
+		kspath),
+		osbuild2.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
 
 	kickstartOptions, err := osbuild2.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
 	if err != nil {
@@ -86,7 +93,7 @@ func (p *ISOTree) serialize() osbuild2.Pipeline {
 
 	pipeline.AddStage(osbuild2.NewKickstartStage(kickstartOptions))
 	pipeline.AddStage(osbuild2.NewDiscinfoStage(&osbuild2.DiscinfoStageOptions{
-		BaseArch: p.anacondaPipeline.arch,
+		BaseArch: p.anacondaPipeline.platform.GetArch().String(),
 		Release:  p.Release,
 	}))
 

@@ -15,11 +15,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
-type OSPipelineOSTree struct {
-	Parent *OSPipelineOSTreeParent
+type OSTree struct {
+	Parent *OSTreeParent
 }
 
-type OSPipelineOSTreeParent struct {
+type OSTreeParent struct {
 	Checksum string
 	URL      string
 }
@@ -43,7 +43,7 @@ type OS struct {
 	// Workload to install on top of the base system
 	Workload workload.Workload
 	// OSTree configuration, if nil the tree cannot be in an OSTree commit
-	OSTree *OSPipelineOSTree
+	OSTree *OSTree
 	// Partition table, if nil the tree cannot be put on a partioned disk
 	PartitionTable *disk.PartitionTable
 	// KernelName indicates that a kernel is installed, and names the kernel
@@ -470,4 +470,8 @@ func usersFirstBootOptions(usersStageOptions *osbuild2.UsersStageOptions) *osbui
 	}
 
 	return options
+}
+
+func (p *OS) GetPlatform() platform.Platform {
+	return p.platform
 }
