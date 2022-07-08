@@ -26,11 +26,8 @@ func TestDBJobQueueMaintenance(t *testing.T) {
 	_, err = dbMaintenance.Conn.Exec(context.Background(), "DELETE FROM jobs")
 	require.NoError(t, err)
 
-	t.Run("testJobsUptoByType", func(t *testing.T) {
-		testJobsUptoByType(t, dbMaintenance, q)
-	})
-	t.Run("testDeleteJobResult", func(t *testing.T) {
-		testDeleteJobResult(t, dbMaintenance, q)
+	t.Run("testDeleteJob", func(t *testing.T) {
+		testDeleteJob(t, dbMaintenance, q)
 	})
 	t.Run("testVacuum", func(t *testing.T) {
 		testVacuum(t, dbMaintenance, q)
@@ -38,46 +35,13 @@ func TestDBJobQueueMaintenance(t *testing.T) {
 
 }
 
-func setFinishedAt(t *testing.T, d db, id uuid.UUID, finished time.Time) {
-	started := finished.Add(-time.Second)
-	queued := started.Add(-time.Second)
-	_, err := d.Conn.Exec(context.Background(), "UPDATE jobs SET queued_at = $1, started_at = $2, finished_at = $3, result = '{\"result\": \"success\" }' WHERE id = $4", queued, started, finished, id)
+func setExpired(t *testing.T, d db, id uuid.UUID) {
+	expires := time.Now().Add(-time.Second)
+	_, err := d.Conn.Exec(context.Background(), "UPDATE jobs SET expires_at = $1 WHERE id = $2", expires, id)
 	require.NoError(t, err)
 }
 
-func testJobsUptoByType(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
-	date80 := time.Date(1980, time.January, 1, 0, 0, 0, 0, time.UTC)
-	date85 := time.Date(1985, time.January, 1, 0, 0, 0, 0, time.UTC)
-	date90 := time.Date(1990, time.January, 1, 0, 0, 0, 0, time.UTC)
-
-	id80, err := q.Enqueue("octopus", nil, nil, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id80)
-	_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
-	require.NoError(t, err)
-	err = q.FinishJob(id80, nil)
-	require.NoError(t, err)
-	setFinishedAt(t, d, id80, date80)
-
-	id85, err := q.Enqueue("octopus", nil, nil, "")
-	require.NoError(t, err)
-	require.NotEqual(t, uuid.Nil, id85)
-	_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
-	require.NoError(t, err)
-	err = q.FinishJob(id85, nil)
-	require.NoError(t, err)
-	setFinishedAt(t, d, id85, date85)
-
-	ids, err := d.JobsUptoByType([]string{"octopus"}, date85)
-	require.NoError(t, err)
-	require.ElementsMatch(t, []uuid.UUID{id80}, ids["octopus"])
-
-	ids, err = d.JobsUptoByType([]string{"octopus"}, date90)
-	require.NoError(t, err)
-	require.ElementsMatch(t, []uuid.UUID{id80, id85}, ids["octopus"])
-}
-
-func testDeleteJobResult(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
+func testDeleteJob(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
 	id, err := q.Enqueue("octopus", nil, nil, "")
 	require.NoError(t, err)
 	require.NotEqual(t, uuid.Nil, id)
@@ -103,13 +67,18 @@ func testDeleteJobResult(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
 	require.NoError(t, json.Unmarshal(r, &r1))
 	require.Equal(t, result, r1)
 
-	rows, err := d.DeleteJobResult([]uuid.UUID{id})
+	rows, err := d.DeleteJob()
+	require.NoError(t, err)
+	require.Equal(t, int64(0), rows)
+
+	setExpired(t, d, id)
+
+	rows, err = d.DeleteJob()
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
-	_, _, r, _, _, _, _, _, err = q.JobStatus(id)
-	require.NoError(t, err)
-	require.Nil(t, r)
+	_, _, _, _, _, _, _, _, err = q.JobStatus(id)
+	require.Error(t, err)
 }
 
 func testVacuum(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {

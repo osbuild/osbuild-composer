@@ -72,6 +72,7 @@ type job struct {
 	QueuedAt   time.Time `json:"queued_at,omitempty"`
 	StartedAt  time.Time `json:"started_at,omitempty"`
 	FinishedAt time.Time `json:"finished_at,omitempty"`
+	ExpiresAt  time.Time `json:"expires_at,omitempty"`
 
 	Canceled bool `json:"canceled,omitempty"`
 }
