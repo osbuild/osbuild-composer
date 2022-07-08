@@ -20,7 +20,7 @@ func NewVPCPipeline(m *Manifest,
 	imgPipeline *LiveImgPipeline,
 	filename string) *VPCPipeline {
 	p := &VPCPipeline{
-		BasePipeline: NewBasePipeline(m, "vpc", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "vpc", buildPipeline),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}

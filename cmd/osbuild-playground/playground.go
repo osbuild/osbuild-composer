@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
 func RunPlayground(img ImageType, d distro.Distro, arch distro.Arch, repos map[string][]rpmmd.RepoConfig, state_dir string) {
@@ -22,8 +23,8 @@ func RunPlayground(img ImageType, d distro.Distro, arch distro.Arch, repos map[s
 
 	manifest := manifest.New()
 
-	// TODO: figure out the runner situation
-	err := img.InstantiateManifest(&manifest, repos[arch.Name()], "org.osbuild.fedora36")
+	// TODO: query distro for runner
+	err := img.InstantiateManifest(&manifest, repos[arch.Name()], &runner.Fedora{Version: 36})
 	if err != nil {
 		panic("InstantiateManifest() failed: " + err.Error())
 	}

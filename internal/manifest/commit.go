@@ -21,7 +21,7 @@ func NewOSTreeCommitPipeline(m *Manifest,
 	treePipeline *OSPipeline,
 	ref string) *OSTreeCommitPipeline {
 	p := &OSTreeCommitPipeline{
-		BasePipeline: NewBasePipeline(m, "ostree-commit", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "ostree-commit", buildPipeline),
 		treePipeline: treePipeline,
 		ref:          ref,
 	}

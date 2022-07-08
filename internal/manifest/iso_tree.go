@@ -39,7 +39,7 @@ func NewISOTreePipeline(m *Manifest,
 	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.arch)
 
 	p := &ISOTreePipeline{
-		BasePipeline:     NewBasePipeline(m, "bootiso-tree", buildPipeline, nil),
+		BasePipeline:     NewBasePipeline(m, "bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
 		isoLabel:         isoLabel,
 		osTreeCommit:     osTreeCommit,

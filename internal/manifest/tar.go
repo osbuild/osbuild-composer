@@ -20,7 +20,7 @@ func NewTarPipeline(m *Manifest,
 	pipelinename,
 	filename string) *TarPipeline {
 	p := &TarPipeline{
-		BasePipeline:  NewBasePipeline(m, pipelinename, buildPipeline, nil),
+		BasePipeline:  NewBasePipeline(m, pipelinename, buildPipeline),
 		inputPipeline: inputPipeline,
 		filename:      filename,
 	}

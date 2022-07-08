@@ -14,13 +14,14 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
 var ImageTypes = make(map[string]ImageType)
 
 type ImageType interface {
 	Name() string
-	InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner string) error
+	InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner runner.Runner) error
 	GetExports() []string
 	GetCheckpoints() []string
 }

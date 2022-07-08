@@ -110,7 +110,7 @@ func NewOSPipeline(m *Manifest,
 	platform platform.Platform,
 	repos []rpmmd.RepoConfig) *OSPipeline {
 	p := &OSPipeline{
-		BasePipeline: NewBasePipeline(m, "os", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "os", buildPipeline),
 		repos:        repos,
 		platform:     platform,
 		Language:     "C.UTF-8",

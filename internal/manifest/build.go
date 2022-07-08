@@ -3,6 +3,7 @@ package manifest
 import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
 // A BuildPipeline represents the build environment for other pipelines. As a
@@ -15,6 +16,7 @@ import (
 type BuildPipeline struct {
 	BasePipeline
 
+	runner       runner.Runner
 	dependents   []Pipeline
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
@@ -22,9 +24,10 @@ type BuildPipeline struct {
 
 // NewBuildPipeline creates a new build pipeline from the repositories in repos
 // and the specified packages.
-func NewBuildPipeline(m *Manifest, runner string, repos []rpmmd.RepoConfig) *BuildPipeline {
+func NewBuildPipeline(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig) *BuildPipeline {
 	pipeline := &BuildPipeline{
-		BasePipeline: NewBasePipeline(m, "build", nil, &runner),
+		BasePipeline: NewBasePipeline(m, "build", nil),
+		runner:       runner,
 		dependents:   make([]Pipeline, 0),
 		repos:        repos,
 	}
@@ -37,16 +40,15 @@ func (p *BuildPipeline) addDependent(dep Pipeline) {
 }
 
 func (p *BuildPipeline) getPackageSetChain() []rpmmd.PackageSet {
-	// TODO: have a runner abstraction that provides the necessary packages
 	// TODO: make the /usr/bin/cp dependency conditional
 	// TODO: make the /usr/bin/xz dependency conditional
 	packages := []string{
 		"selinux-policy-targeted", // needed to build the build pipeline
 		"coreutils",               // /usr/bin/cp - used all over
-		"glibc",                   // ldconfig - used in the runner
-		"systemd",                 // systemd-tmpfiles and systemd-sysusers - used in the runner
 		"xz",                      // usage unclear
 	}
+
+	packages = append(packages, p.runner.GetBuildPackages()...)
 
 	for _, pipeline := range p.dependents {
 		packages = append(packages, pipeline.getBuildPackages()...)
@@ -83,6 +85,7 @@ func (p *BuildPipeline) serialize() osbuild2.Pipeline {
 		panic("serialization not started")
 	}
 	pipeline := p.BasePipeline.serialize()
+	pipeline.Runner = p.runner.String()
 
 	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild2.NewSELinuxStage(&osbuild2.SELinuxStageOptions{

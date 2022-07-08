@@ -21,7 +21,7 @@ func NewQCOW2Pipeline(m *Manifest,
 	imgPipeline *LiveImgPipeline,
 	filename string) *QCOW2Pipeline {
 	p := &QCOW2Pipeline{
-		BasePipeline: NewBasePipeline(m, "qcow2", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "qcow2", buildPipeline),
 		imgPipeline:  imgPipeline,
 		filename:     filename,
 	}

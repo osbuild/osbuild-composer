@@ -4,6 +4,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
 func init() {
@@ -35,7 +36,7 @@ func (img *MyImage) Name() string {
 // Return nil when you are done, or an error if something
 // went wrong. Your manifest will be streamed to osbuild
 // for building.
-func (img *MyImage) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner string) error {
+func (img *MyImage) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner runner.Runner) error {
 	// Let's create a simple OCI container!
 
 	// configure a build pipeline

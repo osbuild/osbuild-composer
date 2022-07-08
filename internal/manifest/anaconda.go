@@ -52,7 +52,7 @@ func NewAnacondaPipeline(m *Manifest,
 	product,
 	version string) *AnacondaPipeline {
 	p := &AnacondaPipeline{
-		BasePipeline: NewBasePipeline(m, "anaconda-tree", buildPipeline, nil),
+		BasePipeline: NewBasePipeline(m, "anaconda-tree", buildPipeline),
 		repos:        repos,
 		kernelName:   kernelName,
 		arch:         arch,

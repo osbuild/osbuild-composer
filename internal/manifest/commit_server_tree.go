@@ -39,7 +39,7 @@ func NewOSTreeCommitServerTreePipeline(m *Manifest,
 	nginxConfigPath,
 	listenPort string) *OSTreeCommitServerTreePipeline {
 	p := &OSTreeCommitServerTreePipeline{
-		BasePipeline:    NewBasePipeline(m, "container-tree", buildPipeline, nil),
+		BasePipeline:    NewBasePipeline(m, "container-tree", buildPipeline),
 		repos:           repos,
 		commitPipeline:  commitPipeline,
 		nginxConfigPath: nginxConfigPath,
