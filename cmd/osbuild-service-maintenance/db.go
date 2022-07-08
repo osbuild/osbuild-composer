@@ -5,24 +5,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/sirupsen/logrus"
-
-	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 const (
 	// Maintenance queries
-	sqlQueryJobsUptoByType = `
-                SELECT array_agg(id), type
-                FROM jobs
-                WHERE type = ANY($1) AND finished_at < $2 AND result IS NOT NULL
-                GROUP BY type`
-	sqlDeleteJobResult = `
-                UPDATE jobs
-                SET result = NULL
-                WHERE id = ANY($1)`
+	sqlDeleteJob = `
+                DELETE FROM jobs
+                WHERE id IN (
+                    SELECT id FROM jobs
+                    WHERE expires_at < NOW()
+                    ORDER BY expires_at
+                    LIMIT 1000
+                )`
 	sqlVacuumAnalyze = `
                 VACUUM ANALYZE`
 	sqlVacuumStats = `
@@ -52,32 +48,8 @@ func (d *db) Close() {
 	d.Conn.Close(context.Background())
 }
 
-// return map id -> jobtype ?
-func (d *db) JobsUptoByType(jobTypes []string, upto time.Time) (result map[string][]uuid.UUID, err error) {
-	result = make(map[string][]uuid.UUID)
-
-	rows, err := d.Conn.Query(context.Background(), sqlQueryJobsUptoByType, jobTypes, upto)
-	if err != nil {
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var ids []uuid.UUID
-		var jt string
-		err = rows.Scan(&ids, &jt)
-		if err != nil {
-			return
-		}
-
-		result[jt] = ids
-	}
-	err = rows.Err()
-	return
-}
-
-func (d *db) DeleteJobResult(jobIds []uuid.UUID) (int64, error) {
-	tag, err := d.Conn.Exec(context.Background(), sqlDeleteJobResult, jobIds)
+func (d *db) DeleteJob() (int64, error) {
+	tag, err := d.Conn.Exec(context.Background(), sqlDeleteJob)
 	if err != nil {
 		return tag.RowsAffected(), fmt.Errorf("Error deleting results from jobs: %v", err)
 	}
@@ -144,43 +116,31 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 		return err
 	}
 
-	// The results of these jobs take up the most space and can contain sensitive data. Delete
-	// them after a while.
-	jobsByType, err := db.JobsUptoByType([]string{worker.JobTypeManifestIDOnly, worker.JobTypeDepsolve}, cutoff)
-	if err != nil {
-		return fmt.Errorf("Error querying jobs: %v", err)
-	}
-
 	err = db.LogVacuumStats()
 	if err != nil {
 		logrus.Errorf("Error running vacuum stats: %v", err)
 	}
 
-	for k, v := range jobsByType {
-		logrus.Infof("Deleting results from %d %s jobs", len(v), k)
-		if dryRun {
-			logrus.Info("Dry run, skipping deletion of jobs")
-			continue
+	var rows int64
+
+	for {
+		rows, err = db.DeleteJob()
+
+		if err != nil {
+			logrus.Errorf("Error deleting results for jobs: %v, %d rows affected", rows, err)
+			return err
 		}
 
-		// Delete results in chunks to avoid starving the rds instance
-		for i := 0; i < len(v); i += 100 {
-			max := i + 100
-			if max > len(v) {
-				max = len(v)
-			}
-
-			rows, err := db.DeleteJobResult(v[i:max])
-			if err != nil {
-				logrus.Errorf("Error deleting results for jobs: %v, %d rows affected", rows, err)
-				continue
-			}
-			logrus.Infof("Deleted results from %d jobs out of %d job ids", rows, len(v))
-			err = db.VacuumAnalyze()
-			if err != nil {
-				logrus.Errorf("Error running vacuum analyze: %v", err)
-			}
+		if rows == 0 {
+			break
 		}
+
+		logrus.Infof("Deleted results for %d", rows)
+	}
+
+	err = db.VacuumAnalyze()
+	if err != nil {
+		logrus.Errorf("Error running vacuum analyze: %v", err)
 	}
 
 	err = db.LogVacuumStats()
