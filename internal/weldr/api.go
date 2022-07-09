@@ -32,6 +32,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
@@ -2163,6 +2164,16 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, options di
 	return depsolvedSets, nil
 }
 
+func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType distro.ImageType) ([]container.Spec, error) {
+	resolver := container.NewResolver(imageType.Arch().Name())
+
+	for _, c := range bp.Containers {
+		resolver.Add(c.Source, c.Name, c.TLSVerify)
+	}
+
+	return resolver.Finish()
+}
+
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
 // pushing it into the channel for waiting builds.
 func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -2333,11 +2344,21 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	containerSpecs, err := api.resolveContainersForImageType(*bp, imageType)
+	if err != nil {
+		errors := responseError{
+			ID:  "ContainerResolveError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
 	manifest, err := imageType.Manifest(bp.Customizations,
 		options,
 		imageRepos,
 		packageSets,
-		nil,
+		containerSpecs,
 		seed)
 	if err != nil {
 		errors := responseError{
