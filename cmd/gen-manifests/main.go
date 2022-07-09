@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
@@ -118,6 +119,12 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			bp = blueprint.Blueprint(*cr.Blueprint)
 		}
 
+		containerSpecs, err := resolveContainers(bp.Containers, archName)
+
+		if err != nil {
+			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
+		}
+
 		packageSpecs, err := depsolve(cacheDir, imgType, bp, options, repos, distribution, archName)
 		if err != nil {
 			return fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
@@ -129,7 +136,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			// use default OSTreeRef for image type
 			options.OSTree.Ref = imgType.OSTreeRef()
 		}
-		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, nil, seedArg)
+		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
 		if err != nil {
 			return fmt.Errorf("[%s] failed: %s", filename, err)
 		}
@@ -186,6 +193,16 @@ func readRepos() DistroArchRepoMap {
 		panic(err)
 	}
 	return darm
+}
+
+func resolveContainers(containers []blueprint.Container, archName string) ([]container.Spec, error) {
+	resolver := container.NewResolver(archName)
+
+	for _, c := range containers {
+		resolver.Add(c.Source, c.Name, c.TLSVerify)
+	}
+
+	return resolver.Finish()
 }
 
 func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
