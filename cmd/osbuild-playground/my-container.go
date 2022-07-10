@@ -44,6 +44,10 @@ func (img *MyContainer) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.
 
 	// create a minimal non-bootable OS tree
 	os := manifest.NewOS(m, build, &platform.X86{}, repos)
+	os.ExtraBasePackages = []string{"@core"}
+	os.OSCustomizations.Language = "en_US.UTF-8"
+	os.OSCustomizations.Hostname = "my-host"
+	os.OSCustomizations.Timezone = "UTC"
 
 	// create an OCI container containing the OS tree created above
 	manifest.NewOCIContainer(m, build, os)
