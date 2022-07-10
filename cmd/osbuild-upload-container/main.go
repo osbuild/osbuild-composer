@@ -17,14 +17,14 @@ func main() {
 	var username string
 	var password string
 	var tag string
-	var ignoreTls bool
+	var ignoreTLS bool
 
 	flag.StringVar(&filename, "container", "", "path to the oci-archive to upload (required)")
 	flag.StringVar(&destination, "destination", "", "destination to upload to (required)")
 	flag.StringVar(&tag, "tag", "", "destination tag to use for the container")
 	flag.StringVar(&username, "username", "", "username to use for registry")
 	flag.StringVar(&password, "password", "", "password to use for registry")
-	flag.BoolVar(&ignoreTls, "ignore-tls", false, "ignore tls verification for destination")
+	flag.BoolVar(&ignoreTLS, "ignore-tls", false, "ignore tls verification for destination")
 	flag.Parse()
 
 	if filename == "" || destination == "" {
@@ -59,7 +59,9 @@ func main() {
 		client.SetCredentials(username, password)
 	}
 
-	client.TlsVerify = !ignoreTls
+	if ignoreTLS {
+		client.SkipTLSVerify()
+	}
 
 	ctx := context.Background()
 
