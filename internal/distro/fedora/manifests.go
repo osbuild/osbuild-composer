@@ -255,12 +255,10 @@ func osPipeline(m *manifest.Manifest,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
 	rng *rand.Rand) (*manifest.OS, error) {
-
-	imageConfig := t.getDefaultImageConfig()
-
 	pl := manifest.NewOS(m, buildPipeline, t.platform, repos)
 	pl.Environment = t.environment
 	pl.Workload = workload
+	pl.OSCustomizations = osCustomizations(t, repos, osPackageSet, c, options)
 
 	if t.bootable {
 		var err error
@@ -269,19 +267,6 @@ func osPipeline(m *manifest.Manifest,
 			return nil, err
 		}
 		pl.PartitionTable = pt
-	}
-
-	if t.bootable || t.rpmOstree {
-		pl.KernelName = c.GetKernel().Name
-
-		var kernelOptions []string
-		if t.kernelOptions != "" {
-			kernelOptions = append(kernelOptions, t.kernelOptions)
-		}
-		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
-			kernelOptions = append(kernelOptions, bpKernel.Append)
-		}
-		pl.KernelOptionsAppend = kernelOptions
 	}
 
 	if t.rpmOstree {
@@ -297,78 +282,107 @@ func osPipeline(m *manifest.Manifest,
 		}
 	}
 
-	pl.ExtraBasePackages = osPackageSet.Include
-	pl.ExcludeBasePackages = osPackageSet.Exclude
-	pl.ExtraBaseRepos = osPackageSet.Repositories
+	return pl, nil
+}
 
-	pl.GPGKeyFiles = imageConfig.GPGKeyFiles
-	pl.ExcludeDocs = imageConfig.ExcludeDocs
+func osCustomizations(
+	t *imageType,
+	repos []rpmmd.RepoConfig,
+	osPackageSet rpmmd.PackageSet,
+	c *blueprint.Customizations,
+	options distro.ImageOptions) manifest.OSCustomizations {
+
+	imageConfig := t.getDefaultImageConfig()
+
+	osc := manifest.OSCustomizations{}
+
+	if t.bootable || t.rpmOstree {
+		osc.KernelName = c.GetKernel().Name
+
+		var kernelOptions []string
+		if t.kernelOptions != "" {
+			kernelOptions = append(kernelOptions, t.kernelOptions)
+		}
+		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
+			kernelOptions = append(kernelOptions, bpKernel.Append)
+		}
+		osc.KernelOptionsAppend = kernelOptions
+	}
+
+	osc.ExtraBasePackages = osPackageSet.Include
+	osc.ExcludeBasePackages = osPackageSet.Exclude
+	osc.ExtraBaseRepos = osPackageSet.Repositories
+
+	osc.GPGKeyFiles = imageConfig.GPGKeyFiles
+	osc.ExcludeDocs = imageConfig.ExcludeDocs
 
 	if !t.bootISO {
 		// don't put users and groups in the payload of an installer
 		// add them via kickstart instead
-		pl.Groups = c.GetGroups()
-		pl.Users = c.GetUsers()
+		osc.Groups = c.GetGroups()
+		osc.Users = c.GetUsers()
 	}
 
-	pl.EnabledServices = imageConfig.EnabledServices
-	pl.DisabledServices = imageConfig.DisabledServices
-	pl.DefaultTarget = imageConfig.DefaultTarget
+	osc.EnabledServices = imageConfig.EnabledServices
+	osc.DisabledServices = imageConfig.DisabledServices
+	osc.DefaultTarget = imageConfig.DefaultTarget
 
-	pl.Firewall = c.GetFirewall()
+	osc.Firewall = c.GetFirewall()
 
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
-		pl.Language = *language
+		osc.Language = *language
 	} else {
-		pl.Language = imageConfig.Locale
+		osc.Language = imageConfig.Locale
 	}
 	if keyboard != nil {
-		pl.Keyboard = keyboard
+		osc.Keyboard = keyboard
 	} else if imageConfig.Keyboard != nil {
-		pl.Keyboard = &imageConfig.Keyboard.Keymap
+		osc.Keyboard = &imageConfig.Keyboard.Keymap
 	}
 
 	if hostname := c.GetHostname(); hostname != nil {
-		pl.Hostname = *hostname
+		osc.Hostname = *hostname
+	} else {
+		osc.Hostname = "localhost.localdomain"
 	}
 
 	timezone, ntpServers := c.GetTimezoneSettings()
 	if timezone != nil {
-		pl.Timezone = *timezone
+		osc.Timezone = *timezone
 	} else {
-		pl.Timezone = imageConfig.Timezone
+		osc.Timezone = imageConfig.Timezone
 	}
 
 	if len(ntpServers) > 0 {
-		pl.NTPServers = ntpServers
+		osc.NTPServers = ntpServers
 	} else if imageConfig.TimeSynchronization != nil {
-		pl.NTPServers = imageConfig.TimeSynchronization.Timeservers
+		osc.NTPServers = imageConfig.TimeSynchronization.Timeservers
 	}
 
-	if imageConfig.NoSElinux {
-		pl.SElinux = ""
+	if !imageConfig.NoSElinux {
+		osc.SElinux = "targeted"
 	}
 
-	pl.Grub2Config = imageConfig.Grub2Config
-	pl.Sysconfig = imageConfig.Sysconfig
-	pl.SystemdLogind = imageConfig.SystemdLogind
-	pl.CloudInit = imageConfig.CloudInit
-	pl.Modprobe = imageConfig.Modprobe
-	pl.DracutConf = imageConfig.DracutConf
-	pl.SystemdUnit = imageConfig.SystemdUnit
-	pl.Authselect = imageConfig.Authselect
-	pl.SELinuxConfig = imageConfig.SELinuxConfig
-	pl.Tuned = imageConfig.Tuned
-	pl.Tmpfilesd = imageConfig.Tmpfilesd
-	pl.PamLimitsConf = imageConfig.PamLimitsConf
-	pl.Sysctld = imageConfig.Sysctld
-	pl.DNFConfig = imageConfig.DNFConfig
-	pl.SshdConfig = imageConfig.SshdConfig
-	pl.AuthConfig = imageConfig.Authconfig
-	pl.PwQuality = imageConfig.PwQuality
+	osc.Grub2Config = imageConfig.Grub2Config
+	osc.Sysconfig = imageConfig.Sysconfig
+	osc.SystemdLogind = imageConfig.SystemdLogind
+	osc.CloudInit = imageConfig.CloudInit
+	osc.Modprobe = imageConfig.Modprobe
+	osc.DracutConf = imageConfig.DracutConf
+	osc.SystemdUnit = imageConfig.SystemdUnit
+	osc.Authselect = imageConfig.Authselect
+	osc.SELinuxConfig = imageConfig.SELinuxConfig
+	osc.Tuned = imageConfig.Tuned
+	osc.Tmpfilesd = imageConfig.Tmpfilesd
+	osc.PamLimitsConf = imageConfig.PamLimitsConf
+	osc.Sysctld = imageConfig.Sysctld
+	osc.DNFConfig = imageConfig.DNFConfig
+	osc.SshdConfig = imageConfig.SshdConfig
+	osc.AuthConfig = imageConfig.Authconfig
+	osc.PwQuality = imageConfig.PwQuality
 
-	return pl, nil
+	return osc
 }
 
 func ostreeCommitPipeline(m *manifest.Manifest,
