@@ -12,6 +12,7 @@ import (
 	_ "github.com/containers/image/v5/docker/archive"
 	_ "github.com/containers/image/v5/oci/archive"
 	_ "github.com/containers/image/v5/oci/layout"
+	"github.com/osbuild/osbuild-composer/internal/common"
 
 	"github.com/containers/common/pkg/retry"
 	"github.com/containers/image/v5/copy"
@@ -48,7 +49,6 @@ type Client struct {
 	MaxRetries        int  // how often to retry http requests
 
 	UserAgent string // user agent string to use for requests, defaults to DefaultUserAgent
-	TlsVerify bool   // use an insecure connection
 
 	// internal state
 	policy *signature.Policy
@@ -89,7 +89,6 @@ func NewClient(target string) (*Client, error) {
 		PrecomputeDigests: true,
 
 		UserAgent: DefaultUserAgent,
-		TlsVerify: true,
 
 		sysCtx: &types.SystemContext{
 			RegistriesDirPath:        "",
@@ -106,6 +105,35 @@ func NewClient(target string) (*Client, error) {
 func (cl *Client) SetCredentials(username, password string) {
 	cl.Auth.Username = username
 	cl.Auth.Password = password
+}
+
+// SetSkipTLSVerify controls if TLS verification happens when
+// making requests. If nil is passed it falls back to the default.
+func (cl *Client) SetTLSVerify(verify *bool) {
+	if verify == nil {
+		cl.sysCtx.DockerInsecureSkipTLSVerify = types.OptionalBoolUndefined
+	} else {
+		cl.sysCtx.DockerInsecureSkipTLSVerify = types.NewOptionalBool(!*verify)
+	}
+}
+
+// GetSkipTLSVerify returns current TLS verification state.
+func (cl *Client) GetTLSVerify() *bool {
+
+	skip := cl.sysCtx.DockerInsecureSkipTLSVerify
+
+	if skip == types.OptionalBoolUndefined {
+		return nil
+	}
+
+	// NB: we invert the state, i.e. verify == (skip == false)
+	return common.BoolToPtr(skip == types.OptionalBoolFalse)
+}
+
+// SkipTLSVerify is a convenience helper that internally calls
+// SetTLSVerify with false
+func (cl *Client) SkipTLSVerify() {
+	cl.SetTLSVerify(common.BoolToPtr(false))
 }
 
 func parseImageName(name string) (types.ImageReference, error) {
@@ -130,7 +158,6 @@ func parseImageName(name string) (types.ImageReference, error) {
 func (cl *Client) UploadImage(ctx context.Context, from, tag string) (digest.Digest, error) {
 
 	targetCtx := *cl.sysCtx
-	targetCtx.DockerInsecureSkipTLSVerify = types.NewOptionalBool(!cl.TlsVerify)
 	targetCtx.DockerRegistryPushPrecomputeDigests = cl.PrecomputeDigests
 
 	targetCtx.DockerAuthConfig = &types.DockerAuthConfig{
