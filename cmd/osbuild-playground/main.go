@@ -12,21 +12,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
-	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
-var ImageTypes = make(map[string]ImageType)
+var ImageTypes = make(map[string]image.ImageKind)
 
-type ImageType interface {
-	Name() string
-	InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner runner.Runner) error
-	GetExports() []string
-	GetCheckpoints() []string
-}
-
-func AddImageType(img ImageType) {
+func AddImageType(img image.ImageKind) {
 	ImageTypes[img.Name()] = img
 }
 

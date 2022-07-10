@@ -3,6 +3,7 @@ package main
 import (
 	"math/rand"
 
+	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
@@ -22,11 +23,15 @@ func init() {
 	AddImageType(&MyImage{})
 }
 
-func (img *MyImage) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner runner.Runner) error {
+func (img *MyImage) InstantiateManifest(m *manifest.Manifest,
+	repos []rpmmd.RepoConfig,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
 	// Let's create a simple raw image!
 
 	// configure a build pipeline
 	build := manifest.NewBuild(m, runner, repos)
+	build.Checkpoint()
 
 	// create an x86_64 platform with bios boot
 	platform := &platform.X86{
@@ -34,9 +39,7 @@ func (img *MyImage) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.Repo
 	}
 
 	// TODO: add helper
-	// math/rand is good enough in this case
-	/* #nosec G404 */
-	pt, err := disk.NewPartitionTable(&basePT, nil, 0, false, rand.New(rand.NewSource(0)))
+	pt, err := disk.NewPartitionTable(&basePT, nil, 0, false, rng)
 	if err != nil {
 		panic(err)
 	}
@@ -47,16 +50,8 @@ func (img *MyImage) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.Repo
 	os.KernelName = "kernel" // use the default fedora kernel
 
 	// create a raw image containing the OS tree created above
-	manifest.NewRawImage(m, build, os)
+	raw := manifest.NewRawImage(m, build, os)
+	artifact := raw.Export()
 
-	return nil
-}
-
-// TODO: make internal
-func (img *MyImage) GetExports() []string {
-	return []string{"image"}
-}
-
-func (img *MyImage) GetCheckpoints() []string {
-	return []string{"build"}
+	return artifact, nil
 }
