@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/environment"
+	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -81,7 +82,7 @@ var (
 			EnabledServices: iotServices,
 		},
 		rpmOstree:        true,
-		manifest:         iotCommitManifest,
+		image:            iotCommitImage,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "ostree-commit", "commit-archive"},
 		exports:          []string{"commit-archive"},
@@ -103,7 +104,7 @@ var (
 		},
 		rpmOstree:        true,
 		bootISO:          false,
-		manifest:         iotContainerManifest,
+		image:            iotContainerImage,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "container"},
 		exports:          []string{"container"},
@@ -123,7 +124,7 @@ var (
 		},
 		rpmOstree:        true,
 		bootISO:          true,
-		manifest:         iotInstallerManifest,
+		image:            iotInstallerImage,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
@@ -148,7 +149,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
-		manifest:            qcow2Manifest,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
@@ -176,7 +177,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
-		manifest:            vhdManifest,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vpc"},
 		exports:             []string{"vpc"},
@@ -203,7 +204,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
-		manifest:            vmdkManifest,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk"},
 		exports:             []string{"vmdk"},
@@ -229,7 +230,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * GigaByte,
-		manifest:            openstackManifest,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
@@ -252,7 +253,7 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         6 * GigaByte,
-		manifest:            ec2Manifest,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
@@ -273,7 +274,7 @@ var (
 			Locale:      "C.UTF-8",
 			Timezone:    "Etc/UTC",
 		},
-		manifest:         containerManifest,
+		image:            containerImage,
 		bootable:         false,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "container"},
@@ -287,7 +288,6 @@ type distribution struct {
 	osVersion          string
 	releaseVersion     string
 	modulePlatformID   string
-	vendor             string
 	ostreeRefTmpl      string
 	isolabelTmpl       string
 	runner             runner.Runner
@@ -309,7 +309,6 @@ var distroMap = map[string]distribution{
 		osVersion:          "35",
 		releaseVersion:     "35",
 		modulePlatformID:   "platform:f35",
-		vendor:             "fedora",
 		ostreeRefTmpl:      "fedora/35/%s/iot",
 		isolabelTmpl:       "Fedora-35-BaseOS-%s",
 		runner:             &runner.Fedora{Version: 35},
@@ -321,7 +320,6 @@ var distroMap = map[string]distribution{
 		osVersion:          "36",
 		releaseVersion:     "36",
 		modulePlatformID:   "platform:f36",
-		vendor:             "fedora",
 		ostreeRefTmpl:      "fedora/36/%s/iot",
 		isolabelTmpl:       "Fedora-36-BaseOS-%s",
 		runner:             &runner.Fedora{Version: 36},
@@ -439,7 +437,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type manifestFunc func(m *manifest.Manifest, workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSets map[string]rpmmd.PackageSet, rng *rand.Rand) error
+type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, rng *rand.Rand) (image.ImageKind, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -458,7 +456,7 @@ type imageType struct {
 	buildPipelines     []string
 	payloadPipelines   []string
 	exports            []string
-	manifest           manifestFunc
+	image              imageFunc
 
 	// bootISO: installable ISO
 	bootISO bool
@@ -631,13 +629,16 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	manifest := manifest.New()
-	err := t.manifest(&manifest, w, t, bp.Customizations, options, repos, packageSets, rng)
+	img, err := t.image(w, t, bp.Customizations, options, packageSets, rng)
 	if err != nil {
 		return nil, err
 	}
-
-	return &manifest, nil
+	manifest := manifest.New()
+	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
+	if err != nil {
+		return nil, err
+	}
+	return &manifest, err
 }
 
 func (t *imageType) Manifest(customizations *blueprint.Customizations,
@@ -745,16 +746,50 @@ func newDistro(distroName string) distro.Distro {
 		&platform.X86{
 			BIOS:       true,
 			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
+			},
 		},
 		qcow2ImgType,
-		openstackImgType,
-		vhdImgType,
-		vmdkImgType,
 		ociImgType,
 	)
 	x86_64.addImageTypes(
 		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+			},
+		},
+		openstackImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_VHD,
+			},
+		},
+		vhdImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_VMDK,
+			},
+		},
+		vmdkImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{
 			BIOS: true,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
 		},
 		amiImgType,
 	)
@@ -790,11 +825,31 @@ func newDistro(distroName string) distro.Distro {
 	aarch64.addImageTypes(
 		&platform.Aarch64{
 			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
 		},
 		amiImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
+			},
+		},
 		qcow2ImgType,
-		openstackImgType,
 		ociImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+			},
+		},
+		openstackImgType,
 	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{},
