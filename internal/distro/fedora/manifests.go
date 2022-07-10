@@ -152,7 +152,7 @@ func iotInstallerManifest(m *manifest.Manifest,
 		d.osVersion,
 		"IoT",
 		ksUsers)
-	isoTreePipeline := bootISOTreePipeline(m, buildPipeline, anacondaTreePipeline, options, d.vendor, d.isolabelTmpl, customizations.GetUsers(), customizations.GetGroups())
+	isoTreePipeline := ostreeBootISOTreePipeline(m, buildPipeline, anacondaTreePipeline, options, d.vendor, d.isolabelTmpl, customizations.GetUsers(), customizations.GetGroups())
 	bootISOPipeline(m, buildPipeline, isoTreePipeline, t.Filename(), false)
 
 	return nil
@@ -431,7 +431,7 @@ func anacondaTreePipeline(m *manifest.Manifest,
 	return p
 }
 
-func bootISOTreePipeline(m *manifest.Manifest,
+func ostreeBootISOTreePipeline(m *manifest.Manifest,
 	buildPipeline *manifest.Build,
 	anacondaPipeline *manifest.Anaconda,
 	options distro.ImageOptions,
