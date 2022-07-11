@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/gommon/log"
+
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -523,4 +524,20 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	return ps
+}
+
+func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"policycoreutils",
+			"selinux-policy-targeted",
+			"kernel",
+			"firewalld",
+			"chrony",
+			"langpacks-en",
+		},
+		Exclude: []string{
+			"dracut-config-rescue",
+		},
+	}
 }

@@ -279,6 +279,21 @@ var (
 		payloadPipelines: []string{"os", "container"},
 		exports:          []string{"container"},
 	}
+
+	imageInstallerImgType = imageType{
+		name:     "image-installer",
+		filename: "installer.iso",
+		mimeType: "application/x-iso9660-image",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey:        bareMetalPackageSet,
+			installerPkgsKey: anacondaPackageSet,
+		},
+		manifest:         imageInstallerManifest,
+		bootISO:          true,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "bootiso"},
+		exports:          []string{"bootiso"},
+	}
 )
 
 type distribution struct {
@@ -759,6 +774,7 @@ func newDistro(distroName string) distro.Distro {
 		vhdImgType,
 		vmdkImgType,
 		ociImgType,
+		imageInstallerImgType,
 	)
 	x86_64.addImageTypes(
 		&platform.X86{

@@ -460,3 +460,48 @@ func bootISOPipeline(m *manifest.Manifest,
 	p.Filename = filename
 	return p
 }
+
+func tarBootISOTreePipeline(m *manifest.Manifest,
+	buildPipeline *manifest.Build,
+	anacondaPipeline *manifest.Anaconda,
+	treePipelineName,
+	vendor,
+	isoLabelTempl string,
+	users []blueprint.UserCustomization,
+	groups []blueprint.GroupCustomization) *manifest.ISOTree {
+
+	payload := manifest.NewTarISOTreePayload(treePipelineName)
+	p := manifest.NewISOTree(m, buildPipeline, anacondaPipeline, isoLabelTempl, payload)
+	p.Release = "202010217.n.0"
+	p.UEFIVendor = vendor
+	p.Users = users
+	p.Groups = groups
+
+	return p
+}
+
+func imageInstallerManifest(m *manifest.Manifest,
+	workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	repos []rpmmd.RepoConfig,
+	packageSets map[string]rpmmd.PackageSet,
+	rng *rand.Rand) error {
+
+	buildPipeline := manifest.NewBuild(m, t.arch.distro.runner, repos)
+
+	d := t.arch.distro
+	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
+
+	p, err := osPipeline(m, buildPipeline, workload, t, repos, packageSets[osPkgsKey], customizations, options, rng)
+	if err != nil {
+		return err
+	}
+
+	anacondaTreePipeline := anacondaTreePipeline(m, buildPipeline, t.platform, repos, packageSets[installerPkgsKey], d.product, d.osVersion, "TODO", ksUsers)
+	isoTreePipeline := tarBootISOTreePipeline(m, buildPipeline, anacondaTreePipeline, p.Name(), d.vendor, d.isolabelTmpl, customizations.GetUsers(), customizations.GetGroups())
+	bootISOPipeline(m, buildPipeline, isoTreePipeline, t.Filename(), false)
+
+	return nil
+}

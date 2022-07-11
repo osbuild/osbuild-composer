@@ -435,6 +435,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"fedora-iot-installer",
 				"oci",
 				"container",
+				"image-installer",
 			},
 		},
 		{
