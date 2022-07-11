@@ -749,8 +749,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			client.Auth.Username = targetOptions.Username
-			client.Auth.Password = targetOptions.Password
+			if targetOptions.Username != "" || targetOptions.Password != "" {
+				client.SetCredentials(targetOptions.Username, targetOptions.Password)
+			}
 			client.SetTLSVerify(targetOptions.TlsVerify)
 
 			sourcePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)

@@ -30,18 +30,12 @@ const (
 	DefaultPolicyPath = "/etc/containers/policy.json"
 )
 
-type Credentials struct {
-	Username string
-	Password string
-}
-
 // A Client to interact with the given Target object at a
 // container registry, like e.g. uploading an image to.
 // All mentioned defaults are only set when using the
 // NewClient constructor.
 type Client struct {
 	Target reference.Named // the target object to interact with
-	Auth   Credentials     // credentials to use
 
 	ReportWriter io.Writer // used for writing status reports, defaults to os.Stdout
 
@@ -103,8 +97,13 @@ func NewClient(target string) (*Client, error) {
 
 // SetCredentials will set username and password for Client
 func (cl *Client) SetCredentials(username, password string) {
-	cl.Auth.Username = username
-	cl.Auth.Password = password
+
+	if cl.sysCtx.DockerAuthConfig == nil {
+		cl.sysCtx.DockerAuthConfig = &types.DockerAuthConfig{}
+	}
+
+	cl.sysCtx.DockerAuthConfig.Username = username
+	cl.sysCtx.DockerAuthConfig.Password = password
 }
 
 // SetSkipTLSVerify controls if TLS verification happens when
@@ -159,11 +158,6 @@ func (cl *Client) UploadImage(ctx context.Context, from, tag string) (digest.Dig
 
 	targetCtx := *cl.sysCtx
 	targetCtx.DockerRegistryPushPrecomputeDigests = cl.PrecomputeDigests
-
-	targetCtx.DockerAuthConfig = &types.DockerAuthConfig{
-		Username: cl.Auth.Username,
-		Password: cl.Auth.Password,
-	}
 
 	policyContext, err := signature.NewPolicyContext(cl.policy)
 
