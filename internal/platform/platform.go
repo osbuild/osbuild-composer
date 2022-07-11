@@ -1,12 +1,22 @@
 package platform
 
 type Arch uint64
+type ImageFormat uint64
 
 const (
 	ARCH_AARCH64 Arch = iota
 	ARCH_PPC64LE
 	ARCH_S390X
 	ARCH_X86_64
+)
+
+const (
+	FORMAT_UNSET ImageFormat = iota
+	FORMAT_RAW
+	FORMAT_ISO
+	FORMAT_QCOW2
+	FORMAT_VMDK
+	FORMAT_VHD
 )
 
 func (a Arch) String() string {
@@ -24,8 +34,27 @@ func (a Arch) String() string {
 	}
 }
 
+func (f ImageFormat) String() string {
+	switch f {
+	case FORMAT_RAW:
+		return "raw"
+	case FORMAT_ISO:
+		return "iso"
+	case FORMAT_QCOW2:
+		return "qcow2"
+	case FORMAT_VMDK:
+		return "vmdk"
+	case FORMAT_VHD:
+		return "vhd"
+	default:
+		panic("invalid architecture")
+	}
+}
+
 type Platform interface {
 	GetArch() Arch
+	GetImageFormat() ImageFormat
+	GetQCOW2Compat() string
 	GetBIOSPlatform() string
 	GetUEFIVendor() string
 	GetZiplSupport() bool
@@ -34,7 +63,17 @@ type Platform interface {
 }
 
 type BasePlatform struct {
+	ImageFormat      ImageFormat
+	QCOW2Compat      string
 	FirmwarePackages []string
+}
+
+func (p BasePlatform) GetImageFormat() ImageFormat {
+	return p.ImageFormat
+}
+
+func (p BasePlatform) GetQCOW2Compat() string {
+	return p.QCOW2Compat
 }
 
 func (p BasePlatform) GetBIOSPlatform() string {
