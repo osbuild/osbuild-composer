@@ -439,9 +439,10 @@ func ostreeBootISOTreePipeline(m *manifest.Manifest,
 	isoLabelTempl string,
 	users []blueprint.UserCustomization,
 	groups []blueprint.GroupCustomization) *manifest.ISOTree {
-	p := manifest.NewISOTree(m, buildPipeline, anacondaPipeline, options.OSTree.Parent, options.OSTree.URL, options.OSTree.Ref, isoLabelTempl)
+
+	payload := manifest.NewOSTreeISOTreePayload(options.OSTree.URL, options.OSTree.Ref, options.OSTree.Parent, "fedora")
+	p := manifest.NewISOTree(m, buildPipeline, anacondaPipeline, isoLabelTempl, payload)
 	p.Release = "202010217.n.0"
-	p.OSName = "fedora"
 	p.UEFIVendor = vendor
 	p.Users = users
 	p.Groups = groups

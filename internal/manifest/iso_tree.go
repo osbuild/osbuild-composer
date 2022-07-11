@@ -16,25 +16,21 @@ type ISOTree struct {
 	Base
 	// TODO: review optional and mandatory fields and their meaning
 	UEFIVendor string
-	OSName     string
 	Release    string
 	Users      []blueprint.UserCustomization
 	Groups     []blueprint.GroupCustomization
 
 	anacondaPipeline *Anaconda
 	isoLabel         string
-	osTreeCommit     string
-	osTreeURL        string
-	osTreeRef        string
+
+	payload ISOTreePayload
 }
 
 func NewISOTree(m *Manifest,
 	buildPipeline *Build,
 	anacondaPipeline *Anaconda,
-	osTreeCommit,
-	osTreeURL,
-	osTreeRef,
-	isoLabelTmpl string) *ISOTree {
+	isoLabelTmpl string,
+	payload ISOTreePayload) *ISOTree {
 	// TODO: replace isoLabelTmpl with more high-level properties
 	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.platform.GetArch())
 
@@ -42,9 +38,7 @@ func NewISOTree(m *Manifest,
 		Base:             NewBase(m, "bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
 		isoLabel:         isoLabel,
-		osTreeCommit:     osTreeCommit,
-		osTreeURL:        osTreeURL,
-		osTreeRef:        osTreeRef,
+		payload:          payload,
 	}
 	buildPipeline.addDependent(p)
 	if anacondaPipeline.Base.manifest != m {
@@ -55,19 +49,15 @@ func NewISOTree(m *Manifest,
 }
 
 func (p *ISOTree) getOSTreeCommits() []osTreeCommit {
-	return []osTreeCommit{
-		{
-			checksum: p.osTreeCommit,
-			url:      p.osTreeURL,
-		},
-	}
+	return p.payload.getOSTreeCommits()
 }
 
 func (p *ISOTree) getBuildPackages() []string {
 	packages := []string{
-		"rpm-ostree",
 		"squashfs-tools",
 	}
+	packages = append(packages, p.payload.getBuildPackages()...)
+
 	return packages
 }
 
@@ -75,7 +65,6 @@ func (p *ISOTree) serialize() osbuild2.Pipeline {
 	pipeline := p.Base.serialize()
 
 	kspath := "/osbuild.ks"
-	ostreeRepoPath := "/ostree/repo"
 
 	pipeline.AddStage(osbuild2.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.kernelVer,
 		p.anacondaPipeline.platform.GetArch().String(),
@@ -86,7 +75,7 @@ func (p *ISOTree) serialize() osbuild2.Pipeline {
 		kspath),
 		osbuild2.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
 
-	kickstartOptions, err := osbuild2.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
+	kickstartOptions, err := osbuild2.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, p.payload.getOSTreeURLForKickstart(), p.payload.getOSTreeRef(), p.payload.getOSName())
 	if err != nil {
 		panic("password encryption failed")
 	}
@@ -97,11 +86,9 @@ func (p *ISOTree) serialize() osbuild2.Pipeline {
 		Release:  p.Release,
 	}))
 
-	pipeline.AddStage(osbuild2.NewOSTreeInitStage(&osbuild2.OSTreeInitStageOptions{Path: ostreeRepoPath}))
-	pipeline.AddStage(osbuild2.NewOSTreePullStage(
-		&osbuild2.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		osbuild2.NewOstreePullStageInputs("org.osbuild.source", p.osTreeCommit, p.osTreeRef),
-	))
+	for _, s := range p.payload.getPayloadStages() {
+		pipeline.AddStage(s)
+	}
 
 	return pipeline
 }
@@ -146,6 +133,17 @@ func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolab
 			},
 		},
 	}
+}
+
+type ISOTreePayload interface {
+	getBuildPackages() []string
+	getImageURL() string
+	getOSTreeURL() string
+	getOSTreeRef() string
+	getOSTreeURLForKickstart() string
+	getOSTreeCommits() []osTreeCommit
+	getOSName() string
+	getPayloadStages() []*osbuild2.Stage
 }
 
 //makeISORootPath return a path that can be used to address files and folders in
