@@ -663,6 +663,18 @@ ContainerUpload:
     RUNNER: aws/fedora-35-x86_64
     INTERNAL_NETWORK: "false"
 
+ContainerEmbedding:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/container-embedding.sh
+  variables:
+    RUNNER: aws/centos-stream-9-x86_64
+    INTERNAL_NETWORK: "true"
+
 finish:
   stage: finish
   dependencies: []
