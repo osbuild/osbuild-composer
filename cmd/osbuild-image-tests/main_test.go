@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package main
@@ -130,6 +131,22 @@ func deleteTmpfilesdPathFromImageInfoReport(imageInfoReport interface{}, path st
 	}
 }
 
+// Replace the UUID of the root LVM container with a static one.  We do not
+// control this value and so it is not stable across image builds.
+func replaceLVMUUID(imageInfoReport interface{}) {
+	imageInfoMap := imageInfoReport.(map[string]interface{})
+	partitions, exists := imageInfoMap["partitions"]
+	if exists {
+		for _, partition := range partitions.([]interface{}) {
+			partitionInfoMap := partition.(map[string]interface{})
+			if islvm, exists := partitionInfoMap["lvm"]; exists && islvm.(bool) == true {
+				// replace UUID
+				partitionInfoMap["uuid"] = "ffffff-ffff-ffff-ffff-ffff-ffff-ffffff"
+			}
+		}
+	}
+}
+
 // testImageInfo runs image-info on image specified by imageImage and
 // compares the result with expected image info
 func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) {
@@ -163,6 +180,9 @@ func testImageInfo(t *testing.T, imagePath string, rawImageInfoExpected []byte) 
 		deleteTmpfilesdPathFromImageInfoReport(imageInfoExpected, path)
 		deleteTmpfilesdPathFromImageInfoReport(imageInfoGot, path)
 	}
+
+	replaceLVMUUID(imageInfoExpected)
+	replaceLVMUUID(imageInfoGot)
 
 	assert.Equal(t, imageInfoExpected, imageInfoGot)
 }
