@@ -1,4 +1,10 @@
 FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
+# We need to be root to install packages, but ubi8/go-toolset defaults to uid 1001
+USER 0
+# The go package `proglottis/gpgme` a dependency of `containers/image/v5` package
+# uses `libgpgme` so we need to install it and its build dependencies
+RUN dnf install -y gpgme-devel libassuan-devel
+USER 1001
 COPY . .
 ENV GOFLAGS=-mod=vendor
 RUN go install ./cmd/osbuild-composer/
