@@ -383,6 +383,13 @@ function verifyInVSphere() {
         -on=false \
         "${VSPHERE_VM_NAME}"
 
+    # tagging vm as testing object
+    $GOVC_CMD tags.attach \
+    	-u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
+    	-k=true \
+    	-c "osbuild-composer testing" gitlab-ci-test \
+    	"/${GOVMOMI_DATACENTER}/vm/${GOVMOMI_FOLDER}/${VSPHERE_VM_NAME}"    
+
     # upload ISO, create CDROM device and insert the ISO in it
     greenprint "💿 ⬆️ Uploading the cloud-init user-data ISO to VSphere"
     VSPHERE_CIDATA_ISO_PATH="${VSPHERE_VM_NAME}/cidata.iso"
