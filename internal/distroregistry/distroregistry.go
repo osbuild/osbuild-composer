@@ -10,7 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel7"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
-	"github.com/osbuild/osbuild-composer/internal/distro/rhel90"
+	"github.com/osbuild/osbuild-composer/internal/distro/rhel9"
 )
 
 // When adding support for a new distribution, add it here.
@@ -25,9 +25,9 @@ var supportedDistros = []supportedDistro{
 	{rhel8.NewRHEL86, rhel8.NewRHEL86HostDistro},
 	{rhel8.NewRHEL87, rhel8.NewRHEL87HostDistro},
 	{rhel8.NewCentos, rhel8.NewCentosHostDistro},
-	{rhel90.New, rhel90.NewHostDistro},
-	{rhel90.NewRHEL91, rhel90.NewRHEL91HostDistro},
-	{rhel90.NewCentos, rhel90.NewCentosHostDistro},
+	{rhel9.New, rhel9.NewHostDistro},
+	{rhel9.NewRHEL91, rhel9.NewRHEL91HostDistro},
+	{rhel9.NewCentos, rhel9.NewCentosHostDistro},
 }
 
 type supportedDistro struct {
