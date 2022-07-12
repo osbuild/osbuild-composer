@@ -4,11 +4,74 @@ package osbuild2
 
 import (
 	"encoding/json"
-
-	"github.com/osbuild/osbuild-composer/internal/osbuild1"
+	"strings"
 )
 
-func (res *Result) fromV1(resv1 osbuild1.Result) {
+type v1StageResult struct {
+	Name     string          `json:"name"`
+	Options  json.RawMessage `json:"options"`
+	Success  bool            `json:"success"`
+	Output   string          `json:"output"`
+	Metadata StageMetadata   `json:"metadata"`
+}
+
+type v1RawStageResult struct {
+	Name     string          `json:"name"`
+	Options  json.RawMessage `json:"options"`
+	Success  bool            `json:"success"`
+	Output   string          `json:"output"`
+	Metadata json.RawMessage `json:"metadata"`
+}
+
+type v1BuildResult struct {
+	Stages  []v1StageResult `json:"stages"`
+	TreeID  string          `json:"tree_id"`
+	Success bool            `json:"success"`
+}
+
+type v1Result struct {
+	TreeID    string          `json:"tree_id"`
+	OutputID  string          `json:"output_id"`
+	Build     *v1BuildResult  `json:"build"`
+	Stages    []v1StageResult `json:"stages"`
+	Assembler *v1StageResult  `json:"assembler"`
+	Success   bool            `json:"success"`
+}
+
+func (result *v1StageResult) UnmarshalJSON(data []byte) error {
+	var rawStageResult v1RawStageResult
+	err := json.Unmarshal(data, &rawStageResult)
+	if err != nil {
+		return err
+	}
+	var metadata StageMetadata
+	switch {
+	case strings.HasSuffix(rawStageResult.Name, "org.osbuild.rpm"):
+		metadata = new(RPMStageMetadata)
+		err = json.Unmarshal(rawStageResult.Metadata, metadata)
+		if err != nil {
+			return err
+		}
+	case strings.HasSuffix(rawStageResult.Name, "org.osbuild.ostree.commit"):
+		metadata = new(OSTreeCommitStageMetadata)
+		err = json.Unmarshal(rawStageResult.Metadata, metadata)
+		if err != nil {
+			return err
+		}
+	default:
+		metadata = RawStageMetadata(rawStageResult.Metadata)
+	}
+
+	result.Name = rawStageResult.Name
+	result.Options = rawStageResult.Options
+	result.Success = rawStageResult.Success
+	result.Output = rawStageResult.Output
+	result.Metadata = metadata
+
+	return nil
+}
+
+func (res *Result) fromV1(resv1 v1Result) {
 	res.Success = resv1.Success
 	res.Type = "result"
 
@@ -48,7 +111,7 @@ func (res *Result) fromV1(resv1 osbuild1.Result) {
 	res.Metadata = metadata
 }
 
-func convertStageResults(v1Stages []osbuild1.StageResult) (PipelineResult, PipelineMetadata) {
+func convertStageResults(v1Stages []v1StageResult) (PipelineResult, PipelineMetadata) {
 	result := make([]StageResult, len(v1Stages))
 	metadata := make(map[string]StageMetadata)
 	for idx, srv1 := range v1Stages {
@@ -63,7 +126,7 @@ func convertStageResults(v1Stages []osbuild1.StageResult) (PipelineResult, Pipel
 	return result, metadata
 }
 
-func convertStageResult(sr1 *osbuild1.StageResult) (*StageResult, StageMetadata) {
+func convertStageResult(sr1 *v1StageResult) (*StageResult, StageMetadata) {
 	sr := &StageResult{
 		ID:      "",
 		Type:    sr1.Name,
@@ -72,24 +135,10 @@ func convertStageResult(sr1 *osbuild1.StageResult) (*StageResult, StageMetadata)
 		Error:   "",
 	}
 
-	var md StageMetadata = nil
-	if sr1.Metadata != nil {
-		switch md1 := sr1.Metadata.(type) {
-		case *osbuild1.RPMStageMetadata:
-			rpmmd := new(RPMStageMetadata)
-			rpmmd.Packages = make([]RPMPackageMetadata, len(md1.Packages))
-			for idx, pkg := range md1.Packages {
-				rpmmd.Packages[idx] = RPMPackageMetadata(pkg)
-			}
-			md = rpmmd
-		case *osbuild1.OSTreeCommitStageMetadata:
-			commitmd := new(OSTreeCommitStageMetadata)
-			commitmd.Compose = OSTreeCommitStageMetadataCompose(md1.Compose)
-			md = commitmd
-		}
-
-	}
-	return sr, md
+	// the two metadata types we care about (RPM and ostree-commit) share the
+	// same structure across v1 and v2 result types, so no conversion is
+	// necessary
+	return sr, sr1.Metadata
 }
 
 // isV1Result returns true if data contains a json-encoded osbuild result

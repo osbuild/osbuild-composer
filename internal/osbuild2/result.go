@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-
-	"github.com/osbuild/osbuild-composer/internal/osbuild1"
 )
 
 type Result struct {
@@ -95,10 +93,10 @@ func (md *PipelineMetadata) UnmarshalJSON(data []byte) error {
 
 func (res *Result) UnmarshalJSON(data []byte) error {
 	// detect if the input is v1 result
-	if v1Result, err := isV1Result(data); err != nil {
+	if isV1, err := isV1Result(data); err != nil {
 		return err
-	} else if v1Result {
-		var resv1 osbuild1.Result
+	} else if isV1 {
+		var resv1 v1Result
 		if err := json.Unmarshal(data, &resv1); err != nil {
 			return err
 		}
