@@ -26,28 +26,27 @@ def compose_request(distro, koji, arch):
         test_repositories = json.load(f)
 
     repositories = [composer_repository_to_koji_repository(repo) for repo in test_repositories[arch]]
-    image_requests = [{
+    image_requests = [
+        {
             "architecture": "x86_64",
-            "image_type": "qcow2",
+            "image_type": "guest-image",
             "repositories": repositories
-        }]
-
-    #TODO: Remove this condition once there is rhel9 support for AMI image type
-    if distro != "rhel-90":
-        image_requests.append({
+        },
+        {
             "architecture": "x86_64",
-            "image_type": "ami",
+            "image_type": "aws",
             "repositories": repositories
-        })
+        }
+    ]
 
     req = {
-        "name": "name",
-        "version": "version",
-        "release": "release",
         "distribution": distro,
         "koji": {
             "server": koji,
-            "task_id": 1
+            "task_id": 1,
+            "name": "name",
+            "version": "version",
+            "release": "release",
         },
         "image_requests": image_requests
     }
@@ -59,7 +58,7 @@ def main(distro, arch):
     cr = compose_request(distro, "https://localhost:4343/kojihub", arch)
     print(json.dumps(cr))
 
-    r = requests.post("https://localhost/api/composer-koji/v1/compose", json=cr,
+    r = requests.post("https://localhost/api/image-builder-composer/v2/compose", json=cr,
                       cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
                       verify="/etc/osbuild-composer/ca-crt.pem")
     if r.status_code != 201:
@@ -71,7 +70,7 @@ def main(distro, arch):
     compose_id = r.json()["id"]
 
     while True:
-        r = requests.get(f"https://localhost/api/composer-koji/v1/compose/{compose_id}",
+        r = requests.get(f"https://localhost/api/image-builder-composer/v2/composes/{compose_id}",
                          cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
                          verify="/etc/osbuild-composer/ca-crt.pem")
         if r.status_code != 200:
@@ -95,13 +94,13 @@ def main(distro, arch):
 
         time.sleep(10)
 
-    r = requests.get(f"https://localhost/api/composer-koji/v1/compose/{compose_id}/logs",
+    r = requests.get(f"https://localhost/api/image-builder-composer/v2/composes/{compose_id}/logs",
                      cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
                      verify="/etc/osbuild-composer/ca-crt.pem")
     logs = r.json()
-    assert "image_logs" in logs
-    assert type(logs["image_logs"]) == list
-    assert len(logs["image_logs"]) == len(cr["image_requests"])
+    assert "image_builds" in logs
+    assert type(logs["image_builds"]) == list
+    assert len(logs["image_builds"]) == len(cr["image_requests"])
 
 
 if __name__ == "__main__":
