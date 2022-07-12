@@ -432,13 +432,6 @@ koji.sh (cloudapi):
   variables:
     SCRIPT: koji.sh
 
-# internal composer still uses kojiapi, so keep testing it for now
-koji.sh (kojiapi):
-  extends: .integration
-  variables:
-    COMPOSER_API: "false"
-    SCRIPT: koji.sh
-
 aws.sh:
   extends: .integration
   variables:
