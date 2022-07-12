@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 // An OCIContainer represents an OCI container, containing a filesystem
@@ -31,23 +31,23 @@ func NewOCIContainer(m *Manifest,
 	return p
 }
 
-func (p *OCIContainer) serialize() osbuild2.Pipeline {
+func (p *OCIContainer) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	options := &osbuild2.OCIArchiveStageOptions{
+	options := &osbuild.OCIArchiveStageOptions{
 		Architecture: p.treePipeline.GetPlatform().GetArch().String(),
 		Filename:     p.Filename,
-		Config: &osbuild2.OCIArchiveConfig{
+		Config: &osbuild.OCIArchiveConfig{
 			Cmd:          p.Cmd,
 			ExposedPorts: p.ExposedPorts,
 		},
 	}
-	baseInput := new(osbuild2.OCIArchiveStageInput)
+	baseInput := new(osbuild.OCIArchiveStageInput)
 	baseInput.Type = "org.osbuild.tree"
 	baseInput.Origin = "org.osbuild.pipeline"
 	baseInput.References = []string{"name:" + p.treePipeline.Name()}
-	inputs := &osbuild2.OCIArchiveStageInputs{Base: baseInput}
-	pipeline.AddStage(osbuild2.NewOCIArchiveStage(options, inputs))
+	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}
+	pipeline.AddStage(osbuild.NewOCIArchiveStage(options, inputs))
 
 	return pipeline
 }

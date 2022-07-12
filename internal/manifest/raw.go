@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
@@ -33,7 +33,7 @@ func (p *RawImage) getBuildPackages() []string {
 	return p.treePipeline.PartitionTable.GetBuildPackages()
 }
 
-func (p *RawImage) serialize() osbuild2.Pipeline {
+func (p *RawImage) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
 	pt := p.treePipeline.PartitionTable
@@ -41,26 +41,26 @@ func (p *RawImage) serialize() osbuild2.Pipeline {
 		panic("no partition table in live image")
 	}
 
-	for _, stage := range osbuild2.GenImagePrepareStages(pt, p.Filename, osbuild2.PTSfdisk) {
+	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename, osbuild.PTSfdisk) {
 		pipeline.AddStage(stage)
 	}
 
 	inputName := "root-tree"
-	copyOptions, copyDevices, copyMounts := osbuild2.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename, pt)
-	copyInputs := osbuild2.NewCopyStagePipelineTreeInputs(inputName, p.treePipeline.Name())
-	pipeline.AddStage(osbuild2.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
+	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename, pt)
+	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, p.treePipeline.Name())
+	pipeline.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 
-	for _, stage := range osbuild2.GenImageFinishStages(pt, p.Filename) {
+	for _, stage := range osbuild.GenImageFinishStages(pt, p.Filename) {
 		pipeline.AddStage(stage)
 	}
 
 	switch p.treePipeline.platform.GetArch() {
 	case platform.ARCH_S390X:
-		loopback := osbuild2.NewLoopbackDevice(&osbuild2.LoopbackDeviceOptions{Filename: p.Filename})
-		pipeline.AddStage(osbuild2.NewZiplInstStage(osbuild2.NewZiplInstStageOptions(p.treePipeline.kernelVer, pt), loopback, copyDevices, copyMounts))
+		loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: p.Filename})
+		pipeline.AddStage(osbuild.NewZiplInstStage(osbuild.NewZiplInstStageOptions(p.treePipeline.kernelVer, pt), loopback, copyDevices, copyMounts))
 	default:
 		if grubLegacy := p.treePipeline.platform.GetBIOSPlatform(); grubLegacy != "" {
-			pipeline.AddStage(osbuild2.NewGrub2InstStage(osbuild2.NewGrub2InstStageOption(p.Filename, pt, grubLegacy)))
+			pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(p.Filename, pt, grubLegacy)))
 		}
 	}
 

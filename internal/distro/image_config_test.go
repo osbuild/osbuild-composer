@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,33 +19,33 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			name: "inheritance with overridden values",
 			distroConfig: &ImageConfig{
 				Timezone: "America/New_York",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
 				Locale: "en_US.UTF-8",
-				Keyboard: &osbuild2.KeymapStageOptions{
+				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
 				DefaultTarget:    "multi-user.target",
-				Sysconfig: []*osbuild2.SysconfigStageOptions{
+				Sysconfig: []*osbuild.SysconfigStageOptions{
 					{
-						Kernel: &osbuild2.SysconfigKernelOptions{
+						Kernel: &osbuild.SysconfigKernelOptions{
 							UpdateDefault: true,
 							DefaultKernel: "kernel",
 						},
-						Network: &osbuild2.SysconfigNetworkOptions{
+						Network: &osbuild.SysconfigNetworkOptions{
 							Networking: true,
 							NoZeroConf: true,
 						},
-						NetworkScripts: &osbuild2.NetworkScriptsOptions{
-							IfcfgFiles: map[string]osbuild2.IfcfgFile{
+						NetworkScripts: &osbuild.NetworkScriptsOptions{
+							IfcfgFiles: map[string]osbuild.IfcfgFile{
 								"eth0": {
 									Device:    "eth0",
-									Bootproto: osbuild2.IfcfgBootprotoDHCP,
+									Bootproto: osbuild.IfcfgBootprotoDHCP,
 									OnBoot:    common.BoolToPtr(true),
-									Type:      osbuild2.IfcfgTypeEthernet,
+									Type:      osbuild.IfcfgTypeEthernet,
 									UserCtl:   common.BoolToPtr(true),
 									PeerDNS:   common.BoolToPtr(true),
 									IPv6Init:  common.BoolToPtr(false),
@@ -57,8 +57,8 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			},
 			imageConfig: &ImageConfig{
 				Timezone: "UTC",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
-					Servers: []osbuild2.ChronyConfigServer{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
+					Servers: []osbuild.ChronyConfigServer{
 						{
 							Hostname: "169.254.169.123",
 							Prefer:   common.BoolToPtr(true),
@@ -72,8 +72,8 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			},
 			expectedConfig: &ImageConfig{
 				Timezone: "UTC",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
-					Servers: []osbuild2.ChronyConfigServer{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
+					Servers: []osbuild.ChronyConfigServer{
 						{
 							Hostname: "169.254.169.123",
 							Prefer:   common.BoolToPtr(true),
@@ -85,29 +85,29 @@ func TestImageConfigInheritFrom(t *testing.T) {
 					LeapsecTz: common.StringToPtr(""),
 				},
 				Locale: "en_US.UTF-8",
-				Keyboard: &osbuild2.KeymapStageOptions{
+				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
 				DefaultTarget:    "multi-user.target",
-				Sysconfig: []*osbuild2.SysconfigStageOptions{
+				Sysconfig: []*osbuild.SysconfigStageOptions{
 					{
-						Kernel: &osbuild2.SysconfigKernelOptions{
+						Kernel: &osbuild.SysconfigKernelOptions{
 							UpdateDefault: true,
 							DefaultKernel: "kernel",
 						},
-						Network: &osbuild2.SysconfigNetworkOptions{
+						Network: &osbuild.SysconfigNetworkOptions{
 							Networking: true,
 							NoZeroConf: true,
 						},
-						NetworkScripts: &osbuild2.NetworkScriptsOptions{
-							IfcfgFiles: map[string]osbuild2.IfcfgFile{
+						NetworkScripts: &osbuild.NetworkScriptsOptions{
+							IfcfgFiles: map[string]osbuild.IfcfgFile{
 								"eth0": {
 									Device:    "eth0",
-									Bootproto: osbuild2.IfcfgBootprotoDHCP,
+									Bootproto: osbuild.IfcfgBootprotoDHCP,
 									OnBoot:    common.BoolToPtr(true),
-									Type:      osbuild2.IfcfgTypeEthernet,
+									Type:      osbuild.IfcfgTypeEthernet,
 									UserCtl:   common.BoolToPtr(true),
 									PeerDNS:   common.BoolToPtr(true),
 									IPv6Init:  common.BoolToPtr(false),
@@ -122,11 +122,11 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			name: "empty image type configuration",
 			distroConfig: &ImageConfig{
 				Timezone: "America/New_York",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
 				Locale: "en_US.UTF-8",
-				Keyboard: &osbuild2.KeymapStageOptions{
+				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
@@ -136,11 +136,11 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			imageConfig: &ImageConfig{},
 			expectedConfig: &ImageConfig{
 				Timezone: "America/New_York",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
 				Locale: "en_US.UTF-8",
-				Keyboard: &osbuild2.KeymapStageOptions{
+				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
@@ -153,11 +153,11 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			distroConfig: &ImageConfig{},
 			imageConfig: &ImageConfig{
 				Timezone: "America/New_York",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
 				Locale: "en_US.UTF-8",
-				Keyboard: &osbuild2.KeymapStageOptions{
+				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
@@ -166,11 +166,11 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			},
 			expectedConfig: &ImageConfig{
 				Timezone: "America/New_York",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
 				Locale: "en_US.UTF-8",
-				Keyboard: &osbuild2.KeymapStageOptions{
+				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
@@ -183,11 +183,11 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			distroConfig: nil,
 			imageConfig: &ImageConfig{
 				Timezone: "America/New_York",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
 				Locale: "en_US.UTF-8",
-				Keyboard: &osbuild2.KeymapStageOptions{
+				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
@@ -196,11 +196,11 @@ func TestImageConfigInheritFrom(t *testing.T) {
 			},
 			expectedConfig: &ImageConfig{
 				Timezone: "America/New_York",
-				TimeSynchronization: &osbuild2.ChronyStageOptions{
+				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
 				Locale: "en_US.UTF-8",
-				Keyboard: &osbuild2.KeymapStageOptions{
+				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},

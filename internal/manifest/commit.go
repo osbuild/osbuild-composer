@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 // OSTreeCommit represents an ostree with one commit.
@@ -40,31 +40,31 @@ func (p *OSTreeCommit) getBuildPackages() []string {
 	return packages
 }
 
-func (p *OSTreeCommit) serialize() osbuild2.Pipeline {
+func (p *OSTreeCommit) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
 	if p.treePipeline.OSTree == nil {
 		panic("tree is not ostree")
 	}
 
-	pipeline.AddStage(osbuild2.NewOSTreeInitStage(&osbuild2.OSTreeInitStageOptions{Path: "/repo"}))
+	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/repo"}))
 
-	commitStageInput := new(osbuild2.OSTreeCommitStageInput)
+	commitStageInput := new(osbuild.OSTreeCommitStageInput)
 	commitStageInput.Type = "org.osbuild.tree"
 	commitStageInput.Origin = "org.osbuild.pipeline"
-	commitStageInput.References = osbuild2.OSTreeCommitStageReferences{"name:" + p.treePipeline.Name()}
+	commitStageInput.References = osbuild.OSTreeCommitStageReferences{"name:" + p.treePipeline.Name()}
 
 	var parent string
 	if p.treePipeline.OSTree.Parent != nil {
 		parent = p.treePipeline.OSTree.Parent.Checksum
 	}
-	pipeline.AddStage(osbuild2.NewOSTreeCommitStage(
-		&osbuild2.OSTreeCommitStageOptions{
+	pipeline.AddStage(osbuild.NewOSTreeCommitStage(
+		&osbuild.OSTreeCommitStageOptions{
 			Ref:       p.ref,
 			OSVersion: p.OSVersion,
 			Parent:    parent,
 		},
-		&osbuild2.OSTreeCommitStageInputs{Tree: commitStageInput}),
+		&osbuild.OSTreeCommitStageInputs{Tree: commitStageInput}),
 	)
 
 	return pipeline

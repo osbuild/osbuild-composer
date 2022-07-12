@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 // A Tar represents the contents of another pipeline in a tar file
@@ -32,14 +32,14 @@ func NewTar(m *Manifest,
 	return p
 }
 
-func (p *Tar) serialize() osbuild2.Pipeline {
+func (p *Tar) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	tree := new(osbuild2.TarStageInput)
+	tree := new(osbuild.TarStageInput)
 	tree.Type = "org.osbuild.tree"
 	tree.Origin = "org.osbuild.pipeline"
 	tree.References = []string{"name:" + p.inputPipeline.Name()}
-	tarStage := osbuild2.NewTarStage(&osbuild2.TarStageOptions{Filename: p.Filename}, &osbuild2.TarStageInputs{Tree: tree})
+	tarStage := osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: p.Filename}, &osbuild.TarStageInputs{Tree: tree})
 
 	pipeline.AddStage(tarStage)
 

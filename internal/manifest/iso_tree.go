@@ -6,7 +6,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 // An ISOTree represents a tree containing the anaconda installer,
@@ -71,44 +71,44 @@ func (p *ISOTree) getBuildPackages() []string {
 	return packages
 }
 
-func (p *ISOTree) serialize() osbuild2.Pipeline {
+func (p *ISOTree) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
 	kspath := "/osbuild.ks"
 	ostreeRepoPath := "/ostree/repo"
 
-	pipeline.AddStage(osbuild2.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.kernelVer,
+	pipeline.AddStage(osbuild.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.kernelVer,
 		p.anacondaPipeline.platform.GetArch().String(),
 		p.UEFIVendor,
 		p.anacondaPipeline.product,
 		p.anacondaPipeline.version,
 		p.isoLabel,
 		kspath),
-		osbuild2.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
+		osbuild.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
 
-	kickstartOptions, err := osbuild2.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
 	if err != nil {
 		panic("password encryption failed")
 	}
 
-	pipeline.AddStage(osbuild2.NewKickstartStage(kickstartOptions))
-	pipeline.AddStage(osbuild2.NewDiscinfoStage(&osbuild2.DiscinfoStageOptions{
+	pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
+	pipeline.AddStage(osbuild.NewDiscinfoStage(&osbuild.DiscinfoStageOptions{
 		BaseArch: p.anacondaPipeline.platform.GetArch().String(),
 		Release:  p.Release,
 	}))
 
-	pipeline.AddStage(osbuild2.NewOSTreeInitStage(&osbuild2.OSTreeInitStageOptions{Path: ostreeRepoPath}))
-	pipeline.AddStage(osbuild2.NewOSTreePullStage(
-		&osbuild2.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		osbuild2.NewOstreePullStageInputs("org.osbuild.source", p.osTreeCommit, p.osTreeRef),
+	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
+	pipeline.AddStage(osbuild.NewOSTreePullStage(
+		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.osTreeCommit, p.osTreeRef),
 	))
 
 	return pipeline
 }
 
-func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel, kspath string) *osbuild2.BootISOMonoStageOptions {
-	comprOptions := new(osbuild2.FSCompressionOptions)
-	if bcj := osbuild2.BCJOption(arch); bcj != "" {
+func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel, kspath string) *osbuild.BootISOMonoStageOptions {
+	comprOptions := new(osbuild.FSCompressionOptions)
+	if bcj := osbuild.BCJOption(arch); bcj != "" {
 		comprOptions.BCJ = bcj
 	}
 	var architectures []string
@@ -121,26 +121,26 @@ func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolab
 		panic("unsupported architecture")
 	}
 
-	return &osbuild2.BootISOMonoStageOptions{
-		Product: osbuild2.Product{
+	return &osbuild.BootISOMonoStageOptions{
+		Product: osbuild.Product{
 			Name:    product,
 			Version: osVersion,
 		},
 		ISOLabel:   isolabel,
 		Kernel:     kernelVer,
 		KernelOpts: fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isolabel, kspath),
-		EFI: osbuild2.EFI{
+		EFI: osbuild.EFI{
 			Architectures: architectures,
 			Vendor:        vendor,
 		},
-		ISOLinux: osbuild2.ISOLinux{
+		ISOLinux: osbuild.ISOLinux{
 			Enabled: arch == distro.X86_64ArchName,
 			Debug:   false,
 		},
 		Templates: "99-generic",
-		RootFS: osbuild2.RootFS{
+		RootFS: osbuild.RootFS{
 			Size: 9216,
-			Compression: osbuild2.FSCompression{
+			Compression: osbuild.FSCompression{
 				Method:  "xz",
 				Options: comprOptions,
 			},

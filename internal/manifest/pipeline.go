@@ -7,7 +7,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -18,7 +18,7 @@ type Pipeline interface {
 	getPackageSetChain() []rpmmd.PackageSet
 	serializeStart([]rpmmd.PackageSpec)
 	serializeEnd()
-	serialize() osbuild2.Pipeline
+	serialize() osbuild.Pipeline
 	getPackageSpecs() []rpmmd.PackageSpec
 	getOSTreeCommits() []osTreeCommit
 	getInline() []string
@@ -95,11 +95,11 @@ func (p Base) serializeStart([]rpmmd.PackageSpec) {
 func (p Base) serializeEnd() {
 }
 
-// Serialize turns a given pipeline into an osbuild2.Pipeline object. This object is
+// Serialize turns a given pipeline into an osbuild.Pipeline object. This object is
 // meant to be treated as opaque and not to be modified further outside of the pipeline
 // package.
-func (p Base) serialize() osbuild2.Pipeline {
-	pipeline := osbuild2.Pipeline{
+func (p Base) serialize() osbuild.Pipeline {
+	pipeline := osbuild.Pipeline{
 		Name: p.name,
 	}
 	if p.build != nil {

@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 
 	"github.com/google/uuid"
@@ -202,7 +202,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// Initialize variable needed for reporting back to osbuild-composer.
 	var osbuildJobResult *worker.OSBuildJobResult = &worker.OSBuildJobResult{
 		Success: false,
-		OSBuildOutput: &osbuild2.Result{
+		OSBuildOutput: &osbuild.Result{
 			Success: false,
 		},
 		UploadStatus: "failure",
@@ -306,7 +306,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	// Run osbuild and handle two kinds of errors
-	osbuildJobResult.OSBuildOutput, err = osbuild2.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, true, os.Stderr)
+	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")

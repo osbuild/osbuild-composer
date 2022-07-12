@@ -8,7 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
@@ -50,7 +50,7 @@ func RunPlayground(img ImageType, d distro.Distro, arch distro.Arch, repos map[s
 
 	store := path.Join(state_dir, "osbuild-store")
 
-	_, err = osbuild2.RunOSBuild(bytes, store, "./", img.GetExports(), []string{"build"}, false, os.Stdout)
+	_, err = osbuild.RunOSBuild(bytes, store, "./", img.GetExports(), []string{"build"}, false, os.Stdout)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not run osbuild: %s", err.Error())
 	}

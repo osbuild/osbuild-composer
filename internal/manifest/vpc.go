@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 // A VPC turns a raw image file into qemu-based image format, such as qcow2.
@@ -31,12 +31,12 @@ func NewVPC(m *Manifest,
 	return p
 }
 
-func (p *VPC) serialize() osbuild2.Pipeline {
+func (p *VPC) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild2.NewQEMUStage(
-		osbuild2.NewQEMUStageOptions(p.Filename, osbuild2.QEMUFormatVPC, nil),
-		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
+	pipeline.AddStage(osbuild.NewQEMUStage(
+		osbuild.NewQEMUStageOptions(p.Filename, osbuild.QEMUFormatVPC, nil),
+		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
 	))
 
 	return pipeline

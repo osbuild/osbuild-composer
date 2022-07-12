@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 // A QCOW2 turns a raw image file into qcow2 image.
@@ -32,16 +32,16 @@ func NewQCOW2(m *Manifest,
 	return p
 }
 
-func (p *QCOW2) serialize() osbuild2.Pipeline {
+func (p *QCOW2) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild2.NewQEMUStage(
-		osbuild2.NewQEMUStageOptions(p.Filename,
-			osbuild2.QEMUFormatQCOW2,
-			osbuild2.QCOW2Options{
+	pipeline.AddStage(osbuild.NewQEMUStage(
+		osbuild.NewQEMUStageOptions(p.Filename,
+			osbuild.QEMUFormatQCOW2,
+			osbuild.QCOW2Options{
 				Compat: p.Compat,
 			}),
-		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
+		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
 	))
 
 	return pipeline

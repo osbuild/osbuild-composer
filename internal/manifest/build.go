@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
@@ -80,15 +80,15 @@ func (p *Build) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *Build) serialize() osbuild2.Pipeline {
+func (p *Build) serialize() osbuild.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
 	pipeline := p.Base.serialize()
 	pipeline.Runner = p.runner.String()
 
-	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
-	pipeline.AddStage(osbuild2.NewSELinuxStage(&osbuild2.SELinuxStageOptions{
+	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
 		Labels: map[string]string{
 			// TODO: make conditional
