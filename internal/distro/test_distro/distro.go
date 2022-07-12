@@ -8,7 +8,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild1"
+	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -249,8 +249,8 @@ func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.Ima
 
 	return json.Marshal(
 		osbuild.Manifest{
-			Sources:  osbuild.Sources{},
-			Pipeline: osbuild.Pipeline{},
+			Sources:   osbuild.Sources{},
+			Pipelines: []osbuild.Pipeline{},
 		},
 	)
 }
