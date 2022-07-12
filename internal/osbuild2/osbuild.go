@@ -1,5 +1,5 @@
 // Package osbuild provides primitives for representing and (un)marshalling
-// OSBuild (schema v1) types.
+// OSBuild (schema v2) types.
 package osbuild2
 
 // A Manifest represents an OSBuild source and pipeline manifest
