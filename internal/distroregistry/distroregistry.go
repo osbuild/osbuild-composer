@@ -118,11 +118,6 @@ func mangleHostDistroName(name string, isBeta, isStream bool) string {
 		hostDistroName += "-beta"
 	}
 
-	// override repository for centos stream, remove when CentOS 8 is EOL
-	if isStream && hostDistroName == "centos-8" {
-		hostDistroName = "centos-stream-8"
-	}
-
 	return hostDistroName
 }
 

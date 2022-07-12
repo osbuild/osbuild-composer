@@ -67,7 +67,7 @@ func TestRegistry_mangleHostDistroName(t *testing.T) {
 
 		{"centos-8", args{"centos-8", false, false}, "centos-8"},
 		{"centos-8 beta", args{"centos-8", true, false}, "centos-8-beta"},
-		{"centos-8 stream", args{"centos-8", false, true}, "centos-stream-8"},
+		{"centos-8 stream", args{"centos-8", false, true}, "centos-8"},
 		{"centos-8 beta stream", args{"centos-8", true, true}, "centos-8-beta"},
 
 		{"rhel-90", args{"rhel-90", false, false}, "rhel-90"},
