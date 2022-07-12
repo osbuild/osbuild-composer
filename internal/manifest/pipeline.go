@@ -14,6 +14,8 @@ import (
 
 type Pipeline interface {
 	Name() string
+	Checkpoint()
+	getCheckpoint() bool
 	getBuildPackages() []string
 	getPackageSetChain() []rpmmd.PackageSet
 	serializeStart([]rpmmd.PackageSpec)
@@ -27,9 +29,10 @@ type Pipeline interface {
 // A Base represents the core functionality shared between each of the pipeline
 // implementations, and the Base struct must be embedded in each of them.
 type Base struct {
-	manifest *Manifest
-	name     string
-	build    *Build
+	manifest   *Manifest
+	name       string
+	build      *Build
+	checkpoint bool
 }
 
 // Name returns the name of the pipeline. The name must be unique for a given manifest.
@@ -37,6 +40,14 @@ type Base struct {
 // or for exporting them.
 func (p Base) Name() string {
 	return p.name
+}
+
+func (p *Base) Checkpoint() {
+	p.checkpoint = true
+}
+
+func (p Base) getCheckpoint() bool {
+	return p.checkpoint
 }
 
 func (p Base) GetManifest() *Manifest {
