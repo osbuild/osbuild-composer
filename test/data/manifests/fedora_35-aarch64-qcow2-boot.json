@@ -11635,6 +11635,7 @@
       "dnf-4.9.0-1.fc35.noarch",
       "dnf-data-4.9.0-1.fc35.noarch",
       "dnf-plugins-core-4.0.24-1.fc35.noarch",
+      "dosfstools-4.2-2.fc35.aarch64",
       "dracut-055-6.fc35.aarch64",
       "dracut-config-generic-055-6.fc35.aarch64",
       "e2fsprogs-1.46.3-1.fc35.aarch64",
