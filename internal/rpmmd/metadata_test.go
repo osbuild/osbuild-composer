@@ -1,4 +1,4 @@
-// a different package is used to prevent import cycles between `rpmmd` and `osbuild2`
+// a different package is used to prevent import cycles between `rpmmd` and `osbuild`
 package rpmmd_test
 
 import (
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	osbuild "github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/stretchr/testify/assert"
 )

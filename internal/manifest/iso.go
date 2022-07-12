@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 // An ISO represents a bootable ISO file created from an
@@ -37,17 +37,17 @@ func (p *ISO) getBuildPackages() []string {
 	}
 }
 
-func (p *ISO) serialize() osbuild2.Pipeline {
+func (p *ISO) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild2.NewXorrisofsStage(xorrisofsStageOptions(p.Filename, p.treePipeline.isoLabel, p.ISOLinux), osbuild2.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))
-	pipeline.AddStage(osbuild2.NewImplantisomd5Stage(&osbuild2.Implantisomd5StageOptions{Filename: p.Filename}))
+	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename, p.treePipeline.isoLabel, p.ISOLinux), osbuild.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))
+	pipeline.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: p.Filename}))
 
 	return pipeline
 }
 
-func xorrisofsStageOptions(filename, isolabel string, isolinux bool) *osbuild2.XorrisofsStageOptions {
-	options := &osbuild2.XorrisofsStageOptions{
+func xorrisofsStageOptions(filename, isolabel string, isolinux bool) *osbuild.XorrisofsStageOptions {
+	options := &osbuild.XorrisofsStageOptions{
 		Filename: filename,
 		VolID:    isolabel,
 		SysID:    "LINUX",
@@ -56,7 +56,7 @@ func xorrisofsStageOptions(filename, isolabel string, isolinux bool) *osbuild2.X
 	}
 
 	if isolinux {
-		options.Boot = &osbuild2.XorrisofsBoot{
+		options.Boot = &osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
 			Catalog: "isolinux/boot.cat",
 		}

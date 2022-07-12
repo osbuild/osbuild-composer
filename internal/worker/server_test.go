@@ -18,7 +18,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -493,12 +493,12 @@ func TestMixedOSBuildJob(t *testing.T) {
 
 	oldJobResult := &worker.OSBuildJobResult{
 		Success: true,
-		OSBuildOutput: &osbuild2.Result{
+		OSBuildOutput: &osbuild.Result{
 			Type:    "result",
 			Success: true,
-			Log: map[string]osbuild2.PipelineResult{
+			Log: map[string]osbuild.PipelineResult{
 				"build-old": {
-					osbuild2.StageResult{
+					osbuild.StageResult{
 						ID:      "---",
 						Type:    "org.osbuild.test",
 						Output:  "<test output>",
@@ -531,12 +531,12 @@ func TestMixedOSBuildJob(t *testing.T) {
 			Build:   []string{"build-result"},
 			Payload: []string{"result-test-payload", "result-test-assembler"},
 		},
-		OSBuildOutput: &osbuild2.Result{
+		OSBuildOutput: &osbuild.Result{
 			Type:    "result",
 			Success: true,
-			Log: map[string]osbuild2.PipelineResult{
+			Log: map[string]osbuild.PipelineResult{
 				"build-new": {
-					osbuild2.StageResult{
+					osbuild.StageResult{
 						ID:      "---",
 						Type:    "org.osbuild.test",
 						Output:  "<test output new>",
@@ -648,12 +648,12 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 	oldJobResult := &worker.OSBuildKojiJobResult{
 		HostOS: "rhel-10",
 		Arch:   "k",
-		OSBuildOutput: &osbuild2.Result{
+		OSBuildOutput: &osbuild.Result{
 			Type:    "result",
 			Success: true,
-			Log: map[string]osbuild2.PipelineResult{
+			Log: map[string]osbuild.PipelineResult{
 				"build-old": {
-					osbuild2.StageResult{
+					osbuild.StageResult{
 						ID:      "---",
 						Type:    "org.osbuild.test",
 						Output:  "<test output>",
@@ -688,12 +688,12 @@ func TestMixedOSBuildKojiJob(t *testing.T) {
 			Build:   []string{"build-result"},
 			Payload: []string{"result-test-payload", "result-test-assembler"},
 		},
-		OSBuildOutput: &osbuild2.Result{
+		OSBuildOutput: &osbuild.Result{
 			Type:    "result",
 			Success: true,
-			Log: map[string]osbuild2.PipelineResult{
+			Log: map[string]osbuild.PipelineResult{
 				"build-new": {
-					osbuild2.StageResult{
+					osbuild.StageResult{
 						ID:      "---",
 						Type:    "org.osbuild.test",
 						Output:  "<test output new>",
@@ -1357,7 +1357,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 							},
 						},
 						result: &worker.OSBuildKojiJobResult{
-							OSBuildOutput: &osbuild2.Result{},
+							OSBuildOutput: &osbuild.Result{},
 						},
 					},
 				},
@@ -1566,7 +1566,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 							},
 						},
 						result: &worker.OSBuildKojiJobResult{
-							OSBuildOutput: &osbuild2.Result{},
+							OSBuildOutput: &osbuild.Result{},
 						},
 					},
 					// passed build
@@ -1589,7 +1589,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 							},
 						},
 						result: &worker.OSBuildKojiJobResult{
-							OSBuildOutput: &osbuild2.Result{},
+							OSBuildOutput: &osbuild.Result{},
 						},
 					},
 				},
@@ -1637,7 +1637,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 							},
 						},
 						result: &worker.OSBuildKojiJobResult{
-							OSBuildOutput: &osbuild2.Result{},
+							OSBuildOutput: &osbuild.Result{},
 						},
 					},
 					// passed build
@@ -1660,7 +1660,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 							},
 						},
 						result: &worker.OSBuildKojiJobResult{
-							OSBuildOutput: &osbuild2.Result{},
+							OSBuildOutput: &osbuild.Result{},
 						},
 					},
 				},

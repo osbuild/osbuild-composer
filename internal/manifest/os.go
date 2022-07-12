@@ -9,7 +9,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/environment"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
@@ -74,24 +74,24 @@ type OS struct {
 	Groups   []blueprint.GroupCustomization
 	Users    []blueprint.UserCustomization
 	Firewall *blueprint.FirewallCustomization
-	// TODO: drop osbuild2 types from the API
-	Grub2Config   *osbuild2.GRUB2Config
-	Sysconfig     []*osbuild2.SysconfigStageOptions
-	SystemdLogind []*osbuild2.SystemdLogindStageOptions
-	CloudInit     []*osbuild2.CloudInitStageOptions
-	Modprobe      []*osbuild2.ModprobeStageOptions
-	DracutConf    []*osbuild2.DracutConfStageOptions
-	SystemdUnit   []*osbuild2.SystemdUnitStageOptions
-	Authselect    *osbuild2.AuthselectStageOptions
-	SELinuxConfig *osbuild2.SELinuxConfigStageOptions
-	Tuned         *osbuild2.TunedStageOptions
-	Tmpfilesd     []*osbuild2.TmpfilesdStageOptions
-	PamLimitsConf []*osbuild2.PamLimitsConfStageOptions
-	Sysctld       []*osbuild2.SysctldStageOptions
-	DNFConfig     []*osbuild2.DNFConfigStageOptions
-	SshdConfig    *osbuild2.SshdConfigStageOptions
-	AuthConfig    *osbuild2.AuthconfigStageOptions
-	PwQuality     *osbuild2.PwqualityConfStageOptions
+	// TODO: drop osbuild types from the API
+	Grub2Config   *osbuild.GRUB2Config
+	Sysconfig     []*osbuild.SysconfigStageOptions
+	SystemdLogind []*osbuild.SystemdLogindStageOptions
+	CloudInit     []*osbuild.CloudInitStageOptions
+	Modprobe      []*osbuild.ModprobeStageOptions
+	DracutConf    []*osbuild.DracutConfStageOptions
+	SystemdUnit   []*osbuild.SystemdUnitStageOptions
+	Authselect    *osbuild.AuthselectStageOptions
+	SELinuxConfig *osbuild.SELinuxConfigStageOptions
+	Tuned         *osbuild.TunedStageOptions
+	Tmpfilesd     []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf []*osbuild.PamLimitsConfStageOptions
+	Sysctld       []*osbuild.SysctldStageOptions
+	DNFConfig     []*osbuild.DNFConfigStageOptions
+	SshdConfig    *osbuild.SshdConfigStageOptions
+	AuthConfig    *osbuild.AuthconfigStageOptions
+	PwQuality     *osbuild.PwqualityConfStageOptions
 
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
@@ -211,7 +211,7 @@ func (p *OS) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *OS) serialize() osbuild2.Pipeline {
+func (p *OS) serialize() osbuild.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
@@ -219,45 +219,45 @@ func (p *OS) serialize() osbuild2.Pipeline {
 	pipeline := p.Base.serialize()
 
 	if p.OSTree != nil && p.OSTree.Parent != nil {
-		pipeline.AddStage(osbuild2.NewOSTreePasswdStage("org.osbuild.source", p.OSTree.Parent.Checksum))
+		pipeline.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", p.OSTree.Parent.Checksum))
 	}
 
-	rpmOptions := osbuild2.NewRPMStageOptions(p.repos)
+	rpmOptions := osbuild.NewRPMStageOptions(p.repos)
 	if p.ExcludeDocs {
 		if rpmOptions.Exclude == nil {
-			rpmOptions.Exclude = &osbuild2.Exclude{}
+			rpmOptions.Exclude = &osbuild.Exclude{}
 		}
 		rpmOptions.Exclude.Docs = true
 	}
 	rpmOptions.GPGKeysFromTree = p.GPGKeyFiles
-	pipeline.AddStage(osbuild2.NewRPMStage(rpmOptions, osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	pipeline.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
 	if p.PartitionTable == nil || p.PartitionTable.FindMountable("/boot") == nil {
-		pipeline.AddStage(osbuild2.NewFixBLSStage(&osbuild2.FixBLSStageOptions{}))
+		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	} else {
-		pipeline.AddStage(osbuild2.NewFixBLSStage(&osbuild2.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
 	}
 
-	pipeline.AddStage(osbuild2.NewLocaleStage(&osbuild2.LocaleStageOptions{Language: p.Language}))
+	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.Language}))
 
 	if p.Keyboard != nil {
-		pipeline.AddStage(osbuild2.NewKeymapStage(&osbuild2.KeymapStageOptions{Keymap: *p.Keyboard}))
+		pipeline.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *p.Keyboard}))
 	}
 
-	pipeline.AddStage(osbuild2.NewHostnameStage(&osbuild2.HostnameStageOptions{Hostname: p.Hostname}))
-	pipeline.AddStage(osbuild2.NewTimezoneStage(&osbuild2.TimezoneStageOptions{Zone: p.Timezone}))
+	pipeline.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: p.Hostname}))
+	pipeline.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: p.Timezone}))
 
 	if len(p.NTPServers) > 0 {
-		pipeline.AddStage(osbuild2.NewChronyStage(&osbuild2.ChronyStageOptions{Timeservers: p.NTPServers}))
+		pipeline.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: p.NTPServers}))
 	}
 
 	if len(p.Groups) > 0 {
-		pipeline.AddStage(osbuild2.NewGroupsStage(osbuild2.NewGroupsStageOptions(p.Groups)))
+		pipeline.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(p.Groups)))
 	}
 
 	if len(p.Users) > 0 {
-		userOptions, err := osbuild2.NewUsersStageOptions(p.Users, false)
+		userOptions, err := osbuild.NewUsersStageOptions(p.Users, false)
 		if err != nil {
 			// TODO: move encryption into weldr
 			panic("password encryption failed")
@@ -266,15 +266,15 @@ func (p *OS) serialize() osbuild2.Pipeline {
 			// for ostree, writing the key during user creation is
 			// redundant and can cause issues so create users without keys
 			// and write them on first boot
-			userOptionsSansKeys, err := osbuild2.NewUsersStageOptions(p.Users, true)
+			userOptionsSansKeys, err := osbuild.NewUsersStageOptions(p.Users, true)
 			if err != nil {
 				// TODO: move encryption into weldr
 				panic("password encryption failed")
 			}
-			pipeline.AddStage(osbuild2.NewUsersStage(userOptionsSansKeys))
-			pipeline.AddStage(osbuild2.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+			pipeline.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
+			pipeline.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
 		} else {
-			pipeline.AddStage(osbuild2.NewUsersStage(userOptions))
+			pipeline.AddStage(osbuild.NewUsersStage(userOptions))
 		}
 	}
 
@@ -291,7 +291,7 @@ func (p *OS) serialize() osbuild2.Pipeline {
 	}
 	if len(enabledServices) != 0 ||
 		len(disabledServices) != 0 || p.DefaultTarget != "" {
-		pipeline.AddStage(osbuild2.NewSystemdStage(&osbuild2.SystemdStageOptions{
+		pipeline.AddStage(osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
 			EnabledServices:  enabledServices,
 			DisabledServices: disabledServices,
 			DefaultTarget:    p.DefaultTarget,
@@ -299,7 +299,7 @@ func (p *OS) serialize() osbuild2.Pipeline {
 	}
 
 	if p.Firewall != nil {
-		options := osbuild2.FirewallStageOptions{
+		options := osbuild.FirewallStageOptions{
 			Ports: p.Firewall.Ports,
 		}
 
@@ -308,86 +308,86 @@ func (p *OS) serialize() osbuild2.Pipeline {
 			options.DisabledServices = p.Firewall.Services.Disabled
 		}
 
-		pipeline.AddStage(osbuild2.NewFirewallStage(&options))
+		pipeline.AddStage(osbuild.NewFirewallStage(&options))
 	}
 
 	for _, sysconfigConfig := range p.Sysconfig {
-		pipeline.AddStage(osbuild2.NewSysconfigStage(sysconfigConfig))
+		pipeline.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
 	}
 
 	for _, systemdLogindConfig := range p.SystemdLogind {
-		pipeline.AddStage(osbuild2.NewSystemdLogindStage(systemdLogindConfig))
+		pipeline.AddStage(osbuild.NewSystemdLogindStage(systemdLogindConfig))
 	}
 
 	for _, cloudInitConfig := range p.CloudInit {
-		pipeline.AddStage(osbuild2.NewCloudInitStage(cloudInitConfig))
+		pipeline.AddStage(osbuild.NewCloudInitStage(cloudInitConfig))
 	}
 
 	for _, modprobeConfig := range p.Modprobe {
-		pipeline.AddStage(osbuild2.NewModprobeStage(modprobeConfig))
+		pipeline.AddStage(osbuild.NewModprobeStage(modprobeConfig))
 	}
 
 	for _, dracutConfConfig := range p.DracutConf {
-		pipeline.AddStage(osbuild2.NewDracutConfStage(dracutConfConfig))
+		pipeline.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
 	}
 
 	for _, systemdUnitConfig := range p.SystemdUnit {
-		pipeline.AddStage(osbuild2.NewSystemdUnitStage(systemdUnitConfig))
+		pipeline.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
 	}
 
 	if p.Authselect != nil {
-		pipeline.AddStage(osbuild2.NewAuthselectStage(p.Authselect))
+		pipeline.AddStage(osbuild.NewAuthselectStage(p.Authselect))
 	}
 
 	if p.SELinuxConfig != nil {
-		pipeline.AddStage(osbuild2.NewSELinuxConfigStage(p.SELinuxConfig))
+		pipeline.AddStage(osbuild.NewSELinuxConfigStage(p.SELinuxConfig))
 	}
 
 	if p.Tuned != nil {
-		pipeline.AddStage(osbuild2.NewTunedStage(p.Tuned))
+		pipeline.AddStage(osbuild.NewTunedStage(p.Tuned))
 	}
 
 	for _, tmpfilesdConfig := range p.Tmpfilesd {
-		pipeline.AddStage(osbuild2.NewTmpfilesdStage(tmpfilesdConfig))
+		pipeline.AddStage(osbuild.NewTmpfilesdStage(tmpfilesdConfig))
 	}
 
 	for _, pamLimitsConfConfig := range p.PamLimitsConf {
-		pipeline.AddStage(osbuild2.NewPamLimitsConfStage(pamLimitsConfConfig))
+		pipeline.AddStage(osbuild.NewPamLimitsConfStage(pamLimitsConfConfig))
 	}
 
 	for _, sysctldConfig := range p.Sysctld {
-		pipeline.AddStage(osbuild2.NewSysctldStage(sysctldConfig))
+		pipeline.AddStage(osbuild.NewSysctldStage(sysctldConfig))
 	}
 
 	for _, dnfConfig := range p.DNFConfig {
-		pipeline.AddStage(osbuild2.NewDNFConfigStage(dnfConfig))
+		pipeline.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
 	}
 
 	if p.SshdConfig != nil {
-		pipeline.AddStage((osbuild2.NewSshdConfigStage(p.SshdConfig)))
+		pipeline.AddStage((osbuild.NewSshdConfigStage(p.SshdConfig)))
 	}
 
 	if p.AuthConfig != nil {
-		pipeline.AddStage(osbuild2.NewAuthconfigStage(p.AuthConfig))
+		pipeline.AddStage(osbuild.NewAuthconfigStage(p.AuthConfig))
 	}
 
 	if p.PwQuality != nil {
-		pipeline.AddStage(osbuild2.NewPwqualityConfStage(p.PwQuality))
+		pipeline.AddStage(osbuild.NewPwqualityConfStage(p.PwQuality))
 	}
 
 	if pt := p.PartitionTable; pt != nil {
-		kernelOptions := osbuild2.GenImageKernelOptions(p.PartitionTable)
+		kernelOptions := osbuild.GenImageKernelOptions(p.PartitionTable)
 		kernelOptions = append(kernelOptions, p.KernelOptionsAppend...)
 		pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
 
-		pipeline.AddStage(osbuild2.NewFSTabStage(osbuild2.NewFSTabStageOptions(pt)))
+		pipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
 
-		var bootloader *osbuild2.Stage
+		var bootloader *osbuild.Stage
 		switch p.platform.GetArch() {
 		case platform.ARCH_S390X:
-			bootloader = osbuild2.NewZiplStage(new(osbuild2.ZiplStageOptions))
+			bootloader = osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 		default:
-			options := osbuild2.NewGrub2StageOptionsUnified(pt,
+			options := osbuild.NewGrub2StageOptionsUnified(pt,
 				p.kernelVer,
 				p.platform.GetUEFIVendor() != "",
 				p.platform.GetBIOSPlatform(),
@@ -402,20 +402,20 @@ func (p *OS) serialize() osbuild2.Pipeline {
 
 				options.Config = cfg
 			}
-			bootloader = osbuild2.NewGRUB2Stage(options)
+			bootloader = osbuild.NewGRUB2Stage(options)
 		}
 
 		pipeline.AddStage(bootloader)
 	}
 
 	if p.SElinux != "" {
-		pipeline.AddStage(osbuild2.NewSELinuxStage(&osbuild2.SELinuxStageOptions{
+		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
 		}))
 	}
 
 	if p.OSTree != nil {
-		pipeline.AddStage(osbuild2.NewOSTreePrepTreeStage(&osbuild2.OSTreePrepTreeStageOptions{
+		pipeline.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
 			EtcGroupMembers: []string{
 				// NOTE: We may want to make this configurable.
 				"wheel", "docker",
@@ -426,18 +426,18 @@ func (p *OS) serialize() osbuild2.Pipeline {
 	return pipeline
 }
 
-func prependKernelCmdlineStage(pipeline osbuild2.Pipeline, kernelOptions string, pt *disk.PartitionTable) osbuild2.Pipeline {
+func prependKernelCmdlineStage(pipeline osbuild.Pipeline, kernelOptions string, pt *disk.PartitionTable) osbuild.Pipeline {
 	rootFs := pt.FindMountable("/")
 	if rootFs == nil {
 		panic("root filesystem must be defined for kernel-cmdline stage, this is a programming error")
 	}
 	rootFsUUID := rootFs.GetFSSpec().UUID
-	kernelStage := osbuild2.NewKernelCmdlineStage(osbuild2.NewKernelCmdlineStageOptions(rootFsUUID, kernelOptions))
-	pipeline.Stages = append([]*osbuild2.Stage{kernelStage}, pipeline.Stages...)
+	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFsUUID, kernelOptions))
+	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	return pipeline
 }
 
-func usersFirstBootOptions(usersStageOptions *osbuild2.UsersStageOptions) *osbuild2.FirstBootStageOptions {
+func usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuild.FirstBootStageOptions {
 	cmds := make([]string, 0, 3*len(usersStageOptions.Users)+2)
 	// workaround for creating authorized_keys file for user
 	// need to special case the root user, which has its home in a different place
@@ -464,7 +464,7 @@ func usersFirstBootOptions(usersStageOptions *osbuild2.UsersStageOptions) *osbui
 	cmds = append(cmds, fmt.Sprintf("restorecon -rvF %s", varhome))
 	cmds = append(cmds, fmt.Sprintf("restorecon -rvF %s", roothome))
 
-	options := &osbuild2.FirstBootStageOptions{
+	options := &osbuild.FirstBootStageOptions{
 		Commands:       cmds,
 		WaitForNetwork: false,
 	}

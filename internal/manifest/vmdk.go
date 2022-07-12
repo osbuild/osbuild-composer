@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
 // A VMDK turns a raw image file into vmdk image.
@@ -30,14 +30,14 @@ func NewVMDK(m *Manifest,
 	return p
 }
 
-func (p *VMDK) serialize() osbuild2.Pipeline {
+func (p *VMDK) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild2.NewQEMUStage(
-		osbuild2.NewQEMUStageOptions(p.Filename, osbuild2.QEMUFormatVMDK, osbuild2.VMDKOptions{
-			Subformat: osbuild2.VMDKSubformatStreamOptimized,
+	pipeline.AddStage(osbuild.NewQEMUStage(
+		osbuild.NewQEMUStageOptions(p.Filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{
+			Subformat: osbuild.VMDKSubformatStreamOptimized,
 		}),
-		osbuild2.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
+		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
 	))
 
 	return pipeline

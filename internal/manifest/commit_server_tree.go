@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -94,51 +94,51 @@ func (p *OSTreeCommitServer) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *OSTreeCommitServer) serialize() osbuild2.Pipeline {
+func (p *OSTreeCommitServer) serialize() osbuild.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
-	pipeline.AddStage(osbuild2.NewLocaleStage(&osbuild2.LocaleStageOptions{Language: p.Language}))
+	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.Language}))
 
 	htmlRoot := "/usr/share/nginx/html"
 	repoPath := filepath.Join(htmlRoot, "repo")
-	pipeline.AddStage(osbuild2.NewOSTreeInitStage(&osbuild2.OSTreeInitStageOptions{Path: repoPath}))
+	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: repoPath}))
 
-	pipeline.AddStage(osbuild2.NewOSTreePullStage(
-		&osbuild2.OSTreePullStageOptions{Repo: repoPath},
-		osbuild2.NewOstreePullStageInputs("org.osbuild.pipeline", "name:"+p.commitPipeline.Name(), p.commitPipeline.ref),
+	pipeline.AddStage(osbuild.NewOSTreePullStage(
+		&osbuild.OSTreePullStageOptions{Repo: repoPath},
+		osbuild.NewOstreePullStageInputs("org.osbuild.pipeline", "name:"+p.commitPipeline.Name(), p.commitPipeline.ref),
 	))
 
 	// make nginx log and lib directories world writeable, otherwise nginx can't start in
 	// an unprivileged container
-	pipeline.AddStage(osbuild2.NewChmodStage(chmodStageOptions("/var/log/nginx", "a+rwX", true)))
-	pipeline.AddStage(osbuild2.NewChmodStage(chmodStageOptions("/var/lib/nginx", "a+rwX", true)))
+	pipeline.AddStage(osbuild.NewChmodStage(chmodStageOptions("/var/log/nginx", "a+rwX", true)))
+	pipeline.AddStage(osbuild.NewChmodStage(chmodStageOptions("/var/lib/nginx", "a+rwX", true)))
 
-	pipeline.AddStage(osbuild2.NewNginxConfigStage(nginxConfigStageOptions(p.nginxConfigPath, htmlRoot, p.listenPort)))
+	pipeline.AddStage(osbuild.NewNginxConfigStage(nginxConfigStageOptions(p.nginxConfigPath, htmlRoot, p.listenPort)))
 
 	return pipeline
 }
 
-func nginxConfigStageOptions(path, htmlRoot, listen string) *osbuild2.NginxConfigStageOptions {
+func nginxConfigStageOptions(path, htmlRoot, listen string) *osbuild.NginxConfigStageOptions {
 	// configure nginx to work in an unprivileged container
-	cfg := &osbuild2.NginxConfig{
+	cfg := &osbuild.NginxConfig{
 		Listen: listen,
 		Root:   htmlRoot,
 		Daemon: common.BoolToPtr(false),
 		PID:    "/tmp/nginx.pid",
 	}
-	return &osbuild2.NginxConfigStageOptions{
+	return &osbuild.NginxConfigStageOptions{
 		Path:   path,
 		Config: cfg,
 	}
 }
 
-func chmodStageOptions(path, mode string, recursive bool) *osbuild2.ChmodStageOptions {
-	return &osbuild2.ChmodStageOptions{
-		Items: map[string]osbuild2.ChmodStagePathOptions{
+func chmodStageOptions(path, mode string, recursive bool) *osbuild.ChmodStageOptions {
+	return &osbuild.ChmodStageOptions{
+		Items: map[string]osbuild.ChmodStagePathOptions{
 			path: {Mode: mode, Recursive: recursive},
 		},
 	}

@@ -1,6 +1,6 @@
 package distro
 
-import "github.com/osbuild/osbuild-composer/internal/osbuild2"
+import "github.com/osbuild/osbuild-composer/internal/osbuild"
 
 type RHSMSubscriptionStatus string
 
@@ -12,13 +12,13 @@ const (
 // ImageConfig represents a (default) configuration applied to the image
 type ImageConfig struct {
 	Timezone            string
-	TimeSynchronization *osbuild2.ChronyStageOptions
+	TimeSynchronization *osbuild.ChronyStageOptions
 	Locale              string
-	Keyboard            *osbuild2.KeymapStageOptions
+	Keyboard            *osbuild.KeymapStageOptions
 	EnabledServices     []string
 	DisabledServices    []string
 	DefaultTarget       string
-	Sysconfig           []*osbuild2.SysconfigStageOptions
+	Sysconfig           []*osbuild.SysconfigStageOptions
 
 	// List of files from which to import GPG keys into the RPM database
 	GPGKeyFiles []string
@@ -31,29 +31,29 @@ type ImageConfig struct {
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
-	RHSMConfig         map[RHSMSubscriptionStatus]*osbuild2.RHSMStageOptions
-	SystemdLogind      []*osbuild2.SystemdLogindStageOptions
-	CloudInit          []*osbuild2.CloudInitStageOptions
-	Modprobe           []*osbuild2.ModprobeStageOptions
-	DracutConf         []*osbuild2.DracutConfStageOptions
-	SystemdUnit        []*osbuild2.SystemdUnitStageOptions
-	Authselect         *osbuild2.AuthselectStageOptions
-	SELinuxConfig      *osbuild2.SELinuxConfigStageOptions
-	Tuned              *osbuild2.TunedStageOptions
-	Tmpfilesd          []*osbuild2.TmpfilesdStageOptions
-	PamLimitsConf      []*osbuild2.PamLimitsConfStageOptions
-	Sysctld            []*osbuild2.SysctldStageOptions
-	DNFConfig          []*osbuild2.DNFConfigStageOptions
-	SshdConfig         *osbuild2.SshdConfigStageOptions
-	Authconfig         *osbuild2.AuthconfigStageOptions
-	PwQuality          *osbuild2.PwqualityConfStageOptions
-	WAAgentConfig      *osbuild2.WAAgentConfStageOptions
-	Grub2Config        *osbuild2.GRUB2Config
-	DNFAutomaticConfig *osbuild2.DNFAutomaticConfigStageOptions
-	YumConfig          *osbuild2.YumConfigStageOptions
-	YUMRepos           []*osbuild2.YumReposStageOptions
-	Firewall           *osbuild2.FirewallStageOptions
-	UdevRules          *osbuild2.UdevRulesStageOptions
+	RHSMConfig         map[RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
+	SystemdLogind      []*osbuild.SystemdLogindStageOptions
+	CloudInit          []*osbuild.CloudInitStageOptions
+	Modprobe           []*osbuild.ModprobeStageOptions
+	DracutConf         []*osbuild.DracutConfStageOptions
+	SystemdUnit        []*osbuild.SystemdUnitStageOptions
+	Authselect         *osbuild.AuthselectStageOptions
+	SELinuxConfig      *osbuild.SELinuxConfigStageOptions
+	Tuned              *osbuild.TunedStageOptions
+	Tmpfilesd          []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf      []*osbuild.PamLimitsConfStageOptions
+	Sysctld            []*osbuild.SysctldStageOptions
+	DNFConfig          []*osbuild.DNFConfigStageOptions
+	SshdConfig         *osbuild.SshdConfigStageOptions
+	Authconfig         *osbuild.AuthconfigStageOptions
+	PwQuality          *osbuild.PwqualityConfStageOptions
+	WAAgentConfig      *osbuild.WAAgentConfStageOptions
+	Grub2Config        *osbuild.GRUB2Config
+	DNFAutomaticConfig *osbuild.DNFAutomaticConfigStageOptions
+	YumConfig          *osbuild.YumConfigStageOptions
+	YUMRepos           []*osbuild.YumReposStageOptions
+	Firewall           *osbuild.FirewallStageOptions
+	UdevRules          *osbuild.UdevRulesStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and

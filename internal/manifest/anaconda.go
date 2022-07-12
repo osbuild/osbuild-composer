@@ -3,7 +3,7 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/osbuild-composer/internal/osbuild2"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -140,24 +140,24 @@ func (p *Anaconda) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *Anaconda) serialize() osbuild2.Pipeline {
+func (p *Anaconda) serialize() osbuild.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild2.NewRPMStage(osbuild2.NewRPMStageOptions(p.repos), osbuild2.NewRpmStageSourceFilesInputs(p.packageSpecs)))
-	pipeline.AddStage(osbuild2.NewBuildstampStage(&osbuild2.BuildstampStageOptions{
+	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
 		Arch:    p.platform.GetArch().String(),
 		Product: p.product,
 		Variant: p.Variant,
 		Version: p.version,
 		Final:   true,
 	}))
-	pipeline.AddStage(osbuild2.NewLocaleStage(&osbuild2.LocaleStageOptions{Language: "en_US.UTF-8"}))
+	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 
 	rootPassword := ""
-	rootUser := osbuild2.UsersStageOptionsUser{
+	rootUser := osbuild.UsersStageOptionsUser{
 		Password: &rootPassword,
 	}
 
@@ -166,27 +166,27 @@ func (p *Anaconda) serialize() osbuild2.Pipeline {
 	installHome := "/root"
 	installShell := "/usr/libexec/anaconda/run-anaconda"
 	installPassword := ""
-	installUser := osbuild2.UsersStageOptionsUser{
+	installUser := osbuild.UsersStageOptionsUser{
 		UID:      &installUID,
 		GID:      &installGID,
 		Home:     &installHome,
 		Shell:    &installShell,
 		Password: &installPassword,
 	}
-	usersStageOptions := &osbuild2.UsersStageOptions{
-		Users: map[string]osbuild2.UsersStageOptionsUser{
+	usersStageOptions := &osbuild.UsersStageOptions{
+		Users: map[string]osbuild.UsersStageOptionsUser{
 			"root":    rootUser,
 			"install": installUser,
 		},
 	}
 
-	pipeline.AddStage(osbuild2.NewUsersStage(usersStageOptions))
-	pipeline.AddStage(osbuild2.NewAnacondaStage(osbuild2.NewAnacondaStageOptions(p.Users)))
-	pipeline.AddStage(osbuild2.NewLoraxScriptStage(&osbuild2.LoraxScriptStageOptions{
+	pipeline.AddStage(osbuild.NewUsersStage(usersStageOptions))
+	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.Users)))
+	pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
 		BaseArch: p.platform.GetArch().String(),
 	}))
-	pipeline.AddStage(osbuild2.NewDracutStage(dracutStageOptions(p.kernelVer, p.Biosdevname, []string{
+	pipeline.AddStage(osbuild.NewDracutStage(dracutStageOptions(p.kernelVer, p.Biosdevname, []string{
 		"anaconda",
 		"rdma",
 		"rngd",
@@ -197,12 +197,12 @@ func (p *Anaconda) serialize() osbuild2.Pipeline {
 		"lunmask",
 		"nfs",
 	})))
-	pipeline.AddStage(osbuild2.NewSELinuxConfigStage(&osbuild2.SELinuxConfigStageOptions{State: osbuild2.SELinuxStatePermissive}))
+	pipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
 	return pipeline
 }
 
-func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []string) *osbuild2.DracutStageOptions {
+func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []string) *osbuild.DracutStageOptions {
 	kernel := []string{kernelVer}
 	modules := []string{
 		"bash",
@@ -249,7 +249,7 @@ func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []
 	}
 
 	modules = append(modules, additionalModules...)
-	return &osbuild2.DracutStageOptions{
+	return &osbuild.DracutStageOptions{
 		Kernel:  kernel,
 		Modules: modules,
 		Install: []string{"/.buildstamp"},
