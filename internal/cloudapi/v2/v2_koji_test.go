@@ -533,7 +533,7 @@ func TestKojiCompose(t *testing.T) {
 			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", finalizeID), ``, http.StatusOK, c.composeStatus, `href`, `id`)
 
 			// get the manifests
-			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", finalizeID), ``, http.StatusOK, `{"manifests":[{"pipeline":{},"sources":{}},{"pipeline":{},"sources":{}}],"kind":"ComposeManifests"}`, `href`, `id`)
+			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", finalizeID), ``, http.StatusOK, `{"manifests":[{"version":"","pipelines":[],"sources":{}},{"version":"","pipelines":[],"sources":{}}],"kind":"ComposeManifests"}`, `href`, `id`)
 
 			// get the logs
 			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", finalizeID), ``, http.StatusOK, `{"kind":"ComposeLogs"}`, `koji`, `image_builds`, `href`, `id`)

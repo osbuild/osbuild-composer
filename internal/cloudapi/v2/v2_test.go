@@ -654,7 +654,8 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"kind": "ComposeManifests",
 		"manifests": [
 			{
-				"pipeline": {},
+				"version": "",
+				"pipelines": [],
 				"sources": {}
 			}
 		]
