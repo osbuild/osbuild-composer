@@ -129,6 +129,9 @@ case "${ID}-${VERSION_ID}" in
     centos-9)
         OS_VARIANT="centos-stream9"
         ;;
+    fedora-*)
+        OS_VARIANT="fedora-unknown"
+        ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
