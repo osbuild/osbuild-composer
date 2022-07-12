@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
@@ -49,4 +50,10 @@ func (p *QCOW2) serialize() osbuild.Pipeline {
 
 func (p *QCOW2) getBuildPackages() []string {
 	return []string{"qemu-img"}
+}
+
+func (p *QCOW2) Export() *artifact.Artifact {
+	p.Base.export = true
+	mimeType := "application/x-qemu-disk"
+	return artifact.New(p.Name(), p.Filename, &mimeType)
 }
