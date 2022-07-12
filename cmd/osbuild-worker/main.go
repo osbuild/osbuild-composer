@@ -431,11 +431,6 @@ func main() {
 				SkipSSLVerification: genericS3SkipSSLVerification,
 			},
 		},
-		worker.JobTypeOSBuildKoji: &OSBuildKojiJobImpl{
-			Store:       store,
-			Output:      output,
-			KojiServers: kojiServers,
-		},
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
 			KojiServers: kojiServers,
 		},

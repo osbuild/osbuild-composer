@@ -17,8 +17,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/sirupsen/logrus"
+
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -29,7 +30,6 @@ import (
 
 const (
 	JobTypeOSBuild        string = "osbuild"
-	JobTypeOSBuildKoji    string = "osbuild-koji"
 	JobTypeKojiInit       string = "koji-init"
 	JobTypeKojiFinalize   string = "koji-finalize"
 	JobTypeDepsolve       string = "depsolve"
@@ -126,14 +126,6 @@ func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, depend
 	return s.enqueue(JobTypeOSBuild+":"+arch, job, dependencies, channel)
 }
 
-func (s *Server) EnqueueOSBuildKoji(arch string, job *OSBuildKojiJob, initID uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeOSBuildKoji+":"+arch, job, []uuid.UUID{initID}, channel)
-}
-
-func (s *Server) EnqueueOSBuildKojiAsDependency(arch string, job *OSBuildKojiJob, manifestID, initID uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeOSBuildKoji+":"+arch, job, []uuid.UUID{initID, manifestID}, channel)
-}
-
 func (s *Server) EnqueueKojiInit(job *KojiInitJob, channel string) (uuid.UUID, error) {
 	return s.enqueue(JobTypeKojiInit, job, nil, channel)
 }
@@ -198,14 +190,6 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 		}
 		jobResult = &kojiInitJR.JobResult
 
-	case JobTypeOSBuildKoji:
-		var osbuildKojiJR OSBuildKojiJobResult
-		_, jobDeps, err = s.OSBuildKojiJobStatus(id, &osbuildKojiJR)
-		if err != nil {
-			return nil, err
-		}
-		jobResult = &osbuildKojiJR.JobResult
-
 	case JobTypeKojiFinalize:
 		var kojiFinalizeJR KojiFinalizeJobResult
 		_, jobDeps, err = s.KojiFinalizeJobStatus(id, &kojiFinalizeJR)
@@ -266,29 +250,6 @@ func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobS
 	// top-level `Success` flag. Override it here by looking into the job.
 	if !result.Success && result.OSBuildOutput != nil {
 		result.Success = result.OSBuildOutput.Success && result.JobError == nil
-	}
-
-	return status, deps, nil
-}
-
-func (s *Server) OSBuildKojiJobStatus(id uuid.UUID, result *OSBuildKojiJobResult) (*JobStatus, []uuid.UUID, error) {
-	jobType, _, status, deps, err := s.jobStatus(id, result)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if !strings.HasPrefix(jobType, JobTypeOSBuildKoji+":") { // Build jobs get automatic arch suffix: Check prefix
-		return nil, nil, fmt.Errorf("expected \"%s:*\", found %q job instead", JobTypeOSBuildKoji, jobType)
-	}
-
-	if result.JobError == nil && !status.Finished.IsZero() {
-		if result.OSBuildOutput == nil {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")
-		} else if len(result.OSBuildOutput.Error) > 0 {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, string(result.OSBuildOutput.Error))
-		} else if result.KojiError != "" {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.KojiError)
-		}
 	}
 
 	return status, deps, nil
@@ -401,24 +362,6 @@ func (s *Server) OSBuildJob(id uuid.UUID, job *OSBuildJob) error {
 	return nil
 }
 
-// OSBuildKojiJob returns the parameters of an OSBuildKojiJob
-func (s *Server) OSBuildKojiJob(id uuid.UUID, job *OSBuildKojiJob) error {
-	jobType, rawArgs, _, _, err := s.jobs.Job(id)
-	if err != nil {
-		return err
-	}
-
-	if !strings.HasPrefix(jobType, JobTypeOSBuildKoji+":") { // Build jobs get automatic arch suffix: Check prefix
-		return fmt.Errorf("expected %s:*, found %q job instead for job '%s'", JobTypeOSBuildKoji, jobType, id)
-	}
-
-	if err := json.Unmarshal(rawArgs, job); err != nil {
-		return fmt.Errorf("error unmarshaling arguments for job '%s': %v", id, err)
-	}
-
-	return nil
-}
-
 func (s *Server) JobChannel(id uuid.UUID) (string, error) {
 	_, _, _, channel, err := s.jobs.Job(id)
 	return channel, err
@@ -505,7 +448,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	// restriction: arch for osbuild jobs.
 	jts := []string{}
 	for _, t := range jobTypes {
-		if t == JobTypeOSBuild || t == JobTypeOSBuildKoji {
+		if t == JobTypeOSBuild {
 			t = t + ":" + arch
 		}
 		if t == JobTypeManifestIDOnly {
@@ -571,8 +514,6 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	prometheus.DequeueJobMetrics(pending, status.Started, jobType, channel)
 	if jobType == JobTypeOSBuild+":"+arch {
 		jobType = JobTypeOSBuild
-	} else if jobType == JobTypeOSBuildKoji+":"+arch {
-		jobType = JobTypeOSBuildKoji
 	}
 
 	return
