@@ -114,6 +114,13 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_OSNAME=fedora
         OS_VARIANT="fedora35"
         ;;
+    "fedora-36")
+        CONTAINER_TYPE=fedora-iot-container
+        INSTALLER_TYPE=fedora-iot-installer
+        OSTREE_REF="fedora/36/${ARCH}/iot"
+        OSTREE_OSNAME=fedora
+        OS_VARIANT="fedora36"
+        ;;
     "rhel-8.7")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
