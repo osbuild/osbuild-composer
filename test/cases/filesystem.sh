@@ -183,10 +183,6 @@ mountpoint = "/srv"
 size = 131072000
 
 [[customizations.filesystem]]
-mountpoint = "/app"
-size = 131072000
-
-[[customizations.filesystem]]
 mountpoint = "/data"
 size = 131072000
 EOF
