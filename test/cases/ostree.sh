@@ -21,6 +21,13 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/35/Everything/x86_64/os/"
         ;;
+    "fedora-36")
+        IMAGE_TYPE=fedora-iot-commit
+        OSTREE_REF="fedora/36/${ARCH}/iot"
+        OS_VARIANT="fedora36"
+        USER_IN_COMMIT="false"
+        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/36/Everything/x86_64/os/"
+        ;;
     "rhel-8.4")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
