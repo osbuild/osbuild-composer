@@ -604,7 +604,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 
 	t.Logf("%q job ID: %s", worker.JobTypeKojiInit, initID)
 	t.Logf("%q job ID: %s", worker.JobTypeKojiFinalize, finalizeID)
-	t.Logf("%q job IDs: %v", worker.JobTypeOSBuildKoji, buildJobIDs)
+	t.Logf("%q job IDs: %v", worker.JobTypeOSBuild, buildJobIDs)
 	for _, path := range []string{"", "/manifests", "/logs"} {
 		// should return OK - actual result should be tested elsewhere
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s%s", finalizeID, path), ``, http.StatusOK, "*")

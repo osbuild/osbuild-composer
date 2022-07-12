@@ -924,15 +924,6 @@ func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
 			}
 
 			switch buildJobType {
-			// TODO: remove eventually. Kept for backward compatibility
-			case worker.JobTypeOSBuildKoji:
-				var buildResult worker.OSBuildKojiJobResult
-				_, _, err = h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
-				if err != nil {
-					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-				}
-				buildResultBlobs = append(buildResultBlobs, buildResult)
-
 			case worker.JobTypeOSBuild:
 				var buildResult worker.OSBuildJobResult
 				_, _, err = h.server.workers.OSBuildJobStatus(deps[i], &buildResult)
@@ -1026,28 +1017,6 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 			var manifest distro.Manifest
 
 			switch buildJobType {
-			// TODO: remove eventually. Kept for backward compatibility
-			case worker.JobTypeOSBuildKoji:
-				var buildJob worker.OSBuildKojiJob
-				err = h.server.workers.OSBuildKojiJob(deps[i], &buildJob)
-				if err != nil {
-					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-				}
-
-				if len(buildJob.Manifest) != 0 {
-					manifest = buildJob.Manifest
-				} else {
-					_, buildDeps, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &worker.OSBuildKojiJobResult{})
-					if err != nil {
-						return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-					}
-					manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildDeps)
-					if err != nil {
-						return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
-					}
-					manifest = manifestResult.Manifest
-				}
-
 			case worker.JobTypeOSBuild:
 				var buildJob worker.OSBuildJob
 				err = h.server.workers.OSBuildJob(deps[i], &buildJob)

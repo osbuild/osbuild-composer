@@ -89,27 +89,6 @@ type KojiInitJobResult struct {
 	JobResult
 }
 
-type OSBuildKojiJob struct {
-	Manifest      distro.Manifest `json:"manifest,omitempty"`
-	ImageName     string          `json:"image_name"`
-	Exports       []string        `json:"exports"`
-	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`
-	KojiServer    string          `json:"koji_server"`
-	KojiDirectory string          `json:"koji_directory"`
-	KojiFilename  string          `json:"koji_filename"`
-}
-
-type OSBuildKojiJobResult struct {
-	HostOS        string          `json:"host_os"`
-	Arch          string          `json:"arch"`
-	OSBuildOutput *osbuild.Result `json:"osbuild_output"`
-	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`
-	ImageHash     string          `json:"image_hash"`
-	ImageSize     uint64          `json:"image_size"`
-	KojiError     string          `json:"koji_error"` // not set by any code other than unit tests
-	JobResult
-}
-
 type KojiFinalizeJob struct {
 	Server        string   `json:"server"`
 	Name          string   `json:"name"`
@@ -327,41 +306,5 @@ func (j *OSBuildJobResult) UnmarshalJSON(data []byte) error {
 		}
 	}
 	*j = OSBuildJobResult(alias)
-	return nil
-}
-
-func (j *OSBuildKojiJob) UnmarshalJSON(data []byte) error {
-	// handles unmarshalling old jobs in the queue that don't contain newer fields
-	// adds default/fallback values to missing data
-	type aliastype OSBuildKojiJob
-	var alias aliastype
-	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
-	}
-	if alias.PipelineNames == nil {
-		alias.PipelineNames = &PipelineNames{
-			Build:   distro.BuildPipelinesFallback(),
-			Payload: distro.PayloadPipelinesFallback(),
-		}
-	}
-	*j = OSBuildKojiJob(alias)
-	return nil
-}
-
-func (j *OSBuildKojiJobResult) UnmarshalJSON(data []byte) error {
-	// handles unmarshalling old jobs in the queue that don't contain newer fields
-	// adds default/fallback values to missing data
-	type aliastype OSBuildKojiJobResult
-	var alias aliastype
-	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
-	}
-	if alias.PipelineNames == nil {
-		alias.PipelineNames = &PipelineNames{
-			Build:   distro.BuildPipelinesFallback(),
-			Payload: distro.PayloadPipelinesFallback(),
-		}
-	}
-	*j = OSBuildKojiJobResult(alias)
 	return nil
 }
