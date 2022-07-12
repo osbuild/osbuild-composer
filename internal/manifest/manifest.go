@@ -98,3 +98,13 @@ func (m Manifest) GetCheckpoints() []string {
 	}
 	return checkpoints
 }
+
+func (m Manifest) GetExports() []string {
+	exports := []string{}
+	for _, p := range m.pipelines {
+		if p.getExport() {
+			exports = append(exports, p.Name())
+		}
+	}
+	return exports
+}

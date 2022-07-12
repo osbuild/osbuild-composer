@@ -7,6 +7,7 @@
 package manifest
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -15,7 +16,9 @@ import (
 type Pipeline interface {
 	Name() string
 	Checkpoint()
+	Export() *artifact.Artifact
 	getCheckpoint() bool
+	getExport() bool
 	getBuildPackages() []string
 	getPackageSetChain() []rpmmd.PackageSet
 	serializeStart([]rpmmd.PackageSpec)
@@ -33,6 +36,7 @@ type Base struct {
 	name       string
 	build      *Build
 	checkpoint bool
+	export     bool
 }
 
 // Name returns the name of the pipeline. The name must be unique for a given manifest.
@@ -48,6 +52,14 @@ func (p *Base) Checkpoint() {
 
 func (p Base) getCheckpoint() bool {
 	return p.checkpoint
+}
+
+func (p *Base) Export() *artifact.Artifact {
+	panic("can't export pipeline")
+}
+
+func (p Base) getExport() bool {
+	return p.export
 }
 
 func (p Base) GetManifest() *Manifest {

@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
@@ -44,4 +45,10 @@ func (p *VPC) serialize() osbuild.Pipeline {
 
 func (p *VPC) getBuildPackages() []string {
 	return []string{"qemu-img"}
+}
+
+func (p *VPC) Export() *artifact.Artifact {
+	p.Base.export = true
+	mimeType := "application/x-vhd"
+	return artifact.New(p.Name(), p.Filename, &mimeType)
 }
