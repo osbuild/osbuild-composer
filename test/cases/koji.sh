@@ -56,13 +56,8 @@ elif [[ "$DISTRO_CODE" == rhel-9* ]]; then
   DISTRO_CODE=rhel-91
 fi
 
-if [ "${COMPOSER_API:=true}" == "true" ]; then
-    greenprint "Pushing compose to Koji (/api/image-builder-comoser/v2/"
-    sudo /usr/libexec/osbuild-composer-test/koji-compose-v2.py "$DISTRO_CODE" "${ARCH}"
-else
-    greenprint "Pushing compose to Koji (/api/comoser-koji/v1/"
-    sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_CODE" "${ARCH}"
-fi
+greenprint "Pushing compose to Koji (/api/image-builder-comoser/v2/"
+sudo /usr/libexec/osbuild-composer-test/koji-compose.py "$DISTRO_CODE" "${ARCH}"
 
 greenprint "Show Koji task"
 koji --server=http://localhost:8080/kojihub taskinfo 1
