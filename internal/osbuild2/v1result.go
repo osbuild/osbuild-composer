@@ -4,18 +4,9 @@ package osbuild2
 
 import (
 	"encoding/json"
-	"strings"
 )
 
 type v1StageResult struct {
-	Name     string          `json:"name"`
-	Options  json.RawMessage `json:"options"`
-	Success  bool            `json:"success"`
-	Output   string          `json:"output"`
-	Metadata StageMetadata   `json:"metadata"`
-}
-
-type v1RawStageResult struct {
 	Name     string          `json:"name"`
 	Options  json.RawMessage `json:"options"`
 	Success  bool            `json:"success"`
@@ -38,40 +29,7 @@ type v1Result struct {
 	Success   bool            `json:"success"`
 }
 
-func (result *v1StageResult) UnmarshalJSON(data []byte) error {
-	var rawStageResult v1RawStageResult
-	err := json.Unmarshal(data, &rawStageResult)
-	if err != nil {
-		return err
-	}
-	var metadata StageMetadata
-	switch {
-	case strings.HasSuffix(rawStageResult.Name, "org.osbuild.rpm"):
-		metadata = new(RPMStageMetadata)
-		err = json.Unmarshal(rawStageResult.Metadata, metadata)
-		if err != nil {
-			return err
-		}
-	case strings.HasSuffix(rawStageResult.Name, "org.osbuild.ostree.commit"):
-		metadata = new(OSTreeCommitStageMetadata)
-		err = json.Unmarshal(rawStageResult.Metadata, metadata)
-		if err != nil {
-			return err
-		}
-	default:
-		metadata = RawStageMetadata(rawStageResult.Metadata)
-	}
-
-	result.Name = rawStageResult.Name
-	result.Options = rawStageResult.Options
-	result.Success = rawStageResult.Success
-	result.Output = rawStageResult.Output
-	result.Metadata = metadata
-
-	return nil
-}
-
-func (res *Result) fromV1(resv1 v1Result) {
+func (res *Result) fromV1(resv1 v1Result) error {
 	res.Success = resv1.Success
 	res.Type = "result"
 
@@ -80,7 +38,10 @@ func (res *Result) fromV1(resv1 v1Result) {
 
 	// make build pipeline from build result
 	if resv1.Build != nil {
-		buildResult, buildMetadata := convertStageResults(resv1.Build.Stages)
+		buildResult, buildMetadata, err := convertStageResults(resv1.Build.Stages)
+		if err != nil {
+			return err
+		}
 		log["build"] = buildResult
 		if len(buildMetadata) > 0 {
 			metadata["build"] = buildMetadata
@@ -89,7 +50,10 @@ func (res *Result) fromV1(resv1 v1Result) {
 
 	// make assembler pipeline from assembler result
 	if resv1.Assembler != nil {
-		assemblerResult, assemblerMetadata := convertStageResult(resv1.Assembler)
+		assemblerResult, assemblerMetadata, err := convertStageResult(resv1.Assembler)
+		if err != nil {
+			return err
+		}
 		log["assembler"] = []StageResult{*assemblerResult}
 		if assemblerMetadata != nil {
 			metadata["assembler"] = map[string]StageMetadata{
@@ -100,7 +64,10 @@ func (res *Result) fromV1(resv1 v1Result) {
 
 	// make os pipeline from main stage results
 	if len(resv1.Stages) > 0 {
-		osResult, osMetadata := convertStageResults(resv1.Stages)
+		osResult, osMetadata, err := convertStageResults(resv1.Stages)
+		if err != nil {
+			return err
+		}
 		log["os"] = osResult
 		if len(osMetadata) > 0 {
 			metadata["os"] = osMetadata
@@ -109,24 +76,28 @@ func (res *Result) fromV1(resv1 v1Result) {
 
 	res.Log = log
 	res.Metadata = metadata
+	return nil
 }
 
-func convertStageResults(v1Stages []v1StageResult) (PipelineResult, PipelineMetadata) {
+func convertStageResults(v1Stages []v1StageResult) (PipelineResult, PipelineMetadata, error) {
 	result := make([]StageResult, len(v1Stages))
 	metadata := make(map[string]StageMetadata)
 	for idx, srv1 := range v1Stages {
 		// Implicit memory alasing doesn't couse any bug in this case
 		/* #nosec G601 */
-		stageResult, stageMetadata := convertStageResult(&srv1)
+		stageResult, stageMetadata, err := convertStageResult(&srv1)
+		if err != nil {
+			return nil, nil, err
+		}
 		result[idx] = *stageResult
 		if stageMetadata != nil {
 			metadata[stageResult.Type] = stageMetadata
 		}
 	}
-	return result, metadata
+	return result, metadata, nil
 }
 
-func convertStageResult(sr1 *v1StageResult) (*StageResult, StageMetadata) {
+func convertStageResult(sr1 *v1StageResult) (*StageResult, StageMetadata, error) {
 	sr := &StageResult{
 		ID:      "",
 		Type:    sr1.Name,
@@ -135,10 +106,23 @@ func convertStageResult(sr1 *v1StageResult) (*StageResult, StageMetadata) {
 		Error:   "",
 	}
 
-	// the two metadata types we care about (RPM and ostree-commit) share the
-	// same structure across v1 and v2 result types, so no conversion is
-	// necessary
-	return sr, sr1.Metadata
+	var metadata StageMetadata
+	switch sr1.Name {
+	case "org.osbuild.rpm":
+		metadata = new(RPMStageMetadata)
+		if err := json.Unmarshal(sr1.Metadata, metadata); err != nil {
+			return nil, nil, err
+		}
+	case "org.osbuild.ostree.commit":
+		metadata = new(OSTreeCommitStageMetadata)
+		if err := json.Unmarshal(sr1.Metadata, metadata); err != nil {
+			return nil, nil, err
+		}
+	default:
+		metadata = RawStageMetadata(sr1.Metadata)
+	}
+
+	return sr, metadata, nil
 }
 
 // isV1Result returns true if data contains a json-encoded osbuild result

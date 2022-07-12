@@ -100,8 +100,7 @@ func (res *Result) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(data, &resv1); err != nil {
 			return err
 		}
-		res.fromV1(resv1)
-		return nil
+		return res.fromV1(resv1)
 	}
 
 	// otherwise, unmarshal using a type alias to prevent recursive calls to
