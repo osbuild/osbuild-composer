@@ -151,10 +151,6 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		logger = log.New(os.Stdout, "", 0)
 	}
 
-	hostDistroName, err := common.GetHostDistroName()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read host distro information")
-	}
 	archName := common.CurrentArch()
 
 	rr, err := reporegistry.New(repoPaths)
@@ -163,24 +159,28 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 	}
 
 	var hostArch distro.Arch
-	hostDistro := dr.GetDistro(hostDistroName)
+	hostDistro := dr.FromHost()
+	hostDistroName := ""
 	if hostDistro != nil {
-		// get canonical distro name if the host distro is supported
 		hostDistroName = hostDistro.Name()
-
 		hostArch, err = hostDistro.GetArch(archName)
 		if err != nil {
 			return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
 		}
 
 		// Check if repositories for the host distro and arch were loaded
-		_, err = rr.ReposByArchName(hostDistroName, archName, false)
+		_, err = rr.ReposByArchName(hostDistro.Name(), archName, false)
 		if err != nil {
 			log.Printf("loaded repository definitions don't contain any for the host distro/arch: %v", err)
 		}
-
 	} else {
-		log.Printf("host distro %q is not supported: only cross-distro builds are available", hostDistroName)
+		// read the host distro name for the log line and to set in the API even though it's not supported
+		hostDistroName, err = common.GetHostDistroName()
+		if err != nil {
+			log.Print("failed to read host distro information: only cross-distro builds are available")
+		} else {
+			log.Printf("host distro %q is not supported: only cross-distro builds are available", hostDistroName)
+		}
 	}
 
 	store := store.New(&stateDir, hostArch, logger)
