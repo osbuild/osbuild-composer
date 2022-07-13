@@ -266,15 +266,6 @@ func installerPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}
 
-	switch t.Arch().Name() {
-	case distro.X86_64ArchName:
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"biosdevname",
-			},
-		})
-	}
-
 	return ps
 }
 
