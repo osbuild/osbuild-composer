@@ -19,6 +19,10 @@ actions:
   post-upstream-clone: "./tools/rpm_spec_add_provides_bundle.sh"
 
 jobs:
+- job: bodhi_update
+  trigger: commit
+  dist_git_branches:
+    - fedora-stable # rawhide updates are created automatically
 - job: koji_build
   trigger: commit
   metadata:
