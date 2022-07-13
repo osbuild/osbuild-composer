@@ -16,19 +16,19 @@ import (
 // When adding support for a new distribution, add it here.
 // Note that this is a constant, do not write to this array.
 var supportedDistros = []distroCtor{
-	fedora.NewF35,
-	fedora.NewF36,
+	fedora.NewF35, // Supported (previous)
+	fedora.NewF36, // Supported (current)
 	rhel7.New,
 	rhel8.New,
-	rhel8.NewRHEL84,
-	rhel8.NewRHEL85,
-	rhel8.NewRHEL86,
-	rhel8.NewRHEL87,
-	rhel8.NewCentos,
+	rhel8.NewRHEL84, // EUS
+	rhel8.NewRHEL85, // EOL 2022-05-10
+	rhel8.NewRHEL86, // Supported (current GA)
+	rhel8.NewRHEL87, // Dev (next)
+	rhel8.NewCentos, // CS8 rolling
 	rhel9.New,
-	rhel9.NewRHEL90,
-	rhel9.NewRHEL91,
-	rhel9.NewCentos,
+	rhel9.NewRHEL90, // Supported (current GA)
+	rhel9.NewRHEL91, // Dev (next)
+	rhel9.NewCentos, // CS9 rolling
 }
 
 type distroCtor func() distro.Distro
