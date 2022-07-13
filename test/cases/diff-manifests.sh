@@ -44,8 +44,14 @@ if [[ "${head}" == "${mergebase}" ]]; then
     exit 0
 fi
 
-greenprint "Installing go"
-sudo dnf install -y go
+# We are compiling things, install the build requirements
+greenprint "Installing build dependencies"
+# first we need to install the rpm macros so that dnf can parse our spec file
+sudo dnf install -y redhat-rpm-config
+# we need to have access to codeready-builder repos for the dependencies
+sudo dnf config-manager --set-enabled codeready-builder-for-rhel-9-rhui-rpms
+# now install our build requirements
+sudo dnf build-dep -y osbuild-composer.spec
 
 manifestdir=$(mktemp -d)
 
