@@ -568,6 +568,7 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 		Backend       string   `json:"backend"`
 		Build         string   `json:"build"`
 		Messages      []string `json:"msgs"`
+		HostDistro    string   `json:"host_distro"`
 	}
 
 	err := json.NewEncoder(writer).Encode(reply{
@@ -578,6 +579,7 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 		Backend:       "osbuild-composer",
 		Build:         common.BuildVersion(),
 		Messages:      make([]string, 0),
+		HostDistro:    api.hostDistroName,
 	})
 	common.PanicOnError(err)
 }
