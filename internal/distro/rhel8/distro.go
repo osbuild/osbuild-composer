@@ -294,7 +294,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error)
+type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -417,6 +417,11 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		}
 	}
 
+	// if we are embedding containers we need to have `skopeo` in the build root
+	if len(bp.Containers) > 0 {
+		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(rpmmd.PackageSet{Include: []string{"skopeo"}})
+	}
+
 	// depsolve bp packages separately
 	// bp packages aren't restricted by exclude lists
 	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
@@ -525,7 +530,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	pipelines, err := t.pipelines(t, customizations, options, repos, packageSpecSets, rng)
+	pipelines, err := t.pipelines(t, customizations, options, repos, packageSpecSets, containers, rng)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
@@ -562,7 +567,10 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
 
-	if len(containers) > 0 {
+	// we support embedding containers on all image types that are not ostree based
+	// since we need to store them outside `/var` since that is not preserved in
+	// commits and then point the container `storage.conf` to that extra location
+	if t.rpmOstree && len(containers) > 0 {
 		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
