@@ -63,7 +63,7 @@ func NewDefault() *Registry {
 	// If there was an error, then the hostDistroName will be an empty string
 	// and as a result, the hostDistro will have a nil value when calling New().
 	// Getting the host distro later using FromHost() will return nil as well.
-	hostDistroName, _, _, _ := common.GetHostDistroName()
+	hostDistroName, _ := common.GetHostDistroName()
 
 	for _, supportedDistro := range supportedDistros {
 		distro := supportedDistro()

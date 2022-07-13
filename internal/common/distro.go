@@ -10,29 +10,23 @@ import (
 	"strings"
 )
 
-func GetHostDistroName() (string, bool, bool, error) {
+// GetHostDistroName returns the name and major version of the host
+// distribution in the form <name>-<major version> (e.g., rhel-8, centos-9,
+// fedora-42)
+func GetHostDistroName() (string, error) {
 	f, err := os.Open("/etc/os-release")
 	if err != nil {
-		return "", false, false, err
+		return "", err
 	}
 	defer f.Close()
 	osrelease, err := readOSRelease(f)
 	if err != nil {
-		return "", false, false, err
+		return "", err
 	}
 
-	isStream := osrelease["NAME"] == "CentOS Stream"
-
-	// NOTE: We only consider major releases up until rhel 8.4
 	version := strings.Split(osrelease["VERSION_ID"], ".")
 	name := osrelease["ID"] + "-" + version[0]
-	if osrelease["ID"] == "rhel" && ((version[0] == "8" && version[1] >= "4") || version[0] == "9") {
-		name = name + version[1]
-	}
-
-	// TODO: We should probably index these things by the full CPE
-	beta := strings.Contains(osrelease["CPE_NAME"], "beta")
-	return name, beta, isStream, nil
+	return name, nil
 }
 
 // GetRedHatRelease returns the content of /etc/redhat-release
