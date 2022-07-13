@@ -566,23 +566,11 @@ func New() distro.Distro {
 	return newDistro("rhel-90")
 }
 
-func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-90")
-}
-
 func NewRHEL91() distro.Distro {
 	return newDistro("rhel-91")
 }
 
-func NewRHEL91HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-91")
-}
-
 func NewCentos() distro.Distro {
-	return newDistro("centos-9")
-}
-
-func NewCentosHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("centos-9")
 }
 

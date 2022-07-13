@@ -632,15 +632,7 @@ func New() distro.Distro {
 	return newDistro("rhel-8")
 }
 
-func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-8")
-}
-
 func NewRHEL84() distro.Distro {
-	return newDistro("rhel-84")
-}
-
-func NewRHEL84HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("rhel-84")
 }
 
@@ -648,15 +640,7 @@ func NewRHEL85() distro.Distro {
 	return newDistro("rhel-85")
 }
 
-func NewRHEL85HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-85")
-}
-
 func NewRHEL86() distro.Distro {
-	return newDistro("rhel-86")
-}
-
-func NewRHEL86HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("rhel-86")
 }
 
@@ -664,15 +648,7 @@ func NewRHEL87() distro.Distro {
 	return newDistro("rhel-87")
 }
 
-func NewRHEL87HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-87")
-}
-
 func NewCentos() distro.Distro {
-	return newDistro("centos-8")
-}
-
-func NewCentosHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("centos-8")
 }
 

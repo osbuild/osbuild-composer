@@ -450,10 +450,6 @@ func New() distro.Distro {
 	return newDistro("rhel-7")
 }
 
-func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-7")
-}
-
 func newDistro(distroName string) distro.Distro {
 
 	rd := distroMap[distroName]

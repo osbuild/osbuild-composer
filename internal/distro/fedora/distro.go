@@ -698,10 +698,6 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 	return nil
 }
 
-func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro(name)
-}
-
 // New creates a new distro object, defining the supported architectures and image types
 func NewF35() distro.Distro {
 	return newDistro(fedora35Distribution)
