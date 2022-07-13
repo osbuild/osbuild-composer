@@ -110,6 +110,9 @@ func (p *Anaconda) getBuildPackages() []string {
 
 func (p *Anaconda) getPackageSetChain() []rpmmd.PackageSet {
 	packages := p.anacondaBootPackageSet()
+	if p.Biosdevname {
+		packages = append(packages, "biosdevname")
+	}
 	return []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraPackages...),
