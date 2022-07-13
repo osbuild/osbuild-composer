@@ -74,6 +74,18 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 
 // distribution objects without the arches > image types
 var distroMap = map[string]distribution{
+	"rhel-9": {
+		name:               "rhel-9",
+		product:            "Red Hat Enterprise Linux",
+		osVersion:          "9.0",
+		releaseVersion:     "9",
+		modulePlatformID:   "platform:el9",
+		vendor:             "redhat",
+		ostreeRefTmpl:      "rhel/9/%s/edge",
+		isolabelTmpl:       "RHEL-9-0-0-BaseOS-%s",
+		runner:             "org.osbuild.rhel90",
+		defaultImageConfig: defaultDistroImageConfig,
+	},
 	"rhel-90": {
 		name:               "rhel-90",
 		product:            "Red Hat Enterprise Linux",
@@ -563,6 +575,10 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
+	return newDistro("rhel-9")
+}
+
+func NewRHEL90() distro.Distro {
 	return newDistro("rhel-90")
 }
 

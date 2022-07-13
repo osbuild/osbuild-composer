@@ -26,6 +26,7 @@ var supportedDistros = []distroCtor{
 	rhel8.NewRHEL87,
 	rhel8.NewCentos,
 	rhel9.New,
+	rhel9.NewRHEL90,
 	rhel9.NewRHEL91,
 	rhel9.NewCentos,
 }

@@ -540,12 +540,12 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 	}
 }
 
-func TestRhel90_ListArches(t *testing.T) {
+func TestRhel9_ListArches(t *testing.T) {
 	arches := rhel9.New().ListArches()
 	assert.Equal(t, []string{"aarch64", "ppc64le", "s390x", "x86_64"}, arches)
 }
 
-func TestRhel90_GetArch(t *testing.T) {
+func TestRhel9_GetArch(t *testing.T) {
 	arches := []struct {
 		name                  string
 		errorExpected         bool
@@ -585,17 +585,17 @@ func TestRhel90_GetArch(t *testing.T) {
 	}
 }
 
-func TestRhel90_Name(t *testing.T) {
+func TestRhel9_Name(t *testing.T) {
 	distro := rhel9.New()
-	assert.Equal(t, "rhel-90", distro.Name())
+	assert.Equal(t, "rhel-9", distro.Name())
 }
 
-func TestRhel90_ModulePlatformID(t *testing.T) {
+func TestRhel9_ModulePlatformID(t *testing.T) {
 	distro := rhel9.New()
 	assert.Equal(t, "platform:el9", distro.ModulePlatformID())
 }
 
-func TestRhel90_KernelOption(t *testing.T) {
+func TestRhel9_KernelOption(t *testing.T) {
 	distro_test_common.TestDistro_KernelOption(t, rhel9.New())
 }
 
