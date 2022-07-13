@@ -680,9 +680,12 @@ ContainerEmbedding:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-embedding.sh
-  variables:
-    RUNNER: aws/centos-stream-9-x86_64
-    INTERNAL_NETWORK: "true"
+  parallel:
+    matrix:
+      - INTERNAL_NETWORK: "true"
+        RUNNER:
+        - aws/centos-stream-8-x86_64
+        - aws/centos-stream-9-x86_64
 
 finish:
   stage: finish
