@@ -36,6 +36,8 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
+const GigaByte = 1024 * 1024 * 1024
+
 var mountpointAllowList = []string{
 	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
 }
@@ -591,7 +593,6 @@ func NewCentos() distro.Distro {
 }
 
 func newDistro(distroName string) distro.Distro {
-	const GigaByte = 1024 * 1024 * 1024
 
 	rd := distroMap[distroName]
 
