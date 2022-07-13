@@ -2,7 +2,7 @@
   "fedora-35": {
     "dependencies": {
       "osbuild": {
-        "commit": "d602b5ff7f40dd3abb956d29aa0c7573e6e0ed29"
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
       }
     },
     "repos": [
@@ -156,21 +156,21 @@
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "d602b5ff7f40dd3abb956d29aa0c7573e6e0ed29"
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
       }
     }
   },
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
-        "commit": "d602b5ff7f40dd3abb956d29aa0c7573e6e0ed29"
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
       }
     }
   },
   "rhel-8.7": {
     "dependencies": {
       "osbuild": {
-        "commit": "d602b5ff7f40dd3abb956d29aa0c7573e6e0ed29"
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
       }
     },
     "repos": [
@@ -216,14 +216,14 @@
   "rhel-9.0": {
     "dependencies": {
       "osbuild": {
-        "commit": "d602b5ff7f40dd3abb956d29aa0c7573e6e0ed29"
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
       }
     }
   },
   "rhel-9.1": {
     "dependencies": {
       "osbuild": {
-        "commit": "d602b5ff7f40dd3abb956d29aa0c7573e6e0ed29"
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
       }
     },
     "repos": [
@@ -269,18 +269,23 @@
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "d602b5ff7f40dd3abb956d29aa0c7573e6e0ed29"
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
       }
     }
   },
   "centos-9": {
     "dependencies": {
       "osbuild": {
-        "commit": "d602b5ff7f40dd3abb956d29aa0c7573e6e0ed29"
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
       }
     }
   },
   "centos-stream-9": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
+      }
+    },
     "repos": [
       {
         "file": "/etc/yum.repos.d/centos.repo",
@@ -322,6 +327,11 @@
     ]
   },
   "centos-stream-8": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "51315a985aa3c26179acead9459db9c249a8b4f6"
+      }
+    },
     "repos": [
       {
         "file": "/etc/yum.repos.d/CentOS-Stream-BaseOS.repo",
