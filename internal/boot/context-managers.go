@@ -118,7 +118,7 @@ func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 		if common.CurrentArch() == "x86_64" {
 			hostDistroName, err := common.GetHostDistroName()
 			if err != nil {
-				return fmt.Errorf("cannot determing the current distro: %v", err)
+				return fmt.Errorf("cannot determine the current distro: %v", err)
 			}
 
 			var qemuPath string
