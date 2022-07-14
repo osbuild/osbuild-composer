@@ -156,10 +156,13 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 	}
 
 	if p.Workload != nil {
-		chain = append(chain, rpmmd.PackageSet{
-			Include:      p.Workload.GetPackages(),
-			Repositories: append(p.repos, p.Workload.GetRepos()...),
-		})
+		workloadPackages := p.Workload.GetPackages()
+		if len(workloadPackages) > 0 {
+			chain = append(chain, rpmmd.PackageSet{
+				Include:      workloadPackages,
+				Repositories: append(p.repos, p.Workload.GetRepos()...),
+			})
+		}
 	}
 
 	return chain
