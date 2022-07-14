@@ -1,5 +1,13 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
-COPY . .
+FROM fedora:35 AS builder
+ENV GOBIN=/opt/app-root/src/go/bin
+# extra packages are needed
+# to compile osbuild
+RUN dnf install -y golang \
+  krb5-devel \
+  gpgme-devel \
+  libassuan-devel
+WORKDIR /osbuild-composer
+COPY . /osbuild-composer
 ENV GOFLAGS=-mod=vendor
 RUN go install ./cmd/osbuild-worker
 
