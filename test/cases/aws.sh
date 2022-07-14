@@ -218,7 +218,7 @@ fi
 
 greenprint "Cloning cloud-image-val from upstream"
 
-release_version="v0.1.0"
+release_version="v0.2.3"
 git clone https://github.com/osbuild/cloud-image-val --branch "${release_version}"
 
 greenprint "Running cloud-image-val on generated image"
