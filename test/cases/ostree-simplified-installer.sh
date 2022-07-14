@@ -25,6 +25,10 @@ function get_build_info() {
 # Start firewalld
 sudo systemctl enable --now firewalld
 
+# Start fdo-aio and test it
+greenprint "Start fdo-aio"
+sudo systemctl enable --now fdo-aio
+
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
@@ -87,13 +91,10 @@ PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
-# FDO server repo commit to checkout
-FDO_SERVER_REPO_COMMIT=c2bab2c3cda954087fe66b683d31bffeac0c7189
-FDO_SERVER_ADDRESS=192.168.200.2
-# FDO admin CLI image version
-FDO_ADMIN_CLI_VERSION=0.4.0
-# FDO Manualfacture server image version
-FDO_MF_SERVER_VERSION=0.4.0
+# fdo-aio service 
+FDO_SERVER_ADDRESS=192.168.100.1
+DIUN_PUB_KEY_HASH=sha256:$(openssl x509 -fingerprint -sha256 -noout -in /etc/fdo/aio/keys/diun_cert.pem | cut -d"=" -f2 | sed 's/://g')
+DIUN_PUB_KEY_ROOT_CERTS=$(cat /etc/fdo/aio/keys/diun_cert.pem)
 ARTIFACTS="ci-artifacts"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
@@ -294,28 +295,6 @@ sudo podman rmi -f -a
 # Prepare stage repo network
 greenprint "🔧 Prepare stage repo network"
 sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create --driver=bridge --subnet=192.168.200.0/24 --gateway=192.168.200.254 edge
-
-###########################################################
-##
-## Prepare fdo server
-##
-###########################################################
-greenprint "🔧 Prepare fdo manufacturing server"
-sudo git clone https://github.com/runcom/fdo-containers
-pushd fdo-containers
-sudo git checkout "$FDO_SERVER_REPO_COMMIT"
-sudo CONTAINER_IMAGE="quay.io/fido-fdo/fdo-admin-cli:$FDO_ADMIN_CLI_VERSION" ./create-keys.sh
-DIUN_PUB_KEY_HASH=$(cat keys/diun_pub_key_hash)
-DIUN_PUB_KEY_ROOT_CERTS=$(cat keys/diun_cert.pem)
-sudo podman run -d \
-  -v "$PWD"/ownership_vouchers:/etc/fdo/ownership_vouchers:z \
-  -v "$PWD"/config/manufacturing-server.yml:/etc/fdo/manufacturing-server.conf.d/00-default.yml:z \
-  -v "$PWD"/keys:/etc/fdo/keys:z \
-  --ip "$FDO_SERVER_ADDRESS" \
-  --name fdo-manufacturing-server \
-  --network edge \
-  "quay.io/fido-fdo/fdo-manufacturing-server:$FDO_MF_SERVER_VERSION"
-popd
 
 # Wait for fdo server to be running
 until [ "$(curl -X POST http://${FDO_SERVER_ADDRESS}:8080/ping)" == "pong" ]; do

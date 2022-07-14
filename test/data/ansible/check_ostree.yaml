@@ -45,28 +45,30 @@
     - set_fact:
         checking_stage: "{{ result_stage.stdout }}"
 
+    # Remove this check because sometimes onboarding happens too fast and /boot/device-credentials will be gone,
+    # and this will cause test unstable.
     # case: check /boot/device-credentials exists
     # simplified installer installed Edge system ONLY
-    - name: check /boot/device-credentials exists
-      stat:
-        path: /boot/device-credentials
-      register: stat_result
+    # - name: check /boot/device-credentials exists
+    #   stat:
+    #     path: /boot/device-credentials
+    #   register: stat_result
 
-    - name: check commit deployed and built
-      block:
-        - assert:
-            that:
-              - stat_result.stat.exists
-            fail_msg: "/boot/device-credentials does not exist"
-            success_msg: "/boot/device-credentials exists"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when: fdo_credential == "true"
+    # - name: check commit deployed and built
+    #   block:
+    #     - assert:
+    #         that:
+    #           - stat_result.stat.exists
+    #         fail_msg: "/boot/device-credentials does not exist"
+    #         success_msg: "/boot/device-credentials exists"
+    #   always:
+    #     - set_fact:
+    #         total_counter: "{{ total_counter | int + 1 }}"
+    #   rescue:
+    #     - name: failed count + 1
+    #       set_fact:
+    #         failed_counter: "{{ failed_counter | int + 1 }}"
+    #   when: fdo_credential == "true"
 
     # case: check ostree commit correctly updated
     - name: get deployed ostree commit
