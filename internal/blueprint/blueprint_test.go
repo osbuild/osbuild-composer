@@ -247,5 +247,5 @@ password = ""
 	assert.Equal(t, "lisa", users[1].Name)
 	assert.Equal(t, "$6$RWdHzrPfoM6BMuIP$gKYlBXQuJgP.G2j2twbOyxYjFDPUQw8Jp.gWe1WD/obX0RMyfgw5vt.Mn/tLLX4mQjaklSiIzoAW3HrVQRg4Q.", *users[1].Password)
 	assert.Equal(t, "maggie", users[2].Name)
-	assert.Equal(t, "", *users[2].Password)
+	assert.Nil(t, users[2].Password)
 }

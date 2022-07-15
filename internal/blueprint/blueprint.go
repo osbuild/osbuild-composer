@@ -144,9 +144,16 @@ func (b *Blueprint) CryptPasswords() error {
 	// Any passwords for users?
 	for i := range b.Customizations.User {
 		// Missing or empty password
-		if b.Customizations.User[i].Password == nil || len(*b.Customizations.User[i].Password) == 0 {
+		if b.Customizations.User[i].Password == nil {
 			continue
 		}
+
+		// Prevent empty password from being hashed
+		if len(*b.Customizations.User[i].Password) == 0 {
+			b.Customizations.User[i].Password = nil
+			continue
+		}
+
 		if !crypt.PasswordIsCrypted(*b.Customizations.User[i].Password) {
 			pw, err := crypt.CryptSHA512(*b.Customizations.User[i].Password)
 			if err != nil {
