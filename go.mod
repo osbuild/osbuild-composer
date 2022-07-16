@@ -37,7 +37,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/openshift-online/ocm-sdk-go v0.1.266
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.12.2
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.4.0
