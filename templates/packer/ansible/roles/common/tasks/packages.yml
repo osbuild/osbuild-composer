@@ -51,7 +51,7 @@
       - jq
       - awscli
       - monit
-      - vector-0.21.2 # vector-0.22 has broken the journald source, see https://github.com/vectordotdev/vector/issues/12966
+      - vector
   register: result
   retries: 5
   until: result is success
