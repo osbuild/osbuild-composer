@@ -24,7 +24,7 @@ cloud.google.com/go/storage/internal/apiv2
 # github.com/Azure/azure-pipeline-go v0.2.3
 ## explicit
 github.com/Azure/azure-pipeline-go/pipeline
-# github.com/Azure/azure-sdk-for-go v63.4.0+incompatible
+# github.com/Azure/azure-sdk-for-go v66.0.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/profiles/2019-03-01/compute/mgmt/compute
 github.com/Azure/azure-sdk-for-go/profiles/2019-03-01/resources/mgmt/resources
