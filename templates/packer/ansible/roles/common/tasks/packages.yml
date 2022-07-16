@@ -49,37 +49,12 @@
   package:
     name:
       - jq
-      - unzip
+      - awscli
       - monit
       - vector-0.21.2 # vector-0.22 has broken the journald source, see https://github.com/vectordotdev/vector/issues/12966
   register: result
   retries: 5
   until: result is success
-
-- name: Download AWS CLI installer
-  get_url:
-    url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
-    dest: /tmp/awscli.zip
-  register: result
-  retries: 5
-  until: result is success
-
-- name: Unpack AWS CLI installer
-  unarchive:
-    src: /tmp/awscli.zip
-    dest: /tmp
-    remote_src: yes
-
-- name: Run AWS installer
-  command: /tmp/aws/install
-
-- name: Cleanup AWS installer
-  file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - /tmp/awscli.zip
-    - /tmp/aws
 
 - name: Create rpmbuild directory
   tags:
