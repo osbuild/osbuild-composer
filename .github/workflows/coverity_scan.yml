@@ -20,7 +20,7 @@ jobs:
           COVERITY_SCAN_EMAIL: ${{ secrets.COVERITY_SCAN_EMAIL }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y libkrb5-dev
+          sudo apt-get install -y libkrb5-dev libgpgme-dev
 
           echo "Downloading coverity scan package."
           curl -o /tmp/cov-analysis-linux64.tgz https://scan.coverity.com/download/linux64 \
