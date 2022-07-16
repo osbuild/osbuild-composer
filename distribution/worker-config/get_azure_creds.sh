@@ -10,7 +10,7 @@ if [[ -z "$AZURE_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
 fi
 
 # Deploy the Azure credentials file.
-/usr/local/bin/aws secretsmanager get-secret-value \
+aws secretsmanager get-secret-value \
   --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \
   --secret-id "${AZURE_ACCOUNT_IMAGE_BUILDER_ARN}" | jq -r ".SecretString" > /tmp/azure_credentials.json
 CLIENT_ID=$(jq -r ".client_id" /tmp/azure_credentials.json)

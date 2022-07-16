@@ -1,0 +1,6 @@
+---
+
+- name: Enable worker configuration service
+  systemd:
+    name: osbuild-worker-config.service
+    enabled: yes

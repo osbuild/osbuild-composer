@@ -3,14 +3,5 @@
 # Install various software packages.
 - include_tasks: packages.yml
 
-# Configure monitoring.
-- include_tasks: monitoring.yml
-
-# Configure worker initialization service.
-- include_tasks: worker-initialization-service.yml
-
-# Configure the worker.
-- include_tasks: worker-config.yml
-
-- name: Ensure SELinux contexts are updated
-  command: restorecon -Rv /etc
+# Enable systemd services
+- include_tasks: services.yml

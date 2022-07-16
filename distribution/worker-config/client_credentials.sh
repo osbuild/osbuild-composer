@@ -10,7 +10,7 @@ if [[ -z "$CLIENT_CREDENTIALS_ARN" ]]; then
 fi
 
 # get client credentials
-/usr/local/bin/aws secretsmanager get-secret-value \
+aws secretsmanager get-secret-value \
   --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \
   --secret-id "${CLIENT_CREDENTIALS_ARN}" | jq -r ".SecretString" > /tmp/client-credentials.json
 

@@ -1,4 +1,4 @@
-{% set pozorbot_script = "/opt/monit/pozorbot_alert" -%}
+{% set pozorbot_script = "/usr/libexec/osbuild-worker-config/pozorbot_alert.sh" -%}
 # Monit configuration for Image Builder in AWS.
 # Docs: https://mmonit.com/monit/documentation/monit.html
 

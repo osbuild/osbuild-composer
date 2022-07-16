@@ -9,7 +9,7 @@ if [[ -z "$KOJI_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
   exit 0
 fi
 
-/usr/local/bin/aws secretsmanager get-secret-value \
+aws secretsmanager get-secret-value \
   --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \
   --secret-id "${KOJI_ACCOUNT_IMAGE_BUILDER_ARN}" | jq -r ".SecretString" > /tmp/koji_credentials.json
 

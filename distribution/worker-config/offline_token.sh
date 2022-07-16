@@ -10,7 +10,7 @@ if [[ -z "$OFFLINE_TOKEN_ARN" ]]; then
 fi
 
 # get offline token
-/usr/local/bin/aws secretsmanager get-secret-value \
+aws secretsmanager get-secret-value \
   --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \
   --secret-id "${OFFLINE_TOKEN_ARN}" | jq -r ".SecretString" > /tmp/offline-token.json
 

@@ -17,7 +17,7 @@ if [[ -z "$AWS_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
   exit 0
 fi
 
-/usr/local/bin/aws secretsmanager get-secret-value \
+aws secretsmanager get-secret-value \
 --endpoint-url "${SECRETS_MANAGER_ENDPOINT_URL}" \
 --secret-id "${AWS_ACCOUNT_IMAGE_BUILDER_ARN}" | jq -r ".SecretString" > /tmp/aws_credentials.json
 ACCESS_KEY_ID=$(jq -r ".access_key_id" /tmp/aws_credentials.json)

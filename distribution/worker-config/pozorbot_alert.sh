@@ -15,4 +15,4 @@ fi
 QUEUE_URL=https://queue.amazonaws.com/933752197999/image-builder-pozorbot-${SQS_ENDPOINT}
 MESSAGE="${MONIT_EVENT} for ${MONIT_SERVICE} on ${MONIT_HOST} at ${MONIT_DATE}"
 RESULT=$(aws sqs send-message --queue-url $QUEUE_URL --message-body "${MESSAGE}")
-echo $RESULT
+echo "$RESULT"

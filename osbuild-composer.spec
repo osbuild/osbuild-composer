@@ -179,6 +179,15 @@ install -m 0644 -vp distribution/*.{service,socket}                %{buildroot}%
 install -m 0755 -vd                                                %{buildroot}%{_sysusersdir}
 install -m 0644 -vp distribution/osbuild-composer.conf             %{buildroot}%{_sysusersdir}/
 
+install -m 0755 -vd                                                %{buildroot}%{_datadir}/osbuild-worker-config
+install -m 0600 -vp distribution/worker-config/monitrc             %{buildroot}%{_datadir}/osbuild-worker-config/
+
+install -m 0755 -vd                                                %{buildroot}%{_sysconfdir}/osbuild-worker
+install -m 0644 -vp distribution/worker-config/osbuild-worker.toml %{buildroot}%{_sysconfdir}/osbuild-worker/
+
+install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/osbuild-worker-config
+install -m 0755 -vp distribution/worker-config/*.sh                %{buildroot}%{_libexecdir}/osbuild-worker-config/
+
 install -m 0755 -vd                                                %{buildroot}%{_localstatedir}/cache/osbuild-composer/dnf-cache
 
 install -m 0755 -vd                                                %{buildroot}%{_mandir}/man7
@@ -346,6 +355,30 @@ fi
 %postun worker
 # restart all the worker services
 %systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
+
+%package worker-config
+Summary:    Sample config for on osbuild worker system
+Requires:   osbuild-composer-worker
+Requires:   awscli
+Requires:   jq
+Requires:   vector
+Requires:   monit
+
+%description worker-config
+Sample config for on osbuild worker system. This configures the system based on secrets
+passed through cloud-init.
+
+%files worker-config
+%{_sysconfdir}/osbuild-worker/osbuild-worker.toml
+%{_datadir}/osbuild-worker-config/
+%{_libexecdir}/osbuild-worker-config/
+%{_unitdir}/osbuild-worker-config.service
+
+%post worker-config
+%systemd_post osbuild-worker-config.service
+
+%preun worker-config
+%systemd_preun osbuild-worker-config.service
 
 %package dnf-json
 Summary: The dnf-json binary used by osbuild-composer and the workers
