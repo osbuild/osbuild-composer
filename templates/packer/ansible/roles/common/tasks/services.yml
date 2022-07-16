@@ -1,5 +1,20 @@
 ---
 
+- name: Enable osbuild-worker
+  systemd:
+    name: osbuild-worker.service
+    enabled: yes
+
+- name: Enable vector
+  systemd:
+    name: vector.service
+    enabled: yes
+
+- name: Enable monit
+  systemd:
+    name: monit.service
+    enabled: yes
+
 - name: Enable worker configuration service
   systemd:
     name: osbuild-worker-config.service

@@ -21,5 +21,3 @@ group_name = "${CLOUDWATCH_LOG_GROUP}"
 stream_name = "worker_syslog_{{ host }}"
 encoding.codec = "json"
 EOF
-
-sudo systemctl enable --now vector

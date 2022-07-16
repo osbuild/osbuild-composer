@@ -1,6 +1,7 @@
 [Unit]
 Description=Worker Configuration Service
 ConditionPathExists=!/etc/worker-first-boot
+Before=osbuild-worker.service vector.service monit.service
 Wants=cloud-final.service
 After=cloud-final.service
 
@@ -20,4 +21,4 @@ ExecStart=/usr/libexec/osbuild-worker-config/get_koji_creds.sh
 ExecStart=/usr/libexec/osbuild-worker-config/worker_service.sh
 
 [Install]
-WantedBy=multi-user.target
+RequiredBy=osbuild-worker.service vector.service monit.service
