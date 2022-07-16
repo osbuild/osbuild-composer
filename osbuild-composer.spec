@@ -336,13 +336,15 @@ The worker for osbuild-composer
 
 %files worker
 %{_libexecdir}/osbuild-composer/osbuild-worker
+%{_unitdir}/osbuild-worker.service
 %{_unitdir}/osbuild-worker@.service
 %{_unitdir}/osbuild-remote-worker@.service
 
 %post worker
-%systemd_post osbuild-worker@.service osbuild-remote-worker@.service
+%systemd_post osbuild-worker.service osbuild-worker@.service osbuild-remote-worker@.service
 
 %preun worker
+%systemd_preun osbuild-worker.service
 # systemd_preun uses systemctl disable --now which doesn't work well with template services.
 # See https://github.com/systemd/systemd/issues/15620
 # The following lines mimicks its behaviour by running two commands:
@@ -354,7 +356,7 @@ fi
 
 %postun worker
 # restart all the worker services
-%systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
+%systemd_postun_with_restart osbuild-worker.service "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 
 %package worker-config
 Summary:    Sample config for on osbuild worker system

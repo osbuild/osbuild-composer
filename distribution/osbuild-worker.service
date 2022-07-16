@@ -1,0 +1,18 @@
+[Unit]
+Description=OSBuild Composer Remote Worker
+After=network.target
+
+[Service]
+Type=simple
+PrivateTmp=true
+ExecStart=/usr/libexec/osbuild-composer/osbuild-worker
+Restart=on-failure
+RestartSec=10s
+CPUSchedulingPolicy=batch
+IOSchedulingClass=idle
+CacheDirectory=osbuild-worker
+# systemd >= 240 sets this, but osbuild-worker runs on earlier versions
+Environment="CACHE_DIRECTORY=/var/cache/osbuild-worker"
+
+[Install]
+WantedBy=multi-user.target

@@ -23,6 +23,7 @@ dnf-json = "/usr/libexec/dnf-json"
 
 [composer]
 proxy = "http://proxy.example.com"
+url = "http://my-composer.com:333"
 
 [koji."kojihub.example.com"]
 relax_timeout_factor = 5
@@ -67,6 +68,7 @@ offline_token = "/etc/osbuild-worker/offline_token"
 				DNFJson:  "/usr/libexec/dnf-json",
 				Composer: &composerConfig{
 					Proxy: "http://proxy.example.com",
+					URL:   "http://my-composer.com:333",
 				},
 				Koji: map[string]kojiServerConfig{
 					"kojihub.example.com": {

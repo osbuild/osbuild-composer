@@ -202,21 +202,25 @@ func main() {
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
 
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [-unix] address\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [[-unix] address]\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 
 	flag.Parse()
 
-	address := flag.Arg(0)
-	if address == "" {
-		flag.Usage()
-		os.Exit(2)
-	}
-
 	config, err := parseConfig(configFile)
 	if err != nil {
 		logrus.Fatalf("Could not load config file '%s': %v", configFile, err)
+	}
+
+	address := flag.Arg(0)
+	if address != "" {
+		config.Composer.URL = address
+	}
+
+	if config.Composer.URL == "" {
+		flag.Usage()
+		os.Exit(2)
 	}
 
 	logrus.Info("Composer configuration:")

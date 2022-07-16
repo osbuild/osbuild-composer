@@ -8,6 +8,7 @@ import (
 )
 
 type composerConfig struct {
+	URL   string `toml:"url"`
 	Proxy string `toml:"proxy"`
 }
 
