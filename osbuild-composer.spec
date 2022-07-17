@@ -182,9 +182,6 @@ install -m 0644 -vp distribution/osbuild-composer.conf             %{buildroot}%
 install -m 0755 -vd                                                %{buildroot}%{_datadir}/osbuild-worker-config
 install -m 0600 -vp distribution/worker-config/monitrc             %{buildroot}%{_datadir}/osbuild-worker-config/
 
-install -m 0755 -vd                                                %{buildroot}%{_sysconfdir}/osbuild-worker
-install -m 0644 -vp distribution/worker-config/osbuild-worker.toml %{buildroot}%{_sysconfdir}/osbuild-worker/
-
 install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/osbuild-worker-config
 install -m 0755 -vp distribution/worker-config/*.sh                %{buildroot}%{_libexecdir}/osbuild-worker-config/
 
@@ -371,7 +368,6 @@ Sample config for on osbuild worker system. This configures the system based on 
 passed through cloud-init.
 
 %files worker-config
-%{_sysconfdir}/osbuild-worker/osbuild-worker.toml
 %{_datadir}/osbuild-worker-config/
 %{_libexecdir}/osbuild-worker-config/
 %{_unitdir}/osbuild-worker-config.service

@@ -19,6 +19,7 @@ jq -r ".client_secret" /tmp/client-credentials.json > /etc/osbuild-worker/client
 rm -f /tmp/client-credentials.json
 
 sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
 [authentication]
 oauth_url = "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
 client_id = "${CLIENT_ID}"

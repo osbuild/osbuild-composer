@@ -15,7 +15,8 @@ aws secretsmanager get-secret-value \
   --secret-id "${GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN}" | jq -r ".SecretString" > /etc/osbuild-worker/gcp_credentials.json
 
 
-sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
 [gcp]
 credentials = "/etc/osbuild-worker/gcp_credentials.json"
 EOF

@@ -17,7 +17,8 @@ aws secretsmanager get-secret-value \
 jq -r ".offline_token" /tmp/offline-token.json > /etc/osbuild-worker/offline-token
 rm -f /tmp/offline-token.json
 
-sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
 [authentication]
 oauth_url = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 client_id = "rhsm-api"

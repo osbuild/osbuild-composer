@@ -6,8 +6,8 @@ echo "Writing vector config."
 
 REGION=$(curl -Ls http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
 
-sudo mkdir -p /etc/vector
-sudo tee /etc/vector/vector.toml > /dev/null << EOF
+mkdir -p /etc/vector
+tee /etc/vector/vector.toml > /dev/null << EOF
 [sources.journald]
 type = "journald"
 exclude_units = ["vector.service"]

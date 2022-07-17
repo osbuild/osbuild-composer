@@ -17,12 +17,13 @@ CLIENT_ID=$(jq -r ".client_id" /tmp/azure_credentials.json)
 CLIENT_SECRET=$(jq -r ".client_secret" /tmp/azure_credentials.json)
 rm /tmp/azure_credentials.json
 
-sudo tee /etc/osbuild-worker/azure_credentials.toml > /dev/null << EOF
+tee /etc/osbuild-worker/azure_credentials.toml > /dev/null << EOF
 client_id =     "$CLIENT_ID"
 client_secret = "$CLIENT_SECRET"
 EOF
 
-sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
 [azure]
 credentials = "/etc/osbuild-worker/azure_credentials.toml"
 EOF

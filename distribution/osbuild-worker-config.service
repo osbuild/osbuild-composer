@@ -9,16 +9,16 @@ After=cloud-final.service
 Type=oneshot
 ExecStart=touch /etc/worker-first-boot
 ExecStart=/usr/libexec/osbuild-worker-config/set_hostname.sh
+ExecStart=/usr/libexec/osbuild-worker-config/subscription_manager.sh
 ExecStart=/usr/libexec/osbuild-worker-config/vector.sh
 ExecStart=/usr/libexec/osbuild-worker-config/monit.sh
-ExecStart=/usr/libexec/osbuild-worker-config/offline_token.sh
-ExecStart=/usr/libexec/osbuild-worker-config/client_credentials.sh
-ExecStart=/usr/libexec/osbuild-worker-config/subscription_manager.sh
+ExecStart=/usr/libexec/osbuild-worker-config/osbuild_worker.sh
+ExecStart=/usr/libexec/osbuild-worker-config/get_openshift_creds.sh
+ExecStart=/usr/libexec/osbuild-worker-config/get_redhat_creds.sh
 ExecStart=/usr/libexec/osbuild-worker-config/get_aws_creds.sh
 ExecStart=/usr/libexec/osbuild-worker-config/get_azure_creds.sh
 ExecStart=/usr/libexec/osbuild-worker-config/get_gcp_creds.sh
 ExecStart=/usr/libexec/osbuild-worker-config/get_koji_creds.sh
-ExecStart=/usr/libexec/osbuild-worker-config/worker_service.sh
 
 [Install]
 RequiredBy=osbuild-worker.service vector.service monit.service

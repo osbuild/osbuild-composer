@@ -19,7 +19,8 @@ PRINCIPAL=$(jq -r ".principal" /tmp/koji_credentials.json)
 jq -r ".keytab" /tmp/koji_credentials.json | base64 -d >/etc/osbuild-worker/koji.keytab
 rm /tmp/koji_credentials.json
 
-sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
 [koji."${KOJIHUB}".kerberos]
 principal = "${PRINCIPAL}"
 keytab = "/etc/osbuild-worker/koji.keytab"

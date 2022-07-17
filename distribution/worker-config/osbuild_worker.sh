@@ -4,7 +4,10 @@ source /tmp/cloud_init_vars
 
 echo "Configuring worker service"
 
-sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+mkdir -p /etc/osbuild-worker
+tee /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+base_path = "/api/image-builder-worker/v1"
+
 [composer]
 url = ${COMPOSER_HOST}:${COMPOSER_PORT}
 EOF
