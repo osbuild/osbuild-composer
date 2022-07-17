@@ -52,12 +52,14 @@ class Solver():
         self.base.conf.substitutions['arch'] = arch
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
 
-        for repo in repos:
-            self.base.repos.add(self._dnfrepo(repo, self.base.conf))
+        # The order repositories are passed indicate their priority, with
+        # each repository overriding the previous ones in the list.
+        for priority, repo in enumerate(list.reverse(repos), start=1):
+            self.base.repos.add(self._dnfrepo(repo, self.base.conf, priority))
         self.base.fill_sack(load_system_repo=False)
 
     @staticmethod
-    def _dnfrepo(desc, parent_conf=None):
+    def _dnfrepo(desc, parent_conf=None, priority=99):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
 
         repo = dnf.repo.Repo(desc["id"], parent_conf)
@@ -81,6 +83,10 @@ class Solver():
             repo.sslclientkey = desc["sslclientkey"]
         if "sslclientcert" in desc:
             repo.sslclientcert = desc["sslclientcert"]
+
+        # The default priority is 99, and a repository with lower priority
+        # takes precedence over one with higher priority.
+        repo.priority = priority
 
         # In dnf, the default metadata expiration time is 48 hours. However,
         # some repositories never expire the metadata, and others expire it much
