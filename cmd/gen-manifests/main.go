@@ -323,14 +323,12 @@ func mergeOverrides(base, overrides composeRequest) composeRequest {
 }
 
 func main() {
-	outputDirFlag := flag.String("output", "test/data/manifests.plain/", "manifest store directory")
-	nWorkersFlag := flag.Int("workers", 16, "number of workers to run concurrently")
-	cacheRootFlag := flag.String("cache", "/tmp/rpmmd", "rpm metadata cache directory")
+	var outputDir, cacheRoot string
+	var nWorkers int
+	flag.StringVar(&outputDir, "output", "test/data/manifests.plain/", "manifest store directory")
+	flag.IntVar(&nWorkers, "workers", 16, "number of workers to run concurrently")
+	flag.StringVar(&cacheRoot, "cache", "/tmp/rpmmd", "rpm metadata cache directory")
 	flag.Parse()
-
-	outputDir := *outputDirFlag
-	nWorkers := *nWorkersFlag
-	cacheRoot := *cacheRootFlag
 
 	seedArg := int64(0)
 	darm := readRepos()
