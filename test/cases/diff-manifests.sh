@@ -65,8 +65,8 @@ greenprint "Generating all manifests for merge-base (${mergebase})"
 go run ./cmd/gen-manifests --output "${manifestdir}/${mergebase}" --workers 50
 
 greenprint "Diff: ${manifestdir}/${mergebase} ${manifestdir}/PR"
-err=0
-diff=$(diff -Naur "${manifestdir}"/{"${mergebase}",PR}) || err=$?
+diff=$(diff -Naur "${manifestdir}"/"${mergebase}" "${manifestdir}/PR")
+err=$?
 
 review_data_file="review.json"
 
