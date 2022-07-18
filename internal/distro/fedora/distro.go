@@ -35,7 +35,6 @@ const (
 	blueprintPkgsKey = "blueprint"
 
 	// Fedora distribution
-	fedora34Distribution = "fedora-34"
 	fedora35Distribution = "fedora-35"
 	fedora36Distribution = "fedora-36"
 
@@ -303,18 +302,6 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 
 // distribution objects without the arches > image types
 var distroMap = map[string]distribution{
-	fedora34Distribution: {
-		name:               fedora34Distribution,
-		product:            "Fedora",
-		osVersion:          "34",
-		releaseVersion:     "34",
-		modulePlatformID:   "platform:f34",
-		vendor:             "fedora",
-		ostreeRefTmpl:      "fedora/34/%s/iot",
-		isolabelTmpl:       "Fedora-34-BaseOS-%s",
-		runner:             &runner.Fedora{Version: 34},
-		defaultImageConfig: defaultDistroImageConfig,
-	},
 	fedora35Distribution: {
 		name:               fedora35Distribution,
 		product:            "Fedora",
@@ -716,9 +703,6 @@ func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 }
 
 // New creates a new distro object, defining the supported architectures and image types
-func NewF34() distro.Distro {
-	return newDistro(fedora34Distribution)
-}
 func NewF35() distro.Distro {
 	return newDistro(fedora35Distribution)
 }

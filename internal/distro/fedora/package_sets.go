@@ -4,9 +4,7 @@ package fedora
 
 import (
 	"fmt"
-	"strconv"
 
-	"github.com/labstack/gommon/log"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -423,18 +421,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	})
 
-	r, err := strconv.Atoi(t.Arch().Distro().Releasever())
-	if err != nil {
-		log.Errorf("failed to convert fedora release %s to string: %s", t.Arch().Distro().Releasever(), err)
-	}
-
-	if r <= 34 {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"xorg-x11-server-utils",
-			},
-		})
-	}
 	switch t.Arch().Name() {
 	case distro.X86_64ArchName:
 		ps = ps.Append(rpmmd.PackageSet{
@@ -478,6 +464,7 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 			"rpm",
 			"sudo",
 			"tar",
+			"util-linux-core",
 			"vim-minimal",
 		},
 		Exclude: []string{
@@ -512,14 +499,6 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 			"whois-nls",
 			"xkeyboard-config",
 		},
-	}
-
-	// util-linux-core was created in Fedora 35 as a smaller
-	// version of util-linux
-	if t.arch.distro.releaseVersion == "34" {
-		ps.Include = append(ps.Include, "util-linux")
-	} else {
-		ps.Include = append(ps.Include, "util-linux-core")
 	}
 
 	return ps
