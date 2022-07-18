@@ -8,8 +8,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
@@ -716,6 +717,22 @@ func TestComposeStatusFailure(t *testing.T) {
 		},
 		"status": "failure"
 	}`, jobId, jobId))
+}
+
+func TestComposeStatusInvalidUUID(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/abcdef", ``, http.StatusBadRequest, `
+{
+	"code": "IMAGE-BUILDER-COMPOSER-14",
+	"details": "",
+	"href": "/api/image-builder-composer/v2/errors/14",
+	"id": "14",
+	"kind": "Error",
+	"reason": "Invalid format for compose id"
+}
+`, "operation_id")
 }
 
 func TestComposeJobError(t *testing.T) {
