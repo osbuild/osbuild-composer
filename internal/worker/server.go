@@ -505,8 +505,6 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	jobType, channel, status, _, err := s.jobStatus(jobId, nil)
 	if err != nil {
 		logrus.Errorf("error retrieving job status: %v", err)
-	} else {
-		prometheus.DequeueJobMetrics(status.Queued, status.Started, jobType, channel)
 	}
 
 	// Record how long the job has been pending for, that is either how
