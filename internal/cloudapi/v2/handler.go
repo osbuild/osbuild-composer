@@ -371,6 +371,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 				irTarget = t
 			case ImageTypesGcp:
+				fallthrough
+			case ImageTypesGcpRhui:
 				var gcpUploadOptions GCPUploadOptions
 				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
 				if err != nil {
@@ -485,6 +487,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "ec2-sap"
 	case ImageTypesGcp:
 		return "gce"
+	case ImageTypesGcpRhui:
+		return "gce-rhui"
 	case ImageTypesAzure:
 		return "vhd"
 	case ImageTypesAzureRhui:

@@ -655,6 +655,7 @@ components:
         - edge-container
         - edge-installer
         - gcp
+        - gcp-rhui
         - guest-image
         - image-installer
         - vsphere
