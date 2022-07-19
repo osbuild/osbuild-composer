@@ -7,15 +7,6 @@ set -euo pipefail
 
 source /etc/os-release
 
-case "${ID}-${VERSION_ID}" in
-    "rhel-8.6" | "rhel-9.0" | "centos-9")
-        ;;
-    *)
-        echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
-        exit 0
-        ;;
-esac
-
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
@@ -127,6 +118,15 @@ clean_up () {
     # Remomve tmp dir.
     sudo rm -rf "$TEMPDIR"
 }
+check_result () {
+    if [ ${#FAILED_MOUNTPOINTS[@]} -eq 0 ]; then
+        echo "🎉 $1 scenario went as expected"
+    else
+        echo "🔥 $1 scenario didn't go as expected. The following mountpoints were not present:"
+        printf '%s\n' "${FAILED_MOUNTPOINTS[@]}"
+        exit 1
+    fi
+}
 
 ##################################################
 ##
@@ -203,13 +203,16 @@ INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
 FAILED_MOUNTPOINTS=()
 
 for MOUNTPOINT in '/' '/var' '/var/log' '/var/log/audit' '/var/tmp' '/usr' '/tmp' '/home' '/opt' '/srv' '/app' '/data'; do
-  EXISTS=$(jq -e --arg m "$MOUNTPOINT" 'any(.fstab[] | .[] == $m; .)' <<< "${INFO}")
+  EXISTS=$(jq --arg m "$MOUNTPOINT" 'any(.fstab[] | .[] == $m; .)' <<< "${INFO}")
   if $EXISTS; then
     greenprint "INFO: mountpoint $MOUNTPOINT exists"
   else
     FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
   fi
 done
+
+# Check the result and pass scenario type
+check_result "Passing"
 
 # Clean compose and blueprints.
 greenprint "🧼 Clean up osbuild-composer again"
@@ -247,7 +250,7 @@ EOF
 # build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem-fail qcow2 true
 build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem-fail qcow2 true
 
-# Check error message.
+# Clear the test variable
 FAILED_MOUNTPOINTS=()
 
 greenprint "💬 Checking expected failures"
@@ -257,16 +260,14 @@ for MOUNTPOINT in '/etc' '/boot' ; do
   fi
 done
 
+# Check the result and pass scenario type
+check_result "Failing"
+
 # Clean compose and blueprints.
 greenprint "🧼 Clean up osbuild-composer again"
 sudo composer-cli blueprints delete rhel85-custom-filesystem-fail > /dev/null
 
 clean_up
 
-if [ ${#FAILED_MOUNTPOINTS[@]} -eq 0 ]; then
-  echo "🎉 All tests passed."
-  exit 0
-else
-  echo "🔥 One or more tests failed."
-  exit 1
-fi
+echo "🎉 All tests passed."
+exit 0
