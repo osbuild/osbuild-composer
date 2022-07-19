@@ -435,6 +435,36 @@ Rebase OSTree:
       - *fedora_runners
       - *rhel_runners
 
+koji.sh (cloud upload):
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/koji.sh cloud-upload ${CLOUD_TARGET} ${IMAGE_TYPE}
+  parallel:
+    matrix:
+      - RUNNER:
+          # Brew workers use RHEL-8.6
+          - aws/rhel-8.6-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+        CLOUD_TARGET: aws
+        IMAGE_TYPE: aws-rhui
+      - RUNNER:
+          # Brew workers use RHEL-8.6
+          - aws/rhel-8.6-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+        CLOUD_TARGET: azure
+        IMAGE_TYPE: azure-rhui
+      - RUNNER:
+          # Brew workers use RHEL-8.6
+          - aws/rhel-8.6-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+        CLOUD_TARGET: gcp
+        IMAGE_TYPE: gcp-rhui
+
 koji.sh (cloudapi):
   extends: .integration
   variables:
