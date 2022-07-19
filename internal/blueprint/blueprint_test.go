@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/BurntSushi/toml"
@@ -212,4 +213,39 @@ func TestKernelNameCustomization(t *testing.T) {
 			assert.ElementsMatch(t, []string{"tmux-1.2", bk, "openssh-server", "@anaconda-tools", ck}, Received_packages)
 		}
 	}
+}
+
+// TestBlueprintPasswords check to make sure all passwords are hashed
+func TestBlueprintPasswords(t *testing.T) {
+	blueprint := `
+name = "test"
+description = "Test"
+version = "0.0.0"
+
+[[customizations.user]]
+name = "bart"
+password = "nobodysawmedoit"
+
+[[customizations.user]]
+name = "lisa"
+password = "$6$RWdHzrPfoM6BMuIP$gKYlBXQuJgP.G2j2twbOyxYjFDPUQw8Jp.gWe1WD/obX0RMyfgw5vt.Mn/tLLX4mQjaklSiIzoAW3HrVQRg4Q."
+
+[[customizations.user]]
+name = "maggie"
+password = ""
+`
+
+	var bp Blueprint
+	err := toml.Unmarshal([]byte(blueprint), &bp)
+	require.Nil(t, err)
+	require.Nil(t, bp.Initialize())
+
+	// Note: User entries are in the same order as the toml
+	users := bp.Customizations.GetUsers()
+	assert.Equal(t, "bart", users[0].Name)
+	assert.True(t, strings.HasPrefix(*users[0].Password, "$6$"))
+	assert.Equal(t, "lisa", users[1].Name)
+	assert.Equal(t, "$6$RWdHzrPfoM6BMuIP$gKYlBXQuJgP.G2j2twbOyxYjFDPUQw8Jp.gWe1WD/obX0RMyfgw5vt.Mn/tLLX4mQjaklSiIzoAW3HrVQRg4Q.", *users[1].Password)
+	assert.Equal(t, "maggie", users[2].Name)
+	assert.Nil(t, users[2].Password)
 }

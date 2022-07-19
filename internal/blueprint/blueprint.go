@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/osbuild/osbuild-composer/internal/crypt"
+
 	"github.com/coreos/go-semver/semver"
 )
 
@@ -74,6 +76,12 @@ func (b *Blueprint) Initialize() error {
 	if err != nil {
 		return fmt.Errorf("Invalid 'version', must use Semantic Versioning: %s", err.Error())
 	}
+
+	err = b.CryptPasswords()
+	if err != nil {
+		return fmt.Errorf("Error hashing passwords: %s", err.Error())
+	}
+
 	return nil
 }
 
@@ -125,4 +133,37 @@ func (p Package) ToNameVersion() string {
 	}
 
 	return p.Name + "-" + p.Version
+}
+
+// CryptPasswords ensures that all blueprint passwords are hashed
+func (b *Blueprint) CryptPasswords() error {
+	if b.Customizations == nil {
+		return nil
+	}
+
+	// Any passwords for users?
+	for i := range b.Customizations.User {
+		// Missing or empty password
+		if b.Customizations.User[i].Password == nil {
+			continue
+		}
+
+		// Prevent empty password from being hashed
+		if len(*b.Customizations.User[i].Password) == 0 {
+			b.Customizations.User[i].Password = nil
+			continue
+		}
+
+		if !crypt.PasswordIsCrypted(*b.Customizations.User[i].Password) {
+			pw, err := crypt.CryptSHA512(*b.Customizations.User[i].Password)
+			if err != nil {
+				return err
+			}
+
+			// Replace the password with the
+			b.Customizations.User[i].Password = &pw
+		}
+	}
+
+	return nil
 }

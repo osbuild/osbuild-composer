@@ -80,23 +80,23 @@ PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
-QUAY_REPO_URL="docker://quay.io/osbuild/testing-rhel-edge-push"
+QUAY_REPO_URL="quay.io/osbuild/testing-rhel-edge-push"
 QUAY_REPO_TAG=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
 STAGE_OCP4_SERVER_NAME="edge-stage-server"
 STAGE_OCP4_REPO_URL="http://${STAGE_OCP4_SERVER_NAME}-${QUAY_REPO_TAG}-frontdoor.apps.ocp.ci.centos.org/repo/"
-ARTIFACTS="ci-artifacts"
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 # For CS8, CS9, RHEL 8.5 and above
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-installer
 INSTALLER_FILENAME=installer.iso
-mkdir -p "${ARTIFACTS}"
 ANSIBLE_USER_FOR_BIOS="installeruser"
 OSTREE_OSNAME=rhel
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
+QUAY_CONFIG=${TEMPDIR}/quay_config.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
@@ -229,11 +229,17 @@ build_image() {
 
     # Start the compose.
     greenprint "🚀 Starting compose"
+    if [ $# -eq 2 ]; then
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
+    fi
     if [ $# -eq 3 ]; then
         repo_url=$3
         sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
-    else
-        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
+    fi
+    if [ $# -eq 4 ]; then
+        image_repo_url=$3
+        registry_config=$4
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" "$image_repo_url" "$registry_config" | tee "$COMPOSE_START"
     fi
     COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
@@ -283,7 +289,7 @@ wait_for_ssh_up () {
 clean_up () {
     greenprint "🧼 Cleaning up"
     # Remove tag from quay.io repo
-    skopeo delete --creds "${V2_QUAY_USERNAME}:${V2_QUAY_PASSWORD}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
+    skopeo delete --creds "${V2_QUAY_USERNAME}:${V2_QUAY_PASSWORD}" "docker://${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
 
     # Clear vm
     if [[ $(sudo virsh domstate "${IMAGE_KEY}-uefi") == "running" ]]; then
@@ -363,6 +369,10 @@ groups = []
 name = "python3"
 version = "*"
 
+[[packages]]
+name = "sssd"
+version = "*"
+
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -380,26 +390,17 @@ greenprint "📋 Preparing container blueprint"
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve container
 
+# Write the registry configuration.
+greenprint "📄 Perparing quay.io config to push image"
+tee "$QUAY_CONFIG" > /dev/null << EOF
+provider = "container"
+[settings]
+username = "$V2_QUAY_USERNAME"
+password = "$V2_QUAY_PASSWORD"
+EOF
+
 # Build container image.
-build_image container "${CONTAINER_TYPE}"
-
-# Download the image
-greenprint "📥 Downloading the container image"
-sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-
-# Clear stage repo running env
-greenprint "🧹 Clearing stage repo running env"
-# Remove any status containers if exist
-sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
-# Remove all images
-sudo podman rmi -f -a
-
-# Deal with stage repo image
-greenprint "🗜 Pushing image to quay.io"
-IMAGE_FILENAME="${COMPOSE_ID}-${CONTAINER_FILENAME}"
-sudo skopeo copy --dest-creds "${V2_QUAY_USERNAME}:${V2_QUAY_PASSWORD}" "oci-archive:${IMAGE_FILENAME}" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
-# Clear image file
-sudo rm -f "$IMAGE_FILENAME"
+build_image container "$CONTAINER_TYPE" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}" "$QUAY_CONFIG"
 
 # Run stage repo in OCP4
 greenprint "Running stage repo in OCP4"
@@ -618,6 +619,10 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
 version = "*"
 
 [[packages]]

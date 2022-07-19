@@ -67,9 +67,6 @@ Conflicts: lorax-composer
 Obsoletes: lorax-composer < 34.3
 %endif
 
-# remove when F34 is EOL
-Obsoletes: osbuild-composer-koji <= 23
-
 %description
 %{common_description}
 
@@ -317,10 +314,6 @@ Requires:   osbuild-ostree >= 55
 Requires:   osbuild-lvm2 >= 55
 Requires:   osbuild-luks2 >= 55
 Requires:   %{name}-dnf-json = %{version}-%{release}
-
-# remove in F34
-Obsoletes: golang-github-osbuild-composer-worker < %{version}-%{release}
-Provides:  golang-github-osbuild-composer-worker = %{version}-%{release}
 
 %description worker
 The worker for osbuild-composer

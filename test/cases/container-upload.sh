@@ -23,6 +23,7 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
 /usr/libexec/osbuild-composer-test/provision.sh
 
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 TEMPDIR=$(mktemp -d)
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
@@ -33,7 +34,7 @@ trap cleanup EXIT
 # Get the compose log.
 get_compose_log () {
     COMPOSE_ID=$1
-    LOG_FILE=${TEMPDIR}/osbuild-${ID}-${VERSION_ID}-azure.log
+    LOG_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-azure.log
 
     # Download the logs.
     sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
@@ -42,7 +43,7 @@ get_compose_log () {
 # Get the compose metadata.
 get_compose_metadata () {
     COMPOSE_ID=$1
-    METADATA_FILE=${TEMPDIR}/osbuild-${ID}-${VERSION_ID}-azure.json
+    METADATA_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-azure.json
 
     # Download the metadata.
     sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null

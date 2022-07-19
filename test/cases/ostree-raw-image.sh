@@ -76,12 +76,11 @@ PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
-ARTIFACTS="ci-artifacts"
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-raw-image
 INSTALLER_FILENAME=image.raw.xz
-mkdir -p "${ARTIFACTS}"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -286,6 +285,10 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
 version = "*"
 
 [customizations.kernel]
@@ -547,6 +550,10 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
 version = "*"
 
 [[packages]]

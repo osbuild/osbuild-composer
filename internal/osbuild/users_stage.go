@@ -36,6 +36,12 @@ func NewUsersStageOptions(userCustomizations []blueprint.UserCustomization, omit
 
 	users := make(map[string]UsersStageOptionsUser, len(userCustomizations))
 	for _, uc := range userCustomizations {
+		// Don't hash empty passwords, set to nil to lock account
+		if uc.Password != nil && len(*uc.Password) == 0 {
+			uc.Password = nil
+		}
+
+		// Hash non-empty un-hashed passwords
 		if uc.Password != nil && !crypt.PasswordIsCrypted(*uc.Password) {
 			cryptedPassword, err := crypt.CryptSHA512(*uc.Password)
 			if err != nil {

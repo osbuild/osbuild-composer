@@ -80,8 +80,7 @@ function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
-ARTIFACTS=ci-artifacts
-mkdir -p "${ARTIFACTS}"
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
@@ -194,7 +193,7 @@ function dump_db() {
 
   # Save the result, including the manifest, for the job, straight from the db
   sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
-    | gpg --batch --yes --passphrase "${GPG_SYMMETRIC_PASSPHRASE}" -o "${ARTIFACTS}/build-result.gpg" --symmetric -
+    | sudo tee "${ARTIFACTS}/build-result.txt"
   set -x
 }
 

@@ -95,12 +95,11 @@ STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
 FDO_SERVER_ADDRESS=192.168.100.1
 DIUN_PUB_KEY_HASH=sha256:$(openssl x509 -fingerprint -sha256 -noout -in /etc/fdo/aio/keys/diun_cert.pem | cut -d"=" -f2 | sed 's/://g')
 DIUN_PUB_KEY_ROOT_CERTS=$(cat /etc/fdo/aio/keys/diun_cert.pem)
-ARTIFACTS="ci-artifacts"
+ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-simplified-installer
 INSTALLER_FILENAME=simplified-installer.iso
-mkdir -p "${ARTIFACTS}"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -317,6 +316,10 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
 version = "*"
 
 [customizations.kernel]
@@ -759,6 +762,10 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
 version = "*"
 
 [[packages]]
