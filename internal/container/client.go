@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	_ "github.com/containers/image/v5/docker/archive"
@@ -29,6 +30,43 @@ const (
 	DefaultUserAgent  = "osbuild-composer/1.0"
 	DefaultPolicyPath = "/etc/containers/policy.json"
 )
+
+var (
+	defaultAuthFile = GetDefaultAuthFile()
+)
+
+// GetDefaultAuthFile returns the authentication file to use for the
+// current environment.
+//
+// This is basically a re-implementation of `getPathToAuthWithOS` from
+// containers/image/pkg/docker/config/config.go[1], but we ensure that
+// the returned path is either accessible or nonexistent. This is needed
+// since any other error than os.ErrNotExist will lead to an overall
+// failure and thus prevent any operation even with public resources.
+//
+// [1] https://github.com/containers/image/blob/55ea76c7db702ed1af60924a0b57c8da533d9e5a/pkg/docker/config/config.go#L506
+func GetDefaultAuthFile() string {
+
+	dirExistsOrEmpty := func(path string) bool {
+		_, err := os.Stat(path)
+		// document the error case
+		return err == nil || os.IsNotExist(err)
+	}
+
+	if runtimeDir := os.Getenv("XDG_RUNTIME_DIR"); runtimeDir != "" {
+		path := filepath.Join(runtimeDir, "containers", "auth.json")
+		if dirExistsOrEmpty(path) {
+			return path
+		}
+	}
+
+	path := fmt.Sprintf("/run/containers/%d/auth.json", os.Getuid())
+	if dirExistsOrEmpty(path) {
+		return path
+	}
+
+	return filepath.Join("var", "empty", "containers-auth.json")
+}
 
 // A Client to interact with the given Target object at a
 // container registry, like e.g. uploading an image to.
@@ -88,11 +126,18 @@ func NewClient(target string) (*Client, error) {
 			RegistriesDirPath:        "",
 			SystemRegistriesConfPath: "",
 			BigFilesTemporaryDir:     "/var/tmp",
+
+			AuthFilePath: defaultAuthFile,
 		},
 		policy: policy,
 	}
 
 	return &client, nil
+}
+
+// SetAuthFilePath sets the location of the `containers-auth.json(5)` file.
+func (cl *Client) SetAuthFilePath(path string) {
+	cl.sysCtx.AuthFilePath = path
 }
 
 // SetCredentials will set username and password for Client
