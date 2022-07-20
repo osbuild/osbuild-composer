@@ -128,7 +128,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			// use default OSTreeRef for image type
 			options.OSTree.Ref = imgType.OSTreeRef()
 		}
-		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, seedArg)
+		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, nil, seedArg)
 		if err != nil {
 			return fmt.Errorf("[%s] failed: %s", filename, err)
 		}

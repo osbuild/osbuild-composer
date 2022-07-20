@@ -186,6 +186,7 @@ func main() {
 			options,
 			repos,
 			depsolvedSets,
+			nil,
 			seedArg)
 		if err != nil {
 			panic(err.Error())

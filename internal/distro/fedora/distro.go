@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/environment"
@@ -532,7 +533,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	}
 
 	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, 0)
+	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, nil, 0)
 	if err != nil {
 		// TODO: handle manifest initialization errors more gracefully, we
 		// refuse to initialize manifests with invalid config.
@@ -605,9 +606,10 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	seed int64) (*manifest.Manifest, error) {
 
-	if err := t.checkOptions(bp.Customizations, options); err != nil {
+	if err := t.checkOptions(bp.Customizations, options, containers); err != nil {
 		return nil, err
 	}
 
@@ -642,6 +644,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSets map[string][]rpmmd.PackageSpec,
+	containers []container.Spec,
 	seed int64) (distro.Manifest, error) {
 
 	bp := &blueprint.Blueprint{}
@@ -651,7 +654,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	}
 	bp.Customizations = customizations
 
-	manifest, err := t.initializeManifest(bp, options, repos, nil, seed)
+	manifest, err := t.initializeManifest(bp, options, repos, nil, containers, seed)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
@@ -660,7 +663,12 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
-func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
+func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
+
+	if len(containers) > 0 {
+		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
+	}
+
 	if t.bootISO && t.rpmOstree {
 		if options.OSTree.Parent == "" {
 			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)

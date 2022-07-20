@@ -2337,6 +2337,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		options,
 		imageRepos,
 		packageSets,
+		nil,
 		seed)
 	if err != nil {
 		errors := responseError{
