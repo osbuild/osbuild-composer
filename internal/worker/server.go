@@ -571,7 +571,8 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 		logrus.Errorf("error finding job status: %v", err)
 	} else {
 		statusCode := clienterrors.GetStatusCode(jobResult.JobError)
-		prometheus.FinishJobMetrics(status.Started, status.Finished, status.Canceled, jobType, channel, statusCode)
+		arch := getBuildJobArch(jobType, result)
+		prometheus.FinishJobMetrics(status.Started, status.Finished, status.Canceled, jobType, channel, arch, statusCode)
 	}
 
 	// Move artifacts from the temporary location to the final job
@@ -585,6 +586,14 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	}
 
 	return nil
+}
+
+func getBuildJobArch(jobType string, jobResult json.RawMessage) string {
+	if !strings.HasPrefix(jobType, "osbuild:") {
+		return ""
+	}
+	arch := strings.Split(jobType, ":")[1]
+	return arch
 }
 
 // apiHandlers implements api.ServerInterface - the http api route handlers
