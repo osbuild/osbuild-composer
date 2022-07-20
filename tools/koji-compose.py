@@ -56,40 +56,41 @@ def compose_request(distro, koji, arch):
 
 def main(distro, arch):
     cr = compose_request(distro, "https://localhost:4343/kojihub", arch)
-    print(json.dumps(cr))
+    print(json.dumps(cr), file=sys.stderr)
 
     r = requests.post("https://localhost/api/image-builder-composer/v2/compose", json=cr,
                       cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
                       verify="/etc/osbuild-composer/ca-crt.pem")
     if r.status_code != 201:
-        print("Failed to create compose")
-        print(r.text)
+        print("Failed to create compose", file=sys.stderr)
+        print(r.text, file=sys.stderr)
         sys.exit(1)
 
-    print(r.text)
+    print(r.text, file=sys.stderr)
     compose_id = r.json()["id"]
+    print(compose_id)
 
     while True:
         r = requests.get(f"https://localhost/api/image-builder-composer/v2/composes/{compose_id}",
                          cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
                          verify="/etc/osbuild-composer/ca-crt.pem")
         if r.status_code != 200:
-            print("Failed to get compose status")
-            print(r.text)
+            print("Failed to get compose status", file=sys.stderr)
+            print(r.text, file=sys.stderr)
             sys.exit(1)
         status = r.json()["status"]
-        print(status)
+        print(status, file=sys.stderr)
         if status == "success":
-            print("Compose worked!")
-            print(r.text)
+            print("Compose worked!", file=sys.stderr)
+            print(r.text, file=sys.stderr)
             break
         elif status == "failure":
-            print("compose failed!")
-            print(r.text)
+            print("compose failed!", file=sys.stderr)
+            print(r.text, file=sys.stderr)
             sys.exit(1)
         elif status != "pending" and status != "running":
-            print(f"unexpected status: {status}")
-            print(r.text)
+            print(f"unexpected status: {status}", file=sys.stderr)
+            print(r.text, file=sys.stderr)
             sys.exit(1)
 
         time.sleep(10)
