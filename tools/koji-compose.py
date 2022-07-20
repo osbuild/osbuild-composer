@@ -2,6 +2,7 @@
 import json
 import sys
 import time
+import os
 
 import requests
 
@@ -54,8 +55,77 @@ def compose_request(distro, koji, arch):
     return req
 
 
-def main(distro, arch):
-    cr = compose_request(distro, "https://localhost:4343/kojihub", arch)
+def upload_options_by_cloud_target(cloud_target):
+    if cloud_target == "aws":
+        return {
+            # the snapshot name is currently not set for Koji composes
+            # "snapshot_name": "",
+            "region": os.getenv("AWS_REGION"),
+            "share_with_accounts": [os.getenv("AWS_API_TEST_SHARE_ACCOUNT")]
+        }
+    elif cloud_target == "azure":
+        return {
+            # image name is currently not set for Koji composes
+            # "image_name": "",
+            "location": os.getenv("AZURE_LOCATION"),
+            "resource_group": os.getenv("AZURE_RESOURCE_GROUP"),
+            "subscription_id": os.getenv("AZURE_SUBSCRIPTION_ID"),
+            "tenant_id": os.getenv("AZURE_TENANT_ID")
+        }
+    elif cloud_target == "gcp":
+        return {
+            # image name is currently not set for Koji composes
+            # "image_name": "",
+            "bucket": os.getenv("GCP_BUCKET"),
+            "region": os.getenv("GCP_REGION"),
+            "share_with_accounts": [os.getenv("GCP_API_TEST_SHARE_ACCOUNT")]
+        }
+    else:
+        raise RuntimeError(f"unsupported target cloud: {cloud_target}")
+
+
+def compose_request_cloud_upload(distro, koji, arch, cloud_target, image_type):
+    with open(f"/usr/share/tests/osbuild-composer/repositories/{distro}.json") as f:
+        test_repositories = json.load(f)
+
+    repositories = [composer_repository_to_koji_repository(repo) for repo in test_repositories[arch]]
+    image_requests = [
+        {
+            "architecture": arch,
+            "image_type": image_type,
+            "repositories": repositories,
+            "upload_options": upload_options_by_cloud_target(cloud_target)
+        },
+    ]
+
+    req = {
+        "distribution": distro,
+        "koji": {
+            "server": koji,
+            "task_id": 1,
+            "name": "name",
+            "version": "version",
+            "release": "release",
+        },
+        "image_requests": image_requests
+    }
+
+    return req
+
+
+def main():
+    koji_url = "https://localhost:4343/kojihub"
+    if len(sys.argv) == 3:
+        distro, arch = sys.argv[1], sys.argv[2]
+        print("Using simple Koji compose with 2 image requests", file=sys.stderr)
+        cr = compose_request(distro, koji_url, arch)
+    elif len(sys.argv) == 5:
+        distro, arch, cloud_target, image_type = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+        print("Using Koji compose with 1 image requests and upload to cloud", file=sys.stderr)
+        cr = compose_request_cloud_upload(distro, koji_url, arch, cloud_target, image_type)
+    else:
+        print(f"usage: {sys.argv[0]} DISTRO ARCH [CLOUD_TARGET IMAGE_TYPE]", file=sys.stderr)
+        sys.exit(1)
     print(json.dumps(cr), file=sys.stderr)
 
     r = requests.post("https://localhost/api/image-builder-composer/v2/compose", json=cr,
@@ -105,7 +175,4 @@ def main(distro, arch):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print(f"usage: {sys.argv[0]} DISTRO ARCH", file=sys.stderr)
-        sys.exit(1)
-    main(sys.argv[1], sys.argv[2])
+    main()
