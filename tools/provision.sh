@@ -34,12 +34,12 @@ if [[ "$VERSION_ID" == "9.0" || "$VERSION_ID" == "9" ]]; then
 fi
 
 sudo mkdir -p /etc/osbuild-composer
-sudo cp -a /usr/share/tests/osbuild-composer/composer/osbuild-composer.toml \
-    /etc/osbuild-composer/
+sudo cp -a /usr/share/tests/osbuild-composer/composer/osbuild-composer-tls.toml \
+    /etc/osbuild-composer/osbuild-composer.toml
 
 sudo mkdir -p /etc/osbuild-worker
-sudo cp -a /usr/share/tests/osbuild-composer/worker/osbuild-worker.toml \
-    /etc/osbuild-worker/
+sudo cp -a /usr/share/tests/osbuild-composer/worker/osbuild-worker-tls.toml \
+    /etc/osbuild-worker/osbuild-worker.toml
 
 # if GCP credentials are defined in the ENV, add them to the worker's configuration
 GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-}"
