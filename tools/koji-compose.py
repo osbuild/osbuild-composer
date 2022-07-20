@@ -28,12 +28,12 @@ def compose_request(distro, koji, arch):
     repositories = [composer_repository_to_koji_repository(repo) for repo in test_repositories[arch]]
     image_requests = [
         {
-            "architecture": "x86_64",
+            "architecture": arch,
             "image_type": "guest-image",
             "repositories": repositories
         },
         {
-            "architecture": "x86_64",
+            "architecture": arch,
             "image_type": "aws",
             "repositories": repositories
         }
