@@ -155,7 +155,7 @@ func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel st
 }
 
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
-	prometheus.EnqueueJobMetrics(jobType, channel)
+	prometheus.EnqueueJobMetrics(strings.Split(jobType, ":")[0], channel)
 	return s.jobs.Enqueue(jobType, job, dependencies, channel)
 }
 
@@ -253,8 +253,8 @@ func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobI
 		return nil, err
 	}
 
-	if !strings.HasPrefix(jobInfo.JobType, JobTypeOSBuild+":") { // Build jobs get automatic arch suffix: Check prefix
-		return nil, fmt.Errorf("expected \"%s:*\", found %q job instead", JobTypeOSBuild, jobInfo.JobType)
+	if jobInfo.JobType != JobTypeOSBuild {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeOSBuild, jobInfo.JobType)
 	}
 
 	if result.JobError == nil && !jobInfo.JobStatus.Finished.IsZero() {
@@ -547,12 +547,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		}
 	}
 
-	// TODO: Drop the ':$architecture' for metrics too, first prometheus queries for alerts and
-	// dashboards need to be adjusted.
-	prometheus.DequeueJobMetrics(pending, jobInfo.JobStatus.Started, jobType, jobInfo.Channel)
-	if jobType == JobTypeOSBuild+":"+arch {
-		jobType = JobTypeOSBuild
-	}
+	prometheus.DequeueJobMetrics(pending, jobInfo.JobStatus.Started, jobInfo.JobType, jobInfo.Channel)
 
 	return
 }
@@ -578,15 +573,62 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 		}
 	}
 
-	var jobResult JobResult
-	jobInfo, err := s.jobStatus(jobId, &jobResult)
+	jobType, err := s.JobType(jobId)
 	if err != nil {
-		logrus.Errorf("error finding job status: %v", err)
-	} else {
-		statusCode := clienterrors.GetStatusCode(jobResult.JobError)
-		arch := getBuildJobArch(jobInfo.JobType, result)
-		prometheus.FinishJobMetrics(jobInfo.JobStatus.Started, jobInfo.JobStatus.Finished, jobInfo.JobStatus.Canceled, jobInfo.JobType, jobInfo.Channel, arch, statusCode)
+		return err
 	}
+
+	var arch string
+	var jobInfo *JobInfo
+	var jobResult *JobResult
+	switch jobType {
+	case JobTypeOSBuild:
+		var osbuildJR OSBuildJobResult
+		jobInfo, err = s.OSBuildJobStatus(jobId, &osbuildJR)
+		if err != nil {
+			return err
+		}
+		arch = osbuildJR.Arch
+		jobResult = &osbuildJR.JobResult
+
+	case JobTypeDepsolve:
+		var depsolveJR DepsolveJobResult
+		jobInfo, err = s.DepsolveJobStatus(jobId, &depsolveJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &depsolveJR.JobResult
+
+	case JobTypeManifestIDOnly:
+		var manifestJR ManifestJobByIDResult
+		jobInfo, err = s.ManifestJobStatus(jobId, &manifestJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &manifestJR.JobResult
+
+	case JobTypeKojiInit:
+		var kojiInitJR KojiInitJobResult
+		jobInfo, err = s.KojiInitJobStatus(jobId, &kojiInitJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &kojiInitJR.JobResult
+
+	case JobTypeKojiFinalize:
+		var kojiFinalizeJR KojiFinalizeJobResult
+		jobInfo, err = s.KojiFinalizeJobStatus(jobId, &kojiFinalizeJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &kojiFinalizeJR.JobResult
+
+	default:
+		return fmt.Errorf("unexpected job type: %s", jobType)
+	}
+
+	statusCode := clienterrors.GetStatusCode(jobResult.JobError)
+	prometheus.FinishJobMetrics(jobInfo.JobStatus.Started, jobInfo.JobStatus.Finished, jobInfo.JobStatus.Canceled, jobType, jobInfo.Channel, arch, statusCode)
 
 	// Move artifacts from the temporary location to the final job
 	// location. Log any errors, but do not treat them as fatal. The job is
@@ -599,14 +641,6 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	}
 
 	return nil
-}
-
-func getBuildJobArch(jobType string, jobResult json.RawMessage) string {
-	if !strings.HasPrefix(jobType, "osbuild:") {
-		return ""
-	}
-	arch := strings.Split(jobType, ":")[1]
-	return arch
 }
 
 // apiHandlers implements api.ServerInterface - the http api route handlers
