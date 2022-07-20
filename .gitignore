@@ -2,6 +2,7 @@ __pycache__
 
 .vscode
 .DS_Store
+/.idea
 
 /containers/config/
 /bin
