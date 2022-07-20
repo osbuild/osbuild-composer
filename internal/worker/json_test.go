@@ -87,6 +87,108 @@ func TestOSBuildJobResultTargetErrors(t *testing.T) {
 	}
 }
 
+func TestOSBuildJobResultTargetResultsByName(t *testing.T) {
+	testCases := []struct {
+		jobResult     OSBuildJobResult
+		targetName    target.TargetName
+		targetResults []*target.TargetResult
+	}{
+		// one target results of a given name
+		{
+			jobResult: OSBuildJobResult{
+				TargetResults: []*target.TargetResult{
+					{
+						Name:        target.TargetNameAWS,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS"),
+					},
+					{
+						Name:        target.TargetNameVMWare,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare"),
+					},
+					{
+						Name:        target.TargetNameVMWare,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare"),
+					},
+					{
+						Name:        target.TargetNameAWSS3,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3"),
+					},
+				},
+			},
+			targetName: target.TargetNameAWS,
+			targetResults: []*target.TargetResult{
+				{
+					Name:        target.TargetNameAWS,
+					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS"),
+				},
+			},
+		},
+		// multiple target results of a given name
+		{
+			jobResult: OSBuildJobResult{
+				TargetResults: []*target.TargetResult{
+					{
+						Name:        target.TargetNameAWS,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS"),
+					},
+					{
+						Name:        target.TargetNameVMWare,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare"),
+					},
+					{
+						Name:        target.TargetNameVMWare,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare"),
+					},
+					{
+						Name:        target.TargetNameAWSS3,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3"),
+					},
+				},
+			},
+			targetName: target.TargetNameVMWare,
+			targetResults: []*target.TargetResult{
+				{
+					Name:        target.TargetNameVMWare,
+					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare"),
+				},
+				{
+					Name:        target.TargetNameVMWare,
+					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare"),
+				},
+			},
+		},
+		// no target result of a given name
+		{
+			jobResult: OSBuildJobResult{
+				TargetResults: []*target.TargetResult{
+					{
+						Name:        target.TargetNameAWS,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS"),
+					},
+					{
+						Name:        target.TargetNameVMWare,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare"),
+					},
+					{
+						Name:        target.TargetNameVMWare,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare"),
+					},
+					{
+						Name:        target.TargetNameAWSS3,
+						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3"),
+					},
+				},
+			},
+			targetName:    target.TargetNameKoji,
+			targetResults: []*target.TargetResult{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		assert.EqualValues(t, testCase.targetResults, testCase.jobResult.TargetResultsByName(testCase.targetName))
+	}
+}
+
 func TestOSBuildJobExports(t *testing.T) {
 	testCases := []struct {
 		job             *OSBuildJob

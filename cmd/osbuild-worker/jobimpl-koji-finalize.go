@@ -153,13 +153,15 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// multiple
 		buildRPMs = rpmmd.DeduplicateRPMs(buildRPMs)
 
-		// TODO: support multiple upload targets
-		if len(buildArgs.TargetResults) != 1 {
-			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Koji compose OSBuild job result must contain exactly one target result")
+		kojiTargetResults := buildArgs.TargetResultsByName(target.TargetNameKoji)
+		// Only a single Koji target is allowed per osbuild job
+		if len(kojiTargetResults) != 1 {
+			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Exactly one Koji target results are expected per osbuild job")
 			return nil
 		}
-		kojiTarget := buildArgs.TargetResults[0]
-		kojiTargetOptions := kojiTarget.Options.(*target.KojiTargetResultOptions)
+
+		kojiTargetResult := kojiTargetResults[0]
+		kojiTargetOptions := kojiTargetResult.Options.(*target.KojiTargetResultOptions)
 
 		buildRoots = append(buildRoots, koji.BuildRoot{
 			ID: uint64(i),
