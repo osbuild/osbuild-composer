@@ -84,9 +84,34 @@ func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token stri
 }
 
 func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
-	var args worker.KojiFinalizeJob
-	err := job.Args(&args)
+	logWithId := logrus.WithField("jobId", job.Id().String())
+
+	// initialize the result variable to be used to report status back to composer
+	var kojiFinalizeJobResult = &worker.KojiFinalizeJobResult{}
+	// initialize / declare variables to be used to report information back to Koji
+	var args = &worker.KojiFinalizeJob{}
+	var initArgs *worker.KojiInitJobResult
+
+	// In all cases it is necessary to report result back to osbuild-composer worker API.
+	defer func() {
+		err := job.Update(kojiFinalizeJobResult)
+		if err != nil {
+			logWithId.Errorf("Error reporting job result: %v", err)
+		}
+
+		// Fail the Koji build if the job error is set and the necessary
+		// information to identify the job are available.
+		if kojiFinalizeJobResult.JobError != nil && initArgs != nil {
+			err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
+			if err != nil {
+				logWithId.Errorf("Failing Koji job failed: %v", err)
+			}
+		}
+	}()
+
+	err := job.Args(args)
 	if err != nil {
+		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingJobArgs, "Error parsing job args", err.Error())
 		return err
 	}
 
@@ -99,30 +124,20 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		EndTime:   time.Now().Unix(),
 	}
 
-	var initArgs *worker.KojiInitJobResult
 	var buildRoots []koji.BuildRoot
 	var images []koji.Image
 
 	var osbuildResults []worker.OSBuildJobResult
 	initArgs, osbuildResults, err = extractDynamicArgs(job)
 	if err != nil {
+		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", err.Error())
 		return err
 	}
 	build.BuildID = initArgs.BuildID
 
-	// Check the dependencies early. Fail the koji build if any of them failed.
+	// Check the dependencies early.
 	if hasFailedDependency(*initArgs, osbuildResults) {
-		err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
-
-		// Update the status immediately and bail out.
-		var result worker.KojiFinalizeJobResult
-		if err != nil {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, err.Error())
-		}
-		err = job.Update(&result)
-		if err != nil {
-			return fmt.Errorf("Error reporting job result: %v", err)
-		}
+		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, "At least one job dependency failed")
 		return nil
 	}
 
@@ -140,8 +155,8 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 		// TODO: support multiple upload targets
 		if len(buildArgs.TargetResults) != 1 {
-			// TODO: should we call kojiFail() and update job status, instead of just returning?
-			return fmt.Errorf("error: Koji compose OSBuild job result doesn't contain exactly one target result")
+			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Koji compose OSBuild job result must contain exactly one target result")
+			return nil
 		}
 		kojiTarget := buildArgs.TargetResults[0]
 		kojiTargetOptions := kojiTarget.Options.(*target.KojiTargetResultOptions)
@@ -195,11 +210,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
 	if err != nil {
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error())
-	}
-
-	err = job.Update(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
+		return err
 	}
 
 	return nil

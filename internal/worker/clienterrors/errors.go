@@ -29,6 +29,7 @@ const (
 	ErrorJobDependency        ClientErrorCode = 26
 	ErrorJobMissingHeartbeat  ClientErrorCode = 27
 	ErrorTargetError          ClientErrorCode = 28
+	ErrorParsingJobArgs       ClientErrorCode = 29
 )
 
 type ClientErrorCode int
