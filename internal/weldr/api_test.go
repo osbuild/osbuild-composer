@@ -669,7 +669,7 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	require.NoError(t, err)
-	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{
@@ -775,7 +775,7 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 	imgType2, err := arch2.GetImageType(test_distro.TestImageTypeName)
 	require.NoError(t, err)
-	manifest2, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
+	manifest2, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
 	expectedComposeGoodDistro := &store.Compose{
@@ -1717,7 +1717,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	require.NoError(t, err)
 	imgType2, err := arch.GetImageType(test_distro.TestImageType2Name)
 	require.NoError(t, err)
-	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, 0)
+	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{

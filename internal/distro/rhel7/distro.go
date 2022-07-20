@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -395,9 +396,10 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecSets map[string][]rpmmd.PackageSpec,
+	containers []container.Spec,
 	seed int64) (distro.Manifest, error) {
 
-	if err := t.checkOptions(customizations, options); err != nil {
+	if err := t.checkOptions(customizations, options, containers); err != nil {
 		return distro.Manifest{}, err
 	}
 
@@ -427,7 +429,11 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
-func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
+func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
+
+	if len(containers) > 0 {
+		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
+	}
 
 	mountpoints := customizations.GetFilesystems()
 
