@@ -16,7 +16,7 @@ var (
 		Namespace: namespace,
 		Subsystem: workerSubsystem,
 		Help:      "Total jobs",
-	}, []string{"type", "status", "tenant"})
+	}, []string{"type", "status", "tenant", "arch"})
 )
 
 var (
@@ -44,7 +44,7 @@ var (
 		Subsystem: workerSubsystem,
 		Help:      "Duration spent by workers on a job.",
 		Buckets:   []float64{.1, .2, .5, 1, 2, 4, 8, 16, 32, 40, 48, 64, 96, 128, 160, 192, 224, 256, 320, 382, 448, 512, 640, 768, 896, 1024, 1280, 1536, 1792, 2049},
-	}, []string{"type", "status", "tenant"})
+	}, []string{"type", "status", "tenant", "arch"})
 )
 
 var (
@@ -70,7 +70,7 @@ func DequeueJobMetrics(pending time.Time, started time.Time, jobType, tenant str
 	}
 }
 
-func CancelJobMetrics(started time.Time, jobType string, tenant string) {
+func CancelJobMetrics(started time.Time, jobType, tenant string) {
 	if !started.IsZero() {
 		RunningJobs.WithLabelValues(jobType, tenant).Dec()
 	} else {
@@ -78,11 +78,11 @@ func CancelJobMetrics(started time.Time, jobType string, tenant string) {
 	}
 }
 
-func FinishJobMetrics(started time.Time, finished time.Time, canceled bool, jobType, tenant string, status clienterrors.StatusCode) {
+func FinishJobMetrics(started time.Time, finished time.Time, canceled bool, jobType, tenant, arch string, status clienterrors.StatusCode) {
 	if !finished.IsZero() && !canceled {
 		diff := finished.Sub(started).Seconds()
-		JobDuration.WithLabelValues(jobType, status.ToString(), tenant).Observe(diff)
-		TotalJobs.WithLabelValues(jobType, status.ToString(), tenant).Inc()
+		JobDuration.WithLabelValues(jobType, status.ToString(), tenant, arch).Observe(diff)
+		TotalJobs.WithLabelValues(jobType, status.ToString(), tenant, arch).Inc()
 		RunningJobs.WithLabelValues(jobType, tenant).Dec()
 	}
 }
