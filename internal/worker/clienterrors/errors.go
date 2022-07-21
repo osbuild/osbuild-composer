@@ -30,6 +30,7 @@ const (
 	ErrorJobMissingHeartbeat  ClientErrorCode = 27
 	ErrorTargetError          ClientErrorCode = 28
 	ErrorParsingJobArgs       ClientErrorCode = 29
+	ErrorContainerResolution  ClientErrorCode = 30
 )
 
 type ClientErrorCode int
@@ -82,6 +83,8 @@ func GetStatusCode(err *Error) StatusCode {
 	case ErrorEmptyPackageSpecs:
 		return JobStatusUserInputError
 	case ErrorEmptyManifest:
+		return JobStatusUserInputError
+	case ErrorContainerResolution:
 		return JobStatusUserInputError
 	default:
 		return JobStatusInternalError

@@ -236,6 +236,26 @@ type ManifestJobByIDResult struct {
 	JobResult
 }
 
+type ContainerSpec struct {
+	Source    string `json:"source"`
+	Name      string `json:"name"`
+	TLSVerify *bool  `json:"tls-verify,omitempty"`
+
+	ImageID string `json:"image_id"`
+	Digest  string `json:"digest"`
+}
+
+type ContainerResolveJob struct {
+	Arch  string          `json:"arch"`
+	Specs []ContainerSpec `json:"specs"`
+}
+
+type ContainerResolveJobResult struct {
+	Specs []ContainerSpec `json:"specs"`
+
+	JobResult
+}
+
 //
 // JSON-serializable types for the client
 //

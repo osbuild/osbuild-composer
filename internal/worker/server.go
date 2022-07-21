@@ -29,11 +29,12 @@ import (
 )
 
 const (
-	JobTypeOSBuild        string = "osbuild"
-	JobTypeKojiInit       string = "koji-init"
-	JobTypeKojiFinalize   string = "koji-finalize"
-	JobTypeDepsolve       string = "depsolve"
-	JobTypeManifestIDOnly string = "manifest-id-only"
+	JobTypeOSBuild          string = "osbuild"
+	JobTypeKojiInit         string = "koji-init"
+	JobTypeKojiFinalize     string = "koji-finalize"
+	JobTypeDepsolve         string = "depsolve"
+	JobTypeManifestIDOnly   string = "manifest-id-only"
+	JobTypeContainerResolve string = "container-resolve"
 )
 
 type Server struct {
@@ -142,6 +143,10 @@ func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID, 
 	return s.enqueue(JobTypeManifestIDOnly, job, []uuid.UUID{parent}, channel)
 }
 
+func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeContainerResolve, job, nil, channel)
+}
+
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	prometheus.EnqueueJobMetrics(jobType, channel)
 	return s.jobs.Enqueue(jobType, job, dependencies, channel)
@@ -197,6 +202,14 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &kojiFinalizeJR.JobResult
+
+	case JobTypeContainerResolve:
+		var containerResolveJR ContainerResolveJobResult
+		_, jobDeps, err = s.ContainerResolveJobStatus(id, &containerResolveJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &containerResolveJR.JobResult
 
 	default:
 		return nil, fmt.Errorf("unexpected job type: %s", jobType)
@@ -318,6 +331,20 @@ func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) 
 
 	if jobType != JobTypeManifestIDOnly {
 		return nil, nil, fmt.Errorf("expected %q, found %q job instead", JobTypeManifestIDOnly, jobType)
+	}
+
+	return status, deps, nil
+}
+
+func (s *Server) ContainerResolveJobStatus(id uuid.UUID, result *ContainerResolveJobResult) (*JobStatus, []uuid.UUID, error) {
+	jobType, _, status, deps, err := s.jobStatus(id, result)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if jobType != JobTypeContainerResolve {
+		return nil, nil, fmt.Errorf("expected %q, found %q job instead", JobTypeDepsolve, jobType)
 	}
 
 	return status, deps, nil
