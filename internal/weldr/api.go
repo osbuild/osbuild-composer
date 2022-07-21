@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	errors_package "errors"
 	"fmt"
 	"io"
@@ -2165,13 +2166,66 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, options di
 }
 
 func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType distro.ImageType) ([]container.Spec, error) {
-	resolver := container.NewResolver(imageType.Arch().Name())
 
-	for _, c := range bp.Containers {
-		resolver.Add(c.Source, c.Name, c.TLSVerify)
+	specs := make([]container.Spec, len(bp.Containers))
+
+	// shortcut
+	if len(bp.Containers) == 0 {
+		return specs, nil
 	}
 
-	return resolver.Finish()
+	job := worker.ContainerResolveJob{
+		Arch:  api.archName,
+		Specs: make([]worker.ContainerSpec, len(bp.Containers)),
+	}
+
+	for i, c := range bp.Containers {
+		job.Specs[i] = worker.ContainerSpec{
+			Source:    c.Source,
+			Name:      c.Name,
+			TLSVerify: c.TLSVerify,
+		}
+	}
+
+	jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
+
+	if err != nil {
+		return specs, err
+	}
+
+	var result worker.ContainerResolveJobResult
+
+	for {
+		status, _, err := api.workers.ContainerResolveJobStatus(jobId, &result)
+
+		if err != nil {
+			return specs, err
+		}
+
+		if result.JobError != nil {
+			return specs, errors.New(result.JobError.Reason)
+		} else if status.Canceled {
+			return specs, fmt.Errorf("Failed to resolve containers: job cancelled")
+		} else if !status.Finished.IsZero() {
+			break
+		}
+
+		time.Sleep(time.Millisecond * 250)
+	}
+
+	if len(result.Specs) != len(specs) {
+		panic("programming error: input / output length don't match")
+	}
+
+	for i, s := range result.Specs {
+		specs[i].Source = s.Source
+		specs[i].Digest = s.Digest
+		specs[i].LocalName = s.Name
+		specs[i].TLSVerify = s.TLSVerify
+		specs[i].ImageID = s.ImageID
+	}
+
+	return specs, nil
 }
 
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
