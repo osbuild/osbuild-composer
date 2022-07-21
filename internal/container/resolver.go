@@ -17,7 +17,8 @@ type Resolver struct {
 
 	ctx context.Context
 
-	Arch string
+	Arch         string
+	AuthFilePath string
 }
 
 func NewResolver(arch string) Resolver {
@@ -39,6 +40,9 @@ func (r *Resolver) Add(source, name string, TLSVerify *bool) {
 
 	client.SetTLSVerify(TLSVerify)
 	client.SetArchitectureChoice(r.Arch)
+	if r.AuthFilePath != "" {
+		client.SetAuthFilePath(r.AuthFilePath)
+	}
 
 	go func() {
 		spec, err := client.Resolve(r.ctx, name)
