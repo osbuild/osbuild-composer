@@ -434,9 +434,7 @@ func main() {
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
 			KojiServers: kojiServers,
 		},
-		worker.JobTypeKojiFinalize: &KojiFinalizeJobImpl{
-			KojiServers: kojiServers,
-		},
+		worker.JobTypeKojiFinalize: &KojiFinalizeJobImpl{},
 	}
 
 	acceptedJobTypes := []string{}
