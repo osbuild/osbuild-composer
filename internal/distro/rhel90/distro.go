@@ -353,7 +353,16 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 
 	// if we are embedding containers we need to have `skopeo` in the build root
 	if len(bp.Containers) > 0 {
-		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(rpmmd.PackageSet{Include: []string{"skopeo"}})
+
+		extraPkgs := rpmmd.PackageSet{Include: []string{"skopeo"}}
+
+		if t.rpmOstree {
+			// for OSTree based images we need to configure the containers-storage.conf(5)
+			// via the org.osbuild.containers.storage.conf stage, which needs python3-toml
+			extraPkgs = extraPkgs.Append(rpmmd.PackageSet{Include: []string{"python3-toml"}})
+		}
+
+		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(extraPkgs)
 	}
 
 	// depsolve bp packages separately
@@ -501,10 +510,8 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
 
-	// we support embedding containers on all image types that are not ostree based
-	// since we need to store them outside `/var` since that is not preserved in
-	// commits and then point the container `storage.conf` to that extra location
-	if t.rpmOstree && len(containers) > 0 {
+	// we do not support embedding containers on ostree-derived images, only on commits themselves
+	if len(containers) > 0 && t.rpmOstree && (t.name != "edge-commit" && t.name != "edge-container") {
 		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 

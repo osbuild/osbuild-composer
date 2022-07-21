@@ -431,7 +431,22 @@ func osPipeline(t *imageType,
 
 	if len(containers) > 0 {
 		images := osbuild.NewContainersInputForSources(containers)
-		skopeo := osbuild.NewSkopeoStage(images, "")
+
+		var storagePath string
+
+		// OSTree commits do not include data in `/var` since that is tied to the
+		// deployment, rather than the commit. Therefore the containers need to be
+		// stored in a different location, like `/usr/share`, and the container
+		// storage engine configured accordingly.
+		if t.rpmOstree {
+			storagePath = "/usr/share/containers/storage"
+			storageConf := "/etc/containers/storage.conf"
+
+			containerStoreOpts := osbuild.NewContainerStorageOptions(storageConf, storagePath)
+			p.AddStage(osbuild.NewContainersStorageConfStage(containerStoreOpts))
+		}
+
+		skopeo := osbuild.NewSkopeoStage(images, storagePath)
 		p.AddStage(skopeo)
 	}
 
