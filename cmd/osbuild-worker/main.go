@@ -377,6 +377,11 @@ func main() {
 		genericS3SkipSSLVerification = config.GenericS3.SkipSSLVerification
 	}
 
+	var containersAuthFilePath string
+	if config.Containers != nil {
+		containersAuthFilePath = config.Containers.AuthFilePath
+	}
+
 	// depsolve jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
 	solver := dnfjson.NewBaseSolver(rpmmd_cache)
@@ -430,11 +435,17 @@ func main() {
 				CABundle:            genericS3CABundle,
 				SkipSSLVerification: genericS3SkipSSLVerification,
 			},
+			ContainerAuthFile: containersAuthFilePath,
 		},
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
 			KojiServers: kojiServers,
 		},
-		worker.JobTypeKojiFinalize: &KojiFinalizeJobImpl{},
+		worker.JobTypeKojiFinalize: &KojiFinalizeJobImpl{
+			KojiServers: kojiServers,
+		},
+		worker.JobTypeContainerResolve: &ContainerResolveJobImpl{
+			AuthFilePath: containersAuthFilePath,
+		},
 	}
 
 	acceptedJobTypes := []string{}

@@ -29,6 +29,7 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	logWithId.Infof("Resolving containers (%d)", len(args.Specs))
 
 	resolver := container.NewResolver(args.Arch)
+	resolver.AuthFilePath = impl.AuthFilePath
 
 	for _, s := range args.Specs {
 		resolver.Add(s.Source, s.Name, s.TLSVerify)

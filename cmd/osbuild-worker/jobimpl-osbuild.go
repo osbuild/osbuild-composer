@@ -41,14 +41,15 @@ type S3Configuration struct {
 }
 
 type OSBuildJobImpl struct {
-	Store       string
-	Output      string
-	KojiServers map[string]kojiServer
-	GCPCreds    string
-	AzureCreds  *azure.Credentials
-	AWSCreds    string
-	AWSBucket   string
-	S3Config    S3Configuration
+	Store             string
+	Output            string
+	KojiServers       map[string]kojiServer
+	GCPCreds          string
+	AzureCreds        *azure.Credentials
+	AWSCreds          string
+	AWSBucket         string
+	S3Config          S3Configuration
+	ContainerAuthFile string
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -306,8 +307,15 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return nil
 	}
 
+	var extraEnv []string
+	if impl.ContainerAuthFile != "" {
+		extraEnv = []string{
+			fmt.Sprintf("REGISTRY_AUTH_FILE=%s", impl.ContainerAuthFile),
+		}
+	}
+
 	// Run osbuild and handle two kinds of errors
-	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, nil, true, os.Stderr)
+	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, extraEnv, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")
