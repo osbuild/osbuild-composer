@@ -642,7 +642,9 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			}
 
 			var us *UploadStatus
-			// only single upload target in addition to Koji is allowed
+			// Only a single upload target in addition to Koji is allowed.
+			// Koji target is always added to osbuild jobs for Koji compose
+			// by the enqueueKojiCompose() function.
 			if len(buildJobResult.TargetResults) > 2 {
 				return HTTPError(ErrorSeveralUploadTargets)
 			}
