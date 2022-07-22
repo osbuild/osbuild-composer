@@ -144,6 +144,11 @@ func (cl *Client) SetAuthFilePath(path string) {
 	cl.sysCtx.AuthFilePath = path
 }
 
+// GetAuthFilePath gets the location of the `containers-auth.json(5)` file.
+func (cl *Client) GetAuthFilePath() string {
+	return cl.sysCtx.AuthFilePath
+}
+
 func (cl *Client) SetArchitectureChoice(arch string) {
 	// Translate some well-known Composer architecture strings
 	// into the corresponding container ones
