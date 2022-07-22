@@ -156,7 +156,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		kojiTargetResults := buildArgs.TargetResultsByName(target.TargetNameKoji)
 		// Only a single Koji target is allowed per osbuild job
 		if len(kojiTargetResults) != 1 {
-			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Exactly one Koji target results are expected per osbuild job")
+			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Exactly one Koji target result is expected per osbuild job")
 			return nil
 		}
 
