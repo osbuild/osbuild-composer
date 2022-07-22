@@ -2,6 +2,9 @@ package container_test
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -62,4 +65,40 @@ func TestClientResolve(t *testing.T) {
 	_, err = client.Resolve(ctx, "")
 
 	assert.Error(t, err)
+}
+
+func TestClientAuthFilePath(t *testing.T) {
+
+	client, err := container.NewClient("quay.io/osbuild/osbuild")
+	assert.NoError(t, err)
+
+	authFilePath := client.GetAuthFilePath()
+	assert.NotEmpty(t, authFilePath)
+	assert.Equal(t, authFilePath, container.GetDefaultAuthFile())
+
+	// make sure the file is accessible
+	_, err = ioutil.ReadFile(authFilePath)
+	assert.True(t, err == nil || os.IsNotExist(err))
+
+	t.Run("XDG_RUNTIME_DIR", func(t *testing.T) {
+		runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
+
+		if runtimeDir == "" {
+			t.Skip("XDG_RUNTIME_DIR not set, skipping test")
+			return
+		}
+
+		t.Cleanup(func() {
+			os.Setenv("XDG_RUNTIME_DIR", runtimeDir)
+		})
+
+		os.Unsetenv("XDG_RUNTIME_DIR")
+
+		authFilePath := container.GetDefaultAuthFile()
+		fmt.Printf("auth file path: %s", authFilePath)
+		assert.NotEmpty(t, authFilePath)
+		_, err = ioutil.ReadFile(authFilePath)
+		assert.True(t, err == nil || os.IsNotExist(err))
+	})
+
 }
