@@ -113,6 +113,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="fedora/35/${ARCH}/iot"
         OSTREE_OSNAME=fedora
         OS_VARIANT="fedora35"
+        EMBEDED_CONTAINER="false"
         ;;
     "fedora-36")
         CONTAINER_TYPE=fedora-iot-container
@@ -120,22 +121,27 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="fedora/36/${ARCH}/iot"
         OSTREE_OSNAME=fedora
         OS_VARIANT="fedora36"
+        EMBEDED_CONTAINER="false"
         ;;
     "rhel-8.7")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
+        EMBEDED_CONTAINER="true"
         ;;
     "rhel-9.1")
         OSTREE_REF="test/rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
+        EMBEDED_CONTAINER="true"
         ;;
     "centos-8")
         OSTREE_REF="test/centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
+        EMBEDED_CONTAINER="true"
         ;;
     "centos-9")
         OSTREE_REF="test/centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
+        EMBEDED_CONTAINER="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -389,6 +395,14 @@ home = "/home/admin/"
 groups = ["wheel"]
 EOF
 
+# RHEL 8.7 and 9.1 later support embeded container in commit
+if [[ "${EMBEDED_CONTAINER}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[containers]]
+source = "quay.io/fedora/fedora:latest"
+EOF
+fi
+
 greenprint "📄 container blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -560,7 +574,7 @@ EOF
 
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on BIOS VM"
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${INSTALL_HASH}" -e embeded_container="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -642,6 +656,14 @@ if [[ "$ID" != "fedora" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
 name = "kernel-rt"
+EOF
+fi
+
+# RHEL 8.7 and 9.1 later support embeded container in commit
+if [[ "${EMBEDED_CONTAINER}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[containers]]
+source = "quay.io/fedora/fedora:latest"
 EOF
 fi
 
@@ -739,7 +761,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
