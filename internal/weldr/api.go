@@ -359,16 +359,16 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 
 	// All jobs are "osbuild" jobs.
 	var result worker.OSBuildJobResult
-	jobStatus, _, err := api.workers.OSBuildJobStatus(jobId, &result)
+	jobInfo, err := api.workers.OSBuildJobStatus(jobId, &result)
 	if err != nil {
 		panic(err)
 	}
 
 	return &composeStatus{
-		State:    composeStateFromJobStatus(jobStatus, &result),
-		Queued:   jobStatus.Queued,
-		Started:  jobStatus.Started,
-		Finished: jobStatus.Finished,
+		State:    composeStateFromJobStatus(jobInfo.JobStatus, &result),
+		Queued:   jobInfo.JobStatus.Queued,
+		Started:  jobInfo.JobStatus.Started,
+		Finished: jobInfo.JobStatus.Finished,
 		Result:   result.OSBuildOutput,
 	}
 }
@@ -2196,7 +2196,7 @@ func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType 
 	var result worker.ContainerResolveJobResult
 
 	for {
-		status, _, err := api.workers.ContainerResolveJobStatus(jobId, &result)
+		jobInfo, err := api.workers.ContainerResolveJobStatus(jobId, &result)
 
 		if err != nil {
 			return specs, err
@@ -2204,9 +2204,9 @@ func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType 
 
 		if result.JobError != nil {
 			return specs, errors.New(result.JobError.Reason)
-		} else if status.Canceled {
+		} else if jobInfo.JobStatus.Canceled {
 			return specs, fmt.Errorf("Failed to resolve containers: job cancelled")
-		} else if !status.Finished.IsZero() {
+		} else if !jobInfo.JobStatus.Finished.IsZero() {
 			break
 		}
 

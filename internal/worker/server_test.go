@@ -516,7 +516,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 	require.NoError(err)
 
 	oldJobResultRead := new(worker.OSBuildJobResult)
-	_, _, err = server.OSBuildJobStatus(oldJobID, oldJobResultRead)
+	_, err = server.OSBuildJobStatus(oldJobID, oldJobResultRead)
 	require.NoError(err)
 
 	// oldJobResultRead should have PipelineNames now
@@ -554,7 +554,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 	require.NoError(err)
 
 	newJobResultRead := new(worker.OSBuildJobResult)
-	_, _, err = server.OSBuildJobStatus(newJobID, newJobResultRead)
+	_, err = server.OSBuildJobStatus(newJobID, newJobResultRead)
 	require.NoError(err)
 	require.Equal(newJobResult, newJobResultRead)
 }
@@ -589,7 +589,7 @@ func TestDepsolveLegacyErrorConversion(t *testing.T) {
 		ErrorType: errType,
 	}
 
-	_, _, err = server.DepsolveJobStatus(depsolveJobId, &depsolveJobResult)
+	_, err = server.DepsolveJobStatus(depsolveJobId, &depsolveJobResult)
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, depsolveJobResult)
 }

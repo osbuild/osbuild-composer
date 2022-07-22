@@ -292,7 +292,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		return
 	}
 
-	_, _, err = workers.DepsolveJobStatus(depsolveJobID, &depsolveResults)
+	_, err = workers.DepsolveJobStatus(depsolveJobID, &depsolveResults)
 	if err != nil {
 		reason := "Error reading depsolve status"
 		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason)

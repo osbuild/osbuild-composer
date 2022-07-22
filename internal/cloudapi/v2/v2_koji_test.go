@@ -458,9 +458,9 @@ func TestKojiCompose(t *testing.T) {
 			// Finishing of the goroutine handling the manifest job is not deterministic and as a result, we may get
 			// the second osbuild job first.
 			// The build jobs ID is determined from the dependencies of the koji-finalize job dependencies.
-			_, finalizeJobDeps, err := workerServer.KojiFinalizeJobStatus(composeId, &worker.KojiFinalizeJobResult{})
+			finalizeInfo, err := workerServer.KojiFinalizeJobStatus(composeId, &worker.KojiFinalizeJobResult{})
 			require.NoError(t, err)
-			buildJobIDs := finalizeJobDeps[1:]
+			buildJobIDs := finalizeInfo.Deps[1:]
 			require.Len(t, buildJobIDs, 2)
 
 			// handle build jobs
