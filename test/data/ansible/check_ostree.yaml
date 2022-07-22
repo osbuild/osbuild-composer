@@ -5,6 +5,7 @@
     workspace: "{{ lookup('env', 'WORKSPACE') }}"
     skip_rollback_test: "false"
     fdo_credential: "false"
+    embeded_container: "false"
     total_counter: "0"
     failed_counter: "0"
 
@@ -150,7 +151,7 @@
     - name: check if it is simplified-installer or raw-image
       command: findmnt -r -o SOURCE -n /sysroot
       register: result_encrypted
-    
+
     - set_fact:
         device_name: "{{ result_encrypted.stdout }}"
       when: "'/dev/mapper/luks-' in result_encrypted.stdout"
@@ -341,6 +342,36 @@
     - name: check dmesg error and fail log
       shell: dmesg --notime | grep -i "error\|fail" || true
       register: result_dmesg_error
+
+    - name: check embeded container image with podman
+      command: podman images
+      become: yes
+      register: result_podman_images
+      when:
+        - embeded_container == "true"
+        - (ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.0', '>')) or
+          (ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('8.6', '>') and ansible_facts ['distribution_version'] is version('9.0', '!=')) or
+          (ansible_facts['distribution'] == 'CentOS')
+
+    - name: embded container should be listed by podman images
+      block:
+        - assert:
+            that:
+              - "'quay.io/fedora/fedora' in result_podman_images.stdout"
+            fail_msg: "fedora image is not built in image"
+            success_msg: "fedora image is built in image"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - embeded_container == "true"
+        - (ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.0', '>')) or
+          (ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('8.6', '>') and ansible_facts ['distribution_version'] is version('9.0', '!=')) or
+          (ansible_facts['distribution'] == 'CentOS')
 
     # case: check running container with podman
     - name: run ubi8 image

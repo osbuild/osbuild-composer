@@ -20,6 +20,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="fedora35"
         USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/35/Everything/x86_64/os/"
+        EMBEDED_CONTAINER="false"
         ;;
     "fedora-36")
         IMAGE_TYPE=fedora-iot-commit
@@ -27,6 +28,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="fedora36"
         USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/36/Everything/x86_64/os/"
+        EMBEDED_CONTAINER="false"
         ;;
     "rhel-8.4")
         IMAGE_TYPE=edge-commit
@@ -34,6 +36,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel8.4"
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/"
+        EMBEDED_CONTAINER="false"
         ;;
     "rhel-8.6")
         IMAGE_TYPE=edge-commit
@@ -41,12 +44,14 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel8-unknown"
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
+        EMBEDED_CONTAINER="false"
         ;;
     "rhel-8.7")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         USER_IN_COMMIT="true"
+        EMBEDED_CONTAINER="true"
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
@@ -60,12 +65,14 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel9.0"
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
+        EMBEDED_CONTAINER="false"
         ;;
     "rhel-9.1")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         USER_IN_COMMIT="true"
+        EMBEDED_CONTAINER="true"
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
@@ -79,6 +86,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos8"
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
+        EMBEDED_CONTAINER="true"
         ;;
     "centos-9")
         IMAGE_TYPE=edge-commit
@@ -86,6 +94,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         USER_IN_COMMIT="true"
         BOOT_LOCATION="https://odcs.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/os/"
+        EMBEDED_CONTAINER="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -335,6 +344,14 @@ groups = ["wheel"]
 EOF
 fi
 
+# RHEL 8.7 and 9.1 later support embeded container in commit
+if [[ "${EMBEDED_CONTAINER}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[containers]]
+source = "quay.io/fedora/fedora:latest"
+EOF
+fi
+
 # Build installation image.
 build_image "$BLUEPRINT_FILE" ostree
 
@@ -504,6 +521,14 @@ groups = ["wheel"]
 EOF
 fi
 
+# RHEL 8.7 and 9.1 later support embeded container in commit
+if [[ "${EMBEDED_CONTAINER}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[containers]]
+source = "quay.io/fedora/fedora:latest"
+EOF
+fi
+
 # Build upgrade image.
 build_image "$BLUEPRINT_FILE" upgrade
 
@@ -570,7 +595,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
