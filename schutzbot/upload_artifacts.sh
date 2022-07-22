@@ -12,6 +12,7 @@ function greenprint {
 }
 
 # s3cmd is in epel, add if it's not present
+source /etc/os-release
 if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-"${VERSION_ID%.*}".noarch.rpm
