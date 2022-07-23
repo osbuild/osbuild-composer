@@ -8,12 +8,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	_ "github.com/containers/image/v5/docker/archive"
 	_ "github.com/containers/image/v5/oci/archive"
 	_ "github.com/containers/image/v5/oci/layout"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"golang.org/x/sys/unix"
 
 	"github.com/containers/common/pkg/retry"
 	"github.com/containers/image/v5/copy"
@@ -33,41 +35,40 @@ const (
 	DefaultPolicyPath = "/etc/containers/policy.json"
 )
 
-var (
-	defaultAuthFile = GetDefaultAuthFile()
-)
-
 // GetDefaultAuthFile returns the authentication file to use for the
 // current environment.
 //
 // This is basically a re-implementation of `getPathToAuthWithOS` from
 // containers/image/pkg/docker/config/config.go[1], but we ensure that
-// the returned path is either accessible or nonexistent. This is needed
-// since any other error than os.ErrNotExist will lead to an overall
-// failure and thus prevent any operation even with public resources.
+// the returned path is either accessible. This is needed since any
+// other error than os.ErrNotExist will lead to an overall failure and
+// thus prevent any operation even with public resources.
 //
 // [1] https://github.com/containers/image/blob/55ea76c7db702ed1af60924a0b57c8da533d9e5a/pkg/docker/config/config.go#L506
 func GetDefaultAuthFile() string {
 
-	dirExistsOrEmpty := func(path string) bool {
-		_, err := os.Stat(path)
-		// document the error case
-		return err == nil || os.IsNotExist(err)
+	checkAccess := func(path string) bool {
+		err := unix.Access(path, unix.R_OK)
+		return err == nil
 	}
 
-	if runtimeDir := os.Getenv("XDG_RUNTIME_DIR"); runtimeDir != "" {
-		path := filepath.Join(runtimeDir, "containers", "auth.json")
-		if dirExistsOrEmpty(path) {
-			return path
+	if authFile := os.Getenv("REGISTRY_AUTH_FILE"); authFile != "" {
+		if checkAccess(authFile) {
+			return authFile
 		}
 	}
 
-	path := fmt.Sprintf("/run/containers/%d/auth.json", os.Getuid())
-	if dirExistsOrEmpty(path) {
-		return path
+	if runtimeDir := os.Getenv("XDG_RUNTIME_DIR"); runtimeDir != "" {
+		if checkAccess(runtimeDir) {
+			return filepath.Join(runtimeDir, "containers", "auth.json")
+		}
 	}
 
-	return filepath.Join("var", "empty", "containers-auth.json")
+	if rundir := filepath.FromSlash("/run/containers"); checkAccess(rundir) {
+		return filepath.Join(rundir, strconv.Itoa(os.Getuid()), "auth.json")
+	}
+
+	return filepath.FromSlash("/var/empty/containers-auth.json")
 }
 
 // A Client to interact with the given Target object at a
@@ -131,7 +132,7 @@ func NewClient(target string) (*Client, error) {
 
 			OSChoice: "linux",
 
-			AuthFilePath: defaultAuthFile,
+			AuthFilePath: GetDefaultAuthFile(),
 		},
 		policy: policy,
 	}
