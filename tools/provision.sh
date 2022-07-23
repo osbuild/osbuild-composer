@@ -7,6 +7,12 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 ARTIFACTS="${ARTIFACTS:=/tmp/artifacts}"
 mkdir -p "${ARTIFACTS}"
 
+# determine the authentication method used by composer
+AUTH_METHOD_TLS="tls"
+AUTH_METHOD_JWT="jwt"
+# default to TLS for now
+AUTH_METHOD="${1:-$AUTH_METHOD_TLS}"
+
 # koji and ansible are not in RHEL repositories. Depending on them in the spec
 # file breaks RHEL gating (see OSCI-1541). Therefore, we need to enable epel
 # and install koji and ansible here.
@@ -34,12 +40,38 @@ if [[ "$VERSION_ID" == "9.0" || "$VERSION_ID" == "9" ]]; then
 fi
 
 sudo mkdir -p /etc/osbuild-composer
-sudo cp -a /usr/share/tests/osbuild-composer/composer/osbuild-composer-tls.toml \
-    /etc/osbuild-composer/osbuild-composer.toml
-
 sudo mkdir -p /etc/osbuild-worker
-sudo cp -a /usr/share/tests/osbuild-composer/worker/osbuild-worker-tls.toml \
-    /etc/osbuild-worker/osbuild-worker.toml
+
+# Generate all X.509 certificates for the tests
+# The whole generation is done in a $CADIR to better represent how osbuild-ca
+# it.
+CERTDIR=/etc/osbuild-composer
+OPENSSL_CONFIG=/usr/share/tests/osbuild-composer/x509/openssl.cnf
+CADIR=/etc/osbuild-composer-test/ca
+
+scriptloc=$(dirname "$0")
+sudo "${scriptloc}/gen-certs.sh" "${OPENSSL_CONFIG}" "${CERTDIR}" "${CADIR}"
+sudo chown _osbuild-composer "${CERTDIR}"/composer-*.pem
+
+# Copy the appropriate configuration files
+if [[ "$AUTH_METHOD" == "$AUTH_METHOD_JWT" ]]; then
+    COMPOSER_TEST_CONFIG="/usr/share/tests/osbuild-composer/composer/osbuild-composer-jwt.toml"
+    WORKER_TEST_CONFIG="/usr/share/tests/osbuild-composer/worker/osbuild-worker-jwt.toml"
+
+    # Default orgID
+    sudo tee "/etc/osbuild-worker/token" >/dev/null <<EOF
+123456789
+EOF
+
+    /usr/libexec/osbuild-composer-test/run-mock-auth-servers.sh start
+
+elif [[ "$AUTH_METHOD" == "$AUTH_METHOD_TLS" ]]; then
+    COMPOSER_TEST_CONFIG="/usr/share/tests/osbuild-composer/composer/osbuild-composer-tls.toml"
+    WORKER_TEST_CONFIG="/usr/share/tests/osbuild-composer/worker/osbuild-worker-tls.toml"
+fi
+
+sudo cp -a "$COMPOSER_TEST_CONFIG" /etc/osbuild-composer/osbuild-composer.toml
+sudo cp -a "$WORKER_TEST_CONFIG" /etc/osbuild-worker/osbuild-worker.toml
 
 # if GCP credentials are defined in the ENV, add them to the worker's configuration
 GOOGLE_APPLICATION_CREDENTIALS="${GOOGLE_APPLICATION_CREDENTIALS:-}"
@@ -126,23 +158,33 @@ if [ -f "rhel-${VERSION_ID%.*}-beta.json" ]; then
     sudo cp rhel-"${VERSION_ID%.*}"-beta.json "$REPODIR/rhel-${VERSION_SUFFIX}-beta.json"
 fi
 
-# Generate all X.509 certificates for the tests
-# The whole generation is done in a $CADIR to better represent how osbuild-ca
-# it.
-CERTDIR=/etc/osbuild-composer
-OPENSSL_CONFIG=/usr/share/tests/osbuild-composer/x509/openssl.cnf
-CADIR=/etc/osbuild-composer-test/ca
+# start appropriate units
+case "${AUTH_METHOD}" in
+    "${AUTH_METHOD_JWT}")
+        # JWT is used only in the "Service" scenario. This means that:
+        # - only remote workers will be used (no local worker)
+        # - only Cloud API socket will be started (no Weldr API)
+        sudo systemctl stop 'osbuild*'
+        # make sure that the local worker is not running
+        sudo systemctl mask osbuild-worker@1.service
+        # enable remote worker API
+        sudo systemctl start osbuild-remote-worker.socket
+        # enable Cloud API
+        sudo systemctl start osbuild-composer-api.socket
+        # start a remote worker
+        sudo systemctl start osbuild-remote-worker@localhost:8700.service
+        ;;
 
-scriptloc=$(dirname "$0")
-sudo "${scriptloc}/gen-certs.sh" "${OPENSSL_CONFIG}" "${CERTDIR}" "${CADIR}"
-sudo chown _osbuild-composer "${CERTDIR}"/composer-*.pem
+    *)
+        # the default setup used previously for all tests
+        sudo systemctl start osbuild-remote-worker.socket
+        sudo systemctl start osbuild-composer.socket
+        sudo systemctl start osbuild-composer-api.socket
 
-sudo systemctl start osbuild-remote-worker.socket
-sudo systemctl start osbuild-composer.socket
-sudo systemctl start osbuild-composer-api.socket
-
-# The keys were regenerated but osbuild-composer might be already running.
-# Let's try to restart it. In ideal world, this shouldn't be needed as every
-# test case is supposed to run on a pristine machine. However, this is
-# currently not true on Schutzbot
-sudo systemctl try-restart osbuild-composer
+        # The keys were regenerated but osbuild-composer might be already running.
+        # Let's try to restart it. In ideal world, this shouldn't be needed as every
+        # test case is supposed to run on a pristine machine. However, this is
+        # currently not true on Schutzbot
+        sudo systemctl try-restart osbuild-composer
+        ;;
+esac

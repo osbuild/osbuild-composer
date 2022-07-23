@@ -1,0 +1,8 @@
+[authentication]
+oauth_url = "http://localhost:8081/token"
+client_id = "rhsm-api"
+offline_token = "/etc/osbuild-worker/token"
+
+[koji.localhost.kerberos]
+principal = "osbuild-krb@LOCAL"
+keytab = "/etc/osbuild-worker/client.keytab"

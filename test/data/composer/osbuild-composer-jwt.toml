@@ -1,0 +1,17 @@
+[koji]
+enable_tls = false
+enable_mtls = false
+enable_jwt = true
+jwt_keys_urls = ["https://localhost:8082/certs"]
+jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
+jwt_acl_file = ""
+jwt_tenant_provider_fields = ["rh-org-id"]
+
+[worker]
+enable_artifacts = false
+enable_tls = true
+enable_mtls = false
+enable_jwt = true
+jwt_keys_urls = ["https://localhost:8082/certs"]
+jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
+jwt_tenant_provider_fields = ["rh-org-id"]

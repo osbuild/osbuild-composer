@@ -44,3 +44,28 @@ function _instanceCheck() {
     echo "Not RHEL OS. Skip subscription check."
   fi
 }
+
+# Fetch a JWT token
+function access_token {
+  # Refresh token represents the ORG ID
+  local refresh_token="$1"
+  curl --request POST \
+    --data "refresh_token=$refresh_token" \
+    --header "Content-Type: application/x-www-form-urlencoded" \
+    --silent \
+    --show-error \
+    --fail \
+    localhost:8081/token | jq -r .access_token
+}
+
+# Get the compose status using a JWT token
+function compose_status {
+  local compose="$1"
+  local refresh_token="$2"
+  curl \
+    --silent \
+    --show-error \
+    --fail \
+    --header "Authorization: Bearer $(access_token "$refresh_token")" \
+    "http://localhost:443/api/image-builder-composer/v2/composes/$compose"
+}
