@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import argparse
 import json
 import sys
 import time
@@ -63,7 +64,8 @@ def upload_options_by_cloud_target(cloud_target):
             "region": os.getenv("AWS_REGION"),
             "share_with_accounts": [os.getenv("AWS_API_TEST_SHARE_ACCOUNT")]
         }
-    elif cloud_target == "azure":
+
+    if cloud_target == "azure":
         return {
             # image name is currently not set for Koji composes
             # "image_name": "",
@@ -72,7 +74,8 @@ def upload_options_by_cloud_target(cloud_target):
             "subscription_id": os.getenv("AZURE_SUBSCRIPTION_ID"),
             "tenant_id": os.getenv("AZURE_TENANT_ID")
         }
-    elif cloud_target == "gcp":
+
+    if cloud_target == "gcp":
         return {
             # image name is currently not set for Koji composes
             # "image_name": "",
@@ -80,8 +83,8 @@ def upload_options_by_cloud_target(cloud_target):
             "region": os.getenv("GCP_REGION"),
             "share_with_accounts": [os.getenv("GCP_API_TEST_SHARE_ACCOUNT")]
         }
-    else:
-        raise RuntimeError(f"unsupported target cloud: {cloud_target}")
+
+    raise RuntimeError(f"unsupported target cloud: {cloud_target}")
 
 
 def compose_request_cloud_upload(distro, koji, arch, cloud_target, image_type):
@@ -113,24 +116,73 @@ def compose_request_cloud_upload(distro, koji, arch, cloud_target, image_type):
     return req
 
 
+# Client for the Composer API.
+class ComposerAPIClient:
+
+    def __init__(self, api_url, refresh_token, auth_server):
+        self.api_url = api_url
+        self.refresh_token = refresh_token
+        self.auth_server = auth_server
+
+    def access_token(self):
+        resp = requests.post(self.auth_server + "/token", data={"refresh_token": self.refresh_token})
+        if resp.status_code != 200:
+            raise RuntimeError(f"failed to refresh token: {resp.text}")
+        return resp.json()["access_token"]
+
+    def submit_compose(self, request):
+        return requests.post(self.api_url + "/compose", json=request,
+                             headers={"Authorization": f"Bearer {self.access_token()}"})
+
+    def compose_status(self, compose_id):
+        return requests.get(self.api_url + f"/composes/{compose_id}",
+                            headers={"Authorization": f"Bearer {self.access_token()}"})
+
+    def compose_log(self, compose_id):
+        return requests.get(self.api_url + f"/composes/{compose_id}/logs",
+                            headers={"Authorization": f"Bearer {self.access_token()}"})
+
+
+def get_parser():
+    parser = argparse.ArgumentParser(description="Koji compose test")
+    parser.add_argument("distro", metavar="DISTRO", help="Distribution to build")
+    parser.add_argument("arch", metavar="ARCH", help="Architecture to build")
+    parser.add_argument("--refresh-token", metavar="TOKEN", help="JWT refresh token. " +
+                        "If not provided, read from /etc/osbuild-worker/token")
+    parser.add_argument("--auth-server", default="http://localhost:8081", help="Auth server URL")
+    parser.add_argument("--koji-url", default="https://localhost:4343/kojihub", help="Koji server to use")
+    parser.add_argument("--composer-url", default="http://localhost:443/api/image-builder-composer/v2",
+                        help="Composer API server to use")
+
+    cloud_upload_group = parser.add_argument_group("Cloud upload options")
+    cloud_upload_group.add_argument("cloud_target", metavar="CLOUD-TARGET", nargs="?", help="Cloud target to use")
+    cloud_upload_group.add_argument("image_type", metavar="IMAGE-TYPE", nargs="?", help="Image type to build")
+
+    return parser
+
+
 def main():
-    koji_url = "https://localhost:4343/kojihub"
-    if len(sys.argv) == 3:
-        distro, arch = sys.argv[1], sys.argv[2]
-        print("Using simple Koji compose with 2 image requests", file=sys.stderr)
-        cr = compose_request(distro, koji_url, arch)
-    elif len(sys.argv) == 5:
-        distro, arch, cloud_target, image_type = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
-        print("Using Koji compose with 1 image requests and upload to cloud", file=sys.stderr)
-        cr = compose_request_cloud_upload(distro, koji_url, arch, cloud_target, image_type)
+    parser = get_parser()
+    args = parser.parse_args()
+
+    if args.cloud_target and not args.image_type or not args.cloud_target and args.image_type:
+        parser.error("CLOUD-TARGET and IMAGE-TYPE must be used together")
+
+    refresh_token = args.refresh_token
+    if not refresh_token:
+        with open("/etc/osbuild-worker/token", encoding="utf-8") as f:
+            refresh_token = f.read().strip()
+
+    composer_api_client = ComposerAPIClient(args.composer_url, refresh_token, args.auth_server)
+
+    if args.cloud_target is not None:
+        cr = compose_request_cloud_upload(args.distro, args.koji_url, args.arch, args.cloud_target, args.image_type)
     else:
-        print(f"usage: {sys.argv[0]} DISTRO ARCH [CLOUD_TARGET IMAGE_TYPE]", file=sys.stderr)
-        sys.exit(1)
+        cr = compose_request(args.distro, args.koji_url, args.arch)
+
     print(json.dumps(cr), file=sys.stderr)
 
-    r = requests.post("https://localhost/api/image-builder-composer/v2/compose", json=cr,
-                      cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
-                      verify="/etc/osbuild-composer/ca-crt.pem")
+    r = composer_api_client.submit_compose(cr)
     if r.status_code != 201:
         print("Failed to create compose", file=sys.stderr)
         print(r.text, file=sys.stderr)
@@ -141,9 +193,7 @@ def main():
     print(compose_id)
 
     while True:
-        r = requests.get(f"https://localhost/api/image-builder-composer/v2/composes/{compose_id}",
-                         cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
-                         verify="/etc/osbuild-composer/ca-crt.pem")
+        r = composer_api_client.compose_status(compose_id)
         if r.status_code != 200:
             print("Failed to get compose status", file=sys.stderr)
             print(r.text, file=sys.stderr)
@@ -165,9 +215,7 @@ def main():
 
         time.sleep(10)
 
-    r = requests.get(f"https://localhost/api/image-builder-composer/v2/composes/{compose_id}/logs",
-                     cert=("/etc/osbuild-composer/worker-crt.pem", "/etc/osbuild-composer/worker-key.pem"),
-                     verify="/etc/osbuild-composer/ca-crt.pem")
+    r = composer_api_client.compose_log(compose_id)
     logs = r.json()
     assert "image_builds" in logs
     assert type(logs["image_builds"]) == list

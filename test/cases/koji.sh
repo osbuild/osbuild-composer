@@ -91,16 +91,29 @@ if [[ "$TEST_TYPE" == "$TEST_TYPE_CLOUD_UPLOAD" ]]; then
         set +eu
         cleanup
         sudo rm -rf "$WORKDIR"
+        /usr/libexec/osbuild-composer-test/run-mock-auth-servers.sh stop
         set -eu
     }
-    trap cleanups EXIT
 
     # install appropriate cloud environment client tool
     installClient
+else
+    # Source common functions
+    # In the common case above, this file is sourced by 'aws.sh' / 'gcp.sh' / 'azure.sh'
+    source /usr/libexec/tests/osbuild-composer/api/common/common.sh
+
+    function cleanups() {
+        greenprint "Script execution stopped or finished - Cleaning up"
+        set +eu
+        /usr/libexec/osbuild-composer-test/run-mock-auth-servers.sh stop
+        set -eu
+    }
 fi
 
+trap cleanups EXIT
+
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh jwt
 
 greenprint "Starting containers"
 sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh start
@@ -118,10 +131,6 @@ sudo cp \
     /etc/osbuild-composer/ca-crt.pem \
     /etc/pki/ca-trust/source/anchors/osbuild-composer-tests-ca-crt.pem
 sudo update-ca-trust
-
-greenprint "Restarting composer to pick up new config"
-sudo systemctl restart osbuild-composer
-sudo systemctl restart osbuild-worker\@1
 
 greenprint "Testing Koji"
 koji --server=http://localhost:8080/kojihub --user=osbuild --password=osbuildpass --authtype=password hello
@@ -153,13 +162,7 @@ esac
 if [[ "$TEST_TYPE" == "$TEST_TYPE_CLOUD_UPLOAD" ]]; then
     greenprint "Verify that image was uploaded to the cloud provider"
 
-    COMPOSE_STATUS=$(curl \
-        --silent \
-        --show-error \
-        --cacert /etc/osbuild-composer/ca-crt.pem \
-        --key /etc/osbuild-composer/client-key.pem \
-        --cert /etc/osbuild-composer/client-crt.pem \
-        "https://localhost/api/image-builder-composer/v2/composes/${COMPOSE_ID}")
+    COMPOSE_STATUS=$(compose_status "${COMPOSE_ID}")
     UPLOAD_OPTIONS=$(echo "${COMPOSE_STATUS}" | jq -r '.image_status.upload_status.options')
 
     # Authenticate with the appropriate cloud
