@@ -114,7 +114,7 @@ function send_compose {
     --show-error \
     --fail \
     --header 'Content-Type: application/json' \
-    --header "Authorization: Bearer $(access_token "$refresh_token")" \
+    --header "Authorization: Bearer $(access_token_with_org_id "$refresh_token")" \
     --request POST \
     --data @"$request_file" \
     http://localhost:443/api/image-builder-composer/v2/compose | jq -r '.id'
@@ -124,7 +124,7 @@ function assert_status {
   local compose="$1"
   local refresh_token="$2"
   local status="$3"
-  [[ $(compose_status "$compose" "$refresh_token" | jq -r '.status') == "$status" ]]
+  [[ $(compose_status_with_org_id "$compose" "$refresh_token" | jq -r '.status') == "$status" ]]
 }
 
 function wait_for_status {
@@ -134,7 +134,7 @@ function wait_for_status {
   while true
   do
     local current_status
-    current_status=$(compose_status "$compose" "$refresh_token" | jq -r '.status')
+    current_status=$(compose_status_with_org_id "$compose" "$refresh_token" | jq -r '.status')
 
     case "$current_status" in
       "$desired_status")
