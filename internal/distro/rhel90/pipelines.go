@@ -1058,6 +1058,9 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 		"rdma",
 		"rngd",
 	})
+	// drivers / kernel modules to add explicitly for parity with the official
+	// RHEL 9.0 ISO
+	dso.AddDrivers = []string{"cuse", "ipmi_devintf", "ipmi_msghandler"}
 	p.AddStage(osbuild.NewDracutStage(dso))
 	p.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
