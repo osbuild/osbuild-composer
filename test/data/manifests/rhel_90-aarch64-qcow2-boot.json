@@ -2078,15 +2078,15 @@
             "options": {
               "filesystems": [
                 {
-                  "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-                  "vfs_type": "xfs",
-                  "path": "/boot",
-                  "options": "defaults"
-                },
-                {
                   "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
                   "vfs_type": "xfs",
                   "path": "/",
+                  "options": "defaults"
+                },
+                {
+                  "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+                  "vfs_type": "xfs",
+                  "path": "/boot",
                   "options": "defaults"
                 },
                 {
