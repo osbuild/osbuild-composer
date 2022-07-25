@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-artifacts="ci-artifacts"
+artifacts="/tmp/artifacts"
 mkdir -p "${artifacts}"
 
 # Colorful output.
