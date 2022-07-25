@@ -27,7 +27,8 @@
     "blueprint": {
       "customizations": {
         "kernel": {
-          "name": "kernel-rt"
+          "name": "kernel-rt",
+          "append": ""
         }
       }
     }
@@ -9450,5 +9451,6 @@
         "checksum": "sha256:0c40e1c58af661a779b6817a7c8d1aa7195ddc32c85c70c3583cea37a0a2e09f"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

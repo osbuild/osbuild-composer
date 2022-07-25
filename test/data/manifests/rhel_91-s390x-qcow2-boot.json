@@ -21,9 +21,6 @@
     "blueprint": {
       "name": "qcow2-boot-test",
       "description": "Image for boot test",
-      "packages": [],
-      "modules": [],
-      "groups": [],
       "customizations": {
         "user": [
           {
@@ -16211,5 +16208,6 @@
         "check_gpg": true
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

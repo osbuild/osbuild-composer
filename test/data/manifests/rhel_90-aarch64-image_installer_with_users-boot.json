@@ -47,7 +47,6 @@
       }
     }
   },
-  "no-image-info": true,
   "manifest": {
     "version": "2",
     "pipelines": [
@@ -22393,5 +22392,6 @@
         "checksum": "sha256:3a32d8bbd10a5f1b75dbc65d964e515dc094b6e3ea3c447acba914ad6a826668"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

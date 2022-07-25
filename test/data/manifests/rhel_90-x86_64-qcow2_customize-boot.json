@@ -25,8 +25,11 @@
           "version": "*"
         }
       ],
-      "modules": [],
-      "groups": [],
+      "groups": [
+        {
+          "name": "core"
+        }
+      ],
       "customizations": {
         "hostname": "my-host",
         "kernel": {
@@ -996,6 +999,9 @@
                     "id": "sha256:f00365d25649f658468a39755e0436ac8e7d6e5f033ffaff5251fe7bb7e5b95a"
                   },
                   {
+                    "id": "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7"
+                  },
+                  {
                     "id": "sha256:f5671dc12b61c49f59c21a989d5afba03f7414f65e40f4fdff9fe75381dda5dc"
                   },
                   {
@@ -1042,6 +1048,12 @@
                   },
                   {
                     "id": "sha256:1aa1d059f7696ae397f8746d8d4fe5ead73bac461f53cce01b92db73fbd2fa81"
+                  },
+                  {
+                    "id": "sha256:7b738903b5a814568894b08e43b837c8e9af7bae834deb3bd8c1c2b6a5abf513"
+                  },
+                  {
+                    "id": "sha256:0aff62a3cac644b279baf297cddc0102166b3cb41acc4a1a52ea28556d3a9a4c"
                   },
                   {
                     "id": "sha256:d4b490f97fec6df68d467e74eeac7f26210757973175d344d989804e4f1a3629"
@@ -1161,13 +1173,58 @@
                     "id": "sha256:f73e5b5ba910b317cfce9991fd51a4b3262806369492753c70d1780a72d3ad62"
                   },
                   {
+                    "id": "sha256:0cc6f5489219f848fa74d3aa01cd8edf29bdae260c81c65e3e57591cc932e70c"
+                  },
+                  {
+                    "id": "sha256:c713d625acdeeba438c739bc1f9ed6e63e2ee3fb8334d4328fe2c8822e1c9b5d"
+                  },
+                  {
                     "id": "sha256:2882e59e2bd1f0fe8e51a99e4338f053d361ffc039cd423e141daa65da3e93b3"
+                  },
+                  {
+                    "id": "sha256:903dbd59906b4f008d91e0be3ebfa0a2c01c9b5fd62100453795fa0341c0cdc4"
                   },
                   {
                     "id": "sha256:62e71529d30a23056ce1c38ca40c517ab425c864b681b135b275204fdd479ae7"
                   },
                   {
                     "id": "sha256:770c850634d50d11aeb04f7ccacd960693fe9e3b9cfb91d47cda44ff7021e9e6"
+                  },
+                  {
+                    "id": "sha256:01939e7ae8b55ea022e463a1a19b395fea414ab1756400481c7393288acc2487"
+                  },
+                  {
+                    "id": "sha256:5d5d28f8506343379b2ecd7e5d3d03032631bee662a91fd014beede70556c431"
+                  },
+                  {
+                    "id": "sha256:08b61941b090d825ba27290d425a96a83ebab213186b80b4556c150dea09ae34"
+                  },
+                  {
+                    "id": "sha256:e58fae3c2f1e1523c5b4967fe59e6e623b7b9fa4a3efb7b4219feb1a62ea748f"
+                  },
+                  {
+                    "id": "sha256:370ffccab77689dcabda535306dd18274742026e59d2330ee2d07c479cfc0dc6"
+                  },
+                  {
+                    "id": "sha256:4900de5fe7cf57df87d84d84a35e2031bb0668494c12da6d26c617f0d23f060d"
+                  },
+                  {
+                    "id": "sha256:540efc56851bf6ac1170d51a584d7659789296d0fc2ee8fb97d83c9f408119c9"
+                  },
+                  {
+                    "id": "sha256:6accd8521cabe36f2f22a33396cae27b6bd5374731828b78da695c06cc8624ae"
+                  },
+                  {
+                    "id": "sha256:eb6cfc3b08cc7aa504beea4b298bd49691a06c2917d5e60ebf39da030285b74c"
+                  },
+                  {
+                    "id": "sha256:8b19d50d04beddd3ae853619b541a66d4f57e4df6d31a79563417a20c658d25c"
+                  },
+                  {
+                    "id": "sha256:f8405090fb3e392da790f5a58bb0a8bb535fe531105ee2133dce4ed4fa50d352"
+                  },
+                  {
+                    "id": "sha256:4dbae3cd048aca496d94e979b233fe7a5ee7126a476aeba828bf02dd6e316215"
                   },
                   {
                     "id": "sha256:4e9aec51ee46d7265d6edd1245b5d5ab5e8336dc2a4ca17f2cace2ce8bae3761"
@@ -1372,6 +1429,9 @@
                   },
                   {
                     "id": "sha256:d11591e3407566e102072c95e2f5372a47a0793a16b2856a80eb3160158a79c7"
+                  },
+                  {
+                    "id": "sha256:308953532379a5af38e5bfcbe69bf05d0fe462e4ac42b20863877556906385a2"
                   },
                   {
                     "id": "sha256:f251c43b13b24e48529285f185d05dd9728c9f597b9c18469e54a111e8607cec"
@@ -1584,6 +1644,9 @@
                     "id": "sha256:18b21d118c2b145f95e41ebdf96ffb694afe9576560d5c2fbdab9f8e670893b2"
                   },
                   {
+                    "id": "sha256:ef7f97c4a72bb3149d4038f8e347cbc546eb17cf639479fd47f2fa22acf9c729"
+                  },
+                  {
                     "id": "sha256:3e044d8534970034063e6445a142780bbe9d37f5e75b98f8788ade5470a32ab6"
                   },
                   {
@@ -1701,6 +1764,9 @@
                     "id": "sha256:30a3b8b08eafb81232ae7758eaef2ba2eef8e2ada837571fee0aaaa874de1f15"
                   },
                   {
+                    "id": "sha256:b6ba64260d2c4bdcb5b2b5ac5f54ee8640c4c714dcce5b33aaad351dff8c4b89"
+                  },
+                  {
                     "id": "sha256:a6fd1db30750fefdb6b2ddb91731c4e59c25ca9ee1c18530ebfe41f7158a66b4"
                   },
                   {
@@ -1735,6 +1801,9 @@
                   },
                   {
                     "id": "sha256:9e41bd1f52490f21696a4a11a5e0c28fbc74d21930e94cf02c34a8f7430420ac"
+                  },
+                  {
+                    "id": "sha256:c8ce8d404b24fc632a072349de3c2f132694798e58f06fc470360abb4c3c578b"
                   },
                   {
                     "id": "sha256:947cd909d714ac798e930dc3e3d268c3b9c98556c8d55d9af9a8ca7e0949145b"
@@ -2644,6 +2713,9 @@
           "sha256:004e7c0e5cb9e300f39884c24dfdb7ddb686c84a2350691b24fa07b05102e325": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-libdnf-0.65.0-2.el9.x86_64.rpm"
           },
+          "sha256:01939e7ae8b55ea022e463a1a19b395fea414ab1756400481c7393288acc2487": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl100-firmware-39.31.5.1-124.el9.noarch.rpm"
+          },
           "sha256:01bf315b3bc44c28515c4d33d49173b23d7979d2a09b7b15f749d434b60851e6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/readline-8.1-4.el9.x86_64.rpm"
           },
@@ -2683,8 +2755,14 @@
           "sha256:083feb8f422304ee96d0578c061c7158054133d18c1d538bb6dedb39f8f12d79": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/pbzip2-1.1.13-6.el9.x86_64.rpm"
           },
+          "sha256:08b61941b090d825ba27290d425a96a83ebab213186b80b4556c150dea09ae34": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl105-firmware-18.168.6.1-124.el9.noarch.rpm"
+          },
           "sha256:09459e8c7c6df89573466118098387b15809eb99ea95f4753534e1ba29b6d3be": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/xfsprogs-5.14.2-1.el9.x86_64.rpm"
+          },
+          "sha256:0aff62a3cac644b279baf297cddc0102166b3cb41acc4a1a52ea28556d3a9a4c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/firewalld-filesystem-1.0.0-4.el9.noarch.rpm"
           },
           "sha256:0b29cfb06051c12254c742e90cfa1df78ddc7234b267aef2d81264adb229bbd7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dmidecode-3.3-6.el9.x86_64.rpm"
@@ -2697,6 +2775,9 @@
           },
           "sha256:0c8f8e301f75c77a24821cc9170596a799edb33c1bf58b6490aa97c8ed7d5996": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/gmp-6.2.0-10.el9.x86_64.rpm"
+          },
+          "sha256:0cc6f5489219f848fa74d3aa01cd8edf29bdae260c81c65e3e57591cc932e70c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/ipset-7.11-6.el9.x86_64.rpm"
           },
           "sha256:0d2465f7b523bf5f4a7da00d947ef006e6fc75a8dd20a584e07db8b39919f9ec": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/sscg-3.0.0-4.el9.x86_64.rpm"
@@ -2806,6 +2887,9 @@
           "sha256:219825121d761bf163e746f0ca424e4dfe071aece87c22ccd632abcf78ab4920": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-inotify-0.9.6-25.el9.noarch.rpm"
           },
+          "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.x86_64.rpm"
+          },
           "sha256:2358982717e4c6df5e0dfc4ad906dade4ecf051cb7612b1aa087ab6c03f36da2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libuser-0.63-7.el9.x86_64.rpm"
           },
@@ -2887,6 +2971,9 @@
           "sha256:2fabb90bb3f87581b44b3805865042ac881a200b055bfdcd48ecba3bb16c5671": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libgudev-237-1.el9.x86_64.rpm"
           },
+          "sha256:308953532379a5af38e5bfcbe69bf05d0fe462e4ac42b20863877556906385a2": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libnftnl-1.1.9-4.el9.x86_64.rpm"
+          },
           "sha256:30a3b8b08eafb81232ae7758eaef2ba2eef8e2ada837571fee0aaaa874de1f15": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-ethtool-0.15-2.el9.x86_64.rpm"
           },
@@ -2913,6 +3000,9 @@
           },
           "sha256:36b604e6766356a69cbec08b800db5ac6f14d3b0e2297309a823eefd55295fa5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/pam-1.5.1-9.el9.x86_64.rpm"
+          },
+          "sha256:370ffccab77689dcabda535306dd18274742026e59d2330ee2d07c479cfc0dc6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl2000-firmware-18.168.6.1-124.el9.noarch.rpm"
           },
           "sha256:372a5cfa95d2edb67435b0386029501ff5254bca91430b6d6e8e446582ba258a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/sqlite-libs-3.34.1-5.el9.x86_64.rpm"
@@ -3019,6 +3109,9 @@
           "sha256:4846ecf18d3670ad6fbdcc1c29d6cdd37faa4ae20786c64d080307daae1a6f97": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/python3-babel-2.9.1-2.el9.noarch.rpm"
           },
+          "sha256:4900de5fe7cf57df87d84d84a35e2031bb0668494c12da6d26c617f0d23f060d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl2030-firmware-18.168.6.1-124.el9.noarch.rpm"
+          },
           "sha256:49191fa272d3c16c219f1b27fd86bd085fa1ae3bac38946de40926b35773c4c4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/redhat-logos-90.2-1.el9.x86_64.rpm"
           },
@@ -3045,6 +3138,9 @@
           },
           "sha256:4da11286bb79e5b384e611328bb12ba654de4b0ad0548faf5a33572f6e9f9b8a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/cloud-init-21.1-16.el9.noarch.rpm"
+          },
+          "sha256:4dbae3cd048aca496d94e979b233fe7a5ee7126a476aeba828bf02dd6e316215": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl7260-firmware-25.30.13.0-124.el9.noarch.rpm"
           },
           "sha256:4e9aec51ee46d7265d6edd1245b5d5ab5e8336dc2a4ca17f2cace2ce8bae3761": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/jansson-2.14-1.el9.x86_64.rpm"
@@ -3078,6 +3174,9 @@
           },
           "sha256:5370109ff91d1c93d3bd04aeec55a87d16c5c981bb8c8bfeb08b548a2fda4b24": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/linux-firmware-whence-20211216-124.el9.noarch.rpm"
+          },
+          "sha256:540efc56851bf6ac1170d51a584d7659789296d0fc2ee8fb97d83c9f408119c9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl3160-firmware-25.30.13.0-124.el9.noarch.rpm"
           },
           "sha256:544a21926b873ff59ad9c053c9385def305bb21c4b9ebe9bddc1fdc289f1d067": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/libisofs-1.5.4-3.el9.x86_64.rpm"
@@ -3142,6 +3241,9 @@
           "sha256:5cf4276217a72649895226707d4c0e3edd6ea64b66702793fab3907177c73069": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/python3-distro-1.5.0-7.el9.noarch.rpm"
           },
+          "sha256:5d5d28f8506343379b2ecd7e5d3d03032631bee662a91fd014beede70556c431": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl1000-firmware-39.31.5.1-124.el9.noarch.rpm"
+          },
           "sha256:5eddffbe9de57d1f1a30fc0b4e8515b3f71cd7ff99c6397f024478b5cb9ab8e8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libbrotli-1.0.9-6.el9.x86_64.rpm"
           },
@@ -3204,6 +3306,9 @@
           },
           "sha256:69aa3b94160d858239bc09d1bfc8168746b8291f58029ccbd638d98100533f3f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/lorax-templates-generic-34.9.11-1.el9.x86_64.rpm"
+          },
+          "sha256:6accd8521cabe36f2f22a33396cae27b6bd5374731828b78da695c06cc8624ae": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl5000-firmware-8.83.5.1_1-124.el9.noarch.rpm"
           },
           "sha256:6ceb9cc5fc9892922d3ef06e0228236b210b2dab104065a587b713b6b92de3e5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libtirpc-1.3.2-1.el9.x86_64.rpm"
@@ -3298,6 +3403,9 @@
           "sha256:7b4d475adb465ba577d1989c21fe5715f9be277189195fe0d28fe92cbfa80731": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/ncurses-6.2-8.20210508.el9.x86_64.rpm"
           },
+          "sha256:7b738903b5a814568894b08e43b837c8e9af7bae834deb3bd8c1c2b6a5abf513": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/firewalld-1.0.0-4.el9.noarch.rpm"
+          },
           "sha256:7b8444e355c1e8dc7177506b629e2beb9dabc13a6e3e8ed9b786c4e321f36f68": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libdhash-0.5.0-51.el9.x86_64.rpm"
           },
@@ -3352,6 +3460,9 @@
           "sha256:8a656c012c9865f1d949cebe0cbf4e74a5ccc2f52640ecc0ca09048477f6d1b9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/coreutils-common-8.32-31.el9.x86_64.rpm"
           },
+          "sha256:8b19d50d04beddd3ae853619b541a66d4f57e4df6d31a79563417a20c658d25c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl6000g2a-firmware-18.168.6.1-124.el9.noarch.rpm"
+          },
           "sha256:8bba35b018036fedcb5629454386a3162e3c2bc74efe6a0283b921933c537b32": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/yum-utils-4.0.24-2.el9.noarch.rpm"
           },
@@ -3375,6 +3486,9 @@
           },
           "sha256:8f717694adb432139bb61c081753c0de00cb36ad6110c28a7a1ca7b1aa60d671": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libgomp-11.2.1-9.1.el9.x86_64.rpm"
+          },
+          "sha256:903dbd59906b4f008d91e0be3ebfa0a2c01c9b5fd62100453795fa0341c0cdc4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iptables-nft-1.8.7-26.el9.x86_64.rpm"
           },
           "sha256:90879ba059eb397d014038061f9998938b7400fb6801e1c0d045b588051e4d8a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/setroubleshoot-plugins-3.3.14-4.el9.noarch.rpm"
@@ -3595,6 +3709,9 @@
           "sha256:b64133227dca092ba89a703ba539e422299fc04a8663ab862240a433f116e5e9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/mokutil-0.4.0-8.el9.x86_64.rpm"
           },
+          "sha256:b6ba64260d2c4bdcb5b2b5ac5f54ee8640c4c714dcce5b33aaad351dff8c4b89": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-firewall-1.0.0-4.el9.noarch.rpm"
+          },
           "sha256:b7138ec10750c522099bba1fc20878dfe3b710975fe08813958fe1e6184a532b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/PackageKit-glib-1.2.4-2.el9.x86_64.rpm"
           },
@@ -3685,6 +3802,9 @@
           "sha256:c6e3129b65ce1aa18ce3b4283219c9c9ccfc0587ff17c227340aa0eafc21df07": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/chrony-4.1-3.el9.x86_64.rpm"
           },
+          "sha256:c713d625acdeeba438c739bc1f9ed6e63e2ee3fb8334d4328fe2c8822e1c9b5d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/ipset-libs-7.11-6.el9.x86_64.rpm"
+          },
           "sha256:c746c3e534fa6616b62525a89cc8ab1014e5acfac31b1012823b5f1e9031181c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-3.9.10-1.el9.x86_64.rpm"
           },
@@ -3696,6 +3816,9 @@
           },
           "sha256:c8b4130984ea24231da37cc07fe7be90ea75d04016fda23d18a16e9a4b8435d6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/openssl-3.0.1-5.el9.x86_64.rpm"
+          },
+          "sha256:c8ce8d404b24fc632a072349de3c2f132694798e58f06fc470360abb4c3c578b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-nftables-0.9.8-10.el9.x86_64.rpm"
           },
           "sha256:c958920cafeaf333863381edc26ac5844823f73be6985b6d48c88efd90390c08": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-ptyprocess-0.6.0-12.el9.noarch.rpm"
@@ -3838,6 +3961,9 @@
           "sha256:e55d976682d6f8ea1937719fb97f130a506312000ad831a18fea5722c5bd253f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/snappy-1.1.8-8.el9.x86_64.rpm"
           },
+          "sha256:e58fae3c2f1e1523c5b4967fe59e6e623b7b9fa4a3efb7b4219feb1a62ea748f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl135-firmware-18.168.6.1-124.el9.noarch.rpm"
+          },
           "sha256:e5d8869dbc34672bb6bc94e00045f659b7d2415172cd27ee9f949e1769f71bb8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/passwd-0.80-12.el9.x86_64.rpm"
           },
@@ -3868,6 +3994,9 @@
           "sha256:eb412729844495d81f36b1bdaa24736070d197d0b7f2fe38736b6022cc84013d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/python3-kickstart-3.32.2-2.el9.noarch.rpm"
           },
+          "sha256:eb6cfc3b08cc7aa504beea4b298bd49691a06c2917d5e60ebf39da030285b74c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl5150-firmware-8.24.2.2-124.el9.noarch.rpm"
+          },
           "sha256:eb8973df11266ce57f1db004883df3f14690c17646992c2d977f81cd6ba560f7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/gdisk-1.0.7-5.el9.x86_64.rpm"
           },
@@ -3891,6 +4020,9 @@
           },
           "sha256:ef69385a6f77c4beea6b895edf4bb39cb70485967e30ac7655593e100e90768d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libss-1.46.5-2.el9.x86_64.rpm"
+          },
+          "sha256:ef7f97c4a72bb3149d4038f8e347cbc546eb17cf639479fd47f2fa22acf9c729": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/nftables-0.9.8-10.el9.x86_64.rpm"
           },
           "sha256:efea47322040d695e76ba1fafc9312b974993f0e5140e4e710ddca43fa366237": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/python3-attrs-20.3.0-5.el9.noarch.rpm"
@@ -3960,6 +4092,9 @@
           },
           "sha256:f835cc738fa003147087d68427c407e17c08587156ae961d641b2dfcee1fe7af": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/bash-5.1.8-2.el9.x86_64.rpm"
+          },
+          "sha256:f8405090fb3e392da790f5a58bb0a8bb535fe531105ee2133dce4ed4fa50d352": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl6050-firmware-41.28.5.1-124.el9.noarch.rpm"
           },
           "sha256:f84294afdeaddb4f44243b80e3b32cf65a5aff76e5b7528f4810657c90559181": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/NetworkManager-team-1.36.0-0.7.el9.x86_64.rpm"
@@ -6559,6 +6694,15 @@
         "checksum": "sha256:f00365d25649f658468a39755e0436ac8e7d6e5f033ffaff5251fe7bb7e5b95a"
       },
       {
+        "name": "dracut-config-rescue",
+        "epoch": 0,
+        "version": "055",
+        "release": "10.git20210824.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.x86_64.rpm",
+        "checksum": "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7"
+      },
+      {
         "name": "dracut-network",
         "epoch": 0,
         "version": "055",
@@ -6701,6 +6845,24 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/findutils-4.8.0-5.el9.x86_64.rpm",
         "checksum": "sha256:1aa1d059f7696ae397f8746d8d4fe5ead73bac461f53cce01b92db73fbd2fa81"
+      },
+      {
+        "name": "firewalld",
+        "epoch": 0,
+        "version": "1.0.0",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/firewalld-1.0.0-4.el9.noarch.rpm",
+        "checksum": "sha256:7b738903b5a814568894b08e43b837c8e9af7bae834deb3bd8c1c2b6a5abf513"
+      },
+      {
+        "name": "firewalld-filesystem",
+        "epoch": 0,
+        "version": "1.0.0",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/firewalld-filesystem-1.0.0-4.el9.noarch.rpm",
+        "checksum": "sha256:0aff62a3cac644b279baf297cddc0102166b3cb41acc4a1a52ea28556d3a9a4c"
       },
       {
         "name": "fonts-filesystem",
@@ -7054,6 +7216,24 @@
         "checksum": "sha256:f73e5b5ba910b317cfce9991fd51a4b3262806369492753c70d1780a72d3ad62"
       },
       {
+        "name": "ipset",
+        "epoch": 0,
+        "version": "7.11",
+        "release": "6.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/ipset-7.11-6.el9.x86_64.rpm",
+        "checksum": "sha256:0cc6f5489219f848fa74d3aa01cd8edf29bdae260c81c65e3e57591cc932e70c"
+      },
+      {
+        "name": "ipset-libs",
+        "epoch": 0,
+        "version": "7.11",
+        "release": "6.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/ipset-libs-7.11-6.el9.x86_64.rpm",
+        "checksum": "sha256:c713d625acdeeba438c739bc1f9ed6e63e2ee3fb8334d4328fe2c8822e1c9b5d"
+      },
+      {
         "name": "iptables-libs",
         "epoch": 0,
         "version": "1.8.7",
@@ -7061,6 +7241,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iptables-libs-1.8.7-26.el9.x86_64.rpm",
         "checksum": "sha256:2882e59e2bd1f0fe8e51a99e4338f053d361ffc039cd423e141daa65da3e93b3"
+      },
+      {
+        "name": "iptables-nft",
+        "epoch": 0,
+        "version": "1.8.7",
+        "release": "26.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iptables-nft-1.8.7-26.el9.x86_64.rpm",
+        "checksum": "sha256:903dbd59906b4f008d91e0be3ebfa0a2c01c9b5fd62100453795fa0341c0cdc4"
       },
       {
         "name": "iputils",
@@ -7079,6 +7268,114 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/irqbalance-1.8.0-4.el9.x86_64.rpm",
         "checksum": "sha256:770c850634d50d11aeb04f7ccacd960693fe9e3b9cfb91d47cda44ff7021e9e6"
+      },
+      {
+        "name": "iwl100-firmware",
+        "epoch": 0,
+        "version": "39.31.5.1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl100-firmware-39.31.5.1-124.el9.noarch.rpm",
+        "checksum": "sha256:01939e7ae8b55ea022e463a1a19b395fea414ab1756400481c7393288acc2487"
+      },
+      {
+        "name": "iwl1000-firmware",
+        "epoch": 1,
+        "version": "39.31.5.1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl1000-firmware-39.31.5.1-124.el9.noarch.rpm",
+        "checksum": "sha256:5d5d28f8506343379b2ecd7e5d3d03032631bee662a91fd014beede70556c431"
+      },
+      {
+        "name": "iwl105-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl105-firmware-18.168.6.1-124.el9.noarch.rpm",
+        "checksum": "sha256:08b61941b090d825ba27290d425a96a83ebab213186b80b4556c150dea09ae34"
+      },
+      {
+        "name": "iwl135-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl135-firmware-18.168.6.1-124.el9.noarch.rpm",
+        "checksum": "sha256:e58fae3c2f1e1523c5b4967fe59e6e623b7b9fa4a3efb7b4219feb1a62ea748f"
+      },
+      {
+        "name": "iwl2000-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl2000-firmware-18.168.6.1-124.el9.noarch.rpm",
+        "checksum": "sha256:370ffccab77689dcabda535306dd18274742026e59d2330ee2d07c479cfc0dc6"
+      },
+      {
+        "name": "iwl2030-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl2030-firmware-18.168.6.1-124.el9.noarch.rpm",
+        "checksum": "sha256:4900de5fe7cf57df87d84d84a35e2031bb0668494c12da6d26c617f0d23f060d"
+      },
+      {
+        "name": "iwl3160-firmware",
+        "epoch": 1,
+        "version": "25.30.13.0",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl3160-firmware-25.30.13.0-124.el9.noarch.rpm",
+        "checksum": "sha256:540efc56851bf6ac1170d51a584d7659789296d0fc2ee8fb97d83c9f408119c9"
+      },
+      {
+        "name": "iwl5000-firmware",
+        "epoch": 0,
+        "version": "8.83.5.1_1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl5000-firmware-8.83.5.1_1-124.el9.noarch.rpm",
+        "checksum": "sha256:6accd8521cabe36f2f22a33396cae27b6bd5374731828b78da695c06cc8624ae"
+      },
+      {
+        "name": "iwl5150-firmware",
+        "epoch": 0,
+        "version": "8.24.2.2",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl5150-firmware-8.24.2.2-124.el9.noarch.rpm",
+        "checksum": "sha256:eb6cfc3b08cc7aa504beea4b298bd49691a06c2917d5e60ebf39da030285b74c"
+      },
+      {
+        "name": "iwl6000g2a-firmware",
+        "epoch": 0,
+        "version": "18.168.6.1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl6000g2a-firmware-18.168.6.1-124.el9.noarch.rpm",
+        "checksum": "sha256:8b19d50d04beddd3ae853619b541a66d4f57e4df6d31a79563417a20c658d25c"
+      },
+      {
+        "name": "iwl6050-firmware",
+        "epoch": 0,
+        "version": "41.28.5.1",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl6050-firmware-41.28.5.1-124.el9.noarch.rpm",
+        "checksum": "sha256:f8405090fb3e392da790f5a58bb0a8bb535fe531105ee2133dce4ed4fa50d352"
+      },
+      {
+        "name": "iwl7260-firmware",
+        "epoch": 1,
+        "version": "25.30.13.0",
+        "release": "124.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl7260-firmware-25.30.13.0-124.el9.noarch.rpm",
+        "checksum": "sha256:4dbae3cd048aca496d94e979b233fe7a5ee7126a476aeba828bf02dd6e316215"
       },
       {
         "name": "jansson",
@@ -7691,6 +7988,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libnfsidmap-2.5.4-9.el9.x86_64.rpm",
         "checksum": "sha256:d11591e3407566e102072c95e2f5372a47a0793a16b2856a80eb3160158a79c7"
+      },
+      {
+        "name": "libnftnl",
+        "epoch": 0,
+        "version": "1.1.9",
+        "release": "4.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libnftnl-1.1.9-4.el9.x86_64.rpm",
+        "checksum": "sha256:308953532379a5af38e5bfcbe69bf05d0fe462e4ac42b20863877556906385a2"
       },
       {
         "name": "libnghttp2",
@@ -8323,6 +8629,15 @@
         "checksum": "sha256:18b21d118c2b145f95e41ebdf96ffb694afe9576560d5c2fbdab9f8e670893b2"
       },
       {
+        "name": "nftables",
+        "epoch": 1,
+        "version": "0.9.8",
+        "release": "10.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/nftables-0.9.8-10.el9.x86_64.rpm",
+        "checksum": "sha256:ef7f97c4a72bb3149d4038f8e347cbc546eb17cf639479fd47f2fa22acf9c729"
+      },
+      {
         "name": "npth",
         "epoch": 0,
         "version": "1.6",
@@ -8674,6 +8989,15 @@
         "checksum": "sha256:30a3b8b08eafb81232ae7758eaef2ba2eef8e2ada837571fee0aaaa874de1f15"
       },
       {
+        "name": "python3-firewall",
+        "epoch": 0,
+        "version": "1.0.0",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-firewall-1.0.0-4.el9.noarch.rpm",
+        "checksum": "sha256:b6ba64260d2c4bdcb5b2b5ac5f54ee8640c4c714dcce5b33aaad351dff8c4b89"
+      },
+      {
         "name": "python3-gobject-base",
         "epoch": 0,
         "version": "3.40.1",
@@ -8780,6 +9104,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-linux-procfs-0.7.0-1.el9.noarch.rpm",
         "checksum": "sha256:9e41bd1f52490f21696a4a11a5e0c28fbc74d21930e94cf02c34a8f7430420ac"
+      },
+      {
+        "name": "python3-nftables",
+        "epoch": 1,
+        "version": "0.9.8",
+        "release": "10.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-nftables-0.9.8-10.el9.x86_64.rpm",
+        "checksum": "sha256:c8ce8d404b24fc632a072349de3c2f132694798e58f06fc470360abb4c3c578b"
       },
       {
         "name": "python3-perf",
@@ -10007,1373 +10340,5 @@
       }
     ]
   },
-  "image-info": {
-    "/etc/resolv.conf": [],
-    "boot-environment": {
-      "saved_entry": "ffffffffffffffffffffffffffffffff-5.14.0-55.el9.x86_64"
-    },
-    "bootloader": "grub",
-    "bootmenu": [
-      {
-        "grub_arg": "--unrestricted",
-        "grub_class": "rhel",
-        "grub_users": "$grub_users",
-        "initrd": "/initramfs-0-rescue-ffffffffffffffffffffffffffffffff.img",
-        "linux": "/vmlinuz-0-rescue-ffffffffffffffffffffffffffffffff",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 debug",
-        "title": "Red Hat Enterprise Linux (0-rescue-ffffffffffffffffffffffffffffffff) 9.0 (Plow)",
-        "version": "0-rescue-ffffffffffffffffffffffffffffffff"
-      },
-      {
-        "grub_arg": "--unrestricted",
-        "grub_class": "rhel",
-        "grub_users": "$grub_users",
-        "initrd": "/initramfs-5.14.0-55.el9.x86_64.img $tuned_initrd",
-        "linux": "/vmlinuz-5.14.0-55.el9.x86_64",
-        "options": "root=UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75 console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 debug $tuned_params",
-        "title": "Red Hat Enterprise Linux (5.14.0-55.el9.x86_64) 9.0 (Plow)",
-        "version": "5.14.0-55.el9.x86_64"
-      }
-    ],
-    "chrony": {
-      "leapsectz": [
-        "right/UTC"
-      ],
-      "server": [
-        "time.example.com iburst"
-      ]
-    },
-    "cloud-init": {
-      "/etc/cloud": {
-        "cloud.cfg": {
-          "cloud_config_modules": [
-            "mounts",
-            "locale",
-            "set-passwords",
-            "rh_subscription",
-            "yum-add-repo",
-            "package-update-upgrade-install",
-            "timezone",
-            "puppet",
-            "chef",
-            "salt-minion",
-            "mcollective",
-            "disable-ec2-metadata",
-            "runcmd"
-          ],
-          "cloud_final_modules": [
-            "rightscale_userdata",
-            "scripts-per-once",
-            "scripts-per-boot",
-            "scripts-per-instance",
-            "scripts-user",
-            "ssh-authkey-fingerprints",
-            "keys-to-console",
-            "phone-home",
-            "final-message",
-            "power-state-change"
-          ],
-          "cloud_init_modules": [
-            "disk_setup",
-            "migrator",
-            "bootcmd",
-            "write-files",
-            "growpart",
-            "resizefs",
-            "set_hostname",
-            "update_hostname",
-            "update_etc_hosts",
-            "rsyslog",
-            "users-groups",
-            "ssh"
-          ],
-          "disable_root": 1,
-          "disable_vmware_customization": false,
-          "mount_default_fields": [
-            null,
-            null,
-            "auto",
-            "defaults,nofail,x-systemd.requires=cloud-init.service",
-            "0",
-            "2"
-          ],
-          "resize_rootfs_tmp": "/dev",
-          "ssh_deletekeys": 1,
-          "ssh_genkeytypes": [
-            "rsa",
-            "ecdsa",
-            "ed25519"
-          ],
-          "ssh_pwauth": 0,
-          "syslog_fix_perms": null,
-          "system_info": {
-            "default_user": {
-              "gecos": "Cloud User",
-              "groups": [
-                "adm",
-                "systemd-journal"
-              ],
-              "lock_passwd": true,
-              "name": "cloud-user",
-              "shell": "/bin/bash",
-              "sudo": [
-                "ALL=(ALL) NOPASSWD:ALL"
-              ]
-            },
-            "distro": "rhel",
-            "paths": {
-              "cloud_dir": "/var/lib/cloud",
-              "templates_dir": "/etc/cloud/templates"
-            },
-            "ssh_svcname": "sshd"
-          },
-          "users": [
-            "default"
-          ]
-        }
-      },
-      "/etc/cloud/cloud.cfg.d": {
-        "05_logging.cfg": {
-          "_log": [
-            "[loggers]\nkeys=root,cloudinit\n\n[handlers]\nkeys=consoleHandler,cloudLogHandler\n\n[formatters]\nkeys=simpleFormatter,arg0Formatter\n\n[logger_root]\nlevel=DEBUG\nhandlers=consoleHandler,cloudLogHandler\n\n[logger_cloudinit]\nlevel=DEBUG\nqualname=cloudinit\nhandlers=\npropagate=1\n\n[handler_consoleHandler]\nclass=StreamHandler\nlevel=WARNING\nformatter=arg0Formatter\nargs=(sys.stderr,)\n\n[formatter_arg0Formatter]\nformat=%(asctime)s - %(filename)s[%(levelname)s]: %(message)s\n\n[formatter_simpleFormatter]\nformat=[CLOUDINIT] %(filename)s[%(levelname)s]: %(message)s\n",
-            "[handler_cloudLogHandler]\nclass=FileHandler\nlevel=DEBUG\nformatter=arg0Formatter\nargs=('/var/log/cloud-init.log', 'a', 'UTF-8')\n",
-            "[handler_cloudLogHandler]\nclass=handlers.SysLogHandler\nlevel=DEBUG\nformatter=simpleFormatter\nargs=(\"/dev/log\", handlers.SysLogHandler.LOG_USER)\n"
-          ],
-          "log_cfgs": [
-            [
-              "[loggers]\nkeys=root,cloudinit\n\n[handlers]\nkeys=consoleHandler,cloudLogHandler\n\n[formatters]\nkeys=simpleFormatter,arg0Formatter\n\n[logger_root]\nlevel=DEBUG\nhandlers=consoleHandler,cloudLogHandler\n\n[logger_cloudinit]\nlevel=DEBUG\nqualname=cloudinit\nhandlers=\npropagate=1\n\n[handler_consoleHandler]\nclass=StreamHandler\nlevel=WARNING\nformatter=arg0Formatter\nargs=(sys.stderr,)\n\n[formatter_arg0Formatter]\nformat=%(asctime)s - %(filename)s[%(levelname)s]: %(message)s\n\n[formatter_simpleFormatter]\nformat=[CLOUDINIT] %(filename)s[%(levelname)s]: %(message)s\n",
-              "[handler_cloudLogHandler]\nclass=FileHandler\nlevel=DEBUG\nformatter=arg0Formatter\nargs=('/var/log/cloud-init.log', 'a', 'UTF-8')\n"
-            ]
-          ],
-          "output": {
-            "all": "| tee -a /var/log/cloud-init-output.log"
-          }
-        }
-      }
-    },
-    "default-target": "multi-user.target",
-    "dnf": {
-      "dnf.conf": {
-        "main": {
-          "best": "True",
-          "clean_requirements_on_remove": "True",
-          "gpgcheck": "1",
-          "installonly_limit": "3",
-          "skip_if_unavailable": "False"
-        }
-      }
-    },
-    "dracut": {
-      "/usr/lib/dracut/dracut.conf.d": {
-        "01-dist.conf": {
-          "dbus": "/usr/share/dbus-1",
-          "dbusconfdir": "/etc/dbus-1",
-          "dbusinterfaces": "/usr/share/dbus-1/interfaces",
-          "dbusinterfacesconfdir": "/etc/dbus-1/interfaces",
-          "dbusservices": "/usr/share/dbus-1/services",
-          "dbusservicesconfdir": "/etc/dbus-1/services",
-          "dbussession": "/usr/share/dbus-1/session.d",
-          "dbussessionconfdir": "/etc/dbus-1/session.d",
-          "dbussystem": "confdir/etc/dbus-1/system.d",
-          "dbussystemservices": "/usr/share/dbus-1/system-services",
-          "dbussystemservicesconfdir": "/etc/dbus-1/system-services",
-          "early_microcode": "yes",
-          "environment": "/usr/lib/environment.d",
-          "environmentconfdir": "/etc/environment.d",
-          "hostonly": "yes",
-          "hostonly_cmdline": "no",
-          "i18n_default_font": "eurlatgr",
-          "i18n_install_all": "yes",
-          "i18n_vars": "/etc/sysconfig/keyboard:KEYTABLE-KEYMAP /etc/sysconfig/i18n:SYSFONT-FONT,FONTACM-FONT_MAP,FONT_UNIMAP",
-          "install_optional_items": " vi /etc/virc ps grep cat rm ",
-          "prefix": "/",
-          "reproducible": "yes",
-          "stdloglvl": "3",
-          "sysctlconfdir": "/etc/sysctl.d",
-          "sysctld": "/usr/lib/sysctl.d",
-          "sysloglvl": "5",
-          "systemdcatalog": "/usr/lib/systemd/catalog",
-          "systemdntpunits": "/usr/lib/systemd/ntp-units.d",
-          "systemdntpunitsconfdir": "/etc/systemd/ntp-units.d",
-          "systemdportable": "/usr/lib/systemd/portable",
-          "systemdportableconfdir": "/etc/systemd/portable",
-          "systemdsystemconfdir": "/etc/systemd/system",
-          "systemdsystemunitdir": "/usr/lib/systemd/system",
-          "systemduser": "/usr/lib/systemd/user",
-          "systemduserconfdir": "/etc/systemd/user",
-          "systemdutilconfdir": "/etc/systemd",
-          "systemdutildir": "/usr/lib/systemd",
-          "sysusers": "/usr/lib/sysusers.d",
-          "sysusersconfdir": "/etc/sysusers.d",
-          "udevdir": "/usr/lib/udev"
-        },
-        "01-microcode.conf": {
-          "early_microcode": "yes"
-        },
-        "02-generic-image.conf": {
-          "hostonly": "no"
-        },
-        "02-rescue.conf": {
-          "dracut_rescue_image": "yes"
-        }
-      }
-    },
-    "firewall-default-zone": "public",
-    "firewall-enabled": [
-      "ssh",
-      "dhcpv6-client",
-      "cockpit"
-    ],
-    "fstab": [
-      [
-        "UUID=0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-        "/boot",
-        "xfs",
-        "defaults",
-        "0",
-        "0"
-      ],
-      [
-        "UUID=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-        "/",
-        "xfs",
-        "defaults",
-        "0",
-        "0"
-      ],
-      [
-        "UUID=7B77-95E7",
-        "/boot/efi",
-        "vfat",
-        "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-        "0",
-        "2"
-      ],
-      [
-        "UUID=fb180daf-48a7-4ee0-b10d-394651850fd4",
-        "/opt",
-        "xfs",
-        "defaults",
-        "0",
-        "0"
-      ]
-    ],
-    "groups": [
-      "adm:x:4:",
-      "audio:x:63:",
-      "bin:x:1:",
-      "cdrom:x:11:",
-      "chrony:x:990:",
-      "cockpit-ws:x:992:",
-      "cockpit-wsinstance:x:991:",
-      "daemon:x:2:",
-      "dbus:x:81:",
-      "dialout:x:18:",
-      "disk:x:6:",
-      "floppy:x:19:",
-      "ftp:x:50:",
-      "games:x:20:",
-      "group1:x:1030:user2",
-      "group2:x:1050:",
-      "input:x:999:",
-      "kmem:x:9:",
-      "kvm:x:36:",
-      "lock:x:54:",
-      "lp:x:7:",
-      "mail:x:12:",
-      "man:x:15:",
-      "mem:x:8:",
-      "nobody:x:65534:",
-      "polkitd:x:996:",
-      "render:x:998:",
-      "root:x:0:",
-      "rpc:x:32:",
-      "rpcuser:x:29:",
-      "setroubleshoot:x:994:",
-      "ssh_keys:x:995:",
-      "sshd:x:74:",
-      "sssd:x:993:",
-      "sys:x:3:",
-      "systemd-coredump:x:997:",
-      "systemd-journal:x:190:",
-      "tape:x:33:",
-      "tcpdump:x:72:",
-      "tss:x:59:",
-      "tty:x:5:",
-      "user1:x:1000:",
-      "users:x:100:",
-      "utempter:x:35:",
-      "utmp:x:22:",
-      "video:x:39:",
-      "wheel:x:10:"
-    ],
-    "hostname": "my-host",
-    "hosts": [
-      "127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4",
-      "::1         localhost localhost.localdomain localhost6 localhost6.localdomain6"
-    ],
-    "image-format": {
-      "compat": "1.1",
-      "type": "qcow2"
-    },
-    "keyboard": {
-      "vconsole": {
-        "KEYMAP": "dvorak"
-      }
-    },
-    "locale": {
-      "LANG": "el_CY.UTF-8"
-    },
-    "machine-id": "",
-    "modprobe": {
-      "/usr/lib/modprobe.d": {
-        "dist-blacklist.conf": {
-          "blacklist": [
-            "chsc_sch"
-          ]
-        }
-      }
-    },
-    "os-release": {
-      "ANSI_COLOR": "0;31",
-      "BUG_REPORT_URL": "https://bugzilla.redhat.com/",
-      "CPE_NAME": "cpe:/o:redhat:enterprise_linux:9::baseos",
-      "DOCUMENTATION_URL": "https://access.redhat.com/documentation/red_hat_enterprise_linux/9/",
-      "HOME_URL": "https://www.redhat.com/",
-      "ID": "rhel",
-      "ID_LIKE": "fedora",
-      "LOGO": "fedora-logo-icon",
-      "NAME": "Red Hat Enterprise Linux",
-      "PLATFORM_ID": "platform:el9",
-      "PRETTY_NAME": "Red Hat Enterprise Linux 9.0 Beta (Plow)",
-      "REDHAT_BUGZILLA_PRODUCT": "Red Hat Enterprise Linux 9",
-      "REDHAT_BUGZILLA_PRODUCT_VERSION": "9.0",
-      "REDHAT_SUPPORT_PRODUCT": "Red Hat Enterprise Linux",
-      "REDHAT_SUPPORT_PRODUCT_VERSION": "9.0 Beta",
-      "VERSION": "9.0 (Plow)",
-      "VERSION_ID": "9.0"
-    },
-    "packages": [
-      "NetworkManager-1.36.0-0.7.el9.x86_64",
-      "NetworkManager-libnm-1.36.0-0.7.el9.x86_64",
-      "NetworkManager-team-1.36.0-0.7.el9.x86_64",
-      "NetworkManager-tui-1.36.0-0.7.el9.x86_64",
-      "PackageKit-1.2.4-2.el9.x86_64",
-      "PackageKit-glib-1.2.4-2.el9.x86_64",
-      "abattis-cantarell-fonts-0.301-4.el9.noarch",
-      "acl-2.3.1-3.el9.x86_64",
-      "alternatives-1.20-2.el9.x86_64",
-      "audit-3.0.7-100.el9.x86_64",
-      "audit-libs-3.0.7-100.el9.x86_64",
-      "authselect-1.2.3-7.el9.x86_64",
-      "authselect-compat-1.2.3-7.el9.x86_64",
-      "authselect-libs-1.2.3-7.el9.x86_64",
-      "basesystem-11-13.el9.noarch",
-      "bash-5.1.8-2.el9.x86_64",
-      "bubblewrap-0.4.1-6.el9.x86_64",
-      "bzip2-1.0.8-8.el9.x86_64",
-      "bzip2-libs-1.0.8-8.el9.x86_64",
-      "c-ares-1.17.1-5.el9.x86_64",
-      "ca-certificates-2020.2.50-94.el9.noarch",
-      "checkpolicy-3.3-1.el9.x86_64",
-      "chrony-4.1-3.el9.x86_64",
-      "cloud-init-21.1-16.el9.noarch",
-      "cloud-utils-growpart-0.31-10.el9.x86_64",
-      "cockpit-bridge-261-1.el9.x86_64",
-      "cockpit-system-261-1.el9.noarch",
-      "cockpit-ws-261-1.el9.x86_64",
-      "coreutils-8.32-31.el9.x86_64",
-      "coreutils-common-8.32-31.el9.x86_64",
-      "cpio-2.13-16.el9.x86_64",
-      "cracklib-2.9.6-27.el9.x86_64",
-      "cracklib-dicts-2.9.6-27.el9.x86_64",
-      "cronie-1.5.7-5.el9.x86_64",
-      "cronie-anacron-1.5.7-5.el9.x86_64",
-      "crontabs-1.11-27.20190603git.el9.noarch",
-      "crypto-policies-20220203-1.gitf03e75e.el9.noarch",
-      "crypto-policies-scripts-20220203-1.gitf03e75e.el9.noarch",
-      "cryptsetup-libs-2.4.3-1.el9.x86_64",
-      "curl-7.76.1-14.el9.x86_64",
-      "cyrus-sasl-lib-2.1.27-17.el9.x86_64",
-      "dbus-1.12.20-5.el9.x86_64",
-      "dbus-broker-28-5.el9.x86_64",
-      "dbus-common-1.12.20-5.el9.noarch",
-      "dbus-libs-1.12.20-5.el9.x86_64",
-      "dbus-tools-1.12.20-5.el9.x86_64",
-      "device-mapper-1.02.181-3.el9.x86_64",
-      "device-mapper-event-1.02.181-3.el9.x86_64",
-      "device-mapper-event-libs-1.02.181-3.el9.x86_64",
-      "device-mapper-libs-1.02.181-3.el9.x86_64",
-      "device-mapper-persistent-data-0.9.0-12.el9.x86_64",
-      "dhcp-client-4.4.2-15.b1.el9.x86_64",
-      "dhcp-common-4.4.2-15.b1.el9.noarch",
-      "diffutils-3.7-12.el9.x86_64",
-      "dmidecode-3.3-6.el9.x86_64",
-      "dnf-4.10.0-3.el9.noarch",
-      "dnf-data-4.10.0-3.el9.noarch",
-      "dnf-plugins-core-4.0.24-2.el9.noarch",
-      "dosfstools-4.2-3.el9.x86_64",
-      "dracut-055-10.git20210824.el9.x86_64",
-      "dracut-config-generic-055-10.git20210824.el9.x86_64",
-      "dracut-config-rescue-055-10.git20210824.el9.x86_64",
-      "dracut-network-055-10.git20210824.el9.x86_64",
-      "dracut-squash-055-10.git20210824.el9.x86_64",
-      "e2fsprogs-1.46.5-2.el9.x86_64",
-      "e2fsprogs-libs-1.46.5-2.el9.x86_64",
-      "efi-filesystem-4-9.el9.noarch",
-      "efibootmgr-16-12.el9.x86_64",
-      "efivar-libs-37-17.el9.x86_64",
-      "elfutils-default-yama-scope-0.186-1.el9.noarch",
-      "elfutils-libelf-0.186-1.el9.x86_64",
-      "elfutils-libs-0.186-1.el9.x86_64",
-      "ethtool-5.10-4.el9.x86_64",
-      "expat-2.2.10-4.el9.x86_64",
-      "file-5.39-8.el9.x86_64",
-      "file-libs-5.39-8.el9.x86_64",
-      "filesystem-3.16-2.el9.x86_64",
-      "findutils-4.8.0-5.el9.x86_64",
-      "firewalld-1.0.0-4.el9.noarch",
-      "firewalld-filesystem-1.0.0-4.el9.noarch",
-      "flashrom-1.2-10.el9.x86_64",
-      "fonts-filesystem-2.0.5-7.el9.1.noarch",
-      "fuse-libs-2.9.9-15.el9.x86_64",
-      "fwupd-1.5.9-3.el9.x86_64",
-      "fwupd-plugin-flashrom-1.5.9-3.el9.x86_64",
-      "gawk-5.1.0-5.el9.x86_64",
-      "gawk-all-langpacks-5.1.0-5.el9.x86_64",
-      "gdbm-libs-1.19-4.el9.x86_64",
-      "gdisk-1.0.7-5.el9.x86_64",
-      "gdk-pixbuf2-2.42.6-2.el9.x86_64",
-      "geolite2-city-20191217-6.el9.noarch",
-      "geolite2-country-20191217-6.el9.noarch",
-      "gettext-0.21-7.el9.x86_64",
-      "gettext-libs-0.21-7.el9.x86_64",
-      "glib-networking-2.68.3-1.el9.x86_64",
-      "glib2-2.68.4-5.el9.x86_64",
-      "glibc-2.34-21.el9.x86_64",
-      "glibc-common-2.34-21.el9.x86_64",
-      "glibc-gconv-extra-2.34-21.el9.x86_64",
-      "glibc-minimal-langpack-2.34-21.el9.x86_64",
-      "gmp-6.2.0-10.el9.x86_64",
-      "gnupg2-2.3.3-1.el9.x86_64",
-      "gnutls-3.7.3-1.el9.x86_64",
-      "gobject-introspection-1.68.0-10.el9.x86_64",
-      "gpg-pubkey-5a6340b3-6229229e",
-      "gpg-pubkey-fd431d51-4ae0493b",
-      "gpgme-1.15.1-5.el9.x86_64",
-      "grep-3.6-5.el9.x86_64",
-      "groff-base-1.22.4-10.el9.x86_64",
-      "grub2-common-2.06-16.el9.noarch",
-      "grub2-efi-x64-2.06-16.el9.x86_64",
-      "grub2-pc-2.06-16.el9.x86_64",
-      "grub2-pc-modules-2.06-16.el9.noarch",
-      "grub2-tools-2.06-16.el9.x86_64",
-      "grub2-tools-minimal-2.06-16.el9.x86_64",
-      "grubby-8.40-54.el9.x86_64",
-      "gsettings-desktop-schemas-40.0-4.el9.x86_64",
-      "gssproxy-0.8.4-4.el9.x86_64",
-      "gzip-1.10-8.el9.x86_64",
-      "hdparm-9.62-2.el9.x86_64",
-      "hostname-3.23-6.el9.x86_64",
-      "hwdata-0.348-9.2.el9.noarch",
-      "ima-evm-utils-1.4-4.el9.x86_64",
-      "inih-49-5.el9.x86_64",
-      "initscripts-service-10.11.1-1.el9.noarch",
-      "insights-client-3.1.7-1.el9.noarch",
-      "ipcalc-1.0.0-5.el9.x86_64",
-      "iproute-5.15.0-2.el9.x86_64",
-      "iproute-tc-5.15.0-2.el9.x86_64",
-      "ipset-7.11-6.el9.x86_64",
-      "ipset-libs-7.11-6.el9.x86_64",
-      "iptables-libs-1.8.7-26.el9.x86_64",
-      "iptables-nft-1.8.7-26.el9.x86_64",
-      "iputils-20210202-7.el9.x86_64",
-      "irqbalance-1.8.0-4.el9.x86_64",
-      "iwl100-firmware-39.31.5.1-124.el9.noarch",
-      "iwl1000-firmware-39.31.5.1-124.el9.noarch",
-      "iwl105-firmware-18.168.6.1-124.el9.noarch",
-      "iwl135-firmware-18.168.6.1-124.el9.noarch",
-      "iwl2000-firmware-18.168.6.1-124.el9.noarch",
-      "iwl2030-firmware-18.168.6.1-124.el9.noarch",
-      "iwl3160-firmware-25.30.13.0-124.el9.noarch",
-      "iwl5000-firmware-8.83.5.1_1-124.el9.noarch",
-      "iwl5150-firmware-8.24.2.2-124.el9.noarch",
-      "iwl6000g2a-firmware-18.168.6.1-124.el9.noarch",
-      "iwl6050-firmware-41.28.5.1-124.el9.noarch",
-      "iwl7260-firmware-25.30.13.0-124.el9.noarch",
-      "jansson-2.14-1.el9.x86_64",
-      "json-c-0.14-11.el9.x86_64",
-      "json-glib-1.6.6-1.el9.x86_64",
-      "kbd-2.4.0-8.el9.x86_64",
-      "kbd-misc-2.4.0-8.el9.noarch",
-      "kernel-5.14.0-55.el9.x86_64",
-      "kernel-core-5.14.0-55.el9.x86_64",
-      "kernel-modules-5.14.0-55.el9.x86_64",
-      "kernel-tools-5.14.0-55.el9.x86_64",
-      "kernel-tools-libs-5.14.0-55.el9.x86_64",
-      "kexec-tools-2.0.23-6.el9.x86_64",
-      "keyutils-1.6.1-4.el9.x86_64",
-      "keyutils-libs-1.6.1-4.el9.x86_64",
-      "kmod-28-7.el9.x86_64",
-      "kmod-libs-28-7.el9.x86_64",
-      "kpartx-0.8.7-4.el9.x86_64",
-      "krb5-libs-1.19.1-13.el9.x86_64",
-      "less-575-4.el9.x86_64",
-      "libacl-2.3.1-3.el9.x86_64",
-      "libaio-0.3.111-13.el9.x86_64",
-      "libappstream-glib-0.7.18-4.el9.x86_64",
-      "libarchive-3.5.2-1.el9.x86_64",
-      "libassuan-2.5.5-3.el9.x86_64",
-      "libattr-2.5.1-3.el9.x86_64",
-      "libbasicobjects-0.1.1-51.el9.x86_64",
-      "libblkid-2.37.2-1.el9.x86_64",
-      "libbpf-0.5.0-3.el9.x86_64",
-      "libbrotli-1.0.9-6.el9.x86_64",
-      "libcap-2.48-8.el9.x86_64",
-      "libcap-ng-0.8.2-6.el9.x86_64",
-      "libcbor-0.7.0-5.el9.x86_64",
-      "libcollection-0.7.0-51.el9.x86_64",
-      "libcom_err-1.46.5-2.el9.x86_64",
-      "libcomps-0.1.18-1.el9.x86_64",
-      "libcurl-7.76.1-14.el9.x86_64",
-      "libdaemon-0.14-23.el9.x86_64",
-      "libdb-5.3.28-53.el9.x86_64",
-      "libdhash-0.5.0-51.el9.x86_64",
-      "libdnf-0.65.0-2.el9.x86_64",
-      "libdnf-plugin-subscription-manager-1.29.23-1.el9.x86_64",
-      "libeconf-0.4.1-2.el9.x86_64",
-      "libedit-3.1-37.20210216cvs.el9.x86_64",
-      "libestr-0.1.11-3.el9.x86_64",
-      "libev-4.33-5.el9.x86_64",
-      "libevent-2.1.12-6.el9.x86_64",
-      "libfastjson-0.99.9-3.el9.x86_64",
-      "libfdisk-2.37.2-1.el9.x86_64",
-      "libffi-3.4.2-7.el9.x86_64",
-      "libfido2-1.6.0-7.el9.x86_64",
-      "libgcab1-1.4-6.el9.x86_64",
-      "libgcc-11.2.1-9.1.el9.x86_64",
-      "libgcrypt-1.10.0-1.el9.x86_64",
-      "libgomp-11.2.1-9.1.el9.x86_64",
-      "libgpg-error-1.42-5.el9.x86_64",
-      "libgudev-237-1.el9.x86_64",
-      "libgusb-0.3.8-1.el9.x86_64",
-      "libibverbs-37.2-1.el9.x86_64",
-      "libidn2-2.3.0-7.el9.x86_64",
-      "libini_config-1.3.1-51.el9.x86_64",
-      "libjcat-0.1.6-3.el9.x86_64",
-      "libjpeg-turbo-2.0.90-5.el9.x86_64",
-      "libkcapi-1.3.1-3.el9.x86_64",
-      "libkcapi-hmaccalc-1.3.1-3.el9.x86_64",
-      "libksba-1.5.1-4.el9.x86_64",
-      "libldb-2.4.1-1.el9.x86_64",
-      "libmaxminddb-1.5.2-3.el9.x86_64",
-      "libmnl-1.0.4-15.el9.x86_64",
-      "libmodulemd-2.13.0-2.el9.x86_64",
-      "libmount-2.37.2-1.el9.x86_64",
-      "libndp-1.8-4.el9.x86_64",
-      "libnetfilter_conntrack-1.0.8-4.el9.x86_64",
-      "libnfnetlink-1.0.1-21.el9.x86_64",
-      "libnfsidmap-2.5.4-9.el9.x86_64",
-      "libnftnl-1.1.9-4.el9.x86_64",
-      "libnghttp2-1.43.0-5.el9.x86_64",
-      "libnl3-3.5.0-10.el9.x86_64",
-      "libnl3-cli-3.5.0-10.el9.x86_64",
-      "libpath_utils-0.2.1-51.el9.x86_64",
-      "libpcap-1.10.0-4.el9.x86_64",
-      "libpipeline-1.5.3-4.el9.x86_64",
-      "libpng-1.6.37-12.el9.x86_64",
-      "libpsl-0.21.1-5.el9.x86_64",
-      "libpwquality-1.4.4-8.el9.x86_64",
-      "libref_array-0.1.5-51.el9.x86_64",
-      "librepo-1.14.2-1.el9.x86_64",
-      "libreport-filesystem-2.15.2-6.el9.noarch",
-      "librhsm-0.0.3-7.el9.x86_64",
-      "libseccomp-2.5.2-2.el9.x86_64",
-      "libselinux-3.3-2.el9.x86_64",
-      "libselinux-utils-3.3-2.el9.x86_64",
-      "libsemanage-3.3-1.el9.x86_64",
-      "libsepol-3.3-2.el9.x86_64",
-      "libsigsegv-2.13-4.el9.x86_64",
-      "libsmartcols-2.37.2-1.el9.x86_64",
-      "libsmbios-2.4.3-4.el9.x86_64",
-      "libsolv-0.7.20-2.el9.x86_64",
-      "libsoup-2.72.0-8.el9.x86_64",
-      "libss-1.46.5-2.el9.x86_64",
-      "libssh-0.9.6-3.el9.x86_64",
-      "libssh-config-0.9.6-3.el9.noarch",
-      "libsss_certmap-2.6.2-2.el9.x86_64",
-      "libsss_idmap-2.6.2-2.el9.x86_64",
-      "libsss_nss_idmap-2.6.2-2.el9.x86_64",
-      "libsss_sudo-2.6.2-2.el9.x86_64",
-      "libstdc++-11.2.1-9.1.el9.x86_64",
-      "libstemmer-0-18.585svn.el9.x86_64",
-      "libsysfs-2.1.1-10.el9.x86_64",
-      "libtalloc-2.3.3-1.el9.x86_64",
-      "libtasn1-4.16.0-7.el9.x86_64",
-      "libtdb-1.4.4-1.el9.x86_64",
-      "libteam-1.31-11.el9.x86_64",
-      "libtevent-0.11.0-1.el9.x86_64",
-      "libtirpc-1.3.2-1.el9.x86_64",
-      "libunistring-0.9.10-15.el9.x86_64",
-      "libusbx-1.0.24-4.el9.x86_64",
-      "libuser-0.63-7.el9.x86_64",
-      "libutempter-1.2.1-6.el9.x86_64",
-      "libuuid-2.37.2-1.el9.x86_64",
-      "libverto-0.3.2-3.el9.x86_64",
-      "libverto-libev-0.3.2-3.el9.x86_64",
-      "libxcrypt-4.4.18-3.el9.x86_64",
-      "libxcrypt-compat-4.4.18-3.el9.x86_64",
-      "libxml2-2.9.12-4.el9.x86_64",
-      "libxmlb-0.3.3-1.el9.x86_64",
-      "libyaml-0.2.5-7.el9.x86_64",
-      "libzstd-1.5.0-2.el9.x86_64",
-      "linux-firmware-20211216-124.el9.noarch",
-      "linux-firmware-whence-20211216-124.el9.noarch",
-      "lmdb-libs-0.9.29-3.el9.x86_64",
-      "logrotate-3.18.0-5.el9.x86_64",
-      "lshw-B.02.19.2-7.el9.x86_64",
-      "lsscsi-0.32-6.el9.x86_64",
-      "lua-libs-5.4.2-4.el9.x86_64",
-      "lvm2-2.03.14-3.el9.x86_64",
-      "lvm2-libs-2.03.14-3.el9.x86_64",
-      "lz4-libs-1.9.3-5.el9.x86_64",
-      "lzo-2.10-7.el9.x86_64",
-      "man-db-2.9.3-6.el9.x86_64",
-      "memstrack-0.2.3-2.el9.x86_64",
-      "microcode_ctl-20210608-2.el9.noarch",
-      "mokutil-0.4.0-8.el9.x86_64",
-      "mpfr-4.1.0-7.el9.x86_64",
-      "ncurses-6.2-8.20210508.el9.x86_64",
-      "ncurses-base-6.2-8.20210508.el9.noarch",
-      "ncurses-libs-6.2-8.20210508.el9.x86_64",
-      "nettle-3.7.3-2.el9.x86_64",
-      "newt-0.52.21-11.el9.x86_64",
-      "nfs-utils-2.5.4-9.el9.x86_64",
-      "nftables-0.9.8-10.el9.x86_64",
-      "npth-1.6-8.el9.x86_64",
-      "numactl-libs-2.0.14-8.el9.x86_64",
-      "oddjob-0.34.7-4.el9.x86_64",
-      "oddjob-mkhomedir-0.34.7-4.el9.x86_64",
-      "openldap-2.4.59-3.el9.x86_64",
-      "openssh-8.7p1-6.el9.x86_64",
-      "openssh-clients-8.7p1-6.el9.x86_64",
-      "openssh-server-8.7p1-6.el9.x86_64",
-      "openssl-3.0.1-5.el9.x86_64",
-      "openssl-libs-3.0.1-5.el9.x86_64",
-      "openssl-pkcs11-0.4.11-7.el9.x86_64",
-      "os-prober-1.77-9.el9.x86_64",
-      "p11-kit-0.24.1-2.el9.x86_64",
-      "p11-kit-trust-0.24.1-2.el9.x86_64",
-      "pam-1.5.1-9.el9.x86_64",
-      "parted-3.4-6.el9.x86_64",
-      "passwd-0.80-12.el9.x86_64",
-      "pciutils-3.7.0-5.el9.x86_64",
-      "pciutils-libs-3.7.0-5.el9.x86_64",
-      "pcre-8.44-3.el9.3.x86_64",
-      "pcre2-10.37-3.el9.1.x86_64",
-      "pcre2-syntax-10.37-3.el9.1.noarch",
-      "pigz-2.5-4.el9.x86_64",
-      "policycoreutils-3.3-2.el9.x86_64",
-      "policycoreutils-python-utils-3.3-2.el9.noarch",
-      "polkit-0.117-8.el9.x86_64",
-      "polkit-libs-0.117-8.el9.x86_64",
-      "polkit-pkla-compat-0.1-21.el9.x86_64",
-      "popt-1.18-8.el9.x86_64",
-      "prefixdevname-0.1.0-8.el9.x86_64",
-      "procps-ng-3.3.17-4.el9.x86_64",
-      "psmisc-23.4-3.el9.x86_64",
-      "publicsuffix-list-dafsa-20210518-2.el9.noarch",
-      "python-unversioned-command-3.9.10-1.el9.noarch",
-      "python3-3.9.10-1.el9.x86_64",
-      "python3-attrs-20.3.0-5.el9.noarch",
-      "python3-audit-3.0.7-100.el9.x86_64",
-      "python3-babel-2.9.1-2.el9.noarch",
-      "python3-chardet-4.0.0-3.el9.noarch",
-      "python3-cloud-what-1.29.23-1.el9.x86_64",
-      "python3-configobj-5.0.6-25.el9.noarch",
-      "python3-dasbus-1.4-5.el9.noarch",
-      "python3-dateutil-2.8.1-6.el9.noarch",
-      "python3-dbus-1.2.18-2.el9.x86_64",
-      "python3-decorator-4.4.2-6.el9.noarch",
-      "python3-distro-1.5.0-7.el9.noarch",
-      "python3-dmidecode-3.12.2-27.el9.x86_64",
-      "python3-dnf-4.10.0-3.el9.noarch",
-      "python3-dnf-plugins-core-4.0.24-2.el9.noarch",
-      "python3-ethtool-0.15-2.el9.x86_64",
-      "python3-file-magic-5.39-8.el9.noarch",
-      "python3-firewall-1.0.0-4.el9.noarch",
-      "python3-gobject-base-3.40.1-5.el9.x86_64",
-      "python3-gpg-1.15.1-5.el9.x86_64",
-      "python3-hawkey-0.65.0-2.el9.x86_64",
-      "python3-idna-2.10-5.el9.noarch",
-      "python3-iniparse-0.4-45.el9.noarch",
-      "python3-inotify-0.9.6-25.el9.noarch",
-      "python3-jinja2-2.11.3-4.el9.noarch",
-      "python3-jsonpatch-1.21-16.el9.noarch",
-      "python3-jsonpointer-2.0-4.el9.noarch",
-      "python3-jsonschema-3.2.0-13.el9.noarch",
-      "python3-libcomps-0.1.18-1.el9.x86_64",
-      "python3-libdnf-0.65.0-2.el9.x86_64",
-      "python3-librepo-1.14.2-1.el9.x86_64",
-      "python3-libs-3.9.10-1.el9.x86_64",
-      "python3-libselinux-3.3-2.el9.x86_64",
-      "python3-libsemanage-3.3-1.el9.x86_64",
-      "python3-libxml2-2.9.12-4.el9.x86_64",
-      "python3-linux-procfs-0.7.0-1.el9.noarch",
-      "python3-markupsafe-1.1.1-12.el9.x86_64",
-      "python3-netifaces-0.10.6-15.el9.x86_64",
-      "python3-nftables-0.9.8-10.el9.x86_64",
-      "python3-oauthlib-3.1.1-2.el9.noarch",
-      "python3-perf-5.14.0-55.el9.x86_64",
-      "python3-pexpect-4.8.0-7.el9.noarch",
-      "python3-pip-wheel-21.2.3-6.el9.noarch",
-      "python3-policycoreutils-3.3-2.el9.noarch",
-      "python3-prettytable-0.7.2-27.el9.noarch",
-      "python3-ptyprocess-0.6.0-12.el9.noarch",
-      "python3-pyrsistent-0.17.3-8.el9.x86_64",
-      "python3-pyserial-3.4-12.el9.noarch",
-      "python3-pysocks-1.7.1-10.el9.noarch",
-      "python3-pytz-2021.1-4.el9.noarch",
-      "python3-pyudev-0.22.0-6.el9.noarch",
-      "python3-pyyaml-5.4.1-4.el9.x86_64",
-      "python3-requests-2.25.1-5.el9.noarch",
-      "python3-rpm-4.16.1.3-10.el9.x86_64",
-      "python3-setools-4.4.0-4.el9.x86_64",
-      "python3-setuptools-53.0.0-9.el9.noarch",
-      "python3-setuptools-wheel-53.0.0-9.el9.noarch",
-      "python3-six-1.15.0-7.el9.noarch",
-      "python3-subscription-manager-rhsm-1.29.23-1.el9.x86_64",
-      "python3-systemd-234-18.el9.x86_64",
-      "python3-urllib3-1.26.5-2.el9.noarch",
-      "qemu-guest-agent-6.2.0-5.el9.x86_64",
-      "quota-4.06-6.el9.x86_64",
-      "quota-nls-4.06-6.el9.noarch",
-      "readline-8.1-4.el9.x86_64",
-      "redhat-logos-90.2-1.el9.x86_64",
-      "redhat-release-9.0-2.13.el9.x86_64",
-      "redhat-release-eula-9.0-2.13.el9.x86_64",
-      "rhsm-icons-1.29.23-1.el9.noarch",
-      "rootfiles-8.1-31.el9.noarch",
-      "rpcbind-1.2.6-2.el9.x86_64",
-      "rpm-4.16.1.3-10.el9.x86_64",
-      "rpm-build-libs-4.16.1.3-10.el9.x86_64",
-      "rpm-libs-4.16.1.3-10.el9.x86_64",
-      "rpm-plugin-audit-4.16.1.3-10.el9.x86_64",
-      "rpm-plugin-selinux-4.16.1.3-10.el9.x86_64",
-      "rpm-plugin-systemd-inhibit-4.16.1.3-10.el9.x86_64",
-      "rpm-sign-libs-4.16.1.3-10.el9.x86_64",
-      "rsync-3.2.3-9.el9.x86_64",
-      "rsyslog-8.2102.0-101.el9.x86_64",
-      "rsyslog-logrotate-8.2102.0-101.el9.x86_64",
-      "sed-4.8-9.el9.x86_64",
-      "selinux-policy-34.1.23-1.el9.noarch",
-      "selinux-policy-targeted-34.1.23-1.el9.noarch",
-      "setroubleshoot-plugins-3.3.14-4.el9.noarch",
-      "setroubleshoot-server-3.3.27-2.el9.x86_64",
-      "setup-2.13.7-6.el9.noarch",
-      "sg3_utils-1.47-6.el9.x86_64",
-      "sg3_utils-libs-1.47-6.el9.x86_64",
-      "shadow-utils-4.9-3.el9.x86_64",
-      "shared-mime-info-2.1-4.el9.x86_64",
-      "shim-x64-15-16.el8.x86_64",
-      "slang-2.3.2-11.el9.x86_64",
-      "snappy-1.1.8-8.el9.x86_64",
-      "sos-4.2-13.el9.noarch",
-      "sqlite-libs-3.34.1-5.el9.x86_64",
-      "squashfs-tools-4.4-7.git1.el9.x86_64",
-      "sscg-3.0.0-4.el9.x86_64",
-      "sssd-client-2.6.2-2.el9.x86_64",
-      "sssd-common-2.6.2-2.el9.x86_64",
-      "sssd-kcm-2.6.2-2.el9.x86_64",
-      "sssd-nfs-idmap-2.6.2-2.el9.x86_64",
-      "subscription-manager-1.29.23-1.el9.x86_64",
-      "subscription-manager-cockpit-1.29.23-1.el9.noarch",
-      "subscription-manager-rhsm-certificates-1.29.23-1.el9.x86_64",
-      "sudo-1.9.5p2-7.el9.x86_64",
-      "systemd-249-9.el9.x86_64",
-      "systemd-libs-249-9.el9.x86_64",
-      "systemd-pam-249-9.el9.x86_64",
-      "systemd-rpm-macros-249-9.el9.noarch",
-      "systemd-udev-249-9.el9.x86_64",
-      "tar-1.34-3.el9.x86_64",
-      "tcpdump-4.99.0-6.el9.x86_64",
-      "teamd-1.31-11.el9.x86_64",
-      "tpm2-tss-3.0.3-6.el9.x86_64",
-      "tuned-2.17.0-1.el9.noarch",
-      "tzdata-2021e-1.el9.noarch",
-      "usermode-1.114-2.el9.x86_64",
-      "userspace-rcu-0.12.1-6.el9.x86_64",
-      "util-linux-2.37.2-1.el9.x86_64",
-      "util-linux-core-2.37.2-1.el9.x86_64",
-      "vim-minimal-8.2.2637-11.el9.x86_64",
-      "virt-what-1.21-2.el9.2.x86_64",
-      "which-2.21-27.el9.x86_64",
-      "xfsprogs-5.14.2-1.el9.x86_64",
-      "xz-5.2.5-7.el9.x86_64",
-      "xz-libs-5.2.5-7.el9.x86_64",
-      "yum-4.10.0-3.el9.noarch",
-      "yum-utils-4.0.24-2.el9.noarch",
-      "zlib-1.2.11-31.el9.x86_64",
-      "zstd-1.5.0-2.el9.x86_64"
-    ],
-    "partition-table": "gpt",
-    "partition-table-id": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-    "partitions": [
-      {
-        "bootable": false,
-        "fstype": "LVM2_member",
-        "label": null,
-        "lvm": true,
-        "lvm.vg": "rootvg",
-        "lvm.volumes": {
-          "optlv": {
-            "fstype": "xfs",
-            "label": null,
-            "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4"
-          },
-          "rootlv": {
-            "fstype": "xfs",
-            "label": "root",
-            "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
-          }
-        },
-        "partuuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562",
-        "size": 10001300992,
-        "start": 736100352,
-        "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
-        "uuid": "pddpuQ-HrFS-km2C-TrzX-69o0-tBXk-133xtw"
-      },
-      {
-        "bootable": false,
-        "fstype": "vfat",
-        "label": null,
-        "partuuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33",
-        "size": 209715200,
-        "start": 2097152,
-        "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
-        "uuid": "7B77-95E7"
-      },
-      {
-        "bootable": false,
-        "fstype": "xfs",
-        "label": "boot",
-        "partuuid": "CB07C243-BC44-4717-853E-28852021225B",
-        "size": 524288000,
-        "start": 211812352,
-        "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
-        "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
-      },
-      {
-        "bootable": false,
-        "fstype": null,
-        "label": null,
-        "partuuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549",
-        "size": 1048576,
-        "start": 1048576,
-        "type": "21686148-6449-6E6F-744E-656564454649",
-        "uuid": null
-      }
-    ],
-    "passwd": [
-      "adm:x:3:4:adm:/var/adm:/sbin/nologin",
-      "bin:x:1:1:bin:/bin:/sbin/nologin",
-      "chrony:x:993:990::/var/lib/chrony:/sbin/nologin",
-      "cockpit-ws:x:995:992:User for cockpit web service:/nonexisting:/sbin/nologin",
-      "cockpit-wsinstance:x:994:991:User for cockpit-ws instances:/nonexisting:/sbin/nologin",
-      "daemon:x:2:2:daemon:/sbin:/sbin/nologin",
-      "dbus:x:81:81:System message bus:/:/sbin/nologin",
-      "ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin",
-      "games:x:12:100:games:/usr/games:/sbin/nologin",
-      "halt:x:7:0:halt:/sbin:/sbin/halt",
-      "lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin",
-      "mail:x:8:12:mail:/var/spool/mail:/sbin/nologin",
-      "nobody:x:65534:65534:Kernel Overflow User:/:/sbin/nologin",
-      "operator:x:11:0:operator:/root:/sbin/nologin",
-      "polkitd:x:998:996:User for polkitd:/:/sbin/nologin",
-      "root:x:0:0:root:/root:/bin/bash",
-      "rpc:x:32:32:Rpcbind Daemon:/var/lib/rpcbind:/sbin/nologin",
-      "rpcuser:x:29:29:RPC Service User:/var/lib/nfs:/sbin/nologin",
-      "setroubleshoot:x:997:994::/var/lib/setroubleshoot:/sbin/nologin",
-      "shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown",
-      "sshd:x:74:74:Privilege-separated SSH:/usr/share/empty.sshd:/sbin/nologin",
-      "sssd:x:996:993:User for sssd:/:/sbin/nologin",
-      "sync:x:5:0:sync:/sbin:/bin/sync",
-      "systemd-coredump:x:999:997:systemd Core Dumper:/:/sbin/nologin",
-      "tcpdump:x:72:72::/:/sbin/nologin",
-      "tss:x:59:59:Account used for TPM access:/dev/null:/sbin/nologin",
-      "user1:x:1000:1000::/home/user1:/bin/bash",
-      "user2:x:1020:1050:description 2:/home/home2:/bin/sh"
-    ],
-    "rhsm": {
-      "dnf-plugins": {
-        "product-id": {
-          "enabled": false
-        },
-        "subscription-manager": {
-          "enabled": false
-        }
-      },
-      "rhsm.conf": {
-        "logging": {
-          "default_log_level": "INFO"
-        },
-        "rhsm": {
-          "auto_enable_yum_plugins": "1",
-          "baseurl": "https://cdn.redhat.com",
-          "ca_cert_dir": "/etc/rhsm/ca/",
-          "consumercertdir": "/etc/pki/consumer",
-          "entitlementcertdir": "/etc/pki/entitlement",
-          "full_refresh_on_yum": "0",
-          "inotify": "1",
-          "manage_repos": "1",
-          "package_profile_on_trans": "0",
-          "pluginconfdir": "/etc/rhsm/pluginconf.d",
-          "plugindir": "/usr/share/rhsm-plugins",
-          "productcertdir": "/etc/pki/product",
-          "repo_ca_cert": "/etc/rhsm/ca/redhat-uep.pem",
-          "repomd_gpg_url": "",
-          "report_package_profile": "1"
-        },
-        "rhsmcertd": {
-          "auto_registration": "0",
-          "auto_registration_interval": "60",
-          "autoattachinterval": "1440",
-          "certcheckinterval": "240",
-          "disable": "0",
-          "splay": "1"
-        },
-        "server": {
-          "hostname": "subscription.rhsm.redhat.com",
-          "insecure": "0",
-          "no_proxy": "",
-          "port": "443",
-          "prefix": "/subscription",
-          "proxy_hostname": "",
-          "proxy_password": "",
-          "proxy_port": "",
-          "proxy_scheme": "http",
-          "proxy_user": ""
-        }
-      }
-    },
-    "rpm-verify": {
-      "changed": {
-        "/boot/efi/EFI/redhat/grubx64.efi": ".......T.",
-        "/boot/grub2/fonts/unicode.pf2": ".M.....T.",
-        "/etc/chrony.conf": "S.5....T.",
-        "/etc/dnf/plugins/product-id.conf": "..5....T.",
-        "/etc/dnf/plugins/subscription-manager.conf": "..5....T.",
-        "/etc/udev/hwdb.bin": ".M.......",
-        "/proc": ".M.......",
-        "/sys": ".M.......",
-        "/var/log/btmp": ".M.......",
-        "/var/log/lastlog": ".M....G..",
-        "/var/spool/anacron/cron.daily": ".M.......",
-        "/var/spool/anacron/cron.monthly": ".M.......",
-        "/var/spool/anacron/cron.weekly": ".M......."
-      },
-      "missing": []
-    },
-    "selinux": {
-      "policy": {
-        "SELINUX": "enforcing",
-        "SELINUXTYPE": "targeted"
-      }
-    },
-    "services-disabled": [
-      "blk-availability.service",
-      "chrony-wait.service",
-      "cockpit.socket",
-      "console-getty.service",
-      "cpupower.service",
-      "debug-shell.service",
-      "exit.target",
-      "fstrim.timer",
-      "fwupd-refresh.timer",
-      "gssproxy.service",
-      "halt.target",
-      "insights-client-results.path",
-      "insights-client.timer",
-      "kexec.target",
-      "kvm_stat.service",
-      "man-db-restart-cache-update.service",
-      "nfs-blkmap.service",
-      "nfs-server.service",
-      "nftables.service",
-      "nm-priv-helper.service",
-      "oddjobd.service",
-      "poweroff.target",
-      "proc-sys-fs-binfmt_misc.mount",
-      "rdisc.service",
-      "remote-cryptsetup.target",
-      "remote-veritysetup.target",
-      "rhsm-facts.service",
-      "rhsm.service",
-      "rpmdb-rebuild.service",
-      "runlevel0.target",
-      "serial-getty@.service",
-      "sshd-keygen@.service",
-      "sssd-autofs.socket",
-      "sssd-nss.socket",
-      "sssd-pac.socket",
-      "sssd-pam-priv.socket",
-      "sssd-pam.socket",
-      "sssd-ssh.socket",
-      "sssd-sudo.socket",
-      "systemd-boot-check-no-failures.service",
-      "systemd-pstore.service",
-      "systemd-sysext.service",
-      "tmp.mount"
-    ],
-    "services-enabled": [
-      "NetworkManager-dispatcher.service",
-      "NetworkManager-wait-online.service",
-      "NetworkManager.service",
-      "auditd.service",
-      "autovt@.service",
-      "chronyd.service",
-      "cloud-config.service",
-      "cloud-final.service",
-      "cloud-init-local.service",
-      "cloud-init.service",
-      "crond.service",
-      "ctrl-alt-del.target",
-      "dbus-broker.service",
-      "dbus-org.fedoraproject.FirewallD1.service",
-      "dbus-org.freedesktop.nm-dispatcher.service",
-      "dbus.service",
-      "dbus.socket",
-      "dm-event.socket",
-      "dnf-makecache.timer",
-      "firewalld.service",
-      "getty@.service",
-      "insights-client-boot.service",
-      "irqbalance.service",
-      "kdump.service",
-      "logrotate.timer",
-      "lvm2-lvmpolld.socket",
-      "lvm2-monitor.service",
-      "microcode.service",
-      "nfs-client.target",
-      "nis-domainname.service",
-      "qemu-guest-agent.service",
-      "reboot.target",
-      "remote-fs.target",
-      "rhsmcertd.service",
-      "rpcbind.service",
-      "rpcbind.socket",
-      "rsyslog.service",
-      "runlevel6.target",
-      "selinux-autorelabel-mark.service",
-      "sshd.service",
-      "sshd.socket",
-      "sssd-kcm.socket",
-      "sssd.service",
-      "tuned.service"
-    ],
-    "ssh_config": {
-      "/etc/ssh": {
-        "ssh_config": [
-          "Include /etc/ssh/ssh_config.d/*.conf"
-        ]
-      },
-      "/etc/ssh/ssh_config.d": {
-        "50-redhat.conf": [
-          "Match final all",
-          "Include /etc/crypto-policies/back-ends/openssh.config",
-          "GSSAPIAuthentication yes",
-          "ForwardX11Trusted yes"
-        ]
-      }
-    },
-    "sshd_config": {
-      "/etc/ssh": {
-        "sshd_config": [
-          "Include /etc/ssh/sshd_config.d/*.conf",
-          "AuthorizedKeysFile\t.ssh/authorized_keys",
-          "Subsystem\tsftp\t/usr/libexec/openssh/sftp-server"
-        ]
-      },
-      "/etc/ssh/sshd_config.d": {
-        "50-redhat.conf": [
-          "Include /etc/crypto-policies/back-ends/opensshserver.config",
-          "SyslogFacility AUTHPRIV",
-          "ChallengeResponseAuthentication no",
-          "GSSAPIAuthentication yes",
-          "GSSAPICleanupCredentials no",
-          "UsePAM yes",
-          "X11Forwarding yes",
-          "PrintMotd no"
-        ]
-      }
-    },
-    "sudoers": {
-      "/etc/sudoers": [
-        "Defaults   !visiblepw",
-        "Defaults    always_set_home",
-        "Defaults    match_group_by_gid",
-        "Defaults    always_query_group_plugin",
-        "Defaults    env_reset",
-        "Defaults    env_keep =  \"COLORS DISPLAY HOSTNAME HISTSIZE KDEDIR LS_COLORS\"",
-        "Defaults    env_keep += \"MAIL PS1 PS2 QTDIR USERNAME LANG LC_ADDRESS LC_CTYPE\"",
-        "Defaults    env_keep += \"LC_COLLATE LC_IDENTIFICATION LC_MEASUREMENT LC_MESSAGES\"",
-        "Defaults    env_keep += \"LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE\"",
-        "Defaults    env_keep += \"LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY\"",
-        "Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin",
-        "root\tALL=(ALL) \tALL",
-        "%wheel\tALL=(ALL)\tALL"
-      ]
-    },
-    "sysconfig": {
-      "kernel": {
-        "DEFAULTKERNEL": "kernel",
-        "UPDATEDEFAULT": "yes"
-      },
-      "network": {
-        "NETWORKING": "yes",
-        "NOZEROCONF": "yes"
-      }
-    },
-    "sysctl.d": {
-      "/usr/lib/sysctl.d": {
-        "10-default-yama-scope.conf": [
-          "kernel.yama.ptrace_scope = 0"
-        ],
-        "50-coredump.conf": [
-          "kernel.core_pattern=|/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h",
-          "kernel.core_pipe_limit=16",
-          "fs.suid_dumpable=2"
-        ],
-        "50-default.conf": [
-          "kernel.sysrq = 16",
-          "kernel.core_uses_pid = 1",
-          "net.ipv4.conf.default.rp_filter = 2",
-          "net.ipv4.conf.*.rp_filter = 2",
-          "-net.ipv4.conf.all.rp_filter",
-          "net.ipv4.conf.default.accept_source_route = 0",
-          "net.ipv4.conf.*.accept_source_route = 0",
-          "-net.ipv4.conf.all.accept_source_route",
-          "net.ipv4.conf.default.promote_secondaries = 1",
-          "net.ipv4.conf.*.promote_secondaries = 1",
-          "-net.ipv4.conf.all.promote_secondaries",
-          "-net.ipv4.ping_group_range = 0 2147483647",
-          "-net.core.default_qdisc = fq_codel",
-          "fs.protected_hardlinks = 1",
-          "fs.protected_symlinks = 1",
-          "fs.protected_regular = 1",
-          "fs.protected_fifos = 1"
-        ],
-        "50-libkcapi-optmem_max.conf": [
-          "net.core.optmem_max = 81920"
-        ],
-        "50-pid-max.conf": [
-          "kernel.pid_max = 4194304"
-        ],
-        "50-redhat.conf": [
-          "kernel.kptr_restrict = 1",
-          "net.ipv4.conf.default.rp_filter = 1",
-          "net.ipv4.conf.*.rp_filter = 1",
-          "-net.ipv4.conf.all.rp_filter"
-        ]
-      }
-    },
-    "systemd-service-dropins": {
-      "/etc/systemd/system": {
-        "sshd-keygen@.service.d": {
-          "Unit": {
-            "ConditionPathExists": "!/run/systemd/generator.early/multi-user.target.wants/cloud-init.target"
-          }
-        }
-      },
-      "/usr/lib/systemd/system": {
-        "systemd-hostnamed.service.d": {
-          "Service": {
-            "PrivateDevices": "no"
-          }
-        },
-        "systemd-logind.service.d": {
-          "Service": {
-            "Environment": "SYSTEMD_REBOOT_TO_BOOT_LOADER_MENU=true"
-          }
-        },
-        "systemd-udev-trigger.service.d": {
-          "Unit": {
-            "RefuseManualStop": "true"
-          }
-        }
-      }
-    },
-    "timezone": "London",
-    "tmpfiles.d": {
-      "/usr/lib/tmpfiles.d": {
-        "cloud-init.conf": [
-          "d /run/cloud-init 0700 root root - -"
-        ],
-        "cockpit-tempfiles.conf": [
-          "C /run/cockpit/inactive.motd 0640 root wheel - /usr/share/cockpit/motd/inactive.motd",
-          "f /run/cockpit/active.motd   0640 root wheel -",
-          "L+ /run/cockpit/motd - - - - inactive.motd"
-        ],
-        "cryptsetup.conf": [
-          "d /run/cryptsetup 0700 root root -"
-        ],
-        "dnf.conf": [
-          "R /var/tmp/dnf*/locks/*",
-          "r /var/cache/dnf/download_lock.pid",
-          "r /var/cache/dnf/metadata_lock.pid",
-          "r /var/lib/dnf/rpmdb_lock.pid",
-          "r /var/log/log_lock.pid"
-        ],
-        "etc.conf": [
-          "L /etc/os-release - - - - ../usr/lib/os-release",
-          "L+ /etc/mtab - - - - ../proc/self/mounts",
-          "C! /etc/nsswitch.conf - - - -",
-          "C! /etc/pam.d - - - -",
-          "C! /etc/issue - - - -"
-        ],
-        "home.conf": [
-          "Q /home 0755 - - -",
-          "q /srv 0755 - - -"
-        ],
-        "journal-nocow.conf": [
-          "h /var/log/journal - - - - +C",
-          "h /var/log/journal/%m - - - - +C",
-          "h /var/log/journal/remote - - - - +C"
-        ],
-        "legacy.conf": [
-          "d /run/lock 0755 root root -",
-          "L /var/lock - - - - ../run/lock",
-          "d /run/lock/subsys 0755 root root -",
-          "r! /forcefsck",
-          "r! /fastboot",
-          "r! /forcequotacheck"
-        ],
-        "libselinux.conf": [
-          "d /run/setrans 0755 root root"
-        ],
-        "lvm2.conf": [
-          "d /run/lock/lvm 0700 root root -",
-          "d /run/lvm 0700 root root -"
-        ],
-        "man-db.conf": [
-          "d /var/cache/man 0755 root root 1w"
-        ],
-        "pam.conf": [
-          "d /run/console 0755 root root -",
-          "d /run/faillock 0755 root root -",
-          "d /run/sepermit 0755 root root -",
-          "d /run/motd.d 0755 root root -",
-          "f /var/log/tallylog 0600 root root -"
-        ],
-        "rpcbind.conf": [
-          "D     /run/rpcbind 0700  rpc  rpc  -  -"
-        ],
-        "selinux-policy.conf": [
-          "z /sys/devices/system/cpu/online - - -",
-          "Z /sys/class/net - - -",
-          "z /sys/kernel/uevent_helper - - -",
-          "w /sys/fs/selinux/checkreqprot - - - - 0"
-        ],
-        "setroubleshoot.conf": [
-          "d /run/setroubleshoot 711 setroubleshoot setroubleshoot -"
-        ],
-        "setup.conf": [
-          "f /run/motd 0644 root root -",
-          "d /run/motd.d 0755 root root -"
-        ],
-        "static-nodes-permissions.conf": [
-          "z /dev/snd/seq      0660 - audio -",
-          "z /dev/snd/timer    0660 - audio -",
-          "z /dev/loop-control 0660 - disk  -",
-          "z /dev/net/tun      0666 - -     -",
-          "z /dev/fuse         0666 - -     -",
-          "z /dev/kvm          0666 - kvm -",
-          "z /dev/vhost-net    0666 - kvm -",
-          "z /dev/vhost-vsock  0666 - kvm -"
-        ],
-        "subscription-manager.conf": [
-          "d /run/rhsm 0755 root root -"
-        ],
-        "sudo.conf": [
-          "d /run/sudo 0711 root root",
-          "D /run/sudo/ts 0700 root root"
-        ],
-        "systemd-nologin.conf": [
-          "F! /run/nologin 0644 - - - \"System is booting up. Unprivileged users are not permitted to log in yet. Please come back later. For technical details, see pam_nologin(8).\""
-        ],
-        "systemd-pstore.conf": [
-          "d /var/lib/systemd/pstore 0755 root root 14d"
-        ],
-        "systemd-tmp.conf": [
-          "x /tmp/systemd-private-%b-*",
-          "X /tmp/systemd-private-%b-*/tmp",
-          "x /var/tmp/systemd-private-%b-*",
-          "X /var/tmp/systemd-private-%b-*/tmp",
-          "R! /tmp/systemd-private-*",
-          "R! /var/tmp/systemd-private-*",
-          "x  /var/lib/systemd/coredump/.#core*.%b*",
-          "r! /var/lib/systemd/coredump/.#*"
-        ],
-        "systemd.conf": [
-          "d /run/user 0755 root root -",
-          "F! /run/utmp 0664 root utmp -",
-          "d /run/systemd/ask-password 0755 root root -",
-          "d /run/systemd/seats 0755 root root -",
-          "d /run/systemd/sessions 0755 root root -",
-          "d /run/systemd/users 0755 root root -",
-          "d /run/systemd/machines 0755 root root -",
-          "d /run/systemd/shutdown 0755 root root -",
-          "d /run/log 0755 root root -",
-          "z /run/log/journal 2755 root systemd-journal - -",
-          "Z /run/log/journal/%m ~2750 root systemd-journal - -",
-          "a+ /run/log/journal    - - - - d:group::r-x,d:group:adm:r-x,d:group:wheel:r-x,group::r-x,group:adm:r-x,group:wheel:r-x",
-          "a+ /run/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x,group:adm:r-x,group:wheel:r-x",
-          "a+ /run/log/journal/%m/*.journal* - - - - group:adm:r--,group:wheel:r--",
-          "z /var/log/journal 2755 root systemd-journal - -",
-          "z /var/log/journal/%m 2755 root systemd-journal - -",
-          "z /var/log/journal/%m/system.journal 0640 root systemd-journal - -",
-          "a+ /var/log/journal    - - - - d:group::r-x,d:group:adm:r-x,d:group:wheel:r-x,group::r-x,group:adm:r-x,group:wheel:r-x",
-          "a+ /var/log/journal/%m - - - - d:group:adm:r-x,d:group:wheel:r-x,group:adm:r-x,group:wheel:r-x",
-          "a+ /var/log/journal/%m/system.journal - - - - group:adm:r--,group:wheel:r--",
-          "d /var/lib/systemd 0755 root root -",
-          "d /var/lib/systemd/coredump 0755 root root 3d",
-          "d /var/lib/private 0700 root root -",
-          "d /var/log/private 0700 root root -",
-          "d /var/cache/private 0700 root root -"
-        ],
-        "tmp.conf": [
-          "q /tmp 1777 root root 10d",
-          "q /var/tmp 1777 root root 30d"
-        ],
-        "tpm2-tss-fapi.conf": [
-          "d       /var/lib/tpm2-tss/system/keystore   2775 tss  tss   -           -",
-          "a+      /var/lib/tpm2-tss/system/keystore   -    -    -     -           default:group:tss:rwx",
-          "d       /run/tpm2-tss/eventlog                2775 tss  tss   -           -",
-          "a+      /run/tpm2-tss/eventlog                -    -    -     -           default:group:tss:rwx"
-        ],
-        "tuned.conf": [
-          "d /run/tuned 0755 root root -"
-        ],
-        "var.conf": [
-          "q /var 0755 - - -",
-          "L /var/run - - - - ../run",
-          "d /var/log 0755 - - -",
-          "f /var/log/wtmp 0664 root utmp -",
-          "f /var/log/btmp 0660 root utmp -",
-          "f /var/log/lastlog 0664 root utmp -",
-          "d /var/cache 0755 - - -",
-          "d /var/lib 0755 - - -",
-          "d /var/spool 0755 - - -"
-        ],
-        "x11.conf": [
-          "D! /tmp/.X11-unix 1777 root root 10d",
-          "D! /tmp/.ICE-unix 1777 root root 10d",
-          "D! /tmp/.XIM-unix 1777 root root 10d",
-          "D! /tmp/.font-unix 1777 root root 10d",
-          "D! /tmp/.Test-unix 1777 root root 10d",
-          "r! /tmp/.X[0-9]*-lock"
-        ]
-      }
-    }
-  }
+  "no-image-info": true
 }

@@ -22,10 +22,7 @@
       },
       {
         "name": "rhel-eng",
-        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530",
-        "package-sets": [
-          "build"
-        ]
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530"
       },
       {
         "name": "azure-rhui-7",
@@ -42,7 +39,6 @@
           "version": "*"
         }
       ],
-      "modules": [],
       "groups": [
         {
           "name": "core"
@@ -10927,5 +10923,6 @@
         "checksum": "sha256:6b335cd2811b48cfcd895189dab46969d5069150a92e4ef725976d5cf4bcbc50"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

@@ -9822,5 +9822,6 @@
         "checksum": "sha256:83e568e3bb4f68f552f26dd517df374eaef0b2204205ba78a855607525a96b92"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }
