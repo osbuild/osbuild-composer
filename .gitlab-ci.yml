@@ -664,6 +664,9 @@ Manifest-diff:
     GIT_STRATEGY: "clone"
     GIT_CHECKOUT: "true"
     GIT_DEPTH: 500
+  artifacts:
+    paths:
+      - "/tmp/artifacts"
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
