@@ -307,7 +307,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	// Run osbuild and handle two kinds of errors
-	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, true, os.Stderr)
+	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, nil, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed")
