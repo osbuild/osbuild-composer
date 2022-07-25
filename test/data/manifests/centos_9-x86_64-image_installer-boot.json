@@ -13035,6 +13035,11 @@
                 "rdma",
                 "rngd"
               ],
+              "add_drivers": [
+                "cuse",
+                "ipmi_devintf",
+                "ipmi_msghandler"
+              ],
               "install": [
                 "/.buildstamp"
               ]
