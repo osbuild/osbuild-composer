@@ -1045,17 +1045,20 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
 	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(users)))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
-	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
+	dso := dracutStageOptions(kernelVer, arch, []string{
 		"anaconda",
-		"rdma",
-		"rngd",
-		"multipath",
 		"fcoe",
 		"fcoe-uefi",
 		"iscsi",
 		"lunmask",
+		"multipath",
 		"nfs",
-	})))
+		"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+		"nvmf",
+		"rdma",
+		"rngd",
+	})
+	p.AddStage(osbuild.NewDracutStage(dso))
 	p.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
 	return p
