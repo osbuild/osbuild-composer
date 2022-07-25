@@ -25,7 +25,7 @@
         ]
       }
     ],
-    "filename": "disk.vhd",
+    "filename": "disk.vhd.xz",
     "blueprint": {}
   },
   "manifest": {
@@ -18995,5 +18995,6 @@
         "checksum": "sha256:2cfbed0a9a51b8ab7e277f835d068e3df43c225034cb68a2c52580ee478316bc"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

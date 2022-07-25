@@ -22,17 +22,14 @@
       },
       {
         "name": "rhel-eng",
-        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530",
-        "package-sets": [
-          "build"
-        ]
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530"
       },
       {
         "name": "azure-rhui-7",
         "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20220530"
       }
     ],
-    "filename": "disk.vhd",
+    "filename": "disk.vhd.xz",
     "blueprint": {}
   },
   "manifest": {
@@ -11390,5 +11387,6 @@
         "checksum": "sha256:000bd49aea30ee3534e6cde11188afa4b567711b13acbcf531e5542fc7b2aefe"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }
