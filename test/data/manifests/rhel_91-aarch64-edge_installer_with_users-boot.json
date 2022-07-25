@@ -4518,6 +4518,14 @@
                     }
                   },
                   {
+                    "id": "sha256:b6782ec48ed2eeb43385cd526ba42626b4ab6ab508297353da905f51736a3298",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:f08900533af1aa558b9ab4f64bfc17691fcddf1196b1585765a9997953e9aaac",
                     "options": {
                       "metadata": {
@@ -9286,14 +9294,16 @@
                 "shutdown",
                 "uefi-lib",
                 "anaconda",
-                "rdma",
-                "rngd",
-                "multipath",
                 "fcoe",
                 "fcoe-uefi",
                 "iscsi",
                 "lunmask",
-                "nfs"
+                "multipath",
+                "nfs",
+                "nvdimm",
+                "nvmf",
+                "rdma",
+                "rngd"
               ],
               "install": [
                 "/.buildstamp"
@@ -11420,6 +11430,9 @@
           },
           "sha256:b66b63dc25e7eb3bba8af2ad2488b0920edc934a58ce9e5ba27f2a6905d9da5f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20220324/Packages/google-noto-cjk-fonts-common-20201206-4.el9.noarch.rpm"
+          },
+          "sha256:b6782ec48ed2eeb43385cd526ba42626b4ab6ab508297353da905f51736a3298": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/nvme-cli-1.16-3.el9.aarch64.rpm"
           },
           "sha256:b6a73c9da522df55690b886c0a9af39338571d34ee6f0d4d9b994c8289df3412": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/libattr-2.5.1-3.el9.aarch64.rpm"
@@ -17799,6 +17812,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/npth-1.6-8.el9.aarch64.rpm",
         "checksum": "sha256:6fb2eb0e66f94ce62b1f14f00704de0800664da8429df1df244ad7d9ee2c0b7b",
+        "check_gpg": true
+      },
+      {
+        "name": "nvme-cli",
+        "epoch": 0,
+        "version": "1.16",
+        "release": "3.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/nvme-cli-1.16-3.el9.aarch64.rpm",
+        "checksum": "sha256:b6782ec48ed2eeb43385cd526ba42626b4ab6ab508297353da905f51736a3298",
         "check_gpg": true
       },
       {
