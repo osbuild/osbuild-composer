@@ -396,7 +396,7 @@ func (s *Server) AWSEC2ShareJobInfo(id uuid.UUID, result *AWSEC2ShareJobResult) 
 }
 
 func (s *Server) jobInfo(id uuid.UUID, result interface{}) (*JobInfo, error) {
-	jobType, channel, rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
+	jobType, channel, rawResult, queued, started, finished, canceled, deps, _, err := s.jobs.JobStatus(id)
 	if err != nil {
 		return nil, err
 	}
@@ -568,7 +568,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		// TODO: include type of arguments
 		var result json.RawMessage
 		var finished time.Time
-		_, _, result, _, _, finished, _, _, err = s.jobs.JobStatus(depID)
+		_, _, result, _, _, finished, _, _, _, err = s.jobs.JobStatus(depID)
 		if err != nil {
 			return
 		}

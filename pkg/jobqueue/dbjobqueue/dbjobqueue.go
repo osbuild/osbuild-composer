@@ -61,6 +61,10 @@ const (
 		SELECT dependency_id
 		FROM job_dependencies
 		WHERE job_id = $1`
+	sqlQueryDependents = `
+		SELECT job_id
+		FROM job_dependencies
+		WHERE dependency_id = $1`
 
 	sqlQueryJob = `
 		SELECT type, args, channel, started_at, finished_at, canceled
@@ -462,7 +466,7 @@ func (q *DBJobQueue) CancelJob(id uuid.UUID) error {
 	return nil
 }
 
-func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error) {
+func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, dependents []uuid.UUID, err error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return
@@ -487,6 +491,11 @@ func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, re
 	}
 
 	deps, err = q.jobDependencies(context.Background(), conn, id)
+	if err != nil {
+		return
+	}
+
+	dependents, err = q.jobDependents(context.Background(), conn, id)
 	if err != nil {
 		return
 	}
@@ -601,4 +610,28 @@ func (q *DBJobQueue) jobDependencies(ctx context.Context, conn *pgxpool.Conn, id
 	}
 
 	return dependencies, nil
+}
+
+func (q *DBJobQueue) jobDependents(ctx context.Context, conn *pgxpool.Conn, id uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := conn.Query(ctx, sqlQueryDependents, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	dependents := []uuid.UUID{}
+	for rows.Next() {
+		var d uuid.UUID
+		err = rows.Scan(&d)
+		if err != nil {
+			return nil, err
+		}
+
+		dependents = append(dependents, d)
+	}
+	if rows.Err() != nil {
+		return nil, err
+	}
+
+	return dependents, nil
 }
