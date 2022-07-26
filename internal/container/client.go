@@ -194,6 +194,10 @@ func (cl *Client) SetCredentials(username, password string) {
 	cl.sysCtx.DockerAuthConfig.Password = password
 }
 
+func (cl *Client) SetDockerCertPath(path string) {
+	cl.sysCtx.DockerCertPath = path
+}
+
 // SetSkipTLSVerify controls if TLS verification happens when
 // making requests. If nil is passed it falls back to the default.
 func (cl *Client) SetTLSVerify(verify *bool) {

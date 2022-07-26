@@ -378,8 +378,16 @@ func main() {
 	}
 
 	var containersAuthFilePath string
+	var containersDomain = ""
+	var containersAccount = ""
+	var containersCertPath = ""
+	var containersTLSVerify = true
 	if config.Containers != nil {
 		containersAuthFilePath = config.Containers.AuthFilePath
+		containersDomain = config.Containers.Domain
+		containersAccount = config.Containers.Account
+		containersCertPath = config.Containers.CertPath
+		containersTLSVerify = config.Containers.TLSVerify
 	}
 
 	// depsolve jobs can be done during other jobs
@@ -435,7 +443,13 @@ func main() {
 				CABundle:            genericS3CABundle,
 				SkipSSLVerification: genericS3SkipSSLVerification,
 			},
-			ContainerAuthFile: containersAuthFilePath,
+			ContainersConfig: ContainersConfiguration{
+				ContainerAuthFile: containersAuthFilePath,
+				Domain:            containersDomain,
+				Account:           containersAccount,
+				CertPath:          containersCertPath,
+				TLSVerify:         &containersTLSVerify,
+			},
 		},
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
 			KojiServers: kojiServers,
