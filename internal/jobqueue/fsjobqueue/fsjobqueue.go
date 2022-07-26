@@ -66,6 +66,7 @@ type job struct {
 	Type         string          `json:"type"`
 	Args         json.RawMessage `json:"args,omitempty"`
 	Dependencies []uuid.UUID     `json:"dependencies"`
+	Dependents   []uuid.UUID     `json:"dependents"`
 	Result       json.RawMessage `json:"result,omitempty"`
 	Channel      string          `json:"channel"`
 
@@ -151,12 +152,19 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	// Verify dependendencies early, so that the job doesn't get written
 	// when one of them doesn't exist.
 	for _, d := range j.Dependencies {
-		exists, err := q.db.Read(d.String(), nil)
+		var dep job
+		exists, err := q.db.Read(d.String(), &dep)
 		if err != nil {
 			return uuid.Nil, err
 		}
 		if !exists {
 			return uuid.Nil, jobqueue.ErrNotExist
+		}
+
+		dep.Dependents = append(dep.Dependents, j.Id)
+		err = q.db.Write(d.String(), dep)
+		if err != nil {
+			return uuid.Nil, err
 		}
 	}
 
@@ -344,7 +352,7 @@ func (q *fsJobQueue) CancelJob(id uuid.UUID) error {
 	return nil
 }
 
-func (q *fsJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, err error) {
+func (q *fsJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, dependents []uuid.UUID, err error) {
 	j, err := q.readJob(id)
 	if err != nil {
 		return
@@ -358,6 +366,7 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, re
 	finished = j.FinishedAt
 	canceled = j.Canceled
 	deps = j.Dependencies
+	dependents = j.Dependents
 
 	return
 }
