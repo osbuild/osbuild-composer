@@ -9,6 +9,9 @@ function greenprint {
 function redprint {
     echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m"
 }
+function revert_to_head {
+   git checkout "$head"
+}
 
 if [[ "${CI_COMMIT_BRANCH}" != PR-* ]]; then
     greenprint "${CI_COMMIT_BRANCH} is not a Pull Request"
@@ -60,6 +63,8 @@ if (( err != 0 )); then
     exit 1
 fi
 
+# revert to $head on exit
+trap revert_to_head EXIT
 greenprint "Checking out merge-base ${mergebase}"
 git checkout "${mergebase}"
 
