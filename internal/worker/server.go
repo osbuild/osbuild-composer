@@ -172,7 +172,7 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 	switch jobType {
 	case JobTypeOSBuild:
 		var osbuildJR OSBuildJobResult
-		jobInfo, err = s.OSBuildJobStatus(id, &osbuildJR)
+		jobInfo, err = s.OSBuildJobInfo(id, &osbuildJR)
 		if err != nil {
 			return nil, err
 		}
@@ -180,7 +180,7 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 
 	case JobTypeDepsolve:
 		var depsolveJR DepsolveJobResult
-		jobInfo, err = s.DepsolveJobStatus(id, &depsolveJR)
+		jobInfo, err = s.DepsolveJobInfo(id, &depsolveJR)
 		if err != nil {
 			return nil, err
 		}
@@ -188,7 +188,7 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 
 	case JobTypeManifestIDOnly:
 		var manifestJR ManifestJobByIDResult
-		jobInfo, err = s.ManifestJobStatus(id, &manifestJR)
+		jobInfo, err = s.ManifestJobInfo(id, &manifestJR)
 		if err != nil {
 			return nil, err
 		}
@@ -196,7 +196,7 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 
 	case JobTypeKojiInit:
 		var kojiInitJR KojiInitJobResult
-		jobInfo, err = s.KojiInitJobStatus(id, &kojiInitJR)
+		jobInfo, err = s.KojiInitJobInfo(id, &kojiInitJR)
 		if err != nil {
 			return nil, err
 		}
@@ -204,7 +204,7 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 
 	case JobTypeKojiFinalize:
 		var kojiFinalizeJR KojiFinalizeJobResult
-		jobInfo, err = s.KojiFinalizeJobStatus(id, &kojiFinalizeJR)
+		jobInfo, err = s.KojiFinalizeJobInfo(id, &kojiFinalizeJR)
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +212,7 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 
 	case JobTypeContainerResolve:
 		var containerResolveJR ContainerResolveJobResult
-		jobInfo, err = s.ContainerResolveJobStatus(id, &containerResolveJR)
+		jobInfo, err = s.ContainerResolveJobInfo(id, &containerResolveJR)
 		if err != nil {
 			return nil, err
 		}
@@ -247,8 +247,8 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 	return nil, nil
 }
 
-func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobInfo, error) {
-	jobInfo, err := s.jobStatus(id, result)
+func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {
 		return nil, err
 	}
@@ -275,8 +275,8 @@ func (s *Server) OSBuildJobStatus(id uuid.UUID, result *OSBuildJobResult) (*JobI
 	return jobInfo, nil
 }
 
-func (s *Server) KojiInitJobStatus(id uuid.UUID, result *KojiInitJobResult) (*JobInfo, error) {
-	jobInfo, err := s.jobStatus(id, result)
+func (s *Server) KojiInitJobInfo(id uuid.UUID, result *KojiInitJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {
 		return nil, err
 	}
@@ -292,8 +292,8 @@ func (s *Server) KojiInitJobStatus(id uuid.UUID, result *KojiInitJobResult) (*Jo
 	return jobInfo, nil
 }
 
-func (s *Server) KojiFinalizeJobStatus(id uuid.UUID, result *KojiFinalizeJobResult) (*JobInfo, error) {
-	jobInfo, err := s.jobStatus(id, result)
+func (s *Server) KojiFinalizeJobInfo(id uuid.UUID, result *KojiFinalizeJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {
 		return nil, err
 	}
@@ -309,8 +309,8 @@ func (s *Server) KojiFinalizeJobStatus(id uuid.UUID, result *KojiFinalizeJobResu
 	return jobInfo, nil
 }
 
-func (s *Server) DepsolveJobStatus(id uuid.UUID, result *DepsolveJobResult) (*JobInfo, error) {
-	jobInfo, err := s.jobStatus(id, result)
+func (s *Server) DepsolveJobInfo(id uuid.UUID, result *DepsolveJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {
 		return nil, err
 	}
@@ -330,8 +330,8 @@ func (s *Server) DepsolveJobStatus(id uuid.UUID, result *DepsolveJobResult) (*Jo
 	return jobInfo, nil
 }
 
-func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) (*JobInfo, error) {
-	jobInfo, err := s.jobStatus(id, result)
+func (s *Server) ManifestJobInfo(id uuid.UUID, result *ManifestJobByIDResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {
 		return nil, err
 	}
@@ -343,8 +343,8 @@ func (s *Server) ManifestJobStatus(id uuid.UUID, result *ManifestJobByIDResult) 
 	return jobInfo, nil
 }
 
-func (s *Server) ContainerResolveJobStatus(id uuid.UUID, result *ContainerResolveJobResult) (*JobInfo, error) {
-	jobInfo, err := s.jobStatus(id, result)
+func (s *Server) ContainerResolveJobInfo(id uuid.UUID, result *ContainerResolveJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
 
 	if err != nil {
 		return nil, err
@@ -357,7 +357,7 @@ func (s *Server) ContainerResolveJobStatus(id uuid.UUID, result *ContainerResolv
 	return jobInfo, nil
 }
 
-func (s *Server) jobStatus(id uuid.UUID, result interface{}) (*JobInfo, error) {
+func (s *Server) jobInfo(id uuid.UUID, result interface{}) (*JobInfo, error) {
 	jobType, channel, rawResult, queued, started, finished, canceled, deps, err := s.jobs.JobStatus(id)
 	if err != nil {
 		return nil, err
@@ -415,7 +415,7 @@ func (s *Server) JobType(id uuid.UUID) (string, error) {
 }
 
 func (s *Server) Cancel(id uuid.UUID) error {
-	jobInfo, err := s.jobStatus(id, nil)
+	jobInfo, err := s.jobInfo(id, nil)
 	if err != nil {
 		logrus.Errorf("error getting job status: %v", err)
 	} else {
@@ -431,7 +431,7 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 		return nil, 0, errors.New("Artifacts not enabled")
 	}
 
-	jobInfo, err := s.jobStatus(id, nil)
+	jobInfo, err := s.jobInfo(id, nil)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -460,7 +460,7 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 		return errors.New("Artifacts not enabled")
 	}
 
-	jobInfo, err := s.jobStatus(id, nil)
+	jobInfo, err := s.jobInfo(id, nil)
 	if err != nil {
 		return err
 	}
@@ -514,7 +514,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		return
 	}
 
-	jobInfo, err := s.jobStatus(jobId, nil)
+	jobInfo, err := s.jobInfo(jobId, nil)
 	if err != nil {
 		logrus.Errorf("error retrieving job status: %v", err)
 	}
@@ -584,7 +584,7 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 	switch jobType {
 	case JobTypeOSBuild:
 		var osbuildJR OSBuildJobResult
-		jobInfo, err = s.OSBuildJobStatus(jobId, &osbuildJR)
+		jobInfo, err = s.OSBuildJobInfo(jobId, &osbuildJR)
 		if err != nil {
 			return err
 		}
@@ -593,7 +593,7 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 
 	case JobTypeDepsolve:
 		var depsolveJR DepsolveJobResult
-		jobInfo, err = s.DepsolveJobStatus(jobId, &depsolveJR)
+		jobInfo, err = s.DepsolveJobInfo(jobId, &depsolveJR)
 		if err != nil {
 			return err
 		}
@@ -601,7 +601,7 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 
 	case JobTypeManifestIDOnly:
 		var manifestJR ManifestJobByIDResult
-		jobInfo, err = s.ManifestJobStatus(jobId, &manifestJR)
+		jobInfo, err = s.ManifestJobInfo(jobId, &manifestJR)
 		if err != nil {
 			return err
 		}
@@ -609,7 +609,7 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 
 	case JobTypeKojiInit:
 		var kojiInitJR KojiInitJobResult
-		jobInfo, err = s.KojiInitJobStatus(jobId, &kojiInitJR)
+		jobInfo, err = s.KojiInitJobInfo(jobId, &kojiInitJR)
 		if err != nil {
 			return err
 		}
@@ -617,7 +617,7 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 
 	case JobTypeKojiFinalize:
 		var kojiFinalizeJR KojiFinalizeJobResult
-		jobInfo, err = s.KojiFinalizeJobStatus(jobId, &kojiFinalizeJR)
+		jobInfo, err = s.KojiFinalizeJobInfo(jobId, &kojiFinalizeJR)
 		if err != nil {
 			return err
 		}
@@ -770,7 +770,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 
 	h.server.jobs.RefreshHeartbeat(token)
 
-	jobInfo, err := h.server.jobStatus(jobId, nil)
+	jobInfo, err := h.server.jobInfo(jobId, nil)
 	if err != nil {
 		return api.HTTPErrorWithInternal(api.ErrorRetrievingJobStatus, err)
 	}

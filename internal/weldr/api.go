@@ -359,7 +359,7 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 
 	// All jobs are "osbuild" jobs.
 	var result worker.OSBuildJobResult
-	jobInfo, err := api.workers.OSBuildJobStatus(jobId, &result)
+	jobInfo, err := api.workers.OSBuildJobInfo(jobId, &result)
 	if err != nil {
 		panic(err)
 	}
@@ -2196,7 +2196,7 @@ func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType 
 	var result worker.ContainerResolveJobResult
 
 	for {
-		jobInfo, err := api.workers.ContainerResolveJobStatus(jobId, &result)
+		jobInfo, err := api.workers.ContainerResolveJobInfo(jobId, &result)
 
 		if err != nil {
 			return specs, err

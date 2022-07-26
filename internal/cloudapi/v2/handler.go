@@ -576,7 +576,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 
 	if jobType == worker.JobTypeOSBuild {
 		var result worker.OSBuildJobResult
-		jobInfo, err := h.server.workers.OSBuildJobStatus(jobId, &result)
+		jobInfo, err := h.server.workers.OSBuildJobInfo(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -616,7 +616,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 		})
 	} else if jobType == worker.JobTypeKojiFinalize {
 		var result worker.KojiFinalizeJobResult
-		finalizeInfo, err := h.server.workers.KojiFinalizeJobStatus(jobId, &result)
+		finalizeInfo, err := h.server.workers.KojiFinalizeJobInfo(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -624,7 +624,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			return HTTPError(ErrorUnexpectedNumberOfImageBuilds)
 		}
 		var initResult worker.KojiInitJobResult
-		_, err = h.server.workers.KojiInitJobStatus(finalizeInfo.Deps[0], &initResult)
+		_, err = h.server.workers.KojiInitJobInfo(finalizeInfo.Deps[0], &initResult)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -632,7 +632,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 		var buildJobStatuses []ImageStatus
 		for i := 1; i < len(finalizeInfo.Deps); i++ {
 			var buildJobResult worker.OSBuildJobResult
-			buildInfo, err := h.server.workers.OSBuildJobStatus(finalizeInfo.Deps[i], &buildJobResult)
+			buildInfo, err := h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &buildJobResult)
 			if err != nil {
 				return HTTPError(ErrorMalformedOSBuildJobResult)
 			}
@@ -816,7 +816,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 	}
 
 	var result worker.OSBuildJobResult
-	buildInfo, err := h.server.workers.OSBuildJobStatus(jobId, &result)
+	buildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &result)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
@@ -939,13 +939,13 @@ func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
 	switch jobType {
 	case worker.JobTypeKojiFinalize:
 		var finalizeResult worker.KojiFinalizeJobResult
-		finalizeInfo, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
+		finalizeInfo, err := h.server.workers.KojiFinalizeJobInfo(jobId, &finalizeResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
 
 		var initResult worker.KojiInitJobResult
-		_, err = h.server.workers.KojiInitJobStatus(finalizeInfo.Deps[0], &initResult)
+		_, err = h.server.workers.KojiInitJobInfo(finalizeInfo.Deps[0], &initResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
@@ -959,7 +959,7 @@ func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
 			switch buildJobType {
 			case worker.JobTypeOSBuild:
 				var buildResult worker.OSBuildJobResult
-				_, err = h.server.workers.OSBuildJobStatus(finalizeInfo.Deps[i], &buildResult)
+				_, err = h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &buildResult)
 				if err != nil {
 					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 				}
@@ -978,7 +978,7 @@ func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
 
 	case worker.JobTypeOSBuild:
 		var buildResult worker.OSBuildJobResult
-		_, err = h.server.workers.OSBuildJobStatus(jobId, &buildResult)
+		_, err = h.server.workers.OSBuildJobInfo(jobId, &buildResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
@@ -1004,7 +1004,7 @@ func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.
 			return nil, err
 		}
 		if depType == worker.JobTypeManifestIDOnly {
-			_, err = w.ManifestJobStatus(deps[i], &manifestResult)
+			_, err = w.ManifestJobInfo(deps[i], &manifestResult)
 			if err != nil {
 				return nil, err
 			}
@@ -1036,7 +1036,7 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 	switch jobType {
 	case worker.JobTypeKojiFinalize:
 		var finalizeResult worker.KojiFinalizeJobResult
-		finalizeInfo, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
+		finalizeInfo, err := h.server.workers.KojiFinalizeJobInfo(jobId, &finalizeResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
@@ -1060,7 +1060,7 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 				if len(buildJob.Manifest) != 0 {
 					manifest = buildJob.Manifest
 				} else {
-					buildInfo, err := h.server.workers.OSBuildJobStatus(finalizeInfo.Deps[i], &worker.OSBuildJobResult{})
+					buildInfo, err := h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &worker.OSBuildJobResult{})
 					if err != nil {
 						return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 					}
@@ -1089,7 +1089,7 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 		if len(buildJob.Manifest) != 0 {
 			manifest = buildJob.Manifest
 		} else {
-			buildInfo, err := h.server.workers.OSBuildJobStatus(jobId, &worker.OSBuildJobResult{})
+			buildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &worker.OSBuildJobResult{})
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
