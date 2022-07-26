@@ -57,7 +57,7 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	err = api.workers.FinishJob(token, rawResult)
 	require.NoError(t, err)
 
-	jobInfo, err := api.workers.OSBuildJobStatus(jobId, &jobResult)
+	jobInfo, err := api.workers.OSBuildJobInfo(jobId, &jobResult)
 	require.NoError(t, err)
 
 	state := composeStateFromJobStatus(jobInfo.JobStatus, &jobResult)
@@ -100,7 +100,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	err = api.workers.FinishJob(token, rawResult)
 	require.NoError(t, err)
 
-	jobInfo, err := api.workers.OSBuildJobStatus(jobId, &jobResult)
+	jobInfo, err := api.workers.OSBuildJobInfo(jobId, &jobResult)
 	require.NoError(t, err)
 
 	state := composeStateFromJobStatus(jobInfo.JobStatus, &jobResult)
