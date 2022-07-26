@@ -52,6 +52,10 @@ type authenticationConfig struct {
 
 type containersConfig struct {
 	AuthFilePath string `toml:"auth_file_path"`
+	Domain       string `toml:"domain"`
+	Account      string `toml:"account"`
+	CertPath     string `toml:"cert_path"`
+	TLSVerify    bool   `toml:"tls_verify"`
 }
 
 type workerConfig struct {

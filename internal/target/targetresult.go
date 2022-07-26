@@ -67,6 +67,8 @@ func UnmarshalTargetResultOptions(trName TargetName, rawOptions json.RawMessage)
 		options = new(KojiTargetResultOptions)
 	case TargetNameOCI:
 		options = new(OCITargetResultOptions)
+	case TargetNameContainer:
+		options = new(ContainerTargetResultOptions)
 	default:
 		return nil, fmt.Errorf("unexpected target result name: %s", trName)
 	}

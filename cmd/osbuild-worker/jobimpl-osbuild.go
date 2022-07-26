@@ -40,16 +40,24 @@ type S3Configuration struct {
 	SkipSSLVerification bool
 }
 
-type OSBuildJobImpl struct {
-	Store             string
-	Output            string
-	KojiServers       map[string]kojiServer
-	GCPCreds          string
-	AzureCreds        *azure.Credentials
-	AWSCreds          string
-	AWSBucket         string
-	S3Config          S3Configuration
+type ContainersConfiguration struct {
 	ContainerAuthFile string
+	Domain            string
+	Account           string
+	CertPath          string
+	TLSVerify         *bool
+}
+
+type OSBuildJobImpl struct {
+	Store            string
+	Output           string
+	KojiServers      map[string]kojiServer
+	GCPCreds         string
+	AzureCreds       *azure.Credentials
+	AWSCreds         string
+	AWSBucket        string
+	S3Config         S3Configuration
+	ContainersConfig ContainersConfiguration
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -199,6 +207,40 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 	return url, nil
 }
 
+func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions *target.ContainerTargetOptions) (*container.Client, error) {
+	useImpl := false
+	i := strings.IndexRune(destination, '/')
+	if i == -1 || (!strings.ContainsAny(destination[:i], ".:") && destination[:i] != "localhost") {
+		if impl.ContainersConfig.Domain != "" {
+			base := impl.ContainersConfig.Domain
+			if impl.ContainersConfig.Account != "" {
+				base = fmt.Sprintf("%s/%s", base, impl.ContainersConfig.Account)
+			}
+			destination = fmt.Sprintf("%s/%s", base, destination)
+			useImpl = true
+		}
+	}
+
+	client, err := container.NewClient(destination)
+	if err != nil {
+		return nil, err
+	}
+
+	if useImpl {
+		if impl.ContainersConfig.CertPath != "" {
+			client.SetDockerCertPath(impl.ContainersConfig.CertPath)
+		}
+		client.SetTLSVerify(impl.ContainersConfig.TLSVerify)
+	} else {
+		if targetOptions.Username != "" || targetOptions.Password != "" {
+			client.SetCredentials(targetOptions.Username, targetOptions.Password)
+		}
+		client.SetTLSVerify(targetOptions.TlsVerify)
+	}
+
+	return client, nil
+}
+
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	logWithId := logrus.WithField("jobId", job.Id().String())
 	// Initialize variable needed for reporting back to osbuild-composer.
@@ -308,9 +350,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	var extraEnv []string
-	if impl.ContainerAuthFile != "" {
+	if impl.ContainersConfig.ContainerAuthFile != "" {
 		extraEnv = []string{
-			fmt.Sprintf("REGISTRY_AUTH_FILE=%s", impl.ContainerAuthFile),
+			fmt.Sprintf("REGISTRY_AUTH_FILE=%s", impl.ContainersConfig.ContainerAuthFile),
 		}
 	}
 
@@ -775,34 +817,29 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResult.Options = &target.OCITargetResultOptions{ImageID: imageID}
 
 		case *target.ContainerTargetOptions:
-			targetResult = target.NewContainerTargetResult()
+			targetResult = target.NewContainerTargetResult(nil)
 			destination := jobTarget.ImageName
 
 			logWithId.Printf("[container] ⬆ Uploading the image to %s", destination)
 
-			ctx := context.Background()
-			client, err := container.NewClient(destination)
+			client, err := impl.getContainerClient(destination, targetOptions)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error())
 				break
 			}
-
-			if targetOptions.Username != "" || targetOptions.Password != "" {
-				client.SetCredentials(targetOptions.Username, targetOptions.Password)
-			}
-			client.SetTLSVerify(targetOptions.TlsVerify)
 
 			sourcePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
 
 			// TODO: get the container type from the metadata of the osbuild job
 			sourceRef := fmt.Sprintf("oci-archive:%s", sourcePath)
 
-			digest, err := client.UploadImage(ctx, sourceRef, "")
+			digest, err := client.UploadImage(context.Background(), sourceRef, "")
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				break
 			}
 			logWithId.Printf("[container] 🎉 Image uploaded (%s)!", digest.String())
+			targetResult.Options = &target.ContainerTargetResultOptions{URL: client.Target.String(), Digest: digest.String()}
 
 		default:
 			// TODO: we may not want to return completely here with multiple targets, because then no TargetErrors will be added to the JobError details

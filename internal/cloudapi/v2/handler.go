@@ -344,8 +344,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				fallthrough
 			case ImageTypesEdgeInstaller:
 				fallthrough
-			case ImageTypesEdgeContainer:
-				fallthrough
 			case ImageTypesEdgeCommit:
 				var awsS3UploadOptions AWSS3UploadOptions
 				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
@@ -363,6 +361,22 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					Key:    key,
 				})
 				t.ImageName = key
+				t.OsbuildArtifact.ExportFilename = imageType.Filename()
+
+				irTarget = t
+			case ImageTypesEdgeContainer:
+				var containerUploadOptions ContainerUploadOptions
+				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+				if err != nil {
+					return HTTPError(ErrorJSONMarshallingError)
+				}
+				err = json.Unmarshal(jsonUploadOptions, &containerUploadOptions)
+				if err != nil {
+					return HTTPError(ErrorJSONUnMarshallingError)
+				}
+
+				t := target.NewContainerTarget(&target.ContainerTargetOptions{})
+				t.ImageName = fmt.Sprintf("%s:%s", containerUploadOptions.Name, containerUploadOptions.Tag)
 				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
@@ -544,6 +558,14 @@ func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
 		uploadOptions = AzureUploadStatus{
 			ImageName: gcpOptions.ImageName,
 		}
+	case target.TargetNameContainer:
+		uploadType = UploadTypesContainer
+		containerOptions := t.Options.(*target.ContainerTargetResultOptions)
+		uploadOptions = ContainerUploadStatus{
+			Url:    containerOptions.URL,
+			Digest: containerOptions.Digest,
+		}
+
 	default:
 		return nil, fmt.Errorf("unknown upload target: %s", t.Name)
 	}
