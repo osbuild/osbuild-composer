@@ -2382,6 +2382,42 @@
           {
             "type": "org.osbuild.modprobe",
             "options": {
+              "filename": "blacklist-amdgpu.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "amdgpu"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.modprobe",
+            "options": {
+              "filename": "blacklist-intel-cstate.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "intel_cstate"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.modprobe",
+            "options": {
+              "filename": "blacklist-floppy.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "floppy"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.modprobe",
+            "options": {
               "filename": "blacklist-nouveau.conf",
               "commands": [
                 {
@@ -2398,11 +2434,11 @@
           {
             "type": "org.osbuild.modprobe",
             "options": {
-              "filename": "blacklist-floppy.conf",
+              "filename": "blacklist-skylake-edac.conf",
               "commands": [
                 {
                   "command": "blacklist",
-                  "modulename": "floppy"
+                  "modulename": "skx_edac"
                 }
               ]
             }
