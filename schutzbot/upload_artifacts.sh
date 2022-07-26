@@ -10,7 +10,7 @@ ARTIFACTS=${ARTIFACTS:-/tmp/artifacts}
 function greenprint {
   echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
-
+source /etc/os-release
 # s3cmd is in epel, add if it's not present
 if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     curl -Ls --retry 5 --output /tmp/epel.rpm \
