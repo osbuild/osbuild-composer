@@ -666,7 +666,7 @@ Manifest-diff:
     GIT_DEPTH: 500
   artifacts:
     paths:
-      - "/tmp/artifacts"
+      - manifests.diff
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
