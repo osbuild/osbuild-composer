@@ -2197,14 +2197,6 @@
                     }
                   },
                   {
-                    "id": "sha256:d668e8e97309259b74740f4d430ad469a86c30993c745cc139f6eb0443f8ec69",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:d8d13dfdc6d4c6af623905c7f37ae4f07faf6c4eeb69546ba9c23fd92fefc883",
                     "options": {
                       "metadata": {
@@ -6545,9 +6537,6 @@
           "sha256:d62f0262248a7da16dc0e9431015f82e29e83e6a981dc969c527df738656abd9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/libcollection-0.7.0-51.el9.aarch64.rpm"
           },
-          "sha256:d668e8e97309259b74740f4d430ad469a86c30993c745cc139f6eb0443f8ec69": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/dracut-config-rescue-055-30.git20220216.el9.aarch64.rpm"
-          },
           "sha256:d679dbc918fd999386ee5e83ecec55c7879499790598ba4731ca84506965f0a9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/c-ares-1.17.1-5.el9.aarch64.rpm"
           },
@@ -9431,16 +9420,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/dracut-config-generic-055-30.git20220216.el9.aarch64.rpm",
         "checksum": "sha256:4ef22e4502fdb4968cdeb73ba084b15d0764928aa5afc1daea7bd648e8a6d41e",
-        "check_gpg": true
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "30.git20220216.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/dracut-config-rescue-055-30.git20220216.el9.aarch64.rpm",
-        "checksum": "sha256:d668e8e97309259b74740f4d430ad469a86c30993c745cc139f6eb0443f8ec69",
         "check_gpg": true
       },
       {

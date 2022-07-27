@@ -1024,9 +1024,6 @@
                     "id": "sha256:f00365d25649f658468a39755e0436ac8e7d6e5f033ffaff5251fe7bb7e5b95a"
                   },
                   {
-                    "id": "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7"
-                  },
-                  {
                     "id": "sha256:f5671dc12b61c49f59c21a989d5afba03f7414f65e40f4fdff9fe75381dda5dc"
                   },
                   {
@@ -4271,9 +4268,6 @@
           },
           "sha256:22c9fb99038494ef3811f1536ead88125d1be28c3ac6f729b9888e4bcffb4026": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/urw-base35-nimbus-mono-ps-fonts-20200910-6.el9.noarch.rpm"
-          },
-          "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.x86_64.rpm"
           },
           "sha256:2310e59546e927a3459e6a4a93bd843ad8a7fd41368e3ba2f5be926b0b9f5a33": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/conmon-2.1.0-1.el9.x86_64.rpm"
@@ -9259,15 +9253,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dracut-config-generic-055-10.git20210824.el9.x86_64.rpm",
         "checksum": "sha256:f00365d25649f658468a39755e0436ac8e7d6e5f033ffaff5251fe7bb7e5b95a"
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "10.git20210824.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.x86_64.rpm",
-        "checksum": "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7"
       },
       {
         "name": "dracut-network",

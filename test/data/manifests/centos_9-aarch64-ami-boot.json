@@ -2691,14 +2691,6 @@
                     }
                   },
                   {
-                    "id": "sha256:1e1cfb72b1111ad7b16b35966dc624c659e2b5521d3041fa1e063f6365bfc538",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:c17542cdd49f973058d76682b3af022646d642159b6a39c4fe43962dc29a3892",
                     "options": {
                       "metadata": {
@@ -5469,9 +5461,6 @@
           },
           "sha256:1d4815615490cc6c8c0e5352860970859fcf6f52c9f772c38d696f42f7d51948": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/libisofs-1.5.4-3.el9.aarch64.rpm"
-          },
-          "sha256:1e1cfb72b1111ad7b16b35966dc624c659e2b5521d3041fa1e063f6365bfc538": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.aarch64.rpm"
           },
           "sha256:1e58565c513e5251cd9ee9cf75e0a8e02e961f8285f355418493f689e28a985b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/shared-mime-info-2.1-4.el9.aarch64.rpm"
@@ -9844,16 +9833,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/dracut-config-generic-055-10.git20210824.el9.aarch64.rpm",
         "checksum": "sha256:a3523e85eb0aab24c3302c7a583ebf0c780b232545e0ab1f56a9a70e8995c103",
-        "check_gpg": true
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "10.git20210824.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.aarch64.rpm",
-        "checksum": "sha256:1e1cfb72b1111ad7b16b35966dc624c659e2b5521d3041fa1e063f6365bfc538",
         "check_gpg": true
       },
       {

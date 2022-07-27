@@ -877,9 +877,6 @@
                     "id": "sha256:6d564871ff46b3e8a0fc5e78fc17a950af1d291397eca19ffe9beb1e97e29f70"
                   },
                   {
-                    "id": "sha256:a39000b7f3c60b35d32b1e57b29ad76cdafcf7e4a069b1fffed1ac670e4d6e86"
-                  },
-                  {
                     "id": "sha256:e3d425107eef5b866e2f39a1e04e2bdddacad0def949017b89acff3a939a0bc7"
                   },
                   {
@@ -3189,9 +3186,6 @@
           },
           "sha256:a3701fe9260c9e076b6b408bd901951121d38e4c3d3c6c52dadea59a286d1e39": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/libbrotli-1.0.9-6.el9.aarch64.rpm"
-          },
-          "sha256:a39000b7f3c60b35d32b1e57b29ad76cdafcf7e4a069b1fffed1ac670e4d6e86": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.aarch64.rpm"
           },
           "sha256:a45df628baddcbc033ba3d55f319ce13f57a2ef615a2a9c9aa11217bf3b273d3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/openssh-8.7p1-6.el9.aarch64.rpm"
@@ -6068,15 +6062,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/dracut-config-generic-055-10.git20210824.el9.aarch64.rpm",
         "checksum": "sha256:6d564871ff46b3e8a0fc5e78fc17a950af1d291397eca19ffe9beb1e97e29f70"
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "10.git20210824.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.aarch64.rpm",
-        "checksum": "sha256:a39000b7f3c60b35d32b1e57b29ad76cdafcf7e4a069b1fffed1ac670e4d6e86"
       },
       {
         "name": "dracut-network",
