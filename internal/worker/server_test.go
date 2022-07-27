@@ -372,7 +372,7 @@ func TestRequestJobById(t *testing.T) {
 	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "")
 	require.NoError(t, err)
 
-	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobId, "")
+	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, []uuid.UUID{depsolveJobId}, "")
 	require.NoError(t, err)
 
 	test.TestRoute(t, server.Handler(), false, "POST", "/api/worker/v1/jobs", fmt.Sprintf(`{"arch":"arch","types":["%s"]}`, worker.JobTypeManifestIDOnly), http.StatusBadRequest,
@@ -742,10 +742,10 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 
 		case *worker.ManifestJobByID:
 			job := dep.main.(*worker.ManifestJobByID)
-			if len(depUUIDs) != 1 {
-				return nil, fmt.Errorf("exactly one dependency is expected for ManifestJobByID, got: %d", len(depUUIDs))
+			if len(depUUIDs) < 1 {
+				return nil, fmt.Errorf("at least one dependency is expected for ManifestJobByID, got: %d", len(depUUIDs))
 			}
-			id, err = s.EnqueueManifestJobByID(job, depUUIDs[0], "")
+			id, err = s.EnqueueManifestJobByID(job, depUUIDs, "")
 			if err != nil {
 				return nil, err
 			}
@@ -776,6 +776,16 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 				return nil, fmt.Errorf("at least two dependencies are expected for KojiFinalizeJob, got: %d", len(depUUIDs))
 			}
 			id, err = s.EnqueueKojiFinalize(job, depUUIDs[0], depUUIDs[1:], "")
+			if err != nil {
+				return nil, err
+			}
+
+		case *worker.ContainerResolveJob:
+			job := dep.main.(*worker.ContainerResolveJob)
+			if len(depUUIDs) != 0 {
+				return nil, fmt.Errorf("dependencies are not supported for ContainerResolveJob, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueContainerResolveJob(job, "")
 			if err != nil {
 				return nil, err
 			}
@@ -940,6 +950,71 @@ func TestJobDependencyChainErrors(t *testing.T) {
 			expectedError: &clienterrors.Error{
 				ID:     clienterrors.ErrorEmptyManifest,
 				Reason: "empty manifest received",
+			},
+		},
+		// osbuild + manifest + depsolve + container resolve
+		// failed container resolve
+		{
+			job: testJob{
+				main: &worker.OSBuildJob{},
+				deps: []testJob{
+					{
+						main:   &worker.KojiInitJob{},
+						result: &worker.KojiInitJobResult{},
+					},
+					{
+						main: &worker.ManifestJobByID{},
+						deps: []testJob{
+							{
+								main: &worker.ContainerResolveJob{},
+								result: &worker.ContainerResolveJobResult{
+									JobResult: worker.JobResult{
+										JobError: &clienterrors.Error{
+											ID:     clienterrors.ErrorContainerResolution,
+											Reason: "remote container not found",
+										},
+									},
+								},
+							},
+							{
+								main:   &worker.DepsolveJob{},
+								result: &worker.DepsolveJobResult{},
+							},
+						},
+						result: &worker.ManifestJobByIDResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorContainerDependency,
+									Reason: "container dependency job failed",
+								},
+							},
+						},
+					},
+				},
+				result: &worker.OSBuildJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorManifestDependency,
+							Reason: "manifest dependency job failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorManifestDependency,
+				Reason: "manifest dependency job failed",
+				Details: []*clienterrors.Error{
+					{
+						ID:     clienterrors.ErrorContainerDependency,
+						Reason: "container dependency job failed",
+						Details: []*clienterrors.Error{
+							{
+								ID:     clienterrors.ErrorContainerResolution,
+								Reason: "remote container not found",
+							},
+						},
+					},
+				},
 			},
 		},
 		// koji-init + osbuild + manifest + depsolve
@@ -1325,7 +1400,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 				Reason: "koji-finalize failed",
 			},
 		},
-		// koji-init + (osbuild + manifest + depsolve) + (osbuild + manifest + depsolve) + koji-finalize
+		// koji-init + (osbuild + manifest + depsolve + container resolve) + (osbuild + manifest + depsolve) + koji-finalize
 		// all passed
 		{
 			job: testJob{
@@ -1346,6 +1421,10 @@ func TestJobDependencyChainErrors(t *testing.T) {
 							{
 								main: &worker.ManifestJobByID{},
 								deps: []testJob{
+									{
+										main:   &worker.ContainerResolveJob{},
+										result: &worker.ContainerResolveJobResult{},
+									},
 									{
 										main:   &worker.DepsolveJob{},
 										result: &worker.DepsolveJobResult{},

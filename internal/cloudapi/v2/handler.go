@@ -173,6 +173,19 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	if request.Customizations != nil && request.Customizations.Containers != nil {
+		for _, c := range *request.Customizations.Containers {
+			bc := blueprint.Container{
+				Source:    c.Source,
+				TLSVerify: c.TlsVerify,
+			}
+			if c.Name != nil {
+				bc.Name = *c.Name
+			}
+			bp.Containers = append(bp.Containers, bc)
+		}
+	}
+
 	if request.Customizations != nil && request.Customizations.Filesystem != nil {
 		var fsCustomizations []blueprint.FilesystemCustomization
 		for _, f := range *request.Customizations.Filesystem {

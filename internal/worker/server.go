@@ -146,8 +146,11 @@ func (s *Server) EnqueueDepsolve(job *DepsolveJob, channel string) (uuid.UUID, e
 	return s.enqueue(JobTypeDepsolve, job, nil, channel)
 }
 
-func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, parent uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeManifestIDOnly, job, []uuid.UUID{parent}, channel)
+func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+	if len(dependencies) == 0 {
+		panic("EnqueueManifestJobByID has no dependencies, expected at least a depsolve job")
+	}
+	return s.enqueue(JobTypeManifestIDOnly, job, dependencies, channel)
 }
 
 func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel string) (uuid.UUID, error) {
@@ -621,6 +624,14 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 			return err
 		}
 		jobResult = &kojiFinalizeJR.JobResult
+
+	case JobTypeContainerResolve:
+		var containerResolveJR ContainerResolveJobResult
+		jobInfo, err = s.ContainerResolveJobInfo(jobId, &containerResolveJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &containerResolveJR.JobResult
 
 	default:
 		return fmt.Errorf("unexpected job type: %s", jobType)
