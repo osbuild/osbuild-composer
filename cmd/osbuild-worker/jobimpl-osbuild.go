@@ -41,11 +41,11 @@ type S3Configuration struct {
 }
 
 type ContainersConfiguration struct {
-	ContainerAuthFile string
-	Domain            string
-	Account           string
-	CertPath          string
-	TLSVerify         *bool
+	AuthFilePath string
+	Domain       string
+	Account      string
+	CertPath     string
+	TLSVerify    *bool
 }
 
 type OSBuildJobImpl struct {
@@ -214,7 +214,12 @@ func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions
 		return nil, err
 	}
 
+	if impl.ContainersConfig.AuthFilePath != "" {
+		client.SetAuthFilePath(impl.ContainersConfig.AuthFilePath)
+	}
+
 	if appliedDefaults {
+
 		if impl.ContainersConfig.CertPath != "" {
 			client.SetDockerCertPath(impl.ContainersConfig.CertPath)
 		}
@@ -338,9 +343,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	var extraEnv []string
-	if impl.ContainersConfig.ContainerAuthFile != "" {
+	if impl.ContainersConfig.AuthFilePath != "" {
 		extraEnv = []string{
-			fmt.Sprintf("REGISTRY_AUTH_FILE=%s", impl.ContainersConfig.ContainerAuthFile),
+			fmt.Sprintf("REGISTRY_AUTH_FILE=%s", impl.ContainersConfig.AuthFilePath),
 		}
 	}
 
