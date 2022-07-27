@@ -1933,9 +1933,6 @@
                     "id": "sha256:6d854c991181c69bf0c08d075ecf15e404d17611bddf66e0b7c749abe543aafa"
                   },
                   {
-                    "id": "sha256:6979fe9b8acfb7e3d4aebb551789e1258d7cc5109a4efb59898b9cb94e470a8b"
-                  },
-                  {
                     "id": "sha256:5750bb4b560044238b945166b92e99c62da5fd3b14faaba8757d78f1b242cf79"
                   },
                   {
@@ -2883,9 +2880,6 @@
           },
           "sha256:688bacfd60f31d9e7b1d295d8929d7f953ec789b86c475ef828c0b74d35d5ae4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/python3-pip-wheel-21.2.3-6.el9.noarch.rpm"
-          },
-          "sha256:6979fe9b8acfb7e3d4aebb551789e1258d7cc5109a4efb59898b9cb94e470a8b": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/qemu-guest-agent-6.2.0-5.el9.aarch64.rpm"
           },
           "sha256:69b20a900c231a1a30629e42d1864aaf9a32ede4a7e8ad39c9d560201d5cf2ca": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/dracut-squash-055-10.git20210824.el9.aarch64.rpm"
@@ -9230,15 +9224,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/python3-pytz-2021.1-4.el9.noarch.rpm",
         "checksum": "sha256:6d854c991181c69bf0c08d075ecf15e404d17611bddf66e0b7c749abe543aafa"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 17,
-        "version": "6.2.0",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/qemu-guest-agent-6.2.0-5.el9.aarch64.rpm",
-        "checksum": "sha256:6979fe9b8acfb7e3d4aebb551789e1258d7cc5109a4efb59898b9cb94e470a8b"
       },
       {
         "name": "rpm-plugin-systemd-inhibit",

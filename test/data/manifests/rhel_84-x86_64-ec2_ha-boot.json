@@ -2457,9 +2457,6 @@
                     "id": "sha256:9e70cafe666de95febf05bcee7d3be9a2c5cb9bb3d361d81b2d72bde8a5e20c7"
                   },
                   {
-                    "id": "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4"
-                  },
-                  {
                     "id": "sha256:560f49382557eb971a482da7026e56a44149a8440ac887fd4fd4d778bb1ab196"
                   },
                   {
@@ -2970,9 +2967,6 @@
           },
           "sha256:03f00cc8815451bf931215a349677e4a0dba9092943a379ac77bc9ea986c779e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.4-20210921/Packages/rpm-plugin-selinux-4.14.3-13.el8.x86_64.rpm"
-          },
-          "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/qemu-guest-agent-4.2.0-48.module+el8.4.0+10368+630e803b.x86_64.rpm"
           },
           "sha256:05c3638dd983e5ab4c29768ce33e74a1ec065e846b28bc67035ec3e6c7fa8ee5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/net-snmp-utils-5.8-20.el8.x86_64.rpm"
@@ -11825,15 +11819,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/python36-3.6.8-2.module+el8.1.0+3334+5cb623d7.x86_64.rpm",
         "checksum": "sha256:9e70cafe666de95febf05bcee7d3be9a2c5cb9bb3d361d81b2d72bde8a5e20c7"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "4.2.0",
-        "release": "48.module+el8.4.0+10368+630e803b",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/qemu-guest-agent-4.2.0-48.module+el8.4.0+10368+630e803b.x86_64.rpm",
-        "checksum": "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4"
       },
       {
         "name": "rhc",

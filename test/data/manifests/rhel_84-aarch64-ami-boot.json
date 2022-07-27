@@ -2070,9 +2070,6 @@
                     "id": "sha256:eeabe7958b5c845f5985d4d42e7ce3dbe731e96ee012252866acd1e3be7974ed"
                   },
                   {
-                    "id": "sha256:6cf6cae43dd6c169b625e301c663893be741753d8a3c65fe762f467fcf4b21c9"
-                  },
-                  {
                     "id": "sha256:92b6987ccd613f645d24008e10c2b59537502396f0a5f98727ceae640782a6ea"
                   },
                   {
@@ -3083,9 +3080,6 @@
           },
           "sha256:6c3ee8b53c0af9bd4958b4e48d4d55fa7c574f444fb42eead1508ad740f97088": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.4-20210921/Packages/prefixdevname-0.1.0-6.el8.aarch64.rpm"
-          },
-          "sha256:6cf6cae43dd6c169b625e301c663893be741753d8a3c65fe762f467fcf4b21c9": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-r8.4-20210921/Packages/qemu-guest-agent-4.2.0-48.module+el8.4.0+10368+630e803b.aarch64.rpm"
           },
           "sha256:6d6990ea51c417dc752c98d34f3a19f9c6fce966f1931bc2cfdddcdbe27931dd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.4-20210921/Packages/ima-evm-utils-1.3.2-12.el8.aarch64.rpm"
@@ -9847,15 +9841,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-r8.4-20210921/Packages/python3-unbound-1.7.3-15.el8.aarch64.rpm",
         "checksum": "sha256:eeabe7958b5c845f5985d4d42e7ce3dbe731e96ee012252866acd1e3be7974ed"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "4.2.0",
-        "release": "48.module+el8.4.0+10368+630e803b",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-r8.4-20210921/Packages/qemu-guest-agent-4.2.0-48.module+el8.4.0+10368+630e803b.aarch64.rpm",
-        "checksum": "sha256:6cf6cae43dd6c169b625e301c663893be741753d8a3c65fe762f467fcf4b21c9"
       },
       {
         "name": "rhc",

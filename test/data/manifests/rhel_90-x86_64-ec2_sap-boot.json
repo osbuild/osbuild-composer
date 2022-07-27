@@ -3181,9 +3181,6 @@
                     "id": "sha256:132cf073ac655f8fcf6a22d0161578cb1a8a252002b2e11adeb0c84d7900ce4c"
                   },
                   {
-                    "id": "sha256:c24fef81612662dd27d8bc72f1e8dae00fff3ca1905c630f57e5362803e72f35"
-                  },
-                  {
                     "id": "sha256:49191fa272d3c16c219f1b27fd86bd085fa1ae3bac38946de40926b35773c4c4"
                   },
                   {
@@ -5897,9 +5894,6 @@
           },
           "sha256:c170870a2d1ff32048d13497fa67c382fe5aaf3d8d21bae639356ac28003dba9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/perl-Pod-Usage-2.01-4.el9.noarch.rpm"
-          },
-          "sha256:c24fef81612662dd27d8bc72f1e8dae00fff3ca1905c630f57e5362803e72f35": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/qemu-guest-agent-6.2.0-5.el9.x86_64.rpm"
           },
           "sha256:c295f071518f6366131e7b143e6c37f30caf6fdb51a0aec8ba516364e6bbde91": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/libXext-1.3.4-8.el9.x86_64.rpm"
@@ -15724,15 +15718,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/python3-tracer-0.7.5-4.el9.noarch.rpm",
         "checksum": "sha256:132cf073ac655f8fcf6a22d0161578cb1a8a252002b2e11adeb0c84d7900ce4c"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 17,
-        "version": "6.2.0",
-        "release": "5.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/qemu-guest-agent-6.2.0-5.el9.x86_64.rpm",
-        "checksum": "sha256:c24fef81612662dd27d8bc72f1e8dae00fff3ca1905c630f57e5362803e72f35"
       },
       {
         "name": "redhat-logos",

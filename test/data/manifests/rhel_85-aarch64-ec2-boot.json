@@ -2043,9 +2043,6 @@
                     "id": "sha256:8fc269f9b18e428f12c9afe7231e67edea41404ad47c7e87f104ec47312ee3fd"
                   },
                   {
-                    "id": "sha256:310c51e65da1036e1d07571b8f44a02aa9962c79743b20a834dbd1349ac41893"
-                  },
-                  {
                     "id": "sha256:9de450d086f494ac3776444a8c325dd313eb63c2140cbe73d9d99e00dee46399"
                   },
                   {
@@ -2717,9 +2714,6 @@
           },
           "sha256:31043a7324411dad6b84f6504a9e9cb7ece9f576acf091be522e484c8b82f469": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.5-20220504/Packages/python3-gobject-base-3.28.3-2.el8.aarch64.rpm"
-          },
-          "sha256:310c51e65da1036e1d07571b8f44a02aa9962c79743b20a834dbd1349ac41893": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-r8.5-20220504/Packages/qemu-guest-agent-4.2.0-59.module+el8.5.0+12817+cb650d43.aarch64.rpm"
           },
           "sha256:310d69dea3d9bb92e6e783f0458f8924431cb5703120a4730b0dcfaac4ecaaa6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.5-20220504/Packages/libdnf-0.63.0-3.el8.aarch64.rpm"
@@ -9736,15 +9730,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-r8.5-20220504/Packages/python3-unbound-1.7.3-17.el8.aarch64.rpm",
         "checksum": "sha256:8fc269f9b18e428f12c9afe7231e67edea41404ad47c7e87f104ec47312ee3fd"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "4.2.0",
-        "release": "59.module+el8.5.0+12817+cb650d43",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-r8.5-20220504/Packages/qemu-guest-agent-4.2.0-59.module+el8.5.0+12817+cb650d43.aarch64.rpm",
-        "checksum": "sha256:310c51e65da1036e1d07571b8f44a02aa9962c79743b20a834dbd1349ac41893"
       },
       {
         "name": "rhc",

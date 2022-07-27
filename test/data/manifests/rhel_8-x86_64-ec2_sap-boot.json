@@ -3129,9 +3129,6 @@
                     "id": "sha256:cbcd80197468aeae26500542100782eb9b4853d3b8db959ef647184c81a38fb6"
                   },
                   {
-                    "id": "sha256:9d491da84f286d7ae152fc33a0ef317328b0c85349706b4817a27181ecd59fb9"
-                  },
-                  {
                     "id": "sha256:65f09851bd80394b34b388d3df5bc6955bfa7e5a9a525bebe915e5adf9052780"
                   },
                   {
@@ -5262,9 +5259,6 @@
           },
           "sha256:9d44aa71f33960ce96e66ee5b42dc12a00edbdb9450e9c7787550a7facb96552": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/python3-lxml-4.2.3-4.el8.x86_64.rpm"
-          },
-          "sha256:9d491da84f286d7ae152fc33a0ef317328b0c85349706b4817a27181ecd59fb9": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/qemu-guest-agent-6.2.0-5.module+el8.6.0+14025+ca131e0a.x86_64.rpm"
           },
           "sha256:9e90e6054da06f5c8c2733c3b66987693a58ddc1f05d95b23ca0a464e26a2b22": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/perl-Digest-1.17-395.el8.noarch.rpm"
@@ -15284,15 +15278,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/python38-six-1.12.0-10.module+el8.4.0+8888+89bc7e79.noarch.rpm",
         "checksum": "sha256:cbcd80197468aeae26500542100782eb9b4853d3b8db959ef647184c81a38fb6"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "6.2.0",
-        "release": "5.module+el8.6.0+14025+ca131e0a",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/qemu-guest-agent-6.2.0-5.module+el8.6.0+14025+ca131e0a.x86_64.rpm",
-        "checksum": "sha256:9d491da84f286d7ae152fc33a0ef317328b0c85349706b4817a27181ecd59fb9"
       },
       {
         "name": "rest",

@@ -2210,14 +2210,6 @@
                     }
                   },
                   {
-                    "id": "sha256:ef2261275c64411ac198bd10da76eb5bedc4fbe2f52cae1f01b212968d0ae39a",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:7ae244bf549eaa426975ef377b1346cca8fc756bfb12170789c854c83e8fa7a7",
                     "options": {
                       "metadata": {
@@ -6255,9 +6247,6 @@
           "sha256:edab8459488d631c21b4a1f06260f2b0d08a0fd3f1a2c578043a34ac6a353cbc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/openssh-server-8.7p1-6.el9.x86_64.rpm"
           },
-          "sha256:ef2261275c64411ac198bd10da76eb5bedc4fbe2f52cae1f01b212968d0ae39a": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/qemu-guest-agent-6.2.0-5.el9.x86_64.rpm"
-          },
           "sha256:f006c0e7cb58cb74f8cdc7abc3455a6d27b735e6a4540dff856b9c6a7af62d5a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/parted-3.4-6.el9.x86_64.rpm"
           },
@@ -9005,16 +8994,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/python3-pytz-2021.1-4.el9.noarch.rpm",
         "checksum": "sha256:e29e50c96c36586e2adb3e2d7a2ac5bbd66a376d48fbf899638ae76357057b7d",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 17,
-        "version": "6.2.0",
-        "release": "5.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/qemu-guest-agent-6.2.0-5.el9.x86_64.rpm",
-        "checksum": "sha256:ef2261275c64411ac198bd10da76eb5bedc4fbe2f52cae1f01b212968d0ae39a",
         "check_gpg": true
       },
       {

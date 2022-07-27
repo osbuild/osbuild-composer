@@ -5818,14 +5818,6 @@
                     }
                   },
                   {
-                    "id": "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:5a43c616c3f06fbba7d45ea4cdd87ca58cc46102908e089a14604de5d55a0393",
                     "options": {
                       "metadata": {
@@ -7601,9 +7593,6 @@
           },
           "sha256:6afc8c020a9b22c187edeb118a96627e849297a3f237022025088af8fb42eb1e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/policycoreutils-3.3-6.el9_0.x86_64.rpm"
-          },
-          "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/qemu-guest-agent-6.2.0-11.el9_0.1.x86_64.rpm"
           },
           "sha256:6c1cfe8c3a9f5cb43b285d8a78e5eb75ac5609fc021eb94e03b68f0f0d89697d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-ha-n9.1-20220324/Packages/pacemaker-cli-2.1.2-4.el9.x86_64.rpm"
@@ -15790,16 +15779,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/python3-pytz-2021.1-4.el9.noarch.rpm",
         "checksum": "sha256:6d854c991181c69bf0c08d075ecf15e404d17611bddf66e0b7c749abe543aafa",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 17,
-        "version": "6.2.0",
-        "release": "11.el9_0.1",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/qemu-guest-agent-6.2.0-11.el9_0.1.x86_64.rpm",
-        "checksum": "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0",
         "check_gpg": true
       },
       {

@@ -2113,9 +2113,6 @@
                     "id": "sha256:ee2ba576f07f5cdd9cf24e788d60071869107aa313addbba0a311448bb32a86c"
                   },
                   {
-                    "id": "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b"
-                  },
-                  {
                     "id": "sha256:788e1e3cafa686a2d7e25ae43deba7fda7226f2fe0795006474dfe518d5d522e"
                   },
                   {
@@ -3577,9 +3574,6 @@
           },
           "sha256:ba59500c8304ec75121cc2c5f9d5917748ff8b293aca3b49c9d1d971feb606f4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.7-20220415/Packages/file-5.33-20.el8.x86_64.rpm"
-          },
-          "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/qemu-guest-agent-6.2.0-9.module+el8.7.0+14737+6552dcb8.x86_64.rpm"
           },
           "sha256:bbbfb708ab2d3bf9b0d0db0c9a24022d28b0a48dfd626bfdd5ff152fccc5267f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.7-20220415/Packages/cryptsetup-libs-2.3.7-2.el8.x86_64.rpm"
@@ -10074,15 +10068,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/python36-3.6.8-38.module+el8.5.0+12207+5c5719bc.x86_64.rpm",
         "checksum": "sha256:ee2ba576f07f5cdd9cf24e788d60071869107aa313addbba0a311448bb32a86c"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "6.2.0",
-        "release": "9.module+el8.7.0+14737+6552dcb8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/qemu-guest-agent-6.2.0-9.module+el8.7.0+14737+6552dcb8.x86_64.rpm",
-        "checksum": "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b"
       },
       {
         "name": "rhc",

@@ -5172,14 +5172,6 @@
                     }
                   },
                   {
-                    "id": "sha256:b590e504fdbdf084fc31afad64e5619932fe324b71b0f2591068d08d30717d23",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:08b3506e03f120f39bd5e7f81c04898229c6682d90d55bc703ae71c5d6cf9958",
                     "options": {
                       "metadata": {
@@ -6532,9 +6524,6 @@
           },
           "sha256:b560a8a185100a7c80e6c32f69ba65ce17004156f7218cf183249b15c13295cc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/libzstd-1.4.4-1.el8.aarch64.rpm"
-          },
-          "sha256:b590e504fdbdf084fc31afad64e5619932fe324b71b0f2591068d08d30717d23": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/qemu-guest-agent-6.1.0-5.module_el8.6.0+1040+0ae94936.aarch64.rpm"
           },
           "sha256:b62589101a60a365ef34447cae78f62e6dba560d403dc56c87036709ea00ad88": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/libidn2-2.2.0-1.el8.aarch64.rpm"
@@ -13273,16 +13262,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/python3-unbound-1.7.3-17.el8.aarch64.rpm",
         "checksum": "sha256:867c11abf3105a23b5bf1aa25d2d530fa3322d5f4c70a0757ea92b62b0d7649f",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "6.1.0",
-        "release": "5.module_el8.6.0+1040+0ae94936",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/qemu-guest-agent-6.1.0-5.module_el8.6.0+1040+0ae94936.aarch64.rpm",
-        "checksum": "sha256:b590e504fdbdf084fc31afad64e5619932fe324b71b0f2591068d08d30717d23",
         "check_gpg": true
       },
       {

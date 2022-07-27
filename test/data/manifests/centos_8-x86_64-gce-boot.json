@@ -5288,14 +5288,6 @@
                     }
                   },
                   {
-                    "id": "sha256:2df1f7f66bc8f95049f9d90793ac1c831954657db96fe387139a06415bd888b9",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:c7bfe545f212a230e12bb9ef202c6dbc57a1d380dfdaaa667ecb762bd0ee7a63",
                     "options": {
                       "metadata": {
@@ -6023,9 +6015,6 @@
           },
           "sha256:2c63399bee449fb6e921671a9bbf3356fda73f890b578820f7d926202e98a479": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libaio-0.3.112-1.el8.x86_64.rpm"
-          },
-          "sha256:2df1f7f66bc8f95049f9d90793ac1c831954657db96fe387139a06415bd888b9": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/qemu-guest-agent-6.1.0-5.module_el8.6.0+1040+0ae94936.x86_64.rpm"
           },
           "sha256:2e8d4ee76fa8678b0e4d6c0297b16f96e0116201bf96b36e8924b1b080abcddd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libnl3-cli-3.5.0-1.el8.x86_64.rpm"
@@ -13637,16 +13626,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/python36-3.6.8-38.module_el8.5.0+895+a459eca8.x86_64.rpm",
         "checksum": "sha256:002b3672de2744c3f97ad8776d012952c058f9213a0cf8e01f7f9b8651b3e6af",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "6.1.0",
-        "release": "5.module_el8.6.0+1040+0ae94936",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/qemu-guest-agent-6.1.0-5.module_el8.6.0+1040+0ae94936.x86_64.rpm",
-        "checksum": "sha256:2df1f7f66bc8f95049f9d90793ac1c831954657db96fe387139a06415bd888b9",
         "check_gpg": true
       },
       {
