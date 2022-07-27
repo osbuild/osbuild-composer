@@ -53,10 +53,11 @@ type JobStatus struct {
 }
 
 type JobInfo struct {
-	JobType   string
-	Channel   string
-	JobStatus *JobStatus
-	Deps      []uuid.UUID
+	JobType    string
+	Channel    string
+	JobStatus  *JobStatus
+	Deps       []uuid.UUID
+	Dependents []uuid.UUID
 }
 
 var ErrInvalidToken = errors.New("token does not exist")
@@ -396,7 +397,7 @@ func (s *Server) AWSEC2ShareJobInfo(id uuid.UUID, result *AWSEC2ShareJobResult) 
 }
 
 func (s *Server) jobInfo(id uuid.UUID, result interface{}) (*JobInfo, error) {
-	jobType, channel, rawResult, queued, started, finished, canceled, deps, _, err := s.jobs.JobStatus(id)
+	jobType, channel, rawResult, queued, started, finished, canceled, deps, dependents, err := s.jobs.JobStatus(id)
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +418,8 @@ func (s *Server) jobInfo(id uuid.UUID, result interface{}) (*JobInfo, error) {
 			Finished: finished,
 			Canceled: canceled,
 		},
-		Deps: deps,
+		Deps:       deps,
+		Dependents: dependents,
 	}, nil
 }
 
