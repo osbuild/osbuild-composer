@@ -444,11 +444,11 @@ func main() {
 				SkipSSLVerification: genericS3SkipSSLVerification,
 			},
 			ContainersConfig: ContainersConfiguration{
-				ContainerAuthFile: containersAuthFilePath,
-				Domain:            containersDomain,
-				Account:           containersAccount,
-				CertPath:          containersCertPath,
-				TLSVerify:         &containersTLSVerify,
+				AuthFilePath: containersAuthFilePath,
+				Domain:       containersDomain,
+				Account:      containersAccount,
+				CertPath:     containersCertPath,
+				TLSVerify:    &containersTLSVerify,
 			},
 		},
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
