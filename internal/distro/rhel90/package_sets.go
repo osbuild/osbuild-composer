@@ -688,7 +688,6 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"cloud-init",
 			"cloud-utils-growpart",
 			"dhcp-client",
-			"dracut-config-rescue",
 			"yum-utils",
 			"dracut-config-generic",
 			"gdisk",
@@ -710,6 +709,8 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"ivtv-firmware",
 			"libertas-sd8787-firmware",
 			"plymouth",
+			// RHBZ#2064087
+			"dracut-config-rescue",
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 }

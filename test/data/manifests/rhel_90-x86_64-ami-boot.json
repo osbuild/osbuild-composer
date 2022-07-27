@@ -901,9 +901,6 @@
                     "id": "sha256:f00365d25649f658468a39755e0436ac8e7d6e5f033ffaff5251fe7bb7e5b95a"
                   },
                   {
-                    "id": "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7"
-                  },
-                  {
                     "id": "sha256:f5671dc12b61c49f59c21a989d5afba03f7414f65e40f4fdff9fe75381dda5dc"
                   },
                   {
@@ -2462,9 +2459,6 @@
           },
           "sha256:219825121d761bf163e746f0ca424e4dfe071aece87c22ccd632abcf78ab4920": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-inotify-0.9.6-25.el9.noarch.rpm"
-          },
-          "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.x86_64.rpm"
           },
           "sha256:2358982717e4c6df5e0dfc4ad906dade4ecf051cb7612b1aa087ab6c03f36da2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libuser-0.63-7.el9.x86_64.rpm"
@@ -6016,15 +6010,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dracut-config-generic-055-10.git20210824.el9.x86_64.rpm",
         "checksum": "sha256:f00365d25649f658468a39755e0436ac8e7d6e5f033ffaff5251fe7bb7e5b95a"
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "10.git20210824.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.x86_64.rpm",
-        "checksum": "sha256:22f900f590759293faf294d79cc7c21ea1d0090816c12d6142d418efbb6d42c7"
       },
       {
         "name": "dracut-network",

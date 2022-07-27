@@ -2378,14 +2378,6 @@
                     }
                   },
                   {
-                    "id": "sha256:54c30b33c21d48d125e132bac9cb41e2d6231fbcd6d5e358c7796c552cc11ac5",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:cd5b20a42eca11f206109f1ca6d6121e8c43585dda6c0a7546e96fd070051a20",
                     "options": {
                       "metadata": {
@@ -7451,9 +7443,6 @@
           "sha256:548978c62b24b7adda4ebcc5db878e22b18f50248bc45aa4a209b86eddd86948": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/polkit-pkla-compat-0.1-21.el9.x86_64.rpm"
           },
-          "sha256:54c30b33c21d48d125e132bac9cb41e2d6231fbcd6d5e358c7796c552cc11ac5": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/dracut-config-rescue-055-30.git20220216.el9.x86_64.rpm"
-          },
           "sha256:54c8ff0d9acb9043c68780e2566ee1a83bf881b236ae7131c5ecaf7b40665c9e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/libbasicobjects-0.1.1-51.el9.x86_64.rpm"
           },
@@ -11501,16 +11490,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/dracut-config-generic-055-30.git20220216.el9.x86_64.rpm",
         "checksum": "sha256:b20143ec0439f888980055d084eb222d933b58c4bef87dc1e20e0e5b1b8be13a",
-        "check_gpg": true
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "30.git20220216.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/dracut-config-rescue-055-30.git20220216.el9.x86_64.rpm",
-        "checksum": "sha256:54c30b33c21d48d125e132bac9cb41e2d6231fbcd6d5e358c7796c552cc11ac5",
         "check_gpg": true
       },
       {

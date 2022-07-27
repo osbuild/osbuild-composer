@@ -2634,14 +2634,6 @@
                     }
                   },
                   {
-                    "id": "sha256:3b918f21bcdd47100ab8076354f250888db6d665c8876c3ea3e12a0239bf02dd",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:f9be6cefbff3a37832fc436922f1fb0c58ed3da6c8dbd3ec63aa7fcf2560887c",
                     "options": {
                       "metadata": {
@@ -5479,9 +5471,6 @@
           },
           "sha256:3b5ce98a03a3336a3f32ac7a0867fbc23da702e8618bfd20d49d882d42a460f4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/gzip-1.10-8.el9.x86_64.rpm"
-          },
-          "sha256:3b918f21bcdd47100ab8076354f250888db6d665c8876c3ea3e12a0239bf02dd": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.x86_64.rpm"
           },
           "sha256:3bb064ceb18523e043c75d9d90ff3c2fccf6dbd93377c2557d7d2ae30e528fc1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20220208/Packages/pbzip2-1.1.13-6.el9.x86_64.rpm"
@@ -9546,16 +9535,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/dracut-config-generic-055-10.git20210824.el9.x86_64.rpm",
         "checksum": "sha256:defa47f5799acbf95283507deaf3d7cefdec0980268dafb926b30beddcfd594d",
-        "check_gpg": true
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "10.git20210824.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/dracut-config-rescue-055-10.git20210824.el9.x86_64.rpm",
-        "checksum": "sha256:3b918f21bcdd47100ab8076354f250888db6d665c8876c3ea3e12a0239bf02dd",
         "check_gpg": true
       },
       {
