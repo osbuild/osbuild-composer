@@ -4987,14 +4987,6 @@
                     }
                   },
                   {
-                    "id": "sha256:f9d0df54678c83fa12d439673c437578af9f7cb09804dec3bb33c006f43f77e4",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:59f7811976c37d5026057216e477abfe70ad2407e42cb2d3da0d4f7de8d53282",
                     "options": {
                       "metadata": {
@@ -6672,9 +6664,6 @@
           },
           "sha256:f821d67686ec0b3c07260bdc41dd9aa720e370c1f8e5b158691d7d182184c0da": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20220324/Packages/python3-netifaces-0.10.6-15.el9.aarch64.rpm"
-          },
-          "sha256:f9d0df54678c83fa12d439673c437578af9f7cb09804dec3bb33c006f43f77e4": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20220324/Packages/qemu-guest-agent-6.2.0-11.el9_0.1.aarch64.rpm"
           },
           "sha256:f9fbfb9999fd64705dbaedb810a0a3b98011d5c8bcd062bb4b7d91ca3d7e34d6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20220324/Packages/sssd-common-2.6.2-2.el9.aarch64.rpm"
@@ -12861,16 +12850,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20220324/Packages/python3-pytz-2021.1-4.el9.noarch.rpm",
         "checksum": "sha256:6d854c991181c69bf0c08d075ecf15e404d17611bddf66e0b7c749abe543aafa",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 17,
-        "version": "6.2.0",
-        "release": "11.el9_0.1",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20220324/Packages/qemu-guest-agent-6.2.0-11.el9_0.1.aarch64.rpm",
-        "checksum": "sha256:f9d0df54678c83fa12d439673c437578af9f7cb09804dec3bb33c006f43f77e4",
         "check_gpg": true
       },
       {

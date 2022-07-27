@@ -698,7 +698,6 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"redhat-release-eula",
 			"rsync",
 			"tar",
-			"qemu-guest-agent",
 		},
 		Exclude: []string{
 			"aic94xx-firmware",
@@ -711,6 +710,8 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"plymouth",
 			// RHBZ#2064087
 			"dracut-config-rescue",
+			// RHBZ#2075815
+			"qemu-guest-agent",
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
@@ -817,8 +818,6 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			// for time synchronization
 			"chrony",
 			"timedatex",
-			// Detected Platform requirements by Anaconda
-			"qemu-guest-agent",
 			// EFI
 			"grub2-tools-efi",
 			"firewalld", // not pulled in any more as on RHEL-8
@@ -859,6 +858,8 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"rt73usb-firmware",
 			"xorg-x11-drv-ati-firmware",
 			"zd1211-firmware",
+			// RHBZ#2075815
+			"qemu-guest-agent",
 		},
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 

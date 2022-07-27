@@ -3129,9 +3129,6 @@
                     "id": "sha256:cbcd80197468aeae26500542100782eb9b4853d3b8db959ef647184c81a38fb6"
                   },
                   {
-                    "id": "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b"
-                  },
-                  {
                     "id": "sha256:65f09851bd80394b34b388d3df5bc6955bfa7e5a9a525bebe915e5adf9052780"
                   },
                   {
@@ -5499,9 +5496,6 @@
           },
           "sha256:bb4b2ae2789e9295d835c3c48705f5bd7f6813613f91faab19d4bcb37300b1c2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.7-20220415/Packages/dejavu-sans-mono-fonts-2.35-7.el8.noarch.rpm"
-          },
-          "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/qemu-guest-agent-6.2.0-9.module+el8.7.0+14737+6552dcb8.x86_64.rpm"
           },
           "sha256:bbbfb708ab2d3bf9b0d0db0c9a24022d28b0a48dfd626bfdd5ff152fccc5267f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.7-20220415/Packages/cryptsetup-libs-2.3.7-2.el8.x86_64.rpm"
@@ -15284,15 +15278,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/python38-six-1.12.0-10.module+el8.4.0+8888+89bc7e79.noarch.rpm",
         "checksum": "sha256:cbcd80197468aeae26500542100782eb9b4853d3b8db959ef647184c81a38fb6"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "6.2.0",
-        "release": "9.module+el8.7.0+14737+6552dcb8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/qemu-guest-agent-6.2.0-9.module+el8.7.0+14737+6552dcb8.x86_64.rpm",
-        "checksum": "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b"
       },
       {
         "name": "rest",

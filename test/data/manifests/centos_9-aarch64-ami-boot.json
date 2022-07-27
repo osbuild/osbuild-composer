@@ -2235,14 +2235,6 @@
                     }
                   },
                   {
-                    "id": "sha256:a817b1bae982a875ba3e03a020bbaaf43eac086dd533a9b9e524ae842a236949",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:61424b5c6da1f5ff2c1b4fc4da18a501822f60797826a0dde2e1f1bba6e793ef",
                     "options": {
                       "metadata": {
@@ -6146,9 +6138,6 @@
           "sha256:a7e79d52b4c5c7b17478e7c30869a80353be2bf3efc3054bd550affdce2ae5ba": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/nspr-4.32.0-8.el9.aarch64.rpm"
           },
-          "sha256:a817b1bae982a875ba3e03a020bbaaf43eac086dd533a9b9e524ae842a236949": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/qemu-guest-agent-6.2.0-5.el9.aarch64.rpm"
-          },
           "sha256:a8425192f250e294ddff960c1925e6b6250ba8327540eac6947edaef71f1cc6c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/procps-ng-3.3.17-4.el9.aarch64.rpm"
           },
@@ -9263,16 +9252,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/python3-pytz-2021.1-4.el9.noarch.rpm",
         "checksum": "sha256:e29e50c96c36586e2adb3e2d7a2ac5bbd66a376d48fbf899638ae76357057b7d",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 17,
-        "version": "6.2.0",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/qemu-guest-agent-6.2.0-5.el9.aarch64.rpm",
-        "checksum": "sha256:a817b1bae982a875ba3e03a020bbaaf43eac086dd533a9b9e524ae842a236949",
         "check_gpg": true
       },
       {

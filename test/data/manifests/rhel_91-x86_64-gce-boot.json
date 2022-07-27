@@ -5095,14 +5095,6 @@
                     }
                   },
                   {
-                    "id": "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:9d517c86aa21c27dbd1896a79942e11e44e5e0f140185280024df99086cc1793",
                     "options": {
                       "metadata": {
@@ -6147,9 +6139,6 @@
           },
           "sha256:6afc8c020a9b22c187edeb118a96627e849297a3f237022025088af8fb42eb1e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/policycoreutils-3.3-6.el9_0.x86_64.rpm"
-          },
-          "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/qemu-guest-agent-6.2.0-11.el9_0.1.x86_64.rpm"
           },
           "sha256:6c285a1b8cf7b6eb99db4d558f3d6b036a6397c79f496d32da7b6f475145d2a5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/qemu-img-6.2.0-11.el9_0.1.x86_64.rpm"
@@ -13184,16 +13173,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/python3-libselinux-3.3-2.el9.x86_64.rpm",
         "checksum": "sha256:1289b71edf0faa3874c651c1b8ffc760017c6749748bbd6037e6aefbf6029cd8",
-        "check_gpg": true
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 17,
-        "version": "6.2.0",
-        "release": "11.el9_0.1",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/qemu-guest-agent-6.2.0-11.el9_0.1.x86_64.rpm",
-        "checksum": "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0",
         "check_gpg": true
       },
       {

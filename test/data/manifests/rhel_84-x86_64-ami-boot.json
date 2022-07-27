@@ -2010,9 +2010,6 @@
                     "id": "sha256:8c4b5140b61fa1e491d76462c2137e81d19c5fbc7e0a91329d91c8d8427ea696"
                   },
                   {
-                    "id": "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4"
-                  },
-                  {
                     "id": "sha256:560f49382557eb971a482da7026e56a44149a8440ac887fd4fd4d778bb1ab196"
                   },
                   {
@@ -2390,9 +2387,6 @@
           },
           "sha256:03f00cc8815451bf931215a349677e4a0dba9092943a379ac77bc9ea986c779e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.4-20210921/Packages/rpm-plugin-selinux-4.14.3-13.el8.x86_64.rpm"
-          },
-          "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/qemu-guest-agent-4.2.0-48.module+el8.4.0+10368+630e803b.x86_64.rpm"
           },
           "sha256:0627b4b710fdc3708c23f142e79e2e83101ca30bb7e57870c2aa02364a784a96": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.4-20210921/Packages/tuned-2.15.0-2.el8.noarch.rpm"
@@ -9469,15 +9463,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/python3-unbound-1.7.3-15.el8.x86_64.rpm",
         "checksum": "sha256:8c4b5140b61fa1e491d76462c2137e81d19c5fbc7e0a91329d91c8d8427ea696"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "4.2.0",
-        "release": "48.module+el8.4.0+10368+630e803b",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/qemu-guest-agent-4.2.0-48.module+el8.4.0+10368+630e803b.x86_64.rpm",
-        "checksum": "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4"
       },
       {
         "name": "rhc",

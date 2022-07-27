@@ -3072,9 +3072,6 @@
                     "id": "sha256:e4fa05ad0f62dabe98a764837433504576febb454109cacc066f165412a7dcce"
                   },
                   {
-                    "id": "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4"
-                  },
-                  {
                     "id": "sha256:65f09851bd80394b34b388d3df5bc6955bfa7e5a9a525bebe915e5adf9052780"
                   },
                   {
@@ -3750,9 +3747,6 @@
           },
           "sha256:03f00cc8815451bf931215a349677e4a0dba9092943a379ac77bc9ea986c779e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.4-20210921/Packages/rpm-plugin-selinux-4.14.3-13.el8.x86_64.rpm"
-          },
-          "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/qemu-guest-agent-4.2.0-48.module+el8.4.0+10368+630e803b.x86_64.rpm"
           },
           "sha256:0448fffcd2d9f2770c9b4a4eec60e117753353c5b2c1258a23a6ec0b478be00d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/tcsh-6.20.00-13.el8.x86_64.rpm"
@@ -14981,15 +14975,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/python3-webencodings-0.5.1-6.el8.noarch.rpm",
         "checksum": "sha256:e4fa05ad0f62dabe98a764837433504576febb454109cacc066f165412a7dcce"
-      },
-      {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "4.2.0",
-        "release": "48.module+el8.4.0+10368+630e803b",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.4-20210921/Packages/qemu-guest-agent-4.2.0-48.module+el8.4.0+10368+630e803b.x86_64.rpm",
-        "checksum": "sha256:03f578c782326e708d8f99645961ac10cabac98d951bee816de1508bac4cf4f4"
       },
       {
         "name": "rest",
