@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	logrus "github.com/sirupsen/logrus"
@@ -229,7 +230,7 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	}
 	defer func() {
 		err := tx.Rollback(context.Background())
-		if err != nil && !errors.As(err, &pgx.ErrTxClosed) {
+		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
 			logrus.Error("error rolling back enqueue transaction: ", err)
 		}
 	}()
@@ -283,7 +284,7 @@ func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []
 		if err == nil {
 			break
 		}
-		if err != nil && !errors.As(err, &pgx.ErrNoRows) {
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error dequeuing job: %v", err)
 		}
 
@@ -384,7 +385,7 @@ func (q *DBJobQueue) FinishJob(id uuid.UUID, result interface{}) error {
 	}
 	defer func() {
 		err = tx.Rollback(context.Background())
-		if err != nil && !errors.As(err, &pgx.ErrTxClosed) {
+		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
 			logrus.Errorf("error rolling back finish job transaction for job %s: %v", id, err)
 		}
 
