@@ -56,10 +56,8 @@ sudo dnf build-dep -y osbuild-composer.spec
 manifestdir=$(mktemp -d)
 
 greenprint "Generating all manifests for HEAD (PR #${prnum})"
-go run ./cmd/gen-manifests --output "${manifestdir}/PR" --workers 50
-err=$?
-if (( err != 0 )); then
-    greenprint "Manifest generation on PR HEAD failed"
+if ! go run ./cmd/gen-manifests --output "${manifestdir}/PR" --workers 50; then
+    redprint "Manifest generation on PR HEAD failed"
     exit 1
 fi
 
@@ -72,21 +70,14 @@ greenprint "Generating all manifests for merge-base (${mergebase})"
 # NOTE: it's not an error if this task fails; manifest generation on base
 # branch can be broken in a PR that fixes it.
 # As long as the generation on the PR HEAD succeeds, the job should succeed.
-go run ./cmd/gen-manifests --output "${manifestdir}/${mergebase}" --workers 50
-err=$?
 merge_base_fail=""
-if (( err != 0 )); then
-    greenprint "Manifest generation on merge-base failed"
+if ! go run ./cmd/gen-manifests --output "${manifestdir}/${mergebase}" --workers 50; then
+    redprint "Manifest generation on merge-base failed"
     merge_base_fail="**NOTE:** Manifest generation on merge-base with \`${basebranch}\` (${mergebase}) failed.\n\n"
 fi
 
 greenprint "Diff: ${manifestdir}/${mergebase} ${manifestdir}/PR"
-diff=$(diff -Naur "${manifestdir}"/"${mergebase}" "${manifestdir}/PR")
-err=$?
-
-review_data_file="review.json"
-
-if (( err == 0 )); then
+if diff=$(diff -Naur "${manifestdir}"/"${mergebase}" "${manifestdir}/PR"); then
     greenprint "No changes in manifests"
     exit 0
 fi
@@ -97,6 +88,7 @@ greenprint "Saved diff in job artifacts"
 
 artifacts_url="${CI_JOB_URL}/artifacts/browse"
 
+review_data_file="review.json"
 cat > "${review_data_file}" << EOF
 {"body":"⚠️ This PR introduces changes in at least one manifest (when comparing PR HEAD ${head} with the ${basebranch} merge-base ${mergebase}).  Please review the changes.  The changes can be found in the [artifacts of the \`Manifest-diff\` job [0]](${artifacts_url}) as \`manifests.diff\`.\n\n${merge_base_fail}[0] ${artifacts_url}","event":"COMMENT"}
 EOF
