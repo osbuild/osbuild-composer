@@ -813,7 +813,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResult = target.NewContainerTargetResult(nil)
 			destination := jobTarget.ImageName
 
-			logWithId.Printf("[container] ⬆ Uploading the image to %s", destination)
+			logWithId.Printf("[container] 📦 Preparing upload to '%s'", destination)
 
 			client, err := impl.getContainerClient(destination, targetOptions)
 			if err != nil {
@@ -821,13 +821,17 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
+			logWithId.Printf("[container] ⬆ Uploading the image to %s", client.Target.String())
+
 			sourcePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
 
 			// TODO: get the container type from the metadata of the osbuild job
 			sourceRef := fmt.Sprintf("oci-archive:%s", sourcePath)
 
 			digest, err := client.UploadImage(context.Background(), sourceRef, "")
+
 			if err != nil {
+				logWithId.Infof("[container] 🙁 Upload of '%s' failed: %v", sourceRef, err)
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error())
 				break
 			}
