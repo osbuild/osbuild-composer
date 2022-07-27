@@ -208,25 +208,13 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 }
 
 func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions *target.ContainerTargetOptions) (*container.Client, error) {
-	useImpl := false
-	i := strings.IndexRune(destination, '/')
-	if i == -1 || (!strings.ContainsAny(destination[:i], ".:") && destination[:i] != "localhost") {
-		if impl.ContainersConfig.Domain != "" {
-			base := impl.ContainersConfig.Domain
-			if impl.ContainersConfig.Account != "" {
-				base = fmt.Sprintf("%s/%s", base, impl.ContainersConfig.Account)
-			}
-			destination = fmt.Sprintf("%s/%s", base, destination)
-			useImpl = true
-		}
-	}
-
+	destination, appliedDefaults := container.ApplyDefaultDomainPath(destination, impl.ContainersConfig.Domain, impl.ContainersConfig.Account)
 	client, err := container.NewClient(destination)
 	if err != nil {
 		return nil, err
 	}
 
-	if useImpl {
+	if appliedDefaults {
 		if impl.ContainersConfig.CertPath != "" {
 			client.SetDockerCertPath(impl.ContainersConfig.CertPath)
 		}

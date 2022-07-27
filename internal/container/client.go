@@ -71,6 +71,25 @@ func GetDefaultAuthFile() string {
 	return filepath.FromSlash("/var/empty/containers-auth.json")
 }
 
+// ApplyDefaultPath checks if the target includes a domain and if it doesn't adds the default ones
+// to the returned string. If also returns a bool indicating whether the defaults were applied
+func ApplyDefaultDomainPath(target, defaultDomain, defaultPath string) (string, bool) {
+	appliedDefaults := false
+	i := strings.IndexRune(target, '/')
+	if i == -1 || (!strings.ContainsAny(target[:i], ".:") && target[:i] != "localhost") {
+		if defaultDomain != "" {
+			base := defaultDomain
+			if defaultPath != "" {
+				base = fmt.Sprintf("%s/%s", base, defaultPath)
+			}
+			target = fmt.Sprintf("%s/%s", base, target)
+			appliedDefaults = true
+		}
+	}
+
+	return target, appliedDefaults
+}
+
 // A Client to interact with the given Target object at a
 // container registry, like e.g. uploading an image to.
 // All mentioned defaults are only set when using the
