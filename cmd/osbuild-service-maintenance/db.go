@@ -131,16 +131,17 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 			return err
 		}
 
+		err = db.VacuumAnalyze()
+		if err != nil {
+			logrus.Errorf("Error running vacuum analyze: %v", err)
+			return err
+		}
+
 		if rows == 0 {
 			break
 		}
 
 		logrus.Infof("Deleted results for %d", rows)
-	}
-
-	err = db.VacuumAnalyze()
-	if err != nil {
-		logrus.Errorf("Error running vacuum analyze: %v", err)
 	}
 
 	err = db.LogVacuumStats()
