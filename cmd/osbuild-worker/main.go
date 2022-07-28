@@ -379,13 +379,13 @@ func main() {
 
 	var containersAuthFilePath string
 	var containersDomain = ""
-	var containersAccount = ""
+	var containersPathPrefix = ""
 	var containersCertPath = ""
 	var containersTLSVerify = true
 	if config.Containers != nil {
 		containersAuthFilePath = config.Containers.AuthFilePath
 		containersDomain = config.Containers.Domain
-		containersAccount = config.Containers.Account
+		containersPathPrefix = config.Containers.PathPrefix
 		containersCertPath = config.Containers.CertPath
 		containersTLSVerify = config.Containers.TLSVerify
 	}
@@ -446,7 +446,7 @@ func main() {
 			ContainersConfig: ContainersConfiguration{
 				AuthFilePath: containersAuthFilePath,
 				Domain:       containersDomain,
-				Account:      containersAccount,
+				PathPrefix:   containersPathPrefix,
 				CertPath:     containersCertPath,
 				TLSVerify:    &containersTLSVerify,
 			},
