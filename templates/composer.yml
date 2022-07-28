@@ -150,9 +150,6 @@ objects:
         - name: composer-config
           configMap:
             name: composer-config
-        - name: db-secrets
-          secret:
-            secretName: db
         - name: state-directory
           emptyDir: {}
         - name: cache-directory
