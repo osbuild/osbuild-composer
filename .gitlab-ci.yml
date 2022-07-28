@@ -509,6 +509,7 @@ cross-distro.sh:
     - gcp
     - vsphere
     - edge-commit generic.s3
+    - edge-container
 
 API:
   stage: test

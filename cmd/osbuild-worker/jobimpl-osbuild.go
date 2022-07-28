@@ -43,7 +43,7 @@ type S3Configuration struct {
 type ContainersConfiguration struct {
 	AuthFilePath string
 	Domain       string
-	Account      string
+	PathPrefix   string
 	CertPath     string
 	TLSVerify    *bool
 }
@@ -208,7 +208,7 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 }
 
 func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions *target.ContainerTargetOptions) (*container.Client, error) {
-	destination, appliedDefaults := container.ApplyDefaultDomainPath(destination, impl.ContainersConfig.Domain, impl.ContainersConfig.Account)
+	destination, appliedDefaults := container.ApplyDefaultDomainPath(destination, impl.ContainersConfig.Domain, impl.ContainersConfig.PathPrefix)
 	client, err := container.NewClient(destination)
 	if err != nil {
 		return nil, err

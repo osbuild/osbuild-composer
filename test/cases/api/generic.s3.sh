@@ -96,7 +96,7 @@ EOF
 # implementation
 function createReqFile() {
     case ${IMAGE_TYPE} in
-        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER")
+        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER")
             AWS_REGION='' createReqFileEdge
             ;;
         "$IMAGE_TYPE_VSPHERE")
