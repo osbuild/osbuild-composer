@@ -387,10 +387,6 @@ func (cl *Client) resolveManifestList(ctx context.Context, list manifestList) (r
 		return resolvedIds{}, fmt.Errorf("error getting manifest: %w", err)
 	}
 
-	if err != nil {
-		return resolvedIds{}, nil
-	}
-
 	return cl.resolveRawManifest(ctx, raw)
 }
 
