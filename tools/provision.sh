@@ -146,10 +146,3 @@ sudo systemctl start osbuild-composer-api.socket
 # test case is supposed to run on a pristine machine. However, this is
 # currently not true on Schutzbot
 sudo systemctl try-restart osbuild-composer
-
-# Basic verification
-sudo composer-cli status show
-sudo composer-cli sources list
-for SOURCE in $(sudo composer-cli sources list); do
-    sudo composer-cli sources info "$SOURCE"
-done
