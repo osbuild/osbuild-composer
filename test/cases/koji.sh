@@ -108,9 +108,6 @@ sudo /usr/libexec/osbuild-composer-test/run-koji-container.sh start
 greenprint "Adding kerberos config"
 sudo cp \
     /tmp/osbuild-composer-koji-test/client.keytab \
-    /etc/osbuild-composer/client.keytab
-sudo cp \
-    /tmp/osbuild-composer-koji-test/client.keytab \
     /etc/osbuild-worker/client.keytab
 sudo cp \
     "${OSBUILD_COMPOSER_TEST_DATA}"/kerberos/krb5-local.conf \
