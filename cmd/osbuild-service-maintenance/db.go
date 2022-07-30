@@ -18,6 +18,9 @@ const (
                     ORDER BY expires_at
                     LIMIT 1000
                 )`
+	sqlExpiredJobCount = `
+                    SELECT COUNT(*) FROM jobs
+                    WHERE expires_at < NOW()`
 	sqlVacuumAnalyze = `
                 VACUUM ANALYZE`
 	sqlVacuumStats = `
@@ -53,6 +56,15 @@ func (d *db) DeleteJobs() (int64, error) {
 		return tag.RowsAffected(), fmt.Errorf("Error deleting jobs: %v", err)
 	}
 	return tag.RowsAffected(), nil
+}
+
+func (d *db) ExpiredJobCount() (int64, error) {
+	var count int64
+	err := d.Conn.QueryRow(context.Background(), sqlExpiredJobCount).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (d *db) VacuumAnalyze() error {
@@ -123,6 +135,15 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 	var rows int64
 
 	for {
+		if dryRun {
+			rows, err = db.ExpiredJobCount()
+			if err != nil {
+				logrus.Warningf("Error querying expired jobs: %v", err)
+			}
+			logrus.Infof("Dryrun, expired job count: %d", rows)
+			break
+		}
+
 		rows, err = db.DeleteJobs()
 		if err != nil {
 			logrus.Errorf("Error deleting jobs: %v, %d rows affected", rows, err)
