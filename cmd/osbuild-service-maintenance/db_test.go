@@ -67,13 +67,13 @@ func testDeleteJob(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
 	require.NoError(t, json.Unmarshal(r, &r1))
 	require.Equal(t, result, r1)
 
-	rows, err := d.DeleteJob()
+	rows, err := d.DeleteJobs()
 	require.NoError(t, err)
 	require.Equal(t, int64(0), rows)
 
 	setExpired(t, d, id)
 
-	rows, err = d.DeleteJob()
+	rows, err = d.DeleteJobs()
 	require.NoError(t, err)
 	require.Equal(t, int64(1), rows)
 
