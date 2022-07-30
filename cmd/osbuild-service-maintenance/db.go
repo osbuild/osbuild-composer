@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	// Maintenance queries
-	sqlDeleteJob = `
+	sqlDeleteJobs = `
                 DELETE FROM jobs
                 WHERE id IN (
                     SELECT id FROM jobs
@@ -48,10 +47,10 @@ func (d *db) Close() {
 	d.Conn.Close(context.Background())
 }
 
-func (d *db) DeleteJob() (int64, error) {
-	tag, err := d.Conn.Exec(context.Background(), sqlDeleteJob)
+func (d *db) DeleteJobs() (int64, error) {
+	tag, err := d.Conn.Exec(context.Background(), sqlDeleteJobs)
 	if err != nil {
-		return tag.RowsAffected(), fmt.Errorf("Error deleting results from jobs: %v", err)
+		return tag.RowsAffected(), fmt.Errorf("Error deleting jobs: %v", err)
 	}
 	return tag.RowsAffected(), nil
 }
@@ -124,10 +123,9 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 	var rows int64
 
 	for {
-		rows, err = db.DeleteJob()
-
+		rows, err = db.DeleteJobs()
 		if err != nil {
-			logrus.Errorf("Error deleting results for jobs: %v, %d rows affected", rows, err)
+			logrus.Errorf("Error deleting jobs: %v, %d rows affected", rows, err)
 			return err
 		}
 
