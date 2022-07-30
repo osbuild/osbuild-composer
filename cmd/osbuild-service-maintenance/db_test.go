@@ -72,6 +72,9 @@ func testDeleteJob(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
 	require.Equal(t, int64(0), rows)
 
 	setExpired(t, d, id)
+	rows, err = d.ExpiredJobCount()
+	require.NoError(t, err)
+	require.Equal(t, int64(1), rows)
 
 	rows, err = d.DeleteJobs()
 	require.NoError(t, err)
