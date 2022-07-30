@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
@@ -36,8 +35,7 @@ func TestDBJobQueueMaintenance(t *testing.T) {
 }
 
 func setExpired(t *testing.T, d db, id uuid.UUID) {
-	expires := time.Now().Add(-time.Second)
-	_, err := d.Conn.Exec(context.Background(), "UPDATE jobs SET expires_at = $1 WHERE id = $2", expires, id)
+	_, err := d.Conn.Exec(context.Background(), "UPDATE jobs SET expires_at = NOW() - INTERVAL '1 SECOND' WHERE id = $1", id)
 	require.NoError(t, err)
 }
 
