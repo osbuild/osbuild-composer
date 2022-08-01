@@ -375,8 +375,17 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
 
+				var name = request.Distribution
+				var tag = uuid.New().String()
+				if containerUploadOptions.Name != nil {
+					name = *containerUploadOptions.Name
+					if containerUploadOptions.Tag != nil {
+						tag = *containerUploadOptions.Tag
+					}
+				}
+
 				t := target.NewContainerTarget(&target.ContainerTargetOptions{})
-				t.ImageName = fmt.Sprintf("%s:%s", containerUploadOptions.Name, containerUploadOptions.Tag)
+				t.ImageName = fmt.Sprintf("%s:%s", name, tag)
 				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t

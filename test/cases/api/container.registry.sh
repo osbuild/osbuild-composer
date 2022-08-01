@@ -71,8 +71,7 @@ function createReqFile() {
       "ref": "${OSTREE_REF}"
     },
     "upload_options": {
-      "name": "${DISTRO}-${IMAGE_TYPE}",
-      "tag": "${CI_COMMIT_REF_SLUG}"
+      "name": "${DISTRO}-${IMAGE_TYPE}"
     }
   }
 }
@@ -80,10 +79,10 @@ EOF
 }
 
 function checkUploadStatusOptions() {
-  local IMAGE_URL
-  IMAGE_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+  local IMAGE_URL_WITHOUT_TAG
+  IMAGE_URL_WITHOUT_TAG=$(echo "$UPLOAD_OPTIONS" | jq -r '.url' | awk -F ":" '{print $1}')
 
-  test "${IMAGE_URL}" = "${CI_REGISTRY}/${CI_PROJECT_PATH}/${DISTRO}-${IMAGE_TYPE}:${CI_COMMIT_REF_SLUG}"
+  test "${IMAGE_URL_WITHOUT_TAG}" = "${CI_REGISTRY}/${CI_PROJECT_PATH}/${DISTRO}-${IMAGE_TYPE}"
 }
 
 function verify() {
