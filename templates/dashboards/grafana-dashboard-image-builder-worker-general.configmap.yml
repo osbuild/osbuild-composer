@@ -2667,10 +2667,10 @@ data:
             "current": {
               "selected": true,
               "text": [
-                "org-15885990"
+                "All"
               ],
               "value": [
-                "org-15885990"
+                "$__all"
               ]
             },
             "hide": 0,
@@ -2679,29 +2679,39 @@ data:
             "name": "tenant",
             "options": [
               {
-                "selected": false,
+                "selected": true,
                 "text": "All",
                 "value": "$__all"
               },
               {
                 "selected": false,
-                "text": "org-15842261",
+                "text": "crc stage",
                 "value": "org-15842261"
               },
               {
                 "selected": false,
-                "text": "org-15877963",
+                "text": "fedora stage",
                 "value": "org-15877963"
               },
               {
-                "selected": true,
-                "text": "org-15885990",
+                "selected": false,
+                "text": "brew stage",
+                "value": "org-16133643"
+              },
+              {
+                "selected": false,
+                "text": "crc production",
                 "value": "org-15885990"
               },
               {
                 "selected": false,
-                "text": "org-16057323",
+                "text": "fedora production",
                 "value": "org-16057323"
+              },
+              {
+                "selected": false,
+                "text": "brew production",
+                "value": "org-16135456"
               }
             ],
             "query": "org-15842261, org-15877963, org-15885990, org-16057323",
@@ -2743,6 +2753,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 7,
+      "version": 8,
       "weekStart": ""
     }
