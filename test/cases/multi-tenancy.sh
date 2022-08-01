@@ -9,6 +9,7 @@
 
 
 set -euo pipefail
+set -x
 
 OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
@@ -19,6 +20,8 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
+
+sudo dnf install -y net-tools
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
@@ -109,10 +112,15 @@ KILL_PIDS+=("$!")
 sudo /usr/libexec/osbuild-composer-test/osbuild-mock-openid-provider -a localhost:8081 -rsaPubPem /etc/osbuild-composer/client-crt.pem -rsaPem /etc/osbuild-composer/client-key.pem &
 KILL_PIDS+=("$!")
 
+sudo netstat -putna
+
 greenprint "Restarting composer, stopping a local worker and starting a remote worker"
 sudo systemctl restart osbuild-composer
 sudo systemctl stop osbuild-worker@1
 sudo systemctl start osbuild-remote-worker@localhost:8700
+
+sudo systemctl status 'osbuild*'
+sudo netstat -putna
 
 DISTRO=rhel-86
 
