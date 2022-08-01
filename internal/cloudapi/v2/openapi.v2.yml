@@ -845,9 +845,6 @@ components:
     ContainerUploadOptions:
       type: object
       additionalProperties: false
-      required:
-        - name
-        - tag
       properties:
         name:
           type: string
