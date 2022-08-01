@@ -321,7 +321,7 @@ OSTree:
           - rhos-01/rhel-8.4-ga-x86_64
           - rhos-01/rhel-8.6-ga-x86_64
           - rhos-01/rhel-9.0-ga-x86_64
-          - rhos-01/rhel-8.7-nightly-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
           - rhos-01/rhel-9.1-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
@@ -335,12 +335,12 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-35-x86_64-large
-          # - rhos-01/fedora-36-x86_64-large
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+          - rhos-01/fedora-35-x86_64
+          # - rhos-01/fedora-36-x86_64
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 OSTree simplified installer:
   stage: test
@@ -351,10 +351,10 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 OSTree raw image:
   stage: test
@@ -371,10 +371,10 @@ OSTree raw image:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 Rebase OSTree:
   stage: test
@@ -385,10 +385,10 @@ Rebase OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 .integration_base:
   stage: test
@@ -616,8 +616,8 @@ OpenSCAP:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
 
 Upgrade:
   stage: test
