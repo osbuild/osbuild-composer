@@ -20,6 +20,11 @@
       state: present
       disable_gpg_check: yes
 
+  - name: Subscribe
+    community.general.redhat_subscription:
+      activationkey: "{{ RH_ACTIVATION_KEY }}"
+      org_id: "{{ RH_ORG_ID }}"
+
   - name: Upgrade all packages
     package:
       name: "*"
@@ -27,11 +32,6 @@
     register: result
     retries: 5
     until: result is success
-
-  - name: Subscribe
-    community.general.redhat_subscription:
-      activationkey: "{{ RH_ACTIVATION_KEY }}"
-      org_id: "{{ RH_ORG_ID }}"
 
   - name: Create rpmbuild directory
     file:
