@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# pylint: disable=invalid-name
+
 import argparse
 import json
 import sys
@@ -200,15 +202,18 @@ def main():
             sys.exit(1)
         status = r.json()["status"]
         print(status, file=sys.stderr)
+
         if status == "success":
             print("Compose worked!", file=sys.stderr)
             print(r.text, file=sys.stderr)
             break
-        elif status == "failure":
+
+        if status == "failure":
             print("compose failed!", file=sys.stderr)
             print(r.text, file=sys.stderr)
             sys.exit(1)
-        elif status != "pending" and status != "running":
+
+        if status not in ("pending", "running"):
             print(f"unexpected status: {status}", file=sys.stderr)
             print(r.text, file=sys.stderr)
             sys.exit(1)
@@ -218,7 +223,7 @@ def main():
     r = composer_api_client.compose_log(compose_id)
     logs = r.json()
     assert "image_builds" in logs
-    assert type(logs["image_builds"]) == list
+    assert isinstance(logs["image_builds"], list)
     assert len(logs["image_builds"]) == len(cr["image_requests"])
 
 
