@@ -94,7 +94,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	require.Equal(t, jobId, j)
 
 	jobResult := worker.OSBuildJobResult{}
-	jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "Upload error")
+	jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "Upload error", nil)
 	rawResult, err := json.Marshal(jobResult)
 	require.NoError(t, err)
 	err = api.workers.FinishJob(token, rawResult)

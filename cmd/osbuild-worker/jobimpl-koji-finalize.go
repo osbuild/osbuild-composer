@@ -137,7 +137,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 	// Check the dependencies early.
 	if hasFailedDependency(*initArgs, osbuildResults) {
-		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, "At least one job dependency failed")
+		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, "At least one job dependency failed", nil)
 		return nil
 	}
 
@@ -156,7 +156,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		kojiTargetResults := buildArgs.TargetResultsByName(target.TargetNameKoji)
 		// Only a single Koji target is allowed per osbuild job
 		if len(kojiTargetResults) != 1 {
-			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Exactly one Koji target result is expected per osbuild job")
+			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Exactly one Koji target result is expected per osbuild job", nil)
 			return nil
 		}
 
@@ -211,7 +211,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	var result worker.KojiFinalizeJobResult
 	err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
 	if err != nil {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error())
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error(), nil)
 		return err
 	}
 
