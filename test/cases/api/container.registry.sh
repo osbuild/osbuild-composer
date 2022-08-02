@@ -11,6 +11,7 @@ function checkEnv() {
 
 # Global var for ostree ref
 export OSTREE_REF="test/osbuild/edge"
+export CONTAINER_SOURCE="registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
 
 function cleanup() {
     CONTAINER_NAME="${OSTREE_CONTAINER_NAME:-}"
@@ -47,8 +48,14 @@ function createReqFile() {
         "baseurl": "$PAYLOAD_REPO_URL"
       }
     ],
+    "containers":[
+      {
+        "source": "$CONTAINER_SOURCE"
+      }
+    ],
     "packages": [
       "postgresql",
+      "podman",
       "dummy"
     ],
     "users":[
@@ -89,6 +96,7 @@ function verify() {
   OSTREE_CONTAINER_NAME=osbuild-test
   local IMAGE_URL
   IMAGE_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
+
   sudo "${CONTAINER_RUNTIME}" run -d --name osbuild-test -p 8080:8080 "${IMAGE_URL}"
 
   GET_METADATA_CURL_REQUEST="curl --silent \
@@ -102,4 +110,21 @@ function verify() {
   SERVICED_OSTREE_COMMIT=$(curl http://localhost:8080/repo/refs/heads/${OSTREE_REF})
 
   test "${BUILD_OSTREE_COMMIT}" = "${SERVICED_OSTREE_COMMIT}"
+
+  # check the commit contains the container, for this we pull the commit into
+  # a repo and poke into the container storage to see if the container we put
+  # in there matches the one we expect to be in there.
+
+  local CONFIG_DIGEST
+  CONFIG_DIGEST=$(skopeo inspect --raw "docker://$CONTAINER_SOURCE" | jq -r .config.digest)
+
+  ostree init --repo=repo
+  ostree remote --repo=repo add --no-gpg-verify container http://localhost:8080/repo
+  sudo ostree pull --repo=repo container "${OSTREE_REF}"
+
+  local EMBEDDED_ID
+  EMBEDDED_ID=$(sudo ostree cat --repo=repo "${BUILD_OSTREE_COMMIT}" /usr/share/containers/storage/overlay-images/images.json | jq -r .[0].id)
+
+  echo -e "have: sha256:${EMBEDDED_ID}\nwant: ${CONFIG_DIGEST}"
+  test "sha256:${EMBEDDED_ID}" = "${CONFIG_DIGEST}"
 }
