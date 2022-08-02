@@ -17,6 +17,7 @@ stages:
     - schutzbot/save_journal.sh || true
     - schutzbot/upload_artifacts.sh
   interruptible: true
+  retry: 1
   tags:
     - terraform
   artifacts:
@@ -38,6 +39,7 @@ stages:
 
 init:
   stage: init
+  interruptible: true
   tags:
     - shell
   script:
