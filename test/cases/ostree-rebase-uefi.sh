@@ -47,7 +47,6 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
   <ip address='192.168.100.1' netmask='255.255.255.0'>
     <dhcp>
       <range start='192.168.100.2' end='192.168.100.254'/>
-      <host mac='34:49:22:B0:83:30' name='vm-bios' ip='192.168.100.50'/>
       <host mac='34:49:22:B0:83:31' name='vm-uefi' ip='192.168.100.51'/>
     </dhcp>
   </ip>
@@ -74,7 +73,6 @@ EOF
 # Set up variables.
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="edge-${TEST_UUID}"
-BIOS_GUEST_ADDRESS=192.168.100.50
 UEFI_GUEST_ADDRESS=192.168.100.51
 PROD_REPO_ADDRESS=192.168.200.1
 PROD_REPO_URL="http://${PROD_REPO_ADDRESS}:8080/repo/"
@@ -231,16 +229,7 @@ wait_for_ssh_up () {
 clean_up () {
     greenprint "🧼 Cleaning up"
 
-    # Clear vm
-    # BIOS vm
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-bios"
-    fi
-    sudo virsh undefine "${IMAGE_KEY}-bios"
-    # Remove qcow2 file.
-    sudo sudo virsh vol-delete --pool images "${IMAGE_KEY}-bios.qcow2"
-
-    #UEFI vm
+    # Clear UEFI vm
     if [[ $(sudo virsh domstate "${IMAGE_KEY}-uefi") == "running" ]]; then
         sudo virsh destroy "${IMAGE_KEY}-uefi"
     fi
@@ -351,11 +340,6 @@ sudo composer-cli blueprints delete container > /dev/null
 greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
-# Create bios vm qcow2 file for virt install.
-greenprint "Create bios vm qcow2 file for virt install"
-LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-bios.qcow2
-sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
-
 # Write kickstart file for ostree image installation.
 greenprint "Generate kickstart file"
 tee "$KS_FILE" > /dev/null << STOPHERE
@@ -374,41 +358,6 @@ poweroff
 echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 %end
 STOPHERE
-
-# Install ostree image via anaconda on BIOS vm.
-greenprint "Install ostree image via anaconda on BIOS vm"
-sudo virt-install  --initrd-inject="${KS_FILE}" \
-                   --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                   --name="${IMAGE_KEY}-bios"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --location "${BOOT_LOCATION}" \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --noreboot
-
-# Start VM.
-greenprint "Start VM"
-sudo virsh start "${IMAGE_KEY}-bios"
-
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
-
-# Check image installation result
-check_result
 
 # Create uefi vm qcow2 file for virt install.
 greenprint "Create uefi vm qcow2 file for virt install"
@@ -538,44 +487,6 @@ UPGRADE_HASH=$(curl "${PROD_REPO_URL}refs/heads/${OSTREE_REF}")
 greenprint "🧽 Clean up upgrade blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
-
-# Rebase with new ref on BIOS vm
-greenprint "🗳 Rebase with new ref on BIOS vm"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "sudo rpm-ostree rebase rhel-edge:${OSTREE_REF}"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "nohup sudo -S systemctl reboot &>/dev/null & exit"
-
-# Sleep 10 seconds here to make sure vm restarted already
-sleep 10
-
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
-# shellcheck disable=SC2034  # Unused variables left for readability
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
-
-# Check ostree upgrade result
-check_result
-
-# Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${BIOS_GUEST_ADDRESS}
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-EOF
-
-# Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${UPGRADE_HASH}" -e ostree_ref="rhel-edge:${OSTREE_REF}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-check_result
 
 # Rebase with new ref on UEFI vm
 greenprint "🗳 Rebase with new ref on UEFI vm"
