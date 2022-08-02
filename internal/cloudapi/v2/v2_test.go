@@ -773,7 +773,7 @@ func TestComposeJobError(t *testing.T) {
 	}`, jobId, jobId))
 
 	jobErr := worker.JobResult{
-		JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error building image"),
+		JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error building image", nil),
 	}
 	jobResult, err := json.Marshal(worker.OSBuildJobResult{JobResult: jobErr})
 	require.NoError(t, err)
@@ -835,9 +835,9 @@ func TestComposeDependencyError(t *testing.T) {
 	}`, jobId, jobId))
 
 	jobErr := worker.JobResult{
-		JobError: clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed"),
+		JobError: clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed", nil),
 	}
-	jobErr.JobError.Details = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, "DNF Error")
+	jobErr.JobError.Details = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, "DNF Error", nil)
 	jobResult, err := json.Marshal(worker.OSBuildJobResult{JobResult: jobErr})
 	require.NoError(t, err)
 
@@ -851,7 +851,6 @@ func TestComposeDependencyError(t *testing.T) {
 		"image_status": {
 			"error": {
 				"details": {
-					"details": null,
 					"id": 22,
 					"reason": "DNF Error"
 				},

@@ -580,7 +580,7 @@ func TestDepsolveLegacyErrorConversion(t *testing.T) {
 		Error:     reason,
 		ErrorType: errType,
 		JobResult: worker.JobResult{
-			JobError: clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, reason),
+			JobError: clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, reason, nil),
 		},
 	}
 

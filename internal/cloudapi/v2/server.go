@@ -280,7 +280,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 
 	if len(dynArgs) == 0 {
 		reason := "No dynamic arguments"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, reason)
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, reason, nil)
 		return
 	}
 
@@ -288,35 +288,35 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 	err = json.Unmarshal(dynArgs[0], &depsolveResults)
 	if err != nil {
 		reason := "Error parsing dynamic arguments"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, reason)
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, reason, nil)
 		return
 	}
 
 	_, err = workers.DepsolveJobInfo(depsolveJobID, &depsolveResults)
 	if err != nil {
 		reason := "Error reading depsolve status"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason)
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason, nil)
 		return
 	}
 
 	if jobErr := depsolveResults.JobError; jobErr != nil {
 		if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingErrors {
-			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested")
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested", nil)
 			return
 		}
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency")
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency", nil)
 		return
 	}
 
 	if len(depsolveResults.PackageSpecs) == 0 {
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs")
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs", nil)
 		return
 	}
 
 	manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, nil, seed)
 	if err != nil {
 		reason := "Error generating manifest"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason)
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)
 		return
 	}
 

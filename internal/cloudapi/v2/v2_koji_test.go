@@ -117,7 +117,7 @@ func TestKojiCompose(t *testing.T) {
 		{
 			initResult: worker.KojiInitJobResult{
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, "Koji init error"),
+					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, "Koji init error", nil),
 				},
 			},
 			buildResult: worker.OSBuildJobResult{
@@ -205,7 +205,7 @@ func TestKojiCompose(t *testing.T) {
 					Success: true,
 				},
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Koji build error"),
+					JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Koji build error", nil),
 				},
 			},
 			composeReplyCode: http.StatusCreated,
@@ -215,7 +215,6 @@ func TestKojiCompose(t *testing.T) {
 				"image_status": {
 					"status": "failure",
 					"error": {
-						"details": null,
 						"id": 10,
 						"reason": "Koji build error"
 					}
@@ -224,7 +223,6 @@ func TestKojiCompose(t *testing.T) {
 					{
 						"status": "failure",
 						"error": {
-							"details": null,
 							"id": 10,
 							"reason": "Koji build error"
 						}
@@ -299,7 +297,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			finalizeResult: worker.KojiFinalizeJobResult{
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Koji finalize error"),
+					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Koji finalize error", nil),
 				},
 			},
 			composeReplyCode: http.StatusCreated,
@@ -346,6 +344,7 @@ func TestKojiCompose(t *testing.T) {
 						clienterrors.WorkerClientError(
 							clienterrors.ErrorDNFOtherError,
 							"DNF Error",
+							nil,
 						),
 					),
 				},
@@ -359,7 +358,6 @@ func TestKojiCompose(t *testing.T) {
 						"details": [
 							{
 								"id": 22,
-								"details": null,
 								"reason": "DNF Error"
 							}
 						],
@@ -374,7 +372,6 @@ func TestKojiCompose(t *testing.T) {
 							"details": [
 								{
 									"id": 22,
-									"details": null,
 									"reason": "DNF Error"
 								}
 							],
