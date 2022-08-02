@@ -378,12 +378,26 @@ OSTree raw image:
           - rhos-01/rhel-9.1-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
-Rebase OSTree:
+Rebase OSTree BIOS:
   stage: test
   extends: OSTree
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-rebase.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-rebase-bios.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-9-x86_64
+
+Rebase OSTree UEFI:
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-rebase-uefi.sh
   parallel:
     matrix:
       - RUNNER:
