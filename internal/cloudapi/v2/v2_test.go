@@ -720,7 +720,6 @@ func TestComposeStatusFailure(t *testing.T) {
 		"image_status": {
 			"error": {
 				"id": 10,
-				"details": null,
 				"reason": "osbuild build failed"
 			},
 			"status": "failure"
@@ -798,7 +797,6 @@ func TestComposeJobError(t *testing.T) {
 		"image_status": {
 			"error": {
 				"id": 10,
-				"details": null,
 				"reason": "Error building image"
 			},
 			"status": "failure"
