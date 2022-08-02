@@ -722,11 +722,14 @@ func composeStatusErrorFromJobError(jobError *clienterrors.Error) *ComposeStatus
 	if jobError == nil {
 		return nil
 	}
-	return &ComposeStatusError{
-		Id:      int(jobError.ID),
-		Reason:  jobError.Reason,
-		Details: &jobError.Details,
+	err := &ComposeStatusError{
+		Id:     int(jobError.ID),
+		Reason: jobError.Reason,
 	}
+	if jobError.Details != nil {
+		err.Details = &jobError.Details
+	}
+	return err
 }
 
 func imageStatusFromOSBuildJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ImageStatusValue {

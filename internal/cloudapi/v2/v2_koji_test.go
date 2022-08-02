@@ -215,7 +215,6 @@ func TestKojiCompose(t *testing.T) {
 				"image_status": {
 					"status": "failure",
 					"error": {
-						"details": null,
 						"id": 10,
 						"reason": "Koji build error"
 					}
@@ -224,7 +223,6 @@ func TestKojiCompose(t *testing.T) {
 					{
 						"status": "failure",
 						"error": {
-							"details": null,
 							"id": 10,
 							"reason": "Koji build error"
 						}
