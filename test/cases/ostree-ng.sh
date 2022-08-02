@@ -195,7 +195,7 @@ ostree remote add --no-gpg-verify --no-sign-verify ${OSTREE_OSNAME} ${PROD_REPO_
 EOFKS
 
     echo "Writing new ISO"
-    if nvrGreaterOrEqual "lorax" "34.9.18"; then
+    if [ "${ID}" != "fedora" && nvrGreaterOrEqual "lorax" "34.9.18" ]; then
         sudo mkksiso -c "console=ttyS0,115200" --ks "${newksfile}" "${iso}" "${newiso}"
     else
         sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
