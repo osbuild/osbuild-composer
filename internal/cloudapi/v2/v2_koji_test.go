@@ -25,7 +25,7 @@ type jobResult struct {
 }
 
 func TestKojiCompose(t *testing.T) {
-	kojiServer, workerServer, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	kojiServer, workerServer, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	handler := kojiServer.Handler("/api/image-builder-composer/v2")
 	workerHandler := workerServer.Handler()
 	defer cancel()
@@ -215,6 +215,7 @@ func TestKojiCompose(t *testing.T) {
 				"image_status": {
 					"status": "failure",
 					"error": {
+						"details": null,
 						"id": 10,
 						"reason": "Koji build error"
 					}
@@ -223,6 +224,7 @@ func TestKojiCompose(t *testing.T) {
 					{
 						"status": "failure",
 						"error": {
+							"details": null,
 							"id": 10,
 							"reason": "Koji build error"
 						}
@@ -321,76 +323,8 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
-		// #7
-		{
-			initResult: worker.KojiInitJobResult{
-				BuildID: 42,
-				Token:   `"foobar"`,
-			},
-			buildResult: worker.OSBuildJobResult{
-				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
-				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
-				})},
-				OSBuildOutput: &osbuild.Result{
-					Success: true,
-				},
-				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(
-						clienterrors.ErrorManifestDependency,
-						"Manifest dependency failed",
-						clienterrors.WorkerClientError(
-							clienterrors.ErrorDNFOtherError,
-							"DNF Error",
-							nil,
-						),
-					),
-				},
-			},
-			composeReplyCode: http.StatusCreated,
-			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
-			composeStatus: `{
-				"kind": "ComposeStatus",
-				"image_status": {
-					"error": {
-						"details": [
-							{
-								"id": 22,
-								"reason": "DNF Error"
-							}
-						],
-						"id": 9,
-						"reason": "Manifest dependency failed"
-					},
-					"status": "failure"
-				},
-				"image_statuses": [
-					{
-						"error": {
-							"details": [
-								{
-									"id": 22,
-									"reason": "DNF Error"
-								}
-							],
-							"id": 9,
-							"reason": "Manifest dependency failed"
-						},
-						"status": "failure"
-					},
-					{
-						"status": "success"
-					}
-				],
-				"koji_status": {
-					"build_id": 42
-				},
-				"status": "failure"
-			}`,
-		},
 	}
+
 	for idx, c := range cases {
 		name, version, release := "foo", "1", "2"
 		t.Run(fmt.Sprintf("Test case #%d", idx), func(t *testing.T) {
@@ -536,7 +470,7 @@ func TestKojiCompose(t *testing.T) {
 }
 
 func TestKojiJobTypeValidation(t *testing.T) {
-	server, workers, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	server, workers, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	handler := server.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 

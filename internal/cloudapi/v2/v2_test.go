@@ -24,7 +24,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
-func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
+func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT bool, failDepsolve bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
 	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id", "account_id"}})
@@ -57,7 +57,17 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 			if err != nil {
 				continue
 			}
-			rawMsg, err := json.Marshal(&worker.DepsolveJobResult{PackageSpecs: map[string][]rpmmd.PackageSpec{"build": []rpmmd.PackageSpec{rpmmd.PackageSpec{Name: "pkg1"}}}, Error: "", ErrorType: worker.ErrorType("")})
+			dJR := &worker.DepsolveJobResult{
+				PackageSpecs: map[string][]rpmmd.PackageSpec{"build": []rpmmd.PackageSpec{rpmmd.PackageSpec{Name: "pkg1"}}},
+				Error:        "",
+				ErrorType:    worker.ErrorType(""),
+			}
+
+			if failDepsolve {
+				dJR.JobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, "DNF Error", nil)
+			}
+
+			rawMsg, err := json.Marshal(dJR)
 			require.NoError(t, err)
 			err = workerServer.FinishJob(token, rawMsg)
 			if err != nil {
@@ -76,7 +86,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 }
 
 func TestUnknownRoute(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/badroute", ``, http.StatusNotFound, `
@@ -90,7 +100,7 @@ func TestUnknownRoute(t *testing.T) {
 }
 
 func TestGetError(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors/4", ``, http.StatusOK, `
@@ -113,7 +123,7 @@ func TestGetError(t *testing.T) {
 }
 
 func TestGetErrorList(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors?page=3&size=1", ``, http.StatusOK, `
@@ -132,7 +142,7 @@ func TestGetErrorList(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
@@ -550,7 +560,7 @@ func TestCompose(t *testing.T) {
 }
 
 func TestComposeStatusSuccess(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -664,7 +674,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 }
 
 func TestComposeStatusFailure(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -720,7 +730,7 @@ func TestComposeStatusFailure(t *testing.T) {
 }
 
 func TestComposeStatusInvalidUUID(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/abcdef", ``, http.StatusBadRequest, `
@@ -736,7 +746,7 @@ func TestComposeStatusInvalidUUID(t *testing.T) {
 }
 
 func TestComposeJobError(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -798,7 +808,7 @@ func TestComposeJobError(t *testing.T) {
 }
 
 func TestComposeDependencyError(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, true)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -837,7 +847,6 @@ func TestComposeDependencyError(t *testing.T) {
 	jobErr := worker.JobResult{
 		JobError: clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed", nil),
 	}
-	jobErr.JobError.Details = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, "DNF Error", nil)
 	jobResult, err := json.Marshal(worker.OSBuildJobResult{JobResult: jobErr})
 	require.NoError(t, err)
 
@@ -850,10 +859,14 @@ func TestComposeDependencyError(t *testing.T) {
 		"id": "%v",
 		"image_status": {
 			"error": {
-				"details": {
-					"id": 22,
-					"reason": "DNF Error"
-				},
+				"details": [{
+					"id": 5,
+					"reason": "Error in depsolve job dependency",
+					"details": [{
+						"id": 22,
+						"reason": "DNF Error"
+					}]
+				}],
 				"id": 9,
 				"reason": "Manifest dependency failed"
 			},
@@ -864,7 +877,7 @@ func TestComposeDependencyError(t *testing.T) {
 }
 
 func TestComposeCustomizations(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -918,7 +931,7 @@ func TestComposeCustomizations(t *testing.T) {
 }
 
 func TestImageTypes(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
