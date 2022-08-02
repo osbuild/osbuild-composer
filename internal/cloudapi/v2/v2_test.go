@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree/mock_ostree_repo"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -869,6 +870,90 @@ func TestComposeDependencyError(t *testing.T) {
 				"reason": "Manifest dependency failed"
 			},
 			"status": "failure"
+		},
+		"status": "failure"
+	}`, jobId, jobId))
+}
+
+func TestComposeTargetErrors(t *testing.T) {
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building"},
+		"status": "pending"
+	}`, jobId, jobId))
+
+	oJR := worker.OSBuildJobResult{
+		TargetResults: []*target.TargetResult{
+			&target.TargetResult{
+				Name:        "org.osbuild.aws",
+				Options:     target.AWSTargetResultOptions{Ami: "", Region: ""},
+				TargetError: clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, "error importing image", nil),
+			},
+		},
+	}
+	jobErr := worker.JobResult{
+		JobError: clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "at least one target failed", oJR.TargetErrors()),
+	}
+	oJR.JobResult = jobErr
+	jobResult, err := json.Marshal(oJR)
+	require.NoError(t, err)
+
+	err = wrksrv.FinishJob(token, jobResult)
+	require.NoError(t, err)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {
+			"error": {
+				"details": [{
+					"id": 12,
+					"reason": "error importing image",
+					"details": "org.osbuild.aws"
+				}],
+				"id": 28,
+				"reason": "at least one target failed"
+			},
+			"status": "failure",
+			"upload_status": {
+				"options": {
+					"ami": "",
+					"region": ""
+				},
+				"status": "",
+				"type": "aws"
+			}
 		},
 		"status": "failure"
 	}`, jobId, jobId))
