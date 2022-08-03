@@ -71,9 +71,16 @@ func (p *ISOTree) getOSTreeCommits() []osTreeCommit {
 
 func (p *ISOTree) getBuildPackages() []string {
 	packages := []string{
-		"rpm-ostree",
 		"squashfs-tools",
 	}
+
+	if p.osTree != nil {
+		packages = append(packages, "rpm-ostree")
+	}
+	if p.osPipeline != nil {
+		packages = append(packages, "tar")
+	}
+
 	return packages
 }
 
@@ -97,7 +104,7 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	var osTreeURL string
 	if p.osTree != nil {
 		osTreeRef = p.osTree.Ref
-		makeISORootPath(ostreeRepoPath)
+		osTreeURL = makeISORootPath(ostreeRepoPath)
 	}
 	if p.osPipeline != nil {
 		tarPath = "/liveimg.tar"

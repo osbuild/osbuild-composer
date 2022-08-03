@@ -64,7 +64,7 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		&manifest.OSTreeRef{
 			Commit: img.OSTreeCommit,
 			URL:    img.OSTreeURL,
-			Ref:    img.OSTreeURL,
+			Ref:    img.OSTreeRef,
 		},
 		nil,
 		img.ISOLabelTempl)
