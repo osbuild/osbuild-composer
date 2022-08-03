@@ -76,7 +76,7 @@ if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
 fi
 
 # Provision the software under tet.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Discover what system is installed on the runner
 case "${ID}" in

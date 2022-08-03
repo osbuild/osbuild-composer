@@ -46,7 +46,7 @@ esac
 
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 echo "====> Finished Provisioning system"
 echo "====> Starting $(basename "$0")"
 

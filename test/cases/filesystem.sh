@@ -8,7 +8,7 @@ set -euo pipefail
 source /etc/os-release
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Colorful output.
 function greenprint {

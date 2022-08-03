@@ -10,7 +10,7 @@ if [[ ${ID} == "rhel" ]] && ! sudo subscription-manager status; then
 fi
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
