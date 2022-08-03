@@ -171,8 +171,8 @@ fi
 
 # start appropriate units
 case "${AUTH_METHOD}" in
-    "${AUTH_METHOD_JWT}")
-        # JWT is used only in the "Service" scenario. This means that:
+    "${AUTH_METHOD_JWT}" | "${AUTH_METHOD_TLS}")
+        # JWT / TLS are used only in the "Service" scenario. This means that:
         # - only remote workers will be used (no local worker)
         # - only Cloud API socket will be started (no Weldr API)
         sudo systemctl stop 'osbuild*'
@@ -193,18 +193,5 @@ case "${AUTH_METHOD}" in
         sudo systemctl stop 'osbuild*'
         # enable Weldr API
         sudo systemctl start osbuild-composer.socket
-        ;;
-
-    *)
-        # the default setup used previously for all tests
-        sudo systemctl start osbuild-remote-worker.socket
-        sudo systemctl start osbuild-composer.socket
-        sudo systemctl start osbuild-composer-api.socket
-
-        # The keys were regenerated but osbuild-composer might be already running.
-        # Let's try to restart it. In ideal world, this shouldn't be needed as every
-        # test case is supposed to run on a pristine machine. However, this is
-        # currently not true on Schutzbot
-        sudo systemctl try-restart osbuild-composer
         ;;
 esac

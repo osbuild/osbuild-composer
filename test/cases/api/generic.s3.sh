@@ -89,7 +89,7 @@ region = "${MINIO_REGION}"
 bucket = "${MINIO_BUCKET}"
 EOF
 
-  sudo systemctl restart "osbuild-worker@1"
+  sudo systemctl restart "osbuild-remote-worker@localhost:8700"
 }
 
 # Unset AWS_REGION, region == "" in the request the worker will look for the generic s3
