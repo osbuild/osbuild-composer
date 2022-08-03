@@ -130,6 +130,23 @@ var (
 		exports:          []string{"bootiso"},
 	}
 
+	imageInstallerImgType = imageType{
+		name:     "image-installer",
+		filename: "installer.iso",
+		mimeType: "application/x-iso9660-image",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey:        bareMetalPackageSet,
+			installerPkgsKey: anacondaPackageSet,
+		},
+		rpmOstree:        false,
+		bootISO:          true,
+		bootable:         true,
+		image:            imageInstallerImage,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
+		exports:          []string{"bootiso"},
+	}
+
 	qcow2ImgType = imageType{
 		name:     "qcow2",
 		filename: "disk.qcow2",
@@ -822,6 +839,13 @@ func newDistro(distroName string) distro.Distro {
 		iotCommitImgType,
 		iotInstallerImgType,
 	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: "fedora",
+		},
+		imageInstallerImgType,
+	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{
 			UEFIVendor: "fedora",
@@ -869,6 +893,12 @@ func newDistro(distroName string) distro.Distro {
 		iotCommitImgType,
 		iotOCIImgType,
 		iotInstallerImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: "fedora",
+		},
+		imageInstallerImgType,
 	)
 
 	s390x.addImageTypes(nil)
