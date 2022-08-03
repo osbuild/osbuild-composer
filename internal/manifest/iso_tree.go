@@ -9,6 +9,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
+type OSTreeRef struct {
+	Commit string
+	URL    string
+	Ref    string
+}
+
 // An ISOTree represents a tree containing the anaconda installer,
 // configuration in terms of a kickstart file, as well as an embedded
 // payload to be installed.
@@ -23,17 +29,15 @@ type ISOTree struct {
 
 	anacondaPipeline *Anaconda
 	isoLabel         string
-	osTreeCommit     string
-	osTreeURL        string
-	osTreeRef        string
+	osTree           *OSTreeRef
+	osPipeline       *OS
 }
 
 func NewISOTree(m *Manifest,
 	buildPipeline *Build,
 	anacondaPipeline *Anaconda,
-	osTreeCommit,
-	osTreeURL,
-	osTreeRef,
+	osTree *OSTreeRef,
+	osPipeline *OS,
 	isoLabelTmpl string) *ISOTree {
 	// TODO: replace isoLabelTmpl with more high-level properties
 	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.platform.GetArch())
@@ -42,9 +46,8 @@ func NewISOTree(m *Manifest,
 		Base:             NewBase(m, "bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
 		isoLabel:         isoLabel,
-		osTreeCommit:     osTreeCommit,
-		osTreeURL:        osTreeURL,
-		osTreeRef:        osTreeRef,
+		osTree:           osTree,
+		osPipeline:       osPipeline,
 	}
 	buildPipeline.addDependent(p)
 	if anacondaPipeline.Base.manifest != m {
@@ -55,12 +58,15 @@ func NewISOTree(m *Manifest,
 }
 
 func (p *ISOTree) getOSTreeCommits() []osTreeCommit {
-	return []osTreeCommit{
-		{
-			checksum: p.osTreeCommit,
-			url:      p.osTreeURL,
-		},
+	if p.osTree != nil {
+		return []osTreeCommit{
+			{
+				checksum: p.osTree.Commit,
+				url:      p.osTree.URL,
+			},
+		}
 	}
+	return nil
 }
 
 func (p *ISOTree) getBuildPackages() []string {
@@ -86,7 +92,17 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 		kspath),
 		osbuild.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
 
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
+	var tarPath string
+	var osTreeRef string
+	var osTreeURL string
+	if p.osTree != nil {
+		osTreeRef = p.osTree.Ref
+		makeISORootPath(ostreeRepoPath)
+	}
+	if p.osPipeline != nil {
+		tarPath = "/liveimg.tar"
+	}
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, tarPath, p.Users, p.Groups, osTreeURL, osTreeRef, p.OSName)
 	if err != nil {
 		panic("password encryption failed")
 	}
@@ -97,11 +113,18 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 		Release:  p.Release,
 	}))
 
-	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
-	pipeline.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.osTreeCommit, p.osTreeRef),
-	))
+	if p.osTree != nil {
+		pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
+		pipeline.AddStage(osbuild.NewOSTreePullStage(
+			&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
+			osbuild.NewOstreePullStageInputs("org.osbuild.source", p.osTree.Commit, p.osTree.Ref),
+		))
+	}
+
+	if p.osPipeline != nil {
+		pipeline.AddStage(osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, osbuild.NewTarStagePipelineTreeInputs(p.osPipeline.name)))
+
+	}
 
 	return pipeline
 }
