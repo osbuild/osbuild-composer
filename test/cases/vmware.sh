@@ -32,7 +32,7 @@ if [ "$ID" != "rhel" ]; then
 fi
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 GOVC_CMD=/tmp/govc
 

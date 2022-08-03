@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Get OS data.
 source /etc/os-release

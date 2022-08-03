@@ -89,7 +89,7 @@ run_test_case () {
 }
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Change to the working directory.
 cd $WORKING_DIRECTORY
