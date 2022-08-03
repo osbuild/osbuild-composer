@@ -66,9 +66,9 @@ EOFKS
 
     echo "Writing new ISO"
     if nvrGreaterOrEqual "lorax" "34.9.18"; then
-        sudo mkksiso -c "console=ttyS0,115200" --ks "${newksfile}" "${iso}" "${newiso}"
+        sudo TMPDIR=/var/tmp/ mkksiso -c "console=ttyS0,115200" --ks "${newksfile}" "${iso}" "${newiso}"
     else
-        sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+        sudo TMPDIR=/var/tmp/ mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
     fi
 
     echo "==== NEW KICKSTART FILE ===="
@@ -133,6 +133,9 @@ case "${ID}-${VERSION_ID}" in
         ;;
     centos-9)
         OS_VARIANT="centos-stream9"
+        ;;
+    fedora-*)
+        OS_VARIANT="fedora-unknown"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
