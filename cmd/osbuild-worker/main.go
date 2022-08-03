@@ -128,6 +128,10 @@ func setProtection(protected bool) {
 		}
 		return
 	}
+	if len(asInstanceOutput.AutoScalingInstances) == 0 {
+		logrus.Info("No Autoscaling instace is defined")
+		return
+	}
 
 	// make the request to protect (or unprotect) the instance
 	input := &autoscaling.SetInstanceProtectionInput{
