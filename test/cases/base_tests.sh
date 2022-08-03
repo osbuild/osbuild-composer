@@ -13,10 +13,13 @@ LOGS_DIRECTORY=$(mktemp --directory --tmpdir=/tmp/logs)
 PASSED_TESTS=()
 FAILED_TESTS=()
 
-TEST_CASES=(
+TEST_CASES_ON_PREM=(
   "osbuild-weldr-tests"
   "osbuild-dnf-json-tests"
   "osbuild-composer-cli-tests"
+)
+
+TEST_CASES_SERVICE=(
   "osbuild-auth-tests"
 )
 
@@ -51,7 +54,14 @@ run_test_case () {
 cd $WORKING_DIRECTORY
 
 # Run each test case.
-for TEST_CASE in "${TEST_CASES[@]}"; do
+for TEST_CASE in "${TEST_CASES_ON_PREM[@]}"; do
+    run_test_case ${TESTS_PATH}/"$TEST_CASE"
+done
+
+/usr/libexec/osbuild-composer-test/provision.sh tls
+
+# Run each test case.
+for TEST_CASE in "${TEST_CASES_SERVICE[@]}"; do
     run_test_case ${TESTS_PATH}/"$TEST_CASE"
 done
 

@@ -34,7 +34,7 @@ domain="${CI_REGISTRY}"
 path_prefix="${CI_PROJECT_PATH}"
 EOF
 
-  sudo systemctl restart "osbuild-worker@1"
+  sudo systemctl restart "osbuild-remote-worker@localhost:8700"
 }
 
 function createReqFile() {

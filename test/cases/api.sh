@@ -431,9 +431,9 @@ waitForState "failure"
 # crashed/stopped/killed worker should result in a failed state
 sendCompose "$REQUEST_FILE"
 waitForState "building"
-sudo systemctl stop "osbuild-worker@*"
+sudo systemctl stop "osbuild-remote-worker@*"
 waitForState "failure"
-sudo systemctl start "osbuild-worker@1"
+sudo systemctl start "osbuild-remote-worker@localhost:8700.service"
 
 # full integration case
 INIT_COMPOSES="$(collectMetrics)"
@@ -565,7 +565,7 @@ TOKEN="$(curl --request POST \
         http://localhost:443/api/image-builder-composer/v2/composes/"$COMPOSE_ID")" = "401" ]
 
 
-sudo systemctl start osbuild-remote-worker@localhost:8700.service
+sudo systemctl restart osbuild-remote-worker@localhost:8700.service
 sudo systemctl is-active --quiet osbuild-remote-worker@localhost:8700.service
 
 exit 0
