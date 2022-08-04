@@ -127,7 +127,10 @@ class ComposerAPIClient:
         self.auth_server = auth_server
 
     def access_token(self):
-        resp = requests.post(self.auth_server + "/token", data={"refresh_token": self.refresh_token})
+        resp = requests.post(self.auth_server + "/token", data={
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token,
+        })
         if resp.status_code != 200:
             raise RuntimeError(f"failed to refresh token: {resp.text}")
         return resp.json()["access_token"]

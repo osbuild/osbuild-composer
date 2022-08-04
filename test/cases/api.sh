@@ -528,11 +528,12 @@ KILL_PIDS+=("$!")
 
 sudo systemctl restart osbuild-composer
 
-until curl --output /dev/null --silent --fail localhost:8081/token; do
+until curl --data "grant_type=refresh_token" --output /dev/null --silent --fail localhost:8081/token; do
     sleep 0.5
 done
 
 TOKEN="$(curl --request POST \
+        --data "grant_type=refresh_token" \
         --data "refresh_token=$REFRESH_TOKEN" \
         --header "Content-Type: application/x-www-form-urlencoded" \
         --silent \
