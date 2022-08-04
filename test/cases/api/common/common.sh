@@ -60,6 +60,7 @@ function access_token {
 function access_token_with_org_id {
   local refresh_token="$1"
   curl --request POST \
+    --data "grant_type=refresh_token" \
     --data "refresh_token=$refresh_token" \
     --header "Content-Type: application/x-www-form-urlencoded" \
     --silent \
