@@ -141,31 +141,10 @@ else # AUTH_METHOD_NONE
     sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-90.json "$REPODIR"
     sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-91.json "$REPODIR"
 
-    # RHEL nightly repos need to be overridden
-    case "${ID}-${VERSION_ID}" in
-        "rhel-8.6")
-            # Override old rhel-8.json and rhel-8-beta.json because RHEL 8.6 test needs nightly repos
-            sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-86.json "$REPODIR/rhel-8.json"
-            # If multiple tests are run and call provision.sh the symlink will need to be overridden with -f
-            sudo ln -sf /etc/osbuild-composer/repositories/rhel-8.json "$REPODIR/rhel-8-beta.json"
-            ;;
-        "rhel-9.0")
-            # Override old rhel-90.json and rhel-90-beta.json because RHEL 9.0 test needs nightly repos
-            sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-90.json "$REPODIR/rhel-90.json"
-            # If multiple tests are run and call provision.sh the symlink will need to be overridden with -f
-            sudo ln -sf /etc/osbuild-composer/repositories/rhel-90.json "$REPODIR/rhel-90-beta.json"
-            ;;
-        *) ;;
-    esac
-
     # overrides for RHEL nightly builds testing
     VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
     if [ -f "rhel-${VERSION_ID%.*}.json" ]; then
         sudo cp rhel-"${VERSION_ID%.*}".json "$REPODIR/rhel-${VERSION_SUFFIX}.json"
-    fi
-
-    if [ -f "rhel-${VERSION_ID%.*}-beta.json" ]; then
-        sudo cp rhel-"${VERSION_ID%.*}"-beta.json "$REPODIR/rhel-${VERSION_SUFFIX}-beta.json"
     fi
 fi
 

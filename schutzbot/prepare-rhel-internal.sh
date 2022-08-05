@@ -88,8 +88,6 @@ tee -a rhel-"${VERSION_ID%.*}".json << EOF
 }
 EOF
 
-cp rhel-"${VERSION_ID%.*}".json rhel-"${VERSION_ID%.*}"-beta.json
-
 # Create tests .repo file if REPO_URL is provided from ENV
 # Otherwise osbuild-composer-tests.rpm will be downloaded from
 # existing repositories

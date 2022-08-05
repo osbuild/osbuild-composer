@@ -65,14 +65,8 @@ case "${ID}" in
                 echo "Running on RHEL ${VERSION_ID}"
                 # starting in 8.5 the override file contains minor version number as well
                 VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
-                if grep beta /etc/os-release;
-                then
-                    DISTRO_NAME="rhel-8-beta"
-                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}-beta.json"
-                else
-                    DISTRO_NAME="rhel-8"
-                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
-                fi
+                DISTRO_NAME="rhel-8"
+                REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
                 REPO1_NAME="baseos"
                 REPO2_NAME="appstream"
                 if [ -n "${NIGHTLY:-}" ]; then
@@ -84,14 +78,8 @@ case "${ID}" in
                 echo "Running on RHEL ${VERSION_ID}"
                 # in 9.0 the override file contains minor version number as well
                 VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
-                if grep beta /etc/os-release;
-                then
-                    DISTRO_NAME="rhel-90-beta"
-                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}-beta.json"
-                else
-                    DISTRO_NAME="rhel-90"
-                    REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
-                fi
+                DISTRO_NAME="rhel-90"
+                REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
                 REPO1_NAME="baseos"
                 REPO2_NAME="appstream"
                 if [ -n "${NIGHTLY:-}" ]; then
