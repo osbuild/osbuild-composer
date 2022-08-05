@@ -141,10 +141,18 @@ else # AUTH_METHOD_NONE
     sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-90.json "$REPODIR"
     sudo cp /usr/share/tests/osbuild-composer/repositories/rhel-91.json "$REPODIR"
 
-    # overrides for RHEL nightly builds testing
-    VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
-    if [ -f "rhel-${VERSION_ID%.*}.json" ]; then
-        sudo cp rhel-"${VERSION_ID%.*}".json "$REPODIR/rhel-${VERSION_SUFFIX}.json"
+    # override source repositories to consume content from the nightly compose
+    if [ "${NIGHTLY:=false}" == "true" ]; then
+        source /usr/libexec/osbuild-composer-test/define-compose-url.sh
+
+        VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
+        for ARCH in aarch64 ppc64le s390x x86_64; do
+            for REPO_NAME in BaseOS AppStream RT; do
+                REPO_NAME_LOWERCASE=$(echo "$REPO_NAME" | tr "[:upper:]" "[:lower:]")
+                # will replace only the lines which match
+                sudo sed -i "s|https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el.*${ARCH}-${REPO_NAME_LOWERCASE}-.*|${COMPOSE_URL}/compose/${REPO_NAME}/${ARCH}/os/\",|" "/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
+            done
+        done
     fi
 fi
 
