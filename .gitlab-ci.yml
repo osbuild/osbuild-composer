@@ -144,7 +144,6 @@ Prepare-rhel-internal:
     paths:
       - rhel-${RHEL_MAJOR}.json
       - rhel${RHEL_MAJOR}internal.repo
-      - rhel-${RHEL_MAJOR}-beta.json
       - COMPOSE_ID
   parallel:
     matrix:
