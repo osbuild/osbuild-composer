@@ -54,6 +54,7 @@ const (
 
 var MountpointPolicies = NewPathPolicies(map[string]PathPolicy{
 	"/":     {Exact: true},
+	"/boot": {Exact: true},
 	"/var":  {},
 	"/opt":  {},
 	"/srv":  {},

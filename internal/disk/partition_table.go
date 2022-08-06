@@ -21,17 +21,33 @@ type PartitionTable struct {
 
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, lvmify bool, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
+	newMountpoints := []blueprint.FilesystemCustomization{}
+
+	// first pass: enlarge existing mountpoints and collect new ones
 	for _, mnt := range mountpoints {
+		if path := entityPath(newPT, mnt.Mountpoint); len(path) != 0 {
+			size := newPT.AlignUp(clampFSSize(mnt.Mountpoint, mnt.MinSize))
+			resizeEntityBranch(path, size)
+		} else {
+			newMountpoints = append(newMountpoints, mnt)
+		}
+	}
+
+	// if there is any new mountpoint and lvmify is enabled, ensure we have LVM layout
+	if lvmify && len(newMountpoints) > 0 {
+		err := newPT.ensureLVM()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// second pass: deal with new mountpoints and newly created ones, after switching to
+	// the LVM layout, if requested, which might introduce new mount points, i.e. `/boot`
+	for _, mnt := range newMountpoints {
 		size := newPT.AlignUp(clampFSSize(mnt.Mountpoint, mnt.MinSize))
 		if path := entityPath(newPT, mnt.Mountpoint); len(path) != 0 {
 			resizeEntityBranch(path, size)
 		} else {
-			if lvmify {
-				err := newPT.ensureLVM()
-				if err != nil {
-					return nil, err
-				}
-			}
 			if err := newPT.createFilesystem(mnt.Mountpoint, size); err != nil {
 				return nil, err
 			}
@@ -467,7 +483,13 @@ func (pt *PartitionTable) FindMountable(mountpoint string) Mountable {
 
 func clampFSSize(mountpoint string, size uint64) uint64 {
 	// set a minimum size of 1GB for all mountpoints
+	// with the exception for '/boot' (= 500 MB)
 	var minSize uint64 = 1073741824
+
+	if mountpoint == "/boot" {
+		minSize = 524288000
+	}
+
 	if minSize > size {
 		return minSize
 	}

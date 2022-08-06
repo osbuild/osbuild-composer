@@ -614,7 +614,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
-					Mountpoint: "/boot",
+					Mountpoint: "/etc",
 				},
 			},
 		},
@@ -629,7 +629,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
 				continue
 			} else {
-				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
+				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/etc\"]")
 			}
 		}
 	}

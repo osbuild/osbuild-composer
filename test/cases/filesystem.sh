@@ -242,7 +242,7 @@ mountpoint = "/etc"
 size = 131072000
 
 [[customizations.filesystem]]
-mountpoint = "/boot"
+mountpoint = "/lost+found"
 size = 131072000
 
 EOF
@@ -254,7 +254,7 @@ build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem-fail qcow2 true
 FAILED_MOUNTPOINTS=()
 
 greenprint "💬 Checking expected failures"
-for MOUNTPOINT in '/etc' '/boot' ; do
+for MOUNTPOINT in '/etc' '/lost+found' ; do
   if ! [[ $ERROR_MSG == *"$MOUNTPOINT"* ]]; then
     FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
   fi
