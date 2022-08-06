@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
-	"path"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -54,9 +52,17 @@ const (
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 )
 
-var MountpointAllowList = []string{
-	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
-}
+var MountpointAllowList = NewPathPolicies(map[string]PathPolicy{
+	"/":     {Exact: true},
+	"/var":  {},
+	"/opt":  {},
+	"/srv":  {},
+	"/usr":  {},
+	"/app":  {},
+	"/data": {},
+	"/home": {},
+	"/tmp":  {},
+})
 
 // Entity is the base interface for all disk-related entities.
 type Entity interface {
@@ -173,29 +179,11 @@ func NewVolIDFromRand(r *rand.Rand) string {
 	return hex.EncodeToString(volid)
 }
 
-func IsMountpointAllowed(mountpoint string, allowlist []string) bool {
-	for _, allowed := range allowlist {
-		match, _ := path.Match(allowed, mountpoint)
-		if match {
-			return true
-		}
-		// ensure that only clean mountpoints
-		// are valid
-		if strings.Contains(mountpoint, "//") {
-			return false
-		}
-		match = strings.HasPrefix(mountpoint, allowed+"/")
-		if allowed != "/" && match {
-			return true
-		}
-	}
-	return false
-}
-
-func CheckMountpoints(mountpoints []blueprint.FilesystemCustomization, mountpointAllowList []string) error {
+func CheckMountpoints(mountpoints []blueprint.FilesystemCustomization, mountpointAllowList *PathPolicies) error {
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
-		if !IsMountpointAllowed(m.Mountpoint, mountpointAllowList) {
+		err := mountpointAllowList.Check(m.Mountpoint)
+		if err != nil {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
 		}
 	}
