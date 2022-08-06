@@ -29,10 +29,6 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-var mountpointAllowList = []string{
-	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
-}
-
 // RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
 	Timezone: "America/New_York",
@@ -437,7 +433,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	mountpoints := customizations.GetFilesystems()
 
-	err := disk.CheckMountpoints(mountpoints, mountpointAllowList)
+	err := disk.CheckMountpoints(mountpoints, disk.MountpointAllowList)
 	if err != nil {
 		return err
 	}

@@ -54,6 +54,10 @@ const (
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 )
 
+var MountpointAllowList = []string{
+	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
+}
+
 // Entity is the base interface for all disk-related entities.
 type Entity interface {
 	// IsContainer indicates if the implementing type can
