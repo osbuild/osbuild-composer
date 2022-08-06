@@ -52,7 +52,7 @@ const (
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 )
 
-var MountpointAllowList = NewPathPolicies(map[string]PathPolicy{
+var MountpointPolicies = NewPathPolicies(map[string]PathPolicy{
 	"/":     {Exact: true},
 	"/var":  {},
 	"/opt":  {},

@@ -433,7 +433,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	mountpoints := customizations.GetFilesystems()
 
-	err := disk.CheckMountpoints(mountpoints, disk.MountpointAllowList)
+	err := disk.CheckMountpoints(mountpoints, disk.MountpointPolicies)
 	if err != nil {
 		return err
 	}
