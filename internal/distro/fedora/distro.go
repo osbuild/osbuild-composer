@@ -696,7 +696,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
 	}
 
-	err := disk.CheckMountpoints(mountpoints, disk.MountpointAllowList)
+	err := disk.CheckMountpoints(mountpoints, disk.MountpointPolicies)
 	if err != nil {
 		return err
 	}
