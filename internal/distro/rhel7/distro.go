@@ -437,15 +437,9 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	mountpoints := customizations.GetFilesystems()
 
-	invalidMountpoints := []string{}
-	for _, m := range mountpoints {
-		if !distro.IsMountpointAllowed(m.Mountpoint, mountpointAllowList) {
-			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
-		}
-	}
-
-	if len(invalidMountpoints) > 0 {
-		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	err := disk.CheckMountpoints(mountpoints, mountpointAllowList)
+	if err != nil {
+		return err
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {

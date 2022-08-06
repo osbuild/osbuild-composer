@@ -18,10 +18,14 @@ package disk
 
 import (
 	"encoding/hex"
+	"fmt"
 	"io"
 	"math/rand"
+	"path"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 )
 
 const (
@@ -163,4 +167,38 @@ func NewVolIDFromRand(r *rand.Rand) string {
 		panic("expected four random bytes")
 	}
 	return hex.EncodeToString(volid)
+}
+
+func IsMountpointAllowed(mountpoint string, allowlist []string) bool {
+	for _, allowed := range allowlist {
+		match, _ := path.Match(allowed, mountpoint)
+		if match {
+			return true
+		}
+		// ensure that only clean mountpoints
+		// are valid
+		if strings.Contains(mountpoint, "//") {
+			return false
+		}
+		match = strings.HasPrefix(mountpoint, allowed+"/")
+		if allowed != "/" && match {
+			return true
+		}
+	}
+	return false
+}
+
+func CheckMountpoints(mountpoints []blueprint.FilesystemCustomization, mountpointAllowList []string) error {
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		if !IsMountpointAllowed(m.Mountpoint, mountpointAllowList) {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	}
+
+	return nil
 }
