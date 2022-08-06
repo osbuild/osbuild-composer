@@ -275,7 +275,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
-					Mountpoint: "/boot",
+					Mountpoint: "/etc",
 				},
 			},
 		},
@@ -285,7 +285,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
-			assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
+			assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/etc\"]")
 		}
 	}
 }

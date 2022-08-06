@@ -553,7 +553,7 @@ func TestComposeUnsupportedMountPointV0(t *testing.T) {
 		description="TestComposeUnsupportedMountPointV0"
 		version="0.0.1"
 		[[customizations.filesystem]]
-		mountpoint = "/boot"
+		mountpoint = "/etc"
 		size = 4294967296
 		`
 	resp, err := PostTOMLBlueprintV0(testState.socket, bp)

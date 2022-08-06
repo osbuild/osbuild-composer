@@ -617,6 +617,36 @@ func TestMinimumSizes(t *testing.T) {
 	}
 }
 
+func TestNewBootWithSizeLVMify(t *testing.T) {
+	pt := testPartitionTables["plain-noboot"]
+	assert := assert.New(t)
+
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+
+	custom := []blueprint.FilesystemCustomization{
+		{
+			Mountpoint: "/boot",
+			MinSize:    700 * MiB,
+		},
+	}
+
+	mpt, err := NewPartitionTable(&pt, custom, uint64(3*GiB), true, rng)
+	assert.NoError(err)
+
+	for idx, c := range custom {
+		mnt, minSize := c.Mountpoint, c.MinSize
+		path := entityPath(mpt, mnt)
+		assert.NotNil(path, "[%d] mountpoint %q not found", idx, mnt)
+		parent := path[1]
+		part, ok := parent.(*Partition)
+		assert.True(ok, "%q parent (%v) is not a partition", mnt, parent)
+		assert.GreaterOrEqual(part.GetSize(), minSize,
+			"[%d] %q size %d should be greater or equal to %d", idx, mnt, part.GetSize(), minSize)
+	}
+}
+
 func collectEntities(pt *PartitionTable) []Entity {
 	entities := make([]Entity, 0)
 	collector := func(ent Entity, path []Entity) error {
