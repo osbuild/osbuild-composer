@@ -2,6 +2,8 @@ package pgconn
 
 import (
 	"errors"
+	"fmt"
+
 	"github.com/jackc/pgproto3/v2"
 )
 
@@ -41,14 +43,14 @@ func (c *PgConn) gssAuth() error {
 	}
 
 	var nextData []byte
-	if spn, ok := c.config.RuntimeParams["krbspn"]; ok {
+	if c.config.KerberosSpn != "" {
 		// Use the supplied SPN if provided.
-		nextData, err = cli.GetInitTokenFromSPN(spn)
+		nextData, err = cli.GetInitTokenFromSPN(c.config.KerberosSpn)
 	} else {
 		// Allow the kerberos service name to be overridden
 		service := "postgres"
-		if val, ok := c.config.RuntimeParams["krbsrvname"]; ok {
-			service = val
+		if c.config.KerberosSrvName != "" {
+			service = c.config.KerberosSrvName
 		}
 		nextData, err = cli.GetInitToken(c.config.Host, service)
 	}
@@ -85,10 +87,13 @@ func (c *PgConn) rxGSSContinue() (*pgproto3.AuthenticationGSSContinue, error) {
 	if err != nil {
 		return nil, err
 	}
-	gssContinue, ok := msg.(*pgproto3.AuthenticationGSSContinue)
-	if ok {
-		return gssContinue, nil
+
+	switch m := msg.(type) {
+	case *pgproto3.AuthenticationGSSContinue:
+		return m, nil
+	case *pgproto3.ErrorResponse:
+		return nil, ErrorResponseToPgError(m)
 	}
 
-	return nil, errors.New("expected AuthenticationGSSContinue message but received unexpected message")
+	return nil, fmt.Errorf("expected AuthenticationGSSContinue message but received unexpected message %T", msg)
 }
