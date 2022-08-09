@@ -4,21 +4,6 @@
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-case "${ID}-${VERSION_ID}" in
-    "rhel-8.6" | "rhel-9.0" | "centos-9" | "centos-8")
-        ;;
-    *)
-        echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
-        exit 0
-        ;;
-esac
-
-if [ "$ARCH" != "x86_64" ]; then
-  echo "Workstation group is only available on x86_64"
-  exit 0
-fi
-
-
 set -xeuo pipefail
 
 function get_build_info() {

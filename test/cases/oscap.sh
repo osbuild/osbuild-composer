@@ -91,8 +91,8 @@ case "${ID}-${VERSION_ID}" in
         DATASTREAM="/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
         ;;
     *)
-        echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
-        exit 0
+        echo "$0 should be skipped on ${ID}-${VERSION_ID} check gitlab-ci.yml"
+        exit 1
         ;;
 esac
 

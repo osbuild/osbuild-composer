@@ -69,12 +69,6 @@ function cleanup {
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-# Skip if running on subscribed RHEL
-if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
-    echo "This test is skipped on subscribed RHEL machines."
-    exit 0
-fi
-
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
@@ -101,12 +95,12 @@ case "${ID}" in
                 ;;
             *)
                 echo "Unknown RHEL: ${VERSION_ID}"
-                exit 0
+                exit 1
         esac
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
-        exit 0
+        exit 1
 esac
 
 trap cleanup EXIT

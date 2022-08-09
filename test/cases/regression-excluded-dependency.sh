@@ -14,16 +14,6 @@
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-case "${ID}-${VERSION_ID}" in
-    "rhel-8.6" | "rhel-9.0" | "centos-9" | "centos-8")
-        ;;
-    *)
-        echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
-        exit 0
-        ;;
-esac
-
-
 set -xeuo pipefail
 
 function get_build_info() {

@@ -13,7 +13,7 @@ function greenprint {
 
 if [ "${NIGHTLY:=false}" == "true" ]; then
     greenprint "INFO: Test not supported during nightly CI pipelines. Exiting ..."
-    exit 0
+    exit 1
 fi
 
 #

@@ -5,15 +5,6 @@
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-case "${ID}-${VERSION_ID}" in
-    "fedora-"*)
-        echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
-        exit 0
-        ;;
-    *)
-        ;;
-esac
-
 set -xeuo pipefail
 
 # Provision the software under test.
