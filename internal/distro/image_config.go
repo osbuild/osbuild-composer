@@ -31,29 +31,30 @@ type ImageConfig struct {
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
-	RHSMConfig         map[RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
-	SystemdLogind      []*osbuild.SystemdLogindStageOptions
-	CloudInit          []*osbuild.CloudInitStageOptions
-	Modprobe           []*osbuild.ModprobeStageOptions
-	DracutConf         []*osbuild.DracutConfStageOptions
-	SystemdUnit        []*osbuild.SystemdUnitStageOptions
-	Authselect         *osbuild.AuthselectStageOptions
-	SELinuxConfig      *osbuild.SELinuxConfigStageOptions
-	Tuned              *osbuild.TunedStageOptions
-	Tmpfilesd          []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf      []*osbuild.PamLimitsConfStageOptions
-	Sysctld            []*osbuild.SysctldStageOptions
-	DNFConfig          []*osbuild.DNFConfigStageOptions
-	SshdConfig         *osbuild.SshdConfigStageOptions
-	Authconfig         *osbuild.AuthconfigStageOptions
-	PwQuality          *osbuild.PwqualityConfStageOptions
-	WAAgentConfig      *osbuild.WAAgentConfStageOptions
-	Grub2Config        *osbuild.GRUB2Config
-	DNFAutomaticConfig *osbuild.DNFAutomaticConfigStageOptions
-	YumConfig          *osbuild.YumConfigStageOptions
-	YUMRepos           []*osbuild.YumReposStageOptions
-	Firewall           *osbuild.FirewallStageOptions
-	UdevRules          *osbuild.UdevRulesStageOptions
+	RHSMConfig          map[RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
+	SystemdLogind       []*osbuild.SystemdLogindStageOptions
+	CloudInit           []*osbuild.CloudInitStageOptions
+	Modprobe            []*osbuild.ModprobeStageOptions
+	DracutConf          []*osbuild.DracutConfStageOptions
+	SystemdUnit         []*osbuild.SystemdUnitStageOptions
+	Authselect          *osbuild.AuthselectStageOptions
+	SELinuxConfig       *osbuild.SELinuxConfigStageOptions
+	Tuned               *osbuild.TunedStageOptions
+	Tmpfilesd           []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf       []*osbuild.PamLimitsConfStageOptions
+	Sysctld             []*osbuild.SysctldStageOptions
+	DNFConfig           []*osbuild.DNFConfigStageOptions
+	SshdConfig          *osbuild.SshdConfigStageOptions
+	Authconfig          *osbuild.AuthconfigStageOptions
+	PwQuality           *osbuild.PwqualityConfStageOptions
+	WAAgentConfig       *osbuild.WAAgentConfStageOptions
+	Grub2Config         *osbuild.GRUB2Config
+	DNFAutomaticConfig  *osbuild.DNFAutomaticConfigStageOptions
+	YumConfig           *osbuild.YumConfigStageOptions
+	YUMRepos            []*osbuild.YumReposStageOptions
+	Firewall            *osbuild.FirewallStageOptions
+	UdevRules           *osbuild.UdevRulesStageOptions
+	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
@@ -150,6 +151,9 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 		if finalConfig.UdevRules == nil {
 			finalConfig.UdevRules = parentConfig.UdevRules
+		}
+		if finalConfig.GCPGuestAgentConfig == nil {
+			finalConfig.GCPGuestAgentConfig = parentConfig.GCPGuestAgentConfig
 		}
 	}
 	return &finalConfig
