@@ -61,24 +61,11 @@ case "${ID}" in
     "rhel")
         echo "Running on RHEL"
         case "${VERSION_ID%.*}" in
-            "8" )
+            "8" | "9")
                 echo "Running on RHEL ${VERSION_ID}"
                 # starting in 8.5 the override file contains minor version number as well
                 VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
-                DISTRO_NAME="rhel-8"
-                REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
-                REPO1_NAME="baseos"
-                REPO2_NAME="appstream"
-                if [ -n "${NIGHTLY:-}" ]; then
-                    REPO1_NAME="baseos-${ARCH}"
-                    REPO2_NAME="appstream-${ARCH}"
-                fi
-                ;;
-            "9" )
-                echo "Running on RHEL ${VERSION_ID}"
-                # in 9.0 the override file contains minor version number as well
-                VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
-                DISTRO_NAME="rhel-90"
+                DISTRO_NAME="rhel-${VERSION_SUFFIX}"
                 REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
                 REPO1_NAME="baseos"
                 REPO2_NAME="appstream"
