@@ -647,6 +647,10 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewYumReposStage(yumRepo))
 	}
 
+	if gcpGuestAgentConfig := imageConfig.GCPGuestAgentConfig; gcpGuestAgentConfig != nil {
+		p.AddStage(osbuild.NewGcpGuestAgentConfigStage(gcpGuestAgentConfig))
+	}
+
 	if udevRules := imageConfig.UdevRules; udevRules != nil {
 		p.AddStage(osbuild.NewUdevRulesStage(udevRules))
 	}
