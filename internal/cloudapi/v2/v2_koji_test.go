@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -14,7 +13,6 @@ import (
 
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
-	"github.com/osbuild/osbuild-composer/internal/kojiapi/api"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -27,7 +25,7 @@ type jobResult struct {
 }
 
 func TestKojiCompose(t *testing.T) {
-	kojiServer, workerServer, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	kojiServer, workerServer, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	handler := kojiServer.Handler("/api/image-builder-composer/v2")
 	workerHandler := workerServer.Handler()
 	defer cancel()
@@ -119,7 +117,7 @@ func TestKojiCompose(t *testing.T) {
 		{
 			initResult: worker.KojiInitJobResult{
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, "Koji init error"),
+					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, "Koji init error", nil),
 				},
 			},
 			buildResult: worker.OSBuildJobResult{
@@ -207,7 +205,7 @@ func TestKojiCompose(t *testing.T) {
 					Success: true,
 				},
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Koji build error"),
+					JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Koji build error", nil),
 				},
 			},
 			composeReplyCode: http.StatusCreated,
@@ -217,7 +215,6 @@ func TestKojiCompose(t *testing.T) {
 				"image_status": {
 					"status": "failure",
 					"error": {
-						"details": null,
 						"id": 10,
 						"reason": "Koji build error"
 					}
@@ -226,7 +223,6 @@ func TestKojiCompose(t *testing.T) {
 					{
 						"status": "failure",
 						"error": {
-							"details": null,
 							"id": 10,
 							"reason": "Koji build error"
 						}
@@ -301,7 +297,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			finalizeResult: worker.KojiFinalizeJobResult{
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Koji finalize error"),
+					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Koji finalize error", nil),
 				},
 			},
 			composeReplyCode: http.StatusCreated,
@@ -325,77 +321,8 @@ func TestKojiCompose(t *testing.T) {
 				"status": "failure"
 			}`,
 		},
-		// #7
-		{
-			initResult: worker.KojiInitJobResult{
-				BuildID: 42,
-				Token:   `"foobar"`,
-			},
-			buildResult: worker.OSBuildJobResult{
-				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
-				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
-				})},
-				OSBuildOutput: &osbuild.Result{
-					Success: true,
-				},
-				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(
-						clienterrors.ErrorManifestDependency,
-						"Manifest dependency failed",
-						clienterrors.WorkerClientError(
-							clienterrors.ErrorDNFOtherError,
-							"DNF Error",
-						),
-					),
-				},
-			},
-			composeReplyCode: http.StatusCreated,
-			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
-			composeStatus: `{
-				"kind": "ComposeStatus",
-				"image_status": {
-					"error": {
-						"details": [
-							{
-								"id": 22,
-								"details": null,
-								"reason": "DNF Error"
-							}
-						],
-						"id": 9,
-						"reason": "Manifest dependency failed"
-					},
-					"status": "failure"
-				},
-				"image_statuses": [
-					{
-						"error": {
-							"details": [
-								{
-									"id": 22,
-									"details": null,
-									"reason": "DNF Error"
-								}
-							],
-							"id": 9,
-							"reason": "Manifest dependency failed"
-						},
-						"status": "failure"
-					},
-					{
-						"status": "success"
-					}
-				],
-				"koji_status": {
-					"build_id": 42
-				},
-				"status": "failure"
-			}`,
-		},
 	}
+
 	for idx, c := range cases {
 		name, version, release := "foo", "1", "2"
 		t.Run(fmt.Sprintf("Test case #%d", idx), func(t *testing.T) {
@@ -460,9 +387,9 @@ func TestKojiCompose(t *testing.T) {
 			// Finishing of the goroutine handling the manifest job is not deterministic and as a result, we may get
 			// the second osbuild job first.
 			// The build jobs ID is determined from the dependencies of the koji-finalize job dependencies.
-			_, finalizeJobDeps, err := workerServer.KojiFinalizeJobStatus(composeId, &worker.KojiFinalizeJobResult{})
+			finalizeInfo, err := workerServer.KojiFinalizeJobInfo(composeId, &worker.KojiFinalizeJobResult{})
 			require.NoError(t, err)
-			buildJobIDs := finalizeJobDeps[1:]
+			buildJobIDs := finalizeInfo.Deps[1:]
 			require.Len(t, buildJobIDs, 2)
 
 			// handle build jobs
@@ -540,37 +467,8 @@ func TestKojiCompose(t *testing.T) {
 	}
 }
 
-func TestKojiRequest(t *testing.T) {
-	server, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
-	handler := server.Handler("/api/image-builder-composer/v2")
-	defer cancel()
-
-	// Make request to an invalid route
-	req := httptest.NewRequest("GET", "/invalidroute", nil)
-
-	rec := httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-	resp := rec.Result()
-
-	var status api.Status
-	err := json.NewDecoder(resp.Body).Decode(&status)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusNotFound, resp.StatusCode)
-
-	// Trigger an error 400 code
-	req = httptest.NewRequest("GET", "/api/image-builder-composer/v2/composes/badid", nil)
-
-	rec = httptest.NewRecorder()
-	handler.ServeHTTP(rec, req)
-	resp = rec.Result()
-
-	err = json.NewDecoder(resp.Body).Decode(&status)
-	require.NoError(t, err)
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-}
-
 func TestKojiJobTypeValidation(t *testing.T) {
-	server, workers, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false)
+	server, workers, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	handler := server.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
@@ -635,7 +533,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 
 	t.Logf("%q job ID: %s", worker.JobTypeKojiInit, initID)
 	t.Logf("%q job ID: %s", worker.JobTypeKojiFinalize, finalizeID)
-	t.Logf("%q job IDs: %v", worker.JobTypeOSBuildKoji, buildJobIDs)
+	t.Logf("%q job IDs: %v", worker.JobTypeOSBuild, buildJobIDs)
 	for _, path := range []string{"", "/manifests", "/logs"} {
 		// should return OK - actual result should be tested elsewhere
 		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s%s", finalizeID, path), ``, http.StatusOK, "*")

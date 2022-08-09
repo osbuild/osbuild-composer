@@ -257,6 +257,24 @@ var azureRhuiImgType = imageType{
 		},
 		Modprobe: []*osbuild.ModprobeStageOptions{
 			{
+				Filename: "blacklist-amdgpu.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
+				},
+			},
+			{
+				Filename: "blacklist-intel-cstate.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("intel_cstate"),
+				},
+			},
+			{
+				Filename: "blacklist-floppy.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("floppy"),
+				},
+			},
+			{
 				Filename: "blacklist-nouveau.conf",
 				Commands: osbuild.ModprobeConfigCmdList{
 					osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
@@ -264,9 +282,9 @@ var azureRhuiImgType = imageType{
 				},
 			},
 			{
-				Filename: "blacklist-floppy.conf",
+				Filename: "blacklist-skylake-edac.conf",
 				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("floppy"),
+					osbuild.NewModprobeConfigCmdBlacklist("skx_edac"),
 				},
 			},
 		},

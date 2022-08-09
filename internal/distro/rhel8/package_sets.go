@@ -538,7 +538,6 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"langpacks-en",
 			"NetworkManager",
 			"NetworkManager-cloud-setup",
-			"qemu-guest-agent",
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",
@@ -573,6 +572,8 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"libertas-sd8787-firmware",
 			"libertas-usb8388-firmware",
 			"plymouth",
+			// RHBZ#2075815
+			"qemu-guest-agent",
 		},
 	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
@@ -681,8 +682,6 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			// for time synchronization
 			"chrony",
 			"timedatex",
-			// Detected Platform requirements by Anaconda
-			"qemu-guest-agent",
 			// EFI
 			"grub2-tools-efi",
 		},
@@ -722,6 +721,8 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"rt73usb-firmware",
 			"xorg-x11-drv-ati-firmware",
 			"zd1211-firmware",
+			// RHBZ#2075815
+			"qemu-guest-agent",
 		},
 	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
 }

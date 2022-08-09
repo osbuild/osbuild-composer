@@ -1,6 +1,9 @@
 package main
 
 import (
+	"math/rand"
+
+	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -36,36 +39,26 @@ func init() {
 // Return nil when you are done, or an error if something
 // went wrong. Your manifest will be streamed to osbuild
 // for building.
-func (img *MyContainer) InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner runner.Runner) error {
+func (img *MyContainer) InstantiateManifest(m *manifest.Manifest,
+	repos []rpmmd.RepoConfig,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
 	// Let's create a simple OCI container!
 
 	// configure a build pipeline
 	build := manifest.NewBuild(m, runner, repos)
+	build.Checkpoint()
 
 	// create a minimal non-bootable OS tree
 	os := manifest.NewOS(m, build, &platform.X86{}, repos)
+	os.ExtraBasePackages = []string{"@core"}
+	os.OSCustomizations.Language = "en_US.UTF-8"
+	os.OSCustomizations.Hostname = "my-host"
+	os.OSCustomizations.Timezone = "UTC"
 
 	// create an OCI container containing the OS tree created above
-	manifest.NewOCIContainer(m, build, os)
+	container := manifest.NewOCIContainer(m, build, os)
+	artifact := container.Export()
 
-	return nil
-}
-
-// GetExports returns a list of the pipelines osbuild should export.
-// These are the pipelines containing the artefact you want returned.
-//
-// TODO: Move this to be implemented in terms ofthe Manifest package.
-//       We should not need to know the pipeline names.
-func (img *MyContainer) GetExports() []string {
-	return []string{"container"}
-}
-
-// GetCheckpoints returns a list of the pipelines osbuild should
-// checkpoint. These are the pipelines likely to be reusable in
-// future runs.
-//
-// TODO: Move this to be implemented in terms ofthe Manifest package.
-//       We should not need to know the pipeline names.
-func (img *MyContainer) GetCheckpoints() []string {
-	return []string{"build"}
+	return artifact, nil
 }

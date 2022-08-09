@@ -17,12 +17,25 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
+
+type multiValue []string
+
+func (mv *multiValue) String() string {
+	return strings.Join(*mv, ", ")
+}
+
+func (mv *multiValue) Set(v string) error {
+	split := strings.Split(v, ",")
+	*mv = split
+	return nil
+}
 
 type repository struct {
 	Name           string   `json:"name"`
@@ -49,6 +62,7 @@ type crBlueprint struct {
 	Packages       []blueprint.Package       `json:"packages,omitempty"`
 	Modules        []blueprint.Package       `json:"modules,omitempty"`
 	Groups         []blueprint.Group         `json:"groups,omitempty"`
+	Containers     []blueprint.Container     `json:"containers,omitempty"`
 	Customizations *blueprint.Customizations `json:"customizations,omitempty"`
 	Distro         string                    `json:"distro,omitempty"`
 }
@@ -108,8 +122,14 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			Parent: cr.OSTree.Parent,
 		}
 	}
-	job := func(msgq chan string) error {
-		defer func() { msgq <- fmt.Sprintf("Finished job %s", filename) }()
+	job := func(msgq chan string) (err error) {
+		defer func() {
+			msg := fmt.Sprintf("Finished job %s", filename)
+			if err != nil {
+				msg += " [failed]"
+			}
+			msgq <- msg
+		}()
 		msgq <- fmt.Sprintf("Starting job %s", filename)
 		repos := convertRepos(cr.Repositories)
 		var bp blueprint.Blueprint
@@ -117,20 +137,29 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			bp = blueprint.Blueprint(*cr.Blueprint)
 		}
 
+		containerSpecs, err := resolveContainers(bp.Containers, archName)
+
+		if err != nil {
+			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
+		}
+
 		packageSpecs, err := depsolve(cacheDir, imgType, bp, options, repos, distribution, archName)
 		if err != nil {
-			return fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
+			err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
+			return
 		}
 		if packageSpecs == nil {
-			return fmt.Errorf("[%s] nil package specs", filename)
+			err = fmt.Errorf("[%s] nil package specs", filename)
+			return
 		}
 		if options.OSTree.Ref == "" {
 			// use default OSTreeRef for image type
 			options.OSTree.Ref = imgType.OSTreeRef()
 		}
-		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, seedArg)
+		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
 		if err != nil {
-			return fmt.Errorf("[%s] failed: %s", filename, err)
+			err = fmt.Errorf("[%s] failed: %s", filename, err)
+			return
 		}
 		request := composeRequest{
 			Distro:       distribution.Name(),
@@ -141,7 +170,8 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			Blueprint:    cr.Blueprint,
 			OSTree:       cr.OSTree,
 		}
-		return save(manifest, packageSpecs, request, path, filename)
+		err = save(manifest, packageSpecs, request, path, filename)
+		return
 	}
 	return job
 }
@@ -185,6 +215,16 @@ func readRepos() DistroArchRepoMap {
 		panic(err)
 	}
 	return darm
+}
+
+func resolveContainers(containers []blueprint.Container, archName string) ([]container.Spec, error) {
+	resolver := container.NewResolver(archName)
+
+	for _, c := range containers {
+		resolver.Add(c.Source, c.Name, c.TLSVerify)
+	}
+
+	return resolver.Finish()
 }
 
 func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
@@ -305,18 +345,24 @@ func mergeOverrides(base, overrides composeRequest) composeRequest {
 }
 
 func main() {
-	outputDirFlag := flag.String("output", "test/data/manifests.plain/", "manifest store directory")
-	nWorkersFlag := flag.Int("workers", 16, "number of workers to run concurrently")
-	cacheRootFlag := flag.String("cache", "/tmp/rpmmd", "rpm metadata cache directory")
-	flag.Parse()
+	// common args
+	var outputDir, cacheRoot string
+	var nWorkers int
+	flag.StringVar(&outputDir, "output", "test/data/manifests.plain/", "manifest store directory")
+	flag.IntVar(&nWorkers, "workers", 16, "number of workers to run concurrently")
+	flag.StringVar(&cacheRoot, "cache", "/tmp/rpmmd", "rpm metadata cache directory")
 
-	outputDir := *outputDirFlag
-	nWorkers := *nWorkersFlag
-	cacheRoot := *cacheRootFlag
+	// manifest selection args
+	var arches, distros, imgTypes multiValue
+	flag.Var(&arches, "arches", "comma-separated list of architectures")
+	flag.Var(&distros, "distros", "comma-separated list of distributions")
+	flag.Var(&imgTypes, "images", "comma-separated list of image types")
+
+	flag.Parse()
 
 	seedArg := int64(0)
 	darm := readRepos()
-	distros := distroregistry.NewDefault()
+	distroReg := distroregistry.NewDefault()
 	jobs := make([]manifestJob, 0)
 
 	requestMap := loadFormatRequestMap()
@@ -327,17 +373,33 @@ func main() {
 	}
 
 	fmt.Println("Collecting jobs")
-	for _, distroName := range distros.List() {
-		distribution := distros.GetDistro(distroName)
-		for _, archName := range distribution.ListArches() {
+	if len(distros) == 0 {
+		distros = distroReg.List()
+	}
+	for _, distroName := range distros {
+		distribution := distroReg.GetDistro(distroName)
+		if distribution == nil {
+			panic(fmt.Sprintf("invalid distro name %q\n", distroName))
+		}
+
+		distroArches := arches
+		if len(distroArches) == 0 {
+			distroArches = distribution.ListArches()
+		}
+		for _, archName := range distroArches {
 			arch, err := distribution.GetArch(archName)
 			if err != nil {
-				panic(fmt.Sprintf("distro %q lists arch %q but GetArch() failed: %s", distroName, archName, err.Error()))
+				panic(fmt.Sprintf("invalid arch name %q for distro %q: %s", archName, distroName, err.Error()))
 			}
-			for _, imgTypeName := range arch.ListImageTypes() {
+
+			daImgTypes := imgTypes
+			if len(daImgTypes) == 0 {
+				daImgTypes = arch.ListImageTypes()
+			}
+			for _, imgTypeName := range daImgTypes {
 				imgType, err := arch.GetImageType(imgTypeName)
 				if err != nil {
-					panic(fmt.Sprintf("distro %q (%q) lists image type %q but GetImageType() failed: %s\n", distroName, archName, imgTypeName, err.Error()))
+					panic(fmt.Sprintf("invalid image type %q for distro %q and arch %q: %s", imgTypeName, distroName, archName, err.Error()))
 				}
 
 				// get repositories
@@ -379,12 +441,13 @@ func main() {
 	for _, j := range jobs {
 		wq.submitJob(j)
 	}
+	fmt.Println("done")
 	errs := wq.wait()
 	exit := 0
 	if len(errs) > 0 {
-		fmt.Printf("Encountered %d errors:\n", len(errs))
+		fmt.Fprintf(os.Stderr, "Encountered %d errors:\n", len(errs))
 		for idx, err := range errs {
-			fmt.Printf("%3d: %s\n", idx, err.Error())
+			fmt.Fprintf(os.Stderr, "%3d: %s\n", idx, err.Error())
 		}
 		exit = 1
 	}

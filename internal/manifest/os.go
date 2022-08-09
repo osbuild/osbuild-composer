@@ -24,10 +24,13 @@ type OSTreeParent struct {
 	URL      string
 }
 
-// OS represents the filesystem tree of the target image. This roughly
-// correpsonds to the root filesystem once an instance of the image is running.
-type OS struct {
-	Base
+// OSCustomizations encapsulates all configuration applied to the base
+// operating independently of where and how it is integrated and what
+// workload it is running.
+// TODO: move out kernel/bootloader/cloud-init/... to other
+//       abstractions, this should ideally only contain things that
+//       can always be applied.
+type OSCustomizations struct {
 	// Packages to install in addition to the ones required by the
 	// pipeline.
 	ExtraBasePackages []string
@@ -38,14 +41,6 @@ type OS struct {
 	ExcludeBasePackages []string
 	// Additional repos to install the base packages from.
 	ExtraBaseRepos []rpmmd.RepoConfig
-	// Environment the system will run in
-	Environment environment.Environment
-	// Workload to install on top of the base system
-	Workload workload.Workload
-	// OSTree configuration, if nil the tree cannot be in an OSTree commit
-	OSTree *OSTree
-	// Partition table, if nil the tree cannot be put on a partioned disk
-	PartitionTable *disk.PartitionTable
 	// KernelName indicates that a kernel is installed, and names the kernel
 	// package.
 	KernelName string
@@ -75,23 +70,40 @@ type OS struct {
 	Users    []blueprint.UserCustomization
 	Firewall *blueprint.FirewallCustomization
 	// TODO: drop osbuild types from the API
-	Grub2Config   *osbuild.GRUB2Config
-	Sysconfig     []*osbuild.SysconfigStageOptions
-	SystemdLogind []*osbuild.SystemdLogindStageOptions
-	CloudInit     []*osbuild.CloudInitStageOptions
-	Modprobe      []*osbuild.ModprobeStageOptions
-	DracutConf    []*osbuild.DracutConfStageOptions
-	SystemdUnit   []*osbuild.SystemdUnitStageOptions
-	Authselect    *osbuild.AuthselectStageOptions
-	SELinuxConfig *osbuild.SELinuxConfigStageOptions
-	Tuned         *osbuild.TunedStageOptions
-	Tmpfilesd     []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf []*osbuild.PamLimitsConfStageOptions
-	Sysctld       []*osbuild.SysctldStageOptions
-	DNFConfig     []*osbuild.DNFConfigStageOptions
-	SshdConfig    *osbuild.SshdConfigStageOptions
-	AuthConfig    *osbuild.AuthconfigStageOptions
-	PwQuality     *osbuild.PwqualityConfStageOptions
+	Grub2Config    *osbuild.GRUB2Config
+	Sysconfig      []*osbuild.SysconfigStageOptions
+	SystemdLogind  []*osbuild.SystemdLogindStageOptions
+	CloudInit      []*osbuild.CloudInitStageOptions
+	Modprobe       []*osbuild.ModprobeStageOptions
+	DracutConf     []*osbuild.DracutConfStageOptions
+	SystemdUnit    []*osbuild.SystemdUnitStageOptions
+	Authselect     *osbuild.AuthselectStageOptions
+	SELinuxConfig  *osbuild.SELinuxConfigStageOptions
+	Tuned          *osbuild.TunedStageOptions
+	Tmpfilesd      []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf  []*osbuild.PamLimitsConfStageOptions
+	Sysctld        []*osbuild.SysctldStageOptions
+	DNFConfig      []*osbuild.DNFConfigStageOptions
+	SshdConfig     *osbuild.SshdConfigStageOptions
+	AuthConfig     *osbuild.AuthconfigStageOptions
+	PwQuality      *osbuild.PwqualityConfStageOptions
+	OpenSCAPConfig *osbuild.OscapRemediationStageOptions
+}
+
+// OS represents the filesystem tree of the target image. This roughly
+// corresponds to the root filesystem once an instance of the image is running.
+type OS struct {
+	Base
+	// Customizations to apply to the base OS
+	OSCustomizations
+	// Environment the system will run in
+	Environment environment.Environment
+	// Workload to install on top of the base system
+	Workload workload.Workload
+	// OSTree configuration, if nil the tree cannot be in an OSTree commit
+	OSTree *OSTree
+	// Partition table, if nil the tree cannot be put on a partioned disk
+	PartitionTable *disk.PartitionTable
 
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
@@ -113,10 +125,6 @@ func NewOS(m *Manifest,
 		Base:     NewBase(m, "os", buildPipeline),
 		repos:    repos,
 		platform: platform,
-		Language: "C.UTF-8",
-		Hostname: "localhost.localdomain",
-		Timezone: "UTC",
-		SElinux:  "targeted",
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -156,10 +164,13 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 	}
 
 	if p.Workload != nil {
-		chain = append(chain, rpmmd.PackageSet{
-			Include:      p.Workload.GetPackages(),
-			Repositories: append(p.repos, p.Workload.GetRepos()...),
-		})
+		workloadPackages := p.Workload.GetPackages()
+		if len(workloadPackages) > 0 {
+			chain = append(chain, rpmmd.PackageSet{
+				Include:      workloadPackages,
+				Repositories: append(p.repos, p.Workload.GetRepos()...),
+			})
+		}
 	}
 
 	return chain
@@ -174,6 +185,9 @@ func (p *OS) getBuildPackages() []string {
 	if p.SElinux != "" {
 		packages = append(packages, "policycoreutils")
 		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	}
+	if p.OpenSCAPConfig != nil {
+		packages = append(packages, "openscap-scanner", "scap-security-guide")
 	}
 	return packages
 }
@@ -406,6 +420,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 
 		pipeline.AddStage(bootloader)
+	}
+
+	if p.OpenSCAPConfig != nil {
+		pipeline.AddStage(osbuild.NewOscapRemediationStage(p.OpenSCAPConfig))
 	}
 
 	if p.SElinux != "" {

@@ -34,8 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 434,
-      "iteration": 1657885396463,
+      "iteration": 1659445869463,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -142,7 +141,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild.*\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_total_jobs{type=~\"osbuild.*\", status!=\"4xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -245,7 +244,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0))\n- \n(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild.*\", status!=\"4xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) OR on() vector(0))\n- \n(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild.*\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "success/sec",
@@ -257,7 +256,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[$interval])) OR on() vector(0))",
+              "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"osbuild.*\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) OR on() vector(0))",
               "hide": false,
               "interval": "",
               "legendFormat": "errors/sec",
@@ -346,7 +345,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
+              "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild.*\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_total_jobs{type=~\"osbuild.*\", status!=\"4xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -446,7 +445,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $stability_slo)\n/ \n(\n  (\n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[28d]))\n    / \n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
+              "expr": "28 * 24 * (1 - $stability_slo)\n/ \n(\n  (\n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild.*\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[28d]))\n    / \n    sum(rate(image_builder_worker_total_jobs{type=~\"osbuild.*\", status!=\"4xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -549,7 +548,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      (\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status=\"5xx\", tenant=~\"$tenant\"}[28d]))\n        /\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild:.*\", status!=\"4xx\", tenant=~\"$tenant\"}[28d]))\n      ) OR on() vector(0) # set fallback for empty query result\n    ) \n  ) \n)\n/ \n(1 - $stability_slo)",
+              "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      (\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild.*\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[28d]))\n        /\n        sum(increase(image_builder_worker_total_jobs{type=~\"osbuild.*\", status!=\"4xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[28d]))\n      ) OR on() vector(0) # set fallback for empty query result\n    ) \n  ) \n)\n/ \n(1 - $stability_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -662,7 +661,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -800,7 +799,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
@@ -813,7 +812,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p95",
@@ -826,7 +825,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "refId": "A"
@@ -919,7 +918,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval]))/sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$interval]))",
+              "expr": "1 - (\n    sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval]))\n    /\n    sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[$interval]))\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -967,7 +966,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red"
+                    "color": "red",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -1017,7 +1017,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) \n/ \n( \n  1.001 - ( \n    (\n      sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$__range]))\n      /\n      sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[$__range]))\n    )  OR on() vector(1) # set fallback incase the above query result is empty\n  )\n)",
+              "expr": "28 * 24 * (1 - $latency_slo) \n/ \n( \n  1.001 - ( \n    (\n      sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__range]))\n      /\n      sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__range]))\n    )  OR on() vector(1) # set fallback incase the above query result is empty\n  )\n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -1119,7 +1119,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild:.*\", tenant=~\"$tenant\"}[28d]))\n      /\n      sum(increase(image_builder_worker_job_duration_seconds_count{type=~\"osbuild:.*\", tenant=~\"$tenant\"}[28d])) \n    ) OR on() vector(1)  \n  ) - $latency_slo\n)\n/\n(1 - $latency_slo)",
+              "expr": "1 - (\n  (\n    (\n      sum(increase(image_builder_worker_job_duration_seconds_bucket{le=\"1536\",type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[28d]))\n      /\n      sum(increase(image_builder_worker_job_duration_seconds_count{type=~\"osbuild.*\", tenant=~\"$tenant\", arch=~\"$arch\"}[28d])) \n    ) OR on() vector(1)  \n  ) - $latency_slo\n)\n/\n(1 - $latency_slo)",
               "instant": false,
               "interval": "",
               "intervalFactor": 10,
@@ -2667,10 +2667,10 @@ data:
             "current": {
               "selected": true,
               "text": [
-                "org-15885990"
+                "All"
               ],
               "value": [
-                "org-15885990"
+                "$__all"
               ]
             },
             "hide": 0,
@@ -2679,32 +2679,89 @@ data:
             "name": "tenant",
             "options": [
               {
-                "selected": false,
+                "selected": true,
                 "text": "All",
                 "value": "$__all"
               },
               {
                 "selected": false,
-                "text": "org-15842261",
+                "text": "crc stage",
                 "value": "org-15842261"
               },
               {
                 "selected": false,
-                "text": "org-15877963",
+                "text": "fedora stage",
                 "value": "org-15877963"
               },
               {
-                "selected": true,
-                "text": "org-15885990",
+                "selected": false,
+                "text": "brew stage",
+                "value": "org-16133643"
+              },
+              {
+                "selected": false,
+                "text": "crc production",
                 "value": "org-15885990"
               },
               {
                 "selected": false,
-                "text": "org-16057323",
+                "text": "fedora production",
                 "value": "org-16057323"
+              },
+              {
+                "selected": false,
+                "text": "brew production",
+                "value": "org-16135456"
               }
             ],
             "query": "org-15842261, org-15877963, org-15885990, org-16057323",
+            "queryValue": "",
+            "skipUrlSync": false,
+            "type": "custom"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "hide": 0,
+            "includeAll": true,
+            "multi": true,
+            "name": "arch",
+            "options": [
+              {
+                "selected": true,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "x86_64",
+                "value": "x86_64"
+              },
+              {
+                "selected": false,
+                "text": "aarch64",
+                "value": "aarch64"
+              },
+              {
+                "selected": false,
+                "text": "ppc64le",
+                "value": "ppc64le"
+              },
+              {
+                "selected": false,
+                "text": "s390x",
+                "value": "s390x"
+              }
+            ],
+            "query": "x86_64, aarch64, ppc64le, s390x",
             "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
@@ -2743,6 +2800,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 7,
+      "version": 9,
       "weekStart": ""
     }

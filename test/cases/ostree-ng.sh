@@ -2,10 +2,11 @@
 set -euo pipefail
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Colorful output.
 function greenprint {
@@ -74,7 +75,6 @@ EOF
 # Set up variables.
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-ostree-test-${TEST_UUID}"
-BIOS_GUEST_ADDRESS=192.168.100.50
 UEFI_GUEST_ADDRESS=192.168.100.51
 PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
@@ -90,7 +90,7 @@ CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-installer
 INSTALLER_FILENAME=installer.iso
-ANSIBLE_USER_FOR_BIOS="installeruser"
+ANSIBLE_USER_FOR_UEFI="installeruser"
 OSTREE_OSNAME=rhel
 
 # Set up temporary files.
@@ -113,22 +113,35 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="fedora/35/${ARCH}/iot"
         OSTREE_OSNAME=fedora
         OS_VARIANT="fedora35"
+        EMBEDED_CONTAINER="false"
+        ;;
+    "fedora-36")
+        CONTAINER_TYPE=fedora-iot-container
+        INSTALLER_TYPE=fedora-iot-installer
+        OSTREE_REF="fedora/36/${ARCH}/iot"
+        OSTREE_OSNAME=fedora
+        OS_VARIANT="fedora36"
+        EMBEDED_CONTAINER="false"
         ;;
     "rhel-8.7")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
+        EMBEDED_CONTAINER="true"
         ;;
     "rhel-9.1")
         OSTREE_REF="test/rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
+        EMBEDED_CONTAINER="true"
         ;;
     "centos-8")
         OSTREE_REF="test/centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
+        EMBEDED_CONTAINER="true"
         ;;
     "centos-9")
         OSTREE_REF="test/centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
+        EMBEDED_CONTAINER="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -138,8 +151,8 @@ esac
 # modify existing kickstart by prepending and appending commands
 function modksiso {
     sudo dnf install -y lorax  # for mkksiso
-    isomount=$(mktemp -d)
-    kspath=$(mktemp -d)
+    isomount=$(mktemp -d --tmpdir=/var/tmp/)
+    kspath=$(mktemp -d --tmpdir=/var/tmp/)
 
     iso="$1"
     newiso="$2"
@@ -182,7 +195,11 @@ ostree remote add --no-gpg-verify --no-sign-verify ${OSTREE_OSNAME} ${PROD_REPO_
 EOFKS
 
     echo "Writing new ISO"
-    sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+    if [ "${ID}" != "fedora" ] && nvrGreaterOrEqual "lorax" "34.9.18"; then
+        sudo TMPDIR="/var/tmp/" mkksiso -c "console=ttyS0,115200" --ks "${newksfile}" "${iso}" "${newiso}"
+    else
+        sudo TMPDIR="/var/tmp/" mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+    fi
 
     echo "==== NEW KICKSTART FILE ===="
     cat "${newksfile}"
@@ -382,6 +399,14 @@ home = "/home/admin/"
 groups = ["wheel"]
 EOF
 
+# RHEL 8.7 and 9.1 later support embeded container in commit
+if [[ "${EMBEDED_CONTAINER}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[containers]]
+source = "quay.io/fedora/fedora:latest"
+EOF
+fi
+
 greenprint "📄 container blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -490,79 +515,8 @@ sudo restorecon -Rv /var/lib/libvirt/images/
 
 # Create qcow2 file for virt install.
 greenprint "🖥 Create qcow2 file for virt install"
-LIBVIRT_BIOS_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-bios.qcow2
 LIBVIRT_UEFI_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-uefi.qcow2
-sudo qemu-img create -f qcow2 "${LIBVIRT_BIOS_IMAGE_PATH}" 20G
 sudo qemu-img create -f qcow2 "${LIBVIRT_UEFI_IMAGE_PATH}" 20G
-
-##################################################
-##
-## Install and test Edge image on BIOS VM
-##
-##################################################
-# Install ostree image via anaconda.
-greenprint "💿 Install ostree image via installer(ISO) on BIOS VM"
-sudo virt-install  --name="${IMAGE_KEY}-bios" \
-                   --disk path="${LIBVIRT_BIOS_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --noreboot
-
-# Start VM.
-greenprint "📟 Start BIOS VM"
-sudo virsh start "${IMAGE_KEY}-bios"
-
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
-
-# Check image installation result
-check_result
-
-# Get ostree commit value.
-greenprint "🕹 Get ostree install commit value"
-INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
-
-# Run Edge test on BIOS VM
-# Add instance IP address into /etc/ansible/hosts
-# Run BIOS VM test with installeruser added by edge-installer bp as ansible user
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${BIOS_GUEST_ADDRESS}
-
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=${ANSIBLE_USER_FOR_BIOS}
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-EOF
-
-# Test IoT/Edge OS
-greenprint "📼 Run Edge tests on BIOS VM"
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-check_result
-
-# Clean up BIOS VM
-greenprint "🧹 Clean up BIOS VM"
-if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
-    sudo virsh destroy "${IMAGE_KEY}-bios"
-fi
-sudo virsh undefine "${IMAGE_KEY}-bios"
-sudo rm -f "$LIBVIRT_BIOS_IMAGE_PATH"
 
 ##################################################
 ##
@@ -600,6 +554,28 @@ for LOOP_COUNTER in $(seq 0 30); do
     sleep 10
 done
 
+# Get ostree commit value.
+greenprint "🕹 Get ostree install commit value"
+INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Run Edge test on UEFI VM
+# Add instance IP address into /etc/ansible/hosts
+# Run UEFI VM test with installeruser added by edge-installer bp as ansible user
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${UEFI_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=${ANSIBLE_USER_FOR_UEFI}
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+EOF
+
+# Test IoT/Edge OS
+greenprint "📼 Run Edge tests on UEFI VM"
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${INSTALL_HASH}" -e embeded_container="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+
 # Check image installation result
 check_result
 
@@ -635,6 +611,14 @@ if [[ "$ID" != "fedora" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
 name = "kernel-rt"
+EOF
+fi
+
+# RHEL 8.7 and 9.1 later support embeded container in commit
+if [[ "${EMBEDED_CONTAINER}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[containers]]
+source = "quay.io/fedora/fedora:latest"
 EOF
 fi
 
@@ -726,13 +710,13 @@ ${UEFI_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_user=${ANSIBLE_USER_FOR_BIOS}
+ansible_user=${ANSIBLE_USER_FOR_UEFI}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up

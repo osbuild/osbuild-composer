@@ -9,7 +9,7 @@
 
 %global goipath         github.com/osbuild/osbuild-composer
 
-Version:        58
+Version:        59
 
 %gometa
 
@@ -201,11 +201,11 @@ install -m 0755 -vp tools/gen-ssh.sh                               %{buildroot}%
 install -m 0755 -vp tools/image-info                               %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/run-koji-container.sh                    %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/koji-compose.py                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
-install -m 0755 -vp tools/koji-compose-v2.py                       %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/libvirt_test.sh                          %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/s3_test.sh                               %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/generic_s3_test.sh                       %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/generic_s3_https_test.sh                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
+install -m 0755 -vp tools/run-mock-auth-servers.sh                 %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/set-env-variables.sh                     %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vp tools/test-case-generators/generate-test-cases %{buildroot}%{_libexecdir}/osbuild-composer-test/
 install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/tests/osbuild-composer
@@ -309,10 +309,10 @@ The core osbuild-composer binary. This is suitable both for spawning in containe
 Summary:    The worker for osbuild-composer
 Requires:   systemd
 Requires:   qemu-img
-Requires:   osbuild >= 55
-Requires:   osbuild-ostree >= 55
-Requires:   osbuild-lvm2 >= 55
-Requires:   osbuild-luks2 >= 55
+Requires:   osbuild >= 62
+Requires:   osbuild-ostree >= 62
+Requires:   osbuild-lvm2 >= 62
+Requires:   osbuild-luks2 >= 62
 Requires:   %{name}-dnf-json = %{version}-%{release}
 
 %description worker
@@ -402,7 +402,6 @@ Requires:   dnf-plugins-core
 Requires:   skopeo
 Requires:   make
 Requires:   python3-pip
-Requires:   fdo-admin-cli
 %if 0%{?fedora}
 # koji and ansible are not in RHEL repositories. Depending on them breaks RHEL
 # gating (see OSCI-1541). The test script must enable EPEL and install those

@@ -109,11 +109,16 @@ function checkUploadStatusOptions() {
   test "$IMAGE_NAME" = "$AZURE_IMAGE_NAME"
 }
 
-# Verify image in Azure
-function verify() {
+# Log into Azure
+function cloud_login() {
   set +x
   $AZURE_CMD login --service-principal --username "${V2_AZURE_CLIENT_ID}" --password "${V2_AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
   set -x
+}
+
+# Verify image in Azure
+function verify() {
+  cloud_login
 
   # verify that the image exists and tag it
   $AZURE_CMD image show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}"

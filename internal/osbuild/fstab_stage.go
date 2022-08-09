@@ -1,6 +1,7 @@
 package osbuild
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -64,10 +65,14 @@ func NewFSTabStageOptions(pt *disk.PartitionTable) *FSTabStageOptions {
 		return nil
 	}
 
+	key := func(fs *FSTabEntry) string {
+		return fmt.Sprintf("%d%s", fs.PassNo, fs.Path)
+	}
+
 	_ = pt.ForEachMountable(genOption) // genOption always returns nil
 	// sort the entries by PassNo to maintain backward compatibility
 	sort.Slice(options.FileSystems, func(i, j int) bool {
-		return options.FileSystems[i].PassNo < options.FileSystems[j].PassNo
+		return key(options.FileSystems[i]) < key(options.FileSystems[j])
 	})
 	return &options
 }

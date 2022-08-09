@@ -23,7 +23,6 @@
     },
     "blueprint": {}
   },
-  "no-image-info": true,
   "manifest": {
     "version": "2",
     "pipelines": [
@@ -19710,5 +19709,6 @@
         "checksum": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

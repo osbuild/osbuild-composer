@@ -22,17 +22,14 @@
       },
       {
         "name": "rhel-eng",
-        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530",
-        "package-sets": [
-          "build"
-        ]
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530"
       },
       {
         "name": "azure-rhui-7",
         "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20220530"
       }
     ],
-    "filename": "disk.vhd",
+    "filename": "disk.vhd.xz",
     "blueprint": {}
   },
   "manifest": {
@@ -2385,6 +2382,42 @@
           {
             "type": "org.osbuild.modprobe",
             "options": {
+              "filename": "blacklist-amdgpu.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "amdgpu"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.modprobe",
+            "options": {
+              "filename": "blacklist-intel-cstate.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "intel_cstate"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.modprobe",
+            "options": {
+              "filename": "blacklist-floppy.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "floppy"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.modprobe",
+            "options": {
               "filename": "blacklist-nouveau.conf",
               "commands": [
                 {
@@ -2401,11 +2434,11 @@
           {
             "type": "org.osbuild.modprobe",
             "options": {
-              "filename": "blacklist-floppy.conf",
+              "filename": "blacklist-skylake-edac.conf",
               "commands": [
                 {
                   "command": "blacklist",
-                  "modulename": "floppy"
+                  "modulename": "skx_edac"
                 }
               ]
             }
@@ -2504,9 +2537,9 @@
             "options": {
               "filesystems": [
                 {
-                  "uuid": "f83b8e88-3bbf-457a-ab99-c5b252c7429c",
+                  "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
                   "vfs_type": "xfs",
-                  "path": "/var",
+                  "path": "/",
                   "options": "defaults"
                 },
                 {
@@ -2522,12 +2555,6 @@
                   "options": "defaults"
                 },
                 {
-                  "uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
-                  "vfs_type": "xfs",
-                  "path": "/",
-                  "options": "defaults"
-                },
-                {
                   "uuid": "a178892e-e285-4ce1-9114-55780875d64e",
                   "vfs_type": "xfs",
                   "path": "/tmp",
@@ -2537,6 +2564,12 @@
                   "uuid": "e2d3d0d0-de6b-48f9-b44c-e85ff044c6b1",
                   "vfs_type": "xfs",
                   "path": "/usr",
+                  "options": "defaults"
+                },
+                {
+                  "uuid": "f83b8e88-3bbf-457a-ab99-c5b252c7429c",
+                  "vfs_type": "xfs",
+                  "path": "/var",
                   "options": "defaults"
                 },
                 {
@@ -11390,5 +11423,6 @@
         "checksum": "sha256:000bd49aea30ee3534e6cde11188afa4b567711b13acbcf531e5542fc7b2aefe"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

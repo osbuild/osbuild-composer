@@ -3,10 +3,9 @@ package distro
 import (
 	"encoding/json"
 	"fmt"
-	"path"
-	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -122,7 +121,7 @@ type ImageType interface {
 	// to build an image, given output format with all packages and customizations
 	// specified in the given blueprint. The packageSpecSets must be labelled in
 	// the same way as the originating PackageSets.
-	Manifest(b *blueprint.Customizations, options ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, seed int64) (Manifest, error)
+	Manifest(b *blueprint.Customizations, options ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (Manifest, error)
 }
 
 // The ImageOptions specify options for a specific image build
@@ -258,23 +257,4 @@ func MakePackageSetChains(t ImageType, packageSets map[string]rpmmd.PackageSet, 
 	}
 
 	return chainedSets
-}
-
-func IsMountpointAllowed(mountpoint string, allowlist []string) bool {
-	for _, allowed := range allowlist {
-		match, _ := path.Match(allowed, mountpoint)
-		if match {
-			return true
-		}
-		// ensure that only clean mountpoints
-		// are valid
-		if strings.Contains(mountpoint, "//") {
-			return false
-		}
-		match = strings.HasPrefix(mountpoint, allowed+"/")
-		if allowed != "/" && match {
-			return true
-		}
-	}
-	return false
 }

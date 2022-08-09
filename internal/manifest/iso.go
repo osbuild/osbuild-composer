@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
@@ -65,4 +66,10 @@ func xorrisofsStageOptions(filename, isolabel string, isolinux bool) *osbuild.Xo
 	}
 
 	return options
+}
+
+func (p *ISO) Export() *artifact.Artifact {
+	p.Base.export = true
+	mimeType := "application/x-iso9660-image"
+	return artifact.New(p.Name(), p.Filename, &mimeType)
 }

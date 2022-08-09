@@ -173,6 +173,19 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	if request.Customizations != nil && request.Customizations.Containers != nil {
+		for _, c := range *request.Customizations.Containers {
+			bc := blueprint.Container{
+				Source:    c.Source,
+				TLSVerify: c.TlsVerify,
+			}
+			if c.Name != nil {
+				bc.Name = *c.Name
+			}
+			bp.Containers = append(bp.Containers, bc)
+		}
+	}
+
 	if request.Customizations != nil && request.Customizations.Filesystem != nil {
 		var fsCustomizations []blueprint.FilesystemCustomization
 		for _, f := range *request.Customizations.Filesystem {
@@ -299,10 +312,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				return HTTPError(ErrorJSONUnMarshallingError)
 			}
 		} else {
-			// TODO: support uploads also for koji
-			if request.Koji != nil {
-				return HTTPError(ErrorJSONUnMarshallingError)
-			}
 			/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 			switch ir.ImageType {
 			case ImageTypesAws:
@@ -348,8 +357,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				fallthrough
 			case ImageTypesEdgeInstaller:
 				fallthrough
-			case ImageTypesEdgeContainer:
-				fallthrough
 			case ImageTypesEdgeCommit:
 				var awsS3UploadOptions AWSS3UploadOptions
 				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
@@ -370,7 +377,34 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
+			case ImageTypesEdgeContainer:
+				var containerUploadOptions ContainerUploadOptions
+				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+				if err != nil {
+					return HTTPError(ErrorJSONMarshallingError)
+				}
+				err = json.Unmarshal(jsonUploadOptions, &containerUploadOptions)
+				if err != nil {
+					return HTTPError(ErrorJSONUnMarshallingError)
+				}
+
+				var name = request.Distribution
+				var tag = uuid.New().String()
+				if containerUploadOptions.Name != nil {
+					name = *containerUploadOptions.Name
+					if containerUploadOptions.Tag != nil {
+						tag = *containerUploadOptions.Tag
+					}
+				}
+
+				t := target.NewContainerTarget(&target.ContainerTargetOptions{})
+				t.ImageName = fmt.Sprintf("%s:%s", name, tag)
+				t.OsbuildArtifact.ExportFilename = imageType.Filename()
+
+				irTarget = t
 			case ImageTypesGcp:
+				fallthrough
+			case ImageTypesGcpRhui:
 				var gcpUploadOptions GCPUploadOptions
 				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
 				if err != nil {
@@ -485,6 +519,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "ec2-sap"
 	case ImageTypesGcp:
 		return "gce"
+	case ImageTypesGcpRhui:
+		return "gce-rhui"
 	case ImageTypesAzure:
 		return "vhd"
 	case ImageTypesAzureRhui:
@@ -512,6 +548,61 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 	return ""
 }
 
+func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
+	var us *UploadStatus
+	var uploadType UploadTypes
+	var uploadOptions interface{}
+
+	switch t.Name {
+	case target.TargetNameAWS:
+		uploadType = UploadTypesAws
+		awsOptions := t.Options.(*target.AWSTargetResultOptions)
+		uploadOptions = AWSEC2UploadStatus{
+			Ami:    awsOptions.Ami,
+			Region: awsOptions.Region,
+		}
+	case target.TargetNameAWSS3:
+		uploadType = UploadTypesAwsS3
+		awsOptions := t.Options.(*target.AWSS3TargetResultOptions)
+		uploadOptions = AWSS3UploadStatus{
+			Url: awsOptions.URL,
+		}
+	case target.TargetNameGCP:
+		uploadType = UploadTypesGcp
+		gcpOptions := t.Options.(*target.GCPTargetResultOptions)
+		uploadOptions = GCPUploadStatus{
+			ImageName: gcpOptions.ImageName,
+			ProjectId: gcpOptions.ProjectID,
+		}
+	case target.TargetNameAzureImage:
+		uploadType = UploadTypesAzure
+		gcpOptions := t.Options.(*target.AzureImageTargetResultOptions)
+		uploadOptions = AzureUploadStatus{
+			ImageName: gcpOptions.ImageName,
+		}
+	case target.TargetNameContainer:
+		uploadType = UploadTypesContainer
+		containerOptions := t.Options.(*target.ContainerTargetResultOptions)
+		uploadOptions = ContainerUploadStatus{
+			Url:    containerOptions.URL,
+			Digest: containerOptions.Digest,
+		}
+
+	default:
+		return nil, fmt.Errorf("unknown upload target: %s", t.Name)
+	}
+
+	us = &UploadStatus{
+		// TODO: determine upload status based on the target results, not job results
+		// Don't set the status here for now, but let it be set by the caller.
+		//Status:  UploadStatusValue(result.UploadStatus),
+		Type:    uploadType,
+		Options: uploadOptions,
+	}
+
+	return us, nil
+}
+
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 	return h.server.EnsureJobChannel(h.getComposeStatusImpl)(ctx, id)
 }
@@ -529,7 +620,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 
 	if jobType == worker.JobTypeOSBuild {
 		var result worker.OSBuildJobResult
-		status, _, err := h.server.workers.OSBuildJobStatus(jobId, &result)
+		jobInfo, err := h.server.workers.OSBuildJobInfo(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -545,47 +636,13 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			if len(result.TargetResults) != 1 {
 				return HTTPError(ErrorSeveralUploadTargets)
 			}
-			tr := *result.TargetResults[0]
-
-			var uploadType UploadTypes
-			var uploadOptions interface{}
-
-			switch tr.Name {
-			case target.TargetNameAWS:
-				uploadType = UploadTypesAws
-				awsOptions := tr.Options.(*target.AWSTargetResultOptions)
-				uploadOptions = AWSEC2UploadStatus{
-					Ami:    awsOptions.Ami,
-					Region: awsOptions.Region,
-				}
-			case target.TargetNameAWSS3:
-				uploadType = UploadTypesAwsS3
-				awsOptions := tr.Options.(*target.AWSS3TargetResultOptions)
-				uploadOptions = AWSS3UploadStatus{
-					Url: awsOptions.URL,
-				}
-			case target.TargetNameGCP:
-				uploadType = UploadTypesGcp
-				gcpOptions := tr.Options.(*target.GCPTargetResultOptions)
-				uploadOptions = GCPUploadStatus{
-					ImageName: gcpOptions.ImageName,
-					ProjectId: gcpOptions.ProjectID,
-				}
-			case target.TargetNameAzureImage:
-				uploadType = UploadTypesAzure
-				gcpOptions := tr.Options.(*target.AzureImageTargetResultOptions)
-				uploadOptions = AzureUploadStatus{
-					ImageName: gcpOptions.ImageName,
-				}
-			default:
+			tr := result.TargetResults[0]
+			us, err = targetResultToUploadStatus(tr)
+			if err != nil {
 				return HTTPError(ErrorUnknownUploadTarget)
 			}
-
-			us = &UploadStatus{
-				Status:  UploadStatusValue(result.UploadStatus),
-				Type:    uploadType,
-				Options: uploadOptions,
-			}
+			// TODO: determine upload status based on the target results, not job results
+			us.Status = UploadStatusValue(result.UploadStatus)
 		}
 
 		return ctx.JSON(http.StatusOK, ComposeStatus{
@@ -594,43 +651,63 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 				Id:   jobId.String(),
 				Kind: "ComposeStatus",
 			},
-			Status: composeStatusFromOSBuildJobStatus(status, &result),
+			Status: composeStatusFromOSBuildJobStatus(jobInfo.JobStatus, &result),
 			ImageStatus: ImageStatus{
-				Status:       imageStatusFromOSBuildJobStatus(status, &result),
+				Status:       imageStatusFromOSBuildJobStatus(jobInfo.JobStatus, &result),
 				Error:        composeStatusErrorFromJobError(jobError),
 				UploadStatus: us,
 			},
 		})
 	} else if jobType == worker.JobTypeKojiFinalize {
 		var result worker.KojiFinalizeJobResult
-		finalizeStatus, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &result)
+		finalizeInfo, err := h.server.workers.KojiFinalizeJobInfo(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
-		if len(deps) < 2 {
+		if len(finalizeInfo.Deps) < 2 {
 			return HTTPError(ErrorUnexpectedNumberOfImageBuilds)
 		}
 		var initResult worker.KojiInitJobResult
-		_, _, err = h.server.workers.KojiInitJobStatus(deps[0], &initResult)
+		_, err = h.server.workers.KojiInitJobInfo(finalizeInfo.Deps[0], &initResult)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
 		var buildJobResults []worker.OSBuildJobResult
 		var buildJobStatuses []ImageStatus
-		for i := 1; i < len(deps); i++ {
+		for i := 1; i < len(finalizeInfo.Deps); i++ {
 			var buildJobResult worker.OSBuildJobResult
-			buildJobStatus, _, err := h.server.workers.OSBuildJobStatus(deps[i], &buildJobResult)
+			buildInfo, err := h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &buildJobResult)
 			if err != nil {
 				return HTTPError(ErrorMalformedOSBuildJobResult)
 			}
-			buildJobError, err := h.server.workers.JobDependencyChainErrors(deps[i])
+			buildJobError, err := h.server.workers.JobDependencyChainErrors(finalizeInfo.Deps[i])
 			if err != nil {
 				return HTTPError(ErrorGettingBuildDependencyStatus)
 			}
+
+			var us *UploadStatus
+			// Only a single upload target in addition to Koji is allowed.
+			// Koji target is always added to osbuild jobs for Koji compose
+			// by the enqueueKojiCompose() function.
+			if len(buildJobResult.TargetResults) > 2 {
+				return HTTPError(ErrorSeveralUploadTargets)
+			}
+			for _, tr := range buildJobResult.TargetResults {
+				if tr.Name != target.TargetNameKoji {
+					us, err = targetResultToUploadStatus(tr)
+					if err != nil {
+						return HTTPError(ErrorUnknownUploadTarget)
+					}
+					// TODO: determine upload status based on the target results, not job results
+					us.Status = UploadStatusValue(buildJobResult.UploadStatus)
+				}
+			}
+
 			buildJobResults = append(buildJobResults, buildJobResult)
 			buildJobStatuses = append(buildJobStatuses, ImageStatus{
-				Status: imageStatusFromKojiJobStatus(buildJobStatus, &initResult, &buildJobResult),
-				Error:  composeStatusErrorFromJobError(buildJobError),
+				Status:       imageStatusFromKojiJobStatus(buildInfo.JobStatus, &initResult, &buildJobResult),
+				Error:        composeStatusErrorFromJobError(buildJobError),
+				UploadStatus: us,
 			})
 		}
 		response := ComposeStatus{
@@ -639,7 +716,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 				Id:   jobId.String(),
 				Kind: "ComposeStatus",
 			},
-			Status:        composeStatusFromKojiJobStatus(finalizeStatus, &initResult, buildJobResults, &result),
+			Status:        composeStatusFromKojiJobStatus(finalizeInfo.JobStatus, &initResult, buildJobResults, &result),
 			ImageStatus:   buildJobStatuses[0], // backwards compatibility
 			ImageStatuses: &buildJobStatuses,
 			KojiStatus:    &KojiStatus{},
@@ -658,11 +735,14 @@ func composeStatusErrorFromJobError(jobError *clienterrors.Error) *ComposeStatus
 	if jobError == nil {
 		return nil
 	}
-	return &ComposeStatusError{
-		Id:      int(jobError.ID),
-		Reason:  jobError.Reason,
-		Details: &jobError.Details,
+	err := &ComposeStatusError{
+		Id:     int(jobError.ID),
+		Reason: jobError.Reason,
 	}
+	if jobError.Details != nil {
+		err.Details = &jobError.Details
+	}
+	return err
 }
 
 func imageStatusFromOSBuildJobStatus(js *worker.JobStatus, result *worker.OSBuildJobResult) ImageStatusValue {
@@ -783,7 +863,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 	}
 
 	var result worker.OSBuildJobResult
-	status, _, err := h.server.workers.OSBuildJobStatus(jobId, &result)
+	buildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &result)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
@@ -793,7 +873,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
 
-	if status.Finished.IsZero() {
+	if buildInfo.JobStatus.Finished.IsZero() {
 		// job still running: empty response
 		return ctx.JSON(200, ComposeMetadata{
 			ObjectReference: ObjectReference{
@@ -804,7 +884,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 		})
 	}
 
-	if status.Canceled || !result.Success {
+	if buildInfo.JobStatus.Canceled || !result.Success {
 		// job canceled or failed, empty response
 		return ctx.JSON(200, ComposeMetadata{
 			ObjectReference: ObjectReference{
@@ -906,36 +986,27 @@ func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
 	switch jobType {
 	case worker.JobTypeKojiFinalize:
 		var finalizeResult worker.KojiFinalizeJobResult
-		_, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
+		finalizeInfo, err := h.server.workers.KojiFinalizeJobInfo(jobId, &finalizeResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
 
 		var initResult worker.KojiInitJobResult
-		_, _, err = h.server.workers.KojiInitJobStatus(deps[0], &initResult)
+		_, err = h.server.workers.KojiInitJobInfo(finalizeInfo.Deps[0], &initResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
 
-		for i := 1; i < len(deps); i++ {
-			buildJobType, err := h.server.workers.JobType(deps[i])
+		for i := 1; i < len(finalizeInfo.Deps); i++ {
+			buildJobType, err := h.server.workers.JobType(finalizeInfo.Deps[i])
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
 
 			switch buildJobType {
-			// TODO: remove eventually. Kept for backward compatibility
-			case worker.JobTypeOSBuildKoji:
-				var buildResult worker.OSBuildKojiJobResult
-				_, _, err = h.server.workers.OSBuildKojiJobStatus(deps[i], &buildResult)
-				if err != nil {
-					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-				}
-				buildResultBlobs = append(buildResultBlobs, buildResult)
-
 			case worker.JobTypeOSBuild:
 				var buildResult worker.OSBuildJobResult
-				_, _, err = h.server.workers.OSBuildJobStatus(deps[i], &buildResult)
+				_, err = h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &buildResult)
 				if err != nil {
 					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 				}
@@ -954,7 +1025,7 @@ func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
 
 	case worker.JobTypeOSBuild:
 		var buildResult worker.OSBuildJobResult
-		_, _, err = h.server.workers.OSBuildJobStatus(jobId, &buildResult)
+		_, err = h.server.workers.OSBuildJobInfo(jobId, &buildResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
@@ -980,7 +1051,7 @@ func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.
 			return nil, err
 		}
 		if depType == worker.JobTypeManifestIDOnly {
-			_, _, err = w.ManifestJobStatus(deps[i], &manifestResult)
+			_, err = w.ManifestJobInfo(deps[i], &manifestResult)
 			if err != nil {
 				return nil, err
 			}
@@ -1012,13 +1083,13 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 	switch jobType {
 	case worker.JobTypeKojiFinalize:
 		var finalizeResult worker.KojiFinalizeJobResult
-		_, deps, err := h.server.workers.KojiFinalizeJobStatus(jobId, &finalizeResult)
+		finalizeInfo, err := h.server.workers.KojiFinalizeJobInfo(jobId, &finalizeResult)
 		if err != nil {
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
 
-		for i := 1; i < len(deps); i++ {
-			buildJobType, err := h.server.workers.JobType(deps[i])
+		for i := 1; i < len(finalizeInfo.Deps); i++ {
+			buildJobType, err := h.server.workers.JobType(finalizeInfo.Deps[i])
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
@@ -1026,31 +1097,9 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 			var manifest distro.Manifest
 
 			switch buildJobType {
-			// TODO: remove eventually. Kept for backward compatibility
-			case worker.JobTypeOSBuildKoji:
-				var buildJob worker.OSBuildKojiJob
-				err = h.server.workers.OSBuildKojiJob(deps[i], &buildJob)
-				if err != nil {
-					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-				}
-
-				if len(buildJob.Manifest) != 0 {
-					manifest = buildJob.Manifest
-				} else {
-					_, buildDeps, err := h.server.workers.OSBuildKojiJobStatus(deps[i], &worker.OSBuildKojiJobResult{})
-					if err != nil {
-						return HTTPErrorWithInternal(ErrorComposeNotFound, err)
-					}
-					manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildDeps)
-					if err != nil {
-						return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
-					}
-					manifest = manifestResult.Manifest
-				}
-
 			case worker.JobTypeOSBuild:
 				var buildJob worker.OSBuildJob
-				err = h.server.workers.OSBuildJob(deps[i], &buildJob)
+				err = h.server.workers.OSBuildJob(finalizeInfo.Deps[i], &buildJob)
 				if err != nil {
 					return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 				}
@@ -1058,11 +1107,11 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 				if len(buildJob.Manifest) != 0 {
 					manifest = buildJob.Manifest
 				} else {
-					_, buildDeps, err := h.server.workers.OSBuildJobStatus(deps[i], &worker.OSBuildJobResult{})
+					buildInfo, err := h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &worker.OSBuildJobResult{})
 					if err != nil {
 						return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 					}
-					manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildDeps)
+					manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildInfo.Deps)
 					if err != nil {
 						return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
 					}
@@ -1087,11 +1136,11 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 		if len(buildJob.Manifest) != 0 {
 			manifest = buildJob.Manifest
 		} else {
-			_, deps, err := h.server.workers.OSBuildJobStatus(jobId, &worker.OSBuildJobResult{})
+			buildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &worker.OSBuildJobResult{})
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
-			manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, deps)
+			manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildInfo.Deps)
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
 			}

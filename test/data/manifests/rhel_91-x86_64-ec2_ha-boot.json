@@ -2378,14 +2378,6 @@
                     }
                   },
                   {
-                    "id": "sha256:54c30b33c21d48d125e132bac9cb41e2d6231fbcd6d5e358c7796c552cc11ac5",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:cd5b20a42eca11f206109f1ca6d6121e8c43585dda6c0a7546e96fd070051a20",
                     "options": {
                       "metadata": {
@@ -5826,14 +5818,6 @@
                     }
                   },
                   {
-                    "id": "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:5a43c616c3f06fbba7d45ea4cdd87ca58cc46102908e089a14604de5d55a0393",
                     "options": {
                       "metadata": {
@@ -6636,15 +6620,15 @@
             "options": {
               "filesystems": [
                 {
-                  "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-                  "vfs_type": "xfs",
-                  "path": "/boot",
-                  "options": "defaults"
-                },
-                {
                   "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
                   "vfs_type": "xfs",
                   "path": "/",
+                  "options": "defaults"
+                },
+                {
+                  "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+                  "vfs_type": "xfs",
+                  "path": "/boot",
                   "options": "defaults"
                 },
                 {
@@ -7451,9 +7435,6 @@
           "sha256:548978c62b24b7adda4ebcc5db878e22b18f50248bc45aa4a209b86eddd86948": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/polkit-pkla-compat-0.1-21.el9.x86_64.rpm"
           },
-          "sha256:54c30b33c21d48d125e132bac9cb41e2d6231fbcd6d5e358c7796c552cc11ac5": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/dracut-config-rescue-055-30.git20220216.el9.x86_64.rpm"
-          },
           "sha256:54c8ff0d9acb9043c68780e2566ee1a83bf881b236ae7131c5ecaf7b40665c9e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/libbasicobjects-0.1.1-51.el9.x86_64.rpm"
           },
@@ -7612,9 +7593,6 @@
           },
           "sha256:6afc8c020a9b22c187edeb118a96627e849297a3f237022025088af8fb42eb1e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/policycoreutils-3.3-6.el9_0.x86_64.rpm"
-          },
-          "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/qemu-guest-agent-6.2.0-11.el9_0.1.x86_64.rpm"
           },
           "sha256:6c1cfe8c3a9f5cb43b285d8a78e5eb75ac5609fc021eb94e03b68f0f0d89697d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-ha-n9.1-20220324/Packages/pacemaker-cli-2.1.2-4.el9.x86_64.rpm"
@@ -11501,16 +11479,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/dracut-config-generic-055-30.git20220216.el9.x86_64.rpm",
         "checksum": "sha256:b20143ec0439f888980055d084eb222d933b58c4bef87dc1e20e0e5b1b8be13a",
-        "check_gpg": true
-      },
-      {
-        "name": "dracut-config-rescue",
-        "epoch": 0,
-        "version": "055",
-        "release": "30.git20220216.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20220324/Packages/dracut-config-rescue-055-30.git20220216.el9.x86_64.rpm",
-        "checksum": "sha256:54c30b33c21d48d125e132bac9cb41e2d6231fbcd6d5e358c7796c552cc11ac5",
         "check_gpg": true
       },
       {
@@ -15814,16 +15782,6 @@
         "check_gpg": true
       },
       {
-        "name": "qemu-guest-agent",
-        "epoch": 17,
-        "version": "6.2.0",
-        "release": "11.el9_0.1",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20220324/Packages/qemu-guest-agent-6.2.0-11.el9_0.1.x86_64.rpm",
-        "checksum": "sha256:6b9f6e054cbdc420ce86df00b60596d07c10bc35dc4c31c0458917819fc55cf0",
-        "check_gpg": true
-      },
-      {
         "name": "redhat-logos",
         "epoch": 0,
         "version": "90.4",
@@ -16574,5 +16532,6 @@
         "check_gpg": true
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

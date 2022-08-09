@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	errors_package "errors"
 	"fmt"
 	"io"
@@ -32,6 +33,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
@@ -357,16 +359,16 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 
 	// All jobs are "osbuild" jobs.
 	var result worker.OSBuildJobResult
-	jobStatus, _, err := api.workers.OSBuildJobStatus(jobId, &result)
+	jobInfo, err := api.workers.OSBuildJobInfo(jobId, &result)
 	if err != nil {
 		panic(err)
 	}
 
 	return &composeStatus{
-		State:    composeStateFromJobStatus(jobStatus, &result),
-		Queued:   jobStatus.Queued,
-		Started:  jobStatus.Started,
-		Finished: jobStatus.Finished,
+		State:    composeStateFromJobStatus(jobInfo.JobStatus, &result),
+		Queued:   jobInfo.JobStatus.Queued,
+		Started:  jobInfo.JobStatus.Started,
+		Finished: jobInfo.JobStatus.Finished,
 		Result:   result.OSBuildOutput,
 	}
 }
@@ -2163,6 +2165,69 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, options di
 	return depsolvedSets, nil
 }
 
+func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType distro.ImageType) ([]container.Spec, error) {
+
+	specs := make([]container.Spec, len(bp.Containers))
+
+	// shortcut
+	if len(bp.Containers) == 0 {
+		return specs, nil
+	}
+
+	job := worker.ContainerResolveJob{
+		Arch:  api.archName,
+		Specs: make([]worker.ContainerSpec, len(bp.Containers)),
+	}
+
+	for i, c := range bp.Containers {
+		job.Specs[i] = worker.ContainerSpec{
+			Source:    c.Source,
+			Name:      c.Name,
+			TLSVerify: c.TLSVerify,
+		}
+	}
+
+	jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
+
+	if err != nil {
+		return specs, err
+	}
+
+	var result worker.ContainerResolveJobResult
+
+	for {
+		jobInfo, err := api.workers.ContainerResolveJobInfo(jobId, &result)
+
+		if err != nil {
+			return specs, err
+		}
+
+		if result.JobError != nil {
+			return specs, errors.New(result.JobError.Reason)
+		} else if jobInfo.JobStatus.Canceled {
+			return specs, fmt.Errorf("Failed to resolve containers: job cancelled")
+		} else if !jobInfo.JobStatus.Finished.IsZero() {
+			break
+		}
+
+		time.Sleep(time.Millisecond * 250)
+	}
+
+	if len(result.Specs) != len(specs) {
+		panic("programming error: input / output length don't match")
+	}
+
+	for i, s := range result.Specs {
+		specs[i].Source = s.Source
+		specs[i].Digest = s.Digest
+		specs[i].LocalName = s.Name
+		specs[i].TLSVerify = s.TLSVerify
+		specs[i].ImageID = s.ImageID
+	}
+
+	return specs, nil
+}
+
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
 // pushing it into the channel for waiting builds.
 func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -2333,10 +2398,21 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	containerSpecs, err := api.resolveContainersForImageType(*bp, imageType)
+	if err != nil {
+		errors := responseError{
+			ID:  "ContainerResolveError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
 	manifest, err := imageType.Manifest(bp.Customizations,
 		options,
 		imageRepos,
 		packageSets,
+		containerSpecs,
 		seed)
 	if err != nil {
 		errors := responseError{

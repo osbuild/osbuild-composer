@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Get OS data.
 source /etc/os-release
@@ -25,8 +25,9 @@ function get_build_info() {
 # Start firewalld
 sudo systemctl enable --now firewalld
 
-# Start fdo-aio and test it
-greenprint "Start fdo-aio"
+# Install fdo packages (This cannot be done in the spec file because Fedora repo does not have this package yet)
+greenprint "Install and start fdo-aio service"
+sudo dnf install -y fdo-admin-cli
 sudo systemctl enable --now fdo-aio
 
 # Start libvirtd and test it.
@@ -91,7 +92,6 @@ PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
-# fdo-aio service 
 FDO_SERVER_ADDRESS=192.168.100.1
 DIUN_PUB_KEY_HASH=sha256:$(openssl x509 -fingerprint -sha256 -noout -in /etc/fdo/aio/keys/diun_cert.pem | cut -d"=" -f2 | sed 's/://g')
 DIUN_PUB_KEY_ROOT_CERTS=$(cat /etc/fdo/aio/keys/diun_cert.pem)
@@ -295,7 +295,7 @@ sudo podman rmi -f -a
 greenprint "🔧 Prepare stage repo network"
 sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create --driver=bridge --subnet=192.168.200.0/24 --gateway=192.168.200.254 edge
 
-# Wait for fdo server to be running
+# Check if fdo-aio service is ready
 until [ "$(curl -X POST http://${FDO_SERVER_ADDRESS}:8080/ping)" == "pong" ]; do
     sleep 1;
 done;

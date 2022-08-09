@@ -31,3 +31,10 @@ function installClient() {
   fi
   $GOVC_CMD version
 }
+
+# Log into AWS
+# AWS does not need explicit login, but define this function for the sake of
+# consistency to allow calling scripts to not care about cloud differences
+function cloud_login() {
+  true
+}

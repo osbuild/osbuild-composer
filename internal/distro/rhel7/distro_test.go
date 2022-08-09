@@ -178,7 +178,7 @@ func TestDistro_ManifestError(t *testing.T) {
 				Size: imgType.Size(0),
 			}
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, testPackageSpecSets, 0)
+			_, err := imgType.Manifest(bp.Customizations, imgOpts, nil, testPackageSpecSets, nil, 0)
 			assert.NoError(t, err)
 		}
 	}
@@ -275,7 +275,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
-					Mountpoint: "/boot",
+					Mountpoint: "/etc",
 				},
 			},
 		},
@@ -284,8 +284,8 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 		arch, _ := r7distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
-			assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/boot\"]")
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
+			assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/etc\"]")
 		}
 	}
 }
@@ -307,7 +307,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
 			assert.NoError(t, err)
 		}
 	}
@@ -334,7 +334,7 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
 			assert.NoError(t, err)
 		}
 	}
@@ -369,7 +369,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
 			assert.NoError(t, err)
 		}
 	}
@@ -399,7 +399,7 @@ func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
 		arch, _ := r7distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
 			assert.EqualError(t, err, "The following custom mountpoints are not supported [\"//\" \"/var//\" \"/var//log/audit/\"]")
 		}
 	}
@@ -425,7 +425,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 		arch, _ := r7distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, 0)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
 			assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/variable\" \"/variable/log/audit\"]")
 		}
 	}
@@ -448,7 +448,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, 0)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
 			assert.NoError(t, err)
 		}
 	}

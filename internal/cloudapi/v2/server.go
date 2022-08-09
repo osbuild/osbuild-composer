@@ -19,6 +19,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
@@ -112,7 +113,33 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobID, channel)
+	dependencies := []uuid.UUID{depsolveJobID}
+	var containerResolveJob uuid.UUID
+	if len(bp.Containers) > 0 {
+		job := worker.ContainerResolveJob{
+			Arch:  ir.arch.Name(),
+			Specs: make([]worker.ContainerSpec, len(bp.Containers)),
+		}
+
+		for i, c := range bp.Containers {
+			job.Specs[i] = worker.ContainerSpec{
+				Source:    c.Source,
+				Name:      c.Name,
+				TLSVerify: c.TLSVerify,
+			}
+		}
+
+		jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
+
+		if err != nil {
+			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+		}
+
+		containerResolveJob = jobId
+		dependencies = append(dependencies, jobId)
+	}
+
+	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -130,7 +157,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -164,7 +191,33 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
 
-		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobID, channel)
+		var containerResolveJob uuid.UUID
+		dependencies := []uuid.UUID{depsolveJobID}
+		if len(bp.Containers) > 0 {
+			job := worker.ContainerResolveJob{
+				Arch:  ir.arch.Name(),
+				Specs: make([]worker.ContainerSpec, len(bp.Containers)),
+			}
+
+			for i, c := range bp.Containers {
+				job.Specs[i] = worker.ContainerSpec{
+					Source:    c.Source,
+					Name:      c.Name,
+					TLSVerify: c.TLSVerify,
+				}
+			}
+
+			jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
+
+			if err != nil {
+				return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+			}
+
+			containerResolveJob = jobId
+			dependencies = append(dependencies, jobId)
+		}
+
+		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -185,12 +238,18 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		kojiTarget.OsbuildArtifact.ExportName = ir.imageType.Exports()[0]
 		kojiTarget.ImageName = kojiFilename
 
+		targets := []*target.Target{kojiTarget}
+		// add any cloud upload target if defined
+		if ir.target != nil {
+			targets = append(targets, ir.target)
+		}
+
 		buildID, err := s.workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{
 			PipelineNames: &worker.PipelineNames{
 				Build:   ir.imageType.BuildPipelines(),
 				Payload: ir.imageType.PayloadPipelines(),
 			},
-			Targets:            []*target.Target{kojiTarget},
+			Targets:            targets,
 			ManifestDynArgsIdx: common.IntToPtr(1),
 		}, []uuid.UUID{initID, manifestJobID}, channel)
 		if err != nil {
@@ -202,7 +261,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
@@ -223,7 +282,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
-func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID uuid.UUID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Customizations) {
+func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID, containerResolveJobID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Customizations) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*5)
 	defer cancel()
 
@@ -274,7 +333,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 
 	if len(dynArgs) == 0 {
 		reason := "No dynamic arguments"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, reason)
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, reason, nil)
 		return
 	}
 
@@ -282,35 +341,64 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 	err = json.Unmarshal(dynArgs[0], &depsolveResults)
 	if err != nil {
 		reason := "Error parsing dynamic arguments"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, reason)
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, reason, nil)
 		return
 	}
 
-	_, _, err = workers.DepsolveJobStatus(depsolveJobID, &depsolveResults)
+	_, err = workers.DepsolveJobInfo(depsolveJobID, &depsolveResults)
 	if err != nil {
 		reason := "Error reading depsolve status"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason)
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason, nil)
 		return
 	}
 
 	if jobErr := depsolveResults.JobError; jobErr != nil {
 		if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingErrors {
-			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested")
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested", nil)
 			return
 		}
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency")
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency", nil)
 		return
 	}
 
 	if len(depsolveResults.PackageSpecs) == 0 {
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs")
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs", nil)
 		return
 	}
 
-	manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, seed)
+	var containerSpecs []container.Spec
+	if len(dynArgs) == 2 {
+		// Container resolve job
+		var result worker.ContainerResolveJobResult
+
+		_, err := workers.ContainerResolveJobInfo(containerResolveJobID, &result)
+
+		if err != nil {
+			reason := "Error reading container resolve job status"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason, nil)
+			return
+		}
+
+		if jobErr := result.JobError; jobErr != nil {
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorContainerDependency, "Error in container resolve job dependency", nil)
+			return
+		}
+
+		containerSpecs = make([]container.Spec, len(result.Specs))
+
+		for i, s := range result.Specs {
+			containerSpecs[i].Source = s.Source
+			containerSpecs[i].Digest = s.Digest
+			containerSpecs[i].LocalName = s.Name
+			containerSpecs[i].TLSVerify = s.TLSVerify
+			containerSpecs[i].ImageID = s.ImageID
+		}
+	}
+
+	manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, containerSpecs, seed)
 	if err != nil {
 		reason := "Error generating manifest"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason)
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)
 		return
 	}
 

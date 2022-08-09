@@ -21,21 +21,23 @@ type PartitionTable struct {
 
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, lvmify bool, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
-	for _, mnt := range mountpoints {
-		size := newPT.AlignUp(clampFSSize(mnt.Mountpoint, mnt.MinSize))
-		if path := entityPath(newPT, mnt.Mountpoint); len(path) != 0 {
-			resizeEntityBranch(path, size)
-		} else {
-			if lvmify {
-				err := newPT.ensureLVM()
-				if err != nil {
-					return nil, err
-				}
-			}
-			if err := newPT.createFilesystem(mnt.Mountpoint, size); err != nil {
-				return nil, err
-			}
+
+	// first pass: enlarge existing mountpoints and collect new ones
+	newMountpoints, _ := newPT.applyCustomization(mountpoints, false)
+
+	// if there is any new mountpoint and lvmify is enabled, ensure we have LVM layout
+	if lvmify && len(newMountpoints) > 0 {
+		err := newPT.ensureLVM()
+		if err != nil {
+			return nil, err
 		}
+	}
+
+	// second pass: deal with new mountpoints and newly created ones, after switching to
+	// the LVM layout, if requested, which might introduce new mount points, i.e. `/boot`
+	_, err := newPT.applyCustomization(newMountpoints, true)
+	if err != nil {
+		return nil, err
 	}
 
 	// TODO: make these overrideable for each image type
@@ -312,6 +314,31 @@ func (pt *PartitionTable) HeaderSize() uint64 {
 	return header
 }
 
+// Apply filesystem filesystem customization to the partiton table. If create is false
+// will only apply customizations to existing partitions and return unhandled, i.e new
+// ones. An error can only occur if create is set. Conversely, it will only return non
+// empty list of new mountpoints if create is false.
+// Does not relayout the table, i.e. a call to relayout might be needed.
+func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemCustomization, create bool) ([]blueprint.FilesystemCustomization, error) {
+
+	newMountpoints := []blueprint.FilesystemCustomization{}
+
+	for _, mnt := range mountpoints {
+		size := pt.AlignUp(clampFSSize(mnt.Mountpoint, mnt.MinSize))
+		if path := entityPath(pt, mnt.Mountpoint); len(path) != 0 {
+			resizeEntityBranch(path, size)
+		} else {
+			if !create {
+				newMountpoints = append(newMountpoints, mnt)
+			} else if err := pt.createFilesystem(mnt.Mountpoint, size); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return newMountpoints, nil
+}
+
 // Dynamically calculate and update the start point for each of the existing
 // partitions. Adjusts the overall size of image to either the supplied
 // value in `size` or to the sum of all partitions if that is lager.
@@ -467,7 +494,13 @@ func (pt *PartitionTable) FindMountable(mountpoint string) Mountable {
 
 func clampFSSize(mountpoint string, size uint64) uint64 {
 	// set a minimum size of 1GB for all mountpoints
+	// with the exception for '/boot' (= 500 MB)
 	var minSize uint64 = 1073741824
+
+	if mountpoint == "/boot" {
+		minSize = 524288000
+	}
+
 	if minSize > size {
 		return minSize
 	}

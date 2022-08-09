@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 type workerQueue struct {
@@ -86,7 +85,6 @@ func (wq *workerQueue) startWorker(idx uint32) {
 			}
 		}
 	}()
-	wq.msgQueue <- fmt.Sprintf("Worker %d started", idx)
 }
 
 func (wq *workerQueue) startMessagePrinter() {
@@ -94,22 +92,13 @@ func (wq *workerQueue) startMessagePrinter() {
 	go func() {
 		defer wq.utilWG.Done()
 		var msglen int
-		for {
-			select {
-			case msg, open := <-wq.msgQueue:
-				// clear previous line (avoids leftover trailing characters from progress)
-				fmt.Printf(strings.Repeat(" ", msglen) + "\r")
-				if !open {
-					fmt.Println()
-					return
-				}
-				fmt.Println(msg)
-			default:
-				msglen, _ = fmt.Printf(" == Jobs == Queue: %4d  Active: %4d  Total: %4d\r", len(wq.jobQueue), wq.activeWorkers, wq.njobs)
-				// sleep a bit when printing progress to avoid constantly pushing out the same progress message
-				time.Sleep(10 * time.Millisecond)
-			}
+		for msg := range wq.msgQueue {
+			// clear previous line (avoids leftover trailing characters from progress)
+			fmt.Printf(strings.Repeat(" ", msglen) + "\r")
+			fmt.Println(msg)
+			msglen, _ = fmt.Printf(" == Jobs == Queue: %4d  Active: %4d  Total: %4d\r", len(wq.jobQueue), wq.activeWorkers, wq.njobs)
 		}
+		fmt.Println()
 	}()
 }
 

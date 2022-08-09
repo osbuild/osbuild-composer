@@ -2,18 +2,20 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
-func RunPlayground(img ImageType, d distro.Distro, arch distro.Arch, repos map[string][]rpmmd.RepoConfig, state_dir string) {
+func RunPlayground(img image.ImageKind, d distro.Distro, arch distro.Arch, repos map[string][]rpmmd.RepoConfig, state_dir string) {
 
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), path.Join(state_dir, "rpmmd"))
 	solver.SetDNFJSONPath(findDnfJsonBin())
@@ -23,8 +25,11 @@ func RunPlayground(img ImageType, d distro.Distro, arch distro.Arch, repos map[s
 
 	manifest := manifest.New()
 
+	/* #nosec G404 */
+	rnd := rand.New(rand.NewSource(0))
+
 	// TODO: query distro for runner
-	err := img.InstantiateManifest(&manifest, repos[arch.Name()], &runner.Fedora{Version: 36})
+	artifact, err := img.InstantiateManifest(&manifest, repos[arch.Name()], &runner.Fedora{Version: 36}, rnd)
 	if err != nil {
 		panic("InstantiateManifest() failed: " + err.Error())
 	}
@@ -50,8 +55,10 @@ func RunPlayground(img ImageType, d distro.Distro, arch distro.Arch, repos map[s
 
 	store := path.Join(state_dir, "osbuild-store")
 
-	_, err = osbuild.RunOSBuild(bytes, store, "./", img.GetExports(), []string{"build"}, false, os.Stdout)
+	_, err = osbuild.RunOSBuild(bytes, store, "./", manifest.GetExports(), manifest.GetCheckpoints(), nil, false, os.Stdout)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not run osbuild: %s", err.Error())
 	}
+
+	fmt.Fprintf(os.Stderr, "built ./%s/%s (%s)\n", artifact.Export(), artifact.Filename(), artifact.MIMEType())
 }

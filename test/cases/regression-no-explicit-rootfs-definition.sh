@@ -17,7 +17,7 @@ esac
 set -xeuo pipefail
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 
 function get_build_info() {

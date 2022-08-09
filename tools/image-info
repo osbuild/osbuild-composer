@@ -161,6 +161,43 @@ def subprocess_check_output(argv, parse_fn=None):
     return parse_fn(output) if parse_fn else output
 
 
+def read_container_images(tree):
+    """
+    Read installed containers
+
+    Returns: a dictionary listing the container images in the format
+    like `podman images --format json` but with less information.
+
+    NB: The parsing is done "manually" since running `podman` in the
+    chroot does not work.
+    """
+
+    images = []
+    images_index = os.path.join("overlay-images", "images.json")
+
+    for d in ("/var/lib/containers/storage", ):
+        path = os.path.join(tree, d.lstrip("/"), images_index)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except FileNotFoundError:
+            continue
+
+        for image in data:
+            img = {
+                "Id": image["id"],
+                "Digest": image["digest"],
+                "Names": image["names"],
+            }
+            created = image.get("created")
+            if created:
+                img["Created"] = created
+
+            images.append(img)
+
+    return images
+
+
 def read_image_format(device):
     """
     Read image format.
@@ -2273,6 +2310,10 @@ def append_filesystem(report, tree, *, is_ostree=False):
         cloud_init_configs = read_cloud_init_configs(tree)
         if cloud_init_configs:
             report["cloud-init"] = cloud_init_configs
+
+        container_images = read_container_images(tree)
+        if container_images:
+            report["container-images"] = container_images
 
         dnf_conf = read_dnf_conf(tree)
         if dnf_conf:

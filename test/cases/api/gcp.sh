@@ -101,14 +101,18 @@ function checkUploadStatusOptions() {
   test "$PROJECT_ID" = "$GCP_PROJECT"
 }
 
-
-# Verify image in Compute Engine on GCP
-function verify() {
+# Log into GCP
+function cloud_login() {
   # Authenticate
   $GCP_CMD auth activate-service-account --key-file "$GOOGLE_APPLICATION_CREDENTIALS"
   # Extract and set the default project to be used for commands
   GCP_PROJECT=$(jq -r '.project_id' "$GOOGLE_APPLICATION_CREDENTIALS")
   $GCP_CMD config set project "$GCP_PROJECT"
+}
+
+# Verify image in Compute Engine on GCP
+function verify() {
+  cloud_login
 
   # Add "gitlab-ci-test" label to the image
   $GCP_CMD compute images add-labels "$GCP_IMAGE_NAME" --labels=gitlab-ci-test=true

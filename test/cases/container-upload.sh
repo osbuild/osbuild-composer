@@ -21,7 +21,7 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 # Provision the software under test.
 #
 
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 TEMPDIR=$(mktemp -d)

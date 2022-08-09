@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -27,10 +28,6 @@ const (
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
 )
-
-var mountpointAllowList = []string{
-	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
-}
 
 // RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
@@ -395,9 +392,10 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecSets map[string][]rpmmd.PackageSpec,
+	containers []container.Spec,
 	seed int64) (distro.Manifest, error) {
 
-	if err := t.checkOptions(customizations, options); err != nil {
+	if err := t.checkOptions(customizations, options, containers); err != nil {
 		return distro.Manifest{}, err
 	}
 
@@ -421,25 +419,27 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(allPackageSpecs, nil, nil),
+			Sources:   osbuild.GenSources(allPackageSpecs, nil, nil, containers),
 		},
 	)
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
-func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
+func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
+
+	if len(containers) > 0 {
+		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
+	}
 
 	mountpoints := customizations.GetFilesystems()
 
-	invalidMountpoints := []string{}
-	for _, m := range mountpoints {
-		if !distro.IsMountpointAllowed(m.Mountpoint, mountpointAllowList) {
-			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
-		}
+	err := disk.CheckMountpoints(mountpoints, disk.MountpointPolicies)
+	if err != nil {
+		return err
 	}
 
-	if len(invalidMountpoints) > 0 {
-		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	if osc := customizations.GetOpenSCAP(); osc != nil {
+		return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.arch.distro.osVersion))
 	}
 
 	return nil

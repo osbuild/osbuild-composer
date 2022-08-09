@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	// Maintenance queries
-	sqlDeleteJob = `
+	sqlDeleteJobs = `
                 DELETE FROM jobs
                 WHERE id IN (
                     SELECT id FROM jobs
@@ -19,6 +18,9 @@ const (
                     ORDER BY expires_at
                     LIMIT 1000
                 )`
+	sqlExpiredJobCount = `
+                    SELECT COUNT(*) FROM jobs
+                    WHERE expires_at < NOW()`
 	sqlVacuumAnalyze = `
                 VACUUM ANALYZE`
 	sqlVacuumStats = `
@@ -48,12 +50,21 @@ func (d *db) Close() {
 	d.Conn.Close(context.Background())
 }
 
-func (d *db) DeleteJob() (int64, error) {
-	tag, err := d.Conn.Exec(context.Background(), sqlDeleteJob)
+func (d *db) DeleteJobs() (int64, error) {
+	tag, err := d.Conn.Exec(context.Background(), sqlDeleteJobs)
 	if err != nil {
-		return tag.RowsAffected(), fmt.Errorf("Error deleting results from jobs: %v", err)
+		return tag.RowsAffected(), fmt.Errorf("Error deleting jobs: %v", err)
 	}
 	return tag.RowsAffected(), nil
+}
+
+func (d *db) ExpiredJobCount() (int64, error) {
+	var count int64
+	err := d.Conn.QueryRow(context.Background(), sqlExpiredJobCount).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (d *db) VacuumAnalyze() error {
@@ -124,10 +135,24 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 	var rows int64
 
 	for {
-		rows, err = db.DeleteJob()
+		if dryRun {
+			rows, err = db.ExpiredJobCount()
+			if err != nil {
+				logrus.Warningf("Error querying expired jobs: %v", err)
+			}
+			logrus.Infof("Dryrun, expired job count: %d", rows)
+			break
+		}
 
+		rows, err = db.DeleteJobs()
 		if err != nil {
-			logrus.Errorf("Error deleting results for jobs: %v, %d rows affected", rows, err)
+			logrus.Errorf("Error deleting jobs: %v, %d rows affected", rows, err)
+			return err
+		}
+
+		err = db.VacuumAnalyze()
+		if err != nil {
+			logrus.Errorf("Error running vacuum analyze: %v", err)
 			return err
 		}
 
@@ -136,11 +161,6 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 		}
 
 		logrus.Infof("Deleted results for %d", rows)
-	}
-
-	err = db.VacuumAnalyze()
-	if err != nil {
-		logrus.Errorf("Error running vacuum analyze: %v", err)
 	}
 
 	err = db.LogVacuumStats()

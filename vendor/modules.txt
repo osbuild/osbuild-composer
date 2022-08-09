@@ -436,6 +436,7 @@ github.com/modern-go/reflect2
 ## explicit
 github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.3-0.20211202193544-a5463b7f9c84
+## explicit
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runc v1.1.1

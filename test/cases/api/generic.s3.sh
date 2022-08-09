@@ -89,14 +89,14 @@ region = "${MINIO_REGION}"
 bucket = "${MINIO_BUCKET}"
 EOF
 
-  sudo systemctl restart "osbuild-worker@1"
+  sudo systemctl restart "osbuild-remote-worker@localhost:8700"
 }
 
 # Unset AWS_REGION, region == "" in the request the worker will look for the generic s3
 # implementation
 function createReqFile() {
     case ${IMAGE_TYPE} in
-        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER")
+        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER")
             AWS_REGION='' createReqFileEdge
             ;;
         "$IMAGE_TYPE_VSPHERE")

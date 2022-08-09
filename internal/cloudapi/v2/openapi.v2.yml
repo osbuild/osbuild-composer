@@ -511,6 +511,7 @@ components:
             - $ref: '#/components/schemas/AWSS3UploadStatus'
             - $ref: '#/components/schemas/GCPUploadStatus'
             - $ref: '#/components/schemas/AzureUploadStatus'
+            - $ref: '#/components/schemas/ContainerUploadStatus'
     UploadStatusValue:
       type: string
       enum: ['success', 'failure', 'pending', 'running']
@@ -521,6 +522,7 @@ components:
         - aws.s3
         - gcp
         - azure
+        - container
     AWSEC2UploadStatus:
       type: object
       required:
@@ -566,7 +568,22 @@ components:
         build_id:
           type: integer
           example: 42
-
+    ContainerUploadStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - url
+        - digest
+      properties:
+        url:
+          type: string
+          example: 'quay.io/myaccount/osbuild:latest'
+          description: |
+            FQDN of the uploaded image
+        digest:
+          type: string
+          description: |
+            Digest of the manifest of the uploaded container on the registry
     ComposeMetadata:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -655,6 +672,7 @@ components:
         - edge-container
         - edge-installer
         - gcp
+        - gcp-rhui
         - guest-image
         - image-installer
         - vsphere
@@ -699,6 +717,7 @@ components:
       - $ref: '#/components/schemas/AWSS3UploadOptions'
       - $ref: '#/components/schemas/GCPUploadOptions'
       - $ref: '#/components/schemas/AzureUploadOptions'
+      - $ref: '#/components/schemas/ContainerUploadOptions'
       description: |
         This should really be oneOf but AWSS3UploadOptions is a subset of
         AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
@@ -823,9 +842,28 @@ components:
             Name of the uploaded image. It must be unique in the given resource group.
             If name is omitted from the request, a random one based on a UUID is
             generated.
+    ContainerUploadOptions:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          example: 'osbuild'
+          description: |
+            Name for the created container image
+        tag:
+          type: string
+          example: 'latest'
+          description: |
+            Tag for the created container image
     Customizations:
       type: object
       properties:
+        containers:
+          type: array
+          items:
+             $ref: '#/components/schemas/Container'
+             description: Container images to embed into the final artfact
         subscription:
           $ref: '#/components/schemas/Subscription'
         packages:
@@ -869,6 +907,22 @@ components:
               items:
                 type: string
                 example: "firewalld"
+    Container:
+      type: object
+      required:
+        - source
+      properties:
+        source:
+          type: string
+          desription: Reference to the container to embed
+          example: 'registry.example.com/image:tag'
+        name:
+          type: string
+          description: Name to use for the container from the image
+        tls_verify:
+          type: boolean
+          description: Control TLS verifification
+          example: true
     Filesystem:
       type: object
       required:

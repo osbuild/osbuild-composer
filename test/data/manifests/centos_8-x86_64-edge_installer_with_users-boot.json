@@ -54,7 +54,6 @@
       }
     }
   },
-  "no-image-info": true,
   "manifest": {
     "version": "2",
     "pipelines": [
@@ -26756,5 +26755,6 @@
         "check_gpg": true
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

@@ -29,6 +29,9 @@ const (
 	ErrorJobDependency        ClientErrorCode = 26
 	ErrorJobMissingHeartbeat  ClientErrorCode = 27
 	ErrorTargetError          ClientErrorCode = 28
+	ErrorParsingJobArgs       ClientErrorCode = 29
+	ErrorContainerResolution  ClientErrorCode = 30
+	ErrorContainerDependency  ClientErrorCode = 31
 )
 
 type ClientErrorCode int
@@ -82,6 +85,8 @@ func GetStatusCode(err *Error) StatusCode {
 		return JobStatusUserInputError
 	case ErrorEmptyManifest:
 		return JobStatusUserInputError
+	case ErrorContainerResolution:
+		return JobStatusUserInputError
 	default:
 		return JobStatusInternalError
 	}
@@ -90,6 +95,8 @@ func GetStatusCode(err *Error) StatusCode {
 // IsDependencyError returns true if the error means that a dependency of a job failed
 func (e *Error) IsDependencyError() bool {
 	switch e.ID {
+	case ErrorContainerDependency:
+		return true
 	case ErrorDepsolveDependency:
 		return true
 	case ErrorManifestDependency:
@@ -103,7 +110,7 @@ func (e *Error) IsDependencyError() bool {
 	}
 }
 
-func WorkerClientError(code ClientErrorCode, reason string, details ...interface{}) *Error {
+func WorkerClientError(code ClientErrorCode, reason string, details interface{}) *Error {
 	return &Error{
 		ID:      code,
 		Reason:  reason,

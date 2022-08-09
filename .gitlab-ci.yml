@@ -8,14 +8,16 @@ stages:
 
 .base:
   before_script:
-    - schutzbot/ci_details.sh > ci-details-before-run.txt
+    - mkdir -p /tmp/artifacts
+    - schutzbot/ci_details.sh > /tmp/artifacts/ci-details-before-run.txt
     - cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
   after_script:
-    - schutzbot/ci_details.sh > ci-details-after-run.txt || true
+    - schutzbot/ci_details.sh > /tmp/artifacts/ci-details-after-run.txt || true
     - schutzbot/update_github_status.sh update || true
     - schutzbot/save_journal.sh || true
     - schutzbot/upload_artifacts.sh
   interruptible: true
+  retry: 1
   tags:
     - terraform
   artifacts:
@@ -37,6 +39,7 @@ stages:
 
 init:
   stage: init
+  interruptible: true
   tags:
     - shell
   script:
@@ -166,6 +169,8 @@ Base:
       - RUNNER:
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
+          - aws/fedora-36-x86_64
+          - aws/fedora-36-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-ga-x86_64
@@ -212,6 +217,8 @@ Manifests:
       - RUNNER:
           - aws/fedora-35-x86_64
           - aws/fedora-35-aarch64
+          - aws/fedora-36-x86_64
+          - aws/fedora-36-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -312,10 +319,11 @@ OSTree:
     matrix:
       - RUNNER:
           - rhos-01/fedora-35-x86_64
+          # - rhos-01/fedora-36-x86_64
           - rhos-01/rhel-8.4-ga-x86_64
           - rhos-01/rhel-8.6-ga-x86_64
           - rhos-01/rhel-9.0-ga-x86_64
-          - rhos-01/rhel-8.7-nightly-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
           - rhos-01/rhel-9.1-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
@@ -329,11 +337,12 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-35-x86_64-large
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+          - rhos-01/fedora-35-x86_64
+          # - rhos-01/fedora-36-x86_64
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 OSTree simplified installer:
   stage: test
@@ -344,10 +353,10 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 OSTree raw image:
   stage: test
@@ -364,24 +373,38 @@ OSTree raw image:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
-Rebase OSTree:
+Rebase OSTree BIOS:
   stage: test
   extends: OSTree
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-rebase.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-rebase-bios.sh
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64-large
-          - rhos-01/rhel-9.1-nightly-x86_64-large
-          - rhos-01/centos-stream-8-x86_64-large
-          - rhos-01/centos-stream-9-x86_64-large
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-9-x86_64
+
+Rebase OSTree UEFI:
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ostree-rebase-uefi.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/centos-stream-8-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 .integration_base:
   stage: test
@@ -413,6 +436,7 @@ Rebase OSTree:
 .fedora_runners: &fedora_runners
     RUNNER:
       - aws/fedora-35-x86_64
+      - aws/fedora-36-x86_64
 
 .integration_fedora:
   extends: .integration_base
@@ -427,16 +451,39 @@ Rebase OSTree:
       - *fedora_runners
       - *rhel_runners
 
+koji.sh (cloud upload):
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules, rules]
+    - !reference [.nightly_rules, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/koji.sh cloud-upload ${CLOUD_TARGET} ${IMAGE_TYPE}
+  parallel:
+    matrix:
+      - RUNNER:
+          # Brew workers use RHEL-8.6
+          - aws/rhel-8.6-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+        CLOUD_TARGET: aws
+        IMAGE_TYPE: aws-rhui
+      - RUNNER:
+          # Brew workers use RHEL-8.6
+          - aws/rhel-8.6-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+        CLOUD_TARGET: azure
+        IMAGE_TYPE: azure-rhui
+      - RUNNER:
+          # Brew workers use RHEL-8.6
+          - aws/rhel-8.6-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+        CLOUD_TARGET: gcp
+        IMAGE_TYPE: gcp-rhui
+
 koji.sh (cloudapi):
   extends: .integration
   variables:
-    SCRIPT: koji.sh
-
-# internal composer still uses kojiapi, so keep testing it for now
-koji.sh (kojiapi):
-  extends: .integration
-  variables:
-    COMPOSER_API: "false"
     SCRIPT: koji.sh
 
 aws.sh:
@@ -478,6 +525,7 @@ cross-distro.sh:
     - gcp
     - vsphere
     - edge-commit generic.s3
+    - edge-container
 
 API:
   stage: test
@@ -501,6 +549,7 @@ API:
       - IMAGE_TYPE: ["edge-commit"]
         RUNNER:
           - aws/fedora-35-x86_64
+          - aws/fedora-36-x86_64
 
 .libvirt_integration:
   stage: test
@@ -572,6 +621,20 @@ Multi-tenancy:
     RUNNER: aws/rhel-8.6-ga-x86_64
     INTERNAL_NETWORK: "true"
 
+OpenSCAP:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/oscap.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-9.1-nightly-x86_64
+
 Upgrade:
   stage: test
   extends: .terraform/openstack
@@ -632,6 +695,9 @@ Manifest-diff:
     GIT_STRATEGY: "clone"
     GIT_CHECKOUT: "true"
     GIT_DEPTH: 500
+  artifacts:
+    paths:
+      - manifests.diff
 
 SCHEDULED_CLOUD_CLEANER:
   stage: cleanup
@@ -669,6 +735,21 @@ ContainerUpload:
   variables:
     RUNNER: aws/fedora-35-x86_64
     INTERNAL_NETWORK: "false"
+
+ContainerEmbedding:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/container-embedding.sh
+  parallel:
+    matrix:
+      - INTERNAL_NETWORK: "true"
+        RUNNER:
+        - aws/centos-stream-8-x86_64
+        - aws/centos-stream-9-x86_64
 
 finish:
   stage: finish

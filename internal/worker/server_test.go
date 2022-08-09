@@ -11,9 +11,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
@@ -126,7 +127,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -151,7 +152,7 @@ func TestCancel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -188,7 +189,7 @@ func TestUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -218,7 +219,7 @@ func TestArgs(t *testing.T) {
 	require.NoError(t, err)
 	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	require.NoError(t, err)
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
@@ -264,7 +265,7 @@ func TestUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -294,7 +295,7 @@ func TestUploadNotAcceptingArtifacts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -324,7 +325,7 @@ func TestUploadAlteredBasePath(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -371,7 +372,7 @@ func TestRequestJobById(t *testing.T) {
 	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "")
 	require.NoError(t, err)
 
-	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, depsolveJobId, "")
+	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, []uuid.UUID{depsolveJobId}, "")
 	require.NoError(t, err)
 
 	test.TestRoute(t, server.Handler(), false, "POST", "/api/worker/v1/jobs", fmt.Sprintf(`{"arch":"arch","types":["%s"]}`, worker.JobTypeManifestIDOnly), http.StatusBadRequest,
@@ -515,7 +516,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 	require.NoError(err)
 
 	oldJobResultRead := new(worker.OSBuildJobResult)
-	_, _, err = server.OSBuildJobStatus(oldJobID, oldJobResultRead)
+	_, err = server.OSBuildJobInfo(oldJobID, oldJobResultRead)
 	require.NoError(err)
 
 	// oldJobResultRead should have PipelineNames now
@@ -553,164 +554,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 	require.NoError(err)
 
 	newJobResultRead := new(worker.OSBuildJobResult)
-	_, _, err = server.OSBuildJobStatus(newJobID, newJobResultRead)
-	require.NoError(err)
-	require.Equal(newJobResult, newJobResultRead)
-}
-
-// Enqueue Koji jobs with and without additional data and read them off the queue to
-// check if the fallbacks are added for the old job and the new data are kept
-// for the new job.
-func TestMixedOSBuildKojiJob(t *testing.T) {
-	require := require.New(t)
-
-	emptyManifestV2 := distro.Manifest(`{"version":"2","pipelines":{}}`)
-	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
-	fbPipelines := &worker.PipelineNames{Build: distro.BuildPipelinesFallback(), Payload: distro.PayloadPipelinesFallback()}
-
-	enqueueKojiJob := func(job *worker.OSBuildKojiJob) uuid.UUID {
-		initJob := new(worker.KojiInitJob)
-		initJobID, err := server.EnqueueKojiInit(initJob, "")
-		require.NoError(err)
-		jobID, err := server.EnqueueOSBuildKoji("k", job, initJobID, "")
-		require.NoError(err)
-		return jobID
-	}
-	oldJob := worker.OSBuildKojiJob{
-		Manifest:  emptyManifestV2,
-		ImageName: "no-pipeline-names",
-	}
-	oldJobID := enqueueKojiJob(&oldJob)
-
-	newJob := worker.OSBuildKojiJob{
-		Manifest:  emptyManifestV2,
-		ImageName: "with-pipeline-names",
-		PipelineNames: &worker.PipelineNames{
-			Build:   []string{"build"},
-			Payload: []string{"other", "pipelines"},
-		},
-	}
-	newJobID := enqueueKojiJob(&newJob)
-
-	var oldJobRead worker.OSBuildKojiJob
-	err := server.OSBuildKojiJob(oldJobID, &oldJobRead)
-	require.NoError(err)
-	require.NotNil(oldJobRead.PipelineNames)
-	// OldJob gets default pipeline names when read
-	require.Equal(fbPipelines, oldJobRead.PipelineNames)
-	require.Equal(oldJob.Manifest, oldJobRead.Manifest)
-	require.Equal(oldJob.ImageName, oldJobRead.ImageName)
-	// Not entirely equal
-	require.NotEqual(oldJob, oldJobRead)
-
-	// NewJob the same when read back
-	var newJobRead worker.OSBuildKojiJob
-	err = server.OSBuildKojiJob(newJobID, &newJobRead)
-	require.NoError(err)
-	require.NotNil(newJobRead.PipelineNames)
-	require.Equal(newJob.PipelineNames, newJobRead.PipelineNames)
-
-	// Dequeue the jobs (via RequestJob) to get their tokens and update them to
-	// test the result retrieval
-
-	// Finish init jobs
-	for idx := uint(0); idx < 2; idx++ {
-		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		defer cancel()
-		_, token, _, _, _, err := server.RequestJob(ctx, "k", []string{worker.JobTypeKojiInit}, []string{""})
-		require.NoError(err)
-		require.NoError(server.FinishJob(token, nil))
-	}
-
-	getJob := func() (uuid.UUID, uuid.UUID) {
-		// don't block forever if the jobs weren't added or can't be retrieved
-		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		defer cancel()
-		id, token, _, _, _, err := server.RequestJob(ctx, "k", []string{worker.JobTypeOSBuildKoji}, []string{""})
-		require.NoError(err)
-		return id, token
-	}
-
-	getJobTokens := func(n uint) map[uuid.UUID]uuid.UUID {
-		tokens := make(map[uuid.UUID]uuid.UUID, n)
-		for idx := uint(0); idx < n; idx++ {
-			id, token := getJob()
-			tokens[id] = token
-		}
-		return tokens
-	}
-
-	jobTokens := getJobTokens(2)
-	// make sure we got them both as expected
-	require.Contains(jobTokens, oldJobID)
-	require.Contains(jobTokens, newJobID)
-
-	oldJobResult := &worker.OSBuildKojiJobResult{
-		HostOS: "rhel-10",
-		Arch:   "k",
-		OSBuildOutput: &osbuild.Result{
-			Type:    "result",
-			Success: true,
-			Log: map[string]osbuild.PipelineResult{
-				"build-old": {
-					osbuild.StageResult{
-						ID:      "---",
-						Type:    "org.osbuild.test",
-						Output:  "<test output>",
-						Success: true,
-					},
-				},
-			},
-		},
-	}
-	oldJobResultRaw, err := json.Marshal(oldJobResult)
-	require.NoError(err)
-	oldJobToken := jobTokens[oldJobID]
-	err = server.FinishJob(oldJobToken, oldJobResultRaw)
-	require.NoError(err)
-
-	oldJobResultRead := new(worker.OSBuildKojiJobResult)
-	_, _, err = server.OSBuildKojiJobStatus(oldJobID, oldJobResultRead)
-	require.NoError(err)
-
-	// oldJobResultRead should have PipelineNames now
-	require.NotEqual(oldJobResult, oldJobResultRead)
-	require.Equal(fbPipelines, oldJobResultRead.PipelineNames)
-	require.NotNil(oldJobResultRead.PipelineNames)
-	require.Equal(oldJobResult.OSBuildOutput, oldJobResultRead.OSBuildOutput)
-	require.Equal(oldJobResult.HostOS, oldJobResultRead.HostOS)
-	require.Equal(oldJobResult.Arch, oldJobResultRead.Arch)
-
-	newJobResult := &worker.OSBuildKojiJobResult{
-		HostOS: "rhel-10",
-		Arch:   "k",
-		PipelineNames: &worker.PipelineNames{
-			Build:   []string{"build-result"},
-			Payload: []string{"result-test-payload", "result-test-assembler"},
-		},
-		OSBuildOutput: &osbuild.Result{
-			Type:    "result",
-			Success: true,
-			Log: map[string]osbuild.PipelineResult{
-				"build-new": {
-					osbuild.StageResult{
-						ID:      "---",
-						Type:    "org.osbuild.test",
-						Output:  "<test output new>",
-						Success: true,
-					},
-				},
-			},
-		},
-	}
-	newJobResultRaw, err := json.Marshal(newJobResult)
-	require.NoError(err)
-	newJobToken := jobTokens[newJobID]
-	err = server.FinishJob(newJobToken, newJobResultRaw)
-	require.NoError(err)
-
-	newJobResultRead := new(worker.OSBuildKojiJobResult)
-	_, _, err = server.OSBuildKojiJobStatus(newJobID, newJobResultRead)
+	_, err = server.OSBuildJobInfo(newJobID, newJobResultRead)
 	require.NoError(err)
 	require.Equal(newJobResult, newJobResultRead)
 }
@@ -736,7 +580,7 @@ func TestDepsolveLegacyErrorConversion(t *testing.T) {
 		Error:     reason,
 		ErrorType: errType,
 		JobResult: worker.JobResult{
-			JobError: clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, reason),
+			JobError: clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, reason, nil),
 		},
 	}
 
@@ -745,125 +589,9 @@ func TestDepsolveLegacyErrorConversion(t *testing.T) {
 		ErrorType: errType,
 	}
 
-	_, _, err = server.DepsolveJobStatus(depsolveJobId, &depsolveJobResult)
+	_, err = server.DepsolveJobInfo(depsolveJobId, &depsolveJobResult)
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, depsolveJobResult)
-}
-
-// Enquueue Koji jobs and save both kinds of
-// error types (old & new) to the queue and ensure
-// that both kinds of errors can be read back
-func TestMixedOSBuildKojiJobErrors(t *testing.T) {
-	require := require.New(t)
-
-	emptyManifestV2 := distro.Manifest(`{"version":"2","pipelines":{}}`)
-	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
-
-	enqueueKojiJob := func(job *worker.OSBuildKojiJob) uuid.UUID {
-		initJob := new(worker.KojiInitJob)
-		initJobID, err := server.EnqueueKojiInit(initJob, "")
-		require.NoError(err)
-		jobID, err := server.EnqueueOSBuildKoji("k", job, initJobID, "")
-		require.NoError(err)
-		return jobID
-	}
-	oldJob := worker.OSBuildKojiJob{
-		Manifest:  emptyManifestV2,
-		ImageName: "no-pipeline-names",
-	}
-	oldJobID := enqueueKojiJob(&oldJob)
-
-	newJob := worker.OSBuildKojiJob{
-		Manifest:  emptyManifestV2,
-		ImageName: "with-pipeline-names",
-		PipelineNames: &worker.PipelineNames{
-			Build:   []string{"build"},
-			Payload: []string{"other", "pipelines"},
-		},
-	}
-	newJobID := enqueueKojiJob(&newJob)
-
-	oldJobRead := new(worker.OSBuildKojiJob)
-	err := server.OSBuildKojiJob(oldJobID, oldJobRead)
-	require.NoError(err)
-	// Not entirely equal
-	require.NotEqual(oldJob, oldJobRead)
-
-	// NewJob the same when read back
-	newJobRead := new(worker.OSBuildKojiJob)
-	err = server.OSBuildKojiJob(newJobID, newJobRead)
-	require.NoError(err)
-
-	// Dequeue the jobs (via RequestJob) to get their tokens and update them to
-	// test the result retrieval
-
-	// Finish init jobs
-	for idx := uint(0); idx < 2; idx++ {
-		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		defer cancel()
-		_, token, _, _, _, err := server.RequestJob(ctx, "k", []string{worker.JobTypeKojiInit}, []string{""})
-		require.NoError(err)
-		require.NoError(server.FinishJob(token, nil))
-	}
-
-	getJob := func() (uuid.UUID, uuid.UUID) {
-		// don't block forever if the jobs weren't added or can't be retrieved
-		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		defer cancel()
-		id, token, _, _, _, err := server.RequestJob(ctx, "k", []string{worker.JobTypeOSBuildKoji}, []string{""})
-		require.NoError(err)
-		return id, token
-	}
-
-	getJobTokens := func(n uint) map[uuid.UUID]uuid.UUID {
-		tokens := make(map[uuid.UUID]uuid.UUID, n)
-		for idx := uint(0); idx < n; idx++ {
-			id, token := getJob()
-			tokens[id] = token
-		}
-		return tokens
-	}
-
-	jobTokens := getJobTokens(2)
-	// make sure we got them both as expected
-	require.Contains(jobTokens, oldJobID)
-	require.Contains(jobTokens, newJobID)
-
-	oldJobResult := &worker.OSBuildKojiJobResult{
-		KojiError: "koji build error",
-	}
-	oldJobResultRaw, err := json.Marshal(oldJobResult)
-	require.NoError(err)
-	oldJobToken := jobTokens[oldJobID]
-	err = server.FinishJob(oldJobToken, oldJobResultRaw)
-	require.NoError(err)
-
-	oldJobResultRead := new(worker.OSBuildKojiJobResult)
-	_, _, err = server.OSBuildKojiJobStatus(oldJobID, oldJobResultRead)
-	require.NoError(err)
-
-	// oldJobResultRead should have PipelineNames now
-	require.NotEqual(oldJobResult, oldJobResultRead)
-
-	newJobResult := &worker.OSBuildKojiJobResult{
-		PipelineNames: &worker.PipelineNames{
-			Build:   []string{"build-result"},
-			Payload: []string{"result-test-payload", "result-test-assembler"},
-		},
-		JobResult: worker.JobResult{
-			JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, "Koji build error", nil),
-		},
-	}
-	newJobResultRaw, err := json.Marshal(newJobResult)
-	require.NoError(err)
-	newJobToken := jobTokens[newJobID]
-	err = server.FinishJob(newJobToken, newJobResultRaw)
-	require.NoError(err)
-
-	newJobResultRead := new(worker.OSBuildKojiJobResult)
-	_, _, err = server.OSBuildKojiJobStatus(newJobID, newJobResultRead)
-	require.NoError(err)
-	require.Equal(newJobResult, newJobResultRead)
 }
 
 // old depsolve job format kept here to test compatibility with older workers
@@ -1014,10 +742,10 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 
 		case *worker.ManifestJobByID:
 			job := dep.main.(*worker.ManifestJobByID)
-			if len(depUUIDs) != 1 {
-				return nil, fmt.Errorf("exactly one dependency is expected for ManifestJobByID, got: %d", len(depUUIDs))
+			if len(depUUIDs) < 1 {
+				return nil, fmt.Errorf("at least one dependency is expected for ManifestJobByID, got: %d", len(depUUIDs))
 			}
-			id, err = s.EnqueueManifestJobByID(job, depUUIDs[0], "")
+			id, err = s.EnqueueManifestJobByID(job, depUUIDs, "")
 			if err != nil {
 				return nil, err
 			}
@@ -1042,22 +770,22 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 				return nil, err
 			}
 
-		case *worker.OSBuildKojiJob:
-			job := dep.main.(*worker.OSBuildKojiJob)
-			if len(depUUIDs) != 2 {
-				return nil, fmt.Errorf("exactly two dependency is expected for OSBuildKojiJob, got: %d", len(depUUIDs))
-			}
-			id, err = s.EnqueueOSBuildKojiAsDependency(distro.X86_64ArchName, job, depUUIDs[1], depUUIDs[0], "")
-			if err != nil {
-				return nil, err
-			}
-
 		case *worker.KojiFinalizeJob:
 			job := dep.main.(*worker.KojiFinalizeJob)
 			if len(depUUIDs) < 2 {
 				return nil, fmt.Errorf("at least two dependencies are expected for KojiFinalizeJob, got: %d", len(depUUIDs))
 			}
 			id, err = s.EnqueueKojiFinalize(job, depUUIDs[0], depUUIDs[1:], "")
+			if err != nil {
+				return nil, err
+			}
+
+		case *worker.ContainerResolveJob:
+			job := dep.main.(*worker.ContainerResolveJob)
+			if len(depUUIDs) != 0 {
+				return nil, fmt.Errorf("dependencies are not supported for ContainerResolveJob, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueContainerResolveJob(job, "")
 			if err != nil {
 				return nil, err
 			}
@@ -1224,11 +952,76 @@ func TestJobDependencyChainErrors(t *testing.T) {
 				Reason: "empty manifest received",
 			},
 		},
-		// koji-init + osbuild-koji + manifest + depsolve
+		// osbuild + manifest + depsolve + container resolve
+		// failed container resolve
+		{
+			job: testJob{
+				main: &worker.OSBuildJob{},
+				deps: []testJob{
+					{
+						main:   &worker.KojiInitJob{},
+						result: &worker.KojiInitJobResult{},
+					},
+					{
+						main: &worker.ManifestJobByID{},
+						deps: []testJob{
+							{
+								main: &worker.ContainerResolveJob{},
+								result: &worker.ContainerResolveJobResult{
+									JobResult: worker.JobResult{
+										JobError: &clienterrors.Error{
+											ID:     clienterrors.ErrorContainerResolution,
+											Reason: "remote container not found",
+										},
+									},
+								},
+							},
+							{
+								main:   &worker.DepsolveJob{},
+								result: &worker.DepsolveJobResult{},
+							},
+						},
+						result: &worker.ManifestJobByIDResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorContainerDependency,
+									Reason: "container dependency job failed",
+								},
+							},
+						},
+					},
+				},
+				result: &worker.OSBuildJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorManifestDependency,
+							Reason: "manifest dependency job failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorManifestDependency,
+				Reason: "manifest dependency job failed",
+				Details: []*clienterrors.Error{
+					{
+						ID:     clienterrors.ErrorContainerDependency,
+						Reason: "container dependency job failed",
+						Details: []*clienterrors.Error{
+							{
+								ID:     clienterrors.ErrorContainerResolution,
+								Reason: "remote container not found",
+							},
+						},
+					},
+				},
+			},
+		},
+		// koji-init + osbuild + manifest + depsolve
 		// failed depsolve
 		{
 			job: testJob{
-				main: &worker.OSBuildKojiJob{},
+				main: &worker.OSBuildJob{},
 				deps: []testJob{
 					{
 						main:   &worker.KojiInitJob{},
@@ -1259,7 +1052,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 						},
 					},
 				},
-				result: &worker.OSBuildKojiJobResult{
+				result: &worker.OSBuildJobResult{
 					JobResult: worker.JobResult{
 						JobError: &clienterrors.Error{
 							ID:     clienterrors.ErrorManifestDependency,
@@ -1285,7 +1078,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 				},
 			},
 		},
-		// koji-init + (osbuild-koji + manifest + depsolve) + (osbuild-koji + manifest + depsolve) + koji-finalize
+		// koji-init + (osbuild + manifest + depsolve) + (osbuild + manifest + depsolve) + koji-finalize
 		// failed one depsolve
 		{
 			job: testJob{
@@ -1297,7 +1090,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 					},
 					// failed build
 					{
-						main: &worker.OSBuildKojiJob{},
+						main: &worker.OSBuildJob{},
 						deps: []testJob{
 							{
 								main:   &worker.KojiInitJob{},
@@ -1328,7 +1121,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								},
 							},
 						},
-						result: &worker.OSBuildKojiJobResult{
+						result: &worker.OSBuildJobResult{
 							JobResult: worker.JobResult{
 								JobError: &clienterrors.Error{
 									ID:     clienterrors.ErrorManifestDependency,
@@ -1339,7 +1132,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 					},
 					// passed build
 					{
-						main: &worker.OSBuildKojiJob{},
+						main: &worker.OSBuildJob{},
 						deps: []testJob{
 							{
 								main:   &worker.KojiInitJob{},
@@ -1356,7 +1149,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								result: &worker.ManifestJobByIDResult{},
 							},
 						},
-						result: &worker.OSBuildKojiJobResult{
+						result: &worker.OSBuildJobResult{
 							OSBuildOutput: &osbuild.Result{},
 						},
 					},
@@ -1393,7 +1186,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 				},
 			},
 		},
-		// koji-init + (osbuild-koji + manifest + depsolve) + (osbuild-koji + manifest + depsolve) + koji-finalize
+		// koji-init + (osbuild + manifest + depsolve) + (osbuild + manifest + depsolve) + koji-finalize
 		// failed both depsolve
 		{
 			job: testJob{
@@ -1405,7 +1198,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 					},
 					// failed build
 					{
-						main: &worker.OSBuildKojiJob{},
+						main: &worker.OSBuildJob{},
 						deps: []testJob{
 							{
 								main:   &worker.KojiInitJob{},
@@ -1436,7 +1229,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								},
 							},
 						},
-						result: &worker.OSBuildKojiJobResult{
+						result: &worker.OSBuildJobResult{
 							JobResult: worker.JobResult{
 								JobError: &clienterrors.Error{
 									ID:     clienterrors.ErrorManifestDependency,
@@ -1447,7 +1240,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 					},
 					// failed build
 					{
-						main: &worker.OSBuildKojiJob{},
+						main: &worker.OSBuildJob{},
 						deps: []testJob{
 							{
 								main:   &worker.KojiInitJob{},
@@ -1478,7 +1271,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								},
 							},
 						},
-						result: &worker.OSBuildKojiJobResult{
+						result: &worker.OSBuildJobResult{
 							JobResult: worker.JobResult{
 								JobError: &clienterrors.Error{
 									ID:     clienterrors.ErrorManifestDependency,
@@ -1536,7 +1329,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 				},
 			},
 		},
-		// koji-init + (osbuild-koji + manifest + depsolve) + (osbuild-koji + manifest + depsolve) + koji-finalize
+		// koji-init + (osbuild + manifest + depsolve) + (osbuild + manifest + depsolve) + koji-finalize
 		// failed koji-finalize
 		{
 			job: testJob{
@@ -1548,7 +1341,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 					},
 					// passed build
 					{
-						main: &worker.OSBuildKojiJob{},
+						main: &worker.OSBuildJob{},
 						deps: []testJob{
 							{
 								main:   &worker.KojiInitJob{},
@@ -1565,13 +1358,13 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								result: &worker.ManifestJobByIDResult{},
 							},
 						},
-						result: &worker.OSBuildKojiJobResult{
+						result: &worker.OSBuildJobResult{
 							OSBuildOutput: &osbuild.Result{},
 						},
 					},
 					// passed build
 					{
-						main: &worker.OSBuildKojiJob{},
+						main: &worker.OSBuildJob{},
 						deps: []testJob{
 							{
 								main:   &worker.KojiInitJob{},
@@ -1588,7 +1381,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								result: &worker.ManifestJobByIDResult{},
 							},
 						},
-						result: &worker.OSBuildKojiJobResult{
+						result: &worker.OSBuildJobResult{
 							OSBuildOutput: &osbuild.Result{},
 						},
 					},
@@ -1607,7 +1400,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 				Reason: "koji-finalize failed",
 			},
 		},
-		// koji-init + (osbuild-koji + manifest + depsolve) + (osbuild-koji + manifest + depsolve) + koji-finalize
+		// koji-init + (osbuild + manifest + depsolve + container resolve) + (osbuild + manifest + depsolve) + koji-finalize
 		// all passed
 		{
 			job: testJob{
@@ -1619,7 +1412,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 					},
 					// passed build
 					{
-						main: &worker.OSBuildKojiJob{},
+						main: &worker.OSBuildJob{},
 						deps: []testJob{
 							{
 								main:   &worker.KojiInitJob{},
@@ -1629,6 +1422,10 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								main: &worker.ManifestJobByID{},
 								deps: []testJob{
 									{
+										main:   &worker.ContainerResolveJob{},
+										result: &worker.ContainerResolveJobResult{},
+									},
+									{
 										main:   &worker.DepsolveJob{},
 										result: &worker.DepsolveJobResult{},
 									},
@@ -1636,13 +1433,13 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								result: &worker.ManifestJobByIDResult{},
 							},
 						},
-						result: &worker.OSBuildKojiJobResult{
+						result: &worker.OSBuildJobResult{
 							OSBuildOutput: &osbuild.Result{},
 						},
 					},
 					// passed build
 					{
-						main: &worker.OSBuildKojiJob{},
+						main: &worker.OSBuildJob{},
 						deps: []testJob{
 							{
 								main:   &worker.KojiInitJob{},
@@ -1659,7 +1456,7 @@ func TestJobDependencyChainErrors(t *testing.T) {
 								result: &worker.ManifestJobByIDResult{},
 							},
 						},
-						result: &worker.OSBuildKojiJobResult{
+						result: &worker.OSBuildJobResult{
 							OSBuildOutput: &osbuild.Result{},
 						},
 					},

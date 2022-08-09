@@ -90,13 +90,29 @@ func main() {
 			panic(err)
 		}
 
-		cc := customClaims{
-			Type:      "Bearer",
-			ExpiresAt: 0,
-			IssuedAt:  time.Now().Unix(),
-			// Use refresh_token as rh-org-id
-			RHOrgID: r.Form.Get("refresh_token"),
+		var cc customClaims
+		switch r.Form.Get("grant_type") {
+		case "refresh_token":
+			cc = customClaims{
+				Type:      "Bearer",
+				ExpiresAt: 0,
+				IssuedAt:  time.Now().Unix(),
+				// Use refresh_token as rh-org-id
+				RHOrgID: r.Form.Get("refresh_token"),
+			}
+		case "client_credentials":
+			cc = customClaims{
+				Type:      "Bearer",
+				ExpiresAt: 0,
+				IssuedAt:  time.Now().Unix(),
+				// Use client_secret as rh-org-id
+				RHOrgID: r.Form.Get("client_secret"),
+			}
+		default:
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
+
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, cc)
 		token.Header["kid"] = "key-id"
 

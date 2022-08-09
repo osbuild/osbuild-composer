@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
@@ -54,4 +55,10 @@ func (p *OCIContainer) serialize() osbuild.Pipeline {
 
 func (p *OCIContainer) getBuildPackages() []string {
 	return []string{"tar"}
+}
+
+func (p *OCIContainer) Export() *artifact.Artifact {
+	p.Base.export = true
+	mimeType := "application/x-tar"
+	return artifact.New(p.Name(), p.Filename, &mimeType)
 }

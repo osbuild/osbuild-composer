@@ -32,7 +32,7 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -57,10 +57,10 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	err = api.workers.FinishJob(token, rawResult)
 	require.NoError(t, err)
 
-	jobStatus, _, err := api.workers.OSBuildJobStatus(jobId, &jobResult)
+	jobInfo, err := api.workers.OSBuildJobInfo(jobId, &jobResult)
 	require.NoError(t, err)
 
-	state := composeStateFromJobStatus(jobStatus, &jobResult)
+	state := composeStateFromJobStatus(jobInfo.JobStatus, &jobResult)
 	require.Equal(t, "FAILED", state.ToString())
 }
 
@@ -81,7 +81,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, 0)
+	manifest, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -94,15 +94,15 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	require.Equal(t, jobId, j)
 
 	jobResult := worker.OSBuildJobResult{}
-	jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "Upload error")
+	jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "Upload error", nil)
 	rawResult, err := json.Marshal(jobResult)
 	require.NoError(t, err)
 	err = api.workers.FinishJob(token, rawResult)
 	require.NoError(t, err)
 
-	jobStatus, _, err := api.workers.OSBuildJobStatus(jobId, &jobResult)
+	jobInfo, err := api.workers.OSBuildJobInfo(jobId, &jobResult)
 	require.NoError(t, err)
 
-	state := composeStateFromJobStatus(jobStatus, &jobResult)
+	state := composeStateFromJobStatus(jobInfo.JobStatus, &jobResult)
 	require.Equal(t, "FAILED", state.ToString())
 }

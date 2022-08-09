@@ -23,7 +23,6 @@
     },
     "blueprint": {}
   },
-  "no-image-info": true,
   "manifest": {
     "version": "2",
     "pipelines": [
@@ -1723,6 +1722,9 @@
                   },
                   {
                     "id": "sha256:6fb2eb0e66f94ce62b1f14f00704de0800664da8429df1df244ad7d9ee2c0b7b"
+                  },
+                  {
+                    "id": "sha256:4f2960344a8f7098953438409500ee9661b50f1fd1e6e5b1b32df317c0aabdba"
                   },
                   {
                     "id": "sha256:f08900533af1aa558b9ab4f64bfc17691fcddf1196b1585765a9997953e9aaac"
@@ -3567,14 +3569,21 @@
                 "shutdown",
                 "uefi-lib",
                 "anaconda",
-                "rdma",
-                "rngd",
-                "multipath",
                 "fcoe",
                 "fcoe-uefi",
                 "iscsi",
                 "lunmask",
-                "nfs"
+                "multipath",
+                "nfs",
+                "nvdimm",
+                "nvmf",
+                "rdma",
+                "rngd"
+              ],
+              "add_drivers": [
+                "cuse",
+                "ipmi_devintf",
+                "ipmi_msghandler"
               ],
               "install": [
                 "/.buildstamp"
@@ -4572,6 +4581,9 @@
           },
           "sha256:4f1f5c0c2f4e131af3839456a1e191da440b62559b289820f942edaa2a2ca354": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/libmaxminddb-1.5.2-3.el9.aarch64.rpm"
+          },
+          "sha256:4f2960344a8f7098953438409500ee9661b50f1fd1e6e5b1b32df317c0aabdba": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/nvme-cli-1.16-2.el9.aarch64.rpm"
           },
           "sha256:4f52b48ea331a31c91582de5377507caf3400970ff40b7f242e0ad5b93d5b9ae": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/gstreamer1-plugins-good-1.18.4-5.el9.aarch64.rpm"
@@ -11474,6 +11486,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/npth-1.6-8.el9.aarch64.rpm",
         "checksum": "sha256:6fb2eb0e66f94ce62b1f14f00704de0800664da8429df1df244ad7d9ee2c0b7b"
+      },
+      {
+        "name": "nvme-cli",
+        "epoch": 0,
+        "version": "1.16",
+        "release": "2.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/nvme-cli-1.16-2.el9.aarch64.rpm",
+        "checksum": "sha256:4f2960344a8f7098953438409500ee9661b50f1fd1e6e5b1b32df317c0aabdba"
       },
       {
         "name": "openldap",
@@ -19902,5 +19923,6 @@
         "checksum": "sha256:8de0339e02fae6983120ba46ecc1018b52bc9d309770b64933345de3ad956a9e"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

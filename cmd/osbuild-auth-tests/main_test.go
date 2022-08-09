@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package main
@@ -93,56 +94,6 @@ func TestWorkerAPIAuth(t *testing.T) {
 		defer ckp.remove()
 
 		testRoute(t, "https://localhost:8700/api/worker/v1/status", ckp, false)
-	})
-}
-
-func TestKojiAPIAuth(t *testing.T) {
-	t.Run("certificate signed by a trusted CA", func(t *testing.T) {
-		cases := []struct {
-			caseDesc string
-			subj     string
-			addext   string
-			success  bool
-		}{
-			{"valid CN and SAN 1", "/CN=client.osbuild.org/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com,DNS:client.osbuild.org", true},
-			{"valid CN and SAN 2", "/CN=localhost/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com,DNS:localhost", true},
-			{"invalid CN and SAN", "/CN=example.com/emailAddress=osbuild@example.com", "subjectAltName=DNS:example.com", false},
-		}
-
-		authority := &ca{BaseDir: trustedCADir}
-
-		for _, c := range cases {
-			t.Run(c.caseDesc, func(t *testing.T) {
-				ckp, err := authority.newCertificateKeyPair(c.subj, osbuildClientExt, c.addext)
-				require.NoError(t, err)
-				defer ckp.remove()
-
-				testRoute(t, "https://localhost/api/composer-koji/v1/status", ckp, c.success)
-			})
-		}
-	})
-
-	t.Run("certificate signed by an untrusted CA", func(t *testing.T) {
-		// generate a new CA
-		ca, err := newCA("/CN=osbuild.org")
-		require.NoError(t, err)
-		defer ca.remove()
-
-		// create a new certificate and signed it with the new CA
-		ckp, err := ca.newCertificateKeyPair("/CN=localhost/emailAddress=osbuild@example.com", osbuildClientExt, "subjectAltName=DNS:localhost")
-		require.NoError(t, err)
-		defer ckp.remove()
-
-		testRoute(t, "https://localhost/api/composer-koji/v1/status", ckp, false)
-	})
-
-	t.Run("self-signed certificate", func(t *testing.T) {
-		// generate a new self-signed certificate
-		ckp, err := newSelfSignedCertificateKeyPair("/CN=osbuild.org")
-		require.NoError(t, err)
-		defer ckp.remove()
-
-		testRoute(t, "https://localhost/api/composer-koji/v1/status", ckp, false)
 	})
 }
 

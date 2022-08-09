@@ -11,8 +11,9 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
@@ -125,14 +126,12 @@ func jobRequest() string {
 				%q,
 				%q,
 				%q,
-				%q,
 				%q
 			],
 			"arch": %q
 		}`,
 		worker.JobTypeKojiInit,
 		worker.JobTypeOSBuild,
-		worker.JobTypeOSBuildKoji,
 		worker.JobTypeKojiFinalize,
 		worker.JobTypeDepsolve,
 		test_distro.TestArch3Name)
@@ -198,7 +197,7 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerHandler http.Handler, orgI
 func TestMultitenancy(t *testing.T) {
 	// Passing an empty list as depsolving channels, we want to do depsolves
 	// ourselvess
-	apiServer, workerServer, q, cancel := newV2Server(t, t.TempDir(), []string{}, true)
+	apiServer, workerServer, q, cancel := newV2Server(t, t.TempDir(), []string{}, true, false)
 	handler := apiServer.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
@@ -252,7 +251,7 @@ func TestMultitenancy(t *testing.T) {
 		c := composes[i]
 
 		// We have to run 2 jobs for S3 composes (depsolve, osbuild)
-		// 4 jobs for koji composes (depsolve, koji-init, osbuild-koji, koji-finalize)
+		// 4 jobs for koji composes (depsolve, koji-init, osbuild, koji-finalize)
 		numjobs := 2
 		if c.koji {
 			numjobs = 4

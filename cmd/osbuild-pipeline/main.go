@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
@@ -58,6 +59,20 @@ func findDnfJsonBin() string {
 
 	// can't run: panic
 	panic(fmt.Sprintf("could not find 'dnf-json' in any of the known paths: %+v", locations))
+}
+
+func resolveContainers(bp blueprint.Blueprint, archName string) ([]container.Spec, error) {
+	if len(bp.Containers) == 0 {
+		return nil, nil
+	}
+
+	resolver := container.NewResolver(archName)
+
+	for _, c := range bp.Containers {
+		resolver.Add(c.Source, c.Name, c.TLSVerify)
+	}
+
+	return resolver.Finish()
 }
 
 func main() {
@@ -182,10 +197,22 @@ func main() {
 			panic(err)
 		}
 	} else {
+
+		containerSpecs, err := resolveContainers(composeRequest.Blueprint, arch.Name())
+		if err != nil {
+			panic("Could not resolve containers: " + err.Error())
+		}
+
+		if composeRequest.OSTree.Ref == "" {
+			// use default OSTreeRef for image type
+			composeRequest.OSTree.Ref = imageType.OSTreeRef()
+		}
+
 		manifest, err := imageType.Manifest(composeRequest.Blueprint.Customizations,
 			options,
 			repos,
 			depsolvedSets,
+			containerSpecs,
 			seedArg)
 		if err != nil {
 			panic(err.Error())

@@ -2424,9 +2424,6 @@
                     "id": "sha256:ee2ba576f07f5cdd9cf24e788d60071869107aa313addbba0a311448bb32a86c"
                   },
                   {
-                    "id": "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b"
-                  },
-                  {
                     "id": "sha256:788e1e3cafa686a2d7e25ae43deba7fda7226f2fe0795006474dfe518d5d522e"
                   },
                   {
@@ -4137,9 +4134,6 @@
           },
           "sha256:bafc9ec3dd737b0dbdf179b9d9b4c8a9b5c1a92423eae1e4eb3047522107695e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/telnet-0.17-76.el8.x86_64.rpm"
-          },
-          "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/qemu-guest-agent-6.2.0-9.module+el8.7.0+14737+6552dcb8.x86_64.rpm"
           },
           "sha256:bbbfb708ab2d3bf9b0d0db0c9a24022d28b0a48dfd626bfdd5ff152fccc5267f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.7-20220415/Packages/cryptsetup-libs-2.3.7-2.el8.x86_64.rpm"
@@ -11686,15 +11680,6 @@
         "checksum": "sha256:ee2ba576f07f5cdd9cf24e788d60071869107aa313addbba0a311448bb32a86c"
       },
       {
-        "name": "qemu-guest-agent",
-        "epoch": 15,
-        "version": "6.2.0",
-        "release": "9.module+el8.7.0+14737+6552dcb8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20220415/Packages/qemu-guest-agent-6.2.0-9.module+el8.7.0+14737+6552dcb8.x86_64.rpm",
-        "checksum": "sha256:bb5773ec3e68aadcf9f31e892e9bbaec9c059602e037db03d0fbecdbdda2186b"
-      },
-      {
         "name": "rhc",
         "epoch": 1,
         "version": "0.2.1",
@@ -12037,5 +12022,6 @@
         "checksum": "sha256:7b297e63a0564219393f4b599bf50cba9cb7fe091490742eaf060ee45d9243c7"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

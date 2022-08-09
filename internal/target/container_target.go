@@ -17,6 +17,13 @@ func NewContainerTarget(options *ContainerTargetOptions) *Target {
 	return newTarget(TargetNameContainer, options)
 }
 
-func NewContainerTargetResult() *TargetResult {
-	return newTargetResult(TargetNameContainer, nil)
+type ContainerTargetResultOptions struct {
+	URL    string `json:"url"`
+	Digest string `json:"digest"`
+}
+
+func (ContainerTargetResultOptions) isTargetResultOptions() {}
+
+func NewContainerTargetResult(options *ContainerTargetResultOptions) *TargetResult {
+	return newTargetResult(TargetNameContainer, options)
 }

@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 )
@@ -65,4 +66,9 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 	}
 
 	return pipeline
+}
+
+func (p *RawImage) Export() *artifact.Artifact {
+	p.Base.export = true
+	return artifact.New(p.Name(), p.Filename, nil)
 }

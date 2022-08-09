@@ -75,6 +75,20 @@ func (j *OSBuildJobResult) TargetErrors() []*clienterrors.Error {
 	return targetErrors
 }
 
+// TargetResultsByName iterates over TargetResults attached to the Job result and
+// returns a slice of Target results of the provided name (type). If there were no
+// TargetResults of the desired type attached to the Job results, the returned
+// slice will be empty.
+func (j *OSBuildJobResult) TargetResultsByName(name target.TargetName) []*target.TargetResult {
+	targetResults := []*target.TargetResult{}
+	for _, targetResult := range j.TargetResults {
+		if targetResult.Name == name {
+			targetResults = append(targetResults, targetResult)
+		}
+	}
+	return targetResults
+}
+
 type KojiInitJob struct {
 	Server  string `json:"server"`
 	Name    string `json:"name"`
@@ -86,27 +100,6 @@ type KojiInitJobResult struct {
 	BuildID   uint64 `json:"build_id"`
 	Token     string `json:"token"`
 	KojiError string `json:"koji_error"`
-	JobResult
-}
-
-type OSBuildKojiJob struct {
-	Manifest      distro.Manifest `json:"manifest,omitempty"`
-	ImageName     string          `json:"image_name"`
-	Exports       []string        `json:"exports"`
-	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`
-	KojiServer    string          `json:"koji_server"`
-	KojiDirectory string          `json:"koji_directory"`
-	KojiFilename  string          `json:"koji_filename"`
-}
-
-type OSBuildKojiJobResult struct {
-	HostOS        string          `json:"host_os"`
-	Arch          string          `json:"arch"`
-	OSBuildOutput *osbuild.Result `json:"osbuild_output"`
-	PipelineNames *PipelineNames  `json:"pipeline_names,omitempty"`
-	ImageHash     string          `json:"image_hash"`
-	ImageSize     uint64          `json:"image_size"`
-	KojiError     string          `json:"koji_error"` // not set by any code other than unit tests
 	JobResult
 }
 
@@ -243,6 +236,26 @@ type ManifestJobByIDResult struct {
 	JobResult
 }
 
+type ContainerSpec struct {
+	Source    string `json:"source"`
+	Name      string `json:"name"`
+	TLSVerify *bool  `json:"tls-verify,omitempty"`
+
+	ImageID string `json:"image_id"`
+	Digest  string `json:"digest"`
+}
+
+type ContainerResolveJob struct {
+	Arch  string          `json:"arch"`
+	Specs []ContainerSpec `json:"specs"`
+}
+
+type ContainerResolveJobResult struct {
+	Specs []ContainerSpec `json:"specs"`
+
+	JobResult
+}
+
 //
 // JSON-serializable types for the client
 //
@@ -327,41 +340,5 @@ func (j *OSBuildJobResult) UnmarshalJSON(data []byte) error {
 		}
 	}
 	*j = OSBuildJobResult(alias)
-	return nil
-}
-
-func (j *OSBuildKojiJob) UnmarshalJSON(data []byte) error {
-	// handles unmarshalling old jobs in the queue that don't contain newer fields
-	// adds default/fallback values to missing data
-	type aliastype OSBuildKojiJob
-	var alias aliastype
-	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
-	}
-	if alias.PipelineNames == nil {
-		alias.PipelineNames = &PipelineNames{
-			Build:   distro.BuildPipelinesFallback(),
-			Payload: distro.PayloadPipelinesFallback(),
-		}
-	}
-	*j = OSBuildKojiJob(alias)
-	return nil
-}
-
-func (j *OSBuildKojiJobResult) UnmarshalJSON(data []byte) error {
-	// handles unmarshalling old jobs in the queue that don't contain newer fields
-	// adds default/fallback values to missing data
-	type aliastype OSBuildKojiJobResult
-	var alias aliastype
-	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
-	}
-	if alias.PipelineNames == nil {
-		alias.PipelineNames = &PipelineNames{
-			Build:   distro.BuildPipelinesFallback(),
-			Payload: distro.PayloadPipelinesFallback(),
-		}
-	}
-	*j = OSBuildKojiJobResult(alias)
 	return nil
 }

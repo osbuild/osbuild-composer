@@ -29,7 +29,7 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 		}
 		pkgSpecSets[name] = res
 	}
-	manifest, err := t.Manifest(bp.Customizations, distro.ImageOptions{}, repos, pkgSpecSets, 0)
+	manifest, err := t.Manifest(bp.Customizations, distro.ImageOptions{}, repos, pkgSpecSets, nil, 0)
 	if err != nil {
 		panic(err)
 	}

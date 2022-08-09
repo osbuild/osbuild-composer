@@ -125,6 +125,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				},
 				repos,
 				imgPackageSpecSets,
+				nil,
 				RandomTestSeed)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {

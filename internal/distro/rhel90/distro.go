@@ -10,9 +10,11 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -36,9 +38,29 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-var mountpointAllowList = []string{
-	"/", "/var", "/opt", "/srv", "/usr", "/app", "/data", "/home", "/tmp",
-}
+var (
+	// rhel9 & cs9 share the same list
+	// of allowed profiles so a single
+	// allow list can be used
+	oscapProfileAllowList = []oscap.Profile{
+		oscap.AnssiBp28Enhanced,
+		oscap.AnssiBp28High,
+		oscap.AnssiBp28Intermediary,
+		oscap.AnssiBp28Minimal,
+		oscap.Cis,
+		oscap.CisServerL1,
+		oscap.CisWorkstationL1,
+		oscap.CisWorkstationL2,
+		oscap.Cui,
+		oscap.E8,
+		oscap.Hippa,
+		oscap.IsmO,
+		oscap.Ospp,
+		oscap.PciDss,
+		oscap.Stig,
+		oscap.StigGui,
+	}
+)
 
 type distribution struct {
 	name               string
@@ -227,7 +249,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error)
+type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -350,6 +372,29 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		}
 	}
 
+	// if we are embedding containers we need to have `skopeo` in the build root
+	if len(bp.Containers) > 0 {
+
+		extraPkgs := rpmmd.PackageSet{Include: []string{"skopeo"}}
+
+		if t.rpmOstree {
+			// for OSTree based images we need to configure the containers-storage.conf(5)
+			// via the org.osbuild.containers.storage.conf stage, which needs python3-toml
+			extraPkgs = extraPkgs.Append(rpmmd.PackageSet{Include: []string{"python3-toml"}})
+		}
+
+		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(extraPkgs)
+	}
+
+	// if oscap customizations are enabled we need to add `openscap-scanner`
+	// and `scap-security-guides` packages to build root
+	if bp.Customizations.GetOpenSCAP() != nil {
+		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(rpmmd.PackageSet{Include: []string{
+			"openscap-scanner",
+			"scap-security-guide",
+		}})
+	}
+
 	// depsolve bp packages separately
 	// bp packages aren't restricted by exclude lists
 	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
@@ -446,9 +491,10 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecSets map[string][]rpmmd.PackageSpec,
+	containers []container.Spec,
 	seed int64) (distro.Manifest, error) {
 
-	if err := t.checkOptions(customizations, options); err != nil {
+	if err := t.checkOptions(customizations, options, containers); err != nil {
 		return distro.Manifest{}, err
 	}
 
@@ -457,7 +503,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	pipelines, err := t.pipelines(t, customizations, options, repos, packageSpecSets, rng)
+	pipelines, err := t.pipelines(t, customizations, options, repos, packageSpecSets, containers, rng)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
@@ -486,13 +532,19 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(allPackageSpecs, commits, inlineData),
+			Sources:   osbuild.GenSources(allPackageSpecs, commits, inlineData, containers),
 		},
 	)
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
-func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions) error {
+func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
+
+	// we do not support embedding containers on ostree-derived images, only on commits themselves
+	if len(containers) > 0 && t.rpmOstree && (t.name != "edge-commit" && t.name != "edge-container") {
+		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
+	}
+
 	if t.bootISO && t.rpmOstree {
 		if options.OSTree.Parent == "" {
 			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
@@ -547,15 +599,27 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
 	}
 
-	invalidMountpoints := []string{}
-	for _, m := range mountpoints {
-		if !distro.IsMountpointAllowed(m.Mountpoint, mountpointAllowList) {
-			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
-		}
+	err := disk.CheckMountpoints(mountpoints, disk.MountpointPolicies)
+	if err != nil {
+		return err
 	}
 
-	if len(invalidMountpoints) > 0 {
-		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	if osc := customizations.GetOpenSCAP(); osc != nil {
+		if t.arch.distro.osVersion == "9.0" {
+			return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.arch.distro.osVersion))
+		}
+		if !oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList) {
+			return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
+		}
+		if t.rpmOstree {
+			return fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
+		}
+		if osc.DataStream == "" {
+			return fmt.Errorf("OpenSCAP datastream cannot be empty")
+		}
+		if osc.ProfileID == "" {
+			return fmt.Errorf("OpenSCAP profile cannot be empty")
+		}
 	}
 
 	return nil

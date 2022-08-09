@@ -20,7 +20,7 @@ CONTAINER_MINIO_CLIENT="quay.io/minio/mc:latest"
 CONTAINER_MINIO_SERVER="quay.io/minio/minio:latest"
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Check available container runtime
 if which podman 2>/dev/null >&2; then

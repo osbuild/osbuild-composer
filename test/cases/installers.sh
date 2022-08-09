@@ -9,10 +9,11 @@ set -euo pipefail
 #
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Colorful output.
 function greenprint {
@@ -64,7 +65,11 @@ echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 EOFKS
 
     echo "Writing new ISO"
-    sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+    if nvrGreaterOrEqual "lorax" "34.9.18"; then
+        sudo mkksiso -c "console=ttyS0,115200" --ks "${newksfile}" "${iso}" "${newiso}"
+    else
+        sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+    fi
 
     echo "==== NEW KICKSTART FILE ===="
     cat "${newksfile}"

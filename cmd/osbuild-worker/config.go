@@ -50,6 +50,14 @@ type authenticationConfig struct {
 	ClientSecretPath string `toml:"client_secret"`
 }
 
+type containersConfig struct {
+	AuthFilePath string `toml:"auth_file_path"`
+	Domain       string `toml:"domain"`
+	PathPrefix   string `toml:"path_prefix"`
+	CertPath     string `toml:"cert_path"`
+	TLSVerify    bool   `toml:"tls_verify"`
+}
+
 type workerConfig struct {
 	Composer       *composerConfig             `toml:"composer"`
 	Koji           map[string]kojiServerConfig `toml:"koji"`
@@ -58,6 +66,7 @@ type workerConfig struct {
 	AWS            *awsConfig                  `toml:"aws"`
 	GenericS3      *genericS3Config            `toml:"generic_s3"`
 	Authentication *authenticationConfig       `toml:"authentication"`
+	Containers     *containersConfig           `toml:"containers"`
 	// default value: /api/worker/v1
 	BasePath string `toml:"base_path"`
 	DNFJson  string `toml:"dnf-json"`

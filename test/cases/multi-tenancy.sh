@@ -21,7 +21,10 @@ function greenprint {
 }
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh jwt
+
+# Source common functions
+source /usr/libexec/tests/osbuild-composer/api/common/common.sh
 
 greenprint "Registering clean ups"
 KILL_PIDS=()
@@ -39,6 +42,9 @@ function cleanup() {
   for P in "${KILL_PIDS[@]}"; do
       sudo pkill -P "$P"
   done
+
+  /usr/libexec/osbuild-composer-test/run-mock-auth-servers.sh stop
+
   set -eu
 }
 trap cleanup EXIT
@@ -60,59 +66,6 @@ sudo cp \
 sudo cp \
     "${OSBUILD_COMPOSER_TEST_DATA}"/kerberos/krb5-local.conf \
     /etc/krb5.conf.d/local
-
-greenprint "Configuring composer and worker"
-sudo tee "/etc/osbuild-composer/osbuild-composer.toml" >/dev/null <<EOF
-[koji]
-enable_tls = false
-enable_mtls = false
-enable_jwt = true
-jwt_keys_urls = ["https://localhost:8082/certs"]
-jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
-jwt_acl_file = ""
-jwt_tenant_provider_fields = ["rh-org-id"]
-[worker]
-enable_artifacts = false
-enable_tls = true
-enable_mtls = false
-enable_jwt = true
-jwt_keys_urls = ["https://localhost:8082/certs"]
-jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
-jwt_tenant_provider_fields = ["rh-org-id"]
-EOF
-
-# No compose will get this orgID
-sudo tee "/etc/osbuild-worker/token" >/dev/null <<EOF
-123456789
-EOF
-
-sudo tee "/etc/osbuild-worker/osbuild-worker.toml" >/dev/null <<EOF
-[authentication]
-oauth_url = "http://localhost:8081/token"
-client_id = "rhsm-api"
-offline_token = "/etc/osbuild-worker/token"
-
-[koji.localhost.kerberos]
-principal = "osbuild-krb@LOCAL"
-keytab = "/etc/osbuild-worker/client.keytab"
-
-[aws]
-bucket = "${AWS_BUCKET}"
-credentials = "/etc/osbuild-worker/aws-credentials.toml"
-EOF
-
-greenprint "Starting mock servers"
-# Spin up an https instance for the composer-api and worker-api; the auth handler needs to hit an ssl `/certs` endpoint
-sudo /usr/libexec/osbuild-composer-test/osbuild-mock-openid-provider -a localhost:8082 -rsaPubPem /etc/osbuild-composer/client-crt.pem -rsaPem /etc/osbuild-composer/client-key.pem -cert /etc/osbuild-composer/composer-crt.pem -key /etc/osbuild-composer/composer-key.pem &
-KILL_PIDS+=("$!")
-# Spin up an http instance for the worker client to bypass the need to specify an extra CA
-sudo /usr/libexec/osbuild-composer-test/osbuild-mock-openid-provider -a localhost:8081 -rsaPubPem /etc/osbuild-composer/client-crt.pem -rsaPem /etc/osbuild-composer/client-key.pem &
-KILL_PIDS+=("$!")
-
-greenprint "Restarting composer, stopping a local worker and starting a remote worker"
-sudo systemctl restart osbuild-composer
-sudo systemctl stop osbuild-worker@1
-sudo systemctl start osbuild-remote-worker@localhost:8700
 
 DISTRO=rhel-86
 
@@ -153,17 +106,6 @@ function koji_request {
 EOF
 }
 
-function access_token {
-  local refresh_token="$1"
-  curl --request POST \
-    --data "refresh_token=$refresh_token" \
-    --header "Content-Type: application/x-www-form-urlencoded" \
-    --silent \
-    --show-error \
-    --fail \
-    localhost:8081/token | jq -r .access_token
-}
-
 function send_compose {
   local request_file="$1"
   local refresh_token="$2"
@@ -172,28 +114,17 @@ function send_compose {
     --show-error \
     --fail \
     --header 'Content-Type: application/json' \
-    --header "Authorization: Bearer $(access_token "$refresh_token")" \
+    --header "Authorization: Bearer $(access_token_with_org_id "$refresh_token")" \
     --request POST \
     --data @"$request_file" \
     http://localhost:443/api/image-builder-composer/v2/compose | jq -r '.id'
-}
-
-function compose_status {
-  local compose="$1"
-  local refresh_token="$2"
-  curl \
-    --silent \
-    --show-error \
-    --fail \
-    --header "Authorization: Bearer $(access_token "$refresh_token")" \
-    "http://localhost:443/api/image-builder-composer/v2/composes/$compose" | jq -r '.status'
 }
 
 function assert_status {
   local compose="$1"
   local refresh_token="$2"
   local status="$3"
-  [[ $(compose_status "$compose" "$refresh_token") == "$status" ]]
+  [[ $(compose_status_with_org_id "$compose" "$refresh_token" | jq -r '.status') == "$status" ]]
 }
 
 function wait_for_status {
@@ -203,7 +134,7 @@ function wait_for_status {
   while true
   do
     local current_status
-    current_status=$(compose_status "$compose" "$refresh_token")
+    current_status=$(compose_status_with_org_id "$compose" "$refresh_token" | jq -r '.status')
 
     case "$current_status" in
       "$desired_status")

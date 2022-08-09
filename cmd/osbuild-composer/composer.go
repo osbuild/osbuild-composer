@@ -16,10 +16,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	logrus "github.com/sirupsen/logrus"
+
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
@@ -27,7 +28,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
-	"github.com/osbuild/osbuild-composer/internal/kojiapi"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
@@ -44,7 +44,6 @@ type Composer struct {
 	workers *worker.Server
 	weldr   *weldr.API
 	api     *cloudapi.Server
-	koji    *kojiapi.Server
 
 	weldrListener, localWorkerListener, workerListener, apiListener net.Listener
 }
@@ -134,7 +133,6 @@ func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, en
 	}
 
 	c.api = cloudapi.NewServer(c.workers, c.distros, config)
-	c.koji = kojiapi.NewServer(c.logger, c.workers, c.solver, c.distros)
 
 	if !enableTLS {
 		c.apiListener = l
@@ -265,7 +263,6 @@ func (c *Composer) Start() error {
 
 	if c.apiListener != nil {
 		const apiRouteV2 = "/api/image-builder-composer/v2"
-		const kojiRoute = "/api/composer-koji/v1"
 
 		mux := http.NewServeMux()
 
@@ -273,7 +270,6 @@ func (c *Composer) Start() error {
 		// trailing slash for rooted subtrees, whereas the
 		// handler functions don't.
 		mux.Handle(apiRouteV2+"/", c.api.V2(apiRouteV2))
-		mux.Handle(kojiRoute+"/", c.koji.Handler(kojiRoute))
 
 		// Metrics handler attached to api mux to avoid a
 		// separate listener/socket

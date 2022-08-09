@@ -84,9 +84,34 @@ func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token stri
 }
 
 func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
-	var args worker.KojiFinalizeJob
-	err := job.Args(&args)
+	logWithId := logrus.WithField("jobId", job.Id().String())
+
+	// initialize the result variable to be used to report status back to composer
+	var kojiFinalizeJobResult = &worker.KojiFinalizeJobResult{}
+	// initialize / declare variables to be used to report information back to Koji
+	var args = &worker.KojiFinalizeJob{}
+	var initArgs *worker.KojiInitJobResult
+
+	// In all cases it is necessary to report result back to osbuild-composer worker API.
+	defer func() {
+		err := job.Update(kojiFinalizeJobResult)
+		if err != nil {
+			logWithId.Errorf("Error reporting job result: %v", err)
+		}
+
+		// Fail the Koji build if the job error is set and the necessary
+		// information to identify the job are available.
+		if kojiFinalizeJobResult.JobError != nil && initArgs != nil {
+			err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
+			if err != nil {
+				logWithId.Errorf("Failing Koji job failed: %v", err)
+			}
+		}
+	}()
+
+	err := job.Args(args)
 	if err != nil {
+		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingJobArgs, "Error parsing job args", err.Error())
 		return err
 	}
 
@@ -99,218 +124,98 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		EndTime:   time.Now().Unix(),
 	}
 
-	var initArgs *worker.KojiInitJobResult
 	var buildRoots []koji.BuildRoot
 	var images []koji.Image
 
-	isOldKojiCompose, err := isOldKojiComposeReq(job)
+	var osbuildResults []worker.OSBuildJobResult
+	initArgs, osbuildResults, err = extractDynamicArgs(job)
 	if err != nil {
+		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", err.Error())
 		return err
 	}
+	build.BuildID = initArgs.BuildID
 
-	// TODO: remove eventually. Kept for backward compatibility.
-	if isOldKojiCompose {
-		var osbuildKojiResults []worker.OSBuildKojiJobResult
-		initArgs, osbuildKojiResults, err = extractDynamicArgsOld(job)
-		if err != nil {
-			return err
+	// Check the dependencies early.
+	if hasFailedDependency(*initArgs, osbuildResults) {
+		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, "At least one job dependency failed", nil)
+		return nil
+	}
+
+	for i, buildArgs := range osbuildResults {
+		buildRPMs := make([]rpmmd.RPM, 0)
+		// collect packages from stages in build pipelines
+		for _, plName := range buildArgs.PipelineNames.Build {
+			buildPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
+			buildRPMs = append(buildRPMs, osbuild.OSBuildMetadataToRPMs(buildPipelineMd)...)
 		}
-		build.BuildID = initArgs.BuildID
+		// this dedupe is usually not necessary since we generally only have
+		// one rpm stage in one build pipeline, but it's not invalid to have
+		// multiple
+		buildRPMs = rpmmd.DeduplicateRPMs(buildRPMs)
 
-		// Check the dependencies early. Fail the koji build if any of them failed.
-		if hasFailedDependencyOld(*initArgs, osbuildKojiResults) {
-			err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
-
-			// Update the status immediately and bail out.
-			var result worker.KojiFinalizeJobResult
-			if err != nil {
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, err.Error())
-			}
-			err = job.Update(&result)
-			if err != nil {
-				return fmt.Errorf("Error reporting job result: %v", err)
-			}
+		kojiTargetResults := buildArgs.TargetResultsByName(target.TargetNameKoji)
+		// Only a single Koji target is allowed per osbuild job
+		if len(kojiTargetResults) != 1 {
+			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Exactly one Koji target result is expected per osbuild job", nil)
 			return nil
 		}
 
-		for i, buildArgs := range osbuildKojiResults {
-			buildRPMs := make([]rpmmd.RPM, 0)
-			// collect packages from stages in build pipelines
-			for _, plName := range buildArgs.PipelineNames.Build {
-				buildPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
-				buildRPMs = append(buildRPMs, osbuild.OSBuildMetadataToRPMs(buildPipelineMd)...)
-			}
-			// this dedupe is usually not necessary since we generally only have
-			// one rpm stage in one build pipeline, but it's not invalid to have
-			// multiple
-			buildRPMs = rpmmd.DeduplicateRPMs(buildRPMs)
-			buildRoots = append(buildRoots, koji.BuildRoot{
-				ID: uint64(i),
-				Host: koji.Host{
-					Os:   buildArgs.HostOS,
-					Arch: buildArgs.Arch,
-				},
-				ContentGenerator: koji.ContentGenerator{
-					Name:    "osbuild",
-					Version: "0", // TODO: put the correct version here
-				},
-				Container: koji.Container{
-					Type: "none",
-					Arch: buildArgs.Arch,
-				},
-				Tools: []koji.Tool{},
-				RPMs:  buildRPMs,
-			})
+		kojiTargetResult := kojiTargetResults[0]
+		kojiTargetOptions := kojiTargetResult.Options.(*target.KojiTargetResultOptions)
 
-			// collect packages from stages in payload pipelines
-			imageRPMs := make([]rpmmd.RPM, 0)
-			for _, plName := range buildArgs.PipelineNames.Payload {
-				payloadPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
-				imageRPMs = append(imageRPMs, osbuild.OSBuildMetadataToRPMs(payloadPipelineMd)...)
-			}
+		buildRoots = append(buildRoots, koji.BuildRoot{
+			ID: uint64(i),
+			Host: koji.Host{
+				Os:   buildArgs.HostOS,
+				Arch: buildArgs.Arch,
+			},
+			ContentGenerator: koji.ContentGenerator{
+				Name:    "osbuild",
+				Version: "0", // TODO: put the correct version here
+			},
+			Container: koji.Container{
+				Type: "none",
+				Arch: buildArgs.Arch,
+			},
+			Tools: []koji.Tool{},
+			RPMs:  buildRPMs,
+		})
 
-			// deduplicate
-			imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
-
-			images = append(images, koji.Image{
-				BuildRootID:  uint64(i),
-				Filename:     args.KojiFilenames[i],
-				FileSize:     buildArgs.ImageSize,
-				Arch:         buildArgs.Arch,
-				ChecksumType: "md5",
-				MD5:          buildArgs.ImageHash,
-				Type:         "image",
-				RPMs:         imageRPMs,
-				Extra: koji.ImageExtra{
-					Info: koji.ImageExtraInfo{
-						Arch: buildArgs.Arch,
-					},
-				},
-			})
-		}
-	} else {
-		var osbuildResults []worker.OSBuildJobResult
-		initArgs, osbuildResults, err = extractDynamicArgs(job)
-		if err != nil {
-			return err
-		}
-		build.BuildID = initArgs.BuildID
-
-		// Check the dependencies early. Fail the koji build if any of them failed.
-		if hasFailedDependency(*initArgs, osbuildResults) {
-			err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
-
-			// Update the status immediately and bail out.
-			var result worker.KojiFinalizeJobResult
-			if err != nil {
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, err.Error())
-			}
-			err = job.Update(&result)
-			if err != nil {
-				return fmt.Errorf("Error reporting job result: %v", err)
-			}
-			return nil
+		// collect packages from stages in payload pipelines
+		imageRPMs := make([]rpmmd.RPM, 0)
+		for _, plName := range buildArgs.PipelineNames.Payload {
+			payloadPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
+			imageRPMs = append(imageRPMs, osbuild.OSBuildMetadataToRPMs(payloadPipelineMd)...)
 		}
 
-		for i, buildArgs := range osbuildResults {
-			buildRPMs := make([]rpmmd.RPM, 0)
-			// collect packages from stages in build pipelines
-			for _, plName := range buildArgs.PipelineNames.Build {
-				buildPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
-				buildRPMs = append(buildRPMs, osbuild.OSBuildMetadataToRPMs(buildPipelineMd)...)
-			}
-			// this dedupe is usually not necessary since we generally only have
-			// one rpm stage in one build pipeline, but it's not invalid to have
-			// multiple
-			buildRPMs = rpmmd.DeduplicateRPMs(buildRPMs)
+		// deduplicate
+		imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
 
-			// TODO: support multiple upload targets
-			if len(buildArgs.TargetResults) != 1 {
-				// TODO: should we call kojiFail() and update job status, instead of just returning?
-				return fmt.Errorf("error: Koji compose OSBuild job result doesn't contain exactly one target result")
-			}
-			kojiTarget := buildArgs.TargetResults[0]
-			kojiTargetOptions := kojiTarget.Options.(*target.KojiTargetResultOptions)
-
-			buildRoots = append(buildRoots, koji.BuildRoot{
-				ID: uint64(i),
-				Host: koji.Host{
-					Os:   buildArgs.HostOS,
+		images = append(images, koji.Image{
+			BuildRootID:  uint64(i),
+			Filename:     args.KojiFilenames[i],
+			FileSize:     kojiTargetOptions.ImageSize,
+			Arch:         buildArgs.Arch,
+			ChecksumType: "md5",
+			MD5:          kojiTargetOptions.ImageMD5,
+			Type:         "image",
+			RPMs:         imageRPMs,
+			Extra: koji.ImageExtra{
+				Info: koji.ImageExtraInfo{
 					Arch: buildArgs.Arch,
 				},
-				ContentGenerator: koji.ContentGenerator{
-					Name:    "osbuild",
-					Version: "0", // TODO: put the correct version here
-				},
-				Container: koji.Container{
-					Type: "none",
-					Arch: buildArgs.Arch,
-				},
-				Tools: []koji.Tool{},
-				RPMs:  buildRPMs,
-			})
-
-			// collect packages from stages in payload pipelines
-			imageRPMs := make([]rpmmd.RPM, 0)
-			for _, plName := range buildArgs.PipelineNames.Payload {
-				payloadPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
-				imageRPMs = append(imageRPMs, osbuild.OSBuildMetadataToRPMs(payloadPipelineMd)...)
-			}
-
-			// deduplicate
-			imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
-
-			images = append(images, koji.Image{
-				BuildRootID:  uint64(i),
-				Filename:     args.KojiFilenames[i],
-				FileSize:     kojiTargetOptions.ImageSize,
-				Arch:         buildArgs.Arch,
-				ChecksumType: "md5",
-				MD5:          kojiTargetOptions.ImageMD5,
-				Type:         "image",
-				RPMs:         imageRPMs,
-				Extra: koji.ImageExtra{
-					Info: koji.ImageExtraInfo{
-						Arch: buildArgs.Arch,
-					},
-				},
-			})
-		}
+			},
+		})
 	}
 
 	var result worker.KojiFinalizeJobResult
 	err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
 	if err != nil {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error())
-	}
-
-	err = job.Update(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
+		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error(), nil)
+		return err
 	}
 
 	return nil
-}
-
-// Extracts dynamic args of the koji-finalize job. Returns an error if they
-// cannot be unmarshalled.
-func extractDynamicArgsOld(job worker.Job) (*worker.KojiInitJobResult, []worker.OSBuildKojiJobResult, error) {
-	var kojiInitResult worker.KojiInitJobResult
-	err := job.DynamicArgs(0, &kojiInitResult)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	osbuildKojiResults := make([]worker.OSBuildKojiJobResult, job.NDynamicArgs()-1)
-
-	for i := 1; i < job.NDynamicArgs(); i++ {
-		err = job.DynamicArgs(i, &osbuildKojiResults[i-1])
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	return &kojiInitResult, osbuildKojiResults, nil
 }
 
 // Extracts dynamic args of the koji-finalize job. Returns an error if they
@@ -332,48 +237,6 @@ func extractDynamicArgs(job worker.Job) (*worker.KojiInitJobResult, []worker.OSB
 	}
 
 	return &kojiInitResult, osbuildResults, nil
-}
-
-// Tests the first osbuild job result for specific values and decides
-// if it is a `worker.OSBuildKojiJobResult` or `worker.OSBuildJobResult`.
-// In case of `worker.OSBuildKojiJobResult` returns `true`.
-// In case of 'worker.OSBuildJobResult` returns `false`.
-func isOldKojiComposeReq(job worker.Job) (bool, error) {
-	if job.NDynamicArgs() < 2 {
-		return false, fmt.Errorf("error: koji-finalize job does not have any osbuild job dynamic arg attached")
-	}
-
-	var osbuildKojiResult worker.OSBuildKojiJobResult
-	err := job.DynamicArgs(1, &osbuildKojiResult)
-	if err != nil {
-		return false, err
-	}
-
-	// The decision is based on the fact if all result values specific to
-	// `worker.OSBuildKojiJobResult` are set to meaningful values or not.
-	// The assumption is that the default type values are not meaningful.
-	if osbuildKojiResult.Arch == "" || osbuildKojiResult.HostOS == "" ||
-		osbuildKojiResult.ImageHash == "" || osbuildKojiResult.ImageSize == 0 {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-// Returns true if any of koji-finalize dependencies failed.
-func hasFailedDependencyOld(kojiInitResult worker.KojiInitJobResult, osbuildKojiResults []worker.OSBuildKojiJobResult) bool {
-	if kojiInitResult.JobError != nil {
-		return true
-	}
-
-	for _, r := range osbuildKojiResults {
-		// No `OSBuildOutput` implies failure: either osbuild crashed or
-		// rejected the input (manifest or command line arguments)
-		if r.OSBuildOutput == nil || !r.OSBuildOutput.Success || r.JobError != nil {
-			return true
-		}
-	}
-	return false
 }
 
 // Returns true if any of koji-finalize dependencies failed.

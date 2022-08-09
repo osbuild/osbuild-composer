@@ -22,7 +22,7 @@ if [[ "${ID}" == "fedora" ]]; then
 fi
 
 # Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh
+/usr/libexec/osbuild-composer-test/provision.sh none
 BLUEPRINT_FILE=/tmp/blueprint.toml
 COMPOSE_START=/tmp/compose-start.json
 COMPOSE_INFO=/tmp/compose-info.json
