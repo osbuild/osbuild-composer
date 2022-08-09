@@ -1666,6 +1666,14 @@ func newDistro(distroName string) distro.Distro {
 				},
 			},
 		},
+		GCPGuestAgentConfig: &osbuild.GcpGuestAgentConfigOptions{
+			ConfigScope: osbuild.GcpGuestAgentConfigScopeDistro,
+			Config: &osbuild.GcpGuestAgentConfig{
+				InstanceSetup: &osbuild.GcpGuestAgentConfigInstanceSetup{
+					SetBotoConfig: common.BoolToPtr(false),
+				},
+			},
+		},
 	}
 
 	gceImgType := imageType{
