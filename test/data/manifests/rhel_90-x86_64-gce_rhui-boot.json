@@ -2161,6 +2161,17 @@
             }
           },
           {
+            "type": "org.osbuild.gcp.guest-agent.conf",
+            "options": {
+              "config_scope": "distro",
+              "config": {
+                "InstanceSetup": {
+                  "set_boto_config": false
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.fstab",
             "options": {
               "filesystems": [
