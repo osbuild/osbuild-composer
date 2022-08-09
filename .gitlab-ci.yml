@@ -237,26 +237,46 @@ Manifests:
 
 regression-bigiso:
   extends: .regression
+  rules: 
+    # WHITELIST: Run only on x86_64 and rhel like systems
+    - if: $RUNNER =~ "/^.*(rhel-8.6.*x86_64|rhel-9.0.*x86_64|centos-stream-8.*x86_64|centos-stream-9.*x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: regression-bigiso.sh
 
 regression-composer-works-behind-satellite-fallback:
   extends: .regression
+  rules: 
+    # BLACKLIST: Skipped on subscribed RHEL machines
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: regression-composer-works-behind-satellite-fallback.sh
 
 regression-composer-works-behind-satellite:
   extends: .regression
+  rules: 
+    # BLACKLIST: Skipped on subscribed RHEL machines
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: regression-composer-works-behind-satellite.sh
 
 regression-excluded-dependency:
   extends: .regression
+  rules: 
+    # WHITELIST
+    - if: $RUNNER =~ "/^.*(rhel-8.6|rhel-9.0|centos-stream-8|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: regression-excluded-dependency.sh
 
 regression-include-excluded-packages:
   extends: .regression
+  rules: 
+    # BLACKLIST: Skipped on fedora systems
+    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: regression-include-excluded-packages.sh
 
@@ -284,6 +304,10 @@ regression-insecure-repo:
 
 regression-no-explicit-rootfs-definition:
   extends: .regression
+  rules: 
+    # BLACKLIST: Skipped on fedora systems
+    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: regression-no-explicit-rootfs-definition.sh
 
@@ -455,7 +479,6 @@ koji.sh (cloud upload):
   extends: .terraform
   rules:
     - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh cloud-upload ${CLOUD_TARGET} ${IMAGE_TYPE}
@@ -498,11 +521,19 @@ azure.sh:
 # The required GCE image type is not supported on Fedora
 gcp.sh:
   extends: .integration_rhel
+  rules: 
+    # BLACKLIST
+    - if: $RUNNER !~ "/^.*(rhel-8.7|rhel-9.1).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
+    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: gcp.sh
 
 vmware.sh:
   extends: .integration
+  rules: 
+    # WHITELIST
+    - if: $RUNNER =~ "/^.*(rhel).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: vmware.sh
 
@@ -574,23 +605,30 @@ libvirt.sh:
   variables:
     SCRIPT: libvirt.sh
 
-generic_s3_http.sh:
+.generic_s3:
   extends: .libvirt_integration
+  rules:
+    # BLACKLIST
+    - if: $RUNNER !~ "/^.*(rhel-8.7|rhel-9.1).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
+    - !reference [.nightly_rules, rules]
+
+generic_s3_http.sh:
+  extends: .generic_s3
   variables:
     SCRIPT: generic_s3_http.sh
 
 generic_s3_https_secure.sh:
-  extends: .libvirt_integration
+  extends: .generic_s3
   variables:
     SCRIPT: generic_s3_https_secure.sh
 
 generic_s3_https_insecure.sh:
-  extends: .libvirt_integration
+  extends: .generic_s3
   variables:
     SCRIPT: generic_s3_https_insecure.sh
 
 aws_s3.sh:
-  extends: .libvirt_integration
+  extends: .generic_s3
   variables:
     SCRIPT: aws_s3.sh
 

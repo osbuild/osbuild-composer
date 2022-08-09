@@ -2,17 +2,6 @@
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-if [ "${NIGHTLY:=false}" == "true" ]; then
-    case "${ID}-${VERSION_ID}" in
-        "rhel-8.7" | "rhel-9.1" )
-            echo "$0 is not enabled for ${ID}-${VERSION_ID} skipping..."
-            exit 0
-            ;;
-        *)
-            ;;
-    esac
-fi
-
 set -euo pipefail
 
 # Container image used for cloud provider CLI tools

@@ -25,12 +25,6 @@ function get_build_info() {
     jq -r "${key}" "${fname}"
 }
 
-
-if [ "$ID" != "rhel" ]; then
-    greenprint "VMware test not supported on $ID"
-    exit 0
-fi
-
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 

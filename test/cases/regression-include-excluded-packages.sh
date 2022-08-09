@@ -16,11 +16,6 @@ set -xeuo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-if [[ "${ID}" == "fedora" ]]; then
-    echo "$0 is only enabled for rhel like systems; skipping..."
-    exit 0
-fi
-
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 BLUEPRINT_FILE=/tmp/blueprint.toml

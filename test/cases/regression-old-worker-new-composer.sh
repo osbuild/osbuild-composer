@@ -19,7 +19,7 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 # Only run this on x86 and rhel8 GA
 if [ "$ARCH" != "x86_64" ] || [ "$ID" != rhel ] || ! sudo subscription-manager status; then
     echo "Test only supported on GA RHEL."
-    exit 0
+    exit 1
 fi
 
 # Provision the software under test.
