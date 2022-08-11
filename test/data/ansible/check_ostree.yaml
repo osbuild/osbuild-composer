@@ -154,9 +154,13 @@
 
     - set_fact:
         device_name: "{{ result_encrypted.stdout }}"
-      when: "'/dev/mapper/luks-' in result_encrypted.stdout"
+      when: "'/dev/mapper/rootvg-rootlv' in result_encrypted.stdout and ((ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.7', '>=')) or (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] is version('9', '>=')))"
 
-    # case: check /sysroot moutn point
+    - set_fact:
+        device_name: "{{ result_encrypted.stdout }}"
+      when: "'/dev/mapper/luks-' in result_encrypted.stdout and ((ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.7', '<')) or (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_major_version'] is version('9', '<')))"
+
+    # case: check /sysroot mount point
     - name: check /sysroot mount point
       command: findmnt -r -o SOURCE -n /sysroot
       register: result_sysroot_mount_point
