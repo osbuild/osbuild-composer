@@ -595,7 +595,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="${EMBEDED_CONTAINER}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
