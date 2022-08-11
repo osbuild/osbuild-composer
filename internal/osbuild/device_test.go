@@ -114,3 +114,28 @@ func TestGenDeviceFinishStages(t *testing.T) {
 	assert.True(ok, "Need LVM2MetadataStageOptions for org.osbuild.lvm2.metadata")
 	assert.Equal("root", opts.VGName)
 }
+
+func TestGenDeviceFinishStagesOrderWithLVMClevisBind(t *testing.T) {
+	assert := assert.New(t)
+
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+
+	luks_lvm := testPartitionTables["luks+lvm+clevisBind"]
+
+	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, rng)
+	assert.NoError(err)
+
+	stages := GenDeviceFinishStages(pt, "image.raw")
+
+	// we should have two stages
+	assert.Equal(2, len(stages))
+	lvm := stages[0]
+	luks := stages[1]
+
+	// the first one should be "org.osbuild.lvm2.metadata"
+	assert.Equal("org.osbuild.lvm2.metadata", lvm.Type)
+	// followed by "org.osbuild.luks2.remove-key"
+	assert.Equal("org.osbuild.luks2.remove-key", luks.Type)
+}
