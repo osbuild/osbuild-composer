@@ -26,6 +26,7 @@ function installClient() {
 
     sudo mkdir -p "${WORKER_CONFIG_DIR}"
 
+    # store credentials in authfile and use the file in subsequent calls, see below
     sudo "${CONTAINER_RUNTIME}" login --authfile "${AUTH_FILE_PATH}" --username "${CI_REGISTRY_USER}" --password "${CI_JOB_TOKEN}" "${CI_REGISTRY_IMAGE}"
 
     cat <<EOF | sudo tee "${WORKER_CONFIG_DIR}/osbuild-worker.toml"
