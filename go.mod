@@ -4,8 +4,8 @@ go 1.16
 
 require (
 	cloud.google.com/go/cloudbuild v1.2.0
-	cloud.google.com/go/compute v1.6.1
-	cloud.google.com/go/storage v1.22.0
+	cloud.google.com/go/compute v1.7.0
+	cloud.google.com/go/storage v1.25.0
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-sdk-for-go v63.4.0+incompatible
 	github.com/Azure/azure-storage-blob-go v0.13.0
@@ -45,10 +45,10 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.28.0
-	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150
-	google.golang.org/api v0.75.0
-	google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
+	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2
+	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
+	golang.org/x/sys v0.0.0-20220624220833-87e55d714810
+	google.golang.org/api v0.88.0
+	google.golang.org/genproto v0.0.0-20220720214146-176da50484ac
 	gopkg.in/ini.v1 v1.66.6
 )
