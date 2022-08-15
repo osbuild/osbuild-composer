@@ -172,5 +172,12 @@ case "${AUTH_METHOD}" in
         sudo systemctl stop 'osbuild*'
         # enable Weldr API
         sudo systemctl start osbuild-composer.socket
+
+        # Print debugging info about content sources
+        sudo composer-cli status show
+        sudo composer-cli sources list
+        for SOURCE in $(sudo composer-cli sources list); do
+            sudo composer-cli sources info "$SOURCE"
+        done
         ;;
 esac
