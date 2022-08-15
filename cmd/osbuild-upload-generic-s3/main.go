@@ -34,13 +34,13 @@ func main() {
 
 	a, err := awscloud.NewForEndpoint(endpoint, region, accessKeyID, secretAccessKey, sessionToken, caBundle, skipSSLVerification)
 	if err != nil {
-		println(err.Error())
+		fmt.Println(err.Error())
 		return
 	}
 
 	uploadOutput, err := a.Upload(filename, bucketName, keyName)
 	if err != nil {
-		println(err.Error())
+		fmt.Println(err.Error())
 		return
 	}
 
