@@ -4,6 +4,7 @@ package fedora
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -386,7 +387,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"sil-padauk-fonts",
 			"sil-scheherazade-fonts",
 			"smartmontools",
-			"smc-meera-fonts",
 			"spice-vdagent",
 			"strace",
 			"systemd",
@@ -411,6 +411,26 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"xz",
 		},
 	})
+
+	releasever := t.Arch().Distro().Releasever()
+	version, err := strconv.Atoi(releasever)
+	if err != nil {
+		panic("cannot convert releasever to int: " + err.Error())
+	}
+
+	if version <= 36 {
+		ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"smc-meera-fonts",
+			},
+		})
+	} else {
+		ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"rit-meera-new-fonts",
+			},
+		})
+	}
 
 	switch t.Arch().Name() {
 	case distro.X86_64ArchName:

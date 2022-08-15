@@ -7133,14 +7133,6 @@
                     }
                   },
                   {
-                    "id": "sha256:d5964dc76c3e62a55a8a6daace1d69f8e3961ed3bfe54326a33768d8711dd85c",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:bfdf0b12dcea6e4cdfe967535d08cfaac4e133f65173d2afe59c5023b5fbde66",
                     "options": {
                       "metadata": {
@@ -12624,9 +12616,6 @@
           },
           "sha256:d54af2b322ad5b352705ca2cfc85fe79e1284a14e4f45cedf3f553bc2c9e4471": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/u/uchardet-0.0.6-14.fc35.aarch64.rpm"
-          },
-          "sha256:d5964dc76c3e62a55a8a6daace1d69f8e3961ed3bfe54326a33768d8711dd85c": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/s/smc-meera-fonts-7.0.3-4.fc35.noarch.rpm"
           },
           "sha256:d5b1205ef37cf65059f0393e78f670b00a0d7d17a10fe91c9ada17d6bd2041b8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/n/nim-srpm-macros-3-5.fc35.noarch.rpm"
@@ -19084,16 +19073,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/s/sil-scheherazade-fonts-2.100-13.fc35.noarch.rpm",
         "checksum": "sha256:082a4653df11d434b8646916895d1942a52f2631666f478b6119c0f915c1423e",
-        "check_gpg": true
-      },
-      {
-        "name": "smc-meera-fonts",
-        "epoch": 0,
-        "version": "7.0.3",
-        "release": "4.fc35",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/s/smc-meera-fonts-7.0.3-4.fc35.noarch.rpm",
-        "checksum": "sha256:d5964dc76c3e62a55a8a6daace1d69f8e3961ed3bfe54326a33768d8711dd85c",
         "check_gpg": true
       },
       {

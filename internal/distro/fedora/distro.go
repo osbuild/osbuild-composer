@@ -727,6 +727,12 @@ func NewF35() distro.Distro {
 func NewF36() distro.Distro {
 	return newDistro(36)
 }
+func NewF37() distro.Distro {
+	return newDistro(37)
+}
+func NewF38() distro.Distro {
+	return newDistro(38)
+}
 
 func newDistro(version int) distro.Distro {
 	rd := getDistro(version)

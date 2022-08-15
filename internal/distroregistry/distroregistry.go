@@ -18,6 +18,8 @@ import (
 var supportedDistros = []supportedDistro{
 	{fedora.NewF35, fedora.NewHostDistro},
 	{fedora.NewF36, fedora.NewHostDistro},
+	{fedora.NewF37, fedora.NewHostDistro},
+	{fedora.NewF38, fedora.NewHostDistro},
 	{rhel7.New, rhel7.NewHostDistro},
 	{rhel8.New, rhel8.NewHostDistro},
 	{rhel8.NewRHEL84, rhel8.NewRHEL84HostDistro},
