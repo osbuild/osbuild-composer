@@ -131,6 +131,13 @@ func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, err
 		return nil, err
 	}
 
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			logrus.Warnf("[AWS] ‼ Failed to close the file uploaded to S3️: %v", err)
+		}
+	}()
+
 	logrus.Infof("[AWS] 🚀 Uploading image to S3: %s/%s", bucket, key)
 	return a.uploader.Upload(
 		&s3manager.UploadInput{
