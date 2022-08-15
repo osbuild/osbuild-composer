@@ -581,3 +581,18 @@ func (a *AWS) S3ObjectPresignedURL(bucket, objectKey string) (string, error) {
 	logrus.Info("[AWS] 🎉 S3 Presigned URL ready")
 	return url, nil
 }
+
+func (a *AWS) MarkS3ObjectAsPublic(bucket, objectKey string) error {
+	logrus.Infof("[AWS] 👐 Making S3 object public %s/%s", bucket, objectKey)
+	_, err := a.s3.PutObjectAcl(&s3.PutObjectAclInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(objectKey),
+		ACL:    aws.String(s3.BucketCannedACLPublicRead),
+	})
+	if err != nil {
+		return err
+	}
+	logrus.Info("[AWS] ✔️ Making S3 object public successful")
+
+	return nil
+}
