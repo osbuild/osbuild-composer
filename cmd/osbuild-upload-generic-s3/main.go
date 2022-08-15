@@ -21,6 +21,7 @@ func main() {
 	var bucketName string
 	var keyName string
 	var filename string
+	var public bool
 	flag.StringVar(&accessKeyID, "access-key-id", "", "access key ID")
 	flag.StringVar(&secretAccessKey, "secret-access-key", "", "secret access key")
 	flag.StringVar(&sessionToken, "session-token", "", "session token")
@@ -31,6 +32,7 @@ func main() {
 	flag.StringVar(&bucketName, "bucket", "", "target S3 bucket name")
 	flag.StringVar(&keyName, "key", "", "target S3 key name")
 	flag.StringVar(&filename, "image", "", "image file to upload")
+	flag.BoolVar(&public, "public", false, "if set, the S3 object is marked as public (default: false)")
 	flag.Parse()
 
 	a, err := awscloud.NewForEndpoint(endpoint, region, accessKeyID, secretAccessKey, sessionToken, caBundle, skipSSLVerification)
@@ -43,6 +45,14 @@ func main() {
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
+	}
+
+	if public {
+		err := a.MarkS3ObjectAsPublic(bucketName, keyName)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 	}
 
 	fmt.Printf("file uploaded to %s\n", aws.StringValue(&uploadOutput.Location))
