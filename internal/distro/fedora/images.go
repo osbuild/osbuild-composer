@@ -280,5 +280,27 @@ func iotRawImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	rng *rand.Rand) (image.ImageKind, error) {
-	return nil, nil
+
+	img := image.NewOSTreeRawImage()
+
+	img.Platform = t.platform
+	img.Workload = workload
+
+	img.Remote = "fedora-iot"
+	img.OSName = "fedora-iot"
+
+	img.OSTreeURL = options.OSTree.URL
+	img.OSTreeRef = options.OSTree.Ref
+	img.OSTreeCommit = options.OSTree.Parent
+
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+	img.PartitionTable = pt
+
+	img.Filename = t.Filename()
+
+	return img, nil
 }
