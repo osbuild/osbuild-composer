@@ -10021,14 +10021,6 @@
                     }
                   },
                   {
-                    "id": "sha256:6b14f513aedb63267eb69943fe95cc50701e2f05bcf208450cef8185d3762c84",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:712698d3c0080b76ea09d0564475bff3505aa6356c5b03f83ce35b5a38003f2e",
                     "options": {
                       "metadata": {
@@ -12034,9 +12026,6 @@
           },
           "sha256:6b05ab620f10b424ae18d8de36a8c68fd8a627956dba8a6feb0295f84f3cbc2e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/l/libarchive-3.5.3-2.fc36.aarch64.rpm"
-          },
-          "sha256:6b14f513aedb63267eb69943fe95cc50701e2f05bcf208450cef8185d3762c84": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/r/rit-meera-new-fonts-1.3-1.fc36.noarch.rpm"
           },
           "sha256:6b15ee0af777cef482ac7fdc0aac1776087edaee4c988dae384969e0dad0393d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-fedora-20220617/Packages/o/oscap-anaconda-addon-1.0-11.fc36.noarch.rpm"
@@ -23032,16 +23021,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/r/redhat-rpm-config-221-1.fc36.noarch.rpm",
         "checksum": "sha256:1483bed44de57b87448b2eb55db952425a5d12825405d912bdb5014ba7a7b0b5",
-        "check_gpg": true
-      },
-      {
-        "name": "rit-meera-new-fonts",
-        "epoch": 0,
-        "version": "1.3",
-        "release": "1.fc36",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/r/rit-meera-new-fonts-1.3-1.fc36.noarch.rpm",
-        "checksum": "sha256:6b14f513aedb63267eb69943fe95cc50701e2f05bcf208450cef8185d3762c84",
         "check_gpg": true
       },
       {
