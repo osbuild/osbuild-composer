@@ -373,14 +373,6 @@ version = "0.0.1"
 modules = []
 groups = []
 
-[[ packages ]]
-name = "openscap-scanner"
-version = "*"
-
-[[ packages ]]
-name = "scap-security-guide"
-version = "*"
-
 [customizations.openscap]
 profile_id = "${PROFILE}"
 datastream = "${DATASTREAM}"
