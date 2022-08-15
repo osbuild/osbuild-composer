@@ -155,6 +155,10 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
 	}
 
+	if p.OpenSCAPConfig != nil {
+		packages = append(packages, "openscap-scanner", "scap-security-guide")
+	}
+
 	chain := []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraBasePackages...),
@@ -185,9 +189,6 @@ func (p *OS) getBuildPackages() []string {
 	if p.SElinux != "" {
 		packages = append(packages, "policycoreutils")
 		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
-	}
-	if p.OpenSCAPConfig != nil {
-		packages = append(packages, "openscap-scanner", "scap-security-guide")
 	}
 	return packages
 }
