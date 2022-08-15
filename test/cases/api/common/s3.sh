@@ -6,6 +6,14 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 OSTREE_REF="test/rhel/8/edge"
 
 function createReqFileEdge() {
+  local public_block=
+
+  # on Fedora, upload the artifact publicly, so we can later check the
+  # URL created by composer is just public, not presigned
+  if [[ $ID == "fedora" ]]; then
+    public_block=',"public": true'
+  fi
+
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
@@ -39,7 +47,7 @@ function createReqFileEdge() {
       "ref": "${OSTREE_REF}"
     },
     "upload_options": {
-      "region": "${AWS_REGION}"
+      "region": "${AWS_REGION}"${public_block}
     }
   }
 }
