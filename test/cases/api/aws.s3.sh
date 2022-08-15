@@ -19,7 +19,7 @@ function cleanup() {
 
   # extract filename component from URL
   local S3_FILENAME
-  S3_FILENAME=$(echo "${S3_URL}" | grep -oP '(?<=/)[^/]+(?=\?)')
+  S3_FILENAME=$(echo "import urllib.parse; print(urllib.parse.urlsplit('$S3_URL').path.strip('/'))" | python3 -)
 
   # prepend bucket
   local S3_URI
@@ -68,7 +68,6 @@ function checkUploadStatusOptions() {
 
   # S3 URL contains region and bucket name
   echo "$S3_URL" | grep -F "$AWS_BUCKET" -
-  echo "$S3_URL" | grep -F "$AWS_REGION" -
 }
 
 # Verify s3 blobs
@@ -79,7 +78,7 @@ function verify() {
 
     # Tag the resource as a test file
     local S3_FILENAME
-    S3_FILENAME=$(echo "${S3_URL}" | grep -oP '(?<=/)[^/]+(?=\?)')
+    S3_FILENAME=$(echo "import urllib.parse; print(urllib.parse.urlsplit('$S3_URL').path.strip('/'))" | python3 -)
 
     # tag the object, also verifying that it exists in the bucket as expected
     $AWS_CMD s3api put-object-tagging \
@@ -92,6 +91,15 @@ function verify() {
     # Download the object using the Presigned URL and inspect
     case ${IMAGE_TYPE} in
         "$IMAGE_TYPE_EDGE_COMMIT")
+            if [[ $ID == "fedora" ]]; then
+                # on Fedora, the test case uploads the artifact publicly,
+                # so check here that the URL isn't presigned
+                [[ ${S3_URL} != *"X-Amz-Signature"* ]]
+            else
+                # The URL is presigned otherwise
+                [[ ${S3_URL} == *"X-Amz-Signature"* ]]
+            fi
+
             curl "${S3_URL}" --output "${WORKDIR}/edge-commit.tar"
             verifyEdgeCommit "${WORKDIR}/edge-commit.tar"
             ;;
@@ -101,6 +109,7 @@ function verify() {
             ;;
 
         "${IMAGE_TYPE_VSPHERE}")
+
             curl "${S3_URL}" --output "${WORKDIR}/disk.vmdk"
             verifyInVSphere "${WORKDIR}/disk.vmdk"
             ;;

@@ -375,10 +375,16 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
 
+				public := false
+				if awsS3UploadOptions.Public != nil && *awsS3UploadOptions.Public {
+					public = true
+				}
+
 				key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 				t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
 					Region: awsS3UploadOptions.Region,
 					Key:    key,
+					Public: public,
 				})
 				t.ImageName = key
 				t.OsbuildArtifact.ExportFilename = imageType.Filename()

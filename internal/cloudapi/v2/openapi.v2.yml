@@ -844,6 +844,16 @@ components:
         region:
           type: string
           example: 'eu-west-1'
+        public:
+          type: boolean
+          default: false
+          description: |
+            If set to false (the default value), a long, obfuscated URL
+            is returned. Its expiration might be sooner than for other upload
+            targets.
+            
+            If set to true, a shorter URL is returned and
+            its expiration is the same as for the other upload targets.
     GCPUploadOptions:
       type: object
       required:
