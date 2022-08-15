@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -37,10 +38,6 @@ const (
 
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
-
-	// Fedora distribution
-	fedora35Distribution = "fedora-35"
-	fedora36Distribution = "fedora-36"
 
 	//Kernel options for ami, qcow2, openstack, vhd and vmdk types
 	defaultKernelOptions = "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
@@ -305,30 +302,18 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 	Locale:   common.StringToPtr("en_US"),
 }
 
-// distribution objects without the arches > image types
-var distroMap = map[string]distribution{
-	fedora35Distribution: {
-		name:               fedora35Distribution,
+func getDistro(version int) distribution {
+	return distribution{
+		name:               fmt.Sprintf("fedora-%d", version),
 		product:            "Fedora",
-		osVersion:          "35",
-		releaseVersion:     "35",
-		modulePlatformID:   "platform:f35",
-		ostreeRefTmpl:      "fedora/35/%s/iot",
-		isolabelTmpl:       "Fedora-35-BaseOS-%s",
-		runner:             &runner.Fedora{Version: 35},
+		osVersion:          strconv.Itoa(version),
+		releaseVersion:     strconv.Itoa(version),
+		modulePlatformID:   fmt.Sprintf("platform:f%d", version),
+		ostreeRefTmpl:      fmt.Sprintf("fedora/%d/%%s/iot", version),
+		isolabelTmpl:       fmt.Sprintf("Fedora-%d-BaseOS-%%s", version),
+		runner:             &runner.Fedora{Version: uint64(version)},
 		defaultImageConfig: defaultDistroImageConfig,
-	},
-	fedora36Distribution: {
-		name:               fedora36Distribution,
-		product:            "Fedora",
-		osVersion:          "36",
-		releaseVersion:     "36",
-		modulePlatformID:   "platform:f36",
-		ostreeRefTmpl:      "fedora/36/%s/iot",
-		isolabelTmpl:       "Fedora-36-BaseOS-%s",
-		runner:             &runner.Fedora{Version: 36},
-		defaultImageConfig: defaultDistroImageConfig,
-	},
+	}
 }
 
 func (d *distribution) Name() string {
@@ -722,20 +707,29 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro(name)
+	parts := strings.Split(name, "-")
+	if len(parts) != 2 || parts[0] != "fedora" {
+		panic("invalid distro name: " + name)
+	}
+
+	version, err := strconv.Atoi(parts[1])
+	if err != nil {
+		panic("invalid distro version: " + name + ": " + err.Error())
+	}
+
+	return newDistro(version)
 }
 
 // New creates a new distro object, defining the supported architectures and image types
 func NewF35() distro.Distro {
-	return newDistro(fedora35Distribution)
+	return newDistro(35)
 }
 func NewF36() distro.Distro {
-	return newDistro(fedora36Distribution)
+	return newDistro(36)
 }
 
-func newDistro(distroName string) distro.Distro {
-
-	rd := distroMap[distroName]
+func newDistro(version int) distro.Distro {
+	rd := getDistro(version)
 
 	// Architecture definitions
 	x86_64 := architecture{
