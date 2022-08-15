@@ -42,6 +42,7 @@ type AWSS3TargetOptions struct {
 	Endpoint            string `json:"endpoint"`
 	CABundle            string `json:"ca_bundle"`
 	SkipSSLVerification bool   `json:"skip_ssl_verification"`
+	Public              bool   `json:"public,omitempty"`
 }
 
 func (AWSS3TargetOptions) isTargetOptions() {}

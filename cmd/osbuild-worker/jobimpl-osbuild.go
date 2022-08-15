@@ -185,7 +185,7 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	result.Success = true
 }
 
-func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string) (string, *clienterrors.Error) {
+func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, public bool) (string, *clienterrors.Error) {
 	imagePath := path.Join(outputDirectory, exportPath, filename)
 
 	if key == "" {
@@ -193,10 +193,19 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 	}
 	key += "-" + filename
 
-	_, err := a.Upload(imagePath, bucket, key)
+	result, err := a.Upload(imagePath, bucket, key)
 	if err != nil {
 		return "", clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
 
+	}
+
+	if public {
+		err := a.MarkS3ObjectAsPublic(bucket, key)
+		if err != nil {
+			return "", clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+		}
+
+		return result.Location, nil
 	}
 
 	url, err := a.S3ObjectPresignedURL(bucket, key)
@@ -506,7 +515,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			url, targetError := uploadToS3(a, outputDirectory, jobTarget.OsbuildArtifact.ExportName, bucket, targetOptions.Key, jobTarget.OsbuildArtifact.ExportFilename)
+			url, targetError := uploadToS3(a, outputDirectory, jobTarget.OsbuildArtifact.ExportName, bucket, targetOptions.Key, jobTarget.OsbuildArtifact.ExportFilename, targetOptions.Public)
 			if targetError != nil {
 				targetResult.TargetError = targetError
 				break
