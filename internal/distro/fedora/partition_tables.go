@@ -105,3 +105,5 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 }
+
+var iotBasePartitionTables = distro.BasePartitionTableMap{}

@@ -131,6 +131,25 @@ var (
 		exports:          []string{"bootiso"},
 	}
 
+	_ = imageType{
+		name:        "fedora-iot-raw-image",
+		nameAliases: []string{"iot-raw-image"},
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		packageSets: map[string]packageSetFunc{},
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: common.StringToPtr("en_US.UTF-8"),
+		},
+		defaultSize:         10 * GigaByte,
+		rpmOstree:           true,
+		bootable:            true,
+		image:               iotRawImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"image-tree", "image", "xz"},
+		exports:             []string{"xz"},
+		basePartitionTables: iotBasePartitionTables,
+	}
+
 	qcow2ImgType = imageType{
 		name:     "qcow2",
 		filename: "disk.qcow2",

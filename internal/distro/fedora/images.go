@@ -273,3 +273,12 @@ func iotInstallerImage(workload workload.Workload,
 
 	return img, nil
 }
+
+func iotRawImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	rng *rand.Rand) (image.ImageKind, error) {
+	return nil, nil
+}
