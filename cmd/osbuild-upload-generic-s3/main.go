@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 
@@ -35,13 +36,13 @@ func main() {
 	a, err := awscloud.NewForEndpoint(endpoint, region, accessKeyID, secretAccessKey, sessionToken, caBundle, skipSSLVerification)
 	if err != nil {
 		fmt.Println(err.Error())
-		return
+		os.Exit(1)
 	}
 
 	uploadOutput, err := a.Upload(filename, bucketName, keyName)
 	if err != nil {
 		fmt.Println(err.Error())
-		return
+		os.Exit(1)
 	}
 
 	fmt.Printf("file uploaded to %s\n", aws.StringValue(&uploadOutput.Location))
