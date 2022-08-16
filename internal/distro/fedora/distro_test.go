@@ -277,6 +277,7 @@ func TestImageType_Name(t *testing.T) {
 				"fedora-iot-commit",
 				"fedora-iot-container",
 				"fedora-iot-installer",
+				"fedora-iot-raw-image",
 				"oci",
 			},
 		},
@@ -290,6 +291,7 @@ func TestImageType_Name(t *testing.T) {
 				"fedora-iot-commit",
 				"fedora-iot-container",
 				"fedora-iot-installer",
+				"fedora-iot-raw-image",
 			},
 		},
 	}
@@ -445,6 +447,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"fedora-iot-commit",
 				"fedora-iot-container",
 				"fedora-iot-installer",
+				"fedora-iot-raw-image",
 				"oci",
 				"container",
 			},
@@ -458,6 +461,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"fedora-iot-commit",
 				"fedora-iot-container",
 				"fedora-iot-installer",
+				"fedora-iot-raw-image",
 				"oci",
 				"container",
 			},
@@ -551,7 +555,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
-			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" {
+			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" || imgTypeName == "fedora-iot-raw-image" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "fedora-iot-installer" {
 				continue
@@ -580,7 +584,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
-			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" {
+			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" || imgTypeName == "fedora-iot-raw-image" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "fedora-iot-installer" {
 				continue
@@ -716,7 +720,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
-			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" {
+			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" || imgTypeName == "fedora-iot-raw-image" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "fedora-iot-installer" {
 				continue
@@ -745,7 +749,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
-			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" {
+			if imgTypeName == "fedora-iot-commit" || imgTypeName == "fedora-iot-container" || imgTypeName == "fedora-iot-raw-image" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "fedora-iot-installer" {
 				continue
