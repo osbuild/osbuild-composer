@@ -1354,8 +1354,8 @@ def get_args():
         "--output",
         metavar="DIR",
         type=os.path.abspath,
-        help="directory for storing generated image test cases",
-        required=True
+        default="test/data/manifests",
+        help="directory for storing generated image test cases (default 'test/data/manifests')"
     )
     parser.add_argument(
         "--sources",
