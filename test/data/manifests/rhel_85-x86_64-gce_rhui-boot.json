@@ -2339,20 +2339,6 @@
                   "name": "Google Compute Engine",
                   "gpgcheck": true,
                   "repo_gpgcheck": false
-                },
-                {
-                  "id": "google-cloud-sdk",
-                  "baseurl": [
-                    "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"
-                  ],
-                  "enabled": true,
-                  "gpgkey": [
-                    "https://packages.cloud.google.com/yum/doc/yum-key.gpg",
-                    "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
-                  ],
-                  "name": "Google Cloud SDK",
-                  "gpgcheck": true,
-                  "repo_gpgcheck": false
                 }
               ]
             }
