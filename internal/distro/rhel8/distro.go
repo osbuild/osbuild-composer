@@ -1729,18 +1729,6 @@ func newDistro(distroName string) distro.Distro {
 							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
 						},
 					},
-					{
-						Id:           "google-cloud-sdk",
-						Name:         "Google Cloud SDK",
-						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"},
-						Enabled:      common.BoolToPtr(true),
-						GPGCheck:     common.BoolToPtr(true),
-						RepoGPGCheck: common.BoolToPtr(false),
-						GPGKey: []string{
-							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
-							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
-						},
-					},
 				},
 			},
 		},
