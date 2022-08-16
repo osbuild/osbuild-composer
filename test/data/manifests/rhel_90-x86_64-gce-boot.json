@@ -2148,7 +2148,7 @@
                     "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
                   ],
                   "name": "Google Compute Engine",
-                  "gpgcheck": true,
+                  "gpgcheck": false,
                   "repo_gpgcheck": false
                 }
               ]
