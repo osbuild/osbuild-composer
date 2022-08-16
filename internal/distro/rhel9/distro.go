@@ -1604,11 +1604,13 @@ func newDistro(distroName string) distro.Distro {
 				Filename: "google-cloud.repo",
 				Repos: []osbuild.YumRepository{
 					{
-						Id:           "google-compute-engine",
-						Name:         "Google Compute Engine",
-						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable"},
-						Enabled:      common.BoolToPtr(true),
-						GPGCheck:     common.BoolToPtr(true),
+						Id:      "google-compute-engine",
+						Name:    "Google Compute Engine",
+						BaseURL: []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable"},
+						Enabled: common.BoolToPtr(true),
+						// TODO: enable GPG check once Google stops using SHA-1 in their keys
+						// https://issuetracker.google.com/issues/223626963
+						GPGCheck:     common.BoolToPtr(false),
 						RepoGPGCheck: common.BoolToPtr(false),
 						GPGKey: []string{
 							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
