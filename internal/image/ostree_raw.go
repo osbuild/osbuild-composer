@@ -38,5 +38,18 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	return nil, nil
+	buildPipeline := manifest.NewBuild(m, runner, repos)
+	buildPipeline.Checkpoint()
+
+	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.OSTreeRef, img.OSTreeCommit, img.OSTreeURL, img.OSName, img.Remote, img.Platform)
+	osPipeline.PartitionTable = img.PartitionTable
+
+	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, osPipeline)
+
+	xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
+	xzPipeline.Filename = img.Filename
+
+	art := xzPipeline.Export()
+
+	return art, nil
 }
