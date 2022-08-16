@@ -675,8 +675,6 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"google-compute-engine",
 			"google-osconfig-agent",
 			"gce-disk-expand",
-			// GCP SDK
-			"google-cloud-sdk",
 
 			// Not explicitly included in GCP kickstart, but present on the image
 			// for time synchronization
