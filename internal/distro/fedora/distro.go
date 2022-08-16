@@ -131,7 +131,7 @@ var (
 		exports:          []string{"bootiso"},
 	}
 
-	_ = imageType{
+	iotRawImgType = imageType{
 		name:        "fedora-iot-raw-image",
 		nameAliases: []string{"iot-raw-image"},
 		filename:    "image.raw.xz",
@@ -854,6 +854,7 @@ func newDistro(version int) distro.Distro {
 		iotOCIImgType,
 		iotCommitImgType,
 		iotInstallerImgType,
+		iotRawImgType,
 	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{
@@ -902,6 +903,7 @@ func newDistro(version int) distro.Distro {
 		iotCommitImgType,
 		iotOCIImgType,
 		iotInstallerImgType,
+		iotRawImgType,
 	)
 
 	s390x.addImageTypes(nil)
