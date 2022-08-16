@@ -344,6 +344,21 @@
     "no-image-info": true,
     "overrides": {}
   },
+  "fedora-iot-raw-image": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "fedora-iot-raw-image",
+      "repositories": [],
+      "filename": "image.raw.xz",
+      "ostree": {
+        "ref": "test/fedora/iot",
+        "url": "http://fedora.example.com/repo"
+      },
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "openstack": {
     "boot": {
       "type": "openstack"
