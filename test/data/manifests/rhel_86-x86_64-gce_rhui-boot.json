@@ -2192,14 +2192,6 @@
                         "rpm.check_gpg": true
                       }
                     }
-                  },
-                  {
-                    "id": "sha256:b3dfe65a6761e51ccd2eeaf458d70eb012b526d2fd8eba117c99ec8e04e8d338",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
                   }
                 ]
               }
@@ -3586,9 +3578,6 @@
           },
           "sha256:b375af1498f005d94bc311b78facf125bb665369016617a4e53fea13227369fc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/hwdata-0.314-8.11.el8.noarch.rpm"
-          },
-          "sha256:b3dfe65a6761e51ccd2eeaf458d70eb012b526d2fd8eba117c99ec8e04e8d338": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-cloud-sdk-20220227/Packages/b3dfe65a6761e51ccd2eeaf458d70eb012b526d2fd8eba117c99ec8e04e8d338-google-cloud-sdk-374.0.0-1.x86_64.rpm"
           },
           "sha256:b41c194ecf358e8e6cec46068c4fb6f34780ee2bd65200c367b94170103a8aa9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/ima-evm-utils-1.3.2-12.el8.x86_64.rpm"
@@ -10239,18 +10228,7 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20220227/Packages/6ecb3fb45a961a54e079c8cca128ee8d154906564da63d63be318779c5176296-google-rhui-client-rhel8-2.1-1.noarch.rpm",
         "checksum": "sha256:6ecb3fb45a961a54e079c8cca128ee8d154906564da63d63be318779c5176296",
         "check_gpg": true
-      },
-      {
-        "name": "google-cloud-sdk",
-        "epoch": 0,
-        "version": "374.0.0",
-        "release": "1",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-cloud-sdk-20220227/Packages/b3dfe65a6761e51ccd2eeaf458d70eb012b526d2fd8eba117c99ec8e04e8d338-google-cloud-sdk-374.0.0-1.x86_64.rpm",
-        "checksum": "sha256:b3dfe65a6761e51ccd2eeaf458d70eb012b526d2fd8eba117c99ec8e04e8d338",
-        "check_gpg": true
       }
     ]
-  },
-  "no-image-info": true
+  }
 }
