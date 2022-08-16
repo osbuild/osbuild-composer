@@ -340,47 +340,23 @@ func (store *Store) toStoreV0() *storeV0 {
 }
 
 var imageTypeCompatMapping = map[string]string{
-	"vhd":                            "Azure",
-	"ami":                            "AWS",
-	"liveiso":                        "LiveISO",
-	"openstack":                      "OpenStack",
-	"qcow2":                          "qcow2",
-	"vmdk":                           "VMWare",
-	"ext4-filesystem":                "Raw-filesystem",
-	"partitioned-disk":               "Partitioned-disk",
-	"tar":                            "Tar",
-	"fedora-iot-commit":              "fedora-iot-commit",
-	"fedora-iot-container":           "fedora-iot-container",
-	"fedora-iot-installer":           "fedora-iot-installer",
-	"iot-commit":                     "iot-commit",
-	"iot-container":                  "iot-container",
-	"iot-installer":                  "iot-installer",
-	"rhel-edge-commit":               "rhel-edge-commit",
-	"rhel-edge-container":            "rhel-edge-container",
-	"rhel-edge-installer":            "rhel-edge-installer",
-	"rhel-raw-image":                 "rhel-raw-image",
-	"rhel-edge-raw-image":            "rhel-edge-raw-image",
-	"rhel-edge-simplified-installer": "rhel-edge-simplified-installer",
-	"edge-commit":                    "edge-commit",
-	"edge-container":                 "edge-container",
-	"edge-installer":                 "edge-installer",
-	"edge-raw-image":                 "edge-raw-image",
-	"edge-simplified-installer":      "edge-simplified-installer",
-	"image-installer":                "image-installer",
-	"test_type":                      "test_type",         // used only in json_test.go
-	"test_type_invalid":              "test_type_invalid", // used only in json_test.go
-	"ec2":                            "ec2",
-	"ec2-ha":                         "ec2-ha",
-	"oci":                            "oci",
-	"gce":                            "GCP",
-	"gce-rhui":                       "GCE RHUI",
-	"container":                      "container",
+	"vhd":              "Azure",
+	"ami":              "AWS",
+	"liveiso":          "LiveISO",
+	"openstack":        "OpenStack",
+	"vmdk":             "VMWare",
+	"ext4-filesystem":  "Raw-filesystem",
+	"partitioned-disk": "Partitioned-disk",
+	"tar":              "Tar",
+	"gce":              "GCP",
+	"gce-rhui":         "GCE RHUI",
 }
 
 func imageTypeToCompatString(imgType distro.ImageType) string {
 	imgTypeString, exists := imageTypeCompatMapping[imgType.Name()]
 	if !exists {
-		panic("No mapping exists for " + imgType.Name())
+		// if no compat string exists, use the original name
+		return imgType.Name()
 	}
 	return imgTypeString
 }
@@ -389,6 +365,12 @@ func imageTypeFromCompatString(input string, arch distro.Arch) distro.ImageType 
 	if arch == nil {
 		return nil
 	}
+
+	// check if input string is a valid image type name: no compat mapping required
+	if imgType, err := arch.GetImageType(input); err == nil {
+		return imgType
+	}
+
 	for k, v := range imageTypeCompatMapping {
 		if v == input {
 			imgType, err := arch.GetImageType(k)
@@ -398,5 +380,6 @@ func imageTypeFromCompatString(input string, arch distro.Arch) distro.ImageType 
 			return imgType
 		}
 	}
+
 	return nil
 }
