@@ -17,6 +17,7 @@
       {
         "name": "google-compute-engine",
         "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20220617",
+        "check_gpg": false,
         "image_type_tags": [
           "gce",
           "gce-rhui"
@@ -25,6 +26,7 @@
       {
         "name": "google-cloud-sdk",
         "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-cloud-sdk-20220617",
+        "check_gpg": false,
         "image_type_tags": [
           "gce",
           "gce-rhui"
@@ -2004,9 +2006,6 @@
                   },
                   {
                     "id": "sha256:2b5574f535a3f3c337b8b1961cfb2a5ff06a36c9969ff5258df7ae1ffbe56e41"
-                  },
-                  {
-                    "id": "sha256:87c6d9bd4811b2ef1582f81e8fb30301dd56e067d0358a2cdadd15b4b07424c9"
                   }
                 ]
               }
@@ -3100,9 +3099,6 @@
           },
           "sha256:8743d4eab6e262efbe770232eb34c3fb5f0c304531b97cc95442ed6c7c8e2909": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/libblockdev-loop-2.25-11.el9.x86_64.rpm"
-          },
-          "sha256:87c6d9bd4811b2ef1582f81e8fb30301dd56e067d0358a2cdadd15b4b07424c9": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-cloud-sdk-20220617/Packages/87c6d9bd4811b2ef1582f81e8fb30301dd56e067d0358a2cdadd15b4b07424c9-google-cloud-sdk-390.0.0-1.x86_64.rpm"
           },
           "sha256:887b23796b57b9e476f916c32b27d446a4db40957b92940519162ea7ba1689cc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/libblockdev-mdraid-2.25-11.el9.x86_64.rpm"
@@ -9516,17 +9512,7 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20220617/Packages/2b5574f535a3f3c337b8b1961cfb2a5ff06a36c9969ff5258df7ae1ffbe56e41-google-osconfig-agent-20220606.00-g1.el9.x86_64.rpm",
         "checksum": "sha256:2b5574f535a3f3c337b8b1961cfb2a5ff06a36c9969ff5258df7ae1ffbe56e41"
-      },
-      {
-        "name": "google-cloud-sdk",
-        "epoch": 0,
-        "version": "390.0.0",
-        "release": "1",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-cloud-sdk-20220617/Packages/87c6d9bd4811b2ef1582f81e8fb30301dd56e067d0358a2cdadd15b4b07424c9-google-cloud-sdk-390.0.0-1.x86_64.rpm",
-        "checksum": "sha256:87c6d9bd4811b2ef1582f81e8fb30301dd56e067d0358a2cdadd15b4b07424c9"
       }
     ]
-  },
-  "no-image-info": true
+  }
 }
