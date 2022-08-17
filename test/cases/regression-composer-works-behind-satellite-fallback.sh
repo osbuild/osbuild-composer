@@ -69,10 +69,6 @@ case "${ID}" in
                 REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
                 REPO1_NAME="baseos"
                 REPO2_NAME="appstream"
-                if [ -n "${NIGHTLY:-}" ]; then
-                    REPO1_NAME="baseos-${ARCH}"
-                    REPO2_NAME="appstream-${ARCH}"
-                fi
                 ;;
             *)
                 echo "Unknown RHEL: ${VERSION_ID}"
