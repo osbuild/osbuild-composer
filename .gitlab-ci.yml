@@ -84,6 +84,8 @@ RPM:
           - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
+          - aws/fedora-37-x86_64
+          - aws/fedora-37-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-ga-x86_64
@@ -170,6 +172,8 @@ Base:
           - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
+          - aws/fedora-37-x86_64
+          - aws/fedora-37-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-ga-x86_64
@@ -218,6 +222,8 @@ Manifests:
           - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
+          - aws/fedora-37-x86_64
+          - aws/fedora-37-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -319,6 +325,7 @@ OSTree:
       - RUNNER:
           - rhos-01/fedora-35-x86_64
           # - rhos-01/fedora-36-x86_64
+          # - rhos-01/fedora-37-x86_64
           - rhos-01/rhel-8.4-ga-x86_64
           - rhos-01/rhel-8.6-ga-x86_64
           - rhos-01/rhel-9.0-ga-x86_64
@@ -338,6 +345,7 @@ New OSTree:
       - RUNNER:
           - rhos-01/fedora-35-x86_64
           # - rhos-01/fedora-36-x86_64
+          # - rhos-01/fedora-37-x86_64
           - rhos-01/rhel-8.7-nightly-x86_64
           - rhos-01/rhel-9.1-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
@@ -436,6 +444,7 @@ Rebase OSTree UEFI:
     RUNNER:
       - aws/fedora-35-x86_64
       - aws/fedora-36-x86_64
+      - aws/fedora-37-x86_64
 
 .integration_fedora:
   extends: .integration_base
@@ -549,6 +558,7 @@ API:
         RUNNER:
           - aws/fedora-35-x86_64
           - aws/fedora-36-x86_64
+          - aws/fedora-37-x86_64
 
 .libvirt_integration:
   stage: test

@@ -30,6 +30,14 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/36/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
         ;;
+    "fedora-37")
+        IMAGE_TYPE=fedora-iot-commit
+        OSTREE_REF="fedora/37/${ARCH}/iot"
+        OS_VARIANT="fedora-unknown"
+        USER_IN_COMMIT="false"
+        BOOT_LOCATION="https://mirrors.kernel.org/fedora/development/37/Everything/x86_64/os/"
+        EMBEDED_CONTAINER="false"
+        ;;
     "rhel-8.4")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
