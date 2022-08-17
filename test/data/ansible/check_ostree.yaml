@@ -46,20 +46,13 @@
     - set_fact:
         checking_stage: "{{ result_stage.stdout }}"
 
-    # case: check /boot/device-credentials exists
-    # simplified installer installed Edge system ONLY
-    - name: check /boot/device-credentials exists
-      stat:
-        path: /boot/device-credentials
-      register: stat_result
-
-    - name: check commit deployed and built
+    # case: check fdo onboarding status
+    # after fdo onboarding finished, /boot/device-credentials will be moved to /etc/device-credentials
+    - name: check if fdo onboarding completed successfully
       block:
-        - assert:
-            that:
-              - stat_result.stat.exists
-            fail_msg: "/boot/device-credentials does not exist"
-            success_msg: "/boot/device-credentials exists"
+        - name: wait until the file /etc/device-credentials is present before continuing
+          wait_for:
+            path: /etc/device-credentials
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
