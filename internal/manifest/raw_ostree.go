@@ -34,7 +34,17 @@ func NewRawOStreeImage(m *Manifest,
 }
 
 func (p *RawOSTreeImage) getBuildPackages() []string {
-	return p.treePipeline.PartitionTable.GetBuildPackages()
+	packages := p.platform.GetBuildPackages()
+	packages = append(packages, p.platform.GetPackages()...)
+	packages = append(packages, p.treePipeline.PartitionTable.GetBuildPackages()...)
+	packages = append(packages,
+		"rpm-ostree",
+
+		// these should be defined on the platform
+		"dracut-config-generic",
+		"efibootmgr",
+	)
+	return packages
 }
 
 func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
