@@ -1223,7 +1223,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"nmap-ncat",
 			"nm-connection-editor",
 			"nss-tools",
-			"nvme-cli", // for nvmf dracut module
 			"openssh-clients",
 			"openssh-server",
 			"oscap-anaconda-addon",
