@@ -116,6 +116,59 @@ class Solver():
             })
         return packages
 
+    def search(self, args):
+        """ Perform a search on the available packages
+
+        args contains a "search" dict with parameters to use for searching.
+        "packages" list of package name globs to search for
+        "latest" is a boolean that will return only the latest NEVRA instead
+        of all matching builds in the metadata.
+
+        eg.
+
+            "search": {
+                "latest": false,
+                "packages": ["tmux", "vim*", "*ssh*"]
+            },
+        """
+        pkg_globs = args.get("packages", [])
+
+        packages = []
+
+        # NOTE: Build query one piece at a time, don't pass all to filterm at the same
+        # time.
+        available = self.base.sack.query().available()
+        for name in pkg_globs:
+            # If the package name glob has * in it, use glob.
+            # If it has *name* use substr
+            # If it has neither use exact match
+            if "*" in name:
+                if name[0] != "*" or name[-1] != "*":
+                    q = available.filter(name__glob=name)
+                else:
+                    q = available.filter(name__substr=name.replace("*", ""))
+            else:
+                q = available.filter(name__eq=name)
+
+            if args.get("latest", False):
+                q = q.latest()
+
+            for package in q:
+                packages.append({
+                    "name": package.name,
+                    "summary": package.summary,
+                    "description": package.description,
+                    "url": package.url,
+                    "repo_id": package.repoid,
+                    "epoch": package.epoch,
+                    "version": package.version,
+                    "release": package.release,
+                    "arch": package.arch,
+                    "buildtime": self._timestamp_to_rfc3339(package.buildtime),
+                    "license": package.license
+                })
+        return packages
+
     def depsolve(self, transactions):
         last_transaction = []
 
@@ -203,6 +256,8 @@ def solve(request, cache_dir):
                 result = solver.dump()
             elif command == "depsolve":
                 result = solver.depsolve(transactions)
+            elif command == "search":
+                result = solver.search(arguments.get("search", {}))
 
         except dnf.exceptions.MarkingErrors as e:
             printe("error install_specs")
@@ -250,7 +305,7 @@ def respond(result):
 
 def validate_request(request):
     command = request.get("command")
-    valid_cmds = ("depsolve", "dump")
+    valid_cmds = ("depsolve", "dump", "search")
     if command not in valid_cmds:
         return {
             "kind": "InvalidRequest",
