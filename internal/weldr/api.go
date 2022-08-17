@@ -1027,7 +1027,17 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	availablePackages, err := api.fetchPackageList(distroName)
+
+	var names []string
+	if modulesParam != "" && modulesParam != "/" {
+		// we have modules for search
+
+		// remove leading /
+		modulesParam = modulesParam[1:]
+
+		names = strings.Split(modulesParam, ",")
+	}
+	packages, err := api.fetchPackageList(distroName, names)
 
 	if err != nil {
 		errors := responseError{
@@ -1038,37 +1048,13 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	var packages rpmmd.PackageList
-	if modulesParam != "" && modulesParam != "/" {
-		// we have modules for search
-
-		// remove leading /
-		modulesParam = modulesParam[1:]
-
-		names := strings.Split(modulesParam, ",")
-
-		packages, err = availablePackages.Search(names...)
-
-		if err != nil {
-			errors := responseError{
-				ID:  "ModulesError",
-				Msg: fmt.Sprintf("Wrong glob pattern: %s", err.Error()),
-			}
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
+	if len(packages) == 0 {
+		errors := responseError{
+			ID:  "UnknownModule",
+			Msg: "No packages have been found.",
 		}
-
-		if len(packages) == 0 {
-			errors := responseError{
-				ID:  "UnknownModule",
-				Msg: "No packages have been found.",
-			}
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
-		}
-	} else {
-		// just return all available packages
-		packages = availablePackages
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
 	}
 
 	packageInfos := packages.ToPackageInfos()
@@ -1124,7 +1110,7 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	availablePackages, err := api.fetchPackageList(distroName)
+	availablePackages, err := api.fetchPackageList(distroName, []string{})
 
 	if err != nil {
 		errors := responseError{
@@ -1207,23 +1193,12 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	availablePackages, err := api.fetchPackageList(distroName)
-
-	if err != nil {
-		errors := responseError{
-			ID:  "ModulesError",
-			Msg: fmt.Sprintf("msg: %s", err.Error()),
-		}
-		statusResponseError(writer, http.StatusBadRequest, errors)
-		return
-	}
-
-	foundPackages, err := availablePackages.Search(names...)
+	foundPackages, err := api.fetchPackageList(distroName, names)
 
 	if err != nil {
 		errors := responseError{
 			ID:  errorId,
-			Msg: fmt.Sprintf("Wrong glob pattern: %s", err.Error()),
+			Msg: fmt.Sprintf("msg: %s", err.Error()),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
@@ -3209,7 +3184,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 }
 
 // fetchPackageList returns the package list or the selected distribution
-func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
+func (api *API) fetchPackageList(distroName string, names []string) (packages rpmmd.PackageList, err error) {
 	d := api.getDistro(distroName)
 	if d == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
@@ -3220,7 +3195,11 @@ func (api *API) fetchPackageList(distroName string) (rpmmd.PackageList, error) {
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
-	packages, err := solver.FetchMetadata(repos)
+	if len(names) == 0 {
+		packages, err = solver.FetchMetadata(repos)
+	} else {
+		packages, err = solver.SearchMetadata(repos, names)
+	}
 	if err != nil {
 		return nil, err
 	}
