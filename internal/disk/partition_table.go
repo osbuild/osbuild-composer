@@ -613,6 +613,7 @@ func (pt *PartitionTable) GetBuildPackages() []string {
 	hasXFS := false
 	hasFAT := false
 	hasEXT4 := false
+	hasLUKS := false
 
 	introspectPT := func(e Entity, path []Entity) error {
 		switch ent := e.(type) {
@@ -631,6 +632,8 @@ func (pt *PartitionTable) GetBuildPackages() []string {
 			case "ext4":
 				hasEXT4 = true
 			}
+		case *LUKSContainer:
+			hasLUKS = true
 		}
 		return nil
 	}
@@ -651,6 +654,13 @@ func (pt *PartitionTable) GetBuildPackages() []string {
 	}
 	if hasEXT4 {
 		packages = append(packages, "e2fsprogs")
+	}
+	if hasLUKS {
+		packages = append(packages,
+			"clevis",
+			"clevis-luks",
+			"cryptsetup",
+		)
 	}
 
 	return packages
