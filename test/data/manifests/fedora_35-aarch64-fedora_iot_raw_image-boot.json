@@ -238,6 +238,30 @@
                     }
                   },
                   {
+                    "id": "sha256:2de92f6f278bf7801b580fcd1ed8e36b18311db493511e2ca038596f458c02d9",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:263feed0527658e659b38909e24ab318fd9855606ccd5cf5ee901eaf9b3fd697",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:6cdd19819db86be3e98fd20c48402100f6341d8b50b16b2850bd94198f0b3072",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:3d51b4873e763244a38ad508d7e3fa37dc1e9957d6534d0402a2e436c8621c39",
                     "options": {
                       "metadata": {
@@ -1086,6 +1110,14 @@
                     }
                   },
                   {
+                    "id": "sha256:e7fb54bd48748b0fedf7e3f5160ac68d8d1c2d00b78eccfbc4bdc33349f75280",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:43cbfaacd7e6b3040022988d71517b6dd409466e1a7eaeeea62555069aeb25b9",
                     "options": {
                       "metadata": {
@@ -1207,6 +1239,14 @@
                   },
                   {
                     "id": "sha256:806fd542fc627df2c9dd0c2975e5a69f415986859e3f1585e91f2addf0ae6d0c",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:f5e1f5983cdb59008647a4134e36d7c4b3d7f592cb8ea0402e1efea97bc47ad6",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -1350,6 +1390,14 @@
                     }
                   },
                   {
+                    "id": "sha256:9d31bbde3f8a512ac32be4e26a5563252c4b609601b476754f89880c1cbfa5e4",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:dc18ce2bc247e72e158d295f8a7edd7cbe7ecacdfcf4583a48a2c2bfd5930014",
                     "options": {
                       "metadata": {
@@ -1479,6 +1527,14 @@
                   },
                   {
                     "id": "sha256:6b701fef01c2570fb0be53aa7c3a0fec224b2592b72799161a6204315900dc73",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c3e027a522363aa11accce1dac0a3043e0c968e2c457928cc6fbf8dcb3db0b34",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -2149,6 +2205,9 @@
           "sha256:25bdf7d234d338d590925563ce7197b2d3be3966e5fa64e3c56d40cff73338c6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/p/p11-kit-trust-0.23.22-4.fc35.aarch64.rpm"
           },
+          "sha256:263feed0527658e659b38909e24ab318fd9855606ccd5cf5ee901eaf9b3fd697": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/e/efibootmgr-16-11.fc35.aarch64.rpm"
+          },
           "sha256:2946733fcf55e18ad7892e420c297006fd3c07fed7955deacb2a8f3d3e5b8893": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/o/os-prober-1.77-8.fc35.aarch64.rpm"
           },
@@ -2160,6 +2219,9 @@
           },
           "sha256:2ca9bef2d48b3ca4abd2c998d36f9b4e5b93997ac222a77fbf34852e914cf366": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/c/curl-7.79.1-1.fc35.aarch64.rpm"
+          },
+          "sha256:2de92f6f278bf7801b580fcd1ed8e36b18311db493511e2ca038596f458c02d9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/e/efi-filesystem-5-4.fc35.noarch.rpm"
           },
           "sha256:307e69f3024cf95970f93fb94ebc6943f0e6de7cbaee0330f928906a88b19804": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/s/shadow-utils-4.9-8.fc35.aarch64.rpm"
@@ -2293,6 +2355,9 @@
           "sha256:6cd3fafa4f6512e3f0d317d5515d018a4ac21f0f3d50dc00651041bfe4344d84": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/p/polkit-pkla-compat-0.1-20.fc35.aarch64.rpm"
           },
+          "sha256:6cdd19819db86be3e98fd20c48402100f6341d8b50b16b2850bd94198f0b3072": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/e/efivar-libs-37-17.fc35.aarch64.rpm"
+          },
           "sha256:6de1615b300767268d494be624d5230bbea36ab2acdf64dabcf11c6f8f7e8838": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/l/libattr-2.5.1-3.fc35.aarch64.rpm"
           },
@@ -2410,6 +2475,9 @@
           "sha256:9d003094761dd276481509e29e08198d3f04f58f9baa1fa566bc6085903313e3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/k/kbd-misc-2.4.0-8.fc35.noarch.rpm"
           },
+          "sha256:9d31bbde3f8a512ac32be4e26a5563252c4b609601b476754f89880c1cbfa5e4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/g/grub2-efi-aa64-2.06-10.fc35.aarch64.rpm"
+          },
           "sha256:9dd8674e7f7a04b8bfc73bb61041730d535694bae2eaf60fb34addfebcfda126": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/u/util-linux-core-2.37.2-1.fc35.aarch64.rpm"
           },
@@ -2518,6 +2586,9 @@
           "sha256:c2d7e19729aaf214daabe35bdb6b756401ad3dd2cc8366c6e415ca4e310e7c5e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/p/pam-1.5.2-5.fc35.aarch64.rpm"
           },
+          "sha256:c3e027a522363aa11accce1dac0a3043e0c968e2c457928cc6fbf8dcb3db0b34": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/m/mokutil-0.5.0-1.fc35.aarch64.rpm"
+          },
           "sha256:c53fdade18d58360854bf7129371b5e97819514977159ad9d05d3d861ecc5cc5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/f/fedora-release-35-36.noarch.rpm"
           },
@@ -2602,6 +2673,9 @@
           "sha256:e7849d46d2c36958591eb826d6e853b0bae9154d270e05eadcdcd38dcf32f217": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/n/ncurses-libs-6.2-8.20210508.fc35.aarch64.rpm"
           },
+          "sha256:e7fb54bd48748b0fedf7e3f5160ac68d8d1c2d00b78eccfbc4bdc33349f75280": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/s/shim-aa64-15.4-5.aarch64.rpm"
+          },
           "sha256:e8cfbe82cbbdc4e46a25648d2d0d7fdfca963d3339924adca6c4bb89b93afaf1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/k/krb5-libs-1.19.2-2.fc35.aarch64.rpm"
           },
@@ -2637,6 +2711,9 @@
           },
           "sha256:f4f60e9a17e89b849177af818573557f7767d92d9167a7e56107789185d763c0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/d/dbus-common-1.12.20-5.fc35.noarch.rpm"
+          },
+          "sha256:f5e1f5983cdb59008647a4134e36d7c4b3d7f592cb8ea0402e1efea97bc47ad6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/d/dracut-config-generic-055-6.fc35.aarch64.rpm"
           },
           "sha256:f6149724bb7159dfeef67108e12e9b854b97f9aa4d074c93677c3db05f6dd9fc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/a/acl-2.3.1-2.fc35.aarch64.rpm"
@@ -2917,6 +2994,36 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/e/e2fsprogs-libs-1.46.3-1.fc35.aarch64.rpm",
         "checksum": "sha256:30aab0b7bafefdb4c9b6946f5d949c3815311566a38328cfd873249716ca2da2",
+        "check_gpg": true
+      },
+      {
+        "name": "efi-filesystem",
+        "epoch": 0,
+        "version": "5",
+        "release": "4.fc35",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/e/efi-filesystem-5-4.fc35.noarch.rpm",
+        "checksum": "sha256:2de92f6f278bf7801b580fcd1ed8e36b18311db493511e2ca038596f458c02d9",
+        "check_gpg": true
+      },
+      {
+        "name": "efibootmgr",
+        "epoch": 0,
+        "version": "16",
+        "release": "11.fc35",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/e/efibootmgr-16-11.fc35.aarch64.rpm",
+        "checksum": "sha256:263feed0527658e659b38909e24ab318fd9855606ccd5cf5ee901eaf9b3fd697",
+        "check_gpg": true
+      },
+      {
+        "name": "efivar-libs",
+        "epoch": 0,
+        "version": "37",
+        "release": "17.fc35",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/e/efivar-libs-37-17.fc35.aarch64.rpm",
+        "checksum": "sha256:6cdd19819db86be3e98fd20c48402100f6341d8b50b16b2850bd94198f0b3072",
         "check_gpg": true
       },
       {
@@ -3980,6 +4087,16 @@
         "check_gpg": true
       },
       {
+        "name": "shim-aa64",
+        "epoch": 0,
+        "version": "15.4",
+        "release": "5",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-fedora-20220106/Packages/s/shim-aa64-15.4-5.aarch64.rpm",
+        "checksum": "sha256:e7fb54bd48748b0fedf7e3f5160ac68d8d1c2d00b78eccfbc4bdc33349f75280",
+        "check_gpg": true
+      },
+      {
         "name": "sqlite-libs",
         "epoch": 0,
         "version": "3.36.0",
@@ -4137,6 +4254,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/d/dracut-055-6.fc35.aarch64.rpm",
         "checksum": "sha256:806fd542fc627df2c9dd0c2975e5a69f415986859e3f1585e91f2addf0ae6d0c",
+        "check_gpg": true
+      },
+      {
+        "name": "dracut-config-generic",
+        "epoch": 0,
+        "version": "055",
+        "release": "6.fc35",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/d/dracut-config-generic-055-6.fc35.aarch64.rpm",
+        "checksum": "sha256:f5e1f5983cdb59008647a4134e36d7c4b3d7f592cb8ea0402e1efea97bc47ad6",
         "check_gpg": true
       },
       {
@@ -4310,6 +4437,16 @@
         "check_gpg": true
       },
       {
+        "name": "grub2-efi-aa64",
+        "epoch": 1,
+        "version": "2.06",
+        "release": "10.fc35",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/g/grub2-efi-aa64-2.06-10.fc35.aarch64.rpm",
+        "checksum": "sha256:9d31bbde3f8a512ac32be4e26a5563252c4b609601b476754f89880c1cbfa5e4",
+        "check_gpg": true
+      },
+      {
         "name": "grub2-tools",
         "epoch": 1,
         "version": "2.06",
@@ -4477,6 +4614,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/m/memstrack-0.2.4-1.fc35.aarch64.rpm",
         "checksum": "sha256:6b701fef01c2570fb0be53aa7c3a0fec224b2592b72799161a6204315900dc73",
+        "check_gpg": true
+      },
+      {
+        "name": "mokutil",
+        "epoch": 2,
+        "version": "0.5.0",
+        "release": "1.fc35",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-aarch64-updates-released-20220113/Packages/m/mokutil-0.5.0-1.fc35.aarch64.rpm",
+        "checksum": "sha256:c3e027a522363aa11accce1dac0a3043e0c968e2c457928cc6fbf8dcb3db0b34",
         "check_gpg": true
       },
       {
