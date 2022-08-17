@@ -47,7 +47,7 @@ func (f ImageFormat) String() string {
 	case FORMAT_VHD:
 		return "vhd"
 	default:
-		panic("invalid architecture")
+		panic("invalid image format")
 	}
 }
 
