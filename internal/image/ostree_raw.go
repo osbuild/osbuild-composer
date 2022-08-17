@@ -44,7 +44,7 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.OSTreeRef, img.OSTreeCommit, img.OSTreeURL, img.OSName, img.Remote, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
 
-	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, osPipeline)
+	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
 
 	xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
 	xzPipeline.Filename = img.Filename
