@@ -179,6 +179,44 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 	return pkgs, nil
 }
 
+// SearchMetadata searches for packages and returns a list of the info for matches.
+func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rpmmd.PackageList, error) {
+	req, err := s.makeSearchRequest(repos, packages)
+	if err != nil {
+		return nil, err
+	}
+
+	// get non-exclusive read lock
+	s.cache.locker.RLock()
+	defer s.cache.locker.RUnlock()
+
+	result, err := run(s.dnfJsonCmd, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// touch repos to now
+	now := time.Now().Local()
+	for _, r := range repos {
+		// ignore errors
+		_ = s.cache.touchRepo(r.Hash(), now)
+	}
+	s.cache.updateInfo()
+
+	var pkgs rpmmd.PackageList
+	if err := json.Unmarshal(result, &pkgs); err != nil {
+		return nil, err
+	}
+
+	sortID := func(pkg rpmmd.Package) string {
+		return fmt.Sprintf("%s-%s-%s", pkg.Name, pkg.Version, pkg.Release)
+	}
+	sort.Slice(pkgs, func(i, j int) bool {
+		return sortID(pkgs[i]) < sortID(pkgs[j])
+	})
+	return pkgs, nil
+}
+
 func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, error) {
 	dnfRepos := make([]repoConfig, len(rpmRepos))
 	for idx, rr := range rpmRepos {
@@ -319,6 +357,27 @@ func (s *Solver) makeDumpRequest(repos []rpmmd.RepoConfig) (*Request, error) {
 	return &req, nil
 }
 
+// Helper function for creating a search request payload
+func (s *Solver) makeSearchRequest(repos []rpmmd.RepoConfig, packages []string) (*Request, error) {
+	dnfRepos, err := s.reposFromRPMMD(repos)
+	if err != nil {
+		return nil, err
+	}
+	req := Request{
+		Command:          "search",
+		ModulePlatformID: s.modulePlatformID,
+		Arch:             s.arch,
+		CacheDir:         s.cache.root,
+		Arguments: arguments{
+			Repos: dnfRepos,
+			Search: searchArgs{
+				Packages: packages,
+			},
+		},
+	}
+	return &req, nil
+}
+
 // convert internal a list of PackageSpecs to the rpmmd equivalent and attach
 // key and subscription information based on the repository configs.
 func (pkgs packageSpecs) toRPMMD(repos map[string]rpmmd.RepoConfig) []rpmmd.PackageSpec {
@@ -368,8 +427,21 @@ type arguments struct {
 	// Repositories to use for depsolving
 	Repos []repoConfig `json:"repos"`
 
+	// Search terms to use with search command
+	Search searchArgs `json:"search"`
+
 	// Depsolve package sets and repository mappings for this request
 	Transactions []transactionArgs `json:"transactions"`
+}
+
+type searchArgs struct {
+	// Only include latest NEVRA when true
+	Latest bool `json:"latest"`
+
+	// List of package name globs to search for
+	// If it has '*' it is passed to dnf glob search, if it has *name* it is passed
+	// to substr matching, and if it has neither an exact match is expected.
+	Packages []string `json:"packages"`
 }
 
 type transactionArgs struct {
