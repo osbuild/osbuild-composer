@@ -106,20 +106,12 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "fedora-35")
+    "fedora-"*)
         CONTAINER_TYPE=fedora-iot-container
         INSTALLER_TYPE=fedora-iot-installer
-        OSTREE_REF="fedora/35/${ARCH}/iot"
+        OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
         OSTREE_OSNAME=fedora
-        OS_VARIANT="fedora35"
-        EMBEDED_CONTAINER="false"
-        ;;
-    "fedora-36")
-        CONTAINER_TYPE=fedora-iot-container
-        INSTALLER_TYPE=fedora-iot-installer
-        OSTREE_REF="fedora/36/${ARCH}/iot"
-        OSTREE_OSNAME=fedora
-        OS_VARIANT="fedora36"
+        OS_VARIANT="fedora-unknown"
         EMBEDED_CONTAINER="false"
         ;;
     "rhel-8.7")

@@ -93,6 +93,8 @@ RPM:
           - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
+          - aws/fedora-37-x86_64
+          - aws/fedora-37-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-ga-x86_64
@@ -179,6 +181,8 @@ Base:
           - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
+          - aws/fedora-37-x86_64
+          - aws/fedora-37-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.6-ga-x86_64
@@ -227,6 +231,8 @@ Manifests:
           - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
+          - aws/fedora-37-x86_64
+          - aws/fedora-37-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -256,7 +262,7 @@ regression-composer-works-behind-satellite-fallback:
   extends: .regression
   rules: 
     # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
     - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-composer-works-behind-satellite-fallback.sh
@@ -265,7 +271,7 @@ regression-composer-works-behind-satellite:
   extends: .regression
   rules: 
     # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
     - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-composer-works-behind-satellite.sh
@@ -351,6 +357,7 @@ OSTree:
       - RUNNER:
           - rhos-01/fedora-35-x86_64
           # - rhos-01/fedora-36-x86_64
+          # - rhos-01/fedora-37-x86_64
           - rhos-01/rhel-8.4-ga-x86_64
           - rhos-01/rhel-8.6-ga-x86_64
           - rhos-01/rhel-9.0-ga-x86_64
@@ -370,6 +377,7 @@ New OSTree:
       - RUNNER:
           - rhos-01/fedora-35-x86_64
           # - rhos-01/fedora-36-x86_64
+          # - rhos-01/fedora-37-x86_64
           - rhos-01/rhel-8.7-nightly-x86_64
           - rhos-01/rhel-9.1-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
@@ -470,6 +478,7 @@ Rebase OSTree UEFI:
     RUNNER:
       - aws/fedora-35-x86_64
       - aws/fedora-36-x86_64
+      - aws/fedora-37-x86_64
 
 .integration_fedora:
   extends: .integration_base
@@ -596,6 +605,7 @@ API:
         RUNNER:
           - aws/fedora-35-x86_64
           - aws/fedora-36-x86_64
+          - aws/fedora-37-x86_64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.6-ga-aarch64
