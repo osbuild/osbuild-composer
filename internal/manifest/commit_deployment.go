@@ -150,20 +150,13 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	// TODO: Add users?
 	// NOTE: Users can be embedded in a commit, but we should also support adding them at deploy time.
 
-	var bootloader *osbuild.Stage
-	switch p.platform.GetArch() {
-	case platform.ARCH_S390X:
-		bootloader = osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
-	default:
-		options := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
-			"",
-			p.platform.GetUEFIVendor() != "",
-			p.platform.GetBIOSPlatform(),
-			p.platform.GetUEFIVendor(), true)
-		options.Greenboot = true
-		bootloader = osbuild.NewGRUB2Stage(options)
-	}
-
+	options := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
+		"",
+		p.platform.GetUEFIVendor() != "",
+		p.platform.GetBIOSPlatform(),
+		p.platform.GetUEFIVendor(), true)
+	options.Greenboot = true
+	bootloader := osbuild.NewGRUB2Stage(options)
 	pipeline.AddStage(bootloader)
 
 	pipeline.AddStage(osbuild.NewOSTreeSelinuxStage(
