@@ -8129,14 +8129,6 @@
                     }
                   },
                   {
-                    "id": "sha256:8aa984accb80c96a9e7569feef196c19408e063b3c40b6f55b60473ae10e9cbb",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:9130a491601594bf3791ee1fafd81840e9b9e66f111b2002236d144c7b65c081",
                     "options": {
                       "metadata": {
@@ -9111,7 +9103,6 @@
                 "multipath",
                 "nfs",
                 "nvdimm",
-                "nvmf",
                 "rdma",
                 "rngd"
               ],
@@ -10776,9 +10767,6 @@
           },
           "sha256:8a7da28db1c8dea227e2e3bf45e22d6f3920b44466d82392db10bc5a202ffcce": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/fwupd-1.5.9-3.el9.aarch64.rpm"
-          },
-          "sha256:8aa984accb80c96a9e7569feef196c19408e063b3c40b6f55b60473ae10e9cbb": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/nvme-cli-1.14-3.el9.aarch64.rpm"
           },
           "sha256:8abb0ab85d37efc7a8a6132e3f9398f0179fa791bf118fd9f87119adaec621e2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20220208/Packages/perl-B-1.80-479.el9.aarch64.rpm"
@@ -22101,16 +22089,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/npth-1.6-8.el9.aarch64.rpm",
         "checksum": "sha256:95bd797672d70a8752fb881c4ff04ccc14234842dfd9de6bc48373dd96c1ec81",
-        "check_gpg": true
-      },
-      {
-        "name": "nvme-cli",
-        "epoch": 0,
-        "version": "1.14",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20220208/Packages/nvme-cli-1.14-3.el9.aarch64.rpm",
-        "checksum": "sha256:8aa984accb80c96a9e7569feef196c19408e063b3c40b6f55b60473ae10e9cbb",
         "check_gpg": true
       },
       {

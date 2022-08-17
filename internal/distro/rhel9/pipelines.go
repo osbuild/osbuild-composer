@@ -1067,7 +1067,6 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 		"multipath",
 		"nfs",
 		"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
-		"nvmf",
 		"rdma",
 		"rngd",
 	})
