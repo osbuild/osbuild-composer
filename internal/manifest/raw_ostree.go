@@ -3,6 +3,7 @@ package manifest
 import (
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
 // A RawOSTreeImage represents a raw ostree image file which can be booted in a
@@ -11,15 +12,18 @@ type RawOSTreeImage struct {
 	Base
 	treePipeline *OSTreeDeployment
 	Filename     string
+	platform     platform.Platform
 }
 
 func NewRawOStreeImage(m *Manifest,
 	buildPipeline *Build,
+	platform platform.Platform,
 	treePipeline *OSTreeDeployment) *RawOSTreeImage {
 	p := &RawOSTreeImage{
 		Base:         NewBase(m, "image", buildPipeline),
 		treePipeline: treePipeline,
 		Filename:     "disk.img",
+		platform:     platform,
 	}
 	buildPipeline.addDependent(p)
 	if treePipeline.Base.manifest != m {
