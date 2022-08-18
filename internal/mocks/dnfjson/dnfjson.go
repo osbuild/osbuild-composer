@@ -46,6 +46,45 @@ func generatePackageList() rpmmd.PackageList {
 	return packageList
 }
 
+// generateSearchResults creates results for use with the dnfjson search command
+// which is used for listing a subset of modules and projects.
+//
+// The map key is a comma-separated list of the packages requested
+// If no packages are included it returns all 22 packages, same as the mock dump
+//
+// nonexistingpkg returns an empty list
+// badpackage1 returns a fetch error, same as when the package name is unknown
+// baddepsolve returns package1, the test then tries to depsolve package1 using BadDepsolve()
+// wich will return a depsolve error.
+func generateSearchResults() map[string]interface{} {
+	allPackages := generatePackageList()
+
+	// This includes package16, package2, package20, and package21
+	var wildcardResults rpmmd.PackageList
+	wildcardResults = append(wildcardResults, allPackages[32], allPackages[33])
+	wildcardResults = append(wildcardResults, allPackages[4], allPackages[5])
+	for i := 40; i < 44; i++ {
+		wildcardResults = append(wildcardResults, allPackages[i])
+	}
+
+	fetchError := dnfjson.Error{
+		Kind:   "FetchError",
+		Reason: "There was a problem when fetching packages.",
+	}
+
+	return map[string]interface{}{
+		"":                    allPackages,
+		"*":                   allPackages,
+		"nonexistingpkg":      rpmmd.PackageList{},
+		"package1":            rpmmd.PackageList{allPackages[2], allPackages[3]},
+		"package1,package2":   rpmmd.PackageList{allPackages[2], allPackages[3], allPackages[4], allPackages[5]},
+		"package2*,package16": wildcardResults,
+		"package16":           rpmmd.PackageList{allPackages[32], allPackages[33]},
+		"badpackage1":         fetchError,
+		"baddepsolve":         rpmmd.PackageList{allPackages[2], allPackages[3]},
+	}
+}
+
 func createBaseDepsolveFixture() []dnfjson.PackageSpec {
 	return []dnfjson.PackageSpec{
 		{
@@ -112,6 +151,7 @@ func Base(tmpdir string) string {
 	data := map[string]interface{}{
 		"depsolve": createBaseDepsolveFixture(),
 		"dump":     generatePackageList(),
+		"search":   generateSearchResults(),
 	}
 	path := filepath.Join(tmpdir, "base.json")
 	write(data, path)
@@ -140,6 +180,7 @@ func BadDepsolve(tmpdir string) string {
 	data := map[string]interface{}{
 		"depsolve": deps,
 		"dump":     generatePackageList(),
+		"search":   generateSearchResults(),
 	}
 	path := filepath.Join(tmpdir, "baddepsolve.json")
 	write(data, path)
@@ -158,6 +199,7 @@ func BadFetch(tmpdir string) string {
 	data := map[string]interface{}{
 		"depsolve": deps,
 		"dump":     pkgs,
+		"search":   generateSearchResults(),
 	}
 	path := filepath.Join(tmpdir, "badfetch.json")
 	write(data, path)
