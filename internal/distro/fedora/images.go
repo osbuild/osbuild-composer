@@ -283,6 +283,10 @@ func iotRawImage(workload workload.Workload,
 
 	img := image.NewOSTreeRawImage()
 
+	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
+	img.Keyboard = "us"
+	img.Locale = "C.UTF-8"
+
 	img.Platform = t.platform
 	img.Workload = workload
 
