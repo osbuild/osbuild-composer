@@ -1831,7 +1831,9 @@
               "rootfs": {
                 "label": "root"
               },
-              "kernel_opts": []
+              "kernel_opts": [
+                "modprobe.blacklist=vc4"
+              ]
             }
           },
           {
@@ -1889,6 +1891,18 @@
                   "ref": "test/fedora/iot"
                 }
               }
+            }
+          },
+          {
+            "type": "org.osbuild.keymap",
+            "options": {
+              "keymap": "us"
+            }
+          },
+          {
+            "type": "org.osbuild.locale",
+            "options": {
+              "language": "C.UTF-8"
             }
           },
           {

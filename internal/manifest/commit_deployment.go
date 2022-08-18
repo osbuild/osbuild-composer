@@ -13,14 +13,20 @@ import (
 // on a deployed ostree commit.
 type OSTreeDeployment struct {
 	Base
+
 	OSVersion string
 
 	osTreeCommit string
 	osTreeURL    string
 	osTreeRef    string
 
-	osName   string
-	remote   string
+	osName string
+	remote string
+
+	KernelOptionsAppend []string
+	Keyboard            string
+	Locale              string
+
 	platform platform.Platform
 
 	PartitionTable *disk.PartitionTable
@@ -102,6 +108,8 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		},
 	}))
 	kernelOpts := osbuild.GenImageKernelOptions(p.PartitionTable)
+	kernelOpts = append(kernelOpts, p.KernelOptionsAppend...)
+
 	pipeline.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: p.osName,
@@ -146,6 +154,22 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		},
 	}
 	pipeline.AddStage(osbuild.NewFSTabStage(fstabOptions))
+
+	if p.Keyboard != "" {
+		options := &osbuild.KeymapStageOptions{
+			Keymap: p.Keyboard,
+		}
+		keymapStage := osbuild.NewKeymapStage(options)
+		pipeline.AddStage(keymapStage)
+	}
+
+	if p.Locale != "" {
+		options := &osbuild.LocaleStageOptions{
+			Language: p.Locale,
+		}
+		localeStage := osbuild.NewLocaleStage(options)
+		pipeline.AddStage(localeStage)
+	}
 
 	// TODO: Add users?
 	// NOTE: Users can be embedded in a commit, but we should also support adding them at deploy time.

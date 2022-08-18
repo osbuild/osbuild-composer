@@ -14,6 +14,7 @@ import (
 
 type OSTreeRawImage struct {
 	Base
+
 	Platform       platform.Platform
 	Workload       workload.Workload
 	PartitionTable *disk.PartitionTable
@@ -24,6 +25,10 @@ type OSTreeRawImage struct {
 
 	Remote string
 	OSName string
+
+	KernelOptionsAppend []string
+	Keyboard            string
+	Locale              string
 
 	Filename string
 }
@@ -43,6 +48,9 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 
 	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.OSTreeRef, img.OSTreeCommit, img.OSTreeURL, img.OSName, img.Remote, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
+	osPipeline.KernelOptionsAppend = img.KernelOptionsAppend
+	osPipeline.Keyboard = img.Keyboard
+	osPipeline.Locale = img.Locale
 
 	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
 
