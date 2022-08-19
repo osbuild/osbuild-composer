@@ -23,6 +23,11 @@ type Customizations struct {
 	InstallationDevice string                    `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
 	FDO                *FDOCustomization         `json:"fdo,omitempty" toml:"fdo,omitempty"`
 	OpenSCAP           *OpenSCAPCustomization    `json:"openscap,omitempty" toml:"openscap,omitempty"`
+	Greenboot          *GreenbootCustomization   `json:"greenboot" toml:"greenboot,omitempty"`
+}
+
+type GreenbootCustomization struct {
+	MonitorServices []string `json:"monitor_service,omitempty" toml:"monitor_service,omitempty"`
 }
 
 type FDOCustomization struct {
@@ -379,4 +384,11 @@ func (c *Customizations) GetOpenSCAP() *OpenSCAPCustomization {
 		return nil
 	}
 	return c.OpenSCAP
+}
+
+func (c *Customizations) GetGreenboot() *GreenbootCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.Greenboot
 }
