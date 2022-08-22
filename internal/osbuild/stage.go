@@ -17,3 +17,11 @@ type Stage struct {
 type StageOptions interface {
 	isStageOptions()
 }
+
+// MountOSTree adds an ostree mount to a stage which makes it run in a deployed
+// ostree stateroot.
+func (s *Stage) MountOSTree(osName, ref string, serial int) {
+	name := "ostree-" + ref
+	ostreeMount := NewOSTreeDeploymentMount(name, osName, ref, serial)
+	s.Mounts = append(s.Mounts, *ostreeMount)
+}
