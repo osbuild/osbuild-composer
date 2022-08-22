@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 )
@@ -49,11 +50,28 @@ func readTestCase() string {
 	return os.Args[1]
 }
 
-func parseResponse(resp []byte, command string) json.RawMessage {
+func parseResponse(resp []byte, req dnfjson.Request) json.RawMessage {
 	parsedResponse := make(map[string]json.RawMessage)
 	err := json.Unmarshal(resp, &parsedResponse)
 	maybeFail(err)
-	return parsedResponse[command]
+
+	if req.Command == "search" {
+		// Search requests need to return results based on the search
+		// The key to the search is a comma-separated list of the requested packages
+		key := strings.Join(req.Arguments.Search.Packages, ",")
+
+		// Extract the possible response map
+		var searches map[string]json.RawMessage
+		err = json.Unmarshal(parsedResponse["search"], &searches)
+		maybeFail(err)
+
+		if _, ok := searches[key]; !ok {
+			fail(fmt.Errorf("search response map is missing key = %s", key))
+		}
+		return searches[key]
+	} else {
+		return parsedResponse[req.Command]
+	}
 }
 
 func checkForError(msg json.RawMessage) bool {
@@ -79,7 +97,7 @@ func main() {
 		fail(fmt.Errorf("failed to read test file %q\n", testFilePath))
 	}
 
-	res := parseResponse(response, req.Command)
+	res := parseResponse(response, req)
 
 	if req.Command == "depsolve" {
 		// add repo ID to packages
