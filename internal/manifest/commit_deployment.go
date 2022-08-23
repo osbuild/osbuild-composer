@@ -152,13 +152,9 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	))
 
 	fstabOptions := osbuild.NewFSTabStageOptions(p.PartitionTable)
-	fstabOptions.OSTree = &osbuild.OSTreeFstab{
-		Deployment: osbuild.OSTreeDeployment{
-			OSName: p.osName,
-			Ref:    p.osTreeRef,
-		},
-	}
-	pipeline.AddStage(osbuild.NewFSTabStage(fstabOptions))
+	fstabStage := osbuild.NewFSTabStage(fstabOptions)
+	fstabStage.MountOSTree(p.osName, p.osTreeRef, 0)
+	pipeline.AddStage(fstabStage)
 
 	if p.Keyboard != "" {
 		options := &osbuild.KeymapStageOptions{
