@@ -324,11 +324,9 @@ func efiMkdirStageOptions() *osbuild.MkdirStageOptions {
 }
 
 func GreenbootStageOptions(config *blueprint.GreenbootCustomization) *osbuild.GreenbootConfig {
-	options := osbuild.GreenbootConfig{
-		MonitorServices: []string{"sshd", "NetworkManager"}, //sshd,NetworkManager are default services to be monitored by greenboot
-	}
+	options := new(osbuild.GreenbootConfig)
 	if config.MonitorServices != nil {
 		options.MonitorServices = config.MonitorServices
 	}
-	return &options
+	return options
 }
