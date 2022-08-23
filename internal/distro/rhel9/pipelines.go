@@ -950,9 +950,13 @@ func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.
 		dracutStageOptions.Install = []string{"/fdo_diun_pub_key_root_certs.pem"}
 	}
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions))
-	if len(greenboot.MonitorServices) != 0 {
-		p.AddStage((osbuild.NewGreenbootConfig(new(osbuild.GreenbootConfig))))
+	greenbootConfig := &osbuild.GreenbootConfig{
+		MonitorServices: []string{"sshd", "NetworkManager"}, //sshd,NetworkManager are default services to be monitored by greenboot
 	}
+	if len(greenboot.MonitorServices) != 0 {
+		greenbootConfig = new(osbuild.GreenbootConfig)
+	}
+	p.AddStage((osbuild.NewGreenbootConfig(greenbootConfig)))
 	return p
 }
 
