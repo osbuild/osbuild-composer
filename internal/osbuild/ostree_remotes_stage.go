@@ -17,14 +17,22 @@ type OSTreeRemote struct {
 	// Identifier for the remote
 	Name string `json:"name"`
 
-	// URL of the repository.
+	// URL for accessing metadata and content for the remote
 	URL string `json:"url"`
+
+	// URL for accessing content. When set, url is used only for
+	// metadata. Supports 'mirrorlist=' prefix
+	ContentURL string `json:"contenturl,omitempty"`
 
 	// Configured branches for the remote
 	Branches []string `json:"branches,omitempty"`
 
 	// GPG keys to verify the commits
 	GPGKeys []string `json:"secrets,omitempty"`
+
+	// Paths to ASCII-armored GPG key or directories containing ASCII-armored
+	// GPG keys to import
+	GPGKeyPaths []string `json:"gpgkeypaths,omitempty"`
 }
 
 // A new org.osbuild.ostree.remotes stage to configure remotes
