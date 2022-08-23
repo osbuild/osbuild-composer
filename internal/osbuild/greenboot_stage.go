@@ -6,9 +6,9 @@ type GreenbootConfig struct {
 
 func (GreenbootConfig) isStageOptions() {}
 
-func NewGreenbootConfig(option *GreenbootConfig) *Stage {
+func NewGreenbootConfig(options *GreenbootConfig) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.greenboot",
-		Options: option,
+		Options: options,
 	}
 }
