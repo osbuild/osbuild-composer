@@ -2185,6 +2185,29 @@
             ]
           },
           {
+            "type": "org.osbuild.users",
+            "options": {
+              "users": {
+                "root": {
+                  "password": "!locked"
+                }
+              }
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/fedora/iot",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "fedora-iot",
+                    "ref": "test/fedora/iot",
+                    "serial": 0
+                  }
+                }
+              }
+            ]
+          },
+          {
             "type": "org.osbuild.keymap",
             "options": {
               "keymap": "us"
