@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
@@ -14,6 +15,8 @@ import (
 type OSTreeDeployment struct {
 	Base
 
+	Remote ostree.Remote
+
 	OSVersion string
 
 	osTreeCommit string
@@ -21,7 +24,6 @@ type OSTreeDeployment struct {
 	osTreeRef    string
 
 	osName string
-	remote string
 
 	KernelOptionsAppend []string
 	Keyboard            string
@@ -40,7 +42,6 @@ func NewOSTreeDeployment(m *Manifest,
 	commit string,
 	url string,
 	osName string,
-	remote string,
 	platform platform.Platform) *OSTreeDeployment {
 
 	p := &OSTreeDeployment{
@@ -49,7 +50,6 @@ func NewOSTreeDeployment(m *Manifest,
 		osTreeURL:    url,
 		osTreeRef:    ref,
 		osName:       osName,
-		remote:       remote,
 		platform:     platform,
 	}
 	buildPipeline.addDependent(p)
@@ -80,7 +80,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 
 	pipeline.AddStage(osbuild.OSTreeInitFsStage())
 	pipeline.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: p.remote},
+		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: p.Remote.Name},
 		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.osTreeCommit, p.osTreeRef),
 	))
 	pipeline.AddStage(osbuild.NewOSTreeOsInitStage(
@@ -114,7 +114,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: p.osName,
 			Ref:    p.osTreeRef,
-			Remote: p.remote,
+			Remote: p.Remote.Name,
 			Mounts: []string{"/boot", "/boot/efi"},
 			Rootfs: osbuild.Rootfs{
 				Label: "root",
@@ -123,19 +123,24 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		},
 	))
 
-	if p.osTreeURL != "" { // TODO: this should never be empty; fail early instead
-		pipeline.AddStage(osbuild.NewOSTreeRemotesStage(
-			&osbuild.OSTreeRemotesStageOptions{
-				Repo: "/ostree/repo",
-				Remotes: []osbuild.OSTreeRemote{
-					{
-						Name: p.remote,
-						URL:  p.osTreeURL,
-					},
+	remoteURL := p.Remote.URL
+	if remoteURL == "" {
+		// if the remote URL for the image is not specified, use the source commit URL
+		remoteURL = p.osTreeURL
+	}
+	pipeline.AddStage(osbuild.NewOSTreeRemotesStage(
+		&osbuild.OSTreeRemotesStageOptions{
+			Repo: "/ostree/repo",
+			Remotes: []osbuild.OSTreeRemote{
+				{
+					Name:        p.Remote.Name,
+					URL:         remoteURL,
+					ContentURL:  p.Remote.ContentURL,
+					GPGKeyPaths: p.Remote.GPGKeyPaths,
 				},
 			},
-		))
-	}
+		},
+	))
 
 	pipeline.AddStage(osbuild.NewOSTreeFillvarStage(
 		&osbuild.OSTreeFillvarStageOptions{
