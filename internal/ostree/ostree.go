@@ -24,6 +24,14 @@ type CommitSource struct {
 	URL      string
 }
 
+// Remote defines the options that can be set for an OSTree Remote configuration.
+type Remote struct {
+	Name        string
+	URL         string
+	ContentURL  string
+	GPGKeyPaths []string
+}
+
 func VerifyRef(ref string) bool {
 	return len(ref) > 0 && ostreeRefRE.MatchString(ref)
 }

@@ -2115,7 +2115,11 @@
               "remotes": [
                 {
                   "name": "fedora-iot",
-                  "url": "http://fedora.example.com/repo"
+                  "url": "https://ostree.fedoraproject.org/iot",
+                  "contenturl": "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",
+                  "gpgkeypaths": [
+                    "/etc/pki/rpm-gpg/"
+                  ]
                 }
               ]
             }

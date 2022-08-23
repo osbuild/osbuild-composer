@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
@@ -23,7 +24,7 @@ type OSTreeRawImage struct {
 	OSTreeRef    string
 	OSTreeCommit string
 
-	Remote string
+	Remote ostree.Remote
 	OSName string
 
 	KernelOptionsAppend []string
@@ -46,8 +47,9 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuild(m, runner, repos)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.OSTreeRef, img.OSTreeCommit, img.OSTreeURL, img.OSName, img.Remote, img.Platform)
+	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.OSTreeRef, img.OSTreeCommit, img.OSTreeURL, img.OSName, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
+	osPipeline.Remote = img.Remote
 	osPipeline.KernelOptionsAppend = img.KernelOptionsAppend
 	osPipeline.Keyboard = img.Keyboard
 	osPipeline.Locale = img.Locale

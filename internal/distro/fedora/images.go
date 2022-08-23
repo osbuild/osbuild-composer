@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
@@ -290,7 +291,12 @@ func iotRawImage(workload workload.Workload,
 	img.Platform = t.platform
 	img.Workload = workload
 
-	img.Remote = "fedora-iot"
+	img.Remote = ostree.Remote{
+		Name:        "fedora-iot",
+		URL:         "https://ostree.fedoraproject.org/iot",
+		ContentURL:  "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",
+		GPGKeyPaths: []string{"/etc/pki/rpm-gpg/"},
+	}
 	img.OSName = "fedora-iot"
 
 	img.OSTreeURL = options.OSTree.URL
