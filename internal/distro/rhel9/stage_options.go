@@ -206,7 +206,7 @@ func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolab
 	}
 }
 
-func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization, greenboot *blueprint.GreenbootCustomization) *osbuild.GrubISOStageOptions {
+func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
 	var architectures []string
 
 	if arch == distro.X86_64ArchName {
@@ -321,4 +321,12 @@ func efiMkdirStageOptions() *osbuild.MkdirStageOptions {
 			},
 		},
 	}
+}
+
+func GreenbootStageOptions(config *blueprint.GreenbootCustomization) *osbuild.GreenbootConfig {
+	options := new(osbuild.GreenbootConfig)
+	if config.MonitorServices != nil {
+		options.MonitorServices = config.MonitorServices
+	}
+	return options
 }

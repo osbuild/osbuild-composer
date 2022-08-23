@@ -715,7 +715,17 @@ func osPipeline(t *imageType,
 			},
 		}))
 	}
-
+	var greenbootStageOptions *osbuild.GreenbootConfig
+	if greenbootConfig := c.GetGreenbootConfig(); greenbootConfig != nil {
+		greenbootStageOptions = GreenbootStageOptions(greenbootConfig)
+	}
+	if greenbootStageOptions == nil {
+		defaultGreenbootCustomization := &blueprint.GreenbootCustomization{
+			MonitorServices: []string{"sshd", "NetworkManager"}, //sshd,NetworkManager are default services to be monitored by greenboot
+		}
+		greenbootStageOptions = GreenbootStageOptions(defaultGreenbootCustomization)
+	}
+	p.AddStage(osbuild.NewGreenbootConfig(greenbootStageOptions))
 	return p, nil
 }
 
@@ -823,9 +833,9 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	// create boot ISO with raw image
 	d := t.arch.distro
 	archName := t.Arch().Name()
-	installerTreePipeline := simplifiedInstallerTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", customizations.GetFDO(), customizations.GetGreenboot())
+	installerTreePipeline := simplifiedInstallerTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", customizations.GetFDO())
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
-	efibootTreePipeline := simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, customizations.GetFDO(), customizations.GetGreenboot())
+	efibootTreePipeline := simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, customizations.GetFDO())
 	bootISOTreePipeline := simplifiedInstallerBootISOTreePipeline(imgPipelineName, kernelVer, rng)
 
 	pipelines = append(pipelines, *installerTreePipeline, *efibootTreePipeline, *bootISOTreePipeline)
@@ -928,15 +938,15 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rn
 	return p
 }
 
-func simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization, greenboot *blueprint.GreenbootCustomization) *osbuild.Pipeline {
+func simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "efiboot-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewGrubISOStage(grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel, fdo, greenboot)))
+	p.AddStage(osbuild.NewGrubISOStage(grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel, fdo)))
 	return p
 }
 
-func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string, fdo *blueprint.FDOCustomization, greenboot *blueprint.GreenbootCustomization) *osbuild.Pipeline {
+func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string, fdo *blueprint.FDOCustomization) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "coi-tree"
 	p.Build = "name:build"
@@ -952,13 +962,7 @@ func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.
 		dracutStageOptions.Install = []string{"/fdo_diun_pub_key_root_certs.pem"}
 	}
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions))
-	greenbootConfig := &osbuild.GreenbootConfig{
-		MonitorServices: []string{"sshd", "NetworkManager"}, //sshd,NetworkManager are default services to be monitored by greenboot
-	}
-	if len(greenboot.MonitorServices) != 0 {
-		greenbootConfig = new(osbuild.GreenbootConfig)
-	}
-	p.AddStage((osbuild.NewGreenbootConfig(greenbootConfig)))
+
 	return p
 }
 

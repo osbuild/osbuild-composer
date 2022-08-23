@@ -386,7 +386,7 @@ func (c *Customizations) GetOpenSCAP() *OpenSCAPCustomization {
 	return c.OpenSCAP
 }
 
-func (c *Customizations) GetGreenboot() *GreenbootCustomization {
+func (c *Customizations) GetGreenbootConfig() *GreenbootCustomization {
 	if c == nil {
 		return nil
 	}
