@@ -2218,14 +2218,35 @@
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "kernel_opts": "modprobe.blacklist=vc4",
               "uefi": {
                 "vendor": "fedora",
                 "install": true,
                 "unified": true
               },
               "greenboot": true,
-              "write_cmdline": false
-            }
+              "write_cmdline": false,
+              "config": {
+                "default": "saved",
+                "terminal_output": [
+                  "console"
+                ],
+                "timeout": 1
+              }
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/fedora/iot",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "fedora-iot",
+                    "ref": "test/fedora/iot",
+                    "serial": 0
+                  }
+                }
+              }
+            ]
           },
           {
             "type": "org.osbuild.ostree.selinux",
