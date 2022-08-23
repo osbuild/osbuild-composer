@@ -23,11 +23,11 @@ type Customizations struct {
 	InstallationDevice string                    `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
 	FDO                *FDOCustomization         `json:"fdo,omitempty" toml:"fdo,omitempty"`
 	OpenSCAP           *OpenSCAPCustomization    `json:"openscap,omitempty" toml:"openscap,omitempty"`
-	Greenboot          *GreenbootCustomization   `json:"greenboot" toml:"greenboot,omitempty"`
+	Greenboot          *GreenbootCustomization   `json:"greenboot,omitempty" toml:"greenboot,omitempty"`
 }
 
 type GreenbootCustomization struct {
-	MonitorServices []string `json:"monitor_service,omitempty" toml:"monitor_service,omitempty"`
+	MonitorServices []string `json:"monitor_services,omitempty" toml:"monitor_services,omitempty"`
 }
 
 type FDOCustomization struct {

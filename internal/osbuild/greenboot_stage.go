@@ -1,7 +1,7 @@
 package osbuild
 
 type GreenbootConfig struct {
-	MonitorService []string `json:"monitor_services,omitempty"`
+	MonitorServices []string `json:"monitor_services,omitempty"`
 }
 
 func (GreenbootConfig) isStageOptions() {}

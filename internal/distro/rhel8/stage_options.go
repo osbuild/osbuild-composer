@@ -206,7 +206,7 @@ func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolab
 	}
 }
 
-func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
+func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization, greenboot *blueprint.GreenbootCustomization) *osbuild.GrubISOStageOptions {
 	var architectures []string
 
 	if arch == distro.X86_64ArchName {
