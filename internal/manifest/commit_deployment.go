@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"os"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -188,13 +189,20 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	// TODO: Add users?
 	// NOTE: Users can be embedded in a commit, but we should also support adding them at deploy time.
 
-	options := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
+	grubOptions := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
 		"",
 		p.platform.GetUEFIVendor() != "",
 		p.platform.GetBIOSPlatform(),
 		p.platform.GetUEFIVendor(), true)
-	options.Greenboot = true
-	bootloader := osbuild.NewGRUB2Stage(options)
+	grubOptions.Greenboot = true
+	grubOptions.Config = &osbuild.GRUB2Config{
+		Default:        "saved",
+		Timeout:        1,
+		TerminalOutput: []string{"console"},
+	}
+	grubOptions.KernelOptions = strings.Join(kernelOpts, ",")
+	bootloader := osbuild.NewGRUB2Stage(grubOptions)
+	bootloader.MountOSTree(p.osName, p.osTreeRef, 0)
 	pipeline.AddStage(bootloader)
 
 	pipeline.AddStage(osbuild.NewOSTreeSelinuxStage(
