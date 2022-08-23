@@ -156,6 +156,17 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	fstabStage.MountOSTree(p.osName, p.osTreeRef, 0)
 	pipeline.AddStage(fstabStage)
 
+	userOptions := &osbuild.UsersStageOptions{
+		Users: map[string]osbuild.UsersStageOptionsUser{
+			"root": {
+				Password: common.StringToPtr("!locked"), // this is treated as crypted and locks/disables the password
+			},
+		},
+	}
+	userStage := osbuild.NewUsersStage(userOptions)
+	userStage.MountOSTree(p.osName, p.osTreeRef, 0)
+	pipeline.AddStage(userStage)
+
 	if p.Keyboard != "" {
 		options := &osbuild.KeymapStageOptions{
 			Keymap: p.Keyboard,
