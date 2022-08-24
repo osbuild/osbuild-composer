@@ -27,8 +27,7 @@
     "blueprint": {
       "customizations": {
         "kernel": {
-          "name": "kernel-rt",
-          "append": ""
+          "name": "kernel-rt"
         }
       }
     }
@@ -5200,6 +5199,15 @@
               "etc_group_members": [
                 "wheel",
                 "docker"
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.greenboot",
+            "options": {
+              "monitor_services": [
+                "sshd",
+                "NetworkManager"
               ]
             }
           }
@@ -12886,6 +12894,5 @@
         "check_gpg": true
       }
     ]
-  },
-  "no-image-info": true
+  }
 }

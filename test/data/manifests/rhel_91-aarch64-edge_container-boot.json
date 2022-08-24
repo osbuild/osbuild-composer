@@ -4771,6 +4771,15 @@
                 "docker"
               ]
             }
+          },
+          {
+            "type": "org.osbuild.greenboot",
+            "options": {
+              "monitor_services": [
+                "sshd",
+                "NetworkManager"
+              ]
+            }
           }
         ]
       },
@@ -13489,6 +13498,5 @@
         "check_gpg": true
       }
     ]
-  },
-  "no-image-info": true
+  }
 }

@@ -2040,6 +2040,15 @@
                 "docker"
               ]
             }
+          },
+          {
+            "type": "org.osbuild.greenboot",
+            "options": {
+              "monitor_services": [
+                "sshd",
+                "NetworkManager"
+              ]
+            }
           }
         ]
       },
@@ -12117,6 +12126,5 @@
         "checksum": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
       }
     ]
-  },
-  "no-image-info": true
+  }
 }
