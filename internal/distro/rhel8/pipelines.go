@@ -714,14 +714,14 @@ func osPipeline(t *imageType,
 				"wheel", "docker",
 			},
 		}))
+		greenbootConfig := &osbuild.GreenbootConfig{
+			MonitorServices: []string{"sshd", "NetworkManager"}, //sshd,NetworkManager are default services to be monitored by greenboot
+		}
+		if newGreenbootConfig := c.GetGreenbootConfig(); newGreenbootConfig != nil {
+			greenbootConfig.MonitorServices = newGreenbootConfig.MonitorServices
+		}
+		p.AddStage(osbuild.NewGreenbootConfig(greenbootConfig))
 	}
-	greenbootConfig := &osbuild.GreenbootConfig{
-		MonitorServices: []string{"sshd", "NetworkManager"}, //sshd,NetworkManager are default services to be monitored by greenboot
-	}
-	if newGreenbootConfig := c.GetGreenbootConfig(); newGreenbootConfig != nil {
-		greenbootConfig.MonitorServices = newGreenbootConfig.MonitorServices
-	}
-	p.AddStage(osbuild.NewGreenbootConfig(greenbootConfig))
 	return p, nil
 }
 
