@@ -7,9 +7,12 @@ import (
 )
 
 func TestGreenbootConfig(t *testing.T) {
-	config := &GreenbootConfig{
-		MonitorServices: []string{"sshd", "NetworkManager"},
+	config := &GreenbootOptions{
+		Config: &GreenbootConfig{
+			MonitorServices: []string{"sshd", "NetworkManager"},
+		},
 	}
+
 	expectedConfig := &Stage{
 		Type:    "org.osbuild.greenboot",
 		Options: config,
