@@ -379,7 +379,8 @@ func main() {
 	for _, distroName := range distros {
 		distribution := distroReg.GetDistro(distroName)
 		if distribution == nil {
-			panic(fmt.Sprintf("invalid distro name %q\n", distroName))
+			fmt.Fprintf(os.Stderr, "invalid distro name %q\n", distroName)
+			continue
 		}
 
 		distroArches := arches
@@ -389,7 +390,8 @@ func main() {
 		for _, archName := range distroArches {
 			arch, err := distribution.GetArch(archName)
 			if err != nil {
-				panic(fmt.Sprintf("invalid arch name %q for distro %q: %s", archName, distroName, err.Error()))
+				fmt.Fprintf(os.Stderr, "invalid arch name %q for distro %q: %s\n", archName, distroName, err.Error())
+				continue
 			}
 
 			daImgTypes := imgTypes
@@ -399,7 +401,8 @@ func main() {
 			for _, imgTypeName := range daImgTypes {
 				imgType, err := arch.GetImageType(imgTypeName)
 				if err != nil {
-					panic(fmt.Sprintf("invalid image type %q for distro %q and arch %q: %s", imgTypeName, distroName, archName, err.Error()))
+					fmt.Fprintf(os.Stderr, "invalid image type %q for distro %q and arch %q: %s\n", imgTypeName, distroName, archName, err.Error())
+					continue
 				}
 
 				// get repositories
