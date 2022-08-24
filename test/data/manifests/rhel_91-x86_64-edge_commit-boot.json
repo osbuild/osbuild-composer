@@ -5010,10 +5010,12 @@
           {
             "type": "org.osbuild.greenboot",
             "options": {
-              "monitor_services": [
-                "sshd",
-                "NetworkManager"
-              ]
+              "config": {
+                "monitor_services": [
+                  "sshd",
+                  "NetworkManager"
+                ]
+              }
             }
           }
         ]
