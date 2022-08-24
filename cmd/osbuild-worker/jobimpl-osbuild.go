@@ -246,10 +246,10 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		Arch:         common.CurrentArch(),
 	}
 
-	hostOS, err := common.GetRedHatRelease()
+	hostOS, _, _, err := common.GetHostDistroName()
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, err.Error(), nil)
-		return nil
+		logWithId.Warnf("Failed to get host distro name: %v", err)
+		hostOS = "linux"
 	}
 	osbuildJobResult.HostOS = hostOS
 
