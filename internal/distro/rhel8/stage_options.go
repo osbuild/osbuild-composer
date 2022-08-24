@@ -322,11 +322,3 @@ func efiMkdirStageOptions() *osbuild.MkdirStageOptions {
 		},
 	}
 }
-
-func GreenbootStageOptions(config *blueprint.GreenbootCustomization) *osbuild.GreenbootConfig {
-	options := new(osbuild.GreenbootConfig)
-	if config.MonitorServices != nil {
-		options.MonitorServices = config.MonitorServices
-	}
-	return options
-}

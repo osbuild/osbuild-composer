@@ -713,15 +713,13 @@ func osPipeline(t *imageType,
 			},
 		}))
 	}
-	var greenbootStageOptions *osbuild.GreenbootConfig
-	greenbootConfig := &blueprint.GreenbootCustomization{
+	greenbootConfig := &osbuild.GreenbootConfig{
 		MonitorServices: []string{"sshd", "NetworkManager"}, //sshd,NetworkManager are default services to be monitored by greenboot
 	}
 	if newGreenbootConfig := c.GetGreenbootConfig(); newGreenbootConfig != nil {
-		greenbootConfig = newGreenbootConfig
+		greenbootConfig.MonitorServices = newGreenbootConfig.MonitorServices
 	}
-	greenbootStageOptions = GreenbootStageOptions(greenbootConfig)
-	p.AddStage(osbuild.NewGreenbootConfig(greenbootStageOptions))
+	p.AddStage(osbuild.NewGreenbootConfig(greenbootConfig))
 	return p, nil
 }
 
