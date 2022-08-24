@@ -90,7 +90,7 @@
         device_name: /dev/vda4
       when: "'/dev/vda4' in result_df.stdout"
 
-    # case: check /sysroot moutn point
+    # case: check /sysroot mount point
     - name: check /sysroot mount point
       command: findmnt -r -o SOURCE -n /sysroot
       register: result_sysroot_mount_point
