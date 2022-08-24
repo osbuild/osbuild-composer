@@ -60,14 +60,8 @@ func readOSRelease(r io.Reader) (map[string]string, error) {
 		}
 
 		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-		if value[0] == '"' {
-			if len(value) < 2 || value[len(value)-1] != '"' {
-				return nil, errors.New("readOSRelease: invalid input")
-			}
-			value = value[1 : len(value)-1]
-		}
-
+		// drop all surrounding whitespace and double-quotes
+		value := strings.Trim(strings.TrimSpace(parts[1]), "\"")
 		osrelease[key] = value
 	}
 
