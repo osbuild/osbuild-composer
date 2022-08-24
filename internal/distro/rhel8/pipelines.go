@@ -266,7 +266,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", ksUsers))
 	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
 	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, payloadStages))
-	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, archName, false))
+	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, archName, t.Arch().Name() == "x86_64"))
 	return pipelines, nil
 }
 
