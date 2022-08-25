@@ -5,6 +5,9 @@ import (
 )
 
 type RPMStageOptions struct {
+	// Use the given path as RPM database
+	DBPath string `json:"dbpath,omitempty"`
+
 	// Array of GPG key contents to import
 	GPGKeys []string `json:"gpgkeys,omitempty"`
 
@@ -15,6 +18,9 @@ type RPMStageOptions struct {
 	DisableDracut bool `json:"disable_dracut,omitempty"`
 
 	Exclude *Exclude `json:"exclude,omitempty"`
+
+	// Create the '/run/ostree-booted' marker
+	OSTreeBooted *bool `json:"ostree_booted,omitempty"`
 }
 
 type Exclude struct {
