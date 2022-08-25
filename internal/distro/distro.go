@@ -129,6 +129,7 @@ type ImageOptions struct {
 	OSTree       ostree.RequestParams
 	Size         uint64
 	Subscription *SubscriptionImageOptions
+	Facts        *FactsImageOptions
 }
 
 // The SubscriptionImageOptions specify subscription-specific image options
@@ -140,6 +141,12 @@ type SubscriptionImageOptions struct {
 	ServerUrl     string
 	BaseUrl       string
 	Insights      bool
+}
+
+// The FactsImageOptions specify things to be stored into the Insights facts
+// storage. This mostly relates to how the build of the image was performed.
+type FactsImageOptions struct {
+	ApiType string
 }
 
 type BasePartitionTableMap map[string]disk.PartitionTable

@@ -2351,6 +2351,9 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			URL:    cr.OSTree.URL,
 		},
 	}
+	options.Facts = &distro.FactsImageOptions{
+		ApiType: "weldr",
+	}
 
 	packageSets, err := api.depsolveBlueprintForImageType(*bp, options, imageType)
 	if err != nil {
