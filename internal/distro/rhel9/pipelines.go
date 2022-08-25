@@ -688,6 +688,14 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	}
 
+	if options.Facts != nil {
+		p.AddStage(osbuild.NewRHSMFactsStage(&osbuild.RHSMFactsStageOptions{
+			Facts: osbuild.RHSMFacts{
+				ApiType: options.Facts.ApiType,
+			},
+		}))
+	}
+
 	if t.rpmOstree {
 		p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
 			EtcGroupMembers: []string{
