@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+
 	"github.com/gobwas/glob"
 )
 
@@ -206,4 +208,61 @@ func dirSize(path string) (uint64, error) {
 	}
 	err := filepath.Walk(path, sizer)
 	return size, err
+}
+
+// dnfResults holds the results of a dnfjson request
+// expire is the time the request was made, used to expire the entry
+type dnfResults struct {
+	expire time.Time
+	pkgs   rpmmd.PackageList
+}
+
+// dnfCache is a cache of results from dnf-json requests
+type dnfCache struct {
+	results map[string]dnfResults
+	timeout time.Duration
+	*sync.RWMutex
+}
+
+// NewDNFCache returns a pointer to an initialized dnfCache struct
+func NewDNFCache(timeout time.Duration) *dnfCache {
+	return &dnfCache{
+		results: make(map[string]dnfResults),
+		timeout: timeout,
+		RWMutex: new(sync.RWMutex),
+	}
+}
+
+// CleanCache deletes unused cache entries
+// This prevents the cache from growing for longer than the timeout interval
+func (d *dnfCache) CleanCache() {
+	d.Lock()
+	defer d.Unlock()
+
+	// Delete expired resultCache entries
+	for k := range d.results {
+		if time.Since(d.results[k].expire) > d.timeout {
+			delete(d.results, k)
+		}
+	}
+}
+
+// Get returns the package list and true if cached
+// or an empty list and false if not cached or if cache is timed out
+func (d *dnfCache) Get(hash string) (rpmmd.PackageList, bool) {
+	d.RLock()
+	defer d.RUnlock()
+
+	result, ok := d.results[hash]
+	if !ok || time.Since(result.expire) >= d.timeout {
+		return rpmmd.PackageList{}, false
+	}
+	return result.pkgs, true
+}
+
+// Store saves the package list in the cache
+func (d *dnfCache) Store(hash string, pkgs rpmmd.PackageList) {
+	d.Lock()
+	defer d.Unlock()
+	d.results[hash] = dnfResults{expire: time.Now(), pkgs: pkgs}
 }
