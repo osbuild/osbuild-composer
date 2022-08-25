@@ -416,6 +416,7 @@ OSTree raw image:
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/rhel-9.1-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
+          - rhos-01/fedora-37-x86_64
 
 Rebase OSTree BIOS:
   stage: test

@@ -17,7 +17,7 @@ function get_build_info() {
     key="$1"
     fname="$2"
     if rpm -q --quiet weldr-client; then
-        key=".body${key}"
+        key=".[0].body${key}"
     fi
     jq -r "${key}" "${fname}"
 }
@@ -79,8 +79,8 @@ STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
-INSTALLER_TYPE=edge-raw-image
-INSTALLER_FILENAME=image.raw.xz
+RAW_IMAGE_TYPE=edge-raw-image
+RAW_IMAGE_FILENAME=image.raw.xz
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -110,6 +110,12 @@ case "${ID}-${VERSION_ID}" in
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
+        ;;
+    "fedora-"*)
+        CONTAINER_TYPE=fedora-iot-container
+        RAW_IMAGE_TYPE=fedora-iot-raw-image
+        OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
+        OS_VARIANT="fedora-unknown"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -291,9 +297,6 @@ version = "*"
 name = "sssd"
 version = "*"
 
-[customizations.kernel]
-name = "kernel-rt"
-
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -302,6 +305,14 @@ key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
+
+# No RT kernel in Fedora
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[customizations.kernel]
+name = "kernel-rt"
+EOF
+fi
 
 greenprint "📄 container blueprint"
 cat "$BLUEPRINT_FILE"
@@ -377,12 +388,12 @@ sudo composer-cli blueprints depsolve installer
 
 # Build installer image.
 # Test --url arg following by URL with tailling slash for bz#1942029
-build_image installer "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+build_image installer "${RAW_IMAGE_TYPE}" "${PROD_REPO_URL}/"
 
 # Download the image
 greenprint "📥 Downloading the raw image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+ISO_FILENAME="${COMPOSE_ID}-${RAW_IMAGE_FILENAME}"
 
 greenprint "Extracting and converting the raw image to a qcow2 file"
 sudo xz -d "${ISO_FILENAME}"
@@ -451,7 +462,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
@@ -524,7 +535,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
@@ -560,9 +571,6 @@ version = "*"
 name = "wget"
 version = "*"
 
-[customizations.kernel]
-name = "kernel-rt"
-
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -570,6 +578,14 @@ password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHB
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
+
+# No RT kernel in Fedora
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[customizations.kernel]
+name = "kernel-rt"
+EOF
+fi
 
 greenprint "📄 upgrade blueprint"
 cat "$BLUEPRINT_FILE"
@@ -659,7 +675,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
