@@ -38,6 +38,8 @@ type BaseSolver struct {
 
 	// Path to the dnf-json binary and optional args (default: "/usr/libexec/osbuild-composer/dnf-json")
 	dnfJsonCmd []string
+
+	resultCache *dnfCache
 }
 
 // Create a new unconfigured BaseSolver (without platform information). It can
@@ -45,8 +47,9 @@ type BaseSolver struct {
 // method.
 func NewBaseSolver(cacheDir string) *BaseSolver {
 	return &BaseSolver{
-		cache:      newRPMCache(cacheDir, 524288000), // 500 MiB
-		dnfJsonCmd: []string{"/usr/libexec/osbuild-composer/dnf-json"},
+		cache:       newRPMCache(cacheDir, 524288000), // 500 MiB
+		dnfJsonCmd:  []string{"/usr/libexec/osbuild-composer/dnf-json"},
+		resultCache: NewDNFCache(60 * time.Second),
 	}
 }
 
@@ -80,6 +83,7 @@ func (bs *BaseSolver) NewWithConfig(modulePlatformID string, releaseVer string, 
 // the total size of the cache falls below the configured maximum size (see
 // SetMaxCacheSize()).
 func (bs *BaseSolver) CleanCache() error {
+	bs.resultCache.CleanCache()
 	return bs.cache.shrink()
 }
 
@@ -153,6 +157,11 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 	s.cache.locker.RLock()
 	defer s.cache.locker.RUnlock()
 
+	// Is this cached?
+	if pkgs, ok := s.resultCache.Get(req.Hash()); ok {
+		return pkgs, nil
+	}
+
 	result, err := run(s.dnfJsonCmd, req)
 	if err != nil {
 		return nil, err
@@ -177,6 +186,9 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 	sort.Slice(pkgs, func(i, j int) bool {
 		return sortID(pkgs[i]) < sortID(pkgs[j])
 	})
+
+	// Cache the results
+	s.resultCache.Store(req.Hash(), pkgs)
 	return pkgs, nil
 }
 
@@ -191,6 +203,11 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 	s.cache.locker.RLock()
 	defer s.cache.locker.RUnlock()
 
+	// Is this cached?
+	if pkgs, ok := s.resultCache.Get(req.Hash()); ok {
+		return pkgs, nil
+	}
+
 	result, err := run(s.dnfJsonCmd, req)
 	if err != nil {
 		return nil, err
@@ -215,6 +232,9 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 	sort.Slice(pkgs, func(i, j int) bool {
 		return sortID(pkgs[i]) < sortID(pkgs[j])
 	})
+
+	// Cache the results
+	s.resultCache.Store(req.Hash(), pkgs)
 	return pkgs, nil
 }
 
