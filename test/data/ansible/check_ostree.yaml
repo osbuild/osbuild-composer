@@ -141,6 +141,96 @@
     - set_fact:
         device_name: "{{ result_sysroot_source.stdout }}"
 
+    # case: check pv format
+    - name: check pv format
+      shell: pvs --reportformat json | jq .report[0].pv[0].pv_fmt -r
+      become: yes
+      register: result_pv_fmt
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+
+    - name: "pv format should be lvm2"
+      block:
+        - assert:
+            that:
+              - result_pv_fmt.stdout == "lvm2"
+            fail_msg: "pv format is not lvm2"
+            success_msg: "pv format is lvm2"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+
+    # case: check pv size
+    - name: check pv size
+      shell: pvs --reportformat json | jq .report[0].pv[0].pv_size -r
+      become: yes
+      register: result_pv_size
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+
+    # simplified installer uses coreos-installer to grow fs to 19G
+    - name: "pv size should bigger than 19G for simplified installer"
+      block:
+        - assert:
+            that:
+              - "'19' in result_pv_size.stdout"
+            fail_msg: "pv size is not bigger than 19G"
+            success_msg: "pv size is bigger than 19G"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - fdo_credential == "true"
+
+    # raw image does not have coreos-installer to grow fs to 19G
+    - name: "pv size should keep at 9G for raw image"
+      block:
+        - assert:
+            that:
+              - "'9' in result_pv_size.stdout"
+            fail_msg: "pv size does not keep at 9G"
+            success_msg: "pv size keeps at 9G"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - fdo_credential == "false"
+
+    # case: check /sysroot lv size
+    - name: check sysroot lv size
+      shell: df -h | grep sysroot
+      register: result_sysroot_lv_size
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+
+    - name: "/sysroot lv size should be 9G"
+      block:
+        - assert:
+            that:
+              - "'9.0G' in result_sysroot_lv_size.stdout"
+            fail_msg: "pv size is not 9G"
+            success_msg: "pv size is 9G"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+
     # case: check /sysroot mount status
     - name: check /sysroot mount status
       shell: findmnt -r -o OPTIONS -n /sysroot | awk -F "," '{print $1}'
