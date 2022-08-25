@@ -245,6 +245,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 		rpmOptions.Exclude.Docs = true
 	}
 	rpmOptions.GPGKeysFromTree = p.GPGKeyFiles
+	if p.OSTree != nil {
+		rpmOptions.OSTreeBooted = common.BoolToPtr(true)
+		rpmOptions.DBPath = "/usr/share/rpm"
+	}
 	pipeline.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
 	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
