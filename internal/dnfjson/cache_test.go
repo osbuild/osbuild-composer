@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -272,4 +274,52 @@ func TestCacheCleanup(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Mock package list to use in testing
+var PackageList = rpmmd.PackageList{
+	rpmmd.Package{
+		Name:        "package0",
+		Summary:     "package summary",
+		Description: "package description",
+		URL:         "https://package-url/",
+		Epoch:       0,
+		Version:     "1.0.0",
+		Release:     "3",
+		Arch:        "x86_64",
+		License:     "MIT",
+	},
+}
+
+func TestDNFCacheStoreGet(t *testing.T) {
+	cache := NewDNFCache(1 * time.Second)
+	assert.Equal(t, cache.timeout, 1*time.Second)
+	assert.NotNil(t, cache.RWMutex)
+
+	cache.Store("notreallyahash", PackageList)
+	assert.Equal(t, 1, len(cache.results))
+	pkgs, ok := cache.Get("notreallyahash")
+	assert.True(t, ok)
+	assert.Equal(t, "package0", pkgs[0].Name)
+}
+
+func TestDNFCacheTimeout(t *testing.T) {
+	cache := NewDNFCache(1 * time.Second)
+	cache.Store("notreallyahash", PackageList)
+	_, ok := cache.Get("notreallyahash")
+	assert.True(t, ok)
+	time.Sleep(2 * time.Second)
+	_, ok = cache.Get("notreallyahash")
+	assert.False(t, ok)
+}
+
+func TestDNFCacheCleanup(t *testing.T) {
+	cache := NewDNFCache(1 * time.Second)
+	cache.Store("notreallyahash", PackageList)
+	time.Sleep(2 * time.Second)
+	assert.Equal(t, 1, len(cache.results))
+	cache.CleanCache()
+	assert.Equal(t, 0, len(cache.results))
+	_, ok := cache.Get("notreallyahash")
+	assert.False(t, ok)
 }
