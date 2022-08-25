@@ -548,3 +548,39 @@ func TestErrorRepoInfo(t *testing.T) {
 		})
 	}
 }
+
+func TestRepoConfigHash(t *testing.T) {
+	rc := repoConfig{
+		ID:        "repoid-1",
+		Name:      "A test repository",
+		BaseURL:   "https://arepourl/",
+		IgnoreSSL: false,
+	}
+
+	hash := rc.Hash()
+	assert.Equal(t, 64, len(hash))
+
+	rc.BaseURL = "https://adifferenturl/"
+	assert.NotEqual(t, hash, rc.Hash())
+}
+
+func TestRequestHash(t *testing.T) {
+	solver := NewSolver("f36", "36", "x86_64", "/tmp/cache")
+	repos := []rpmmd.RepoConfig{
+		rpmmd.RepoConfig{
+			Name:      "A test repository",
+			BaseURL:   "https://arepourl/",
+			IgnoreSSL: false,
+		},
+	}
+
+	req, err := solver.makeDumpRequest(repos)
+	assert.Nil(t, err)
+	hash := req.Hash()
+	assert.Equal(t, 64, len(hash))
+
+	req, err = solver.makeSearchRequest(repos, []string{"package0*"})
+	assert.Nil(t, err)
+	assert.Equal(t, 64, len(req.Hash()))
+	assert.NotEqual(t, hash, req.Hash())
+}
