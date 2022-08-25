@@ -15,6 +15,7 @@ package dnfjson
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -263,6 +264,17 @@ type repoConfig struct {
 	MetadataExpire string `json:"metadata_expire,omitempty"`
 }
 
+// Hash calculates an ID string that uniquely represents a repository
+// configuration.  The Name and ImageTypeTags fields are not considered in the
+// calculation.
+// Copied from rpmmd/repository.go
+func (r *repoConfig) Hash() string {
+	bts := func(b bool) string {
+		return fmt.Sprintf("%T", b)
+	}
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(r.BaseURL+r.Metalink+r.MirrorList+r.GPGKey+bts(r.IgnoreSSL)+r.MetadataExpire)))
+}
+
 // Helper function for creating a depsolve request payload.
 // The request defines a sequence of transactions, each depsolving one of the
 // elements of `pkgSets` in the order they appear.  The `repoConfigs` are used
@@ -420,6 +432,23 @@ type Request struct {
 
 	// Arguments for the action defined by Command
 	Arguments arguments `json:"arguments"`
+}
+
+// Hash returns a hash of the unique aspects of the Request
+//nolint:errcheck
+func (r *Request) Hash() string {
+	h := sha256.New()
+
+	h.Write([]byte(r.Command))
+	h.Write([]byte(r.ModulePlatformID))
+	h.Write([]byte(r.Arch))
+	for _, repo := range r.Arguments.Repos {
+		h.Write([]byte(repo.Hash()))
+	}
+	h.Write([]byte(fmt.Sprintf("%T", r.Arguments.Search.Latest)))
+	h.Write([]byte(strings.Join(r.Arguments.Search.Packages, "")))
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 // arguments for a dnf-json request
