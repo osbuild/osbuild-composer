@@ -39,3 +39,10 @@ curl \
     -H "Accept: application/vnd.github.v3+json" \
     "https://api.github.com/repos/osbuild/osbuild-composer/statuses/${CI_COMMIT_SHA}" \
     -d '{"state":"'"${GITHUB_NEW_STATE}"'", "description": "'"${GITHUB_NEW_DESC}"'", "context": "Schutzbot on GitLab", "target_url": "'"${CI_PIPELINE_URL}"'"}'
+
+# ff release branch on github if this ran on main
+if [ "$CI_COMMIT_BRANCH" = "main" ] && [ "$GITHUB_NEW_STATE" = "success" ]; then
+    git remote add github "https://${SCHUTZBOT_LOGIN#*:}@github.com/osbuild/osbuild-composer.git"
+    # || true to ignore non fast-forwards
+    git push github "${CI_COMMIT_SHA}:refs/heads/release" || true
+fi
