@@ -270,6 +270,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
 
+		if request.Koji == nil {
+			imageOptions.Facts = &distro.FactsImageOptions{
+				ApiType: "cloudapi-v2",
+			}
+		}
+
 		if request.Customizations != nil && request.Customizations.Subscription != nil {
 			imageOptions.Subscription = &distro.SubscriptionImageOptions{
 				Organization:  request.Customizations.Subscription.Organization,
