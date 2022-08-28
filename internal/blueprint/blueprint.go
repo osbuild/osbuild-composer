@@ -19,7 +19,7 @@ type Blueprint struct {
 	Modules        []Package       `json:"modules" toml:"modules"`
 	Groups         []Group         `json:"groups" toml:"groups"`
 	Containers     []Container     `json:"containers,omitempty" toml:"containers,omitempty"`
-	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations,omitempty"`
+	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations"`
 	Distro         string          `json:"distro" toml:"distro"`
 }
 
