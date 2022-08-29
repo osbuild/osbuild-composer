@@ -123,6 +123,8 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 	}
 	c.weldrListener = weldrListener
 
+	// Preload the Metadata for all the supported distros
+	c.weldr.PreloadMetadata()
 	return nil
 }
 
