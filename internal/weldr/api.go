@@ -299,6 +299,33 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	api.router.ServeHTTP(writer, request)
 }
 
+// PreloadMetadata loads the metadata for all supported distros
+// This starts a background depsolve for all known distros in order to preload the
+// metadata.
+func (api *API) PreloadMetadata() {
+	for _, distro := range api.distros {
+		go func(distro string) {
+			d := api.getDistro(distro)
+			if d == nil {
+				log.Printf("GetDistro - unknown distribution: %s", distro)
+				return
+			}
+
+			repos, err := api.allRepositories(distro)
+			if err != nil {
+				log.Printf("Error getting repositories for distro %s: %s", distro, err)
+				return
+			}
+
+			solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
+			_, err = solver.Depsolve([]rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}})
+			if err != nil {
+				log.Printf("Problem preloading distro metadata for %s: %s", distro, err)
+			}
+		}(distro)
+	}
+}
+
 type composeStatus struct {
 	State    ComposeState
 	Queued   time.Time
