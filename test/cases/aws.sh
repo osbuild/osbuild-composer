@@ -229,7 +229,7 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
         {
             "ami": "$AMI_IMAGE_ID",
             "region": "us-east-1",
-            "instance_type": "t3a.micro",
+            "instance_type": "t3.medium",
             "username": "$SSH_USER",
             "name": "civ-testing-image"
         }
