@@ -582,6 +582,10 @@ API:
         RUNNER:
           - aws/fedora-35-x86_64
           - aws/fedora-36-x86_64
+      - IMAGE_TYPE: ["aws"]
+        RUNNER:
+          - aws/rhel-8.6-ga-aarch64
+        INTERNAL_NETWORK: ["true"]
 
 .libvirt_integration:
   stage: test
