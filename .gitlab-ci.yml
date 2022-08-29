@@ -240,7 +240,6 @@ regression-bigiso:
   rules: 
     # WHITELIST: Run only on x86_64 and rhel like systems
     - if: $RUNNER =~ "/^.*(rhel-8.6.*x86_64|rhel-9.0.*x86_64|centos-stream-8.*x86_64|centos-stream-9.*x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: regression-bigiso.sh
 
@@ -505,6 +504,9 @@ koji.sh (cloud upload):
 
 koji.sh (cloudapi):
   extends: .integration
+  # Not supported in nightly pipelines
+  rules:
+    - !reference [.upstream_rules, rules]
   variables:
     SCRIPT: koji.sh
 
