@@ -170,8 +170,19 @@ function verify() {
   $AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
   chmod 400 ./keypair.pem
 
+  echo "ARCH is $ARCH"
+
+  if [ "$ARCH" = "aarch64" ]; then
+    INST_TYPE="t4g.micro"
+  elif [ "$ARCH" = "x86_64" ]; then
+    INST_TYPE="t2.micro"
+  else
+    echo "Unsupported architecture ❌"
+    exit 1
+  fi
+
   # Create an instance based on the ami
-  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" --tag-specifications 'ResourceType=instance,Tags=[{Key=gitlab-ci-test,Value=true}]' > "$WORKDIR/instances.json"
+  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type "$INST_TYPE" --key-name "key-for-$AMI_IMAGE_ID" --tag-specifications 'ResourceType=instance,Tags=[{Key=gitlab-ci-test,Value=true}]' > "$WORKDIR/instances.json"
   AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
 
   $AWS_CMD ec2 wait instance-running --instance-ids "$AWS_INSTANCE_ID"
