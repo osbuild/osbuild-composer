@@ -136,7 +136,7 @@ func TestCreate(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
 	handler := server.Handler()
 
-	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "", int64(0))
 	require.NoError(t, err)
 
 	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs",
@@ -161,7 +161,7 @@ func TestCancel(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
 	handler := server.Handler()
 
-	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "", int64(0))
 	require.NoError(t, err)
 
 	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
@@ -198,7 +198,7 @@ func TestUpdate(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
 	handler := server.Handler()
 
-	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "", int64(0))
 	require.NoError(t, err)
 
 	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
@@ -244,7 +244,7 @@ func TestArgs(t *testing.T) {
 			},
 		},
 	}
-	jobId, err := server.EnqueueOSBuild(arch.Name(), &job, "")
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &job, "", int64(0))
 	require.NoError(t, err)
 
 	_, _, _, args, _, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
@@ -274,7 +274,7 @@ func TestUpload(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", true)
 	handler := server.Handler()
 
-	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "", int64(0))
 	require.NoError(t, err)
 
 	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
@@ -304,7 +304,7 @@ func TestUploadNotAcceptingArtifacts(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
 	handler := server.Handler()
 
-	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "", int64(0))
 	require.NoError(t, err)
 
 	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
@@ -334,7 +334,7 @@ func TestUploadAlteredBasePath(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/image-builder-worker/v1", true)
 	handler := server.Handler()
 
-	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "", int64(0))
 	require.NoError(t, err)
 
 	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
@@ -371,10 +371,10 @@ func TestRequestJobById(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
 	handler := server.Handler()
 
-	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "")
+	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "", int64(0))
 	require.NoError(t, err)
 
-	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, []uuid.UUID{depsolveJobId}, "")
+	jobId, err := server.EnqueueManifestJobByID(&worker.ManifestJobByID{}, []uuid.UUID{depsolveJobId}, "", int64(0))
 	require.NoError(t, err)
 
 	test.TestRoute(t, server.Handler(), false, "POST", "/api/worker/v1/jobs", fmt.Sprintf(`{"arch":"arch","types":["%s"]}`, worker.JobTypeManifestIDOnly), http.StatusBadRequest,
@@ -426,7 +426,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 			},
 		},
 	}
-	oldJobID, err := server.EnqueueOSBuild("x", &oldJob, "")
+	oldJobID, err := server.EnqueueOSBuild("x", &oldJob, "", int64(0))
 	require.NoError(err)
 
 	newJob := worker.OSBuildJob{
@@ -447,7 +447,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 			},
 		},
 	}
-	newJobID, err := server.EnqueueOSBuild("x", &newJob, "")
+	newJobID, err := server.EnqueueOSBuild("x", &newJob, "", int64(0))
 	require.NoError(err)
 
 	var oldJobRead worker.OSBuildJob
@@ -569,7 +569,7 @@ func TestDepsolveLegacyErrorConversion(t *testing.T) {
 	}
 	server := newTestServer(t, t.TempDir(), time.Duration(0), "/api/worker/v1", false)
 
-	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "")
+	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "", int64(0))
 	require.NoError(t, err)
 
 	_, _, _, _, _, err = server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeDepsolve}, []string{""})
@@ -737,7 +737,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 		switch dep.main.(type) {
 		case *worker.OSBuildJob:
 			job := dep.main.(*worker.OSBuildJob)
-			id, err = s.EnqueueOSBuildAsDependency(distro.X86_64ArchName, job, depUUIDs, "")
+			id, err = s.EnqueueOSBuildAsDependency(distro.X86_64ArchName, job, depUUIDs, "", int64(0))
 			if err != nil {
 				return nil, err
 			}
@@ -747,7 +747,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 			if len(depUUIDs) < 1 {
 				return nil, fmt.Errorf("at least one dependency is expected for ManifestJobByID, got: %d", len(depUUIDs))
 			}
-			id, err = s.EnqueueManifestJobByID(job, depUUIDs, "")
+			id, err = s.EnqueueManifestJobByID(job, depUUIDs, "", int64(0))
 			if err != nil {
 				return nil, err
 			}
@@ -757,7 +757,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 			if len(depUUIDs) != 0 {
 				return nil, fmt.Errorf("dependencies are not supported for DepsolveJob, got: %d", len(depUUIDs))
 			}
-			id, err = s.EnqueueDepsolve(job, "")
+			id, err = s.EnqueueDepsolve(job, "", int64(0))
 			if err != nil {
 				return nil, err
 			}
@@ -767,7 +767,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 			if len(depUUIDs) != 0 {
 				return nil, fmt.Errorf("dependencies are not supported for KojiInitJob, got: %d", len(depUUIDs))
 			}
-			id, err = s.EnqueueKojiInit(job, "")
+			id, err = s.EnqueueKojiInit(job, "", int64(0))
 			if err != nil {
 				return nil, err
 			}
@@ -777,7 +777,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 			if len(depUUIDs) < 2 {
 				return nil, fmt.Errorf("at least two dependencies are expected for KojiFinalizeJob, got: %d", len(depUUIDs))
 			}
-			id, err = s.EnqueueKojiFinalize(job, depUUIDs[0], depUUIDs[1:], "")
+			id, err = s.EnqueueKojiFinalize(job, depUUIDs[0], depUUIDs[1:], "", int64(0))
 			if err != nil {
 				return nil, err
 			}
@@ -787,7 +787,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 			if len(depUUIDs) != 0 {
 				return nil, fmt.Errorf("dependencies are not supported for ContainerResolveJob, got: %d", len(depUUIDs))
 			}
-			id, err = s.EnqueueContainerResolveJob(job, "")
+			id, err = s.EnqueueContainerResolveJob(job, "", int64(0))
 			if err != nil {
 				return nil, err
 			}

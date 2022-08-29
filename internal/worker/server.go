@@ -133,35 +133,35 @@ func (s *Server) WatchHeartbeats() {
 	}
 }
 
-func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeOSBuild+":"+arch, job, nil, channel)
+func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob, channel string, expiry int64) (uuid.UUID, error) {
+	return s.enqueue(JobTypeOSBuild+":"+arch, job, nil, channel, expiry)
 }
 
-func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeOSBuild+":"+arch, job, dependencies, channel)
+func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, dependencies []uuid.UUID, channel string, expiry int64) (uuid.UUID, error) {
+	return s.enqueue(JobTypeOSBuild+":"+arch, job, dependencies, channel, expiry)
 }
 
-func (s *Server) EnqueueKojiInit(job *KojiInitJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeKojiInit, job, nil, channel)
+func (s *Server) EnqueueKojiInit(job *KojiInitJob, channel string, expiry int64) (uuid.UUID, error) {
+	return s.enqueue(JobTypeKojiInit, job, nil, channel, expiry)
 }
 
-func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeKojiFinalize, job, append([]uuid.UUID{initID}, buildIDs...), channel)
+func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID, channel string, expiry int64) (uuid.UUID, error) {
+	return s.enqueue(JobTypeKojiFinalize, job, append([]uuid.UUID{initID}, buildIDs...), channel, expiry)
 }
 
-func (s *Server) EnqueueDepsolve(job *DepsolveJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeDepsolve, job, nil, channel)
+func (s *Server) EnqueueDepsolve(job *DepsolveJob, channel string, expiry int64) (uuid.UUID, error) {
+	return s.enqueue(JobTypeDepsolve, job, nil, channel, expiry)
 }
 
-func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, dependencies []uuid.UUID, channel string, expiry int64) (uuid.UUID, error) {
 	if len(dependencies) == 0 {
 		panic("EnqueueManifestJobByID has no dependencies, expected at least a depsolve job")
 	}
-	return s.enqueue(JobTypeManifestIDOnly, job, dependencies, channel)
+	return s.enqueue(JobTypeManifestIDOnly, job, dependencies, channel, expiry)
 }
 
-func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeContainerResolve, job, nil, channel)
+func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel string, expiry int64) (uuid.UUID, error) {
+	return s.enqueue(JobTypeContainerResolve, job, nil, channel, 0)
 }
 
 func (s *Server) EnqueueOSTreeResolveJob(job *OSTreeResolveJob, channel string) (uuid.UUID, error) {
@@ -169,16 +169,16 @@ func (s *Server) EnqueueOSTreeResolveJob(job *OSTreeResolveJob, channel string) 
 }
 
 func (s *Server) EnqueueAWSEC2CopyJob(job *AWSEC2CopyJob, parent uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeAWSEC2Copy, job, []uuid.UUID{parent}, channel)
+	return s.enqueue(JobTypeAWSEC2Copy, job, []uuid.UUID{parent}, channel, 0)
 }
 
 func (s *Server) EnqueueAWSEC2ShareJob(job *AWSEC2ShareJob, parent uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel)
+	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel, 0)
 }
 
-func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string, expiry int64) (uuid.UUID, error) {
 	prometheus.EnqueueJobMetrics(strings.Split(jobType, ":")[0], channel)
-	return s.jobs.Enqueue(jobType, job, dependencies, channel)
+	return s.jobs.Enqueue(jobType, job, dependencies, channel, expiry)
 }
 
 // DependencyChainErrors recursively gathers all errors from job's dependencies,

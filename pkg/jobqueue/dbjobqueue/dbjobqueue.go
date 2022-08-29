@@ -27,9 +27,8 @@ const (
 	sqlNotify   = `NOTIFY jobs`
 	sqlListen   = `LISTEN jobs`
 	sqlUnlisten = `UNLISTEN jobs`
-
-	sqlEnqueue = `INSERT INTO jobs(id, type, args, queued_at, channel) VALUES ($1, $2, $3, statement_timestamp(), $4)`
-	sqlDequeue = `
+	sqlEnqueue  = `INSERT INTO jobs(id, type, args, queued_at, expires_at, channel) VALUES ($1, $2, $3, statement_timestamp(), $4, $5)`
+	sqlDequeue  = `
 		UPDATE jobs
 		SET token = $1, started_at = statement_timestamp()
 		WHERE id = (
@@ -260,7 +259,7 @@ func (q *DBJobQueue) Close() {
 	q.pool.Close()
 }
 
-func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string, expiry int64) (uuid.UUID, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error connecting to database: %v", err)
@@ -279,7 +278,19 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	}()
 
 	id := uuid.New()
-	_, err = tx.Exec(context.Background(), sqlEnqueue, id, jobType, args, channel)
+
+	var deltaDays int64
+
+	if expiry != 0 {
+		deltaDays = expiry
+	} else {
+		// A '0' being passed means 'no expiry' (aka: very very long time)
+		deltaDays = 9999
+	}
+
+	expires := time.Now().UTC().Add(time.Hour * time.Duration(24*deltaDays))
+
+	_, err = tx.Exec(context.Background(), sqlEnqueue, id, jobType, args, expires, channel)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error enqueuing job: %v", err)
 	}

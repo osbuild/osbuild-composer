@@ -483,7 +483,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 		Version: "42",
 		Release: "1",
 	}
-	initID, err := workers.EnqueueKojiInit(&initJob, "")
+	initID, err := workers.EnqueueKojiInit(&initJob, "", int64(0))
 	require.NoError(t, err)
 
 	manifest, err := json.Marshal(osbuild.Manifest{})
@@ -508,7 +508,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 			// TODO: use dependent depsolve and manifests jobs instead
 			Manifest: manifest,
 		}
-		buildID, err := workers.EnqueueOSBuildAsDependency(fmt.Sprintf("fake-arch-%d", idx), &buildJob, []uuid.UUID{initID}, "")
+		buildID, err := workers.EnqueueOSBuildAsDependency(fmt.Sprintf("fake-arch-%d", idx), &buildJob, []uuid.UUID{initID}, "", int64(0))
 		require.NoError(t, err)
 
 		buildJobs[idx] = buildJob
@@ -526,7 +526,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 		TaskID:        0,
 		StartTime:     uint64(time.Now().Unix()),
 	}
-	finalizeID, err := workers.EnqueueKojiFinalize(&finalizeJob, initID, buildJobIDs, "")
+	finalizeID, err := workers.EnqueueKojiFinalize(&finalizeJob, initID, buildJobIDs, "", int64(0))
 	require.NoError(t, err)
 
 	// ----- Jobs queued - Test API endpoints (status, manifests, logs) ----- //

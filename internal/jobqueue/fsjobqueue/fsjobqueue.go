@@ -131,7 +131,7 @@ func New(dir string) (*fsJobQueue, error) {
 	return q, nil
 }
 
-func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string, expiry int64) (uuid.UUID, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 

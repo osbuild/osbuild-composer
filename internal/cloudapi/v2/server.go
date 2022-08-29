@@ -99,7 +99,7 @@ func (s *Server) Shutdown() {
 	s.goroutinesGroup.Wait()
 }
 
-func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
+func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string, expiry int64) (uuid.UUID, error) {
 	var id uuid.UUID
 	if len(irs) != 1 {
 		return id, HTTPError(ErrorInvalidNumberOfImageBuilds)
@@ -111,7 +111,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		ModulePlatformID: distribution.ModulePlatformID(),
 		Arch:             ir.arch.Name(),
 		Releasever:       distribution.Releasever(),
-	}, channel)
+	}, channel, expiry)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -132,7 +132,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 			}
 		}
 
-		jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
+		jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel, int64(0))
 
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -162,7 +162,8 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		dependencies = append(dependencies, ostreeResolveJobID)
 	}
 
-	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel)
+	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel, expiry)
+
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -173,7 +174,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 			Build:   ir.imageType.BuildPipelines(),
 			Payload: ir.imageType.PayloadPipelines(),
 		},
-	}, []uuid.UUID{manifestJobID}, channel)
+	}, []uuid.UUID{manifestJobID}, channel, expiry)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -187,7 +188,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	return id, nil
 }
 
-func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, distribution distro.Distro, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
+func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, distribution distro.Distro, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string, expiry int64) (uuid.UUID, error) {
 	var id uuid.UUID
 	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
 
@@ -196,7 +197,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		Name:    name,
 		Version: version,
 		Release: release,
-	}, channel)
+	}, channel, expiry)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -209,7 +210,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			ModulePlatformID: distribution.ModulePlatformID(),
 			Arch:             ir.arch.Name(),
 			Releasever:       distribution.Releasever(),
-		}, channel)
+		}, channel, expiry)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -230,7 +231,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 				}
 			}
 
-			jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
+			jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel, int64(0))
 
 			if err != nil {
 				return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -259,7 +260,8 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			dependencies = append(dependencies, ostreeResolveJobID)
 		}
 
-		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel)
+		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel, expiry)
+
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -293,7 +295,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			},
 			Targets:            targets,
 			ManifestDynArgsIdx: common.IntToPtr(1),
-		}, []uuid.UUID{initID, manifestJobID}, channel)
+		}, []uuid.UUID{initID, manifestJobID}, channel, expiry)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -316,7 +318,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		KojiDirectory: kojiDirectory,
 		TaskID:        taskID,
 		StartTime:     uint64(time.Now().Unix()),
-	}, initID, buildIDs, channel)
+	}, initID, buildIDs, channel, expiry)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}

@@ -48,7 +48,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID, channel string) uuid.UUID {
 	t.Helper()
-	id, err := q.Enqueue(jobType, args, dependencies, channel)
+	id, err := q.Enqueue(jobType, args, dependencies, channel, int64(0))
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
 	return id
@@ -71,12 +71,12 @@ func finishNextTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, result
 
 func testErrors(t *testing.T, q jobqueue.JobQueue) {
 	// not serializable to JSON
-	id, err := q.Enqueue("test", make(chan string), nil, "")
+	id, err := q.Enqueue("test", make(chan string), nil, "", int64(0))
 	require.Error(t, err)
 	require.Equal(t, uuid.Nil, id)
 
 	// invalid dependency
-	id, err = q.Enqueue("test", "arg0", []uuid.UUID{uuid.New()}, "")
+	id, err = q.Enqueue("test", "arg0", []uuid.UUID{uuid.New()}, "", int64(0))
 	require.Error(t, err)
 	require.Equal(t, uuid.Nil, id)
 

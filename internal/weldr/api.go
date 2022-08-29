@@ -2267,7 +2267,7 @@ func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType 
 		}
 	}
 
-	jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
+	jobId, err := api.workers.EnqueueContainerResolveJob(&job, "", int64(0))
 
 	if err != nil {
 		return specs, err
@@ -2323,6 +2323,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		OSTree        ostree.RequestParams `json:"ostree"`
 		Branch        string               `json:"branch"`
 		Upload        *uploadRequest       `json:"upload"`
+		Expiry        *int64               `json:"expiry"`
 	}
 	type ComposeReply struct {
 		BuildID uuid.UUID `json:"build_id"`
@@ -2520,6 +2521,13 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		}
 	}
 
+	var expiry int64
+	if cr.Expiry != nil {
+		expiry = *cr.Expiry
+	} else {
+		expiry = int64(0)
+	}
+
 	if testMode == "1" {
 		// Create a failed compose
 		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false, packages)
@@ -2536,7 +2544,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 				Build:   imageType.BuildPipelines(),
 				Payload: imageType.PayloadPipelines(),
 			},
-		}, "")
+		}, "", expiry)
 		if err == nil {
 			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId, packages)
 		}

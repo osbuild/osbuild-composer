@@ -29,7 +29,7 @@ func newTestWorkerServer(t *testing.T) (string, string, string) {
 		BasePath:     "/api/image-builder-worker/v1",
 	}
 	workerServer := worker.NewServer(nil, q, config)
-	_, err = workerServer.EnqueueOSBuild("arch", &worker.OSBuildJob{}, "")
+	_, err = workerServer.EnqueueOSBuild("arch", &worker.OSBuildJob{}, "", int64(0))
 	require.NoError(t, err)
 
 	handler := workerServer.Handler()

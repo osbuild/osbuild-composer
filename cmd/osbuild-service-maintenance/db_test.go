@@ -40,7 +40,7 @@ func setExpired(t *testing.T, d db, id uuid.UUID) {
 }
 
 func testDeleteJob(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
-	id, err := q.Enqueue("octopus", nil, nil, "")
+	id, err := q.Enqueue("octopus", nil, nil, "", int64(0))
 	require.NoError(t, err)
 	require.NotEqual(t, uuid.Nil, id)
 	_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{""})

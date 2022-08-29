@@ -735,6 +735,11 @@ components:
           $ref: '#/components/schemas/Customizations'
         koji:
           $ref: '#/components/schemas/Koji'
+        expiry:
+          type: integer
+          example: 7
+          default: 14
+          description: 'Days before the job result will be deleted.'
     ImageRequest:
       required:
         - architecture

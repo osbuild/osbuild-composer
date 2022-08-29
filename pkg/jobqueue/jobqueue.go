@@ -32,7 +32,7 @@ type JobQueue interface {
 	// have finished.
 	//
 	// Returns the id of the new job, or an error.
-	Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error)
+	Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string, expiry int64) (uuid.UUID, error)
 
 	// Dequeues a job, blocking until one is available.
 	//
