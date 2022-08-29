@@ -17,11 +17,15 @@ function installClient() {
   $AWS_CMD --version
 
   if ! hash govc; then
+    ARCH="$(uname -m)"
+    if [ "$ARCH" = "aarch64" ]; then
+      ARCH="arm64"
+    fi
     greenprint "Installing govc"
     pushd "${WORKDIR}" || exit 1
-    curl -Ls --retry 5 --output govc.gz \
-         https://github.com/vmware/govmomi/releases/download/v0.24.0/govc_linux_amd64.gz
-    gunzip -f govc.gz
+    curl -Ls --retry 5 --output govc.tar.gz \
+         "https://github.com/vmware/govmomi/releases/download/v0.29.0/govc_Linux_$ARCH.tar.gz"
+    tar -xvf govc.tar.gz
     GOVC_CMD="${WORKDIR}/govc"
     chmod +x "${GOVC_CMD}"
     popd || exit 1
