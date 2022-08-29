@@ -476,6 +476,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"ami",
 				"ec2",
 				"ec2-ha",
+				"ec2-eus",
 				"ec2-sap",
 				"edge-commit",
 				"edge-container",

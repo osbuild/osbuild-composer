@@ -730,6 +730,17 @@ func rhelEc2PackageSet(t *imageType) rpmmd.PackageSet {
 	return ec2PackageSet
 }
 
+// rhel-eus-ec2 image package set
+func rhelEc2EusPackageSet(t *imageType) rpmmd.PackageSet {
+	ec2PackageSet := ec2CommonPackageSet(t)
+	ec2PackageSet = ec2PackageSet.Append(rpmmd.PackageSet{
+		Include: []string{
+			"rh-amazon-rhui-client-sap-bundle-e4s", //TODO: Replace with the package build in RHUI-289
+		},
+	})
+	return ec2PackageSet
+}
+
 // rhel-ha-ec2 image package set
 func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
 	ec2HaPackageSet := ec2CommonPackageSet(t)

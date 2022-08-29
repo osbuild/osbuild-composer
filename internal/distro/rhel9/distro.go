@@ -1558,6 +1558,45 @@ func newDistro(distroName string) distro.Distro {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
+	defaultEc2EusImageConfigX86_64 := &distro.ImageConfig{
+		// E4S/EUS
+		DNFConfig: []*osbuild.DNFConfigStageOptions{
+			osbuild.NewDNFConfigStageOptions(
+				[]osbuild.DNFVariable{
+					{
+						Name:  "releasever",
+						Value: rd.osVersion,
+					},
+				},
+				nil,
+			),
+		},
+	}
+	defaultEc2EusImageConfigX86_64 = defaultEc2EusImageConfigX86_64.InheritFrom(defaultEc2ImageConfigX86_64)
+
+	ec2EusImgTypeX86_64 := imageType{
+		name:     "ec2-eus",
+		filename: "image.raw.xz",
+		mimeType: "application/xz",
+		packageSets: map[string]packageSetFunc{
+			buildPkgsKey: ec2BuildPackageSet,
+			osPkgsKey:    rhelEc2EusPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
+		defaultImageConfig:  defaultEc2EusImageConfigX86_64,
+		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1",
+		bootable:            true,
+		bootType:            distro.LegacyBootType,
+		defaultSize:         10 * GigaByte,
+		pipelines:           rhelEc2Pipelines,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "archive"},
+		exports:             []string{"archive"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
 	defaultGceImageConfig := &distro.ImageConfig{
 		Timezone: "UTC",
 		TimeSynchronization: &osbuild.ChronyStageOptions{
@@ -1794,7 +1833,7 @@ func newDistro(distroName string) distro.Distro {
 		x86_64.addImageTypes(azureRhuiImgType)
 
 		// add ec2 image types to RHEL distro only
-		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
+		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64, ec2EusImgTypeX86_64)
 		aarch64.addImageTypes(ec2ImgTypeAarch64)
 
 		// add GCE RHUI image to RHEL only
