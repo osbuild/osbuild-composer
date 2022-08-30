@@ -26,7 +26,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
-	github.com/gophercloud/gophercloud v0.24.0
+	github.com/gophercloud/gophercloud v1.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.1
 	github.com/jackc/pgtype v1.12.0
 	github.com/jackc/pgx/v4 v4.17.1
