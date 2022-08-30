@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-source /usr/libexec/tests/osbuild-composer/api/common/aws.sh
+source /usr/libexec/tests/osbuild-composer/api/common/vmware.sh
 source /usr/libexec/tests/osbuild-composer/api/common/common.sh
 source /usr/libexec/tests/osbuild-composer/api/common/s3.sh
 

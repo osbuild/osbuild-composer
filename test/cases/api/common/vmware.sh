@@ -15,6 +15,21 @@ function installClient() {
     AWS_CMD="aws --region $AWS_REGION --output json --color on"
   fi
   $AWS_CMD --version
+
+  if ! hash govc; then
+    greenprint "Installing govc"
+    pushd "${WORKDIR}" || exit 1
+    curl -Ls --retry 5 --output govc.gz \
+         https://github.com/vmware/govmomi/releases/download/v0.24.0/govc_linux_amd64.gz
+    gunzip -f govc.gz
+    GOVC_CMD="${WORKDIR}/govc"
+    chmod +x "${GOVC_CMD}"
+    popd || exit 1
+  else
+     echo "Using pre-installed 'govc' from the system"
+     GOVC_CMD="govc"
+  fi
+  $GOVC_CMD version
 }
 
 # Log into AWS
