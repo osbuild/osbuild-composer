@@ -421,6 +421,18 @@
     },
     "overrides": {}
   },
+  "minimal-rpm": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "minimal-rpm",
+      "repositories": [],
+      "filename": "minimal-rpm.img",
+      "blueprint": {}
+    },
+    "no-image-info": true,
+    "overrides": {}
+  },
   "image-installer": {
     "compose-request": {
       "distro": "",

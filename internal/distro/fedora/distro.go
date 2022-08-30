@@ -166,6 +166,24 @@ var (
 		basePartitionTables: iotBasePartitionTables,
 	}
 
+	minimalrpmImgType = imageType{
+		name:     "minimal-rpm",
+		filename: "minimal-rpm.img",
+		mimeType: "application/disk",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: minimalrpmPackageSet,
+		},
+		rpmOstree:           true,
+		kernelOptions:       defaultKernelOptions,
+		bootable:            true,
+		defaultSize:         2 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image"},
+		exports:             []string{"image"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
 	qcow2ImgType = imageType{
 		name:     "qcow2",
 		filename: "disk.qcow2",
@@ -888,6 +906,16 @@ func newDistro(version int) distro.Distro {
 		imageInstallerImgType,
 	)
 
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS: true,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+		},
+		minimalrpmImgType,
+	)
+
 	aarch64.addImageTypes(
 		&platform.Aarch64{
 			UEFIVendor: "fedora",
@@ -950,6 +978,15 @@ func newDistro(version int) distro.Distro {
 			UEFIVendor: "fedora",
 		},
 		imageInstallerImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+		},
+		minimalrpmImgType,
 	)
 
 	s390x.addImageTypes(nil)
