@@ -4,16 +4,9 @@
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-set -xeuo pipefail
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
+set -xeuo pipefail
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none

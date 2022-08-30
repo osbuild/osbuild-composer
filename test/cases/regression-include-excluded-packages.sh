@@ -15,6 +15,7 @@
 set -xeuo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
@@ -41,21 +42,13 @@ EOF
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve nss-devel
 sudo composer-cli --json compose start nss-devel qcow2 | tee "${COMPOSE_START}"
-if rpm -q --quiet weldr-client; then
-    COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
-else
-    COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
-fi
+COMPOSE_ID=$(get_build_info '.build_id' "$COMPOSE_START")
 
 # Wait for the compose to finish.
 echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
 while true; do
     sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    if rpm -q --quiet weldr-client; then
-        COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
-    else
-        COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
-    fi
+    COMPOSE_STATUS=$(get_build_info '.queue_status' "$COMPOSE_INFO")
 
     # Is the compose finished?
     if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
