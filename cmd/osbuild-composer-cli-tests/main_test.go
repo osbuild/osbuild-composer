@@ -128,15 +128,20 @@ func TestBlueprintCommands(t *testing.T) {
 	runComposer(t, "blueprints", "tag", "empty")
 
 	// undo the latest commit we can find
-	var changesWeldr weldr.BlueprintsChangesV0Weldr
+	var changesWeldr []weldr.BlueprintsChangesV0Weldr
 	rawReply := runComposerJSON(t, "blueprints", "changes", "empty")
 	if isWeldrClientInstalled() {
 		err = json.Unmarshal(rawReply, &changesWeldr)
+		if err != nil {
+			changesWeldr = make([]weldr.BlueprintsChangesV0Weldr, 1)
+			err = json.Unmarshal(rawReply, &changesWeldr[0])
+		}
 	} else {
-		err = json.Unmarshal(rawReply, &changesWeldr.Body)
+		changesWeldr = make([]weldr.BlueprintsChangesV0Weldr, 1)
+		err = json.Unmarshal(rawReply, &changesWeldr[0].Body)
 	}
 	require.Nilf(t, err, "Error searching for commits to undo: %v", err)
-	runComposer(t, "blueprints", "undo", "empty", changesWeldr.Body.BlueprintsChanges[0].Changes[0].Commit)
+	runComposer(t, "blueprints", "undo", "empty", changesWeldr[0].Body.BlueprintsChanges[0].Changes[0].Commit)
 	runComposer(t, "blueprints", "workspace", "empty.toml")
 }
 
@@ -197,26 +202,35 @@ func buildCompose(t *testing.T, bpName string, outputType string) uuid.UUID {
 }
 
 func startCompose(t *testing.T, name, outputType string) uuid.UUID {
+	rawReply := runComposerJSON(t, "compose", "start", name, outputType)
+
 	type reply struct {
 		BuildID uuid.UUID `json:"build_id"`
 		Status  bool      `json:"status"`
 	}
-	var replyWeldr struct {
+	type replyWithBody struct {
 		Body reply `json:"body"`
 	}
-	rawReply := runComposerJSON(t, "compose", "start", name, outputType)
+	var replyWeldr []replyWithBody
 	var err error
 	if isWeldrClientInstalled() {
 		err = json.Unmarshal(rawReply, &replyWeldr)
+		if err != nil {
+			replyWeldr = make([]replyWithBody, 1)
+			err = json.Unmarshal(rawReply, &replyWeldr[0])
+		}
 	} else {
-		err = json.Unmarshal(rawReply, &replyWeldr.Body)
+		replyWeldr = make([]replyWithBody, 1)
+		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
-	require.Truef(t, replyWeldr.Body.Status, "Unexpected status %v", replyWeldr.Body.Status)
-	return replyWeldr.Body.BuildID
+	require.Truef(t, replyWeldr[0].Body.Status, "Unexpected status %v", replyWeldr[0].Body.Status)
+	return replyWeldr[0].Body.BuildID
 }
 
 func deleteCompose(t *testing.T, id uuid.UUID) {
+	rawReply := runComposerJSON(t, "compose", "delete", id.String())
+
 	type deleteUUID struct {
 		ID     uuid.UUID `json:"uuid"`
 		Status bool      `json:"status"`
@@ -225,20 +239,25 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 		IDs    []deleteUUID  `json:"uuids"`
 		Errors []interface{} `json:"errors"`
 	}
-	var replyWeldr struct {
+	type replyWithBody struct {
 		Body reply `json:"body"`
 	}
-	rawReply := runComposerJSON(t, "compose", "delete", id.String())
+	var replyWeldr []replyWithBody
 	var err error
 	if isWeldrClientInstalled() {
 		err = json.Unmarshal(rawReply, &replyWeldr)
+		if err != nil {
+			replyWeldr = make([]replyWithBody, 1)
+			err = json.Unmarshal(rawReply, &replyWeldr[0])
+		}
 	} else {
-		err = json.Unmarshal(rawReply, &replyWeldr.Body)
+		replyWeldr = make([]replyWithBody, 1)
+		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
-	require.Zerof(t, len(replyWeldr.Body.Errors), "Unexpected errors")
-	require.Equalf(t, 1, len(replyWeldr.Body.IDs), "Unexpected number of UUIDs returned: %d", len(replyWeldr.Body.IDs))
-	require.Truef(t, replyWeldr.Body.IDs[0].Status, "Unexpected status %v", replyWeldr.Body.IDs[0].Status)
+	require.Zerof(t, len(replyWeldr[0].Body.Errors), "Unexpected errors")
+	require.Equalf(t, 1, len(replyWeldr[0].Body.IDs), "Unexpected number of UUIDs returned: %d", len(replyWeldr[0].Body.IDs))
+	require.Truef(t, replyWeldr[0].Body.IDs[0].Status, "Unexpected status %v", replyWeldr[0].Body.IDs[0].Status)
 }
 
 func waitForCompose(t *testing.T, uuid uuid.UUID) string {
@@ -252,21 +271,28 @@ func waitForCompose(t *testing.T, uuid uuid.UUID) string {
 }
 
 func getComposeStatus(t *testing.T, uuid uuid.UUID) string {
+	rawReply := runComposerJSON(t, "compose", "info", uuid.String())
+
 	type reply struct {
 		QueueStatus string `json:"queue_status"`
 	}
-	var replyWeldr struct {
+	type replyWithBody struct {
 		Body reply `json:"body"`
 	}
-	rawReply := runComposerJSON(t, "compose", "info", uuid.String())
+	var replyWeldr []replyWithBody
 	var err error
 	if isWeldrClientInstalled() {
 		err = json.Unmarshal(rawReply, &replyWeldr)
+		if err != nil {
+			replyWeldr = make([]replyWithBody, 1)
+			err = json.Unmarshal(rawReply, &replyWeldr[0])
+		}
 	} else {
-		err = json.Unmarshal(rawReply, &replyWeldr.Body)
+		replyWeldr = make([]replyWithBody, 1)
+		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
-	return replyWeldr.Body.QueueStatus
+	return replyWeldr[0].Body.QueueStatus
 }
 
 func getLogs(t *testing.T, uuid uuid.UUID) string {
@@ -300,39 +326,53 @@ func pushBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	err = tmpfile.Close()
 	require.Nilf(t, err, "Could not close toml file: %v", err)
 
+	rawReply := runComposerJSON(t, "blueprints", "push", tmpfile.Name())
+
 	type reply struct {
 		Status bool `json:"status"`
 	}
-	var replyWeldr struct {
+	type replyWithBody struct {
 		Body reply `json:"body"`
 	}
-	rawReply := runComposerJSON(t, "blueprints", "push", tmpfile.Name())
+	var replyWeldr []replyWithBody
 	if isWeldrClientInstalled() {
 		err = json.Unmarshal(rawReply, &replyWeldr)
+		if err != nil {
+			replyWeldr = make([]replyWithBody, 1)
+			err = json.Unmarshal(rawReply, &replyWeldr[0])
+		}
 	} else {
-		err = json.Unmarshal(rawReply, &replyWeldr.Body)
+		replyWeldr = make([]replyWithBody, 1)
+		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
-	log.Printf("Mesasge: %v", replyWeldr.Body.Status)
-	require.Truef(t, replyWeldr.Body.Status, "Unexpected status %v", replyWeldr.Body.Status)
+	log.Printf("Mesasge: %v", replyWeldr[0].Body.Status)
+	require.Truef(t, replyWeldr[0].Body.Status, "Unexpected status %v", replyWeldr[0].Body.Status)
 }
 
 func deleteBlueprint(t *testing.T, bp *blueprint.Blueprint) {
+	rawReply := runComposerJSON(t, "blueprints", "delete", bp.Name)
+
 	type reply struct {
 		Status bool `json:"status"`
 	}
-	var replyWeldr struct {
+	type replyWithBody struct {
 		Body reply `json:"body"`
 	}
-	rawReply := runComposerJSON(t, "blueprints", "delete", bp.Name)
+	var replyWeldr []replyWithBody
 	var err error
 	if isWeldrClientInstalled() {
 		err = json.Unmarshal(rawReply, &replyWeldr)
+		if err != nil {
+			replyWeldr = make([]replyWithBody, 1)
+			err = json.Unmarshal(rawReply, &replyWeldr[0])
+		}
 	} else {
-		err = json.Unmarshal(rawReply, &replyWeldr.Body)
+		replyWeldr = make([]replyWithBody, 1)
+		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
-	require.Truef(t, replyWeldr.Body.Status, "Unexpected status %v", replyWeldr.Body.Status)
+	require.Truef(t, replyWeldr[0].Body.Status, "Unexpected status %v", replyWeldr[0].Body.Status)
 }
 
 func runComposer(t *testing.T, command ...string) []byte {
