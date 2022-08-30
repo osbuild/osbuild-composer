@@ -12,11 +12,6 @@ source /etc/os-release
 
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-test-${TEST_UUID}"
 

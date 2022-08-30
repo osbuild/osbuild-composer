@@ -7,10 +7,6 @@
 
 set -exuo pipefail
 
-# Colorful timestamped output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
 
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 

@@ -15,16 +15,12 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh jwt
 
 # Source common functions
 source /usr/libexec/tests/osbuild-composer/api/common/common.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 greenprint "Registering clean ups"
 KILL_PIDS=()

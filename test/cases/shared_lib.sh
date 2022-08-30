@@ -33,3 +33,11 @@ function get_build_info() {
     jq -r "${key}" "${fname}"
 }
 
+# Colorful timestamped output.
+function greenprint {
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
+}
+
+function redprint {
+    echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m"
+}

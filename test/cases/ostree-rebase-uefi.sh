@@ -13,11 +13,6 @@ fi
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd

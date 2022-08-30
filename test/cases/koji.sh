@@ -5,11 +5,8 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
 
 if [ "${NIGHTLY:=false}" == "true" ]; then
     greenprint "INFO: Test not supported during nightly CI pipelines. Exiting ..."

@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 function installClient() {
   if ! hash aws; then

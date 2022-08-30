@@ -8,9 +8,7 @@
 
 set -exuo pipefail
 
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 function generate_certificates {
     # Generate CA root key
