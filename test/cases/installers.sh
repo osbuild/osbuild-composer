@@ -200,21 +200,13 @@ build_image() {
     # Start the compose.
     greenprint "🚀 Starting compose"
     sudo composer-cli --json compose start "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
-    if rpm -q --quiet weldr-client; then
-        COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
-    else
-        COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
-    fi
+    COMPOSE_ID=$(get_build_info ".build_id" "${COMPOSE_START}")
 
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
         sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-        if rpm -q --quiet weldr-client; then
-            COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
-        else
-            COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
-        fi
+        COMPOSE_STATUS=$(get_build_info ".queue_status" "${COMPOSE_INFO}")
 
         # Is the compose finished?
         if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then

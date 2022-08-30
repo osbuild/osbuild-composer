@@ -13,15 +13,6 @@ function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
-
 
 # Install openshift client
 greenprint "🔧 Installing oenshift client(oc)"

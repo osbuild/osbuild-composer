@@ -2,21 +2,14 @@
 
 set -euxo pipefail
 
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+
 WORKSPACE=$(mktemp -d)
 function cleanup() {
     echo "== Script execution stopped or finished - Cleaning up =="
     rm -rf "$WORKSPACE"
 }
 trap cleanup EXIT
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Get the compose log.
 get_compose_log () {

@@ -9,6 +9,8 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 # Get OS data.
 source /etc/os-release
 
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
@@ -124,15 +126,6 @@ gen_iso () {
 # Insall necessary packages to run
 # scans and check results
 sudo dnf install -y xmlstarlet openscap-utils scap-security-guide
-
-get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Get the compose log.
 get_compose_log () {

@@ -10,19 +10,11 @@
 set -euo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
 }
 
 # Container image used for cloud provider CLI tools
@@ -109,14 +101,6 @@ get_compose_metadata () {
 
     # Move the JSON file into place.
     sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
-}
-
-is_weldr_client_installed () {
-    if rpm --quiet -q weldr-client; then
-        echo true
-    else
-        echo false
-    fi
 }
 
 # Write an AWS TOML file

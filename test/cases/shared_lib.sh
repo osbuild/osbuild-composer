@@ -7,12 +7,12 @@ function nvrGreaterOrEqual {
     set +e
 
     rpm_version=$(rpm -q --qf "%{version}" "${rpm_name}")
-    rpmdev-vercmp "${rpm_version}" "${min_version}"
+    rpmdev-vercmp "${rpm_version}" "${min_version}" 1>&2
     if [ "$?" != "12" ]; then
         # 0 - rpm_version == min_version
         # 11 - rpm_version > min_version
         # 12 - rpm_version < min_version
-        echo "DEBUG: ${rpm_version} >= ${min_version}"
+        echo "DEBUG: ${rpm_version} >= ${min_version}" 1>&2
         set -e
         return
     fi
@@ -20,3 +20,16 @@ function nvrGreaterOrEqual {
     set -e
     false
 }
+
+function get_build_info() {
+    local key="$1"
+    local fname="$2"
+    if rpm -q --quiet weldr-client; then
+        key=".body${key}"
+        if nvrGreaterOrEqual "weldr-client" "35.6"; then
+            key=".[0]${key}"
+        fi
+    fi
+    jq -r "${key}" "${fname}"
+}
+

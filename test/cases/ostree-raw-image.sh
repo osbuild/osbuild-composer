@@ -4,6 +4,8 @@ set -euo pipefail
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
@@ -11,15 +13,6 @@ ARCH=$(uname -m)
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".[0].body${key}"
-    fi
-    jq -r "${key}" "${fname}"
 }
 
 # Start libvirtd and test it.

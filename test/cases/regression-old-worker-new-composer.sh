@@ -15,6 +15,7 @@ function greenprint {
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Only run this on x86 and rhel8 GA
 if [ "$ARCH" != "x86_64" ] || [ "$ID" != rhel ] || ! sudo subscription-manager status; then
