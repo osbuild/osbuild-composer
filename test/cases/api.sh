@@ -79,14 +79,11 @@ case ${IMAGE_TYPE} in
         exit 1
 esac
 
-# Colorful timestamped output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
 
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Container image used for cloud provider CLI tools
 export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"

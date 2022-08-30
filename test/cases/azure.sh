@@ -17,11 +17,6 @@ BRANCH_NAME="${CI_COMMIT_BRANCH:-local}"
 BUILD_ID="${CI_BUILD_ID:-$(uuidgen)}"
 HYPER_V_GEN="${HYPER_V_GEN:-V1}"
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 

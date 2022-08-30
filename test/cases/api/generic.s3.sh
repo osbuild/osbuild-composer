@@ -2,6 +2,7 @@
 
 source /usr/libexec/tests/osbuild-composer/api/common/common.sh
 source /usr/libexec/tests/osbuild-composer/api/common/s3.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 function checkEnv() {
     printenv AWS_REGION > /dev/null

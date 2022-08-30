@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+
 function createReqFileEdge() {
   cat > "$REQUEST_FILE" << EOF
 {

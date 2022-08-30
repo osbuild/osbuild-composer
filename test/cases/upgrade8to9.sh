@@ -3,13 +3,10 @@ set -uxo pipefail
 
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
 
 # Wait for VM to start
 function wait_for_vm {

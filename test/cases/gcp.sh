@@ -12,10 +12,6 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 set -euo pipefail
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
 
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"

@@ -7,10 +7,6 @@
 
 set -exuo pipefail
 
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
 function generate_certificates {
     # Generate CA root key
     sudo openssl genrsa -out ca.key
