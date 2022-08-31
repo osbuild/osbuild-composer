@@ -154,6 +154,11 @@
     ]
   },
   "fedora-37": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "4bc6e226ea4196b702841add42fe0e0a793c2998"
+      }
+    },
     "repos": [
       {
         "file": "/etc/yum.repos.d/fedora.repo",
