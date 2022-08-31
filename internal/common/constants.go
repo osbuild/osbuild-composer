@@ -2,6 +2,17 @@ package common
 
 import "fmt"
 
+const (
+	KiloByte = 1000                      // kB
+	KibiByte = 1024                      // KiB
+	MegaByte = 1000 * 1000               // MB
+	MebiByte = 1024 * 1024               // MiB
+	GigaByte = 1000 * 1000 * 1000        // GB
+	GibiByte = 1024 * 1024 * 1024        // GiB
+	TeraByte = 1000 * 1000 * 1000 * 1000 // TB
+	TebiByte = 1024 * 1024 * 1024 * 1024 // TiB
+)
+
 // These constants are set during buildtime using additional
 // compiler flags. Not all of them are necessarily defined
 // because RPMs can be build from a tarball and spec file without
