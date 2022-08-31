@@ -24,7 +24,6 @@ import (
 )
 
 const (
-	GigaByte = 1024 * 1024 * 1024
 	// package set names
 
 	// main/common os image package set name
@@ -140,7 +139,7 @@ var (
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.StringToPtr("en_US.UTF-8"),
 		},
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
 		image:               iotRawImage,
@@ -168,7 +167,7 @@ var (
 		},
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
-		defaultSize:         2 * GigaByte,
+		defaultSize:         2 * common.GibiByte,
 		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
@@ -196,7 +195,7 @@ var (
 		},
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
-		defaultSize:         2 * GigaByte,
+		defaultSize:         2 * common.GibiByte,
 		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vpc"},
@@ -223,7 +222,7 @@ var (
 		},
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
-		defaultSize:         2 * GigaByte,
+		defaultSize:         2 * common.GibiByte,
 		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk"},
@@ -249,7 +248,7 @@ var (
 		},
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
-		defaultSize:         2 * GigaByte,
+		defaultSize:         2 * common.GibiByte,
 		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
@@ -272,7 +271,7 @@ var (
 		defaultImageConfig:  defaultEc2ImageConfig,
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
-		defaultSize:         6 * GigaByte,
+		defaultSize:         6 * common.GibiByte,
 		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
@@ -501,10 +500,9 @@ func (t *imageType) OSTreeRef() string {
 }
 
 func (t *imageType) Size(size uint64) uint64 {
-	const MegaByte = 1024 * 1024
 	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
-	if t.name == "vhd" && size%MegaByte != 0 {
-		size = (size/MegaByte + 1) * MegaByte
+	if t.name == "vhd" && size%common.MebiByte != 0 {
+		size = (size/common.MebiByte + 1) * common.MebiByte
 	}
 	if size == 0 {
 		size = t.defaultSize
