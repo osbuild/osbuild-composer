@@ -536,9 +536,9 @@ gcp.sh:
 
 vmware.sh:
   extends: .integration
-  rules: 
+  rules:
     # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER =~ "/^.*(rhel).*$/" && $RUNNER =~ "/^.*(x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
     - !reference [.nightly_rules, rules]
   variables:
     SCRIPT: vmware.sh
