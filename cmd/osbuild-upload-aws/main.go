@@ -34,14 +34,14 @@ func main() {
 
 	a, err := awscloud.New(region, accessKeyID, secretAccessKey, sessionToken)
 	if err != nil {
-		println(err.Error())
-		return
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
 	uploadOutput, err := a.Upload(filename, bucketName, keyName)
 	if err != nil {
-		println(err.Error())
-		return
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
 	fmt.Printf("file uploaded to %s\n", aws.StringValue(&uploadOutput.Location))
@@ -52,8 +52,8 @@ func main() {
 	}
 	ami, err := a.Register(imageName, bucketName, keyName, share, arch)
 	if err != nil {
-		println(err.Error())
-		return
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 
 	fmt.Printf("AMI registered: %s\n", aws.StringValue(ami))
