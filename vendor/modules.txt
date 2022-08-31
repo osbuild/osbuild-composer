@@ -9,7 +9,7 @@ cloud.google.com/go/longrunning/autogen
 # cloud.google.com/go/cloudbuild v1.2.0
 ## explicit
 cloud.google.com/go/cloudbuild/apiv1
-# cloud.google.com/go/compute v1.7.0
+# cloud.google.com/go/compute v1.9.0
 ## explicit
 cloud.google.com/go/compute/apiv1
 cloud.google.com/go/compute/internal
