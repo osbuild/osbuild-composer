@@ -65,14 +65,14 @@ func DataSizeToUint64(size string) (uint64, error) {
 		re       *regexp.Regexp
 		multiple uint64
 	}{
-		{regexp.MustCompile(`^\s*[[:digit:]]+\s*kB$`), 1000},
-		{regexp.MustCompile(`^\s*[[:digit:]]+\s*KiB$`), 1024},
-		{regexp.MustCompile(`^\s*[[:digit:]]+\s*MB$`), 1000 * 1000},
-		{regexp.MustCompile(`^\s*[[:digit:]]+\s*MiB$`), 1024 * 1024},
-		{regexp.MustCompile(`^\s*[[:digit:]]+\s*GB$`), 1000 * 1000 * 1000},
-		{regexp.MustCompile(`^\s*[[:digit:]]+\s*GiB$`), 1024 * 1024 * 1024},
-		{regexp.MustCompile(`^\s*[[:digit:]]+\s*TB$`), 1000 * 1000 * 1000 * 1000},
-		{regexp.MustCompile(`^\s*[[:digit:]]+\s*TiB$`), 1024 * 1024 * 1024 * 1024},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*kB$`), KiloByte},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*KiB$`), KibiByte},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*MB$`), MegaByte},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*MiB$`), MebiByte},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*GB$`), GigaByte},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*GiB$`), GibiByte},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*TB$`), TeraByte},
+		{regexp.MustCompile(`^\s*[[:digit:]]+\s*TiB$`), TebiByte},
 		{regexp.MustCompile(`^\s*[[:digit:]]+$`), 1},
 	}
 
