@@ -5,9 +5,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
 
-// shared constants
-const GigaByte = 1024 * 1024 * 1024
-
 // ////////// Partition table //////////
 
 var defaultBasePartitionTables = distro.BasePartitionTableMap{

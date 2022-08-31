@@ -143,7 +143,7 @@ var qcow2ImgType = imageType{
 		},
 	},
 	bootable:            true,
-	defaultSize:         10 * GigaByte,
+	defaultSize:         10 * common.GibiByte,
 	pipelines:           qcow2Pipelines,
 	buildPipelines:      []string{"build"},
 	payloadPipelines:    []string{"os", "image", "qcow2"},

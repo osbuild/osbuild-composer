@@ -340,10 +340,9 @@ func (t *imageType) OSTreeRef() string {
 }
 
 func (t *imageType) Size(size uint64) uint64 {
-	const MegaByte = 1024 * 1024
 	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
-	if t.name == "vhd" && size%MegaByte != 0 {
-		size = (size/MegaByte + 1) * MegaByte
+	if t.name == "vhd" && size%common.MebiByte != 0 {
+		size = (size/common.MebiByte + 1) * common.MebiByte
 	}
 	if size == 0 {
 		size = t.defaultSize
@@ -709,8 +708,6 @@ func NewCentosHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro
 }
 
 func newDistro(distroName string) distro.Distro {
-	const GigaByte = 1024 * 1024 * 1024
-
 	rd := distroMap[distroName]
 
 	// Architecture definitions
@@ -824,7 +821,7 @@ func newDistro(distroName string) distro.Distro {
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: edgeRawImageBuildPackageSet,
 		},
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
 		bootISO:             false,
@@ -885,7 +882,7 @@ func newDistro(distroName string) distro.Distro {
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices,
 		},
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
 		bootISO:             true,
@@ -924,7 +921,7 @@ func newDistro(distroName string) distro.Distro {
 			},
 		},
 		bootable:            true,
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		pipelines:           qcow2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
@@ -952,7 +949,7 @@ func newDistro(distroName string) distro.Distro {
 		},
 		kernelOptions:       "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:            true,
-		defaultSize:         4 * GigaByte,
+		defaultSize:         4 * common.GibiByte,
 		pipelines:           vhdPipelines(false),
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vpc"},
@@ -1174,7 +1171,7 @@ func newDistro(distroName string) distro.Distro {
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
-		defaultSize:         4 * GigaByte,
+		defaultSize:         4 * common.GibiByte,
 		pipelines:           vmdkPipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk"},
@@ -1195,7 +1192,7 @@ func newDistro(distroName string) distro.Distro {
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
-		defaultSize:         4 * GigaByte,
+		defaultSize:         4 * common.GibiByte,
 		pipelines:           openstackPipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
@@ -1409,7 +1406,7 @@ func newDistro(distroName string) distro.Distro {
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		pipelines:           ec2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
@@ -1431,7 +1428,7 @@ func newDistro(distroName string) distro.Distro {
 		defaultImageConfig:  defaultAMIImageConfig,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		pipelines:           ec2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
@@ -1454,7 +1451,7 @@ func newDistro(distroName string) distro.Distro {
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		pipelines:           rhelEc2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
@@ -1476,7 +1473,7 @@ func newDistro(distroName string) distro.Distro {
 		defaultImageConfig:  defaultEc2ImageConfig,
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		pipelines:           rhelEc2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
@@ -1499,7 +1496,7 @@ func newDistro(distroName string) distro.Distro {
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		pipelines:           rhelEc2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
@@ -1633,7 +1630,7 @@ func newDistro(distroName string) distro.Distro {
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
-		defaultSize:         10 * GigaByte,
+		defaultSize:         10 * common.GibiByte,
 		pipelines:           rhelEc2Pipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
@@ -1786,7 +1783,7 @@ func newDistro(distroName string) distro.Distro {
 		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
 		bootable:            true,
 		bootType:            distro.UEFIBootType,
-		defaultSize:         20 * GigaByte,
+		defaultSize:         20 * common.GibiByte,
 		pipelines:           gcePipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
@@ -1834,7 +1831,7 @@ func newDistro(distroName string) distro.Distro {
 		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
 		bootable:            true,
 		bootType:            distro.UEFIBootType,
-		defaultSize:         20 * GigaByte,
+		defaultSize:         20 * common.GibiByte,
 		pipelines:           gcePipelines,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
