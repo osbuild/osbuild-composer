@@ -70,11 +70,16 @@ else
     echo "Test is not running on neither Fedora, RHEL or CentOS, terminating!"
     exit 1
 fi
+
 sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/$release/hashicorp.repo
 # set $releasever to 8 when running on RHEL-9 because there is no hashicorp repo for it yet
 if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
     # shellcheck disable=SC2016
     sudo sed -i 's/$releasever/8/g' /etc/yum.repos.d/hashicorp.repo
+# set $releasever to 36 when running on Fedora 37 because there is no hashicorp repo for it yet
+elif [[ $ID == fedora ]] && [[ ${VERSION_ID%.*} == 37 ]]; then
+    # shellcheck disable=SC2016
+    sudo sed -i 's/$releasever/36/g' /etc/yum.repos.d/hashicorp.repo
 fi
 sudo dnf install -y terraform
 
