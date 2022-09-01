@@ -946,6 +946,7 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"ima-evm-utils",
 			"audit",
 			"podman",
+			"containernetworking-plugins", // required for cni networks but not a hard dependency of podman >= 4.2.0 (rhbz#2123210)
 			"container-selinux",
 			"skopeo",
 			"criu",
