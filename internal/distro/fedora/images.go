@@ -41,7 +41,9 @@ func osCustomizations(
 	osc.ExtraBaseRepos = osPackageSet.Repositories
 
 	osc.GPGKeyFiles = imageConfig.GPGKeyFiles
-	osc.ExcludeDocs = imageConfig.ExcludeDocs
+	if imageConfig.ExcludeDocs != nil {
+		osc.ExcludeDocs = *imageConfig.ExcludeDocs
+	}
 
 	if !t.bootISO {
 		// don't put users and groups in the payload of an installer
@@ -52,15 +54,17 @@ func osCustomizations(
 
 	osc.EnabledServices = imageConfig.EnabledServices
 	osc.DisabledServices = imageConfig.DisabledServices
-	osc.DefaultTarget = imageConfig.DefaultTarget
+	if imageConfig.DefaultTarget != nil {
+		osc.DefaultTarget = *imageConfig.DefaultTarget
+	}
 
 	osc.Firewall = c.GetFirewall()
 
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		osc.Language = *language
-	} else {
-		osc.Language = imageConfig.Locale
+	} else if imageConfig.Locale != nil {
+		osc.Language = *imageConfig.Locale
 	}
 	if keyboard != nil {
 		osc.Keyboard = keyboard
@@ -77,8 +81,8 @@ func osCustomizations(
 	timezone, ntpServers := c.GetTimezoneSettings()
 	if timezone != nil {
 		osc.Timezone = *timezone
-	} else {
-		osc.Timezone = imageConfig.Timezone
+	} else if imageConfig.Timezone != nil {
+		osc.Timezone = *imageConfig.Timezone
 	}
 
 	if len(ntpServers) > 0 {
@@ -87,7 +91,8 @@ func osCustomizations(
 		osc.NTPServers = imageConfig.TimeSynchronization.Timeservers
 	}
 
-	if !imageConfig.NoSElinux {
+	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
+	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
 		osc.SElinux = "targeted"
 	}
 

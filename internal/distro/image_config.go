@@ -11,23 +11,23 @@ const (
 
 // ImageConfig represents a (default) configuration applied to the image
 type ImageConfig struct {
-	Timezone            string
+	Timezone            *string
 	TimeSynchronization *osbuild.ChronyStageOptions
-	Locale              string
+	Locale              *string
 	Keyboard            *osbuild.KeymapStageOptions
 	EnabledServices     []string
 	DisabledServices    []string
-	DefaultTarget       string
+	DefaultTarget       *string
 	Sysconfig           []*osbuild.SysconfigStageOptions
 
 	// List of files from which to import GPG keys into the RPM database
 	GPGKeyFiles []string
 
 	// Disable SELinux labelling
-	NoSElinux bool
+	NoSElinux *bool
 
 	// Disable documentation
-	ExcludeDocs bool
+	ExcludeDocs *bool
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not

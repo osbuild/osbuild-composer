@@ -103,7 +103,7 @@ var qcow2ImgType = imageType{
 		osPkgsKey:    qcow2CommonPackageSet,
 	},
 	defaultImageConfig: &distro.ImageConfig{
-		DefaultTarget: "multi-user.target",
+		DefaultTarget: common.StringToPtr("multi-user.target"),
 		Sysconfig: []*osbuild.SysconfigStageOptions{
 			{
 				Kernel: &osbuild.SysconfigKernelOptions{

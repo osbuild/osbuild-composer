@@ -47,7 +47,7 @@ func osPipeline(t *imageType,
 	rpmOptions := osbuild.NewRPMStageOptions(repos)
 	rpmOptions.GPGKeysFromTree = imageConfig.GPGKeyFiles
 
-	if imageConfig.ExcludeDocs {
+	if imageConfig.ExcludeDocs != nil && *imageConfig.ExcludeDocs {
 		if rpmOptions.Exclude == nil {
 			rpmOptions.Exclude = &osbuild.Exclude{}
 		}
@@ -60,8 +60,8 @@ func osPipeline(t *imageType,
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
 		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: imageConfig.Locale}))
+	} else if imageConfig.Locale != nil {
+		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *imageConfig.Locale}))
 	}
 	if keyboard != nil {
 		p.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *keyboard}))
@@ -76,8 +76,8 @@ func osPipeline(t *imageType,
 	timezone, ntpServers := c.GetTimezoneSettings()
 	if timezone != nil {
 		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *timezone}))
-	} else {
-		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: imageConfig.Timezone}))
+	} else if imageConfig.Timezone != nil {
+		p.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: *imageConfig.Timezone}))
 	}
 
 	if len(ntpServers) > 0 {
@@ -97,12 +97,16 @@ func osPipeline(t *imageType,
 	}
 
 	if services := c.GetServices(); services != nil || imageConfig.EnabledServices != nil ||
-		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != "" {
+		imageConfig.DisabledServices != nil || imageConfig.DefaultTarget != nil {
+		defaultTarget := ""
+		if imageConfig.DefaultTarget != nil {
+			defaultTarget = *imageConfig.DefaultTarget
+		}
 		p.AddStage(osbuild.NewSystemdStage(systemdStageOptions(
 			imageConfig.EnabledServices,
 			imageConfig.DisabledServices,
 			services,
-			imageConfig.DefaultTarget,
+			defaultTarget,
 		)))
 	}
 
@@ -292,7 +296,8 @@ func osPipeline(t *imageType,
 		p.AddStage(bootloader)
 	}
 
-	if !imageConfig.NoSElinux {
+	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
+	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
 		p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	}
 

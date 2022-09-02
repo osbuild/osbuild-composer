@@ -18,17 +18,17 @@ func TestImageConfigInheritFrom(t *testing.T) {
 		{
 			name: "inheritance with overridden values",
 			distroConfig: &ImageConfig{
-				Timezone: "America/New_York",
+				Timezone: common.StringToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
-				Locale: "en_US.UTF-8",
+				Locale: common.StringToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    "multi-user.target",
+				DefaultTarget:    common.StringToPtr("multi-user.target"),
 				Sysconfig: []*osbuild.SysconfigStageOptions{
 					{
 						Kernel: &osbuild.SysconfigKernelOptions{
@@ -56,7 +56,7 @@ func TestImageConfigInheritFrom(t *testing.T) {
 				},
 			},
 			imageConfig: &ImageConfig{
-				Timezone: "UTC",
+				Timezone: common.StringToPtr("UTC"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{
 						{
@@ -71,7 +71,7 @@ func TestImageConfigInheritFrom(t *testing.T) {
 				},
 			},
 			expectedConfig: &ImageConfig{
-				Timezone: "UTC",
+				Timezone: common.StringToPtr("UTC"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{
 						{
@@ -84,13 +84,13 @@ func TestImageConfigInheritFrom(t *testing.T) {
 					},
 					LeapsecTz: common.StringToPtr(""),
 				},
-				Locale: "en_US.UTF-8",
+				Locale: common.StringToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    "multi-user.target",
+				DefaultTarget:    common.StringToPtr("multi-user.target"),
 				Sysconfig: []*osbuild.SysconfigStageOptions{
 					{
 						Kernel: &osbuild.SysconfigKernelOptions{
@@ -121,91 +121,91 @@ func TestImageConfigInheritFrom(t *testing.T) {
 		{
 			name: "empty image type configuration",
 			distroConfig: &ImageConfig{
-				Timezone: "America/New_York",
+				Timezone: common.StringToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
-				Locale: "en_US.UTF-8",
+				Locale: common.StringToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    "multi-user.target",
+				DefaultTarget:    common.StringToPtr("multi-user.target"),
 			},
 			imageConfig: &ImageConfig{},
 			expectedConfig: &ImageConfig{
-				Timezone: "America/New_York",
+				Timezone: common.StringToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
-				Locale: "en_US.UTF-8",
+				Locale: common.StringToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    "multi-user.target",
+				DefaultTarget:    common.StringToPtr("multi-user.target"),
 			},
 		},
 		{
 			name:         "empty distro configuration",
 			distroConfig: &ImageConfig{},
 			imageConfig: &ImageConfig{
-				Timezone: "America/New_York",
+				Timezone: common.StringToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
-				Locale: "en_US.UTF-8",
+				Locale: common.StringToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    "multi-user.target",
+				DefaultTarget:    common.StringToPtr("multi-user.target"),
 			},
 			expectedConfig: &ImageConfig{
-				Timezone: "America/New_York",
+				Timezone: common.StringToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
-				Locale: "en_US.UTF-8",
+				Locale: common.StringToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    "multi-user.target",
+				DefaultTarget:    common.StringToPtr("multi-user.target"),
 			},
 		},
 		{
 			name:         "empty distro configuration",
 			distroConfig: nil,
 			imageConfig: &ImageConfig{
-				Timezone: "America/New_York",
+				Timezone: common.StringToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
-				Locale: "en_US.UTF-8",
+				Locale: common.StringToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    "multi-user.target",
+				DefaultTarget:    common.StringToPtr("multi-user.target"),
 			},
 			expectedConfig: &ImageConfig{
-				Timezone: "America/New_York",
+				Timezone: common.StringToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Timeservers: []string{"127.0.0.1"},
 				},
-				Locale: "en_US.UTF-8",
+				Locale: common.StringToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    "multi-user.target",
+				DefaultTarget:    common.StringToPtr("multi-user.target"),
 			},
 		},
 	}
