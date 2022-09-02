@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -31,8 +32,8 @@ const (
 
 // RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
-	Timezone: "America/New_York",
-	Locale:   "en_US.UTF-8",
+	Timezone: common.StringToPtr("America/New_York"),
+	Locale:   common.StringToPtr("en_US.UTF-8"),
 	GPGKeyFiles: []string{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
 	},

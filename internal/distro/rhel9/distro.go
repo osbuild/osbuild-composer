@@ -78,8 +78,8 @@ type distribution struct {
 
 // RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
-	Timezone: "America/New_York",
-	Locale:   "C.UTF-8",
+	Timezone: common.StringToPtr("America/New_York"),
+	Locale:   common.StringToPtr("C.UTF-8"),
 	Sysconfig: []*osbuild.SysconfigStageOptions{
 		{
 			Kernel: &osbuild.SysconfigKernelOptions{
@@ -745,7 +745,7 @@ func newDistro(distroName string) distro.Distro {
 			buildPkgsKey: edgeRawImageBuildPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: "en_US.UTF-8",
+			Locale: common.StringToPtr("en_US.UTF-8"),
 		},
 		defaultSize:         10 * GigaByte,
 		rpmOstree:           true,
@@ -779,7 +779,7 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale:          "en_US.UTF-8",
+			Locale:          common.StringToPtr("en_US.UTF-8"),
 			EnabledServices: edgeServices,
 		},
 		rpmOstree:        true,
@@ -833,7 +833,7 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			DefaultTarget: "multi-user.target",
+			DefaultTarget: common.StringToPtr("multi-user.target"),
 			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
 				distro.RHSMConfigNoSubscription: {
 					DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
@@ -868,12 +868,12 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: "en_US.UTF-8",
+			Locale: common.StringToPtr("en_US.UTF-8"),
 			EnabledServices: []string{
 				"sshd",
 				"waagent",
 			},
-			DefaultTarget: "multi-user.target",
+			DefaultTarget: common.StringToPtr("multi-user.target"),
 		},
 		kernelOptions:       "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
 		bootable:            true,
@@ -894,8 +894,8 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey:    azureRhuiCommonPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Timezone: "Etc/UTC",
-			Locale:   "en_US.UTF-8",
+			Timezone: common.StringToPtr("Etc/UTC"),
+			Locale:   common.StringToPtr("en_US.UTF-8"),
 			GPGKeyFiles: []string{
 				"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
 				"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
@@ -1058,7 +1058,7 @@ func newDistro(distroName string) distro.Distro {
 					},
 				},
 			},
-			DefaultTarget: "multi-user.target",
+			DefaultTarget: common.StringToPtr("multi-user.target"),
 		},
 		kernelOptions:       "ro console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300",
 		bootable:            true,
@@ -1082,7 +1082,7 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: "en_US.UTF-8",
+			Locale: common.StringToPtr("en_US.UTF-8"),
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
@@ -1106,7 +1106,7 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: "en_US.UTF-8",
+			Locale: common.StringToPtr("en_US.UTF-8"),
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
@@ -1120,8 +1120,8 @@ func newDistro(distroName string) distro.Distro {
 
 	// default EC2 images config (common for all architectures)
 	defaultEc2ImageConfig := &distro.ImageConfig{
-		Locale:   "en_US.UTF-8",
-		Timezone: "UTC",
+		Locale:   common.StringToPtr("en_US.UTF-8"),
+		Timezone: common.StringToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Servers: []osbuild.ChronyConfigServer{
 				{
@@ -1153,7 +1153,7 @@ func newDistro(distroName string) distro.Distro {
 			"reboot.target",
 			"tuned",
 		},
-		DefaultTarget: "multi-user.target",
+		DefaultTarget: common.StringToPtr("multi-user.target"),
 		Sysconfig: []*osbuild.SysconfigStageOptions{
 			{
 				Kernel: &osbuild.SysconfigKernelOptions{
@@ -1559,7 +1559,7 @@ func newDistro(distroName string) distro.Distro {
 	}
 
 	defaultGceImageConfig := &distro.ImageConfig{
-		Timezone: "UTC",
+		Timezone: common.StringToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Timeservers: []string{"metadata.google.internal"},
 		},
@@ -1575,8 +1575,8 @@ func newDistro(distroName string) distro.Distro {
 			"sshd-keygen@",
 			"reboot.target",
 		},
-		DefaultTarget: "multi-user.target",
-		Locale:        "en_US.UTF-8",
+		DefaultTarget: common.StringToPtr("multi-user.target"),
+		Locale:        common.StringToPtr("en_US.UTF-8"),
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
 		},

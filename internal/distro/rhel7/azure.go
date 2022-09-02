@@ -221,8 +221,8 @@ var azureRhuiImgType = imageType{
 		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 	},
 	defaultImageConfig: &distro.ImageConfig{
-		Timezone: "Etc/UTC",
-		Locale:   "en_US.UTF-8",
+		Timezone: common.StringToPtr("Etc/UTC"),
+		Locale:   common.StringToPtr("en_US.UTF-8"),
 		GPGKeyFiles: []string{
 			"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
 			"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
@@ -402,7 +402,7 @@ var azureRhuiImgType = imageType{
 				},
 			},
 		},
-		DefaultTarget: "multi-user.target",
+		DefaultTarget: common.StringToPtr("multi-user.target"),
 	},
 	kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y",
 	bootable:            true,
