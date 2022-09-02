@@ -19,6 +19,7 @@
       "filename": "disk.vhd.xz",
       "blueprint": {}
     },
+    "overrides": {},
     "supported_arches": [
       "x86_64"
     ]
