@@ -1,6 +1,11 @@
 package distro
 
-import "github.com/osbuild/osbuild-composer/internal/osbuild"
+import (
+	"fmt"
+	"reflect"
+
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
+)
 
 type RHSMSubscriptionStatus string
 
@@ -62,98 +67,21 @@ type ImageConfig struct {
 func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 	finalConfig := ImageConfig(*c)
 	if parentConfig != nil {
-		if finalConfig.Timezone == "" {
-			finalConfig.Timezone = parentConfig.Timezone
-		}
-		if finalConfig.TimeSynchronization == nil {
-			finalConfig.TimeSynchronization = parentConfig.TimeSynchronization
-		}
-		if finalConfig.Locale == "" {
-			finalConfig.Locale = parentConfig.Locale
-		}
-		if finalConfig.Keyboard == nil {
-			finalConfig.Keyboard = parentConfig.Keyboard
-		}
-		if finalConfig.EnabledServices == nil {
-			finalConfig.EnabledServices = parentConfig.EnabledServices
-		}
-		if finalConfig.DisabledServices == nil {
-			finalConfig.DisabledServices = parentConfig.DisabledServices
-		}
-		if finalConfig.DefaultTarget == "" {
-			finalConfig.DefaultTarget = parentConfig.DefaultTarget
-		}
-		if finalConfig.Sysconfig == nil {
-			finalConfig.Sysconfig = parentConfig.Sysconfig
-		}
-		if finalConfig.GPGKeyFiles == nil {
-			finalConfig.GPGKeyFiles = parentConfig.GPGKeyFiles
-		}
-		if finalConfig.RHSMConfig == nil {
-			finalConfig.RHSMConfig = parentConfig.RHSMConfig
-		}
-		if finalConfig.SystemdLogind == nil {
-			finalConfig.SystemdLogind = parentConfig.SystemdLogind
-		}
-		if finalConfig.CloudInit == nil {
-			finalConfig.CloudInit = parentConfig.CloudInit
-		}
-		if finalConfig.Modprobe == nil {
-			finalConfig.Modprobe = parentConfig.Modprobe
-		}
-		if finalConfig.DracutConf == nil {
-			finalConfig.DracutConf = parentConfig.DracutConf
-		}
-		if finalConfig.SystemdUnit == nil {
-			finalConfig.SystemdUnit = parentConfig.SystemdUnit
-		}
-		if finalConfig.Authselect == nil {
-			finalConfig.Authselect = parentConfig.Authselect
-		}
-		if finalConfig.SELinuxConfig == nil {
-			finalConfig.SELinuxConfig = parentConfig.SELinuxConfig
-		}
-		if finalConfig.Tuned == nil {
-			finalConfig.Tuned = parentConfig.Tuned
-		}
-		if finalConfig.Tmpfilesd == nil {
-			finalConfig.Tmpfilesd = parentConfig.Tmpfilesd
-		}
-		if finalConfig.PamLimitsConf == nil {
-			finalConfig.PamLimitsConf = parentConfig.PamLimitsConf
-		}
-		if finalConfig.Sysctld == nil {
-			finalConfig.Sysctld = parentConfig.Sysctld
-		}
-		if finalConfig.DNFConfig == nil {
-			finalConfig.DNFConfig = parentConfig.DNFConfig
-		}
-		if finalConfig.SshdConfig == nil {
-			finalConfig.SshdConfig = parentConfig.SshdConfig
-		}
-		if finalConfig.Authconfig == nil {
-			finalConfig.Authconfig = parentConfig.Authconfig
-		}
-		if finalConfig.PwQuality == nil {
-			finalConfig.PwQuality = parentConfig.PwQuality
-		}
-		if finalConfig.DNFAutomaticConfig == nil {
-			finalConfig.DNFAutomaticConfig = parentConfig.DNFAutomaticConfig
-		}
-		if finalConfig.YumConfig == nil {
-			finalConfig.YumConfig = parentConfig.YumConfig
-		}
-		if finalConfig.YUMRepos == nil {
-			finalConfig.YUMRepos = parentConfig.YUMRepos
-		}
-		if finalConfig.Firewall == nil {
-			finalConfig.Firewall = parentConfig.Firewall
-		}
-		if finalConfig.UdevRules == nil {
-			finalConfig.UdevRules = parentConfig.UdevRules
-		}
-		if finalConfig.GCPGuestAgentConfig == nil {
-			finalConfig.GCPGuestAgentConfig = parentConfig.GCPGuestAgentConfig
+		// iterate over all struct fields and copy unset values from the parent
+		for i := 0; i < reflect.TypeOf(*c).NumField(); i++ {
+			fieldName := reflect.TypeOf(*c).Field(i).Name
+			field := reflect.ValueOf(&finalConfig).Elem().FieldByName(fieldName)
+
+			// Only container types or pointer are supported.
+			// The reason is that with basic types, we can't distinguish between unset value and zero value.
+			if kind := field.Kind(); kind != reflect.Ptr && kind != reflect.Slice && kind != reflect.Map {
+				panic(fmt.Sprintf("unsupported field type: %s (only container types or pointer are supported)",
+					field.Kind()))
+			}
+
+			if field.IsNil() {
+				field.Set(reflect.ValueOf(parentConfig).Elem().FieldByName(fieldName))
+			}
 		}
 	}
 	return &finalConfig
