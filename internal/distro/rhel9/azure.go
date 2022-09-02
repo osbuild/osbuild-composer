@@ -14,56 +14,9 @@ import (
 
 // PACKAGE SETS
 
-func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
+// Common Azure image package set
+func azureCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
-		Include: []string{
-			// Defaults
-			"langpacks-en",
-			// From the lorax kickstart
-			"chrony",
-			"firewalld",
-			"WALinuxAgent",
-			"python3",
-			"net-tools",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"gdisk",
-
-			// removed from defaults but required to boot in azure
-			"dhcp-client",
-		},
-		Exclude: []string{
-			"rng-tools",
-		},
-	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
-
-	if t.arch.Name() == distro.X86_64ArchName {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				// packages below used to come from @core group and were not excluded
-				// they may not be needed at all, but kept them here to not need
-				// to exclude them instead in all other images
-				"iwl100-firmware",
-				"iwl105-firmware",
-				"iwl135-firmware",
-				"iwl1000-firmware",
-				"iwl2000-firmware",
-				"iwl2030-firmware",
-				"iwl3160-firmware",
-				"iwl5000-firmware",
-				"iwl5150-firmware",
-				"iwl6000g2a-firmware",
-				"iwl6050-firmware",
-				"iwl7260-firmware",
-			},
-		})
-	}
-
-	return ps
-}
-
-func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
 		Include: []string{
 			"@Server",
 			"bzip2",
@@ -75,7 +28,6 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"grub2-efi-x64",
 			"grub2-pc",
 			"hyperv-daemons",
-			"insights-client",
 			"kernel-core",
 			"kernel-modules",
 			"kernel",
@@ -85,8 +37,6 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"NetworkManager-cloud-setup",
 			"nvme-cli",
 			"patch",
-			"rhc",
-			"rhui-azure-rhel9",
 			"rng-tools",
 			"selinux-policy-targeted",
 			"shim-x64",
@@ -142,7 +92,31 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"rhnsd",
 			"usb_modeswitch",
 		},
-	}.Append(bootPackageSet(t))
+	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+
+	if t.arch.distro.isRHEL() {
+		ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"rhc",
+			},
+		})
+	}
+
+	return ps
+}
+
+// Azure BYOS image package set
+func azurePackageSet(t *imageType) rpmmd.PackageSet {
+	return azureCommonPackageSet(t)
+}
+
+// Azure RHUI image package set
+func azureRhuiPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"rhui-azure-rhel9",
+		},
+	}.Append(azureCommonPackageSet(t))
 }
 
 // PARTITION TABLES
@@ -302,26 +276,161 @@ func vhdPipelines(compress bool) pipelinesFunc {
 
 // IMAGE DEFINITIONS
 
-var vhdImgType = imageType{
+var defaultAzureKernelOptions = "ro console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
+
+var defaultAzureImageConfig = &distro.ImageConfig{
+	Timezone: common.StringToPtr("Etc/UTC"),
+	Locale:   common.StringToPtr("en_US.UTF-8"),
+	Keyboard: &osbuild.KeymapStageOptions{
+		Keymap: "us",
+		X11Keymap: &osbuild.X11KeymapOptions{
+			Layouts: []string{"us"},
+		},
+	},
+	Sysconfig: []*osbuild.SysconfigStageOptions{
+		{
+			Kernel: &osbuild.SysconfigKernelOptions{
+				UpdateDefault: true,
+				DefaultKernel: "kernel-core",
+			},
+			Network: &osbuild.SysconfigNetworkOptions{
+				Networking: true,
+				NoZeroConf: true,
+			},
+		},
+	},
+	EnabledServices: []string{
+		"firewalld",
+		"nm-cloud-setup.service",
+		"nm-cloud-setup.timer",
+		"sshd",
+		"waagent",
+	},
+	SshdConfig: &osbuild.SshdConfigStageOptions{
+		Config: osbuild.SshdConfigConfig{
+			ClientAliveInterval: common.IntToPtr(180),
+		},
+	},
+	Modprobe: []*osbuild.ModprobeStageOptions{
+		{
+			Filename: "blacklist-amdgpu.conf",
+			Commands: osbuild.ModprobeConfigCmdList{
+				osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
+			},
+		},
+		{
+			Filename: "blacklist-floppy.conf",
+			Commands: osbuild.ModprobeConfigCmdList{
+				osbuild.NewModprobeConfigCmdBlacklist("floppy"),
+			},
+		},
+		{
+			Filename: "blacklist-nouveau.conf",
+			Commands: osbuild.ModprobeConfigCmdList{
+				osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
+				osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
+			},
+		},
+	},
+	CloudInit: []*osbuild.CloudInitStageOptions{
+		{
+			Filename: "10-azure-kvp.cfg",
+			Config: osbuild.CloudInitConfigFile{
+				Reporting: &osbuild.CloudInitConfigReporting{
+					Logging: &osbuild.CloudInitConfigReportingHandlers{
+						Type: "log",
+					},
+					Telemetry: &osbuild.CloudInitConfigReportingHandlers{
+						Type: "hyperv",
+					},
+				},
+			},
+		},
+		{
+			Filename: "91-azure_datasource.cfg",
+			Config: osbuild.CloudInitConfigFile{
+				Datasource: &osbuild.CloudInitConfigDatasource{
+					Azure: &osbuild.CloudInitConfigDatasourceAzure{
+						ApplyNetworkConfig: false,
+					},
+				},
+				DatasourceList: []string{
+					"Azure",
+				},
+			},
+		},
+	},
+	PwQuality: &osbuild.PwqualityConfStageOptions{
+		Config: osbuild.PwqualityConfConfig{
+			Minlen:   common.IntToPtr(6),
+			Minclass: common.IntToPtr(3),
+			Dcredit:  common.IntToPtr(0),
+			Ucredit:  common.IntToPtr(0),
+			Lcredit:  common.IntToPtr(0),
+			Ocredit:  common.IntToPtr(0),
+		},
+	},
+	WAAgentConfig: &osbuild.WAAgentConfStageOptions{
+		Config: osbuild.WAAgentConfig{
+			RDFormat:     common.BoolToPtr(false),
+			RDEnableSwap: common.BoolToPtr(false),
+		},
+	},
+	Grub2Config: &osbuild.GRUB2Config{
+		TerminalInput:  []string{"serial", "console"},
+		TerminalOutput: []string{"serial", "console"},
+		Serial:         "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
+		Timeout:        10,
+	},
+	UdevRules: &osbuild.UdevRulesStageOptions{
+		Filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
+		Rules: osbuild.UdevRules{
+			osbuild.UdevRuleComment{
+				Comment: []string{
+					"Accelerated Networking on Azure exposes a new SRIOV interface to the VM.",
+					"This interface is transparently bonded to the synthetic interface,",
+					"so NetworkManager should just ignore any SRIOV interfaces.",
+				},
+			},
+			osbuild.NewUdevRule(
+				[]osbuild.UdevKV{
+					{K: "SUBSYSTEM", O: "==", V: "net"},
+					{K: "DRIVERS", O: "==", V: "hv_pci"},
+					{K: "ACTION", O: "==", V: "add"},
+					{K: "ENV", A: "NM_UNMANAGED", O: "=", V: "1"},
+				},
+			),
+		},
+	},
+	SystemdUnit: []*osbuild.SystemdUnitStageOptions{
+		{
+			Unit:   "nm-cloud-setup.service",
+			Dropin: "10-rh-enable-for-azure.conf",
+			Config: osbuild.SystemdServiceUnitDropin{
+				Service: &osbuild.SystemdUnitServiceSection{
+					Environment: "NM_CLOUD_SETUP_AZURE=yes",
+				},
+			},
+		},
+	},
+	DefaultTarget: common.StringToPtr("multi-user.target"),
+}
+
+// Azure non-RHEL image type
+var azureImgType = imageType{
 	name:     "vhd",
 	filename: "disk.vhd",
 	mimeType: "application/x-vhd",
 	packageSets: map[string]packageSetFunc{
-		buildPkgsKey: distroBuildPackageSet,
-		osPkgsKey:    vhdCommonPackageSet,
+		// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
+		buildPkgsKey: ec2BuildPackageSet,
+		osPkgsKey:    azurePackageSet,
 	},
 	packageSetChains: map[string][]string{
 		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 	},
-	defaultImageConfig: &distro.ImageConfig{
-		Locale: common.StringToPtr("en_US.UTF-8"),
-		EnabledServices: []string{
-			"sshd",
-			"waagent",
-		},
-		DefaultTarget: common.StringToPtr("multi-user.target"),
-	},
-	kernelOptions:       "ro biosdevname=0 rootdelay=300 console=ttyS0 earlyprintk=ttyS0 net.ifnames=0",
+	defaultImageConfig:  defaultAzureImageConfig,
+	kernelOptions:       defaultAzureKernelOptions,
 	bootable:            true,
 	defaultSize:         4 * common.GibiByte,
 	pipelines:           vhdPipelines(false),
@@ -331,182 +440,108 @@ var vhdImgType = imageType{
 	basePartitionTables: defaultBasePartitionTables,
 }
 
+// Diff of the default Image Config compare to the `defaultAzureImageConfig`
+var defaultAzureByosImageConfig = &distro.ImageConfig{
+	GPGKeyFiles: []string{
+		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+	},
+	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+		distro.RHSMConfigNoSubscription: {
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.BoolToPtr(true),
+				},
+				// Don't disable RHSM redhat.repo management on the GCE
+				// image, which is BYOS and does not use RHUI for content.
+				// Otherwise subscribing the system manually after booting
+				// it would result in empty redhat.repo. Without RHUI, such
+				// system would have no way to get Red Hat content, but
+				// enable the repo management manually, which would be very
+				// confusing.
+			},
+		},
+		distro.RHSMConfigWithSubscription: {
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.BoolToPtr(true),
+				},
+				// do not disable the redhat.repo management if the user
+				// explicitly request the system to be subscribed
+			},
+		},
+	},
+}
+
+// Azure BYOS image type
+var azureByosImgType = imageType{
+	name:     "vhd",
+	filename: "disk.vhd",
+	mimeType: "application/x-vhd",
+	packageSets: map[string]packageSetFunc{
+		// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
+		buildPkgsKey: ec2BuildPackageSet,
+		osPkgsKey:    azurePackageSet,
+	},
+	packageSetChains: map[string][]string{
+		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+	},
+	defaultImageConfig:  defaultAzureByosImageConfig.InheritFrom(defaultAzureImageConfig),
+	kernelOptions:       defaultAzureKernelOptions,
+	bootable:            true,
+	defaultSize:         4 * common.GibiByte,
+	pipelines:           vhdPipelines(false),
+	buildPipelines:      []string{"build"},
+	payloadPipelines:    []string{"os", "image", "vpc"},
+	exports:             []string{"vpc"},
+	basePartitionTables: defaultBasePartitionTables,
+}
+
+// Diff of the default Image Config compare to the `defaultAzureImageConfig`
+var defaultAzureRhuiImageConfig = &distro.ImageConfig{
+	GPGKeyFiles: []string{
+		"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
+		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+	},
+	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+		distro.RHSMConfigNoSubscription: {
+			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+					Enabled: false,
+				},
+			},
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.BoolToPtr(true),
+				},
+				Rhsm: &osbuild.SubManConfigRHSMSection{
+					ManageRepos: common.BoolToPtr(false),
+				},
+			},
+		},
+		distro.RHSMConfigWithSubscription: {
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.BoolToPtr(true),
+				},
+				// do not disable the redhat.repo management if the user
+				// explicitly request the system to be subscribed
+			},
+		},
+	},
+}
+
+// Azure RHUI image type
 var azureRhuiImgType = imageType{
 	name:     "azure-rhui",
 	filename: "disk.vhd.xz",
 	mimeType: "application/xz",
 	packageSets: map[string]packageSetFunc{
+		// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
 		buildPkgsKey: ec2BuildPackageSet,
-		osPkgsKey:    azureRhuiCommonPackageSet,
+		osPkgsKey:    azureRhuiPackageSet,
 	},
-	defaultImageConfig: &distro.ImageConfig{
-		Timezone: common.StringToPtr("Etc/UTC"),
-		Locale:   common.StringToPtr("en_US.UTF-8"),
-		GPGKeyFiles: []string{
-			"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
-			"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
-		},
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-			X11Keymap: &osbuild.X11KeymapOptions{
-				Layouts: []string{"us"},
-			},
-		},
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					UpdateDefault: true,
-					DefaultKernel: "kernel-core",
-				},
-				Network: &osbuild.SysconfigNetworkOptions{
-					Networking: true,
-					NoZeroConf: true,
-				},
-			},
-		},
-		EnabledServices: []string{
-			"firewalld",
-			"nm-cloud-setup.service",
-			"nm-cloud-setup.timer",
-			"sshd",
-			"waagent",
-		},
-		SshdConfig: &osbuild.SshdConfigStageOptions{
-			Config: osbuild.SshdConfigConfig{
-				ClientAliveInterval: common.IntToPtr(180),
-			},
-		},
-		Modprobe: []*osbuild.ModprobeStageOptions{
-			{
-				Filename: "blacklist-amdgpu.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
-				},
-			},
-			{
-				Filename: "blacklist-floppy.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("floppy"),
-				},
-			},
-			{
-				Filename: "blacklist-nouveau.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
-					osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
-				},
-			},
-		},
-		CloudInit: []*osbuild.CloudInitStageOptions{
-			{
-				Filename: "10-azure-kvp.cfg",
-				Config: osbuild.CloudInitConfigFile{
-					Reporting: &osbuild.CloudInitConfigReporting{
-						Logging: &osbuild.CloudInitConfigReportingHandlers{
-							Type: "log",
-						},
-						Telemetry: &osbuild.CloudInitConfigReportingHandlers{
-							Type: "hyperv",
-						},
-					},
-				},
-			},
-			{
-				Filename: "91-azure_datasource.cfg",
-				Config: osbuild.CloudInitConfigFile{
-					Datasource: &osbuild.CloudInitConfigDatasource{
-						Azure: &osbuild.CloudInitConfigDatasourceAzure{
-							ApplyNetworkConfig: false,
-						},
-					},
-					DatasourceList: []string{
-						"Azure",
-					},
-				},
-			},
-		},
-		PwQuality: &osbuild.PwqualityConfStageOptions{
-			Config: osbuild.PwqualityConfConfig{
-				Minlen:   common.IntToPtr(6),
-				Minclass: common.IntToPtr(3),
-				Dcredit:  common.IntToPtr(0),
-				Ucredit:  common.IntToPtr(0),
-				Lcredit:  common.IntToPtr(0),
-				Ocredit:  common.IntToPtr(0),
-			},
-		},
-		WAAgentConfig: &osbuild.WAAgentConfStageOptions{
-			Config: osbuild.WAAgentConfig{
-				RDFormat:     common.BoolToPtr(false),
-				RDEnableSwap: common.BoolToPtr(false),
-			},
-		},
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-					SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-						Enabled: false,
-					},
-				},
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.BoolToPtr(false),
-					},
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
-		Grub2Config: &osbuild.GRUB2Config{
-			TerminalInput:  []string{"serial", "console"},
-			TerminalOutput: []string{"serial", "console"},
-			Serial:         "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
-			Timeout:        10,
-		},
-		UdevRules: &osbuild.UdevRulesStageOptions{
-			Filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
-			Rules: osbuild.UdevRules{
-				osbuild.UdevRuleComment{
-					Comment: []string{
-						"Accelerated Networking on Azure exposes a new SRIOV interface to the VM.",
-						"This interface is transparently bonded to the synthetic interface,",
-						"so NetworkManager should just ignore any SRIOV interfaces.",
-					},
-				},
-				osbuild.NewUdevRule(
-					[]osbuild.UdevKV{
-						{K: "SUBSYSTEM", O: "==", V: "net"},
-						{K: "DRIVERS", O: "==", V: "hv_pci"},
-						{K: "ACTION", O: "==", V: "add"},
-						{K: "ENV", A: "NM_UNMANAGED", O: "=", V: "1"},
-					},
-				),
-			},
-		},
-		SystemdUnit: []*osbuild.SystemdUnitStageOptions{
-			{
-				Unit:   "nm-cloud-setup.service",
-				Dropin: "10-rh-enable-for-azure.conf",
-				Config: osbuild.SystemdServiceUnitDropin{
-					Service: &osbuild.SystemdUnitServiceSection{
-						Environment: "NM_CLOUD_SETUP_AZURE=yes",
-					},
-				},
-			},
-		},
-		DefaultTarget: common.StringToPtr("multi-user.target"),
-	},
-	kernelOptions:       "ro console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300",
+	defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(defaultAzureImageConfig),
+	kernelOptions:       defaultAzureKernelOptions,
 	bootable:            true,
 	defaultSize:         68719476736,
 	pipelines:           vhdPipelines(true),

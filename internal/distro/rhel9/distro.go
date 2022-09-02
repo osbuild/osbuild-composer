@@ -1575,7 +1575,7 @@ func newDistro(distroName string) distro.Distro {
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
-	x86_64.addImageTypes(qcow2ImgType, vhdImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType)
+	x86_64.addImageTypes(qcow2ImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType)
 	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
 	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
 	s390x.addImageTypes(qcow2ImgType, tarImgType)
@@ -1583,6 +1583,7 @@ func newDistro(distroName string) distro.Distro {
 	if rd.isRHEL() {
 		// add azure to RHEL distro only
 		x86_64.addImageTypes(azureRhuiImgType)
+		x86_64.addImageTypes(azureByosImgType)
 
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
@@ -1590,6 +1591,8 @@ func newDistro(distroName string) distro.Distro {
 
 		// add GCE RHUI image to RHEL only
 		x86_64.addImageTypes(gceRhuiImgType)
+	} else {
+		x86_64.addImageTypes(azureImgType)
 	}
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
