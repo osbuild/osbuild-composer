@@ -1666,7 +1666,6 @@ func newDistro(distroName string) distro.Distro {
 		openstackImgType,
 		qcow2ImgType,
 		tarImgType,
-		vhdImgType,
 		vmdkImgType,
 	)
 
@@ -1701,6 +1700,7 @@ func newDistro(distroName string) distro.Distro {
 
 		// add azure to RHEL distro only
 		x86_64.addImageTypes(azureRhuiImgType)
+		x86_64.addImageTypes(azureByosImgType)
 
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64)
@@ -1719,7 +1719,7 @@ func newDistro(distroName string) distro.Distro {
 		// add s390x to RHEL distro only
 		rd.addArches(s390x)
 	} else {
-		x86_64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
+		x86_64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType, azureImgType)
 		aarch64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
 	}
 	rd.addArches(x86_64, aarch64, ppc64le)
