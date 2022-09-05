@@ -3,6 +3,7 @@ package osbuild
 import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
+	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
 type UsersStageOptions struct {
@@ -68,4 +69,44 @@ func NewUsersStageOptions(userCustomizations []blueprint.UserCustomization, omit
 	}
 
 	return &UsersStageOptions{Users: users}, nil
+}
+
+func GenUsersStage(users []users.User, omitKey bool) (*Stage, error) {
+	options := &UsersStageOptions{
+		Users: make(map[string]UsersStageOptionsUser, len(users)),
+	}
+
+	for _, user := range users {
+		// Don't hash empty passwords, set to nil to lock account
+		if user.Password != nil && len(*user.Password) == 0 {
+			user.Password = nil
+		}
+
+		// Hash non-empty un-hashed passwords
+		if user.Password != nil && !crypt.PasswordIsCrypted(*user.Password) {
+			cryptedPassword, err := crypt.CryptSHA512(*user.Password)
+			if err != nil {
+				return nil, err
+			}
+
+			user.Password = &cryptedPassword
+		}
+
+		userOptions := UsersStageOptionsUser{
+			UID:         user.UID,
+			GID:         user.GID,
+			Groups:      user.Groups,
+			Description: user.Description,
+			Home:        user.Home,
+			Shell:       user.Shell,
+			Password:    user.Password,
+			Key:         nil,
+		}
+		if !omitKey {
+			userOptions.Key = user.Key
+		}
+		options.Users[user.Name] = userOptions
+	}
+
+	return NewUsersStage(options), nil
 }
