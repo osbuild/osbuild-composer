@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
+	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
 // OSTreeDeployment represents the filesystem tree of a target image based
@@ -29,6 +30,9 @@ type OSTreeDeployment struct {
 	KernelOptionsAppend []string
 	Keyboard            string
 	Locale              string
+
+	Users  []users.User
+	Groups []users.Group
 
 	platform platform.Platform
 
@@ -157,16 +161,39 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	fstabStage.MountOSTree(p.osName, p.osTreeRef, 0)
 	pipeline.AddStage(fstabStage)
 
-	userOptions := &osbuild.UsersStageOptions{
-		Users: map[string]osbuild.UsersStageOptionsUser{
-			"root": {
-				Password: common.StringToPtr("!locked"), // this is treated as crypted and locks/disables the password
-			},
-		},
+	if len(p.Users) > 0 {
+		usersStage, err := osbuild.GenUsersStage(p.Users, false)
+		if err != nil {
+			panic("password encryption failed")
+		}
+		pipeline.AddStage(usersStage)
 	}
-	userStage := osbuild.NewUsersStage(userOptions)
-	userStage.MountOSTree(p.osName, p.osTreeRef, 0)
-	pipeline.AddStage(userStage)
+
+	if len(p.Groups) > 0 {
+		pipeline.AddStage(osbuild.GenGroupsStage(p.Groups))
+	}
+
+	// if no root password is set, lock the root account
+	hasRoot := false
+	for _, user := range p.Users {
+		if user.Name == "root" {
+			hasRoot = true
+			break
+		}
+	}
+
+	if !hasRoot {
+		userOptions := &osbuild.UsersStageOptions{
+			Users: map[string]osbuild.UsersStageOptionsUser{
+				"root": {
+					Password: common.StringToPtr("!locked"), // this is treated as crypted and locks/disables the password
+				},
+			},
+		}
+		rootLockStage := osbuild.NewUsersStage(userOptions)
+		rootLockStage.MountOSTree(p.osName, p.osTreeRef, 0)
+		pipeline.AddStage(rootLockStage)
+	}
 
 	if p.Keyboard != "" {
 		options := &osbuild.KeymapStageOptions{
@@ -185,9 +212,6 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		localeStage.MountOSTree(p.osName, p.osTreeRef, 0)
 		pipeline.AddStage(localeStage)
 	}
-
-	// TODO: Add users?
-	// NOTE: Users can be embedded in a commit, but we should also support adding them at deploy time.
 
 	grubOptions := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
 		"",
