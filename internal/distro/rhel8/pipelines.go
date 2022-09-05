@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
 func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
@@ -348,7 +349,7 @@ func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizatio
 	return pipelines, nil
 }
 
-func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptions, rng *rand.Rand) ([]osbuild.Pipeline, string, error) {
+func edgeImagePipelines(t *imageType, customizations *blueprint.Customizations, filename string, options distro.ImageOptions, rng *rand.Rand) ([]osbuild.Pipeline, string, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	ostreeRepoPath := "/ostree/repo"
 	imgName := "image.raw"
@@ -359,7 +360,7 @@ func edgeImagePipelines(t *imageType, filename string, options distro.ImageOptio
 	}
 
 	// prepare ostree deployment tree
-	treePipeline := ostreeDeployPipeline(t, partitionTable, ostreeRepoPath, nil, "", rng, options)
+	treePipeline := ostreeDeployPipeline(t, partitionTable, ostreeRepoPath, nil, "", rng, customizations, options)
 	pipelines = append(pipelines, *treePipeline)
 
 	// make raw image from tree
@@ -380,7 +381,7 @@ func edgeRawImagePipelines(t *imageType, customizations *blueprint.Customization
 	imgName := t.filename
 
 	// create the raw image
-	imagePipelines, _, err := edgeImagePipelines(t, imgName, options, rng)
+	imagePipelines, _, err := edgeImagePipelines(t, customizations, imgName, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -813,7 +814,7 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	installDevice := customizations.GetInstallationDevice()
 
 	// create the raw image
-	imagePipelines, imgPipelineName, err := edgeImagePipelines(t, imgName, options, rng)
+	imagePipelines, imgPipelineName, err := edgeImagePipelines(t, customizations, imgName, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -963,6 +964,7 @@ func ostreeDeployPipeline(
 	kernel *blueprint.KernelCustomization,
 	kernelVer string,
 	rng *rand.Rand,
+	c *blueprint.Customizations,
 	options distro.ImageOptions,
 ) *osbuild.Pipeline {
 
@@ -1030,7 +1032,19 @@ func ostreeDeployPipeline(
 	}
 	p.AddStage(osbuild.NewFSTabStage(fstabOptions))
 
-	// TODO: Add users?
+	if bpUsers := c.GetUsers(); len(bpUsers) > 0 {
+		usersStage, err := osbuild.GenUsersStage(users.UsersFromBP(bpUsers), false)
+		if err != nil {
+			panic(err)
+		}
+		usersStage.MountOSTree(osname, options.OSTree.Ref, 0)
+		p.AddStage(usersStage)
+	}
+	if bpGroups := c.GetGroups(); len(bpGroups) > 0 {
+		groupsStage := osbuild.GenGroupsStage(users.GroupsFromBP(bpGroups))
+		groupsStage.MountOSTree(osname, options.OSTree.Ref, 0)
+		p.AddStage(groupsStage)
+	}
 
 	p.AddStage(bootloaderConfigStage(t, *pt, kernel, kernelVer, true, true))
 
