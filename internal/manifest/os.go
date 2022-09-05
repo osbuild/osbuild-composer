@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/users"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
@@ -65,9 +66,9 @@ type OSCustomizations struct {
 	// Do not install documentation
 	ExcludeDocs bool
 
+	Groups []users.Group
+	Users  []users.User
 	// TODO: drop blueprint types from the API
-	Groups   []blueprint.GroupCustomization
-	Users    []blueprint.UserCustomization
 	Firewall *blueprint.FirewallCustomization
 	// TODO: drop osbuild types from the API
 	Grub2Config    *osbuild.GRUB2Config
@@ -272,28 +273,28 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if len(p.Groups) > 0 {
-		pipeline.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(p.Groups)))
+		pipeline.AddStage(osbuild.GenGroupsStage(p.Groups))
 	}
 
 	if len(p.Users) > 0 {
-		userOptions, err := osbuild.NewUsersStageOptions(p.Users, false)
-		if err != nil {
-			// TODO: move encryption into weldr
-			panic("password encryption failed")
-		}
 		if p.OSTree != nil {
 			// for ostree, writing the key during user creation is
 			// redundant and can cause issues so create users without keys
 			// and write them on first boot
-			userOptionsSansKeys, err := osbuild.NewUsersStageOptions(p.Users, true)
+			usersStageSansKeys, err := osbuild.GenUsersStage(p.Users, true)
 			if err != nil {
 				// TODO: move encryption into weldr
 				panic("password encryption failed")
 			}
-			pipeline.AddStage(osbuild.NewUsersStage(userOptionsSansKeys))
-			pipeline.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(userOptions)))
+			pipeline.AddStage(usersStageSansKeys)
+			pipeline.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(p.Users)))
 		} else {
-			pipeline.AddStage(osbuild.NewUsersStage(userOptions))
+			usersStage, err := osbuild.GenUsersStage(p.Users, false)
+			if err != nil {
+				// TODO: move encryption into weldr
+				panic("password encryption failed")
+			}
+			pipeline.AddStage(usersStage)
 		}
 	}
 
@@ -460,28 +461,28 @@ func prependKernelCmdlineStage(pipeline osbuild.Pipeline, kernelOptions string, 
 	return pipeline
 }
 
-func usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuild.FirstBootStageOptions {
-	cmds := make([]string, 0, 3*len(usersStageOptions.Users)+2)
+func usersFirstBootOptions(users []users.User) *osbuild.FirstBootStageOptions {
+	cmds := make([]string, 0, 3*len(users)+2)
 	// workaround for creating authorized_keys file for user
 	// need to special case the root user, which has its home in a different place
 	varhome := filepath.Join("/var", "home")
 	roothome := filepath.Join("/var", "roothome")
 
-	for name, user := range usersStageOptions.Users {
+	for _, user := range users {
 		if user.Key != nil {
 			var home string
 
-			if name == "root" {
+			if user.Name == "root" {
 				home = roothome
 			} else {
-				home = filepath.Join(varhome, name)
+				home = filepath.Join(varhome, user.Name)
 			}
 
 			sshdir := filepath.Join(home, ".ssh")
 
 			cmds = append(cmds, fmt.Sprintf("mkdir -p %s", sshdir))
 			cmds = append(cmds, fmt.Sprintf("sh -c 'echo %q >> %q'", *user.Key, filepath.Join(sshdir, "authorized_keys")))
-			cmds = append(cmds, fmt.Sprintf("chown %s:%s -Rc %s", name, name, sshdir))
+			cmds = append(cmds, fmt.Sprintf("chown %s:%s -Rc %s", user.Name, user.Name, sshdir))
 		}
 	}
 	cmds = append(cmds, fmt.Sprintf("restorecon -rvF %s", varhome))
