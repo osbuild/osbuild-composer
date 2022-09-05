@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/users"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
@@ -49,8 +50,8 @@ func osCustomizations(
 	if !t.bootISO {
 		// don't put users and groups in the payload of an installer
 		// add them via kickstart instead
-		osc.Groups = c.GetGroups()
-		osc.Users = c.GetUsers()
+		osc.Groups = users.GroupsFromBP(c.GetGroups())
+		osc.Users = users.UsersFromBP(c.GetUsers())
 	}
 
 	osc.EnabledServices = imageConfig.EnabledServices
