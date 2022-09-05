@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
+	"github.com/osbuild/osbuild-composer/internal/users"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
@@ -19,6 +20,9 @@ type OSTreeRawImage struct {
 	Platform       platform.Platform
 	Workload       workload.Workload
 	PartitionTable *disk.PartitionTable
+
+	Users  []users.User
+	Groups []users.Group
 
 	OSTreeURL    string
 	OSTreeRef    string
@@ -53,6 +57,8 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.KernelOptionsAppend = img.KernelOptionsAppend
 	osPipeline.Keyboard = img.Keyboard
 	osPipeline.Locale = img.Locale
+	osPipeline.Users = img.Users
+	osPipeline.Groups = img.Groups
 
 	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
 

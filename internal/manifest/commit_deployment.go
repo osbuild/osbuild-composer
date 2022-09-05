@@ -166,11 +166,14 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		if err != nil {
 			panic("password encryption failed")
 		}
+		usersStage.MountOSTree(p.osName, p.osTreeRef, 0)
 		pipeline.AddStage(usersStage)
 	}
 
 	if len(p.Groups) > 0 {
-		pipeline.AddStage(osbuild.GenGroupsStage(p.Groups))
+		grpStage := osbuild.GenGroupsStage(p.Groups)
+		grpStage.MountOSTree(p.osName, p.osTreeRef, 0)
+		pipeline.AddStage(grpStage)
 	}
 
 	// if no root password is set, lock the root account
