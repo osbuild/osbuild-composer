@@ -216,7 +216,15 @@ fi
 
 greenprint "Pulling cloud-image-val container"
 
-CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:latest"
+if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
+  # If running on CIV, get dev container
+  TAG=${CI_COMMIT_REF_SLUG}
+else
+  # If not, get prod container
+  TAG="prod"
+fi
+
+CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
 
 sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_CLOUD_IMAGE_VAL}
 
