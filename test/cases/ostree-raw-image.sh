@@ -285,14 +285,6 @@ version = "*"
 [[packages]]
 name = "sssd"
 version = "*"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-key = "${SSH_KEY_PUB}"
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
 
 # No RT kernel in Fedora
@@ -365,6 +357,14 @@ description = "A rhel-edge raw image"
 version = "0.0.1"
 modules = []
 groups = []
+
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/admin/"
+groups = ["wheel"]
 EOF
 
 greenprint "📄 raw image blueprint"
@@ -559,13 +559,6 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
 
 # No RT kernel in Fedora
