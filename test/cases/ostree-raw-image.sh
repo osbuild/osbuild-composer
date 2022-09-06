@@ -343,8 +343,8 @@ until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; 
     sleep 1;
 done;
 
-# Sync installer edge content
-greenprint "📡 Sync installer content from stage repo"
+# Sync edge content
+greenprint "📡 Sync content from stage repo"
 sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage "$OSTREE_REF"
 
 # Clean compose and blueprints.
@@ -358,9 +358,9 @@ sudo composer-cli blueprints delete container > /dev/null
 ##
 ############################################################
 
-# Write a blueprint for installer image.
+# Write a blueprint for raw image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "installer"
+name = "raw-image"
 description = "A rhel-edge raw image"
 version = "0.0.1"
 modules = []
@@ -373,11 +373,11 @@ cat "$BLUEPRINT_FILE"
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing raw image blueprint"
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli blueprints depsolve installer
+sudo composer-cli blueprints depsolve raw-image
 
-# Build installer image.
+# Build raw image.
 # Test --url arg following by URL with tailling slash for bz#1942029
-build_image installer "${RAW_IMAGE_TYPE}" "${PROD_REPO_URL}/"
+build_image raw-image "${RAW_IMAGE_TYPE}" "${PROD_REPO_URL}/"
 
 # Download the image
 greenprint "📥 Downloading the raw image"
@@ -389,9 +389,9 @@ sudo xz -d "${ISO_FILENAME}"
 sudo qemu-img convert -f raw "${COMPOSE_ID}-image.raw" -O qcow2 "${IMAGE_KEY}.qcow2"
 
 # Clean compose and blueprints.
-greenprint "🧹 Clean up installer blueprint and compose"
+greenprint "🧹 Clean up raw-image blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete installer > /dev/null
+sudo composer-cli blueprints delete raw-image > /dev/null
 
 ##################################################################
 ##
