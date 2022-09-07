@@ -55,39 +55,39 @@ build {
     }
   }
 
-  source "amazon-ebs.image_builder" {
-    name = "rhel-8-aarch64"
+  // source "amazon-ebs.image_builder" {
+  //   name = "rhel-8-aarch64"
 
-    # Use a static RHEL 8.6 Cloud Access Image.
-    source_ami = "ami-0c84d76d81209a0e2"
-    ssh_username = "ec2-user"
-    instance_type = "c6g.large"
-    aws_polling {
-      delay_seconds = 10
-      max_attempts  = 50
-    }
+  //   # Use a static RHEL 8.6 Cloud Access Image.
+  //   source_ami = "ami-0c84d76d81209a0e2"
+  //   ssh_username = "ec2-user"
+  //   instance_type = "c6g.large"
+  //   aws_polling {
+  //     delay_seconds = 10
+  //     max_attempts  = 50
+  //   }
 
-    # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}"
+  //   # Set a name for the resulting AMI.
+  //   ami_name = "${var.image_name}"
 
-    # Apply tags to the resulting AMI/EBS snapshot.
-    tags = {
-      AppCode = "IMGB-001"
-      Name = "${var.image_name}"
-      composer_commit = "${var.composer_commit}"
-      os = "rhel"
-      os_version = "8"
-      arch = "aarch64"
-    }
+  //   # Apply tags to the resulting AMI/EBS snapshot.
+  //   tags = {
+  //     AppCode = "IMGB-001"
+  //     Name = "${var.image_name}"
+  //     composer_commit = "${var.composer_commit}"
+  //     os = "rhel"
+  //     os_version = "8"
+  //     arch = "aarch64"
+  //   }
 
-    # Ensure that the EBS snapshot used for the AMI meets our requirements.
-    launch_block_device_mappings {
-      delete_on_termination = "true"
-      device_name           = "/dev/sda1"
-      volume_size           = 10
-      volume_type           = "gp2"
-    }
-  }
+  //   # Ensure that the EBS snapshot used for the AMI meets our requirements.
+  //   launch_block_device_mappings {
+  //     delete_on_termination = "true"
+  //     device_name           = "/dev/sda1"
+  //     volume_size           = 10
+  //     volume_type           = "gp2"
+  //   }
+  // }
 
   source "amazon-ebs.image_builder"  {
     name = "fedora-35-x86_64"
