@@ -2915,6 +2915,14 @@
                     }
                   },
                   {
+                    "id": "sha256:5d6fac4e929d34fe9ad79a9d3e907c461cd12508641c5fe6eaec755ea6c0fcc5",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:c19d2a133bb48c61325b9b6fe63f02aefad65ce200b67006bfbadd54b324a024",
                     "options": {
                       "metadata": {
@@ -6074,6 +6082,9 @@
           },
           "sha256:5d623b3080b32144b709ed7cf11dae330607dfb65bb5ac27585ec83bd3d99429": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-rawhide-20220817/Packages/l/libksba-1.6.0-4.fc37.x86_64.rpm"
+          },
+          "sha256:5d6fac4e929d34fe9ad79a9d3e907c461cd12508641c5fe6eaec755ea6c0fcc5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-rawhide-20220817/Packages/g/greenboot-default-health-checks-0.15.1-1.fc37.x86_64.rpm"
           },
           "sha256:5e6b4a62d8cda8eb663df9365c93d3201bb1faaf1816adbc400d56262afdccbd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-rawhide-20220817/Packages/c/cracklib-2.9.6-28.fc36.x86_64.rpm"
@@ -10526,6 +10537,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-rawhide-20220817/Packages/g/greenboot-0.15.1-1.fc37.x86_64.rpm",
         "checksum": "sha256:1d44b90ef2e4e5517a00f3ae2284b4e507601b3049ff562e4515860f6d71402a",
+        "check_gpg": true
+      },
+      {
+        "name": "greenboot-default-health-checks",
+        "epoch": 0,
+        "version": "0.15.1",
+        "release": "1.fc37",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-rawhide-20220817/Packages/g/greenboot-default-health-checks-0.15.1-1.fc37.x86_64.rpm",
+        "checksum": "sha256:5d6fac4e929d34fe9ad79a9d3e907c461cd12508641c5fe6eaec755ea6c0fcc5",
         "check_gpg": true
       },
       {

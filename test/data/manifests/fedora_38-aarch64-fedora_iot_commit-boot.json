@@ -2931,6 +2931,14 @@
                     }
                   },
                   {
+                    "id": "sha256:675d2fa0a3e73612e6741867ebb755b64c20f98039fde4bcbb74d32aacd663ac",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:124d0e3f779e3bf7cb2fc8635aa1ed73a7d1540dd1bc22420542c26e6fb3e46d",
                     "options": {
                       "metadata": {
@@ -6026,6 +6034,9 @@
           },
           "sha256:65dce8e6db42e4f6e38cef65d9de7b5fc14fbf283061538d1a8ee0fb63e42332": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20220817/Packages/c/cryptsetup-2.5.0-1.fc37.aarch64.rpm"
+          },
+          "sha256:675d2fa0a3e73612e6741867ebb755b64c20f98039fde4bcbb74d32aacd663ac": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20220817/Packages/g/greenboot-default-health-checks-0.15.1-1.fc37.aarch64.rpm"
           },
           "sha256:679728f60d6d1a342c06aebe3830dad314a5e46ef4295ae8a0494c04f34fca08": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20220817/Packages/s/sudo-python-plugin-1.9.11-4.p3.fc37.aarch64.rpm"
@@ -10390,6 +10401,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20220817/Packages/g/greenboot-0.15.1-1.fc37.aarch64.rpm",
         "checksum": "sha256:ad630c19bf8da661bb9113f3f108e13665e38d5cd2a849503bfdf8c4b3ae02df",
+        "check_gpg": true
+      },
+      {
+        "name": "greenboot-default-health-checks",
+        "epoch": 0,
+        "version": "0.15.1",
+        "release": "1.fc37",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20220817/Packages/g/greenboot-default-health-checks-0.15.1-1.fc37.aarch64.rpm",
+        "checksum": "sha256:675d2fa0a3e73612e6741867ebb755b64c20f98039fde4bcbb74d32aacd663ac",
         "check_gpg": true
       },
       {

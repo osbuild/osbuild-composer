@@ -2931,6 +2931,14 @@
                     }
                   },
                   {
+                    "id": "sha256:70f3f8819f2a5e12cc2750b535882519040e536bebf995882e2f67b715305ca9",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:8b96394a0a90e311f7043c7d504e4637e0a073a70f7aac6ed4fcfcc5b98280ed",
                     "options": {
                       "metadata": {
@@ -6108,6 +6116,9 @@
           },
           "sha256:6e71dfea8a327a33d284594dfc9eac7f6d839abed90149759f32d1bec882e57d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20220831/Packages/o/os-prober-1.81-1.fc37.aarch64.rpm"
+          },
+          "sha256:70f3f8819f2a5e12cc2750b535882519040e536bebf995882e2f67b715305ca9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20220831/Packages/g/greenboot-default-health-checks-0.15.1-1.fc37.aarch64.rpm"
           },
           "sha256:722a9893ae7d36b0b6209c4cf5964903e1d74906af33953aae56ae120dbb9102": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20220831/Packages/s/systemd-networkd-251.4-53.fc37.aarch64.rpm"
@@ -10409,6 +10420,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20220831/Packages/g/greenboot-0.15.1-1.fc37.aarch64.rpm",
         "checksum": "sha256:9dfb04593041d23c4050969816535430a5a0c02df333720bed41c110ce3b715a",
+        "check_gpg": true
+      },
+      {
+        "name": "greenboot-default-health-checks",
+        "epoch": 0,
+        "version": "0.15.1",
+        "release": "1.fc37",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20220831/Packages/g/greenboot-default-health-checks-0.15.1-1.fc37.aarch64.rpm",
+        "checksum": "sha256:70f3f8819f2a5e12cc2750b535882519040e536bebf995882e2f67b715305ca9",
         "check_gpg": true
       },
       {
