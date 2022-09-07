@@ -5,6 +5,7 @@ package rhel8
 import (
 	"fmt"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -828,7 +829,7 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
 	}
 
-	if t.arch.distro.isRHEL() && versionLessThan(t.arch.distro.osVersion, "8.6") {
+	if t.arch.distro.isRHEL() && common.VersionLessThan(t.arch.distro.osVersion, "8.6") {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"greenboot-grub2",
