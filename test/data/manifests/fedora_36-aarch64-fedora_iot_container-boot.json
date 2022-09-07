@@ -2555,6 +2555,14 @@
                     }
                   },
                   {
+                    "id": "sha256:c1ae1b7907690c6143200cd5a85e60c6fbba0dd7f2cc1ae6f674c7953f97c57e",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:a32759e37d5c1ef6ff35c2b68e14492ded88be2fb4cae54014e0d6126b94513a",
                     "options": {
                       "metadata": {
@@ -7938,6 +7946,9 @@
           "sha256:c0b524a0abfed63f722a2b8b426e7cbfd79074bff42636513a162818c74df3ec": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-fedora-20220617/Packages/q/qrencode-libs-4.1.1-2.fc36.aarch64.rpm"
           },
+          "sha256:c1ae1b7907690c6143200cd5a85e60c6fbba0dd7f2cc1ae6f674c7953f97c57e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-fedora-20220617/Packages/g/greenboot-default-health-checks-0.14.0-2.fc36.aarch64.rpm"
+          },
           "sha256:c20f377409f00597b57dd1cffdccf306adf5aaaaff94c1d56170001ff008a1c9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/r/rpm-ostree-2022.10-3.fc36.aarch64.rpm"
           },
@@ -13081,6 +13092,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-fedora-20220617/Packages/g/greenboot-0.14.0-2.fc36.aarch64.rpm",
         "checksum": "sha256:dce6c43bcf7f6c906dc5abbbb0715332fd20eed9f348405d0cafeffdcd740886",
+        "check_gpg": true
+      },
+      {
+        "name": "greenboot-default-health-checks",
+        "epoch": 0,
+        "version": "0.14.0",
+        "release": "2.fc36",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-fedora-20220617/Packages/g/greenboot-default-health-checks-0.14.0-2.fc36.aarch64.rpm",
+        "checksum": "sha256:c1ae1b7907690c6143200cd5a85e60c6fbba0dd7f2cc1ae6f674c7953f97c57e",
         "check_gpg": true
       },
       {

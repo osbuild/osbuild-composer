@@ -2578,6 +2578,14 @@
                     }
                   },
                   {
+                    "id": "sha256:a045be09fc1884b8a920026434ea8880e7f07fef3dc4aac8f1188db6ab1196c6",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:c46fc6b15fa0792536c795f620f78ef97f53fa52983ed536579910c209eedc3e",
                     "options": {
                       "metadata": {
@@ -6417,6 +6425,9 @@
           "sha256:a028d16393155c75d89016ddc1d5fa3b9c05ad3c6393aa6366a4ea330431532d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-fedora-20220617/Packages/l/libsecret-0.20.5-1.fc36.x86_64.rpm"
           },
+          "sha256:a045be09fc1884b8a920026434ea8880e7f07fef3dc4aac8f1188db6ab1196c6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-fedora-20220617/Packages/g/greenboot-default-health-checks-0.14.0-2.fc36.x86_64.rpm"
+          },
           "sha256:a0761340128a7a5b9307e3e77a037b74af7b437bb329639b84267cf914e7b6a0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-fedora-20220617/Packages/m/mpfr-4.1.0-9.fc36.x86_64.rpm"
           },
@@ -10019,6 +10030,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-fedora-20220617/Packages/g/greenboot-0.14.0-2.fc36.x86_64.rpm",
         "checksum": "sha256:fb088f19ec5c1c9764639bd9dddcad97b452c12b0739fc1c204d84e8149a0cc9",
+        "check_gpg": true
+      },
+      {
+        "name": "greenboot-default-health-checks",
+        "epoch": 0,
+        "version": "0.14.0",
+        "release": "2.fc36",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-x86_64-fedora-20220617/Packages/g/greenboot-default-health-checks-0.14.0-2.fc36.x86_64.rpm",
+        "checksum": "sha256:a045be09fc1884b8a920026434ea8880e7f07fef3dc4aac8f1188db6ab1196c6",
         "check_gpg": true
       },
       {

@@ -2915,6 +2915,14 @@
                     }
                   },
                   {
+                    "id": "sha256:20667e3c8ac7893b0c21ac3fb7549c137a1bc3f56411bf19df0077745cbd930c",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:d997786e71f2c7b4a9ed1323b8684ec1802e49a866fb0c1b69101531440cb464",
                     "options": {
                       "metadata": {
@@ -5790,6 +5798,9 @@
           },
           "sha256:1f2c3773b6d2a19f5b2a3ea190b210a9f06e186eff763e70662c63fe5c85d394": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20220831/Packages/f/fuse-common-3.10.5-5.fc37.x86_64.rpm"
+          },
+          "sha256:20667e3c8ac7893b0c21ac3fb7549c137a1bc3f56411bf19df0077745cbd930c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20220831/Packages/g/greenboot-default-health-checks-0.15.1-1.fc37.x86_64.rpm"
           },
           "sha256:20b825188654b5b5d17340ce6a78cbd3504e74729f8cfb83150b6798db4a586f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20220831/Packages/p/policycoreutils-3.4-6.fc37.x86_64.rpm"
@@ -10545,6 +10556,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20220831/Packages/g/greenboot-0.15.1-1.fc37.x86_64.rpm",
         "checksum": "sha256:7a0016bb3810509fdde64fcc55dc1b3819244ee544a56ce006dce11c9a6099b8",
+        "check_gpg": true
+      },
+      {
+        "name": "greenboot-default-health-checks",
+        "epoch": 0,
+        "version": "0.15.1",
+        "release": "1.fc37",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20220831/Packages/g/greenboot-default-health-checks-0.15.1-1.fc37.x86_64.rpm",
+        "checksum": "sha256:20667e3c8ac7893b0c21ac3fb7549c137a1bc3f56411bf19df0077745cbd930c",
         "check_gpg": true
       },
       {
