@@ -51,3 +51,33 @@ func readOSRelease(r io.Reader) (map[string]string, error) {
 
 	return osrelease, nil
 }
+
+// Returns true if the version represented by the first argument is
+// semantically older than the second.
+// Meant to be used for comparing distro versions for differences between minor
+// releases.
+// Evaluates to false if a and b are equal.
+// Assumes any missing components are 0, so 8 < 8.1.
+func VersionLessThan(a, b string) bool {
+	aParts := strings.Split(a, ".")
+	bParts := strings.Split(b, ".")
+
+	// pad shortest argument with zeroes
+	for len(aParts) < len(bParts) {
+		aParts = append(aParts, "0")
+	}
+	for len(bParts) < len(aParts) {
+		bParts = append(bParts, "0")
+	}
+
+	for idx := 0; idx < len(aParts); idx++ {
+		if aParts[idx] < bParts[idx] {
+			return true
+		} else if aParts[idx] > bParts[idx] {
+			return false
+		}
+	}
+
+	// equal
+	return false
+}

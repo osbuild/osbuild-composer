@@ -19,36 +19,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-// Returns true if the version represented by the first argument is
-// semantically older than the second.
-// Meant to be used for comparing RHEL versions for differences between minor
-// releases.
-// Evaluates to false if a and b are equal.
-// Assumes any missing components are 0, so 8 < 8.1.
-func versionLessThan(a, b string) bool {
-	aParts := strings.Split(a, ".")
-	bParts := strings.Split(b, ".")
-
-	// pad shortest argument with zeroes
-	for len(aParts) < len(bParts) {
-		aParts = append(aParts, "0")
-	}
-	for len(bParts) < len(aParts) {
-		bParts = append(bParts, "0")
-	}
-
-	for idx := 0; idx < len(aParts); idx++ {
-		if aParts[idx] < bParts[idx] {
-			return true
-		} else if aParts[idx] > bParts[idx] {
-			return false
-		}
-	}
-
-	// equal
-	return false
-}
-
 const (
 	// package set names
 
@@ -668,7 +638,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		// only add support for RHEL 8.7 and above. centos not supported.
-		if !t.arch.distro.isRHEL() || versionLessThan(t.arch.distro.osVersion, "8.7") {
+		if !t.arch.distro.isRHEL() || common.VersionLessThan(t.arch.distro.osVersion, "8.7") {
 			return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.arch.distro.osVersion))
 		}
 		supported := oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList)
@@ -788,7 +758,7 @@ func newDistro(distroName string) distro.Distro {
 
 	}
 
-	if !(rd.isRHEL() && versionLessThan(rd.osVersion, "8.6")) {
+	if !(rd.isRHEL() && common.VersionLessThan(rd.osVersion, "8.6")) {
 		// enable fdo-client only on RHEL 8.6+ and CS8
 
 		// TODO(runcom): move fdo-client-linuxapp.service to presets?
@@ -1954,7 +1924,7 @@ func newDistro(distroName string) distro.Distro {
 	)
 
 	if rd.isRHEL() {
-		if !versionLessThan(rd.osVersion, "8.6") {
+		if !common.VersionLessThan(rd.osVersion, "8.6") {
 			// image types only available on 8.6 and later on RHEL
 			// These edge image types require FDO which aren't available on older versions
 			x86_64.addImageTypes(edgeSimplifiedInstallerImgType, edgeRawImgType)
