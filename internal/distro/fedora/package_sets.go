@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -187,10 +188,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"fwupd",
 			"usbguard",
 			"greenboot",
-			"greenboot-grub2",
-			"greenboot-rpm-ostree-grub2",
-			"greenboot-reboot",
-			"greenboot-status",
 			"ignition",
 			"zezere-ignition",
 			"rsync",
@@ -224,6 +221,20 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"iwl7260-firmware",
 			"iwlax2xx-firmware",
 		},
+	}
+
+	if common.VersionLessThan(t.arch.distro.osVersion, "36") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"greenboot-grub2",
+				"greenboot-reboot",
+				"greenboot-rpm-ostree-grub2",
+				"greenboot-status",
+			},
+		},
+		)
+	} else {
+		ps = ps.Append(rpmmd.PackageSet{Include: []string{"greenboot-default-health-checks"}})
 	}
 
 	return ps
