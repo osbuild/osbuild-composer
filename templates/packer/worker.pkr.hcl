@@ -32,6 +32,10 @@ build {
     source_ami = "ami-03debf3ebf61b20cd"
     ssh_username = "ec2-user"
     instance_type = "c6a.large"
+    aws_polling {
+      delay_seconds = 10
+      max_attempts  = 60
+    }
 
     # Set a name for the resulting AMI.
     ami_name = "${var.image_name}"
@@ -64,7 +68,7 @@ build {
     instance_type = "c6g.large"
     aws_polling {
       delay_seconds = 10
-      max_attempts  = 50
+      max_attempts  = 60
     }
 
     # Set a name for the resulting AMI.
