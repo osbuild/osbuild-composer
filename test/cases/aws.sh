@@ -245,6 +245,10 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
 }
 EOF
 
+if [ "$ARCH" == "aarch64" ]; then
+    sed -i s/t3.medium/a1.large/ "${TEMPDIR}/resource-file.json"
+fi
+
 sudo ${CONTAINER_RUNTIME} run \
     -a stdout -a stderr \
     -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
