@@ -498,8 +498,13 @@
     # case: check greenboot* services log
     - name: all greenboot* service should run without error
       block:
+        - name: check boot-complete.target
+          # will fail if the target was not reached
+          command: systemctl --no-pager status boot-complete.target
+
+        # TODO: check service/target status instead of string matching messages
         - name: all greenboot* service should run without error
-          command: journalctl -b -0 -u boot-complete.target -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
+          command: journalctl -b -0 -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
           register: result_greenboot_log
 
         - assert:
@@ -507,7 +512,6 @@
               - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot Health Checks Runner' in result_greenboot_log.stdout"
-              - "'Reached target Boot Completion Check' in result_greenboot_log.stdout"
               - "'Mark boot as successful in grubenv' in result_greenboot_log.stdout"
               - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot MotD Generator' in result_greenboot_log.stdout"
@@ -611,11 +615,18 @@
         - skip_rollback_test == "false"
         - result_rollback is succeeded
 
+
     # case: check greenboot* services log again
     - name: fallback log should be found here
       block:
+
+        - name: check boot-complete.target
+          # will fail if the target was not reached
+          command: systemctl --no-pager status boot-complete.target
+
+        # TODO: check service/target status instead of string matching messages
         - name: fallback log should be found here
-          command: journalctl -b -0 -u boot-complete.target -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
+          command: journalctl -b -0 -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
           register: result_greenboot_log
 
         - assert:
@@ -624,7 +635,6 @@
               - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot Health Checks Runner' in result_greenboot_log.stdout"
-              - "'Reached target Boot Completion Check' in result_greenboot_log.stdout"
               - "'Mark boot as successful in grubenv' in result_greenboot_log.stdout"
               - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot MotD Generator' in result_greenboot_log.stdout"
