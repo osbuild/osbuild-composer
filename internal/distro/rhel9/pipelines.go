@@ -697,12 +697,6 @@ func osPipeline(t *imageType,
 	}
 
 	if t.rpmOstree {
-		p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
-			EtcGroupMembers: []string{
-				// NOTE: We may want to make this configurable.
-				"wheel", "docker",
-			},
-		}))
 		greenbootConfig := &osbuild.GreenbootOptions{
 			Config: &osbuild.GreenbootConfig{
 				MonitorServices: []string{"sshd", "NetworkManager"}, //sshd,NetworkManager are default services to be monitored by greenboot
@@ -712,6 +706,12 @@ func osPipeline(t *imageType,
 			greenbootConfig.Config.MonitorServices = newGreenbootConfig.MonitorServices
 		}
 		p.AddStage(osbuild.NewGreenbootConfig(greenbootConfig))
+		p.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
+			EtcGroupMembers: []string{
+				// NOTE: We may want to make this configurable.
+				"wheel", "docker",
+			},
+		}))
 	}
 	return p, nil
 }
