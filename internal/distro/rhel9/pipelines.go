@@ -233,7 +233,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	}
 	pipelines = append(pipelines, *treePipeline)
 
-	kernelPkg := new(rpmmd.PackageSpec)
+	var kernelPkg *rpmmd.PackageSpec
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	for _, pkg := range installerPackages {
 		if pkg.Name == "kernel" {
