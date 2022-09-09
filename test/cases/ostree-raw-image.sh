@@ -409,6 +409,7 @@ greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
 greenprint "💿 Installing raw image on BIOS VM"
+# TODO: os-type is deprecated in newer versions; remove conditionally
 sudo virt-install  --name="${IMAGE_KEY}-bios"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
@@ -482,12 +483,14 @@ greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
 greenprint "💿 Installing raw image on UEFI VM"
+# TODO: os-type is deprecated in newer versions; remove conditionally
 sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:31 \
                    --os-type linux \
+                   --import \
                    --os-variant ${OS_VARIANT} \
                    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
                    --nographics \
