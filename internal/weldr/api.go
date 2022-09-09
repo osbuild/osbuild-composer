@@ -276,7 +276,10 @@ func setupRouter(api *API) *API {
 }
 
 func (api *API) Serve(listener net.Listener) error {
-	api.server = http.Server{Handler: api}
+	api.server = http.Server{
+		Handler:           api,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
 	err := api.server.Serve(listener)
 	if err != nil && err != http.ErrServerClosed {

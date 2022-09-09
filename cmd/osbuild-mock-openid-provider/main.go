@@ -149,6 +149,7 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 	})
 
+	//nolint:gosec
 	if tlsCert != "" && tlsKey != "" {
 		log.Fatal(http.ListenAndServeTLS(addr, tlsCert, tlsKey, mux))
 	} else {
