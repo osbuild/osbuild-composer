@@ -11,8 +11,12 @@ import (
 	"net/url"
 	"os"
 
+	// NOTE these are deprecated and will need replacement, see issue #2977
+	//nolint:staticcheck
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network"
+	//nolint:staticcheck
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
+
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
