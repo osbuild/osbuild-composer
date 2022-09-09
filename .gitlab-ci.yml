@@ -51,14 +51,23 @@ init:
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "true"'
       when: manual
 
-.upstream_rules:
+.upstream_rules_all:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
 
-.nightly_rules:
+.upstream_rules_x86_64:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/"'
+
+.nightly_rules_all:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.1-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.7-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+
+.nightly_rules_x86_64:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.1-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.7-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
@@ -100,7 +109,7 @@ Build -tests RPM for RHEL:
   stage: rpmbuild
   extends: .terraform
   rules:
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - sh "schutzbot/mockbuild.sh"
   interruptible: true
@@ -137,7 +146,7 @@ Prepare-rhel-internal:
   stage: prepare-rhel-internal
   extends: .terraform
   rules:
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/prepare-rhel-internal.sh
   artifacts:
@@ -158,8 +167,8 @@ Base:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
@@ -191,8 +200,8 @@ Manifests:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/manifest_tests.sh
@@ -206,8 +215,8 @@ Manifests:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -248,7 +257,7 @@ regression-composer-works-behind-satellite-fallback:
   rules: 
     # BLACKLIST: Skipped on subscribed RHEL machines
     - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-composer-works-behind-satellite-fallback.sh
 
@@ -257,7 +266,7 @@ regression-composer-works-behind-satellite:
   rules: 
     # BLACKLIST: Skipped on subscribed RHEL machines
     - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-composer-works-behind-satellite.sh
 
@@ -266,7 +275,7 @@ regression-excluded-dependency:
   rules: 
     # WHITELIST
     - if: $RUNNER =~ "/^.*(rhel-8.6|rhel-9.0|centos-stream-8|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-excluded-dependency.sh
 
@@ -275,7 +284,7 @@ regression-include-excluded-packages:
   rules: 
     # BLACKLIST: Skipped on fedora systems
     - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-include-excluded-packages.sh
 
@@ -306,7 +315,7 @@ regression-no-explicit-rootfs-definition:
   rules: 
     # BLACKLIST: Skipped on fedora systems
     - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-no-explicit-rootfs-definition.sh
 
@@ -314,7 +323,7 @@ Image Tests:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/image_tests.sh
@@ -333,7 +342,7 @@ OSTree:
   stage: test
   extends: .terraform/openstack
   rules:
-    - !reference [.upstream_rules, rules]
+    - !reference [.upstream_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
@@ -387,8 +396,8 @@ OSTree raw image:
     # run only this edge test on nightly to have some testing for sign-off
     # but still reduce duplication with virt-qe Jenkins and increase nightly
     # pipelines stability
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
@@ -432,8 +441,8 @@ Rebase OSTree UEFI:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -479,7 +488,7 @@ koji.sh (cloud upload):
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
+    - !reference [.upstream_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh cloud-upload ${CLOUD_TARGET} ${IMAGE_TYPE}
@@ -508,7 +517,7 @@ koji.sh (cloudapi):
   extends: .integration
   # Not supported in nightly pipelines
   rules:
-    - !reference [.upstream_rules, rules]
+    - !reference [.upstream_rules_all, rules]
   variables:
     SCRIPT: koji.sh
 
@@ -519,27 +528,28 @@ aws.sh:
 
 azure.sh:
   extends: .integration
+  rules:
+    # Run only on x86_64
+    - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.nightly_rules_x86_64, rules]
   variables:
     SCRIPT: azure.sh
-  rules:
-    - if: '$RUNNER =~ /[\S]+x86_64[\S]+/'
 
 # The required GCE image type is not supported on Fedora
 gcp.sh:
   extends: .integration_rhel
   rules: 
-    # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-8.7|rhel-9.1).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
-    - !reference [.nightly_rules, rules]
+    - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.nightly_rules_x86_64, rules]
   variables:
     SCRIPT: gcp.sh
 
 vmware.sh:
-  extends: .integration
+  extends: .integration_rhel
   rules:
-    # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel).*$/" && $RUNNER =~ "/^.*(x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules, rules]
+    # Run only on x86_64
+    - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.nightly_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh
 
@@ -567,7 +577,7 @@ API:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
+    - !reference [.upstream_rules_all, rules]
     # note: cloud API is not supported for on-prem installations so
     # don't run this test case for nightly trees
   script:
@@ -596,8 +606,8 @@ API:
   stage: test
   extends: .terraform/openstack
   rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -621,7 +631,7 @@ libvirt.sh:
   rules:
     # BLACKLIST
     - if: $RUNNER !~ "/^.*(rhel-8.7|rhel-9.1).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
 
 generic_s3_http.sh:
   extends: .generic_s3
@@ -647,7 +657,7 @@ RHEL 9 on 8:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
+    - !reference [.upstream_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
@@ -673,7 +683,7 @@ OpenSCAP:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
+    - !reference [.upstream_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/oscap.sh
@@ -687,7 +697,7 @@ Upgrade:
   stage: test
   extends: .terraform/openstack
   rules:
-    - !reference [.nightly_rules, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
@@ -717,8 +727,8 @@ Installer:
   stage: test
   extends: .terraform/openstack
   rules:
-    - !reference [.upstream_rules, rules]
-    - !reference [.nightly_rules, rules]
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/installers.sh
@@ -776,7 +786,7 @@ ContainerUpload:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
+    - !reference [.upstream_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-upload.sh
@@ -788,7 +798,7 @@ ContainerEmbedding:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules, rules]
+    - !reference [.upstream_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-embedding.sh
