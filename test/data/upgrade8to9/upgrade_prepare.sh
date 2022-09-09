@@ -12,7 +12,7 @@ dnf install -y osbuild-composer composer-cli
 
 # Prepare the upgrade
 curl -k -o /etc/yum.repos.d/oam-group-leapp-rhel-8.repo https://gitlab.cee.redhat.com/leapp/oamg-rhel8-vagrant/-/raw/master/roles/init/files/leapp-copr.repo
-dnf install leapp-upgrade-el8toel9 -y
+dnf install -y leapp-upgrade-el8toel9 vdo
 curl -kLO https://gitlab.cee.redhat.com/leapp/oamg-rhel7-vagrant/raw/master/roles/init/files/prepare_test_env.sh
 source /root/prepare_test_env.sh
 get_data_files
