@@ -186,7 +186,7 @@ func (c StorageClient) CreateStorageContainerIfNotExist(ctx context.Context, sto
 
 	_, err := containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
 	if err != nil {
-		if storageErr, ok := err.(azblob.StorageError); ok && storageErr.(azblob.StorageError).ServiceCode() == azblob.ServiceCodeContainerAlreadyExists {
+		if storageErr, ok := err.(azblob.StorageError); ok && storageErr.ServiceCode() == azblob.ServiceCodeContainerAlreadyExists {
 			return nil
 		}
 		return fmt.Errorf("cannot create a storage container: %v", err)
