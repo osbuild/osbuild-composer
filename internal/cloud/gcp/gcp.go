@@ -14,6 +14,7 @@ import (
 // GCPCredentialsEnvName contains name of the environment variable used
 // to specify the path to file with CGP service account credentials
 const (
+	//nolint:gosec
 	GCPCredentialsEnvName string = "GOOGLE_APPLICATION_CREDENTIALS"
 )
 
