@@ -44,6 +44,7 @@ func newSelfSignedCertificateKeyPair(subj string) (*certificateKeyPair, error) {
 
 	ckp := certificateKeyPair{baseDir: dir}
 
+	//nolint:gosec
 	cmd := exec.Command(
 		"openssl", "req", "-nodes", "-x509",
 		"-subj", subj,
@@ -115,6 +116,7 @@ func newCA(subj string) (*ca, error) {
 		BaseDir: baseDir,
 	}
 
+	//nolint:gosec
 	cmd := exec.Command(
 		"openssl", "req",
 		"-config", opensslConfig,
