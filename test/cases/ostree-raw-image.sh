@@ -70,6 +70,7 @@ CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 RAW_IMAGE_TYPE=edge-raw-image
 RAW_IMAGE_FILENAME=image.raw.xz
+OSTREE_OSNAME=redhat
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -105,6 +106,7 @@ case "${ID}-${VERSION_ID}" in
         RAW_IMAGE_TYPE=fedora-iot-raw-image
         OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
         OS_VARIANT="fedora-unknown"
+        OSTREE_OSNAME="fedora-iot"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -457,7 +459,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -530,7 +532,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 ##################################################################
@@ -663,7 +665,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
