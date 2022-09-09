@@ -483,8 +483,21 @@ greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
 greenprint "💿 Installing raw image on UEFI VM"
-# TODO: os-type is deprecated in newer versions; remove conditionally
-sudo virt-install  --name="${IMAGE_KEY}-uefi"\
+if nvrGreaterOrEqual "virt-install" "4"; then
+  sudo virt-install  --name="${IMAGE_KEY}-uefi"\
+                     --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                     --ram 3072 \
+                     --vcpus 2 \
+                     --network network=integration,mac=34:49:22:B0:83:31 \
+                     --import \
+                     --os-variant ${OS_VARIANT} \
+                     --boot uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no \
+                     --nographics \
+                     --noautoconsole \
+                     --wait=-1 \
+                     --noreboot
+else
+  sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
@@ -497,6 +510,7 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --noautoconsole \
                    --wait=-1 \
                    --noreboot
+fi
 
 # Start VM.
 greenprint "💻 Start UEFI VM"
