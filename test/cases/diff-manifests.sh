@@ -31,12 +31,18 @@ basebranch=$(curl  \
     -H 'Accept: application/vnd.github.v3+json' \
     "https://api.github.com/repos/osbuild/osbuild-composer/pulls/${prnum}" | jq -r ".base.ref")
 
-greenprint "Fetching origin/${basebranch}"
-git fetch origin "${basebranch}"
+greenprint "Adding upstream GitHub remote"
+# distro version branches aren't synced to GitLab, so we will need to fetch
+# them from GitHub directly
+git remote add gh https://github.com/osbuild/osbuild-composer
+git remote show gh
+
+greenprint "Fetching gh/${basebranch}"
+git fetch gh "${basebranch}"
 
 greenprint "Getting revision IDs for HEAD and merge-base"
 head=$(git rev-parse HEAD)
-mergebase=$(git merge-base HEAD "origin/${basebranch}")
+mergebase=$(git merge-base HEAD "gh/${basebranch}")
 
 if [[ "${head}" == "${mergebase}" ]]; then
     greenprint "HEAD and merge-base are the same"
