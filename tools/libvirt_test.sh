@@ -144,6 +144,11 @@ if [ -z "${LIBVIRT_IMAGE_URL}" ]; then
 name = "bp"
 description = "A base system"
 version = "0.0.1"
+
+# Related RHBZ#2065734
+[[packages]]
+name = "ipa-client"
+version = "*"
 EOF
 
     # Prepare the blueprint for the compose.
