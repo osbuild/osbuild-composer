@@ -124,6 +124,11 @@ version = "0.0.1"
 [[packages]]
 name = "bash"
 
+# Related RHBZ#2065734
+[[packages]]
+name = "ipa-client"
+version = "*"
+
 [customizations.services]
 enabled = ["sshd"]
 
