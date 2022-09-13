@@ -221,7 +221,7 @@ func (c *Composer) Start() error {
 	if c.localWorkerListener != nil {
 		localWorkerAPI = &http.Server{
 			ErrorLog:          c.logger,
-			Handler:           c.workers.Handler(),
+			Handler:           http.TimeoutHandler(c.workers.Handler(), 60*time.Second, `{"href":"/api/worker/v1/errors/1008","code":"IMAGE-BUILDER-LOCAL-WORKER-1008","id":"1008","kind":"Error","reason":"Timeout exceeded"}`),
 			ReadHeaderTimeout: 5 * time.Second,
 		}
 
@@ -253,7 +253,7 @@ func (c *Composer) Start() error {
 		}
 		remoteWorkerAPI = &http.Server{
 			ErrorLog:          c.logger,
-			Handler:           handler,
+			Handler:           http.TimeoutHandler(handler, 60*time.Second, `{"href":"/api/worker/v1/errors/1008","code":"IMAGE-BUILDER-REMOTE-WORKER-1008","id":"1008","kind":"Error","reason":"Timeout exceeded"}`),
 			ReadHeaderTimeout: 5 * time.Second,
 		}
 
@@ -299,7 +299,7 @@ func (c *Composer) Start() error {
 
 		composerAPI = &http.Server{
 			ErrorLog:          c.logger,
-			Handler:           handler,
+			Handler:           http.TimeoutHandler(handler, 60*time.Second, `{"href":"/api/image-builder-composer/v2/errors/1020","code":"IMAGE-BUILDER-COMPOSER-1020","id":"1020","kind":"Error","reason":"Timeout exceeded"}`),
 			ReadHeaderTimeout: 5 * time.Second,
 		}
 

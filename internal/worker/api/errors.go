@@ -34,6 +34,7 @@ const (
 	ErrorRetrievingJobStatus      ServiceErrorCode = 1005
 	ErrorRequestingJob            ServiceErrorCode = 1006
 	ErrorFailedLoadingOpenAPISpec ServiceErrorCode = 1007
+	ErrorTimeoutExceeded          ServiceErrorCode = 1008
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -70,6 +71,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorRequestingJob, http.StatusInternalServerError, "Error requesting job"},
 		serviceError{ErrorInvalidErrorId, http.StatusBadRequest, "Invalid format for error id, it should be an integer as a string"},
 		serviceError{ErrorFailedLoadingOpenAPISpec, http.StatusInternalServerError, "Unable to load openapi spec"},
+		serviceError{ErrorTimeoutExceeded, http.StatusInternalServerError, "Timeout exceeded"},
 		serviceError{ErrorResourceNotFound, http.StatusNotFound, "Requested resource doesn't exist"},
 		serviceError{ErrorMethodNotAllowed, http.StatusMethodNotAllowed, "Requested method isn't supported for resource"},
 		serviceError{ErrorNotAcceptable, http.StatusNotAcceptable, "Only 'application/json' content is supported"},
