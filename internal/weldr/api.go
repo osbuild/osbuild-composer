@@ -277,7 +277,8 @@ func setupRouter(api *API) *API {
 
 func (api *API) Serve(listener net.Listener) error {
 	api.server = http.Server{
-		Handler:           api,
+		// The timeout here is so long because downloading metadata can take several minutes
+		Handler:           http.TimeoutHandler(api, 10*time.Minute, `{"errors":[{"code":500,"id":"HTTPTimeoutError","msg":"Timeout exceeded"}],"status":false}`),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
