@@ -28,10 +28,10 @@ const (
 	sqlListen   = `LISTEN jobs`
 	sqlUnlisten = `UNLISTEN jobs`
 
-	sqlEnqueue = `INSERT INTO jobs(id, type, args, queued_at, channel) VALUES ($1, $2, $3, NOW(), $4)`
+	sqlEnqueue = `INSERT INTO jobs(id, type, args, queued_at, channel) VALUES ($1, $2, $3, statement_timestamp(), $4)`
 	sqlDequeue = `
 		UPDATE jobs
-		SET token = $1, started_at = now()
+		SET token = $1, started_at = statement_timestamp()
 		WHERE id = (
 		  SELECT id
 		  FROM ready_jobs
@@ -45,7 +45,7 @@ const (
 
 	sqlDequeueByID = `
 		UPDATE jobs
-		SET token = $1, started_at = now()
+		SET token = $1, started_at = statement_timestamp()
 		WHERE id = (
 		  SELECT id
 		  FROM ready_jobs
