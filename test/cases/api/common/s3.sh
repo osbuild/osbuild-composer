@@ -2,6 +2,9 @@
 
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
+# Global var for ostree ref
+OSTREE_REF="test/rhel/8/edge"
+
 function createReqFileEdge() {
   cat > "$REQUEST_FILE" << EOF
 {
