@@ -2814,6 +2814,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 9,
+      "version": 10,
       "weekStart": ""
     }
