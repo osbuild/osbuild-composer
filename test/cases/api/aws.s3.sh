@@ -2,6 +2,7 @@
 
 source /usr/libexec/tests/osbuild-composer/api/common/aws.sh
 source /usr/libexec/tests/osbuild-composer/api/common/common.sh
+source /usr/libexec/tests/osbuild-composer/api/common/vsphere.sh
 source /usr/libexec/tests/osbuild-composer/api/common/s3.sh
 
 # Check that needed variables are set to access AWS.
@@ -31,6 +32,14 @@ function cleanup() {
   if [ -n "$AWS_CMD" ]; then
     $AWS_CMD s3 rm "${S3_URI}"
   fi
+}
+
+function installClient() {
+    installAWSClient
+
+    if [ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]; then
+        installClientVSphere
+    fi
 }
 
 function createReqFile() {

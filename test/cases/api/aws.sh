@@ -27,6 +27,9 @@ function cleanup() {
   fi
 }
 
+function installClient() {
+  installAWSClient
+}
 
 function createReqFile() {
   AWS_SNAPSHOT_NAME=${TEST_ID}
