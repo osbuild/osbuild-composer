@@ -167,8 +167,8 @@ case $CLOUD_PROVIDER in
     source /usr/libexec/tests/osbuild-composer/api/aws.s3.sh
     ;;
   "$CLOUD_PROVIDER_GENERIC_S3")
-      source /usr/libexec/tests/osbuild-composer/api/generic.s3.sh
-      ;;
+    source /usr/libexec/tests/osbuild-composer/api/generic.s3.sh
+    ;;
   "$CLOUD_PROVIDER_GCP")
     source /usr/libexec/tests/osbuild-composer/api/gcp.sh
     ;;
