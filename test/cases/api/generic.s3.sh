@@ -20,6 +20,9 @@ function cleanup() {
   if [ -n "${MINIO_CONTAINER_NAME}" ]; then
     sudo "${CONTAINER_RUNTIME}" kill "${MINIO_CONTAINER_NAME}"
   fi
+  if [ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]; then
+    cleanupVSphere
+  fi
 }
 
 function installClient() {

@@ -215,3 +215,34 @@ function verifyInVSphere() {
 
     greenprint "✅ Successfully verified VSphere image with cloud-init"
 }
+
+function cleanupVSphere() {
+    # since this function can be called at any time, ensure that we don't expand unbound variables
+    GOVC_CMD="${GOVC_CMD:-}"
+    VSPHERE_VM_NAME="${VSPHERE_VM_NAME:-}"
+    VSPHERE_CIDATA_ISO_PATH="${VSPHERE_CIDATA_ISO_PATH:-}"
+
+    greenprint "🧹 Cleaning up the VSphere VM"
+    $GOVC_CMD vm.destroy \
+        -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
+        -k=true \
+        -dc="${GOVC_DATACENTER}" \
+        "${VSPHERE_VM_NAME}"
+
+    greenprint "🧹 Cleaning up the VSphere Datastore"
+    $GOVC_CMD datastore.rm \
+        -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
+        -k=true \
+        -dc="${GOVC_DATACENTER}" \
+        -ds="${GOVMOMI_DATASTORE}" \
+        -f \
+        "${VSPHERE_CIDATA_ISO_PATH}"
+
+    $GOVC_CMD datastore.rm \
+        -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
+        -k=true \
+        -dc="${GOVC_DATACENTER}" \
+        -ds="${GOVMOMI_DATASTORE}" \
+        -f \
+        "${VSPHERE_VM_NAME}"
+}
