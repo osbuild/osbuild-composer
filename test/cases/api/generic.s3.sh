@@ -7,6 +7,9 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 function checkEnv() {
     printenv AWS_REGION > /dev/null
+    if [ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]; then
+        checkEnvVSphere
+    fi
 }
 
 # Global var for ostree ref
