@@ -8,9 +8,8 @@ source /usr/libexec/tests/osbuild-composer/api/common/s3.sh
 # Check that needed variables are set to access AWS.
 function checkEnv() {
     printenv AWS_REGION AWS_BUCKET V2_AWS_ACCESS_KEY_ID V2_AWS_SECRET_ACCESS_KEY AWS_API_TEST_SHARE_ACCOUNT > /dev/null
-
-    if [ "${IMAGE_TYPE}" = "${IMAGE_TYPE_VSPHERE}" ]; then
-        printenv GOVMOMI_USERNAME GOVMOMI_PASSWORD GOVMOMI_URL GOVMOMI_CLUSTER GOVC_DATACENTER GOVMOMI_DATASTORE GOVMOMI_FOLDER GOVMOMI_NETWORK  > /dev/null
+    if [ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]; then
+        checkEnvVSphere
     fi
 }
 

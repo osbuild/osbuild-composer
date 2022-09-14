@@ -24,3 +24,7 @@ function installClientVSphere() {
     $GOVC_CMD version
 }
 
+function checkEnvVSphere() {
+    printenv GOVMOMI_USERNAME GOVMOMI_PASSWORD GOVMOMI_URL GOVMOMI_CLUSTER GOVC_DATACENTER GOVMOMI_DATASTORE GOVMOMI_FOLDER GOVMOMI_NETWORK  > /dev/null
+}
+
