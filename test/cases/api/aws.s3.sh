@@ -31,6 +31,10 @@ function cleanup() {
   if [ -n "$AWS_CMD" ]; then
     $AWS_CMD s3 rm "${S3_URI}"
   fi
+
+  if [ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]; then
+    cleanupVSphere
+  fi
 }
 
 function installClient() {
