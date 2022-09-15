@@ -118,6 +118,7 @@ sudo pkill -P "$CONSOLE_PID"
 
 # copy over next phases of the test and run the first one
 sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/share/tests/osbuild-composer/upgrade8to9/*.sh root@"$INSTANCE_ADDRESS":
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/libexec/tests/osbuild-composer/shared_lib.sh root@"$INSTANCE_ADDRESS":
 # Put comment in sshd_config to keep root login after upgrade
 sudo ssh "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS" 'sed -i "s/PermitRootLogin yes/PermitRootLogin yes #for sure/" /etc/ssh/sshd_config'
 set +e

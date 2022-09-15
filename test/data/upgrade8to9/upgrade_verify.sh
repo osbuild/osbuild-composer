@@ -2,7 +2,7 @@
 
 set -euxo pipefail
 
-source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+source shared_lib.sh
 
 WORKSPACE=$(mktemp -d)
 function cleanup() {
@@ -43,9 +43,6 @@ COMPOSE_INFO=${WORKSPACE}/compose-info-${IMAGE_KEY}.json
 
 # check installed osbuild-composer version
 rpm -qi osbuild-composer
-
-# install jq in case it's not present
-dnf install -y jq
 
 # Prepare repository override
 mkdir -p /etc/osbuild-composer/repositories
