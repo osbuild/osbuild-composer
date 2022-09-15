@@ -128,10 +128,10 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 	distro.X86_64ArchName: disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
-		Size: 68719476736,
+		Size: 64 * common.GibiByte,
 		Partitions: []disk.Partition{
 			{
-				Size: 524288000,
+				Size: 500 * common.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -144,7 +144,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 524288000,
+				Size: 500 * common.MebiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -156,7 +156,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size:     2097152,
+				Size:     2 * common.MebiByte,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
@@ -169,7 +169,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 					Description: "built with lvm2 and osbuild",
 					LogicalVolumes: []disk.LVMLogicalVolume{
 						{
-							Size: 1 * 1024 * 1024 * 1024,
+							Size: 1 * common.GibiByte,
 							Name: "homelv",
 							Payload: &disk.Filesystem{
 								Type:         "xfs",
@@ -181,7 +181,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							},
 						},
 						{
-							Size: 2 * 1024 * 1024 * 1024,
+							Size: 2 * common.GibiByte,
 							Name: "rootlv",
 							Payload: &disk.Filesystem{
 								Type:         "xfs",
@@ -193,7 +193,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							},
 						},
 						{
-							Size: 2 * 1024 * 1024 * 1024,
+							Size: 2 * common.GibiByte,
 							Name: "tmplv",
 							Payload: &disk.Filesystem{
 								Type:         "xfs",
@@ -205,7 +205,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							},
 						},
 						{
-							Size: 10 * 1024 * 1024 * 1024,
+							Size: 10 * common.GibiByte,
 							Name: "usrlv",
 							Payload: &disk.Filesystem{
 								Type:         "xfs",
@@ -217,7 +217,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							},
 						},
 						{
-							Size: 10 * 1024 * 1024 * 1024,
+							Size: 10 * common.GibiByte,
 							Name: "varlv",
 							Payload: &disk.Filesystem{
 								Type:         "xfs",
