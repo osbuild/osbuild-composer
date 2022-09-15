@@ -1,6 +1,7 @@
 package rhel8
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 )
@@ -11,13 +12,13 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     1048576,
+				Size:     1 * common.MebiByte,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 104857600,
+				Size: 100 * common.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -30,7 +31,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
+				Size: 2 * common.GibiByte, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -49,7 +50,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 104857600,
+				Size: 100 * common.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -62,7 +63,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
+				Size: 2 * common.GibiByte, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -81,12 +82,12 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "dos",
 		Partitions: []disk.Partition{
 			{
-				Size:     4194304,
+				Size:     4 * common.MebiByte,
 				Type:     "41",
 				Bootable: true,
 			},
 			{
-				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
+				Size: 2 * common.GibiByte, // 2 GiB
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/",
@@ -102,7 +103,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "dos",
 		Partitions: []disk.Partition{
 			{
-				Size:     2 * 1024 * 1024 * 1024, // 2 GiB
+				Size:     2 * common.GibiByte, // 2 GiB
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
@@ -122,13 +123,13 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     1048576,
+				Size:     1 * common.MebiByte,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
+				Size: 2 * common.GibiByte, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -147,7 +148,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 209715200,
+				Size: 200 * common.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -160,7 +161,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 536870912,
+				Size: 512 * common.MebiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -172,7 +173,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
+				Size: 2 * common.GibiByte, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -194,13 +195,13 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     1048576,
+				Size:     1 * common.MebiByte,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 133169152, // 127 MB
+				Size: 127 * common.MebiByte, // 127 MB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -214,7 +215,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 402653184, // 384 MB
+				Size: 384 * common.MebiByte, // 384 MB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -227,7 +228,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
+				Size: 2 * common.GibiByte, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.LUKSContainer{
@@ -261,7 +262,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 133169152, // 127 MB
+				Size: 127 * common.MebiByte, // 127 MB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -275,7 +276,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 402653184, // 384 MB
+				Size: 384 * common.MebiByte, // 384 MB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -288,7 +289,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * 1024 * 1024 * 1024, // 2 GiB
+				Size: 2 * common.GibiByte, // 2 GiB
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.LUKSContainer{
