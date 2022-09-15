@@ -38,7 +38,7 @@ build {
     }
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}"
+    ami_name = "${var.image_name}-rhel-8-x86_64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
@@ -72,7 +72,7 @@ build {
     }
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}"
+    ami_name = "${var.image_name}-rhel-8-aarch64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
