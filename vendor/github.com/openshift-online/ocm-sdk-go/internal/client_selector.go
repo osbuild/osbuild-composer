@@ -24,10 +24,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
 	"sync"
 
 	"golang.org/x/net/http2"
@@ -183,7 +183,7 @@ func (b *ClientSelectorBuilder) loadTrustedCAs(ctx context.Context) (result *x50
 				source,
 			)
 			var buffer []byte
-			buffer, err = ioutil.ReadFile(source) // #nosec G304
+			buffer, err = os.ReadFile(source) // #nosec G304
 			if err != nil {
 				result = nil
 				err = fmt.Errorf(
