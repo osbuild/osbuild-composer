@@ -559,7 +559,7 @@ github.com/vbauerster/mpb/v7
 github.com/vbauerster/mpb/v7/cwriter
 github.com/vbauerster/mpb/v7/decor
 github.com/vbauerster/mpb/v7/internal
-# github.com/vmware/govmomi v0.28.0
+# github.com/vmware/govmomi v0.29.0
 ## explicit
 github.com/vmware/govmomi/cns
 github.com/vmware/govmomi/cns/methods
@@ -576,6 +576,7 @@ github.com/vmware/govmomi/guest
 github.com/vmware/govmomi/guest/toolbox
 github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
+github.com/vmware/govmomi/internal/version
 github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
