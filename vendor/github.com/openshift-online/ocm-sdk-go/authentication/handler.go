@@ -25,7 +25,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -395,7 +394,7 @@ type aclItem struct {
 // loadACLFile loads the given ACL file into the given map of ACL items.
 func (b *HandlerBuilder) loadACLFile(file string, items map[string]*regexp.Regexp) error {
 	// Load the YAML data:
-	yamlData, err := ioutil.ReadFile(file) // nolint
+	yamlData, err := os.ReadFile(file) // nolint
 	if err != nil {
 		return err
 	}
@@ -622,7 +621,7 @@ func (h *Handler) loadKeysURL(ctx context.Context, addr string) error {
 // readKeys reads the keys from JSON web key set available in the given reader.
 func (h *Handler) readKeys(ctx context.Context, reader io.Reader) error {
 	// Read the JSON data:
-	jsonData, err := ioutil.ReadAll(reader)
+	jsonData, err := io.ReadAll(reader)
 	if err != nil {
 		return err
 	}

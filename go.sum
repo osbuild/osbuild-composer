@@ -1352,8 +1352,8 @@ github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xA
 github.com/opencontainers/selinux v1.9.1/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
 github.com/opencontainers/selinux v1.10.0/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
 github.com/opencontainers/selinux v1.10.1/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
-github.com/openshift-online/ocm-sdk-go v0.1.266 h1:rSp9oub4VE0oLIBER9vt+IZwzwA9EM2L+w+oXJdIBfk=
-github.com/openshift-online/ocm-sdk-go v0.1.266/go.mod h1:8nUowenx0yTyU9JIob+4KuXnejlxZkiAOUB8o4xbPyM=
+github.com/openshift-online/ocm-sdk-go v0.1.287 h1:b8WqqXXZPl5GeUXhbxzQlf5IVjbZFdQbnr9q6b1MKXQ=
+github.com/openshift-online/ocm-sdk-go v0.1.287/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=

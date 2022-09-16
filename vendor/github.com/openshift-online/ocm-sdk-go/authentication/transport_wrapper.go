@@ -25,7 +25,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -387,38 +387,41 @@ func (b *TransportWrapperBuilder) Build(ctx context.Context) (result *TransportW
 			err = fmt.Errorf("claims of token %d are of type '%T'", i, claims)
 			return
 		}
-		claim, ok := claims["typ"]
+		claim, ok := claims["token_use"]
 		if !ok {
-			// When the token doesn't have the `typ` claim we will use the position to
-			// decide: first token should be the access token and second should be the
-			// refresh token. That is consistent with the signature of the method that
-			// returns the tokens.
-			switch i {
-			case 0:
-				b.logger.Debug(
-					ctx,
-					"First token doesn't have a 'typ' claim, will assume "+
-						"that it is an access token",
-				)
-				accessToken = &tokenInfo{
-					text:   text,
-					object: object,
+			claim, ok = claims["typ"]
+			if !ok {
+				// When the token doesn't have the `typ` claim we will use the position to
+				// decide: first token should be the access token and second should be the
+				// refresh token. That is consistent with the signature of the method that
+				// returns the tokens.
+				switch i {
+				case 0:
+					b.logger.Debug(
+						ctx,
+						"First token doesn't have a 'typ' claim, will assume "+
+							"that it is an access token",
+					)
+					accessToken = &tokenInfo{
+						text:   text,
+						object: object,
+					}
+					continue
+				case 1:
+					b.logger.Debug(
+						ctx,
+						"Second token doesn't have a 'typ' claim, will assume "+
+							"that it is a refresh token",
+					)
+					refreshToken = &tokenInfo{
+						text:   text,
+						object: object,
+					}
+					continue
+				default:
+					err = fmt.Errorf("token %d doesn't contain the 'typ' claim", i)
+					return
 				}
-				continue
-			case 1:
-				b.logger.Debug(
-					ctx,
-					"Second token doesn't have a 'typ' claim, will assume "+
-						"that it is a refresh token",
-				)
-				refreshToken = &tokenInfo{
-					text:   text,
-					object: object,
-				}
-				continue
-			default:
-				err = fmt.Errorf("token %d doesn't contain the 'typ' claim", i)
-				return
 			}
 		}
 		typ, ok := claim.(string)
@@ -427,7 +430,7 @@ func (b *TransportWrapperBuilder) Build(ctx context.Context) (result *TransportW
 			return
 		}
 		switch strings.ToLower(typ) {
-		case "bearer":
+		case "access", "bearer":
 			accessToken = &tokenInfo{
 				text:   text,
 				object: object,
@@ -482,9 +485,7 @@ func (b *TransportWrapperBuilder) Build(ctx context.Context) (result *TransportW
 		scopes = DefaultScopes
 	} else {
 		scopes = make([]string, len(b.scopes))
-		for i := range b.scopes {
-			scopes[i] = b.scopes[i]
-		}
+		copy(scopes, b.scopes)
 	}
 
 	// Create the client selector:
@@ -857,12 +858,17 @@ func (w *TransportWrapper) currentTokens() (access, refresh string) {
 func (w *TransportWrapper) sendClientCredentialsForm(ctx context.Context, attempt int) (code int,
 	result *internal.TokenResponse, err error) {
 	form := url.Values{}
+	headers := map[string]string{}
 	w.logger.Debug(ctx, "Requesting new token using the client credentials grant")
 	form.Set(grantTypeField, clientCredentialsGrant)
 	form.Set(clientIDField, w.clientID)
-	form.Set(clientSecretField, w.clientSecret)
 	form.Set(scopeField, strings.Join(w.scopes, " "))
-	return w.sendForm(ctx, form, attempt)
+	// Encode client_id and client_secret to use as basic auth
+	// https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1
+	auth := fmt.Sprintf("%s:%s", w.clientID, w.clientSecret)
+	hash := base64.StdEncoding.EncodeToString([]byte(auth))
+	headers["Authorization"] = fmt.Sprintf("Basic %s", hash)
+	return w.sendForm(ctx, form, headers, attempt)
 }
 
 func (w *TransportWrapper) sendPasswordForm(ctx context.Context, attempt int) (code int,
@@ -874,7 +880,7 @@ func (w *TransportWrapper) sendPasswordForm(ctx context.Context, attempt int) (c
 	form.Set(usernameField, w.user)
 	form.Set(passwordField, w.password)
 	form.Set(scopeField, strings.Join(w.scopes, " "))
-	return w.sendForm(ctx, form, attempt)
+	return w.sendForm(ctx, form, nil, attempt)
 }
 
 func (w *TransportWrapper) sendRefreshForm(ctx context.Context, attempt int) (code int,
@@ -884,15 +890,15 @@ func (w *TransportWrapper) sendRefreshForm(ctx context.Context, attempt int) (co
 	form.Set(grantTypeField, refreshTokenGrant)
 	form.Set(clientIDField, w.clientID)
 	form.Set(refreshTokenField, w.refreshToken.text)
-	code, result, err = w.sendForm(ctx, form, attempt)
+	code, result, err = w.sendForm(ctx, form, nil, attempt)
 	return
 }
 
-func (w *TransportWrapper) sendForm(ctx context.Context, form url.Values,
+func (w *TransportWrapper) sendForm(ctx context.Context, form url.Values, headers map[string]string,
 	attempt int) (code int, result *internal.TokenResponse, err error) {
 	// Measure the time that it takes to send the request and receive the response:
 	start := time.Now()
-	code, result, err = w.sendFormTimed(ctx, form)
+	code, result, err = w.sendFormTimed(ctx, form, headers)
 	elapsed := time.Since(start)
 
 	// Update the metrics:
@@ -913,7 +919,7 @@ func (w *TransportWrapper) sendForm(ctx context.Context, form url.Values,
 	return
 }
 
-func (w *TransportWrapper) sendFormTimed(ctx context.Context, form url.Values) (code int,
+func (w *TransportWrapper) sendFormTimed(ctx context.Context, form url.Values, headers map[string]string) (code int,
 	result *internal.TokenResponse, err error) {
 	// Create the HTTP request:
 	body := []byte(form.Encode())
@@ -925,6 +931,10 @@ func (w *TransportWrapper) sendFormTimed(ctx context.Context, form url.Values) (
 	}
 	header.Set("Content-Type", "application/x-www-form-urlencoded")
 	header.Set("Accept", "application/json")
+	// Add any additional headers:
+	for k, v := range headers {
+		header.Set(k, v)
+	}
 	if err != nil {
 		err = fmt.Errorf("can't create request: %w", err)
 		return
@@ -958,7 +968,7 @@ func (w *TransportWrapper) sendFormTimed(ctx context.Context, form url.Values) (
 	}
 
 	// Read the response body:
-	body, err = ioutil.ReadAll(response.Body)
+	body, err = io.ReadAll(response.Body)
 	if err != nil {
 		err = fmt.Errorf("can't read response: %w", err)
 		return
@@ -1012,15 +1022,15 @@ func (w *TransportWrapper) sendFormTimed(ctx context.Context, form url.Values) (
 		}
 	}
 
-	// The refresh token isn't mandatory for the password and client credentials grants:
+	// If a refresh token is not included in the response, we can safely assume that the old
+	// one is still valid and does not need to be discarded
+	// https://datatracker.ietf.org/doc/html/rfc6749#section-6
 	var refreshTokenText string
 	var refreshTokenObject *jwt.Token
 	var refreshToken *tokenInfo
 	if result.RefreshToken == nil {
-		grantType := form.Get(grantTypeField)
-		if grantType != passwordGrant && grantType != clientCredentialsGrant {
-			err = fmt.Errorf("no refresh token was received")
-			return
+		if w.refreshToken != nil && w.refreshToken.text != "" {
+			result.RefreshToken = &w.refreshToken.text
 		}
 	} else {
 		refreshTokenText = *result.RefreshToken
@@ -1104,7 +1114,6 @@ func parsePullSecretAccessToken(text string) error {
 const (
 	grantTypeField    = "grant_type"
 	clientIDField     = "client_id"
-	clientSecretField = "client_secret"
 	usernameField     = "username"
 	passwordField     = "password"
 	refreshTokenField = "refresh_token"

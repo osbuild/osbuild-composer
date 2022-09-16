@@ -21,7 +21,7 @@ package internal
 import (
 	"fmt"
 	"html"
-	"io/ioutil"
+	"io"
 	"mime"
 	"net/http"
 	"regexp"
@@ -71,7 +71,7 @@ func CheckContentType(response *http.Response) error {
 // beginning of the content followed by ellipsis.
 func contentSummary(mediaType string, response *http.Response) (summary string, err error) {
 	var body []byte
-	body, err = ioutil.ReadAll(response.Body)
+	body, err = io.ReadAll(response.Body)
 	if err != nil {
 		return
 	}
