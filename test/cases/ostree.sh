@@ -15,14 +15,6 @@ fi
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    "fedora-35")
-        IMAGE_TYPE=iot-commit
-        OSTREE_REF="fedora/35/${ARCH}/iot"
-        OS_VARIANT="fedora35"
-        USER_IN_COMMIT="false"
-        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/35/Everything/x86_64/os/"
-        EMBEDED_CONTAINER="false"
-        ;;
     "fedora-36")
         IMAGE_TYPE=iot-commit
         OSTREE_REF="fedora/36/${ARCH}/iot"
