@@ -93,8 +93,8 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
     "fedora-"*)
-        CONTAINER_TYPE=fedora-iot-container
-        INSTALLER_TYPE=fedora-iot-installer
+        CONTAINER_TYPE=iot-container
+        INSTALLER_TYPE=iot-installer
         OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
         OSTREE_OSNAME=fedora
         OS_VARIANT="fedora-unknown"
