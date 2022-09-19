@@ -47,7 +47,7 @@ function installClient() {
 
 function createReqFile() {
     case ${IMAGE_TYPE} in
-        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER")
+        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_IOT_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER")
             createReqFileEdge
             ;;
         "$IMAGE_TYPE_VSPHERE")
@@ -90,7 +90,7 @@ function verify() {
 
     # Download the object using the Presigned URL and inspect
     case ${IMAGE_TYPE} in
-        "$IMAGE_TYPE_EDGE_COMMIT")
+        "$IMAGE_TYPE_EDGE_COMMIT"|"${IMAGE_TYPE_IOT_COMMIT}")
             if [[ $ID == "fedora" ]]; then
                 # on Fedora, the test case uploads the artifact publicly,
                 # so check here that the URL isn't presigned
