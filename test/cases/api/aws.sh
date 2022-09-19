@@ -22,7 +22,7 @@ function cleanup() {
     $AWS_CMD ec2 delete-snapshot --snapshot-id "$AWS_SNAPSHOT_ID"
     $AWS_CMD ec2 delete-key-pair --key-name "key-for-$AMI_IMAGE_ID"
 
-    $AWS_CMD ec2 deregister-image --region "$REGION_2" --image-id "$AMI_2"
+    $AWS_CMD ec2 deregister-image --region "$REGION_2" --image-id "$AMI_ID_2"
     $AWS_CMD ec2 delete-snapshot --region "$REGION_2" --snapshot-id "$SNAPSHOT_ID_2"
   fi
 }
@@ -146,6 +146,12 @@ function verify() {
   SNAPSHOT_ID_2=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami2.json")
   $AWS_CMD ec2 describe-snapshot-attribute --region "$REGION_2" --snapshot-id "$SNAPSHOT_ID_2" \
            --attribute createVolumePermission > "$WORKDIR/snapshot-attributes2.json"
+
+  # Tag cloned image and snapshot with "gitlab-ci-test" tag
+  $AWS_CMD ec2 create-tags --region "$REGION_2" \
+    --resources "${SNAPSHOT_ID_2}" "${AMI_ID_2}" \
+    --tags Key=gitlab-ci-test,Value=true
+
   SHARED_ID_2=$(jq -r ".CreateVolumePermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT\").UserId" "$WORKDIR/snapshot-attributes2.json")
   if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID_2" ]; then
       echo "EC2 Snapshot wasn't shared with AWS_API_TEST_SHARE_ACCOUNT"
