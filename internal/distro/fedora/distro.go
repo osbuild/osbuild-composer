@@ -71,8 +71,8 @@ var (
 
 	// Image Definitions
 	iotCommitImgType = imageType{
-		name:        "fedora-iot-commit",
-		nameAliases: []string{"iot-commit"},
+		name:        "iot-commit",
+		nameAliases: []string{"fedora-iot-commit"},
 		filename:    "commit.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
@@ -89,8 +89,8 @@ var (
 	}
 
 	iotOCIImgType = imageType{
-		name:        "fedora-iot-container",
-		nameAliases: []string{"iot-container"},
+		name:        "iot-container",
+		nameAliases: []string{"fedora-iot-container"},
 		filename:    "container.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
@@ -111,8 +111,8 @@ var (
 	}
 
 	iotInstallerImgType = imageType{
-		name:        "fedora-iot-installer",
-		nameAliases: []string{"iot-installer"},
+		name:        "iot-installer",
+		nameAliases: []string{"fedora-iot-installer"},
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
@@ -131,8 +131,8 @@ var (
 	}
 
 	iotRawImgType = imageType{
-		name:        "fedora-iot-raw-image",
-		nameAliases: []string{"iot-raw-image"},
+		name:        "iot-raw-image",
+		nameAliases: []string{"fedora-iot-raw-image"},
 		filename:    "image.raw.xz",
 		mimeType:    "application/xz",
 		packageSets: map[string]packageSetFunc{},
@@ -681,7 +681,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 
-		if t.name == "iot-installer" || t.name == "fedora-iot-installer" {
+		if t.name == "iot-installer" {
 			allowed := []string{"User", "Group"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
