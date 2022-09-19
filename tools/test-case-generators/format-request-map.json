@@ -240,22 +240,22 @@
     "no-image-info": true,
     "overrides": {}
   },
-  "fedora-iot-commit": {
+  "iot-commit": {
     "compose-request": {
       "distro": "",
       "arch": "",
-      "image-type": "fedora-iot-commit",
+      "image-type": "iot-commit",
       "repositories": [],
       "filename": "commit.tar",
       "blueprint": {}
     },
     "overrides": {}
   },
-  "fedora-iot-commit-debug": {
+  "iot-commit-debug": {
     "compose-request": {
       "distro": "",
       "arch": "",
-      "image-type": "fedora-iot-commit",
+      "image-type": "iot-commit",
       "repositories": [],
       "filename": "commit.tar",
       "blueprint": {
@@ -271,22 +271,22 @@
       "x86_64"
     ]
   },
-  "fedora-iot-container": {
+  "iot-container": {
     "compose-request": {
       "distro": "",
       "arch": "",
-      "image-type": "fedora-iot-container",
+      "image-type": "iot-container",
       "repositories": [],
       "filename": "container.tar",
       "blueprint": {}
     },
     "overrides": {}
   },
-  "fedora-iot-installer": {
+  "iot-installer": {
     "compose-request": {
       "distro": "",
       "arch": "",
-      "image-type": "fedora-iot-installer",
+      "image-type": "iot-installer",
       "repositories": [],
       "filename": "installer.iso",
       "ostree": {
@@ -299,11 +299,11 @@
     "no-image-info": true,
     "overrides": {}
   },
-  "fedora-iot-installer-with-users": {
+  "iot-installer-with-users": {
     "compose-request": {
       "distro": "",
       "arch": "",
-      "image-type": "fedora-iot-installer",
+      "image-type": "iot-installer",
       "repositories": [],
       "filename": "installer.iso",
       "ostree": {
@@ -345,11 +345,11 @@
     "no-image-info": true,
     "overrides": {}
   },
-  "fedora-iot-raw-image": {
+  "iot-raw-image": {
     "compose-request": {
       "distro": "",
       "arch": "",
-      "image-type": "fedora-iot-raw-image",
+      "image-type": "iot-raw-image",
       "repositories": [],
       "filename": "image.raw.xz",
       "ostree": {
