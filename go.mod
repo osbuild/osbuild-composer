@@ -6,7 +6,7 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 require (
 	cloud.google.com/go/cloudbuild v1.2.0
-	cloud.google.com/go/compute v1.9.0
+	cloud.google.com/go/compute v1.10.0
 	cloud.google.com/go/storage v1.26.0
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-sdk-for-go v66.0.0+incompatible
@@ -45,10 +45,10 @@ require (
 	github.com/stretchr/testify v1.8.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.29.0
-	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
+	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10
 	google.golang.org/api v0.96.0
-	google.golang.org/genproto v0.0.0-20220810155839-1856144b1d9c
+	google.golang.org/genproto v0.0.0-20220915135415-7fd63a7952de
 	gopkg.in/ini.v1 v1.67.0
 )
