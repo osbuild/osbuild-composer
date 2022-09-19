@@ -311,6 +311,27 @@ name = "kernel-rt"
 EOF
 fi
 
+# User in raw image blueprint is not for RHEL 9.1 and 8.7
+# Workaround for RHEL 9.1 and 8.7 nightly test
+# Check osbuild-composer version first
+if ! nvrGreaterOrEqual "osbuild-composer" "64"; then
+    USER_IN_RAW="false"
+else
+    USER_IN_RAW="true"
+fi
+
+if [[ "$USER_IN_RAW" == "false" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/admin/"
+groups = ["wheel"]
+EOF
+fi
+
 greenprint "📄 container blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -374,6 +395,20 @@ version = "0.0.1"
 modules = []
 groups = []
 EOF
+
+# User in raw image blueprint is not for RHEL 9.1 and 8.7
+# Workaround for RHEL 9.1 and 8.7 nightly test
+if [[ "$USER_IN_RAW" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/admin/"
+groups = ["wheel"]
+EOF
+fi
 
 greenprint "📄 raw image blueprint"
 cat "$BLUEPRINT_FILE"
@@ -582,6 +617,19 @@ if [[ "$ID" != "fedora" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
 name = "kernel-rt"
+EOF
+fi
+
+# User in raw image blueprint is not for RHEL 9.1 and 8.7
+# Workaround for RHEL 9.1 and 8.7 nightly test
+if [[ "$USER_IN_RAW" == "false" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+home = "/home/admin/"
+groups = ["wheel"]
 EOF
 fi
 
