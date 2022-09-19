@@ -16,7 +16,7 @@ fi
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
     "fedora-35")
-        IMAGE_TYPE=fedora-iot-commit
+        IMAGE_TYPE=iot-commit
         OSTREE_REF="fedora/35/${ARCH}/iot"
         OS_VARIANT="fedora35"
         USER_IN_COMMIT="false"
@@ -24,7 +24,7 @@ case "${ID}-${VERSION_ID}" in
         EMBEDED_CONTAINER="false"
         ;;
     "fedora-36")
-        IMAGE_TYPE=fedora-iot-commit
+        IMAGE_TYPE=iot-commit
         OSTREE_REF="fedora/36/${ARCH}/iot"
         OS_VARIANT="fedora36"
         USER_IN_COMMIT="false"
@@ -32,7 +32,7 @@ case "${ID}-${VERSION_ID}" in
         EMBEDED_CONTAINER="false"
         ;;
     "fedora-37")
-        IMAGE_TYPE=fedora-iot-commit
+        IMAGE_TYPE=iot-commit
         OSTREE_REF="fedora/37/${ARCH}/iot"
         OS_VARIANT="fedora-unknown"
         USER_IN_COMMIT="false"

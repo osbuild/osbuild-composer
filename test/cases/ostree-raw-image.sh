@@ -102,8 +102,8 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         ;;
     "fedora-"*)
-        CONTAINER_TYPE=fedora-iot-container
-        RAW_IMAGE_TYPE=fedora-iot-raw-image
+        CONTAINER_TYPE=iot-container
+        RAW_IMAGE_TYPE=iot-raw-image
         OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
         OS_VARIANT="fedora-unknown"
         OSTREE_OSNAME="fedora-iot"
