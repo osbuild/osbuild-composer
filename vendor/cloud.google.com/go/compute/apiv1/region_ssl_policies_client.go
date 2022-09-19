@@ -24,7 +24,6 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	"sort"
 
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/googleapi"
@@ -39,69 +38,66 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var newTargetHttpProxiesClientHook clientHook
+var newRegionSslPoliciesClientHook clientHook
 
-// TargetHttpProxiesCallOptions contains the retry settings for each method of TargetHttpProxiesClient.
-type TargetHttpProxiesCallOptions struct {
-	AggregatedList []gax.CallOption
-	Delete         []gax.CallOption
-	Get            []gax.CallOption
-	Insert         []gax.CallOption
-	List           []gax.CallOption
-	Patch          []gax.CallOption
-	SetUrlMap      []gax.CallOption
+// RegionSslPoliciesCallOptions contains the retry settings for each method of RegionSslPoliciesClient.
+type RegionSslPoliciesCallOptions struct {
+	Delete                []gax.CallOption
+	Get                   []gax.CallOption
+	Insert                []gax.CallOption
+	List                  []gax.CallOption
+	ListAvailableFeatures []gax.CallOption
+	Patch                 []gax.CallOption
 }
 
-func defaultTargetHttpProxiesRESTCallOptions() *TargetHttpProxiesCallOptions {
-	return &TargetHttpProxiesCallOptions{
-		AggregatedList: []gax.CallOption{},
-		Delete:         []gax.CallOption{},
-		Get:            []gax.CallOption{},
-		Insert:         []gax.CallOption{},
-		List:           []gax.CallOption{},
-		Patch:          []gax.CallOption{},
-		SetUrlMap:      []gax.CallOption{},
+func defaultRegionSslPoliciesRESTCallOptions() *RegionSslPoliciesCallOptions {
+	return &RegionSslPoliciesCallOptions{
+		Delete:                []gax.CallOption{},
+		Get:                   []gax.CallOption{},
+		Insert:                []gax.CallOption{},
+		List:                  []gax.CallOption{},
+		ListAvailableFeatures: []gax.CallOption{},
+		Patch:                 []gax.CallOption{},
 	}
 }
 
-// internalTargetHttpProxiesClient is an interface that defines the methods available from Google Compute Engine API.
-type internalTargetHttpProxiesClient interface {
+// internalRegionSslPoliciesClient is an interface that defines the methods available from Google Compute Engine API.
+type internalRegionSslPoliciesClient interface {
 	Close() error
 	setGoogleClientInfo(...string)
 	Connection() *grpc.ClientConn
-	AggregatedList(context.Context, *computepb.AggregatedListTargetHttpProxiesRequest, ...gax.CallOption) *TargetHttpProxiesScopedListPairIterator
-	Delete(context.Context, *computepb.DeleteTargetHttpProxyRequest, ...gax.CallOption) (*Operation, error)
-	Get(context.Context, *computepb.GetTargetHttpProxyRequest, ...gax.CallOption) (*computepb.TargetHttpProxy, error)
-	Insert(context.Context, *computepb.InsertTargetHttpProxyRequest, ...gax.CallOption) (*Operation, error)
-	List(context.Context, *computepb.ListTargetHttpProxiesRequest, ...gax.CallOption) *TargetHttpProxyIterator
-	Patch(context.Context, *computepb.PatchTargetHttpProxyRequest, ...gax.CallOption) (*Operation, error)
-	SetUrlMap(context.Context, *computepb.SetUrlMapTargetHttpProxyRequest, ...gax.CallOption) (*Operation, error)
+	Delete(context.Context, *computepb.DeleteRegionSslPolicyRequest, ...gax.CallOption) (*Operation, error)
+	Get(context.Context, *computepb.GetRegionSslPolicyRequest, ...gax.CallOption) (*computepb.SslPolicy, error)
+	Insert(context.Context, *computepb.InsertRegionSslPolicyRequest, ...gax.CallOption) (*Operation, error)
+	List(context.Context, *computepb.ListRegionSslPoliciesRequest, ...gax.CallOption) *SslPolicyIterator
+	ListAvailableFeatures(context.Context, *computepb.ListAvailableFeaturesRegionSslPoliciesRequest, ...gax.CallOption) (*computepb.SslPoliciesListAvailableFeaturesResponse, error)
+	Patch(context.Context, *computepb.PatchRegionSslPolicyRequest, ...gax.CallOption) (*Operation, error)
 }
 
-// TargetHttpProxiesClient is a client for interacting with Google Compute Engine API.
+// RegionSslPoliciesClient is a client for interacting with Google Compute Engine API.
 // Methods, except Close, may be called concurrently. However, fields must not be modified concurrently with method calls.
 //
-// The TargetHttpProxies API.
-type TargetHttpProxiesClient struct {
+// The RegionSslPolicies API.
+type RegionSslPoliciesClient struct {
 	// The internal transport-dependent client.
-	internalClient internalTargetHttpProxiesClient
+	internalClient internalRegionSslPoliciesClient
 
 	// The call options for this service.
-	CallOptions *TargetHttpProxiesCallOptions
+	CallOptions *RegionSslPoliciesCallOptions
 }
 
 // Wrapper methods routed to the internal client.
 
 // Close closes the connection to the API service. The user should invoke this when
 // the client is no longer required.
-func (c *TargetHttpProxiesClient) Close() error {
+func (c *RegionSslPoliciesClient) Close() error {
 	return c.internalClient.Close()
 }
 
 // setGoogleClientInfo sets the name and version of the application in
 // the `x-goog-api-client` header passed on each request. Intended for
 // use by Google-written clients.
-func (c *TargetHttpProxiesClient) setGoogleClientInfo(keyval ...string) {
+func (c *RegionSslPoliciesClient) setGoogleClientInfo(keyval ...string) {
 	c.internalClient.setGoogleClientInfo(keyval...)
 }
 
@@ -109,47 +105,42 @@ func (c *TargetHttpProxiesClient) setGoogleClientInfo(keyval ...string) {
 //
 // Deprecated: Connections are now pooled so this method does not always
 // return the same resource.
-func (c *TargetHttpProxiesClient) Connection() *grpc.ClientConn {
+func (c *RegionSslPoliciesClient) Connection() *grpc.ClientConn {
 	return c.internalClient.Connection()
 }
 
-// AggregatedList retrieves the list of all TargetHttpProxy resources, regional and global, available to the specified project.
-func (c *TargetHttpProxiesClient) AggregatedList(ctx context.Context, req *computepb.AggregatedListTargetHttpProxiesRequest, opts ...gax.CallOption) *TargetHttpProxiesScopedListPairIterator {
-	return c.internalClient.AggregatedList(ctx, req, opts...)
-}
-
-// Delete deletes the specified TargetHttpProxy resource.
-func (c *TargetHttpProxiesClient) Delete(ctx context.Context, req *computepb.DeleteTargetHttpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
+// Delete deletes the specified SSL policy. The SSL policy resource can be deleted only if it is not in use by any TargetHttpsProxy or TargetSslProxy resources.
+func (c *RegionSslPoliciesClient) Delete(ctx context.Context, req *computepb.DeleteRegionSslPolicyRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Delete(ctx, req, opts...)
 }
 
-// Get returns the specified TargetHttpProxy resource. Gets a list of available target HTTP proxies by making a list() request.
-func (c *TargetHttpProxiesClient) Get(ctx context.Context, req *computepb.GetTargetHttpProxyRequest, opts ...gax.CallOption) (*computepb.TargetHttpProxy, error) {
+// Get lists all of the ordered rules present in a single specified policy.
+func (c *RegionSslPoliciesClient) Get(ctx context.Context, req *computepb.GetRegionSslPolicyRequest, opts ...gax.CallOption) (*computepb.SslPolicy, error) {
 	return c.internalClient.Get(ctx, req, opts...)
 }
 
-// Insert creates a TargetHttpProxy resource in the specified project using the data included in the request.
-func (c *TargetHttpProxiesClient) Insert(ctx context.Context, req *computepb.InsertTargetHttpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
+// Insert creates a new policy in the specified project and region using the data included in the request.
+func (c *RegionSslPoliciesClient) Insert(ctx context.Context, req *computepb.InsertRegionSslPolicyRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Insert(ctx, req, opts...)
 }
 
-// List retrieves the list of TargetHttpProxy resources available to the specified project.
-func (c *TargetHttpProxiesClient) List(ctx context.Context, req *computepb.ListTargetHttpProxiesRequest, opts ...gax.CallOption) *TargetHttpProxyIterator {
+// List lists all the SSL policies that have been configured for the specified project and region.
+func (c *RegionSslPoliciesClient) List(ctx context.Context, req *computepb.ListRegionSslPoliciesRequest, opts ...gax.CallOption) *SslPolicyIterator {
 	return c.internalClient.List(ctx, req, opts...)
 }
 
-// Patch patches the specified TargetHttpProxy resource with the data included in the request. This method supports PATCH semantics and uses JSON merge patch format and processing rules.
-func (c *TargetHttpProxiesClient) Patch(ctx context.Context, req *computepb.PatchTargetHttpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
+// ListAvailableFeatures lists all features that can be specified in the SSL policy when using custom profile.
+func (c *RegionSslPoliciesClient) ListAvailableFeatures(ctx context.Context, req *computepb.ListAvailableFeaturesRegionSslPoliciesRequest, opts ...gax.CallOption) (*computepb.SslPoliciesListAvailableFeaturesResponse, error) {
+	return c.internalClient.ListAvailableFeatures(ctx, req, opts...)
+}
+
+// Patch patches the specified SSL policy with the data included in the request.
+func (c *RegionSslPoliciesClient) Patch(ctx context.Context, req *computepb.PatchRegionSslPolicyRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.Patch(ctx, req, opts...)
 }
 
-// SetUrlMap changes the URL map for TargetHttpProxy.
-func (c *TargetHttpProxiesClient) SetUrlMap(ctx context.Context, req *computepb.SetUrlMapTargetHttpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
-	return c.internalClient.SetUrlMap(ctx, req, opts...)
-}
-
 // Methods, except Close, may be called concurrently. However, fields must not be modified concurrently with method calls.
-type targetHttpProxiesRESTClient struct {
+type regionSslPoliciesRESTClient struct {
 	// The http endpoint to connect to.
 	endpoint string
 
@@ -157,27 +148,27 @@ type targetHttpProxiesRESTClient struct {
 	httpClient *http.Client
 
 	// operationClient is used to call the operation-specific management service.
-	operationClient *GlobalOperationsClient
+	operationClient *RegionOperationsClient
 
 	// The x-goog-* metadata to be sent with each request.
 	xGoogMetadata metadata.MD
 
-	// Points back to the CallOptions field of the containing TargetHttpProxiesClient
-	CallOptions **TargetHttpProxiesCallOptions
+	// Points back to the CallOptions field of the containing RegionSslPoliciesClient
+	CallOptions **RegionSslPoliciesCallOptions
 }
 
-// NewTargetHttpProxiesRESTClient creates a new target http proxies rest client.
+// NewRegionSslPoliciesRESTClient creates a new region ssl policies rest client.
 //
-// The TargetHttpProxies API.
-func NewTargetHttpProxiesRESTClient(ctx context.Context, opts ...option.ClientOption) (*TargetHttpProxiesClient, error) {
-	clientOpts := append(defaultTargetHttpProxiesRESTClientOptions(), opts...)
+// The RegionSslPolicies API.
+func NewRegionSslPoliciesRESTClient(ctx context.Context, opts ...option.ClientOption) (*RegionSslPoliciesClient, error) {
+	clientOpts := append(defaultRegionSslPoliciesRESTClientOptions(), opts...)
 	httpClient, endpoint, err := httptransport.NewClient(ctx, clientOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	callOpts := defaultTargetHttpProxiesRESTCallOptions()
-	c := &targetHttpProxiesRESTClient{
+	callOpts := defaultRegionSslPoliciesRESTCallOptions()
+	c := &regionSslPoliciesRESTClient{
 		endpoint:    endpoint,
 		httpClient:  httpClient,
 		CallOptions: &callOpts,
@@ -188,16 +179,16 @@ func NewTargetHttpProxiesRESTClient(ctx context.Context, opts ...option.ClientOp
 		option.WithHTTPClient(httpClient),
 		option.WithEndpoint(endpoint),
 	}
-	opC, err := NewGlobalOperationsRESTClient(ctx, o...)
+	opC, err := NewRegionOperationsRESTClient(ctx, o...)
 	if err != nil {
 		return nil, err
 	}
 	c.operationClient = opC
 
-	return &TargetHttpProxiesClient{internalClient: c, CallOptions: callOpts}, nil
+	return &RegionSslPoliciesClient{internalClient: c, CallOptions: callOpts}, nil
 }
 
-func defaultTargetHttpProxiesRESTClientOptions() []option.ClientOption {
+func defaultRegionSslPoliciesRESTClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		internaloption.WithDefaultEndpoint("https://compute.googleapis.com"),
 		internaloption.WithDefaultMTLSEndpoint("https://compute.mtls.googleapis.com"),
@@ -209,7 +200,7 @@ func defaultTargetHttpProxiesRESTClientOptions() []option.ClientOption {
 // setGoogleClientInfo sets the name and version of the application in
 // the `x-goog-api-client` header passed on each request. Intended for
 // use by Google-written clients.
-func (c *targetHttpProxiesRESTClient) setGoogleClientInfo(keyval ...string) {
+func (c *regionSslPoliciesRESTClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", versionGo()}, keyval...)
 	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "rest", "UNKNOWN")
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
@@ -217,7 +208,7 @@ func (c *targetHttpProxiesRESTClient) setGoogleClientInfo(keyval ...string) {
 
 // Close closes the connection to the API service. The user should invoke this when
 // the client is no longer required.
-func (c *targetHttpProxiesRESTClient) Close() error {
+func (c *regionSslPoliciesRESTClient) Close() error {
 	// Replace httpClient with nil to force cleanup.
 	c.httpClient = nil
 	if err := c.operationClient.Close(); err != nil {
@@ -229,123 +220,17 @@ func (c *targetHttpProxiesRESTClient) Close() error {
 // Connection returns a connection to the API service.
 //
 // Deprecated: This method always returns nil.
-func (c *targetHttpProxiesRESTClient) Connection() *grpc.ClientConn {
+func (c *regionSslPoliciesRESTClient) Connection() *grpc.ClientConn {
 	return nil
 }
 
-// AggregatedList retrieves the list of all TargetHttpProxy resources, regional and global, available to the specified project.
-func (c *targetHttpProxiesRESTClient) AggregatedList(ctx context.Context, req *computepb.AggregatedListTargetHttpProxiesRequest, opts ...gax.CallOption) *TargetHttpProxiesScopedListPairIterator {
-	it := &TargetHttpProxiesScopedListPairIterator{}
-	req = proto.Clone(req).(*computepb.AggregatedListTargetHttpProxiesRequest)
-	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	it.InternalFetch = func(pageSize int, pageToken string) ([]TargetHttpProxiesScopedListPair, string, error) {
-		resp := &computepb.TargetHttpProxyAggregatedList{}
-		if pageToken != "" {
-			req.PageToken = proto.String(pageToken)
-		}
-		if pageSize > math.MaxInt32 {
-			req.MaxResults = proto.Uint32(math.MaxInt32)
-		} else if pageSize != 0 {
-			req.MaxResults = proto.Uint32(uint32(pageSize))
-		}
-		baseUrl, err := url.Parse(c.endpoint)
-		if err != nil {
-			return nil, "", err
-		}
-		baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/aggregated/targetHttpProxies", req.GetProject())
-
-		params := url.Values{}
-		if req != nil && req.Filter != nil {
-			params.Add("filter", fmt.Sprintf("%v", req.GetFilter()))
-		}
-		if req != nil && req.IncludeAllScopes != nil {
-			params.Add("includeAllScopes", fmt.Sprintf("%v", req.GetIncludeAllScopes()))
-		}
-		if req != nil && req.MaxResults != nil {
-			params.Add("maxResults", fmt.Sprintf("%v", req.GetMaxResults()))
-		}
-		if req != nil && req.OrderBy != nil {
-			params.Add("orderBy", fmt.Sprintf("%v", req.GetOrderBy()))
-		}
-		if req != nil && req.PageToken != nil {
-			params.Add("pageToken", fmt.Sprintf("%v", req.GetPageToken()))
-		}
-		if req != nil && req.ReturnPartialSuccess != nil {
-			params.Add("returnPartialSuccess", fmt.Sprintf("%v", req.GetReturnPartialSuccess()))
-		}
-
-		baseUrl.RawQuery = params.Encode()
-
-		// Build HTTP headers from client and context metadata.
-		headers := buildHeaders(ctx, c.xGoogMetadata, metadata.Pairs("Content-Type", "application/json"))
-		e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-			if settings.Path != "" {
-				baseUrl.Path = settings.Path
-			}
-			httpReq, err := http.NewRequest("GET", baseUrl.String(), nil)
-			if err != nil {
-				return err
-			}
-			httpReq.Header = headers
-
-			httpRsp, err := c.httpClient.Do(httpReq)
-			if err != nil {
-				return err
-			}
-			defer httpRsp.Body.Close()
-
-			if err = googleapi.CheckResponse(httpRsp); err != nil {
-				return err
-			}
-
-			buf, err := ioutil.ReadAll(httpRsp.Body)
-			if err != nil {
-				return err
-			}
-
-			if err := unm.Unmarshal(buf, resp); err != nil {
-				return maybeUnknownEnum(err)
-			}
-
-			return nil
-		}, opts...)
-		if e != nil {
-			return nil, "", e
-		}
-		it.Response = resp
-
-		elems := make([]TargetHttpProxiesScopedListPair, 0, len(resp.GetItems()))
-		for k, v := range resp.GetItems() {
-			elems = append(elems, TargetHttpProxiesScopedListPair{k, v})
-		}
-		sort.Slice(elems, func(i, j int) bool { return elems[i].Key < elems[j].Key })
-
-		return elems, resp.GetNextPageToken(), nil
-	}
-
-	fetch := func(pageSize int, pageToken string) (string, error) {
-		items, nextPageToken, err := it.InternalFetch(pageSize, pageToken)
-		if err != nil {
-			return "", err
-		}
-		it.items = append(it.items, items...)
-		return nextPageToken, nil
-	}
-
-	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
-	it.pageInfo.MaxSize = int(req.GetMaxResults())
-	it.pageInfo.Token = req.GetPageToken()
-
-	return it
-}
-
-// Delete deletes the specified TargetHttpProxy resource.
-func (c *targetHttpProxiesRESTClient) Delete(ctx context.Context, req *computepb.DeleteTargetHttpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
+// Delete deletes the specified SSL policy. The SSL policy resource can be deleted only if it is not in use by any TargetHttpsProxy or TargetSslProxy resources.
+func (c *regionSslPoliciesRESTClient) Delete(ctx context.Context, req *computepb.DeleteRegionSslPolicyRequest, opts ...gax.CallOption) (*Operation, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
 		return nil, err
 	}
-	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/global/targetHttpProxies/%v", req.GetProject(), req.GetTargetHttpProxy())
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/sslPolicies/%v", req.GetProject(), req.GetRegion(), req.GetSslPolicy())
 
 	params := url.Values{}
 	if req != nil && req.RequestId != nil {
@@ -355,7 +240,7 @@ func (c *targetHttpProxiesRESTClient) Delete(ctx context.Context, req *computepb
 	baseUrl.RawQuery = params.Encode()
 
 	// Build HTTP headers from client and context metadata.
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "target_http_proxy", url.QueryEscape(req.GetTargetHttpProxy())))
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "region", url.QueryEscape(req.GetRegion()), "ssl_policy", url.QueryEscape(req.GetSslPolicy())))
 
 	headers := buildHeaders(ctx, c.xGoogMetadata, md, metadata.Pairs("Content-Type", "application/json"))
 	opts = append((*c.CallOptions).Delete[0:len((*c.CallOptions).Delete):len((*c.CallOptions).Delete)], opts...)
@@ -397,30 +282,31 @@ func (c *targetHttpProxiesRESTClient) Delete(ctx context.Context, req *computepb
 		return nil, e
 	}
 	op := &Operation{
-		&globalOperationsHandle{
+		&regionOperationsHandle{
 			c:       c.operationClient,
 			proto:   resp,
 			project: req.GetProject(),
+			region:  req.GetRegion(),
 		},
 	}
 	return op, nil
 }
 
-// Get returns the specified TargetHttpProxy resource. Gets a list of available target HTTP proxies by making a list() request.
-func (c *targetHttpProxiesRESTClient) Get(ctx context.Context, req *computepb.GetTargetHttpProxyRequest, opts ...gax.CallOption) (*computepb.TargetHttpProxy, error) {
+// Get lists all of the ordered rules present in a single specified policy.
+func (c *regionSslPoliciesRESTClient) Get(ctx context.Context, req *computepb.GetRegionSslPolicyRequest, opts ...gax.CallOption) (*computepb.SslPolicy, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
 		return nil, err
 	}
-	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/global/targetHttpProxies/%v", req.GetProject(), req.GetTargetHttpProxy())
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/sslPolicies/%v", req.GetProject(), req.GetRegion(), req.GetSslPolicy())
 
 	// Build HTTP headers from client and context metadata.
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "target_http_proxy", url.QueryEscape(req.GetTargetHttpProxy())))
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "region", url.QueryEscape(req.GetRegion()), "ssl_policy", url.QueryEscape(req.GetSslPolicy())))
 
 	headers := buildHeaders(ctx, c.xGoogMetadata, md, metadata.Pairs("Content-Type", "application/json"))
 	opts = append((*c.CallOptions).Get[0:len((*c.CallOptions).Get):len((*c.CallOptions).Get)], opts...)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	resp := &computepb.TargetHttpProxy{}
+	resp := &computepb.SslPolicy{}
 	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		if settings.Path != "" {
 			baseUrl.Path = settings.Path
@@ -459,10 +345,10 @@ func (c *targetHttpProxiesRESTClient) Get(ctx context.Context, req *computepb.Ge
 	return resp, nil
 }
 
-// Insert creates a TargetHttpProxy resource in the specified project using the data included in the request.
-func (c *targetHttpProxiesRESTClient) Insert(ctx context.Context, req *computepb.InsertTargetHttpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
+// Insert creates a new policy in the specified project and region using the data included in the request.
+func (c *regionSslPoliciesRESTClient) Insert(ctx context.Context, req *computepb.InsertRegionSslPolicyRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
-	body := req.GetTargetHttpProxyResource()
+	body := req.GetSslPolicyResource()
 	jsonReq, err := m.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -472,7 +358,7 @@ func (c *targetHttpProxiesRESTClient) Insert(ctx context.Context, req *computepb
 	if err != nil {
 		return nil, err
 	}
-	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/global/targetHttpProxies", req.GetProject())
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/sslPolicies", req.GetProject(), req.GetRegion())
 
 	params := url.Values{}
 	if req != nil && req.RequestId != nil {
@@ -482,7 +368,7 @@ func (c *targetHttpProxiesRESTClient) Insert(ctx context.Context, req *computepb
 	baseUrl.RawQuery = params.Encode()
 
 	// Build HTTP headers from client and context metadata.
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v", "project", url.QueryEscape(req.GetProject())))
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "region", url.QueryEscape(req.GetRegion())))
 
 	headers := buildHeaders(ctx, c.xGoogMetadata, md, metadata.Pairs("Content-Type", "application/json"))
 	opts = append((*c.CallOptions).Insert[0:len((*c.CallOptions).Insert):len((*c.CallOptions).Insert)], opts...)
@@ -524,22 +410,23 @@ func (c *targetHttpProxiesRESTClient) Insert(ctx context.Context, req *computepb
 		return nil, e
 	}
 	op := &Operation{
-		&globalOperationsHandle{
+		&regionOperationsHandle{
 			c:       c.operationClient,
 			proto:   resp,
 			project: req.GetProject(),
+			region:  req.GetRegion(),
 		},
 	}
 	return op, nil
 }
 
-// List retrieves the list of TargetHttpProxy resources available to the specified project.
-func (c *targetHttpProxiesRESTClient) List(ctx context.Context, req *computepb.ListTargetHttpProxiesRequest, opts ...gax.CallOption) *TargetHttpProxyIterator {
-	it := &TargetHttpProxyIterator{}
-	req = proto.Clone(req).(*computepb.ListTargetHttpProxiesRequest)
+// List lists all the SSL policies that have been configured for the specified project and region.
+func (c *regionSslPoliciesRESTClient) List(ctx context.Context, req *computepb.ListRegionSslPoliciesRequest, opts ...gax.CallOption) *SslPolicyIterator {
+	it := &SslPolicyIterator{}
+	req = proto.Clone(req).(*computepb.ListRegionSslPoliciesRequest)
 	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.TargetHttpProxy, string, error) {
-		resp := &computepb.TargetHttpProxyList{}
+	it.InternalFetch = func(pageSize int, pageToken string) ([]*computepb.SslPolicy, string, error) {
+		resp := &computepb.SslPoliciesList{}
 		if pageToken != "" {
 			req.PageToken = proto.String(pageToken)
 		}
@@ -552,7 +439,7 @@ func (c *targetHttpProxiesRESTClient) List(ctx context.Context, req *computepb.L
 		if err != nil {
 			return nil, "", err
 		}
-		baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/global/targetHttpProxies", req.GetProject())
+		baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/sslPolicies", req.GetProject(), req.GetRegion())
 
 		params := url.Values{}
 		if req != nil && req.Filter != nil {
@@ -629,10 +516,82 @@ func (c *targetHttpProxiesRESTClient) List(ctx context.Context, req *computepb.L
 	return it
 }
 
-// Patch patches the specified TargetHttpProxy resource with the data included in the request. This method supports PATCH semantics and uses JSON merge patch format and processing rules.
-func (c *targetHttpProxiesRESTClient) Patch(ctx context.Context, req *computepb.PatchTargetHttpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
+// ListAvailableFeatures lists all features that can be specified in the SSL policy when using custom profile.
+func (c *regionSslPoliciesRESTClient) ListAvailableFeatures(ctx context.Context, req *computepb.ListAvailableFeaturesRegionSslPoliciesRequest, opts ...gax.CallOption) (*computepb.SslPoliciesListAvailableFeaturesResponse, error) {
+	baseUrl, err := url.Parse(c.endpoint)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/sslPolicies/listAvailableFeatures", req.GetProject(), req.GetRegion())
+
+	params := url.Values{}
+	if req != nil && req.Filter != nil {
+		params.Add("filter", fmt.Sprintf("%v", req.GetFilter()))
+	}
+	if req != nil && req.MaxResults != nil {
+		params.Add("maxResults", fmt.Sprintf("%v", req.GetMaxResults()))
+	}
+	if req != nil && req.OrderBy != nil {
+		params.Add("orderBy", fmt.Sprintf("%v", req.GetOrderBy()))
+	}
+	if req != nil && req.PageToken != nil {
+		params.Add("pageToken", fmt.Sprintf("%v", req.GetPageToken()))
+	}
+	if req != nil && req.ReturnPartialSuccess != nil {
+		params.Add("returnPartialSuccess", fmt.Sprintf("%v", req.GetReturnPartialSuccess()))
+	}
+
+	baseUrl.RawQuery = params.Encode()
+
+	// Build HTTP headers from client and context metadata.
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "region", url.QueryEscape(req.GetRegion())))
+
+	headers := buildHeaders(ctx, c.xGoogMetadata, md, metadata.Pairs("Content-Type", "application/json"))
+	opts = append((*c.CallOptions).ListAvailableFeatures[0:len((*c.CallOptions).ListAvailableFeatures):len((*c.CallOptions).ListAvailableFeatures)], opts...)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	resp := &computepb.SslPoliciesListAvailableFeaturesResponse{}
+	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		if settings.Path != "" {
+			baseUrl.Path = settings.Path
+		}
+		httpReq, err := http.NewRequest("GET", baseUrl.String(), nil)
+		if err != nil {
+			return err
+		}
+		httpReq = httpReq.WithContext(ctx)
+		httpReq.Header = headers
+
+		httpRsp, err := c.httpClient.Do(httpReq)
+		if err != nil {
+			return err
+		}
+		defer httpRsp.Body.Close()
+
+		if err = googleapi.CheckResponse(httpRsp); err != nil {
+			return err
+		}
+
+		buf, err := ioutil.ReadAll(httpRsp.Body)
+		if err != nil {
+			return err
+		}
+
+		if err := unm.Unmarshal(buf, resp); err != nil {
+			return maybeUnknownEnum(err)
+		}
+
+		return nil
+	}, opts...)
+	if e != nil {
+		return nil, e
+	}
+	return resp, nil
+}
+
+// Patch patches the specified SSL policy with the data included in the request.
+func (c *regionSslPoliciesRESTClient) Patch(ctx context.Context, req *computepb.PatchRegionSslPolicyRequest, opts ...gax.CallOption) (*Operation, error) {
 	m := protojson.MarshalOptions{AllowPartial: true}
-	body := req.GetTargetHttpProxyResource()
+	body := req.GetSslPolicyResource()
 	jsonReq, err := m.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -642,7 +601,7 @@ func (c *targetHttpProxiesRESTClient) Patch(ctx context.Context, req *computepb.
 	if err != nil {
 		return nil, err
 	}
-	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/global/targetHttpProxies/%v", req.GetProject(), req.GetTargetHttpProxy())
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/regions/%v/sslPolicies/%v", req.GetProject(), req.GetRegion(), req.GetSslPolicy())
 
 	params := url.Values{}
 	if req != nil && req.RequestId != nil {
@@ -652,7 +611,7 @@ func (c *targetHttpProxiesRESTClient) Patch(ctx context.Context, req *computepb.
 	baseUrl.RawQuery = params.Encode()
 
 	// Build HTTP headers from client and context metadata.
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "target_http_proxy", url.QueryEscape(req.GetTargetHttpProxy())))
+	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "region", url.QueryEscape(req.GetRegion()), "ssl_policy", url.QueryEscape(req.GetSslPolicy())))
 
 	headers := buildHeaders(ctx, c.xGoogMetadata, md, metadata.Pairs("Content-Type", "application/json"))
 	opts = append((*c.CallOptions).Patch[0:len((*c.CallOptions).Patch):len((*c.CallOptions).Patch)], opts...)
@@ -694,98 +653,19 @@ func (c *targetHttpProxiesRESTClient) Patch(ctx context.Context, req *computepb.
 		return nil, e
 	}
 	op := &Operation{
-		&globalOperationsHandle{
+		&regionOperationsHandle{
 			c:       c.operationClient,
 			proto:   resp,
 			project: req.GetProject(),
+			region:  req.GetRegion(),
 		},
 	}
 	return op, nil
 }
 
-// SetUrlMap changes the URL map for TargetHttpProxy.
-func (c *targetHttpProxiesRESTClient) SetUrlMap(ctx context.Context, req *computepb.SetUrlMapTargetHttpProxyRequest, opts ...gax.CallOption) (*Operation, error) {
-	m := protojson.MarshalOptions{AllowPartial: true}
-	body := req.GetUrlMapReferenceResource()
-	jsonReq, err := m.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	baseUrl, err := url.Parse(c.endpoint)
-	if err != nil {
-		return nil, err
-	}
-	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/targetHttpProxies/%v/setUrlMap", req.GetProject(), req.GetTargetHttpProxy())
-
-	params := url.Values{}
-	if req != nil && req.RequestId != nil {
-		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
-	}
-
-	baseUrl.RawQuery = params.Encode()
-
-	// Build HTTP headers from client and context metadata.
-	md := metadata.Pairs("x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "target_http_proxy", url.QueryEscape(req.GetTargetHttpProxy())))
-
-	headers := buildHeaders(ctx, c.xGoogMetadata, md, metadata.Pairs("Content-Type", "application/json"))
-	opts = append((*c.CallOptions).SetUrlMap[0:len((*c.CallOptions).SetUrlMap):len((*c.CallOptions).SetUrlMap)], opts...)
-	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
-	resp := &computepb.Operation{}
-	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
-		if settings.Path != "" {
-			baseUrl.Path = settings.Path
-		}
-		httpReq, err := http.NewRequest("POST", baseUrl.String(), bytes.NewReader(jsonReq))
-		if err != nil {
-			return err
-		}
-		httpReq = httpReq.WithContext(ctx)
-		httpReq.Header = headers
-
-		httpRsp, err := c.httpClient.Do(httpReq)
-		if err != nil {
-			return err
-		}
-		defer httpRsp.Body.Close()
-
-		if err = googleapi.CheckResponse(httpRsp); err != nil {
-			return err
-		}
-
-		buf, err := ioutil.ReadAll(httpRsp.Body)
-		if err != nil {
-			return err
-		}
-
-		if err := unm.Unmarshal(buf, resp); err != nil {
-			return maybeUnknownEnum(err)
-		}
-
-		return nil
-	}, opts...)
-	if e != nil {
-		return nil, e
-	}
-	op := &Operation{
-		&globalOperationsHandle{
-			c:       c.operationClient,
-			proto:   resp,
-			project: req.GetProject(),
-		},
-	}
-	return op, nil
-}
-
-// TargetHttpProxiesScopedListPair is a holder type for string/*computepb.TargetHttpProxiesScopedList map entries
-type TargetHttpProxiesScopedListPair struct {
-	Key   string
-	Value *computepb.TargetHttpProxiesScopedList
-}
-
-// TargetHttpProxiesScopedListPairIterator manages a stream of TargetHttpProxiesScopedListPair.
-type TargetHttpProxiesScopedListPairIterator struct {
-	items    []TargetHttpProxiesScopedListPair
+// SslPolicyIterator manages a stream of *computepb.SslPolicy.
+type SslPolicyIterator struct {
+	items    []*computepb.SslPolicy
 	pageInfo *iterator.PageInfo
 	nextFunc func() error
 
@@ -800,18 +680,18 @@ type TargetHttpProxiesScopedListPairIterator struct {
 	// InternalFetch returns results from a single call to the underlying RPC.
 	// The number of results is no greater than pageSize.
 	// If there are no more results, nextPageToken is empty and err is nil.
-	InternalFetch func(pageSize int, pageToken string) (results []TargetHttpProxiesScopedListPair, nextPageToken string, err error)
+	InternalFetch func(pageSize int, pageToken string) (results []*computepb.SslPolicy, nextPageToken string, err error)
 }
 
 // PageInfo supports pagination. See the google.golang.org/api/iterator package for details.
-func (it *TargetHttpProxiesScopedListPairIterator) PageInfo() *iterator.PageInfo {
+func (it *SslPolicyIterator) PageInfo() *iterator.PageInfo {
 	return it.pageInfo
 }
 
 // Next returns the next result. Its second return value is iterator.Done if there are no more
 // results. Once Next returns Done, all subsequent calls will return Done.
-func (it *TargetHttpProxiesScopedListPairIterator) Next() (TargetHttpProxiesScopedListPair, error) {
-	var item TargetHttpProxiesScopedListPair
+func (it *SslPolicyIterator) Next() (*computepb.SslPolicy, error) {
+	var item *computepb.SslPolicy
 	if err := it.nextFunc(); err != nil {
 		return item, err
 	}
@@ -820,11 +700,11 @@ func (it *TargetHttpProxiesScopedListPairIterator) Next() (TargetHttpProxiesScop
 	return item, nil
 }
 
-func (it *TargetHttpProxiesScopedListPairIterator) bufLen() int {
+func (it *SslPolicyIterator) bufLen() int {
 	return len(it.items)
 }
 
-func (it *TargetHttpProxiesScopedListPairIterator) takeBuf() interface{} {
+func (it *SslPolicyIterator) takeBuf() interface{} {
 	b := it.items
 	it.items = nil
 	return b

@@ -9,7 +9,7 @@ cloud.google.com/go/longrunning/autogen
 # cloud.google.com/go/cloudbuild v1.2.0
 ## explicit
 cloud.google.com/go/cloudbuild/apiv1
-# cloud.google.com/go/compute v1.9.0
+# cloud.google.com/go/compute v1.10.0
 ## explicit
 cloud.google.com/go/compute/apiv1
 cloud.google.com/go/compute/internal
@@ -667,7 +667,7 @@ golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
 golang.org/x/net/trace
-# golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
+# golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1
 ## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/authhandler
@@ -753,7 +753,7 @@ google.golang.org/appengine/internal/socket
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/socket
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20220810155839-1856144b1d9c
+# google.golang.org/genproto v0.0.0-20220915135415-7fd63a7952de
 ## explicit
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/httpbody
