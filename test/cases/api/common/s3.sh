@@ -121,7 +121,7 @@ function createReqFileVSphere() {
 EOF
 }
 
-# verify edge commit content
+# verify edge/iot commit content
 function verifyEdgeCommit() {
     filename="$1"
     greenprint "Verifying contents of ${filename}"
