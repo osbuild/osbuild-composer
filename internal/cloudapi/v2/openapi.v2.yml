@@ -758,8 +758,8 @@ components:
       type: string
       enum:
         - aws
-        - aws-rhui
         - aws-ha-rhui
+        - aws-rhui
         - aws-sap-rhui
         - azure
         - azure-rhui
@@ -770,6 +770,9 @@ components:
         - gcp-rhui
         - guest-image
         - image-installer
+        - iot-commit
+        - iot-container
+        - iot-raw-image
         - vsphere
     Repository:
       type: object

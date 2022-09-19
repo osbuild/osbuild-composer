@@ -365,6 +365,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			case ImageTypesEdgeInstaller:
 				fallthrough
 			case ImageTypesEdgeCommit:
+				fallthrough
+			case ImageTypesIotCommit:
+				fallthrough
+			case ImageTypesIotRawImage:
 				var awsS3UploadOptions AWSS3UploadOptions
 				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
 				if err != nil {
@@ -391,6 +395,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 				irTarget = t
 			case ImageTypesEdgeContainer:
+				fallthrough
+			case ImageTypesIotContainer:
 				var containerUploadOptions ContainerUploadOptions
 				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
 				if err != nil {
@@ -545,18 +551,17 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 	case ImageTypesImageInstaller:
 		return "image-installer"
 	case ImageTypesEdgeCommit:
-		// Fedora doesn't define "rhel-edge-commit", or "edge-commit" yet.
-		// Assume that if the distro contains "fedora-iot-commit", it's Fedora
-		// and translate ImageTypesEdgeCommit to fedora-iot-commit in this case.
-		// This should definitely be removed in the near future.
-		if _, err := arch.GetImageType("fedora-iot-commit"); err == nil {
-			return "fedora-iot-commit"
-		}
 		return "rhel-edge-commit"
 	case ImageTypesEdgeContainer:
 		return "rhel-edge-container"
 	case ImageTypesEdgeInstaller:
 		return "rhel-edge-installer"
+	case ImageTypesIotCommit:
+		return "iot-commit"
+	case ImageTypesIotContainer:
+		return "iot-container"
+	case ImageTypesIotRawImage:
+		return "iot-raw-image"
 	}
 	return ""
 }
