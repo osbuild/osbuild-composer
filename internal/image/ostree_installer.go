@@ -61,9 +61,12 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline := manifest.NewISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
-		img.OSTreeCommit,
-		img.OSTreeURL,
-		img.OSTreeRef,
+		&manifest.OSTreeRef{
+			Commit: img.OSTreeCommit,
+			URL:    img.OSTreeURL,
+			Ref:    img.OSTreeRef,
+		},
+		nil,
 		img.ISOLabelTempl)
 	isoTreePipeline.Release = img.Release
 	isoTreePipeline.OSName = img.OSName
