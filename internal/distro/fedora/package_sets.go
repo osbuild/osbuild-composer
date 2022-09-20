@@ -525,3 +525,11 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 
 	return ps
 }
+
+func imageInstallerPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"@core",
+		},
+	}
+}

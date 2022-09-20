@@ -130,6 +130,23 @@ var (
 		exports:          []string{"bootiso"},
 	}
 
+	imageInstallerImgType = imageType{
+		name:     "image-installer",
+		filename: "installer.iso",
+		mimeType: "application/x-iso9660-image",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey:        imageInstallerPackageSet,
+			installerPkgsKey: anacondaPackageSet,
+		},
+		rpmOstree:        false,
+		bootISO:          true,
+		bootable:         true,
+		image:            imageInstallerImage,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
+		exports:          []string{"bootiso"},
+	}
+
 	iotRawImgType = imageType{
 		name:        "iot-raw-image",
 		nameAliases: []string{"fedora-iot-raw-image"},
@@ -863,6 +880,14 @@ func newDistro(version int) distro.Distro {
 		},
 		iotRawImgType,
 	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: "fedora",
+		},
+		imageInstallerImgType,
+	)
+
 	aarch64.addImageTypes(
 		&platform.Aarch64{
 			UEFIVendor: "fedora",
@@ -919,6 +944,12 @@ func newDistro(version int) distro.Distro {
 			UEFIVendor: "fedora",
 		},
 		iotRawImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: "fedora",
+		},
+		imageInstallerImgType,
 	)
 
 	s390x.addImageTypes(nil)

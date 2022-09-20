@@ -421,6 +421,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"iot-raw-image",
 				"oci",
 				"container",
+				"image-installer",
 			},
 		},
 		{
@@ -435,6 +436,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"iot-raw-image",
 				"oci",
 				"container",
+				"image-installer",
 			},
 		},
 	}

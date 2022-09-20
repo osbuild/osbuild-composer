@@ -318,3 +318,34 @@ func iotRawImage(workload workload.Workload,
 
 	return img, nil
 }
+
+func imageInstallerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	d := t.arch.distro
+
+	img := image.NewImageInstaller()
+
+	img.Platform = t.platform
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+	img.Users = customizations.GetUsers()
+	img.Groups = customizations.GetGroups()
+
+	img.ISOLabelTempl = d.isolabelTmpl
+	img.Product = d.product
+	img.OSName = "fedora"
+	img.OSVersion = d.osVersion
+	img.Release = "202010217.n.0" // ???
+
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
+	img.Environment = t.environment
+	img.Workload = workload
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
