@@ -752,6 +752,8 @@ Installer:
           - rhos-01/rhel-8.7-nightly-x86_64
           - rhos-01/rhel-9.1-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
+          - rhos-01/fedora-35-x86_64
+          - rhos-01/fedora-36-x86_64
 
 Manifest-diff:
   stage: test
