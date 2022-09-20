@@ -18,3 +18,13 @@ func NewTreeInput(reference string) *TreeInput {
 	input.References = []string{reference}
 	return input
 }
+
+type PipelineTreeInputs map[string]TreeInput
+
+func NewPipelineTreeInputs(name, pipeline string) *PipelineTreeInputs {
+	return &PipelineTreeInputs{
+		name: *NewTreeInput("name:" + pipeline),
+	}
+}
+
+func (PipelineTreeInputs) isStageInputs() {}
