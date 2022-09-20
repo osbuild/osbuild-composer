@@ -254,7 +254,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
 
 	tarPath := "/liveimg.tar"
-	tarPayloadStages := []*osbuild.Stage{osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, osbuild.NewTarStagePipelineTreeInputs(treePipeline.Name))}
+	tarPayloadStages := []*osbuild.Stage{osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, treePipeline.Name)}
 	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "", "rhel")
 	if err != nil {
 		return nil, err
@@ -683,18 +683,15 @@ func ostreeCommitPipeline(options distro.ImageOptions, osVersion string) *osbuil
 	p.Build = "name:build"
 	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/repo"}))
 
-	commitStageInput := new(osbuild.OSTreeCommitStageInput)
-	commitStageInput.Type = "org.osbuild.tree"
-	commitStageInput.Origin = "org.osbuild.pipeline"
-	commitStageInput.References = osbuild.OSTreeCommitStageReferences{"name:ostree-tree"}
-
-	p.AddStage(osbuild.NewOSTreeCommitStage(
-		&osbuild.OSTreeCommitStageOptions{
-			Ref:       options.OSTree.Ref,
-			OSVersion: osVersion,
-			Parent:    options.OSTree.Parent,
-		},
-		&osbuild.OSTreeCommitStageInputs{Tree: commitStageInput}),
+	p.AddStage(
+		osbuild.NewOSTreeCommitStage(
+			&osbuild.OSTreeCommitStageOptions{
+				Ref:       options.OSTree.Ref,
+				OSVersion: osVersion,
+				Parent:    options.OSTree.Parent,
+			},
+			"ostree-tree",
+		),
 	)
 	return p
 }
@@ -740,10 +737,7 @@ func containerPipeline(t *imageType, nginxConfigPath, listenPort string) *osbuil
 			ExposedPorts: []string{listenPort},
 		},
 	}
-	baseInput := new(osbuild.OCIArchiveStageInput)
-	baseInput.Type = "org.osbuild.tree"
-	baseInput.Origin = "org.osbuild.pipeline"
-	baseInput.References = []string{"name:container-tree"}
+	baseInput := osbuild.NewTreeInput("name:container-tree")
 	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}
 	p.AddStage(osbuild.NewOCIArchiveStage(options, inputs))
 	return p
@@ -847,12 +841,12 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rn
 	}
 
 	inputName := "root-tree"
-	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, "efiboot-tree")
+	copyInputs := osbuild.NewPipelineTreeInputs(inputName, "efiboot-tree")
 	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, "efiboot-tree", filename, &pt)
 	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 
 	inputName = "coi"
-	copyInputs = osbuild.NewCopyStagePipelineTreeInputs(inputName, "coi-tree")
+	copyInputs = osbuild.NewPipelineTreeInputs(inputName, "coi-tree")
 	p.AddStage(osbuild.NewCopyStageSimple(
 		&osbuild.CopyStageOptions{
 			Paths: []osbuild.CopyStagePath{
@@ -870,7 +864,7 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rn
 	))
 
 	inputName = "efi-tree"
-	copyInputs = osbuild.NewCopyStagePipelineTreeInputs(inputName, "efiboot-tree")
+	copyInputs = osbuild.NewPipelineTreeInputs(inputName, "efiboot-tree")
 	p.AddStage(osbuild.NewCopyStageSimple(
 		&osbuild.CopyStageOptions{
 			Paths: []osbuild.CopyStagePath{
@@ -1087,7 +1081,7 @@ func bootISOPipeline(filename, isolabel, arch string, isolinux bool) *osbuild.Pi
 	p.Name = "bootiso"
 	p.Build = "name:build"
 
-	p.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(filename, isolabel, arch, isolinux), osbuild.NewXorrisofsStagePipelineTreeInputs("bootiso-tree")))
+	p.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(filename, isolabel, arch, isolinux), "bootiso-tree"))
 	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: filename}))
 
 	return p
@@ -1104,7 +1098,7 @@ func liveImagePipeline(inputPipelineName string, outputFilename string, pt *disk
 
 	inputName := "root-tree"
 	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, inputPipelineName, outputFilename, pt)
-	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, inputPipelineName)
+	copyInputs := osbuild.NewPipelineTreeInputs(inputName, inputPipelineName)
 	p.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 
 	for _, stage := range osbuild.GenImageFinishStages(pt, outputFilename) {
@@ -1134,7 +1128,7 @@ func tarArchivePipeline(name, inputPipelineName string, tarOptions *osbuild.TarS
 	p := new(osbuild.Pipeline)
 	p.Name = name
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewTarStage(tarOptions, osbuild.NewTarStagePipelineTreeInputs(inputPipelineName)))
+	p.AddStage(osbuild.NewTarStage(tarOptions, inputPipelineName))
 	return p
 }
 

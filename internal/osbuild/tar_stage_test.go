@@ -8,13 +8,22 @@ import (
 
 func TestNewTarStage(t *testing.T) {
 	stageOptions := &TarStageOptions{Filename: "archive.tar.xz"}
-	stageInputs := &TarStageInputs{}
+	stageInputs := &PipelineTreeInputs{"tree": TreeInput{
+		inputCommon: inputCommon{
+			Type:   "org.osbuild.tree",
+			Origin: "org.osbuild.pipeline",
+		},
+		References: []string{
+			"name:pipeline33",
+		},
+	},
+	}
 	expectedStage := &Stage{
 		Type:    "org.osbuild.tar",
 		Options: stageOptions,
 		Inputs:  stageInputs,
 	}
-	actualStage := NewTarStage(stageOptions, stageInputs)
+	actualStage := NewTarStage(stageOptions, "pipeline33")
 	assert.Equal(t, expectedStage, actualStage)
 }
 
@@ -59,10 +68,10 @@ func TestTarStageOptionsValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.err {
 				assert.Errorf(t, tt.options.validate(), "%q didn't return an error [idx: %d]", tt.name, idx)
-				assert.Panics(t, func() { NewTarStage(&tt.options, &TarStageInputs{}) })
+				assert.Panics(t, func() { NewTarStage(&tt.options, "") })
 			} else {
 				assert.NoErrorf(t, tt.options.validate(), "%q returned an error [idx: %d]", tt.name, idx)
-				assert.NotPanics(t, func() { NewTarStage(&tt.options, &TarStageInputs{}) })
+				assert.NotPanics(t, func() { NewTarStage(&tt.options, "") })
 			}
 		})
 	}

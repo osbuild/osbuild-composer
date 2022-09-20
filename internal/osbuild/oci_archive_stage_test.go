@@ -36,7 +36,7 @@ func TestOCIArchiveInputs(t *testing.T) {
 		}
 	}`
 	inputs := new(OCIArchiveStageInputs)
-	base := &OCIArchiveStageInput{
+	base := &TreeInput{
 		References: []string{
 			"name:container-tree",
 		},
@@ -44,14 +44,14 @@ func TestOCIArchiveInputs(t *testing.T) {
 	base.Type = "org.osbuild.oci-archive"
 	base.Origin = "org.osbuild.pipeline"
 
-	layer1 := OCIArchiveStageInput{
+	layer1 := TreeInput{
 		References: []string{
 			"name:container-ostree",
 		},
 	}
 	layer1.Type = "org.osbuild.tree"
 	layer1.Origin = "org.osbuild.pipeline"
-	layer2 := OCIArchiveStageInput{
+	layer2 := TreeInput{
 		References: []string{
 			"name:container-ostree2",
 		},
@@ -60,7 +60,7 @@ func TestOCIArchiveInputs(t *testing.T) {
 	layer2.Origin = "org.osbuild.pipeline"
 
 	inputs.Base = base
-	inputs.Layers = []OCIArchiveStageInput{layer1, layer2}
+	inputs.Layers = []TreeInput{layer1, layer2}
 
 	data, err := json.Marshal(inputs)
 	assert.NoError(t, err)

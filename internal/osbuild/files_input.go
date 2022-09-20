@@ -24,9 +24,6 @@ func NewFilesInputs(references FilesInputReferences) *FilesInputs {
 // inputs accepted by the XZ stage
 func (FilesInputs) isXzStageInputs() {}
 
-// inputs accepted by the Copy stage
-func (FilesInputs) isCopyStageInputs() {}
-
 // SPECIFIC INPUT STRUCTURE
 
 type FilesInput struct {

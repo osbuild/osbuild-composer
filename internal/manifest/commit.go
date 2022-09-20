@@ -49,11 +49,6 @@ func (p *OSTreeCommit) serialize() osbuild.Pipeline {
 
 	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/repo"}))
 
-	commitStageInput := new(osbuild.OSTreeCommitStageInput)
-	commitStageInput.Type = "org.osbuild.tree"
-	commitStageInput.Origin = "org.osbuild.pipeline"
-	commitStageInput.References = osbuild.OSTreeCommitStageReferences{"name:" + p.treePipeline.Name()}
-
 	var parent string
 	if p.treePipeline.OSTree.Parent != nil {
 		parent = p.treePipeline.OSTree.Parent.Checksum
@@ -64,7 +59,7 @@ func (p *OSTreeCommit) serialize() osbuild.Pipeline {
 			OSVersion: p.OSVersion,
 			Parent:    parent,
 		},
-		&osbuild.OSTreeCommitStageInputs{Tree: commitStageInput}),
+		p.treePipeline.Name()),
 	)
 
 	return pipeline
