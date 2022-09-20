@@ -13,30 +13,13 @@ type OSTreeCommitStageOptions struct {
 
 func (OSTreeCommitStageOptions) isStageOptions() {}
 
-type OSTreeCommitStageInput struct {
-	inputCommon
-	References OSTreeCommitStageReferences `json:"references"`
-}
-
-func (OSTreeCommitStageInput) isStageInput() {}
-
-type OSTreeCommitStageInputs struct {
-	Tree *OSTreeCommitStageInput `json:"tree"`
-}
-
-func (OSTreeCommitStageInputs) isStageInputs() {}
-
-type OSTreeCommitStageReferences []string
-
-func (OSTreeCommitStageReferences) isReferences() {}
-
 // The OSTreeCommitStage (org.osbuild.ostree.commit) describes how to assemble
 // a tree into an OSTree commit.
-func NewOSTreeCommitStage(options *OSTreeCommitStageOptions, inputs *OSTreeCommitStageInputs) *Stage {
+func NewOSTreeCommitStage(options *OSTreeCommitStageOptions, inputPipeline string) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.ostree.commit",
 		Options: options,
-		Inputs:  inputs,
+		Inputs:  NewPipelineTreeInputs("tree", inputPipeline),
 	}
 }
 

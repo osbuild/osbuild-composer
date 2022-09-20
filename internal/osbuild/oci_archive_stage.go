@@ -34,23 +34,12 @@ func (OCIArchiveStageOptions) isStageOptions() {}
 
 type OCIArchiveStageInputs struct {
 	// Base layer for the container
-	Base *OCIArchiveStageInput `json:"base"`
+	Base *TreeInput `json:"base"`
 	// Additional layers in ascending order
-	Layers []OCIArchiveStageInput `json:",omitempty"`
+	Layers []TreeInput `json:",omitempty"`
 }
 
 func (OCIArchiveStageInputs) isStageInputs() {}
-
-type OCIArchiveStageInput struct {
-	inputCommon
-	References OCIArchiveStageReferences `json:"references"`
-}
-
-func (OCIArchiveStageInput) isStageInput() {}
-
-type OCIArchiveStageReferences []string
-
-func (OCIArchiveStageReferences) isReferences() {}
 
 // A new OCIArchiveStage to to assemble an OCI image archive
 func NewOCIArchiveStage(options *OCIArchiveStageOptions, inputs *OCIArchiveStageInputs) *Stage {
@@ -69,7 +58,7 @@ func (inputs *OCIArchiveStageInputs) MarshalJSON() ([]byte, error) {
 	}
 
 	layers := inputs.Layers
-	inputsMap := make(map[string]OCIArchiveStageInput, len(layers)+1)
+	inputsMap := make(map[string]TreeInput, len(layers)+1)
 	if inputs.Base != nil {
 		inputsMap["base"] = *inputs.Base
 	}
@@ -83,7 +72,7 @@ func (inputs *OCIArchiveStageInputs) MarshalJSON() ([]byte, error) {
 }
 
 // Get the sorted keys that match the pattern "layer.N" (for N > 0)
-func layerKeys(layers map[string]OCIArchiveStageInput) ([]string, error) {
+func layerKeys(layers map[string]TreeInput) ([]string, error) {
 	keys := make([]string, 0, len(layers))
 	for key := range layers {
 		re := regexp.MustCompile(`layer\.[1-9]\d*`)
@@ -110,7 +99,7 @@ func (inputs *OCIArchiveStageInputs) UnmarshalJSON(data []byte) error {
 		inputs = new(OCIArchiveStageInputs)
 	}
 
-	inputsMap := make(map[string]OCIArchiveStageInput)
+	inputsMap := make(map[string]TreeInput)
 
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
@@ -130,7 +119,7 @@ func (inputs *OCIArchiveStageInputs) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	inputs.Layers = make([]OCIArchiveStageInput, len(inputsMap)-1)
+	inputs.Layers = make([]TreeInput, len(inputsMap)-1)
 	for idx, key := range keys {
 		inputs.Layers[idx] = inputsMap[key]
 	}

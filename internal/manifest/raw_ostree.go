@@ -61,7 +61,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 
 	inputName := "root-tree"
 	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename, pt)
-	copyInputs := osbuild.NewCopyStagePipelineTreeInputs(inputName, p.treePipeline.Name())
+	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
 	pipeline.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 
 	for _, stage := range osbuild.GenImageFinishStages(pt, p.Filename) {

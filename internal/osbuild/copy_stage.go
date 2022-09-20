@@ -21,57 +21,22 @@ type CopyStagePath struct {
 
 func (CopyStageOptions) isStageOptions() {}
 
-type CopyStageInputs map[string]CopyStageInput
-
-type CopyStageInput struct {
-	inputCommon
-	References CopyStageReferences `json:"references"`
-}
-
-func (CopyStageInputs) isStageInputs() {}
-
-type CopyStageReferences []string
-
-type CopyStageInputsNew interface {
-	isCopyStageInputs()
-}
-
-func (CopyStageInputs) isCopyStageInputs() {}
-
-func (CopyStageReferences) isReferences() {}
-
-func NewCopyStage(options *CopyStageOptions, inputs CopyStageInputsNew, devices *Devices, mounts *Mounts) *Stage {
-	var stageInputs Inputs
-	if inputs != nil {
-		stageInputs = inputs.(Inputs)
-	}
+func NewCopyStage(options *CopyStageOptions, inputs Inputs, devices *Devices, mounts *Mounts) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.copy",
 		Options: options,
-		Inputs:  stageInputs,
+		Inputs:  inputs,
 		Devices: *devices,
 		Mounts:  *mounts,
 	}
 }
 
-func NewCopyStageSimple(options *CopyStageOptions, inputs CopyStageInputsNew) *Stage {
-	var stageInputs Inputs
-	if inputs != nil {
-		stageInputs = inputs.(Inputs)
-	}
+func NewCopyStageSimple(options *CopyStageOptions, inputs Inputs) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.copy",
 		Options: options,
-		Inputs:  stageInputs,
+		Inputs:  inputs,
 	}
-}
-
-func NewCopyStagePipelineTreeInputs(inputName, inputPipeline string) *CopyStageInputs {
-	treeInput := CopyStageInput{}
-	treeInput.Type = "org.osbuild.tree"
-	treeInput.Origin = "org.osbuild.pipeline"
-	treeInput.References = []string{"name:" + inputPipeline}
-	return &CopyStageInputs{inputName: treeInput}
 }
 
 // GenCopyFSTreeOptions creates the options, inputs, devices, and mounts properties

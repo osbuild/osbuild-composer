@@ -29,20 +29,20 @@ func TestNewCopyStage(t *testing.T) {
 		*NewBtrfsMount("root", "root", "/"),
 	}
 
-	treeInput := CopyStageInput{}
+	treeInput := TreeInput{}
 	treeInput.Type = "org.osbuild.tree"
 	treeInput.Origin = "org.osbuild.pipeline"
 	treeInput.References = []string{"name:input-pipeline"}
 	expectedStage := &Stage{
 		Type:    "org.osbuild.copy",
 		Options: &CopyStageOptions{paths},
-		Inputs:  &CopyStageInputs{"tree-input": treeInput},
+		Inputs:  &PipelineTreeInputs{"tree-input": treeInput},
 		Devices: devices,
 		Mounts:  mounts,
 	}
 	// convert to alias types
 	stageMounts := Mounts(mounts)
 	stageDevices := Devices(devices)
-	actualStage := NewCopyStage(&CopyStageOptions{paths}, &CopyStageInputs{"tree-input": treeInput}, &stageDevices, &stageMounts)
+	actualStage := NewCopyStage(&CopyStageOptions{paths}, NewPipelineTreeInputs("tree-input", "input-pipeline"), &stageDevices, &stageMounts)
 	assert.Equal(t, expectedStage, actualStage)
 }

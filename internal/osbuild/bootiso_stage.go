@@ -62,22 +62,11 @@ func BCJOption(arch string) string {
 func (BootISOMonoStageOptions) isStageOptions() {}
 
 type BootISOMonoStageInputs struct {
-	RootFS *BootISOMonoStageInput `json:"rootfs"`
-	Kernel *BootISOMonoStageInput `json:"kernel,omitempty"`
+	RootFS *TreeInput `json:"rootfs"`
+	Kernel *TreeInput `json:"kernel,omitempty"`
 }
 
 func (BootISOMonoStageInputs) isStageInputs() {}
-
-type BootISOMonoStageInput struct {
-	inputCommon
-	References BootISOMonoStageReferences `json:"references"`
-}
-
-func (BootISOMonoStageInput) isStageInput() {}
-
-type BootISOMonoStageReferences []string
-
-func (BootISOMonoStageReferences) isReferences() {}
 
 // Assemble a file system tree for a bootable ISO
 func NewBootISOMonoStage(options *BootISOMonoStageOptions, inputs *BootISOMonoStageInputs) *Stage {
@@ -89,10 +78,7 @@ func NewBootISOMonoStage(options *BootISOMonoStageOptions, inputs *BootISOMonoSt
 }
 
 func NewBootISOMonoStagePipelineTreeInputs(pipeline string) *BootISOMonoStageInputs {
-	rootfsInput := new(BootISOMonoStageInput)
-	rootfsInput.Type = "org.osbuild.tree"
-	rootfsInput.Origin = "org.osbuild.pipeline"
-	rootfsInput.References = BootISOMonoStageReferences{"name:" + pipeline}
+	rootfsInput := NewTreeInput("name:" + pipeline)
 	return &BootISOMonoStageInputs{
 		RootFS: rootfsInput,
 	}

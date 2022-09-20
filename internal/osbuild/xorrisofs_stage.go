@@ -30,36 +30,11 @@ type XorrisofsBoot struct {
 
 func (XorrisofsStageOptions) isStageOptions() {}
 
-type XorrisofsStageInputs struct {
-	Tree *XorrisofsStageInput `json:"tree"`
-}
-
-func (XorrisofsStageInputs) isStageInputs() {}
-
-type XorrisofsStageInput struct {
-	inputCommon
-	References XorrisofsStageReferences `json:"references"`
-}
-
-func (XorrisofsStageInput) isStageInput() {}
-
-type XorrisofsStageReferences []string
-
-func (XorrisofsStageReferences) isReferences() {}
-
 // Assembles a Rock Ridge enhanced ISO 9660 filesystem (iso)
-func NewXorrisofsStage(options *XorrisofsStageOptions, inputs *XorrisofsStageInputs) *Stage {
+func NewXorrisofsStage(options *XorrisofsStageOptions, inputPipeline string) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.xorrisofs",
 		Options: options,
-		Inputs:  inputs,
+		Inputs:  NewPipelineTreeInputs("tree", inputPipeline),
 	}
-}
-
-func NewXorrisofsStagePipelineTreeInputs(pipeline string) *XorrisofsStageInputs {
-	input := new(XorrisofsStageInput)
-	input.Type = "org.osbuild.tree"
-	input.Origin = "org.osbuild.pipeline"
-	input.References = XorrisofsStageReferences{"name:" + pipeline}
-	return &XorrisofsStageInputs{Tree: input}
 }

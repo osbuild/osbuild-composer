@@ -36,12 +36,7 @@ func NewTar(m *Manifest,
 func (p *Tar) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	tree := new(osbuild.TarStageInput)
-	tree.Type = "org.osbuild.tree"
-	tree.Origin = "org.osbuild.pipeline"
-	tree.References = []string{"name:" + p.inputPipeline.Name()}
-	tarStage := osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: p.Filename}, &osbuild.TarStageInputs{Tree: tree})
-
+	tarStage := osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: p.Filename}, p.inputPipeline.Name())
 	pipeline.AddStage(tarStage)
 
 	return pipeline

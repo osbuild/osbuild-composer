@@ -43,10 +43,7 @@ func (p *OCIContainer) serialize() osbuild.Pipeline {
 			ExposedPorts: p.ExposedPorts,
 		},
 	}
-	baseInput := new(osbuild.OCIArchiveStageInput)
-	baseInput.Type = "org.osbuild.tree"
-	baseInput.Origin = "org.osbuild.pipeline"
-	baseInput.References = []string{"name:" + p.treePipeline.Name()}
+	baseInput := osbuild.NewTreeInput("name:" + p.treePipeline.Name())
 	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}
 	pipeline.AddStage(osbuild.NewOCIArchiveStage(options, inputs))
 

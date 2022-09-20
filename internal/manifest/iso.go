@@ -41,7 +41,7 @@ func (p *ISO) getBuildPackages() []string {
 func (p *ISO) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename, p.treePipeline.isoLabel, p.ISOLinux), osbuild.NewXorrisofsStagePipelineTreeInputs(p.treePipeline.Name())))
+	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename, p.treePipeline.isoLabel, p.ISOLinux), p.treePipeline.Name()))
 	pipeline.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: p.Filename}))
 
 	return pipeline

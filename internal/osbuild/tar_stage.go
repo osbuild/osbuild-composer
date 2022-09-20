@@ -84,26 +84,9 @@ func (o TarStageOptions) validate() error {
 	return nil
 }
 
-type TarStageInput struct {
-	inputCommon
-	References TarStageReferences `json:"references"`
-}
-
-func (TarStageInput) isStageInput() {}
-
-type TarStageInputs struct {
-	Tree *TarStageInput `json:"tree"`
-}
-
-func (TarStageInputs) isStageInputs() {}
-
-type TarStageReferences []string
-
-func (TarStageReferences) isReferences() {}
-
 // Assembles a tree into a tar archive. Compression is determined by the suffix
 // (i.e., --auto-compress is used).
-func NewTarStage(options *TarStageOptions, inputs *TarStageInputs) *Stage {
+func NewTarStage(options *TarStageOptions, inputPipeline string) *Stage {
 	if err := options.validate(); err != nil {
 		panic(err)
 	}
@@ -111,16 +94,6 @@ func NewTarStage(options *TarStageOptions, inputs *TarStageInputs) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.tar",
 		Options: options,
-		Inputs:  inputs,
-	}
-}
-
-func NewTarStagePipelineTreeInputs(pipeline string) *TarStageInputs {
-	tree := new(TarStageInput)
-	tree.Type = "org.osbuild.tree"
-	tree.Origin = "org.osbuild.pipeline"
-	tree.References = []string{"name:" + pipeline}
-	return &TarStageInputs{
-		Tree: tree,
+		Inputs:  NewPipelineTreeInputs("tree", inputPipeline),
 	}
 }
