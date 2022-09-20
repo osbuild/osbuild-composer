@@ -24,7 +24,7 @@ require (
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v4 v4.4.2
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/gophercloud/gophercloud v1.0.0
 	github.com/hashicorp/go-retryablehttp v0.7.1
