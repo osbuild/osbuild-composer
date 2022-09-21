@@ -34,6 +34,14 @@ function installClient() {
 function createReqFile() {
   AWS_SNAPSHOT_NAME=${TEST_ID}
 
+  local upload_block=
+
+    # on Fedora, upload the AMI publicly, so we can later check that
+    # it's indeed public
+    if [[ $ID == "fedora" ]]; then
+      upload_block=',"public": true'
+    fi
+
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",
@@ -72,7 +80,7 @@ function createReqFile() {
       "upload_options": {
         "region": "${AWS_REGION}",
         "snapshot_name": "${AWS_SNAPSHOT_NAME}",
-        "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
+        "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]${upload_block}
     }
   }
 }
@@ -124,8 +132,17 @@ function verify() {
     SHARE_OK=0
   fi
 
-  # Verify that the ec2 ami was shared
+  # Verify that the ec2 has the correct attributes
   $AWS_CMD ec2 describe-image-attribute --image-id "$AMI_IMAGE_ID" --attribute launchPermission > "$WORKDIR/ami-attributes.json"
+
+  if [[ $ID == "fedora" ]]; then
+    # Fedora images are public, let's check that
+    SHARED_GROUP=$(jq -r '.LaunchPermissions[0].Group' "$WORKDIR/ami-attributes.json")
+    if [ "all" != "$SHARED_GROUP" ]; then
+      echo "AMI wasn't made public."
+      exit 1
+    fi
+  fi
 
   SHARED_ID=$(jq -r '.LaunchPermissions[0].UserId' "$WORKDIR/ami-attributes.json")
   if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then

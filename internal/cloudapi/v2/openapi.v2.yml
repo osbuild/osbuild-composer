@@ -839,6 +839,12 @@ components:
           example: ['123456789012']
           items:
             type: string
+        public:
+          type: boolean
+          default: false
+          description: |
+            If set to true, the resulting AMI will be made public. This means
+            that every AWS account will be able to use it.
     AWSS3UploadOptions:
       type: object
       required:

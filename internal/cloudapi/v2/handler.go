@@ -347,6 +347,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					Region:            awsUploadOptions.Region,
 					Key:               key,
 					ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
+					Public:            awsUploadOptions.Public != nil && *awsUploadOptions.Public,
 				})
 				if awsUploadOptions.SnapshotName != nil {
 					t.ImageName = *awsUploadOptions.SnapshotName
