@@ -596,3 +596,23 @@ func (a *AWS) MarkS3ObjectAsPublic(bucket, objectKey string) error {
 
 	return nil
 }
+
+func (a *AWS) MarkAMIAsPublic(ami string) error {
+	logrus.Infof("[AWS] 👐 Making AMI public %s", ami)
+	_, err := a.ec2.ModifyImageAttribute(&ec2.ModifyImageAttributeInput{
+		ImageId: aws.String(ami),
+		LaunchPermission: &ec2.LaunchPermissionModifications{
+			Add: []*ec2.LaunchPermission{
+				{
+					Group: aws.String("all"),
+				},
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	logrus.Info("[AWS] ✔️ Making AMI public successful")
+
+	return nil
+}

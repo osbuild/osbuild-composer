@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 
@@ -20,6 +21,7 @@ func main() {
 	var imageName string
 	var shareWith string
 	var arch string
+	var public bool
 	flag.StringVar(&accessKeyID, "access-key-id", "", "access key ID")
 	flag.StringVar(&secretAccessKey, "secret-access-key", "", "secret access key")
 	flag.StringVar(&sessionToken, "session-token", "", "session token")
@@ -30,6 +32,7 @@ func main() {
 	flag.StringVar(&imageName, "name", "", "AMI name")
 	flag.StringVar(&shareWith, "account-id", "", "account id to share image with")
 	flag.StringVar(&arch, "arch", "", "arch (x86_64 or aarch64)")
+	flag.BoolVar(&public, "public", false, "whether to make this image public (default: false)")
 	flag.Parse()
 
 	a, err := awscloud.New(region, accessKeyID, secretAccessKey, sessionToken)
@@ -54,6 +57,14 @@ func main() {
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
+	}
+
+	if public {
+		err := a.MarkAMIAsPublic(*ami)
+		if err != nil {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
 	}
 
 	fmt.Printf("AMI registered: %s\n", aws.StringValue(ami))
