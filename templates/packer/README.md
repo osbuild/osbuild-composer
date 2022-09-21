@@ -34,6 +34,13 @@ COMPOSER_PORT=443
 # The secret contains only one key "offline_token". Its value is the offline token to be used. 
 OFFLINE_TOKEN_ARN=arn:aws:secretsmanager:us-east-1:123456789012:secret:offline-token-abcdef
 
+# AWS ARN of a secret containing OAuth client credentials
+# The secret contains two keys: "client_id" and "client_secret".
+CLIENT_CREDENTIALS_ARN=arn:aws:secretsmanager:us-east-1:123456789012:secret:client-credentials-abcdef
+
+# Authentication URL to retrieve an access_token from
+TOKEN_URL="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+
 # AWS ARN of a secret containing a command to subscribe the instance using subscription-manager
 # The secrets contains only one key "subscription_manager_command" that contains the subscription-manager command
 SUBSCRIPTION_MANAGER_COMMAND_ARN=arn:aws:secretsmanager:us-east-1:123456789012:secret:subscription-manager-command-abcdef
@@ -92,4 +99,5 @@ write_files:
       SECRETS_MANAGER_ENDPOINT_URL=https://secretsmanager.us-east-1.amazonaws.com/
       CLOUDWATCH_LOGS_ENDPOINT_URL=https://logs.us-east-1.amazonaws.com/
       CLOUDWATCH_LOG_GROUP=staging_workers_aoc
+      TOKEN_URL="https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 ```
