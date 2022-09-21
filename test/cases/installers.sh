@@ -60,7 +60,7 @@ echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 EOFKS
 
     echo "Writing new ISO"
-    if nvrGreaterOrEqual "lorax" "34.9.18"; then
+    if [ "${ID}" != "fedora" && nvrGreaterOrEqual "lorax" "34.9.18" ]; then
         sudo TMPDIR=/var/tmp/ mkksiso -c "console=ttyS0,115200" --ks "${newksfile}" "${iso}" "${newiso}"
     else
         sudo TMPDIR=/var/tmp/ mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
