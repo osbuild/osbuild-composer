@@ -38,8 +38,11 @@ function createReqFile() {
 
     # on Fedora, upload the AMI publicly, so we can later check that
     # it's indeed public
+    # on other distros, use share_with_accounts
     if [[ $ID == "fedora" ]]; then
       upload_block=',"public": true'
+    else
+      upload_block=",\"share_with_accounts\": [\"${AWS_API_TEST_SHARE_ACCOUNT}\"]"
     fi
 
   cat > "$REQUEST_FILE" << EOF
@@ -79,8 +82,7 @@ function createReqFile() {
       "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
       "upload_options": {
         "region": "${AWS_REGION}",
-        "snapshot_name": "${AWS_SNAPSHOT_NAME}",
-        "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]${upload_block}
+        "snapshot_name": "${AWS_SNAPSHOT_NAME}"${upload_block}
     }
   }
 }
@@ -142,11 +144,12 @@ function verify() {
       echo "AMI wasn't made public."
       exit 1
     fi
-  fi
-
-  SHARED_ID=$(jq -r '.LaunchPermissions[0].UserId' "$WORKDIR/ami-attributes.json")
-  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
-    SHARE_OK=0
+  else
+    # Other images are just shared
+    SHARED_ID=$(jq -r '.LaunchPermissions[0].UserId' "$WORKDIR/ami-attributes.json")
+    if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID" ]; then
+      SHARE_OK=0
+    fi
   fi
 
   if [ "$SHARE_OK" != 1 ]; then
