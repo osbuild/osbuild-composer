@@ -826,7 +826,10 @@ components:
       type: object
       required:
         - region
-        - share_with_accounts
+      description: |
+        Upload options for AWS images.
+        You have specify share_with_accounts, or public. Otherwise, the request
+        will be rejected because no one will be able to launch the image.
       properties:
         region:
           type: string
@@ -839,6 +842,13 @@ components:
           example: ['123456789012']
           items:
             type: string
+            pattern: '^[0-9]{12}$'
+            description: |
+              AWS Account ID as described in:
+              https://docs.aws.amazon.com/IAM/latest/UserGuide/console_account-alias.html.
+          description: |
+            An array of AWS accounts that will be able to launch the uploaded
+            AMI.
         public:
           type: boolean
           default: false

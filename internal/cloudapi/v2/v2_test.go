@@ -260,7 +260,8 @@ func TestCompose(t *testing.T) {
 				"rhsm": false
 			}],
 			"upload_options": {
-				"region": "eu-central-1"
+				"region": "eu-central-1",
+				"share_with_accounts": ["123456789012"]
 			}
 		 }
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
@@ -557,6 +558,82 @@ func TestCompose(t *testing.T) {
 		"kind": "Error",
 		"code": "IMAGE-BUILDER-COMPOSER-27",
 		"reason": "Invalid OSTree parameters or parameter combination"
+	}`, "operation_id", "details")
+
+	// aws: no share_with_accounts, nor public
+
+	// both == nil
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
+	{
+		"href": "/api/image-builder-composer/v2/errors/35",
+		"id": "35",
+		"kind": "Error",
+		"code": "IMAGE-BUILDER-COMPOSER-35",
+		"reason": "You need to use either share_with_accounts, or public"
+	}`, "operation_id", "details")
+
+	// shared == nil, public == false
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1",
+				"public": false
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
+	{
+		"href": "/api/image-builder-composer/v2/errors/35",
+		"id": "35",
+		"kind": "Error",
+		"code": "IMAGE-BUILDER-COMPOSER-35",
+		"reason": "You need to use either share_with_accounts, or public"
+	}`, "operation_id", "details")
+
+	// len(shared) == 0, public == nil
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1",
+				"shared_with_accounts": 0
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
+	{
+		"href": "/api/image-builder-composer/v2/errors/35",
+		"id": "35",
+		"kind": "Error",
+		"code": "IMAGE-BUILDER-COMPOSER-35",
+		"reason": "You need to use either share_with_accounts, or public"
 	}`, "operation_id", "details")
 }
 

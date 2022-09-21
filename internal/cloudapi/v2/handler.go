@@ -338,6 +338,16 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
 
+				if (awsUploadOptions.ShareWithAccounts == nil || len(*awsUploadOptions.ShareWithAccounts) == 0) &&
+					(awsUploadOptions.Public == nil || !*awsUploadOptions.Public) {
+					return HTTPError(ErrorUnreachableImage)
+				}
+
+				var shareWithAccounts []string
+				if awsUploadOptions.ShareWithAccounts != nil {
+					shareWithAccounts = *awsUploadOptions.ShareWithAccounts
+				}
+
 				// For service maintenance, images are discovered by the "Name:composer-api-*"
 				// tag filter. Currently all image names in the service are generated, so they're
 				// guaranteed to be unique as well. If users are ever allowed to name their images,
@@ -346,7 +356,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t := target.NewAWSTarget(&target.AWSTargetOptions{
 					Region:            awsUploadOptions.Region,
 					Key:               key,
-					ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
+					ShareWithAccounts: shareWithAccounts,
 					Public:            awsUploadOptions.Public != nil && *awsUploadOptions.Public,
 				})
 				if awsUploadOptions.SnapshotName != nil {

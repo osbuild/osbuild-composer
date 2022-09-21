@@ -48,6 +48,7 @@ const (
 	ErrorUnsupportedImage             ServiceErrorCode = 32
 	ErrorInvalidImageFromComposeId    ServiceErrorCode = 33
 	ErrorImageNotFound                ServiceErrorCode = 34
+	ErrorUnreachableImage             ServiceErrorCode = 35
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -123,6 +124,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorUnsupportedImage, http.StatusBadRequest, "This compose doesn't support the creation of multiple images"},
 		serviceError{ErrorInvalidImageFromComposeId, http.StatusBadRequest, "Invalid format for image id"},
 		serviceError{ErrorImageNotFound, http.StatusBadRequest, "Image with given id not found"},
+		serviceError{ErrorUnreachableImage, http.StatusBadRequest, "You need to use either share_with_accounts, or public"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
