@@ -502,6 +502,15 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, "No ami returned", nil)
 				break
 			}
+
+			if targetOptions.Public {
+				err := a.MarkAMIAsPublic(*ami)
+				if err != nil {
+					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorMakingAMIPublic, err.Error(), nil)
+					break
+				}
+			}
+
 			targetResult.Options = &target.AWSTargetResultOptions{
 				Ami:    *ami,
 				Region: targetOptions.Region,

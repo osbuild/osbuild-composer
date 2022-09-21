@@ -13,6 +13,7 @@ type AWSTargetOptions struct {
 	Bucket            string   `json:"bucket"`
 	Key               string   `json:"key"`
 	ShareWithAccounts []string `json:"shareWithAccounts"`
+	Public            bool     `json:"public,omitempty"`
 }
 
 func (AWSTargetOptions) isTargetOptions() {}

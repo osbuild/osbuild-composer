@@ -32,6 +32,7 @@ const (
 	ErrorParsingJobArgs       ClientErrorCode = 29
 	ErrorContainerResolution  ClientErrorCode = 30
 	ErrorContainerDependency  ClientErrorCode = 31
+	ErrorMakingAMIPublic      ClientErrorCode = 32
 )
 
 type ClientErrorCode int
