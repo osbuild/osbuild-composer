@@ -167,6 +167,80 @@ update-crypto-policies --set LEGACY
 EOF
   }
 
+  source "amazon-ebs.image_builder"  {
+    name = "fedora-36-x86_64"
+
+    # Use a static Fedora 36 Cloud Base Image.
+    source_ami = "ami-08b7bda26f4071b80"
+    ssh_username = "fedora"
+    instance_type = "c6a.large"
+
+    # Set a name for the resulting AMI.
+    ami_name = "${var.image_name}-fedora-36-x86_64"
+
+    # Apply tags to the resulting AMI/EBS snapshot.
+    tags = {
+      AppCode = "IMGB-001"
+      Name = "${var.image_name}-fedora-36-x86_64"
+      composer_commit = "${var.composer_commit}"
+      os = "fedora"
+      os_version = "36"
+      arch = "x86_64"
+    }
+
+    # Ensure that the EBS snapshot used for the AMI meets our requirements.
+    launch_block_device_mappings {
+      delete_on_termination = "true"
+      device_name           = "/dev/sda1"
+      volume_size           = 5
+      volume_type           = "gp2"
+    }
+
+    # go doesn't like modern Fedora crypto policies
+    # see https://github.com/hashicorp/packer/issues/10074
+    user_data = <<EOF
+#!/bin/bash
+update-crypto-policies --set LEGACY
+EOF
+  }
+
+  source "amazon-ebs.image_builder"  {
+    name = "fedora-36-aarch64"
+
+    # Use a static Fedora 36 Cloud Base Image.
+    source_ami = "ami-01925eb0821988986"
+    ssh_username = "fedora"
+    instance_type = "c6g.large"
+
+    # Set a name for the resulting AMI.
+    ami_name = "${var.image_name}-fedora-36-aarch64"
+
+    # Apply tags to the resulting AMI/EBS snapshot.
+    tags = {
+      AppCode = "IMGB-001"
+      Name = "${var.image_name}-fedora-36-aarch64"
+      composer_commit = "${var.composer_commit}"
+      os = "fedora"
+      os_version = "36"
+      arch = "aarch64"
+    }
+
+    # Ensure that the EBS snapshot used for the AMI meets our requirements.
+    launch_block_device_mappings {
+      delete_on_termination = "true"
+      device_name           = "/dev/sda1"
+      volume_size           = 5
+      volume_type           = "gp2"
+    }
+
+    # go doesn't like modern Fedora crypto policies
+    # see https://github.com/hashicorp/packer/issues/10074
+    user_data = <<EOF
+#!/bin/bash
+update-crypto-policies --set LEGACY
+EOF
+  }
+
   provisioner "ansible" {
     playbook_file = "${path.root}/ansible/playbook.yml"
     user = build.User
