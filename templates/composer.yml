@@ -287,7 +287,7 @@ objects:
       <match **>
         @type splunk_hec
         hec_host "#{ENV['SPLUNK_HEC_URL']}"
-        hec_port "${SPLUNK_HEC_PORT}"
+        hec_port "${SPLUNK_HEC_POR}"
         hec_token "#{ENV['SPLUNK_HEC_TOKEN']}"
       </match>
 - apiVersion: batch/v1
