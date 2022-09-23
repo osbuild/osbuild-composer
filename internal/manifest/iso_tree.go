@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
@@ -14,33 +15,41 @@ import (
 // payload to be installed.
 type ISOTree struct {
 	Base
+
 	// TODO: review optional and mandatory fields and their meaning
-	UEFIVendor string
-	OSName     string
-	Release    string
-	Users      []blueprint.UserCustomization
-	Groups     []blueprint.GroupCustomization
+	OSName  string
+	Release string
+	Users   []blueprint.UserCustomization
+	Groups  []blueprint.GroupCustomization
+
+	PartitionTable *disk.PartitionTable
 
 	anacondaPipeline *Anaconda
-	isoLabel         string
-	osTreeCommit     string
-	osTreeURL        string
-	osTreeRef        string
+	rootfsPipeline   *ISORootfsImg
+	bootTreePipeline *EFIBootTree
+
+	KSPath       string
+	isoLabel     string
+	osTreeCommit string
+	osTreeURL    string
+	osTreeRef    string
 }
 
 func NewISOTree(m *Manifest,
 	buildPipeline *Build,
 	anacondaPipeline *Anaconda,
+	rootfsPipeline *ISORootfsImg,
+	bootTreePipeline *EFIBootTree,
 	osTreeCommit,
 	osTreeURL,
 	osTreeRef,
-	isoLabelTmpl string) *ISOTree {
-	// TODO: replace isoLabelTmpl with more high-level properties
-	isoLabel := fmt.Sprintf(isoLabelTmpl, anacondaPipeline.platform.GetArch())
+	isoLabel string) *ISOTree {
 
 	p := &ISOTree{
 		Base:             NewBase(m, "bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
+		rootfsPipeline:   rootfsPipeline,
+		bootTreePipeline: bootTreePipeline,
 		isoLabel:         isoLabel,
 		osTreeCommit:     osTreeCommit,
 		osTreeURL:        osTreeURL,
@@ -74,34 +83,104 @@ func (p *ISOTree) getBuildPackages() []string {
 func (p *ISOTree) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	kspath := "/osbuild.ks"
 	ostreeRepoPath := "/ostree/repo"
+	kernelOpts := fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.isoLabel, p.KSPath)
 
-	pipeline.AddStage(osbuild.NewBootISOMonoStage(bootISOMonoStageOptions(p.anacondaPipeline.kernelVer,
-		p.anacondaPipeline.platform.GetArch().String(),
-		p.UEFIVendor,
-		p.anacondaPipeline.product,
-		p.anacondaPipeline.version,
-		p.isoLabel,
-		kspath),
-		osbuild.NewBootISOMonoStagePipelineTreeInputs(p.anacondaPipeline.Name())))
+	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+		Paths: []osbuild.Path{
+			{
+				Path: "images",
+			},
+			{
+				Path: "images/pxeboot",
+			},
+		},
+	}))
 
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
+	inputName := "tree"
+	copyStageOptions := &osbuild.CopyStageOptions{
+		Paths: []osbuild.CopyStagePath{
+			{
+				From: fmt.Sprintf("input://%s/boot/vmlinuz-%s", inputName, p.anacondaPipeline.kernelVer),
+				To:   "tree:///images/pxeboot/vmlinuz",
+			},
+			{
+				From: fmt.Sprintf("input://%s/boot/initramfs-%s.img", inputName, p.anacondaPipeline.kernelVer),
+				To:   "tree:///images/pxeboot/initrd.img",
+			},
+		},
+	}
+	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.anacondaPipeline.Name())
+	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
+	pipeline.AddStage(copyStage)
+
+	squashfsOptions := osbuild.SquashfsStageOptions{
+		Filename: "images/install.img",
+		Compression: osbuild.FSCompression{
+			Method: "lz4",
+		},
+	}
+	squashfsStage := osbuild.NewSquashfsStage(&squashfsOptions, p.rootfsPipeline.Name())
+	pipeline.AddStage(squashfsStage)
+
+	isoLinuxOptions := &osbuild.ISOLinuxStageOptions{
+		Product: osbuild.ISOLinuxProduct{
+			Name:    p.anacondaPipeline.product,
+			Version: p.anacondaPipeline.version,
+		},
+		Kernel: osbuild.ISOLinuxKernel{
+			Dir:  "/images/pxeboot",
+			Opts: []string{kernelOpts},
+		},
+	}
+	isoLinuxStage := osbuild.NewISOLinuxStage(isoLinuxOptions, p.anacondaPipeline.Name())
+	pipeline.AddStage(isoLinuxStage)
+
+	filename := "images/efiboot.img"
+	pipeline.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{
+		Filename: filename,
+		Size:     "20MB",
+	}))
+
+	efibootDevice := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: filename})
+	for _, stage := range osbuild.GenMkfsStages(p.PartitionTable, efibootDevice) {
+		pipeline.AddStage(stage)
+	}
+
+	inputName = "root-tree"
+	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.bootTreePipeline.Name())
+	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.bootTreePipeline.Name(), filename, p.PartitionTable)
+	pipeline.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
+
+	copyInputs = osbuild.NewPipelineTreeInputs(inputName, p.bootTreePipeline.Name())
+	pipeline.AddStage(osbuild.NewCopyStageSimple(
+		&osbuild.CopyStageOptions{
+			Paths: []osbuild.CopyStagePath{
+				{
+					From: fmt.Sprintf("input://%s/EFI", inputName),
+					To:   "tree:///",
+				},
+			},
+		},
+		copyInputs,
+	))
+
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
 	if err != nil {
 		panic("password encryption failed")
 	}
-
-	pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
-	pipeline.AddStage(osbuild.NewDiscinfoStage(&osbuild.DiscinfoStageOptions{
-		BaseArch: p.anacondaPipeline.platform.GetArch().String(),
-		Release:  p.Release,
-	}))
 
 	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
 	pipeline.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
 		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.osTreeCommit, p.osTreeRef),
 	))
+
+	pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
+	pipeline.AddStage(osbuild.NewDiscinfoStage(&osbuild.DiscinfoStageOptions{
+		BaseArch: p.anacondaPipeline.platform.GetArch().String(),
+		Release:  p.Release,
+	}))
 
 	return pipeline
 }
