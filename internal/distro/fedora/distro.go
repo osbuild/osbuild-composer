@@ -126,7 +126,7 @@ var (
 		bootISO:          true,
 		image:            iotInstallerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree"},
 		exports:          []string{"bootiso"},
 	}
 

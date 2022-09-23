@@ -1,9 +1,12 @@
 package image
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/artifact"
+	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -48,7 +51,8 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline := manifest.NewAnaconda(m,
 		buildPipeline,
 		img.Platform,
-		repos, "kernel",
+		repos,
+		"kernel",
 		img.Product,
 		img.OSVersion)
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
@@ -58,15 +62,43 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
 
+	rootfsPartitionTable := &disk.PartitionTable{
+		Size: 20 * common.MebiByte,
+		Partitions: []disk.Partition{
+			{
+				Start: 0,
+				Size:  20 * common.MebiByte,
+				Payload: &disk.Filesystem{
+					Type:       "vfat",
+					Mountpoint: "/",
+					UUID:       disk.NewVolIDFromRand(rng),
+				},
+			},
+		},
+	}
+
+	// TODO: replace isoLabelTmpl with more high-level properties
+	isoLabel := fmt.Sprintf(img.ISOLabelTempl, img.Platform.GetArch())
+
+	rootfsImagePipeline := manifest.NewISORootfsImg(m, buildPipeline, anacondaPipeline)
+	rootfsImagePipeline.Size = 4 * common.GibiByte
+
+	bootTreePipeline := manifest.NewEFIBootTree(m, buildPipeline, anacondaPipeline)
+	bootTreePipeline.Platform = img.Platform
+	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
+	bootTreePipeline.KSPath = "/ostree.ks"
+	bootTreePipeline.ISOLabel = isoLabel
+
 	isoTreePipeline := manifest.NewISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
-		nil,
-		nil,
+		rootfsImagePipeline,
+		bootTreePipeline,
 		img.OSTreeCommit,
 		img.OSTreeURL,
 		img.OSTreeRef,
-		"")
+		isoLabel)
+	isoTreePipeline.PartitionTable = rootfsPartitionTable
 	isoTreePipeline.Release = img.Release
 	isoTreePipeline.OSName = img.OSName
 	isoTreePipeline.Users = img.Users
