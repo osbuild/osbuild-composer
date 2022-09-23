@@ -61,15 +61,17 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline := manifest.NewISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
+		nil,
+		nil,
 		img.OSTreeCommit,
 		img.OSTreeURL,
 		img.OSTreeRef,
-		img.ISOLabelTempl)
+		"")
 	isoTreePipeline.Release = img.Release
 	isoTreePipeline.OSName = img.OSName
-	isoTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	isoTreePipeline.Users = img.Users
 	isoTreePipeline.Groups = img.Groups
+	isoTreePipeline.KSPath = "/ostree.ks"
 
 	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline)
 	isoPipeline.Filename = img.Filename
