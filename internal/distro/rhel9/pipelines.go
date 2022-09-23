@@ -211,7 +211,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ostreeRepoPath := "/ostree/repo"
 	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", customizations.GetUsers(), customizations.GetGroups(), makeISORootPath(ostreeRepoPath), options.OSTree.Ref, "rhel")
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", users.UsersFromBP(customizations.GetUsers()), users.GroupsFromBP(customizations.GetGroups()), makeISORootPath(ostreeRepoPath), options.OSTree.Ref, "rhel")
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 
 	tarPath := "/liveimg.tar"
 	tarPayloadStages := []*osbuild.Stage{osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, treePipeline.Name)}
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), customizations.GetUsers(), customizations.GetGroups(), "", "", "rhel")
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), users.UsersFromBP(customizations.GetUsers()), users.GroupsFromBP(customizations.GetGroups()), "", "", "rhel")
 	if err != nil {
 		return nil, err
 	}
@@ -444,17 +444,17 @@ func osPipeline(t *imageType,
 		// don't put users and groups in the payload of an installer
 		// add them via kickstart instead
 		if groups := c.GetGroups(); len(groups) > 0 {
-			p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
+			p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(users.GroupsFromBP(groups))))
 		}
 
-		if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
+		if userOptions, err := osbuild.NewUsersStageOptions(users.UsersFromBP(c.GetUsers()), false); err != nil {
 			return nil, err
 		} else if userOptions != nil {
 			if t.rpmOstree {
 				// for ostree, writing the key during user creation is
 				// redundant and can cause issues so create users without keys
 				// and write them on first boot
-				userOptionsSansKeys, err := osbuild.NewUsersStageOptions(c.GetUsers(), true)
+				userOptionsSansKeys, err := osbuild.NewUsersStageOptions(users.UsersFromBP(c.GetUsers()), true)
 				if err != nil {
 					return nil, err
 				}

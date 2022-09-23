@@ -257,8 +257,8 @@ func iotInstallerImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
-	img.Users = customizations.GetUsers()
-	img.Groups = customizations.GetGroups()
+	img.Users = users.UsersFromBP(customizations.GetUsers())
+	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
 	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product

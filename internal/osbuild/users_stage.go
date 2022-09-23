@@ -1,7 +1,6 @@
 package osbuild
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/crypt"
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
@@ -30,7 +29,7 @@ func NewUsersStage(options *UsersStageOptions) *Stage {
 	}
 }
 
-func NewUsersStageOptions(userCustomizations []blueprint.UserCustomization, omitKey bool) (*UsersStageOptions, error) {
+func NewUsersStageOptions(userCustomizations []users.User, omitKey bool) (*UsersStageOptions, error) {
 	if len(userCustomizations) == 0 {
 		return nil, nil
 	}

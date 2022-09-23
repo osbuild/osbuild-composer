@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
 func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSpec, runner string) *osbuild.Pipeline {
@@ -87,10 +88,10 @@ func osPipeline(t *imageType,
 	}
 
 	if groups := c.GetGroups(); len(groups) > 0 {
-		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(groups)))
+		p.AddStage(osbuild.NewGroupsStage(osbuild.NewGroupsStageOptions(users.GroupsFromBP(groups))))
 	}
 
-	if userOptions, err := osbuild.NewUsersStageOptions(c.GetUsers(), false); err != nil {
+	if userOptions, err := osbuild.NewUsersStageOptions(users.UsersFromBP(c.GetUsers()), false); err != nil {
 		return nil, err
 	} else if userOptions != nil {
 		p.AddStage(osbuild.NewUsersStage(userOptions))

@@ -1,7 +1,6 @@
 package osbuild
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
@@ -22,7 +21,7 @@ func NewGroupsStage(options *GroupsStageOptions) *Stage {
 	}
 }
 
-func NewGroupsStageOptions(groups []blueprint.GroupCustomization) *GroupsStageOptions {
+func NewGroupsStageOptions(groups []users.Group) *GroupsStageOptions {
 	options := GroupsStageOptions{
 		Groups: map[string]GroupsStageOptionsGroup{},
 	}

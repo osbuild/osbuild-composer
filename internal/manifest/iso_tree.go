@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
 // An ISOTree represents a tree containing the anaconda installer,
@@ -18,8 +18,8 @@ type ISOTree struct {
 	// TODO: review optional and mandatory fields and their meaning
 	OSName  string
 	Release string
-	Users   []blueprint.UserCustomization
-	Groups  []blueprint.GroupCustomization
+	Users   []users.User
+	Groups  []users.Group
 
 	PartitionTable *disk.PartitionTable
 
