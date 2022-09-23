@@ -60,10 +60,10 @@ fi
 
 if [ "$ON_JENKINS" = true ]; then
     # jenkins on main: build rhel only
-    PACKER_ONLY_EXCEPT=--only=amazon-ebs.rhel-8-x86_64,amazon-ebs.rhel-8-aarch64
+    PACKER_ONLY_EXCEPT=--only=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64
 elif [ -n "$CI_COMMIT_BRANCH" ] && [ "$CI_COMMIT_BRANCH" == "main" ]; then
     # Schutzbot on main: build all except rhel
-    PACKER_ONLY_EXCEPT=--except=amazon-ebs.rhel-8-x86_64,amazon-ebs.rhel-8-aarch64
+    PACKER_ONLY_EXCEPT=--except=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64
 elif [ -n "$CI_COMMIT_BRANCH" ]; then
     # Schutzbot but not main, build everything (use dummy except)
     PACKER_ONLY_EXCEPT=--except=amazon-ebs.dummy
@@ -84,8 +84,8 @@ function write_inventories {
 
         # write rpmrepo_distribution variable
         local rpmrepo_distribution="$distro"
-        if [[ $rpmrepo_distribution == rhel-8 ]]; then
-            rpmrepo_distribution=rhel-8-cdn
+        if [[ $rpmrepo_distribution == rhel-9 ]]; then
+            rpmrepo_distribution=rhel-9-cdn
         fi
         cat >"$item/group_vars/all.yml" <<EOF
 ---
@@ -94,8 +94,8 @@ EOF
 
         # get distro name for schutzfile
         local schutzfile_distro="$distro"
-        if [[ $schutzfile_distro == rhel-8 ]]; then
-            schutzfile_distro=rhel-8.6
+        if [[ $schutzfile_distro == rhel-9 ]]; then
+            schutzfile_distro=rhel-9.0
         fi
 
         # get osbuild_commit from schutzfile
