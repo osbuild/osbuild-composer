@@ -16,8 +16,8 @@
 
   - name: Add EPEL
     dnf:
-      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
       state: present
+      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
       disable_gpg_check: yes
 
   - name: Subscribe
@@ -81,7 +81,7 @@
   - name: Mockbuild osbuild
     shell: >-
         mock
-        -r "rhel-8-{{ ansible_architecture }}"
+        -r "rhel-9-{{ ansible_architecture }}"
         --rebuild
         --define "commit {{ OSBUILD_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
@@ -100,7 +100,7 @@
   - name: Mockbuild osbuild-composer
     shell: >-
         mock
-        -r "rhel-8-{{ ansible_architecture }}"
+        -r "rhel-9-{{ ansible_architecture }}"
         --rebuild
         --define "commit {{ COMPOSER_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
