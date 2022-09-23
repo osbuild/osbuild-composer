@@ -6,6 +6,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
@@ -27,11 +28,10 @@ type ISOTree struct {
 	rootfsPipeline   *ISORootfsImg
 	bootTreePipeline *EFIBootTree
 
-	KSPath       string
-	isoLabel     string
-	osTreeCommit string
-	osTreeURL    string
-	osTreeRef    string
+	KSPath   string
+	isoLabel string
+
+	ostree ostree.RequestParams
 }
 
 func NewISOTree(m *Manifest,
@@ -39,9 +39,9 @@ func NewISOTree(m *Manifest,
 	anacondaPipeline *Anaconda,
 	rootfsPipeline *ISORootfsImg,
 	bootTreePipeline *EFIBootTree,
-	osTreeCommit,
-	osTreeURL,
-	osTreeRef,
+	ostreeCommit,
+	ostreeURL,
+	ostreeRef,
 	isoLabel string) *ISOTree {
 
 	p := &ISOTree{
@@ -50,9 +50,11 @@ func NewISOTree(m *Manifest,
 		rootfsPipeline:   rootfsPipeline,
 		bootTreePipeline: bootTreePipeline,
 		isoLabel:         isoLabel,
-		osTreeCommit:     osTreeCommit,
-		osTreeURL:        osTreeURL,
-		osTreeRef:        osTreeRef,
+		ostree: ostree.RequestParams{
+			Parent: ostreeCommit,
+			URL:    ostreeURL,
+			Ref:    ostreeRef,
+		},
 	}
 	buildPipeline.addDependent(p)
 	if anacondaPipeline.Base.manifest != m {
@@ -65,8 +67,8 @@ func NewISOTree(m *Manifest,
 func (p *ISOTree) getOSTreeCommits() []osTreeCommit {
 	return []osTreeCommit{
 		{
-			checksum: p.osTreeCommit,
-			url:      p.osTreeURL,
+			checksum: p.ostree.Parent,
+			url:      p.ostree.URL,
 		},
 	}
 }
@@ -164,7 +166,7 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 		copyInputs,
 	))
 
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.osTreeRef, p.OSName)
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.ostree.Ref, p.OSName)
 	if err != nil {
 		panic("password encryption failed")
 	}
@@ -172,7 +174,7 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
 	pipeline.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.osTreeCommit, p.osTreeRef),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostree.Parent, p.ostree.Ref),
 	))
 
 	pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
