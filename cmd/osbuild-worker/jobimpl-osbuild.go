@@ -31,6 +31,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
+type GCPConfiguration struct {
+	Creds string
+}
+
 type S3Configuration struct {
 	Creds               string
 	Endpoint            string
@@ -52,7 +56,7 @@ type OSBuildJobImpl struct {
 	Store            string
 	Output           string
 	KojiServers      map[string]kojiServer
-	GCPCreds         string
+	GCPConfig        GCPConfiguration
 	AzureCreds       *azure.Credentials
 	AWSCreds         string
 	AWSBucket        string
@@ -160,9 +164,9 @@ func (impl *OSBuildJobImpl) getGCP(credentials []byte) (*gcp.GCP, error) {
 	if credentials != nil {
 		logrus.Info("[GCP] 🔑 using credentials provided with the job request")
 		return gcp.New(credentials)
-	} else if impl.GCPCreds != "" {
+	} else if impl.GCPConfig.Creds != "" {
 		logrus.Info("[GCP] 🔑 using credentials from the worker configuration")
-		return gcp.NewFromFile(impl.GCPCreds)
+		return gcp.NewFromFile(impl.GCPConfig.Creds)
 	} else {
 		logrus.Info("[GCP] 🔑 using Application Default Credentials via Google library")
 		return gcp.New(nil)
