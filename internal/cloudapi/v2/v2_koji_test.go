@@ -356,7 +356,7 @@ func TestKojiCompose(t *testing.T) {
 				"release":"%[6]s",
 				"task_id": 42
 			}
-		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage), name, version, release),
+		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.AWSS3ImageRequestImageTypeGuestImage), name, version, release),
 				c.composeReplyCode, c.composeReply, "id", "operation_id")
 
 			// determine the compose ID from the reply

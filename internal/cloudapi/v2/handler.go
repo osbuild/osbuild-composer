@@ -253,7 +253,25 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPError(ErrorInvalidNumberOfImageBuilds)
 	}
 	var irs []imageRequest
-	for _, ir := range *request.ImageRequests {
+	for _, abstractIr := range *request.ImageRequests {
+		irJson, err := json.Marshal(abstractIr)
+		if err != nil {
+			return HTTPError(ErrorJSONMarshallingError)
+		}
+
+		// We know that all image request kinds have image_type
+		// and upload_options. image_type is just a string and for
+		// upload_options, we just need to check whether it's nil
+		var ir struct {
+			AbstractImageRequest
+			ImageType     string      `json:"image_type"`
+			UploadOptions interface{} `json:"upload_options"`
+		}
+		err = json.Unmarshal(irJson, &ir)
+		if err != nil {
+			return HTTPError(ErrorJSONUnMarshallingError)
+		}
+
 		arch, err := distribution.GetArch(ir.Architecture)
 		if err != nil {
 			return HTTPError(ErrorUnsupportedArchitecture)
@@ -316,27 +334,24 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if ir.UploadOptions == nil {
 			// nowhere to put the image, this is a user error
 			if request.Koji == nil {
-				return HTTPError(ErrorJSONUnMarshallingError)
+				return HTTPError(ErrorNoUpload)
 			}
 		} else {
 			/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 			switch ir.ImageType {
-			case ImageTypesAws:
+			case string(AWSEC2ImageRequestImageTypeAws):
 				fallthrough
-			case ImageTypesAwsRhui:
+			case string(AWSEC2ImageRequestImageTypeAwsRhui):
 				fallthrough
-			case ImageTypesAwsHaRhui:
+			case string(AWSEC2ImageRequestImageTypeAwsHaRhui):
 				fallthrough
-			case ImageTypesAwsSapRhui:
-				var awsUploadOptions AWSEC2UploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &awsUploadOptions)
+			case string(AWSEC2ImageRequestImageTypeAwsSapRhui):
+				var awsIR AWSEC2ImageRequest
+				err = json.Unmarshal(irJson, &awsIR)
 				if err != nil {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
+				awsUploadOptions := *awsIR.UploadOptions
 
 				// For service maintenance, images are discovered by the "Name:composer-api-*"
 				// tag filter. Currently all image names in the service are generated, so they're
@@ -356,28 +371,25 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
-			case ImageTypesGuestImage:
+			case string(AWSS3ImageRequestImageTypeGuestImage):
 				fallthrough
-			case ImageTypesVsphere:
+			case string(AWSS3ImageRequestImageTypeVsphere):
 				fallthrough
-			case ImageTypesImageInstaller:
+			case string(AWSS3ImageRequestImageTypeImageInstaller):
 				fallthrough
-			case ImageTypesEdgeInstaller:
+			case string(AWSS3ImageRequestImageTypeEdgeInstaller):
 				fallthrough
-			case ImageTypesEdgeCommit:
+			case string(AWSS3ImageRequestImageTypeEdgeCommit):
 				fallthrough
-			case ImageTypesIotCommit:
+			case string(AWSS3ImageRequestImageTypeIotCommit):
 				fallthrough
-			case ImageTypesIotRawImage:
-				var awsS3UploadOptions AWSS3UploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &awsS3UploadOptions)
+			case string(AWSS3ImageRequestImageTypeIotRawImage):
+				var awsS3IR AWSS3ImageRequest
+				err = json.Unmarshal(irJson, &awsS3IR)
 				if err != nil {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
+				awsS3UploadOptions := *awsS3IR.UploadOptions
 
 				public := false
 				if awsS3UploadOptions.Public != nil && *awsS3UploadOptions.Public {
@@ -394,18 +406,15 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
-			case ImageTypesEdgeContainer:
+			case string(ContainerImageRequestImageTypeEdgeContainer):
 				fallthrough
-			case ImageTypesIotContainer:
-				var containerUploadOptions ContainerUploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &containerUploadOptions)
+			case string(ContainerImageRequestImageTypeIotContainer):
+				var containerIR ContainerImageRequest
+				err = json.Unmarshal(irJson, &containerIR)
 				if err != nil {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
+				containerUploadOptions := *containerIR.UploadOptions
 
 				var name = request.Distribution
 				var tag = uuid.New().String()
@@ -421,18 +430,15 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
-			case ImageTypesGcp:
+			case string(GCPImageRequestImageTypeGcp):
 				fallthrough
-			case ImageTypesGcpRhui:
-				var gcpUploadOptions GCPUploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &gcpUploadOptions)
+			case string(GCPImageRequestImageTypeGcpRhui):
+				var gcpIR GCPImageRequest
+				err = json.Unmarshal(irJson, &gcpIR)
 				if err != nil {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
+				gcpUploadOptions := *gcpIR.UploadOptions
 
 				var share []string
 				if gcpUploadOptions.ShareWithAccounts != nil {
@@ -457,18 +463,16 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 				irTarget = t
-			case ImageTypesAzure:
+			case string(AzureImageRequestImageTypeAzure):
 				fallthrough
-			case ImageTypesAzureRhui:
-				var azureUploadOptions AzureUploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &azureUploadOptions)
+			case string(AzureImageRequestImageTypeAzureRhui):
+				var azureIR AzureImageRequest
+				err = json.Unmarshal(irJson, &azureIR)
 				if err != nil {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
+				azureUploadOptions := *azureIR.UploadOptions
+
 				t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
 					TenantID:       azureUploadOptions.TenantId,
 					Location:       azureUploadOptions.Location,
@@ -526,41 +530,41 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	})
 }
 
-func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
+func imageTypeFromApiImageType(it string, arch distro.Arch) string {
 	switch it {
-	case ImageTypesAws:
+	case string(AWSEC2ImageRequestImageTypeAws):
 		return "ami"
-	case ImageTypesAwsRhui:
+	case string(AWSEC2ImageRequestImageTypeAwsRhui):
 		return "ec2"
-	case ImageTypesAwsHaRhui:
+	case string(AWSEC2ImageRequestImageTypeAwsHaRhui):
 		return "ec2-ha"
-	case ImageTypesAwsSapRhui:
+	case string(AWSEC2ImageRequestImageTypeAwsSapRhui):
 		return "ec2-sap"
-	case ImageTypesGcp:
+	case string(GCPImageRequestImageTypeGcp):
 		return "gce"
-	case ImageTypesGcpRhui:
+	case string(GCPImageRequestImageTypeGcpRhui):
 		return "gce-rhui"
-	case ImageTypesAzure:
+	case string(AzureImageRequestImageTypeAzure):
 		return "vhd"
-	case ImageTypesAzureRhui:
+	case string(AzureImageRequestImageTypeAzureRhui):
 		return "azure-rhui"
-	case ImageTypesGuestImage:
+	case string(AWSS3ImageRequestImageTypeGuestImage):
 		return "qcow2"
-	case ImageTypesVsphere:
+	case string(AWSS3ImageRequestImageTypeVsphere):
 		return "vmdk"
-	case ImageTypesImageInstaller:
+	case string(AWSS3ImageRequestImageTypeImageInstaller):
 		return "image-installer"
-	case ImageTypesEdgeCommit:
+	case string(AWSS3ImageRequestImageTypeEdgeCommit):
 		return "rhel-edge-commit"
-	case ImageTypesEdgeContainer:
+	case string(ContainerImageRequestImageTypeEdgeContainer):
 		return "rhel-edge-container"
-	case ImageTypesEdgeInstaller:
+	case string(AWSS3ImageRequestImageTypeEdgeInstaller):
 		return "rhel-edge-installer"
-	case ImageTypesIotCommit:
+	case string(AWSS3ImageRequestImageTypeIotCommit):
 		return "iot-commit"
-	case ImageTypesIotContainer:
+	case string(ContainerImageRequestImageTypeIotContainer):
 		return "iot-container"
-	case ImageTypesIotRawImage:
+	case string(AWSS3ImageRequestImageTypeIotRawImage):
 		return "iot-raw-image"
 	}
 	return ""

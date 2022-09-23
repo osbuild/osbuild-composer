@@ -43,7 +43,7 @@ func kojiRequest() string {
 				"version":"1",
 				"release":"2"
 			}
-		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage))
+		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.AWSS3ImageRequestImageTypeGuestImage))
 }
 
 func s3Request() string {
@@ -64,7 +64,7 @@ func s3Request() string {
 					}
 				}
 			]
-		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage))
+		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.AWSS3ImageRequestImageTypeGuestImage))
 }
 
 var reqContextCallCount = 0

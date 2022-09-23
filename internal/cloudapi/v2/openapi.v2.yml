@@ -735,45 +735,111 @@ components:
           $ref: '#/components/schemas/Customizations'
         koji:
           $ref: '#/components/schemas/Koji'
+
     ImageRequest:
+      oneOf:
+        - $ref: '#/components/schemas/AWSEC2ImageRequest'
+        - $ref: '#/components/schemas/AWSS3ImageRequest'
+        - $ref: '#/components/schemas/GCPImageRequest'
+        - $ref: '#/components/schemas/AzureImageRequest'
+        - $ref: '#/components/schemas/ContainerImageRequest'
+
+    AbstractImageRequest:
       required:
         - architecture
-        - image_type
         - repositories
       properties:
         architecture:
           type: string
           example: 'x86_64'
-        image_type:
-          $ref: '#/components/schemas/ImageTypes'
         repositories:
           type: array
           items:
             $ref: '#/components/schemas/Repository'
         ostree:
           $ref: '#/components/schemas/OSTree'
-        upload_options:
-          $ref: '#/components/schemas/UploadOptions'
-    ImageTypes:
-      type: string
-      enum:
-        - aws
-        - aws-ha-rhui
-        - aws-rhui
-        - aws-sap-rhui
-        - azure
-        - azure-rhui
-        - edge-commit
-        - edge-container
-        - edge-installer
-        - gcp
-        - gcp-rhui
-        - guest-image
-        - image-installer
-        - iot-commit
-        - iot-container
-        - iot-raw-image
-        - vsphere
+
+    AWSEC2ImageRequest:
+      allOf:
+        - $ref: '#/components/schemas/AbstractImageRequest'
+        - type: object
+          required:
+            - image_type
+          properties:
+            image_type:
+              type: string
+              enum:
+                - aws
+                - aws-ha-rhui
+                - aws-rhui
+                - aws-sap-rhui
+            upload_options:
+              $ref: '#/components/schemas/AWSEC2UploadOptions'
+
+    AWSS3ImageRequest:
+      allOf:
+        - $ref: '#/components/schemas/AbstractImageRequest'
+        - type: object
+          required:
+            - image_type
+          properties:
+            image_type:
+              type: string
+              enum:
+                - edge-commit
+                - edge-installer
+                - guest-image
+                - image-installer
+                - iot-commit
+                - iot-raw-image
+                - vsphere
+            upload_options:
+              $ref: '#/components/schemas/AWSS3UploadOptions'
+
+    GCPImageRequest:
+      allOf:
+        - $ref: '#/components/schemas/AbstractImageRequest'
+        - type: object
+          required:
+            - image_type
+          properties:
+            image_type:
+              type: string
+              enum:
+                - gcp
+                - gcp-rhui
+            upload_options:
+              $ref: '#/components/schemas/GCPUploadOptions'
+
+    AzureImageRequest:
+      allOf:
+        - $ref: '#/components/schemas/AbstractImageRequest'
+        - type: object
+          required:
+            - image_type
+          properties:
+            image_type:
+              type: string
+              enum:
+                - azure
+                - azure-rhui
+            upload_options:
+              $ref: '#/components/schemas/AzureUploadOptions'
+
+    ContainerImageRequest:
+      allOf:
+        - $ref: '#/components/schemas/AbstractImageRequest'
+        - type: object
+          required:
+            - image_type
+          properties:
+            image_type:
+              type: string
+              enum:
+                - edge-container
+                - iot-container
+            upload_options:
+              $ref: '#/components/schemas/ContainerUploadOptions'
     Repository:
       type: object
       properties:
@@ -809,19 +875,6 @@ components:
           description: |
             Naming package sets for a repository assigns it to a specific part
             (pipeline) of the build process.
-    UploadOptions:
-      anyOf:
-      - $ref: '#/components/schemas/AWSEC2UploadOptions'
-      - $ref: '#/components/schemas/AWSS3UploadOptions'
-      - $ref: '#/components/schemas/GCPUploadOptions'
-      - $ref: '#/components/schemas/AzureUploadOptions'
-      - $ref: '#/components/schemas/ContainerUploadOptions'
-      description: |
-        This should really be oneOf but AWSS3UploadOptions is a subset of
-        AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
-        are also valid AWSS3UploadOptionas objects which violates the oneOf
-        rules. Therefore, we have to use anyOf here but be aware that it isn't
-        possible to mix and match more schemas together.
     AWSEC2UploadOptions:
       type: object
       required:
