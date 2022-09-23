@@ -10213,13 +10213,168 @@
         ]
       },
       {
+        "name": "rootfs-image",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.mkdir",
+            "options": {
+              "paths": [
+                {
+                  "path": "LiveOS"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.truncate",
+            "options": {
+              "filename": "LiveOS/rootfs.img",
+              "size": "4294967296"
+            }
+          },
+          {
+            "type": "org.osbuild.mkfs.ext4",
+            "options": {
+              "uuid": "2fe99653-f7ff-44fd-bea8-fa70107524fb",
+              "label": "Anaconda"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "LiveOS/rootfs.img"
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.copy",
+            "inputs": {
+              "tree": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:anaconda-tree"
+                ]
+              }
+            },
+            "options": {
+              "paths": [
+                {
+                  "from": "input://tree/",
+                  "to": "mount://device/"
+                }
+              ]
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "LiveOS/rootfs.img"
+                }
+              }
+            },
+            "mounts": [
+              {
+                "name": "device",
+                "type": "org.osbuild.ext4",
+                "source": "device",
+                "target": "/"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "efiboot-tree",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.grub2.iso",
+            "options": {
+              "product": {
+                "name": "Fedora",
+                "version": "35"
+              },
+              "kernel": {
+                "dir": "/images/pxeboot",
+                "opts": [
+                  "inst.ks=hd:LABEL=Fedora-35-BaseOS-x86_64:/ostree.ks"
+                ]
+              },
+              "isolabel": "Fedora-35-BaseOS-x86_64",
+              "architectures": [
+                "X64"
+              ],
+              "vendor": "fedora"
+            }
+          }
+        ]
+      },
+      {
         "name": "bootiso-tree",
         "build": "name:build",
         "stages": [
           {
-            "type": "org.osbuild.bootiso.mono",
+            "type": "org.osbuild.mkdir",
+            "options": {
+              "paths": [
+                {
+                  "path": "images"
+                },
+                {
+                  "path": "images/pxeboot"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.copy",
             "inputs": {
-              "rootfs": {
+              "tree": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:anaconda-tree"
+                ]
+              }
+            },
+            "options": {
+              "paths": [
+                {
+                  "from": "input://tree/boot/vmlinuz-5.15.13-200.fc35.x86_64",
+                  "to": "tree:///images/pxeboot/vmlinuz"
+                },
+                {
+                  "from": "input://tree/boot/initramfs-5.15.13-200.fc35.x86_64.img",
+                  "to": "tree:///images/pxeboot/initrd.img"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.squashfs",
+            "inputs": {
+              "tree": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:rootfs-image"
+                ]
+              }
+            },
+            "options": {
+              "filename": "images/install.img",
+              "compression": {
+                "method": "lz4"
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.isolinux",
+            "inputs": {
+              "data": {
                 "type": "org.osbuild.tree",
                 "origin": "org.osbuild.pipeline",
                 "references": [
@@ -10232,34 +10387,121 @@
                 "name": "Fedora",
                 "version": "35"
               },
-              "kernel": "5.15.13-200.fc35.x86_64",
-              "isolabel": "Fedora-35-BaseOS-x86_64",
-              "efi": {
-                "architectures": [
-                  "X64"
-                ],
-                "vendor": "fedora"
-              },
-              "isolinux": {
-                "enabled": true
-              },
-              "kernel_opts": "inst.ks=hd:LABEL=Fedora-35-BaseOS-x86_64:/osbuild.ks",
-              "templates": "99-generic",
-              "rootfs": {
-                "compression": {
-                  "method": "xz",
-                  "options": {
-                    "bcj": "x86"
-                  }
-                },
-                "size": 9216
+              "kernel": {
+                "dir": "/images/pxeboot",
+                "opts": [
+                  "inst.ks=hd:LABEL=Fedora-35-BaseOS-x86_64:/ostree.ks"
+                ]
               }
+            }
+          },
+          {
+            "type": "org.osbuild.truncate",
+            "options": {
+              "filename": "images/efiboot.img",
+              "size": "20MB"
+            }
+          },
+          {
+            "type": "org.osbuild.mkfs.fat",
+            "options": {
+              "volid": "0194fdc2"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "images/efiboot.img",
+                  "size": 40960,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.copy",
+            "inputs": {
+              "root-tree": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:efiboot-tree"
+                ]
+              }
+            },
+            "options": {
+              "paths": [
+                {
+                  "from": "input://root-tree/",
+                  "to": "mount://root/"
+                }
+              ]
+            },
+            "devices": {
+              "root": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "images/efiboot.img",
+                  "size": 40960
+                }
+              }
+            },
+            "mounts": [
+              {
+                "name": "root",
+                "type": "org.osbuild.fat",
+                "source": "root",
+                "target": "/"
+              }
+            ]
+          },
+          {
+            "type": "org.osbuild.copy",
+            "inputs": {
+              "root-tree": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:efiboot-tree"
+                ]
+              }
+            },
+            "options": {
+              "paths": [
+                {
+                  "from": "input://root-tree/EFI",
+                  "to": "tree:///"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.ostree.init",
+            "options": {
+              "path": "/ostree/repo"
+            }
+          },
+          {
+            "type": "org.osbuild.ostree.pull",
+            "inputs": {
+              "commits": {
+                "type": "org.osbuild.ostree",
+                "origin": "org.osbuild.source",
+                "references": {
+                  "test/iot": {
+                    "ref": "test/iot"
+                  }
+                }
+              }
+            },
+            "options": {
+              "repo": "/ostree/repo"
             }
           },
           {
             "type": "org.osbuild.kickstart",
             "options": {
-              "path": "/osbuild.ks",
+              "path": "/ostree.ks",
               "ostree": {
                 "osname": "fedora",
                 "url": "file:///run/install/repo/ostree/repo",
@@ -10295,29 +10537,6 @@
             "options": {
               "basearch": "x86_64",
               "release": "202010217.n.0"
-            }
-          },
-          {
-            "type": "org.osbuild.ostree.init",
-            "options": {
-              "path": "/ostree/repo"
-            }
-          },
-          {
-            "type": "org.osbuild.ostree.pull",
-            "inputs": {
-              "commits": {
-                "type": "org.osbuild.ostree",
-                "origin": "org.osbuild.source",
-                "references": {
-                  "test/iot": {
-                    "ref": "test/iot"
-                  }
-                }
-              }
-            },
-            "options": {
-              "repo": "/ostree/repo"
             }
           }
         ]
