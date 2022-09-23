@@ -4,8 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-
+	"github.com/osbuild/osbuild-composer/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,20 +23,20 @@ func TestNewUsersStageOptionsPassword(t *testing.T) {
 	EmptyPass := ""
 	CryptPass := "$6$RWdHzrPfoM6BMuIP$gKYlBXQuJgP.G2j2twbOyxYjFDPUQw8Jp.gWe1WD/obX0RMyfgw5vt.Mn/tLLX4mQjaklSiIzoAW3HrVQRg4Q." // #nosec G101
 
-	users := []blueprint.UserCustomization{
-		blueprint.UserCustomization{
+	users := []users.User{
+		{
 			Name:     "bart",
 			Password: &Pass,
 		},
-		blueprint.UserCustomization{
+		{
 			Name:     "lisa",
 			Password: &CryptPass,
 		},
-		blueprint.UserCustomization{
+		{
 			Name:     "maggie",
 			Password: &EmptyPass,
 		},
-		blueprint.UserCustomization{
+		{
 			Name: "homer",
 		},
 	}

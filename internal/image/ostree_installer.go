@@ -4,19 +4,19 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/artifact"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
+	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
 type OSTreeInstaller struct {
 	Base
 	Platform          platform.Platform
 	ExtraBasePackages rpmmd.PackageSet
-	Users             []blueprint.UserCustomization
-	Groups            []blueprint.GroupCustomization
+	Users             []users.User
+	Groups            []users.Group
 
 	ISOLabelTempl string
 	Product       string

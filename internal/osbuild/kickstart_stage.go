@@ -1,8 +1,6 @@
 package osbuild
 
-import (
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-)
+import "github.com/osbuild/osbuild-composer/internal/users"
 
 type KickstartStageOptions struct {
 	// Where to place the kickstart file
@@ -41,8 +39,8 @@ func NewKickstartStage(options *KickstartStageOptions) *Stage {
 func NewKickstartStageOptions(
 	path string,
 	imageURL string,
-	userCustomizations []blueprint.UserCustomization,
-	groupCustomizations []blueprint.GroupCustomization,
+	userCustomizations []users.User,
+	groupCustomizations []users.Group,
 	ostreeURL string,
 	ostreeRef string,
 	osName string) (*KickstartStageOptions, error) {
