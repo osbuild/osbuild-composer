@@ -6,7 +6,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 )
 
@@ -183,48 +182,6 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	}))
 
 	return pipeline
-}
-
-func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel, kspath string) *osbuild.BootISOMonoStageOptions {
-	comprOptions := new(osbuild.FSCompressionOptions)
-	if bcj := osbuild.BCJOption(arch); bcj != "" {
-		comprOptions.BCJ = bcj
-	}
-	var architectures []string
-
-	if arch == distro.X86_64ArchName {
-		architectures = []string{"X64"}
-	} else if arch == distro.Aarch64ArchName {
-		architectures = []string{"AA64"}
-	} else {
-		panic("unsupported architecture")
-	}
-
-	return &osbuild.BootISOMonoStageOptions{
-		Product: osbuild.Product{
-			Name:    product,
-			Version: osVersion,
-		},
-		ISOLabel:   isolabel,
-		Kernel:     kernelVer,
-		KernelOpts: fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isolabel, kspath),
-		EFI: osbuild.EFI{
-			Architectures: architectures,
-			Vendor:        vendor,
-		},
-		ISOLinux: osbuild.ISOLinux{
-			Enabled: arch == distro.X86_64ArchName,
-			Debug:   false,
-		},
-		Templates: "99-generic",
-		RootFS: osbuild.RootFS{
-			Size: 9216,
-			Compression: osbuild.FSCompression{
-				Method:  "xz",
-				Options: comprOptions,
-			},
-		},
-	}
 }
 
 //makeISORootPath return a path that can be used to address files and folders in
