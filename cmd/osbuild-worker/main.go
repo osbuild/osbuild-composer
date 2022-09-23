@@ -351,9 +351,9 @@ func main() {
 
 	// If the credentials are not provided in the configuration, then the
 	// worker will rely on the GCP library to authenticate using default means.
-	var gcpCredentials string
+	var gcpConfig GCPConfiguration
 	if config.GCP != nil {
-		gcpCredentials = config.GCP.Credentials
+		gcpConfig.Creds = config.GCP.Credentials
 	}
 
 	// If the credentials are not provided in the configuration, then the
@@ -435,7 +435,7 @@ func main() {
 			Store:       store,
 			Output:      output,
 			KojiServers: kojiServers,
-			GCPCreds:    gcpCredentials,
+			GCPConfig:   gcpConfig,
 			AzureCreds:  azureCredentials,
 			AWSCreds:    awsCredentials,
 			AWSBucket:   awsBucket,
