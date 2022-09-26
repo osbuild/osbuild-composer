@@ -19,5 +19,7 @@ image_users = [$PACKER_IMAGE_USERS]
 EOF2
 fi
 
+/usr/bin/packer init /osbuild-composer/templates/packer
+
 # disable parallel builds as it fails consistently while waiting for AMI
 /usr/bin/packer build -parallel-builds=1 "$PACKER_ONLY_EXCEPT" /osbuild-composer/templates/packer
