@@ -121,8 +121,11 @@ func (impl *OSBuildJobImpl) getAWSForS3Target(options *target.AWSS3TargetOptions
 	// Endpoint == "" && Region != "" => AWS (Weldr and Composer)
 	if options.Endpoint == "" && options.Region != "" {
 		aws, err = impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
-		if impl.AWSBucket != "" {
+		if bucket == "" {
 			bucket = impl.AWSBucket
+			if bucket == "" {
+				err = fmt.Errorf("No AWS bucket provided")
+			}
 		}
 	} else if options.Endpoint != "" && options.Region != "" { // Endpoint != "" && Region != "" => Generic S3 Weldr API
 		aws, err = impl.getAWSForS3TargetFromOptions(options)
@@ -471,8 +474,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 
 			bucket := targetOptions.Bucket
-			if impl.AWSBucket != "" {
+			if bucket == "" {
 				bucket = impl.AWSBucket
+				if bucket == "" {
+					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No AWS bucket provided", nil)
+					break
+				}
 			}
 
 			// TODO: Remove this once multiple exports will be supported and used by image definitions
