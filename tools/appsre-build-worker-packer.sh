@@ -69,10 +69,6 @@ elif [ -n "$CI_COMMIT_BRANCH" ]; then
     PACKER_ONLY_EXCEPT=--except=amazon-ebs.dummy
 fi
 
-cat >> worker-packer.sh <<EOF
-/usr/bin/packer build $PACKER_ONLY_EXCEPT /osbuild-composer/templates/packer
-EOF
-
 # prepare ansible inventories
 function write_inventories {
     for item in templates/packer/ansible/inventory/*; do
