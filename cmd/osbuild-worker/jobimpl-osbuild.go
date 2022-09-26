@@ -32,7 +32,8 @@ import (
 )
 
 type GCPConfiguration struct {
-	Creds string
+	Creds  string
+	Bucket string
 }
 
 type S3Configuration struct {
@@ -579,9 +580,18 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			logWithId.Infof("[GCP] 🚀 Uploading image to: %s/%s", targetOptions.Bucket, targetOptions.Object)
+			bucket := targetOptions.Bucket
+			if bucket == "" {
+				bucket = impl.GCPConfig.Bucket
+				if bucket == "" {
+					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No GCP bucket provided", nil)
+					break
+				}
+			}
+
+			logWithId.Infof("[GCP] 🚀 Uploading image to: %s/%s", bucket, targetOptions.Object)
 			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename),
-				targetOptions.Bucket, targetOptions.Object, map[string]string{gcp.MetadataKeyImageName: jobTarget.ImageName})
+				bucket, targetOptions.Object, map[string]string{gcp.MetadataKeyImageName: jobTarget.ImageName})
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
@@ -589,14 +599,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			logWithId.Infof("[GCP] 📥 Importing image into Compute Engine as '%s'", jobTarget.ImageName)
 
-			_, importErr := g.ComputeImageInsert(ctx, targetOptions.Bucket, targetOptions.Object, jobTarget.ImageName, []string{targetOptions.Region}, gcp.GuestOsFeaturesByDistro(targetOptions.Os))
+			_, importErr := g.ComputeImageInsert(ctx, bucket, targetOptions.Object, jobTarget.ImageName, []string{targetOptions.Region}, gcp.GuestOsFeaturesByDistro(targetOptions.Os))
 			if importErr == nil {
 				logWithId.Infof("[GCP] 🎉 Image import finished successfully")
 			}
 
 			// Cleanup storage before checking for errors
-			logWithId.Infof("[GCP] 🧹 Deleting uploaded image file: %s/%s", targetOptions.Bucket, targetOptions.Object)
-			if err = g.StorageObjectDelete(ctx, targetOptions.Bucket, targetOptions.Object); err != nil {
+			logWithId.Infof("[GCP] 🧹 Deleting uploaded image file: %s/%s", bucket, targetOptions.Object)
+			if err = g.StorageObjectDelete(ctx, bucket, targetOptions.Object); err != nil {
 				logWithId.Errorf("[GCP] Encountered error while deleting object: %v", err)
 			}
 

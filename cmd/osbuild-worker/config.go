@@ -23,6 +23,7 @@ type kojiServerConfig struct {
 
 type gcpConfig struct {
 	Credentials string `toml:"credentials"`
+	Bucket      string `toml:"bucket"`
 }
 
 type azureConfig struct {
