@@ -354,6 +354,7 @@ func main() {
 	var gcpConfig GCPConfiguration
 	if config.GCP != nil {
 		gcpConfig.Creds = config.GCP.Credentials
+		gcpConfig.Bucket = config.GCP.Bucket
 	}
 
 	// If the credentials are not provided in the configuration, then the
