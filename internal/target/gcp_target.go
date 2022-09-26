@@ -5,7 +5,7 @@ const TargetNameGCP TargetName = "org.osbuild.gcp"
 type GCPTargetOptions struct {
 	Region            string   `json:"region"`
 	Os                string   `json:"os"` // not exposed in cloudapi for now
-	Bucket            string   `json:"bucket"`
+	Bucket            string   `json:"bucket,omitempty"`
 	Object            string   `json:"object"`
 	ShareWithAccounts []string `json:"shareWithAccounts,omitempty"`
 
