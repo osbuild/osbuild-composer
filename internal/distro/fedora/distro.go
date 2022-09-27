@@ -654,7 +654,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	containers []container.Spec,
 	seed int64) (distro.Manifest, error) {
 
-	bp := &blueprint.Blueprint{}
+	bp := &blueprint.Blueprint{Name: "empty blueprint"}
 	err := bp.Initialize()
 	if err != nil {
 		panic("could not initialize empty blueprint: " + err.Error())
