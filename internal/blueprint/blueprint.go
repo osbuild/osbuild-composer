@@ -67,6 +67,10 @@ func (b *Blueprint) DeepCopy() Blueprint {
 
 // Initialize ensures that the blueprint has sane defaults for any missing fields
 func (b *Blueprint) Initialize() error {
+	if len(b.Name) == 0 {
+		return fmt.Errorf("empty blueprint name not allowed")
+	}
+
 	if b.Packages == nil {
 		b.Packages = []Package{}
 	}

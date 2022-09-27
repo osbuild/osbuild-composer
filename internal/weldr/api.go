@@ -1945,6 +1945,17 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 		}
 	}
 
+	// Make sure the blueprint has default values and that the version is valid
+	err = blueprint.Initialize()
+	if err != nil {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	commitMsg := "Recipe " + blueprint.Name + ", version " + blueprint.Version + " saved."
 	err = api.store.PushBlueprint(blueprint, commitMsg)
 	if err != nil {
