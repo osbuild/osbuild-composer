@@ -448,10 +448,14 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				}
 
 				imageName := fmt.Sprintf("composer-api-%s", uuid.New().String())
+				var bucket string
+				if gcpUploadOptions.Bucket != nil {
+					bucket = *gcpUploadOptions.Bucket
+				}
 				t := target.NewGCPTarget(&target.GCPTargetOptions{
 					Region: gcpUploadOptions.Region,
 					Os:     imageType.Arch().Distro().Name(), // not exposed in cloudapi
-					Bucket: gcpUploadOptions.Bucket,
+					Bucket: bucket,
 					// the uploaded object must have a valid extension
 					Object:            fmt.Sprintf("%s.tar.gz", imageName),
 					ShareWithAccounts: share,

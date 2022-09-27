@@ -862,7 +862,6 @@ components:
       type: object
       required:
         - region
-        - bucket
       properties:
         region:
           type: string
