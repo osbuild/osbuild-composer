@@ -132,7 +132,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPError(ErrorUnsupportedDistribution)
 	}
 
-	var bp = blueprint.Blueprint{}
+	var bp = blueprint.Blueprint{Name: "empty blueprint"}
 	err = bp.Initialize()
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorFailedToInitializeBlueprint, err)
