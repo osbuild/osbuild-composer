@@ -78,7 +78,6 @@ function createReqFile() {
     "image_type": "${IMAGE_TYPE}",
     "repositories": $(jq ".\"$ARCH\"" /usr/share/tests/osbuild-composer/repositories/"$DISTRO".json),
     "upload_options": {
-      "bucket": "${GCP_BUCKET}",
       "region": "${GCP_REGION}",
       "image_name": "${GCP_IMAGE_NAME}",
       "share_with_accounts": ["${GCP_API_TEST_SHARE_ACCOUNT}"]

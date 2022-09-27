@@ -87,7 +87,12 @@ EOF
         # it into /tmp and as a result, the worker would not see it due to using PrivateTmp=true.
         GCP_CREDS_WORKER_PATH="/etc/osbuild-worker/gcp-credentials.json"
         sudo cp "$GOOGLE_APPLICATION_CREDENTIALS" "$GCP_CREDS_WORKER_PATH"
-        echo -e "\n[gcp]\ncredentials = \"$GCP_CREDS_WORKER_PATH\"\n" | sudo tee -a /etc/osbuild-worker/osbuild-worker.toml
+        sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+
+[gcp]
+credentials = "$GCP_CREDS_WORKER_PATH"
+bucket = "$GCP_BUCKET"
+EOF
     fi
 
     # if Azure credentials are defined in the env, create the credentials file
