@@ -170,6 +170,9 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	logWithId := logrus.WithField("jobId", jobID)
 	if result.JobError != nil {
 		logWithId.Errorf("osbuild job failed: %s", result.JobError.Reason)
+		if result.JobError.Details != nil {
+			logWithId.Errorf("failure details : %v", result.JobError.Details)
+		}
 		return
 	}
 	// if the job failed, but the JobError is
