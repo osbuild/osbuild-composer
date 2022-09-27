@@ -3,9 +3,6 @@
 # Install various software packages.
 - include_tasks: packages.yml
 
-# Configure monitoring.
-- include_tasks: monitoring.yml
-
 # Configure worker initialization service.
 - include_tasks: worker-initialization-service.yml
 
