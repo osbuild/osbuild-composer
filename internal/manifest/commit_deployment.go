@@ -93,17 +93,6 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			OSName: p.osName,
 		},
 	))
-	pipeline.AddStage(osbuild.NewOSTreeConfigStage(
-		&osbuild.OSTreeConfigStageOptions{
-			Repo: repoPath,
-			Config: &osbuild.OSTreeConfig{
-				Sysroot: &osbuild.SysrootOptions{
-					ReadOnly:   common.BoolToPtr(true),
-					Bootloader: "none",
-				},
-			},
-		},
-	))
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 		Paths: []osbuild.Path{
 			{
@@ -155,6 +144,20 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		},
 	))
+
+	configStage := osbuild.NewOSTreeConfigStage(
+		&osbuild.OSTreeConfigStageOptions{
+			Repo: repoPath,
+			Config: &osbuild.OSTreeConfig{
+				Sysroot: &osbuild.SysrootOptions{
+					ReadOnly:   common.BoolToPtr(true),
+					Bootloader: "none",
+				},
+			},
+		},
+	)
+	configStage.MountOSTree(p.osName, p.osTreeRef, 0)
+	pipeline.AddStage(configStage)
 
 	fstabOptions := osbuild.NewFSTabStageOptions(p.PartitionTable)
 	fstabStage := osbuild.NewFSTabStage(fstabOptions)
