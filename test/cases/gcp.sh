@@ -201,7 +201,6 @@ provider = "gcp"
 [settings]
 bucket = "${GCP_BUCKET}"
 region = "${GCP_REGION}"
-object = "${GCP_IMAGE_NAME}"
 credentials = "$(base64 -w 0 "${GOOGLE_APPLICATION_CREDENTIALS}")"
 EOF
 

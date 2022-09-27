@@ -65,7 +65,7 @@ func (azureUploadSettings) isUploadSettings() {}
 type gcpUploadSettings struct {
 	Region string `json:"region"`
 	Bucket string `json:"bucket"`
-	Object string `json:"object"`
+	Object string `json:"object,omitempty"`
 
 	// base64 encoded GCP credentials JSON file
 	Credentials string `json:"credentials,omitempty"`
@@ -300,9 +300,13 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			}
 		}
 
-		// The uploaded image object name must have 'tar.gz' suffix to be imported
+		// Providing the Object name is optional. If it is provided, we must
+		// ensure that it has a '.tar.gz' suffix to be successfully imported.
+		// If it is not provided, we will generate a random name.
 		objectName := options.Object
-		if !strings.HasSuffix(objectName, ".tar.gz") {
+		if objectName == "" {
+			objectName = fmt.Sprintf("composer-api-%s.tar.gz", uuid.New().String())
+		} else if !strings.HasSuffix(objectName, ".tar.gz") {
 			objectName = objectName + ".tar.gz"
 			logrus.Infof("[GCP] object name must end with '.tar.gz', using %q as the object name", objectName)
 		}
