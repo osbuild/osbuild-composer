@@ -569,7 +569,7 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot uefi \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
