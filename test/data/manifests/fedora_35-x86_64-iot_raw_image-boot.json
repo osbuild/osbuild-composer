@@ -1820,18 +1820,6 @@
             }
           },
           {
-            "type": "org.osbuild.ostree.config",
-            "options": {
-              "repo": "/ostree/repo",
-              "config": {
-                "sysroot": {
-                  "readonly": true,
-                  "bootloader": "none"
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.mkdir",
             "options": {
               "paths": [
@@ -1856,7 +1844,8 @@
                 "label": "root"
               },
               "kernel_opts": [
-                "modprobe.blacklist=vc4"
+                "modprobe.blacklist=vc4",
+                "rw"
               ]
             }
           },
@@ -1884,6 +1873,31 @@
                 "ref": "test/fedora/iot"
               }
             }
+          },
+          {
+            "type": "org.osbuild.ostree.config",
+            "options": {
+              "repo": "/ostree/repo",
+              "config": {
+                "sysroot": {
+                  "readonly": true,
+                  "bootloader": "none"
+                }
+              }
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/fedora/iot",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "fedora-iot",
+                    "ref": "test/fedora/iot",
+                    "serial": 0
+                  }
+                }
+              }
+            ]
           },
           {
             "type": "org.osbuild.fstab",
@@ -1994,7 +2008,7 @@
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "modprobe.blacklist=vc4",
+              "kernel_opts": "modprobe.blacklist=vc4,rw",
               "legacy": "i386-pc",
               "uefi": {
                 "vendor": "fedora",
