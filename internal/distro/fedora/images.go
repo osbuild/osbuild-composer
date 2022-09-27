@@ -288,7 +288,7 @@ func iotRawImage(workload workload.Workload,
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
+	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
 	img.Keyboard = "us"
 	img.Locale = "C.UTF-8"
 
