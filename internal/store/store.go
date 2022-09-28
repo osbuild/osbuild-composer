@@ -31,6 +31,14 @@ const StoreDBName = "state"
 
 // A Store contains all the persistent state of osbuild-composer, and is serialized
 // on every change, and deserialized on start.
+//
+// blueprints contain the most recent blueprint, using the name as the key
+//
+// blueprintsCommits contains the order of the commits to a blueprint name as a string of hashes
+// with the most recent one last.
+//
+// blueprintsChanges contains the blueprint change, using the blueprint name string and
+// the hash string from blueprintsCommits
 type Store struct {
 	blueprints        map[string]blueprint.Blueprint
 	workspace         map[string]blueprint.Blueprint
@@ -294,8 +302,14 @@ func (s *Store) TagBlueprint(name string) error {
 			return errors.New("Unknown blueprint")
 		}
 
-		if len(s.blueprintsCommits[name]) == 0 {
+		_, ok = s.blueprintsCommits[name]
+		if !ok || len(s.blueprintsCommits[name]) == 0 {
 			return errors.New("No commits for blueprint")
+		}
+
+		_, ok = s.blueprintsChanges[name]
+		if !ok {
+			return errors.New("No changes for blueprint")
 		}
 
 		latest := s.blueprintsCommits[name][len(s.blueprintsCommits[name])-1]
@@ -304,20 +318,21 @@ func (s *Store) TagBlueprint(name string) error {
 			return nil
 		}
 
-		// Get the latest revision for this blueprint
+		// Get the latest revision for this blueprint (or 0 if there is none)
+		// blueprintsCommits has the most recent commit at the end, so start there
 		var revision int
-		var change blueprint.Change
 		for i := len(s.blueprintsCommits[name]) - 1; i >= 0; i-- {
 			commit := s.blueprintsCommits[name][i]
-			change = s.blueprintsChanges[name][commit]
+			change := s.blueprintsChanges[name][commit]
 			if change.Revision != nil && *change.Revision > revision {
 				revision = *change.Revision
 				break
 			}
 		}
 
-		// Bump the revision (if there was none it will start at 1)
+		// Bump the revision (if there was none it will start at 1) of the latest commit
 		revision++
+		change := s.blueprintsChanges[name][latest]
 		change.Revision = &revision
 		s.blueprintsChanges[name][latest] = change
 		return nil
