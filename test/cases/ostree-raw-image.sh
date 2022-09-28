@@ -510,34 +510,25 @@ greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
 greenprint "💿 Installing raw image on UEFI VM"
-if nvrGreaterOrEqual "virt-install" "4"; then
-  sudo virt-install  --name="${IMAGE_KEY}-uefi"\
-                     --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                     --ram 3072 \
-                     --vcpus 2 \
-                     --network network=integration,mac=34:49:22:B0:83:31 \
-                     --import \
-                     --os-variant ${OS_VARIANT} \
-                     --boot uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no \
-                     --nographics \
-                     --noautoconsole \
-                     --wait=-1 \
-                     --noreboot
+
+# if nvrGreaterOrEqual "virt-install" "4"; then
+if [[ ${OS_VARIANT} == "centos-stream9" ]] && nvrGreaterOrEqual "virt-install" "4"; then
+    BOOT_UEFI_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
 else
-  sudo virt-install  --name="${IMAGE_KEY}-uefi"\
+    BOOT_UEFI_ARGS="uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no"
+fi
+sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:31 \
-                   --os-type linux \
                    --import \
                    --os-variant ${OS_VARIANT} \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot "$BOOT_UEFI_ARGS" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
                    --noreboot
-fi
 
 # Start VM.
 greenprint "💻 Start UEFI VM"

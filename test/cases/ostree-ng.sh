@@ -560,16 +560,17 @@ sudo rm -f "$LIBVIRT_BIOS_IMAGE_PATH"
 ##
 ##################################################
 
+# Install ostree image via anaconda.
+greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
+
 # Since virt-install 4.0.0, loader attribute can't be configured here,
 # otherwise it'll report "loader attribute 'readonly' cannot be specified
 # when firmware autoselection is enabled"
-if nvrGreaterOrEqual "virt-install" "4.0.0"; then
-    BOOT_UEFI_ARGS="uefi"
+if [[ ${OS_VARIANT} == "centos-stream9" ]] && nvrGreaterOrEqual "virt-install" "4"; then
+    BOOT_UEFI_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
 else
     BOOT_UEFI_ARGS="uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no"
 fi
-# Install ostree image via anaconda.
-greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
 sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --disk path="${LIBVIRT_UEFI_IMAGE_PATH}",format=qcow2 \
                    --ram 3072 \
