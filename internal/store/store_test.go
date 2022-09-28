@@ -23,8 +23,9 @@ type storeTest struct {
 	myStore          *Store
 	myCustomizations blueprint.Customizations
 	myBP             blueprint.Blueprint
-	CommitHash       string
-	myChange         blueprint.Change
+	myBPv3           blueprint.Blueprint
+	CommitHash       []string
+	myChange         []blueprint.Change
 	myTarget         *target.Target
 	mySources        map[string]osbuild.Source
 	myCompose        Compose
@@ -90,13 +91,34 @@ func (suite *storeTest) SetupSuite() {
 			{Name: "test3"}},
 		Customizations: &suite.myCustomizations,
 	}
-	suite.CommitHash = "firstCommit"
-	suite.myChange = blueprint.Change{
-		Commit:    "firstCommit",
-		Message:   "firstCommitMessage",
-		Revision:  nil,
-		Timestamp: "now",
-		Blueprint: suite.myBP,
+	suite.myBPv3 = blueprint.Blueprint{
+		Name:        "testBP",
+		Description: "Testing tagging testBP blueprint",
+		Version:     "3.0.0",
+		Packages: []blueprint.Package{
+			{Name: "test4", Version: "*"}},
+		Modules: []blueprint.Package{
+			{Name: "test5", Version: "*"}},
+		Groups: []blueprint.Group{
+			{Name: "test6"}},
+		Customizations: &suite.myCustomizations,
+	}
+	suite.CommitHash = []string{"firstCommit", "secondCommit"}
+	suite.myChange = []blueprint.Change{
+		blueprint.Change{
+			Commit:    "firstCommit",
+			Message:   "firstCommitMessage",
+			Revision:  nil,
+			Timestamp: "now",
+			Blueprint: suite.myBP,
+		},
+		blueprint.Change{
+			Commit:    "secondCommit",
+			Message:   "secondCommitMessage",
+			Revision:  nil,
+			Timestamp: "now",
+			Blueprint: suite.myBPv3,
+		},
 	}
 	suite.myTarget = &target.Target{
 		Uuid:      uuid.New(),
@@ -190,17 +212,18 @@ func (suite *storeTest) TestGetBlueprintChanges() {
 
 func (suite *storeTest) TestGetBlueprintChange() {
 	Commit := make(map[string]blueprint.Change)
-	Commit[suite.CommitHash] = suite.myChange
-	suite.myStore.blueprintsCommits["testBP"] = []string{suite.CommitHash}
+	Commit[suite.CommitHash[0]] = suite.myChange[0]
+	Commit[suite.CommitHash[1]] = suite.myChange[1]
+	suite.myStore.blueprintsCommits["testBP"] = suite.CommitHash
 	suite.myStore.blueprintsChanges["testBP"] = Commit
 
-	actualChange, err := suite.myStore.GetBlueprintChange("testBP", suite.CommitHash)
+	actualChange, err := suite.myStore.GetBlueprintChange("testBP", suite.CommitHash[0])
 	suite.NoError(err)
-	expectedChange := suite.myChange
+	expectedChange := suite.myChange[0]
 	suite.Equal(&expectedChange, actualChange)
 
 	//Try to get non existing BP
-	actualChange, err = suite.myStore.GetBlueprintChange("Non_existing_BP", suite.CommitHash)
+	actualChange, err = suite.myStore.GetBlueprintChange("Non_existing_BP", suite.CommitHash[0])
 	suite.Nil(actualChange)
 	suite.EqualError(err, "Unknown blueprint")
 
@@ -212,20 +235,44 @@ func (suite *storeTest) TestGetBlueprintChange() {
 
 func (suite *storeTest) TestTagBlueprint() {
 	Commit := make(map[string]blueprint.Change)
-	Commit[suite.CommitHash] = suite.myChange
-	suite.myStore.blueprints["testBP"] = suite.myBP
-	suite.myStore.blueprintsCommits["testBP"] = []string{suite.CommitHash}
+	Commit[suite.CommitHash[0]] = suite.myChange[0]
+	Commit[suite.CommitHash[1]] = suite.myChange[1]
+	suite.myStore.blueprintsCommits["testBP"] = suite.CommitHash
 	suite.myStore.blueprintsChanges["testBP"] = Commit
+	suite.myStore.blueprints["testBP"] = suite.myBPv3
 
-	//Check that the blueprints change has no revision
-	suite.Nil(suite.myStore.blueprintsChanges["testBP"][suite.CommitHash].Revision)
+	//Check that the blueprint changes have no revisions
+	suite.Nil(suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[0]].Revision)
+	suite.Nil(suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[1]].Revision)
+
+	// This should tag the most recent commit
 	suite.NoError(suite.myStore.TagBlueprint("testBP"))
-	//The blueprints change should have a revision now
-	actualRevision := suite.myStore.blueprintsChanges["testBP"][suite.CommitHash].Revision
+
+	actualRevision := suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[0]].Revision
+	suite.Nil(actualRevision)
+
+	actualRevision = suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[1]].Revision
+	suite.Require().NotNil(actualRevision)
 	suite.Equal(1, *actualRevision)
+
+	// Check the blueprints to make sure they have not been changed
+	actualBP := suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[0]].Blueprint
+	suite.Equal(suite.myBP, actualBP)
+
+	actualBP = suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[1]].Blueprint
+	suite.Equal(suite.myBPv3, actualBP)
+	suite.Equal(suite.myBPv3, suite.myStore.blueprints["testBP"])
+
 	//Try to tag it again (should not change)
 	suite.NoError(suite.myStore.TagBlueprint("testBP"))
+
+	actualRevision = suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[0]].Revision
+	suite.Nil(actualRevision)
+
+	actualRevision = suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[1]].Revision
+	suite.Require().NotNil(actualRevision)
 	suite.Equal(1, *actualRevision)
+
 	//Try to tag a non existing BNP
 	suite.EqualError(suite.myStore.TagBlueprint("Non_existing_BP"), "Unknown blueprint")
 	//Remove commits from a blueprint and try to tag it
