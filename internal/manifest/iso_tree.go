@@ -140,7 +140,7 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	filename := "images/efiboot.img"
 	pipeline.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{
 		Filename: filename,
-		Size:     "20MB",
+		Size:     fmt.Sprintf("%d", p.PartitionTable.Size),
 	}))
 
 	efibootDevice := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: filename})
