@@ -79,7 +79,7 @@
   "fedora-36": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     },
     "repos": [
@@ -156,7 +156,7 @@
   "fedora-37": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     },
     "repos": [
