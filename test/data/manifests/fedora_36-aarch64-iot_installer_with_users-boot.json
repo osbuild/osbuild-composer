@@ -10726,7 +10726,7 @@
             "type": "org.osbuild.truncate",
             "options": {
               "filename": "images/efiboot.img",
-              "size": "20MB"
+              "size": "20971520"
             }
           },
           {
