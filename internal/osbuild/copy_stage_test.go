@@ -29,14 +29,11 @@ func TestNewCopyStage(t *testing.T) {
 		*NewBtrfsMount("root", "root", "/"),
 	}
 
-	treeInput := TreeInput{}
-	treeInput.Type = "org.osbuild.tree"
-	treeInput.Origin = "org.osbuild.pipeline"
-	treeInput.References = []string{"name:input-pipeline"}
+	treeInput := NewTreeInput("name:input-pipeline")
 	expectedStage := &Stage{
 		Type:    "org.osbuild.copy",
 		Options: &CopyStageOptions{paths},
-		Inputs:  &PipelineTreeInputs{"tree-input": treeInput},
+		Inputs:  &PipelineTreeInputs{"tree-input": *treeInput},
 		Devices: devices,
 		Mounts:  mounts,
 	}
