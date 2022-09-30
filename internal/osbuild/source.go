@@ -54,7 +54,7 @@ func (sources *Sources) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSource, inlineData []string, containers []container.Spec) Sources {
+func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSpec, inlineData []string, containers []container.Spec) Sources {
 	sources := Sources{}
 	curl := &CurlSource{
 		Items: make(map[string]CurlSourceItem),

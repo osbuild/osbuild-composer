@@ -18,11 +18,17 @@ type RequestParams struct {
 	Parent string `json:"parent"`
 }
 
-// CommitSource defines the source URL from which to fetch a specific commit
-// identified by its checksum.
-type CommitSource struct {
+// CommitSpec specifies an ostree commit using any combination of Ref (branch), URL (source), and Checksum (commit ID).
+type CommitSpec struct {
+
+	// Ref for the commit. Can be empty.
+	Ref string
+
+	// URL of the repo where the commit can be fetched, if available.
+	URL string
+
+	// Checksum of the commit.
 	Checksum string
-	URL      string
 }
 
 // Remote defines the options that can be set for an OSTree Remote configuration.

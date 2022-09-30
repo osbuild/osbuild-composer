@@ -61,14 +61,14 @@ func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
 func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (distro.Manifest, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	packages := make([]rpmmd.PackageSpec, 0)
-	commits := make([]ostree.CommitSource, 0)
+	commits := make([]ostree.CommitSpec, 0)
 	inline := make([]string, 0)
 	for _, pipeline := range m.pipelines {
 		pipeline.serializeStart(packageSets[pipeline.Name()])
 	}
 	for _, pipeline := range m.pipelines {
 		for _, commit := range pipeline.getOSTreeCommits() {
-			commits = append(commits, ostree.CommitSource{
+			commits = append(commits, ostree.CommitSpec{
 				Checksum: commit.checksum, URL: commit.url,
 			})
 		}
