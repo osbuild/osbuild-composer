@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
@@ -18,15 +19,16 @@ type OSTreeArchive struct {
 	OSCustomizations manifest.OSCustomizations
 	Environment      environment.Environment
 	Workload         workload.Workload
-	OSTreeParent     manifest.OSTree
+	OSTreeParent     *ostree.CommitSpec
 	OSTreeRef        string
 	OSVersion        string
 	Filename         string
 }
 
-func NewOSTreeArchive() *OSTreeArchive {
+func NewOSTreeArchive(ref string) *OSTreeArchive {
 	return &OSTreeArchive{
-		Base: NewBase("ostree-archive"),
+		Base:      NewBase("ostree-archive"),
+		OSTreeRef: ref,
 	}
 }
 
@@ -41,7 +43,8 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
-	osPipeline.OSTree = &img.OSTreeParent
+	osPipeline.OSTreeParent = img.OSTreeParent
+	osPipeline.OSTreeRef = img.OSTreeRef
 
 	ostreeCommitPipeline := manifest.NewOSTreeCommit(m, buildPipeline, osPipeline, img.OSTreeRef)
 	ostreeCommitPipeline.OSVersion = img.OSVersion

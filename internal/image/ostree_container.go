@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
@@ -18,17 +19,18 @@ type OSTreeContainer struct {
 	OSCustomizations       manifest.OSCustomizations
 	Environment            environment.Environment
 	Workload               workload.Workload
-	OSTreeParent           manifest.OSTree
-	OSTreeRef              string // TODO: merge into the above
+	OSTreeRef              string
+	OSTreeParent           *ostree.CommitSpec
 	OSVersion              string
 	ExtraContainerPackages rpmmd.PackageSet
 	ContainerLanguage      string
 	Filename               string
 }
 
-func NewOSTreeContainer() *OSTreeContainer {
+func NewOSTreeContainer(ref string) *OSTreeContainer {
 	return &OSTreeContainer{
-		Base: NewBase("ostree-container"),
+		Base:      NewBase("ostree-container"),
+		OSTreeRef: ref,
 	}
 }
 
@@ -43,7 +45,8 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
-	osPipeline.OSTree = &img.OSTreeParent
+	osPipeline.OSTreeRef = img.OSTreeRef
+	osPipeline.OSTreeParent = img.OSTreeParent
 
 	commitPipeline := manifest.NewOSTreeCommit(m, buildPipeline, osPipeline, img.OSTreeRef)
 	commitPipeline.OSVersion = img.OSVersion

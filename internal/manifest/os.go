@@ -10,20 +10,12 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/users"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
-
-type OSTree struct {
-	Parent *OSTreeParent
-}
-
-type OSTreeParent struct {
-	Checksum string
-	URL      string
-}
 
 // OSCustomizations encapsulates all configuration applied to the base
 // operating system independently of where and how it is integrated and what
@@ -101,8 +93,10 @@ type OS struct {
 	Environment environment.Environment
 	// Workload to install on top of the base system
 	Workload workload.Workload
-	// OSTree configuration, if nil the tree cannot be in an OSTree commit
-	OSTree *OSTree
+	// Ref of ostree commit, if empty the tree cannot be in an ostree commit
+	OSTreeRef string
+	// OSTree parent spec, if nil the new commit (if applicable) will have no parent
+	OSTreeParent *ostree.CommitSpec
 	// Partition table, if nil the tree cannot be put on a partitioned disk
 	PartitionTable *disk.PartitionTable
 
@@ -136,8 +130,10 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 		packages = append(packages, p.KernelName)
 	}
 
-	// If we have a logical volume we need to include the lvm2 package
-	if p.PartitionTable != nil && p.OSTree == nil {
+	// If we have a logical volume we need to include the lvm2 package.
+	// OSTree-based images (commit and container) aren't bootable images and
+	// don't have partition tables.
+	if p.PartitionTable != nil && p.OSTreeRef == "" {
 		packages = append(packages, p.PartitionTable.GetBuildPackages()...)
 	}
 
@@ -181,7 +177,7 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 func (p *OS) getBuildPackages() []string {
 	packages := p.platform.GetBuildPackages()
 	packages = append(packages, "rpm")
-	if p.OSTree != nil {
+	if p.OSTreeRef != "" {
 		packages = append(packages, "rpm-ostree")
 	}
 	if p.SElinux != "" {
@@ -193,10 +189,10 @@ func (p *OS) getBuildPackages() []string {
 
 func (p *OS) getOSTreeCommits() []osTreeCommit {
 	commits := []osTreeCommit{}
-	if p.OSTree != nil && p.OSTree.Parent != nil {
+	if p.OSTreeRef != "" && p.OSTreeParent != nil {
 		commits = append(commits, osTreeCommit{
-			checksum: p.OSTree.Parent.Checksum,
-			url:      p.OSTree.Parent.URL,
+			checksum: p.OSTreeParent.Checksum,
+			url:      p.OSTreeParent.URL,
 		})
 	}
 	return commits
@@ -231,8 +227,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	pipeline := p.Base.serialize()
 
-	if p.OSTree != nil && p.OSTree.Parent != nil {
-		pipeline.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", p.OSTree.Parent.Checksum))
+	if p.OSTreeRef != "" && p.OSTreeParent != nil {
+		pipeline.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", p.OSTreeParent.Checksum))
 	}
 
 	rpmOptions := osbuild.NewRPMStageOptions(p.repos)
@@ -243,7 +239,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 		rpmOptions.Exclude.Docs = true
 	}
 	rpmOptions.GPGKeysFromTree = p.GPGKeyFiles
-	if p.OSTree != nil {
+	if p.OSTreeRef != "" {
 		rpmOptions.OSTreeBooted = common.BoolToPtr(true)
 		rpmOptions.DBPath = "/usr/share/rpm"
 	}
@@ -274,7 +270,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if len(p.Users) > 0 {
-		if p.OSTree != nil {
+		if p.OSTreeRef != "" {
 			// for ostree, writing the key during user creation is
 			// redundant and can cause issues so create users without keys
 			// and write them on first boot
@@ -435,7 +431,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}))
 	}
 
-	if p.OSTree != nil {
+	if p.OSTreeRef != "" {
 		pipeline.AddStage(osbuild.NewOSTreePrepTreeStage(&osbuild.OSTreePrepTreeStageOptions{
 			EtcGroupMembers: []string{
 				// NOTE: We may want to make this configurable.
