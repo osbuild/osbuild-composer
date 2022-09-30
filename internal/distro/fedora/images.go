@@ -182,25 +182,20 @@ func iotCommitImage(workload workload.Workload,
 	packageSets map[string]rpmmd.PackageSet,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewOSTreeArchive()
+	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
 	img.Environment = t.environment
 	img.Workload = workload
 
-	var parent *manifest.OSTreeParent
 	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
-		parent = &manifest.OSTreeParent{
+		img.OSTreeParent = &ostree.CommitSpec{
 			Checksum: options.OSTree.FetchChecksum,
 			URL:      options.OSTree.URL,
 		}
 	}
-	img.OSTreeParent = manifest.OSTree{
-		Parent: parent,
-	}
 
-	img.OSTreeRef = options.OSTree.ImageRef
 	img.OSVersion = t.arch.distro.osVersion
 
 	img.Filename = t.Filename()
@@ -215,7 +210,7 @@ func iotContainerImage(workload workload.Workload,
 	packageSets map[string]rpmmd.PackageSet,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewOSTreeContainer()
+	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
@@ -223,18 +218,13 @@ func iotContainerImage(workload workload.Workload,
 	img.Environment = t.environment
 	img.Workload = workload
 
-	var parent *manifest.OSTreeParent
 	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
-		parent = &manifest.OSTreeParent{
+		img.OSTreeParent = &ostree.CommitSpec{
 			Checksum: options.OSTree.FetchChecksum,
 			URL:      options.OSTree.URL,
 		}
 	}
-	img.OSTreeParent = manifest.OSTree{
-		Parent: parent,
-	}
 
-	img.OSTreeRef = options.OSTree.ImageRef
 	img.OSVersion = t.arch.distro.osVersion
 
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]

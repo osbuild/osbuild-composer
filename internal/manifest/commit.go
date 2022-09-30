@@ -43,15 +43,15 @@ func (p *OSTreeCommit) getBuildPackages() []string {
 func (p *OSTreeCommit) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	if p.treePipeline.OSTree == nil {
+	if p.treePipeline.OSTreeRef == "" {
 		panic("tree is not ostree")
 	}
 
 	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/repo"}))
 
 	var parent string
-	if p.treePipeline.OSTree.Parent != nil {
-		parent = p.treePipeline.OSTree.Parent.Checksum
+	if p.treePipeline.OSTreeParent != nil {
+		parent = p.treePipeline.OSTreeParent.Checksum
 	}
 	pipeline.AddStage(osbuild.NewOSTreeCommitStage(
 		&osbuild.OSTreeCommitStageOptions{
