@@ -211,7 +211,7 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
 	ostreeRepoPath := "/ostree/repo"
 	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", users.UsersFromBP(customizations.GetUsers()), users.GroupsFromBP(customizations.GetGroups()), makeISORootPath(ostreeRepoPath), options.OSTree.Ref, "rhel")
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", users.UsersFromBP(customizations.GetUsers()), users.GroupsFromBP(customizations.GetGroups()), makeISORootPath(ostreeRepoPath), options.OSTree.ImageRef, "rhel")
 	if err != nil {
 		return nil, err
 	}
@@ -368,8 +368,8 @@ func osPipeline(t *imageType,
 	}
 	p.Build = "name:build"
 
-	if t.rpmOstree && options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.Parent))
+	if t.rpmOstree && options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+		p.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", options.OSTree.FetchChecksum))
 	}
 
 	rpmOptions := osbuild.NewRPMStageOptions(repos)
@@ -686,9 +686,9 @@ func ostreeCommitPipeline(options distro.ImageOptions, osVersion string) *osbuil
 
 	p.AddStage(osbuild.NewOSTreeCommitStage(
 		&osbuild.OSTreeCommitStageOptions{
-			Ref:       options.OSTree.Ref,
+			Ref:       options.OSTree.ImageRef,
 			OSVersion: osVersion,
-			Parent:    options.OSTree.Parent,
+			Parent:    options.OSTree.FetchChecksum,
 		},
 		"ostree-tree"),
 	)
@@ -713,7 +713,7 @@ func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpe
 
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: repoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.ImageRef),
 	))
 
 	// make nginx log and lib directories world writeable, otherwise nginx can't start in
@@ -750,7 +750,7 @@ func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*
 	stages = append(stages, osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
 	stages = append(stages, osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.FetchChecksum, options.OSTree.ImageRef),
 	))
 
 	return stages
@@ -924,7 +924,7 @@ func ostreeDeployPipeline(
 	p.AddStage(osbuild.OSTreeInitFsStage())
 	p.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: remote},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.Parent, options.OSTree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.FetchChecksum, options.OSTree.ImageRef),
 	))
 	p.AddStage(osbuild.NewOSTreeOsInitStage(
 		&osbuild.OSTreeOsInitStageOptions{
@@ -937,7 +937,7 @@ func ostreeDeployPipeline(
 	p.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: osname,
-			Ref:    options.OSTree.Ref,
+			Ref:    options.OSTree.ImageRef,
 			Remote: remote,
 			Mounts: []string{"/boot", "/boot/efi"},
 			Rootfs: osbuild.Rootfs{
@@ -965,7 +965,7 @@ func ostreeDeployPipeline(
 		&osbuild.OSTreeFillvarStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: osname,
-				Ref:    options.OSTree.Ref,
+				Ref:    options.OSTree.ImageRef,
 			},
 		},
 	))
@@ -974,7 +974,7 @@ func ostreeDeployPipeline(
 	fstabOptions.OSTree = &osbuild.OSTreeFstab{
 		Deployment: osbuild.OSTreeDeployment{
 			OSName: osname,
-			Ref:    options.OSTree.Ref,
+			Ref:    options.OSTree.ImageRef,
 		},
 	}
 	p.AddStage(osbuild.NewFSTabStage(fstabOptions))
@@ -984,12 +984,12 @@ func ostreeDeployPipeline(
 		if err != nil {
 			panic(err)
 		}
-		usersStage.MountOSTree(osname, options.OSTree.Ref, 0)
+		usersStage.MountOSTree(osname, options.OSTree.ImageRef, 0)
 		p.AddStage(usersStage)
 	}
 	if bpGroups := c.GetGroups(); len(bpGroups) > 0 {
 		groupsStage := osbuild.GenGroupsStage(users.GroupsFromBP(bpGroups))
-		groupsStage.MountOSTree(osname, options.OSTree.Ref, 0)
+		groupsStage.MountOSTree(osname, options.OSTree.ImageRef, 0)
 		p.AddStage(groupsStage)
 	}
 
@@ -999,7 +999,7 @@ func ostreeDeployPipeline(
 		&osbuild.OSTreeSelinuxStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: osname,
-				Ref:    options.OSTree.Ref,
+				Ref:    options.OSTree.ImageRef,
 			},
 		},
 	))

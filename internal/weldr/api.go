@@ -2351,11 +2351,14 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	testMode := q.Get("test")
 
+	ostreeOptions := distro.OSTreeImageOptions{
+		URL: cr.OSTree.URL,
+	}
 	if testMode == "1" || testMode == "2" {
 		// Fake a parent commit for test requests
 		cr.OSTree.Parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
 	} else {
-		ostreeParams, err := ostree.ResolveParams(cr.OSTree, imageType.OSTreeRef())
+		ref, checksum, err := ostree.ResolveParams(cr.OSTree, imageType.OSTreeRef())
 		if err != nil {
 			errors := responseError{
 				ID:  "OSTreeOptionsError",
@@ -2364,7 +2367,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
-		cr.OSTree = ostreeParams
+		ostreeOptions.ImageRef = ref
+		ostreeOptions.FetchChecksum = checksum
 	}
 
 	var size uint64
@@ -2385,12 +2389,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	seed := bigSeed.Int64()
 
 	options := distro.ImageOptions{
-		Size: size,
-		OSTree: ostree.RequestParams{
-			Ref:    cr.OSTree.Ref,
-			Parent: cr.OSTree.Parent,
-			URL:    cr.OSTree.URL,
-		},
+		Size:   size,
+		OSTree: ostreeOptions,
 	}
 	options.Facts = &distro.FactsImageOptions{
 		ApiType: "weldr",

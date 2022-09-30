@@ -677,7 +677,8 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 	}
 
 	if t.bootISO && t.rpmOstree {
-		if options.OSTree.Parent == "" {
+		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
+		if options.OSTree.FetchChecksum == "" {
 			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 

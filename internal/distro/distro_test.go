@@ -8,7 +8,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -118,10 +117,10 @@ func TestImageType_PackageSetsChains(t *testing.T) {
 					require.Nil(t, err)
 
 					imagePkgSets := imageType.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
-						OSTree: ostree.RequestParams{
-							URL:    "foo",
-							Ref:    "bar",
-							Parent: "baz",
+						OSTree: distro.OSTreeImageOptions{
+							URL:           "foo",
+							ImageRef:      "bar",
+							FetchChecksum: "baz",
 						},
 					}, nil)
 					for packageSetName := range imageType.PackageSetsChains() {

@@ -13,7 +13,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -159,10 +158,10 @@ func main() {
 
 	options := distro.ImageOptions{
 		Size: imageType.Size(0),
-		OSTree: ostree.RequestParams{
-			Ref:    composeRequest.OSTree.Ref,
-			Parent: composeRequest.OSTree.Parent,
-			URL:    composeRequest.OSTree.URL,
+		OSTree: distro.OSTreeImageOptions{
+			ImageRef:      composeRequest.OSTree.Ref,
+			FetchChecksum: composeRequest.OSTree.Parent,
+			URL:           composeRequest.OSTree.URL,
 		},
 	}
 

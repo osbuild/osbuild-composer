@@ -72,47 +72,56 @@ func ResolveRef(location, ref string) (string, error) {
 	return parent, nil
 }
 
-// ResolveParams resolves all necessary missing parameters in the given struct:
-// it sets the defaultRef if none is provided and resolves the parent commit if
-// a URL and Ref are provided. If there is an error, it will be of type
-// InvalidParameterError or ResolveRefError (from the ResolveRef function)
-func ResolveParams(params RequestParams, defaultRef string) (RequestParams, error) {
-	resolved := RequestParams{}
-	resolved.Ref = params.Ref
-	// if ref is not provided, use distro default
-	if resolved.Ref == "" {
-		resolved.Ref = defaultRef
-	} else if !VerifyRef(params.Ref) { // only verify if specified in params
-		return resolved, NewRefError("Invalid ostree ref %q", params.Ref)
+// ResolveParams resolves the ostree request parameters into the necessary ref
+// for the image build pipeline and a commit (checksum) to be fetched.
+//
+// If a URL is defined in the RequestParams, the checksum of the Parent ref is
+// resolved, otherwise the checksum is an empty string. Specifying Parent
+// without URL results in a ParameterComboError. Failure to resolve the
+// checksum results in a ResolveRefError.
+//
+// If Ref is not specified in the RequestParams, the defaultRef is used.
+// If Parent is not specified in the RequestParams, the value of Ref is used
+// (which will be defaultRef if neither is specified).
+//
+// If any ref (Ref or Parent) is malformed, the function returns with a RefError.
+func ResolveParams(params RequestParams, defaultRef string) (ref, checksum string, err error) {
+	// Determine value of ref
+	ref = params.Ref
+	if ref != "" {
+		// verify format of provided ref
+		if !VerifyRef(params.Ref) {
+			return "", "", NewRefError("Invalid ostree ref %q", params.Ref)
+		}
+	} else {
+		// if ref is not provided, use distro default
+		ref = defaultRef
 	}
 
-	if params.Parent != "" {
-		// parent must also be a valid ref
+	// Determine value of parentRef
+	parentRef := params.Parent
+	if parentRef != "" {
+		// verify format of parent ref
 		if !VerifyRef(params.Parent) {
-			return resolved, NewRefError("Invalid ostree parent ref %q", params.Parent)
+			return "", "", NewRefError("Invalid ostree parent ref %q", params.Parent)
 		}
 		if params.URL == "" {
 			// specifying parent ref also requires URL
-			return resolved, NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
+			return "", "", NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
 		}
+	} else {
+		// if parent is not provided, use ref
+		parentRef = ref
 	}
 
-	resolved.URL = params.URL
-	if resolved.URL != "" {
-		// if a URL is specified, we need to fetch the commit at the URL
-		// the reference to resolve is the parent commit which is defined by
-		// the 'parent' argument
-		// if the parent argument is not specified, we use the specified ref
-		// if neither is specified, we use the default ref
-		parentRef := params.Parent
-		if parentRef == "" {
-			parentRef = resolved.Ref
-		}
-		parent, err := ResolveRef(resolved.URL, parentRef)
+	// Resolve parent checksum
+	if params.URL != "" {
+		// If a URL is specified, we need to fetch the commit at the URL.
+		parent, err := ResolveRef(params.URL, parentRef)
 		if err != nil {
-			return resolved, err // ResolveRefError
+			return "", "", err // ResolveRefError
 		}
-		resolved.Parent = parent
+		checksum = parent
 	}
-	return resolved, nil
+	return
 }

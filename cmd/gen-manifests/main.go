@@ -21,7 +21,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -116,10 +115,10 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 
 	options := distro.ImageOptions{Size: 0}
 	if cr.OSTree != nil {
-		options.OSTree = ostree.RequestParams{
-			URL:    cr.OSTree.URL,
-			Ref:    cr.OSTree.Ref,
-			Parent: cr.OSTree.Parent,
+		options.OSTree = distro.OSTreeImageOptions{
+			URL:           cr.OSTree.URL,
+			ImageRef:      cr.OSTree.Ref,
+			FetchChecksum: cr.OSTree.Parent,
 		}
 	}
 	job := func(msgq chan string) (err error) {
@@ -152,9 +151,9 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			err = fmt.Errorf("[%s] nil package specs", filename)
 			return
 		}
-		if options.OSTree.Ref == "" {
+		if options.OSTree.ImageRef == "" {
 			// use default OSTreeRef for image type
-			options.OSTree.Ref = imgType.OSTreeRef()
+			options.OSTree.ImageRef = imgType.OSTreeRef()
 		}
 		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
 		if err != nil {

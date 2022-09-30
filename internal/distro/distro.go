@@ -7,7 +7,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -126,10 +125,29 @@ type ImageType interface {
 
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	OSTree       ostree.RequestParams
 	Size         uint64
+	OSTree       OSTreeImageOptions
 	Subscription *SubscriptionImageOptions
 	Facts        *FactsImageOptions
+}
+
+// The OSTreeImageOptions specify an ostree ref, checksum, and URL. The meaning
+// of each parameter depends on the image type being built.
+type OSTreeImageOptions struct {
+	// For ostree commit and container types: The ref of the new commit to be
+	// built.
+	// For ostree installers and raw images: The ref of the commit being
+	// embedded in the installer or deployed in the image.
+	ImageRef string
+
+	// For ostree commit and container types: The FetchChecksum specifies the parent
+	// ostree commit that the new commit will be based on.
+	// For ostree installers and raw images: The FetchChecksum specifies the commit
+	// ID that will be embedded in the installer or deployed in the image.
+	FetchChecksum string
+
+	// The URL from which to fetch the commit specified by the checksum.
+	URL string
 }
 
 // The SubscriptionImageOptions specify subscription-specific image options
