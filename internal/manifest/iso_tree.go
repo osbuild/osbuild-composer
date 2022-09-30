@@ -186,8 +186,8 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-//makeISORootPath return a path that can be used to address files and folders in
-//the root of the iso
+// makeISORootPath return a path that can be used to address files and folders
+// in the root of the iso
 func makeISORootPath(p string) string {
 	fullpath := path.Join("/run/install/repo", p)
 	return fmt.Sprintf("file://%s", fullpath)
