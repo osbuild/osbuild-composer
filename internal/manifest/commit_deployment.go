@@ -21,9 +21,7 @@ type OSTreeDeployment struct {
 
 	OSVersion string
 
-	osTreeCommit string
-	osTreeURL    string
-	osTreeRef    string
+	commit ostree.CommitSpec
 
 	osName string
 
@@ -43,19 +41,15 @@ type OSTreeDeployment struct {
 // commit.
 func NewOSTreeDeployment(m *Manifest,
 	buildPipeline *Build,
-	ref string,
-	commit string,
-	url string,
+	commit ostree.CommitSpec,
 	osName string,
 	platform platform.Platform) *OSTreeDeployment {
 
 	p := &OSTreeDeployment{
-		Base:         NewBase(m, "image-tree", buildPipeline),
-		osTreeCommit: commit,
-		osTreeURL:    url,
-		osTreeRef:    ref,
-		osName:       osName,
-		platform:     platform,
+		Base:     NewBase(m, "image-tree", buildPipeline),
+		commit:   commit,
+		osName:   osName,
+		platform: platform,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -72,8 +66,8 @@ func (p *OSTreeDeployment) getBuildPackages() []string {
 func (p *OSTreeDeployment) getOSTreeCommits() []osTreeCommit {
 	return []osTreeCommit{
 		{
-			checksum: p.osTreeCommit,
-			url:      p.osTreeURL,
+			checksum: p.commit.Checksum,
+			url:      p.commit.URL,
 		},
 	}
 }
@@ -86,7 +80,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.OSTreeInitFsStage())
 	pipeline.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: p.Remote.Name},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.osTreeCommit, p.osTreeRef),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.commit.Checksum, p.commit.Ref),
 	))
 	pipeline.AddStage(osbuild.NewOSTreeOsInitStage(
 		&osbuild.OSTreeOsInitStageOptions{
@@ -107,7 +101,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: p.osName,
-			Ref:    p.osTreeRef,
+			Ref:    p.commit.Ref,
 			Remote: p.Remote.Name,
 			Mounts: []string{"/boot", "/boot/efi"},
 			Rootfs: osbuild.Rootfs{
@@ -120,7 +114,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	remoteURL := p.Remote.URL
 	if remoteURL == "" {
 		// if the remote URL for the image is not specified, use the source commit URL
-		remoteURL = p.osTreeURL
+		remoteURL = p.commit.URL
 	}
 	pipeline.AddStage(osbuild.NewOSTreeRemotesStage(
 		&osbuild.OSTreeRemotesStageOptions{
@@ -140,7 +134,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		&osbuild.OSTreeFillvarStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: p.osName,
-				Ref:    p.osTreeRef,
+				Ref:    p.commit.Ref,
 			},
 		},
 	))
@@ -156,12 +150,12 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		},
 	)
-	configStage.MountOSTree(p.osName, p.osTreeRef, 0)
+	configStage.MountOSTree(p.osName, p.commit.Ref, 0)
 	pipeline.AddStage(configStage)
 
 	fstabOptions := osbuild.NewFSTabStageOptions(p.PartitionTable)
 	fstabStage := osbuild.NewFSTabStage(fstabOptions)
-	fstabStage.MountOSTree(p.osName, p.osTreeRef, 0)
+	fstabStage.MountOSTree(p.osName, p.commit.Ref, 0)
 	pipeline.AddStage(fstabStage)
 
 	if len(p.Users) > 0 {
@@ -169,13 +163,13 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		if err != nil {
 			panic("password encryption failed")
 		}
-		usersStage.MountOSTree(p.osName, p.osTreeRef, 0)
+		usersStage.MountOSTree(p.osName, p.commit.Ref, 0)
 		pipeline.AddStage(usersStage)
 	}
 
 	if len(p.Groups) > 0 {
 		grpStage := osbuild.GenGroupsStage(p.Groups)
-		grpStage.MountOSTree(p.osName, p.osTreeRef, 0)
+		grpStage.MountOSTree(p.osName, p.commit.Ref, 0)
 		pipeline.AddStage(grpStage)
 	}
 
@@ -197,7 +191,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		}
 		rootLockStage := osbuild.NewUsersStage(userOptions)
-		rootLockStage.MountOSTree(p.osName, p.osTreeRef, 0)
+		rootLockStage.MountOSTree(p.osName, p.commit.Ref, 0)
 		pipeline.AddStage(rootLockStage)
 	}
 
@@ -206,7 +200,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			Keymap: p.Keyboard,
 		}
 		keymapStage := osbuild.NewKeymapStage(options)
-		keymapStage.MountOSTree(p.osName, p.osTreeRef, 0)
+		keymapStage.MountOSTree(p.osName, p.commit.Ref, 0)
 		pipeline.AddStage(keymapStage)
 	}
 
@@ -215,7 +209,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			Language: p.Locale,
 		}
 		localeStage := osbuild.NewLocaleStage(options)
-		localeStage.MountOSTree(p.osName, p.osTreeRef, 0)
+		localeStage.MountOSTree(p.osName, p.commit.Ref, 0)
 		pipeline.AddStage(localeStage)
 	}
 
@@ -232,14 +226,14 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}
 	grubOptions.KernelOptions = strings.Join(kernelOpts, ",")
 	bootloader := osbuild.NewGRUB2Stage(grubOptions)
-	bootloader.MountOSTree(p.osName, p.osTreeRef, 0)
+	bootloader.MountOSTree(p.osName, p.commit.Ref, 0)
 	pipeline.AddStage(bootloader)
 
 	pipeline.AddStage(osbuild.NewOSTreeSelinuxStage(
 		&osbuild.OSTreeSelinuxStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: p.osName,
-				Ref:    p.osTreeRef,
+				Ref:    p.commit.Ref,
 			},
 		},
 	))

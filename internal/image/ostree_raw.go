@@ -24,9 +24,7 @@ type OSTreeRawImage struct {
 	Users  []users.User
 	Groups []users.Group
 
-	OSTreeURL    string
-	OSTreeRef    string
-	OSTreeCommit string
+	Commit ostree.CommitSpec
 
 	Remote ostree.Remote
 	OSName string
@@ -38,9 +36,10 @@ type OSTreeRawImage struct {
 	Filename string
 }
 
-func NewOSTreeRawImage() *OSTreeRawImage {
+func NewOSTreeRawImage(commit ostree.CommitSpec) *OSTreeRawImage {
 	return &OSTreeRawImage{
-		Base: NewBase("ostree-raw-image"),
+		Base:   NewBase("ostree-raw-image"),
+		Commit: commit,
 	}
 }
 
@@ -51,7 +50,7 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuild(m, runner, repos)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.OSTreeRef, img.OSTreeCommit, img.OSTreeURL, img.OSName, img.Platform)
+	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.Commit, img.OSName, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.Remote = img.Remote
 	osPipeline.KernelOptionsAppend = img.KernelOptionsAppend
