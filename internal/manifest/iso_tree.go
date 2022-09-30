@@ -31,7 +31,7 @@ type ISOTree struct {
 	KSPath   string
 	isoLabel string
 
-	ostree ostree.RequestParams
+	OSTree *ostree.CommitSpec
 }
 
 func NewISOTree(m *Manifest,
@@ -39,9 +39,6 @@ func NewISOTree(m *Manifest,
 	anacondaPipeline *Anaconda,
 	rootfsPipeline *ISORootfsImg,
 	bootTreePipeline *EFIBootTree,
-	ostreeCommit,
-	ostreeURL,
-	ostreeRef,
 	isoLabel string) *ISOTree {
 
 	p := &ISOTree{
@@ -50,11 +47,6 @@ func NewISOTree(m *Manifest,
 		rootfsPipeline:   rootfsPipeline,
 		bootTreePipeline: bootTreePipeline,
 		isoLabel:         isoLabel,
-		ostree: ostree.RequestParams{
-			Parent: ostreeCommit,
-			URL:    ostreeURL,
-			Ref:    ostreeRef,
-		},
 	}
 	buildPipeline.addDependent(p)
 	if anacondaPipeline.Base.manifest != m {
@@ -65,10 +57,16 @@ func NewISOTree(m *Manifest,
 }
 
 func (p *ISOTree) getOSTreeCommits() []osTreeCommit {
+	var checksum, url string
+	if p.OSTree != nil {
+		checksum = p.OSTree.Checksum
+		url = p.OSTree.URL
+
+	}
 	return []osTreeCommit{
 		{
-			checksum: p.ostree.Parent,
-			url:      p.ostree.URL,
+			checksum: checksum,
+			url:      url,
 		},
 	}
 }
@@ -166,7 +164,10 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 		copyInputs,
 	))
 
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.ostree.Ref, p.OSName)
+	if p.OSTree == nil {
+		panic("missing ostree parameters in ISO tree pipeline")
+	}
+	kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.OSTree.Ref, p.OSName)
 	if err != nil {
 		panic("password encryption failed")
 	}
@@ -174,7 +175,7 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
 	pipeline.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostree.Parent, p.ostree.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.OSTree.Checksum, p.OSTree.Ref),
 	))
 
 	pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))

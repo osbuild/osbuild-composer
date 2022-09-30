@@ -243,7 +243,12 @@ func iotInstallerImage(workload workload.Workload,
 
 	d := t.arch.distro
 
-	img := image.NewOSTreeInstaller()
+	commit := ostree.CommitSpec{
+		Ref:      options.OSTree.ImageRef,
+		URL:      options.OSTree.URL,
+		Checksum: options.OSTree.FetchChecksum,
+	}
+	img := image.NewOSTreeInstaller(commit)
 
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
@@ -256,10 +261,6 @@ func iotInstallerImage(workload workload.Workload,
 	img.OSName = "fedora"
 	img.OSVersion = d.osVersion
 	img.Release = "202010217.n.0" // ???
-
-	img.OSTreeURL = options.OSTree.URL
-	img.OSTreeRef = options.OSTree.ImageRef
-	img.OSTreeCommit = options.OSTree.FetchChecksum
 
 	img.Filename = t.Filename()
 
