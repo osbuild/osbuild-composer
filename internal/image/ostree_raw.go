@@ -26,6 +26,8 @@ type OSTreeRawImage struct {
 
 	Commit ostree.CommitSpec
 
+	SysrootReadOnly bool
+
 	Remote ostree.Remote
 	OSName string
 
@@ -58,6 +60,7 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Locale = img.Locale
 	osPipeline.Users = img.Users
 	osPipeline.Groups = img.Groups
+	osPipeline.SysrootReadOnly = img.SysrootReadOnly
 
 	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
 

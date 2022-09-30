@@ -23,6 +23,8 @@ type OSTreeDeployment struct {
 
 	commit ostree.CommitSpec
 
+	SysrootReadOnly bool
+
 	osName string
 
 	KernelOptionsAppend []string
@@ -144,7 +146,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			Repo: repoPath,
 			Config: &osbuild.OSTreeConfig{
 				Sysroot: &osbuild.SysrootOptions{
-					ReadOnly:   common.BoolToPtr(true),
+					ReadOnly:   &p.SysrootReadOnly,
 					Bootloader: "none",
 				},
 			},
