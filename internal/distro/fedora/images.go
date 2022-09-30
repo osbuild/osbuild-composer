@@ -2,8 +2,10 @@ package fedora
 
 import (
 	"math/rand"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
@@ -280,6 +282,12 @@ func iotRawImage(workload workload.Workload,
 		Checksum: options.OSTree.FetchChecksum,
 	}
 	img := image.NewOSTreeRawImage(commit)
+
+	// Set sysroot read-only only for Fedora 37+
+	distro := t.Arch().Distro()
+	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "37") {
+		img.SysrootReadOnly = true
+	}
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
