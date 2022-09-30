@@ -190,9 +190,9 @@ func iotCommitImage(workload workload.Workload,
 	img.Workload = workload
 
 	var parent *manifest.OSTreeParent
-	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
+	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
 		parent = &manifest.OSTreeParent{
-			Checksum: options.OSTree.Parent,
+			Checksum: options.OSTree.FetchChecksum,
 			URL:      options.OSTree.URL,
 		}
 	}
@@ -200,7 +200,7 @@ func iotCommitImage(workload workload.Workload,
 		Parent: parent,
 	}
 
-	img.OSTreeRef = options.OSTree.Ref
+	img.OSTreeRef = options.OSTree.ImageRef
 	img.OSVersion = t.arch.distro.osVersion
 
 	img.Filename = t.Filename()
@@ -224,9 +224,9 @@ func iotContainerImage(workload workload.Workload,
 	img.Workload = workload
 
 	var parent *manifest.OSTreeParent
-	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
+	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
 		parent = &manifest.OSTreeParent{
-			Checksum: options.OSTree.Parent,
+			Checksum: options.OSTree.FetchChecksum,
 			URL:      options.OSTree.URL,
 		}
 	}
@@ -234,7 +234,7 @@ func iotContainerImage(workload workload.Workload,
 		Parent: parent,
 	}
 
-	img.OSTreeRef = options.OSTree.Ref
+	img.OSTreeRef = options.OSTree.ImageRef
 	img.OSVersion = t.arch.distro.osVersion
 
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
@@ -268,8 +268,8 @@ func iotInstallerImage(workload workload.Workload,
 	img.Release = "202010217.n.0" // ???
 
 	img.OSTreeURL = options.OSTree.URL
-	img.OSTreeRef = options.OSTree.Ref
-	img.OSTreeCommit = options.OSTree.Parent
+	img.OSTreeRef = options.OSTree.ImageRef
+	img.OSTreeCommit = options.OSTree.FetchChecksum
 
 	img.Filename = t.Filename()
 
@@ -304,8 +304,8 @@ func iotRawImage(workload workload.Workload,
 	img.OSName = "fedora-iot"
 
 	img.OSTreeURL = options.OSTree.URL
-	img.OSTreeRef = options.OSTree.Ref
-	img.OSTreeCommit = options.OSTree.Parent
+	img.OSTreeRef = options.OSTree.ImageRef
+	img.OSTreeCommit = options.OSTree.FetchChecksum
 
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)

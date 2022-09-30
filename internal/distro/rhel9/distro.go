@@ -513,8 +513,8 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 
 	// handle OSTree commit inputs
 	var commits []ostree.CommitSpec
-	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		commits = []ostree.CommitSpec{{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}}
+	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+		commits = []ostree.CommitSpec{{Checksum: options.OSTree.FetchChecksum, URL: options.OSTree.URL}}
 	}
 
 	// handle inline sources
@@ -543,7 +543,8 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 	}
 
 	if t.bootISO && t.rpmOstree {
-		if options.OSTree.Parent == "" {
+		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
+		if options.OSTree.FetchChecksum == "" {
 			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 
@@ -582,7 +583,8 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 	}
 
-	if t.name == "edge-raw-image" && options.OSTree.Parent == "" {
+	// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
+	if t.name == "edge-raw-image" && options.OSTree.FetchChecksum == "" {
 		return fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
 	}
 

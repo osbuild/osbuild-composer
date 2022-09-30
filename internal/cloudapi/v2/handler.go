@@ -298,7 +298,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				ostreeOptions.Parent = *ir.Ostree.Parent
 			}
 		}
-		if imageOptions.OSTree, err = ostree.ResolveParams(ostreeOptions, imageType.OSTreeRef()); err != nil {
+		ref, checksum, err := ostree.ResolveParams(ostreeOptions, imageType.OSTreeRef())
+		if err != nil {
 			switch v := err.(type) {
 			case ostree.RefError:
 				return HTTPError(ErrorInvalidOSTreeRef)
@@ -310,6 +311,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				// general case
 				return HTTPError(ErrorInvalidOSTreeParams)
 			}
+		}
+		imageOptions.OSTree = distro.OSTreeImageOptions{
+			ImageRef:      ref,
+			FetchChecksum: checksum,
+			URL:           ostreeOptions.URL,
 		}
 
 		var irTarget *target.Target

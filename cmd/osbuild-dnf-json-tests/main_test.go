@@ -16,7 +16,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -53,10 +52,10 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 							packages := imgType.PackageSets(blueprint.Blueprint{},
 								distro.ImageOptions{
-									OSTree: ostree.RequestParams{
-										URL:    "foo",
-										Ref:    "bar",
-										Parent: "baz",
+									OSTree: distro.OSTreeImageOptions{
+										URL:           "foo",
+										ImageRef:      "bar",
+										FetchChecksum: "baz",
 									},
 								},
 								repos[archStr])
