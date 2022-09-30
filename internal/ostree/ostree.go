@@ -18,7 +18,8 @@ type RequestParams struct {
 	Parent string `json:"parent"`
 }
 
-// CommitSource defines the source URL from which to fetch a specific commit.
+// CommitSource defines the source URL from which to fetch a specific commit
+// identified by its checksum.
 type CommitSource struct {
 	Checksum string
 	URL      string
