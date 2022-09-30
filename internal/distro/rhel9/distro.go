@@ -512,9 +512,9 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	}
 
 	// handle OSTree commit inputs
-	var commits []ostree.CommitSource
+	var commits []ostree.CommitSpec
 	if options.OSTree.Parent != "" && options.OSTree.URL != "" {
-		commits = []ostree.CommitSource{{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}}
+		commits = []ostree.CommitSpec{{Checksum: options.OSTree.Parent, URL: options.OSTree.URL}}
 	}
 
 	// handle inline sources
