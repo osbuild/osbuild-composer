@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
@@ -28,16 +29,15 @@ type OSTreeInstaller struct {
 	OSVersion     string
 	Release       string
 
-	OSTreeURL    string
-	OSTreeRef    string
-	OSTreeCommit string
+	Commit ostree.CommitSpec
 
 	Filename string
 }
 
-func NewOSTreeInstaller() *OSTreeInstaller {
+func NewOSTreeInstaller(commit ostree.CommitSpec) *OSTreeInstaller {
 	return &OSTreeInstaller{
-		Base: NewBase("ostree-installer"),
+		Base:   NewBase("ostree-installer"),
+		Commit: commit,
 	}
 }
 
@@ -94,9 +94,6 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		anacondaPipeline,
 		rootfsImagePipeline,
 		bootTreePipeline,
-		img.OSTreeCommit,
-		img.OSTreeURL,
-		img.OSTreeRef,
 		isoLabel)
 	isoTreePipeline.PartitionTable = rootfsPartitionTable
 	isoTreePipeline.Release = img.Release
@@ -104,6 +101,8 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.Users = img.Users
 	isoTreePipeline.Groups = img.Groups
 	isoTreePipeline.KSPath = "/ostree.ks"
+
+	isoTreePipeline.OSTree = &img.Commit
 
 	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline)
 	isoPipeline.Filename = img.Filename
