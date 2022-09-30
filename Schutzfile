@@ -2,7 +2,7 @@
   "fedora-35": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     },
     "repos": [
@@ -233,21 +233,21 @@
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     }
   },
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     }
   },
   "rhel-8.7": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     },
     "repos": [
@@ -293,14 +293,14 @@
   "rhel-9.0": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     }
   },
   "rhel-9.1": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     },
     "repos": [
@@ -346,21 +346,21 @@
   "centos-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     }
   },
   "centos-9": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     }
   },
   "centos-stream-9": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     },
     "repos": [
@@ -406,7 +406,7 @@
   "centos-stream-8": {
     "dependencies": {
       "osbuild": {
-        "commit": "c824e18b458823eb7dd8ca582b0a990bfdc7f257"
+        "commit": "8a7b6d382de16b7be30c4d37e10f24c416a294f8"
       }
     },
     "repos": [
