@@ -226,6 +226,8 @@ func (q *DBJobQueue) listen(ctx context.Context, ready chan<- struct{}) {
 			// otherwise, just log the error and continue, there might just
 			// be a temporary networking issue
 			q.logger.Error(err, "Error waiting for notification on jobs channel")
+			// backoff to avoid log spam
+			time.Sleep(time.Millisecond * 500)
 			continue
 		}
 
