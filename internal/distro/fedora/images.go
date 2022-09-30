@@ -1,6 +1,7 @@
 package fedora
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 
@@ -262,7 +263,7 @@ func iotInstallerImage(workload workload.Workload,
 	img.Variant = "IoT"
 	img.OSName = "fedora"
 	img.OSVersion = d.osVersion
-	img.Release = "202010217.n.0" // ???
+	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
 
 	img.Filename = t.Filename()
 

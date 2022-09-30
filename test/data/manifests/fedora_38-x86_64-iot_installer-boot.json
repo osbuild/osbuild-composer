@@ -11090,7 +11090,7 @@
             "type": "org.osbuild.discinfo",
             "options": {
               "basearch": "x86_64",
-              "release": "202010217.n.0"
+              "release": "Fedora 38"
             }
           }
         ]

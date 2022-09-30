@@ -10863,7 +10863,7 @@
             "type": "org.osbuild.discinfo",
             "options": {
               "basearch": "aarch64",
-              "release": "202010217.n.0"
+              "release": "Fedora 36"
             }
           }
         ]
