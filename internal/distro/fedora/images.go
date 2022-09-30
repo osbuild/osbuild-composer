@@ -274,7 +274,12 @@ func iotRawImage(workload workload.Workload,
 	packageSets map[string]rpmmd.PackageSet,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewOSTreeRawImage()
+	commit := ostree.CommitSpec{
+		Ref:      options.OSTree.ImageRef,
+		URL:      options.OSTree.URL,
+		Checksum: options.OSTree.FetchChecksum,
+	}
+	img := image.NewOSTreeRawImage(commit)
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
@@ -293,10 +298,6 @@ func iotRawImage(workload workload.Workload,
 		GPGKeyPaths: []string{"/etc/pki/rpm-gpg/"},
 	}
 	img.OSName = "fedora-iot"
-
-	img.OSTreeURL = options.OSTree.URL
-	img.OSTreeRef = options.OSTree.ImageRef
-	img.OSTreeCommit = options.OSTree.FetchChecksum
 
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
