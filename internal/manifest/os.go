@@ -26,7 +26,7 @@ type OSTreeParent struct {
 }
 
 // OSCustomizations encapsulates all configuration applied to the base
-// operating independently of where and how it is integrated and what
+// operating system independently of where and how it is integrated and what
 // workload it is running.
 // TODO: move out kernel/bootloader/cloud-init/... to other
 //       abstractions, this should ideally only contain things that
@@ -103,7 +103,7 @@ type OS struct {
 	Workload workload.Workload
 	// OSTree configuration, if nil the tree cannot be in an OSTree commit
 	OSTree *OSTree
-	// Partition table, if nil the tree cannot be put on a partioned disk
+	// Partition table, if nil the tree cannot be put on a partitioned disk
 	PartitionTable *disk.PartitionTable
 
 	repos        []rpmmd.RepoConfig
@@ -112,12 +112,9 @@ type OS struct {
 	kernelVer    string
 }
 
-// NewOS creates a new OS pipeline. osTree indicates whether or not the
-// system is ostree based. osTreeParent indicates (for ostree systems) what the
-// parent commit is. repos are the reposotories to install RPMs from. packages
-// are the depsolved pacakges to be installed into the tree. partitionTable
-// represents the disk layout of the target system. kernelName is the name of the
-// kernel package that will be used on the target system.
+// NewOS creates a new OS pipeline. build is the build pipeline to use for
+// building the OS pipeline. platform is the target platform for the final
+// image. repos are the repositories to install RPMs from.
 func NewOS(m *Manifest,
 	buildPipeline *Build,
 	platform platform.Platform,
