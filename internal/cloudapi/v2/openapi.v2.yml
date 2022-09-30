@@ -772,6 +772,7 @@ components:
         - image-installer
         - iot-commit
         - iot-container
+        - iot-installer
         - iot-raw-image
         - vsphere
     Repository:
