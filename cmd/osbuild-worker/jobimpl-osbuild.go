@@ -580,6 +580,11 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
+			if targetOptions.Object == "" {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No GCP object key provided", nil)
+				break
+			}
+
 			bucket := targetOptions.Bucket
 			if bucket == "" {
 				bucket = impl.GCPConfig.Bucket
