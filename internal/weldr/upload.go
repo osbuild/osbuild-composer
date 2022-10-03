@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -250,6 +251,10 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 
 	switch options := u.Settings.(type) {
 	case *awsUploadSettings:
+		key := options.Key
+		if key == "" {
+			key = fmt.Sprintf("composer-api-%s", uuid.New().String())
+		}
 		t.Name = target.TargetNameAWS
 		t.Options = &target.AWSTargetOptions{
 			Region:          options.Region,
@@ -257,9 +262,13 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			SecretAccessKey: options.SecretAccessKey,
 			SessionToken:    options.SessionToken,
 			Bucket:          options.Bucket,
-			Key:             options.Key,
+			Key:             key,
 		}
 	case *awsS3UploadSettings:
+		key := options.Key
+		if key == "" {
+			key = fmt.Sprintf("composer-api-%s", uuid.New().String())
+		}
 		t.Name = target.TargetNameAWSS3
 		t.Options = &target.AWSS3TargetOptions{
 			Region:              options.Region,
@@ -267,7 +276,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			SecretAccessKey:     options.SecretAccessKey,
 			SessionToken:        options.SessionToken,
 			Bucket:              options.Bucket,
-			Key:                 options.Key,
+			Key:                 key,
 			Endpoint:            options.Endpoint,
 			CABundle:            options.CABundle,
 			SkipSSLVerification: options.SkipSSLVerification,

@@ -468,9 +468,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			key := targetOptions.Key
-			if key == "" {
-				key = uuid.New().String()
+			if targetOptions.Key == "" {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No AWS object key provided", nil)
+				break
 			}
 
 			bucket := targetOptions.Bucket
@@ -496,13 +496,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				}
 			}
 
-			_, err = a.Upload(imagePath, bucket, key)
+			_, err = a.Upload(imagePath, bucket, targetOptions.Key)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 
-			ami, err := a.Register(jobTarget.ImageName, bucket, key, targetOptions.ShareWithAccounts, common.CurrentArch())
+			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, common.CurrentArch())
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, err.Error(), nil)
 				break
@@ -522,6 +522,11 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			a, bucket, err := impl.getAWSForS3Target(targetOptions)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				break
+			}
+
+			if targetOptions.Key == "" {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No AWS object key provided", nil)
 				break
 			}
 
