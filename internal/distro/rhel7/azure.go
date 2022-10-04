@@ -79,7 +79,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					FSTabOptions: "defaults",
 					FSTabFreq:    0,
@@ -103,7 +103,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							Size: 1 * common.GibiByte,
 							Name: "homelv",
 							Payload: &disk.Filesystem{
-								Type:         "xfs",
+								Type:         defaultFSType,
 								Label:        "home",
 								Mountpoint:   "/home",
 								FSTabOptions: "defaults",
@@ -115,7 +115,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							Size: 2 * common.GibiByte,
 							Name: "rootlv",
 							Payload: &disk.Filesystem{
-								Type:         "xfs",
+								Type:         defaultFSType,
 								Label:        "root",
 								Mountpoint:   "/",
 								FSTabOptions: "defaults",
@@ -127,7 +127,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							Size: 2 * common.GibiByte,
 							Name: "tmplv",
 							Payload: &disk.Filesystem{
-								Type:         "xfs",
+								Type:         defaultFSType,
 								Label:        "tmp",
 								Mountpoint:   "/tmp",
 								FSTabOptions: "defaults",
@@ -139,7 +139,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							Size: 10 * common.GibiByte,
 							Name: "usrlv",
 							Payload: &disk.Filesystem{
-								Type:         "xfs",
+								Type:         defaultFSType,
 								Label:        "usr",
 								Mountpoint:   "/usr",
 								FSTabOptions: "defaults",
@@ -151,7 +151,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 							Size: 10 * common.GibiByte, // firedrill: 8 GB
 							Name: "varlv",
 							Payload: &disk.Filesystem{
-								Type:         "xfs",
+								Type:         defaultFSType,
 								Label:        "var",
 								Mountpoint:   "/var",
 								FSTabOptions: "defaults",
@@ -171,7 +171,7 @@ func vhdPipelines(compress bool) pipelinesFunc {
 		pipelines := make([]osbuild.Pipeline, 0)
 		pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-		partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+		partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 		if err != nil {
 			return nil, err
 		}

@@ -22,10 +22,12 @@ version = "2.4.*"
 
 [[customizations.filesystem]]
 mountpoint = "/var"
+fstype = "xfs"
 size = 2147483648
 
 [[customizations.filesystem]]
 mountpoint = "/opt"
+fstype = "xfs"
 size = "20 GB"
 `
 
@@ -43,6 +45,7 @@ size = "20 GB"
 		"customizations": {
 		  "filesystem": [{
 			"mountpoint": "/opt",
+			"fstype": "xfs",
 			"minsize": "20 GiB"
 		  }]
 		}

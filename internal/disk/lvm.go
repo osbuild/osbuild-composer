@@ -60,12 +60,12 @@ func (vg *LVMVolumeGroup) GetChild(n uint) Entity {
 	return &vg.LogicalVolumes[n]
 }
 
-func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
+func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint, fstype string, size uint64) (Entity, error) {
 	if vg == nil {
 		panic("LVMVolumeGroup.CreateMountpoint: nil entity")
 	}
 	filesystem := Filesystem{
-		Type:         "xfs",
+		Type:         fstype,
 		Mountpoint:   mountpoint,
 		FSTabOptions: "defaults",
 		FSTabFreq:    0,

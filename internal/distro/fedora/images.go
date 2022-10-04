@@ -149,7 +149,7 @@ func liveImage(workload workload.Workload,
 	img.Environment = t.environment
 	img.Workload = workload
 	// TODO: move generation into LiveImage
-	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func iotRawImage(workload workload.Workload,
 	img.OSName = "fedora-iot"
 
 	// TODO: move generation into LiveImage
-	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 	if err != nil {
 		return nil, err
 	}

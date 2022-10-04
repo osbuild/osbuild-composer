@@ -119,7 +119,7 @@ type Mountable interface {
 // CreateMountpoint creates a new mountpoint with the given size and
 // returns the entity that represents the new mountpoint.
 type MountpointCreator interface {
-	CreateMountpoint(mountpoint string, size uint64) (Entity, error)
+	CreateMountpoint(mountpoint, fstype string, size uint64) (Entity, error)
 }
 
 // A UniqueEntity is an entity that can be uniquely identified via a UUID.
@@ -184,7 +184,7 @@ func CheckMountpoints(mountpoints []blueprint.FilesystemCustomization, mountpoin
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
 		err := mountpointAllowList.Check(m.Mountpoint)
-		if err != nil {
+		if err != nil || m.FSType == "" || m.FSType == "btrfs" {
 			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
 		}
 	}

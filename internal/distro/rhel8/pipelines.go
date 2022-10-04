@@ -20,7 +20,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func openstackPipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func gcePipelines(t *imageType, customizations *blueprint.Customizations, option
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 	if err != nil {
 		return nil, err
 	}

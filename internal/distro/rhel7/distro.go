@@ -28,6 +28,9 @@ const (
 
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
+
+	// default filesystem type
+	defaultFSType = "xfs"
 )
 
 // RHEL-based OS image configuration defaults
@@ -297,7 +300,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	pt := t.basePartitionTables[archName]
 	haveNewMountpoint := false
 
-	if fs := bp.Customizations.GetFilesystems(); fs != nil {
+	if fs := bp.Customizations.GetFilesystems(defaultFSType); fs != nil {
 		for i := 0; !haveNewMountpoint && i < len(fs); i++ {
 			haveNewMountpoint = !pt.ContainsMountpoint(fs[i].Mountpoint)
 		}
@@ -432,7 +435,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
-	mountpoints := customizations.GetFilesystems()
+	mountpoints := customizations.GetFilesystems(defaultFSType)
 
 	err := disk.CheckMountpoints(mountpoints, disk.MountpointPolicies)
 	if err != nil {

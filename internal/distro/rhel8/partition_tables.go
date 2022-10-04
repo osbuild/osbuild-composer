@@ -35,7 +35,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Label:        "root",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
@@ -67,7 +67,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Label:        "root",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
@@ -89,7 +89,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 2 * common.GibiByte, // 2 GiB
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
 					FSTabFreq:    0,
@@ -106,7 +106,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Size:     2 * common.GibiByte, // 2 GiB
 				Bootable: true,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
 					FSTabFreq:    0,
@@ -133,7 +133,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Label:        "root",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
@@ -165,7 +165,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					FSTabOptions: "defaults",
 					FSTabFreq:    0,
@@ -177,7 +177,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Label:        "root",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
@@ -219,7 +219,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					Label:        "boot",
 					FSTabOptions: "defaults",
@@ -246,7 +246,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 						RemovePassphrase: true,
 					},
 					Payload: &disk.Filesystem{
-						Type:         "xfs",
+						Type:         defaultFSType,
 						Label:        "root",
 						Mountpoint:   "/",
 						FSTabOptions: "defaults",
@@ -280,7 +280,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					Label:        "boot",
 					FSTabOptions: "defaults",
@@ -307,7 +307,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 						RemovePassphrase: true,
 					},
 					Payload: &disk.Filesystem{
-						Type:         "xfs",
+						Type:         defaultFSType,
 						Label:        "root",
 						Mountpoint:   "/",
 						FSTabOptions: "defaults",

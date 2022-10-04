@@ -516,6 +516,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/etc",
 				},
 			},
@@ -544,6 +545,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/",
 				},
 			},
@@ -573,10 +575,12 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/var/log",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/var/log/audit",
 				},
 			},
@@ -604,18 +608,22 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/var/a",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/var/a/b",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/var/a/b/c",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/var/a/b/c/d",
 				},
 			},
@@ -643,14 +651,17 @@ func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "//",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/var//",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/var//log/audit/",
 				},
 			},
@@ -677,10 +688,12 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/variable",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/variable/log/audit",
 				},
 			},
@@ -709,6 +722,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "ext4",
 					Mountpoint: "/usr",
 				},
 			},
@@ -750,4 +764,31 @@ func TestIotInstallerWithoutOStreeRefs(t *testing.T) {
 
 	sets := imgType.PackageSets(bp, distro.ImageOptions{}, nil)
 	require.NotZero(t, len(sets))
+}
+
+func TestDistro_MountpointsWithEmptyFSTypeAllowed(t *testing.T) {
+	fedoraDistro := fedora.NewF35()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/var",
+				},
+			},
+		},
+	}
+	for _, archName := range fedoraDistro.ListArches() {
+		arch, _ := fedoraDistro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			if strings.HasPrefix(imgTypeName, "iot-") {
+				continue
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
 }

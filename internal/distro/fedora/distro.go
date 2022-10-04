@@ -42,6 +42,8 @@ const (
 
 	//Kernel options for ami, qcow2, openstack, vhd and vmdk types
 	defaultKernelOptions = "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
+
+	defaultFSType = "ext4"
 )
 
 var (
@@ -715,7 +717,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
-	mountpoints := customizations.GetFilesystems()
+	mountpoints := customizations.GetFilesystems(defaultFSType)
 
 	if mountpoints != nil && t.rpmOstree {
 		return fmt.Errorf("Custom mountpoints are not supported for ostree types")

@@ -36,7 +36,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					Label:        "boot",
 					FSTabOptions: "defaults",
@@ -49,7 +49,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Label:        "root",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
@@ -82,7 +82,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					Label:        "boot",
 					FSTabOptions: "defaults",
@@ -95,7 +95,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Label:        "root",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
@@ -117,7 +117,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 500 * common.MebiByte, // 500 MB
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					Label:        "boot",
 					FSTabOptions: "defaults",
@@ -128,7 +128,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 2 * common.GibiByte, // 2GiB
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
 					FSTabFreq:    0,
@@ -144,7 +144,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 500 * common.MebiByte, // 500 MB
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					Label:        "boot",
 					FSTabOptions: "defaults",
@@ -156,7 +156,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Size:     2 * common.GibiByte, // 2GiB
 				Bootable: true,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",
 					FSTabFreq:    0,
@@ -197,7 +197,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					Label:        "boot",
 					FSTabOptions: "defaults",
@@ -230,7 +230,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 								Size: 9 * 1024 * 1024 * 1024, // 9 GB
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
-									Type:         "xfs",
+									Type:         defaultFSType,
 									Label:        "root",
 									Mountpoint:   "/",
 									FSTabOptions: "defaults",
@@ -267,7 +267,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
-					Type:         "xfs",
+					Type:         defaultFSType,
 					Mountpoint:   "/boot",
 					Label:        "boot",
 					FSTabOptions: "defaults",
@@ -300,7 +300,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 								Size: 9 * 1024 * 1024 * 1024, // 9 GB
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
-									Type:         "xfs",
+									Type:         defaultFSType,
 									Label:        "root",
 									Mountpoint:   "/",
 									FSTabOptions: "defaults",

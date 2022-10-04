@@ -240,7 +240,7 @@ func (t *TestImageType) Exports() []string {
 }
 
 func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (distro.Manifest, error) {
-	mountpoints := b.GetFilesystems()
+	mountpoints := b.GetFilesystems("")
 
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {

@@ -23,6 +23,7 @@ var testEc2ImageType = imageType{
 var mountpoints = []blueprint.FilesystemCustomization{
 	{
 		MinSize:    1024,
+		FSType:     defaultFSType,
 		Mountpoint: "/usr",
 	},
 }

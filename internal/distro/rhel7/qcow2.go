@@ -71,7 +71,7 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(defaultFSType), options, rng)
 	if err != nil {
 		return nil, err
 	}

@@ -50,7 +50,7 @@ func (b *Btrfs) GetItemCount() uint {
 func (b *Btrfs) GetChild(n uint) Entity {
 	return &b.Subvolumes[n]
 }
-func (b *Btrfs) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
+func (b *Btrfs) CreateMountpoint(mountpoint, fstype string, size uint64) (Entity, error) {
 	name := mountpoint
 	if name == "/" {
 		name = "root"

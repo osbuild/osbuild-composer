@@ -220,9 +220,9 @@ func (pt *PartitionTable) EnsureDirectorySizes(dirSizeMap map[string]uint64) {
 	}
 }
 
-func (pt *PartitionTable) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
+func (pt *PartitionTable) CreateMountpoint(mountpoint, fstype string, size uint64) (Entity, error) {
 	filesystem := Filesystem{
-		Type:         "xfs",
+		Type:         fstype,
 		Mountpoint:   mountpoint,
 		FSTabOptions: "defaults",
 		FSTabFreq:    0,
@@ -332,7 +332,7 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 		} else {
 			if !create {
 				newMountpoints = append(newMountpoints, mnt)
-			} else if err := pt.createFilesystem(mnt.Mountpoint, size); err != nil {
+			} else if err := pt.createFilesystem(mnt.Mountpoint, mnt.FSType, size); err != nil {
 				return nil, err
 			}
 		}
@@ -402,7 +402,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 	return start
 }
 
-func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error {
+func (pt *PartitionTable) createFilesystem(mountpoint, fstype string, size uint64) error {
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
 		panic("no root mountpoint for PartitionTable")
@@ -422,7 +422,7 @@ func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error
 		panic("could not find root volume container")
 	}
 
-	newVol, err := vc.CreateMountpoint(mountpoint, 0)
+	newVol, err := vc.CreateMountpoint(mountpoint, fstype, 0)
 	if err != nil {
 		return fmt.Errorf("failed creating volume: " + err.Error())
 	}
@@ -563,7 +563,7 @@ func (pt *PartitionTable) ensureLVM() error {
 	// we need a /boot partition to boot LVM, ensure one exists
 	bootPath := entityPath(pt, "/boot")
 	if bootPath == nil {
-		_, err := pt.CreateMountpoint("/boot", 512*1024*1024)
+		_, err := pt.CreateMountpoint("/boot", "xfs", 512*1024*1024)
 
 		if err != nil {
 			return err

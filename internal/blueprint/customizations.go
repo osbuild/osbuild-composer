@@ -88,6 +88,7 @@ type ServicesCustomization struct {
 
 type FilesystemCustomization struct {
 	Mountpoint string `json:"mountpoint,omitempty" toml:"mountpoint,omitempty"`
+	FSType     string `json:"fstype,omitempty" toml:"fstype,omitempty"`
 	MinSize    uint64 `json:"minsize,omitempty" toml:"size,omitempty"`
 }
 
@@ -104,6 +105,10 @@ func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
 		fsc.Mountpoint = d["mountpoint"].(string)
 	default:
 		return fmt.Errorf("TOML unmarshal: mountpoint must be string, got %v of type %T", d["mountpoint"], d["mountpoint"])
+	}
+
+	if fstype, ok := d["fstype"].(string); ok {
+		fsc.FSType = fstype
 	}
 
 	switch d["size"].(type) {
@@ -134,6 +139,10 @@ func (fsc *FilesystemCustomization) UnmarshalJSON(data []byte) error {
 		fsc.Mountpoint = d["mountpoint"].(string)
 	default:
 		return fmt.Errorf("JSON unmarshal: mountpoint must be string, got %v of type %T", d["mountpoint"], d["mountpoint"])
+	}
+
+	if fstype, ok := d["fstype"].(string); ok {
+		fsc.FSType = fstype
 	}
 
 	// The JSON specification only mentions float64 and Go defaults to it: https://go.dev/blog/json
@@ -337,11 +346,19 @@ func (c *Customizations) GetServices() *ServicesCustomization {
 	return c.Services
 }
 
-func (c *Customizations) GetFilesystems() []FilesystemCustomization {
+func (c *Customizations) GetFilesystems(defaultFSType string) []FilesystemCustomization {
 	if c == nil {
 		return nil
 	}
-	return c.Filesystem
+
+	var fsc []FilesystemCustomization
+	for _, m := range c.Filesystem {
+		if m.FSType == "" {
+			m.FSType = defaultFSType
+		}
+		fsc = append(fsc, m)
+	}
+	return fsc
 }
 
 func (c *Customizations) GetFilesystemsMinSize() uint64 {

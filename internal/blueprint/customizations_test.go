@@ -323,7 +323,7 @@ func TestGetFilesystems(t *testing.T) {
 		Filesystem: expectedFilesystems,
 	}
 
-	retFilesystems := TestCustomizations.GetFilesystems()
+	retFilesystems := TestCustomizations.GetFilesystems("")
 
 	assert.ElementsMatch(t, expectedFilesystems, retFilesystems)
 }

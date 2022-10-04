@@ -488,6 +488,7 @@ func TestComposeSupportedMountPointV0(t *testing.T) {
 		version="0.0.1"
 		[[customizations.filesystem]]
 		mountpoint = "/"
+                fstype = "xfs"
 		size = 4294967296
 		`
 	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
@@ -554,6 +555,7 @@ func TestComposeUnsupportedMountPointV0(t *testing.T) {
 		version="0.0.1"
 		[[customizations.filesystem]]
 		mountpoint = "/etc"
+                fstype = "xfs"
 		size = 4294967296
 		`
 	resp, err := PostTOMLBlueprintV0(testState.socket, bp)

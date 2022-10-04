@@ -606,6 +606,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/etc",
 				},
 			},
@@ -634,6 +635,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/",
 				},
 			},
@@ -663,10 +665,12 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/var/log",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/var/log/audit",
 				},
 			},
@@ -694,18 +698,22 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/var/a",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/var/a/b",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/var/a/b/c",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/var/a/b/c/d",
 				},
 			},
@@ -733,14 +741,17 @@ func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "//",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/var//",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/var//log/audit/",
 				},
 			},
@@ -767,10 +778,12 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/variable",
 				},
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/variable/log/audit",
 				},
 			},
@@ -799,7 +812,37 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 			Filesystem: []blueprint.FilesystemCustomization{
 				{
 					MinSize:    1024,
+					FSType:     "xfs",
 					Mountpoint: "/usr",
+				},
+			},
+		},
+	}
+	for _, archName := range r9distro.ListArches() {
+		arch, _ := r9distro.GetArch(archName)
+		for _, imgTypeName := range arch.ListImageTypes() {
+			imgType, _ := arch.GetImageType(imgTypeName)
+			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
+			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
+				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+				continue
+			} else {
+				assert.NoError(t, err)
+			}
+		}
+	}
+}
+
+func TestDistro_MountpointsWithEmptyFSTypeAllowed(t *testing.T) {
+	r9distro := rhel9.New()
+	bp := blueprint.Blueprint{
+		Customizations: &blueprint.Customizations{
+			Filesystem: []blueprint.FilesystemCustomization{
+				{
+					MinSize:    1024,
+					Mountpoint: "/var",
 				},
 			},
 		},

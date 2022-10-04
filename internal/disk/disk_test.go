@@ -520,6 +520,7 @@ func TestMinimumSizes(t *testing.T) {
 			Blueprint: []blueprint.FilesystemCustomization{
 				{
 					Mountpoint: "/usr",
+					FSType:     "xfs",
 					MinSize:    1 * MiB,
 				},
 			},
@@ -532,10 +533,12 @@ func TestMinimumSizes(t *testing.T) {
 			Blueprint: []blueprint.FilesystemCustomization{
 				{
 					Mountpoint: "/",
+					FSType:     "xfs",
 					MinSize:    1 * MiB,
 				},
 				{
 					Mountpoint: "/usr",
+					FSType:     "xfs",
 					MinSize:    1 * KiB,
 				},
 			},
@@ -548,6 +551,7 @@ func TestMinimumSizes(t *testing.T) {
 			Blueprint: []blueprint.FilesystemCustomization{
 				{
 					Mountpoint: "/usr",
+					FSType:     "xfs",
 					MinSize:    10 * GiB,
 				},
 			},
@@ -560,10 +564,12 @@ func TestMinimumSizes(t *testing.T) {
 			Blueprint: []blueprint.FilesystemCustomization{
 				{
 					Mountpoint: "/",
+					FSType:     "xfs",
 					MinSize:    10 * GiB,
 				},
 				{
 					Mountpoint: "/home",
+					FSType:     "xfs",
 					MinSize:    1 * MiB,
 				},
 			},
@@ -576,6 +582,7 @@ func TestMinimumSizes(t *testing.T) {
 			Blueprint: []blueprint.FilesystemCustomization{
 				{
 					Mountpoint: "/opt",
+					FSType:     "xfs",
 					MinSize:    10 * GiB,
 				},
 			},

@@ -36,6 +36,9 @@ const (
 
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
+
+	// default filesystem type
+	defaultFSType = "xfs"
 )
 
 var (
@@ -372,7 +375,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		pt := t.basePartitionTables[archName]
 		haveNewMountpoint := false
 
-		if fs := bp.Customizations.GetFilesystems(); fs != nil {
+		if fs := bp.Customizations.GetFilesystems(defaultFSType); fs != nil {
 			for i := 0; !haveNewMountpoint && i < len(fs); i++ {
 				haveNewMountpoint = !pt.ContainsMountpoint(fs[i].Mountpoint)
 			}
@@ -608,7 +611,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
-	mountpoints := customizations.GetFilesystems()
+	mountpoints := customizations.GetFilesystems(defaultFSType)
 
 	if mountpoints != nil && t.rpmOstree {
 		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
