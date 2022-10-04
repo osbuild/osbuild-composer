@@ -89,14 +89,17 @@
         "filesystem": [
           {
             "mountpoint": "/usr",
+            "fstype": "xfs",
             "minsize": 2147483648
           },
           {
             "mountpoint": "/var",
+            "fstype": "xfs",
             "minsize": 1073741824
           },
           {
             "mountpoint": "/",
+            "fstype": "xfs",
             "minsize": 2147483648
           }
         ]

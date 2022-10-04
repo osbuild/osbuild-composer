@@ -103,6 +103,7 @@
         "filesystem": [
           {
             "mountpoint": "/opt",
+            "fstype": "xfs",
             "minsize": 1073741824
           }
         ]
