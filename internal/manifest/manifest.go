@@ -18,11 +18,6 @@ const (
 	ARCH_PPC64LE
 )
 
-type osTreeCommit struct {
-	checksum string
-	url      string
-}
-
 // An OSBuildManifest is an opaque JSON object, which is a valid input to osbuild
 // TODO: use this instead of distro.Manifest below
 type OSBuildManifest []byte
@@ -67,11 +62,8 @@ func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (distro.
 		pipeline.serializeStart(packageSets[pipeline.Name()])
 	}
 	for _, pipeline := range m.pipelines {
-		for _, commit := range pipeline.getOSTreeCommits() {
-			commits = append(commits, ostree.CommitSpec{
-				Checksum: commit.checksum, URL: commit.url,
-			})
-		}
+
+		commits = append(commits, pipeline.getOSTreeCommits()...)
 		pipelines = append(pipelines, pipeline.serialize())
 		packages = append(packages, packageSets[pipeline.Name()]...)
 		inline = append(inline, pipeline.getInline()...)

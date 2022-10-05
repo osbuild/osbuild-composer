@@ -56,18 +56,13 @@ func NewISOTree(m *Manifest,
 	return p
 }
 
-func (p *ISOTree) getOSTreeCommits() []osTreeCommit {
-	var checksum, url string
-	if p.OSTree != nil {
-		checksum = p.OSTree.Checksum
-		url = p.OSTree.URL
-
+// Return the ostree commit URL and checksum that will be included in this
+func (p *ISOTree) getOSTreeCommits() []ostree.CommitSpec {
+	if p.OSTree == nil {
+		return nil
 	}
-	return []osTreeCommit{
-		{
-			checksum: checksum,
-			url:      url,
-		},
+	return []ostree.CommitSpec{
+		*p.OSTree,
 	}
 }
 

@@ -9,6 +9,7 @@ package manifest
 import (
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -25,7 +26,7 @@ type Pipeline interface {
 	serializeEnd()
 	serialize() osbuild.Pipeline
 	getPackageSpecs() []rpmmd.PackageSpec
-	getOSTreeCommits() []osTreeCommit
+	getOSTreeCommits() []ostree.CommitSpec
 	getInline() []string
 }
 
@@ -78,8 +79,8 @@ func (p Base) getPackageSpecs() []rpmmd.PackageSpec {
 	return []rpmmd.PackageSpec{}
 }
 
-func (p Base) getOSTreeCommits() []osTreeCommit {
-	return []osTreeCommit{}
+func (p Base) getOSTreeCommits() []ostree.CommitSpec {
+	return nil
 }
 
 func (p Base) getInline() []string {
