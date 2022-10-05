@@ -412,7 +412,7 @@ github.com/kr/text
 ## explicit
 github.com/labstack/echo/v4
 github.com/labstack/echo/v4/middleware
-# github.com/labstack/gommon v0.3.1
+# github.com/labstack/gommon v0.4.0
 ## explicit
 github.com/labstack/gommon/bytes
 github.com/labstack/gommon/color
