@@ -422,57 +422,59 @@ greenprint "🧹 Clean up raw-image blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete raw-image > /dev/null
 
-##################################################################
-##
-## Install and test edge vm with edge-raw-image (BIOS)
-##
-##################################################################
-# Prepare qcow2 file for BIOS
-sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
 
-# Ensure SELinux is happy with our new images.
-greenprint "👿 Running restorecon on image directory"
-sudo restorecon -Rv /var/lib/libvirt/images/
+if [[ "$ID" != "fedora" ]]; then
+    ##################################################################
+    ##
+    ## Install and test edge vm with edge-raw-image (BIOS)
+    ##
+    ##################################################################
+    # Prepare qcow2 file for BIOS
+    sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 
-greenprint "💿 Installing raw image on BIOS VM"
-# TODO: os-type is deprecated in newer versions; remove conditionally
-sudo virt-install  --name="${IMAGE_KEY}-bios"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:30 \
-                   --import \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --noreboot
+    # Ensure SELinux is happy with our new images.
+    greenprint "👿 Running restorecon on image directory"
+    sudo restorecon -Rv /var/lib/libvirt/images/
 
-# Start VM.
-greenprint "💻 Start BIOS VM"
-sudo virsh start "${IMAGE_KEY}-bios"
+    greenprint "💿 Installing raw image on BIOS VM"
+    # TODO: os-type is deprecated in newer versions; remove conditionally
+    sudo virt-install  --name="${IMAGE_KEY}-bios"\
+                       --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                       --ram 3072 \
+                       --vcpus 2 \
+                       --network network=integration,mac=34:49:22:B0:83:30 \
+                       --import \
+                       --os-type linux \
+                       --os-variant ${OS_VARIANT} \
+                       --nographics \
+                       --noautoconsole \
+                       --wait=-1 \
+                       --noreboot
 
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
+    # Start VM.
+    greenprint "💻 Start BIOS VM"
+    sudo virsh start "${IMAGE_KEY}-bios"
 
-# Check image installation result
-check_result
+    # Check for ssh ready to go.
+    greenprint "🛃 Checking for SSH is ready to go"
+    for LOOP_COUNTER in $(seq 0 30); do
+        RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
+        if [[ $RESULTS == 1 ]]; then
+            echo "SSH is ready now! 🥳"
+            break
+        fi
+        sleep 10
+    done
 
-greenprint "🕹 Get ostree install commit value"
-INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+    # Check image installation result
+    check_result
 
-# Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+    greenprint "🕹 Get ostree install commit value"
+    INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+    # Add instance IP address into /etc/ansible/hosts
+    sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
 ${BIOS_GUEST_ADDRESS}
 
@@ -486,17 +488,20 @@ ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
-# Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-check_result
+    # Test IoT/Edge OS
+    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+    check_result
 
-# Clean up BIOS VM
-greenprint "🧹 Clean up BIOS VM"
-if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
-    sudo virsh destroy "${IMAGE_KEY}-bios"
+    # Clean up BIOS VM
+    greenprint "🧹 Clean up BIOS VM"
+    if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
+        sudo virsh destroy "${IMAGE_KEY}-bios"
+    fi
+    sudo virsh undefine "${IMAGE_KEY}-bios"
+    sudo rm -fr LIBVIRT_IMAGE_PATH
+else
+    greenprint "Skipping BIOS boot for Fedora IoT (not supported)"
 fi
-sudo virsh undefine "${IMAGE_KEY}-bios"
-sudo rm -fr LIBVIRT_IMAGE_PATH
 
 ##################################################################
 ##
