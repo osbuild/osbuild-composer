@@ -1398,22 +1398,6 @@
                     }
                   },
                   {
-                    "id": "sha256:bd422838b08aee333b919798924814148118cd1d2ec7051a3d01f0161eec4184",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:59525eff25d7e8c661f3d2a5308d431234cbd5e4a70c4150c3a71639d0e0e136",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:94104f196a74be27358ac696a3f6063d45f7c33df2785a42454b988141760564",
                     "options": {
                       "metadata": {
@@ -2009,7 +1993,6 @@
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
               "kernel_opts": "modprobe.blacklist=vc4,rw",
-              "legacy": "i386-pc",
               "uefi": {
                 "vendor": "fedora",
                 "install": true,
@@ -2068,27 +2051,20 @@
               "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
               "partitions": [
                 {
-                  "bootable": true,
-                  "size": 2048,
-                  "start": 2048,
-                  "type": "21686148-6449-6E6F-744E-656564454649",
-                  "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
-                },
-                {
                   "size": 1026048,
-                  "start": 4096,
+                  "start": 2048,
                   "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
                   "size": 2097152,
-                  "start": 1030144,
+                  "start": 1028096,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 17844191,
-                  "start": 3127296,
+                  "size": 17846239,
+                  "start": 3125248,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -2114,7 +2090,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 4096,
+                  "start": 2048,
                   "size": 1026048,
                   "lock": true
                 }
@@ -2132,7 +2108,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1030144,
+                  "start": 1028096,
                   "size": 2097152,
                   "lock": true
                 }
@@ -2150,8 +2126,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 3127296,
-                  "size": 17844191,
+                  "start": 3125248,
+                  "size": 17846239,
                   "lock": true
                 }
               }
@@ -2181,7 +2157,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1030144,
+                  "start": 1028096,
                   "size": 2097152
                 }
               },
@@ -2189,7 +2165,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 4096,
+                  "start": 2048,
                   "size": 1026048
                 }
               },
@@ -2197,8 +2173,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 3127296,
-                  "size": 17844191
+                  "start": 3125248,
+                  "size": 17846239
                 }
               }
             },
@@ -2222,25 +2198,6 @@
                 "target": "/boot/efi"
               }
             ]
-          },
-          {
-            "type": "org.osbuild.grub2.inst",
-            "options": {
-              "filename": "disk.img",
-              "platform": "i386-pc",
-              "location": 2048,
-              "core": {
-                "type": "mkimage",
-                "partlabel": "gpt",
-                "filesystem": "ext4"
-              },
-              "prefix": {
-                "type": "partition",
-                "partlabel": "gpt",
-                "number": 2,
-                "path": "/grub2"
-              }
-            }
           }
         ]
       },
@@ -2520,9 +2477,6 @@
           "sha256:571ad1c79fa5dc94318169a18b5b395458580c74d7492215b5b0efc5aa07d29d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/d/dracut-config-generic-055-6.fc35.x86_64.rpm"
           },
-          "sha256:59525eff25d7e8c661f3d2a5308d431234cbd5e4a70c4150c3a71639d0e0e136": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-modules-2.06-10.fc35.noarch.rpm"
-          },
           "sha256:59d8bf9aefb00d5ec8317c30561e05b9bd50d946ad3c9d5beaa4ec7c7d9a478d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/l/libverto-0.3.2-2.fc35.x86_64.rpm"
           },
@@ -2747,9 +2701,6 @@
           },
           "sha256:bcc4edb810df0371fa4a1ca69b143386542505009eff4a1a0a806d13093e5c9d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/s/sqlite-libs-3.36.0-3.fc35.x86_64.rpm"
-          },
-          "sha256:bd422838b08aee333b919798924814148118cd1d2ec7051a3d01f0161eec4184": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-2.06-10.fc35.x86_64.rpm"
           },
           "sha256:c1447e6ba83c7ea1faad6370f831c9b0adaa85d912727d165dfec32735f6fff7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-fedora-20220106/Packages/g/grubby-8.40-55.fc35.x86_64.rpm"
@@ -4606,26 +4557,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-efi-x64-2.06-10.fc35.x86_64.rpm",
         "checksum": "sha256:5a2c17e7ccc7d7482d977c6ea754fb994ea5e94b204ff8ebb8a9c22ba20827ee",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "10.fc35",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-2.06-10.fc35.x86_64.rpm",
-        "checksum": "sha256:bd422838b08aee333b919798924814148118cd1d2ec7051a3d01f0161eec4184",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc-modules",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "10.fc35",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f35/f35-x86_64-updates-released-20220113/Packages/g/grub2-pc-modules-2.06-10.fc35.noarch.rpm",
-        "checksum": "sha256:59525eff25d7e8c661f3d2a5308d431234cbd5e4a70c4150c3a71639d0e0e136",
         "check_gpg": true
       },
       {
