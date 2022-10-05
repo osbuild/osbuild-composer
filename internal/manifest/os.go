@@ -187,15 +187,11 @@ func (p *OS) getBuildPackages() []string {
 	return packages
 }
 
-func (p *OS) getOSTreeCommits() []osTreeCommit {
-	commits := []osTreeCommit{}
-	if p.OSTreeRef != "" && p.OSTreeParent != nil {
-		commits = append(commits, osTreeCommit{
-			checksum: p.OSTreeParent.Checksum,
-			url:      p.OSTreeParent.URL,
-		})
+func (p *OS) getOSTreeCommits() []ostree.CommitSpec {
+	if p.OSTreeParent == nil {
+		return nil
 	}
-	return commits
+	return []ostree.CommitSpec{*p.OSTreeParent}
 }
 
 func (p *OS) getPackageSpecs() []rpmmd.PackageSpec {

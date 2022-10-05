@@ -65,13 +65,8 @@ func (p *OSTreeDeployment) getBuildPackages() []string {
 	return packages
 }
 
-func (p *OSTreeDeployment) getOSTreeCommits() []osTreeCommit {
-	return []osTreeCommit{
-		{
-			checksum: p.commit.Checksum,
-			url:      p.commit.URL,
-		},
-	}
+func (p *OSTreeDeployment) getOSTreeCommits() []ostree.CommitSpec {
+	return []ostree.CommitSpec{p.commit}
 }
 
 func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
