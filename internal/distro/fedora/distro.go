@@ -859,7 +859,7 @@ func newDistro(version int) distro.Distro {
 			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_RAW,
 			},
-			BIOS:       true,
+			BIOS:       false,
 			UEFIVendor: "fedora",
 		},
 		iotRawImgType,

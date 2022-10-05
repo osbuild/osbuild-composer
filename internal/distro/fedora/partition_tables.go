@@ -113,12 +113,6 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     1 * common.MebiByte, // 1MB
-				Bootable: true,
-				Type:     disk.BIOSBootPartitionGUID,
-				UUID:     disk.BIOSBootPartitionUUID,
-			},
-			{
 				Size: 501 * common.MebiByte, // 501 MiB
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
@@ -164,12 +158,6 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
-			{
-				Size:     1 * common.MebiByte, // 1MB
-				Bootable: true,
-				Type:     disk.BIOSBootPartitionGUID,
-				UUID:     disk.BIOSBootPartitionUUID,
-			},
 			{
 				Size: 501 * common.MebiByte, // 501 MiB
 				Type: disk.EFISystemPartitionGUID,
