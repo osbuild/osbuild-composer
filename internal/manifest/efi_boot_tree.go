@@ -18,6 +18,8 @@ type EFIBootTree struct {
 	UEFIVendor string
 	ISOLabel   string
 	KSPath     string
+
+	KernelOpts []string
 }
 
 func NewEFIBootTree(m *Manifest, buildPipeline *Build, anacondaPipeline *Anaconda) *EFIBootTree {
@@ -43,6 +45,18 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 		panic("unsupported architecture")
 	}
 
+	kernelOpts := []string{}
+
+	if p.KSPath != "" {
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.ISOLabel, p.KSPath))
+	} else {
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", p.ISOLabel))
+	}
+
+	if len(p.KernelOpts) > 0 {
+		kernelOpts = append(kernelOpts, p.KernelOpts...)
+	}
+
 	grubOptions := &osbuild.GrubISOStageOptions{
 		Product: osbuild.Product{
 			Name:    p.anacondaPipeline.product,
@@ -50,7 +64,7 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 		},
 		Kernel: osbuild.ISOKernel{
 			Dir:  "/images/pxeboot",
-			Opts: []string{fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.ISOLabel, p.KSPath)},
+			Opts: kernelOpts,
 		},
 		ISOLabel:      p.ISOLabel,
 		Architectures: architectures,

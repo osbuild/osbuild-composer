@@ -15,7 +15,7 @@ func NewAnacondaStage(options *AnacondaStageOptions) *Stage {
 	}
 }
 
-func NewAnacondaStageOptions(users bool) *AnacondaStageOptions {
+func NewAnacondaStageOptions(users bool, additionalModules []string) *AnacondaStageOptions {
 	modules := []string{
 		"org.fedoraproject.Anaconda.Modules.Network",
 		"org.fedoraproject.Anaconda.Modules.Payloads",
@@ -24,6 +24,10 @@ func NewAnacondaStageOptions(users bool) *AnacondaStageOptions {
 
 	if users {
 		modules = append(modules, "org.fedoraproject.Anaconda.Modules.Users")
+	}
+
+	if len(additionalModules) > 0 {
+		modules = append(modules, additionalModules...)
 	}
 
 	return &AnacondaStageOptions{

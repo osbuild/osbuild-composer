@@ -72,6 +72,24 @@ var (
 	}
 
 	// Image Definitions
+	imageInstallerImgType = imageType{
+		name:        "image-installer",
+		nameAliases: []string{"fedora-image-installer"},
+		filename:    "installer.iso",
+		mimeType:    "application/x-iso9660-image",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey:        bareMetalPackageSet,
+			installerPkgsKey: imageInstallerPackageSet,
+		},
+		bootable:         true,
+		bootISO:          true,
+		rpmOstree:        false,
+		image:            imageInstallerImage,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree"},
+		exports:          []string{"bootiso"},
+	}
+
 	iotCommitImgType = imageType{
 		name:        "iot-commit",
 		nameAliases: []string{"fedora-iot-commit"},
@@ -702,8 +720,11 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		if options.OSTree.FetchChecksum == "" {
 			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
+	}
 
-		if t.name == "iot-installer" {
+	// BootISO's have limited support for customizations.
+	if t.bootISO {
+		if t.name == "iot-installer" || t.name == "image-installer" {
 			allowed := []string{"User", "Group"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
@@ -874,6 +895,7 @@ func newDistro(version int) distro.Distro {
 		iotOCIImgType,
 		iotCommitImgType,
 		iotInstallerImgType,
+		imageInstallerImgType,
 	)
 	x86_64.addImageTypes(
 		&platform.X86{
@@ -932,6 +954,7 @@ func newDistro(version int) distro.Distro {
 		iotCommitImgType,
 		iotOCIImgType,
 		iotInstallerImgType,
+		imageInstallerImgType,
 	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{

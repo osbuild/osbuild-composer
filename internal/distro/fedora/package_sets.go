@@ -432,12 +432,14 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 		ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"smc-meera-fonts",
+				"sil-scheherazade-fonts",
 			},
 		})
 	} else {
 		ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"rit-meera-new-fonts",
+				"sil-scheherazade-new-fonts",
 			},
 		})
 	}
@@ -485,6 +487,27 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 
 func iotInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	return anacondaPackageSet(t)
+}
+
+func imageInstallerPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := anacondaPackageSet(t)
+
+	releasever := t.Arch().Distro().Releasever()
+	version, err := strconv.Atoi(releasever)
+	if err != nil {
+		panic("cannot convert releasever to int: " + err.Error())
+	}
+
+	// We want to generate a preview image when rawhide is built
+	if version >= 38 {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"anaconda-webui",
+			},
+		})
+	}
+
+	return ps
 }
 
 func containerPackageSet(t *imageType) rpmmd.PackageSet {
@@ -539,4 +562,12 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	return ps
+}
+
+func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"@core",
+		},
+	}
 }

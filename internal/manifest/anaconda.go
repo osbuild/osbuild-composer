@@ -37,6 +37,13 @@ type Anaconda struct {
 	kernelVer    string
 	product      string
 	version      string
+
+	// Interactive defaults is a kickstart stage that can be provided, it
+	// will be written to /usr/share/anaconda/interactive-defaults
+	InteractiveDefaults *AnacondaInteractiveDefaults
+
+	// Additional anaconda modules to enable
+	AdditionalModules []string
 }
 
 // NewAnaconda creates an anaconda pipeline object. repos and packages
@@ -184,7 +191,7 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 	}
 
 	pipeline.AddStage(osbuild.NewUsersStage(usersStageOptions))
-	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.Users)))
+	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.Users, p.AdditionalModules)))
 	pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
 		BaseArch: p.platform.GetArch().String(),
@@ -201,6 +208,24 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 		"nfs",
 	})))
 	pipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
+
+	if p.InteractiveDefaults != nil {
+		kickstartOptions, err := osbuild.NewKickstartStageOptions(
+			"/usr/share/anaconda/interactive-defaults.ks",
+			p.InteractiveDefaults.TarPath,
+			nil,
+			nil,
+			"",
+			"",
+			"",
+		)
+
+		if err != nil {
+			panic("failed to create kickstartstage options for interactive defaults")
+		}
+
+		pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
+	}
 
 	return pipeline
 }
@@ -261,4 +286,16 @@ func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []
 
 func (p *Anaconda) GetPlatform() platform.Platform {
 	return p.platform
+}
+
+type AnacondaInteractiveDefaults struct {
+	TarPath string
+}
+
+func NewAnacondaInteractiveDefaults(tarPath string) *AnacondaInteractiveDefaults {
+	i := &AnacondaInteractiveDefaults{
+		TarPath: tarPath,
+	}
+
+	return i
 }
