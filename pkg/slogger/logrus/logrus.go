@@ -1,7 +1,7 @@
-package slogger
+package logrus
 
 import (
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
+	"github.com/osbuild/osbuild-composer/pkg/slogger"
 	"github.com/sirupsen/logrus"
 )
 
@@ -9,8 +9,12 @@ type simpleLogrus struct {
 	logger *logrus.Logger
 }
 
-func NewLogrusLogger(logger *logrus.Logger) jobqueue.SimpleLogger {
+func NewLogrusLogger(logger *logrus.Logger) slogger.SimpleLogger {
 	return &simpleLogrus{logger: logger}
+}
+
+func NewStandardLogrusLogger() slogger.SimpleLogger {
+	return NewLogrusLogger(logrus.StandardLogger())
 }
 
 func (s *simpleLogrus) log(level logrus.Level, err error, msg string, args ...string) {

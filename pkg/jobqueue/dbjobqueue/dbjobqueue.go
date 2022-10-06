@@ -18,9 +18,9 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/osbuild/osbuild-composer/internal/common/slogger"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/osbuild-composer/pkg/slogger"
+	"github.com/osbuild/osbuild-composer/pkg/slogger/logrus"
 )
 
 const (
@@ -105,7 +105,7 @@ const (
 )
 
 type DBJobQueue struct {
-	logger       jobqueue.SimpleLogger
+	logger       slogger.SimpleLogger
 	pool         *pgxpool.Pool
 	dequeuers    *dequeuers
 	stopListener func()
@@ -157,12 +157,12 @@ func (d *dequeuers) notifyAll() {
 type Config struct {
 	// Logger is used for all logging of the queue, when not provided, the stanard
 	// global logger (logrus) is used.
-	Logger jobqueue.SimpleLogger
+	Logger slogger.SimpleLogger
 }
 
 // New creates a new DBJobQueue object for `url` with default configuration.
 func New(url string) (*DBJobQueue, error) {
-	stdLogger := slogger.NewLogrusLogger(logrus.StandardLogger())
+	stdLogger := logrus.NewStandardLogrusLogger()
 	config := Config{
 		Logger: stdLogger,
 	}

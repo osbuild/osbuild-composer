@@ -1,13 +1,13 @@
-package slogger
+package noop
 
 import (
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
+	"github.com/osbuild/osbuild-composer/pkg/slogger"
 )
 
 type noopLogger struct {
 }
 
-func NewNoopLogger() jobqueue.SimpleLogger {
+func NewNoopLogger() slogger.SimpleLogger {
 	return &noopLogger{}
 }
 

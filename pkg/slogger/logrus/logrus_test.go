@@ -1,4 +1,4 @@
-package slogger
+package logrus
 
 import (
 	"bytes"
