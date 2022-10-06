@@ -67,8 +67,7 @@ detailed help. In most situations the following commands are sufficient to
 build and install from source:
 
 ```sh
-mkdir build
-go build -o build ./...
+make build
 ```
 
 The man-pages require `python-docutils` and can be built via:
