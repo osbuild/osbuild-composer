@@ -58,27 +58,25 @@ jobs:
           - 5432:5432
     steps:
       # gpgme-devel is needed for container upload dependencies
-    - name: Install test dependencies
-      run: sudo apt-get install -y libgpgme-dev
-    - uses: actions/checkout@v2
-    - uses: actions/setup-go@v3
-      with:
-        go-version: 1.16
-    - env:
-        PGUSER: postgres
-        PGPASSWORD: foobar
-        PGDATABASE: osbuildcomposer
-        PGHOST: localhost
-        PGPORT: 5432
-      run: |
-        WORKDIR=$(readlink -f pkg/jobqueue/dbjobqueue/schemas)
-        pushd $(mktemp -d)
-        go mod init temp
-        go get -u github.com/jackc/tern
-        go run github.com/jackc/tern migrate -m "$WORKDIR"
-        popd
-    - run: go test -tags=integration ./cmd/osbuild-composer-dbjobqueue-tests
-    - run: go test -tags=integration ./cmd/osbuild-service-maintenance
+      - name: Install test dependencies
+        run: sudo apt-get install -y libgpgme-dev
+      - uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.16
+
+      - name: Migrate jobqueue
+        run: |
+          go install github.com/jackc/tern@latest
+          make migrate-dbjobqueue
+
+      - name: Run dbjobqueue tests
+        run: go test -tags=integration ./cmd/osbuild-composer-dbjobqueue-tests
+
+      - name: Run service maintenance tests
+        run: go test -tags=integration ./cmd/osbuild-service-maintenance
 
   python-lint:
     name: "🐍 Lint (dnf-json)"

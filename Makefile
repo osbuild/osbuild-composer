@@ -129,6 +129,10 @@ build:
 	go test -c -tags=integration -o bin/osbuild-composer-maintenance-tests ./cmd/osbuild-service-maintenance/
 	go test -c -tags=integration -o bin/osbuild-composer-manifest-tests ./cmd/osbuild-composer-manifest-tests/
 
+.PHONY: migrate-dbjobqueue
+migrate-dbjobqueue:
+	tern migrate -c ./cmd/osbuild-composer-dbjobqueue-tests/tern.conf -m pkg/jobqueue/dbjobqueue/schemas/
+
 .PHONY: install
 install:
 	- mkdir -p /usr/libexec/osbuild-composer
