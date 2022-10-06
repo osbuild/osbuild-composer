@@ -158,28 +158,37 @@ type Config struct {
 	// Logger is used for all logging of the queue, when not provided, the stanard
 	// global logger (logrus) is used.
 	Logger slogger.SimpleLogger
+
+	// Database pool to use for all queries. Required. Close must be called on the
+	// dbjobqueue when done.
+	Pool *pgxpool.Pool
 }
 
-// New creates a new DBJobQueue object for `url` with default configuration.
+// New creates a new DBJobQueue object for `url` with default configuration and a new
+// connection pool created from `url`.
+// Close must be called when done with the jobqueue.
 func New(url string) (*DBJobQueue, error) {
 	stdLogger := logrus.NewStandardLogrusLogger()
-	config := Config{
-		Logger: stdLogger,
-	}
-	return NewWithConfig(url, config)
-}
 
-// NewWithLogger creates a new DBJobQueue object for `url` with specific configuration.
-func NewWithConfig(url string, config Config) (*DBJobQueue, error) {
 	pool, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("error establishing connection: %v", err)
 	}
 
+	config := Config{
+		Logger: stdLogger,
+		Pool:   pool,
+	}
+	return NewFromConfig(config)
+}
+
+// NewWithLogger creates a new DBJobQueue object from `Config`.
+// Close must be called when done with the jobqueue.
+func NewFromConfig(config Config) (*DBJobQueue, error) {
 	listenContext, cancel := context.WithCancel(context.Background())
 	q := &DBJobQueue{
 		logger:       config.Logger,
-		pool:         pool,
+		pool:         config.Pool,
 		dequeuers:    newDequeuers(),
 		stopListener: cancel,
 	}
