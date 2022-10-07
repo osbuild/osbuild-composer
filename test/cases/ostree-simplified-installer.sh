@@ -519,7 +519,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -643,7 +643,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -765,7 +765,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 greenprint "🧹 Clean up VM"
@@ -882,7 +882,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 ########################
@@ -1016,7 +1016,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up

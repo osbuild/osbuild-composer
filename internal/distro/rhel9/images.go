@@ -317,9 +317,12 @@ func edgeRawImage(workload workload.Workload,
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
+	// "rw" kernel option is required when /sysroot is mounted read-only to
+	// keep stateful parts of the filesystem writeable (/var/ and /etc)
+	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
 	img.Keyboard = "us"
 	img.Locale = "C.UTF-8"
+	img.SysrootReadOnly = true
 
 	img.Platform = t.platform
 	img.Workload = workload
@@ -361,9 +364,12 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
+	// "rw" kernel option is required when /sysroot is mounted read-only to
+	// keep stateful parts of the filesystem writeable (/var/ and /etc)
+	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
 	rawImg.Keyboard = "us"
 	rawImg.Locale = "C.UTF-8"
+	rawImg.SysrootReadOnly = true
 
 	rawImg.Platform = t.platform
 	rawImg.Workload = workload
