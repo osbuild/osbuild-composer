@@ -953,9 +953,12 @@ func ostreeDeployPipeline(
 			OSName: osname,
 		},
 	))
-	p.AddStage(osbuild.NewOSTreeConfigStage(ostreeConfigStageOptions(repoPath, false)))
+	p.AddStage(osbuild.NewOSTreeConfigStage(ostreeConfigStageOptions(repoPath, true)))
 	p.AddStage(osbuild.NewMkdirStage(efiMkdirStageOptions()))
 	kernelOpts := osbuild.GenImageKernelOptions(pt)
+	// "rw" kernel option is required when /sysroot is mounted read-only to
+	// keep stateful parts of the filesystem writeable (/var/ and /etc)
+	kernelOpts = append(kernelOpts, "rw")
 	p.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: osname,
