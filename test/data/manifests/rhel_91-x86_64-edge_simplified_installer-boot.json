@@ -33,7 +33,6 @@
       }
     }
   },
-  "no-image-info": true,
   "manifest": {
     "version": "2",
     "pipelines": [
@@ -2475,7 +2474,7 @@
               "repo": "/ostree/repo",
               "config": {
                 "sysroot": {
-                  "readonly": true,
+                  "readonly": false,
                   "bootloader": "none"
                 }
               }
@@ -16200,5 +16199,6 @@
         "check_gpg": true
       }
     ]
-  }
+  },
+  "no-image-info": true
 }
