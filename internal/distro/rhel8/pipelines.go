@@ -935,9 +935,10 @@ func ostreeDeployPipeline(
 			OSName: osname,
 		},
 	))
-	p.AddStage(osbuild.NewOSTreeConfigStage(ostreeConfigStageOptions(repoPath, false)))
+	p.AddStage(osbuild.NewOSTreeConfigStage(ostreeConfigStageOptions(repoPath, true)))
 	p.AddStage(osbuild.NewMkdirStage(efiMkdirStageOptions()))
 	kernelOpts := osbuild.GenImageKernelOptions(pt)
+	kernelOpts = append(kernelOpts, "rw")
 	p.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: osname,
