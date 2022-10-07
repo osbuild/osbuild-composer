@@ -2545,7 +2545,8 @@
                 "label": "root"
               },
               "kernel_opts": [
-                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                "rw"
               ]
             }
           },
