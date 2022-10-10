@@ -74,6 +74,12 @@ type LocaleCustomization struct {
 type FirewallCustomization struct {
 	Ports    []string                       `json:"ports,omitempty" toml:"ports,omitempty"`
 	Services *FirewallServicesCustomization `json:"services,omitempty" toml:"services,omitempty"`
+	Sources  []FirewallSourceCustomization  `json:"sources,omitempty" toml:"sources,omitempty"`
+}
+
+type FirewallSourceCustomization struct {
+	Zone    string   `json:"zone,omitempty" toml:"zone,omitempty"`
+	Sources []string `json:"sources,omitempty" toml:"sources,omitempty"`
 }
 
 type FirewallServicesCustomization struct {
@@ -162,8 +168,8 @@ func (e *CustomizationError) Error() string {
 	return e.Message
 }
 
-//CheckCustomizations returns an error of type `CustomizationError`
-//if `c` has any customizations not specified in `allowed`
+// CheckCustomizations returns an error of type `CustomizationError`
+// if `c` has any customizations not specified in `allowed`
 func (c *Customizations) CheckAllowed(allowed ...string) error {
 	if c == nil {
 		return nil
