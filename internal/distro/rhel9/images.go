@@ -74,6 +74,14 @@ func osCustomizations(
 			options.EnabledServices = fw.Services.Enabled
 			options.DisabledServices = fw.Services.Disabled
 		}
+		if fw.Sources != nil {
+			for _, s := range fw.Sources {
+				options.Sources = append(options.Sources, osbuild.FirewallSource{
+					Zone:    s.Zone,
+					Sources: s.Sources,
+				})
+			}
+		}
 		osc.Firewall = &options
 	}
 

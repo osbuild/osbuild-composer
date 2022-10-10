@@ -200,8 +200,8 @@ func tarPipelines(t *imageType, customizations *blueprint.Customizations, option
 	return pipelines, nil
 }
 
-//makeISORootPath return a path that can be used to address files and folders in
-//the root of the iso
+// makeISORootPath return a path that can be used to address files and folders in
+// the root of the iso
 func makeISORootPath(p string) string {
 	fullpath := path.Join("/run/install/repo", p)
 	return fmt.Sprintf("file://%s", fullpath)
@@ -497,11 +497,12 @@ func osPipeline(t *imageType,
 		// merge the user-provided firewall config with the default one
 		if fwStageOptions != nil {
 			fwStageOptions = &osbuild.FirewallStageOptions{
-				// Prefer the firewall ports and services settings provided
+				// Prefer the firewall ports, services and sources settings provided
 				// via BP customization.
 				Ports:            fwStageOptions.Ports,
 				EnabledServices:  fwStageOptions.EnabledServices,
 				DisabledServices: fwStageOptions.DisabledServices,
+				Sources:          fwStageOptions.Sources,
 				// Default zone can not be set using BP customizations, therefore
 				// default to the one provided in the default image configuration.
 				DefaultZone: firewallConfig.DefaultZone,
