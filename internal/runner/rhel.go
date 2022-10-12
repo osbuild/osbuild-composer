@@ -8,7 +8,7 @@ type RHEL struct {
 }
 
 func (r *RHEL) String() string {
-	return fmt.Sprintf("org.osbuild.fedora%d%d", r.Major, r.Minor)
+	return fmt.Sprintf("org.osbuild.rhel%d%d", r.Major, r.Minor)
 }
 
 func (p *RHEL) GetBuildPackages() []string {
