@@ -641,6 +641,90 @@ fi
 sudo virsh undefine "${IMAGE_KEY}-fdosshkey" --nvram
 sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
 
+
+####################################################################
+##
+## Install with an additional drive to mimic USB install
+## reuse the above installer...
+##
+####################################################################
+
+# Create qcow2 file for virt install.
+greenprint "🖥 Create qcow2 files for virt install (with additional drive)"
+sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+LIBVIRT_FAKE_USB_PATH=/var/lib/libvirt/images/usb.qcow2
+sudo qemu-img create -f qcow2 "${LIBVIRT_FAKE_USB_PATH}" 16g
+
+greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
+sudo virt-install  --name="${IMAGE_KEY}-usb"\
+                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                   --disk path="${LIBVIRT_FAKE_USB_PATH}",format=qcow2 \
+                   --ram 3072 \
+                   --vcpus 2 \
+                   --network network=integration,mac=34:49:22:B0:83:32 \
+                   --os-type linux \
+                   --os-variant ${OS_VARIANT} \
+                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --nographics \
+                   --noautoconsole \
+                   --wait=15 \
+                   --noreboot
+
+# Installation can get stuck, destroying VM helps
+# See https://github.com/osbuild/osbuild-composer/issues/2413
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-usb") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-usb"
+fi
+
+# Start VM.
+greenprint "💻 Start UEFI VM"
+sudo virsh start "${IMAGE_KEY}-usb"
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $ROOT_CERT_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check image installation result
+check_result
+
+greenprint "🕹 Get ostree install commit value"
+INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${ROOT_CERT_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes 
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
+# Clean up BIOS VM
+greenprint "🧹 Clean up VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-usb") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-usb"
+fi
+sudo virsh undefine "${IMAGE_KEY}-usb" --nvram
+sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
+
 ##################################################################
 ##
 ## Build edge-simplified-installer with diun_pub_key_root_certs
@@ -663,7 +747,7 @@ diun_pub_key_root_certs="""
 ${DIUN_PUB_KEY_ROOT_CERTS}"""
 EOF
 
-greenprint "📄 fdosshkey blueprint"
+greenprint "📄 fdorootcert blueprint"
 cat "$BLUEPRINT_FILE"
 
 # Prepare the blueprint for the compose.
