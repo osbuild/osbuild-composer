@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -17,6 +18,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
 const (
@@ -71,12 +73,12 @@ type distribution struct {
 	vendor             string
 	ostreeRefTmpl      string
 	isolabelTmpl       string
-	runner             string
+	runner             runner.Runner
 	arches             map[string]distro.Arch
 	defaultImageConfig *distro.ImageConfig
 }
 
-// RHEL-based OS image configuration defaults
+// CentOS- and RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
 	Timezone: common.StringToPtr("America/New_York"),
 	Locale:   common.StringToPtr("C.UTF-8"),
@@ -94,56 +96,34 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 	},
 }
 
-// distribution objects without the arches > image types
-var distroMap = map[string]distribution{
-	"rhel-90": {
-		name:               "rhel-90",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "9.0",
-		releaseVersion:     "9",
-		modulePlatformID:   "platform:el9",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/9/%s/edge",
-		isolabelTmpl:       "RHEL-9-0-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel90",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"rhel-91": {
-		name:               "rhel-91",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "9.1",
-		releaseVersion:     "9",
-		modulePlatformID:   "platform:el9",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/9/%s/edge",
-		isolabelTmpl:       "RHEL-9-1-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel91",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"rhel-92": {
-		name:               "rhel-92",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "9.2",
-		releaseVersion:     "9",
-		modulePlatformID:   "platform:el9",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/9/%s/edge",
-		isolabelTmpl:       "RHEL-9-2-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel92",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"centos-9": {
-		name:               "centos-9",
+func getCentOSDistro(version int) distribution {
+	return distribution{
+		name:               fmt.Sprintf("centos-%d", version),
 		product:            "CentOS Stream",
-		osVersion:          "9-stream",
-		releaseVersion:     "9",
-		modulePlatformID:   "platform:el9",
+		osVersion:          fmt.Sprintf("%d-stream", version),
+		releaseVersion:     strconv.Itoa(version),
+		modulePlatformID:   fmt.Sprintf("platform:el%d", version),
 		vendor:             "centos",
-		ostreeRefTmpl:      "centos/9/%s/edge",
-		isolabelTmpl:       "CentOS-Stream-9-BaseOS-%s",
-		runner:             "org.osbuild.centos9",
+		ostreeRefTmpl:      fmt.Sprintf("centos/%d/%%s/edge", version),
+		isolabelTmpl:       fmt.Sprintf("CentOS-Stream-%d-BaseOS-%%s", version),
+		runner:             &runner.CentOS{Version: uint64(version)},
 		defaultImageConfig: defaultDistroImageConfig,
-	},
+	}
+}
+
+func getRHELDistro(major, minor int) distribution {
+	return distribution{
+		name:               fmt.Sprintf("rhel-%d%d", major, minor),
+		product:            "Red Hat Enterprise Linux",
+		osVersion:          fmt.Sprintf("%d.%d", major, minor),
+		releaseVersion:     strconv.Itoa(major),
+		modulePlatformID:   fmt.Sprintf("platform:el%d", major),
+		vendor:             "redhat",
+		ostreeRefTmpl:      fmt.Sprintf("rhel/%d/%%s/edge", major),
+		isolabelTmpl:       fmt.Sprintf("RHEL-%d-%d-0-BaseOS-%%s", major, minor),
+		runner:             &runner.RHEL{Major: uint64(major), Minor: uint64(minor)},
+		defaultImageConfig: defaultDistroImageConfig,
+	}
 }
 
 func (d *distribution) Name() string {
@@ -640,41 +620,61 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 	return nil
 }
 
-// New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	return newDistro("rhel-90")
+	return NewRHEL90()
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-90")
+	// NOTE: args are ignored - host distro constructors are deprecated
+	return NewRHEL90()
+}
+
+func NewCentOS9() distro.Distro {
+	return newDistro("centos", 9, 0)
+}
+
+func NewCentOS9HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	// NOTE: args are ignored - host distro constructors are deprecated
+	return NewCentOS9()
+}
+
+func NewRHEL90() distro.Distro {
+	return newDistro("rhel", 9, 0)
+}
+
+func NewRHEL90HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	// NOTE: args are ignored - host distro constructors are deprecated
+	return NewRHEL90()
 }
 
 func NewRHEL91() distro.Distro {
-	return newDistro("rhel-91")
+	return newDistro("rhel", 9, 1)
 }
 
 func NewRHEL91HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-91")
+	// NOTE: args are ignored - host distro constructors are deprecated
+	return NewRHEL91()
 }
 
 func NewRHEL92() distro.Distro {
-	return newDistro("rhel-92")
+	return newDistro("rhel", 9, 2)
 }
 
 func NewRHEL92HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-92")
+	// NOTE: args are ignored - host distro constructors are deprecated
+	return NewRHEL92()
 }
 
-func NewCentos() distro.Distro {
-	return newDistro("centos-9")
-}
-
-func NewCentosHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("centos-9")
-}
-
-func newDistro(distroName string) distro.Distro {
-	rd := distroMap[distroName]
+func newDistro(name string, major, minor int) distro.Distro {
+	var rd distribution
+	switch name {
+	case "rhel":
+		rd = getRHELDistro(major, minor)
+	case "centos":
+		rd = getCentOSDistro(major)
+	default:
+		panic(fmt.Sprintf("unknown distro name: %s", name))
+	}
 
 	// Architecture definitions
 	x86_64 := architecture{
