@@ -697,6 +697,28 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: skip_rollback_test == "false"
 
+    - name: check journald has persistent logging
+      block:
+        - name: lsit boots
+          shell: journalctl --list-boots
+          register: result_list_boots
+
+        - assert:
+            that:
+              - result_list_boots.stdout_lines | length > 1
+            fail_msg: "journald hasn't persistent logging"
+            success_msg: "journald has persistent logging"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - skip_rollback_test == "false"
+        - result_rollback is succeeded
+
     # case: check ostree commit after rollback
     - name: check ostree commit after rollback
       block:
