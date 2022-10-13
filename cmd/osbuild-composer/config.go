@@ -78,7 +78,8 @@ func (c *ComposerConfigFile) weldrDistrosImageTypeDenyList() map[string][]string
 
 // GetDefaultConfig returns the default configuration of osbuild-composer
 // Defaults:
-// - 'azure-rhui', 'ec2', 'ec2-ha', 'ec2-sap' image types on 'rhel-85' are not exposed via Weldr API
+// - 'azure-rhui', 'azure-sap-rhui', 'ec2', 'ec2-ha', 'ec2-sap' image types on 'rhel-*'
+//   are not exposed via Weldr API
 func GetDefaultConfig() *ComposerConfigFile {
 	return &ComposerConfigFile{
 		Koji: KojiAPIConfig{
@@ -99,6 +100,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 				"rhel-*": {
 					ImageTypeDenyList: []string{
 						"azure-rhui",
+						"azure-sap-rhui",
 						"ec2",
 						"ec2-ha",
 						"ec2-sap",
