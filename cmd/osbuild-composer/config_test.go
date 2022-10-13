@@ -49,6 +49,7 @@ func TestDefaultConfig(t *testing.T) {
 			"rhel-*": {
 				[]string{
 					"azure-rhui",
+					"azure-sap-rhui",
 					"ec2",
 					"ec2-ha",
 					"ec2-sap",

@@ -588,3 +588,32 @@ var azureRhuiImgType = imageType{
 	exports:             []string{"archive"},
 	basePartitionTables: azureRhuiBasePartitionTables,
 }
+
+func SapAzureImageConfig(rd distribution) *distro.ImageConfig {
+	return SapImageConfig(rd).InheritFrom(defaultAzureImageConfig)
+}
+
+func azureSapImgType(rd distribution) imageType {
+	return imageType{
+		name:     "azure-sap-rhui",
+		filename: "disk.vhd.xz",
+		mimeType: "application/xz",
+		packageSets: map[string]packageSetFunc{
+			// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
+			buildPkgsKey: ec2BuildPackageSet,
+			osPkgsKey:    azureSapPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
+		defaultImageConfig:  SapAzureImageConfig(rd),
+		kernelOptions:       defaultAzureKernelOptions,
+		bootable:            true,
+		defaultSize:         64 * common.GibiByte,
+		pipelines:           vhdPipelines(true),
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc", "archive"},
+		exports:             []string{"archive"},
+		basePartitionTables: azureRhuiBasePartitionTables,
+	}
+}
