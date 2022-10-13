@@ -75,13 +75,7 @@ PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
-# FDO server repo commit to checkout
-FDO_SERVER_REPO_COMMIT=c2bab2c3cda954087fe66b683d31bffeac0c7189
 FDO_SERVER_ADDRESS=192.168.200.2
-# FDO admin CLI image version
-FDO_ADMIN_CLI_VERSION=0.4.0
-# FDO Manualfacture server image version
-FDO_MF_SERVER_VERSION=0.4.0
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
@@ -278,31 +272,39 @@ sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm
 # Remove all images
 sudo podman rmi -f -a
 
-# Prepare stage repo network
+# Prepare stage repo network, also needed for FDO AIO to correctly resolve ips
 greenprint "🔧 Prepare stage repo network"
 sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create --driver=bridge --subnet=192.168.200.0/24 --gateway=192.168.200.254 edge
 
 ###########################################################
 ##
-## Prepare fdo server
+## Prepare fdo AIO server
 ##
 ###########################################################
-greenprint "🔧 Prepare fdo manufacturing server"
-sudo git clone https://github.com/runcom/fdo-containers
-pushd fdo-containers
-sudo git checkout "$FDO_SERVER_REPO_COMMIT"
-sudo CONTAINER_IMAGE="quay.io/fido-fdo/fdo-admin-cli:$FDO_ADMIN_CLI_VERSION" ./create-keys.sh
-DIUN_PUB_KEY_HASH=$(cat keys/diun_pub_key_hash)
-DIUN_PUB_KEY_ROOT_CERTS=$(cat keys/diun_cert.pem)
+greenprint "🔧 Prepare fdo AIO server"
+
+greenprint "🔧 Prepare fdo AIO configuration"
+sudo mkdir aio
+sudo podman run -v "$PWD"/aio/:/aio:z \
+  "quay.io/fido-fdo/aio:nightly" \
+  aio --directory aio generate-configs-and-keys --contact-hostname "$FDO_SERVER_ADDRESS"
+
+# TODO: tweak config aio/configs/serviceinfo_api_server.yml to test basic FDO functionalities
+#       like adding user/key/pwd, re-encryption, files, commands etc etc
+
+greenprint "🔧 Prepare fdo AIO manufacturing DIUN"
+DIUN_PUB_KEY_ROOT_CERTS=$(sudo cat aio/keys/diun_cert.pem)
+# shellcheck disable=SC2116
+DIUN_PUB_KEY_HASH=$(echo "sha256:$(sudo openssl x509 -fingerprint -sha256 -noout -in aio/keys/diun_cert.pem | cut -d"=" -f2 | sed 's/://g')")
+
+greenprint "🔧 Starting fdo AIO server"
 sudo podman run -d \
-  -v "$PWD"/ownership_vouchers:/etc/fdo/ownership_vouchers:z \
-  -v "$PWD"/config/manufacturing-server.yml:/etc/fdo/manufacturing-server.conf.d/00-default.yml:z \
-  -v "$PWD"/keys:/etc/fdo/keys:z \
   --ip "$FDO_SERVER_ADDRESS" \
-  --name fdo-manufacturing-server \
+  --name fdo-aio \
   --network edge \
-  "quay.io/fido-fdo/fdo-manufacturing-server:$FDO_MF_SERVER_VERSION"
-popd
+  -v "$PWD"/aio/:/aio:z \
+  "quay.io/fido-fdo/aio:nightly" \
+  aio --directory aio
 
 # Wait for fdo server to be running
 until [ "$(curl -X POST http://${FDO_SERVER_ADDRESS}:8080/ping)" == "pong" ]; do
@@ -462,6 +464,7 @@ sudo virt-install --name="${IMAGE_KEY}-http"\
                   --os-variant "${OS_VARIANT}" \
                   --pxe \
                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                  --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                   --nographics \
                   --noautoconsole \
                   --wait=15 \
@@ -582,6 +585,7 @@ sudo virt-install  --name="${IMAGE_KEY}-fdosshkey"\
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                    --nographics \
                    --noautoconsole \
                    --wait=15 \
@@ -703,6 +707,7 @@ sudo virt-install  --name="${IMAGE_KEY}-fdorootcert"\
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                    --nographics \
                    --noautoconsole \
                    --wait=15 \

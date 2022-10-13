@@ -46,24 +46,19 @@
     - set_fact:
         checking_stage: "{{ result_stage.stdout }}"
 
-    # case: check /boot/device-credentials exists
-    # simplified installer installed Edge system ONLY
-    - name: check /boot/device-credentials exists
-      stat:
-        path: /boot/device-credentials
-      register: stat_result
-
-    - name: check commit deployed and built
+    - name: wait for FDO onboarding
       block:
-        - assert:
-            that:
-              - stat_result.stat.exists
-            fail_msg: "/boot/device-credentials does not exist"
-            success_msg: "/boot/device-credentials exists"
+        - wait_for:
+            path:  "/etc/device-credentials"
+            delay: 10
+            timeout: 600
+            state: present
+            msg: "FDO onboarding credentials not created"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
       rescue:
+        # TODO: gather fdo-client-linuxapp.service logs
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
