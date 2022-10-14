@@ -548,7 +548,11 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	// handle OSTree commit inputs
 	var commits []ostree.CommitSpec
 	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
-		commits = []ostree.CommitSpec{{Checksum: options.OSTree.FetchChecksum, URL: options.OSTree.URL}}
+		commit := ostree.CommitSpec{Checksum: options.OSTree.FetchChecksum, URL: options.OSTree.URL, ContentURL: options.OSTree.ContentURL}
+		if options.OSTree.RHSM {
+			commit.Secrets = "org.osbuild.rhsm.consumer"
+		}
+		commits = []ostree.CommitSpec{commit}
 	}
 
 	// handle inline sources

@@ -27,6 +27,10 @@ type CommitSpec struct {
 	// URL of the repo where the commit can be fetched, if available.
 	URL string
 
+	ContentURL string
+
+	Secrets string
+
 	// Checksum of the commit.
 	Checksum string
 }

@@ -13,7 +13,13 @@ type OSTreeSourceItem struct {
 
 type OSTreeSourceRemote struct {
 	// URL of the repository.
-	URL string `json:"url"`
+	URL        string `json:"url"`
+	ContentURL string `json:"contenturl,omitempty"`
 	// GPG keys to verify the commits
-	GPGKeys []string `json:"gpgkeys,omitempty"`
+	GPGKeys []string                   `json:"gpgkeys,omitempty"`
+	Secrets *OSTreeSourceRemoteSecrets `json:"secrets,omitempty"`
+}
+
+type OSTreeSourceRemoteSecrets struct {
+	Name string `json:"name"`
 }

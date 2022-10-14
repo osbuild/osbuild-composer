@@ -80,6 +80,12 @@ func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSpec,
 	for _, commit := range ostreeCommits {
 		item := new(OSTreeSourceItem)
 		item.Remote.URL = commit.URL
+		item.Remote.ContentURL = commit.ContentURL
+		if commit.Secrets == "org.osbuild.rhsm.consumer" {
+			item.Remote.Secrets = &OSTreeSourceRemoteSecrets{
+				Name: "org.osbuild.rhsm.consumer",
+			}
+		}
 		ostree.Items[commit.Checksum] = *item
 	}
 	if len(ostree.Items) > 0 {
