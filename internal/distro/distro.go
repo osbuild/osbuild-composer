@@ -131,8 +131,8 @@ type ImageOptions struct {
 	Facts        *FactsImageOptions
 }
 
-// The OSTreeImageOptions specify an ostree ref, checksum, and URL. The meaning
-// of each parameter depends on the image type being built.
+// The OSTreeImageOptions specify an ostree ref, checksum, URL, ContentURL, and RHSM. The meaning of
+// each parameter depends on the image type being built.
 type OSTreeImageOptions struct {
 	// For ostree commit and container types: The ref of the new commit to be
 	// built.
@@ -148,6 +148,13 @@ type OSTreeImageOptions struct {
 
 	// The URL from which to fetch the commit specified by the checksum.
 	URL string
+
+	// If specified, the URL will be used only for metadata.
+	ContentURL string
+
+	// Indicate if the 'org.osbuild.rhsm.consumer' secret should be added when pulling from the
+	// remote.
+	RHSM bool
 }
 
 // The SubscriptionImageOptions specify subscription-specific image options
