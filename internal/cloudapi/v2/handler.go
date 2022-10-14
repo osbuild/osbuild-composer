@@ -286,36 +286,44 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 		}
 
-		ostreeOptions := ostree.RequestParams{}
-		if ir.Ostree != nil {
-			if ir.Ostree.Ref != nil {
-				ostreeOptions.Ref = *ir.Ostree.Ref
+		// assume it's an ostree image if the type has a default ostree ref
+		if imageType.OSTreeRef() != "" && ir.Ostree != nil {
+			ostreeOptions := ostree.RequestParams{}
+			if ir.Ostree != nil {
+				if ir.Ostree.Ref != nil {
+					ostreeOptions.Ref = *ir.Ostree.Ref
+				}
+				if ir.Ostree.Url != nil {
+					ostreeOptions.URL = *ir.Ostree.Url
+				}
+				if ir.Ostree.Parent != nil {
+					ostreeOptions.Parent = *ir.Ostree.Parent
+				}
 			}
-			if ir.Ostree.Url != nil {
-				ostreeOptions.URL = *ir.Ostree.Url
+
+			if ostreeOptions.Ref == "" {
+				ostreeOptions.Ref = imageType.OSTreeRef()
 			}
-			if ir.Ostree.Parent != nil {
-				ostreeOptions.Parent = *ir.Ostree.Parent
+
+			ref, checksum, err := ostree.ResolveParams(ostreeOptions)
+			if err != nil {
+				switch v := err.(type) {
+				case ostree.RefError:
+					return HTTPError(ErrorInvalidOSTreeRef)
+				case ostree.ResolveRefError:
+					return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, v)
+				case ostree.ParameterComboError:
+					return HTTPError(ErrorInvalidOSTreeParams)
+				default:
+					// general case
+					return HTTPError(ErrorInvalidOSTreeParams)
+				}
 			}
-		}
-		ref, checksum, err := ostree.ResolveParams(ostreeOptions, imageType.OSTreeRef())
-		if err != nil {
-			switch v := err.(type) {
-			case ostree.RefError:
-				return HTTPError(ErrorInvalidOSTreeRef)
-			case ostree.ResolveRefError:
-				return HTTPErrorWithInternal(ErrorInvalidOSTreeRepo, v)
-			case ostree.ParameterComboError:
-				return HTTPError(ErrorInvalidOSTreeParams)
-			default:
-				// general case
-				return HTTPError(ErrorInvalidOSTreeParams)
+			imageOptions.OSTree = distro.OSTreeImageOptions{
+				ImageRef:      ref,
+				FetchChecksum: checksum,
+				URL:           ostreeOptions.URL,
 			}
-		}
-		imageOptions.OSTree = distro.OSTreeImageOptions{
-			ImageRef:      ref,
-			FetchChecksum: checksum,
-			URL:           ostreeOptions.URL,
 		}
 
 		var irTarget *target.Target

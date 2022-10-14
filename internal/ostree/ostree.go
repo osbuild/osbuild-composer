@@ -80,22 +80,15 @@ func ResolveRef(location, ref string) (string, error) {
 // without URL results in a ParameterComboError. Failure to resolve the
 // checksum results in a ResolveRefError.
 //
-// If Ref is not specified in the RequestParams, the defaultRef is used.
-// If Parent is not specified in the RequestParams, the value of Ref is used
-// (which will be defaultRef if neither is specified).
+// If Parent is not specified in the RequestParams, the value of Ref is used.
 //
 // If any ref (Ref or Parent) is malformed, the function returns with a RefError.
-func ResolveParams(params RequestParams, defaultRef string) (ref, checksum string, err error) {
-	// Determine value of ref
+func ResolveParams(params RequestParams) (ref, checksum string, err error) {
 	ref = params.Ref
-	if ref != "" {
-		// verify format of provided ref
-		if !VerifyRef(params.Ref) {
-			return "", "", NewRefError("Invalid ostree ref %q", params.Ref)
-		}
-	} else {
-		// if ref is not provided, use distro default
-		ref = defaultRef
+
+	// Determine value of ref
+	if !VerifyRef(params.Ref) {
+		return "", "", NewRefError("Invalid ostree ref %q", params.Ref)
 	}
 
 	// Determine value of parentRef
@@ -111,7 +104,7 @@ func ResolveParams(params RequestParams, defaultRef string) (ref, checksum strin
 		}
 	} else {
 		// if parent is not provided, use ref
-		parentRef = ref
+		parentRef = params.Ref
 	}
 
 	// Resolve parent checksum
