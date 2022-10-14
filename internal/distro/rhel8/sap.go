@@ -3,6 +3,7 @@ package rhel8
 import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 // SapImageConfig returns the SAP specific ImageConfig data
@@ -115,4 +116,58 @@ func SapImageConfig(rd distribution) *distro.ImageConfig {
 			),
 		},
 	}
+}
+
+func SapPackageSet(t *imageType) rpmmd.PackageSet {
+	packageSet := rpmmd.PackageSet{
+		Include: []string{
+			// RHBZ#2074107
+			"@Server",
+			// SAP System Roles
+			// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
+			"rhel-system-roles-sap",
+			// RHBZ#1959813
+			"bind-utils",
+			"compat-sap-c++-9",
+			"compat-sap-c++-10", // RHBZ#2074114
+			"nfs-utils",
+			"tcsh",
+			// RHBZ#1959955
+			"uuidd",
+			// RHBZ#1959923
+			"cairo",
+			"expect",
+			"graphviz",
+			"gtk2",
+			"iptraf-ng",
+			"krb5-workstation",
+			"libaio",
+			"libatomic",
+			"libcanberra-gtk2",
+			"libicu",
+			"libpng12",
+			"libtool-ltdl",
+			"lm_sensors",
+			"net-tools",
+			"numactl",
+			"PackageKit-gtk3-module",
+			"xorg-x11-xauth",
+			// RHBZ#1960617
+			"tuned-profiles-sap-hana",
+			// RHBZ#1961168
+			"libnsl",
+		},
+	}
+
+	if t.arch.distro.osVersion == "8.4" {
+		packageSet = packageSet.Append(rpmmd.PackageSet{
+			Include: []string{"ansible"},
+		})
+	} else {
+		// 8.6+ and CS8 (image type does not exist on 8.5)
+		packageSet = packageSet.Append(rpmmd.PackageSet{
+			Include: []string{"ansible-core"}, // RHBZ#2077356
+		})
+	}
+	return packageSet
 }
