@@ -122,6 +122,17 @@ func azureRhuiPackageSet(t *imageType) rpmmd.PackageSet {
 	}.Append(azureCommonPackageSet(t))
 }
 
+// Azure SAP image package set
+// Includes the common azure package set, the common SAP packages, and
+// the azure rhui sap package.
+func azureSapPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"rhui-azure-rhel8-sap-ha",
+		},
+	}.Append(azureCommonPackageSet(t)).Append(SapPackageSet(t))
+}
+
 // PARTITION TABLES
 
 var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{

@@ -501,59 +501,14 @@ func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 // rhel-sap-ec2 image package set
+// Includes the common ec2 package set, the common SAP packages, and
+// the amazon rhui sap package
 func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
-	ec2SapPackageSet := rhelEc2CommonPackageSet(t)
-	ec2SapPackageSet.Include = append(ec2SapPackageSet.Include,
-		// RHBZ#2074107
-		"@Server",
-		// SAP System Roles
-		// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-		"rhel-system-roles-sap",
-		// RHBZ#1959813
-		"bind-utils",
-		"compat-sap-c++-9",
-		"compat-sap-c++-10", // RHBZ#2074114
-		"nfs-utils",
-		"tcsh",
-		// RHBZ#1959955
-		"uuidd",
-		// RHBZ#1959923
-		"cairo",
-		"expect",
-		"graphviz",
-		"gtk2",
-		"iptraf-ng",
-		"krb5-workstation",
-		"libaio",
-		"libatomic",
-		"libcanberra-gtk2",
-		"libicu",
-		"libpng12",
-		"libtool-ltdl",
-		"lm_sensors",
-		"net-tools",
-		"numactl",
-		"PackageKit-gtk3-module",
-		"xorg-x11-xauth",
-		// RHBZ#1960617
-		"tuned-profiles-sap-hana",
-		// RHBZ#1961168
-		"libnsl",
-		// RHUI client
-		"rh-amazon-rhui-client-sap-bundle-e4s",
-	)
-
-	if t.arch.distro.osVersion == "8.4" {
-		ec2SapPackageSet = ec2SapPackageSet.Append(rpmmd.PackageSet{
-			Include: []string{"ansible"},
-		})
-	} else {
-		// 8.6+ and CS8 (image type does not exist on 8.5)
-		ec2SapPackageSet = ec2SapPackageSet.Append(rpmmd.PackageSet{
-			Include: []string{"ansible-core"}, // RHBZ#2077356
-		})
-	}
-	return ec2SapPackageSet
+	return rpmmd.PackageSet{
+		Include: []string{
+			"rh-amazon-rhui-client-sap-bundle-e4s",
+		},
+	}.Append(rhelEc2CommonPackageSet(t)).Append(SapPackageSet(t))
 }
 
 // common GCE image
