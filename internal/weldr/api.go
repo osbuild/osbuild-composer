@@ -2357,8 +2357,13 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	if testMode == "1" || testMode == "2" {
 		// Fake a parent commit for test requests
 		cr.OSTree.Parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
-	} else {
-		ref, checksum, err := ostree.ResolveParams(cr.OSTree, imageType.OSTreeRef())
+	} else if imageType.OSTreeRef() != "" {
+		// If the image type has a default ostree ref, assume this is an OSTree image
+		reqParams := cr.OSTree
+		if reqParams.Ref == "" {
+			reqParams.Ref = imageType.OSTreeRef()
+		}
+		ref, checksum, err := ostree.ResolveParams(reqParams)
 		if err != nil {
 			errors := responseError{
 				ID:  "OSTreeOptionsError",
