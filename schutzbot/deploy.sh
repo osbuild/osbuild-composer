@@ -92,6 +92,7 @@ echo -e "fastestmirror=1" | sudo tee -a /etc/dnf/dnf.conf
 
 # TODO: include this in the jenkins runner (and split test/target machines out)
 sudo dnf -y install jq
+sudo pip install yq
 
 # fallback for gitlab
 GIT_COMMIT="${GIT_COMMIT:-${CI_COMMIT_SHA}}"

@@ -291,6 +291,7 @@ sudo podman run -v "$PWD"/aio/:/aio:z \
 
 # TODO: tweak config aio/configs/serviceinfo_api_server.yml to test basic FDO functionalities
 #       like adding user/key/pwd, re-encryption, files, commands etc etc
+sudo yq -iy '.service_info.initial_user |= {username: "testuser", sshkeys: ["testkey1", "testkey2"]}' aio/configs/serviceinfo_api_server.yml
 
 greenprint "🔧 Prepare fdo AIO manufacturing DIUN"
 DIUN_PUB_KEY_ROOT_CERTS=$(sudo cat aio/keys/diun_cert.pem)

@@ -64,6 +64,39 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: fdo_credential == "true"
 
+    - name: Check that the testuser FDO user is present
+      block:
+        - getent:
+            database: passwd
+            key: testuser
+            fail_key: true
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: fdo_credential == "true"
+
+    - name: Check that testuser's ssh keys are present
+      block:
+        - lineinfile:
+            path: /home/testuser/.ssh/authorized_keys
+            line: "testkey1"
+            state: present
+          check_mode: yes
+          register: presence
+          failed_when: (presence is changed) or (presence is failed)
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: fdo_credential == "true"
+
     # case: check ostree commit correctly updated
     - name: get deployed ostree commit
       shell: rpm-ostree status --json | jq -r '.deployments[0].checksum'
