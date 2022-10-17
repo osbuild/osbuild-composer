@@ -1046,26 +1046,218 @@ func newDistro(name string, major, minor int) distro.Distro {
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
-	var emptyPlat platform.Platform
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
+			},
+		},
+		qcow2ImgType,
+		ociImgType,
+	)
 
-	x86_64.addImageTypes(emptyPlat, qcow2ImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType)
-	aarch64.addImageTypes(emptyPlat, qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
-	ppc64le.addImageTypes(emptyPlat, qcow2ImgType, tarImgType)
-	s390x.addImageTypes(emptyPlat, qcow2ImgType, tarImgType)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+			},
+		},
+		openstackImgType,
+	)
+
+	azureX64Platform := &platform.X86{
+		BIOS:       true,
+		UEFIVendor: rd.vendor,
+		BasePlatform: platform.BasePlatform{
+			ImageFormat: platform.FORMAT_VHD,
+		},
+	}
+
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_VMDK,
+			},
+		},
+		vmdkImgType,
+	)
+
+	rawX86Platform := &platform.X86{
+		BIOS: true,
+		BasePlatform: platform.BasePlatform{
+			ImageFormat: platform.FORMAT_RAW,
+		},
+	}
+	x86_64.addImageTypes(
+		rawX86Platform,
+		amiImgTypeX86_64,
+		gceImgType,
+	)
+
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
+				FirmwarePackages: []string{
+					"microcode_ctl", // ??
+					"iwl1000-firmware",
+					"iwl100-firmware",
+					"iwl105-firmware",
+					"iwl135-firmware",
+					"iwl2000-firmware",
+					"iwl2030-firmware",
+					"iwl3160-firmware",
+					"iwl5000-firmware",
+					"iwl5150-firmware",
+					"iwl6000-firmware",
+					"iwl6050-firmware",
+				},
+			},
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+		},
+		edgeOCIImgType,
+		edgeCommitImgType,
+		edgeInstallerImgType,
+	)
+
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+			BIOS:       false,
+			UEFIVendor: rd.vendor,
+		},
+		edgeRawImgType,
+		edgeSimplifiedInstallerImgType,
+	)
+
+	x86_64.addImageTypes(
+		&platform.X86{},
+		tarImgType,
+		imageInstaller,
+	)
+
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+			},
+		},
+		openstackImgType,
+	)
+
+	aarch64.addImageTypes(
+		&platform.Aarch64{},
+		tarImgType,
+		imageInstaller,
+	)
+
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			BasePlatform: platform.BasePlatform{
+				FirmwarePackages: []string{
+					"uboot-images-armv8", // ??
+					"bcm283x-firmware",
+					"arm-image-installer", // ??
+				},
+			},
+			UEFIVendor: rd.vendor,
+		},
+		edgeCommitImgType,
+		edgeOCIImgType,
+		edgeInstallerImgType,
+		edgeSimplifiedInstallerImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+			UEFIVendor: rd.vendor,
+		},
+		edgeRawImgType,
+	)
+
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
+			},
+		},
+		qcow2ImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+		},
+		amiImgTypeAarch64,
+	)
+
+	ppc64le.addImageTypes(
+		&platform.PPC64LE{
+			BIOS: true,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
+			},
+		},
+		qcow2ImgType,
+	)
+	ppc64le.addImageTypes(
+		&platform.PPC64LE{},
+		tarImgType,
+	)
+
+	s390x.addImageTypes(
+		&platform.S390X{
+			BIOS: true,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
+			},
+		},
+		qcow2ImgType,
+	)
+	s390x.addImageTypes(
+		&platform.S390X{},
+		tarImgType,
+	)
 
 	if rd.isRHEL() {
 		// add azure to RHEL distro only
-		x86_64.addImageTypes(emptyPlat, azureRhuiImgType)
-		x86_64.addImageTypes(emptyPlat, azureByosImgType)
+		x86_64.addImageTypes(azureX64Platform, azureRhuiImgType, azureByosImgType)
 
 		// add ec2 image types to RHEL distro only
-		x86_64.addImageTypes(emptyPlat, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
-		aarch64.addImageTypes(emptyPlat, ec2ImgTypeAarch64)
+		x86_64.addImageTypes(rawX86Platform, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
+
+		aarch64.addImageTypes(
+			&platform.Aarch64{
+				UEFIVendor: rd.vendor,
+				BasePlatform: platform.BasePlatform{
+					ImageFormat: platform.FORMAT_RAW,
+				},
+			},
+			ec2ImgTypeAarch64,
+		)
 
 		// add GCE RHUI image to RHEL only
-		x86_64.addImageTypes(emptyPlat, gceRhuiImgType)
+		x86_64.addImageTypes(rawX86Platform, gceRhuiImgType)
 	} else {
-		x86_64.addImageTypes(emptyPlat, azureImgType)
+		x86_64.addImageTypes(azureX64Platform, azureImgType)
 	}
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
