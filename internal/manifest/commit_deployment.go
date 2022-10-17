@@ -37,6 +37,9 @@ type OSTreeDeployment struct {
 	platform platform.Platform
 
 	PartitionTable *disk.PartitionTable
+
+	// Whether ignition is in use or not
+	Ignition bool
 }
 
 // NewOSTreeDeployment creates a pipeline for an ostree deployment from a
@@ -94,6 +97,14 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}))
 	kernelOpts := osbuild.GenImageKernelOptions(p.PartitionTable)
 	kernelOpts = append(kernelOpts, p.KernelOptionsAppend...)
+
+	if p.Ignition {
+		kernelOpts = append(kernelOpts,
+			"coreos.no_persist_ip", // users cannot add connections as we don't have a live iso, this prevents connections to bleed into the system from the ign initrd
+			"ignition.platform.id=metal",
+			"$ignition_firstboot",
+		)
+	}
 
 	pipeline.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
@@ -170,6 +181,10 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		pipeline.AddStage(grpStage)
 	}
 
+	if p.Ignition {
+		pipeline.AddStage(osbuild.NewIgnitionStage(&osbuild.IgnitionStageOptions{}))
+	}
+
 	// if no root password is set, lock the root account
 	hasRoot := false
 	for _, user := range p.Users {
@@ -216,6 +231,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		p.platform.GetBIOSPlatform(),
 		p.platform.GetUEFIVendor(), true)
 	grubOptions.Greenboot = true
+	grubOptions.Ignition = p.Ignition
 	grubOptions.Config = &osbuild.GRUB2Config{
 		Default:        "saved",
 		Timeout:        1,

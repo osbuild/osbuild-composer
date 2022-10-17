@@ -132,7 +132,7 @@ var (
 	// Shared Services
 	edgeServices = []string{
 		// TODO(runcom): move fdo-client-linuxapp.service to presets?
-		"NetworkManager.service", "firewalld.service", "sshd.service", "fdo-client-linuxapp.service",
+		"NetworkManager.service", "firewalld.service", "sshd.service", "fdo-client-linuxapp.service", "ignition-firstboot-complete.service", "coreos-ignition-write-issues", "coreos-ignition-write-issues",
 	}
 
 	// Partition tables
@@ -366,6 +366,9 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"greenboot-default-health-checks",
 			"fdo-client",
 			"fdo-owner-cli",
+			"ignition",
+			"ignition-edge",
+			"ssh-key-dir",
 		},
 		Exclude: []string{
 			"rng-tools",

@@ -25,6 +25,7 @@ type GRUB2StageOptions struct {
 	Greenboot          bool         `json:"greenboot,omitempty"`
 	WriteCmdLine       *bool        `json:"write_cmdline,omitempty"`
 	Config             *GRUB2Config `json:"config,omitempty"`
+	Ignition           bool         `json:"ignition,omitempty"`
 }
 
 type GRUB2UEFI struct {
