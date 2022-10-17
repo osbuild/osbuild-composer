@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/fdo"
@@ -243,6 +244,9 @@ func edgeContainerImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !common.VersionLessThan(t.arch.distro.osVersion, "9-stream") {
+		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues", "coreos-ignition-write-issues")
+	}
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
 	img.Workload = workload
@@ -375,6 +379,7 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 		Checksum:   options.OSTree.FetchChecksum,
 	}
 	rawImg := image.NewOSTreeRawImage(commit)
+	rawImg.Ignition = true
 
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())

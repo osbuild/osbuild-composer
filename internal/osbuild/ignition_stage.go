@@ -5,6 +5,18 @@ import (
 	"fmt"
 )
 
+type IgnitionStageOptions struct {
+}
+
+func (IgnitionStageOptions) isStageOptions() {}
+
+func NewIgnitionStage(options *IgnitionStageOptions) *Stage {
+	return &Stage{
+		Type:    "org.osbuild.ignition",
+		Options: options,
+	}
+}
+
 type IgnitionStageInputInline struct {
 	InlineFile IgnitionStageInput `json:"inlinefile"`
 }

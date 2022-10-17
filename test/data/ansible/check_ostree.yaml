@@ -10,6 +10,7 @@
     total_counter: "0"
     failed_counter: "0"
     firewall_feature: "false"
+    ignition: "false"
 
   tasks:
     # current target host's IP address
@@ -47,6 +48,27 @@
 
     - set_fact:
         checking_stage: "{{ result_stage.stdout }}"
+
+    - name: check Ignition has run and the config was provided correctly
+      block:
+        - name: check user provided config
+          shell: cat /etc/.ignition-result.json | jq '.userConfigProvided'
+          register: user_provided_config
+        - assert:
+            that:
+              - user_provided_config.stdout == "true"
+            fail_msg: "no ign user provided config"
+            success_msg: "ignition has run with user provided config"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        # TODO: gather Ignition logs
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: ignition == "true" and ((ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('9.2', '>=')) or
+            (ansible_facts['distribution'] == 'CentOS' and (ansible_facts['distribution_version'] == '9')))
 
     - name: wait for FDO onboarding
       block:
@@ -790,7 +812,7 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: fdo_credential == "true"
+      when: fdo_credential == "true" and skip_rollback_test == "false"
 
     - name: check fdo-client-linuxapp logs
       command: journalctl -u fdo-client-linuxapp
