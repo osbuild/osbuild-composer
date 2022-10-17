@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -42,6 +43,7 @@ type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
 type imageType struct {
 	arch               *architecture
+	platform           platform.Platform
 	name               string
 	nameAliases        []string
 	filename           string
