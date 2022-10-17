@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
@@ -1045,24 +1046,26 @@ func newDistro(name string, major, minor int) distro.Distro {
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
-	x86_64.addImageTypes(qcow2ImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType)
-	aarch64.addImageTypes(qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
-	ppc64le.addImageTypes(qcow2ImgType, tarImgType)
-	s390x.addImageTypes(qcow2ImgType, tarImgType)
+	var emptyPlat platform.Platform
+
+	x86_64.addImageTypes(emptyPlat, qcow2ImgType, vmdkImgType, openstackImgType, amiImgTypeX86_64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType, ociImgType, gceImgType)
+	aarch64.addImageTypes(emptyPlat, qcow2ImgType, openstackImgType, amiImgTypeAarch64, tarImgType, imageInstaller, edgeCommitImgType, edgeInstallerImgType, edgeOCIImgType, edgeRawImgType, edgeSimplifiedInstallerImgType)
+	ppc64le.addImageTypes(emptyPlat, qcow2ImgType, tarImgType)
+	s390x.addImageTypes(emptyPlat, qcow2ImgType, tarImgType)
 
 	if rd.isRHEL() {
 		// add azure to RHEL distro only
-		x86_64.addImageTypes(azureRhuiImgType)
-		x86_64.addImageTypes(azureByosImgType)
+		x86_64.addImageTypes(emptyPlat, azureRhuiImgType)
+		x86_64.addImageTypes(emptyPlat, azureByosImgType)
 
 		// add ec2 image types to RHEL distro only
-		x86_64.addImageTypes(ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
-		aarch64.addImageTypes(ec2ImgTypeAarch64)
+		x86_64.addImageTypes(emptyPlat, ec2ImgTypeX86_64, ec2HaImgTypeX86_64, ec2SapImgTypeX86_64)
+		aarch64.addImageTypes(emptyPlat, ec2ImgTypeAarch64)
 
 		// add GCE RHUI image to RHEL only
-		x86_64.addImageTypes(gceRhuiImgType)
+		x86_64.addImageTypes(emptyPlat, gceRhuiImgType)
 	} else {
-		x86_64.addImageTypes(azureImgType)
+		x86_64.addImageTypes(emptyPlat, azureImgType)
 	}
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
