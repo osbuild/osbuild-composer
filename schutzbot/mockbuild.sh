@@ -101,10 +101,13 @@ greenprint "📤 RPMS will be uploaded to: ${REPO_URL}"
 # override template repositories
 template_override
 
+greenprint "✏ Adding user to mock group"
+sudo usermod -a -G mock "$(whoami)"
+
 greenprint "🔧 Building source RPM"
 git archive --prefix "osbuild-composer-${COMMIT}/" --output "osbuild-composer-${COMMIT}.tar.gz" HEAD
 ./tools/rpm_spec_add_provides_bundle.sh
-sudo mock -r "$MOCK_CONFIG" --buildsrpm \
+mock -r "$MOCK_CONFIG" --buildsrpm \
   --define "commit ${COMMIT}" \
   --spec ./osbuild-composer.spec \
   --sources "./osbuild-composer-${COMMIT}.tar.gz" \
@@ -115,7 +118,7 @@ if [ "${NIGHTLY:=false}" == "true" ]; then
 fi
 
 greenprint "🎁 Building RPMs"
-sudo mock -r "$MOCK_CONFIG" \
+mock -r "$MOCK_CONFIG" \
     --define "commit ${COMMIT}" \
     --with=tests \
     ${RELAX_REQUIRES:+"$RELAX_REQUIRES"} \
