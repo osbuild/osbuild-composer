@@ -36,6 +36,8 @@ type OSTreeRawImage struct {
 	Locale              string
 
 	Filename string
+
+	Ignition bool
 }
 
 func NewOSTreeRawImage(commit ostree.CommitSpec) *OSTreeRawImage {
@@ -46,7 +48,7 @@ func NewOSTreeRawImage(commit ostree.CommitSpec) *OSTreeRawImage {
 }
 
 func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.XZ {
-	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.Commit, img.OSName, img.Platform)
+	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.Commit, img.OSName, img.Ignition, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.Remote = img.Remote
 	osPipeline.KernelOptionsAppend = img.KernelOptionsAppend
