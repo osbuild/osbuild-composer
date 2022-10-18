@@ -139,6 +139,25 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		dependencies = append(dependencies, jobId)
 	}
 
+	var ostreeResolveJobID uuid.UUID
+	if ir.ostree != nil {
+		jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{
+			Specs: []worker.OSTreeResolveSpec{
+				worker.OSTreeResolveSpec{
+					URL:    ir.ostree.URL,
+					Ref:    ir.ostree.Ref,
+					Parent: ir.ostree.Parent,
+				},
+			},
+		}, channel)
+		if err != nil {
+			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+		}
+
+		ostreeResolveJobID = jobID
+		dependencies = append(dependencies, ostreeResolveJobID)
+	}
+
 	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -157,7 +176,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -217,6 +236,25 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			dependencies = append(dependencies, jobId)
 		}
 
+		var ostreeResolveJobID uuid.UUID
+		if ir.ostree != nil {
+			jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{
+				Specs: []worker.OSTreeResolveSpec{
+					worker.OSTreeResolveSpec{
+						URL:    ir.ostree.URL,
+						Ref:    ir.ostree.Ref,
+						Parent: ir.ostree.Parent,
+					},
+				},
+			}, channel)
+			if err != nil {
+				return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+			}
+
+			ostreeResolveJobID = jobID
+			dependencies = append(dependencies, ostreeResolveJobID)
+		}
+
 		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -261,7 +299,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
@@ -282,7 +320,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
-func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID, containerResolveJobID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Customizations) {
+func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Customizations) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*5)
 	defer cancel()
 
@@ -367,7 +405,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 	}
 
 	var containerSpecs []container.Spec
-	if len(dynArgs) == 2 {
+	if containerResolveJobID != uuid.Nil {
 		// Container resolve job
 		var result worker.ContainerResolveJobResult
 
@@ -392,6 +430,29 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 			containerSpecs[i].LocalName = s.Name
 			containerSpecs[i].TLSVerify = s.TLSVerify
 			containerSpecs[i].ImageID = s.ImageID
+		}
+	}
+
+	if ostreeResolveJobID != uuid.Nil {
+		var result worker.OSTreeResolveJobResult
+		_, err := workers.OSTreeResolveJobInfo(ostreeResolveJobID, &result)
+
+		if err != nil {
+			reason := "Error reading ostree resolve job status"
+			logrus.Errorf("%s: %v", reason, err)
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason, nil)
+			return
+		}
+
+		if jobErr := result.JobError; jobErr != nil {
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOSTreeDependency, "Error in ostree resolve job dependency", nil)
+			return
+		}
+
+		options.OSTree = distro.OSTreeImageOptions{
+			ImageRef:      result.Specs[0].Ref,
+			FetchChecksum: result.Specs[0].Checksum,
+			URL:           result.Specs[0].URL,
 		}
 	}
 
