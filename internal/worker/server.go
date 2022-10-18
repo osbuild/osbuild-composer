@@ -35,6 +35,7 @@ const (
 	JobTypeDepsolve         string = "depsolve"
 	JobTypeManifestIDOnly   string = "manifest-id-only"
 	JobTypeContainerResolve string = "container-resolve"
+	JobTypeOSTreeResolve    string = "ostree-resolve"
 	JobTypeAWSEC2Copy       string = "aws-ec2-copy"
 	JobTypeAWSEC2Share      string = "aws-ec2-share"
 )
@@ -160,6 +161,10 @@ func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel st
 	return s.enqueue(JobTypeContainerResolve, job, nil, channel)
 }
 
+func (s *Server) EnqueueOSTreeResolveJob(job *OSTreeResolveJob, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeOSTreeResolve, job, nil, channel)
+}
+
 func (s *Server) EnqueueAWSEC2CopyJob(job *AWSEC2CopyJob, parent uuid.UUID, channel string) (uuid.UUID, error) {
 	return s.enqueue(JobTypeAWSEC2Copy, job, []uuid.UUID{parent}, channel)
 }
@@ -231,6 +236,13 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &containerResolveJR.JobResult
+	case JobTypeOSTreeResolve:
+		var ostreeResolveJR OSTreeResolveJobResult
+		jobInfo, err = s.OSTreeResolveJobInfo(id, &ostreeResolveJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &ostreeResolveJR.JobResult
 
 	default:
 		return nil, fmt.Errorf("unexpected job type: %s", jobType)
@@ -365,6 +377,19 @@ func (s *Server) ContainerResolveJobInfo(id uuid.UUID, result *ContainerResolveJ
 
 	if jobInfo.JobType != JobTypeContainerResolve {
 		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeDepsolve, jobInfo.JobType)
+	}
+
+	return jobInfo, nil
+}
+
+func (s *Server) OSTreeResolveJobInfo(id uuid.UUID, result *OSTreeResolveJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
+	if err != nil {
+		return nil, err
+	}
+
+	if jobInfo.JobType != JobTypeOSTreeResolve {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeOSTreeResolve, jobInfo.JobType)
 	}
 
 	return jobInfo, nil
@@ -684,6 +709,13 @@ func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
 			return err
 		}
 		jobResult = &containerResolveJR.JobResult
+	case JobTypeOSTreeResolve:
+		var ostreeResolveJR OSTreeResolveJobResult
+		jobInfo, err = s.OSTreeResolveJobInfo(jobId, &ostreeResolveJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &ostreeResolveJR.JobResult
 
 	default:
 		return fmt.Errorf("unexpected job type: %s", jobType)

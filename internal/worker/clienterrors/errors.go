@@ -32,6 +32,10 @@ const (
 	ErrorParsingJobArgs       ClientErrorCode = 29
 	ErrorContainerResolution  ClientErrorCode = 30
 	ErrorContainerDependency  ClientErrorCode = 31
+	ErrorOSTreeRefInvalid     ClientErrorCode = 32
+	ErrorOSTreeRefResolution  ClientErrorCode = 33
+	ErrorOSTreeParamsInvalid  ClientErrorCode = 34
+	ErrorOSTreeDependency     ClientErrorCode = 35
 )
 
 type ClientErrorCode int
@@ -87,6 +91,8 @@ func GetStatusCode(err *Error) StatusCode {
 		return JobStatusUserInputError
 	case ErrorContainerResolution:
 		return JobStatusUserInputError
+	case ErrorOSTreeDependency:
+		return JobStatusUserInputError
 	default:
 		return JobStatusInternalError
 	}
@@ -96,6 +102,8 @@ func GetStatusCode(err *Error) StatusCode {
 func (e *Error) IsDependencyError() bool {
 	switch e.ID {
 	case ErrorContainerDependency:
+		return true
+	case ErrorOSTreeDependency:
 		return true
 	case ErrorDepsolveDependency:
 		return true
