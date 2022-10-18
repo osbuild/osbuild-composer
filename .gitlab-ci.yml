@@ -603,19 +603,13 @@ API:
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-9.0-ga-x86_64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-9.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-36-x86_64
           - aws/fedora-37-x86_64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.6-ga-aarch64
-          - aws/rhel-9.0-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
 .libvirt_integration:
