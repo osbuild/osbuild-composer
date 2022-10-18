@@ -5,6 +5,7 @@ package rhel9
 import (
 	"fmt"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -549,6 +550,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
+// common package set for RHEL (BYOS/RHUI) and CentOS Stream images
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
@@ -585,9 +587,19 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
 
+// common rhel ec2 RHUI image package set
+func rhelEc2CommonPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := ec2CommonPackageSet(t)
+	// Include "redhat-cloud-client-configuration" on 9.1+ (COMPOSER-1805)
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.1") {
+		ps.Include = append(ps.Include, "redhat-cloud-client-configuration")
+	}
+	return ps
+}
+
 // rhel-ec2 image package set
 func rhelEc2PackageSet(t *imageType) rpmmd.PackageSet {
-	ec2PackageSet := ec2CommonPackageSet(t)
+	ec2PackageSet := rhelEc2CommonPackageSet(t)
 	ec2PackageSet = ec2PackageSet.Append(rpmmd.PackageSet{
 		Include: []string{
 			"rh-amazon-rhui-client",
@@ -601,7 +613,7 @@ func rhelEc2PackageSet(t *imageType) rpmmd.PackageSet {
 
 // rhel-ha-ec2 image package set
 func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
-	ec2HaPackageSet := ec2CommonPackageSet(t)
+	ec2HaPackageSet := rhelEc2CommonPackageSet(t)
 	ec2HaPackageSet = ec2HaPackageSet.Append(rpmmd.PackageSet{
 		Include: []string{
 			"fence-agents-all",
@@ -618,7 +630,7 @@ func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
 
 // rhel-sap-ec2 image package set
 func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
-	ec2SapPackageSet := ec2CommonPackageSet(t)
+	ec2SapPackageSet := rhelEc2CommonPackageSet(t)
 	ec2SapPackageSet = ec2SapPackageSet.Append(rpmmd.PackageSet{
 		Include: []string{
 			// RHBZ#2076763

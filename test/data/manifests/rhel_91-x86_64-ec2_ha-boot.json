@@ -5794,7 +5794,23 @@
                     }
                   },
                   {
+                    "id": "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:5a43c616c3f06fbba7d45ea4cdd87ca58cc46102908e089a14604de5d55a0393",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c3a2d41fb291f8f6160d0a80840aee0f96d6f7ef5445ad1d2bdccd4e41f19e93",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6489,19 +6505,6 @@
                     "type": "Ethernet",
                     "userctl": true
                   }
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
                 }
               }
             }
@@ -8218,6 +8221,9 @@
           "sha256:c3713e0ffb283367dfe1741477f140ec1d6b6d38158e1bb5294d485f12f30630": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/perl-SelectSaver-1.02-479.el9.noarch.rpm"
           },
+          "sha256:c3a2d41fb291f8f6160d0a80840aee0f96d6f7ef5445ad1d2bdccd4e41f19e93": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/rhc-0.2.1-9.el9.x86_64.rpm"
+          },
           "sha256:c406715a8a7e8a87df8d022bfdb4eef1e87881d7af6be2b3f794f722caab4f5a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/pkgconf-1.7.3-9.el9.x86_64.rpm"
           },
@@ -8265,6 +8271,9 @@
           },
           "sha256:cc320422d1ed3c73821e5cb0dfd2002b88d3d53998958ac437de99423099881d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/cloud-init-22.1-5.el9.noarch.rpm"
+          },
+          "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/redhat-cloud-client-configuration-1-10.el9.noarch.rpm"
           },
           "sha256:cd8f32a588f83b75183a94e40f895ec9640bfba4ba1768f1e86b57c18cec3e47": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/elfutils-default-yama-scope-0.187-5.el9.noarch.rpm"
@@ -15713,6 +15722,16 @@
         "check_gpg": true
       },
       {
+        "name": "redhat-cloud-client-configuration",
+        "epoch": 0,
+        "version": "1",
+        "release": "10.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/redhat-cloud-client-configuration-1-10.el9.noarch.rpm",
+        "checksum": "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8",
+        "check_gpg": true
+      },
+      {
         "name": "redhat-logos",
         "epoch": 0,
         "version": "90.4",
@@ -15720,6 +15739,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/redhat-logos-90.4-1.el9.x86_64.rpm",
         "checksum": "sha256:5a43c616c3f06fbba7d45ea4cdd87ca58cc46102908e089a14604de5d55a0393",
+        "check_gpg": true
+      },
+      {
+        "name": "rhc",
+        "epoch": 1,
+        "version": "0.2.1",
+        "release": "9.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/rhc-0.2.1-9.el9.x86_64.rpm",
+        "checksum": "sha256:c3a2d41fb291f8f6160d0a80840aee0f96d6f7ef5445ad1d2bdccd4e41f19e93",
         "check_gpg": true
       },
       {

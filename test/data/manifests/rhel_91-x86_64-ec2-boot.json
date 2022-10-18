@@ -4919,6 +4919,22 @@
                     }
                   },
                   {
+                    "id": "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c3a2d41fb291f8f6160d0a80840aee0f96d6f7ef5445ad1d2bdccd4e41f19e93",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:786c9df5502ba5a461deb554da6ad56f4b5ad3e80e99808fd983a2b7502a5bb3",
                     "options": {
                       "metadata": {
@@ -5045,19 +5061,6 @@
                     "type": "Ethernet",
                     "userctl": true
                   }
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
                 }
               }
             }
@@ -6357,6 +6360,9 @@
           "sha256:c2292d29245c4b9f57eaef472b719261f53bad10594cf5778533d73710b3d316": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/shadow-utils-4.9-5.el9.x86_64.rpm"
           },
+          "sha256:c3a2d41fb291f8f6160d0a80840aee0f96d6f7ef5445ad1d2bdccd4e41f19e93": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/rhc-0.2.1-9.el9.x86_64.rpm"
+          },
           "sha256:c491f49444112b0ceaaeac310a646a85a78e041cbf110c7cb465bd5783274160": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/kbd-2.4.0-8.el9.x86_64.rpm"
           },
@@ -6392,6 +6398,9 @@
           },
           "sha256:cc320422d1ed3c73821e5cb0dfd2002b88d3d53998958ac437de99423099881d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/cloud-init-22.1-5.el9.noarch.rpm"
+          },
+          "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/redhat-cloud-client-configuration-1-10.el9.noarch.rpm"
           },
           "sha256:cd8f32a588f83b75183a94e40f895ec9640bfba4ba1768f1e86b57c18cec3e47": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/elfutils-default-yama-scope-0.187-5.el9.noarch.rpm"
@@ -12667,6 +12676,26 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/python3-pytz-2021.1-4.el9.noarch.rpm",
         "checksum": "sha256:6d854c991181c69bf0c08d075ecf15e404d17611bddf66e0b7c749abe543aafa",
+        "check_gpg": true
+      },
+      {
+        "name": "redhat-cloud-client-configuration",
+        "epoch": 0,
+        "version": "1",
+        "release": "10.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/redhat-cloud-client-configuration-1-10.el9.noarch.rpm",
+        "checksum": "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8",
+        "check_gpg": true
+      },
+      {
+        "name": "rhc",
+        "epoch": 1,
+        "version": "0.2.1",
+        "release": "9.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/rhc-0.2.1-9.el9.x86_64.rpm",
+        "checksum": "sha256:c3a2d41fb291f8f6160d0a80840aee0f96d6f7ef5445ad1d2bdccd4e41f19e93",
         "check_gpg": true
       },
       {
