@@ -193,12 +193,9 @@ function dump_db() {
   # Disable -x for these commands to avoid printing the whole result and manifest into the log
   set +x
 
-  # Make sure we get 3 job entries in the db per compose (depsolve + manifest + build)
-  sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows" > /dev/null
-
   # Save the result, including the manifest, for the job, straight from the db
   sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
-    | sudo tee "${ARTIFACTS}/build-result.txt"
+    | sudo tee "${ARTIFACTS}/build-result.txt" > /dev/null
   set -x
 }
 
@@ -346,6 +343,7 @@ createReqFile
 #
 
 function collectMetrics(){
+    set +x
     METRICS_OUTPUT=$(curl \
                           --cacert /etc/osbuild-composer/ca-crt.pem \
                           --key /etc/osbuild-composer/client-key.pem \
@@ -353,6 +351,7 @@ function collectMetrics(){
                           https://localhost/metrics)
 
     echo "$METRICS_OUTPUT" | grep "^image_builder_composer_total_compose_requests" | cut -f2 -d' '
+    set -x
 }
 
 function sendCompose() {
@@ -523,6 +522,7 @@ verify
 
 # Verify selected package (postgresql) is included in package list
 function verifyPackageList() {
+  set +x
   # Save build metadata to artifacts directory for troubleshooting
   curl --silent \
       --show-error \
@@ -532,6 +532,7 @@ function verifyPackageList() {
       https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"/metadata --output "${ARTIFACTS}/metadata.json"
   local PACKAGENAMES
   PACKAGENAMES=$(jq -rM '.packages[].name' "${ARTIFACTS}/metadata.json")
+  set -x
 
   if ! grep -q postgresql <<< "${PACKAGENAMES}"; then
       echo "'postgresql' not found in compose package list 😠"
