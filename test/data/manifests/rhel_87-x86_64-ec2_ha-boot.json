@@ -2424,6 +2424,9 @@
                     "id": "sha256:ee2ba576f07f5cdd9cf24e788d60071869107aa313addbba0a311448bb32a86c"
                   },
                   {
+                    "id": "sha256:0942e19ecae75b9b0f30f10c1469b783e0887728bdbd946b6e49d7c3fabc4593"
+                  },
+                  {
                     "id": "sha256:821923c32f6cd4c764ea7e97bee3335993d405694aa81b923cf1ef46c9e03cf9"
                   },
                   {
@@ -2630,19 +2633,6 @@
                     "type": "Ethernet",
                     "userctl": true
                   }
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
                 }
               }
             }
@@ -2964,6 +2954,9 @@
           },
           "sha256:09149617095dc52e19cdce1e45c8245e1e92d371bd4d107320ff56788b9977f1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.7-20221015/Packages/libusbx-1.0.23-4.el8.x86_64.rpm"
+          },
+          "sha256:0942e19ecae75b9b0f30f10c1469b783e0887728bdbd946b6e49d7c3fabc4593": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20221015/Packages/redhat-cloud-client-configuration-1-10.el8.noarch.rpm"
           },
           "sha256:0968073d2f23b87841d4a3876f5a7d7ec472916c57597b36c45d5a9e85a321c8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.7-20221015/Packages/dracut-squash-049-209.git20220815.el8.x86_64.rpm"
@@ -11678,6 +11671,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20221015/Packages/python36-3.6.8-38.module+el8.5.0+12207+5c5719bc.x86_64.rpm",
         "checksum": "sha256:ee2ba576f07f5cdd9cf24e788d60071869107aa313addbba0a311448bb32a86c"
+      },
+      {
+        "name": "redhat-cloud-client-configuration",
+        "epoch": 0,
+        "version": "1",
+        "release": "10.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.7-20221015/Packages/redhat-cloud-client-configuration-1-10.el8.noarch.rpm",
+        "checksum": "sha256:0942e19ecae75b9b0f30f10c1469b783e0887728bdbd946b6e49d7c3fabc4593"
       },
       {
         "name": "rhc",

@@ -1116,6 +1116,16 @@ func newDistro(distroName string) distro.Distro {
 		},
 	}
 
+	// The RHSM configuration should not be applied since 8.7, but it is instead
+	// done by installing the redhat-cloud-client-configuration package.
+	// See COMPOSER-1804 for more information.
+	rhel87PlusEc2ImageConfigOverride := &distro.ImageConfig{
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{},
+	}
+	if !common.VersionLessThan(rd.osVersion, "8.7") {
+		defaultEc2ImageConfig = rhel87PlusEc2ImageConfigOverride.InheritFrom(defaultEc2ImageConfig)
+	}
+
 	// default EC2 images config (x86_64)
 	defaultEc2ImageConfigX86_64 := &distro.ImageConfig{
 		DracutConf: append(defaultEc2ImageConfig.DracutConf,
