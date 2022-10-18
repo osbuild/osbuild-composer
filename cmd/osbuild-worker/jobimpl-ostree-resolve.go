@@ -50,7 +50,7 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 
 	logWithId.Infof("Resolving (%d) ostree commits", len(args.Specs))
 
-	for _, s := range args.Specs {
+	for i, s := range args.Specs {
 		reqParams := ostree.RequestParams{
 			URL:    s.URL,
 			Ref:    s.Ref,
@@ -63,11 +63,11 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 			break
 		}
 
-		result.Specs = append(result.Specs, worker.OSTreeResolveResultSpec{
+		result.Specs[i] = worker.OSTreeResolveResultSpec{
 			URL:      s.URL,
 			Ref:      ref,
 			Checksum: checksum,
-		})
+		}
 	}
 
 	err = job.Update(&result)

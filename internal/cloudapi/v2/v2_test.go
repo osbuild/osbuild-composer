@@ -78,8 +78,47 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 		}
 	}()
 
+	ostreeResolveContext, cancelOstree := context.WithCancel(context.Background())
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			_, token, _, _, _, err := workerServer.RequestJob(ostreeResolveContext, test_distro.TestDistroName, []string{worker.JobTypeOSTreeResolve}, depsolveChannels)
+			select {
+			case <-ostreeResolveContext.Done():
+				return
+			default:
+			}
+
+			if err != nil {
+				continue
+			}
+			oJR := &worker.OSTreeResolveJobResult{
+				Specs: []worker.OSTreeResolveResultSpec{
+					worker.OSTreeResolveResultSpec{
+						URL:      "",
+						Ref:      "",
+						Checksum: "",
+					},
+				},
+			}
+
+			if failDepsolve {
+				oJR.JobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOSTreeParamsInvalid, "ostree error", nil)
+			}
+
+			rawMsg, err := json.Marshal(oJR)
+			require.NoError(t, err)
+			err = workerServer.FinishJob(token, rawMsg)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
 	cancelWithWait := func() {
 		cancel()
+		cancelOstree()
 		wg.Wait()
 	}
 
@@ -417,147 +456,6 @@ func TestCompose(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
-
-	// ostree errors
-
-	// bad url
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
-	{
-		"distribution": "%s",
-		"image_request":{
-			"architecture": "%s",
-			"image_type": "edge-commit",
-			"repositories": [{
-				"baseurl": "somerepo.org",
-				"rhsm": false
-			}],
-			"upload_options": {
-				"region": "eu-central-1"
-			},
-			"ostree": {
-				"ref": "rhel/10/x86_64/edge",
-				"url": "not-a-URL"
-			}
-		 }
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
-	{
-		"href": "/api/image-builder-composer/v2/errors/10",
-		"id": "10",
-		"kind": "Error",
-		"code": "IMAGE-BUILDER-COMPOSER-10",
-		"reason": "Error resolving OSTree repo"
-	}`, "operation_id", "details")
-
-	// bad ref
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
-	{
-		"distribution": "%s",
-		"image_request":{
-			"architecture": "%s",
-			"image_type": "edge-commit",
-			"repositories": [{
-				"baseurl": "somerepo.org",
-				"rhsm": false
-			}],
-			"upload_options": {
-				"region": "eu-central-1"
-			},
-			"ostree": {
-				"ref": "/bad/ref"
-			}
-		 }
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
-	{
-		"href": "/api/image-builder-composer/v2/errors/9",
-		"id": "9",
-		"kind": "Error",
-		"code": "IMAGE-BUILDER-COMPOSER-9",
-		"reason": "Invalid OSTree ref"
-	}`, "operation_id", "details")
-
-	// bad parent ref
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
-	{
-		"distribution": "%s",
-		"image_request":{
-			"architecture": "%s",
-			"image_type": "edge-commit",
-			"repositories": [{
-				"baseurl": "somerepo.org",
-				"rhsm": false
-			}],
-			"upload_options": {
-				"region": "eu-central-1"
-			},
-			"ostree": {
-				"ref": "%s",
-				"url": "%s",
-				"parent": "/bad/ref/number/2"
-			}
-		 }
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL), http.StatusBadRequest, `
-	{
-		"href": "/api/image-builder-composer/v2/errors/9",
-		"id": "9",
-		"kind": "Error",
-		"code": "IMAGE-BUILDER-COMPOSER-9",
-		"reason": "Invalid OSTree ref"
-	}`, "operation_id", "details")
-
-	// incorrect ref for URL
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
-	{
-		"distribution": "%s",
-		"image_request":{
-			"architecture": "%s",
-			"image_type": "edge-commit",
-			"repositories": [{
-				"baseurl": "somerepo.org",
-				"rhsm": false
-			}],
-			"upload_options": {
-				"region": "eu-central-1"
-			},
-			"ostree": {
-				"url": "%s",
-				"parent": "incorrect/ref"
-			}
-		 }
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoOther.Server.URL), http.StatusBadRequest, `
-	{
-		"href": "/api/image-builder-composer/v2/errors/10",
-		"id": "10",
-		"kind": "Error",
-		"code": "IMAGE-BUILDER-COMPOSER-10",
-		"reason": "Error resolving OSTree repo"
-	}`, "operation_id", "details")
-
-	// parent ref without URL
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
-	{
-		"distribution": "%s",
-		"image_request":{
-			"architecture": "%s",
-			"image_type": "edge-commit",
-			"repositories": [{
-				"baseurl": "somerepo.org",
-				"rhsm": false
-			}],
-			"upload_options": {
-				"region": "eu-central-1"
-			},
-			"ostree": {
-				"parent": "some/ref"
-			}
-		 }
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
-	{
-		"href": "/api/image-builder-composer/v2/errors/27",
-		"id": "27",
-		"kind": "Error",
-		"code": "IMAGE-BUILDER-COMPOSER-27",
-		"reason": "Invalid OSTree parameters or parameter combination"
-	}`, "operation_id", "details")
 }
 
 func TestComposeStatusSuccess(t *testing.T) {
@@ -816,6 +714,10 @@ func TestComposeDependencyError(t *testing.T) {
 		"image_request":{
 			"architecture": "%s",
 			"image_type": "aws",
+                        "ostree": {
+                                "url": "somerepo.org",
+                                "ref": "test"
+                        },
 			"repositories": [{
 				"baseurl": "somerepo.org",
 				"rhsm": false
@@ -864,7 +766,11 @@ func TestComposeDependencyError(t *testing.T) {
 					"details": [{
 						"id": 22,
 						"reason": "DNF Error"
-					}]
+					},
+                                        {
+                                                "id": 34,
+                                                "reason": "ostree error"
+                                        }]
 				}],
 				"id": 9,
 				"reason": "Manifest dependency failed"
