@@ -790,6 +790,16 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 				return nil, err
 			}
 
+		case *worker.OSTreeResolveJob:
+			job := dep.main.(*worker.OSTreeResolveJob)
+			if len(depUUIDs) != 0 {
+				return nil, fmt.Errorf("dependencies are not supported for OSTreeResolveJob, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueOSTreeResolveJob(job, "")
+			if err != nil {
+				return nil, err
+			}
+
 		default:
 			return nil, fmt.Errorf("unexpected job type")
 		}
@@ -1466,6 +1476,71 @@ func TestJobDependencyChainErrors(t *testing.T) {
 				},
 			},
 			expectedError: nil,
+		},
+		// osbuild + manifest + depsolve + ostree resolve
+		// failed ostree resolve
+		{
+			job: testJob{
+				main: &worker.OSBuildJob{},
+				deps: []testJob{
+					{
+						main:   &worker.KojiInitJob{},
+						result: &worker.KojiInitJobResult{},
+					},
+					{
+						main: &worker.ManifestJobByID{},
+						deps: []testJob{
+							{
+								main: &worker.OSTreeResolveJob{},
+								result: &worker.OSTreeResolveJobResult{
+									JobResult: worker.JobResult{
+										JobError: &clienterrors.Error{
+											ID:     clienterrors.ErrorOSTreeRefResolution,
+											Reason: "remote ostree ref not found",
+										},
+									},
+								},
+							},
+							{
+								main:   &worker.DepsolveJob{},
+								result: &worker.DepsolveJobResult{},
+							},
+						},
+						result: &worker.ManifestJobByIDResult{
+							JobResult: worker.JobResult{
+								JobError: &clienterrors.Error{
+									ID:     clienterrors.ErrorOSTreeDependency,
+									Reason: "ostree dependency job failed",
+								},
+							},
+						},
+					},
+				},
+				result: &worker.OSBuildJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorManifestDependency,
+							Reason: "manifest dependency job failed",
+						},
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:     clienterrors.ErrorManifestDependency,
+				Reason: "manifest dependency job failed",
+				Details: []*clienterrors.Error{
+					{
+						ID:     clienterrors.ErrorOSTreeDependency,
+						Reason: "ostree dependency job failed",
+						Details: []*clienterrors.Error{
+							{
+								ID:     clienterrors.ErrorOSTreeRefResolution,
+								Reason: "remote ostree ref not found",
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 

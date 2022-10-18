@@ -256,6 +256,28 @@ type ContainerResolveJobResult struct {
 	JobResult
 }
 
+type OSTreeResolveSpec struct {
+	URL    string `json:"url"`
+	Ref    string `json:"ref"`
+	Parent string `json:"parent"`
+}
+
+type OSTreeResolveJob struct {
+	Specs []OSTreeResolveSpec `json:"ostree_resolve_specs"`
+}
+
+type OSTreeResolveResultSpec struct {
+	URL      string `json:"url"`
+	Ref      string `json:"ref"`
+	Checksum string `json:"checksum"`
+}
+
+type OSTreeResolveJobResult struct {
+	Specs []OSTreeResolveResultSpec `json:"ostree_resolve_result_specs"`
+
+	JobResult
+}
+
 type AWSEC2ShareJob struct {
 	Ami               string   `json:"ami"`
 	Region            string   `json:"region"`
