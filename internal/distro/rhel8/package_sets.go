@@ -412,6 +412,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 
 }
 
+// common package set for RHEL (BYOS/RHUI) and CentOS Stream images
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
@@ -468,9 +469,19 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
 
+// common rhel ec2 RHUI image package set
+func rhelEc2CommonPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := ec2CommonPackageSet(t)
+	// Include "redhat-cloud-client-configuration" on 8.7+ (COMPOSER-1804)
+	if !common.VersionLessThan(t.arch.distro.osVersion, "8.7") {
+		ps.Include = append(ps.Include, "redhat-cloud-client-configuration")
+	}
+	return ps
+}
+
 // rhel-ec2 image package set
 func rhelEc2PackageSet(t *imageType) rpmmd.PackageSet {
-	ec2PackageSet := ec2CommonPackageSet(t)
+	ec2PackageSet := rhelEc2CommonPackageSet(t)
 	ec2PackageSet.Include = append(ec2PackageSet.Include, "rh-amazon-rhui-client")
 	ec2PackageSet.Exclude = append(ec2PackageSet.Exclude, "alsa-lib")
 	return ec2PackageSet
@@ -478,7 +489,7 @@ func rhelEc2PackageSet(t *imageType) rpmmd.PackageSet {
 
 // rhel-ha-ec2 image package set
 func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
-	ec2HaPackageSet := ec2CommonPackageSet(t)
+	ec2HaPackageSet := rhelEc2CommonPackageSet(t)
 	ec2HaPackageSet.Include = append(ec2HaPackageSet.Include,
 		"fence-agents-all",
 		"pacemaker",
@@ -491,7 +502,7 @@ func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
 
 // rhel-sap-ec2 image package set
 func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
-	ec2SapPackageSet := ec2CommonPackageSet(t)
+	ec2SapPackageSet := rhelEc2CommonPackageSet(t)
 	ec2SapPackageSet.Include = append(ec2SapPackageSet.Include,
 		// RHBZ#2074107
 		"@Server",
