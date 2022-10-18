@@ -164,13 +164,12 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		return nil, fmt.Errorf("error loading repository definitions: %v", err)
 	}
 
-	var hostArch distro.Arch
 	hostDistro := dr.GetDistro(hostDistroName)
 	if hostDistro != nil {
 		// get canonical distro name if the host distro is supported
 		hostDistroName = hostDistro.Name()
 
-		hostArch, err = hostDistro.GetArch(archName)
+		_, err = hostDistro.GetArch(archName)
 		if err != nil {
 			return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
 		}
@@ -185,7 +184,7 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		log.Printf("host distro %q is not supported: only cross-distro builds are available", hostDistroName)
 	}
 
-	store := store.New(&stateDir, hostArch, logger)
+	store := store.New(&stateDir, dr, logger)
 	compatOutputDir := path.Join(stateDir, "outputs")
 
 	api := &API{

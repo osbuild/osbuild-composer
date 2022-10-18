@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
@@ -142,7 +143,8 @@ func main() {
 	}
 	rpmmdCache := path.Join(homeDir, ".cache/osbuild-composer/rpmmd")
 
-	s := store.New(&cwd, a, nil)
+	dr, _ := distroregistry.New(d, nil)
+	s := store.New(&cwd, dr, nil)
 	if s == nil {
 		panic("could not create store")
 	}

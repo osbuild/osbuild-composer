@@ -133,10 +133,11 @@ func (suite *storeTest) SetupSuite() {
 //setup before each test
 func (suite *storeTest) SetupTest() {
 	distro := test_distro.New()
-	arch, err := distro.GetArch(test_distro.TestArchName)
+	_, err := distro.GetArch(test_distro.TestArchName)
 	suite.NoError(err)
 	suite.dir = suite.T().TempDir()
-	suite.myStore = New(&suite.dir, arch, nil)
+	dr := test_distro.NewRegistry()
+	suite.myStore = New(&suite.dir, dr, nil)
 }
 
 func (suite *storeTest) TestRandomSHA1String() {

@@ -41,7 +41,8 @@ func FixtureBase() *Store {
 		},
 	}
 
-	d := test_distro.New()
+	dr := test_distro.NewRegistry()
+	d := dr.FromHost()
 	arch, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
@@ -54,7 +55,8 @@ func FixtureBase() *Store {
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
-	s := New(nil, arch, nil)
+
+	s := New(nil, dr, nil)
 
 	pkgs := []rpmmd.PackageSpec{
 		{
@@ -176,7 +178,8 @@ func FixtureFinished() *Store {
 		},
 	}
 
-	d := test_distro.New()
+	dr := test_distro.NewRegistry()
+	d := dr.FromHost()
 	arch, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
@@ -189,7 +192,8 @@ func FixtureFinished() *Store {
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
-	s := New(nil, arch, nil)
+
+	s := New(nil, dr, nil)
 
 	pkgs := []rpmmd.PackageSpec{
 		{
@@ -272,13 +276,14 @@ func FixtureEmpty() *Store {
 		Customizations: nil,
 	}
 
-	d := test_distro.New()
-	arch, err := d.GetArch(test_distro.TestArchName)
+	dr := test_distro.NewRegistry()
+	d := dr.FromHost()
+	_, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
 
-	s := New(nil, arch, nil)
+	s := New(nil, dr, nil)
 
 	s.blueprints[bName] = b
 
@@ -310,13 +315,14 @@ func FixtureOldChanges() *Store {
 		Customizations: nil,
 	}
 
-	d := test_distro.New()
-	arch, err := d.GetArch(test_distro.TestArchName)
+	dr := test_distro.NewRegistry()
+	d := dr.FromHost()
+	_, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
 
-	s := New(nil, arch, nil)
+	s := New(nil, dr, nil)
 
 	s.PushBlueprint(b, "Initial commit")
 	b.Version = "0.0.1"

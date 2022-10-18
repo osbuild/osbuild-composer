@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"sort"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
@@ -96,11 +98,11 @@ func newWorkspaceFromV0(workspaceStruct workspaceV0) map[string]blueprint.Bluepr
 	return workspace
 }
 
-func newComposesFromV0(composesStruct composesV0, arch distro.Arch, log *log.Logger) map[uuid.UUID]Compose {
+func newComposesFromV0(composesStruct composesV0, dr *distroregistry.Registry, log *log.Logger) map[uuid.UUID]Compose {
 	composes := make(map[uuid.UUID]Compose)
 
 	for composeID, composeStruct := range composesStruct {
-		c, err := newComposeFromV0(composeStruct, arch)
+		c, err := newComposeFromV0(composeStruct, dr)
 		if err != nil {
 			if log != nil {
 				log.Printf("ignoring compose: %v", err)
@@ -143,15 +145,32 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 	}, nil
 }
 
-func newComposeFromV0(composeStruct composeV0, arch distro.Arch) (Compose, error) {
+func newComposeFromV0(composeStruct composeV0, dr *distroregistry.Registry) (Compose, error) {
 	if len(composeStruct.ImageBuilds) != 1 {
 		return Compose{}, errors.New("compose with unsupported number of image builds")
 	}
+
+	// Get the distro from the blueprint (empty means use host distro)
+	bp := composeStruct.Blueprint.DeepCopy()
+	distroName := bp.Distro
+	if len(distroName) == 0 {
+		distroName = dr.FromHost().Name()
+	}
+	distro := dr.GetDistro(distroName)
+	if distro == nil {
+		return Compose{}, fmt.Errorf("Unknown distro - %s", distroName)
+	}
+
+	// Get the host distro's architecture. This contains the distro+arch specific image types
+	arch, err := distro.GetArch(dr.HostArchName())
+	if err != nil {
+		return Compose{}, err
+	}
+
 	ib, err := newImageBuildFromV0(composeStruct.ImageBuilds[0], arch)
 	if err != nil {
 		return Compose{}, err
 	}
-	bp := composeStruct.Blueprint.DeepCopy()
 
 	pkgs := make([]rpmmd.PackageSpec, len(composeStruct.Packages))
 	copy(pkgs, composeStruct.Packages)
@@ -234,11 +253,11 @@ func newCommitsFromV0(commitsMapStruct commitsV0, changesMapStruct changesV0) ma
 	return commitsMap
 }
 
-func newStoreFromV0(storeStruct storeV0, arch distro.Arch, log *log.Logger) *Store {
+func newStoreFromV0(storeStruct storeV0, dr *distroregistry.Registry, log *log.Logger) *Store {
 	return &Store{
 		blueprints:        newBlueprintsFromV0(storeStruct.Blueprints),
 		workspace:         newWorkspaceFromV0(storeStruct.Workspace),
-		composes:          newComposesFromV0(storeStruct.Composes, arch, log),
+		composes:          newComposesFromV0(storeStruct.Composes, dr, log),
 		sources:           newSourceConfigsFromV0(storeStruct.Sources),
 		blueprintsChanges: newChangesFromV0(storeStruct.Changes),
 		blueprintsCommits: newCommitsFromV0(storeStruct.Commits, storeStruct.Changes),
