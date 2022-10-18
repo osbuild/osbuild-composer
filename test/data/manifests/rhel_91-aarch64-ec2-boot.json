@@ -5069,6 +5069,22 @@
                     }
                   },
                   {
+                    "id": "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b4bbff6fdd5fc3f429c8a55cf80d80c5848f07dec045a431b89dd22e7db16618",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:1292d5d283f1948249149b773a284ae215a12ae296284ffb8a021eb6957882da",
                     "options": {
                       "metadata": {
@@ -5211,19 +5227,6 @@
                     "type": "Ethernet",
                     "userctl": true
                   }
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
                 }
               }
             }
@@ -6434,6 +6437,9 @@
           "sha256:b4a44692245a733692b5b0e049393cc49a61f0036848306d11edbda7e6c405fe": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221015/Packages/libsss_nss_idmap-2.7.3-4.el9.aarch64.rpm"
           },
+          "sha256:b4bbff6fdd5fc3f429c8a55cf80d80c5848f07dec045a431b89dd22e7db16618": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/rhc-0.2.1-9.el9.aarch64.rpm"
+          },
           "sha256:b4d62576a7d648f1872365fc1678b05446ca132611a308bf99a6bed72c2d50b6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221015/Packages/crypto-policies-scripts-20220815-1.git0fbe86f.el9.noarch.rpm"
           },
@@ -6541,6 +6547,9 @@
           },
           "sha256:ccd85efa3679cb8c15deadb009f1257b39d108efe759810d8b91fd3aece94edd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221015/Packages/device-mapper-event-1.02.185-3.el9.aarch64.rpm"
+          },
+          "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/redhat-cloud-client-configuration-1-10.el9.noarch.rpm"
           },
           "sha256:cd6462c66489eed11b8d9f1acf70a38a1a2629a969a31d0f511eca148783dcdd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221015/Packages/libpcap-1.10.0-4.el9.aarch64.rpm"
@@ -13081,6 +13090,26 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/python3-pytz-2021.1-4.el9.noarch.rpm",
         "checksum": "sha256:6d854c991181c69bf0c08d075ecf15e404d17611bddf66e0b7c749abe543aafa",
+        "check_gpg": true
+      },
+      {
+        "name": "redhat-cloud-client-configuration",
+        "epoch": 0,
+        "version": "1",
+        "release": "10.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/redhat-cloud-client-configuration-1-10.el9.noarch.rpm",
+        "checksum": "sha256:cd3d87f6fcc9a53ace91784a1443e4cc6ecc6d5f16d55482ed2b86f0f4e223e8",
+        "check_gpg": true
+      },
+      {
+        "name": "rhc",
+        "epoch": 1,
+        "version": "0.2.1",
+        "release": "9.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/rhc-0.2.1-9.el9.aarch64.rpm",
+        "checksum": "sha256:b4bbff6fdd5fc3f429c8a55cf80d80c5848f07dec045a431b89dd22e7db16618",
         "check_gpg": true
       },
       {
