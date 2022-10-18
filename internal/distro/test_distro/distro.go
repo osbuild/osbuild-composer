@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -342,6 +343,18 @@ func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 // New returns new instance of TestDistro named "test-distro".
 func New() *TestDistro {
 	return newTestDistro(TestDistroName, TestDistroModulePlatformID, TestDistroReleasever)
+}
+
+func NewRegistry() *distroregistry.Registry {
+	td := New()
+	registry, err := distroregistry.New(td, td)
+	if err != nil {
+		panic(err)
+	}
+
+	// Override the host's architecture name with the test's name
+	registry.SetHostArchName(TestArchName)
+	return registry
 }
 
 // New2 returns new instance of TestDistro named "test-distro-2".

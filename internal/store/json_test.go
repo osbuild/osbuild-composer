@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/stretchr/testify/assert"
@@ -114,13 +115,14 @@ func Test_imageTypeFromCompatString(t *testing.T) {
 
 func TestMarshalEmpty(t *testing.T) {
 	d := test_distro.New()
-	arch, err := d.GetArch(test_distro.TestArchName)
+	_, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
 	store1 := FixtureEmpty()
 	storeV0 := store1.toStoreV0()
-	store2 := newStoreFromV0(*storeV0, arch, nil)
+	dr := test_distro.NewRegistry()
+	store2 := newStoreFromV0(*storeV0, dr, nil)
 	if !reflect.DeepEqual(store1, store2) {
 		t.Errorf("marshal/unmarshal roundtrip not a noop for empty store:\n got: %#v\n want: %#v", store1, store2)
 	}
@@ -128,13 +130,14 @@ func TestMarshalEmpty(t *testing.T) {
 
 func TestMarshalFinished(t *testing.T) {
 	d := test_distro.New()
-	arch, err := d.GetArch(test_distro.TestArchName)
+	_, err := d.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
 	}
 	store1 := FixtureFinished()
 	storeV0 := store1.toStoreV0()
-	store2 := newStoreFromV0(*storeV0, arch, nil)
+	dr := test_distro.NewRegistry()
+	store2 := newStoreFromV0(*storeV0, dr, nil)
 	if !reflect.DeepEqual(store1, store2) {
 		t.Errorf("marshal/unmarshal roundtrip not a noop for base store:\n got: %#v\n want: %#v", store2, store1)
 	}
@@ -187,11 +190,12 @@ func TestStore_toStoreV0(t *testing.T) {
 func Test_newStoreFromV0(t *testing.T) {
 	type args struct {
 		storeStruct storeV0
-		arch        distro.Arch
+		registry    *distroregistry.Registry
 	}
 
-	testDistro := test_distro.New()
-	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	//testDistro := test_distro.New()
+	//	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
+	dr := test_distro.NewRegistry()
 
 	tests := []struct {
 		name string
@@ -202,14 +206,14 @@ func Test_newStoreFromV0(t *testing.T) {
 			name: "empty",
 			args: args{
 				storeStruct: storeV0{},
-				arch:        testArch,
+				registry:    dr,
 			},
-			want: New(nil, testArch, nil),
+			want: New(nil, dr, nil),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newStoreFromV0(tt.args.storeStruct, tt.args.arch, nil); !reflect.DeepEqual(got, tt.want) {
+			if got := newStoreFromV0(tt.args.storeStruct, tt.args.registry, nil); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newStoreFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
@@ -303,9 +307,13 @@ func Test_upgrade(t *testing.T) {
 		assert.NoErrorf(err, "Could not read test-store '%s': %v", fileName, err)
 		err = json.Unmarshal([]byte(file), &storeStruct)
 		assert.NoErrorf(err, "Could not parse test-store '%s': %v", fileName, err)
-		arch, err := fedora.NewF35().GetArch(distro.X86_64ArchName)
+		f35 := fedora.NewF35()
+		registry, err := distroregistry.New(f35, f35)
 		assert.NoError(err)
-		store := newStoreFromV0(storeStruct, arch, nil)
+
+		// The test data has image types only supported on Fedora X86_64
+		registry.SetHostArchName(distro.X86_64ArchName)
+		store := newStoreFromV0(storeStruct, registry, nil)
 		assert.Equal(1, len(store.blueprints))
 		assert.Equal(1, len(store.blueprintsChanges))
 		assert.Equal(1, len(store.blueprintsCommits))
@@ -1094,25 +1102,26 @@ func Test_newComposeFromV0(t *testing.T) {
 	testDistro := test_distro.New()
 	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
 	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+	dr := test_distro.NewRegistry()
 
 	tests := []struct {
-		name    string
-		compose composeV0
-		arch    distro.Arch
-		want    Compose
-		errOk   bool
+		name     string
+		compose  composeV0
+		registry *distroregistry.Registry
+		want     Compose
+		errOk    bool
 	}{
 		{
-			name:    "empty",
-			compose: composeV0{},
-			arch:    testArch,
-			want:    Compose{},
-			errOk:   true,
+			name:     "empty",
+			compose:  composeV0{},
+			registry: dr,
+			want:     Compose{},
+			errOk:    true,
 		},
 		{
-			name:  "qcow2 compose",
-			arch:  testArch,
-			errOk: false,
+			name:     "qcow2 compose",
+			registry: dr,
+			errOk:    false,
 			compose: composeV0{
 				Blueprint: &bp,
 				ImageBuilds: []imageBuildV0{
@@ -1182,7 +1191,7 @@ func Test_newComposeFromV0(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := newComposeFromV0(tt.compose, tt.arch)
+			got, err := newComposeFromV0(tt.compose, tt.registry)
 			if err != nil {
 				if !tt.errOk {
 					t.Errorf("newComposeFromV0() error = %v", err)
@@ -1371,22 +1380,23 @@ func Test_newComposesFromV0(t *testing.T) {
 	testDistro := test_distro.New()
 	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
 	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+	dr := test_distro.NewRegistry()
 
 	tests := []struct {
 		name     string
-		arch     distro.Arch
+		registry *distroregistry.Registry
 		composes composesV0
 		want     map[uuid.UUID]Compose
 	}{
 		{
 			name:     "empty",
-			arch:     testArch,
+			registry: dr,
 			composes: composesV0{},
 			want:     make(map[uuid.UUID]Compose),
 		},
 		{
-			name: "two composes",
-			arch: testArch,
+			name:     "two composes",
+			registry: dr,
 			composes: composesV0{
 				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
 					Blueprint: &bp,
@@ -1525,7 +1535,7 @@ func Test_newComposesFromV0(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newComposesFromV0(tt.composes, tt.arch, nil); !reflect.DeepEqual(got, tt.want) {
+			if got := newComposesFromV0(tt.composes, tt.registry, nil); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newComposesFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
