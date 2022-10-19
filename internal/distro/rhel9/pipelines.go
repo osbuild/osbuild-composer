@@ -1003,6 +1003,17 @@ func ostreeDeployPipeline(
 			},
 		},
 	))
+
+	p.AddStage(osbuild.NewSystemdJournaldStage(
+		&osbuild.SystemdJournaldStageOptions{
+			Filename: "10-persistent.conf",
+			Config: osbuild.SystemdJournaldConfigDropin{
+				Journal: osbuild.SystemdJournaldConfigJournalSection{
+					Storage: common.StringToPtr("persistent"),
+				},
+			},
+		},
+	))
 	return p
 }
 
