@@ -14,8 +14,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/sirupsen/logrus"
+
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -166,7 +167,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 
 func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, distribution distro.Distro, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
-	kojiDirectory := "osbuild-composer-koji-" + uuid.New().String()
+	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
 
 	initID, err := s.workers.EnqueueKojiInit(&worker.KojiInitJob{
 		Server:  server,
