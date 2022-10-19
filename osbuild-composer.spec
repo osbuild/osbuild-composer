@@ -350,6 +350,12 @@ The dnf-json binary used by osbuild-composer and the workers.
 %files dnf-json
 %{_libexecdir}/osbuild-composer/dnf-json
 
+%post dnf-json
+# Fix ownership of the rpmmd cache files from previous versions where it was owned by root:root
+if [ -e /var/cache/osbuild-composer/rpmmd ]; then
+    chown -f -R --from root:root _osbuild-composer:_osbuild-composer /var/cache/osbuild-composer/rpmmd
+fi
+
 %if %{with tests} || 0%{?rhel}
 
 %package tests
