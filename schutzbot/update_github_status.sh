@@ -42,7 +42,10 @@ curl \
 
 # ff release branch on github if this ran on main
 if [ "$CI_COMMIT_BRANCH" = "main" ] && [ "$GITHUB_NEW_STATE" = "success" ]; then
-    git remote add github "https://${SCHUTZBOT_LOGIN#*:}@github.com/osbuild/osbuild-composer.git"
+    if [ ! -d "release-ff-clone" ]; then
+        git clone --bare "https://${SCHUTZBOT_LOGIN#*:}@github.com/osbuild/osbuild-composer.git" release-ff-clone
+    fi
+    git -C release-ff-clone fetch origin
     # || true to ignore non fast-forwards
-    git push github "${CI_COMMIT_SHA}:refs/heads/release" || true
+    git -C release-ff-clone push origin "${CI_COMMIT_SHA}:refs/heads/release" || true
 fi
