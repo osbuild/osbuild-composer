@@ -1110,6 +1110,17 @@
                 "ref": "test/edge"
               }
             }
+          },
+          {
+            "type": "org.osbuild.systemd-journald",
+            "options": {
+              "filename": "10-persistent.conf",
+              "config": {
+                "Journal": {
+                  "Storage": "persistent"
+                }
+              }
+            }
           }
         ]
       },

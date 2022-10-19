@@ -33,6 +33,7 @@
       }
     }
   },
+  "no-image-info": true,
   "manifest": {
     "version": "2",
     "pipelines": [
@@ -2536,6 +2537,17 @@
               "deployment": {
                 "osname": "redhat",
                 "ref": "test/edge"
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd-journald",
+            "options": {
+              "filename": "10-persistent.conf",
+              "config": {
+                "Journal": {
+                  "Storage": "persistent"
+                }
               }
             }
           }
@@ -15562,6 +15574,5 @@
         "check_gpg": true
       }
     ]
-  },
-  "no-image-info": true
+  }
 }
