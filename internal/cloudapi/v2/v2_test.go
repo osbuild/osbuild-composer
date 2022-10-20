@@ -713,7 +713,7 @@ func TestComposeDependencyError(t *testing.T) {
 		"distribution": "%s",
 		"image_request":{
 			"architecture": "%s",
-			"image_type": "aws",
+			"image_type": "edge-commit",
                         "ostree": {
                                 "url": "somerepo.org",
                                 "ref": "test"

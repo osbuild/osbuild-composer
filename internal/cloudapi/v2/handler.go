@@ -289,18 +289,19 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 		var ostreeOptions *ostree.RequestParams
 		// assume it's an ostree image if the type has a default ostree ref
-		if imageType.OSTreeRef() != "" && ir.Ostree != nil {
+		if imageType.OSTreeRef() != "" {
 			ostreeOptions = &ostree.RequestParams{}
-			if ir.Ostree.Ref != nil {
-				ostreeOptions.Ref = *ir.Ostree.Ref
+			if ir.Ostree != nil {
+				if ir.Ostree.Ref != nil {
+					ostreeOptions.Ref = *ir.Ostree.Ref
+				}
+				if ir.Ostree.Url != nil {
+					ostreeOptions.URL = *ir.Ostree.Url
+				}
+				if ir.Ostree.Parent != nil {
+					ostreeOptions.Parent = *ir.Ostree.Parent
+				}
 			}
-			if ir.Ostree.Url != nil {
-				ostreeOptions.URL = *ir.Ostree.Url
-			}
-			if ir.Ostree.Parent != nil {
-				ostreeOptions.Parent = *ir.Ostree.Parent
-			}
-
 			if ostreeOptions.Ref == "" {
 				ostreeOptions.Ref = imageType.OSTreeRef()
 			}

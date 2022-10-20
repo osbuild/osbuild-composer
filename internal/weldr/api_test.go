@@ -167,8 +167,8 @@ func TestBasic(t *testing.T) {
 		{"/api/v0/blueprints/info/", http.StatusNotFound, `{"errors":[{"code":404,"id":"HTTPError","msg":"Not Found"}],"status":false}`},
 		{"/api/v0/blueprints/info/foo", http.StatusOK, `{"blueprints":[],"changes":[],"errors":[{"id":"UnknownBlueprint","msg":"foo: "}]}`},
 		{"/api/v1/distros/list", http.StatusOK, `{"distros": ["test-distro", "test-distro-2"]}`},
-		{"/api/v1/compose/types", http.StatusOK, `{"types": [{"enabled":true, "name":"test_type"}]}`},
-		{"/api/v1/compose/types?distro=test-distro-2", http.StatusOK, `{"types": [{"enabled":true, "name":"test_type"}]}`},
+		{"/api/v1/compose/types", http.StatusOK, `{"types": [{"enabled":true, "name":"test_ostree_type"},{"enabled":true, "name":"test_type"}]}`},
+		{"/api/v1/compose/types?distro=test-distro-2", http.StatusOK, `{"types": [{"enabled":true, "name":"test_ostree_type"},{"enabled":true, "name":"test_type"}]}`},
 		{"/api/v1/compose/types?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
 	}
 
@@ -679,6 +679,11 @@ func TestCompose(t *testing.T) {
 	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
+	ostreeImgType, err := arch.GetImageType(test_distro.TestImageTypeOSTree)
+	require.NoError(t, err)
+	ostreeManifest, err := ostreeImgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
+	require.NoError(t, err)
+
 	expectedComposeLocal := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
@@ -760,14 +765,14 @@ func TestCompose(t *testing.T) {
 		},
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
-			ImageType:   imgType,
-			Manifest:    manifest,
+			ImageType:   ostreeImgType,
+			Manifest:    ostreeManifest,
 			Targets: []*target.Target{
 				{
-					ImageName: imgType.Filename(),
+					ImageName: ostreeImgType.Filename(),
 					OsbuildArtifact: target.OsbuildArtifact{
-						ExportFilename: imgType.Filename(),
-						ExportName:     imgType.Exports()[0],
+						ExportFilename: ostreeImgType.Filename(),
+						ExportName:     ostreeImgType.Exports()[0],
 					},
 					Name:    target.TargetNameWorkerServer,
 					Options: &target.WorkerServerTargetOptions{},
@@ -897,7 +902,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":""}}`, test_distro.TestImageTypeName),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":""}}`, test_distro.TestImageTypeOSTree),
 			http.StatusBadRequest,
 			`{"status": false, "errors":[{"id":"OSTreeOptionsError","msg":"ostree parent ref specified, but no URL to retrieve it"}]}`,
 			expectedComposeOSTree,
@@ -908,7 +913,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeOSTree, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL),
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeOSTree,
@@ -919,7 +924,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"whatever","parent":"","url":"invalid-url"}}`, test_distro.TestImageTypeName),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"whatever","parent":"","url":"invalid-url"}}`, test_distro.TestImageTypeOSTree),
 			http.StatusBadRequest,
 			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Get \"invalid-url/refs/heads/whatever\": unsupported protocol scheme \"\""}]}`,
 			nil,
@@ -930,7 +935,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeName),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeOSTree),
 			http.StatusBadRequest,
 			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Invalid ostree ref \"/bad/ref\""}]}`,
 			expectedComposeOSTree,
@@ -941,7 +946,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, "the/wrong/ref", ostreeRepoDefault.Server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeOSTree, "the/wrong/ref", ostreeRepoDefault.Server.URL),
 			http.StatusBadRequest,
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"ostree repository \"%s/refs/heads/the/wrong/ref\" returned status: 404 Not Found"}]}`, ostreeRepoDefault.Server.URL),
 			expectedComposeOSTree,
@@ -952,7 +957,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeName, "the/new/ref", ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeOSTree, "the/new/ref", ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL),
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,
@@ -963,7 +968,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeOSTree, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL),
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,
@@ -974,7 +979,7 @@ func TestCompose(t *testing.T) {
 			false,
 			"POST",
 			"/api/v1/compose",
-			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"","url":"%s"}}`, test_distro.TestImageTypeName, ostreeRepoDefault.Server.URL),
+			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"","parent":"","url":"%s"}}`, test_distro.TestImageTypeOSTree, ostreeRepoDefault.Server.URL),
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,

@@ -57,8 +57,9 @@ const (
 	TestArch2Name = "test_arch2"
 	TestArch3Name = "test_arch3"
 
-	TestImageTypeName  = "test_type"
-	TestImageType2Name = "test_type2"
+	TestImageTypeName   = "test_type"
+	TestImageType2Name  = "test_type2"
+	TestImageTypeOSTree = "test_ostree_type"
 
 	// added for cloudapi tests
 	TestImageTypeAmi            = "ami"
@@ -175,7 +176,10 @@ func (t *TestImageType) MIMEType() string {
 }
 
 func (t *TestImageType) OSTreeRef() string {
-	return t.architecture.distribution.OSTreeRef()
+	if t.name == TestImageTypeEdgeCommit || t.name == TestImageTypeEdgeInstaller || t.name == TestImageTypeOSTree {
+		return t.architecture.distribution.OSTreeRef()
+	}
+	return ""
 }
 
 func (t *TestImageType) Size(size uint64) uint64 {
@@ -322,7 +326,11 @@ func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 		name: TestImageTypeGce,
 	}
 
-	ta1.addImageTypes(it1)
+	it11 := TestImageType{
+		name: TestImageTypeOSTree,
+	}
+
+	ta1.addImageTypes(it1, it11)
 	ta2.addImageTypes(it1, it2)
 	ta3.addImageTypes(it3, it4, it5, it6, it7, it8, it9, it10)
 
