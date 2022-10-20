@@ -40,14 +40,16 @@ type supportedDistro struct {
 }
 
 type Registry struct {
-	distros    map[string]distro.Distro
-	hostDistro distro.Distro
+	distros      map[string]distro.Distro
+	hostDistro   distro.Distro
+	hostArchName string
 }
 
 func New(hostDistro distro.Distro, distros ...distro.Distro) (*Registry, error) {
 	reg := &Registry{
-		distros:    make(map[string]distro.Distro),
-		hostDistro: hostDistro,
+		distros:      make(map[string]distro.Distro),
+		hostDistro:   hostDistro,
+		hostArchName: common.CurrentArch(),
 	}
 	for _, d := range distros {
 		name := d.Name()
@@ -135,4 +137,14 @@ func mangleHostDistroName(name string, isBeta, isStream bool) string {
 // is e.g. a Beta or a Stream.
 func (r *Registry) FromHost() distro.Distro {
 	return r.hostDistro
+}
+
+// HostArchName returns the host's arch name
+func (r *Registry) HostArchName() string {
+	return r.hostArchName
+}
+
+// SetHostArchName can be used to override the host's arch name for testing
+func (r *Registry) SetHostArchName(name string) {
+	r.hostArchName = name
 }
