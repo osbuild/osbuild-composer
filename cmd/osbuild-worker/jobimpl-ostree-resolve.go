@@ -55,6 +55,7 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 			URL:    s.URL,
 			Ref:    s.Ref,
 			Parent: s.Parent,
+			RHSM:   s.RHSM,
 		}
 
 		ref, checksum, err := ostree.ResolveParams(reqParams)
@@ -67,6 +68,7 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 			URL:      s.URL,
 			Ref:      ref,
 			Checksum: checksum,
+			RHSM:     s.RHSM,
 		}
 	}
 

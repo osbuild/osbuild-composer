@@ -260,6 +260,7 @@ type OSTreeResolveSpec struct {
 	URL    string `json:"url"`
 	Ref    string `json:"ref"`
 	Parent string `json:"parent"`
+	RHSM   bool   `json:"rhsm"`
 }
 
 type OSTreeResolveJob struct {
@@ -270,6 +271,7 @@ type OSTreeResolveResultSpec struct {
 	URL      string `json:"url"`
 	Ref      string `json:"ref"`
 	Checksum string `json:"checksum"`
+	RHSM     bool   `json:"bool"`
 }
 
 type OSTreeResolveJobResult struct {
