@@ -7,6 +7,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/internal/ostree/test_mtls_server"
+	"github.com/osbuild/osbuild-composer/internal/rhsm"
 )
 
 func TestOstreeResolveRef(t *testing.T) {
@@ -34,30 +38,63 @@ func TestOstreeResolveRef(t *testing.T) {
 	srv := httptest.NewServer(handler)
 	defer srv.Close()
 
+	mTLSSrv, err := test_mtls_server.NewMTLSServer(handler)
+	srv2 := mTLSSrv.Server
+	require.NoError(t, err)
+	defer srv2.Close()
+	subs := &rhsm.Subscriptions{
+		Consumer: &rhsm.ConsumerSecrets{
+			CACert:       mTLSSrv.CAPath,
+			ConsumerKey:  mTLSSrv.ClientKeyPath,
+			ConsumerCert: mTLSSrv.ClientCrtPath,
+		},
+	}
+
+	type srvConfig struct {
+		Srv  *httptest.Server
+		RHSM bool
+		Subs *rhsm.Subscriptions
+	}
+	srvConfs := []srvConfig{
+		srvConfig{
+			Srv:  srv,
+			RHSM: false,
+			Subs: nil,
+		},
+		srvConfig{
+			Srv:  srv2,
+			RHSM: true,
+			Subs: subs,
+		},
+	}
+
 	type input struct {
 		location string
 		ref      string
 	}
-	validCases := map[input]string{
-		{srv.URL, "test_redir"}:       goodRef,
-		{srv.URL, "valid/ostree/ref"}: goodRef,
-	}
-	for in, expOut := range validCases {
-		out, err := ResolveRef(in.location, in.ref)
-		assert.NoError(t, err)
-		assert.Equal(t, expOut, out)
-	}
 
-	errCases := map[input]string{
-		{"not-a-url", "a-bad-ref"}:             "Get \"not-a-url/refs/heads/a-bad-ref\": unsupported protocol scheme \"\"",
-		{"http://0.0.0.0:10/repo", "whatever"}: "Get \"http://0.0.0.0:10/repo/refs/heads/whatever\": dial tcp 0.0.0.0:10: connect: connection refused",
-		{srv.URL, "rhel/8/x86_64/edge"}:        fmt.Sprintf("ostree repository \"%s/refs/heads/rhel/8/x86_64/edge\" returned status: 404 Not Found", srv.URL),
-		{srv.URL, "test_forbidden"}:            fmt.Sprintf("ostree repository \"%s/refs/heads/test_forbidden\" returned status: 403 Forbidden", srv.URL),
-		{srv.URL, "get_bad_ref"}:               fmt.Sprintf("ostree repository \"%s/refs/heads/get_bad_ref\" returned invalid reference", srv.URL),
-	}
-	for in, expMsg := range errCases {
-		_, err := ResolveRef(in.location, in.ref)
-		assert.EqualError(t, err, expMsg)
+	for _, srvConf := range srvConfs {
+		validCases := map[input]string{
+			{srvConf.Srv.URL, "test_redir"}:       goodRef,
+			{srvConf.Srv.URL, "valid/ostree/ref"}: goodRef,
+		}
+		for in, expOut := range validCases {
+			out, err := ResolveRef(in.location, in.ref, srvConf.RHSM, srvConf.Subs)
+			assert.NoError(t, err)
+			assert.Equal(t, expOut, out)
+		}
+
+		errCases := map[input]string{
+			{"not-a-url", "a-bad-ref"}:              "Get \"not-a-url/refs/heads/a-bad-ref\": unsupported protocol scheme \"\"",
+			{"http://0.0.0.0:10/repo", "whatever"}:  "Get \"http://0.0.0.0:10/repo/refs/heads/whatever\": dial tcp 0.0.0.0:10: connect: connection refused",
+			{srvConf.Srv.URL, "rhel/8/x86_64/edge"}: fmt.Sprintf("ostree repository \"%s/refs/heads/rhel/8/x86_64/edge\" returned status: 404 Not Found", srvConf.Srv.URL),
+			{srvConf.Srv.URL, "test_forbidden"}:     fmt.Sprintf("ostree repository \"%s/refs/heads/test_forbidden\" returned status: 403 Forbidden", srvConf.Srv.URL),
+			{srvConf.Srv.URL, "get_bad_ref"}:        fmt.Sprintf("ostree repository \"%s/refs/heads/get_bad_ref\" returned invalid reference", srvConf.Srv.URL),
+		}
+		for in, expMsg := range errCases {
+			_, err := ResolveRef(in.location, in.ref, srvConf.RHSM, srvConf.Subs)
+			assert.EqualError(t, err, expMsg)
+		}
 	}
 }
 
