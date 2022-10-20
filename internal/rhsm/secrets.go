@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"gopkg.in/ini.v1"
 )
 
@@ -23,6 +24,8 @@ type subscription struct {
 type Subscriptions struct {
 	available []subscription
 	secrets   *RHSMSecrets // secrets are used in there is no matching subscription
+
+	Consumer *ConsumerSecrets
 }
 
 // RHSMSecrets represents a set of CA certificate, client key, and
@@ -31,6 +34,13 @@ type RHSMSecrets struct {
 	SSLCACert     string
 	SSLClientKey  string
 	SSLClientCert string
+}
+
+// These secrets are present on any subscribed system and uniquely identify the host
+type ConsumerSecrets struct {
+	CACert       string
+	ConsumerKey  string
+	ConsumerCert string
 }
 
 func getRHSMSecrets() (*RHSMSecrets, error) {
@@ -74,11 +84,31 @@ func getListOfSubscriptions() ([]subscription, error) {
 	return subscriptions, nil
 }
 
+func getConsumerSecrets() (*ConsumerSecrets, error) {
+	res := ConsumerSecrets{
+		CACert:       "/etc/rhsm/ca/redhat-uep.pem",
+		ConsumerKey:  "/etc/pki/consumer/key.pem",
+		ConsumerCert: "/etc/pki/consumer/cert.pem",
+	}
+
+	if _, err := os.Stat(res.ConsumerKey); err != nil {
+		return nil, fmt.Errorf("no consumer key found")
+	}
+	if _, err := os.Stat(res.ConsumerCert); err != nil {
+		return nil, fmt.Errorf("no consumer cert found")
+	}
+	return &res, nil
+}
+
 // LoadSystemSubscriptions loads all the available subscriptions.
 func LoadSystemSubscriptions() (*Subscriptions, error) {
+	consumerSecrets, err := getConsumerSecrets()
+	if err != nil {
+		logrus.Warnf("Failed to load consumer certs: %v", err)
+	}
+
 	subscriptions, err1 := getListOfSubscriptions()
 	secrets, err2 := getRHSMSecrets()
-
 	if subscriptions == nil && secrets == nil {
 		// Neither works, return an error because at least one has to be available
 		if err1 != nil {
@@ -93,6 +123,8 @@ func LoadSystemSubscriptions() (*Subscriptions, error) {
 	return &Subscriptions{
 		available: subscriptions,
 		secrets:   secrets,
+
+		Consumer: consumerSecrets,
 	}, nil
 }
 
