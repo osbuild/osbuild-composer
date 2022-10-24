@@ -75,15 +75,17 @@ func (pt *PartitionTable) Clone() Entity {
 
 	for idx, partition := range pt.Partitions {
 		ent := partition.Clone()
-		var part *Partition
 
-		if ent != nil {
-			pEnt, cloneOk := ent.(*Partition)
-			if !cloneOk {
-				panic("PartitionTable.Clone() returned an Entity that cannot be converted to *PartitionTable; this is a programming error")
-			}
-			part = pEnt
+		// partition.Clone() will return nil only if the partition is nil
+		if ent == nil {
+			panic(fmt.Sprintf("partition %d in a Partition Table is nil; this is a programming error", idx))
 		}
+
+		part, cloneOk := ent.(*Partition)
+		if !cloneOk {
+			panic("PartitionTable.Clone() returned an Entity that cannot be converted to *PartitionTable; this is a programming error")
+		}
+
 		clone.Partitions[idx] = *part
 	}
 	return clone
