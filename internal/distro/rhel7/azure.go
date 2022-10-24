@@ -186,9 +186,6 @@ func vhdPipelines(compress bool) pipelinesFunc {
 		kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
 		imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
 		pipelines = append(pipelines, *imagePipeline)
-		if err != nil {
-			return nil, err
-		}
 
 		var qemufile string
 		if compress {
