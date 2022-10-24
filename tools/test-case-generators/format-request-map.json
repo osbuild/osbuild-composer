@@ -24,6 +24,20 @@
       "x86_64"
     ]
   },
+  "azure-sap-rhui": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "azure-sap-rhui",
+      "repositories": [],
+      "filename": "disk.vhd.xz",
+      "blueprint": {}
+    },
+    "overrides": {},
+    "supported_arches": [
+      "x86_64"
+    ]
+  },
   "container": {
     "compose-request": {
       "distro": "",
