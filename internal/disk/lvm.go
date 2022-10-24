@@ -29,14 +29,17 @@ func (vg *LVMVolumeGroup) Clone() Entity {
 
 	for idx, lv := range vg.LogicalVolumes {
 		ent := lv.Clone()
-		var lv *LVMLogicalVolume
-		if ent != nil {
-			lvEnt, cloneOk := ent.(*LVMLogicalVolume)
-			if !cloneOk {
-				panic("LVMLogicalVolume.Clone() returned an Entity that cannot be converted to *LVMLogicalVolume; this is a programming error")
-			}
-			lv = lvEnt
+
+		// lv.Clone() will return nil only if the logical volume is nil
+		if ent == nil {
+			panic(fmt.Sprintf("logical volume %d in a LVM volume group is nil; this is a programming error", idx))
 		}
+
+		lv, cloneOk := ent.(*LVMLogicalVolume)
+		if !cloneOk {
+			panic("LVMLogicalVolume.Clone() returned an Entity that cannot be converted to *LVMLogicalVolume; this is a programming error")
+		}
+
 		clone.LogicalVolumes[idx] = *lv
 	}
 
