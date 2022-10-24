@@ -94,7 +94,6 @@ function createReqFile() {
       "tenant_id": "${AZURE_TENANT_ID}",
       "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
       "resource_group": "${AZURE_RESOURCE_GROUP}",
-      "location": "${AZURE_LOCATION}",
       "image_name": "${AZURE_IMAGE_NAME}"
     }
   }
