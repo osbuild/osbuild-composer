@@ -74,9 +74,19 @@ func (ac Client) GetResourceGroupLocation(ctx context.Context, subscriptionID, r
 // CreateStorageAccount creates a storage account in the specified resource
 // group. The location parameter can be used to specify its location. The tag
 // can be used to specify a tag attached to the account.
+// The location is optional and if not provided, it is determined
+// from the resource group.
 func (ac Client) CreateStorageAccount(ctx context.Context, subscriptionID, resourceGroup, name, location string, tag Tag) error {
 	c := storage.NewAccountsClient(subscriptionID)
 	c.Authorizer = ac.authorizer
+
+	var err error
+	if location == "" {
+		location, err = ac.GetResourceGroupLocation(ctx, subscriptionID, resourceGroup)
+		if err != nil {
+			return fmt.Errorf("retrieving resource group location failed: %v", err)
+		}
+	}
 
 	result, err := c.Create(ctx, resourceGroup, name, storage.AccountCreateParameters{
 		Sku: &storage.Sku{
@@ -125,11 +135,21 @@ func (ac Client) GetStorageAccountKey(ctx context.Context, subscriptionID, resou
 }
 
 // RegisterImage creates a generalized V1 Linux image from a given blob.
+// The location is optional and if not provided, it is determined
+// from the resource group.
 func (ac Client) RegisterImage(ctx context.Context, subscriptionID, resourceGroup, storageAccount, storageContainer, blobName, imageName, location string) error {
 	c := compute.NewImagesClient(subscriptionID)
 	c.Authorizer = ac.authorizer
 
 	blobURI := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", storageAccount, storageContainer, blobName)
+
+	var err error
+	if location == "" {
+		location, err = ac.GetResourceGroupLocation(ctx, subscriptionID, resourceGroup)
+		if err != nil {
+			return fmt.Errorf("retrieving resource group location failed: %v", err)
+		}
+	}
 
 	imageFuture, err := c.CreateOrUpdate(ctx, resourceGroup, imageName, compute.Image{
 		Response: autorest.Response{},
