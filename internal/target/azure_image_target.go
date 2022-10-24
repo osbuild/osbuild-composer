@@ -4,7 +4,7 @@ const TargetNameAzureImage TargetName = "org.osbuild.azure.image"
 
 type AzureImageTargetOptions struct {
 	TenantID       string `json:"tenant_id"`
-	Location       string `json:"location"`
+	Location       string `json:"location,omitempty"`
 	SubscriptionID string `json:"subscription_id"`
 	ResourceGroup  string `json:"resource_group"`
 }
