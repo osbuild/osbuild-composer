@@ -58,6 +58,19 @@ func (ac Client) GetResourceNameByTag(ctx context.Context, subscriptionID, resou
 	return *result.Values()[0].Name, nil
 }
 
+// GetResourceGroupLocation returns the location of the given resource group.
+func (ac Client) GetResourceGroupLocation(ctx context.Context, subscriptionID, resourceGroup string) (string, error) {
+	c := resources.NewGroupsClient(subscriptionID)
+	c.Authorizer = ac.authorizer
+
+	group, err := c.Get(ctx, resourceGroup)
+	if err != nil {
+		return "", fmt.Errorf("retrieving resource group failed: %v", err)
+	}
+
+	return *group.Location, nil
+}
+
 // CreateStorageAccount creates a storage account in the specified resource
 // group. The location parameter can be used to specify its location. The tag
 // can be used to specify a tag attached to the account.
