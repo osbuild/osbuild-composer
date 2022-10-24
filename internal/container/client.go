@@ -132,10 +132,6 @@ func NewClient(target string) (*Client, error) {
 		}
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	client := Client{
 		Target: reference.TagNameOnly(ref),
 
