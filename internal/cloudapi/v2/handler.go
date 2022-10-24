@@ -470,9 +470,13 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				if err != nil {
 					return HTTPError(ErrorJSONUnMarshallingError)
 				}
+				rgLocation := ""
+				if azureUploadOptions.Location != nil {
+					rgLocation = *azureUploadOptions.Location
+				}
 				t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
 					TenantID:       azureUploadOptions.TenantId,
-					Location:       azureUploadOptions.Location,
+					Location:       rgLocation,
 					SubscriptionID: azureUploadOptions.SubscriptionId,
 					ResourceGroup:  azureUploadOptions.ResourceGroup,
 				})

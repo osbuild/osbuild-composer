@@ -917,7 +917,6 @@ components:
         - tenant_id
         - subscription_id
         - resource_group
-        - location
       properties:
         tenant_id:
           type: string
@@ -940,9 +939,10 @@ components:
           type: string
           example: 'westeurope'
           description: |
-            Location where the image should be uploaded and registered.
+            Location of the provided resource_group, where the image should be uploaded and registered.
             How to list all locations:
             https://docs.microsoft.com/en-us/cli/azure/account?view=azure-cli-latest#az_account_list_locations'
+            If the location is not specified, it is deducted from the provided resource_group.
         image_name:
           type: string
           example: 'my-image'
