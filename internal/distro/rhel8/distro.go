@@ -154,6 +154,18 @@ var distroMap = map[string]distribution{
 		runner:             "org.osbuild.rhel87",
 		defaultImageConfig: defaultDistroImageConfig,
 	},
+	"rhel-88": {
+		name:               "rhel-88",
+		product:            "Red Hat Enterprise Linux",
+		osVersion:          "8.8",
+		releaseVersion:     "8",
+		modulePlatformID:   "platform:el8",
+		vendor:             "redhat",
+		ostreeRefTmpl:      "rhel/8/%s/edge",
+		isolabelTmpl:       "RHEL-8-8-0-BaseOS-%s",
+		runner:             "org.osbuild.rhel88",
+		defaultImageConfig: defaultDistroImageConfig,
+	},
 	"centos-8": {
 		name:               "centos-8",
 		product:            "CentOS Stream",
@@ -703,6 +715,14 @@ func NewRHEL87() distro.Distro {
 
 func NewRHEL87HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	return newDistro("rhel-87")
+}
+
+func NewRHEL88() distro.Distro {
+	return newDistro("rhel-88")
+}
+
+func NewRHEL88HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
+	return newDistro("rhel-88")
 }
 
 func NewCentos() distro.Distro {
