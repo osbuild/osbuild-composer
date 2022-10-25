@@ -6,8 +6,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-// SapImageConfig returns the SAP specific ImageConfig data
-func SapImageConfig(rd distribution) *distro.ImageConfig {
+// sapImageConfig returns the SAP specific ImageConfig data
+func sapImageConfig(osVersion string) *distro.ImageConfig {
 	return &distro.ImageConfig{
 		SELinuxConfig: &osbuild.SELinuxConfigStageOptions{
 			State: osbuild.SELinuxStatePermissive,
@@ -109,7 +109,7 @@ func SapImageConfig(rd distribution) *distro.ImageConfig {
 				[]osbuild.DNFVariable{
 					{
 						Name:  "releasever",
-						Value: rd.osVersion,
+						Value: osVersion,
 					},
 				},
 				nil,
