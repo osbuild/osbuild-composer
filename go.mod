@@ -13,7 +13,7 @@ require (
 	github.com/Azure/azure-storage-blob-go v0.13.0
 	github.com/Azure/go-autorest/autorest v0.11.28
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
-	github.com/BurntSushi/toml v1.2.0
+	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.44.114
 	github.com/containers/common v0.49.1
 	github.com/containers/image/v5 v5.22.0
