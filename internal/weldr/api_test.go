@@ -392,6 +392,221 @@ func TestBlueprintsInfoToml(t *testing.T) {
 	require.Equalf(t, expected, got, "received unexpected blueprint")
 }
 
+func TestBlueprintsCustomizationInfoToml(t *testing.T) {
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
+
+	// A test blueprint with all the available customizations filled in
+	// Converted from TOML to JSON for the POST
+	testBlueprint := `{
+  "name": "example-custom-base",
+  "description": "A base system with customizations",
+  "version": "0.0.1",
+  "distro": "test-distro",
+  "packages": [
+    {
+      "name": "tmux",
+      "version": "*"
+    },
+    {
+      "name": "git",
+      "version": "*"
+    },
+    {
+      "name": "vim-enhanced",
+      "version": "*"
+    }
+  ],
+  "containers": [
+    {
+      "source": "quay.io/fedora/fedora:latest"
+    }
+  ],
+  "customizations": {
+    "hostname": "custombase",
+    "kernel": {
+      "append": "nosmt=force"
+    },
+    "timezone": {
+      "timezone": "US/Eastern",
+      "ntpservers": [
+        "0.north-america.pool.ntp.org",
+        "1.north-america.pool.ntp.org"
+      ]
+    },
+    "locale": {
+      "languages": [
+        "en_US.UTF-8"
+      ],
+      "keyboard": "us"
+    },
+    "sshkey": [
+      {
+        "user": "root",
+        "key": "A SSH KEY FOR ROOT"
+      }
+    ],
+    "firewall": {
+      "ports": [
+        "22:tcp",
+        "80:tcp",
+        "imap:tcp",
+        "53:tcp",
+        "53:udp"
+      ],
+      "services": {
+        "enabled": [
+          "ftp",
+          "ntp",
+          "dhcp"
+        ],
+        "disabled": [
+          "telnet"
+        ]
+      }
+    },
+    "services": {
+      "enabled": [
+        "sshd",
+        "cockpit.socket",
+        "httpd"
+      ],
+      "disabled": [
+        "postfix",
+        "telnetd"
+      ]
+    },
+    "user": [
+      {
+        "name": "admin",
+        "description": "Widget admin account",
+        "password": "$6$CHO2$3rN8eviE2t50lmVyBYihTgVRHcaecmeCk31LeOUleVK/R/aeWVHVZDi26zAH.o0ywBKH9Tc0/wm7sW/q39uyd1",
+        "home": "/srv/widget/",
+        "shell": "/usr/bin/bash",
+        "groups": [
+          "widget",
+          "users",
+          "students"
+        ],
+        "uid": 1200
+      }
+    ],
+    "group": [
+      {
+        "name": "widget"
+      },
+      {
+        "name": "students"
+      }
+    ],
+    "filesystem": [
+      {
+        "mountpoint": "/",
+        "minsize": 2147483648
+      }
+    ],
+	"openscap": {
+	    "datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
+		"profile_id": "xccdf_org.ssgproject.content_profile_cis"
+	}
+  }
+}`
+	resp := test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", testBlueprint)
+	body, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+
+	req := httptest.NewRequest("GET", "/api/v0/blueprints/info/example-custom-base?format=toml", nil)
+	recorder := httptest.NewRecorder()
+	api.ServeHTTP(recorder, req)
+
+	resp = recorder.Result()
+	body, err = ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+
+	var got blueprint.Blueprint
+	err = toml.Unmarshal(body, &got)
+	require.NoErrorf(t, err, "error decoding toml file")
+
+	expected := blueprint.Blueprint{
+		Name:        "example-custom-base",
+		Description: "A base system with customizations",
+		Version:     "0.0.1",
+		Distro:      "test-distro",
+		Packages: []blueprint.Package{
+			blueprint.Package{Name: "tmux", Version: "*"},
+			blueprint.Package{Name: "git", Version: "*"},
+			blueprint.Package{Name: "vim-enhanced", Version: "*"},
+		},
+		Modules: []blueprint.Package{},
+		Groups:  []blueprint.Group{},
+		Containers: []blueprint.Container{
+			blueprint.Container{
+				Source: "quay.io/fedora/fedora:latest",
+			},
+		},
+		Customizations: &blueprint.Customizations{
+			Hostname: common.StringToPtr("custombase"),
+			Kernel: &blueprint.KernelCustomization{
+				Append: "nosmt=force",
+			},
+			SSHKey: []blueprint.SSHKeyCustomization{
+				blueprint.SSHKeyCustomization{User: "root", Key: "A SSH KEY FOR ROOT"},
+			},
+			User: []blueprint.UserCustomization{
+				blueprint.UserCustomization{
+					Name:        "admin",
+					Description: common.StringToPtr("Widget admin account"),
+					Password:    common.StringToPtr("$6$CHO2$3rN8eviE2t50lmVyBYihTgVRHcaecmeCk31LeOUleVK/R/aeWVHVZDi26zAH.o0ywBKH9Tc0/wm7sW/q39uyd1"),
+					Home:        common.StringToPtr("/srv/widget/"),
+					Shell:       common.StringToPtr("/usr/bin/bash"),
+					Groups:      []string{"widget", "users", "students"},
+					UID:         common.IntToPtr(1200),
+				},
+			},
+			Group: []blueprint.GroupCustomization{
+				blueprint.GroupCustomization{
+					Name: "widget",
+				},
+				blueprint.GroupCustomization{
+					Name: "students",
+				},
+			},
+			Timezone: &blueprint.TimezoneCustomization{
+				Timezone:   common.StringToPtr("US/Eastern"),
+				NTPServers: []string{"0.north-america.pool.ntp.org", "1.north-america.pool.ntp.org"},
+			},
+			Locale: &blueprint.LocaleCustomization{
+				Languages: []string{"en_US.UTF-8"},
+				Keyboard:  common.StringToPtr("us"),
+			},
+			Firewall: &blueprint.FirewallCustomization{
+				Ports: []string{"22:tcp", "80:tcp", "imap:tcp", "53:tcp", "53:udp"},
+				Services: &blueprint.FirewallServicesCustomization{
+					Enabled:  []string{"ftp", "ntp", "dhcp"},
+					Disabled: []string{"telnet"},
+				},
+			},
+			Services: &blueprint.ServicesCustomization{
+				Enabled:  []string{"sshd", "cockpit.socket", "httpd"},
+				Disabled: []string{"postfix", "telnetd"},
+			},
+			Filesystem: []blueprint.FilesystemCustomization{
+				blueprint.FilesystemCustomization{
+					Mountpoint: "/",
+					MinSize:    2147483648,
+				},
+			},
+			OpenSCAP: &blueprint.OpenSCAPCustomization{
+				DataStream: "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
+				ProfileID:  "xccdf_org.ssgproject.content_profile_cis",
+			},
+		},
+	}
+
+	require.Equalf(t, expected, got, string(body))
+}
+
 func TestNonExistentBlueprintsInfoToml(t *testing.T) {
 	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
 	req := httptest.NewRequest("GET", "/api/v0/blueprints/info/test3-non?format=toml", nil)
