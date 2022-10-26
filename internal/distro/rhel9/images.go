@@ -65,6 +65,7 @@ func osCustomizations(
 		osc.DefaultTarget = *imageConfig.DefaultTarget
 	}
 
+	osc.Firewall = imageConfig.Firewall
 	if fw := c.GetFirewall(); fw != nil {
 		options := osbuild.FirewallStageOptions{
 			Ports: fw.Ports,
@@ -74,11 +75,11 @@ func osCustomizations(
 			options.EnabledServices = fw.Services.Enabled
 			options.DisabledServices = fw.Services.Disabled
 		}
-		if fw.Sources != nil {
-			for _, s := range fw.Sources {
-				options.Sources = append(options.Sources, osbuild.FirewallSource{
-					Zone:    s.Zone,
-					Sources: s.Sources,
+		if fw.Zones != nil {
+			for _, z := range fw.Zones {
+				options.Zones = append(options.Zones, osbuild.FirewallZone{
+					Name:    *z.Name,
+					Sources: z.Sources,
 				})
 			}
 		}
@@ -163,7 +164,6 @@ func osCustomizations(
 	osc.RHSMConfig = imageConfig.RHSMConfig
 	osc.Subscription = options.Subscription
 	osc.WAAgentConfig = imageConfig.WAAgentConfig
-	osc.Firewall = imageConfig.Firewall
 	osc.UdevRules = imageConfig.UdevRules
 	osc.GCPGuestAgentConfig = imageConfig.GCPGuestAgentConfig
 

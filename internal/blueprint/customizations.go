@@ -74,11 +74,11 @@ type LocaleCustomization struct {
 type FirewallCustomization struct {
 	Ports    []string                       `json:"ports,omitempty" toml:"ports,omitempty"`
 	Services *FirewallServicesCustomization `json:"services,omitempty" toml:"services,omitempty"`
-	Sources  []FirewallSourceCustomization  `json:"sources,omitempty" toml:"sources,omitempty"`
+	Zones    []FirewallZoneCustomization    `json:"zones,omitempty" toml:"zones,omitempty"`
 }
 
-type FirewallSourceCustomization struct {
-	Zone    string   `json:"zone,omitempty" toml:"zone,omitempty"`
+type FirewallZoneCustomization struct {
+	Name    *string  `json:"name,omitempty" toml:"name,omitempty"`
 	Sources []string `json:"sources,omitempty" toml:"sources,omitempty"`
 }
 

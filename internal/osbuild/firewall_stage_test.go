@@ -14,3 +14,14 @@ func TestNewFirewallStage(t *testing.T) {
 	actualFirewall := NewFirewallStage(&FirewallStageOptions{})
 	assert.Equal(t, expectedFirewall, actualFirewall)
 }
+
+func TestFirewallStageZones_ValidateInvalid(t *testing.T) {
+	options := FirewallStageOptions{}
+	var sources []string
+	options.Zones = append(options.Zones, FirewallZone{
+		Name:    "",
+		Sources: sources,
+	})
+	assert := assert.New(t)
+	assert.Error(options.validate())
+}

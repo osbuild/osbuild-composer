@@ -76,11 +76,11 @@ func firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.Fi
 		options.DisabledServices = firewall.Services.Disabled
 	}
 
-	if len(firewall.Sources) != 0 {
-		for _, s := range firewall.Sources {
-			options.Sources = append(options.Sources, osbuild.FirewallSource{
-				Zone:    s.Zone,
-				Sources: s.Sources,
+	if len(firewall.Zones) != 0 {
+		for _, z := range firewall.Zones {
+			options.Zones = append(options.Zones, osbuild.FirewallZone{
+				Name:    *z.Name,
+				Sources: z.Sources,
 			})
 		}
 	}
