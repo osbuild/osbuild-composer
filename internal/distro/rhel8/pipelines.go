@@ -497,12 +497,12 @@ func osPipeline(t *imageType,
 		// merge the user-provided firewall config with the default one
 		if fwStageOptions != nil {
 			fwStageOptions = &osbuild.FirewallStageOptions{
-				// Prefer the firewall ports, services and sources settings provided
+				// Prefer the firewall ports, services and zone settings provided
 				// via BP customization.
 				Ports:            fwStageOptions.Ports,
 				EnabledServices:  fwStageOptions.EnabledServices,
 				DisabledServices: fwStageOptions.DisabledServices,
-				Sources:          fwStageOptions.Sources,
+				Zones:            fwStageOptions.Zones,
 				// Default zone can not be set using BP customizations, therefore
 				// default to the one provided in the default image configuration.
 				DefaultZone: firewallConfig.DefaultZone,
