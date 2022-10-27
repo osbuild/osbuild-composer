@@ -49,7 +49,6 @@ func azureCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		Exclude: []string{
 			"aic94xx-firmware",
 			"alsa-firmware",
-			"alsa-lib",
 			"alsa-sof-firmware",
 			"alsa-tools-firmware",
 			"dracut-config-rescue",
@@ -110,7 +109,11 @@ func azureCommonPackageSet(t *imageType) rpmmd.PackageSet {
 
 // Azure BYOS image package set
 func azurePackageSet(t *imageType) rpmmd.PackageSet {
-	return azureCommonPackageSet(t)
+	return rpmmd.PackageSet{
+		Exclude: []string{
+			"alsa-lib",
+		},
+	}.Append(azureCommonPackageSet(t))
 }
 
 // Azure RHUI image package set
@@ -118,6 +121,9 @@ func azureRhuiPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"rhui-azure-rhel8",
+		},
+		Exclude: []string{
+			"alsa-lib",
 		},
 	}.Append(azureCommonPackageSet(t))
 }
