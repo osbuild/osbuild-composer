@@ -543,7 +543,7 @@ var azureRhuiImgType = imageType{
 	defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(defaultAzureImageConfig),
 	kernelOptions:       defaultAzureKernelOptions,
 	bootable:            true,
-	defaultSize:         68719476736,
+	defaultSize:         64 * common.GibiByte,
 	pipelines:           vhdPipelines(true),
 	buildPipelines:      []string{"build"},
 	payloadPipelines:    []string{"os", "image", "vpc", "archive"},
