@@ -629,48 +629,14 @@ func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 // rhel-sap-ec2 image package set
+// Includes the common ec2 package set, the common SAP packages, and
+// the amazon rhui sap package
 func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
-	ec2SapPackageSet := rhelEc2CommonPackageSet(t)
-	ec2SapPackageSet = ec2SapPackageSet.Append(rpmmd.PackageSet{
+	return rpmmd.PackageSet{
 		Include: []string{
-			// RHBZ#2076763
-			"@Server",
-			// SAP System Roles
-			// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-			"ansible-core",
-			"rhel-system-roles-sap",
-			// RHBZ#1959813
-			"bind-utils",
-			"nfs-utils",
-			"tcsh",
-			// RHBZ#1959955
-			"uuidd",
-			// RHBZ#1959923
-			"cairo",
-			"expect",
-			"graphviz",
-			"gtk2",
-			"iptraf-ng",
-			"krb5-workstation",
-			"libaio",
-			"libatomic",
-			"libcanberra-gtk2",
-			"libicu",
-			"libtool-ltdl",
-			"lm_sensors",
-			"net-tools",
-			"numactl",
-			"PackageKit-gtk3-module",
-			"xorg-x11-xauth",
-			// RHBZ#1960617
-			"tuned-profiles-sap-hana",
-			// RHBZ#1961168
-			"libnsl",
-			// RHUI client
 			"rh-amazon-rhui-client-sap-bundle-e4s",
 		},
-	})
-	return ec2SapPackageSet
+	}.Append(rhelEc2CommonPackageSet(t)).Append(SapPackageSet(t))
 }
 
 // common GCE image

@@ -3,6 +3,7 @@ package rhel9
 import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 // SapImageConfig returns the SAP specific ImageConfig data
@@ -113,6 +114,46 @@ func SapImageConfig(rd distribution) *distro.ImageConfig {
 				},
 				nil,
 			),
+		},
+	}
+}
+
+func SapPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			// RHBZ#2076763
+			"@Server",
+			// SAP System Roles
+			// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
+			"ansible-core",
+			"rhel-system-roles-sap",
+			// RHBZ#1959813
+			"bind-utils",
+			"nfs-utils",
+			"tcsh",
+			// RHBZ#1959955
+			"uuidd",
+			// RHBZ#1959923
+			"cairo",
+			"expect",
+			"graphviz",
+			"gtk2",
+			"iptraf-ng",
+			"krb5-workstation",
+			"libaio",
+			"libatomic",
+			"libcanberra-gtk2",
+			"libicu",
+			"libtool-ltdl",
+			"lm_sensors",
+			"net-tools",
+			"numactl",
+			"PackageKit-gtk3-module",
+			"xorg-x11-xauth",
+			// RHBZ#1960617
+			"tuned-profiles-sap-hana",
+			// RHBZ#1961168
+			"libnsl",
 		},
 	}
 }
