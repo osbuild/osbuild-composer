@@ -237,6 +237,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 		bootType: distro.LegacyBootType,
 	}
 
+	qcow2ImgType := mkQcow2ImgType(rd)
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
