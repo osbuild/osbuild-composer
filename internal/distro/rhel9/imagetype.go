@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -50,6 +51,7 @@ type packageSetFunc func(t *imageType) rpmmd.PackageSet
 type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
+	environment        environment.Environment
 	name               string
 	nameAliases        []string
 	filename           string
