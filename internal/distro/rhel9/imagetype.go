@@ -11,11 +11,15 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/image"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/workload"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -37,6 +41,8 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
+type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, rng *rand.Rand) (image.ImageKind, error)
+
 type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
@@ -57,6 +63,7 @@ type imageType struct {
 	payloadPipelines   []string
 	exports            []string
 	pipelines          pipelinesFunc
+	image              imageFunc
 
 	// bootISO: installable ISO
 	bootISO bool
@@ -115,6 +122,14 @@ func (t *imageType) getPackages(name string) rpmmd.PackageSet {
 }
 
 func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+	// TEMPORARY
+	// Use the new manifest generation function if the image type defines an
+	// imageFunc
+	// This is temporary until all image types are transitioned
+	if t.image != nil {
+		return t.PackageSetsNew(bp, options, repos)
+	}
+
 	// merge package sets that appear in the image type with the package sets
 	// of the same name from the distro and arch
 	mergedSets := make(map[string]rpmmd.PackageSet)
@@ -273,12 +288,61 @@ func (t *imageType) PartitionType() string {
 	return basePartitionTable.Type
 }
 
+func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	repos []rpmmd.RepoConfig,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	seed int64) (*manifest.Manifest, error) {
+
+	if err := t.checkOptions(bp.Customizations, options, containers); err != nil {
+		return nil, err
+	}
+
+	// TODO: let image types specify valid workloads, rather than
+	// always assume Custom.
+	w := &workload.Custom{
+		BaseWorkload: workload.BaseWorkload{
+			Repos: packageSets[blueprintPkgsKey].Repositories,
+		},
+		Packages: bp.GetPackagesEx(false),
+	}
+	if services := bp.Customizations.GetServices(); services != nil {
+		w.Services = services.Enabled
+		w.DisabledServices = services.Disabled
+	}
+
+	source := rand.NewSource(seed)
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(source)
+
+	img, err := t.image(w, t, bp.Customizations, options, packageSets, rng)
+	if err != nil {
+		return nil, err
+	}
+	manifest := manifest.New()
+	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
+	if err != nil {
+		return nil, err
+	}
+	return &manifest, err
+}
+
 func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
 	packageSpecSets map[string][]rpmmd.PackageSpec,
 	containers []container.Spec,
 	seed int64) (distro.Manifest, error) {
+
+	// TEMPORARY
+	// Use the new manifest generation function if the image type defines an
+	// imageFunc
+	// This is temporary until all image types are transitioned
+	if t.image != nil {
+		return t.ManifestNew(customizations, options, repos, packageSpecSets, containers, seed)
+	}
 
 	if err := t.checkOptions(customizations, options, containers); err != nil {
 		return distro.Manifest{}, err
@@ -325,6 +389,84 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 			Sources:   osbuild.GenSources(allPackageSpecs, commits, inlineData, containers),
 		},
 	)
+}
+
+func (t *imageType) ManifestNew(customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	repos []rpmmd.RepoConfig,
+	packageSets map[string][]rpmmd.PackageSpec,
+	containers []container.Spec,
+	seed int64) (distro.Manifest, error) {
+
+	bp := &blueprint.Blueprint{Name: "empty blueprint"}
+	err := bp.Initialize()
+	if err != nil {
+		panic("could not initialize empty blueprint: " + err.Error())
+	}
+	bp.Customizations = customizations
+
+	manifest, err := t.initializeManifest(bp, options, repos, nil, containers, seed)
+	if err != nil {
+		return distro.Manifest{}, err
+	}
+
+	return manifest.Serialize(packageSets)
+}
+
+func (t *imageType) PackageSetsNew(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+	// merge package sets that appear in the image type with the package sets
+	// of the same name from the distro and arch
+	packageSets := make(map[string]rpmmd.PackageSet)
+
+	for name, getter := range t.packageSets {
+		packageSets[name] = getter(t)
+	}
+
+	// amend with repository information
+	globalRepos := make([]rpmmd.RepoConfig, 0)
+	for _, repo := range repos {
+		if len(repo.PackageSets) > 0 {
+			// only apply the repo to the listed package sets
+			for _, psName := range repo.PackageSets {
+				ps := packageSets[psName]
+				ps.Repositories = append(ps.Repositories, repo)
+				packageSets[psName] = ps
+			}
+		} else {
+			// no package sets were listed, so apply the repo
+			// to all package sets
+			globalRepos = append(globalRepos, repo)
+		}
+	}
+
+	// In case of Cloud API, this method is called before the ostree commit
+	// is resolved. Unfortunately, initializeManifest when called for
+	// an ostree installer returns an error.
+	//
+	// Work around this by providing a dummy FetchChecksum to convince the
+	// method that it's fine to initialize the manifest. Note that the ostree
+	// content has no effect on the package sets, so this is fine.
+	//
+	// See: https://github.com/osbuild/osbuild-composer/issues/3125
+	//
+	// TODO: Remove me when it's possible the get the package set chain without
+	//       resolving the ostree reference before. Also remove the test for
+	//       this workaround
+	if t.rpmOstree && t.bootISO && options.OSTree.FetchChecksum == "" {
+		options.OSTree.FetchChecksum = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+		logrus.Warn("FIXME: Requesting package sets for iot-installer without a resolved ostree ref. Faking one.")
+	}
+
+	// create a manifest object and instantiate it with the computed packageSetChains
+	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, nil, 0)
+	if err != nil {
+		// TODO: handle manifest initialization errors more gracefully, we
+		// refuse to initialize manifests with invalid config.
+		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
+		return nil
+	}
+
+	return manifest.GetPackageSetChains()
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
