@@ -254,7 +254,9 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewKeymapStage(&osbuild.KeymapStageOptions{Keymap: *p.Keyboard}))
 	}
 
-	pipeline.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: p.Hostname}))
+	if p.Hostname != "" {
+		pipeline.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: p.Hostname}))
+	}
 	pipeline.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: p.Timezone}))
 
 	if len(p.NTPServers) > 0 {
