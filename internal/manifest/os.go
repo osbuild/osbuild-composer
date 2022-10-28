@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
+	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
@@ -81,6 +82,9 @@ type OSCustomizations struct {
 	AuthConfig     *osbuild.AuthconfigStageOptions
 	PwQuality      *osbuild.PwqualityConfStageOptions
 	OpenSCAPConfig *osbuild.OscapRemediationStageOptions
+
+	Subscription *distro.SubscriptionImageOptions
+	RHSMConfig   map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -384,6 +388,27 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	if p.PwQuality != nil {
 		pipeline.AddStage(osbuild.NewPwqualityConfStage(p.PwQuality))
+	}
+
+	if p.Subscription != nil {
+		commands := []string{
+			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", p.Subscription.Organization, p.Subscription.ActivationKey, p.Subscription.ServerUrl, p.Subscription.BaseUrl),
+		}
+		if p.Subscription.Insights {
+			commands = append(commands, "/usr/bin/insights-client --register")
+		}
+		pipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
+			Commands:       commands,
+			WaitForNetwork: true,
+		}))
+
+		if rhsmConfig, exists := p.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
+			pipeline.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+		}
+	} else {
+		if rhsmConfig, exists := p.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
+			pipeline.AddStage(osbuild.NewRHSMStage(rhsmConfig))
+		}
 	}
 
 	if pt := p.PartitionTable; pt != nil {
