@@ -16,7 +16,9 @@ import (
 func osCustomizations(
 	t *imageType,
 	osPackageSet rpmmd.PackageSet,
-	c *blueprint.Customizations) manifest.OSCustomizations {
+	options distro.ImageOptions,
+	c *blueprint.Customizations,
+) manifest.OSCustomizations {
 
 	imageConfig := t.getDefaultImageConfig()
 
@@ -122,6 +124,8 @@ func osCustomizations(
 	osc.SshdConfig = imageConfig.SshdConfig
 	osc.AuthConfig = imageConfig.Authconfig
 	osc.PwQuality = imageConfig.PwQuality
+	osc.RHSMConfig = imageConfig.RHSMConfig
+	osc.Subscription = options.Subscription
 
 	return osc
 }
@@ -135,7 +139,7 @@ func liveImage(workload workload.Workload,
 
 	img := image.NewLiveImage()
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
 	// TODO: move generation into LiveImage

@@ -16,21 +16,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: qcow2CommonPackageSet,
 		},
-		defaultImageConfig: &distro.ImageConfig{
-			DefaultTarget: common.StringToPtr("multi-user.target"),
-			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-				distro.RHSMConfigNoSubscription: {
-					DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-						ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-							Enabled: false,
-						},
-						SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-							Enabled: false,
-						},
-					},
-				},
-			},
-		},
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
 		image:               liveImage,
@@ -157,4 +142,32 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	return ps
+}
+
+func qcowImageConfig(d distribution) *distro.ImageConfig {
+	ic := &distro.ImageConfig{
+		DefaultTarget: common.StringToPtr("multi-user.target"),
+	}
+	if d.isRHEL() {
+		ic.RHSMConfig = map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+					ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
+						Enabled: false,
+					},
+					SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+						Enabled: false,
+					},
+				},
+			},
+		}
+
+	}
+	return ic
+}
+
+func mkQcow2ImgType(d distribution) imageType {
+	it := qcow2ImgType
+	it.defaultImageConfig = qcowImageConfig(d)
+	return it
 }
