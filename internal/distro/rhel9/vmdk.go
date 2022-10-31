@@ -11,11 +11,7 @@ var vmdkImgType = imageType{
 	filename: "disk.vmdk",
 	mimeType: "application/x-vmdk",
 	packageSets: map[string]packageSetFunc{
-		buildPkgsKey: distroBuildPackageSet,
-		osPkgsKey:    vmdkCommonPackageSet,
-	},
-	packageSetChains: map[string][]string{
-		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		osPkgsKey: vmdkCommonPackageSet,
 	},
 	defaultImageConfig: &distro.ImageConfig{
 		Locale: common.StringToPtr("en_US.UTF-8"),
@@ -23,7 +19,7 @@ var vmdkImgType = imageType{
 	kernelOptions:       "ro net.ifnames=0",
 	bootable:            true,
 	defaultSize:         4 * common.GibiByte,
-	pipelines:           vmdkPipelines,
+	image:               liveImage,
 	buildPipelines:      []string{"build"},
 	payloadPipelines:    []string{"os", "image", "vmdk"},
 	exports:             []string{"vmdk"},
