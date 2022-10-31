@@ -1048,6 +1048,11 @@ components:
       properties:
         url:
           type: string
+        contenturl:
+          type: string
+          description: |
+            A URL which, if set, is used for fetching content. Implies that `url` is set as well,
+            which will be used for metadata only.
         ref:
           type: string
           example: 'rhel/8/x86_64/edge'
@@ -1058,6 +1063,13 @@ components:
             02604b2da6e954bd34b8b82a835e5a77d2b60ffa), or a branch-like
             reference (example: rhel/8/x86_64/edge)
           example: 'rhel/8/x86_64/edge'
+        rhsm:
+          type: boolean
+          default: false
+          description: |
+            Determines whether a valid subscription manager (candlepin) identity is required to
+            access this repository. Consumer certificates will be used as client certificates when
+            fetching metadata and content.
     Subscription:
       type: object
       required:

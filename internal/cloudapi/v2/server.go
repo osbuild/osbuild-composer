@@ -450,11 +450,9 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 			return
 		}
 
-		options.OSTree = distro.OSTreeImageOptions{
-			ImageRef:      result.Specs[0].Ref,
-			FetchChecksum: result.Specs[0].Checksum,
-			URL:           result.Specs[0].URL,
-		}
+		options.OSTree.ImageRef = result.Specs[0].Ref
+		options.OSTree.FetchChecksum = result.Specs[0].Checksum
+		options.OSTree.URL = result.Specs[0].URL
 	}
 
 	manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, containerSpecs, seed)

@@ -298,8 +298,21 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				if ir.Ostree.Url != nil {
 					ostreeOptions.URL = *ir.Ostree.Url
 				}
+				if ir.Ostree.Contenturl != nil {
+					// URL must be set if content url is specified
+					if ir.Ostree.Url == nil {
+						return HTTPError(ErrorInvalidOSTreeParams)
+					}
+
+					// Contenturl is set on imageoptions directly, as it's not
+					// needed in the resolve job
+					imageOptions.OSTree.ContentURL = *ir.Ostree.Contenturl
+				}
 				if ir.Ostree.Parent != nil {
 					ostreeOptions.Parent = *ir.Ostree.Parent
+				}
+				if ir.Ostree.Rhsm != nil {
+					ostreeOptions.RHSM = *ir.Ostree.Rhsm
 				}
 			}
 			if ostreeOptions.Ref == "" {
