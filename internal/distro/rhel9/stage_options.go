@@ -279,28 +279,6 @@ func xorrisofsStageOptions(filename, isolabel, arch string, isolinux bool) *osbu
 	return options
 }
 
-func nginxConfigStageOptions(path, htmlRoot, listen string) *osbuild.NginxConfigStageOptions {
-	// configure nginx to work in an unprivileged container
-	cfg := &osbuild.NginxConfig{
-		Listen: listen,
-		Root:   htmlRoot,
-		Daemon: common.BoolToPtr(false),
-		PID:    "/tmp/nginx.pid",
-	}
-	return &osbuild.NginxConfigStageOptions{
-		Path:   path,
-		Config: cfg,
-	}
-}
-
-func chmodStageOptions(path, mode string, recursive bool) *osbuild.ChmodStageOptions {
-	return &osbuild.ChmodStageOptions{
-		Items: map[string]osbuild.ChmodStagePathOptions{
-			path: {Mode: mode, Recursive: recursive},
-		},
-	}
-}
-
 func ostreeConfigStageOptions(repo string, readOnly bool) *osbuild.OSTreeConfigStageOptions {
 	return &osbuild.OSTreeConfigStageOptions{
 		Repo: repo,
