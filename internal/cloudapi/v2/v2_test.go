@@ -456,6 +456,34 @@ func TestCompose(t *testing.T) {
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
+
+	// ref + parent + url + contenturl + rhsm
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "edge-commit",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			},
+			"ostree": {
+				"parent": "%s",
+				"url": "%s",
+				"ref": "a/new/ref",
+                                "contenturl": "%s",
+                                "rhsm": true
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL, fmt.Sprintf("%s/content", ostreeRepoOther.Server.URL)), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
 }
 
 func TestComposeStatusSuccess(t *testing.T) {
