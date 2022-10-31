@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -176,27 +175,6 @@ func makeISORootPath(p string) string {
 	return fmt.Sprintf("file://%s", fullpath)
 }
 
-func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-	installerPackages := packageSetSpecs[installerPkgsKey]
-	d := t.arch.distro
-	archName := t.Arch().Name()
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
-	ostreeRepoPath := "/ostree/repo"
-	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", users.UsersFromBP(customizations.GetUsers()), users.GroupsFromBP(customizations.GetGroups()), makeISORootPath(ostreeRepoPath), options.OSTree.ImageRef, "rhel")
-	if err != nil {
-		return nil, err
-	}
-	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", ksUsers))
-	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
-	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, payloadStages))
-	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, archName, t.Arch().Name() == "x86_64"))
-	return pipelines, nil
-}
-
 func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
@@ -237,44 +215,6 @@ func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizati
 	return pipelines, nil
 }
 
-func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	pipelines = append(pipelines, *treePipeline)
-	pipelines = append(pipelines, *ostreeCommitPipeline(options, t.arch.distro.osVersion))
-
-	return pipelines, nil
-}
-
-func edgeCommitPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines, err := edgeCorePipelines(t, customizations, options, repos, packageSetSpecs, containers)
-	if err != nil {
-		return nil, err
-	}
-	tarPipeline := tarArchivePipeline("commit-archive", "ostree-commit", &osbuild.TarStageOptions{Filename: t.Filename()})
-	pipelines = append(pipelines, *tarPipeline)
-	return pipelines, nil
-}
-
-func edgeContainerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines, err := edgeCorePipelines(t, customizations, options, repos, packageSetSpecs, containers)
-	if err != nil {
-		return nil, err
-	}
-
-	nginxConfigPath := "/etc/nginx.conf"
-	httpPort := "8080"
-	pipelines = append(pipelines, *containerTreePipeline(repos, packageSetSpecs[containerPkgsKey], options, customizations, nginxConfigPath, httpPort))
-	pipelines = append(pipelines, *containerPipeline(t, nginxConfigPath, httpPort))
-	return pipelines, nil
-}
-
 func edgeImagePipelines(t *imageType, customizations *blueprint.Customizations, filename string, options distro.ImageOptions, rng *rand.Rand) ([]osbuild.Pipeline, string, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	ostreeRepoPath := "/ostree/repo"
@@ -298,23 +238,6 @@ func edgeImagePipelines(t *imageType, customizations *blueprint.Customizations, 
 	pipelines = append(pipelines, *xzPipeline)
 
 	return pipelines, xzPipeline.Name, nil
-}
-
-func edgeRawImagePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	imgName := t.filename
-
-	// create the raw image
-	imagePipelines, _, err := edgeImagePipelines(t, customizations, imgName, options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	pipelines = append(pipelines, imagePipelines...)
-
-	return pipelines, nil
 }
 
 func buildPipeline(repos []rpmmd.RepoConfig, buildPackageSpecs []rpmmd.PackageSpec, runner string) *osbuild.Pipeline {
@@ -650,84 +573,6 @@ func osPipeline(t *imageType,
 	}
 
 	return p, nil
-}
-
-func ostreeCommitPipeline(options distro.ImageOptions, osVersion string) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "ostree-commit"
-	p.Build = "name:build"
-	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/repo"}))
-
-	p.AddStage(osbuild.NewOSTreeCommitStage(
-		&osbuild.OSTreeCommitStageOptions{
-			Ref:       options.OSTree.ImageRef,
-			OSVersion: osVersion,
-			Parent:    options.OSTree.FetchChecksum,
-		},
-		"ostree-tree"),
-	)
-	return p
-}
-
-func containerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, options distro.ImageOptions, c *blueprint.Customizations, nginxConfigPath, listenPort string) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "container-tree"
-	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
-	language, _ := c.GetPrimaryLocale()
-	if language != nil {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: *language}))
-	} else {
-		p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US"}))
-	}
-
-	htmlRoot := "/usr/share/nginx/html"
-	repoPath := filepath.Join(htmlRoot, "repo")
-	p.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: repoPath}))
-
-	p.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: repoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.pipeline", "name:ostree-commit", options.OSTree.ImageRef),
-	))
-
-	// make nginx log and lib directories world writeable, otherwise nginx can't start in
-	// an unprivileged container
-	p.AddStage(osbuild.NewChmodStage(chmodStageOptions("/var/log/nginx", "a+rwX", true)))
-	p.AddStage(osbuild.NewChmodStage(chmodStageOptions("/var/lib/nginx", "a+rwX", true)))
-
-	p.AddStage(osbuild.NewNginxConfigStage(nginxConfigStageOptions(nginxConfigPath, htmlRoot, listenPort)))
-	return p
-}
-
-func containerPipeline(t *imageType, nginxConfigPath, listenPort string) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "container"
-	p.Build = "name:build"
-	options := &osbuild.OCIArchiveStageOptions{
-		Architecture: t.arch.Name(),
-		Filename:     t.Filename(),
-		Config: &osbuild.OCIArchiveConfig{
-			Cmd:          []string{"nginx", "-c", nginxConfigPath},
-			ExposedPorts: []string{listenPort},
-		},
-	}
-	baseInput := osbuild.NewTreeInput("name:container-tree")
-	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}
-	p.AddStage(osbuild.NewOCIArchiveStage(options, inputs))
-	return p
-}
-
-func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*osbuild.Stage {
-	stages := make([]*osbuild.Stage, 0)
-
-	// ostree commit payload
-	stages = append(stages, osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
-	stages = append(stages, osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.FetchChecksum, options.OSTree.ImageRef),
-	))
-
-	return stages
 }
 
 func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {

@@ -310,7 +310,6 @@ func newDistro(name string, major, minor int) distro.Distro {
 					"iwl3160-firmware",
 					"iwl5000-firmware",
 					"iwl5150-firmware",
-					"iwl6000-firmware",
 					"iwl6050-firmware",
 				},
 			},
@@ -327,10 +326,20 @@ func newDistro(name string, major, minor int) distro.Distro {
 			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_RAW,
 			},
-			BIOS:       false,
+			BIOS:       true,
 			UEFIVendor: rd.vendor,
 		},
 		edgeRawImgType,
+	)
+
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+			BIOS:       false,
+			UEFIVendor: rd.vendor,
+		},
 		edgeSimplifiedInstallerImgType,
 	)
 
@@ -358,14 +367,8 @@ func newDistro(name string, major, minor int) distro.Distro {
 
 	aarch64.addImageTypes(
 		&platform.Aarch64{
-			BasePlatform: platform.BasePlatform{
-				FirmwarePackages: []string{
-					"uboot-images-armv8", // ??
-					"bcm283x-firmware",
-					"arm-image-installer", // ??
-				},
-			},
-			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{},
+			UEFIVendor:   rd.vendor,
 		},
 		edgeCommitImgType,
 		edgeOCIImgType,

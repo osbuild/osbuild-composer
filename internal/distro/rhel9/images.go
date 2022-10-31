@@ -1,6 +1,7 @@
 package rhel9
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -8,6 +9,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/users"
 	"github.com/osbuild/osbuild-composer/internal/workload"
@@ -142,6 +144,144 @@ func liveImage(workload workload.Workload,
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+	img.PartitionTable = pt
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
+func edgeCommitImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
+
+	img.Platform = t.platform
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, customizations)
+	img.Environment = t.environment
+	img.Workload = workload
+
+	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+		img.OSTreeParent = &ostree.CommitSpec{
+			Checksum:   options.OSTree.FetchChecksum,
+			URL:        options.OSTree.URL,
+			ContentURL: options.OSTree.ContentURL,
+		}
+	}
+
+	img.OSVersion = t.arch.distro.osVersion
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
+func edgeContainerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
+
+	img.Platform = t.platform
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, customizations)
+	img.ContainerLanguage = img.OSCustomizations.Language
+	img.Environment = t.environment
+	img.Workload = workload
+
+	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+		img.OSTreeParent = &ostree.CommitSpec{
+			Checksum:   options.OSTree.FetchChecksum,
+			URL:        options.OSTree.URL,
+			ContentURL: options.OSTree.ContentURL,
+		}
+	}
+
+	img.OSVersion = t.arch.distro.osVersion
+
+	img.ExtraContainerPackages = packageSets[containerPkgsKey]
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
+func edgeInstallerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	d := t.arch.distro
+
+	commit := ostree.CommitSpec{
+		Ref:        options.OSTree.ImageRef,
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+		Checksum:   options.OSTree.FetchChecksum,
+	}
+	img := image.NewOSTreeInstaller(commit)
+
+	img.Platform = t.platform
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+	img.Users = users.UsersFromBP(customizations.GetUsers())
+	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.ISOLabelTempl = d.isolabelTmpl
+	img.Product = d.product
+	img.Variant = "edge"
+	img.OSName = "rhel"
+	img.OSVersion = d.osVersion
+	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
+func edgeRawImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	commit := ostree.CommitSpec{
+		Ref:        options.OSTree.ImageRef,
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+		Checksum:   options.OSTree.FetchChecksum,
+	}
+	img := image.NewOSTreeRawImage(commit)
+
+	img.Users = users.UsersFromBP(customizations.GetUsers())
+	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
+	img.Keyboard = "us"
+	img.Locale = "C.UTF-8"
+
+	img.Platform = t.platform
+	img.Workload = workload
+	img.Remote = ostree.Remote{
+		Name:       "rhel-edge",
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+	}
+	img.OSName = "redhat"
+
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {

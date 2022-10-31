@@ -17,19 +17,15 @@ var (
 		filename:    "commit.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: edgeBuildPackageSet,
-			osPkgsKey:    edgeCommitPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+			osPkgsKey: edgeCommitPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices,
 		},
 		rpmOstree:        true,
-		pipelines:        edgeCommitPipelines,
+		image:            edgeCommitImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"ostree-tree", "ostree-commit", "commit-archive"},
+		payloadPipelines: []string{"os", "ostree-commit", "commit-archive"},
 		exports:          []string{"commit-archive"},
 	}
 
@@ -39,26 +35,22 @@ var (
 		filename:    "container.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: edgeBuildPackageSet,
-			osPkgsKey:    edgeCommitPackageSet,
+			osPkgsKey: edgeCommitPackageSet,
 			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
 				return rpmmd.PackageSet{
 					Include: []string{"nginx"},
 				}
 			},
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices,
 		},
 		rpmOstree:        true,
 		bootISO:          false,
-		pipelines:        edgeContainerPipelines,
+		image:            edgeContainerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "container"},
-		exports:          []string{containerPkgsKey},
+		payloadPipelines: []string{"os", "ostree-commit", "container-tree", "container"},
+		exports:          []string{"container"},
 	}
 
 	edgeRawImgType = imageType{
@@ -66,9 +58,7 @@ var (
 		nameAliases: []string{"rhel-edge-raw-image"},
 		filename:    "image.raw.xz",
 		mimeType:    "application/xz",
-		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: edgeRawImageBuildPackageSet,
-		},
+		packageSets: nil,
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.StringToPtr("en_US.UTF-8"),
 		},
@@ -76,10 +66,10 @@ var (
 		rpmOstree:           true,
 		bootable:            true,
 		bootISO:             false,
-		pipelines:           edgeRawImagePipelines,
+		image:               edgeRawImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"image-tree", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"image-tree", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: edgeBasePartitionTables,
 	}
 
@@ -96,12 +86,7 @@ var (
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     edgeInstallerBuildPackageSet,
-			osPkgsKey:        edgeCommitPackageSet,
 			installerPkgsKey: edgeInstallerPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale:          common.StringToPtr("en_US.UTF-8"),
@@ -109,9 +94,9 @@ var (
 		},
 		rpmOstree:        true,
 		bootISO:          true,
-		pipelines:        edgeInstallerPipelines,
+		image:            edgeInstallerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
 	}
 
@@ -330,11 +315,6 @@ func edgeSimplifiedInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	)
 }
 
-func edgeRawImageBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return edgeBuildPackageSet(t).Append(edgeEncryptionBuildPackageSet(t)).Append(
-		bootPackageSet(t),
-	)
-}
 func edgeInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return anacondaBuildPackageSet(t).Append(
 		edgeBuildPackageSet(t),
