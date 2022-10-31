@@ -90,12 +90,24 @@ func (p *Build) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
-		Labels: map[string]string{
-			// TODO: make conditional
-			"/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
-		},
+		Labels:       p.getSELinuxLabels(),
 	},
 	))
 
 	return pipeline
+}
+
+// Returns a map of paths to labels for the SELinux stage based on specific
+// packages found in the pipeline.
+func (p *Build) getSELinuxLabels() map[string]string {
+	labels := make(map[string]string)
+	for _, pkg := range p.getPackageSpecs() {
+		switch pkg.Name {
+		case "coreutils":
+			labels["/usr/bin/cp"] = "system_u:object_r:install_exec_t:s0"
+		case "tar":
+			labels["/usr/bin/tar"] = "system_u:object_r:install_exec_t:s0"
+		}
+	}
+	return labels
 }
