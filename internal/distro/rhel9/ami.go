@@ -141,9 +141,9 @@ var (
 	}
 )
 
-var (
-	// default EC2 images config (common for all architectures)
-	baseEc2ImageConfig = &distro.ImageConfig{
+// default EC2 images config (common for all architectures)
+func baseEc2ImageConfig() *distro.ImageConfig {
+	return &distro.ImageConfig{
 		Locale:   common.StringToPtr("en_US.UTF-8"),
 		Timezone: common.StringToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
@@ -200,29 +200,6 @@ var (
 							IPv6Init:  common.BoolToPtr(false),
 						},
 					},
-				},
-			},
-		},
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.BoolToPtr(false),
-					},
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
 				},
 			},
 		},
@@ -293,104 +270,39 @@ var (
 			},
 		},
 	}
-)
+}
 
-func defaultEc2ImageConfig(osVersion string) *distro.ImageConfig {
-	ic := baseEc2ImageConfig
-	if !common.VersionLessThan(osVersion, "9.1") {
-		// The RHSM configuration should not be applied since 9.1, but it is instead
-		// done by installing the redhat-cloud-client-configuration package.
-		// See COMPOSER-1805 for more information.
-		rhel91PlusEc2ImageConfigOverride := &distro.ImageConfig{
-			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{},
-		}
-		ic = rhel91PlusEc2ImageConfigOverride.InheritFrom(ic)
+func defaultEc2ImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
+	ic := baseEc2ImageConfig()
+	if rhsm && common.VersionLessThan(osVersion, "9.1") {
+		ic = appendRHSM(ic)
+		// Disable RHSM redhat.repo management
+		rhsmConf := ic.RHSMConfig[distro.RHSMConfigNoSubscription]
+		rhsmConf.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{ManageRepos: common.BoolToPtr(false)}
+		ic.RHSMConfig[distro.RHSMConfigNoSubscription] = rhsmConf
 	}
 	return ic
 }
 
 // default AMI (EC2 BYOS) images config
-func defaultAMIImageConfig(osVersion string) *distro.ImageConfig {
-	ic := &distro.ImageConfig{
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					// Don't disable RHSM redhat.repo management on the AMI
-					// image, which is BYOS and does not use RHUI for content.
-					// Otherwise subscribing the system manually after booting
-					// it would result in empty redhat.repo. Without RHUI, such
-					// system would have no way to get Red Hat content, but
-					// enable the repo management manually, which would be very
-					// confusing.
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
+func defaultAMIImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
+	ic := defaultEc2ImageConfig(osVersion, rhsm)
+	if rhsm {
+		// defaultAMIImageConfig() adds the rhsm options only for RHEL < 9.1
+		// Add it unconditionally for AMI
+		ic = appendRHSM(ic)
 	}
-	return ic.InheritFrom(defaultEc2ImageConfig(osVersion))
+	return ic
 }
 
-func defaultEc2ImageConfigX86_64(osVersion string) *distro.ImageConfig {
-	ic := &distro.ImageConfig{
-		DracutConf: append(baseEc2ImageConfig.DracutConf,
-			&osbuild.DracutConfStageOptions{
-				Filename: "ec2.conf",
-				Config: osbuild.DracutConfigFile{
-					AddDrivers: []string{
-						"nvme",
-						"xen-blkfront",
-					},
-				},
-			}),
-	}
-
-	return ic.InheritFrom(defaultEc2ImageConfig(osVersion))
+func defaultEc2ImageConfigX86_64(osVersion string, rhsm bool) *distro.ImageConfig {
+	ic := defaultEc2ImageConfig(osVersion, rhsm)
+	return appendEC2DracutX86_64(ic)
 }
 
-func defaultAMIImageConfigX86_64(osVersion string) *distro.ImageConfig {
-	ic := &distro.ImageConfig{
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					// Don't disable RHSM redhat.repo management on the AMI
-					// image, which is BYOS and does not use RHUI for content.
-					// Otherwise subscribing the system manually after booting
-					// it would result in empty redhat.repo. Without RHUI, such
-					// system would have no way to get Red Hat content, but
-					// enable the repo management manually, which would be very
-					// confusing.
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
-	}
-	return ic.InheritFrom(defaultEc2ImageConfigX86_64(osVersion))
+func defaultAMIImageConfigX86_64(osVersion string, rhsm bool) *distro.ImageConfig {
+	ic := defaultAMIImageConfig(osVersion, rhsm).InheritFrom(defaultEc2ImageConfigX86_64(osVersion, rhsm))
+	return appendEC2DracutX86_64(ic)
 }
 
 // common ec2 image build package set
@@ -491,38 +403,95 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 	}.Append(rhelEc2CommonPackageSet(t)).Append(SapPackageSet(t))
 }
 
-func mkAMIImgTypeX86_64(osVersion string) imageType {
-	it := amiImgTypeX86_64
-	it.defaultImageConfig = defaultAMIImageConfigX86_64(osVersion)
-	return it
-}
-
-func mkEC2SapImgTypeX86_64(osVersion string) imageType {
-	it := ec2SapImgTypeX86_64
-	it.defaultImageConfig = sapImageConfig(osVersion).InheritFrom(defaultEc2ImageConfigX86_64(osVersion))
-	return it
-}
-
-func mkEc2ImgTypeX86_64(osVersion string) imageType {
+func mkEc2ImgTypeX86_64(osVersion string, rhsm bool) imageType {
 	it := ec2ImgTypeX86_64
-	it.defaultImageConfig = defaultEc2ImageConfigX86_64(osVersion)
+	ic := defaultEc2ImageConfigX86_64(osVersion, rhsm)
+	it.defaultImageConfig = ic
 	return it
 }
 
-func mkEc2HaImgTypeX86_64(osVersion string) imageType {
+func mkAMIImgTypeX86_64(osVersion string, rhsm bool) imageType {
+	it := amiImgTypeX86_64
+	ic := defaultAMIImageConfigX86_64(osVersion, rhsm)
+	if rhsm && common.VersionLessThan(osVersion, "9.1") {
+		ic = appendRHSM(ic)
+	}
+	it.defaultImageConfig = ic
+	return it
+}
+
+func mkEC2SapImgTypeX86_64(osVersion string, rhsm bool) imageType {
+	it := ec2SapImgTypeX86_64
+	it.defaultImageConfig = sapImageConfig(osVersion).InheritFrom(defaultEc2ImageConfigX86_64(osVersion, rhsm))
+	return it
+}
+
+func mkEc2HaImgTypeX86_64(osVersion string, rhsm bool) imageType {
 	it := ec2HaImgTypeX86_64
-	it.defaultImageConfig = defaultEc2ImageConfigX86_64(osVersion)
+	ic := defaultEc2ImageConfigX86_64(osVersion, rhsm)
+	it.defaultImageConfig = ic
 	return it
 }
 
-func mkAMIImgTypeAarch64(osVersion string) imageType {
+func mkAMIImgTypeAarch64(osVersion string, rhsm bool) imageType {
 	it := amiImgTypeAarch64
-	it.defaultImageConfig = defaultAMIImageConfig(osVersion)
+	ic := defaultAMIImageConfig(osVersion, rhsm)
+	it.defaultImageConfig = ic
 	return it
 }
 
-func mkEC2ImgTypeAarch64(osVersion string) imageType {
+func mkEC2ImgTypeAarch64(osVersion string, rhsm bool) imageType {
 	it := ec2ImgTypeAarch64
-	it.defaultImageConfig = defaultEc2ImageConfig(osVersion)
+	ic := defaultEc2ImageConfig(osVersion, rhsm)
+	it.defaultImageConfig = ic
 	return it
+}
+
+// Add RHSM config options to ImageConfig.
+// Used for RHEL distros.
+func appendRHSM(ic *distro.ImageConfig) *distro.ImageConfig {
+	rhsm := &distro.ImageConfig{
+		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// Don't disable RHSM redhat.repo management on the AMI
+					// image, which is BYOS and does not use RHUI for content.
+					// Otherwise subscribing the system manually after booting
+					// it would result in empty redhat.repo. Without RHUI, such
+					// system would have no way to get Red Hat content, but
+					// enable the repo management manually, which would be very
+					// confusing.
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				// RHBZ#1932802
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		},
+	}
+	return rhsm.InheritFrom(ic)
+}
+
+func appendEC2DracutX86_64(ic *distro.ImageConfig) *distro.ImageConfig {
+	ic.DracutConf = append(ic.DracutConf,
+		&osbuild.DracutConfStageOptions{
+			Filename: "ec2.conf",
+			Config: osbuild.DracutConfigFile{
+				AddDrivers: []string{
+					"nvme",
+					"xen-blkfront",
+				},
+			},
+		})
+	return ic
 }

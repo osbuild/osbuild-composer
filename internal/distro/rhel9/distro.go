@@ -292,7 +292,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 	}
 	x86_64.addImageTypes(
 		rawX86Platform,
-		mkAMIImgTypeX86_64(rd.osVersion),
+		mkAMIImgTypeX86_64(rd.osVersion, rd.isRHEL()),
 		gceImgType,
 	)
 
@@ -392,7 +392,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 				ImageFormat: platform.FORMAT_RAW,
 			},
 		},
-		mkAMIImgTypeAarch64(rd.osVersion),
+		mkAMIImgTypeAarch64(rd.osVersion, rd.isRHEL()),
 	)
 
 	ppc64le.addImageTypes(
@@ -430,7 +430,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 		x86_64.addImageTypes(azureX64Platform, azureRhuiImgType, azureByosImgType)
 
 		// add ec2 image types to RHEL distro only
-		x86_64.addImageTypes(rawX86Platform, mkEc2ImgTypeX86_64(rd.osVersion), mkEc2HaImgTypeX86_64(rd.osVersion), mkEC2SapImgTypeX86_64(rd.osVersion))
+		x86_64.addImageTypes(rawX86Platform, mkEc2ImgTypeX86_64(rd.osVersion, rd.isRHEL()), mkEc2HaImgTypeX86_64(rd.osVersion, rd.isRHEL()), mkEC2SapImgTypeX86_64(rd.osVersion, rd.isRHEL()))
 
 		aarch64.addImageTypes(
 			&platform.Aarch64{
@@ -439,7 +439,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 					ImageFormat: platform.FORMAT_RAW,
 				},
 			},
-			mkEC2ImgTypeAarch64(rd.osVersion),
+			mkEC2ImgTypeAarch64(rd.osVersion, rd.isRHEL()),
 		)
 
 		// add GCE RHUI image to RHEL only
