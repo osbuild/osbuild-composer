@@ -396,7 +396,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"sg3_utils",
 			"sil-abyssinica-fonts",
 			"sil-padauk-fonts",
-			"sil-scheherazade-fonts",
 			"smartmontools",
 			"spice-vdagent",
 			"strace",
@@ -441,6 +440,22 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 				"rit-meera-new-fonts",
 			},
 		})
+	}
+
+	if common.VersionLessThan(t.arch.distro.osVersion, "37") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"sil-scheherazade-fonts",
+			},
+		},
+		)
+	} else {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"sil-scheherazade-new-fonts",
+			},
+		},
+		)
 	}
 
 	switch t.Arch().Name() {
