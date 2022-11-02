@@ -1348,7 +1348,7 @@ func newDistro(distroName string) distro.Distro {
 	defaultGceByosImageConfig := &distro.ImageConfig{
 		Timezone: common.StringToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
-			Timeservers: []string{"metadata.google.internal"},
+			Servers: []osbuild.ChronyConfigServer{{Hostname: "metadata.google.internal"}},
 		},
 		Firewall: &osbuild.FirewallStageOptions{
 			DefaultZone: "trusted",

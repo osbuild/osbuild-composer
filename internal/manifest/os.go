@@ -47,7 +47,6 @@ type OSCustomizations struct {
 	Keyboard         *string
 	Hostname         string
 	Timezone         string
-	NTPServers       []string
 	EnabledServices  []string
 	DisabledServices []string
 	DefaultTarget    string
@@ -82,6 +81,8 @@ type OSCustomizations struct {
 	AuthConfig     *osbuild.AuthconfigStageOptions
 	PwQuality      *osbuild.PwqualityConfStageOptions
 	OpenSCAPConfig *osbuild.OscapRemediationStageOptions
+	NTPServers     []osbuild.ChronyConfigServer
+	LeapSecTZ      *string
 
 	Subscription *distro.SubscriptionImageOptions
 	RHSMConfig   map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
@@ -264,7 +265,11 @@ func (p *OS) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: p.Timezone}))
 
 	if len(p.NTPServers) > 0 {
-		pipeline.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: p.NTPServers}))
+		chronyOptions := &osbuild.ChronyStageOptions{Servers: p.NTPServers}
+		if p.LeapSecTZ != nil {
+			chronyOptions.LeapsecTz = p.LeapSecTZ
+		}
+		pipeline.AddStage(osbuild.NewChronyStage(chronyOptions))
 	}
 
 	if len(p.Groups) > 0 {
