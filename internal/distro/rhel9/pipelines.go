@@ -307,7 +307,11 @@ func osPipeline(t *imageType,
 	}
 
 	if len(ntpServers) > 0 {
-		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Timeservers: ntpServers}))
+		servers := make([]osbuild.ChronyConfigServer, len(ntpServers))
+		for idx, server := range ntpServers {
+			servers[idx] = osbuild.ChronyConfigServer{Hostname: server}
+		}
+		p.AddStage(osbuild.NewChronyStage(&osbuild.ChronyStageOptions{Servers: servers}))
 	} else if imageConfig.TimeSynchronization != nil {
 		p.AddStage(osbuild.NewChronyStage(imageConfig.TimeSynchronization))
 	}

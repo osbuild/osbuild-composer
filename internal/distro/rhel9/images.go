@@ -87,9 +87,12 @@ func osCustomizations(
 	}
 
 	if len(ntpServers) > 0 {
-		osc.NTPServers = ntpServers
+		for _, server := range ntpServers {
+			osc.NTPServers = append(osc.NTPServers, osbuild.ChronyConfigServer{Hostname: server})
+		}
 	} else if imageConfig.TimeSynchronization != nil {
-		osc.NTPServers = imageConfig.TimeSynchronization.Timeservers
+		osc.NTPServers = imageConfig.TimeSynchronization.Servers
+		osc.LeapSecTZ = imageConfig.TimeSynchronization.LeapsecTz
 	}
 
 	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
