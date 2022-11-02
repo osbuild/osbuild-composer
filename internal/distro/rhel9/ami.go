@@ -15,8 +15,7 @@ var (
 		filename: "image.raw",
 		mimeType: "application/octet-stream",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    ec2CommonPackageSet,
+			osPkgsKey: ec2CommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -25,7 +24,7 @@ var (
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           ec2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
