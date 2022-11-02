@@ -5236,8 +5236,10 @@
           {
             "type": "org.osbuild.chrony",
             "options": {
-              "timeservers": [
-                "metadata.google.internal"
+              "servers": [
+                {
+                  "hostname": "metadata.google.internal"
+                }
               ]
             }
           },

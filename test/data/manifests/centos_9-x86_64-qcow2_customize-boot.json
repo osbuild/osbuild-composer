@@ -5065,8 +5065,10 @@
           {
             "type": "org.osbuild.chrony",
             "options": {
-              "timeservers": [
-                "time.example.com"
+              "servers": [
+                {
+                  "hostname": "time.example.com"
+                }
               ]
             }
           },
