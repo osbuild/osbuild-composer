@@ -73,6 +73,9 @@ func osCustomizations(
 		osc.Keyboard = keyboard
 	} else if imageConfig.Keyboard != nil {
 		osc.Keyboard = &imageConfig.Keyboard.Keymap
+		if imageConfig.Keyboard.X11Keymap != nil {
+			osc.X11KeymapLayouts = imageConfig.Keyboard.X11Keymap.Layouts
+		}
 	}
 
 	if hostname := c.GetHostname(); hostname != nil {
