@@ -28,7 +28,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="fedora/37/${ARCH}/iot"
         OS_VARIANT="fedora-unknown"
         USER_IN_COMMIT="false"
-        BOOT_LOCATION="https://mirrors.kernel.org/fedora/development/37/Everything/x86_64/os/"
+        BOOT_LOCATION="https://dl.fedoraproject.org/pub/alt/stage/37_RC-1.4/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
         ;;
     "rhel-8.4")
