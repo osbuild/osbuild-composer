@@ -17,7 +17,6 @@
       {
         "name": "google-compute-engine",
         "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20220617",
-        "check_gpg": false,
         "image_type_tags": [
           "gce",
           "gce-rhui"
@@ -26,7 +25,6 @@
       {
         "name": "google-cloud-sdk",
         "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-cloud-sdk-20220617",
-        "check_gpg": false,
         "image_type_tags": [
           "gce",
           "gce-rhui"
@@ -9529,5 +9527,6 @@
         "checksum": "sha256:92edd5aa48d52929de6725b944840f14d3e1d9288dd2ca8ae083e78815fd89a7"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }
