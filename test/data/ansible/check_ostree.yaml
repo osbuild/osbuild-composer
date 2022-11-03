@@ -651,6 +651,13 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
+    - name: check fdo-client-linuxapp logs
+      command: journalctl -u fdo-client-linuxapp
+      register: result_fdo_client_linuxapp_journalctl
+
+    - debug: 
+        var: result_fdo_client_linuxapp_journalctl
+
     # case: check rollback function if boot error found
     - name: install sanely failing health check unit to test red boot status behavior
       block:
@@ -719,6 +726,35 @@
         - skip_rollback_test == "false"
         - result_rollback is succeeded
 
+    - name: check fdo-client-linuxapp logs
+      command: journalctl -u fdo-client-linuxapp
+      register: result_fdo_client_linuxapp_journalctl
+
+    - debug: 
+        var: result_fdo_client_linuxapp_journalctl
+
+    - name: wait for FDO re-encryption
+      block:
+        - shell: cryptsetup luksDump /dev/vda4
+          register: result
+          until: not result.stdout_lines is search("cipher_null-ecb")
+          retries: 30
+          delay: 60
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: fdo_credential == "true"
+
+    - name: check fdo-client-linuxapp logs
+      command: journalctl -u fdo-client-linuxapp
+      register: result_fdo_client_linuxapp_journalctl
+
+    - debug: 
+        var: result_fdo_client_linuxapp_journalctl
 
     # case: check greenboot* services log again
     - name: fallback log should be found here
