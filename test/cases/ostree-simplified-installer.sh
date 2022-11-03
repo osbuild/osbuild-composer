@@ -12,6 +12,7 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Start firewalld
 sudo systemctl enable --now firewalld
+sudo pip3 install yq
 
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
@@ -81,6 +82,7 @@ CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-simplified-installer
 INSTALLER_FILENAME=simplified-installer.iso
+MEMORY=3072
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -291,6 +293,8 @@ sudo podman run -v "$PWD"/aio/:/aio:z \
 
 # TODO: tweak config aio/configs/serviceinfo_api_server.yml to test basic FDO functionalities
 #       like adding user/key/pwd, re-encryption, files, commands etc etc
+# TODO: check tpm2 config
+sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' aio/configs/serviceinfo_api_server.yml
 
 greenprint "🔧 Prepare fdo AIO manufacturing DIUN"
 DIUN_PUB_KEY_ROOT_CERTS=$(sudo cat aio/keys/diun_cert.pem)
@@ -457,7 +461,7 @@ sudo podman ps -a
 greenprint "📋 Install edge vm via http boot"
 sudo virt-install --name="${IMAGE_KEY}-http"\
                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                  --ram 3072 \
+                  --ram "${MEMORY}" \
                   --vcpus 2 \
                   --network network=integration,mac=34:49:22:B0:83:30 \
                   --os-type linux \
@@ -523,6 +527,9 @@ if [[ $(sudo virsh domstate "${IMAGE_KEY}-http") == "running" ]]; then
 fi
 sudo virsh undefine "${IMAGE_KEY}-http" --nvram
 sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
+sudo umount /mnt/installer
+sudo rm -rf /mnt/installer "${ISO_FILENAME}"
+sudo rm -rf "/var/lib/libvirt/images/${ISO_FILENAME}"
 
 ####################################################################
 ##
@@ -578,7 +585,7 @@ sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
 sudo virt-install  --name="${IMAGE_KEY}-fdosshkey"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram "${MEMORY}" \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:31 \
                    --os-type linux \
@@ -700,7 +707,7 @@ sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
 sudo virt-install  --name="${IMAGE_KEY}-fdorootcert"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram "${MEMORY}" \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:32 \
                    --os-type linux \
