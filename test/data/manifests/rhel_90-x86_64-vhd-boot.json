@@ -19,9 +19,6 @@
     "blueprint": {
       "name": "vhd-boot-test",
       "description": "Image for boot test",
-      "packages": [],
-      "modules": [],
-      "groups": [],
       "customizations": {
         "user": [
           {
@@ -12466,5 +12463,6 @@
         "checksum": "sha256:2278e3b1ce7ddd4ff394064e5dc5404ac2799e51f9441a056b334d518bb51af4"
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

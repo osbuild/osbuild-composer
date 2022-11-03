@@ -1,7 +1,4 @@
 {
-  "boot": {
-    "type": "nspawn-extract"
-  },
   "compose-request": {
     "distro": "rhel-92",
     "arch": "aarch64",
@@ -30,8 +27,6 @@
           "version": "*"
         }
       ],
-      "modules": [],
-      "groups": [],
       "customizations": {
         "user": [
           {
@@ -7185,5 +7180,6 @@
         "check_gpg": true
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

@@ -653,17 +653,17 @@ func osPipeline(t *imageType,
 		p.AddStage(osbuild.NewOscapRemediationStage(remediationOptions))
 	}
 
-	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
-	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
-		p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
-	}
-
 	if t.arch.distro.isRHEL() && options.Facts != nil {
 		p.AddStage(osbuild.NewRHSMFactsStage(&osbuild.RHSMFactsStageOptions{
 			Facts: osbuild.RHSMFacts{
 				ApiType: options.Facts.ApiType,
 			},
 		}))
+	}
+
+	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
+	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
+		p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
 	}
 
 	if t.rpmOstree {
