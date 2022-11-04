@@ -71,11 +71,11 @@ type sourceV0 struct {
 type sourcesV0 map[string]sourceV0
 
 type changeV0 struct {
-	Commit    string `json:"commit"`
-	Message   string `json:"message"`
-	Revision  *int   `json:"revision"`
-	Timestamp string `json:"timestamp"`
-	// BUG: We are currently not (un)marshalling the Blueprint field.
+	Commit    string              `json:"commit"`
+	Message   string              `json:"message"`
+	Revision  *int                `json:"revision"`
+	Timestamp string              `json:"timestamp"`
+	Blueprint blueprint.Blueprint `json:"blueprint"`
 }
 
 type changesV0 map[string]map[string]changeV0
@@ -203,6 +203,7 @@ func newChangesFromV0(changesStruct changesV0) map[string]map[string]blueprint.C
 				Message:   change.Message,
 				Revision:  change.Revision,
 				Timestamp: change.Timestamp,
+				Blueprint: change.Blueprint,
 			}
 		}
 		changes[name] = commits
@@ -332,6 +333,7 @@ func newChangesV0(changes map[string]map[string]blueprint.Change) changesV0 {
 				Message:   change.Message,
 				Revision:  change.Revision,
 				Timestamp: change.Timestamp,
+				Blueprint: change.Blueprint,
 			}
 		}
 		changesStruct[name] = commitsStruct
