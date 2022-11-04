@@ -21,6 +21,7 @@ type LiveImage struct {
 	Environment      environment.Environment
 	Workload         workload.Workload
 	Filename         string
+	Compression      string
 }
 
 func NewLiveImage() *LiveImage {
@@ -47,8 +48,15 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 	var artifact *artifact.Artifact
 	switch img.Platform.GetImageFormat() {
 	case platform.FORMAT_RAW:
-		imagePipeline.Filename = img.Filename
-		artifact = imagePipeline.Export()
+		switch img.Compression {
+		case "xz":
+			xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
+			xzPipeline.Filename = img.Filename
+			artifact = xzPipeline.Export()
+		default:
+			imagePipeline.Filename = img.Filename
+			artifact = imagePipeline.Export()
+		}
 	case platform.FORMAT_QCOW2:
 		qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, imagePipeline)
 		qcow2Pipeline.Filename = img.Filename
