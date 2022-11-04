@@ -32,12 +32,12 @@ var (
 	}
 
 	ec2ImgTypeX86_64 = imageType{
-		name:     "ec2",
-		filename: "image.raw.xz",
-		mimeType: "application/xz",
+		name:        "ec2",
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    rhelEc2PackageSet,
+			osPkgsKey: rhelEc2PackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -46,17 +46,18 @@ var (
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           rhelEc2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	ec2HaImgTypeX86_64 = imageType{
-		name:     "ec2-ha",
-		filename: "image.raw.xz",
-		mimeType: "application/xz",
+		name:        "ec2-ha",
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2HaPackageSet,
@@ -68,10 +69,10 @@ var (
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           rhelEc2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
@@ -89,7 +90,7 @@ var (
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0",
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           ec2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
@@ -97,9 +98,10 @@ var (
 	}
 
 	ec2ImgTypeAarch64 = imageType{
-		name:     "ec2",
-		filename: "image.raw.xz",
-		mimeType: "application/xz",
+		name:        "ec2",
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2PackageSet,
@@ -110,17 +112,18 @@ var (
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0",
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           rhelEc2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
 	ec2SapImgTypeX86_64 = imageType{
-		name:     "ec2-sap",
-		filename: "image.raw.xz",
-		mimeType: "application/xz",
+		name:        "ec2-sap",
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2SapPackageSet,
@@ -132,10 +135,10 @@ var (
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           rhelEc2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 )

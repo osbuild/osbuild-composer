@@ -150,6 +150,7 @@ func liveImage(workload workload.Workload,
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
+	img.Compression = t.compression
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
