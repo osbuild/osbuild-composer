@@ -699,6 +699,69 @@ func Test_newChangesFromV0(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "Blueprint Changes With Blueprint",
+			changes: changesV0{
+				"test-blueprint-changes-1": {
+					"4774980638f4162d9909a613c3ccd938e60bb3a9": {
+						Commit:    "4774980638f4162d9909a613c3ccd938e60bb3a9",
+						Message:   "Recipe test-blueprint-changes-1, version 0.1.2 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-29T09:52:07Z",
+						Blueprint: blueprint.Blueprint{
+							Name:    "test-blueprint-changes-1",
+							Version: "0.1.2",
+						},
+					},
+					"72fdb76b9994bd72770e283bf3a5206756daf497": {
+						Commit:    "72fdb76b9994bd72770e283bf3a5206756daf497",
+						Message:   "Recipe test-blueprint-changes-1, version 0.1.1 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-09T13:33:06Z",
+						Blueprint: blueprint.Blueprint{
+							Name:    "test-blueprint-changes-1",
+							Version: "0.1.1",
+						},
+					},
+					"79e2043a83637ffdd4db078c6da23deaae09c84b": {
+						Commit:    "79e2043a83637ffdd4db078c6da23deaae09c84b",
+						Message:   "Recipe test-blueprint-changes-1, version 0.0.1 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-07T02:57:00Z",
+					},
+				},
+			},
+			want: map[string]map[string]blueprint.Change{
+				"test-blueprint-changes-1": {
+					"4774980638f4162d9909a613c3ccd938e60bb3a9": {
+						Commit:    "4774980638f4162d9909a613c3ccd938e60bb3a9",
+						Message:   "Recipe test-blueprint-changes-1, version 0.1.2 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-29T09:52:07Z",
+						Blueprint: blueprint.Blueprint{
+							Name:    "test-blueprint-changes-1",
+							Version: "0.1.2",
+						},
+					},
+					"72fdb76b9994bd72770e283bf3a5206756daf497": {
+						Commit:    "72fdb76b9994bd72770e283bf3a5206756daf497",
+						Message:   "Recipe test-blueprint-changes-1, version 0.1.1 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-09T13:33:06Z",
+						Blueprint: blueprint.Blueprint{
+							Name:    "test-blueprint-changes-1",
+							Version: "0.1.1",
+						},
+					},
+					"79e2043a83637ffdd4db078c6da23deaae09c84b": {
+						Commit:    "79e2043a83637ffdd4db078c6da23deaae09c84b",
+						Message:   "Recipe test-blueprint-changes-1, version 0.0.1 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-07T02:57:00Z",
+					},
+				},
+			},
 		}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -812,6 +875,69 @@ func Test_newChangesV0(t *testing.T) {
 					"79e2043a83637ffdd4db078c6da23deaae09c84b": {
 						Commit:    "79e2043a83637ffdd4db078c6da23deaae09c84b",
 						Message:   "Recipe test-blueprint-changes-v0, version 0.0.1 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-07T02:57:00Z",
+					},
+				},
+			},
+		},
+		{
+			name: "Blueprint Changes With Blueprint",
+			changes: map[string]map[string]blueprint.Change{
+				"test-blueprint-changes-1": {
+					"4774980638f4162d9909a613c3ccd938e60bb3a9": {
+						Commit:    "4774980638f4162d9909a613c3ccd938e60bb3a9",
+						Message:   "Recipe test-blueprint-changes-1, version 0.1.2 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-29T09:52:07Z",
+						Blueprint: blueprint.Blueprint{
+							Name:    "test-blueprint-changes-1",
+							Version: "0.1.2",
+						},
+					},
+					"72fdb76b9994bd72770e283bf3a5206756daf497": {
+						Commit:    "72fdb76b9994bd72770e283bf3a5206756daf497",
+						Message:   "Recipe test-blueprint-changes-1, version 0.1.1 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-09T13:33:06Z",
+						Blueprint: blueprint.Blueprint{
+							Name:    "test-blueprint-changes-1",
+							Version: "0.1.1",
+						},
+					},
+					"79e2043a83637ffdd4db078c6da23deaae09c84b": {
+						Commit:    "79e2043a83637ffdd4db078c6da23deaae09c84b",
+						Message:   "Recipe test-blueprint-changes-1, version 0.0.1 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-07T02:57:00Z",
+					},
+				},
+			},
+			want: changesV0{
+				"test-blueprint-changes-1": {
+					"4774980638f4162d9909a613c3ccd938e60bb3a9": {
+						Commit:    "4774980638f4162d9909a613c3ccd938e60bb3a9",
+						Message:   "Recipe test-blueprint-changes-1, version 0.1.2 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-29T09:52:07Z",
+						Blueprint: blueprint.Blueprint{
+							Name:    "test-blueprint-changes-1",
+							Version: "0.1.2",
+						},
+					},
+					"72fdb76b9994bd72770e283bf3a5206756daf497": {
+						Commit:    "72fdb76b9994bd72770e283bf3a5206756daf497",
+						Message:   "Recipe test-blueprint-changes-1, version 0.1.1 saved.",
+						Revision:  nil,
+						Timestamp: "2020-07-09T13:33:06Z",
+						Blueprint: blueprint.Blueprint{
+							Name:    "test-blueprint-changes-1",
+							Version: "0.1.1",
+						},
+					},
+					"79e2043a83637ffdd4db078c6da23deaae09c84b": {
+						Commit:    "79e2043a83637ffdd4db078c6da23deaae09c84b",
+						Message:   "Recipe test-blueprint-changes-1, version 0.0.1 saved.",
 						Revision:  nil,
 						Timestamp: "2020-07-07T02:57:00Z",
 					},
