@@ -10,21 +10,18 @@ type XZ struct {
 	Base
 	Filename string
 
-	imgPipeline *RawOSTreeImage
+	imgPipeline Pipeline
 }
 
 // NewXZ creates a new XZ pipeline. imgPipeline is the pipeline producing the
-// raw image. Filename is the name of the produced archive.
+// raw image that will be xz compressed.
 func NewXZ(m *Manifest,
 	buildPipeline *Build,
-	imgPipeline *RawOSTreeImage) *XZ {
+	imgPipeline Pipeline) *XZ {
 	p := &XZ{
 		Base:        NewBase(m, "xz", buildPipeline),
-		imgPipeline: imgPipeline,
 		Filename:    "image.xz",
-	}
-	if imgPipeline.Base.manifest != m {
-		panic("live image pipeline from different manifest")
+		imgPipeline: imgPipeline,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -36,7 +33,7 @@ func (p *XZ) serialize() osbuild.Pipeline {
 
 	pipeline.AddStage(osbuild.NewXzStage(
 		osbuild.NewXzStageOptions(p.Filename),
-		osbuild.NewFilesInputs(osbuild.NewFilesInputReferencesPipeline(p.imgPipeline.Name(), p.imgPipeline.Filename)),
+		osbuild.NewFilesInputs(osbuild.NewFilesInputReferencesPipeline(p.imgPipeline.Name(), p.imgPipeline.Export().Filename())),
 	))
 
 	return pipeline
