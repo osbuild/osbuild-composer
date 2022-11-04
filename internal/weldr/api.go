@@ -236,6 +236,7 @@ func setupRouter(api *API) *API {
 	api.router.GET("/api/v:version/blueprints/depsolve/*blueprints", api.blueprintsDepsolveHandler)
 	api.router.GET("/api/v:version/blueprints/freeze/*blueprints", api.blueprintsFreezeHandler)
 	api.router.GET("/api/v:version/blueprints/diff/:blueprint/:from/:to", api.blueprintsDiffHandler)
+	api.router.GET("/api/v:version/blueprints/change/:blueprint/:commit", api.blueprintsChangeHandler)
 	api.router.GET("/api/v:version/blueprints/changes/*blueprints", api.blueprintsChangesHandler)
 	api.router.POST("/api/v:version/blueprints/new", api.blueprintsNewHandler)
 	api.router.POST("/api/v:version/blueprints/workspace", api.blueprintsWorkspaceHandler)
@@ -1803,6 +1804,70 @@ func (api *API) blueprintsDiffHandler(writer http.ResponseWriter, request *http.
 
 	err := json.NewEncoder(writer).Encode(reply{diffs})
 	common.PanicOnError(err)
+}
+
+// blueprintsChangeHandler returns a specific change to a blueprint
+func (api *API) blueprintsChangeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	if !verifyRequestVersion(writer, params, 1) {
+		return
+	}
+	name := params.ByName("blueprint")
+	if !verifyStringsWithRegex(writer, []string{name}, ValidBlueprintName) {
+		return
+	}
+
+	commit := params.ByName("commit")
+	if !verifyStringsWithRegex(writer, []string{commit}, ValidBlueprintName) {
+		return
+	}
+
+	bpChange, err := api.store.GetBlueprintChange(name, commit)
+	if err != nil {
+		errors := responseError{
+			ID:  "UnknownCommit",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	bp := bpChange.Blueprint
+	if len(bpChange.Blueprint.Name) == 0 {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: fmt.Sprintf("no blueprint found for commit %s", commit),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	query, err := url.ParseQuery(request.URL.RawQuery)
+	if err != nil {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid query string: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	format := query.Get("format")
+	if format == "json" || format == "" {
+		err := json.NewEncoder(writer).Encode(bp)
+		common.PanicOnError(err)
+	} else if format == "toml" {
+		encoder := toml.NewEncoder(writer)
+		encoder.Indent = ""
+		err := encoder.Encode(bp)
+		common.PanicOnError(err)
+	} else {
+		errors := responseError{
+			ID:  "InvalidChars",
+			Msg: fmt.Sprintf("invalid format parameter: %s", format),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
 }
 
 func (api *API) blueprintsChangesHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
