@@ -55,6 +55,7 @@ type imageType struct {
 	name               string
 	nameAliases        []string
 	filename           string
+	compression        string // TODO: remove from image definition and make it a transport option
 	mimeType           string
 	packageSets        map[string]packageSetFunc
 	packageSetChains   map[string][]string
