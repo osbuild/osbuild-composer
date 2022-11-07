@@ -7,24 +7,24 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const gceKernelOptions = "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d"
+
 var (
 	gceImgType = imageType{
 		name:     "gce",
 		filename: "image.tar.gz",
 		mimeType: "application/gzip",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    gcePackageSet,
+			osPkgsKey: gcePackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
-		defaultImageConfig:  defaultGceImageConfig,
-		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d",
+		kernelOptions:       gceKernelOptions,
 		bootable:            true,
 		bootType:            distro.UEFIBootType,
 		defaultSize:         20 * common.GibiByte,
-		pipelines:           gcePipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
@@ -36,25 +36,37 @@ var (
 		filename: "image.tar.gz",
 		mimeType: "application/gzip",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    gceRhuiPackageSet,
+			osPkgsKey: gceRhuiPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
-		defaultImageConfig:  defaultGceRhuiImageConfig(),
-		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d",
+		kernelOptions:       gceKernelOptions,
 		bootable:            true,
 		bootType:            distro.UEFIBootType,
 		defaultSize:         20 * common.GibiByte,
-		pipelines:           gcePipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
+)
 
-	defaultGceImageConfig = &distro.ImageConfig{
+func mkGCEImageType(rhsm bool) imageType {
+	it := gceImgType
+	it.defaultImageConfig = baseGCEImageConfig(rhsm)
+	return it
+}
+
+func mkGCERHUIImageType(rhsm bool) imageType {
+	it := gceRhuiImgType
+	it.defaultImageConfig = defaultGceRhuiImageConfig(rhsm)
+	return it
+}
+
+func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
+	ic := &distro.ImageConfig{
 		Timezone: common.StringToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Servers: []osbuild.ChronyConfigServer{{Hostname: "metadata.google.internal"}},
@@ -114,31 +126,6 @@ var (
 				},
 			},
 		},
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					// Don't disable RHSM redhat.repo management on the GCE
-					// image, which is BYOS and does not use RHUI for content.
-					// Otherwise subscribing the system manually after booting
-					// it would result in empty redhat.repo. Without RHUI, such
-					// system would have no way to get Red Hat content, but
-					// enable the repo management manually, which would be very
-					// confusing.
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
 				PasswordAuthentication: common.BoolToPtr(false),
@@ -171,9 +158,38 @@ var (
 			},
 		},
 	}
-)
 
-func defaultGceRhuiImageConfig() *distro.ImageConfig {
+	if rhsm {
+		ic.RHSMConfig = map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// Don't disable RHSM redhat.repo management on the GCE
+					// image, which is BYOS and does not use RHUI for content.
+					// Otherwise subscribing the system manually after booting
+					// it would result in empty redhat.repo. Without RHUI, such
+					// system would have no way to get Red Hat content, but
+					// enable the repo management manually, which would be very
+					// confusing.
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.BoolToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		}
+	}
+	return ic
+}
+
+func defaultGceRhuiImageConfig(rhsm bool) *distro.ImageConfig {
 	ic := &distro.ImageConfig{
 		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
 			distro.RHSMConfigNoSubscription: {
@@ -197,7 +213,7 @@ func defaultGceRhuiImageConfig() *distro.ImageConfig {
 			},
 		},
 	}
-	return ic.InheritFrom(defaultGceImageConfig)
+	return ic.InheritFrom(baseGCEImageConfig(rhsm))
 }
 
 func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {

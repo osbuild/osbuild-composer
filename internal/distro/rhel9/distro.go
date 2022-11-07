@@ -304,7 +304,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 	}
 	x86_64.addImageTypes(
 		gceX86Platform,
-		gceImgType,
+		mkGCEImageType(rd.isRHEL()),
 	)
 
 	x86_64.addImageTypes(
@@ -454,7 +454,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 		)
 
 		// add GCE RHUI image to RHEL only
-		x86_64.addImageTypes(gceX86Platform, gceRhuiImgType)
+		x86_64.addImageTypes(gceX86Platform, mkGCERHUIImageType(rd.isRHEL()))
 	} else {
 		x86_64.addImageTypes(azureX64Platform, azureImgType)
 	}
