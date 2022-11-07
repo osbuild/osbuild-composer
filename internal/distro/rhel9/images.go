@@ -61,7 +61,17 @@ func osCustomizations(
 		osc.DefaultTarget = *imageConfig.DefaultTarget
 	}
 
-	osc.Firewall = c.GetFirewall()
+	if fw := c.GetFirewall(); fw != nil {
+		options := osbuild.FirewallStageOptions{
+			Ports: fw.Ports,
+		}
+
+		if fw.Services != nil {
+			options.EnabledServices = fw.Services.Enabled
+			options.DisabledServices = fw.Services.Disabled
+		}
+		osc.Firewall = &options
+	}
 
 	language, keyboard := c.GetPrimaryLocale()
 	if language != nil {
@@ -135,6 +145,7 @@ func osCustomizations(
 	osc.RHSMConfig = imageConfig.RHSMConfig
 	osc.Subscription = options.Subscription
 	osc.WAAgentConfig = imageConfig.WAAgentConfig
+	osc.Firewall = imageConfig.Firewall
 	osc.UdevRules = imageConfig.UdevRules
 
 	return osc
