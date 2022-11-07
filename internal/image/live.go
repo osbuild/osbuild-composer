@@ -4,9 +4,11 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/artifact"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
@@ -76,6 +78,15 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 		}
 		artifactPipeline = vmdkPipeline
 		artifact = vmdkPipeline.Export()
+	case platform.FORMAT_GCE:
+		archivePipeline := manifest.NewTar(m, buildPipeline, imagePipeline, "archive")
+		archivePipeline.Format = osbuild.TarArchiveFormatOldgnu
+		archivePipeline.RootNode = osbuild.TarRootNodeOmit
+		// these are required to successfully import the image to GCP
+		archivePipeline.ACLs = common.BoolToPtr(false)
+		archivePipeline.SELinux = common.BoolToPtr(false)
+		archivePipeline.Xattrs = common.BoolToPtr(false)
+		archivePipeline.Filename = img.Filename // filename extension will determine compression
 	default:
 		panic("invalid image format for image kind")
 	}
