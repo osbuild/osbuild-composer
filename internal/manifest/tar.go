@@ -10,7 +10,13 @@ type Tar struct {
 	Base
 	Filename string
 
-	inputPipeline *Base
+	Format   osbuild.TarArchiveFormat
+	RootNode osbuild.TarRootNode
+	ACLs     *bool
+	SELinux  *bool
+	Xattrs   *bool
+
+	inputPipeline Pipeline
 }
 
 // NewTar creates a new TarPipeline. The inputPipeline represents the
@@ -18,15 +24,12 @@ type Tar struct {
 // is the name of the pipeline. The filename is the name of the output tar file.
 func NewTar(m *Manifest,
 	buildPipeline *Build,
-	inputPipeline *Base,
+	inputPipeline Pipeline,
 	pipelinename string) *Tar {
 	p := &Tar{
 		Base:          NewBase(m, pipelinename, buildPipeline),
 		inputPipeline: inputPipeline,
 		Filename:      "image.tar",
-	}
-	if inputPipeline.manifest != m {
-		panic("tree pipeline from different manifest")
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -36,7 +39,15 @@ func NewTar(m *Manifest,
 func (p *Tar) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	tarStage := osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: p.Filename}, p.inputPipeline.Name())
+	tarOptions := &osbuild.TarStageOptions{
+		Filename: p.Filename,
+		Format:   p.Format,
+		ACLs:     p.ACLs,
+		SELinux:  p.SELinux,
+		Xattrs:   p.Xattrs,
+		RootNode: p.RootNode,
+	}
+	tarStage := osbuild.NewTarStage(tarOptions, p.inputPipeline.Name())
 	pipeline.AddStage(tarStage)
 
 	return pipeline
