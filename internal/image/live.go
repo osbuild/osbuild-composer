@@ -79,6 +79,9 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 		artifactPipeline = vmdkPipeline
 		artifact = vmdkPipeline.Export()
 	case platform.FORMAT_GCE:
+		// NOTE(akoutsou): temporary workaround; filename required for GCP
+		// TODO: define internal raw filename on image type
+		imagePipeline.Filename = "disk.raw"
 		archivePipeline := manifest.NewTar(m, buildPipeline, imagePipeline, "archive")
 		archivePipeline.Format = osbuild.TarArchiveFormatOldgnu
 		archivePipeline.RootNode = osbuild.TarRootNodeOmit
