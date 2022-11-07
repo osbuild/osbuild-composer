@@ -293,6 +293,17 @@ func newDistro(name string, major, minor int) distro.Distro {
 	x86_64.addImageTypes(
 		rawX86Platform,
 		mkAMIImgTypeX86_64(rd.osVersion, rd.isRHEL()),
+	)
+
+	gceX86Platform := &platform.X86{
+		BIOS:       true,
+		UEFIVendor: rd.vendor,
+		BasePlatform: platform.BasePlatform{
+			ImageFormat: platform.FORMAT_GCE,
+		},
+	}
+	x86_64.addImageTypes(
+		gceX86Platform,
 		gceImgType,
 	)
 
@@ -443,7 +454,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 		)
 
 		// add GCE RHUI image to RHEL only
-		x86_64.addImageTypes(rawX86Platform, gceRhuiImgType)
+		x86_64.addImageTypes(gceX86Platform, gceRhuiImgType)
 	} else {
 		x86_64.addImageTypes(azureX64Platform, azureImgType)
 	}
