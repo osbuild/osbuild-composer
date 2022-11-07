@@ -17,6 +17,7 @@ const (
 	FORMAT_QCOW2
 	FORMAT_VMDK
 	FORMAT_VHD
+	FORMAT_GCE
 )
 
 func (a Arch) String() string {
@@ -46,6 +47,8 @@ func (f ImageFormat) String() string {
 		return "vmdk"
 	case FORMAT_VHD:
 		return "vhd"
+	case FORMAT_GCE:
+		return "gce"
 	default:
 		panic("invalid image format")
 	}
