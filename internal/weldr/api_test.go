@@ -792,6 +792,42 @@ func TestBlueprintsChanges(t *testing.T) {
 	test.SendHTTP(api, true, "DELETE", "/api/v0/blueprints/delete/"+id, ``)
 }
 
+// TestBlueprintChange tests getting a single blueprint commit
+func TestBlueprintChange(t *testing.T) {
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
+	rand.Seed(time.Now().UnixNano())
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	id := strconv.Itoa(rand.Int())
+
+	test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"`+id+`","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.1"}`)
+	test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"`+id+`","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.2"}`)
+
+	resp := test.SendHTTP(api, true, "GET", "/api/v0/blueprints/changes/"+id, ``)
+	body, err := ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var changes BlueprintsChangesV0
+	err = json.Unmarshal(body, &changes)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(changes.BlueprintsChanges))
+	require.Equal(t, 2, len(changes.BlueprintsChanges[0].Changes))
+	commit := changes.BlueprintsChanges[0].Changes[1].Commit
+
+	// Get the blueprint's oldest commit
+	route := fmt.Sprintf("/api/v1/blueprints/change/%s/%s", id, commit)
+	resp = test.SendHTTP(api, true, "GET", route, ``)
+	body, err = ioutil.ReadAll(resp.Body)
+	require.Nil(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var bp blueprint.Blueprint
+	err = json.Unmarshal(body, &bp)
+	require.Nil(t, err)
+	require.Equal(t, "0.0.1", bp.Version)
+}
+
 func TestBlueprintsDepsolve(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
