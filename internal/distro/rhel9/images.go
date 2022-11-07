@@ -134,6 +134,8 @@ func osCustomizations(
 	osc.PwQuality = imageConfig.PwQuality
 	osc.RHSMConfig = imageConfig.RHSMConfig
 	osc.Subscription = options.Subscription
+	osc.WAAgentConfig = imageConfig.WAAgentConfig
+	osc.UdevRules = imageConfig.UdevRules
 
 	return osc
 }

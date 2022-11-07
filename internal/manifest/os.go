@@ -83,6 +83,8 @@ type OSCustomizations struct {
 	PwQuality      *osbuild.PwqualityConfStageOptions
 	OpenSCAPConfig *osbuild.OscapRemediationStageOptions
 	NTPServers     []osbuild.ChronyConfigServer
+	WAAgentConfig  *osbuild.WAAgentConfStageOptions
+	UdevRules      *osbuild.UdevRulesStageOptions
 	LeapSecTZ      *string
 
 	Subscription *distro.SubscriptionImageOptions
@@ -426,6 +428,14 @@ func (p *OS) serialize() osbuild.Pipeline {
 		if rhsmConfig, exists := p.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
 			pipeline.AddStage(osbuild.NewRHSMStage(rhsmConfig))
 		}
+	}
+
+	if waConfig := p.WAAgentConfig; waConfig != nil {
+		pipeline.AddStage(osbuild.NewWAAgentConfStage(waConfig))
+	}
+
+	if udevRules := p.UdevRules; udevRules != nil {
+		pipeline.AddStage(osbuild.NewUdevRulesStage(udevRules))
 	}
 
 	if pt := p.PartitionTable; pt != nil {
