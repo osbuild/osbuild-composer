@@ -22,7 +22,7 @@ func NewVPC(m *Manifest,
 	p := &VPC{
 		Base:        NewBase(m, "vpc", buildPipeline),
 		imgPipeline: imgPipeline,
-		Filename:    "image.vpc",
+		Filename:    "image.vhd",
 	}
 	if imgPipeline.Base.manifest != m {
 		panic("live image pipeline from different manifest")
