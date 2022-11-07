@@ -190,6 +190,13 @@ func (p *OS) getBuildPackages() []string {
 		packages = append(packages, "policycoreutils")
 		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
 	}
+	if len(p.CloudInit) > 0 {
+		packages = append(packages, "python3-pyyaml")
+	}
+	if len(p.DNFConfig) > 0 || len(p.RHSMConfig) > 0 {
+		packages = append(packages, "python3-iniparse")
+	}
+
 	return packages
 }
 
