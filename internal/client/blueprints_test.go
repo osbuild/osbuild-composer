@@ -1082,4 +1082,54 @@ func TestFreezeInvalidBlueprintV0(t *testing.T) {
 	require.Contains(t, api.Errors[0].Msg, "Invalid characters in API path")
 }
 
-// TODO diff of blueprint changes
+// Make several changes to a blueprint and get the oldest change by commit hash
+func TestBlueprintChangeV1(t *testing.T) {
+	bps := []string{`{
+		"name": "test-blueprint-change-v1",
+		"description": "CheckBlueprintChangeV1",
+		"version": "0.0.1",
+		"packages": [{"name": "bash", "version": "*"}],
+		"modules": [{"name": "util-linux", "version": "*"}]
+	}`,
+		`{
+		"name": "test-blueprint-change-v1",
+		"description": "CheckBlueprintChangeV1",
+		"version": "0.1.0",
+		"packages": [{"name": "bash", "version": "*"}, {"name": "tmux", "version": "*"}],
+		"modules": [{"name": "util-linux", "version": "*"}],
+		"customizations": {"user": [{"name": "root", "password": "qweqweqwe"}]}
+	}`,
+		`{
+		"name": "test-blueprint-change-v1",
+		"description": "CheckBlueprintChangeV1",
+		"version": "0.1.1",
+		"packages": [{"name": "bash", "version": "*"}, {"name": "tmux", "version": "*"}],
+		"modules": [],
+		"customizations": {"user": [{"name": "root", "password": "asdasdasd"}]}
+	}`}
+
+	// Push 3 changes to the blueprint
+	for i := range bps {
+		resp, err := PostJSONBlueprintV0(testState.socket, bps[i])
+		require.NoError(t, err, "POST blueprint #%d failed with a client error")
+		require.True(t, resp.Status, "POST blueprint #%d failed: %#v", i, resp)
+	}
+
+	// List the changes
+	changes, api, err := GetBlueprintsChangesV0(testState.socket, []string{"test-blueprint-change-v1"})
+	require.NoError(t, err, "GET blueprint failed with a client error")
+	require.Nil(t, api, "GetBlueprintsChanges failed: %#v", api)
+	require.Equal(t, 1, len(changes.BlueprintsChanges), "No changes returned")
+	require.Equal(t, "test-blueprint-change-v1", changes.BlueprintsChanges[0].Name, "Wrong blueprint changes returned")
+	require.Greater(t, len(changes.BlueprintsChanges[0].Changes), 2, "Wrong number of changes returned")
+
+	// Get the oldest commit
+	commit := changes.BlueprintsChanges[0].Changes[2].Commit
+	t.Logf("commit = %s", commit)
+	t.Logf("changes = %v", changes)
+	bp, api, err := GetBlueprintChangeV1(testState.socket, "test-blueprint-change-v1", commit)
+	require.NoError(t, err, "GET blueprint change failed with a client error")
+	require.Nil(t, api, "GET blueprint change failed: %#v", api)
+	require.NotNil(t, bp, "GET blueprint change failed: missing blueprint")
+	assert.Equal(t, bp.Version, "0.0.1")
+}
