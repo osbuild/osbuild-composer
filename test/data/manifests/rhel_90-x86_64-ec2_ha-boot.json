@@ -352,6 +352,9 @@
                     "id": "sha256:bc0f73fb262df04514d6ce8f4d970adefc7385be519e759c9d61bf7f715cc6e1"
                   },
                   {
+                    "id": "sha256:409beeb1faf626a882e95763ec4892d514077289e6074d3b61bef1b90739ad66"
+                  },
+                  {
                     "id": "sha256:dfbb0c4f2c524b731e2c2ed7d352541183667ad7981fb01de6474c6be5e52951"
                   },
                   {
@@ -418,13 +421,22 @@
                     "id": "sha256:c746c3e534fa6616b62525a89cc8ab1014e5acfac31b1012823b5f1e9031181c"
                   },
                   {
+                    "id": "sha256:2d963fbff4044e88673c52fb03cc11d9395dcc2a0c27a26844477bf6eb1e8160"
+                  },
+                  {
                     "id": "sha256:e9efb4a947b2a178c85aa20bc5283d11f0dc85404fe527c25153d2389085eb71"
                   },
                   {
                     "id": "sha256:688bacfd60f31d9e7b1d295d8929d7f953ec789b86c475ef828c0b74d35d5ae4"
                   },
                   {
+                    "id": "sha256:01de25f463fc6423b7770ba03bdc8370f14e7651ac34a313ccddadd6096036a3"
+                  },
+                  {
                     "id": "sha256:e4ab6f11d394cb13a23494da17a8432ad248c4e4f16df79d1aff439d77202298"
+                  },
+                  {
+                    "id": "sha256:17127ca6f27ec841e7b0cd6520bb0ae3d0e523b03ca8709d808b045b44992c34"
                   },
                   {
                     "id": "sha256:01bf315b3bc44c28515c4d33d49173b23d7979d2a09b7b15f749d434b60851e6"
@@ -5326,6 +5338,15 @@
         "checksum": "sha256:bc0f73fb262df04514d6ce8f4d970adefc7385be519e759c9d61bf7f715cc6e1"
       },
       {
+        "name": "libyaml",
+        "epoch": 0,
+        "version": "0.2.5",
+        "release": "7.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/libyaml-0.2.5-7.el9.x86_64.rpm",
+        "checksum": "sha256:409beeb1faf626a882e95763ec4892d514077289e6074d3b61bef1b90739ad66"
+      },
+      {
         "name": "libzstd",
         "epoch": 0,
         "version": "1.5.0",
@@ -5524,6 +5545,15 @@
         "checksum": "sha256:c746c3e534fa6616b62525a89cc8ab1014e5acfac31b1012823b5f1e9031181c"
       },
       {
+        "name": "python3-iniparse",
+        "epoch": 0,
+        "version": "0.4",
+        "release": "45.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-iniparse-0.4-45.el9.noarch.rpm",
+        "checksum": "sha256:2d963fbff4044e88673c52fb03cc11d9395dcc2a0c27a26844477bf6eb1e8160"
+      },
+      {
         "name": "python3-libs",
         "epoch": 0,
         "version": "3.9.10",
@@ -5542,6 +5572,15 @@
         "checksum": "sha256:688bacfd60f31d9e7b1d295d8929d7f953ec789b86c475ef828c0b74d35d5ae4"
       },
       {
+        "name": "python3-pyyaml",
+        "epoch": 0,
+        "version": "5.4.1",
+        "release": "4.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-pyyaml-5.4.1-4.el9.x86_64.rpm",
+        "checksum": "sha256:01de25f463fc6423b7770ba03bdc8370f14e7651ac34a313ccddadd6096036a3"
+      },
+      {
         "name": "python3-setuptools-wheel",
         "epoch": 0,
         "version": "53.0.0",
@@ -5549,6 +5588,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-setuptools-wheel-53.0.0-9.el9.noarch.rpm",
         "checksum": "sha256:e4ab6f11d394cb13a23494da17a8432ad248c4e4f16df79d1aff439d77202298"
+      },
+      {
+        "name": "python3-six",
+        "epoch": 0,
+        "version": "1.15.0",
+        "release": "7.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-six-1.15.0-7.el9.noarch.rpm",
+        "checksum": "sha256:17127ca6f27ec841e7b0cd6520bb0ae3d0e523b03ca8709d808b045b44992c34"
       },
       {
         "name": "readline",

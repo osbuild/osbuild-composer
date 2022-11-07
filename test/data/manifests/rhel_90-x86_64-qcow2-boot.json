@@ -422,6 +422,9 @@
                     "id": "sha256:c746c3e534fa6616b62525a89cc8ab1014e5acfac31b1012823b5f1e9031181c"
                   },
                   {
+                    "id": "sha256:2d963fbff4044e88673c52fb03cc11d9395dcc2a0c27a26844477bf6eb1e8160"
+                  },
+                  {
                     "id": "sha256:e9efb4a947b2a178c85aa20bc5283d11f0dc85404fe527c25153d2389085eb71"
                   },
                   {
@@ -429,6 +432,9 @@
                   },
                   {
                     "id": "sha256:e4ab6f11d394cb13a23494da17a8432ad248c4e4f16df79d1aff439d77202298"
+                  },
+                  {
+                    "id": "sha256:17127ca6f27ec841e7b0cd6520bb0ae3d0e523b03ca8709d808b045b44992c34"
                   },
                   {
                     "id": "sha256:01bf315b3bc44c28515c4d33d49173b23d7979d2a09b7b15f749d434b60851e6"
@@ -4644,6 +4650,15 @@
         "checksum": "sha256:c746c3e534fa6616b62525a89cc8ab1014e5acfac31b1012823b5f1e9031181c"
       },
       {
+        "name": "python3-iniparse",
+        "epoch": 0,
+        "version": "0.4",
+        "release": "45.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-iniparse-0.4-45.el9.noarch.rpm",
+        "checksum": "sha256:2d963fbff4044e88673c52fb03cc11d9395dcc2a0c27a26844477bf6eb1e8160"
+      },
+      {
         "name": "python3-libs",
         "epoch": 0,
         "version": "3.9.10",
@@ -4669,6 +4684,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-setuptools-wheel-53.0.0-9.el9.noarch.rpm",
         "checksum": "sha256:e4ab6f11d394cb13a23494da17a8432ad248c4e4f16df79d1aff439d77202298"
+      },
+      {
+        "name": "python3-six",
+        "epoch": 0,
+        "version": "1.15.0",
+        "release": "7.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-six-1.15.0-7.el9.noarch.rpm",
+        "checksum": "sha256:17127ca6f27ec841e7b0cd6520bb0ae3d0e523b03ca8709d808b045b44992c34"
       },
       {
         "name": "readline",

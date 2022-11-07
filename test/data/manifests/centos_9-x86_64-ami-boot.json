@@ -905,6 +905,14 @@
                     }
                   },
                   {
+                    "id": "sha256:e939227fdb6a25c742b03ac88ce4f7dc5738f36ff3aac29a4acf37949c8fcb27",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:8282f33f06743ab88e36fea978559ac617c44cda14eb65495cad37505fdace41",
                     "options": {
                       "metadata": {
@@ -1090,6 +1098,14 @@
                   },
                   {
                     "id": "sha256:8e9e72535944204b48dbcb9cb34007b4991bdb4b5223e4c5874b07c6c122c1ff",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:7e6e354e0503b143139e8188aa0f8a1a01dc9ef1781f1392d34be9c68a53837b",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6783,6 +6799,16 @@
         "check_gpg": true
       },
       {
+        "name": "libyaml",
+        "epoch": 0,
+        "version": "0.2.5",
+        "release": "7.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/libyaml-0.2.5-7.el9.x86_64.rpm",
+        "checksum": "sha256:e939227fdb6a25c742b03ac88ce4f7dc5738f36ff3aac29a4acf37949c8fcb27",
+        "check_gpg": true
+      },
+      {
         "name": "libzstd",
         "epoch": 0,
         "version": "1.5.0",
@@ -7020,6 +7046,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/python3-pip-wheel-21.2.3-6.el9.noarch.rpm",
         "checksum": "sha256:8e9e72535944204b48dbcb9cb34007b4991bdb4b5223e4c5874b07c6c122c1ff",
+        "check_gpg": true
+      },
+      {
+        "name": "python3-pyyaml",
+        "epoch": 0,
+        "version": "5.4.1",
+        "release": "4.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20220208/Packages/python3-pyyaml-5.4.1-4.el9.x86_64.rpm",
+        "checksum": "sha256:7e6e354e0503b143139e8188aa0f8a1a01dc9ef1781f1392d34be9c68a53837b",
         "check_gpg": true
       },
       {
