@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -61,9 +60,8 @@ type OSCustomizations struct {
 
 	Groups []users.Group
 	Users  []users.User
-	// TODO: drop blueprint types from the API
-	Firewall *blueprint.FirewallCustomization
 	// TODO: drop osbuild types from the API
+	Firewall       *osbuild.FirewallStageOptions
 	Grub2Config    *osbuild.GRUB2Config
 	Sysconfig      []*osbuild.SysconfigStageOptions
 	SystemdLogind  []*osbuild.SystemdLogindStageOptions
@@ -333,16 +331,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if p.Firewall != nil {
-		options := osbuild.FirewallStageOptions{
-			Ports: p.Firewall.Ports,
-		}
-
-		if p.Firewall.Services != nil {
-			options.EnabledServices = p.Firewall.Services.Enabled
-			options.DisabledServices = p.Firewall.Services.Disabled
-		}
-
-		pipeline.AddStage(osbuild.NewFirewallStage(&options))
+		pipeline.AddStage(osbuild.NewFirewallStage(p.Firewall))
 	}
 
 	for _, sysconfigConfig := range p.Sysconfig {
