@@ -61,29 +61,32 @@ type OSCustomizations struct {
 	Groups []users.Group
 	Users  []users.User
 	// TODO: drop osbuild types from the API
-	Firewall       *osbuild.FirewallStageOptions
-	Grub2Config    *osbuild.GRUB2Config
-	Sysconfig      []*osbuild.SysconfigStageOptions
-	SystemdLogind  []*osbuild.SystemdLogindStageOptions
-	CloudInit      []*osbuild.CloudInitStageOptions
-	Modprobe       []*osbuild.ModprobeStageOptions
-	DracutConf     []*osbuild.DracutConfStageOptions
-	SystemdUnit    []*osbuild.SystemdUnitStageOptions
-	Authselect     *osbuild.AuthselectStageOptions
-	SELinuxConfig  *osbuild.SELinuxConfigStageOptions
-	Tuned          *osbuild.TunedStageOptions
-	Tmpfilesd      []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf  []*osbuild.PamLimitsConfStageOptions
-	Sysctld        []*osbuild.SysctldStageOptions
-	DNFConfig      []*osbuild.DNFConfigStageOptions
-	SshdConfig     *osbuild.SshdConfigStageOptions
-	AuthConfig     *osbuild.AuthconfigStageOptions
-	PwQuality      *osbuild.PwqualityConfStageOptions
-	OpenSCAPConfig *osbuild.OscapRemediationStageOptions
-	NTPServers     []osbuild.ChronyConfigServer
-	WAAgentConfig  *osbuild.WAAgentConfStageOptions
-	UdevRules      *osbuild.UdevRulesStageOptions
-	LeapSecTZ      *string
+	Firewall            *osbuild.FirewallStageOptions
+	Grub2Config         *osbuild.GRUB2Config
+	Sysconfig           []*osbuild.SysconfigStageOptions
+	SystemdLogind       []*osbuild.SystemdLogindStageOptions
+	CloudInit           []*osbuild.CloudInitStageOptions
+	Modprobe            []*osbuild.ModprobeStageOptions
+	DracutConf          []*osbuild.DracutConfStageOptions
+	SystemdUnit         []*osbuild.SystemdUnitStageOptions
+	Authselect          *osbuild.AuthselectStageOptions
+	SELinuxConfig       *osbuild.SELinuxConfigStageOptions
+	Tuned               *osbuild.TunedStageOptions
+	Tmpfilesd           []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf       []*osbuild.PamLimitsConfStageOptions
+	Sysctld             []*osbuild.SysctldStageOptions
+	DNFConfig           []*osbuild.DNFConfigStageOptions
+	DNFAutomaticConfig  *osbuild.DNFAutomaticConfigStageOptions
+	YUMRepos            []*osbuild.YumReposStageOptions
+	SshdConfig          *osbuild.SshdConfigStageOptions
+	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
+	AuthConfig          *osbuild.AuthconfigStageOptions
+	PwQuality           *osbuild.PwqualityConfStageOptions
+	OpenSCAPConfig      *osbuild.OscapRemediationStageOptions
+	NTPServers          []osbuild.ChronyConfigServer
+	WAAgentConfig       *osbuild.WAAgentConfStageOptions
+	UdevRules           *osbuild.UdevRulesStageOptions
+	LeapSecTZ           *string
 
 	Subscription *distro.SubscriptionImageOptions
 	RHSMConfig   map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
@@ -384,6 +387,18 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	for _, dnfConfig := range p.DNFConfig {
 		pipeline.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
+	}
+
+	if p.DNFAutomaticConfig != nil {
+		pipeline.AddStage(osbuild.NewDNFAutomaticConfigStage(p.DNFAutomaticConfig))
+	}
+
+	for _, yumRepo := range p.YUMRepos {
+		pipeline.AddStage(osbuild.NewYumReposStage(yumRepo))
+	}
+
+	if p.GCPGuestAgentConfig != nil {
+		pipeline.AddStage(osbuild.NewGcpGuestAgentConfigStage(p.GCPGuestAgentConfig))
 	}
 
 	if p.SshdConfig != nil {
