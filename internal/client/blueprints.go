@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
@@ -119,6 +120,21 @@ func GetBlueprintsChangesV0(socket *http.Client, bpNames []string) (weldr.Bluepr
 		return weldr.BlueprintsChangesV0{}, nil, err
 	}
 	return changes, nil, nil
+}
+
+// GetBlueprintChangeV1 returns a specific blueprint change
+func GetBlueprintChangeV1(socket *http.Client, name, commit string) (blueprint.Blueprint, *APIResponse, error) {
+	route := fmt.Sprintf("/api/v1/blueprints/change/%s/%s", name, commit)
+	body, resp, err := GetRaw(socket, "GET", route)
+	if resp != nil || err != nil {
+		return blueprint.Blueprint{}, resp, err
+	}
+	var bp blueprint.Blueprint
+	err = json.Unmarshal(body, &bp)
+	if err != nil {
+		return blueprint.Blueprint{}, nil, err
+	}
+	return bp, nil, nil
 }
 
 // UndoBlueprintChangeV0 reverts a blueprint to a previous commit
