@@ -46,32 +46,45 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 	imagePipeline := manifest.NewRawImage(m, buildPipeline, osPipeline)
 
 	var artifact *artifact.Artifact
+	var artifactPipeline manifest.Pipeline
 	switch img.Platform.GetImageFormat() {
 	case platform.FORMAT_RAW:
-		switch img.Compression {
-		case "xz":
-			xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
-			xzPipeline.Filename = img.Filename
-			artifact = xzPipeline.Export()
-		default:
+		if img.Compression == "" {
 			imagePipeline.Filename = img.Filename
-			artifact = imagePipeline.Export()
 		}
+		artifactPipeline = imagePipeline
+		artifact = imagePipeline.Export()
 	case platform.FORMAT_QCOW2:
 		qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, imagePipeline)
-		qcow2Pipeline.Filename = img.Filename
+		if img.Compression == "" {
+			qcow2Pipeline.Filename = img.Filename
+		}
 		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+		artifactPipeline = qcow2Pipeline
 		artifact = qcow2Pipeline.Export()
 	case platform.FORMAT_VHD:
 		vpcPipeline := manifest.NewVPC(m, buildPipeline, imagePipeline)
-		vpcPipeline.Filename = img.Filename
+		if img.Compression == "" {
+			vpcPipeline.Filename = img.Filename
+		}
+		artifactPipeline = vpcPipeline
 		artifact = vpcPipeline.Export()
 	case platform.FORMAT_VMDK:
 		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, imagePipeline)
-		vmdkPipeline.Filename = img.Filename
+		if img.Compression == "" {
+			vmdkPipeline.Filename = img.Filename
+		}
+		artifactPipeline = vmdkPipeline
 		artifact = vmdkPipeline.Export()
 	default:
 		panic("invalid image format for image kind")
+	}
+
+	switch img.Compression {
+	case "xz":
+		xzPipeline := manifest.NewXZ(m, buildPipeline, artifactPipeline)
+		xzPipeline.Filename = img.Filename
+		artifact = xzPipeline.Export()
 	}
 
 	return artifact, nil
