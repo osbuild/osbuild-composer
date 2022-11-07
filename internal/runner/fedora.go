@@ -14,5 +14,6 @@ func (p *Fedora) GetBuildPackages() []string {
 	return []string{
 		"glibc",   // ldconfig
 		"systemd", // systemd-tmpfiles and systemd-sysusers
+		"python3", // osbuild
 	}
 }
