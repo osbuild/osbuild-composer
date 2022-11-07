@@ -139,6 +139,8 @@ func osCustomizations(
 	osc.PamLimitsConf = imageConfig.PamLimitsConf
 	osc.Sysctld = imageConfig.Sysctld
 	osc.DNFConfig = imageConfig.DNFConfig
+	osc.DNFAutomaticConfig = imageConfig.DNFAutomaticConfig
+	osc.YUMRepos = imageConfig.YUMRepos
 	osc.SshdConfig = imageConfig.SshdConfig
 	osc.AuthConfig = imageConfig.Authconfig
 	osc.PwQuality = imageConfig.PwQuality
@@ -147,6 +149,7 @@ func osCustomizations(
 	osc.WAAgentConfig = imageConfig.WAAgentConfig
 	osc.Firewall = imageConfig.Firewall
 	osc.UdevRules = imageConfig.UdevRules
+	osc.GCPGuestAgentConfig = imageConfig.GCPGuestAgentConfig
 
 	return osc
 }
