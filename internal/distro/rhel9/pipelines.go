@@ -27,108 +27,6 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, kernelOptions string,
 	return pipeline
 }
 
-func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-
-	diskfile := "disk.img"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, nil)
-	pipelines = append(pipelines, *qemuPipeline)
-	return pipelines, nil
-}
-
-func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec,
-	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-	return pipelines, nil
-}
-
-// ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
-func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, containers, rng, t.Filename())
-}
-
-// rhelEc2Pipelines returns pipelines which produce XZ-compressed EC2 images which are expected to use RHUI for content
-func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	rawImageFilename := "image.raw"
-
-	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, containers, rng, rawImageFilename)
-	if err != nil {
-		return nil, err
-	}
-
-	lastPipeline := pipelines[len(pipelines)-1]
-	pipelines = append(pipelines, *xzArchivePipeline(lastPipeline.Name, rawImageFilename, t.Filename()))
-
-	return pipelines, nil
-}
-
-func gcePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-
-	diskfile := "disk.raw"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-
-	archivePipeline := tarArchivePipeline("archive", imagePipeline.Name, &osbuild.TarStageOptions{
-		Filename: t.Filename(),
-		Format:   osbuild.TarArchiveFormatOldgnu,
-		RootNode: osbuild.TarRootNodeOmit,
-		// import of the image to GCP fails in case the options below are enabled, which is the default
-		ACLs:    common.BoolToPtr(false),
-		SELinux: common.BoolToPtr(false),
-		Xattrs:  common.BoolToPtr(false),
-	})
-	pipelines = append(pipelines, *archivePipeline)
-
-	return pipelines, nil
-}
-
 func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
@@ -927,19 +825,6 @@ func tarArchivePipeline(name, inputPipelineName string, tarOptions *osbuild.TarS
 	p.Name = name
 	p.Build = "name:build"
 	p.AddStage(osbuild.NewTarStage(tarOptions, inputPipelineName))
-	return p
-}
-
-func qemuPipeline(inputPipelineName, inputFilename, outputFilename string, format osbuild.QEMUFormat, formatOptions osbuild.QEMUFormatOptions) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = string(format)
-	p.Build = "name:build"
-
-	qemuStage := osbuild.NewQEMUStage(
-		osbuild.NewQEMUStageOptions(outputFilename, format, formatOptions),
-		osbuild.NewQemuStagePipelineFilesInputs(inputPipelineName, inputFilename),
-	)
-	p.AddStage(qemuStage)
 	return p
 }
 
