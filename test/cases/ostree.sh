@@ -22,6 +22,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/36/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "fedora-37")
         IMAGE_TYPE=iot-commit
@@ -30,6 +31,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.kernel.org/fedora/development/37/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "rhel-8.4")
         IMAGE_TYPE=edge-commit
@@ -38,6 +40,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "rhel-8.6")
         IMAGE_TYPE=edge-commit
@@ -46,6 +49,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "rhel-8.7")
         IMAGE_TYPE=edge-commit
@@ -53,6 +57,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel8-unknown"
         USER_IN_COMMIT="true"
         EMBEDED_CONTAINER="true"
+        FIREWALL_FEATURE="true"
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
@@ -67,6 +72,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "rhel-9.1")
         IMAGE_TYPE=edge-commit
@@ -74,6 +80,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel9-unknown"
         USER_IN_COMMIT="true"
         EMBEDED_CONTAINER="true"
+        FIREWALL_FEATURE="true"
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
@@ -88,6 +95,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="true"
+        FIREWALL_FEATURE="false"
         ;;
     "centos-9")
         IMAGE_TYPE=edge-commit
@@ -96,6 +104,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="https://odcs.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="true"
+        FIREWALL_FEATURE="false"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -516,6 +525,17 @@ source = "quay.io/fedora/fedora:latest"
 EOF
 fi
 
+if [[ "${FIREWALL_FEATURE}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.firewall.zones]]
+name = "trusted"
+sources = ["192.168.100.51"]
+[[customizations.firewall.zones]]
+name = "work"
+sources = ["192.168.100.52"]
+EOF
+fi
+
 # Build upgrade image.
 build_image "$BLUEPRINT_FILE" upgrade
 
@@ -582,7 +602,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="${EMBEDED_CONTAINER}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="${EMBEDED_CONTAINER}" -e firewall_feature="${FIREWALL_FEATURE}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up

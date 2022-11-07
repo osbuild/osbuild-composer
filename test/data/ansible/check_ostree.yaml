@@ -816,6 +816,33 @@
         - skip_rollback_test == "false"
         - result_rollback is succeeded
 
+    # case: checking firewall customizations
+    - name: Check applied firewall customizations
+      block:
+        - name: Ensure firewall customizations applied from blueprint in trusted zone
+          command: firewall-cmd --info-zone=trusted
+          register: result_trusted_zone
+          become: yes
+        - name: Ensure firewall customizations applied from blueprint in work zone
+          command: firewall-cmd --info-zone=work
+          register: result_work_zone
+          become: yes
+
+        - assert:
+            that:
+              - "'192.168.100.51' in result_trusted_zone.stdout"
+              - "'192.168.100.52' in result_work_zone.stdout"
+            fail_msg: "No firewall customizations found"
+            success_msg: "Firewall customizations added from blueprint"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: firewall_feature == "true"
+
     - assert:
         that:
           - failed_counter == "0"
