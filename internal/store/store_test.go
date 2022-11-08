@@ -89,6 +89,13 @@ func (suite *storeTest) SetupSuite() {
 			{Name: "test2", Version: "*"}},
 		Groups: []blueprint.Group{
 			{Name: "test3"}},
+		Containers: []blueprint.Container{
+			{
+				Source:    "https://registry.example.com/container",
+				Name:      "example-container",
+				TLSVerify: common.BoolToPtr(true),
+			},
+		},
 		Customizations: &suite.myCustomizations,
 	}
 	suite.myBPv3 = blueprint.Blueprint{
