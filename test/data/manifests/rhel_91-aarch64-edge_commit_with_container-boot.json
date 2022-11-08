@@ -1481,6 +1481,14 @@
                     }
                   },
                   {
+                    "id": "sha256:9acc2b5fa8a8ea019c9f91039e7fe6504b1f24139e55d178bd13e1298b52f939",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:ffa60067f694259376b1a6256c058fb2efb7736f8e5188aca45906f3a909b9a8",
                     "options": {
                       "metadata": {
@@ -4458,6 +4466,41 @@
             "options": {}
           },
           {
+            "type": "org.osbuild.containers.storage.conf",
+            "options": {
+              "filename": "/etc/containers/storage.conf",
+              "config": {
+                "storage": {
+                  "options": {
+                    "additionalimagestores": [
+                      "/usr/share/containers/storage"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.skopeo",
+            "inputs": {
+              "images": {
+                "type": "org.osbuild.containers",
+                "origin": "org.osbuild.source",
+                "references": {
+                  "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6": {
+                    "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+                  }
+                }
+              }
+            },
+            "options": {
+              "destination": {
+                "type": "containers-storage",
+                "storage-path": "/usr/share/containers/storage"
+              }
+            }
+          },
+          {
             "type": "org.osbuild.locale",
             "options": {
               "language": "C.UTF-8"
@@ -5226,6 +5269,9 @@
           "sha256:9a5c0eeb5058f1234f912d619c2ecae1f76650d9ed00597c8c6720b1f83342cd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221015/Packages/coreutils-common-8.32-32.el9.aarch64.rpm"
           },
+          "sha256:9acc2b5fa8a8ea019c9f91039e7fe6504b1f24139e55d178bd13e1298b52f939": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/python3-toml-0.10.2-6.el9.noarch.rpm"
+          },
           "sha256:9c0132a7535813623f9ecc77827dde81bfac6afe530a8149c4e9e9337865d956": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/greenboot-0.14.0-3.el9.aarch64.rpm"
           },
@@ -5645,6 +5691,16 @@
           },
           "sha256:fffd57e2d5e81f093843723f76622be93d6e41da74ee3f155a21b7ea6ba8d426": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221015/Packages/libmbim-1.26.0-2.el9.aarch64.rpm"
+          }
+        }
+      },
+      "org.osbuild.skopeo": {
+        "items": {
+          "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6": {
+            "image": {
+              "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal",
+              "digest": "sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
+            }
           }
         }
       }
@@ -7450,6 +7506,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/python3-policycoreutils-3.4-4.el9.noarch.rpm",
         "checksum": "sha256:686eca65f9fe16b47d9006aee1735b0f70c10e532e7e547c3be740e91ac4aaec",
+        "check_gpg": true
+      },
+      {
+        "name": "python3-toml",
+        "epoch": 0,
+        "version": "0.10.2",
+        "release": "6.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/python3-toml-0.10.2-6.el9.noarch.rpm",
+        "checksum": "sha256:9acc2b5fa8a8ea019c9f91039e7fe6504b1f24139e55d178bd13e1298b52f939",
         "check_gpg": true
       },
       {

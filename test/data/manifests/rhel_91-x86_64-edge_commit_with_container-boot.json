@@ -1578,6 +1578,14 @@
                     }
                   },
                   {
+                    "id": "sha256:9acc2b5fa8a8ea019c9f91039e7fe6504b1f24139e55d178bd13e1298b52f939",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:5c9d57c469a4a379e5e1ddec23661891a434068671f0886ff3673bc1c96712ae",
                     "options": {
                       "metadata": {
@@ -4669,6 +4677,41 @@
             "options": {}
           },
           {
+            "type": "org.osbuild.containers.storage.conf",
+            "options": {
+              "filename": "/etc/containers/storage.conf",
+              "config": {
+                "storage": {
+                  "options": {
+                    "additionalimagestores": [
+                      "/usr/share/containers/storage"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.skopeo",
+            "inputs": {
+              "images": {
+                "type": "org.osbuild.containers",
+                "origin": "org.osbuild.source",
+                "references": {
+                  "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6": {
+                    "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+                  }
+                }
+              }
+            },
+            "options": {
+              "destination": {
+                "type": "containers-storage",
+                "storage-path": "/usr/share/containers/storage"
+              }
+            }
+          },
+          {
             "type": "org.osbuild.locale",
             "options": {
               "language": "C.UTF-8"
@@ -5461,6 +5504,9 @@
           "sha256:9a1007827d9b3360d1b44b01beb447312bbf7473a8dc46157002f4d998a2b3bc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/procps-ng-3.3.17-8.el9.x86_64.rpm"
           },
+          "sha256:9acc2b5fa8a8ea019c9f91039e7fe6504b1f24139e55d178bd13e1298b52f939": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/python3-toml-0.10.2-6.el9.noarch.rpm"
+          },
           "sha256:9ba40981a8ea3d51a689a41c2d404bc8d127c6788bc3ae84cefcd5bd3e49cf66": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/libassuan-2.5.5-3.el9.x86_64.rpm"
           },
@@ -5898,6 +5944,16 @@
           },
           "sha256:ff20c1890d9d5eb5135f21acf2b55f27fddac48934285b5b0fa72b591480edbb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/libacl-2.3.1-3.el9.x86_64.rpm"
+          }
+        }
+      },
+      "org.osbuild.skopeo": {
+        "items": {
+          "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6": {
+            "image": {
+              "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal",
+              "digest": "sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
+            }
           }
         }
       }
@@ -7813,6 +7869,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/python3-policycoreutils-3.4-4.el9.noarch.rpm",
         "checksum": "sha256:686eca65f9fe16b47d9006aee1735b0f70c10e532e7e547c3be740e91ac4aaec",
+        "check_gpg": true
+      },
+      {
+        "name": "python3-toml",
+        "epoch": 0,
+        "version": "0.10.2",
+        "release": "6.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/python3-toml-0.10.2-6.el9.noarch.rpm",
+        "checksum": "sha256:9acc2b5fa8a8ea019c9f91039e7fe6504b1f24139e55d178bd13e1298b52f939",
         "check_gpg": true
       },
       {
