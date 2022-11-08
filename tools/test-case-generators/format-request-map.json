@@ -282,6 +282,23 @@
     },
     "overrides": {}
   },
+  "iot-commit-with-container": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "iot-commit",
+      "repositories": [],
+      "filename": "commit.tar",
+      "blueprint": {
+        "containers": [
+          {
+            "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+          }
+        ]
+      }
+    },
+    "overrides": {}
+  },
   "iot-commit-debug": {
     "compose-request": {
       "distro": "",
