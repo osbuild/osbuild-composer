@@ -74,8 +74,8 @@ jobs:
         WORKDIR=$(readlink -f pkg/jobqueue/dbjobqueue/schemas)
         pushd $(mktemp -d)
         go mod init temp
-        go get -u github.com/jackc/tern
-        go run github.com/jackc/tern migrate -m "$WORKDIR"
+        go install github.com/jackc/tern@latest
+        $(go env GOPATH)/bin/tern migrate -m "$WORKDIR"
         popd
     - run: go test -tags=integration ./cmd/osbuild-composer-dbjobqueue-tests
     - run: go test -tags=integration ./cmd/osbuild-service-maintenance
