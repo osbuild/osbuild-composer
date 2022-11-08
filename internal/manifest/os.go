@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/environment"
@@ -24,23 +25,30 @@ import (
 //       abstractions, this should ideally only contain things that
 //       can always be applied.
 type OSCustomizations struct {
+
 	// Packages to install in addition to the ones required by the
 	// pipeline.
 	ExtraBasePackages []string
+
 	// Packages to exclude from the base package set. This is useful in
 	// case of weak dependencies, comps groups, or where multiple packages
 	// can satisfy a dependency. Must not conflict with the included base
 	// package set.
 	ExcludeBasePackages []string
+
 	// Additional repos to install the base packages from.
 	ExtraBaseRepos []rpmmd.RepoConfig
+
+	// Containers to embed in the image
+	Containers []container.Spec
+
 	// KernelName indicates that a kernel is installed, and names the kernel
 	// package.
 	KernelName string
+
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
-	// UEFIVendor indicates whether or not the image should support UEFI and
-	// if set namespaces the UEFI binaries with this string.
+
 	GPGKeyFiles      []string
 	Language         string
 	Keyboard         *string
@@ -185,19 +193,28 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 
 func (p *OS) getBuildPackages() []string {
 	packages := p.platform.GetBuildPackages()
+	if p.PartitionTable != nil {
+		packages = append(packages, p.PartitionTable.GetBuildPackages()...)
+	}
 	packages = append(packages, "rpm")
 	if p.OSTreeRef != "" {
 		packages = append(packages, "rpm-ostree")
 	}
 	if p.SElinux != "" {
-		packages = append(packages, "policycoreutils")
-		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
+		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.SElinux))
 	}
 	if len(p.CloudInit) > 0 {
 		packages = append(packages, "python3-pyyaml")
 	}
 	if len(p.DNFConfig) > 0 || len(p.RHSMConfig) > 0 {
 		packages = append(packages, "python3-iniparse")
+	}
+
+	if len(p.OSCustomizations.Containers) > 0 {
+		if p.OSTreeRef != "" {
+			packages = append(packages, "python3-toml")
+		}
+		packages = append(packages, "skopeo")
 	}
 
 	return packages
@@ -212,6 +229,10 @@ func (p *OS) getOSTreeCommits() []ostree.CommitSpec {
 
 func (p *OS) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
+}
+
+func (p *OS) getContainerSpecs() []container.Spec {
+	return p.Containers
 }
 
 func (p *OS) serializeStart(packages []rpmmd.PackageSpec) {
@@ -262,6 +283,27 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	} else {
 		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+	}
+
+	if len(p.Containers) > 0 {
+		images := osbuild.NewContainersInputForSources(p.Containers)
+
+		var storagePath string
+
+		// OSTree commits do not include data in `/var` since that is tied to the
+		// deployment, rather than the commit. Therefore the containers need to be
+		// stored in a different location, like `/usr/share`, and the container
+		// storage engine configured accordingly.
+		if p.OSTreeRef != "" {
+			storagePath = "/usr/share/containers/storage"
+			storageConf := "/etc/containers/storage.conf"
+
+			containerStoreOpts := osbuild.NewContainerStorageOptions(storageConf, storagePath)
+			pipeline.AddStage(osbuild.NewContainersStorageConfStage(containerStoreOpts))
+		}
+
+		skopeo := osbuild.NewSkopeoStage(images, storagePath)
+		pipeline.AddStage(skopeo)
 	}
 
 	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.Language}))

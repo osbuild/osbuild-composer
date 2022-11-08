@@ -7,6 +7,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
@@ -22,6 +23,7 @@ import (
 func osCustomizations(
 	t *imageType,
 	osPackageSet rpmmd.PackageSet,
+	containers []container.Spec,
 	c *blueprint.Customizations) manifest.OSCustomizations {
 
 	imageConfig := t.getDefaultImageConfig()
@@ -44,6 +46,8 @@ func osCustomizations(
 	osc.ExtraBasePackages = osPackageSet.Include
 	osc.ExcludeBasePackages = osPackageSet.Exclude
 	osc.ExtraBaseRepos = osPackageSet.Repositories
+
+	osc.Containers = containers
 
 	osc.GPGKeyFiles = imageConfig.GPGKeyFiles
 	if imageConfig.ExcludeDocs != nil {
@@ -153,11 +157,12 @@ func liveImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewLiveImage()
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
 	// TODO: move generation into LiveImage
@@ -177,11 +182,12 @@ func containerImage(workload workload.Workload,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 	img := image.NewBaseContainer()
 
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], c)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, c)
 	img.Environment = t.environment
 	img.Workload = workload
 
@@ -195,6 +201,7 @@ func imageInstallerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewImageInstaller()
@@ -212,7 +219,7 @@ func imageInstallerImage(workload workload.Workload,
 	}
 
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
@@ -235,12 +242,13 @@ func iotCommitImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
 
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
 
@@ -264,12 +272,13 @@ func iotContainerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
 
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
 	img.Workload = workload
@@ -296,6 +305,7 @@ func iotInstallerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	d := t.arch.distro
@@ -330,6 +340,7 @@ func iotRawImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	commit := ostree.CommitSpec{

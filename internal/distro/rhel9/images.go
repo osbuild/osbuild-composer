@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
@@ -19,6 +20,7 @@ func osCustomizations(
 	t *imageType,
 	osPackageSet rpmmd.PackageSet,
 	options distro.ImageOptions,
+	containers []container.Spec,
 	c *blueprint.Customizations,
 ) manifest.OSCustomizations {
 
@@ -42,6 +44,8 @@ func osCustomizations(
 	osc.ExtraBasePackages = osPackageSet.Include
 	osc.ExcludeBasePackages = osPackageSet.Exclude
 	osc.ExtraBaseRepos = osPackageSet.Repositories
+
+	osc.Containers = containers
 
 	osc.GPGKeyFiles = imageConfig.GPGKeyFiles
 	if imageConfig.ExcludeDocs != nil {
@@ -159,11 +163,12 @@ func liveImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewLiveImage()
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, customizations)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
 	img.Compression = t.compression
@@ -184,12 +189,13 @@ func edgeCommitImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
 
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, customizations)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
 
@@ -213,12 +219,13 @@ func edgeContainerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
 
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, customizations)
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
 	img.Workload = workload
@@ -245,6 +252,7 @@ func edgeInstallerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	d := t.arch.distro
@@ -279,6 +287,7 @@ func edgeRawImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	commit := ostree.CommitSpec{

@@ -464,7 +464,7 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, rng *rand.Rand) (image.ImageKind, error)
+type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.Spec, rng *rand.Rand) (image.ImageKind, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -574,8 +574,19 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		logrus.Warn("FIXME: Requesting package sets for iot-installer without a resolved ostree ref. Faking one.")
 	}
 
+	// create a temporary container spec array with the info from the blueprint
+	// to initialize the manifest
+	containers := make([]container.Spec, len(bp.Containers))
+	for idx := range bp.Containers {
+		containers[idx] = container.Spec{
+			Source:    bp.Containers[idx].Source,
+			TLSVerify: bp.Containers[idx].TLSVerify,
+			LocalName: bp.Containers[idx].Name,
+		}
+	}
+
 	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, nil, 0)
+	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, containers, 0)
 	if err != nil {
 		// TODO: handle manifest initialization errors more gracefully, we
 		// refuse to initialize manifests with invalid config.
@@ -674,7 +685,7 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, rng)
+	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -711,7 +722,8 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
 
-	if len(containers) > 0 {
+	// we do not support embedding containers on ostree-derived images, only on commits themselves
+	if len(containers) > 0 && t.rpmOstree && (t.name != "iot-commit" && t.name != "iot-container") {
 		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
