@@ -128,9 +128,9 @@ sudo ${CONTAINER_RUNTIME} logs osbuild-composer-db
 pushd "$(mktemp -d)"
 sudo dnf install -y go
 go mod init temp
-go get github.com/jackc/tern
+go install github.com/jackc/tern@latest
 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PGPORT=5432 \
-      go run github.com/jackc/tern migrate -m /usr/share/tests/osbuild-composer/schemas
+    "$(go env GOPATH)"/bin/tern migrate -m /usr/share/tests/osbuild-composer/schemas
 popd
 
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
