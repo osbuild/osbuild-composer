@@ -169,7 +169,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			Blueprint:    cr.Blueprint,
 			OSTree:       cr.OSTree,
 		}
-		err = save(manifest, packageSpecs, request, path, filename)
+		err = save(manifest, packageSpecs, containerSpecs, request, path, filename)
 		return
 	}
 	return job
@@ -241,14 +241,15 @@ func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprin
 	return depsolvedSets, nil
 }
 
-func save(manifest distro.Manifest, pkgs map[string][]rpmmd.PackageSpec, cr composeRequest, path, filename string) error {
+func save(manifest distro.Manifest, pkgs map[string][]rpmmd.PackageSpec, containers []container.Spec, cr composeRequest, path, filename string) error {
 	data := struct {
 		ComposeRequest composeRequest                 `json:"compose-request"`
 		Manifest       distro.Manifest                `json:"manifest"`
 		RPMMD          map[string][]rpmmd.PackageSpec `json:"rpmmd"`
+		Containers     []container.Spec               `json:"containers,omitempty"`
 		NoImageInfo    bool                           `json:"no-image-info"`
 	}{
-		cr, manifest, pkgs, true,
+		cr, manifest, pkgs, containers, true,
 	}
 	b, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
