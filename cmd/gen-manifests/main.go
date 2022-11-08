@@ -347,7 +347,7 @@ func main() {
 	// common args
 	var outputDir, cacheRoot string
 	var nWorkers int
-	flag.StringVar(&outputDir, "output", "test/data/manifests.plain/", "manifest store directory")
+	flag.StringVar(&outputDir, "output", "test/data/manifests/", "manifest store directory")
 	flag.IntVar(&nWorkers, "workers", 16, "number of workers to run concurrently")
 	flag.StringVar(&cacheRoot, "cache", "/tmp/rpmmd", "rpm metadata cache directory")
 
