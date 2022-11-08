@@ -80,6 +80,9 @@ func (b *Blueprint) Initialize() error {
 	if b.Groups == nil {
 		b.Groups = []Group{}
 	}
+	if b.Containers == nil {
+		b.Containers = []Container{}
+	}
 	if b.Version == "" {
 		b.Version = "0.0.0"
 	}

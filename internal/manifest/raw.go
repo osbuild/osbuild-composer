@@ -31,7 +31,7 @@ func NewRawImage(m *Manifest,
 }
 
 func (p *RawImage) getBuildPackages() []string {
-	return p.treePipeline.PartitionTable.GetBuildPackages()
+	return p.treePipeline.getBuildPackages()
 }
 
 func (p *RawImage) serialize() osbuild.Pipeline {

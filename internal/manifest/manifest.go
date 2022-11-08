@@ -3,6 +3,7 @@ package manifest
 import (
 	"encoding/json"
 
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
@@ -58,15 +59,16 @@ func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (distro.
 	packages := make([]rpmmd.PackageSpec, 0)
 	commits := make([]ostree.CommitSpec, 0)
 	inline := make([]string, 0)
+	containers := make([]container.Spec, 0)
 	for _, pipeline := range m.pipelines {
 		pipeline.serializeStart(packageSets[pipeline.Name()])
 	}
 	for _, pipeline := range m.pipelines {
-
 		commits = append(commits, pipeline.getOSTreeCommits()...)
 		pipelines = append(pipelines, pipeline.serialize())
 		packages = append(packages, packageSets[pipeline.Name()]...)
 		inline = append(inline, pipeline.getInline()...)
+		containers = append(containers, pipeline.getContainerSpecs()...)
 	}
 	for _, pipeline := range m.pipelines {
 		pipeline.serializeEnd()
@@ -76,7 +78,7 @@ func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (distro.
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(packages, commits, inline, nil),
+			Sources:   osbuild.GenSources(packages, commits, inline, containers),
 		},
 	)
 }

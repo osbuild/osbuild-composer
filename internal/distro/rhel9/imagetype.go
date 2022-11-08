@@ -42,7 +42,7 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, rng *rand.Rand) (image.ImageKind, error)
+type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.Spec, rng *rand.Rand) (image.ImageKind, error)
 
 type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error)
 
@@ -320,7 +320,7 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, rng)
+	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -460,8 +460,19 @@ func (t *imageType) PackageSetsNew(bp blueprint.Blueprint, options distro.ImageO
 		logrus.Warn("FIXME: Requesting package sets for iot-installer without a resolved ostree ref. Faking one.")
 	}
 
+	// create a temporary container spec array with the info from the blueprint
+	// to initialize the manifest
+	containers := make([]container.Spec, len(bp.Containers))
+	for idx := range bp.Containers {
+		containers[idx] = container.Spec{
+			Source:    bp.Containers[idx].Source,
+			TLSVerify: bp.Containers[idx].TLSVerify,
+			LocalName: bp.Containers[idx].Name,
+		}
+	}
+
 	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, nil, 0)
+	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, containers, 0)
 	if err != nil {
 		// TODO: handle manifest initialization errors more gracefully, we
 		// refuse to initialize manifests with invalid config.
