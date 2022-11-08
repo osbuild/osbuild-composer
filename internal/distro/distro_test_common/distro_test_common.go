@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
@@ -48,6 +49,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			ComposeRequest  *composeRequest                `json:"compose-request"`
 			PackageSpecSets map[string][]rpmmd.PackageSpec `json:"rpmmd"`
 			Manifest        distro.Manifest                `json:"manifest,omitempty"`
+			Containers      []container.Spec               `json:"containers,omitempty"`
 		}
 		file, err := ioutil.ReadFile(fileName)
 		assert.NoErrorf(err, "Could not read test-case '%s': %v", fileName, err)
@@ -87,6 +89,25 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				return
 			}
 
+			var ostreeOptions distro.OSTreeImageOptions
+			if ref := imageType.OSTreeRef(); ref != "" {
+				if tt.ComposeRequest.OSTree != nil {
+					ostreeOptions = distro.OSTreeImageOptions{
+						ImageRef:      tt.ComposeRequest.OSTree.Ref,
+						FetchChecksum: tt.ComposeRequest.OSTree.Parent,
+						URL:           tt.ComposeRequest.OSTree.URL,
+					}
+				}
+			}
+			if ostreeOptions.ImageRef == "" { // set image type default if not specified in request
+				ostreeOptions.ImageRef = imageType.OSTreeRef()
+			}
+
+			options := distro.ImageOptions{
+				Size:   imageType.Size(0),
+				OSTree: ostreeOptions,
+			}
+
 			var imgPackageSpecSets map[string][]rpmmd.PackageSpec
 			// depsolve the image's package set to catch changes in the image's default package set.
 			// downside is that this takes long time
@@ -96,13 +117,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				imgPackageSpecSets = getImageTypePkgSpecSets(
 					imageType,
 					*tt.ComposeRequest.Blueprint,
-					distro.ImageOptions{
-						OSTree: distro.OSTreeImageOptions{
-							URL:           "foo",
-							ImageRef:      "bar",
-							FetchChecksum: "baz",
-						},
-					},
+					options,
 					repos,
 					dnfCacheDir,
 					dnfJsonPath,
@@ -111,25 +126,11 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				imgPackageSpecSets = tt.PackageSpecSets
 			}
 
-			ostreeOptions := ostree.RequestParams{
-				Ref: imageType.OSTreeRef(),
-			}
-			if tt.ComposeRequest.OSTree != nil {
-				ostreeOptions = *tt.ComposeRequest.OSTree
-			}
-
 			got, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
-				distro.ImageOptions{
-					Size: imageType.Size(0),
-					OSTree: distro.OSTreeImageOptions{
-						URL:           ostreeOptions.URL,
-						ImageRef:      ostreeOptions.Ref,
-						FetchChecksum: ostreeOptions.Parent,
-					},
-				},
+				options,
 				repos,
 				imgPackageSpecSets,
-				nil,
+				tt.Containers,
 				RandomTestSeed)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
