@@ -13472,5 +13472,14 @@
       }
     ]
   },
+  "containers": [
+    {
+      "Source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal",
+      "Digest": "sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b",
+      "TLSVerify": null,
+      "ImageID": "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6",
+      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+    }
+  ],
   "no-image-info": true
 }
