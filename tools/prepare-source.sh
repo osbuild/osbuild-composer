@@ -6,8 +6,8 @@ GO_VERSION=1.16.12
 GO_BINARY=$(go env GOPATH)/bin/go$GO_VERSION
 
 # this is the official way to get a different version of golang
-# see https://golang.org/doc/install#extra_versions
-go get golang.org/dl/go$GO_VERSION
+# see https://go.dev/doc/manage-install
+go install golang.org/dl/go$GO_VERSION@latest
 $GO_BINARY download
 
 # ensure that go.mod and go.sum are up to date, ...

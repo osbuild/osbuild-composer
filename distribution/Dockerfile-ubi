@@ -10,7 +10,7 @@ ENV GOFLAGS=-mod=vendor
 RUN go install ./cmd/osbuild-composer/
 
 FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder2
-RUN go get -u github.com/jackc/tern
+RUN go install github.com/jackc/tern@latest
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN microdnf install python3 python3-dnf
