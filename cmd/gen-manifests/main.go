@@ -137,9 +137,13 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		}
 
 		containerSpecs, err := resolveContainers(bp.Containers, archName)
-
 		if err != nil {
 			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
+		}
+
+		if options.OSTree.ImageRef == "" {
+			// use default OSTreeRef for image type
+			options.OSTree.ImageRef = imgType.OSTreeRef()
 		}
 
 		packageSpecs, err := depsolve(cacheDir, imgType, bp, options, repos, distribution, archName)
@@ -150,10 +154,6 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		if packageSpecs == nil {
 			err = fmt.Errorf("[%s] nil package specs", filename)
 			return
-		}
-		if options.OSTree.ImageRef == "" {
-			// use default OSTreeRef for image type
-			options.OSTree.ImageRef = imgType.OSTreeRef()
 		}
 		manifest, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
 		if err != nil {
