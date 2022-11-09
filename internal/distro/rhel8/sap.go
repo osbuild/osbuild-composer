@@ -1,6 +1,7 @@
 package rhel8
 
 import (
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -159,7 +160,7 @@ func SapPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}
 
-	if t.arch.distro.osVersion == "8.4" {
+	if common.VersionLessThan(t.arch.distro.osVersion, "8.6") {
 		packageSet = packageSet.Append(rpmmd.PackageSet{
 			Include: []string{"ansible"},
 		})
