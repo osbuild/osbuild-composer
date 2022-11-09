@@ -33,7 +33,6 @@ services:
       [
         "python3",
         "/opt/entrypoint.py",
-        "--dnf-json",
         "--weldr-api",
         "--remote-worker-api",
         "--composer-api",
