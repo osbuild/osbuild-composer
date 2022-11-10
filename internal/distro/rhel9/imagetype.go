@@ -332,7 +332,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 
 		if t.name == "edge-simplified-installer" {
-			allowed := []string{"InstallationDevice", "FDO"}
+			allowed := []string{"InstallationDevice", "FDO", "Kernel"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
 			}
@@ -372,7 +372,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
 	}
 
-	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree {
+	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree && t.name != "edge-raw-image" && t.name != "edge-simplified-installer" {
 		return fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
