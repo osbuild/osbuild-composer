@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
-# Colorful timestamped output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
+# NOTE: This script is executed differently in .gitlab-ci.yml so use a relative path
+source ./test/cases/shared_lib.sh
 
 function revert_to_head {
    git checkout "$head"
