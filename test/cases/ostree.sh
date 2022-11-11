@@ -10,6 +10,9 @@ if [[ ${ID} == "rhel" ]] && ! sudo subscription-manager status; then
     source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 fi
 
+# Set up variables.
+FIREWALL_FEATURE="false"
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
