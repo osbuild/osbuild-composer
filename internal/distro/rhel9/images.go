@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/fdo"
+	"github.com/osbuild/osbuild-composer/internal/ignition"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -410,6 +411,9 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 	if bpFDO := customizations.GetFDO(); bpFDO != nil {
 		img.FDO = fdo.FromBP(*bpFDO)
+	}
+	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && customizations.Ignition.FirstBoot != nil {
+		img.Ignition = ignition.FromBP(*bpIgnition.FirstBoot)
 	}
 
 	d := t.arch.distro

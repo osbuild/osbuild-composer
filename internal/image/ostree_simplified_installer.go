@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/fdo"
+	"github.com/osbuild/osbuild-composer/internal/ignition"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -49,6 +50,9 @@ type OSTreeSimplifiedInstaller struct {
 	Filename string
 
 	FDO *fdo.Options
+
+	// ignition firstboot configuration options
+	Ignition *ignition.Options
 
 	AdditionalDracutModules []string
 }
@@ -118,6 +122,12 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 			kernelOpts = append(kernelOpts, "fdo.diun_pub_key_root_certs=/fdo_diun_pub_key_root_certs.pem")
 		}
 	}
+
+	// ignition firstboot options
+	if img.Ignition != nil {
+		kernelOpts = append(kernelOpts, "coreos.inst.append ignition.config.url="+img.Ignition.ProvisioningURL)
+	}
+
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	rootfsPartitionTable := &disk.PartitionTable{

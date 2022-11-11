@@ -332,7 +332,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 
 		if t.name == "edge-simplified-installer" {
-			allowed := []string{"InstallationDevice", "FDO"}
+			allowed := []string{"InstallationDevice", "FDO", "Ignition"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
 			}
@@ -357,6 +357,22 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 				}
 				if diunSet != 1 {
 					return fmt.Errorf("boot ISO image type %q requires specifying one of [FDO.DiunPubKeyHash,FDO.DiunPubKeyInsecure,FDO.DiunPubKeyRootCerts] configuration to install to when using FDO", t.name)
+				}
+			}
+
+			// ignition is optional, we might be using FDO
+			if customizations.Ignition.HasIgnition() {
+				if customizations.GetIgnition().Embedded != nil && customizations.GetIgnition().FirstBoot != nil {
+					return fmt.Errorf("both ignition embedded and firstboot configurations found")
+				}
+				if customizations.GetIgnition().Embedded != nil {
+					possibleErr := customizations.GetIgnition().Embedded.CheckEmbeddedIgnition()
+					if possibleErr != nil {
+						return possibleErr
+					}
+				}
+				if customizations.GetIgnition().FirstBoot != nil && customizations.GetIgnition().FirstBoot.ProvisioningURL == "" {
+					return fmt.Errorf("ignition.firstboot requires a provisioning url")
 				}
 			}
 		} else if t.name == "edge-installer" {
