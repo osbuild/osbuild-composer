@@ -730,3 +730,24 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 		}
 	}
 }
+
+func TestIotInstallerWithoutOStreeRefs(t *testing.T) {
+	// Regression test for https://github.com/osbuild/osbuild-composer/issues/3125
+
+	// TODO: Remove when the ugly workaround is gone
+	d := fedora.NewF38()
+	arch, err := d.GetArch("x86_64")
+	require.NoError(t, err)
+
+	imgType, err := arch.GetImageType("iot-installer")
+	require.NoError(t, err)
+
+	bp := blueprint.Blueprint{
+		Name: "fish",
+	}
+	err = bp.Initialize()
+	require.NoError(t, err)
+
+	sets := imgType.PackageSets(bp, distro.ImageOptions{}, nil)
+	require.NotZero(t, len(sets))
+}
