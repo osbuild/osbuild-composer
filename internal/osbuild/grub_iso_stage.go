@@ -10,6 +10,8 @@ type GrubISOStageOptions struct {
 	Architectures []string `json:"architectures,omitempty"`
 
 	Vendor string `json:"vendor,omitempty"`
+
+	Config *GRUB2Config `json:"config,omitempty"`
 }
 
 func (GrubISOStageOptions) isStageOptions() {}

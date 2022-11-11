@@ -879,11 +879,13 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rn
 	return p
 }
 
+const SIMPLIFIED_INSTALLER_GRUB_TIMEOUT = 5
+
 func simplifiedInstallerEFIBootTreePipeline(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.Pipeline {
 	p := new(osbuild.Pipeline)
 	p.Name = "efiboot-tree"
 	p.Build = "name:build"
-	p.AddStage(osbuild.NewGrubISOStage(grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel, fdo)))
+	p.AddStage(osbuild.NewGrubISOStage(grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel, SIMPLIFIED_INSTALLER_GRUB_TIMEOUT, fdo)))
 	return p
 }
 

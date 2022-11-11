@@ -206,7 +206,7 @@ func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolab
 	}
 }
 
-func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
+func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, timeout int, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
 	var architectures []string
 
 	if arch == distro.X86_64ArchName {
@@ -235,6 +235,8 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 		Architectures: architectures,
 		Vendor:        vendor,
 	}
+
+	grubISOStageOptions.Config = &osbuild.GRUB2Config{Timeout: timeout}
 
 	grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.manufacturing_server_url="+fdo.ManufacturingServerURL)
 	if fdo.DiunPubKeyInsecure != "" {
