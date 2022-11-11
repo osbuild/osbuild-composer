@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
@@ -534,6 +536,24 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 			// to all package sets
 			globalRepos = append(globalRepos, repo)
 		}
+	}
+
+	// In case of Cloud API, this method is called before the ostree commit
+	// is resolved. Unfortunately, initializeManifest when called for
+	// an ostree installer returns an error.
+	//
+	// Work around this by providing a dummy FetchChecksum to convince the
+	// method that it's fine to initialize the manifest. Note that the ostree
+	// content has no effect on the package sets, so this is fine.
+	//
+	// See: https://github.com/osbuild/osbuild-composer/issues/3125
+	//
+	// TODO: Remove me when it's possible the get the package set chain without
+	//       resolving the ostree reference before. Also remove the test for
+	//       this workaround
+	if t.rpmOstree && t.bootISO && options.OSTree.FetchChecksum == "" {
+		options.OSTree.FetchChecksum = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+		logrus.Warn("FIXME: Requesting package sets for iot-installer without a resolved ostree ref. Faking one.")
 	}
 
 	// create a manifest object and instantiate it with the computed packageSetChains
