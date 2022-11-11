@@ -187,6 +187,18 @@ func imageInstallerImage(workload workload.Workload,
 
 	img := image.NewImageInstaller()
 
+	// Enable anaconda-webui for Fedora > 38
+	distro := t.Arch().Distro()
+	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "38") {
+		img.AdditionalAnacondaModules = []string{
+			"org.fedoraproject.Anaconda.Modules.Security",
+			"org.fedoraproject.Anaconda.Modules.Users",
+			"org.fedoraproject.Anaconda.Modules.Timezone",
+			"org.fedoraproject.Anaconda.Modules.Localization",
+		}
+		img.AdditionalKernelOpts = []string{"inst.webui", "inst.webui.remote"}
+	}
+
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], customizations)
 	img.ExtraBasePackages = packageSets[installerPkgsKey]

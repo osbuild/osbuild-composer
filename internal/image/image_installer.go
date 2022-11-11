@@ -3,7 +3,6 @@ package image
 import (
 	"fmt"
 	"math/rand"
-	"strconv"
 
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -36,6 +35,9 @@ type ImageInstaller struct {
 	Release       string
 
 	Filename string
+
+	AdditionalKernelOpts      []string
+	AdditionalAnacondaModules []string
 }
 
 func NewImageInstaller() *ImageInstaller {
@@ -50,14 +52,6 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos)
 	buildPipeline.Checkpoint()
-
-	version, err := strconv.Atoi(img.OSVersion)
-
-	if err != nil {
-		panic("cannot convert version to int: " + err.Error())
-	}
-
-	useWebUi := img.OSName == "fedora" && version >= 38
 
 	anacondaPipeline := manifest.NewAnaconda(m,
 		buildPipeline,
@@ -77,15 +71,7 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
 	anacondaPipeline.InteractiveDefaults = interactiveDefaults
-
-	if useWebUi {
-		anacondaPipeline.AdditionalModules = []string{
-			"org.fedoraproject.Anaconda.Modules.Security",
-			"org.fedoraproject.Anaconda.Modules.Users",
-			"org.fedoraproject.Anaconda.Modules.Timezone",
-			"org.fedoraproject.Anaconda.Modules.Localization",
-		}
-	}
+	anacondaPipeline.AdditionalModules = img.AdditionalAnacondaModules
 
 	anacondaPipeline.Checkpoint()
 
@@ -114,10 +100,7 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
-
-	if useWebUi {
-		bootTreePipeline.KernelOpts = []string{"inst.webui", "inst.webui.remote"}
-	}
+	bootTreePipeline.KernelOpts = img.AdditionalKernelOpts
 
 	osPipeline := manifest.NewOS(m, buildPipeline, img.Platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
@@ -137,10 +120,7 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.Groups = img.Groups
 
 	isoTreePipeline.OSPipeline = osPipeline
-
-	if useWebUi {
-		isoTreePipeline.KernelOpts = []string{"inst.webui", "inst.webui.remote"}
-	}
+	isoTreePipeline.KernelOpts = img.AdditionalKernelOpts
 
 	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline)
 	isoPipeline.Filename = img.Filename
