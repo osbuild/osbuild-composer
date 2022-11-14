@@ -61,23 +61,23 @@ init:
 
 .nightly_rules_all:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.1-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.7-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.2-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.8-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
 .nightly_rules_x86_64:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.1-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.7-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.2-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.8-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-8.7-nightly-x86_64
-    - aws/rhel-8.7-nightly-aarch64
     - aws/rhel-8.8-nightly-x86_64
     - aws/rhel-8.8-nightly-aarch64
-    - aws/rhel-9.1-nightly-x86_64
-    - aws/rhel-9.1-nightly-aarch64
+    - aws/rhel-8.8-nightly-x86_64
+    - aws/rhel-8.8-nightly-aarch64
+    - aws/rhel-9.2-nightly-x86_64
+    - aws/rhel-9.2-nightly-aarch64
     - aws/rhel-9.2-nightly-x86_64
     - aws/rhel-9.2-nightly-aarch64
 
@@ -163,8 +163,8 @@ Prepare-rhel-internal:
       - RUNNER:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-9.1-nightly-x86_64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-9.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -192,10 +192,10 @@ Base:
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-8.8-nightly-aarch64
+          - aws/rhel-9.2-nightly-x86_64
+          - aws/rhel-9.2-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -212,7 +212,7 @@ Manifests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.1-nightly-x86_64
+          - aws/rhel-9.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .regression:
@@ -240,10 +240,10 @@ Manifests:
           - aws/rhel-8.6-ga-aarch64
           - aws/rhel-9.0-ga-x86_64
           - aws/rhel-9.0-ga-aarch64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-8.8-nightly-aarch64
+          - aws/rhel-9.2-nightly-x86_64
+          - aws/rhel-9.2-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -336,10 +336,10 @@ Image Tests:
       - RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-8.8-nightly-aarch64
+          - aws/rhel-9.2-nightly-x86_64
+          - aws/rhel-9.2-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 OSTree:
@@ -358,8 +358,8 @@ OSTree:
           - rhos-01/rhel-8.4-ga-x86_64
           - rhos-01/rhel-8.6-ga-x86_64
           - rhos-01/rhel-9.0-ga-x86_64
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -374,8 +374,8 @@ New OSTree:
       - RUNNER:
           - rhos-01/fedora-36-x86_64
           - rhos-01/fedora-37-x86_64
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -388,9 +388,9 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 OSTree raw image:
@@ -408,9 +408,9 @@ OSTree raw image:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
           - rhos-01/fedora-37-x86_64
 
@@ -423,8 +423,8 @@ Rebase OSTree BIOS:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -437,8 +437,8 @@ Rebase OSTree UEFI:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -458,10 +458,10 @@ Rebase OSTree UEFI:
       - aws/rhel-8.4-ga-x86_64
       - aws/rhel-8.6-ga-x86_64
       - aws/rhel-9.0-ga-x86_64
-      - aws/rhel-8.7-nightly-x86_64
-      - aws/rhel-8.7-nightly-aarch64
-      - aws/rhel-9.1-nightly-x86_64
-      - aws/rhel-9.1-nightly-aarch64
+      - aws/rhel-8.8-nightly-x86_64
+      - aws/rhel-8.8-nightly-aarch64
+      - aws/rhel-9.2-nightly-x86_64
+      - aws/rhel-9.2-nightly-aarch64
       - aws/centos-stream-9-x86_64
     INTERNAL_NETWORK: ["true"]
 
@@ -594,8 +594,8 @@ API:
         RUNNER:
           - aws/rhel-8.6-ga-x86_64
           - aws/rhel-9.0-ga-x86_64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-9.1-nightly-x86_64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-9.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
@@ -622,8 +622,8 @@ API:
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/rhel-8.6-ga-x86_64
           - rhos-01/rhel-9.0-ga-x86_64
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 libvirt.sh:
@@ -635,7 +635,7 @@ libvirt.sh:
   extends: .libvirt_integration
   rules:
     # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-8.7|rhel-9.1).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
+    - if: $RUNNER !~ "/^.*(rhel-8.8|rhel-9.2).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
     - !reference [.nightly_rules_all, rules]
 
 generic_s3_http.sh:
@@ -695,8 +695,8 @@ OpenSCAP:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
 
 Upgrade:
   stage: test
@@ -707,7 +707,7 @@ Upgrade:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
   variables:
-    RUNNER: rhos-01/rhel-9.1-nightly-x86_64
+    RUNNER: rhos-01/rhel-9.2-nightly-x86_64
 
 NIGHTLY_FAIL:
   stage: finish
@@ -740,8 +740,8 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 Manifest-diff:
