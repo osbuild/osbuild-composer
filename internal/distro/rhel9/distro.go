@@ -1041,6 +1041,13 @@ func newDistro(distroName string) distro.Distro {
 					osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
 				},
 			},
+			// COMPOSER-1807
+			{
+				Filename: "blacklist-amdgpu.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
+				},
+			},
 		},
 		DracutConf: []*osbuild.DracutConfStageOptions{
 			{
