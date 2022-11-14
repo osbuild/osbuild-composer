@@ -354,3 +354,23 @@ func imageInstallerImage(workload workload.Workload,
 
 	return img, nil
 }
+
+func tarImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewArchive()
+	img.Platform = t.platform
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+	img.Environment = t.environment
+	img.Workload = workload
+
+	img.Filename = t.Filename()
+
+	return img, nil
+
+}
