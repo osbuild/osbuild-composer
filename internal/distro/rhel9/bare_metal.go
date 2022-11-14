@@ -35,7 +35,6 @@ var (
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey:     anacondaBuildPackageSet,
 			osPkgsKey:        bareMetalPackageSet,
 			installerPkgsKey: anacondaPackageSet,
 		},
@@ -45,7 +44,7 @@ var (
 		rpmOstree:        false,
 		bootISO:          true,
 		bootable:         true,
-		pipelines:        imageInstallerPipelines,
+		image:            imageInstallerImage,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
