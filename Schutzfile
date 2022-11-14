@@ -214,6 +214,11 @@
     ]
   },
   "rhel-8.8": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "f34bee944bdfc590cf25159521ee66c515d0cf10"
+      }
+    },
     "repos": [
       {
         "file": "/etc/yum.repos.d/rhel8internal.repo",
@@ -308,6 +313,11 @@
     ]
   },
   "rhel-9.2": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "f34bee944bdfc590cf25159521ee66c515d0cf10"
+      }
+    },
     "repos": [
       {
         "file": "/etc/yum.repos.d/rhel9internal.repo",
