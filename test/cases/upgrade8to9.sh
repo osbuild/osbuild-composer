@@ -71,8 +71,8 @@ ignoredisk --only-use=vda
 autopart --type=lvm
 clearpart --all --initlabel --drives=vda
 
-repo --name baseos --baseurl="http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.7.0/compose/BaseOS/x86_64/os/" --install
-repo --name appstream --baseurl="http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.7.0/compose/AppStream/x86_64/os/" --install
+repo --name baseos --baseurl="http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.8.0/compose/BaseOS/x86_64/os/" --install
+repo --name appstream --baseurl="http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.8.0/compose/AppStream/x86_64/os/" --install
 
 %packages 
 @core
@@ -103,7 +103,7 @@ sudo virt-install --name rhel-test \
                   --memory 3072 \
                   --vcpus 2 \
                   --disk size=20 \
-                  --location http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.7.0/compose/BaseOS/x86_64/os/ \
+                  --location http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.8.0/compose/BaseOS/x86_64/os/ \
                   --network network=integration,mac=34:49:22:B0:83:30 \
                   --console pipe,source.path="$TEMPFILE" \
                   --noautoconsole \

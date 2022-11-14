@@ -101,12 +101,12 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="fedora-unknown"
         EMBEDED_CONTAINER="false"
         ;;
-    "rhel-8.7")
+    "rhel-8.8")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         EMBEDED_CONTAINER="true"
         ;;
-    "rhel-9.1")
+    "rhel-9.2")
         OSTREE_REF="test/rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         EMBEDED_CONTAINER="true"
