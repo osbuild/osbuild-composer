@@ -325,3 +325,32 @@ func edgeRawImage(workload workload.Workload,
 
 	return img, nil
 }
+
+func imageInstallerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewImageInstaller()
+
+	img.Platform = t.platform
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+	img.Users = users.UsersFromBP(customizations.GetUsers())
+	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	d := t.arch.distro
+
+	img.ISOLabelTempl = d.isolabelTmpl
+	img.Product = d.product
+	img.OSName = "redhat"
+	img.OSVersion = d.osVersion
+	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
