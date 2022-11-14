@@ -2163,6 +2163,18 @@
             }
           },
           {
+            "type": "org.osbuild.modprobe",
+            "options": {
+              "filename": "blacklist-amdgpu.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "amdgpu"
+                }
+              ]
+            }
+          },
+          {
             "type": "org.osbuild.dracut.conf",
             "options": {
               "filename": "sgdisk.conf",
