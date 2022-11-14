@@ -408,7 +408,7 @@ github.com/klauspost/pgzip
 github.com/kolo/xmlrpc
 # github.com/kr/text v0.2.0
 github.com/kr/text
-# github.com/labstack/echo/v4 v4.9.0
+# github.com/labstack/echo/v4 v4.9.1
 ## explicit
 github.com/labstack/echo/v4
 github.com/labstack/echo/v4/middleware
