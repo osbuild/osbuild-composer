@@ -899,7 +899,7 @@ func simplifiedInstallerTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.
 		"coreos-installer",
 		"fdo",
 	})
-	if fdo.DiunPubKeyRootCerts != "" {
+	if fdo.HasFDO() && fdo.DiunPubKeyRootCerts != "" {
 		p.AddStage(osbuild.NewFDOStageForRootCerts(fdo.DiunPubKeyRootCerts))
 		dracutStageOptions.Install = []string{"/fdo_diun_pub_key_root_certs.pem"}
 	}

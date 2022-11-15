@@ -210,12 +210,12 @@ wait_for_ssh_up () {
 clean_up () {
     greenprint "🧼 Cleaning up"
 
-    # Clear vm
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-fdorootcert") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-fdorootcert"
+    # Clean up BIOS VM
+    greenprint "🧹 Clean up BIOS VM"
+    if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_without_fdo") == "running" ]]; then
+        sudo virsh destroy "${IMAGE_KEY}-simplified_iso_without_fdo"
     fi
-    sudo virsh undefine "${IMAGE_KEY}-fdorootcert" --nvram
-    # Remove qcow2 file.
+    sudo virsh undefine "${IMAGE_KEY}-simplified_iso_without_fdo" --nvram
     sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
 
     # Remove any status containers if exist
@@ -759,6 +759,123 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
+greenprint "🧹 Clean up VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-fdorootcert") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-fdorootcert"
+fi
+sudo virsh undefine "${IMAGE_KEY}-fdorootcert" --nvram
+sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
+
+##################################################################
+##
+## Build edge-simplified-installer without FDO 
+##
+##################################################################
+
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "simplified_iso_without_fdo"
+description = "A rhel-edge simplified-installer image without FDO"
+version = "0.0.1"
+modules = []
+groups = []
+
+[customizations]
+installation_device = "/dev/vda"
+
+EOF
+
+greenprint "📄 simplified_iso_without_fdo blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing installer blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve simplified_iso_without_fdo
+
+# Build simplified installer iso image.
+build_image simplified_iso_without_fdo "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+
+# Download the image
+greenprint "📥 Downloading the simplified_iso_without_fdo image"
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
+
+# Clean compose and blueprints.
+greenprint "🧹 Clean up simplified_iso_without_fdo blueprint and compose"
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli blueprints delete simplified_iso_without_fdo > /dev/null
+
+# Ensure SELinux is happy with our new images.
+greenprint "👿 Running restorecon on image directory"
+sudo restorecon -Rv /var/lib/libvirt/images/
+
+# Create qcow2 file for virt install.
+greenprint "🖥 Create qcow2 file for virt install"
+sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+
+greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
+sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_without_fdo"\
+                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                   --ram 3072 \
+                   --vcpus 2 \
+                   --network network=integration,mac=34:49:22:B0:83:32 \
+                   --os-type linux \
+                   --os-variant ${OS_VARIANT} \
+                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
+                   --nographics \
+                   --noautoconsole \
+                   --wait=15 \
+                   --noreboot
+
+# Installation can get stuck, destroying VM helps
+# See https://github.com/osbuild/osbuild-composer/issues/2413
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_without_fdo") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-simplified_iso_without_fdo"
+fi
+
+# Start VM.
+greenprint "💻 Start UEFI VM"
+sudo virsh start "${IMAGE_KEY}-simplified_iso_without_fdo"
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $ROOT_CERT_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check image installation result
+check_result
+
+greenprint "🕹 Get ostree install commit value"
+INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${ROOT_CERT_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes 
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
 ########################
 ##
 ## Build upgrade image
@@ -890,7 +1007,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
