@@ -61,9 +61,7 @@ func (vg *LVMVolumeGroup) GetChild(n uint) Entity {
 }
 
 func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
-	if vg == nil {
-		panic("LVMVolumeGroup.CreateMountpoint: nil entity")
-	}
+
 	filesystem := Filesystem{
 		Type:         "xfs",
 		Mountpoint:   mountpoint,
@@ -72,12 +70,20 @@ func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint string, size uint64) (Enti
 		FSTabPassNo:  0,
 	}
 
+	return vg.CreateLogicalVolume(mountpoint, size, &filesystem)
+}
+
+func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payload Entity) (Entity, error) {
+	if vg == nil {
+		panic("LVMVolumeGroup.CreateLogicalVolume: nil entity")
+	}
+
 	names := make(map[string]bool, len(vg.LogicalVolumes))
 	for _, lv := range vg.LogicalVolumes {
 		names[lv.Name] = true
 	}
 
-	base := lvname(mountpoint)
+	base := lvname(lvName)
 	var exists bool
 	name := base
 
@@ -100,7 +106,7 @@ func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint string, size uint64) (Enti
 	lv := LVMLogicalVolume{
 		Name:    name,
 		Size:    size,
-		Payload: &filesystem,
+		Payload: payload,
 	}
 
 	vg.LogicalVolumes = append(vg.LogicalVolumes, lv)
