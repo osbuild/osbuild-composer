@@ -326,8 +326,9 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 	newMountpoints := []blueprint.FilesystemCustomization{}
 
 	for _, mnt := range mountpoints {
-		size := pt.AlignUp(clampFSSize(mnt.Mountpoint, mnt.MinSize))
+		size := clampFSSize(mnt.Mountpoint, mnt.MinSize)
 		if path := entityPath(pt, mnt.Mountpoint); len(path) != 0 {
+			size = alignEntityBranch(path, size)
 			resizeEntityBranch(path, size)
 		} else {
 			if !create {
@@ -427,6 +428,7 @@ func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error
 		return fmt.Errorf("failed creating volume: " + err.Error())
 	}
 	vcPath := append([]Entity{newVol}, rootPath[idx:]...)
+	size = alignEntityBranch(vcPath, size)
 	resizeEntityBranch(vcPath, size)
 	return nil
 }
@@ -509,6 +511,20 @@ func clampFSSize(mountpoint string, size uint64) uint64 {
 	return size
 }
 
+func alignEntityBranch(path []Entity, size uint64) uint64 {
+	if len(path) == 0 {
+		return size
+	}
+
+	element := path[0]
+
+	if c, ok := element.(MountpointCreator); ok {
+		size = c.AlignUp(size)
+	}
+
+	return alignEntityBranch(path[1:], size)
+}
+
 // resizeEntityBranch resizes the first entity in the specified path to be at
 // least the specified size and then grows every entity up the path to the
 // PartitionTable accordingly.
@@ -579,17 +595,17 @@ func (pt *PartitionTable) ensureLVM() error {
 	} else if part, ok := parent.(*Partition); ok {
 		filesystem := part.Payload
 
-		part.Payload = &LVMVolumeGroup{
+		vg := &LVMVolumeGroup{
 			Name:        "rootvg",
 			Description: "created via lvm2 and osbuild",
-			LogicalVolumes: []LVMLogicalVolume{
-				{
-					Size:    part.Size,
-					Name:    "rootlv",
-					Payload: filesystem,
-				},
-			},
 		}
+
+		_, err := vg.CreateLogicalVolume("root", part.Size, filesystem)
+		if err != nil {
+			panic(fmt.Sprintf("Could not create LV: %v", err))
+		}
+
+		part.Payload = vg
 
 		// reset it so it will be grown later
 		part.Size = 0

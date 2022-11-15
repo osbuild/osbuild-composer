@@ -67,6 +67,10 @@ func (b *Btrfs) CreateMountpoint(mountpoint string, size uint64) (Entity, error)
 	return &b.Subvolumes[len(b.Subvolumes)-1], nil
 }
 
+func (b *Btrfs) AlignUp(size uint64) uint64 {
+	return size // No extra alignment necessary for subvolumes
+}
+
 func (b *Btrfs) GenUUID(rng *rand.Rand) {
 	if b.UUID == "" {
 		b.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()

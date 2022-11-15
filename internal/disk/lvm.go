@@ -3,7 +3,13 @@ package disk
 import (
 	"fmt"
 	"strings"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
+
+// Default physical extent size in bytes: logical volumes
+// created inside the VG will be aligned to this.
+const LVMDefaultExtentSize = 4 * common.MebiByte
 
 type LVMVolumeGroup struct {
 	Name        string
@@ -105,13 +111,22 @@ func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payloa
 
 	lv := LVMLogicalVolume{
 		Name:    name,
-		Size:    size,
+		Size:    vg.AlignUp(size),
 		Payload: payload,
 	}
 
 	vg.LogicalVolumes = append(vg.LogicalVolumes, lv)
 
 	return &vg.LogicalVolumes[len(vg.LogicalVolumes)-1], nil
+}
+
+func (vg *LVMVolumeGroup) AlignUp(size uint64) uint64 {
+
+	if size%LVMDefaultExtentSize != 0 {
+		size += LVMDefaultExtentSize - size%LVMDefaultExtentSize
+	}
+
+	return size
 }
 
 func (vg *LVMVolumeGroup) MetadataSize() uint64 {
