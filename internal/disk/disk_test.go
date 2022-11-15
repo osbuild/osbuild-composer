@@ -617,6 +617,92 @@ func TestMinimumSizes(t *testing.T) {
 	}
 }
 
+func TestLVMExtentAlignment(t *testing.T) {
+	assert := assert.New(t)
+
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+	pt := testPartitionTables["plain"]
+
+	type testCase struct {
+		Blueprint     []blueprint.FilesystemCustomization
+		ExpectedSizes map[string]uint64
+	}
+
+	testCases := []testCase{
+		{
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/var",
+					MinSize:    1*GiB + 1,
+				},
+			},
+			ExpectedSizes: map[string]uint64{
+				"/var": 1*GiB + LVMDefaultExtentSize,
+			},
+		},
+		{
+			// lots of mount points in /var
+			// https://bugzilla.redhat.com/show_bug.cgi?id=2141738
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/",
+					MinSize:    32000000000,
+				},
+				{
+					Mountpoint: "/var",
+					MinSize:    4096000000,
+				},
+				{
+					Mountpoint: "/var/log",
+					MinSize:    4096000000,
+				},
+			},
+			ExpectedSizes: map[string]uint64{
+				"/":        32002539520,
+				"/var":     3908 * MiB,
+				"/var/log": 3908 * MiB,
+			},
+		},
+		{
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/",
+					MinSize:    32 * GiB,
+				},
+				{
+					Mountpoint: "/var",
+					MinSize:    4 * GiB,
+				},
+				{
+					Mountpoint: "/var/log",
+					MinSize:    4 * GiB,
+				},
+			},
+			ExpectedSizes: map[string]uint64{
+				"/":        32 * GiB,
+				"/var":     4 * GiB,
+				"/var/log": 4 * GiB,
+			},
+		},
+	}
+
+	for idx, tc := range testCases {
+		mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, rng)
+		assert.NoError(err)
+		for mnt, expSize := range tc.ExpectedSizes {
+			path := entityPath(mpt, mnt)
+			assert.NotNil(path, "[%d] mountpoint %q not found", idx, mnt)
+			parent := path[1]
+			part, ok := parent.(*LVMLogicalVolume)
+			assert.True(ok, "[%d] %q parent (%v) is not an LVM logical volume", idx, mnt, parent)
+			assert.Equal(part.GetSize(), expSize,
+				"[%d] %q size %d should be equal to %d", idx, mnt, part.GetSize(), expSize)
+		}
+	}
+}
+
 func TestNewBootWithSizeLVMify(t *testing.T) {
 	pt := testPartitionTables["plain-noboot"]
 	assert := assert.New(t)
