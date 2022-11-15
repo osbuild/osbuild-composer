@@ -11,7 +11,7 @@ PROJECT=${1:-osbuild-composer}
 
 # set locale to en_US.UTF-8
 sudo dnf install -y glibc-langpack-en
-localectl set-locale LANG=en_US.UTF-8
+sudo localectl set-locale LANG=en_US.UTF-8
 
 # Colorful output.
 function greenprint {
