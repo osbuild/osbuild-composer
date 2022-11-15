@@ -380,3 +380,7 @@ func (c *Customizations) GetOpenSCAP() *OpenSCAPCustomization {
 	}
 	return c.OpenSCAP
 }
+
+func (f *FDOCustomization) HasFDO() bool {
+	return f != nil
+}

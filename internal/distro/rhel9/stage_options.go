@@ -235,16 +235,17 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 		Architectures: architectures,
 		Vendor:        vendor,
 	}
-
-	grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.manufacturing_server_url="+fdo.ManufacturingServerURL)
-	if fdo.DiunPubKeyInsecure != "" {
-		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_insecure="+fdo.DiunPubKeyInsecure)
-	}
-	if fdo.DiunPubKeyHash != "" {
-		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_hash="+fdo.DiunPubKeyHash)
-	}
-	if fdo.DiunPubKeyRootCerts != "" {
-		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_root_certs=/fdo_diun_pub_key_root_certs.pem")
+	if fdo.HasFDO() {
+		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.manufacturing_server_url="+fdo.ManufacturingServerURL)
+		if fdo.DiunPubKeyInsecure != "" {
+			grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_insecure="+fdo.DiunPubKeyInsecure)
+		}
+		if fdo.DiunPubKeyHash != "" {
+			grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_hash="+fdo.DiunPubKeyHash)
+		}
+		if fdo.DiunPubKeyRootCerts != "" {
+			grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_root_certs=/fdo_diun_pub_key_root_certs.pem")
+		}
 	}
 
 	return grubISOStageOptions

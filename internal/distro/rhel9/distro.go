@@ -572,24 +572,24 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 			if customizations.GetInstallationDevice() == "" {
 				return fmt.Errorf("boot ISO image type %q requires specifying an installation device to install to", t.name)
 			}
-			if customizations.GetFDO() == nil {
-				return fmt.Errorf("boot ISO image type %q requires specifying FDO configuration to install to", t.name)
-			}
-			if customizations.GetFDO().ManufacturingServerURL == "" {
-				return fmt.Errorf("boot ISO image type %q requires specifying FDO.ManufacturingServerURL configuration to install to", t.name)
-			}
-			var diunSet int
-			if customizations.GetFDO().DiunPubKeyHash != "" {
-				diunSet++
-			}
-			if customizations.GetFDO().DiunPubKeyInsecure != "" {
-				diunSet++
-			}
-			if customizations.GetFDO().DiunPubKeyRootCerts != "" {
-				diunSet++
-			}
-			if diunSet != 1 {
-				return fmt.Errorf("boot ISO image type %q requires specifying one of [FDO.DiunPubKeyHash,FDO.DiunPubKeyInsecure,FDO.DiunPubKeyRootCerts] configuration to install to", t.name)
+			//making fdo optional so that simplified installer can be composed w/o the FDO section in the blueprint
+			if customizations.GetFDO() != nil {
+				if customizations.GetFDO().ManufacturingServerURL == "" {
+					return fmt.Errorf("boot ISO image type %q requires specifying FDO.ManufacturingServerURL configuration to install to", t.name)
+				}
+				var diunSet int
+				if customizations.GetFDO().DiunPubKeyHash != "" {
+					diunSet++
+				}
+				if customizations.GetFDO().DiunPubKeyInsecure != "" {
+					diunSet++
+				}
+				if customizations.GetFDO().DiunPubKeyRootCerts != "" {
+					diunSet++
+				}
+				if diunSet != 1 {
+					return fmt.Errorf("boot ISO image type %q requires specifying one of [FDO.DiunPubKeyHash,FDO.DiunPubKeyInsecure,FDO.DiunPubKeyRootCerts] configuration to install to", t.name)
+				}
 			}
 		} else if t.name == "edge-installer" {
 			allowed := []string{"User", "Group"}
