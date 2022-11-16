@@ -36,6 +36,7 @@ type Server struct {
 	distros *distroregistry.Registry
 	config  ServerConfig
 	router  routers.Router
+	routes  openapi3.Paths
 
 	goroutinesCtx       context.Context
 	goroutinesCtxCancel context.CancelFunc
@@ -69,6 +70,7 @@ func NewServer(workers *worker.Server, distros *distroregistry.Registry, config 
 		distros: distros,
 		config:  config,
 		router:  router,
+		routes:  spec.Paths,
 
 		goroutinesCtx:       ctx,
 		goroutinesCtxCancel: cancel,
@@ -87,7 +89,15 @@ func (s *Server) Handler(path string) http.Handler {
 	handler := apiHandlers{
 		server: s,
 	}
-	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware, s.ValidateRequest), &handler)
+
+	// we need to get a list of all the routes and
+	// then clean them to remove the dynamic parameters.
+	// Ideally, this function will be removed in favour of
+	// adding the paths inside the ocm sdk here:
+	// https://github.com/openshift-online/ocm-sdk-go/blob/ae3d77d559729baff1758859a7a104d2ffc70069/metrics/path_tree_data.go#L23
+	genericPaths := prometheus.MakeGenericPaths(s.routes)
+	ocmMiddleware := prometheus.OcmPrometheusMiddleware(prometheus.ComposerSubsystem, path, genericPaths)
+	RegisterHandlers(e.Group(path, s.ValidateRequest, ocmMiddleware), &handler)
 
 	return e
 }
