@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/osbuild-composer/internal/fdo"
+	"github.com/osbuild/osbuild-composer/internal/ignition"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -34,6 +35,9 @@ type CoreOSInstaller struct {
 	Biosdevname bool
 
 	FDO *fdo.Options
+
+	// For the coreos-installer we only have EmbeddedOptions for ignition
+	Ignition *ignition.EmbeddedOptions
 
 	AdditionalDracutModules []string
 }
@@ -127,11 +131,20 @@ func (p *CoreOSInstaller) serializeStart(packages []rpmmd.PackageSpec) {
 }
 
 func (p *CoreOSInstaller) getInline() []string {
+	inlineData := []string{}
 	// inline data for FDO cert
 	if p.FDO != nil && p.FDO.DiunPubKeyRootCerts != "" {
-		return []string{p.FDO.DiunPubKeyRootCerts}
+		inlineData = append(inlineData, p.FDO.DiunPubKeyRootCerts)
 	}
-	return []string{}
+	// inline data for ignition embedded (url or data)
+	if p.Ignition != nil {
+		if p.Ignition.Data64 != "" {
+			inlineData = append(inlineData, p.Ignition.Data64)
+		} else {
+			inlineData = append(inlineData, p.Ignition.ProvisioningURL)
+		}
+	}
+	return inlineData
 }
 
 func (p *CoreOSInstaller) serializeEnd() {

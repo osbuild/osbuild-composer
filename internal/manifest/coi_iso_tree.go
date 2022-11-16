@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"crypto/sha256"
 	"fmt"
 
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -65,6 +66,30 @@ func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 		},
 		osbuild.NewFilesInputs(osbuild.NewFilesInputReferencesPipeline(p.payloadPipeline.Name(), p.payloadPipeline.Filename)),
 	))
+
+	if p.coiPipeline.Ignition != nil {
+		filename := ""
+		copyInput := ""
+		// These specific filenames in the root of the ISO are expected by
+		// coreos-installer-dracut during installation
+		if p.coiPipeline.Ignition.Data64 != "" {
+			filename = "ignition_config"
+			copyInput = p.coiPipeline.Ignition.Data64
+		} else {
+			filename = "ignition_url"
+			copyInput = p.coiPipeline.Ignition.ProvisioningURL
+		}
+		pipeline.AddStage(osbuild.NewCopyStageSimple(
+			&osbuild.CopyStageOptions{
+				Paths: []osbuild.CopyStagePath{
+					{
+						From: fmt.Sprintf("input://inlinefile/sha256:%x", sha256.Sum256([]byte(copyInput))),
+						To:   fmt.Sprintf("tree:///%s", filename),
+					},
+				},
+			},
+			osbuild.NewIgnitionInlineInput(copyInput)))
+	}
 
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 		Paths: []osbuild.Path{

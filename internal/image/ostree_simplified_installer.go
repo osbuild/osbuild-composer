@@ -51,8 +51,11 @@ type OSTreeSimplifiedInstaller struct {
 
 	FDO *fdo.Options
 
-	// ignition firstboot configuration options
-	Ignition *ignition.Options
+	// Ignition firstboot configuration options
+	IgnitionFirstBoot *ignition.FirstBootOptions
+
+	// Ignition embedded configuration options
+	IgnitionEmbedded *ignition.EmbeddedOptions
 
 	AdditionalDracutModules []string
 }
@@ -88,6 +91,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	coiPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	coiPipeline.FDO = img.FDO
+	coiPipeline.Ignition = img.IgnitionEmbedded
 	coiPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
 	coiPipeline.Variant = img.Variant
 	coiPipeline.AdditionalDracutModules = img.AdditionalDracutModules
@@ -124,8 +128,8 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	// ignition firstboot options
-	if img.Ignition != nil {
-		kernelOpts = append(kernelOpts, "coreos.inst.append ignition.config.url="+img.Ignition.ProvisioningURL)
+	if img.IgnitionFirstBoot != nil {
+		kernelOpts = append(kernelOpts, "coreos.inst.append ignition.config.url="+img.IgnitionFirstBoot.ProvisioningURL)
 	}
 
 	bootTreePipeline.KernelOpts = kernelOpts
