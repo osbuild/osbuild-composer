@@ -664,6 +664,19 @@ func osPipeline(t *imageType,
 		}))
 	}
 
+	if t.rpmOstree {
+		p.AddStage(osbuild.NewSystemdJournaldStage(
+			&osbuild.SystemdJournaldStageOptions{
+				Filename: "10-persistent.conf",
+				Config: osbuild.SystemdJournaldConfigDropin{
+					Journal: osbuild.SystemdJournaldConfigJournalSection{
+						Storage: osbuild.StoragePresistent,
+					},
+				},
+			},
+		))
+	}
+
 	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
 	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
 		p.AddStage(osbuild.NewSELinuxStage(selinuxStageOptions(false)))
