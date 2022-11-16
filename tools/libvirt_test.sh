@@ -277,29 +277,51 @@ elif [[ $ARCH == 's390x' ]]; then
         --noautoconsole \
         --network network=integration,mac=34:49:22:B0:83:30
 else
+    case "${ID}-${VERSION_ID}" in
+        "rhel-8"* | "centos-8")
+             MIN_RAM="1024"
+             ;;
+        "rhel-9"* | "centos-9")
+             MIN_RAM="1536"
+             ;;
+        *)
+            echo "unsupported distro: ${ID}-${VERSION_ID}"
+            exit 1;;
+    esac
+
+    case "${ID}-${VERSION_ID}" in
+        "rhel-8"* | "rhel-9.0" | "rhel-9.1" | "centos-8")
+             NVRAM_TEMPLATE="nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd"
+             ;;
+        "centos-9" )
+            # Disable secure boot for CS9 due to bug bz#2108646
+            NVRAM_TEMPLATE="firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
+            ;;
+        "rhel-9.2")
+             NVRAM_TEMPLATE=""
+             ;;
+        *)
+            echo "unsupported distro: ${ID}-${VERSION_ID}"
+            exit 1;;
+    esac
+
     # Both aarch64 and x86_64 support hybrid boot
     if [[ $BOOT_TYPE == 'uefi' ]]; then
-        # Disable secure boot for CS9 due to bug bz#2108646
-        if [[ "${ID}-${VERSION_ID}" == "centos-9" ]] ; then
-            BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
-        else
-            BOOT_ARGS="uefi,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd"
-        fi
         sudo virt-install \
             --name "$IMAGE_KEY" \
-            --memory 1024 \
+            --memory ${MIN_RAM} \
             --vcpus 2 \
             --disk path="${LIBVIRT_IMAGE_PATH}" \
             --disk path=${CLOUD_INIT_PATH},device=cdrom \
             --import \
             --os-variant rhel8-unknown \
             --noautoconsole \
-            --boot "${BOOT_ARGS}" \
+            --boot uefi,"${NVRAM_TEMPLATE}" \
             --network network=integration,mac=34:49:22:B0:83:30
     else
         sudo virt-install \
             --name "$IMAGE_KEY" \
-            --memory 1024 \
+            --memory ${MIN_RAM} \
             --vcpus 2 \
             --disk path="${LIBVIRT_IMAGE_PATH}" \
             --disk path=${CLOUD_INIT_PATH},device=cdrom \
