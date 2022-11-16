@@ -2622,7 +2622,10 @@
                 "IA32",
                 "X64"
               ],
-              "vendor": "redhat"
+              "vendor": "redhat",
+              "config": {
+                "timeout": 5
+              }
             }
           }
         ]

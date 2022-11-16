@@ -5942,7 +5942,10 @@
                 "IA32",
                 "X64"
               ],
-              "vendor": "centos"
+              "vendor": "centos",
+              "config": {
+                "timeout": 5
+              }
             }
           }
         ]
