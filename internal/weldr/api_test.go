@@ -1141,7 +1141,7 @@ func TestCompose(t *testing.T) {
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"whatever","parent":"","url":"invalid-url"}}`, test_distro.TestImageTypeOSTree),
 			http.StatusBadRequest,
-			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Get \"invalid-url/refs/heads/whatever\": unsupported protocol scheme \"\""}]}`,
+			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"error sending request to ostree repository \"invalid-url/refs/heads/whatever\": Get \"invalid-url/refs/heads/whatever\": unsupported protocol scheme \"\""}]}`,
 			nil,
 			[]string{"build_id"},
 		},

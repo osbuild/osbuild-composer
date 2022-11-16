@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -61,7 +62,7 @@ func VerifyRef(ref string) bool {
 func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptions) (string, error) {
 	u, err := url.Parse(location)
 	if err != nil {
-		return "", NewResolveRefError(err.Error())
+		return "", NewResolveRefError(fmt.Sprintf("error parsing ostree repository location: %v", err))
 	}
 	u.Path = path.Join(u.Path, "refs/heads/", ref)
 
@@ -109,14 +110,14 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", NewResolveRefError(err.Error())
+		return "", NewResolveRefError(fmt.Sprintf("error sending request to ostree repository %q: %v", u.String(), err))
 	}
 	if resp.StatusCode != http.StatusOK {
 		return "", NewResolveRefError("ostree repository %q returned status: %s", u.String(), resp.Status)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", NewResolveRefError(err.Error())
+		return "", NewResolveRefError(fmt.Sprintf("error reading response from ostree repository %q: %v", u.String(), err))
 	}
 	parent := strings.TrimSpace(string(body))
 	// Check that this is at least a hex string.
