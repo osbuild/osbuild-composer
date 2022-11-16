@@ -412,8 +412,14 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	if bpFDO := customizations.GetFDO(); bpFDO != nil {
 		img.FDO = fdo.FromBP(*bpFDO)
 	}
-	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && customizations.Ignition.FirstBoot != nil {
-		img.Ignition = ignition.FromBP(*bpIgnition.FirstBoot)
+	// ignition configs from blueprint
+	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil {
+		if bpIgnition.FirstBoot != nil {
+			img.IgnitionFirstBoot = ignition.FirstbootOptionsFromBP(*bpIgnition.FirstBoot)
+		}
+		if bpIgnition.Embedded != nil {
+			img.IgnitionEmbedded = ignition.EmbeddedOptionsFromBP(*bpIgnition.Embedded)
+		}
 	}
 
 	d := t.arch.distro
