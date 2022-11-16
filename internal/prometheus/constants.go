@@ -1,7 +1,6 @@
 package prometheus
 
 const (
-	Namespace         = "image_builder"
-	ComposerSubsystem = "composer"
-	WorkerSubsystem   = "worker"
+	ComposerSubsystem = "image_builder_composer"
+	WorkerSubsystem   = "image_builder_worker"
 )
