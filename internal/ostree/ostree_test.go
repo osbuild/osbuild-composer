@@ -85,8 +85,8 @@ func TestOstreeResolveRef(t *testing.T) {
 		}
 
 		errCases := map[input]string{
-			{"not-a-url", "a-bad-ref"}:              "Get \"not-a-url/refs/heads/a-bad-ref\": unsupported protocol scheme \"\"",
-			{"http://0.0.0.0:10/repo", "whatever"}:  "Get \"http://0.0.0.0:10/repo/refs/heads/whatever\": dial tcp 0.0.0.0:10: connect: connection refused",
+			{"not-a-url", "a-bad-ref"}:              "error sending request to ostree repository \"not-a-url/refs/heads/a-bad-ref\": Get \"not-a-url/refs/heads/a-bad-ref\": unsupported protocol scheme \"\"",
+			{"http://0.0.0.0:10/repo", "whatever"}:  "error sending request to ostree repository \"http://0.0.0.0:10/repo/refs/heads/whatever\": Get \"http://0.0.0.0:10/repo/refs/heads/whatever\": dial tcp 0.0.0.0:10: connect: connection refused",
 			{srvConf.Srv.URL, "rhel/8/x86_64/edge"}: fmt.Sprintf("ostree repository \"%s/refs/heads/rhel/8/x86_64/edge\" returned status: 404 Not Found", srvConf.Srv.URL),
 			{srvConf.Srv.URL, "test_forbidden"}:     fmt.Sprintf("ostree repository \"%s/refs/heads/test_forbidden\" returned status: 403 Forbidden", srvConf.Srv.URL),
 			{srvConf.Srv.URL, "get_bad_ref"}:        fmt.Sprintf("ostree repository \"%s/refs/heads/get_bad_ref\" returned invalid reference", srvConf.Srv.URL),

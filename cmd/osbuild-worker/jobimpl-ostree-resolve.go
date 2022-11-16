@@ -60,6 +60,7 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 
 		ref, checksum, err := ostree.ResolveParams(reqParams)
 		if err != nil {
+			logWithId.Infof("Resolving ostree params failed: %v", err)
 			setError(err, &result)
 			break
 		}
