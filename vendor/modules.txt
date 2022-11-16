@@ -467,13 +467,14 @@ github.com/opencontainers/runc/libcontainer/user
 github.com/opencontainers/runc/libcontainer/userns
 # github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift-online/ocm-sdk-go v0.1.287
+# github.com/openshift-online/ocm-sdk-go v0.1.292
 ## explicit
 github.com/openshift-online/ocm-sdk-go/authentication
 github.com/openshift-online/ocm-sdk-go/errors
 github.com/openshift-online/ocm-sdk-go/helpers
 github.com/openshift-online/ocm-sdk-go/internal
 github.com/openshift-online/ocm-sdk-go/logging
+github.com/openshift-online/ocm-sdk-go/metrics
 # github.com/oracle/oci-go-sdk/v54 v54.0.0
 ## explicit
 github.com/oracle/oci-go-sdk/v54/common
