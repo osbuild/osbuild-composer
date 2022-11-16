@@ -326,8 +326,9 @@ The worker for osbuild-composer
 %preun worker
 # systemd_preun uses systemctl disable --now which doesn't work well with template services.
 # See https://github.com/systemd/systemd/issues/15620
-# The following lines mimicks its behaviour by running two commands:
-if [ -d /run/systemd/system ]; then
+# The following lines mimicks its behaviour by running two commands.
+# The scriptlet is supposed to run only when the package is being removed.
+if [ $1 -eq 0 ] && [ -d /run/systemd/system ]; then
     # disable and stop all the worker services
     systemctl --no-reload disable osbuild-worker@.service osbuild-remote-worker@.service
     systemctl stop "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
