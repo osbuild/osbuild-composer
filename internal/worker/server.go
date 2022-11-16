@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -44,6 +45,7 @@ type Server struct {
 	jobs   jobqueue.JobQueue
 	logger *log.Logger
 	config Config
+	routes openapi3.Paths
 }
 
 type JobStatus struct {
@@ -74,10 +76,16 @@ type Config struct {
 }
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, config Config) *Server {
+	spec, err := api.GetSwagger()
+	if err != nil {
+		panic(err)
+	}
+
 	s := &Server{
 		jobs:   jobs,
 		logger: logger,
 		config: config,
+		routes: spec.Paths,
 	}
 
 	api.BasePath = config.BasePath
@@ -98,7 +106,15 @@ func (s *Server) Handler() http.Handler {
 	handler := apiHandlers{
 		server: s,
 	}
-	api.RegisterHandlers(e.Group(api.BasePath), &handler)
+
+	// we need to get a list of all the routes and
+	// then clean them to remove the dynamic parameters.
+	// Ideally, this function will be removed in favour of
+	// adding the paths inside the ocm sdk here:
+	// https://github.com/openshift-online/ocm-sdk-go/blob/ae3d77d559729baff1758859a7a104d2ffc70069/metrics/path_tree_data.go#L23
+	genericPaths := prometheus.MakeGenericPaths(s.routes)
+	ocmMiddleware := prometheus.OcmPrometheusMiddleware(prometheus.WorkerSubsystem, api.BasePath, genericPaths)
+	api.RegisterHandlers(e.Group(api.BasePath, ocmMiddleware), &handler)
 
 	return e
 }
