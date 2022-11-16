@@ -530,6 +530,18 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}))
 	}
 
+	if p.OSTreeRef != "" {
+		pipeline.AddStage(osbuild.NewSystemdJournaldStage(
+			&osbuild.SystemdJournaldStageOptions{
+				Filename: "10-persistent.conf",
+				Config: osbuild.SystemdJournaldConfigDropin{
+					Journal: osbuild.SystemdJournaldConfigJournalSection{
+						Storage: osbuild.StoragePresistent,
+					},
+				},
+			}))
+	}
+
 	if p.SElinux != "" {
 		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
