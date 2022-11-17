@@ -148,6 +148,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 					URL:    ir.ostree.URL,
 					Ref:    ir.ostree.Ref,
 					Parent: ir.ostree.Parent,
+					RHSM:   ir.ostree.RHSM,
 				},
 			},
 		}, channel)
