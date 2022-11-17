@@ -574,6 +574,11 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		logrus.Warn("FIXME: Requesting package sets for iot-installer without a resolved ostree ref. Faking one.")
 	}
 
+	// Similar to above, for edge-commit and edge-container, we need to set an
+	// ImageRef in order to properly initialize the manifest and package
+	// selection.
+	options.OSTree.ImageRef = t.OSTreeRef()
+
 	// create a temporary container spec array with the info from the blueprint
 	// to initialize the manifest
 	containers := make([]container.Spec, len(bp.Containers))
