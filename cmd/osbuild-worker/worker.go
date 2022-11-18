@@ -47,11 +47,6 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 
 	solver := dnfjson.NewBaseSolver(path.Join(cacheDir, "rpmmd"))
 	solver.SetDNFJSONPath(w.config.DNFJson)
-	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
-		worker.JobTypeDepsolve: &DepsolveJobImpl{
-			Solver: solver,
-		},
-	})
 
 	store := path.Join(cacheDir, "osbuild-store")
 	output := path.Join(cacheDir, "output")
@@ -215,7 +210,20 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 		containersTLSVerify = config.Containers.TLSVerify
 	}
 
-	// non-depsolve job
+	// depsolve jobs can take up to 30 seconds. They are quite CPU intensive
+	// but also moderately latency sensitive. A user might be watching the
+	// spinner spin. For this reason we don't run them in the same loop as
+	// the much slower bulid jobs. We only want to run one depsolve job at
+	// a time.
+	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
+		worker.JobTypeDepsolve: &DepsolveJobImpl{
+			Solver: solver,
+		},
+	})
+
+	// build jobs can take up to half an hour. They are both IO and CPU
+	// intensive, so we do not want to run multiple at once. They are not
+	// particularly CPU intensive.
 	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
 		worker.JobTypeOSBuild: &OSBuildJobImpl{
 			Store:       store,
@@ -241,22 +249,35 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 				TLSVerify:    &containersTLSVerify,
 			},
 		},
-		worker.JobTypeKojiInit: &KojiInitJobImpl{
-			KojiServers: kojiServers,
-		},
-		worker.JobTypeKojiFinalize: &KojiFinalizeJobImpl{
-			KojiServers: kojiServers,
-		},
-		worker.JobTypeContainerResolve: &ContainerResolveJobImpl{
-			AuthFilePath: containersAuthFilePath,
-		},
-		worker.JobTypeOSTreeResolve: &OSTreeResolveJobImpl{},
+	})
+
+	// the copy and share jobs are not CPU nor IO intensive, but can be
+	// fairly long running. We could run several of these concurrently,
+	// thouh this is not currently supported.
+	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
 		worker.JobTypeAWSEC2Copy: &AWSEC2CopyJobImpl{
 			AWSCreds: awsCredentials,
 		},
 		worker.JobTypeAWSEC2Share: &AWSEC2ShareJobImpl{
 			AWSCreds: awsCredentials,
 		},
+		worker.JobTypeKojiFinalize: &KojiFinalizeJobImpl{
+			KojiServers: kojiServers,
+		},
+	})
+
+	// the remaining job types are neither CPU nor IO intensive, and are
+	// very short running. They could in principle be run concurrently.
+	// We run them separately from the other jobs to not add needless
+	// latency.
+	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
+		worker.JobTypeKojiInit: &KojiInitJobImpl{
+			KojiServers: kojiServers,
+		},
+		worker.JobTypeContainerResolve: &ContainerResolveJobImpl{
+			AuthFilePath: containersAuthFilePath,
+		},
+		worker.JobTypeOSTreeResolve: &OSTreeResolveJobImpl{},
 	})
 
 	return &w, nil
