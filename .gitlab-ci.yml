@@ -397,10 +397,7 @@ OSTree simplified installer:
           - rhos-01/rhel-8.7-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/rhel-9.1-nightly-x86_64
-          # this is disabled because of two BZs in cs9
-          # rhbz#2124735 and rhbz#2108646 preventing 
-          # the system to install and boot properly
-          # - rhos-01/centos-stream-9-x86_64
+          - rhos-01/centos-stream-9-x86_64
 
 OSTree raw image:
   stage: test
