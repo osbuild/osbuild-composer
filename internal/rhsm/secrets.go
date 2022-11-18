@@ -38,7 +38,6 @@ type RHSMSecrets struct {
 
 // These secrets are present on any subscribed system and uniquely identify the host
 type ConsumerSecrets struct {
-	CACert       string
 	ConsumerKey  string
 	ConsumerCert string
 }
@@ -86,7 +85,6 @@ func getListOfSubscriptions() ([]subscription, error) {
 
 func getConsumerSecrets() (*ConsumerSecrets, error) {
 	res := ConsumerSecrets{
-		CACert:       "/etc/rhsm/ca/redhat-uep.pem",
 		ConsumerKey:  "/etc/pki/consumer/key.pem",
 		ConsumerCert: "/etc/pki/consumer/cert.pem",
 	}

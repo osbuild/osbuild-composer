@@ -59,7 +59,7 @@ func VerifyRef(ref string) bool {
 // ResolveRef resolves the URL path specified by the location and ref
 // (location+"refs/heads/"+ref) and returns the commit ID for the named ref. If
 // there is an error, it will be of type ResolveRefError.
-func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptions) (string, error) {
+func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptions, ca *string) (string, error) {
 	u, err := url.Parse(location)
 	if err != nil {
 		return "", NewResolveRefError(fmt.Sprintf("error parsing ostree repository location: %v", err))
@@ -74,28 +74,33 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 				return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
 			}
 		}
-		caCertPEM, err := ioutil.ReadFile(subs.Consumer.CACert)
-		if err != nil {
-			return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
+
+		tlsConf := &tls.Config{
+			MinVersion: tls.VersionTLS12,
 		}
 
-		roots := x509.NewCertPool()
-		ok := roots.AppendCertsFromPEM(caCertPEM)
-		if !ok {
-			return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
+		if ca != nil {
+			caCertPEM, err := ioutil.ReadFile(*ca)
+			if err != nil {
+				return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
+			}
+			roots := x509.NewCertPool()
+			ok := roots.AppendCertsFromPEM(caCertPEM)
+			if !ok {
+				return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
+			}
+			tlsConf.RootCAs = roots
 		}
 
 		cert, err := tls.LoadX509KeyPair(subs.Consumer.ConsumerCert, subs.Consumer.ConsumerKey)
 		if err != nil {
 			return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
 		}
+		tlsConf.Certificates = []tls.Certificate{cert}
+
 		client = &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					Certificates: []tls.Certificate{cert},
-					RootCAs:      roots,
-					MinVersion:   tls.VersionTLS12,
-				},
+				TLSClientConfig: tlsConf,
 			},
 			Timeout: 300 * time.Second,
 		}
@@ -166,7 +171,7 @@ func ResolveParams(params RequestParams) (ref, checksum string, err error) {
 	// Resolve parent checksum
 	if params.URL != "" {
 		// If a URL is specified, we need to fetch the commit at the URL.
-		parent, err := ResolveRef(params.URL, parentRef, params.RHSM, nil)
+		parent, err := ResolveRef(params.URL, parentRef, params.RHSM, nil, nil)
 		if err != nil {
 			return "", "", err // ResolveRefError
 		}
