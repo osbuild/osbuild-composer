@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -392,9 +394,9 @@ func RequestAndRunJob(client *worker.Client, jobImpls map[string]JobImplementati
 }
 
 func (worker *Worker) Start() error {
-	// depsolve jobs can be done during other jobs
-	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
-	defer depsolveCtxCancel()
+	// don't schedule new jobs after we receive SIGTERM
+	jobCtx, jobCtxCancel := context.WithCancel(context.Background())
+
 	go func() {
 		for {
 			err := RequestAndRunJob(worker.client, worker.depsolveJobImpls)
@@ -404,20 +406,42 @@ func (worker *Worker) Start() error {
 			}
 
 			select {
-			case <-depsolveCtx.Done():
+			case <-jobCtx.Done():
 				return
 			default:
 				continue
 			}
-
 		}
 	}()
 
-	for {
-		err := RequestAndRunJob(worker.client, worker.otherJobImpls)
-		if err != nil {
-			logrus.Warn("Received error from RequestAndRunJob, backing off")
-			time.Sleep(backoffDuration)
+	go func() {
+		for {
+			err := RequestAndRunJob(worker.client, worker.otherJobImpls)
+			if err != nil {
+				logrus.Warn("Received error from RequestAndRunJob, backing off")
+				time.Sleep(backoffDuration)
+			}
+
+			select {
+			case <-jobCtx.Done():
+				return
+			default:
+				continue
+			}
 		}
-	}
+	}()
+
+	sigint := make(chan os.Signal, 1)
+
+	signal.Notify(sigint, syscall.SIGTERM)
+	signal.Notify(sigint, syscall.SIGINT)
+
+	// block until interrupted
+	<-sigint
+
+	logrus.Info("Shutting down.")
+
+	jobCtxCancel()
+
+	return nil
 }
