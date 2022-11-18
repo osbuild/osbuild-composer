@@ -44,7 +44,6 @@ func TestOstreeResolveRef(t *testing.T) {
 	defer srv2.Close()
 	subs := &rhsm.Subscriptions{
 		Consumer: &rhsm.ConsumerSecrets{
-			CACert:       mTLSSrv.CAPath,
 			ConsumerKey:  mTLSSrv.ClientKeyPath,
 			ConsumerCert: mTLSSrv.ClientCrtPath,
 		},
@@ -79,7 +78,7 @@ func TestOstreeResolveRef(t *testing.T) {
 			{srvConf.Srv.URL, "valid/ostree/ref"}: goodRef,
 		}
 		for in, expOut := range validCases {
-			out, err := ResolveRef(in.location, in.ref, srvConf.RHSM, srvConf.Subs)
+			out, err := ResolveRef(in.location, in.ref, srvConf.RHSM, srvConf.Subs, &mTLSSrv.CAPath)
 			assert.NoError(t, err)
 			assert.Equal(t, expOut, out)
 		}
@@ -92,7 +91,7 @@ func TestOstreeResolveRef(t *testing.T) {
 			{srvConf.Srv.URL, "get_bad_ref"}:        fmt.Sprintf("ostree repository \"%s/refs/heads/get_bad_ref\" returned invalid reference", srvConf.Srv.URL),
 		}
 		for in, expMsg := range errCases {
-			_, err := ResolveRef(in.location, in.ref, srvConf.RHSM, srvConf.Subs)
+			_, err := ResolveRef(in.location, in.ref, srvConf.RHSM, srvConf.Subs, &mTLSSrv.CAPath)
 			assert.EqualError(t, err, expMsg)
 		}
 	}
