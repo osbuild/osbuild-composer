@@ -19,19 +19,19 @@ func setError(err error, result *worker.OSTreeResolveJobResult) {
 		result.JobError = clienterrors.WorkerClientError(
 			clienterrors.ErrorOSTreeRefInvalid,
 			"Invalid OSTree ref",
-			err,
+			err.Error(),
 		)
 	case ostree.ResolveRefError:
 		result.JobError = clienterrors.WorkerClientError(
 			clienterrors.ErrorOSTreeRefResolution,
 			"Error resolving OSTree ref",
-			err,
+			err.Error(),
 		)
 	default:
 		result.JobError = clienterrors.WorkerClientError(
 			clienterrors.ErrorOSTreeParamsInvalid,
 			"Invalid OSTree parameters or parameter combination",
-			err,
+			err.Error(),
 		)
 	}
 }
