@@ -344,7 +344,12 @@ func setProtection(protected bool) {
 
 // Requests and runs 1 job of specified type(s)
 // Returning an error here will result in the worker backing off for a while and retrying
-func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls map[string]JobImplementation) error {
+func RequestAndRunJob(client *worker.Client, jobImpls map[string]JobImplementation) error {
+	acceptedJobTypes := []string{}
+	for jt := range jobImpls {
+		acceptedJobTypes = append(acceptedJobTypes, jt)
+	}
+
 	logrus.Debug("Waiting for a new job...")
 	job, err := client.RequestJob(acceptedJobTypes, common.CurrentArch())
 	if err == worker.ErrClientRequestJobTimeout {
@@ -391,13 +396,8 @@ func (worker *Worker) Start() error {
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
 	defer depsolveCtxCancel()
 	go func() {
-		acceptedJobTypes := []string{}
-		for jt := range worker.depsolveJobImpls {
-			acceptedJobTypes = append(acceptedJobTypes, jt)
-		}
-
 		for {
-			err := RequestAndRunJob(worker.client, acceptedJobTypes, worker.depsolveJobImpls)
+			err := RequestAndRunJob(worker.client, worker.depsolveJobImpls)
 			if err != nil {
 				logrus.Warn("Received error from RequestAndRunJob, backing off")
 				time.Sleep(backoffDuration)
@@ -413,13 +413,8 @@ func (worker *Worker) Start() error {
 		}
 	}()
 
-	acceptedJobTypes := []string{}
-	for jt := range worker.otherJobImpls {
-		acceptedJobTypes = append(acceptedJobTypes, jt)
-	}
-
 	for {
-		err := RequestAndRunJob(worker.client, acceptedJobTypes, worker.otherJobImpls)
+		err := RequestAndRunJob(worker.client, worker.otherJobImpls)
 		if err != nil {
 			logrus.Warn("Received error from RequestAndRunJob, backing off")
 			time.Sleep(backoffDuration)
