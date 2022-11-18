@@ -34,24 +34,24 @@ type JobImplementation interface {
 type Worker struct {
 	config *workerConfig
 
-	depsolveJobImpls map[string]JobImplementation
-	otherJobImpls    map[string]JobImplementation
+	jobImplKinds []map[string]JobImplementation
 
 	client *worker.Client
 }
 
 func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Worker, error) {
 	w := Worker{
-		config: config,
+		config:       config,
+		jobImplKinds: make([]map[string]JobImplementation, 0),
 	}
 
 	solver := dnfjson.NewBaseSolver(path.Join(cacheDir, "rpmmd"))
 	solver.SetDNFJSONPath(w.config.DNFJson)
-	w.depsolveJobImpls = map[string]JobImplementation{
+	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
 		worker.JobTypeDepsolve: &DepsolveJobImpl{
 			Solver: solver,
 		},
-	}
+	})
 
 	store := path.Join(cacheDir, "osbuild-store")
 	output := path.Join(cacheDir, "output")
@@ -216,7 +216,7 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 	}
 
 	// non-depsolve job
-	w.otherJobImpls = map[string]JobImplementation{
+	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
 		worker.JobTypeOSBuild: &OSBuildJobImpl{
 			Store:       store,
 			Output:      output,
@@ -257,7 +257,7 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 		worker.JobTypeAWSEC2Share: &AWSEC2ShareJobImpl{
 			AWSCreds: awsCredentials,
 		},
-	}
+	})
 
 	return &w, nil
 }
@@ -397,39 +397,24 @@ func (worker *Worker) Start() error {
 	// don't schedule new jobs after we receive SIGTERM
 	jobCtx, jobCtxCancel := context.WithCancel(context.Background())
 
-	go func() {
-		for {
-			err := RequestAndRunJob(worker.client, worker.depsolveJobImpls)
-			if err != nil {
-				logrus.Warn("Received error from RequestAndRunJob, backing off")
-				time.Sleep(backoffDuration)
-			}
+	for _, jobImpls := range worker.jobImplKinds {
+		go func(impls map[string]JobImplementation) {
+			for {
+				err := RequestAndRunJob(worker.client, impls)
+				if err != nil {
+					logrus.Warn("Received error from RequestAndRunJob, backing off")
+					time.Sleep(backoffDuration)
+				}
 
-			select {
-			case <-jobCtx.Done():
-				return
-			default:
-				continue
+				select {
+				case <-jobCtx.Done():
+					return
+				default:
+					continue
+				}
 			}
-		}
-	}()
-
-	go func() {
-		for {
-			err := RequestAndRunJob(worker.client, worker.otherJobImpls)
-			if err != nil {
-				logrus.Warn("Received error from RequestAndRunJob, backing off")
-				time.Sleep(backoffDuration)
-			}
-
-			select {
-			case <-jobCtx.Done():
-				return
-			default:
-				continue
-			}
-		}
-	}()
+		}(jobImpls)
+	}
 
 	sigint := make(chan os.Signal, 1)
 
