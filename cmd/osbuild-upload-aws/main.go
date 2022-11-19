@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 
@@ -50,7 +51,7 @@ func main() {
 	if shareWith != "" {
 		share = append(share, shareWith)
 	}
-	ami, err := a.Register(imageName, bucketName, keyName, share, arch)
+	ami, err := a.Register(context.Background(), imageName, bucketName, keyName, share, arch)
 	if err != nil {
 		println(err.Error())
 		return

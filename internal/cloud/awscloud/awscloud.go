@@ -1,6 +1,7 @@
 package awscloud
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -152,8 +153,8 @@ func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, err
 // DescribeImportSnapshots to wait for a condition to be met before returning.
 // If the condition is not met within the max attempt window, an error will
 // be returned.
-func WaitUntilImportSnapshotTaskCompleted(c *ec2.EC2, input *ec2.DescribeImportSnapshotTasksInput) error {
-	return WaitUntilImportSnapshotTaskCompletedWithContext(c, aws.BackgroundContext(), input)
+func WaitUntilImportSnapshotTaskCompleted(c *ec2.EC2, ctx context.Context, input *ec2.DescribeImportSnapshotTasksInput) error {
+	return WaitUntilImportSnapshotTaskCompletedWithContext(c, ctx, input)
 }
 
 // WaitUntilImportSnapshotCompletedWithContext is an extended version of
@@ -208,7 +209,7 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 // Register is a function that imports a snapshot, waits for the snapshot to
 // fully import, tags the snapshot, cleans up the image in S3, and registers
 // an AMI in AWS.
-func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch string) (*string, error) {
+func (a *AWS) Register(ctx context.Context, name, bucket, key string, shareWith []string, rpmArch string) (*string, error) {
 	rpmArchToEC2Arch := map[string]string{
 		"x86_64":  "x86_64",
 		"aarch64": "arm64",
@@ -240,6 +241,7 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 	logrus.Infof("[AWS] 🚚 Waiting for snapshot to finish importing: %s", *importTaskOutput.ImportTaskId)
 	err = WaitUntilImportSnapshotTaskCompleted(
 		a.ec2,
+		ctx,
 		&ec2.DescribeImportSnapshotTasksInput{
 			ImportTaskIds: []*string{
 				importTaskOutput.ImportTaskId,
@@ -346,7 +348,7 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 }
 
 // target region is determined by the region configured in the aws session
-func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
+func (a *AWS) CopyImage(ctx context.Context, name, ami, sourceRegion string) (string, error) {
 	result, err := a.ec2.CopyImage(
 		&ec2.CopyImageInput{
 			Name:          aws.String(name),
@@ -387,12 +389,12 @@ func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
 				inCpy = &tmp
 			}
 			req, _ := a.ec2.DescribeImagesRequest(inCpy)
-			req.SetContext(aws.BackgroundContext())
+			req.SetContext(ctx)
 			req.ApplyOptions(opts...)
 			return req, nil
 		},
 	}
-	err = w.WaitWithContext(aws.BackgroundContext())
+	err = w.WaitWithContext(ctx)
 	if err != nil {
 		return *result.ImageId, err
 	}

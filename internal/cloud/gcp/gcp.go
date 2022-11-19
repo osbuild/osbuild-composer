@@ -24,7 +24,7 @@ type GCP struct {
 }
 
 // New returns an authenticated GCP instance, allowing to interact with GCP API.
-func New(credentials []byte) (*GCP, error) {
+func New(ctx context.Context, credentials []byte) (*GCP, error) {
 	scopes := []string{storage.ScopeReadWrite}                 // file upload
 	scopes = append(scopes, compute.DefaultAuthScopes()...)    // permissions to image
 	scopes = append(scopes, cloudbuild.DefaultAuthScopes()...) // image import
@@ -33,7 +33,7 @@ func New(credentials []byte) (*GCP, error) {
 	if credentials != nil {
 		getCredsFunc = func() (*google.Credentials, error) {
 			return google.CredentialsFromJSON(
-				context.Background(),
+				ctx,
 				credentials,
 				scopes...,
 			)
@@ -41,7 +41,7 @@ func New(credentials []byte) (*GCP, error) {
 	} else {
 		getCredsFunc = func() (*google.Credentials, error) {
 			return google.FindDefaultCredentials(
-				context.Background(),
+				ctx,
 				scopes...,
 			)
 		}
@@ -57,12 +57,12 @@ func New(credentials []byte) (*GCP, error) {
 
 // NewFromFile loads the credentials from a file and returns an authenticated
 // *GCP object instance.
-func NewFromFile(path string) (*GCP, error) {
+func NewFromFile(ctx context.Context, path string) (*GCP, error) {
 	gcpCredentials, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load GCP credentials from file %q: %v", path, err)
 	}
-	return New(gcpCredentials)
+	return New(ctx, gcpCredentials)
 }
 
 // GetProjectID returns a string with the Project ID of the project, used for

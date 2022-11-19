@@ -41,7 +41,7 @@ func (impl *AWSEC2CopyJobImpl) Run(ctx context.Context, job worker.Job) (interfa
 		return &result, err
 	}
 
-	ami, err := aws.CopyImage(args.TargetName, args.Ami, args.SourceRegion)
+	ami, err := aws.CopyImage(ctx, args.TargetName, args.Ami, args.SourceRegion)
 	if err != nil {
 		logWithId.Errorf("Error copying ami: %v", err)
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Error copying ami %s", args.Ami), nil)

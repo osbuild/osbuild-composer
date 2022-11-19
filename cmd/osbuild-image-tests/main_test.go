@@ -335,7 +335,7 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 	require.NoError(t, err)
 
 	// the following line should be done by osbuild-composer at some point
-	err = boot.UploadImageToAWS(creds, imagePath, imageName)
+	err = boot.UploadImageToAWS(context.Background(), creds, imagePath, imageName)
 	require.NoErrorf(t, err, "upload to amazon failed, resources could have been leaked")
 
 	imageDesc, err := boot.DescribeEC2Image(e, imageName)

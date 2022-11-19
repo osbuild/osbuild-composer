@@ -68,12 +68,12 @@ func main() {
 		}
 	}
 
-	g, err := gcp.New(credentials)
+	ctx := context.Background()
+
+	g, err := gcp.New(ctx, credentials)
 	if err != nil {
 		logrus.Fatalf("[GCP] Failed to create new GCP object: %v", err)
 	}
-
-	ctx := context.Background()
 
 	// Upload image to the Storage
 	if !skipUpload {

@@ -1,8 +1,10 @@
+//go:build integration
 // +build integration
 
 package boot
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -90,7 +92,7 @@ func wrapErrorf(innerError error, format string, a ...interface{}) error {
 // It takes an image and an image name and creates an ec2 instance from them.
 // The s3 key is never returned - the same thing is done in osbuild-composer,
 // the user has no way of getting the s3 key.
-func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) error {
+func UploadImageToAWS(ctx context.Context, c *awsCredentials, imagePath string, imageName string) error {
 	uploader, err := awscloud.New(c.Region, c.AccessKeyId, c.SecretAccessKey, c.sessionToken)
 	if err != nil {
 		return fmt.Errorf("cannot create aws uploader: %v", err)
@@ -100,7 +102,7 @@ func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) err
 	if err != nil {
 		return fmt.Errorf("cannot upload the image: %v", err)
 	}
-	_, err = uploader.Register(imageName, c.Bucket, imageName, nil, common.CurrentArch())
+	_, err = uploader.Register(ctx, imageName, c.Bucket, imageName, nil, common.CurrentArch())
 	if err != nil {
 		return fmt.Errorf("cannot register the image: %v", err)
 	}

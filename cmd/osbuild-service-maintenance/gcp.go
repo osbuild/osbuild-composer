@@ -15,7 +15,7 @@ import (
 )
 
 func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff time.Time) error {
-	g, err := gcp.New(creds)
+	g, err := gcp.New(context.Background(), creds)
 	if err != nil {
 		return err
 	}

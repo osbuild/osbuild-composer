@@ -161,16 +161,16 @@ func (impl *OSBuildJobImpl) getAWSForS3Target(options *target.AWSS3TargetOptions
 //
 //    3b. It tries to authenticate using the service account attached to the
 //        resource which is running the code (e.g. Google Compute Engine VM).
-func (impl *OSBuildJobImpl) getGCP(credentials []byte) (*gcp.GCP, error) {
+func (impl *OSBuildJobImpl) getGCP(ctx context.Context, credentials []byte) (*gcp.GCP, error) {
 	if credentials != nil {
 		logrus.Info("[GCP] 🔑 using credentials provided with the job request")
-		return gcp.New(credentials)
+		return gcp.New(ctx, credentials)
 	} else if impl.GCPConfig.Creds != "" {
 		logrus.Info("[GCP] 🔑 using credentials from the worker configuration")
-		return gcp.NewFromFile(impl.GCPConfig.Creds)
+		return gcp.NewFromFile(ctx, impl.GCPConfig.Creds)
 	} else {
 		logrus.Info("[GCP] 🔑 using Application Default Credentials via Google library")
-		return gcp.New(nil)
+		return gcp.New(ctx, nil)
 	}
 }
 
@@ -502,7 +502,7 @@ func (impl *OSBuildJobImpl) Run(ctx context.Context, job worker.Job) (interface{
 				break
 			}
 
-			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, common.CurrentArch())
+			ami, err := a.Register(ctx, jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, common.CurrentArch())
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, err.Error(), nil)
 				break
@@ -567,9 +567,8 @@ func (impl *OSBuildJobImpl) Run(ctx context.Context, job worker.Job) (interface{
 
 		case *target.GCPTargetOptions:
 			targetResult = target.NewGCPTargetResult(nil)
-			ctx := context.Background()
 
-			g, err := impl.getGCP(targetOptions.Credentials)
+			g, err := impl.getGCP(ctx, targetOptions.Credentials)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
@@ -632,7 +631,6 @@ func (impl *OSBuildJobImpl) Run(ctx context.Context, job worker.Job) (interface{
 
 		case *target.AzureImageTargetOptions:
 			targetResult = target.NewAzureImageTargetResult(nil)
-			ctx := context.Background()
 
 			if impl.AzureCreds == nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, "osbuild job has org.osbuild.azure.image target but this worker doesn't have azure credentials", nil)
@@ -866,7 +864,7 @@ func (impl *OSBuildJobImpl) Run(ctx context.Context, job worker.Job) (interface{
 			// TODO: get the container type from the metadata of the osbuild job
 			sourceRef := fmt.Sprintf("oci-archive:%s", sourcePath)
 
-			digest, err := client.UploadImage(context.Background(), sourceRef, "")
+			digest, err := client.UploadImage(ctx, sourceRef, "")
 
 			if err != nil {
 				logWithId.Infof("[container] 🙁 Upload of '%s' failed: %v", sourceRef, err)
