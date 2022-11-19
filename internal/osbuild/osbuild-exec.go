@@ -2,6 +2,7 @@ package osbuild
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,11 +15,12 @@ import (
 // Note that osbuild returns non-zero when the pipeline fails. This function
 // does not return an error in this case. Instead, the failure is communicated
 // with its corresponding logs through osbuild.Result.
-func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpoints, extraEnv []string, result bool, errorWriter io.Writer) (*Result, error) {
+func RunOSBuild(ctx context.Context, manifest []byte, store, outputDirectory string, exports, checkpoints, extraEnv []string, result bool, errorWriter io.Writer) (*Result, error) {
 	var stdoutBuffer bytes.Buffer
 	var res Result
 
-	cmd := exec.Command(
+	cmd := exec.CommandContext(
+		ctx,
 		"osbuild",
 		"--store", store,
 		"--output-directory", outputDirectory,

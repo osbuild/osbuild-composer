@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -104,5 +105,5 @@ func main() {
 
 	state_dir := path.Join(home, ".local/share/osbuild-playground/")
 
-	RunPlayground(img, d, arch, repos, state_dir)
+	RunPlayground(context.Background(), img, d, arch, repos, state_dir)
 }

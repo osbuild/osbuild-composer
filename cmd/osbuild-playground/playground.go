@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -15,7 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
-func RunPlayground(img image.ImageKind, d distro.Distro, arch distro.Arch, repos map[string][]rpmmd.RepoConfig, state_dir string) {
+func RunPlayground(ctx context.Context, img image.ImageKind, d distro.Distro, arch distro.Arch, repos map[string][]rpmmd.RepoConfig, state_dir string) {
 
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), path.Join(state_dir, "rpmmd"))
 	solver.SetDNFJSONPath(findDnfJsonBin())
@@ -55,7 +56,7 @@ func RunPlayground(img image.ImageKind, d distro.Distro, arch distro.Arch, repos
 
 	store := path.Join(state_dir, "osbuild-store")
 
-	_, err = osbuild.RunOSBuild(bytes, store, "./", manifest.GetExports(), manifest.GetCheckpoints(), nil, false, os.Stdout)
+	_, err = osbuild.RunOSBuild(ctx, bytes, store, "./", manifest.GetExports(), manifest.GetCheckpoints(), nil, false, os.Stdout)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not run osbuild: %s", err.Error())
 	}

@@ -365,7 +365,7 @@ func (impl *OSBuildJobImpl) Run(ctx context.Context, job worker.Job) (interface{
 	}
 
 	// Run osbuild and handle two kinds of errors
-	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, extraEnv, true, os.Stderr)
+	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(ctx, jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, extraEnv, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", nil)
