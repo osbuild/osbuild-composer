@@ -284,18 +284,14 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 }
 
 // Regularly ask osbuild-composer if the compose we're currently working on was
-// canceled and exit the process if it was.
-// It would be cleaner to kill the osbuild process using (`exec.CommandContext`
-// or similar), but osbuild does not currently support this. Exiting here will
-// make systemd clean up the whole cgroup and restart this service.
-func WatchJob(ctx context.Context, job worker.Job) {
+// canceled and cancel the job context if it was.
+func WatchJob(ctx context.Context, job worker.Job, cancelRun context.CancelFunc) {
 	for {
 		select {
 		case <-time.After(15 * time.Second):
 			canceled, err := job.Canceled()
 			if err == nil && canceled {
-				logrus.Info("Job was canceled. Exiting.")
-				os.Exit(0)
+				cancelRun()
 			}
 		case <-ctx.Done():
 			return
@@ -376,15 +372,21 @@ func RunJob(ctx context.Context, job worker.Job, impl JobImplementation) error {
 	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type())
 
 	watcherCtx, cancelWatcher := context.WithCancel(ctx)
-	go WatchJob(watcherCtx, job)
 	defer cancelWatcher()
+	runCtx, cancelRun := context.WithCancel(ctx)
+	defer cancelRun()
 
-	err, result := impl.Run(ctx, job)
+	go WatchJob(watcherCtx, job, cancelRun)
+
+	err, result := impl.Run(runCtx, job)
 	select {
 	case <-ctx.Done():
 		// The worker is shutting down, don't report a partial result.
 		// The job will be requeued by composer once the heartbeat times out.
 		logrus.Warnf("Worker interrupted while running job '%s' (%s). Ignoring result", job.Id(), job.Type())
+	case <-runCtx.Done():
+		// Composer cancelled the job.
+		logrus.Infof("Job '%s' (%s) cancelled remotely. Ignoring result", job.Id(), job.Type())
 	default:
 		if err == nil {
 			logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type())
