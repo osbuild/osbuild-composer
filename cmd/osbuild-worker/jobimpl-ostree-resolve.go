@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/sirupsen/logrus"
 
@@ -36,12 +36,12 @@ func setError(err error, result *worker.OSTreeResolveJobResult) {
 	}
 }
 
-func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
+func (impl *OSTreeResolveJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	var args worker.OSTreeResolveJob
 	err := job.Args(&args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	result := worker.OSTreeResolveJobResult{
@@ -73,10 +73,5 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 		}
 	}
 
-	err = job.Update(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
-	}
-
-	return nil
+	return &result, nil
 }

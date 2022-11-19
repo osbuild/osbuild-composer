@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -47,11 +48,11 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 	return buildInfo.Token, uint64(buildInfo.BuildID), nil
 }
 
-func (impl *KojiInitJobImpl) Run(job worker.Job) error {
+func (impl *KojiInitJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
 	var args worker.KojiInitJob
 	err := job.Args(&args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var result worker.KojiInitJobResult
@@ -60,10 +61,5 @@ func (impl *KojiInitJobImpl) Run(job worker.Job) error {
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, err.Error(), nil)
 	}
 
-	err = job.Update(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
-	}
-
-	return nil
+	return &result, nil
 }

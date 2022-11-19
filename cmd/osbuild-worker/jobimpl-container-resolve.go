@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/sirupsen/logrus"
 
@@ -14,12 +14,12 @@ type ContainerResolveJobImpl struct {
 	AuthFilePath string
 }
 
-func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
+func (impl *ContainerResolveJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	var args worker.ContainerResolveJob
 	err := job.Args(&args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	result := worker.ContainerResolveJobResult{
@@ -51,10 +51,5 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 		}
 	}
 
-	err = job.Update(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
-	}
-
-	return nil
+	return &result, nil
 }

@@ -254,7 +254,7 @@ func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions
 	return client, nil
 }
 
-func (impl *OSBuildJobImpl) Run(job worker.Job) error {
+func (impl *OSBuildJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id().String())
 	// Initialize variable needed for reporting back to osbuild-composer.
 	var osbuildJobResult *worker.OSBuildJobResult = &worker.OSBuildJobResult{
@@ -279,11 +279,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	defer func() {
 		validateResult(osbuildJobResult, job.Id().String())
 
-		err := job.Update(osbuildJobResult)
-		if err != nil {
-			logWithId.Errorf("Error reporting job result: %v", err)
-		}
-
 		err = os.RemoveAll(outputDirectory)
 		if err != nil {
 			logWithId.Errorf("Error removing temporary output directory (%s): %v", outputDirectory, err)
@@ -292,14 +287,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	outputDirectory, err = ioutil.TempDir(impl.Output, job.Id().String()+"-*")
 	if err != nil {
-		return fmt.Errorf("error creating temporary output directory: %v", err)
+		return osbuildJobResult, fmt.Errorf("error creating temporary output directory: %v", err)
 	}
 
 	// Read the job specification
 	var jobArgs worker.OSBuildJob
 	err = job.Args(&jobArgs)
 	if err != nil {
-		return err
+		return osbuildJobResult, err
 	}
 
 	// In case the manifest is empty, try to get it from dynamic args
@@ -319,20 +314,20 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			if err != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", nil)
-				return err
+				return osbuildJobResult, err
 			}
 
 			// skip the job if the manifest generation failed
 			if manifestJR.JobError != nil {
 				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed", nil)
-				return nil
+				return osbuildJobResult, nil
 			}
 			jobArgs.Manifest = manifestJR.Manifest
 		}
 
 		if len(jobArgs.Manifest) == 0 {
 			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyManifest, "Job has no manifest", nil)
-			return nil
+			return osbuildJobResult, nil
 		}
 	}
 
@@ -343,12 +338,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		err = job.DynamicArgs(idx, &jobResult)
 		if err != nil {
 			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", nil)
-			return err
+			return osbuildJobResult, err
 		}
 
 		if jobResult.JobError != nil {
 			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorJobDependency, "Job dependency failed", nil)
-			return nil
+			return osbuildJobResult, nil
 		}
 	}
 
@@ -359,7 +354,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	exports := jobArgs.OsbuildExports()
 	if len(exports) == 0 {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "no osbuild export specified for the job", nil)
-		return nil
+		return osbuildJobResult, nil
 	}
 
 	var extraEnv []string
@@ -374,7 +369,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", nil)
-		return err
+		return osbuildJobResult, err
 	}
 
 	// Include pipeline stages output inside the worker's logs.
@@ -402,7 +397,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", nil)
-		return nil
+		return osbuildJobResult, nil
 	}
 
 	for _, jobTarget := range jobArgs.Targets {
@@ -885,7 +880,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			// TODO: we may not want to return completely here with multiple targets, because then no TargetErrors will be added to the JobError details
 			// Nevertheless, all target errors will be still in the OSBuildJobResult.
 			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTarget, fmt.Sprintf("invalid target type: %s", jobTarget.Name), nil)
-			return nil
+			return osbuildJobResult, nil
 		}
 
 		// this is a programming error
@@ -903,7 +898,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		osbuildJobResult.UploadStatus = "success"
 	}
 
-	return nil
+	return osbuildJobResult, nil
 }
 
 // extractXzArchive extracts the provided XZ archive in the same directory

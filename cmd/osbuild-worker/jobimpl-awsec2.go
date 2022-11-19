@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -22,29 +23,22 @@ type AWSEC2CopyJobImpl struct {
 	AWSCreds string
 }
 
-func (impl *AWSEC2CopyJobImpl) Run(job worker.Job) error {
+func (impl *AWSEC2CopyJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	result := worker.AWSEC2CopyJobResult{}
-
-	defer func() {
-		err := job.Update(&result)
-		if err != nil {
-			logWithId.Errorf("Error reporting job result: %v", err)
-		}
-	}()
 
 	var args worker.AWSEC2CopyJob
 	err := job.Args(&args)
 	if err != nil {
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingJobArgs, fmt.Sprintf("Error parsing arguments: %v", err), nil)
-		return err
+		return &result, err
 	}
 
 	aws, err := getAWS(impl.AWSCreds, args.TargetRegion)
 	if err != nil {
 		logWithId.Errorf("Error creating aws client: %v", err)
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Invalid worker config", nil)
-		return err
+		return &result, err
 	}
 
 	ami, err := aws.CopyImage(args.TargetName, args.Ami, args.SourceRegion)
@@ -63,51 +57,44 @@ func (impl *AWSEC2CopyJobImpl) Run(job worker.Job) error {
 				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Source ami '%s' not found", args.Ami), nil)
 			}
 		}
-		return err
+		return &result, err
 	}
 
 	result.Ami = ami
 	result.Region = args.TargetRegion
-	return nil
+	return &result, nil
 }
 
 type AWSEC2ShareJobImpl struct {
 	AWSCreds string
 }
 
-func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
+func (impl *AWSEC2ShareJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	result := worker.AWSEC2ShareJobResult{}
-
-	defer func() {
-		err := job.Update(&result)
-		if err != nil {
-			logWithId.Errorf("Error reporting job result: %v", err)
-		}
-	}()
 
 	var args worker.AWSEC2ShareJob
 	err := job.Args(&args)
 	if err != nil {
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingJobArgs, fmt.Sprintf("Error parsing arguments: %v", err), nil)
-		return err
+		return &result, err
 	}
 
 	if args.Ami == "" || args.Region == "" {
 		if job.NDynamicArgs() != 1 {
 			logWithId.Error("No arguments given and dynamic args empty")
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, "An ec2 share job should have args or depend on an ec2 copy job", nil)
-			return nil
+			return &result, nil
 		}
 		var cjResult worker.AWSEC2CopyJobResult
 		err = job.DynamicArgs(0, &cjResult)
 		if err != nil {
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args as ec2 copy job", nil)
-			return err
+			return &result, err
 		}
 		if cjResult.JobError != nil {
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorJobDependency, "AWSEC2CopyJob dependency failed", nil)
-			return nil
+			return &result, nil
 		}
 
 		args.Ami = cjResult.Ami
@@ -118,7 +105,7 @@ func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
 	if err != nil {
 		logWithId.Errorf("Error creating aws client: %v", err)
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Invalid worker config", nil)
-		return err
+		return &result, err
 	}
 
 	err = aws.ShareImage(args.Ami, args.ShareWithAccounts)
@@ -135,10 +122,10 @@ func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
 				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Invalid user id to share ami with: %v", args.ShareWithAccounts), nil)
 			}
 		}
-		return err
+		return &result, err
 	}
 
 	result.Ami = args.Ami
 	result.Region = args.Region
-	return nil
+	return &result, nil
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/sirupsen/logrus"
 
@@ -34,12 +34,12 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 	return depsolvedSets, nil
 }
 
-func (impl *DepsolveJobImpl) Run(job worker.Job) error {
+func (impl *DepsolveJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	var args worker.DepsolveJob
 	err := job.Args(&args)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var result worker.DepsolveJobResult
@@ -72,10 +72,5 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 		logWithId.Errorf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
 
-	err = job.Update(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
-	}
-
-	return nil
+	return &result, err
 }

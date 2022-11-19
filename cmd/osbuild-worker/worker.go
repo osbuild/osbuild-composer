@@ -28,7 +28,7 @@ import (
 
 // Represents the implementation of a job type as defined by the worker API.
 type JobImplementation interface {
-	Run(job worker.Job) error
+	Run(ctx context.Context, job worker.Job) (interface{}, error)
 }
 
 type Worker struct {
@@ -365,9 +365,46 @@ func setProtection(protected bool) {
 	}
 }
 
+func RunJob(ctx context.Context, job worker.Job, impl JobImplementation) error {
+	// Depsolve requests needs reactivity, since setting the protection can take up to 6s to timeout if the worker isn't
+	// in an AWS env, disable this setting for them.
+	if job.Type() != worker.JobTypeDepsolve {
+		setProtection(true)
+		defer setProtection(false)
+	}
+
+	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type())
+
+	watcherCtx, cancelWatcher := context.WithCancel(ctx)
+	go WatchJob(watcherCtx, job)
+	defer cancelWatcher()
+
+	err, result := impl.Run(ctx, job)
+	select {
+	case <-ctx.Done():
+		// The worker is shutting down, don't report a partial result.
+		// The job will be requeued by composer once the heartbeat times out.
+		logrus.Warnf("Worker interrupted while running job '%s' (%s). Ignoring result", job.Id(), job.Type())
+	default:
+		if err == nil {
+			logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type())
+		} else {
+			logrus.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err)
+		}
+		if result != nil {
+			err = job.Update(result)
+			if err != nil {
+				logrus.Warnf("Error reporting job result for '%s' (%s): %v", job.Id(), job.Type(), err)
+			}
+		}
+	}
+
+	return nil
+}
+
 // Requests and runs 1 job of specified type(s)
 // Returning an error here will result in the worker backing off for a while and retrying
-func RequestAndRunJob(client *worker.Client, jobImpls map[string]JobImplementation) error {
+func RequestAndRunJob(ctx context.Context, client *worker.Client, jobImpls map[string]JobImplementation) error {
 	acceptedJobTypes := []string{}
 	for jt := range jobImpls {
 		acceptedJobTypes = append(acceptedJobTypes, jt)
@@ -390,27 +427,11 @@ func RequestAndRunJob(client *worker.Client, jobImpls map[string]JobImplementati
 		return err
 	}
 
-	// Depsolve requests needs reactivity, since setting the protection can take up to 6s to timeout if the worker isn't
-	// in an AWS env, disable this setting for them.
-	if job.Type() != worker.JobTypeDepsolve {
-		setProtection(true)
-		defer setProtection(false)
-	}
-
-	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type())
-
-	ctx, cancelWatcher := context.WithCancel(context.Background())
-	go WatchJob(ctx, job)
-
-	err = impl.Run(job)
-	cancelWatcher()
+	err = RunJob(ctx, job, impl)
 	if err != nil {
-		logrus.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err)
-		// Don't return this error so the worker picks up the next job immediately
-		return nil
+		return err
 	}
 
-	logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type())
 	return nil
 }
 
@@ -421,7 +442,7 @@ func (worker *Worker) Start() error {
 	for _, jobImpls := range worker.jobImplKinds {
 		go func(impls map[string]JobImplementation) {
 			for {
-				err := RequestAndRunJob(worker.client, impls)
+				err := RequestAndRunJob(jobCtx, worker.client, impls)
 				if err != nil {
 					logrus.Warn("Received error from RequestAndRunJob, backing off")
 					time.Sleep(backoffDuration)
