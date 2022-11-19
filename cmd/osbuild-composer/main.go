@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -94,7 +95,7 @@ func main() {
 			logrus.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain only one socket.")
 		}
 
-		err = composer.InitWeldr(repositoryConfigs, l[0], config.weldrDistrosImageTypeDenyList())
+		err = composer.InitWeldr(context.Background(), repositoryConfigs, l[0], config.weldrDistrosImageTypeDenyList())
 		if err != nil {
 			logrus.Fatalf("Error initializing weldr API: %v", err)
 		}

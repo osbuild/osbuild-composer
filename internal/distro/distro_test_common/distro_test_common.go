@@ -1,6 +1,7 @@
 package distro_test_common
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -156,7 +157,7 @@ func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint,
 	solver := dnfjson.NewSolver(imageType.Arch().Distro().ModulePlatformID(), imageType.Arch().Distro().Releasever(), imageType.Arch().Name(), cacheDir)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range imgPackageSets {
-		res, err := solver.Depsolve(packages)
+		res, err := solver.Depsolve(context.Background(), packages)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}

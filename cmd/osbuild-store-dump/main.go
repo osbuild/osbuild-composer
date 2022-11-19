@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path"
 	"time"
@@ -24,7 +25,7 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), cacheDir)
 	for name, packages := range packageSets {
-		res, err := solver.Depsolve(packages)
+		res, err := solver.Depsolve(context.Background(), packages)
 		if err != nil {
 			panic(err)
 		}

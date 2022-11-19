@@ -305,7 +305,7 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // PreloadMetadata loads the metadata for all supported distros
 // This starts a background depsolve for all known distros in order to preload the
 // metadata.
-func (api *API) PreloadMetadata() {
+func (api *API) PreloadMetadata(ctx context.Context) {
 	for _, distro := range api.distros {
 		go func(distro string) {
 			d := api.getDistro(distro)
@@ -321,7 +321,7 @@ func (api *API) PreloadMetadata() {
 			}
 
 			solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
-			_, err = solver.Depsolve([]rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}})
+			_, err = solver.Depsolve(ctx, []rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}})
 			if err != nil {
 				log.Printf("Problem preloading distro metadata for %s: %s", distro, err)
 			}
@@ -1067,7 +1067,7 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 
 		names = strings.Split(modulesParam, ",")
 	}
-	packages, err := api.fetchPackageList(distroName, names)
+	packages, err := api.fetchPackageList(request.Context(), distroName, names)
 
 	if err != nil {
 		errors := responseError{
@@ -1140,7 +1140,7 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	availablePackages, err := api.fetchPackageList(distroName, []string{})
+	availablePackages, err := api.fetchPackageList(request.Context(), distroName, []string{})
 
 	if err != nil {
 		errors := responseError{
@@ -1223,7 +1223,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	foundPackages, err := api.fetchPackageList(distroName, names)
+	foundPackages, err := api.fetchPackageList(request.Context(), distroName, names)
 
 	if err != nil {
 		errors := responseError{
@@ -1268,7 +1268,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
 		for i := range packageInfos {
 			pkgName := packageInfos[i].Name
-			solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}})
+			solved, err := solver.Depsolve(request.Context(), []rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}})
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1350,7 +1350,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
-	deps, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names, Repositories: repos}})
+	deps, err := solver.Depsolve(request.Context(), []rpmmd.PackageSet{{Include: names, Repositories: repos}})
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
@@ -1545,7 +1545,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 			continue
 		}
 
-		dependencies, err := api.depsolveBlueprint(*blueprint)
+		dependencies, err := api.depsolveBlueprint(request.Context(), *blueprint)
 
 		if err != nil {
 			blueprintsErrors = append(blueprintsErrors, responseError{
@@ -1634,7 +1634,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 		}
 		// Make a copy of the blueprint since we will be replacing the version globs
 		blueprint := bp.DeepCopy()
-		dependencies, err := api.depsolveBlueprint(blueprint)
+		dependencies, err := api.depsolveBlueprint(request.Context(), blueprint)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -2210,7 +2210,7 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 // depsolveBlueprintForImageType handles depsolving the blueprint package list and
 // the packages required for the image type.
 // NOTE: The imageType *must* be from the same distribution as the blueprint.
-func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, options distro.ImageOptions, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
+func (api *API) depsolveBlueprintForImageType(ctx context.Context, bp blueprint.Blueprint, options distro.ImageOptions, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
 	// Depsolve using the host distro if none has been specified
 	if bp.Distro == "" {
 		bp.Distro = api.hostDistroName
@@ -2232,7 +2232,7 @@ func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, options di
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
 
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve(pkgSet)
+		res, err := solver.Depsolve(ctx, pkgSet)
 		if err != nil {
 			return nil, err
 		}
@@ -2465,7 +2465,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		ApiType: "weldr",
 	}
 
-	packageSets, err := api.depsolveBlueprintForImageType(*bp, options, imageType)
+	packageSets, err := api.depsolveBlueprintForImageType(request.Context(), *bp, options, imageType)
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -3297,7 +3297,7 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 }
 
 // fetchPackageList returns the package list or the selected distribution
-func (api *API) fetchPackageList(distroName string, names []string) (packages rpmmd.PackageList, err error) {
+func (api *API) fetchPackageList(ctx context.Context, distroName string, names []string) (packages rpmmd.PackageList, err error) {
 	d := api.getDistro(distroName)
 	if d == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
@@ -3309,9 +3309,9 @@ func (api *API) fetchPackageList(distroName string, names []string) (packages rp
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
 	if len(names) == 0 {
-		packages, err = solver.FetchMetadata(repos)
+		packages, err = solver.FetchMetadata(ctx, repos)
 	} else {
-		packages, err = solver.SearchMetadata(repos, names)
+		packages, err = solver.SearchMetadata(ctx, repos, names)
 	}
 	if err != nil {
 		return nil, err
@@ -3369,7 +3369,7 @@ func (api *API) allRepositories(distroName string) ([]rpmmd.RepoConfig, error) {
 	return repos, nil
 }
 
-func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
+func (api *API) depsolveBlueprint(ctx context.Context, bp blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
 	// Depsolve using the host distro if none has been specified
 	if bp.Distro == "" {
 		bp.Distro = api.hostDistroName
@@ -3385,7 +3385,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName)
-	solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}})
+	solved, err := solver.Depsolve(ctx, []rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}})
 	if err != nil {
 		return nil, err
 	}

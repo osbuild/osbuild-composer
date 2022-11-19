@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -182,7 +183,7 @@ func main() {
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve(pkgSet)
+		res, err := solver.Depsolve(context.Background(), pkgSet)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
 		}

@@ -8,6 +8,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -103,7 +104,7 @@ func loadFormatRequestMap() formatRequestMap {
 	return frm
 }
 
-type manifestJob func(chan string) error
+type manifestJob func(context.Context, chan string) error
 
 func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, distribution distro.Distro, archName string, seedArg int64, path string, cacheRoot string) manifestJob {
 	distroName := distribution.Name()
@@ -121,7 +122,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			FetchChecksum: cr.OSTree.Parent,
 		}
 	}
-	job := func(msgq chan string) (err error) {
+	job := func(ctx context.Context, msgq chan string) (err error) {
 		defer func() {
 			msg := fmt.Sprintf("Finished job %s", filename)
 			if err != nil {
@@ -146,7 +147,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			options.OSTree.ImageRef = imgType.OSTreeRef()
 		}
 
-		packageSpecs, err := depsolve(cacheDir, imgType, bp, options, repos, distribution, archName)
+		packageSpecs, err := depsolve(ctx, cacheDir, imgType, bp, options, repos, distribution, archName)
 		if err != nil {
 			err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
 			return
@@ -226,13 +227,13 @@ func resolveContainers(containers []blueprint.Container, archName string) ([]con
 	return resolver.Finish()
 }
 
-func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
+func depsolve(ctx context.Context, cacheDir string, imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch, cacheDir)
 	solver.SetDNFJSONPath("./dnf-json")
 	packageSets := imageType.PackageSets(bp, options, repos)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve(pkgSet)
+		res, err := solver.Depsolve(ctx, pkgSet)
 		if err != nil {
 			return nil, err
 		}
@@ -438,7 +439,7 @@ func main() {
 	nJobs := len(jobs)
 	fmt.Printf("Collected %d jobs\n", nJobs)
 	wq := newWorkerQueue(uint32(nWorkers), uint32(nJobs))
-	wq.start()
+	wq.start(context.Background())
 	fmt.Printf("Initialised %d workers\n", nWorkers)
 	fmt.Printf("Submitting %d jobs... ", nJobs)
 	for _, j := range jobs {

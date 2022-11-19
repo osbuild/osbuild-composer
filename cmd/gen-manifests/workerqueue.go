@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -51,11 +52,11 @@ func newWorkerQueue(nworkers uint32, njobs uint32) *workerQueue {
 	return &wq
 }
 
-func (wq *workerQueue) start() {
+func (wq *workerQueue) start(ctx context.Context) {
 	wq.startMessagePrinter()
 	wq.startErrorCollector()
 	for idx := uint32(0); idx < wq.nworkers; idx++ {
-		wq.startWorker(idx)
+		wq.startWorker(ctx, idx)
 	}
 }
 
@@ -72,19 +73,19 @@ func (wq *workerQueue) wait() []error {
 	return wq.errors
 }
 
-func (wq *workerQueue) startWorker(idx uint32) {
+func (wq *workerQueue) startWorker(ctx context.Context, idx uint32) {
 	wq.workerWG.Add(1)
-	go func() {
+	go func(ctx context.Context) {
 		atomic.AddInt32(&(wq.activeWorkers), 1)
 		defer atomic.AddInt32(&(wq.activeWorkers), -1)
 		defer wq.workerWG.Done()
 		for job := range wq.jobQueue {
-			err := job(wq.msgQueue)
+			err := job(ctx, wq.msgQueue)
 			if err != nil {
 				wq.errQueue <- err
 			}
 		}
-	}()
+	}(ctx)
 }
 
 func (wq *workerQueue) startMessagePrinter() {

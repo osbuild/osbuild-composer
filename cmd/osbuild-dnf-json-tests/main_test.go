@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -61,7 +62,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 								repos[archStr])
 
 							for _, set := range packages {
-								_, err = solver.Depsolve(set)
+								_, err = solver.Depsolve(context.Background(), set)
 								assert.NoError(t, err)
 							}
 						})
@@ -126,7 +127,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 			gotPackageSpecsSets := make(map[string][]rpmmd.PackageSpec, len(imagePkgSets))
 
 			for name, pkgSet := range imagePkgSets {
-				res, err := solver.Depsolve(pkgSet)
+				res, err := solver.Depsolve(context.Background(), pkgSet)
 				if err != nil {
 					require.Nil(t, err)
 				}

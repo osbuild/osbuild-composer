@@ -15,6 +15,7 @@ package dnfjson
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -115,7 +116,7 @@ func NewSolver(modulePlatformID string, releaseVer string, arch string, cacheDir
 // their associated repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
-func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, error) {
+func (s *Solver) Depsolve(ctx context.Context, pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, error) {
 	req, repoMap, err := s.makeDepsolveRequest(pkgSets)
 	if err != nil {
 		return nil, err
@@ -125,7 +126,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, erro
 	s.cache.locker.RLock()
 	defer s.cache.locker.RUnlock()
 
-	output, err := run(s.dnfJsonCmd, req)
+	output, err := run(ctx, s.dnfJsonCmd, req)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +148,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, erro
 
 // FetchMetadata returns the list of all the available packages in repos and
 // their info.
-func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
+func (s *Solver) FetchMetadata(ctx context.Context, repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
 	req, err := s.makeDumpRequest(repos)
 	if err != nil {
 		return nil, err
@@ -162,7 +163,7 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 		return pkgs, nil
 	}
 
-	result, err := run(s.dnfJsonCmd, req)
+	result, err := run(ctx, s.dnfJsonCmd, req)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +194,7 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 }
 
 // SearchMetadata searches for packages and returns a list of the info for matches.
-func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rpmmd.PackageList, error) {
+func (s *Solver) SearchMetadata(ctx context.Context, repos []rpmmd.RepoConfig, packages []string) (rpmmd.PackageList, error) {
 	req, err := s.makeSearchRequest(repos, packages)
 	if err != nil {
 		return nil, err
@@ -208,7 +209,7 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 		return pkgs, nil
 	}
 
-	result, err := run(s.dnfJsonCmd, req)
+	result, err := run(ctx, s.dnfJsonCmd, req)
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +576,7 @@ func ParseError(data []byte) Error {
 	return e
 }
 
-func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
+func run(ctx context.Context, dnfJsonCmd []string, req *Request) ([]byte, error) {
 	if len(dnfJsonCmd) == 0 {
 		return nil, fmt.Errorf("dnf-json command undefined")
 	}
@@ -584,7 +585,7 @@ func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
 	if len(dnfJsonCmd) > 1 {
 		args = dnfJsonCmd[1:]
 	}
-	cmd := exec.Command(ex, args...)
+	cmd := exec.CommandContext(ctx, ex, args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err

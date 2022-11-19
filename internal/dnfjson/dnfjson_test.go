@@ -1,6 +1,7 @@
 package dnfjson
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -44,7 +45,7 @@ func TestDepsolver(t *testing.T) {
 	{ // single depsolve
 		pkgsets := []rpmmd.PackageSet{{Include: []string{"kernel", "vim-minimal", "tmux", "zsh"}, Repositories: []rpmmd.RepoConfig{s.RepoConfig}}} // everything you'll ever need
 
-		deps, err := solver.Depsolve(pkgsets)
+		deps, err := solver.Depsolve(context.Background(), pkgsets)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -57,7 +58,7 @@ func TestDepsolver(t *testing.T) {
 			{Include: []string{"kernel"}, Repositories: []rpmmd.RepoConfig{s.RepoConfig}},
 			{Include: []string{"vim-minimal", "tmux", "zsh"}, Repositories: []rpmmd.RepoConfig{s.RepoConfig}},
 		}
-		deps, err := solver.Depsolve(pkgsets)
+		deps, err := solver.Depsolve(context.Background(), pkgsets)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -536,13 +537,14 @@ func TestErrorRepoInfo(t *testing.T) {
 	solver.SetDNFJSONPath("../../dnf-json")
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
-			_, err := solver.Depsolve([]rpmmd.PackageSet{
-				{
-					Include:      []string{"osbuild"},
-					Exclude:      nil,
-					Repositories: []rpmmd.RepoConfig{tc.repo},
-				},
-			})
+			_, err := solver.Depsolve(context.Background(),
+				[]rpmmd.PackageSet{
+					{
+						Include:      []string{"osbuild"},
+						Exclude:      nil,
+						Repositories: []rpmmd.RepoConfig{tc.repo},
+					},
+				})
 			assert.Error(err)
 			assert.Contains(err.Error(), tc.expMsg)
 		})

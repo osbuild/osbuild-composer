@@ -115,7 +115,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	return &c, nil
 }
 
-func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
+func (c *Composer) InitWeldr(ctx context.Context, repoPaths []string, weldrListener net.Listener,
 	distrosImageTypeDenylist map[string][]string) (err error) {
 	c.weldr, err = weldr.New(repoPaths, c.stateDir, c.solver, c.distros, c.logger, c.workers, distrosImageTypeDenylist)
 	if err != nil {
@@ -124,7 +124,7 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 	c.weldrListener = weldrListener
 
 	// Preload the Metadata for all the supported distros
-	c.weldr.PreloadMetadata()
+	c.weldr.PreloadMetadata(ctx)
 	return nil
 }
 
