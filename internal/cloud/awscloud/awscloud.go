@@ -9,9 +9,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -597,4 +600,90 @@ func (a *AWS) MarkS3ObjectAsPublic(bucket, objectKey string) error {
 	logrus.Info("[AWS] ✔️ Making S3 object public successful")
 
 	return nil
+}
+
+type AWSInstanceProtector struct {
+	protected            bool
+	autoScalingGroupName *string
+	instanceId           *string
+	svc                  *autoscaling.AutoScaling
+}
+
+func NewAWSInstanceProtector() *AWSInstanceProtector {
+	p := AWSInstanceProtector{}
+
+	// create a new session
+	awsSession, err := session.NewSession()
+	if err != nil {
+		logrus.Debugf("Error getting an AWS session, %s", err)
+		return nil
+	}
+
+	// get the identity for the instanceID
+	identity, err := ec2metadata.New(awsSession).GetInstanceIdentityDocument()
+	if err != nil {
+		logrus.Debugf("Error getting the identity document, %s", err)
+		return nil
+	}
+
+	svc := autoscaling.New(awsSession, aws.NewConfig().WithRegion(identity.Region))
+
+	// get the autoscaling group info for the auto scaling group name
+	asInstanceInput := &autoscaling.DescribeAutoScalingInstancesInput{
+		InstanceIds: []*string{
+			aws.String(identity.InstanceID),
+		},
+	}
+	asInstanceOutput, err := svc.DescribeAutoScalingInstances(asInstanceInput)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			logrus.Warningf("Error getting the Autoscaling instances: %s %s", aerr.Code(), aerr.Error())
+		} else {
+			logrus.Errorf("Error getting the Autoscaling instances: unknown, %s", err)
+		}
+		return nil
+	}
+	if len(asInstanceOutput.AutoScalingInstances) == 0 {
+		logrus.Info("No Autoscaling instace is defined")
+		return nil
+	}
+	p.autoScalingGroupName = asInstanceOutput.AutoScalingInstances[0].AutoScalingGroupName
+	p.instanceId = aws.String(identity.InstanceID)
+
+	return &p
+}
+
+// protect an AWS instance from scaling and/or terminating.
+func (p *AWSInstanceProtector) SetProtection(protected bool) {
+	if p.autoScalingGroupName == nil {
+		return
+	}
+
+	if p.protected == protected {
+		panic("(un)protecting an (un)protected instance")
+	} else {
+		p.protected = protected
+	}
+
+	input := &autoscaling.SetInstanceProtectionInput{
+		AutoScalingGroupName: p.autoScalingGroupName,
+		InstanceIds: []*string{
+			p.instanceId,
+		},
+		ProtectedFromScaleIn: aws.Bool(protected),
+	}
+	_, err := p.svc.SetInstanceProtection(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			logrus.Warningf("Error protecting instance: %s %s", aerr.Code(), aerr.Error())
+		} else {
+			logrus.Errorf("Error protecting instance: unknown, %s", err)
+		}
+		return
+	}
+	if protected {
+		logrus.Info("Instance protected")
+	} else {
+		logrus.Info("Instance protection removed")
+	}
 }
