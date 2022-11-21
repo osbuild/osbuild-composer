@@ -12,7 +12,7 @@ import (
 )
 
 func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
+	ps := rpmmd.PackageSet{
 		Include: []string{
 			"@base",
 			"@core",
@@ -53,6 +53,16 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"postfix",
 		},
 	}.Append(bootPackageSet(t))
+
+	if t.arch.distro.isRHEL() {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"insights-client",
+			},
+		})
+	}
+
+	return ps
 }
 
 var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
