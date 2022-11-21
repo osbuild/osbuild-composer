@@ -3,16 +3,11 @@ package rhel9
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
-)
-
-const (
-	kspath = "/osbuild.ks"
 )
 
 // selinuxStageOptions returns the options for the org.osbuild.selinux stage.
@@ -31,66 +26,6 @@ func selinuxStageOptions(labelcp bool) *osbuild.SELinuxStageOptions {
 	return options
 }
 
-func usersFirstBootOptions(usersStageOptions *osbuild.UsersStageOptions) *osbuild.FirstBootStageOptions {
-	cmds := make([]string, 0, 3*len(usersStageOptions.Users)+2)
-	// workaround for creating authorized_keys file for user
-	// need to special case the root user, which has its home in a different place
-	varhome := filepath.Join("/var", "home")
-	roothome := filepath.Join("/var", "roothome")
-
-	for name, user := range usersStageOptions.Users {
-		if user.Key != nil {
-			var home string
-
-			if name == "root" {
-				home = roothome
-			} else {
-				home = filepath.Join(varhome, name)
-			}
-
-			sshdir := filepath.Join(home, ".ssh")
-
-			cmds = append(cmds, fmt.Sprintf("mkdir -p %s", sshdir))
-			cmds = append(cmds, fmt.Sprintf("sh -c 'echo %q >> %q'", *user.Key, filepath.Join(sshdir, "authorized_keys")))
-			cmds = append(cmds, fmt.Sprintf("chown %s:%s -Rc %s", name, name, sshdir))
-		}
-	}
-	cmds = append(cmds, fmt.Sprintf("restorecon -rvF %s", varhome))
-	cmds = append(cmds, fmt.Sprintf("restorecon -rvF %s", roothome))
-
-	options := &osbuild.FirstBootStageOptions{
-		Commands:       cmds,
-		WaitForNetwork: false,
-	}
-
-	return options
-}
-
-func firewallStageOptions(firewall *blueprint.FirewallCustomization) *osbuild.FirewallStageOptions {
-	options := osbuild.FirewallStageOptions{
-		Ports: firewall.Ports,
-	}
-
-	if firewall.Services != nil {
-		options.EnabledServices = firewall.Services.Enabled
-		options.DisabledServices = firewall.Services.Disabled
-	}
-
-	return &options
-}
-
-func systemdStageOptions(enabledServices, disabledServices []string, s *blueprint.ServicesCustomization, target string) *osbuild.SystemdStageOptions {
-	if s != nil {
-		enabledServices = append(enabledServices, s.Enabled...)
-		disabledServices = append(disabledServices, s.Disabled...)
-	}
-	return &osbuild.SystemdStageOptions{
-		EnabledServices:  enabledServices,
-		DisabledServices: disabledServices,
-		DefaultTarget:    target,
-	}
-}
-
 func buildStampStageOptions(arch, product, osVersion, variant string) *osbuild.BuildstampStageOptions {
 	return &osbuild.BuildstampStageOptions{
 		Arch:    arch,
@@ -98,13 +33,6 @@ func buildStampStageOptions(arch, product, osVersion, variant string) *osbuild.B
 		Version: osVersion,
 		Variant: variant,
 		Final:   true,
-	}
-}
-
-func loraxScriptStageOptions(arch string) *osbuild.LoraxScriptStageOptions {
-	return &osbuild.LoraxScriptStageOptions{
-		Path:     "99-generic/runtime-postinstall.tmpl",
-		BaseArch: arch,
 	}
 }
 
@@ -164,48 +92,6 @@ func dracutStageOptions(kernelVer, arch string, additionalModules []string) *osb
 	}
 }
 
-func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel string) *osbuild.BootISOMonoStageOptions {
-	comprOptions := new(osbuild.FSCompressionOptions)
-	if bcj := osbuild.BCJOption(arch); bcj != "" {
-		comprOptions.BCJ = bcj
-	}
-	var architectures []string
-
-	if arch == distro.X86_64ArchName {
-		architectures = []string{"X64"}
-	} else if arch == distro.Aarch64ArchName {
-		architectures = []string{"AA64"}
-	} else {
-		panic("unsupported architecture")
-	}
-
-	return &osbuild.BootISOMonoStageOptions{
-		Product: osbuild.Product{
-			Name:    product,
-			Version: osVersion,
-		},
-		ISOLabel:   isolabel,
-		Kernel:     kernelVer,
-		KernelOpts: fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isolabel, kspath),
-		EFI: osbuild.EFI{
-			Architectures: architectures,
-			Vendor:        vendor,
-		},
-		ISOLinux: osbuild.ISOLinux{
-			Enabled: arch == distro.X86_64ArchName,
-			Debug:   false,
-		},
-		Templates: "80-rhel",
-		RootFS: osbuild.RootFS{
-			Size: 9216,
-			Compression: osbuild.FSCompression{
-				Method:  "xz",
-				Options: comprOptions,
-			},
-		},
-	}
-}
-
 func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
 	var architectures []string
 
@@ -249,13 +135,6 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 	}
 
 	return grubISOStageOptions
-}
-
-func discinfoStageOptions(arch string) *osbuild.DiscinfoStageOptions {
-	return &osbuild.DiscinfoStageOptions{
-		BaseArch: arch,
-		Release:  "202010217.n.0",
-	}
 }
 
 func xorrisofsStageOptions(filename, isolabel, arch string, isolinux bool) *osbuild.XorrisofsStageOptions {
