@@ -69,7 +69,8 @@ func TestErrors(t *testing.T) {
 		// Create job with invalid body
 		{"POST", "/api/worker/v1/jobs", ``, http.StatusBadRequest},
 		// Wrong method
-		{"GET", "/api/worker/v1/jobs", ``, http.StatusMethodNotAllowed},
+		// Returns 404, but should be 405; see https://github.com/labstack/echo/issues/1981
+		{"GET", "/api/worker/v1/jobs", ``, http.StatusNotFound},
 		// Update job with invalid ID
 		{"PATCH", "/api/worker/v1/jobs/foo", `{"status":"FINISHED"}`, http.StatusBadRequest},
 		// Update job that does not exist, with invalid body
@@ -99,7 +100,8 @@ func TestErrorsAlteredBasePath(t *testing.T) {
 		// Create job with invalid body
 		{"POST", "/api/image-builder-worker/v1/jobs", ``, http.StatusBadRequest},
 		// Wrong method
-		{"GET", "/api/image-builder-worker/v1/jobs", ``, http.StatusMethodNotAllowed},
+		// Returns 404, but should be 405; see https://github.com/labstack/echo/issues/1981
+		{"GET", "/api/image-builder-worker/v1/jobs", ``, http.StatusNotFound},
 		// Update job with invalid ID
 		{"PATCH", "/api/image-builder-worker/v1/jobs/foo", `{"status":"FINISHED"}`, http.StatusBadRequest},
 		// Update job that does not exist, with invalid body
