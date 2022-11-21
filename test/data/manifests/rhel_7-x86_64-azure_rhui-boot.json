@@ -22,7 +22,10 @@
       },
       {
         "name": "rhel-eng",
-        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530"
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530",
+        "package-sets": [
+          "build"
+        ]
       },
       {
         "name": "azure-rhui-7",
@@ -1057,6 +1060,9 @@
                   },
                   {
                     "id": "sha256:74f3d93caa5b80e431181ee02b0727db0240b35032b5cbadec3d3b01551f7c21"
+                  },
+                  {
+                    "id": "sha256:0d2a47225e982af09c27b97e8ce24dce5cd3e45b3ce2550e47982ef94d19eb7d"
                   },
                   {
                     "id": "sha256:a9a0f1078682a2e7b85967c4402672648e05802d2eccdae48dab33b47521adbc"
@@ -3199,6 +3205,9 @@
           },
           "sha256:0c75f4193a32541ca250fc4dc41754350bbea7ac64e3cb50bfde9aa2bc0d9473": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/krb5-libs-1.15.1-50.el7.x86_64.rpm"
+          },
+          "sha256:0d2a47225e982af09c27b97e8ce24dce5cd3e45b3ce2550e47982ef94d19eb7d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/insights-client-3.0.13-1.el7.noarch.rpm"
           },
           "sha256:0d3b093a48d64797df3a93d7dec2d26554efbece0ede5c6d4b90347ae4a9e1c4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/bind-utils-9.11.4-26.P2.el7.x86_64.rpm"
@@ -7796,6 +7805,15 @@
         "checksum": "sha256:74f3d93caa5b80e431181ee02b0727db0240b35032b5cbadec3d3b01551f7c21"
       },
       {
+        "name": "insights-client",
+        "epoch": 0,
+        "version": "3.0.13",
+        "release": "1.el7",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/insights-client-3.0.13-1.el7.noarch.rpm",
+        "checksum": "sha256:0d2a47225e982af09c27b97e8ce24dce5cd3e45b3ce2550e47982ef94d19eb7d"
+      },
+      {
         "name": "iproute",
         "epoch": 0,
         "version": "4.11.0",
@@ -11423,6 +11441,5 @@
         "checksum": "sha256:000bd49aea30ee3534e6cde11188afa4b567711b13acbcf531e5542fc7b2aefe"
       }
     ]
-  },
-  "no-image-info": true
+  }
 }
