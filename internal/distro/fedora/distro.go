@@ -740,6 +740,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 	}
 
 	// BootISO's have limited support for customizations.
+	// TODO: Support kernel name selection for image-installer
 	if t.bootISO {
 		if t.name == "iot-installer" || t.name == "image-installer" {
 			allowed := []string{"User", "Group"}
