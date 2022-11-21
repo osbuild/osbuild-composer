@@ -87,7 +87,9 @@ func (s *Server) Handler(path string) http.Handler {
 	handler := apiHandlers{
 		server: s,
 	}
-	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware, s.ValidateRequest), &handler)
+
+	statusMW := prometheus.StatusMiddleware(prometheus.ComposerSubsystem)
+	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware, s.ValidateRequest, statusMW), &handler)
 
 	return e
 }
