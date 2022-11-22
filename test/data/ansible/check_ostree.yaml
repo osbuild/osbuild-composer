@@ -8,6 +8,7 @@
     embeded_container: "false"
     total_counter: "0"
     failed_counter: "0"
+    firewall_feature: "false"
 
   tasks:
     # current target host's IP address
