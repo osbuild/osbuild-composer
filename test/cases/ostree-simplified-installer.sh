@@ -99,6 +99,7 @@ CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-simplified-installer
 INSTALLER_FILENAME=simplified-installer.iso
+BOOT_ARGS="uefi"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -128,6 +129,7 @@ case "${ID}-${VERSION_ID}" in
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -473,7 +475,8 @@ sudo virt-install --name="${IMAGE_KEY}-http"\
                   --os-type linux \
                   --os-variant "${OS_VARIANT}" \
                   --pxe \
-                  --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                  --boot "$BOOT_ARGS" \
+                  --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                   --nographics \
                   --noautoconsole \
                   --wait=15 \
@@ -593,7 +596,8 @@ sudo virt-install  --name="${IMAGE_KEY}-fdosshkey"\
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot "$BOOT_ARGS" \
+                   --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                    --nographics \
                    --noautoconsole \
                    --wait=15 \
@@ -714,7 +718,8 @@ sudo virt-install  --name="${IMAGE_KEY}-fdorootcert"\
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot "$BOOT_ARGS" \
+                   --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                    --nographics \
                    --noautoconsole \
                    --wait=15 \

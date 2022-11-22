@@ -82,6 +82,7 @@ CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-raw-image
 INSTALLER_FILENAME=image.raw.xz
 OSTREE_OSNAME=redhat
+BOOT_ARGS="uefi"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -111,6 +112,7 @@ case "${ID}-${VERSION_ID}" in
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -481,18 +483,19 @@ greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
 greenprint "💿 Installing raw image on UEFI VM"
-sudo virt-install  --name="${IMAGE_KEY}-uefi"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:31 \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --noreboot
+sudo virt-install --name="${IMAGE_KEY}-uefi"\
+               --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+               --ram 3072 \
+               --vcpus 2 \
+               --network network=integration,mac=34:49:22:B0:83:31 \
+               --os-type linux \
+               --import \
+               --os-variant ${OS_VARIANT} \
+               --boot "$BOOT_ARGS" \
+               --nographics \
+               --noautoconsole \
+               --wait=-1 \
+               --noreboot
 
 # Start VM.
 greenprint "💻 Start UEFI VM"

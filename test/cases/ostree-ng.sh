@@ -91,6 +91,7 @@ INSTALLER_TYPE=edge-installer
 INSTALLER_FILENAME=installer.iso
 ANSIBLE_USER_FOR_BIOS="installeruser"
 OSTREE_OSNAME=rhel
+BOOT_ARGS="uefi"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -141,6 +142,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="test/centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
         EMBEDED_CONTAINER="true"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -582,14 +584,6 @@ sudo rm -f "$LIBVIRT_BIOS_IMAGE_PATH"
 ##
 ##################################################
 
-# Since virt-install 4.0.0, loader attribute can't be configured here,
-# otherwise it'll report "loader attribute 'readonly' cannot be specified
-# when firmware autoselection is enabled"
-if nvrGreaterOrEqual "virt-install" "4.0.0"; then
-    BOOT_UEFI_ARGS="uefi"
-else
-    BOOT_UEFI_ARGS="uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no"
-fi
 # Install ostree image via anaconda.
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
 sudo virt-install  --name="${IMAGE_KEY}-uefi"\
@@ -600,7 +594,7 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot "$BOOT_UEFI_ARGS" \
+                   --boot "$BOOT_ARGS" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \

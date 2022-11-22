@@ -79,6 +79,7 @@ PROD_REPO_URL="http://${PROD_REPO_ADDRESS}:8080/repo/"
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
+BOOT_ARGS="uefi"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -125,6 +126,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         BOOT_LOCATION="https://odcs.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/os/"
         PARENT_REF="centos/9/${ARCH}/edge"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -376,7 +378,7 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --location "${BOOT_LOCATION}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot "$BOOT_ARGS"\
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
