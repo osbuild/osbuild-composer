@@ -27,6 +27,8 @@ type ImageInstaller struct {
 	Users             []users.User
 	Groups            []users.Group
 
+	SquashfsCompression string
+
 	ISOLabelTempl string
 	Product       string
 	Variant       string
@@ -119,6 +121,8 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.OSName = img.OSName
 	isoTreePipeline.Users = img.Users
 	isoTreePipeline.Groups = img.Groups
+
+	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
 
 	isoTreePipeline.OSPipeline = osPipeline
 	isoTreePipeline.KernelOpts = img.AdditionalKernelOpts
