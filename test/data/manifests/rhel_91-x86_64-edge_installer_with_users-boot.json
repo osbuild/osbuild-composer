@@ -9795,7 +9795,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.ks=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64:/ostree.ks"
+                  "inst.ks=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               },
               "isolabel": "RHEL-9-1-0-BaseOS-x86_64",
@@ -9888,7 +9888,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.ks=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64:/ostree.ks"
+                  "inst.ks=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               }
             }
@@ -9999,7 +9999,7 @@
           {
             "type": "org.osbuild.kickstart",
             "options": {
-              "path": "/ostree.ks",
+              "path": "/osbuild.ks",
               "ostree": {
                 "osname": "rhel",
                 "url": "file:///run/install/repo/ostree/repo",

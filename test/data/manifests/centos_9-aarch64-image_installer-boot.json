@@ -8989,15 +8989,6 @@
             "options": {
               "state": "permissive"
             }
-          },
-          {
-            "type": "org.osbuild.kickstart",
-            "options": {
-              "path": "/usr/share/anaconda/interactive-defaults.ks",
-              "liveimg": {
-                "url": "file:///run/install/repo/liveimg.tar.gz"
-              }
-            }
           }
         ]
       },
@@ -9089,7 +9080,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.stage2=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64"
+                  "inst.ks=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64:/osbuild.ks"
                 ]
               },
               "isolabel": "CentOS-Stream-9-BaseOS-aarch64",
@@ -12928,7 +12919,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.stage2=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64"
+                  "inst.ks=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64:/osbuild.ks"
                 ]
               }
             }
@@ -13026,6 +13017,15 @@
             },
             "options": {
               "filename": "/liveimg.tar.gz"
+            }
+          },
+          {
+            "type": "org.osbuild.kickstart",
+            "options": {
+              "path": "/osbuild.ks",
+              "liveimg": {
+                "url": "file:///run/install/repo/liveimg.tar.gz"
+              }
             }
           },
           {
