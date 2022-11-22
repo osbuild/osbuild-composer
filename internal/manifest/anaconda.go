@@ -6,27 +6,30 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
 // An Anaconda represents the installer tree as found on an ISO.
 type Anaconda struct {
 	Base
+
 	// Packages to install in addition to the ones required by the
 	// pipeline.
 	ExtraPackages []string
+
 	// Extra repositories to install packages from
 	ExtraRepos []rpmmd.RepoConfig
-	// Users indicate whether or not the user spoke should be enabled in
-	// anaconda. If it is, users specified in a kickstart will be configured,
-	// and in case no users are provided in a kickstart the user will be
-	// prompted to configure them at install time. If this is set to false
-	// any kickstart provided users are ignored and the user is never
-	// prompted to configure users during installation.
-	Users bool
+
+	// Users and Groups to create during installation.
+	// If empty, then the user can interactively create users at install time.
+	Users  []users.User
+	Groups []users.Group
+
 	// Biosdevname indicates whether or not biosdevname should be used to
 	// name network devices when booting the installer. This may affect
 	// the naming of network devices on the target system.
 	Biosdevname bool
+
 	// Variant is the variant of the product being installed, if applicable.
 	Variant string
 
@@ -191,7 +194,8 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 	}
 
 	pipeline.AddStage(osbuild.NewUsersStage(usersStageOptions))
-	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.Users, p.AdditionalModules)))
+	// always enable users module in anaconda
+	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(true, p.AdditionalModules)))
 	pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
 		BaseArch: p.platform.GetArch().String(),
@@ -213,8 +217,8 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 		kickstartOptions, err := osbuild.NewKickstartStageOptions(
 			"/usr/share/anaconda/interactive-defaults.ks",
 			p.InteractiveDefaults.TarPath,
-			nil,
-			nil,
+			p.Users,
+			p.Groups,
 			"",
 			"",
 			"",
