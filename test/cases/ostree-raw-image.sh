@@ -71,6 +71,7 @@ CONTAINER_FILENAME=container.tar
 RAW_IMAGE_TYPE=edge-raw-image
 RAW_IMAGE_FILENAME=image.raw.xz
 OSTREE_OSNAME=redhat
+BOOT_ARGS="uefi"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -100,6 +101,7 @@ case "${ID}-${VERSION_ID}" in
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     "fedora-"*)
         CONTAINER_TYPE=iot-container
@@ -514,13 +516,6 @@ sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
-greenprint "💿 Installing raw image on UEFI VM"
-if nvrGreaterOrEqual "virt-install" "4"; then
-    BOOT_UEFI_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
-else
-    BOOT_UEFI_ARGS="uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no"
-fi
-
 sudo virt-install --name="${IMAGE_KEY}-uefi"\
                --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                --ram 3072 \
@@ -529,7 +524,7 @@ sudo virt-install --name="${IMAGE_KEY}-uefi"\
                --os-type linux \
                --import \
                --os-variant ${OS_VARIANT} \
-               --boot "${BOOT_UEFI_ARGS}" \
+               --boot "$BOOT_ARGS" \
                --nographics \
                --noautoconsole \
                --wait=-1 \
