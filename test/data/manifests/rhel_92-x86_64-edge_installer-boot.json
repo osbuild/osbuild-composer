@@ -9610,7 +9610,8 @@
               "kickstart-modules": [
                 "org.fedoraproject.Anaconda.Modules.Network",
                 "org.fedoraproject.Anaconda.Modules.Payloads",
-                "org.fedoraproject.Anaconda.Modules.Storage"
+                "org.fedoraproject.Anaconda.Modules.Storage",
+                "org.fedoraproject.Anaconda.Modules.Users"
               ]
             }
           },
@@ -9848,7 +9849,10 @@
             "options": {
               "filename": "images/install.img",
               "compression": {
-                "method": "lz4"
+                "method": "xz",
+                "options": {
+                  "bcj": "x86"
+                }
               }
             }
           },
