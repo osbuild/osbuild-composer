@@ -224,6 +224,8 @@ func imageInstallerImage(workload workload.Workload,
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
+	img.SquashfsCompression = "lz4"
+
 	d := t.arch.distro
 
 	img.ISOLabelTempl = d.isolabelTmpl
@@ -322,6 +324,8 @@ func iotInstallerImage(workload workload.Workload,
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.SquashfsCompression = "lz4"
 
 	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product

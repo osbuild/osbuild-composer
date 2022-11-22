@@ -270,6 +270,8 @@ func edgeInstallerImage(workload workload.Workload,
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
+	img.SquashfsCompression = "xz"
+
 	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
 	img.Variant = "edge"
@@ -341,6 +343,8 @@ func imageInstallerImage(workload workload.Workload,
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.SquashfsCompression = "xz"
 
 	d := t.arch.distro
 

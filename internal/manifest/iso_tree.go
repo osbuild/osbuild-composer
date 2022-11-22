@@ -32,6 +32,8 @@ type ISOTree struct {
 	KSPath   string
 	isoLabel string
 
+	SquashfsCompression string
+
 	OSPipeline *OS
 	OSTree     *ostree.CommitSpec
 
@@ -143,10 +145,21 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 
 	squashfsOptions := osbuild.SquashfsStageOptions{
 		Filename: "images/install.img",
-		Compression: osbuild.FSCompression{
-			Method: "lz4",
-		},
 	}
+
+	if p.SquashfsCompression != "" {
+		squashfsOptions.Compression.Method = p.SquashfsCompression
+	} else {
+		// default to xz if not specified
+		squashfsOptions.Compression.Method = "xz"
+	}
+
+	if squashfsOptions.Compression.Method == "xz" {
+		squashfsOptions.Compression.Options = &osbuild.FSCompressionOptions{
+			BCJ: osbuild.BCJOption(p.anacondaPipeline.platform.GetArch().String()),
+		}
+	}
+
 	squashfsStage := osbuild.NewSquashfsStage(&squashfsOptions, p.rootfsPipeline.Name())
 	pipeline.AddStage(squashfsStage)
 
