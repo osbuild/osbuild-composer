@@ -83,7 +83,7 @@ EOF
 
 # push and depsolve the blueprint
 composer-cli blueprints push blueprint.toml
-composer-cli blueprints despsolve bash
+composer-cli blueprints depsolve bash
 
 # build a qcow image to verify functionality
 composer-cli --json compose start bash qcow2 | tee "$COMPOSE_START"
