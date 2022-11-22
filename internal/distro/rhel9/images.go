@@ -346,6 +346,9 @@ func imageInstallerImage(workload workload.Workload,
 
 	img.SquashfsCompression = "xz"
 
+	// put the kickstart file in the root of the iso
+	img.ISORootKickstart = true
+
 	d := t.arch.distro
 
 	img.ISOLabelTempl = d.isolabelTmpl

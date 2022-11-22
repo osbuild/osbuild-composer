@@ -89,7 +89,7 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline := manifest.NewEFIBootTree(m, buildPipeline, anacondaPipeline)
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
-	bootTreePipeline.KSPath = "/ostree.ks"
+	bootTreePipeline.KSPath = kspath
 	bootTreePipeline.ISOLabel = isoLabel
 
 	isoTreePipeline := manifest.NewISOTree(m,
@@ -106,7 +106,9 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
 
-	isoTreePipeline.KSPath = "/ostree.ks"
+	// For ostree installers, always put the kickstart file in the root of the ISO
+	isoTreePipeline.KSPath = kspath
+	isoTreePipeline.PayloadPath = "/ostree/repo"
 
 	isoTreePipeline.OSTree = &img.Commit
 

@@ -3,6 +3,7 @@ package image
 import (
 	"fmt"
 	"math/rand"
+	"path/filepath"
 
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -16,6 +17,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
+const kspath = "/osbuild.ks"
+
 type ImageInstaller struct {
 	Base
 	Platform         platform.Platform
@@ -26,6 +29,11 @@ type ImageInstaller struct {
 	ExtraBasePackages rpmmd.PackageSet
 	Users             []users.User
 	Groups            []users.Group
+
+	// If set, the kickstart file will be added to the bootiso-tree as
+	// /osbuild.ks, otherwise any kickstart options will be configured in the
+	// default /usr/share/anaconda/interactive-defaults.ks in the rootfs.
+	ISORootKickstart bool
 
 	SquashfsCompression string
 
@@ -63,18 +71,20 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.Product,
 		img.OSVersion)
 
-	interactiveDefaults := manifest.NewAnacondaInteractiveDefaults(
-		"file:///run/install/repo/liveimg.tar.gz",
-	)
-
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	anacondaPipeline.Users = img.Users
 	anacondaPipeline.Groups = img.Groups
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
-	anacondaPipeline.InteractiveDefaults = interactiveDefaults
 	anacondaPipeline.AdditionalModules = img.AdditionalAnacondaModules
+
+	tarPath := "/liveimg.tar.gz"
+
+	if !img.ISORootKickstart {
+		payloadPath := filepath.Join("/run/install/repo/", tarPath)
+		anacondaPipeline.InteractiveDefaults = manifest.NewAnacondaInteractiveDefaults(fmt.Sprintf("file://%s", payloadPath))
+	}
 
 	anacondaPipeline.Checkpoint()
 
@@ -104,6 +114,9 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
 	bootTreePipeline.KernelOpts = img.AdditionalKernelOpts
+	if img.ISORootKickstart {
+		bootTreePipeline.KSPath = kspath
+	}
 
 	osPipeline := manifest.NewOS(m, buildPipeline, img.Platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
@@ -121,6 +134,10 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.OSName = img.OSName
 	isoTreePipeline.Users = img.Users
 	isoTreePipeline.Groups = img.Groups
+	isoTreePipeline.PayloadPath = tarPath
+	if img.ISORootKickstart {
+		isoTreePipeline.KSPath = kspath
+	}
 
 	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
 

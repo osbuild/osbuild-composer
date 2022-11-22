@@ -29,7 +29,15 @@ type ISOTree struct {
 	rootfsPipeline   *ISORootfsImg
 	bootTreePipeline *EFIBootTree
 
-	KSPath   string
+	// The location of the kickstart file, if it will be added to the
+	// bootiso-tree.
+	// Otherwise, it should be defined in the interactive defaults of the
+	// Anaconda pipeline.
+	KSPath string
+
+	// The path where the payload (tarball or ostree repo) will be stored.
+	PayloadPath string
+
 	isoLabel string
 
 	SquashfsCompression string
@@ -102,7 +110,6 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 
 	pipeline := p.Base.serialize()
 
-	ostreeRepoPath := "/ostree/repo"
 	kernelOpts := []string{}
 
 	if p.KSPath != "" {
@@ -206,13 +213,15 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	))
 
 	if p.OSTree != nil {
-		pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
+		// Set up the payload ostree repo
+		pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: p.PayloadPath}))
 		pipeline.AddStage(osbuild.NewOSTreePullStage(
-			&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
+			&osbuild.OSTreePullStageOptions{Repo: p.PayloadPath},
 			osbuild.NewOstreePullStageInputs("org.osbuild.source", p.OSTree.Checksum, p.OSTree.Ref),
 		))
 
-		kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(ostreeRepoPath), p.OSTree.Ref, p.OSName)
+		// Configure the kickstart file with the payload and any user options
+		kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(p.PayloadPath), p.OSTree.Ref, p.OSName)
 
 		if err != nil {
 			panic("failed to create kickstartstage options")
@@ -222,11 +231,19 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	}
 
 	if p.OSPipeline != nil {
-		// The TarStage has --autocompress
-		pipeline.AddStage(osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: "/liveimg.tar.gz"}, p.OSPipeline.name))
+		// Create the payload tarball
+		pipeline.AddStage(osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: p.PayloadPath}, p.OSPipeline.name))
 
-		// In the case of OSPipeline then the ImageInstaller has already set InteractiveDefaults on the anaconda-tree,
-		// eliminating the need to set a separate kickstart here.
+		// If the KSPath is set, we need to add the kickstart stage to this (bootiso-tree) pipeline.
+		// If it's not specified here, it should have been added to the InteractiveDefaults in the anaconda-tree.
+		if p.KSPath != "" {
+			kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, makeISORootPath(p.PayloadPath), p.Users, p.Groups, "", "", p.OSName)
+			if err != nil {
+				panic("failed to create kickstartstage options")
+			}
+
+			pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
+		}
 	}
 
 	pipeline.AddStage(osbuild.NewDiscinfoStage(&osbuild.DiscinfoStageOptions{
