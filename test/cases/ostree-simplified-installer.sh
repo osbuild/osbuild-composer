@@ -83,6 +83,7 @@ CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-simplified-installer
 INSTALLER_FILENAME=simplified-installer.iso
 MEMORY=3072
+BOOT_ARGS="uefi"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -112,6 +113,7 @@ case "${ID}-${VERSION_ID}" in
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -467,7 +469,7 @@ sudo virt-install --name="${IMAGE_KEY}-http"\
                   --os-type linux \
                   --os-variant "${OS_VARIANT}" \
                   --pxe \
-                  --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                  --boot "$BOOT_ARGS" \
                   --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                   --nographics \
                   --noautoconsole \
@@ -591,7 +593,7 @@ sudo virt-install  --name="${IMAGE_KEY}-fdosshkey"\
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot "$BOOT_ARGS" \
                    --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                    --nographics \
                    --noautoconsole \
@@ -713,7 +715,7 @@ sudo virt-install  --name="${IMAGE_KEY}-fdorootcert"\
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot "$BOOT_ARGS" \
                    --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                    --nographics \
                    --noautoconsole \
@@ -824,13 +826,13 @@ sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
 sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_without_fdo"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram "${MEMORY}" \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:32 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot "$BOOT_ARGS" \
                    --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
                    --nographics \
                    --noautoconsole \
