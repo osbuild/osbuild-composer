@@ -57,7 +57,8 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.OSVersion)
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
-	anacondaPipeline.Users = len(img.Users)+len(img.Groups) > 0
+	anacondaPipeline.Users = img.Users
+	anacondaPipeline.Groups = img.Groups
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
