@@ -26,7 +26,7 @@ function get_build_info() {
     local fname="$2"
     if rpm -q --quiet weldr-client; then
         key=".body${key}"
-        if nvrGreaterOrEqual "weldr-client" "35.6"; then
+        if nvrGreaterOrEqual "weldr-client" "35.6" 2> /dev/null; then
             key=".[0]${key}"
         fi
     fi
