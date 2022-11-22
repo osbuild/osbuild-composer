@@ -20,6 +20,12 @@
     "filename": "installer.iso",
     "blueprint": {
       "name": "image-installer-users",
+      "packages": [
+        {
+          "name": "podman",
+          "version": "*"
+        }
+      ],
       "customizations": {
         "user": [
           {
@@ -9483,37 +9489,6 @@
             "options": {
               "state": "permissive"
             }
-          },
-          {
-            "type": "org.osbuild.kickstart",
-            "options": {
-              "path": "/usr/share/anaconda/interactive-defaults.ks",
-              "liveimg": {
-                "url": "file:///run/install/repo/liveimg.tar.gz"
-              },
-              "users": {
-                "user2": {
-                  "uid": 1020,
-                  "gid": 1050,
-                  "groups": [
-                    "group1"
-                  ],
-                  "description": "description 2",
-                  "home": "/home/home2",
-                  "shell": "/bin/sh",
-                  "password": "$6$BhyxFBgrEFh0VrPJ$MllG8auiU26x2pmzL4.1maHzPHrA.4gTdCvlATFp8HJU9UPee4zCS9BVl2HOzKaUYD/zEm8r/OF05F2icWB0K/",
-                  "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
-                }
-              },
-              "groups": {
-                "group1": {
-                  "gid": 1030
-                },
-                "group2": {
-                  "gid": 1050
-                }
-              }
-            }
           }
         ]
       },
@@ -9605,7 +9580,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.stage2=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64"
+                  "inst.ks=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               },
               "isolabel": "RHEL-9-1-0-BaseOS-x86_64",
@@ -10206,6 +10181,14 @@
                   },
                   {
                     "id": "sha256:d4b490f97fec6df68d467e74eeac7f26210757973175d344d989804e4f1a3629",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:f606fe2f369351298e141e588a1c8f985d09de125a90ff3a8b0bb73af9b00ab0",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -12053,6 +12036,14 @@
                     }
                   },
                   {
+                    "id": "sha256:7b6d75347ccb670b14ca8cbc8a9716202e7c7a48fd9e57b7bd75babe58378e29",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:30ad5408417c7f06fb945dc321bef3ce31f813f25389707dd1efa7c1d337b806",
                     "options": {
                       "metadata": {
@@ -12565,6 +12556,14 @@
                     }
                   },
                   {
+                    "id": "sha256:18591b14e57ee65df5c06aa305c2b95d2b4a1ce7437bc4d53d63190325546e96",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:442b665e87e21775c72e47730b330b9dc9f05a1b5f002ab0cd8e96d748abae0a",
                     "options": {
                       "metadata": {
@@ -12941,7 +12940,79 @@
                     }
                   },
                   {
+                    "id": "sha256:7ae479d1e502edf6def8010532c1d8811c92a3aec15eb8e485e18d2dcbbce310",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:30bbd3e668d0056c79a9387178adc7fd25f4761947403e835f1bef58830fbd8e",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:42f08f4d163576834a16f9f5d4f5296919db76192508a12de0c3eb722fe3b176",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:7f3ac148c2fa50cb9c16bd88e47f3ad6198056c53314bb7b9e970f14e8c22c39",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:d7700be670043322bd376781019b348011642bcf776b453ee35dc860bbe888e4",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:13bf4847e2d4e243fabe4f74c6e401e1586288ad67d815ae30336d20e8371925",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:bf082e093af4071810a0bf473b2ceb1451bd90f5349026d4305262fc6bf84d56",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b1dfb9ba2096d18ea962c4b8e0e64783816c41999141f3b2d6c2425d0ae77960",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:e5184158871d0c9fe4b667ce51586cba8e762a41637126bd6ab43e91a2284830",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:a7ba2bb451678b22e4e58cc7b235554e7dee87e6ec01438d512ce1a9c9d46aa1",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -13157,7 +13228,23 @@
                     }
                   },
                   {
+                    "id": "sha256:b9e11909a5031297aefd9b98b280edf24395af0c1aebabcaef37aa3d81b0c9fc",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:c28db0927e8d45e528e29ef90ecfe75153244df035d0ae0ba84a62abbc8e0870",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c916ffb29385ca487c759e5aedfecacfda5a8e151e00e7ef9a7bc40a52fb58c2",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -13214,6 +13301,14 @@
                   },
                   {
                     "id": "sha256:10b7e7b592a318fa73f37306b469c140175a1177b987f0041ec2c5b2e110953b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:961fdebfc9155f47467de4166cf2fd7e4c87cde44dc9c8c33da1c4f5aeeed685",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -13286,6 +13381,22 @@
                   },
                   {
                     "id": "sha256:083feb8f422304ee96d0578c061c7158054133d18c1d538bb6dedb39f8f12d79",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:2d5084361f1c269ef55e494cb427750187b5a51944fa5623279d7253a10031a5",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:3c3937ecb96e8eba75a4cf6393369e70e6ee216a38c60b6b50002df87f34c226",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -13469,6 +13580,14 @@
                     }
                   },
                   {
+                    "id": "sha256:acb3bc3f1c294b8da8232325519bcf0a89e5a231f5b7a3ff3f81a47d8e826166",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:826ba0707dce5fbcea824827164cac3d0c89430061fa188f5f0eb5f045993597",
                     "options": {
                       "metadata": {
@@ -13518,6 +13637,14 @@
                   },
                   {
                     "id": "sha256:e0526b1916ea97da65cf28ddaa417dc8be7d85e579076da1530cff146a4058d3",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:69d721b451dc548595d838c60e06c771942ed05bd96ad0661f221c3403d304c5",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -13652,7 +13779,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.stage2=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64"
+                  "inst.ks=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               }
             }
@@ -13750,6 +13877,37 @@
             },
             "options": {
               "filename": "/liveimg.tar.gz"
+            }
+          },
+          {
+            "type": "org.osbuild.kickstart",
+            "options": {
+              "path": "/osbuild.ks",
+              "liveimg": {
+                "url": "file:///run/install/repo/liveimg.tar.gz"
+              },
+              "users": {
+                "user2": {
+                  "uid": 1020,
+                  "gid": 1050,
+                  "groups": [
+                    "group1"
+                  ],
+                  "description": "description 2",
+                  "home": "/home/home2",
+                  "shell": "/bin/sh",
+                  "password": "$6$BhyxFBgrEFh0VrPJ$MllG8auiU26x2pmzL4.1maHzPHrA.4gTdCvlATFp8HJU9UPee4zCS9BVl2HOzKaUYD/zEm8r/OF05F2icWB0K/",
+                  "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+                }
+              },
+              "groups": {
+                "group1": {
+                  "gid": 1030
+                },
+                "group2": {
+                  "gid": 1050
+                }
+              }
             }
           },
           {
@@ -14080,6 +14238,9 @@
           "sha256:184de0f12248380b3da5a3ce3aeb54b7f1e3a9c96be1f86c44a30c58e3df4de0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/quota-4.06-6.el9.x86_64.rpm"
           },
+          "sha256:18591b14e57ee65df5c06aa305c2b95d2b4a1ce7437bc4d53d63190325546e96": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/shadow-utils-subid-4.9-5.el9.x86_64.rpm"
+          },
           "sha256:185c9b26e524ad1e026cb223f05b6eaf9fd5769ced16ff9897080aa8735ffe64": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/ipcalc-1.0.0-5.el9.x86_64.rpm"
           },
@@ -14305,6 +14466,9 @@
           "sha256:2d4c4fdfc10215af3c957c24995b79a26e27e6d76de4ed1f5198d25bf7ef9671": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/diffutils-3.7-12.el9.x86_64.rpm"
           },
+          "sha256:2d5084361f1c269ef55e494cb427750187b5a51944fa5623279d7253a10031a5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/podman-4.2.0-3.el9.x86_64.rpm"
+          },
           "sha256:2d51e00b1d97f6c8603e167259d84f37353e3b73d4e855d7bda6ccaded4f0be1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/authselect-compat-1.2.5-1.el9.x86_64.rpm"
           },
@@ -14439,6 +14603,9 @@
           },
           "sha256:3c0c6f7f7debd9b5c7c57bccadeac571c2f50e1fc1d500718c6ebf5878293f65": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/libasyncns-0.8-22.el9.x86_64.rpm"
+          },
+          "sha256:3c3937ecb96e8eba75a4cf6393369e70e6ee216a38c60b6b50002df87f34c226": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/podman-catatonit-4.2.0-3.el9.x86_64.rpm"
           },
           "sha256:3c3ada58a1436a70257fba2b11a51595382c21fa992ca7ba679821a92694914f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/python3-pyudev-0.22.0-6.el9.noarch.rpm"
@@ -15229,6 +15396,9 @@
           "sha256:7ae3264c0b446d0d15e6cdefcbac5c7e295477fe663ceea5c79261c7487d4fb8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/xorg-x11-xauth-1.1-10.el9.x86_64.rpm"
           },
+          "sha256:7ae479d1e502edf6def8010532c1d8811c92a3aec15eb8e485e18d2dcbbce310": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/conmon-2.1.4-1.el9.x86_64.rpm"
+          },
           "sha256:7b3e967413d6744988f16e084a0d53c344a27f3883355aaa86e3d67188bbaa79": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/kernel-core-5.14.0-162.6.1.el9_1.x86_64.rpm"
           },
@@ -15540,6 +15710,9 @@
           },
           "sha256:95fa428623ac713c8fa6d5c00355881d4d8cf8029bb74a90a2d4ce16cf603816": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/libverto-libev-0.3.2-3.el9.x86_64.rpm"
+          },
+          "sha256:961fdebfc9155f47467de4166cf2fd7e4c87cde44dc9c8c33da1c4f5aeeed685": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/netavark-1.1.0-6.el9.x86_64.rpm"
           },
           "sha256:962a7fce2921080ff7b4e79f1b5eebfce591e0b3bea8ae226f9f8a497b89cb1a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/initscripts-rename-device-10.11.5-1.el9.x86_64.rpm"
@@ -29043,6 +29216,16 @@
         "check_gpg": true
       },
       {
+        "name": "fuse-common",
+        "epoch": 0,
+        "version": "3.10.2",
+        "release": "5.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/fuse-common-3.10.2-5.el9.x86_64.rpm",
+        "checksum": "sha256:f606fe2f369351298e141e588a1c8f985d09de125a90ff3a8b0bb73af9b00ab0",
+        "check_gpg": true
+      },
+      {
         "name": "fuse-libs",
         "epoch": 0,
         "version": "2.9.9",
@@ -31343,6 +31526,16 @@
         "check_gpg": true
       },
       {
+        "name": "protobuf-c",
+        "epoch": 0,
+        "version": "1.3.3",
+        "release": "12.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/protobuf-c-1.3.3-12.el9.x86_64.rpm",
+        "checksum": "sha256:7b6d75347ccb670b14ca8cbc8a9716202e7c7a48fd9e57b7bd75babe58378e29",
+        "check_gpg": true
+      },
+      {
         "name": "psmisc",
         "epoch": 0,
         "version": "23.4",
@@ -31983,6 +32176,16 @@
         "check_gpg": true
       },
       {
+        "name": "shadow-utils-subid",
+        "epoch": 2,
+        "version": "4.9",
+        "release": "5.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/shadow-utils-subid-4.9-5.el9.x86_64.rpm",
+        "checksum": "sha256:18591b14e57ee65df5c06aa305c2b95d2b4a1ce7437bc4d53d63190325546e96",
+        "check_gpg": true
+      },
+      {
         "name": "shared-mime-info",
         "epoch": 0,
         "version": "2.1",
@@ -32453,6 +32656,66 @@
         "check_gpg": true
       },
       {
+        "name": "conmon",
+        "epoch": 2,
+        "version": "2.1.4",
+        "release": "1.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/conmon-2.1.4-1.el9.x86_64.rpm",
+        "checksum": "sha256:7ae479d1e502edf6def8010532c1d8811c92a3aec15eb8e485e18d2dcbbce310",
+        "check_gpg": true
+      },
+      {
+        "name": "container-selinux",
+        "epoch": 3,
+        "version": "2.189.0",
+        "release": "1.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/container-selinux-2.189.0-1.el9.noarch.rpm",
+        "checksum": "sha256:30bbd3e668d0056c79a9387178adc7fd25f4761947403e835f1bef58830fbd8e",
+        "check_gpg": true
+      },
+      {
+        "name": "containers-common",
+        "epoch": 2,
+        "version": "1",
+        "release": "44.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/containers-common-1-44.el9.x86_64.rpm",
+        "checksum": "sha256:42f08f4d163576834a16f9f5d4f5296919db76192508a12de0c3eb722fe3b176",
+        "check_gpg": true
+      },
+      {
+        "name": "criu",
+        "epoch": 0,
+        "version": "3.17",
+        "release": "4.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/criu-3.17-4.el9.x86_64.rpm",
+        "checksum": "sha256:7f3ac148c2fa50cb9c16bd88e47f3ad6198056c53314bb7b9e970f14e8c22c39",
+        "check_gpg": true
+      },
+      {
+        "name": "criu-libs",
+        "epoch": 0,
+        "version": "3.17",
+        "release": "4.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/criu-libs-3.17-4.el9.x86_64.rpm",
+        "checksum": "sha256:d7700be670043322bd376781019b348011642bcf776b453ee35dc860bbe888e4",
+        "check_gpg": true
+      },
+      {
+        "name": "crun",
+        "epoch": 0,
+        "version": "1.5",
+        "release": "1.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/crun-1.5-1.el9.x86_64.rpm",
+        "checksum": "sha256:13bf4847e2d4e243fabe4f74c6e401e1586288ad67d815ae30336d20e8371925",
+        "check_gpg": true
+      },
+      {
         "name": "flashrom",
         "epoch": 0,
         "version": "1.2",
@@ -32460,6 +32723,36 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/flashrom-1.2-10.el9.x86_64.rpm",
         "checksum": "sha256:bf082e093af4071810a0bf473b2ceb1451bd90f5349026d4305262fc6bf84d56",
+        "check_gpg": true
+      },
+      {
+        "name": "fuse-overlayfs",
+        "epoch": 0,
+        "version": "1.9",
+        "release": "1.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/fuse-overlayfs-1.9-1.el9.x86_64.rpm",
+        "checksum": "sha256:b1dfb9ba2096d18ea962c4b8e0e64783816c41999141f3b2d6c2425d0ae77960",
+        "check_gpg": true
+      },
+      {
+        "name": "fuse3",
+        "epoch": 0,
+        "version": "3.10.2",
+        "release": "5.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/fuse3-3.10.2-5.el9.x86_64.rpm",
+        "checksum": "sha256:e5184158871d0c9fe4b667ce51586cba8e762a41637126bd6ab43e91a2284830",
+        "check_gpg": true
+      },
+      {
+        "name": "fuse3-libs",
+        "epoch": 0,
+        "version": "3.10.2",
+        "release": "5.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/fuse3-libs-3.10.2-5.el9.x86_64.rpm",
+        "checksum": "sha256:a7ba2bb451678b22e4e58cc7b235554e7dee87e6ec01438d512ce1a9c9d46aa1",
         "check_gpg": true
       },
       {
@@ -32723,6 +33016,16 @@
         "check_gpg": true
       },
       {
+        "name": "libnet",
+        "epoch": 0,
+        "version": "1.2",
+        "release": "6.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/libnet-1.2-6.el9.x86_64.rpm",
+        "checksum": "sha256:b9e11909a5031297aefd9b98b280edf24395af0c1aebabcaef37aa3d81b0c9fc",
+        "check_gpg": true
+      },
+      {
         "name": "libproxy-webkitgtk4",
         "epoch": 0,
         "version": "0.4.15",
@@ -32730,6 +33033,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/libproxy-webkitgtk4-0.4.15-35.el9.x86_64.rpm",
         "checksum": "sha256:c28db0927e8d45e528e29ef90ecfe75153244df035d0ae0ba84a62abbc8e0870",
+        "check_gpg": true
+      },
+      {
+        "name": "libslirp",
+        "epoch": 0,
+        "version": "4.4.0",
+        "release": "7.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/libslirp-4.4.0-7.el9.x86_64.rpm",
+        "checksum": "sha256:c916ffb29385ca487c759e5aedfecacfda5a8e151e00e7ef9a7bc40a52fb58c2",
         "check_gpg": true
       },
       {
@@ -32800,6 +33113,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/lorax-templates-rhel-9.0-35.el9.noarch.rpm",
         "checksum": "sha256:10b7e7b592a318fa73f37306b469c140175a1177b987f0041ec2c5b2e110953b",
+        "check_gpg": true
+      },
+      {
+        "name": "netavark",
+        "epoch": 2,
+        "version": "1.1.0",
+        "release": "6.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/netavark-1.1.0-6.el9.x86_64.rpm",
+        "checksum": "sha256:961fdebfc9155f47467de4166cf2fd7e4c87cde44dc9c8c33da1c4f5aeeed685",
         "check_gpg": true
       },
       {
@@ -32890,6 +33213,26 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/pbzip2-1.1.13-6.el9.x86_64.rpm",
         "checksum": "sha256:083feb8f422304ee96d0578c061c7158054133d18c1d538bb6dedb39f8f12d79",
+        "check_gpg": true
+      },
+      {
+        "name": "podman",
+        "epoch": 2,
+        "version": "4.2.0",
+        "release": "3.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/podman-4.2.0-3.el9.x86_64.rpm",
+        "checksum": "sha256:2d5084361f1c269ef55e494cb427750187b5a51944fa5623279d7253a10031a5",
+        "check_gpg": true
+      },
+      {
+        "name": "podman-catatonit",
+        "epoch": 2,
+        "version": "4.2.0",
+        "release": "3.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/podman-catatonit-4.2.0-3.el9.x86_64.rpm",
+        "checksum": "sha256:3c3937ecb96e8eba75a4cf6393369e70e6ee216a38c60b6b50002df87f34c226",
         "check_gpg": true
       },
       {
@@ -33113,6 +33456,16 @@
         "check_gpg": true
       },
       {
+        "name": "slirp4netns",
+        "epoch": 0,
+        "version": "1.2.0",
+        "release": "2.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/slirp4netns-1.2.0-2.el9.x86_64.rpm",
+        "checksum": "sha256:acb3bc3f1c294b8da8232325519bcf0a89e5a231f5b7a3ff3f81a47d8e826166",
+        "check_gpg": true
+      },
+      {
         "name": "sscg",
         "epoch": 0,
         "version": "3.0.0",
@@ -33180,6 +33533,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/xz-lzma-compat-5.2.5-8.el9_0.x86_64.rpm",
         "checksum": "sha256:e0526b1916ea97da65cf28ddaa417dc8be7d85e579076da1530cff146a4058d3",
+        "check_gpg": true
+      },
+      {
+        "name": "yajl",
+        "epoch": 0,
+        "version": "2.1.0",
+        "release": "21.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/yajl-2.1.0-21.el9.x86_64.rpm",
+        "checksum": "sha256:69d721b451dc548595d838c60e06c771942ed05bd96ad0661f221c3403d304c5",
         "check_gpg": true
       }
     ]

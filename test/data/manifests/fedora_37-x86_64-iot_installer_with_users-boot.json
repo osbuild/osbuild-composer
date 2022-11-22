@@ -10947,7 +10947,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.ks=hd:LABEL=Fedora-37-BaseOS-x86_64:/ostree.ks"
+                  "inst.ks=hd:LABEL=Fedora-37-BaseOS-x86_64:/osbuild.ks"
                 ]
               },
               "isolabel": "Fedora-37-BaseOS-x86_64",
@@ -11037,7 +11037,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.ks=hd:LABEL=Fedora-37-BaseOS-x86_64:/ostree.ks"
+                  "inst.ks=hd:LABEL=Fedora-37-BaseOS-x86_64:/osbuild.ks"
                 ]
               }
             }
@@ -11148,7 +11148,7 @@
           {
             "type": "org.osbuild.kickstart",
             "options": {
-              "path": "/ostree.ks",
+              "path": "/osbuild.ks",
               "ostree": {
                 "osname": "fedora",
                 "url": "file:///run/install/repo/ostree/repo",

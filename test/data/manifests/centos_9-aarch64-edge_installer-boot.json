@@ -9124,7 +9124,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.ks=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64:/ostree.ks"
+                  "inst.ks=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64:/osbuild.ks"
                 ]
               },
               "isolabel": "CentOS-Stream-9-BaseOS-aarch64",
@@ -9217,7 +9217,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.ks=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64:/ostree.ks"
+                  "inst.ks=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64:/osbuild.ks"
                 ]
               }
             }
@@ -9328,7 +9328,7 @@
           {
             "type": "org.osbuild.kickstart",
             "options": {
-              "path": "/ostree.ks",
+              "path": "/osbuild.ks",
               "ostree": {
                 "osname": "rhel",
                 "url": "file:///run/install/repo/ostree/repo",
