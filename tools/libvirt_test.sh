@@ -274,6 +274,12 @@ elif [[ $ARCH == 's390x' ]]; then
 else
     # Both aarch64 and x86_64 support hybrid boot
     if [[ $BOOT_TYPE == 'uefi' ]]; then
+        # Disable secure boot for CS9 due to bug bz#2108646
+        if [[ "${ID}-${VERSION_ID}" == "centos-9" ]] ; then
+            BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
+        else
+            BOOT_ARGS="uefi,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd"
+        fi
         sudo virt-install \
             --name "$IMAGE_KEY" \
             --memory 1024 \
@@ -283,7 +289,7 @@ else
             --import \
             --os-variant rhel8-unknown \
             --noautoconsole \
-            --boot uefi,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd \
+            --boot "${BOOT_ARGS}" \
             --network network=integration,mac=34:49:22:B0:83:30
     else
         sudo virt-install \
