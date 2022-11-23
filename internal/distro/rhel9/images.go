@@ -339,6 +339,7 @@ func imageInstallerImage(workload workload.Workload,
 	img := image.NewImageInstaller()
 
 	img.Platform = t.platform
+	img.Workload = workload
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 	img.Users = users.UsersFromBP(customizations.GetUsers())
