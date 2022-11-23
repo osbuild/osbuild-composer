@@ -13,7 +13,8 @@ type EFIBootTree struct {
 
 	Platform platform.Platform
 
-	anacondaPipeline *Anaconda
+	product string
+	version string
 
 	UEFIVendor string
 	ISOLabel   string
@@ -22,10 +23,11 @@ type EFIBootTree struct {
 	KernelOpts []string
 }
 
-func NewEFIBootTree(m *Manifest, buildPipeline *Build, anacondaPipeline *Anaconda) *EFIBootTree {
+func NewEFIBootTree(m *Manifest, buildPipeline *Build, product, version string) *EFIBootTree {
 	p := &EFIBootTree{
-		Base:             NewBase(m, "efiboot-tree", buildPipeline),
-		anacondaPipeline: anacondaPipeline,
+		Base:    NewBase(m, "efiboot-tree", buildPipeline),
+		product: product,
+		version: version,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -59,8 +61,8 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 
 	grubOptions := &osbuild.GrubISOStageOptions{
 		Product: osbuild.Product{
-			Name:    p.anacondaPipeline.product,
-			Version: p.anacondaPipeline.version,
+			Name:    p.product,
+			Version: p.version,
 		},
 		Kernel: osbuild.ISOKernel{
 			Dir:  "/images/pxeboot",
