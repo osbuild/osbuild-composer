@@ -490,6 +490,12 @@
       "filename": "installer.iso",
       "blueprint": {
         "name": "image-installer-users",
+        "packages": [
+          {
+            "name": "podman",
+            "version": "*"
+          }
+        ],
         "customizations": {
           "user": [
             {
