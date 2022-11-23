@@ -209,7 +209,8 @@ func (p *ISOTree) serialize() osbuild.Pipeline {
 	}
 
 	if p.OSPipeline != nil {
-		pipeline.AddStage(osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: "/liveimg.tar"}, p.OSPipeline.name))
+		// The TarStage has --autocompress
+		pipeline.AddStage(osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: "/liveimg.tar.gz"}, p.OSPipeline.name))
 
 		// In the case of OSPipeline then the ImageInstaller has already set InteractiveDefaults on the anaconda-tree,
 		// eliminating the need to set a separate kickstart here.

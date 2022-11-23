@@ -62,7 +62,7 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.OSVersion)
 
 	interactiveDefaults := manifest.NewAnacondaInteractiveDefaults(
-		"file:///run/install/repo/liveimg.tar",
+		"file:///run/install/repo/liveimg.tar.gz",
 	)
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
