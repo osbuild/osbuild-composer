@@ -8,16 +8,16 @@ if [[ $ID != rhel ]]; then
 fi
 
 if [[ $ID == rhel && ${VERSION_ID%.*} == 8 ]]; then
-  COMPOSE_ID=$(curl -L http://download.eng.bos.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-"${VERSION_ID}"/COMPOSE_ID)
+  COMPOSE_ID=$(curl -L http://download.eng.bos.redhat.com/rhel-8/nightly/updates/RHEL-8/latest-RHEL-"${VERSION_ID}".0/COMPOSE_ID)
 
   # default to a nightly tree but respect values passed from ENV so we can test rel-eng composes as well
-  COMPOSE_URL="${COMPOSE_URL:-http://download.eng.bos.redhat.com/rhel-8/nightly/RHEL-8/$COMPOSE_ID}"
+  COMPOSE_URL="${COMPOSE_URL:-http://download.eng.bos.redhat.com/rhel-8/nightly/updates/RHEL-8/$COMPOSE_ID}"
 
 elif [[ $ID == rhel && ${VERSION_ID%.*} == 9 ]]; then
-  COMPOSE_ID=$(curl -L http://download.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-"${VERSION_ID}"/COMPOSE_ID)
+  COMPOSE_ID=$(curl -L http://download.eng.bos.redhat.com/rhel-9/nightly/updates/RHEL-9/latest-RHEL-"${VERSION_ID}".0/COMPOSE_ID)
 
   # default to a nightly tree but respect values passed from ENV so we can test rel-eng composes as well
-  COMPOSE_URL="${COMPOSE_URL:-http://download.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/$COMPOSE_ID}"
+  COMPOSE_URL="${COMPOSE_URL:-http://download.eng.bos.redhat.com/rhel-9/nightly/updates/RHEL-9/$COMPOSE_ID}"
 fi
 
 # in case COMPOSE_URL was defined from the outside refresh COMPOSE_ID file,
