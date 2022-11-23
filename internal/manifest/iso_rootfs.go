@@ -11,13 +11,13 @@ type ISORootfsImg struct {
 
 	Size uint64
 
-	anacondaPipeline *Anaconda
+	installerPipeline Pipeline
 }
 
-func NewISORootfsImg(m *Manifest, buildPipeline *Build, anacondaPipeline *Anaconda) *ISORootfsImg {
+func NewISORootfsImg(m *Manifest, buildPipeline *Build, installerPipeline Pipeline) *ISORootfsImg {
 	p := &ISORootfsImg{
-		Base:             NewBase(m, "rootfs-image", buildPipeline),
-		anacondaPipeline: anacondaPipeline,
+		Base:              NewBase(m, "rootfs-image", buildPipeline),
+		installerPipeline: installerPipeline,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -63,7 +63,7 @@ func (p *ISORootfsImg) serialize() osbuild.Pipeline {
 			},
 		},
 	}
-	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.anacondaPipeline.Name())
+	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.installerPipeline.Name())
 	copyStageMounts := &osbuild.Mounts{*osbuild.NewExt4Mount(devName, devName, "/")}
 	copyStage := osbuild.NewCopyStage(copyStageOptions, copyStageInputs, &devices, copyStageMounts)
 	pipeline.AddStage(copyStage)
