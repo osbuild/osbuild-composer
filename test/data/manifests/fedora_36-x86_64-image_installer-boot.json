@@ -10412,7 +10412,7 @@
             "options": {
               "path": "/usr/share/anaconda/interactive-defaults.ks",
               "liveimg": {
-                "url": "file:///run/install/repo/liveimg.tar"
+                "url": "file:///run/install/repo/liveimg.tar.gz"
               }
             }
           }
@@ -13866,7 +13866,7 @@
               }
             },
             "options": {
-              "filename": "/liveimg.tar"
+              "filename": "/liveimg.tar.gz"
             }
           },
           {
