@@ -1,6 +1,7 @@
 package image
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/artifact"
@@ -99,6 +100,11 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 		xzPipeline := manifest.NewXZ(m, buildPipeline, artifactPipeline)
 		xzPipeline.Filename = img.Filename
 		artifact = xzPipeline.Export()
+	case "":
+		// do nothing
+	default:
+		// panic on unknown strings
+		panic(fmt.Sprintf("unsupported compression type %q", img.Compression))
 	}
 
 	return artifact, nil
