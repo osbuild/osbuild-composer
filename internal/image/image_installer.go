@@ -113,10 +113,15 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
-	bootTreePipeline.KernelOpts = img.AdditionalKernelOpts
+
+	kernelOpts := make([]string, 0)
 	if img.ISORootKickstart {
-		bootTreePipeline.KSPath = kspath
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isoLabel, kspath))
+	} else {
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", isoLabel))
 	}
+	kernelOpts = append(kernelOpts, img.AdditionalKernelOpts...)
+	bootTreePipeline.KernelOpts = kernelOpts
 
 	osPipeline := manifest.NewOS(m, buildPipeline, img.Platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
