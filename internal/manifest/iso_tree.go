@@ -10,11 +10,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
-// An ISOTree represents a tree containing the anaconda installer,
+// An AnacondaISOTree represents a tree containing the anaconda installer,
 // configuration in terms of a kickstart file, as well as an embedded
 // payload to be installed, this payload can either be an ostree
 // CommitSpec or OSPipeline for an OS.
-type ISOTree struct {
+type AnacondaISOTree struct {
 	Base
 
 	// TODO: review optional and mandatory fields and their meaning
@@ -48,14 +48,14 @@ type ISOTree struct {
 	KernelOpts []string
 }
 
-func NewISOTree(m *Manifest,
+func NewAnacondaISOTree(m *Manifest,
 	buildPipeline *Build,
 	anacondaPipeline *Anaconda,
 	rootfsPipeline *ISORootfsImg,
 	bootTreePipeline *EFIBootTree,
-	isoLabel string) *ISOTree {
+	isoLabel string) *AnacondaISOTree {
 
-	p := &ISOTree{
+	p := &AnacondaISOTree{
 		Base:             NewBase(m, "bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
 		rootfsPipeline:   rootfsPipeline,
@@ -71,7 +71,7 @@ func NewISOTree(m *Manifest,
 }
 
 // Return the ostree commit URL and checksum that will be included in this
-func (p *ISOTree) getOSTreeCommits() []ostree.CommitSpec {
+func (p *AnacondaISOTree) getOSTreeCommits() []ostree.CommitSpec {
 	if p.OSTree == nil {
 		return nil
 	}
@@ -81,7 +81,7 @@ func (p *ISOTree) getOSTreeCommits() []ostree.CommitSpec {
 	}
 }
 
-func (p *ISOTree) getBuildPackages() []string {
+func (p *AnacondaISOTree) getBuildPackages() []string {
 	packages := []string{
 		"squashfs-tools",
 	}
@@ -97,7 +97,7 @@ func (p *ISOTree) getBuildPackages() []string {
 	return packages
 }
 
-func (p *ISOTree) serialize() osbuild.Pipeline {
+func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
 	// We need one of two payloads
 	if p.OSTree == nil && p.OSPipeline == nil {
 		panic("missing ostree or ospipeline parameters in ISO tree pipeline")

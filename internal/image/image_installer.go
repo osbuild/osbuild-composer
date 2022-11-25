@@ -123,7 +123,7 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
 
-	isoTreePipeline := manifest.NewISOTree(m,
+	isoTreePipeline := manifest.NewAnacondaISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
 		rootfsImagePipeline,
