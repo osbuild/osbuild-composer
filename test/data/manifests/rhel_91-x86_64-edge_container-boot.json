@@ -15,6 +15,11 @@
         "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/",
         "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBErgSTsBEACh2A4b0O9t+vzC9VrVtL1AKvUWi9OPCjkvR7Xd8DtJxeeMZ5eF\n0HtzIG58qDRybwUe89FZprB1ffuUKzdE+HcL3FbNWSSOXVjZIersdXyH3NvnLLLF\n0DNRB2ix3bXG9Rh/RXpFsNxDp2CEMdUvbYCzE79K1EnUTVh1L0Of023FtPSZXX0c\nu7Pb5DI5lX5YeoXO6RoodrIGYJsVBQWnrWw4xNTconUfNPk0EGZtEnzvH2zyPoJh\nXGF+Ncu9XwbalnYde10OCvSWAZ5zTCpoLMTvQjWpbCdWXJzCm6G+/hx9upke546H\n5IjtYm4dTIVTnc3wvDiODgBKRzOl9rEOCIgOuGtDxRxcQkjrC+xvg5Vkqn7vBUyW\n9pHedOU+PoF3DGOM+dqv+eNKBvh9YF9ugFAQBkcG7viZgvGEMGGUpzNgN7XnS1gj\n/DPo9mZESOYnKceve2tIC87p2hqjrxOHuI7fkZYeNIcAoa83rBltFXaBDYhWAKS1\nPcXS1/7JzP0ky7d0L6Xbu/If5kqWQpKwUInXtySRkuraVfuK3Bpa+X1XecWi24JY\nHVtlNX025xx1ewVzGNCTlWn1skQN2OOoQTV4C8/qFpTW6DTWYurd4+fE0OJFJZQF\nbuhfXYwmRlVOgN5i77NTIJZJQfYFj38c/Iv5vZBPokO6mffrOTv3MHWVgQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChyZWxlYXNlIGtleSAyKSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjYEEwECACAFAkrgSTsCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK\nCRAZni+R/UMdUWzpD/9s5SFR/ZF3yjY5VLUFLMXIKUztNN3oc45fyLdTI3+UClKC\n2tEruzYjqNHhqAEXa2sN1fMrsuKec61Ll2NfvJjkLKDvgVIh7kM7aslNYVOP6BTf\nC/JJ7/ufz3UZmyViH/WDl+AYdgk3JqCIO5w5ryrC9IyBzYv2m0HqYbWfphY3uHw5\nun3ndLJcu8+BGP5F+ONQEGl+DRH58Il9Jp3HwbRa7dvkPgEhfFR+1hI+Btta2C7E\n0/2NKzCxZw7Lx3PBRcU92YKyaEihfy/aQKZCAuyfKiMvsmzs+4poIX7I9NQCJpyE\nIGfINoZ7VxqHwRn/d5mw2MZTJjbzSf+Um9YJyA0iEEyD6qjriWQRbuxpQXmlAJbh\n8okZ4gbVFv1F8MzK+4R8VvWJ0XxgtikSo72fHjwha7MAjqFnOq6eo6fEC/75g3NL\nGht5VdpGuHk0vbdENHMC8wS99e5qXGNDued3hlTavDMlEAHl34q2H9nakTGRF5Ki\nJUfNh3DVRGhg8cMIti21njiRh7gyFI2OccATY7bBSr79JhuNwelHuxLrCFpY7V25\nOFktl15jZJaMxuQBqYdBgSay2G0U6D1+7VsWufpzd/Abx1/c3oi9ZaJvW22kAggq\ndzdA27UUYjWvx42w9menJwh/0jeQcTecIUd0d0rFcw/c1pvgMMl/Q73yzKgKYw==\n=zbHE\n-----END PGP PUBLIC KEY BLOCK-----\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBFsy23UBEACUKSphFEIEvNpy68VeW4Dt6qv+mU6am9a2AAl10JANLj1oqWX+\noYk3en1S6cVe2qehSL5DGVa3HMUZkP3dtbD4SgzXzxPodebPcr4+0QNWigkUisri\nXGL5SCEcOP30zDhZvg+4mpO2jMi7Kc1DLPzBBkgppcX91wa0L1pQzBcvYMPyV/Dh\nKbQHR75WdkP6OA2JXdfC94nxYq+2e0iPqC1hCP3Elh+YnSkOkrawDPmoB1g4+ft/\nxsiVGVy/W0ekXmgvYEHt6si6Y8NwXgnTMqxeSXQ9YUgVIbTpsxHQKGy76T5lMlWX\n4LCOmEVomBJg1SqF6yi9Vu8TeNThaDqT4/DddYInd0OO69s0kGIXalVgGYiW2HOD\nx2q5R1VGCoJxXomz+EbOXY+HpKPOHAjU0DB9MxbU3S248LQ69nIB5uxysy0PSco1\nsdZ8sxRNQ9Dw6on0Nowx5m6Thefzs5iK3dnPGBqHTT43DHbnWc2scjQFG+eZhe98\nEll/kb6vpBoY4bG9/wCG9qu7jj9Z+BceCNKeHllbezVLCU/Hswivr7h2dnaEFvPD\nO4GqiWiwOF06XaBMVgxA8p2HRw0KtXqOpZk+o+sUvdPjsBw42BB96A1yFX4jgFNA\nPyZYnEUdP6OOv9HSjnl7k/iEkvHq/jGYMMojixlvXpGXhnt5jNyc4GSUJQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChhdXhpbGlhcnkga2V5KSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjkEEwECACMFAlsy23UCGwMHCwkIBwMCAQYVCAIJCgsEFgIDAQIeAQIX\ngAAKCRD3b2bD1AgnknqOD/9fB2ASuG2aJIiap4kK58R+RmOVM4qgclAnaG57+vjI\nnKvyfV3NH/keplGNRxwqHekfPCqvkpABwhdGEXIE8ILqnPewIMr6PZNZWNJynZ9i\neSMzVuCG7jDoGyQ5/6B0f6xeBtTeBDiRl7+Alehet1twuGL1BJUYG0QuLgcEzkaE\n/gkuumeVcazLzz7L12D22nMk66GxmgXfqS5zcbqOAuZwaA6VgSEgFdV2X2JU79zS\nBQJXv7NKc+nDXFG7M7EHjY3Rma3HXkDbkT8bzh9tJV7Z7TlpT829pStWQyoxKCVq\nsEX8WsSapTKA3P9YkYCwLShgZu4HKRFvHMaIasSIZWzLu+RZH/4yyHOhj0QB7XMY\neHQ6fGSbtJ+K6SrpHOOsKQNAJ0hVbSrnA1cr5+2SDfel1RfYt0W9FA6DoH/S5gAR\ndzT1u44QVwwp3U+eFpHphFy//uzxNMtCjjdkpzhYYhOCLNkDrlRPb+bcoL/6ePSr\n016PA7eEnuC305YU1Ml2WcCn7wQV8x90o33klJmEkWtXh3X39vYtI4nCPIvZn1eP\nVy+F+wWt4vN2b8oOdlzc2paOembbCo2B+Wapv5Y9peBvlbsDSgqtJABfK8KQq/jK\nYl3h5elIa1I3uNfczeHOnf1enLOUOlq630yeM/yHizz99G1g+z/guMh5+x/OHraW\niA==\n=+Gxh\n-----END PGP PUBLIC KEY BLOCK-----\n",
         "check_gpg": true
+      },
+      {
+        "name": "ignition-edge",
+        "baseurl": "https://download.copr.fedorainfracloud.org/results/runcom/greenboot/centos-stream-9-x86_64/",
+        "check_gpg": false
       }
     ],
     "filename": "container.tar",
@@ -4220,6 +4225,14 @@
                     }
                   },
                   {
+                    "id": "sha256:281e1a05b389237cf64f3969af1ee8b1db647218e642dc20d5d87498492bbdb3",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:97e95484635a1e585021d1307ebfdae4ff8f34b02d7584b3d6bf21f1c6c526bd",
                     "options": {
                       "metadata": {
@@ -4596,6 +4609,14 @@
                     }
                   },
                   {
+                    "id": "sha256:a89ea545ca3c37c519018baf499ee7baf18c09fe59e5b7fc0ac377a75247cb0c",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:0dcd6624357942ada8b2ebf933ee47e11b1cbdc4eaee545519c43420adb6f46b",
                     "options": {
                       "metadata": {
@@ -4634,6 +4655,9 @@
                         "rpm.check_gpg": true
                       }
                     }
+                  },
+                  {
+                    "id": "sha256:5498a56e74aef780c0f2f0910ce0bc0d0e79fefe73def747b64f6ee07053e605"
                   }
                 ]
               }
@@ -4670,7 +4694,10 @@
                 "NetworkManager.service",
                 "firewalld.service",
                 "sshd.service",
-                "fdo-client-linuxapp.service"
+                "fdo-client-linuxapp.service",
+                "ignition-firstboot-complete.service",
+                "coreos-ignition-write-issues",
+                "coreos-ignition-write-issues"
               ]
             }
           },
@@ -5725,6 +5752,9 @@
           "sha256:26bee2c6124e4047f5b6261589bbd7a801603ca12dc90b64b0cd178911e25cbb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/libxml2-2.9.13-2.el9.x86_64.rpm"
           },
+          "sha256:281e1a05b389237cf64f3969af1ee8b1db647218e642dc20d5d87498492bbdb3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/ignition-2.14.0-1.el9.x86_64.rpm"
+          },
           "sha256:284f8e549fd6ad678f0a12def81fd5f6b177e6583d843e7069b2b780130e3fe0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/python3-firewall-1.1.1-3.el9.noarch.rpm"
           },
@@ -5946,6 +5976,9 @@
           },
           "sha256:548978c62b24b7adda4ebcc5db878e22b18f50248bc45aa4a209b86eddd86948": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/polkit-pkla-compat-0.1-21.el9.x86_64.rpm"
+          },
+          "sha256:5498a56e74aef780c0f2f0910ce0bc0d0e79fefe73def747b64f6ee07053e605": {
+            "url": "https://download.copr.fedorainfracloud.org/results/runcom/greenboot/centos-stream-9-x86_64/05067230-ignition-edge/ignition-edge-99-1.20221125gita3a8f0a.el9.x86_64.rpm"
           },
           "sha256:5556895ff1817066ca71b50785615e944b0fcc7e1c94c983087c7c691819623d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/grep-3.6-5.el9.x86_64.rpm"
@@ -6321,6 +6354,9 @@
           },
           "sha256:a83b9cdfb211d444f5ca32c8f218e9e881b77716b4d244dd60c5ea27666eaef6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/clevis-dracut-18-106.el9.x86_64.rpm"
+          },
+          "sha256:a89ea545ca3c37c519018baf499ee7baf18c09fe59e5b7fc0ac377a75247cb0c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/ssh-key-dir-0.1.3-2.el9.x86_64.rpm"
           },
           "sha256:a99b796ebf0f883aa95dff39ed0c87e9ed9987e2808ac9188e52cbf8a9149b6c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/python3-audit-3.0.7-103.el9.x86_64.rpm"
@@ -12780,6 +12816,16 @@
         "check_gpg": true
       },
       {
+        "name": "ignition",
+        "epoch": 0,
+        "version": "2.14.0",
+        "release": "1.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/ignition-2.14.0-1.el9.x86_64.rpm",
+        "checksum": "sha256:281e1a05b389237cf64f3969af1ee8b1db647218e642dc20d5d87498492bbdb3",
+        "check_gpg": true
+      },
+      {
         "name": "jose",
         "epoch": 0,
         "version": "11",
@@ -13250,6 +13296,16 @@
         "check_gpg": true
       },
       {
+        "name": "ssh-key-dir",
+        "epoch": 0,
+        "version": "0.1.3",
+        "release": "2.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/ssh-key-dir-0.1.3-2.el9.x86_64.rpm",
+        "checksum": "sha256:a89ea545ca3c37c519018baf499ee7baf18c09fe59e5b7fc0ac377a75247cb0c",
+        "check_gpg": true
+      },
+      {
         "name": "udisks2",
         "epoch": 0,
         "version": "2.9.4",
@@ -13298,8 +13354,16 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.1-20221015/Packages/yajl-2.1.0-21.el9.x86_64.rpm",
         "checksum": "sha256:69d721b451dc548595d838c60e06c771942ed05bd96ad0661f221c3403d304c5",
         "check_gpg": true
+      },
+      {
+        "name": "ignition-edge",
+        "epoch": 0,
+        "version": "99",
+        "release": "1.20221125gita3a8f0a.el9",
+        "arch": "x86_64",
+        "remote_location": "https://download.copr.fedorainfracloud.org/results/runcom/greenboot/centos-stream-9-x86_64/05067230-ignition-edge/ignition-edge-99-1.20221125gita3a8f0a.el9.x86_64.rpm",
+        "checksum": "sha256:5498a56e74aef780c0f2f0910ce0bc0d0e79fefe73def747b64f6ee07053e605"
       }
     ]
-  },
-  "no-image-info": true
+  }
 }

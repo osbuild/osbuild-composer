@@ -61,6 +61,11 @@
       "check_gpg": true
     },
     {
+      "name": "ignition-edge",
+      "baseurl": "https://download.copr.fedorainfracloud.org/results/runcom/greenboot/centos-stream-9-x86_64/",
+      "check_gpg": false
+    },
+    {
       "name": "google-compute-engine",
       "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20220227",
       "check_gpg": false,
