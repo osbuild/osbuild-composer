@@ -8,23 +8,6 @@ import (
 )
 
 var (
-	qcow2ImgType = imageType{
-		name:          "qcow2",
-		filename:      "disk.qcow2",
-		mimeType:      "application/x-qemu-disk",
-		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: qcow2CommonPackageSet,
-		},
-		bootable:            true,
-		defaultSize:         10 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "qcow2"},
-		exports:             []string{"qcow2"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
 	openstackImgType = imageType{
 		name:     "openstack",
 		filename: "disk.qcow2",
@@ -167,7 +150,22 @@ func qcowImageConfig(d distribution) *distro.ImageConfig {
 }
 
 func mkQcow2ImgType(d distribution) imageType {
-	it := qcow2ImgType
+	it := imageType{
+		name:          "qcow2",
+		filename:      "disk.qcow2",
+		mimeType:      "application/x-qemu-disk",
+		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: qcow2CommonPackageSet,
+		},
+		bootable:            true,
+		defaultSize:         10 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "qcow2"},
+		exports:             []string{"qcow2"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
 	it.defaultImageConfig = qcowImageConfig(d)
 	return it
 }
