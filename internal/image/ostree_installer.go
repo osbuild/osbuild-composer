@@ -92,7 +92,7 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.KSPath = kspath
 	bootTreePipeline.ISOLabel = isoLabel
 
-	isoTreePipeline := manifest.NewISOTree(m,
+	isoTreePipeline := manifest.NewAnacondaISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
 		rootfsImagePipeline,
