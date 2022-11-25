@@ -415,9 +415,6 @@ func mkEc2ImgTypeX86_64(osVersion string, rhsm bool) imageType {
 func mkAMIImgTypeX86_64(osVersion string, rhsm bool) imageType {
 	it := amiImgTypeX86_64
 	ic := defaultAMIImageConfigX86_64(osVersion, rhsm)
-	if rhsm && common.VersionLessThan(osVersion, "9.1") {
-		ic = appendRHSM(ic)
-	}
 	it.defaultImageConfig = ic
 	return it
 }
