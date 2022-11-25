@@ -1,8 +1,6 @@
 package manifest
 
 import (
-	"fmt"
-
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
@@ -18,7 +16,6 @@ type EFIBootTree struct {
 
 	UEFIVendor string
 	ISOLabel   string
-	KSPath     string
 
 	KernelOpts []string
 }
@@ -48,13 +45,6 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 	}
 
 	kernelOpts := []string{}
-
-	if p.KSPath != "" {
-		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.ISOLabel, p.KSPath))
-	} else {
-		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", p.ISOLabel))
-	}
-
 	if len(p.KernelOpts) > 0 {
 		kernelOpts = append(kernelOpts, p.KernelOpts...)
 	}
