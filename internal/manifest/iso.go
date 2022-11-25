@@ -12,21 +12,21 @@ type ISO struct {
 	ISOLinux bool
 	Filename string
 
-	treePipeline *ISOTree
+	treePipeline Pipeline
+	isoLabel     string
 }
 
 func NewISO(m *Manifest,
 	buildPipeline *Build,
-	treePipeline *ISOTree) *ISO {
+	treePipeline Pipeline,
+	isoLabel string) *ISO {
 	p := &ISO{
 		Base:         NewBase(m, "bootiso", buildPipeline),
 		treePipeline: treePipeline,
 		Filename:     "image.iso",
+		isoLabel:     isoLabel,
 	}
 	buildPipeline.addDependent(p)
-	if treePipeline.Base.manifest != m {
-		panic("tree pipeline from different manifest")
-	}
 	m.addPipeline(p)
 	return p
 }
@@ -41,7 +41,7 @@ func (p *ISO) getBuildPackages() []string {
 func (p *ISO) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename, p.treePipeline.isoLabel, p.ISOLinux), p.treePipeline.Name()))
+	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename, p.isoLabel, p.ISOLinux), p.treePipeline.Name()))
 	pipeline.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: p.Filename}))
 
 	return pipeline

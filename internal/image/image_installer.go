@@ -144,7 +144,7 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.OSPipeline = osPipeline
 	isoTreePipeline.KernelOpts = img.AdditionalKernelOpts
 
-	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline)
+	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline, isoLabel)
 	isoPipeline.Filename = img.Filename
 	isoPipeline.ISOLinux = img.Platform.GetArch() == platform.ARCH_X86_64
 
