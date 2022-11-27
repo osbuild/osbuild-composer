@@ -36,7 +36,7 @@ func setError(err error, result *worker.OSTreeResolveJobResult) {
 	}
 }
 
-func (impl *OSTreeResolveJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
+func (impl *OSTreeResolveJobImpl) Run(ctx context.Context, job *worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	var args worker.OSTreeResolveJob
 	err := job.Args(&args)

@@ -12,13 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/sirupsen/logrus"
 
+	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
+	"github.com/osbuild/osbuild-composer/internal/cloud/instanceprotector"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
@@ -26,15 +23,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-// Represents the implementation of a job type as defined by the worker API.
-type JobImplementation interface {
-	Run(ctx context.Context, job worker.Job) (interface{}, error)
-}
-
 type Worker struct {
 	config *workerConfig
 
-	jobImplKinds []map[string]JobImplementation
+	jobImplKinds []map[string]worker.JobImplementation
 
 	client *worker.Client
 }
@@ -42,7 +34,7 @@ type Worker struct {
 func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Worker, error) {
 	w := Worker{
 		config:       config,
-		jobImplKinds: make([]map[string]JobImplementation, 0),
+		jobImplKinds: make([]map[string]worker.JobImplementation, 0),
 	}
 
 	solver := dnfjson.NewBaseSolver(path.Join(cacheDir, "rpmmd"))
@@ -69,8 +61,9 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 
 	if unix {
 		w.client = worker.NewClientUnix(worker.ClientConfig{
-			BaseURL:  address,
-			BasePath: config.BasePath,
+			BaseURL:   address,
+			BasePath:  config.BasePath,
+			Heartbeat: 5 * time.Second,
 		})
 	} else if config.Authentication != nil {
 		var conf *tls.Config
@@ -109,6 +102,7 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 
 		client, err := worker.NewClient(worker.ClientConfig{
 			BaseURL:      fmt.Sprintf("https://%s", address),
+			Heartbeat:    15 * time.Second,
 			TlsConfig:    conf,
 			OfflineToken: token,
 			OAuthURL:     config.Authentication.OAuthURL,
@@ -142,6 +136,7 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 
 		client, err := worker.NewClient(worker.ClientConfig{
 			BaseURL:   fmt.Sprintf("https://%s", address),
+			Heartbeat: 15 * time.Second,
 			TlsConfig: conf,
 			BasePath:  config.BasePath,
 			ProxyURL:  proxy,
@@ -215,7 +210,7 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 	// spinner spin. For this reason we don't run them in the same loop as
 	// the much slower bulid jobs. We only want to run one depsolve job at
 	// a time.
-	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
+	w.jobImplKinds = append(w.jobImplKinds, map[string]worker.JobImplementation{
 		worker.JobTypeDepsolve: &DepsolveJobImpl{
 			Solver: solver,
 		},
@@ -224,7 +219,7 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 	// build jobs can take up to half an hour. They are both IO and CPU
 	// intensive, so we do not want to run multiple at once. They are not
 	// particularly CPU intensive.
-	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
+	w.jobImplKinds = append(w.jobImplKinds, map[string]worker.JobImplementation{
 		worker.JobTypeOSBuild: &OSBuildJobImpl{
 			Store:       store,
 			Output:      output,
@@ -254,7 +249,7 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 	// the copy and share jobs are not CPU nor IO intensive, but can be
 	// fairly long running. We could run several of these concurrently,
 	// thouh this is not currently supported.
-	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
+	w.jobImplKinds = append(w.jobImplKinds, map[string]worker.JobImplementation{
 		worker.JobTypeAWSEC2Copy: &AWSEC2CopyJobImpl{
 			AWSCreds: awsCredentials,
 		},
@@ -270,7 +265,7 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 	// very short running. They could in principle be run concurrently.
 	// We run them separately from the other jobs to not add needless
 	// latency.
-	w.jobImplKinds = append(w.jobImplKinds, map[string]JobImplementation{
+	w.jobImplKinds = append(w.jobImplKinds, map[string]worker.JobImplementation{
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
 			KojiServers: kojiServers,
 		},
@@ -283,181 +278,16 @@ func NewWorker(config *workerConfig, unix bool, address, cacheDir string) (*Work
 	return &w, nil
 }
 
-// Regularly ask osbuild-composer if the compose we're currently working on was
-// canceled and cancel the job context if it was.
-func WatchJob(ctx context.Context, job worker.Job, cancelRun context.CancelFunc) {
-	for {
-		select {
-		case <-time.After(15 * time.Second):
-			canceled, err := job.Canceled()
-			if err == nil && canceled {
-				cancelRun()
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-// protect an AWS instance from scaling and/or terminating.
-func setProtection(protected bool) {
-	// create a new session
-	awsSession, err := session.NewSession()
-	if err != nil {
-		logrus.Debugf("Error getting an AWS session, %s", err)
-		return
-	}
-
-	// get the identity for the instanceID
-	identity, err := ec2metadata.New(awsSession).GetInstanceIdentityDocument()
-	if err != nil {
-		logrus.Debugf("Error getting the identity document, %s", err)
-		return
-	}
-
-	svc := autoscaling.New(awsSession, aws.NewConfig().WithRegion(identity.Region))
-
-	// get the autoscaling group info for the auto scaling group name
-	asInstanceInput := &autoscaling.DescribeAutoScalingInstancesInput{
-		InstanceIds: []*string{
-			aws.String(identity.InstanceID),
-		},
-	}
-	asInstanceOutput, err := svc.DescribeAutoScalingInstances(asInstanceInput)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			logrus.Warningf("Error getting the Autoscaling instances: %s %s", aerr.Code(), aerr.Error())
-		} else {
-			logrus.Errorf("Error getting the Autoscaling instances: unknown, %s", err)
-		}
-		return
-	}
-	if len(asInstanceOutput.AutoScalingInstances) == 0 {
-		logrus.Info("No Autoscaling instace is defined")
-		return
-	}
-
-	// make the request to protect (or unprotect) the instance
-	input := &autoscaling.SetInstanceProtectionInput{
-		AutoScalingGroupName: asInstanceOutput.AutoScalingInstances[0].AutoScalingGroupName,
-		InstanceIds: []*string{
-			aws.String(identity.InstanceID),
-		},
-		ProtectedFromScaleIn: aws.Bool(protected),
-	}
-	_, err = svc.SetInstanceProtection(input)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			logrus.Warningf("Error protecting instance: %s %s", aerr.Code(), aerr.Error())
-		} else {
-			logrus.Errorf("Error protecting instance: unknown, %s", err)
-		}
-		return
-	}
-	if protected {
-		logrus.Info("Instance protected")
-	} else {
-		logrus.Info("Instance protection removed")
-	}
-}
-
-func RunJob(ctx context.Context, job worker.Job, impl JobImplementation) error {
-	// Depsolve requests needs reactivity, since setting the protection can take up to 6s to timeout if the worker isn't
-	// in an AWS env, disable this setting for them.
-	if job.Type() != worker.JobTypeDepsolve {
-		setProtection(true)
-		defer setProtection(false)
-	}
-
-	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type())
-
-	watcherCtx, cancelWatcher := context.WithCancel(ctx)
-	defer cancelWatcher()
-	runCtx, cancelRun := context.WithCancel(ctx)
-	defer cancelRun()
-
-	go WatchJob(watcherCtx, job, cancelRun)
-
-	err, result := impl.Run(runCtx, job)
-	select {
-	case <-ctx.Done():
-		// The worker is shutting down, don't report a partial result.
-		// The job will be requeued by composer once the heartbeat times out.
-		logrus.Warnf("Worker interrupted while running job '%s' (%s). Ignoring result", job.Id(), job.Type())
-	case <-runCtx.Done():
-		// Composer cancelled the job.
-		logrus.Infof("Job '%s' (%s) cancelled remotely. Ignoring result", job.Id(), job.Type())
-	default:
-		if err == nil {
-			logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type())
-		} else {
-			logrus.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err)
-		}
-		if result != nil {
-			err = job.Update(result)
-			if err != nil {
-				logrus.Warnf("Error reporting job result for '%s' (%s): %v", job.Id(), job.Type(), err)
-			}
-		}
-	}
-
-	return nil
-}
-
-// Requests and runs 1 job of specified type(s)
-// Returning an error here will result in the worker backing off for a while and retrying
-func RequestAndRunJob(ctx context.Context, client *worker.Client, jobImpls map[string]JobImplementation) error {
-	acceptedJobTypes := []string{}
-	for jt := range jobImpls {
-		acceptedJobTypes = append(acceptedJobTypes, jt)
-	}
-
-	logrus.Debug("Waiting for a new job...")
-	job, err := client.RequestJob(acceptedJobTypes, common.CurrentArch())
-	if err == worker.ErrClientRequestJobTimeout {
-		logrus.Debugf("Requesting job timed out: %v", err)
-		return nil
-	}
-	if err != nil {
-		logrus.Errorf("Requesting job failed: %v", err)
-		return err
-	}
-
-	impl, exists := jobImpls[job.Type()]
-	if !exists {
-		logrus.Errorf("Ignoring job with unknown type %s", job.Type())
-		return err
-	}
-
-	err = RunJob(ctx, job, impl)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (worker *Worker) Start() error {
+func (w *Worker) Start() error {
 	// don't schedule new jobs after we receive SIGTERM
 	jobCtx, jobCtxCancel := context.WithCancel(context.Background())
 
-	for _, jobImpls := range worker.jobImplKinds {
-		go func(impls map[string]JobImplementation) {
-			for {
-				err := RequestAndRunJob(jobCtx, worker.client, impls)
-				if err != nil {
-					logrus.Warn("Received error from RequestAndRunJob, backing off")
-					time.Sleep(backoffDuration)
-				}
+	// async protect / unprotect the instances
+	ip := instanceprotector.NewInstanceProtector(10*time.Second, time.Minute, 1024, awscloud.NewAWSInstanceProtector())
+	go ip.Start(jobCtx)
 
-				select {
-				case <-jobCtx.Done():
-					return
-				default:
-					continue
-				}
-			}
-		}(jobImpls)
+	for _, jobImpls := range w.jobImplKinds {
+		go w.client.Start(jobCtx, backoffDuration, ip, common.CurrentArch(), jobImpls)
 	}
 
 	sigint := make(chan os.Signal, 1)

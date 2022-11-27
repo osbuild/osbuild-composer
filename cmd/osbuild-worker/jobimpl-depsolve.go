@@ -34,7 +34,7 @@ func (impl *DepsolveJobImpl) depsolve(ctx context.Context, packageSets map[strin
 	return depsolvedSets, nil
 }
 
-func (impl *DepsolveJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
+func (impl *DepsolveJobImpl) Run(ctx context.Context, job *worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	var args worker.DepsolveJob
 	err := job.Args(&args)

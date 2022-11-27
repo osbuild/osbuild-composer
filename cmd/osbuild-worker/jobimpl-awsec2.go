@@ -23,7 +23,7 @@ type AWSEC2CopyJobImpl struct {
 	AWSCreds string
 }
 
-func (impl *AWSEC2CopyJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
+func (impl *AWSEC2CopyJobImpl) Run(ctx context.Context, job *worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	result := worker.AWSEC2CopyJobResult{}
 
@@ -69,7 +69,7 @@ type AWSEC2ShareJobImpl struct {
 	AWSCreds string
 }
 
-func (impl *AWSEC2ShareJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
+func (impl *AWSEC2ShareJobImpl) Run(ctx context.Context, job *worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	result := worker.AWSEC2ShareJobResult{}
 

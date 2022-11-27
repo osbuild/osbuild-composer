@@ -48,7 +48,7 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 	return buildInfo.Token, uint64(buildInfo.BuildID), nil
 }
 
-func (impl *KojiInitJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
+func (impl *KojiInitJobImpl) Run(ctx context.Context, job *worker.Job) (interface{}, error) {
 	var args worker.KojiInitJob
 	err := job.Args(&args)
 	if err != nil {

@@ -254,7 +254,7 @@ func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions
 	return client, nil
 }
 
-func (impl *OSBuildJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
+func (impl *OSBuildJobImpl) Run(ctx context.Context, job *worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id().String())
 	// Initialize variable needed for reporting back to osbuild-composer.
 	var osbuildJobResult *worker.OSBuildJobResult = &worker.OSBuildJobResult{
@@ -413,7 +413,7 @@ func (impl *OSBuildJobImpl) Run(ctx context.Context, job worker.Job) (interface{
 				break
 			}
 			defer f.Close()
-			err = job.UploadArtifact(jobTarget.ImageName, f)
+			err = job.UploadArtifact(ctx, jobTarget.ImageName, f)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break

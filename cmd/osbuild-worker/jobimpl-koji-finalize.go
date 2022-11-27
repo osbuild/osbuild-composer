@@ -84,7 +84,7 @@ func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token stri
 	return k.CGFailBuild(buildID, token)
 }
 
-func (impl *KojiFinalizeJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
+func (impl *KojiFinalizeJobImpl) Run(ctx context.Context, job *worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id().String())
 
 	// initialize the result variable to be used to report status back to composer
@@ -216,7 +216,7 @@ func (impl *KojiFinalizeJobImpl) Run(ctx context.Context, job worker.Job) (inter
 
 // Extracts dynamic args of the koji-finalize job. Returns an error if they
 // cannot be unmarshalled.
-func extractDynamicArgs(job worker.Job) (*worker.KojiInitJobResult, []worker.OSBuildJobResult, error) {
+func extractDynamicArgs(job *worker.Job) (*worker.KojiInitJobResult, []worker.OSBuildJobResult, error) {
 	var kojiInitResult worker.KojiInitJobResult
 	err := job.DynamicArgs(0, &kojiInitResult)
 	if err != nil {

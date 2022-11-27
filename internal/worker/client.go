@@ -12,15 +12,19 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 
+	"github.com/osbuild/osbuild-composer/internal/cloud/instanceprotector"
 	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
 type Client struct {
 	server       *url.URL
 	requester    *http.Client
+	heartbeat    time.Duration
 	offlineToken string
 	oAuthURL     string
 	accessToken  string
@@ -32,6 +36,7 @@ type Client struct {
 
 type ClientConfig struct {
 	BaseURL      string
+	Heartbeat    time.Duration
 	TlsConfig    *tls.Config
 	OfflineToken string
 	OAuthURL     string
@@ -41,20 +46,14 @@ type ClientConfig struct {
 	ProxyURL     string
 }
 
-type Job interface {
-	Id() uuid.UUID
-	Type() string
-	Args(args interface{}) error
-	DynamicArgs(i int, args interface{}) error
-	NDynamicArgs() int
-	Update(result interface{}) error
-	Canceled() (bool, error)
-	UploadArtifact(name string, reader io.Reader) error
+// Represents the implementation of a job type as defined by the worker API.
+type JobImplementation interface {
+	Run(ctx context.Context, job *Job) (interface{}, error)
 }
 
 var ErrClientRequestJobTimeout = errors.New("Dequeue timed out, retry")
 
-type job struct {
+type Job struct {
 	client           *Client
 	id               uuid.UUID
 	location         string
@@ -111,6 +110,7 @@ func NewClient(conf ClientConfig) (*Client, error) {
 	return &Client{
 		server:       server,
 		requester:    requester,
+		heartbeat:    conf.Heartbeat,
 		offlineToken: conf.OfflineToken,
 		oAuthURL:     conf.OAuthURL,
 		clientId:     conf.ClientId,
@@ -176,14 +176,14 @@ func (c *Client) refreshAccessToken() error {
 	return nil
 }
 
-func (c *Client) NewRequest(method, url string, headers map[string]string, body io.Reader) (*http.Response, error) {
+func (c *Client) newRequest(ctx context.Context, method, url string, headers map[string]string, body io.Reader) (*http.Response, error) {
 	token := func() string {
 		c.tokenMu.RLock()
 		defer c.tokenMu.RUnlock()
 		return c.accessToken
 	}
 
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +213,7 @@ func (c *Client) NewRequest(method, url string, headers map[string]string, body 
 	return resp, err
 }
 
-func (c *Client) RequestJob(types []string, arch string) (Job, error) {
+func (c *Client) requestJob(ctx context.Context, types []string, arch string) (*Job, error) {
 	url, err := c.server.Parse("jobs")
 	if err != nil {
 		// This only happens when "jobs" cannot be parsed.
@@ -229,7 +229,7 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 		panic(err)
 	}
 
-	response, err := c.NewRequest("POST", url.String(), map[string]string{"Content-Type": "application/json"}, &buf)
+	response, err := c.newRequest(ctx, "POST", url.String(), map[string]string{"Content-Type": "application/json"}, &buf)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 		dynamicArgs = *jr.DynamicArgs
 	}
 
-	return &job{
+	return &Job{
 		client:           c,
 		id:               jobId,
 		jobType:          jr.Type,
@@ -283,15 +283,123 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 	}, nil
 }
 
-func (j *job) Id() uuid.UUID {
+// Regularly ask osbuild-composer if the compose we're currently working on was
+// canceled and cancel the job context if it was.
+func (job *Job) watch(ctx context.Context, heartbeat time.Duration, cancelRun context.CancelFunc) {
+	if heartbeat == 0 {
+		return
+	}
+
+	for {
+		select {
+		case <-time.After(heartbeat):
+			canceled, err := job.Canceled(ctx)
+			if err == nil && canceled {
+				cancelRun()
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (job *Job) run(ctx context.Context, heartbeat time.Duration, ip *instanceprotector.InstanceProtector, impl JobImplementation) error {
+	// request the VM running the job not be shut down until we finish
+	ip.Protect()
+	defer ip.Unprotect()
+
+	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type())
+
+	watcherCtx, cancelWatcher := context.WithCancel(ctx)
+	defer cancelWatcher()
+	runCtx, cancelRun := context.WithCancel(ctx)
+	defer cancelRun()
+
+	go job.watch(watcherCtx, heartbeat, cancelRun)
+
+	result, err := impl.Run(runCtx, job)
+	select {
+	case <-ctx.Done():
+		// The worker is shutting down, don't report a partial result.
+		// The job will be requeued by composer once the heartbeat times out.
+		logrus.Warnf("Worker interrupted while running job '%s' (%s). Ignoring result", job.Id(), job.Type())
+	case <-runCtx.Done():
+		// Composer cancelled the job.
+		logrus.Infof("Job '%s' (%s) cancelled remotely. Ignoring result", job.Id(), job.Type())
+	default:
+		if err == nil {
+			logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type())
+		} else {
+			logrus.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err)
+		}
+		if result != nil {
+			err = job.finish(ctx, result)
+			if err != nil {
+				logrus.Warnf("Error reporting job result for '%s' (%s): %v", job.Id(), job.Type(), err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// Requests and runs 1 job of specified type(s)
+// Returning an error here will result in the worker backing off for a while and retrying
+func (c *Client) requestAndRunJob(ctx context.Context, ip *instanceprotector.InstanceProtector, arch string, jobImpls map[string]JobImplementation) error {
+	acceptedJobTypes := []string{}
+	for jt := range jobImpls {
+		acceptedJobTypes = append(acceptedJobTypes, jt)
+	}
+
+	logrus.Debug("Waiting for a new job...")
+	job, err := c.requestJob(ctx, acceptedJobTypes, arch)
+	if err != nil {
+		if errors.Is(err, ErrClientRequestJobTimeout) {
+			logrus.Debugf("Requesting job timed out: %v", err)
+			return nil
+		} else if errors.Is(err, context.Canceled) {
+			logrus.Debugf("Requesting job canceled: %v", err)
+		} else {
+			logrus.Errorf("Requesting job failed: %v", err)
+		}
+		return err
+	}
+
+	impl, exists := jobImpls[job.Type()]
+	if !exists {
+		logrus.Errorf("Ignoring job with unknown type %s", job.Type())
+		return err
+	}
+
+	err = job.run(ctx, c.heartbeat, ip, impl)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (client *Client) Start(ctx context.Context, backoffDuration time.Duration, ip *instanceprotector.InstanceProtector, arch string, impls map[string]JobImplementation) {
+	for {
+		err := client.requestAndRunJob(ctx, ip, arch, impls)
+		if errors.Is(err, context.Canceled) {
+			return
+		} else if err != nil {
+			logrus.Warn("Received error from RequestAndRunJob, backing off")
+			time.Sleep(backoffDuration)
+		}
+	}
+}
+
+func (j *Job) Id() uuid.UUID {
 	return j.id
 }
 
-func (j *job) Type() string {
+func (j *Job) Type() string {
 	return j.jobType
 }
 
-func (j *job) Args(args interface{}) error {
+func (j *Job) Args(args interface{}) error {
 	err := json.Unmarshal(j.args, args)
 	if err != nil {
 		return fmt.Errorf("error parsing job arguments: %v", err)
@@ -299,11 +407,11 @@ func (j *job) Args(args interface{}) error {
 	return nil
 }
 
-func (j *job) NDynamicArgs() int {
+func (j *Job) NDynamicArgs() int {
 	return len(j.dynamicArgs)
 }
 
-func (j *job) DynamicArgs(i int, args interface{}) error {
+func (j *Job) DynamicArgs(i int, args interface{}) error {
 	err := json.Unmarshal(j.dynamicArgs[i], args)
 	if err != nil {
 		return fmt.Errorf("error parsing job arguments: %v", err)
@@ -311,7 +419,7 @@ func (j *job) DynamicArgs(i int, args interface{}) error {
 	return nil
 }
 
-func (j *job) Update(result interface{}) error {
+func (j *Job) finish(ctx context.Context, result interface{}) error {
 	var buf bytes.Buffer
 	err := json.NewEncoder(&buf).Encode(updateJobRequest{
 		Result: result,
@@ -320,7 +428,7 @@ func (j *job) Update(result interface{}) error {
 		panic(err)
 	}
 
-	response, err := j.client.NewRequest("PATCH", j.location, map[string]string{"Content-Type": "application/json"}, &buf)
+	response, err := j.client.newRequest(ctx, "PATCH", j.location, map[string]string{"Content-Type": "application/json"}, &buf)
 	if err != nil {
 		return fmt.Errorf("error fetching job info: %v", err)
 	}
@@ -333,8 +441,8 @@ func (j *job) Update(result interface{}) error {
 	return nil
 }
 
-func (j *job) Canceled() (bool, error) {
-	response, err := j.client.NewRequest("GET", j.location, map[string]string{}, nil)
+func (j *Job) Canceled(ctx context.Context) (bool, error) {
+	response, err := j.client.newRequest(ctx, "GET", j.location, map[string]string{}, nil)
 	if err != nil {
 		return false, fmt.Errorf("error fetching job info: %v", err)
 	}
@@ -353,7 +461,7 @@ func (j *job) Canceled() (bool, error) {
 	return jr.Canceled, nil
 }
 
-func (j *job) UploadArtifact(name string, reader io.Reader) error {
+func (j *Job) UploadArtifact(ctx context.Context, name string, reader io.Reader) error {
 	if j.artifactLocation == "" {
 		return fmt.Errorf("server does not accept artifacts for this job")
 	}
@@ -368,7 +476,7 @@ func (j *job) UploadArtifact(name string, reader io.Reader) error {
 		panic(err)
 	}
 
-	response, err := j.client.NewRequest("PUT", loc.String(), map[string]string{"Content-Type": "application/octet-stream"}, reader)
+	response, err := j.client.newRequest(ctx, "PUT", loc.String(), map[string]string{"Content-Type": "application/octet-stream"}, reader)
 	if err != nil {
 		return fmt.Errorf("error uploading artifact: %v", err)
 	}

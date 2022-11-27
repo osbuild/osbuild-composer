@@ -14,7 +14,7 @@ type ContainerResolveJobImpl struct {
 	AuthFilePath string
 }
 
-func (impl *ContainerResolveJobImpl) Run(ctx context.Context, job worker.Job) (interface{}, error) {
+func (impl *ContainerResolveJobImpl) Run(ctx context.Context, job *worker.Job) (interface{}, error) {
 	logWithId := logrus.WithField("jobId", job.Id())
 	var args worker.ContainerResolveJob
 	err := job.Args(&args)
