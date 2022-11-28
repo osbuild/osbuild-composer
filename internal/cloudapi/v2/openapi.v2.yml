@@ -778,6 +778,11 @@ components:
         - vsphere
     Repository:
       type: object
+      description: |
+        Repository configuration.
+        At least one of the 'baseurl', 'mirrorlist', 'metalink' properties must
+        be specified. If more of them are specified, the order of precedence is
+        the same as listed above.
       properties:
         rhsm:
           type: boolean
