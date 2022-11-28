@@ -19,7 +19,7 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "test/edge"
+      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     "blueprint": {
       "customizations": {
@@ -978,7 +978,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "test/edge": {
+                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
                     "ref": "test/edge"
                   }
                 }
@@ -3916,7 +3916,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "test/edge": {
+          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
             "remote": {
               "url": "http://edge.example.com/repo"
             }
