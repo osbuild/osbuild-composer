@@ -215,7 +215,7 @@
       "ostree": {
         "ref": "test/edge",
         "url": "http://edge.example.com/repo",
-        "parent": "test/edge"
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       },
       "blueprint": {}
     },
@@ -235,7 +235,7 @@
       "ostree": {
         "ref": "test/edge",
         "url": "http://edge.example.com/repo",
-        "parent": "test/edge"
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       },
       "blueprint": {
         "name": "edge-installer-users",
@@ -340,7 +340,7 @@
       "ostree": {
         "ref": "test/iot",
         "url": "http://iot.example.com/repo",
-        "parent": "test/iot"
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       },
       "blueprint": {}
     },
@@ -357,7 +357,7 @@
       "ostree": {
         "ref": "test/iot",
         "url": "http://iot.example.com/repo",
-        "parent": "test/iot"
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       },
       "blueprint": {
         "name": "iot-installer-users",
@@ -538,7 +538,7 @@
       "ostree": {
         "ref": "test/edge",
         "url": "http://edge.example.com/repo",
-        "parent": "test/edge"
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       },
       "blueprint": {}
     },
@@ -555,7 +555,7 @@
       "ostree": {
         "ref": "test/edge",
         "url": "http://edge.example.com/repo",
-        "parent": "test/edge"
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       },
       "blueprint": {
         "name": "edge-installer-users",
@@ -608,7 +608,7 @@
       "ostree": {
         "ref": "test/edge",
         "url": "http://edge.example.com/repo",
-        "parent": "test/edge"
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       },
       "blueprint": {
         "customizations": {
@@ -641,7 +641,7 @@
       "ostree": {
         "ref": "test/edge",
         "url": "http://edge.example.com/repo",
-        "parent": "test/edge"
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
       },
       "blueprint": {}
     },

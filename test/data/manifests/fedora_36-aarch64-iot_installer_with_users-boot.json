@@ -35,7 +35,7 @@
     "ostree": {
       "ref": "test/iot",
       "url": "http://iot.example.com/repo",
-      "parent": "test/iot"
+      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     "blueprint": {
       "name": "iot-installer-users",
@@ -10816,7 +10816,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "test/iot": {
+                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
                     "ref": "test/iot"
                   }
                 }
@@ -13917,7 +13917,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "test/iot": {
+          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
             "remote": {
               "url": "http://iot.example.com/repo"
             }
