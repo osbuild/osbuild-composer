@@ -46,7 +46,10 @@ type Anaconda struct {
 	InteractiveDefaults *AnacondaInteractiveDefaults
 
 	// Additional anaconda modules to enable
-	AdditionalModules []string
+	AdditionalAnacondaModules []string
+
+	// Additional dracut modules to enable
+	AdditionalDracutModules []string
 }
 
 // NewAnaconda creates an anaconda pipeline object. repos and packages
@@ -195,12 +198,14 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 
 	pipeline.AddStage(osbuild.NewUsersStage(usersStageOptions))
 	// always enable users module in anaconda
-	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(true, p.AdditionalModules)))
+	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(true, p.AdditionalAnacondaModules)))
 	pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
 		BaseArch: p.platform.GetArch().String(),
 	}))
-	pipeline.AddStage(osbuild.NewDracutStage(dracutStageOptions(p.kernelVer, p.Biosdevname, []string{
+
+	dracutModules := append(
+		p.AdditionalDracutModules,
 		"anaconda",
 		"rdma",
 		"rngd",
@@ -210,7 +215,8 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 		"iscsi",
 		"lunmask",
 		"nfs",
-	})))
+	)
+	pipeline.AddStage(osbuild.NewDracutStage(dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)))
 	pipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
 	if p.InteractiveDefaults != nil {

@@ -34,6 +34,8 @@ type CoreOSInstaller struct {
 	Biosdevname bool
 
 	FDO *fdo.Options
+
+	AdditionalDracutModules []string
 }
 
 // NewCoreOSInstaller creates an CoreOS installer pipeline object.
@@ -144,10 +146,14 @@ func (p *CoreOSInstaller) serialize() osbuild.Pipeline {
 		Final:   true,
 	}))
 	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "C.UTF-8"}))
-	dracutStageOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, []string{
+
+	dracutModules := append(
+		p.AdditionalDracutModules,
 		"coreos-installer",
 		"fdo",
-	})
+	)
+
+	dracutStageOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
 	if p.FDO != nil && p.FDO.DiunPubKeyRootCerts != "" {
 		pipeline.AddStage(osbuild.NewFDOStageForRootCerts(p.FDO.DiunPubKeyRootCerts))
 		dracutStageOptions.Install = []string{"/fdo_diun_pub_key_root_certs.pem"}
