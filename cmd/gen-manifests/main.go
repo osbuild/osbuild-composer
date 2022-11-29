@@ -46,6 +46,7 @@ type repository struct {
 	RHSM           bool     `json:"rhsm,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
+	PackageSets    []string `json:"package-sets,omitempty"`
 }
 
 type ostreeOptions struct {
