@@ -1459,6 +1459,9 @@
                     "id": "sha256:85bbb36deb440290998a34782c92db155d399d00dee10c156810b5e50ca0baed"
                   },
                   {
+                    "id": "sha256:2475aa4696c3eec24a69bd624c649683c2b5ac28b004e51757e67b875ed59283"
+                  },
+                  {
                     "id": "sha256:36be1ddc6748a7425fc9ee7aa3764ede57b2d0bc733e1d828a5375cd506d6cbc"
                   },
                   {
@@ -1597,6 +1600,9 @@
                     "id": "sha256:370108c2f1025d257f9a0e3bea075ae7edf6ed2e93f03e0c4d0838a261171a03"
                   },
                   {
+                    "id": "sha256:dade4d122e131bf529607f57873315ed555a9d3c9d4162379dd16f56da3f3756"
+                  },
+                  {
                     "id": "sha256:339116c6415c611943a78d8d1aa15104cec30ad7c2e49014e97538cb946fc445"
                   },
                   {
@@ -1613,6 +1619,9 @@
                   },
                   {
                     "id": "sha256:8de0339e02fae6983120ba46ecc1018b52bc9d309770b64933345de3ad956a9e"
+                  },
+                  {
+                    "id": "sha256:f0f8166ad49fe75e6e11c58d0e96348b51bb4aed7bfc8d0d280b628a2a36d8d1"
                   }
                 ]
               }
@@ -1907,6 +1916,9 @@
           },
           "sha256:21b7229992b9cb9fcc8c90d638dcb2c83adb52dd0d9ab67941e892caf4d96016": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220829/Packages/python3-gobject-base-3.40.1-5.el9.aarch64.rpm"
+          },
+          "sha256:2475aa4696c3eec24a69bd624c649683c2b5ac28b004e51757e67b875ed59283": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220829/Packages/ignition-2.13.0-1.el9.aarch64.rpm"
           },
           "sha256:254635c58f9dc2c0b33b1ab757707fcc402d1aa08862817c4d8e23ff3abe7046": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220829/Packages/criu-3.15-13.el9.aarch64.rpm"
@@ -2667,6 +2679,9 @@
           "sha256:da928c469d400e6576cf33ab80666b99c9a714bbb7657a6529b1b0fe0591b503": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220829/Packages/criu-libs-3.15-13.el9.aarch64.rpm"
           },
+          "sha256:dade4d122e131bf529607f57873315ed555a9d3c9d4162379dd16f56da3f3756": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220829/Packages/ssh-key-dir-0.1.3-2.el9_0.aarch64.rpm"
+          },
           "sha256:db9eb59805f25764549f8105825c987b7bd359a86624d4633dd5d4283959ed97": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220829/Packages/hostname-3.23-6.el9.aarch64.rpm"
           },
@@ -2759,6 +2774,9 @@
           },
           "sha256:f05030123425a5033bcca3f260313cafc199bc7bca57e9fb13c335bd087c35a7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220829/Packages/libxcrypt-4.4.18-3.el9.aarch64.rpm"
+          },
+          "sha256:f0f8166ad49fe75e6e11c58d0e96348b51bb4aed7bfc8d0d280b628a2a36d8d1": {
+            "url": "https://download.copr.fedorainfracloud.org/results/runcom/greenboot/centos-stream-9-aarch64/05067230-ignition-edge/ignition-edge-99-1.20221125gita3a8f0a.el9.aarch64.rpm"
           },
           "sha256:f193d9f0208477b420c650718f053b89691cba40edf6107185b13a0b27471e2c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220829/Packages/nss-sysinit-3.71.0-7.el9.aarch64.rpm"
@@ -7002,6 +7020,15 @@
         "checksum": "sha256:85bbb36deb440290998a34782c92db155d399d00dee10c156810b5e50ca0baed"
       },
       {
+        "name": "ignition",
+        "epoch": 0,
+        "version": "2.13.0",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220829/Packages/ignition-2.13.0-1.el9.aarch64.rpm",
+        "checksum": "sha256:2475aa4696c3eec24a69bd624c649683c2b5ac28b004e51757e67b875ed59283"
+      },
+      {
         "name": "jose",
         "epoch": 0,
         "version": "11",
@@ -7416,6 +7443,15 @@
         "checksum": "sha256:370108c2f1025d257f9a0e3bea075ae7edf6ed2e93f03e0c4d0838a261171a03"
       },
       {
+        "name": "ssh-key-dir",
+        "epoch": 0,
+        "version": "0.1.3",
+        "release": "2.el9_0",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220829/Packages/ssh-key-dir-0.1.3-2.el9_0.aarch64.rpm",
+        "checksum": "sha256:dade4d122e131bf529607f57873315ed555a9d3c9d4162379dd16f56da3f3756"
+      },
+      {
         "name": "tpm2-tools",
         "epoch": 0,
         "version": "5.0",
@@ -7468,6 +7504,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220829/Packages/yajl-2.1.0-20.el9.aarch64.rpm",
         "checksum": "sha256:8de0339e02fae6983120ba46ecc1018b52bc9d309770b64933345de3ad956a9e"
+      },
+      {
+        "name": "ignition-edge",
+        "epoch": 0,
+        "version": "99",
+        "release": "1.20221125gita3a8f0a.el9",
+        "arch": "aarch64",
+        "remote_location": "https://download.copr.fedorainfracloud.org/results/runcom/greenboot/centos-stream-9-aarch64/05067230-ignition-edge/ignition-edge-99-1.20221125gita3a8f0a.el9.aarch64.rpm",
+        "checksum": "sha256:f0f8166ad49fe75e6e11c58d0e96348b51bb4aed7bfc8d0d280b628a2a36d8d1"
       }
     ]
   },
