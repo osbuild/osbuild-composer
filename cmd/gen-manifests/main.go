@@ -121,6 +121,12 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			FetchChecksum: cr.OSTree.Parent,
 		}
 	}
+
+	// add RHSM fact to detect changes
+	options.Facts = &distro.FactsImageOptions{
+		ApiType: "test-manifest",
+	}
+
 	job := func(msgq chan string) (err error) {
 		defer func() {
 			msg := fmt.Sprintf("Finished job %s", filename)
