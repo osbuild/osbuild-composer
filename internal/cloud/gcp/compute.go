@@ -18,7 +18,9 @@ var GuestOsFeaturesRHEL8 []*computepb.GuestOsFeature = []*computepb.GuestOsFeatu
 	{Type: common.StringToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
 }
 
-// Guest OS Features for RHEL9 images
+// Guest OS Features for RHEL9 images.  Note that if you update this, also
+// consider changing the code in https://github.com/coreos/coreos-assembler/blob/0083086c4720b602b8243effb85c0a1f73f013dd/mantle/platform/api/gcloud/image.go#L105
+// for RHEL CoreOS which uses coreos-assembler today.
 var GuestOsFeaturesRHEL9 []*computepb.GuestOsFeature = []*computepb.GuestOsFeature{
 	{Type: common.StringToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
 	{Type: common.StringToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
