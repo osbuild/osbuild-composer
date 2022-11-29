@@ -366,9 +366,6 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"greenboot-default-health-checks",
 			"fdo-client",
 			"fdo-owner-cli",
-			"ignition",
-			"ignition-edge",
-			"ssh-key-dir",
 		},
 		Exclude: []string{
 			"rng-tools",
@@ -383,6 +380,10 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 
 	case distro.Aarch64ArchName:
 		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
+	}
+
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") {
+		ps.Include = append(ps.Include, "ignition", "ignition-edge", "ssh-key-dir")
 	}
 
 	return ps
