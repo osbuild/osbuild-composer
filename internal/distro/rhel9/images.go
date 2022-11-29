@@ -283,6 +283,7 @@ func edgeInstallerImage(workload workload.Workload,
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
 	img.SquashfsCompression = "xz"
+	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
 
 	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
@@ -356,6 +357,8 @@ func imageInstallerImage(workload workload.Workload,
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
 
 	img.SquashfsCompression = "xz"
 

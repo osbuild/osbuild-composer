@@ -34,6 +34,8 @@ type OSTreeInstaller struct {
 	Commit ostree.CommitSpec
 
 	Filename string
+
+	AdditionalDracutModules []string
 }
 
 func NewOSTreeInstaller(commit ostree.CommitSpec) *OSTreeInstaller {
@@ -64,6 +66,7 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
+	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 
 	rootfsPartitionTable := &disk.PartitionTable{
 		Size: 20 * common.MebiByte,
