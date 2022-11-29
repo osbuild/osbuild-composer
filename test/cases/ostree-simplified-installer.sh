@@ -38,6 +38,7 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
       <host mac='34:49:22:B0:83:30' name='vm-httpboot' ip='192.168.100.50'/>
       <host mac='34:49:22:B0:83:31' name='vm-uefi-01' ip='192.168.100.51'/>
       <host mac='34:49:22:B0:83:32' name='vm-uefi-02' ip='192.168.100.52'/>
+      <host mac='34:49:22:B0:83:33' name='vm-ignition' ip='192.168.100.53'/>
     </dhcp>
   </ip>
   <dnsmasq:options>
@@ -72,6 +73,7 @@ IMAGE_KEY="edge-${TEST_UUID}"
 HTTP_GUEST_ADDRESS=192.168.100.50
 PUB_KEY_GUEST_ADDRESS=192.168.100.51
 ROOT_CERT_GUEST_ADDRESS=192.168.100.52
+IGNITION_GUEST_ADDRESS=192.168.100.53
 PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 STAGE_REPO_ADDRESS=192.168.200.1
@@ -643,7 +645,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -765,7 +767,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="true" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 greenprint "🧹 Clean up VM"
@@ -777,13 +779,90 @@ sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
 
 ##################################################################
 ##
-## Build edge-simplified-installer without FDO 
+## Build edge-simplified-installer without FDO & with Ignition
 ##
 ##################################################################
 
+# TODO(runcom): change this to butane to check that too
+# also, write the very same test for ostree-raw-image
+IGN_PATH="${HTTPD_PATH}/ignition"
+sudo mkdir -p ${IGN_PATH}
+IGN_CONFIG_PATH="${IGN_PATH}/config.ign"
+sudo tee "$IGN_CONFIG_PATH" > /dev/null << EOF
+{
+  "ignition": {
+    "config": {
+      "merge": [
+        {
+          "source": "http://192.168.100.1/ignition/sample.ign"
+        }
+      ]
+    },
+    "timeouts": {
+      "httpTotal": 30
+    },
+    "version": "3.3.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "groups": [
+          "wheel"
+        ],
+        "name": "core",
+        "passwordHash": "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl.",
+        "sshAuthorizedKeys": [
+          "${SSH_KEY_PUB}"
+        ]
+      }
+    ]
+  }
+}
+EOF
+
+IGN_CONFIG_SAMPLE_PATH="${IGN_PATH}/sample.ign"
+sudo tee "$IGN_CONFIG_SAMPLE_PATH" > /dev/null << EOF
+{
+  "ignition": {
+    "version": "3.3.0"
+  },
+  "storage": {
+    "files": [
+      {
+        "path": "/usr/local/bin/startup.sh",
+        "contents": {
+          "compression": "",
+          "source": "data:;base64,IyEvYmluL2Jhc2gKZWNobyAiSGVsbG8sIFdvcmxkISIK"
+        },
+        "mode": 493
+      }
+    ]
+  },
+  "systemd": {
+    "units": [
+      {
+        "contents": "[Unit]\nDescription=A hello world unit!\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/local/bin/startup.sh\n[Install]\nWantedBy=multi-user.target\n",
+        "enabled": true,
+        "name": "hello.service"
+      },
+      {
+        "dropins": [
+          {
+            "contents": "[Service]\nEnvironment=LOG_LEVEL=trace\n",
+            "name": "log_trace.conf"
+          }
+        ],
+        "name": "fdo-client-linuxapp.service"
+      }
+    ]
+  }
+}
+EOF
+sudo chmod -R +r ${HTTPD_PATH}/ignition/*
+
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "simplified_iso_without_fdo"
-description = "A rhel-edge simplified-installer image without FDO"
+description = "A rhel-edge simplified-installer image without FDO with Ignition"
 version = "0.0.1"
 modules = []
 groups = []
@@ -791,6 +870,8 @@ groups = []
 [customizations]
 installation_device = "/dev/vda"
 
+[customizations.kernel]
+append = "ignition.config.url=http://192.168.100.1/ignition/config.ign"
 EOF
 
 greenprint "📄 simplified_iso_without_fdo blueprint"
@@ -828,7 +909,7 @@ sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_without_fdo"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram "${MEMORY}" \
                    --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:32 \
+                   --network network=integration,mac=34:49:22:B0:83:33 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
@@ -852,7 +933,7 @@ sudo virsh start "${IMAGE_KEY}-simplified_iso_without_fdo"
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
 for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $ROOT_CERT_GUEST_ADDRESS)"
+    RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -869,20 +950,41 @@ INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
-${ROOT_CERT_GUEST_ADDRESS}
+${IGNITION_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=core
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
+# now try with blueprint user
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${IGNITION_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 ########################
@@ -979,8 +1081,8 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
 
 greenprint "🗳 Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${ROOT_CERT_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${ROOT_CERT_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${IGNITION_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${IGNITION_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -989,7 +1091,7 @@ sleep 10
 greenprint "🛃 Checking for SSH is ready to go"
 # shellcheck disable=SC2034  # Unused variables left for readability
 for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $ROOT_CERT_GUEST_ADDRESS)"
+    RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -1000,23 +1102,46 @@ done
 # Check ostree upgrade result
 check_result
 
+# try with core user
+
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
-${ROOT_CERT_GUEST_ADDRESS}
+${IGNITION_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=core
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
+# now try with blueprint user
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${IGNITION_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
