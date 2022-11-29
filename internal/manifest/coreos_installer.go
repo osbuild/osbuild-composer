@@ -3,7 +3,7 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/fdo"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -33,7 +33,7 @@ type CoreOSInstaller struct {
 	// the naming of network devices on the target system.
 	Biosdevname bool
 
-	FDO *blueprint.FDOCustomization
+	FDO *fdo.Options
 }
 
 // NewCoreOSInstaller creates an CoreOS installer pipeline object.
