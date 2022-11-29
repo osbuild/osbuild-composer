@@ -208,10 +208,9 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		})
 	}
 
-	var result worker.KojiFinalizeJobResult
 	err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
 	if err != nil {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error(), nil)
+		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error(), nil)
 		return err
 	}
 
