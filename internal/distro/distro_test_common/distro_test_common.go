@@ -105,6 +105,9 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			options := distro.ImageOptions{
 				Size:   imageType.Size(0),
 				OSTree: ostreeOptions,
+				Facts: &distro.FactsImageOptions{
+					ApiType: "test-manifest",
+				},
 			}
 
 			var imgPackageSpecSets map[string][]rpmmd.PackageSpec
