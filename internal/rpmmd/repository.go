@@ -178,34 +178,6 @@ type PackageInfo struct {
 	Dependencies []PackageSpec  `json:"dependencies,omitempty"`
 }
 
-type RPMMD interface {
-	// FetchMetadata returns all metadata about the repositories we use in the code. Specifically it is a
-	// list of packages and dictionary of checksums of the repositories.
-	FetchMetadata(repos []RepoConfig, modulePlatformID, arch, releasever string) (PackageList, map[string]string, error)
-
-	// Depsolve takes a list of required content (specs), explicitly unwanted content (excludeSpecs), list
-	// or repositories, and platform ID for modularity. It returns a list of all packages (with solved
-	// dependencies) that will be installed into the system.
-	//
-	// NOTE: Kept for legacy purposes (Weldr). New code should default to using DepsolvePackageSets().
-	Depsolve(packageSet PackageSet, repos []RepoConfig, modulePlatformID, arch, releasever string) ([]PackageSpec, map[string]string, error)
-
-	// DepsolvePackageSets takes a map of package sets chains, which should be depsolved as separate transactions,
-	// a map of package sets (included and excluded), a list of common and package-set-specific repositories,
-	// platform ID for modularity, architecture and release version. It returns a map of Package Specs, depsolved
-	// in a chain or alone, as defined based on the provided arguments.
-	DepsolvePackageSets(packageSetsChains map[string][]string, packageSets map[string]PackageSet, repos []RepoConfig, packageSetsRepos map[string][]RepoConfig, modulePlatformID, arch, releasever string) (map[string][]PackageSpec, error)
-}
-
-type DNFError struct {
-	Kind   string `json:"kind"`
-	Reason string `json:"reason"`
-}
-
-func (err *DNFError) Error() string {
-	return fmt.Sprintf("DNF error occured: %s: %s", err.Kind, err.Reason)
-}
-
 type RepositoryError struct {
 	msg string
 }
