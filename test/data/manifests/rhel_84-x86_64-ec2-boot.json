@@ -2267,6 +2267,14 @@
             }
           },
           {
+            "type": "org.osbuild.rhsm.facts",
+            "options": {
+              "facts": {
+                "image-builder.osbuild-composer.api-type": "test-manifest"
+              }
+            }
+          },
+          {
             "type": "org.osbuild.selinux",
             "options": {
               "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
