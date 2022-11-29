@@ -129,6 +129,10 @@ func osCustomizations(
 		)
 	}
 
+	if t.arch.distro.isRHEL() && options.Facts != nil {
+		osc.FactAPIType = options.Facts.ApiType
+	}
+
 	osc.Grub2Config = imageConfig.Grub2Config
 	osc.Sysconfig = imageConfig.Sysconfig
 	osc.SystemdLogind = imageConfig.SystemdLogind
