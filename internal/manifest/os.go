@@ -95,6 +95,7 @@ type OSCustomizations struct {
 	WAAgentConfig       *osbuild.WAAgentConfStageOptions
 	UdevRules           *osbuild.UdevRulesStageOptions
 	LeapSecTZ           *string
+	FactAPIType         string
 
 	Subscription *distro.SubscriptionImageOptions
 	RHSMConfig   map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
@@ -519,6 +520,14 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	if p.OpenSCAPConfig != nil {
 		pipeline.AddStage(osbuild.NewOscapRemediationStage(p.OpenSCAPConfig))
+	}
+
+	if p.FactAPIType != "" {
+		pipeline.AddStage(osbuild.NewRHSMFactsStage(&osbuild.RHSMFactsStageOptions{
+			Facts: osbuild.RHSMFacts{
+				ApiType: p.FactAPIType,
+			},
+		}))
 	}
 
 	if p.SElinux != "" {
