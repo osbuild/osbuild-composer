@@ -178,14 +178,6 @@ type PackageInfo struct {
 	Dependencies []PackageSpec  `json:"dependencies,omitempty"`
 }
 
-type RepositoryError struct {
-	msg string
-}
-
-func (re *RepositoryError) Error() string {
-	return re.msg
-}
-
 func GetVerStrFromPackageSpecList(pkgs []PackageSpec, packageName string) (string, error) {
 	for _, pkg := range pkgs {
 		if pkg.Name == packageName {
@@ -310,7 +302,7 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfi
 	}
 
 	if repoConfigs == nil {
-		return nil, &RepositoryError{"LoadRepositories failed: none of the provided paths contain distro configuration"}
+		return nil, fmt.Errorf("LoadRepositories failed: none of the provided paths contain distro configuration")
 	}
 
 	return repoConfigs, nil
