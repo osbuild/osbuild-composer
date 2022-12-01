@@ -113,7 +113,6 @@ var (
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     edgeSimplifiedInstallerBuildPackageSet,
 			installerPkgsKey: edgeSimplifiedInstallerPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
@@ -123,7 +122,7 @@ var (
 		rpmOstree:           true,
 		bootable:            true,
 		bootISO:             true,
-		pipelines:           edgeSimplifiedInstallerPipelines,
+		image:               edgeSimplifiedInstallerImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"image-tree", "image", "archive", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:             []string{"bootiso"},
