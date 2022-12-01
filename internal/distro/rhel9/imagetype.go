@@ -1,7 +1,6 @@
 package rhel9
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -14,9 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
@@ -44,8 +41,6 @@ const (
 
 type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.Spec, rng *rand.Rand) (image.ImageKind, error)
 
-type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error)
-
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
 type imageType struct {
@@ -65,7 +60,6 @@ type imageType struct {
 	buildPipelines     []string
 	payloadPipelines   []string
 	exports            []string
-	pipelines          pipelinesFunc
 	image              imageFunc
 
 	// bootISO: installable ISO
@@ -115,101 +109,6 @@ func (t *imageType) Size(size uint64) uint64 {
 	return size
 }
 
-func (t *imageType) getPackages(name string) rpmmd.PackageSet {
-	getter := t.packageSets[name]
-	if getter == nil {
-		return rpmmd.PackageSet{}
-	}
-
-	return getter(t)
-}
-
-func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
-	// TEMPORARY
-	// Use the new manifest generation function if the image type defines an
-	// imageFunc
-	// This is temporary until all image types are transitioned
-	if t.image != nil {
-		return t.PackageSetsNew(bp, options, repos)
-	}
-
-	// merge package sets that appear in the image type with the package sets
-	// of the same name from the distro and arch
-	mergedSets := make(map[string]rpmmd.PackageSet)
-
-	imageSets := t.packageSets
-
-	for name := range imageSets {
-		mergedSets[name] = t.getPackages(name)
-	}
-
-	if _, hasPackages := imageSets[osPkgsKey]; !hasPackages {
-		// should this be possible??
-		mergedSets[osPkgsKey] = rpmmd.PackageSet{}
-	}
-
-	// every image type must define a 'build' package set
-	if _, hasBuild := imageSets[buildPkgsKey]; !hasBuild {
-		panic(fmt.Sprintf("'%s' image type has no '%s' package set defined", t.name, buildPkgsKey))
-	}
-
-	// blueprint packages
-	bpPackages := bp.GetPackages()
-	timezone, _ := bp.Customizations.GetTimezoneSettings()
-	if timezone != nil {
-		bpPackages = append(bpPackages, "chrony")
-	}
-
-	// if we have file system customization that will need to a new mount point
-	// the layout is converted to LVM so we need to corresponding packages
-	if !t.rpmOstree {
-		archName := t.arch.Name()
-		pt := t.basePartitionTables[archName]
-		haveNewMountpoint := false
-
-		if fs := bp.Customizations.GetFilesystems(); fs != nil {
-			for i := 0; !haveNewMountpoint && i < len(fs); i++ {
-				haveNewMountpoint = !pt.ContainsMountpoint(fs[i].Mountpoint)
-			}
-		}
-
-		if haveNewMountpoint {
-			bpPackages = append(bpPackages, "lvm2")
-		}
-	}
-
-	// if we are embedding containers we need to have `skopeo` in the build root
-	if len(bp.Containers) > 0 {
-
-		extraPkgs := rpmmd.PackageSet{Include: []string{"skopeo"}}
-
-		if t.rpmOstree {
-			// for OSTree based images we need to configure the containers-storage.conf(5)
-			// via the org.osbuild.containers.storage.conf stage, which needs python3-toml
-			extraPkgs = extraPkgs.Append(rpmmd.PackageSet{Include: []string{"python3-toml"}})
-		}
-
-		mergedSets[buildPkgsKey] = mergedSets[buildPkgsKey].Append(extraPkgs)
-	}
-
-	// if oscap customizations are enabled we need to add
-	// `openscap-scanner` & `scap-security-guide` packages
-	// to build root
-	if bp.Customizations.GetOpenSCAP() != nil {
-		bpPackages = append(bpPackages, "openscap-scanner", "scap-security-guide")
-	}
-
-	// depsolve bp packages separately
-	// bp packages aren't restricted by exclude lists
-	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
-	kernel := bp.Customizations.GetKernel().Name
-
-	// add bp kernel to main OS package set to avoid duplicate kernels
-	mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kernel}})
-
-	return distro.MakePackageSetChains(t, mergedSets, repos)
-}
-
 func (t *imageType) BuildPipelines() []string {
 	return t.buildPipelines
 }
@@ -241,14 +140,6 @@ func (t *imageType) getBootType() distro.BootType {
 		bootType = t.bootType
 	}
 	return bootType
-}
-
-func (t *imageType) supportsUEFI() bool {
-	bootType := t.getBootType()
-	if bootType == distro.HybridBootType || bootType == distro.UEFIBootType {
-		return true
-	}
-	return false
 }
 
 func (t *imageType) getPartitionTable(
@@ -335,68 +226,6 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSpecSets map[string][]rpmmd.PackageSpec,
-	containers []container.Spec,
-	seed int64) (distro.Manifest, error) {
-
-	// TEMPORARY
-	// Use the new manifest generation function if the image type defines an
-	// imageFunc
-	// This is temporary until all image types are transitioned
-	if t.image != nil {
-		return t.ManifestNew(customizations, options, repos, packageSpecSets, containers, seed)
-	}
-
-	if err := t.checkOptions(customizations, options, containers); err != nil {
-		return distro.Manifest{}, err
-	}
-
-	source := rand.NewSource(seed)
-	// math/rand is good enough in this case
-	/* #nosec G404 */
-	rng := rand.New(source)
-
-	pipelines, err := t.pipelines(t, customizations, options, repos, packageSpecSets, containers, rng)
-	if err != nil {
-		return distro.Manifest{}, err
-	}
-
-	// flatten spec sets for sources
-	allPackageSpecs := make([]rpmmd.PackageSpec, 0)
-	for _, specs := range packageSpecSets {
-		allPackageSpecs = append(allPackageSpecs, specs...)
-	}
-
-	// handle OSTree commit inputs
-	var commits []ostree.CommitSpec
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
-		commit := ostree.CommitSpec{Checksum: options.OSTree.FetchChecksum, URL: options.OSTree.URL, ContentURL: options.OSTree.ContentURL}
-		if options.OSTree.RHSM {
-			commit.Secrets = "org.osbuild.rhsm.consumer"
-		}
-		commits = []ostree.CommitSpec{commit}
-	}
-
-	// handle inline sources
-	inlineData := []string{}
-
-	// FDO root certs, if any, are transmitted via an inline source
-	if fdo := customizations.GetFDO(); fdo != nil && fdo.DiunPubKeyRootCerts != "" {
-		inlineData = append(inlineData, fdo.DiunPubKeyRootCerts)
-	}
-
-	return json.Marshal(
-		osbuild.Manifest{
-			Version:   "2",
-			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(allPackageSpecs, commits, inlineData, containers),
-		},
-	)
-}
-
-func (t *imageType) ManifestNew(customizations *blueprint.Customizations,
-	options distro.ImageOptions,
-	repos []rpmmd.RepoConfig,
 	packageSets map[string][]rpmmd.PackageSpec,
 	containers []container.Spec,
 	seed int64) (distro.Manifest, error) {
@@ -416,7 +245,7 @@ func (t *imageType) ManifestNew(customizations *blueprint.Customizations,
 	return manifest.Serialize(packageSets)
 }
 
-func (t *imageType) PackageSetsNew(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
 	// merge package sets that appear in the image type with the package sets
 	// of the same name from the distro and arch
 	packageSets := make(map[string]rpmmd.PackageSet)

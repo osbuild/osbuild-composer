@@ -116,29 +116,6 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
-func installerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{
-				"isomd5sum",
-				"xorriso",
-			},
-		})
-}
-
-func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"squashfs-tools",
-		},
-	}
-
-	ps = ps.Append(installerBuildPackageSet(t))
-	ps = ps.Append(anacondaBootPackageSet(t))
-
-	return ps
-}
-
 // BOOT PACKAGE SETS
 
 func bootPackageSet(t *imageType) rpmmd.PackageSet {
