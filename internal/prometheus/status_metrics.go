@@ -14,7 +14,7 @@ func StatusRequestsCounter(subsystem string) *prometheus.CounterVec {
 		Namespace: Namespace,
 		Subsystem: subsystem,
 		Help:      "total number of http requests",
-	}, []string{"method", "path", "code", "service"})
+	}, []string{"method", "path", "code", "subsystem"})
 
 	err := prometheus.Register(counter)
 	if err != nil {
