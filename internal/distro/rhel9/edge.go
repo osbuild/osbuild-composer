@@ -288,38 +288,6 @@ var (
 
 // Package Sets
 
-// common edge image build package set
-func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{
-				"rpm-ostree",
-			},
-		})
-}
-
-func edgeEncryptionBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"clevis",
-			"clevis-luks",
-			"cryptsetup",
-		},
-	}
-}
-
-func edgeSimplifiedInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return edgeInstallerBuildPackageSet(t).Append(
-		edgeEncryptionBuildPackageSet(t),
-	)
-}
-
-func edgeInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return anacondaBuildPackageSet(t).Append(
-		edgeBuildPackageSet(t),
-	)
-}
-
 // edge commit OS package set
 func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
