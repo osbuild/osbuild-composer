@@ -1,0 +1,127 @@
+package manifest
+
+import (
+	"fmt"
+
+	"github.com/osbuild/osbuild-composer/internal/disk"
+	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/users"
+)
+
+type CoreOSISOTree struct {
+	Base
+
+	// TODO: review optional and mandatory fields and their meaning
+	OSName  string
+	Release string
+	Users   []users.User
+	Groups  []users.Group
+
+	PartitionTable *disk.PartitionTable
+
+	payloadPipeline  *XZ
+	coiPipeline      *CoreOSInstaller
+	bootTreePipeline *EFIBootTree
+
+	// The path where the payload (tarball or ostree repo) will be stored.
+	PayloadPath string
+
+	isoLabel string
+}
+
+func NewCoreOSISOTree(m *Manifest,
+	buildPipeline *Build,
+	payloadPipeline *XZ,
+	coiPipeline *CoreOSInstaller,
+	bootTreePipeline *EFIBootTree,
+	isoLabel string) *CoreOSISOTree {
+
+	p := &CoreOSISOTree{
+		Base:             NewBase(m, "bootiso-tree", buildPipeline),
+		payloadPipeline:  payloadPipeline,
+		coiPipeline:      coiPipeline,
+		bootTreePipeline: bootTreePipeline,
+		isoLabel:         isoLabel,
+	}
+	buildPipeline.addDependent(p)
+	if coiPipeline.Base.manifest != m {
+		panic("anaconda pipeline from different manifest")
+	}
+	m.addPipeline(p)
+	return p
+}
+
+func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
+	pipeline := p.Base.serialize()
+
+	pipeline.AddStage(osbuild.NewCopyStageSimple(
+		&osbuild.CopyStageOptions{
+			Paths: []osbuild.CopyStagePath{
+				{
+					From: fmt.Sprintf("input://file/%s", p.payloadPipeline.Filename),
+					To:   fmt.Sprintf("tree://%s", p.PayloadPath),
+				},
+			},
+		},
+		osbuild.NewFilesInputs(osbuild.NewFilesInputReferencesPipeline(p.payloadPipeline.Name(), p.payloadPipeline.Filename)),
+	))
+
+	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+		Paths: []osbuild.Path{
+			{
+				Path: "images",
+			},
+			{
+				Path: "images/pxeboot",
+			},
+		},
+	}))
+
+	filename := "images/efiboot.img"
+	pipeline.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{
+		Filename: filename,
+		Size:     fmt.Sprintf("%d", p.PartitionTable.Size),
+	}))
+
+	efibootDevice := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: filename})
+	for _, stage := range osbuild.GenMkfsStages(p.PartitionTable, efibootDevice) {
+		pipeline.AddStage(stage)
+	}
+
+	inputName := "root-tree"
+	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.bootTreePipeline.Name())
+	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.bootTreePipeline.Name(), filename, p.PartitionTable)
+	pipeline.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
+
+	inputName = "tree"
+	copyStageOptions := &osbuild.CopyStageOptions{
+		Paths: []osbuild.CopyStagePath{
+			{
+				From: fmt.Sprintf("input://%s/boot/vmlinuz-%s", inputName, p.coiPipeline.kernelVer),
+				To:   "tree:///images/pxeboot/vmlinuz",
+			},
+			{
+				From: fmt.Sprintf("input://%s/boot/initramfs-%s.img", inputName, p.coiPipeline.kernelVer),
+				To:   "tree:///images/pxeboot/initrd.img",
+			},
+		},
+	}
+	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.coiPipeline.Name())
+	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
+	pipeline.AddStage(copyStage)
+
+	copyInputs = osbuild.NewPipelineTreeInputs(inputName, p.bootTreePipeline.Name())
+	pipeline.AddStage(osbuild.NewCopyStageSimple(
+		&osbuild.CopyStageOptions{
+			Paths: []osbuild.CopyStagePath{
+				{
+					From: fmt.Sprintf("input://%s/EFI", inputName),
+					To:   "tree:///",
+				},
+			},
+		},
+		copyInputs,
+	))
+
+	return pipeline
+}
