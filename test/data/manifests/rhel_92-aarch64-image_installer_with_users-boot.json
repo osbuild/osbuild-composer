@@ -9340,6 +9340,8 @@
                 "img-lib",
                 "shutdown",
                 "uefi-lib",
+                "prefixdevname",
+                "prefixdevname-tools",
                 "anaconda",
                 "rdma",
                 "rngd",
