@@ -45,13 +45,7 @@ func NewOSTreeRawImage(commit ostree.CommitSpec) *OSTreeRawImage {
 	}
 }
 
-func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
-	repos []rpmmd.RepoConfig,
-	runner runner.Runner,
-	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := manifest.NewBuild(m, runner, repos)
-	buildPipeline.Checkpoint()
-
+func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.XZ {
 	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.Commit, img.OSName, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.Remote = img.Remote
@@ -67,7 +61,18 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
 	xzPipeline.Filename = img.Filename
 
-	art := xzPipeline.Export()
+	return xzPipeline
+}
 
+func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
+	repos []rpmmd.RepoConfig,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
+	buildPipeline := manifest.NewBuild(m, runner, repos)
+	buildPipeline.Checkpoint()
+
+	xzPipeline := ostreeCompressedImagePipelines(img, m, buildPipeline)
+
+	art := xzPipeline.Export()
 	return art, nil
 }
