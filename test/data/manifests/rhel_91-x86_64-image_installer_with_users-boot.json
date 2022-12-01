@@ -9469,6 +9469,8 @@
                 "shutdown",
                 "uefi-lib",
                 "biosdevname",
+                "prefixdevname",
+                "prefixdevname-tools",
                 "anaconda",
                 "rdma",
                 "rngd",
