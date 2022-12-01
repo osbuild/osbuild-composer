@@ -528,14 +528,6 @@
                     }
                   },
                   {
-                    "id": "sha256:e47cbf47c231a024657294db7a671e89546cc0760bfe0f88313af036c550f8d3",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:7ff18c9c1c361aeec4c65f0fa63dbe89836dacb65c718ab5d8a27ad0dca3860e",
                     "options": {
                       "metadata": {
@@ -888,14 +880,6 @@
                     }
                   },
                   {
-                    "id": "sha256:d512bafd403bcbdd9d2be3248129e8064b430f11a6802066592a7fcb233e9de9",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:c375a6d6cc433bb67ab4ac7edae009461f317021a4e2cf33ac8a7ad2e07322d9",
                     "options": {
                       "metadata": {
@@ -913,6 +897,14 @@
                   },
                   {
                     "id": "sha256:23f1371fcd4df638fa6e27d3d0fdc9b71143b28c30f387664ec7ebd3633d5418",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b3f71150e9dbe76c4300cb8b9e6b22cecc1d43dae4f3a8e28aff407ef52e1f31",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -2184,14 +2176,6 @@
                     }
                   },
                   {
-                    "id": "sha256:58adb858cd19e953c98745460355993baaaa7741be239e1e865dad5d745d4b65",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:f30d8e5d48d0b9675b517b1e18c7ea4dcdb061f72ed0aae0a7e18d66ef9ae1a9",
                     "options": {
                       "metadata": {
@@ -2597,18 +2581,6 @@
             }
           },
           {
-            "type": "org.osbuild.ostree.config",
-            "options": {
-              "repo": "/ostree/repo",
-              "config": {
-                "sysroot": {
-                  "readonly": false,
-                  "bootloader": "none"
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.mkdir",
             "options": {
               "paths": [
@@ -2633,7 +2605,8 @@
                 "label": "root"
               },
               "kernel_opts": [
-                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                "modprobe.blacklist=vc4"
               ]
             }
           },
@@ -2657,6 +2630,31 @@
                 "ref": "test/edge"
               }
             }
+          },
+          {
+            "type": "org.osbuild.ostree.config",
+            "options": {
+              "repo": "/ostree/repo",
+              "config": {
+                "sysroot": {
+                  "readonly": false,
+                  "bootloader": "none"
+                }
+              }
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/edge",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "redhat",
+                    "ref": "test/edge",
+                    "serial": 0
+                  }
+                }
+              }
+            ]
           },
           {
             "type": "org.osbuild.fstab",
@@ -2683,28 +2681,117 @@
                   "options": "defaults,uid=0,gid=0,umask=077,shortname=winnt",
                   "passno": 2
                 }
-              ],
-              "ostree": {
-                "deployment": {
-                  "osname": "redhat",
-                  "ref": "test/edge"
+              ]
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/edge",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "redhat",
+                    "ref": "test/edge",
+                    "serial": 0
+                  }
                 }
               }
-            }
+            ]
+          },
+          {
+            "type": "org.osbuild.users",
+            "options": {
+              "users": {
+                "root": {
+                  "password": "!locked"
+                }
+              }
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/edge",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "redhat",
+                    "ref": "test/edge",
+                    "serial": 0
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "org.osbuild.keymap",
+            "options": {
+              "keymap": "us"
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/edge",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "redhat",
+                    "ref": "test/edge",
+                    "serial": 0
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "org.osbuild.locale",
+            "options": {
+              "language": "C.UTF-8"
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/edge",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "redhat",
+                    "ref": "test/edge",
+                    "serial": 0
+                  }
+                }
+              }
+            ]
           },
           {
             "type": "org.osbuild.grub2",
             "options": {
               "root_fs_uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "kernel_opts": "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75,modprobe.blacklist=vc4",
               "uefi": {
                 "vendor": "centos",
                 "install": true,
                 "unified": true
               },
               "greenboot": true,
-              "write_cmdline": false
-            }
+              "write_cmdline": false,
+              "config": {
+                "default": "saved",
+                "terminal_output": [
+                  "console"
+                ],
+                "timeout": 1
+              }
+            },
+            "mounts": [
+              {
+                "name": "ostree-test/edge",
+                "type": "org.osbuild.ostree.deployment",
+                "options": {
+                  "deployment": {
+                    "osname": "redhat",
+                    "ref": "test/edge",
+                    "serial": 0
+                  }
+                }
+              }
+            ]
           },
           {
             "type": "org.osbuild.ostree.selinux",
@@ -2724,7 +2811,7 @@
           {
             "type": "org.osbuild.truncate",
             "options": {
-              "filename": "image.raw",
+              "filename": "disk.img",
               "size": "10737418240"
             }
           },
@@ -2758,7 +2845,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "lock": true
                 }
               }
@@ -2783,7 +2870,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 1048576,
                   "size": 19922911,
                   "lock": true
@@ -2802,7 +2889,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 1048576,
                   "size": 19922911,
                   "lock": true
@@ -2831,7 +2918,7 @@
               "luks-6e4f": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 1048576,
                   "size": 19922911,
                   "lock": true
@@ -2848,7 +2935,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 2048,
                   "size": 260096,
                   "lock": true
@@ -2866,7 +2953,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 262144,
                   "size": 786432,
                   "lock": true
@@ -2891,7 +2978,7 @@
               "luks-6e4f": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 1048576,
                   "size": 19922911,
                   "lock": true
@@ -2929,7 +3016,7 @@
               "boot": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 262144,
                   "size": 786432
                 }
@@ -2937,7 +3024,7 @@
               "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 2048,
                   "size": 260096
                 }
@@ -2945,7 +3032,7 @@
               "luks-6e4f": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 1048576,
                   "size": 19922911
                 }
@@ -3002,7 +3089,7 @@
               "luks-6e4f": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 1048576,
                   "size": 19922911,
                   "lock": true
@@ -3019,7 +3106,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "image.raw",
+                  "filename": "disk.img",
                   "start": 1048576,
                   "size": 19922911,
                   "lock": true
@@ -3030,7 +3117,7 @@
         ]
       },
       {
-        "name": "archive",
+        "name": "xz",
         "build": "name:build",
         "stages": [
           {
@@ -3041,13 +3128,13 @@
                 "origin": "org.osbuild.pipeline",
                 "references": {
                   "name:image": {
-                    "file": "image.raw"
+                    "file": "disk.img"
                   }
                 }
               }
             },
             "options": {
-              "filename": "disk.img.xz"
+              "filename": "image.raw.xz"
             }
           }
         ]
@@ -3976,6 +4063,14 @@
                     }
                   },
                   {
+                    "id": "sha256:06d3efbc9bc157b28002af281ab19f69daf1372a0ba88901a49b9a88a70e8adb",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:d82ebf3bcfe85eae2b34c4dbd507d8a0b0ac05d4df4c9ee16fee7555f36c7873",
                     "options": {
                       "metadata": {
@@ -4096,6 +4191,14 @@
                     }
                   },
                   {
+                    "id": "sha256:5547be2aab25b50cbf3c3d72d802bf2067c116b2d8fc377d5dfca3b55e37b93b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:33bdf571a62cb8b7d659617e9278e46043aa936f8e963202750d19463a805f60",
                     "options": {
                       "metadata": {
@@ -4120,7 +4223,23 @@
                     }
                   },
                   {
+                    "id": "sha256:c7b3f66c0567ede2801b2282ccc73bf7401c62d2a4071feb2a71f72f03845d39",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:6f82d810994199c4f6ad02d4df4b996044cbcf79bc4bf0319298d6d7cf42d3eb",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:9f564cc2c9a5bb85345f200dab5efdcc90a1ff1bcf4708d3655c46323c08a04d",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -4153,6 +4272,14 @@
                   },
                   {
                     "id": "sha256:5a39a441dad01ccc8af601f1cca5bed46ac231fbdbe39ea3202bd54cf9390d81",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:d2926882457c7679c4bed0f7f8021404e131e7130e4a1cf13a09fec670a5b61c",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -4865,6 +4992,14 @@
                   },
                   {
                     "id": "sha256:30e787a579a65cfa78880f86cd41de1f8636c3694a94e6091538e4fdd438f354",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:99f9eca159e41e315b9fe48ec6c6d1d7a944bd5d8fc0b308aba779a6608b3777",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5879,8 +6014,6 @@
                 "url-lib",
                 "drm",
                 "plymouth",
-                "prefixdevname",
-                "prefixdevname-tools",
                 "crypt",
                 "dm",
                 "dmsquash-live",
@@ -5904,6 +6037,8 @@
                 "img-lib",
                 "shutdown",
                 "uefi-lib",
+                "prefixdevname",
+                "prefixdevname-tools",
                 "coreos-installer",
                 "fdo"
               ],
@@ -5932,7 +6067,7 @@
                   "coreos.inst.crypt_root=1",
                   "coreos.inst.isoroot=CentOS-Stream-9-BaseOS-aarch64",
                   "coreos.inst.install_dev=/dev/vda",
-                  "coreos.inst.image_file=/run/media/iso/disk.img.xz",
+                  "coreos.inst.image_file=/run/media/iso/image.raw.xz",
                   "coreos.inst.insecure",
                   "fdo.manufacturing_server_url=https;//fdo.example.com",
                   "fdo.diun_pub_key_insecure=true"
@@ -5958,8 +6093,8 @@
                 "type": "org.osbuild.files",
                 "origin": "org.osbuild.pipeline",
                 "references": {
-                  "name:archive": {
-                    "file": "disk.img.xz"
+                  "name:xz": {
+                    "file": "image.raw.xz"
                   }
                 }
               }
@@ -5967,8 +6102,8 @@
             "options": {
               "paths": [
                 {
-                  "from": "input://file/disk.img.xz",
-                  "to": "tree:///disk.img.xz"
+                  "from": "input://file/image.raw.xz",
+                  "to": "tree:///image.raw.xz"
                 }
               ]
             }
@@ -6049,7 +6184,7 @@
           {
             "type": "org.osbuild.copy",
             "inputs": {
-              "coi": {
+              "tree": {
                 "type": "org.osbuild.tree",
                 "origin": "org.osbuild.pipeline",
                 "references": [
@@ -6060,11 +6195,11 @@
             "options": {
               "paths": [
                 {
-                  "from": "input://coi/boot/vmlinuz-5.14.0-200.el9.aarch64",
+                  "from": "input://tree/boot/vmlinuz-5.14.0-200.el9.aarch64",
                   "to": "tree:///images/pxeboot/vmlinuz"
                 },
                 {
-                  "from": "input://coi/boot/initramfs-5.14.0-200.el9.aarch64.img",
+                  "from": "input://tree/boot/initramfs-5.14.0-200.el9.aarch64.img",
                   "to": "tree:///images/pxeboot/initrd.img"
                 }
               ]
@@ -6073,7 +6208,7 @@
           {
             "type": "org.osbuild.copy",
             "inputs": {
-              "efi-tree": {
+              "tree": {
                 "type": "org.osbuild.tree",
                 "origin": "org.osbuild.pipeline",
                 "references": [
@@ -6084,7 +6219,7 @@
             "options": {
               "paths": [
                 {
-                  "from": "input://efi-tree/EFI",
+                  "from": "input://tree/EFI",
                   "to": "tree:///"
                 }
               ]
@@ -6516,9 +6651,6 @@
           },
           "sha256:5880f7e169c386998644d5563d0c78fe72831e8a9efe94c0e9786337e6bbba60": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20221124/Packages/python3-libsemanage-3.4-2.el9.aarch64.rpm"
-          },
-          "sha256:58adb858cd19e953c98745460355993baaaa7741be239e1e865dad5d745d4b65": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/python3-iniparse-0.4-45.el9.noarch.rpm"
           },
           "sha256:58f8af10693870058a9fcf4717b6be540c926f2fd509202a0a25b9aaaa892d57": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20221124/Packages/python3-kickstart-3.32.8-1.el9.noarch.rpm"
@@ -7114,9 +7246,6 @@
           "sha256:d4fd778156c539f96cf2aacaaea9faf84a9bd8763bf89b6c54bfc37d1bb469c9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/tar-1.34-5.el9.aarch64.rpm"
           },
-          "sha256:d512bafd403bcbdd9d2be3248129e8064b430f11a6802066592a7fcb233e9de9": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dnf-4.14.0-1.el9.noarch.rpm"
-          },
           "sha256:d5a6df418f446d3d983845d6155f137eca79cc55017faa8e9278fd2235a4ab12": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/util-linux-core-2.37.4-9.el9.aarch64.rpm"
           },
@@ -7191,9 +7320,6 @@
           },
           "sha256:e428d4d3318c5ea832e4d740e58c9d49b8b082eb2262f22a250a0df4856f4263": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libreport-filesystem-2.15.2-6.el9.noarch.rpm"
-          },
-          "sha256:e47cbf47c231a024657294db7a671e89546cc0760bfe0f88313af036c550f8d3": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20221124/Packages/qemu-img-7.1.0-4.el9.aarch64.rpm"
           },
           "sha256:e48e46f17cda6de2b2b6bf7953d60c0fefd5ecf9972f5180125bd8654ec4465d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20221124/Packages/coreos-installer-0.16.1-1.el9.aarch64.rpm"
@@ -7353,1218 +7479,6 @@
     }
   },
   "rpmmd": {
-    "blueprint": [
-      {
-        "name": "gawk-all-langpacks",
-        "epoch": 0,
-        "version": "5.1.0",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20221124/Packages/gawk-all-langpacks-5.1.0-6.el9.aarch64.rpm",
-        "checksum": "sha256:d2f9d8ff6e67f79bf6ca6fb09391dddb7f078e2b9ac74af71dd3fcff37cbb469",
-        "check_gpg": true
-      },
-      {
-        "name": "acl",
-        "epoch": 0,
-        "version": "2.3.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/acl-2.3.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:151d6542a39243b5f65698b31edfe2d9c59e2fd71a7dcaa237442fc5d1d9de1e",
-        "check_gpg": true
-      },
-      {
-        "name": "alternatives",
-        "epoch": 0,
-        "version": "1.20",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/alternatives-1.20-2.el9.aarch64.rpm",
-        "checksum": "sha256:4d9055232088f1ab181e4741358aa188749b8195f184817c04a61447606cdfb5",
-        "check_gpg": true
-      },
-      {
-        "name": "audit-libs",
-        "epoch": 0,
-        "version": "3.0.7",
-        "release": "103.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/audit-libs-3.0.7-103.el9.aarch64.rpm",
-        "checksum": "sha256:d76fb317d2c119de235f079463163dc5a6ed8df8073aa747463697cb667ca604",
-        "check_gpg": true
-      },
-      {
-        "name": "basesystem",
-        "epoch": 0,
-        "version": "11",
-        "release": "13.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/basesystem-11-13.el9.noarch.rpm",
-        "checksum": "sha256:a7a687ef39dd28d01d34fab18ea7e3e87f649f6c202dded82260b7ea625b9973",
-        "check_gpg": true
-      },
-      {
-        "name": "bash",
-        "epoch": 0,
-        "version": "5.1.8",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/bash-5.1.8-5.el9.aarch64.rpm",
-        "checksum": "sha256:a420094f613ae39a964b7fc2accebe9a95abae8f85a3b126950df9a86e419ca8",
-        "check_gpg": true
-      },
-      {
-        "name": "bzip2-libs",
-        "epoch": 0,
-        "version": "1.0.8",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/bzip2-libs-1.0.8-8.el9.aarch64.rpm",
-        "checksum": "sha256:6c20f6f13c274fa2487f95f1e3dddcee9b931ce222abebd2f1d9b3f7eb69fcde",
-        "check_gpg": true
-      },
-      {
-        "name": "ca-certificates",
-        "epoch": 0,
-        "version": "2022.2.54",
-        "release": "90.2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/ca-certificates-2022.2.54-90.2.el9.noarch.rpm",
-        "checksum": "sha256:24978e8dd3e054583da86036657ab16e93da97a0bafc148ec28d871d8c15257c",
-        "check_gpg": true
-      },
-      {
-        "name": "centos-gpg-keys",
-        "epoch": 0,
-        "version": "9.0",
-        "release": "18.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/centos-gpg-keys-9.0-18.el9.noarch.rpm",
-        "checksum": "sha256:4d08c97e3852712e5a46d37e1abf4fe234fbdbdfad0c3c047fe6f3f14881bd81",
-        "check_gpg": true
-      },
-      {
-        "name": "centos-stream-release",
-        "epoch": 0,
-        "version": "9.0",
-        "release": "18.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/centos-stream-release-9.0-18.el9.noarch.rpm",
-        "checksum": "sha256:7078f8a58d6749b6d755cf375291c283318b5fc1b81ba550513e4570d77b961d",
-        "check_gpg": true
-      },
-      {
-        "name": "centos-stream-repos",
-        "epoch": 0,
-        "version": "9.0",
-        "release": "18.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/centos-stream-repos-9.0-18.el9.noarch.rpm",
-        "checksum": "sha256:447442d183d82e93a9516258dc272ba87207c9d5e755ca8e37d562dea92f1875",
-        "check_gpg": true
-      },
-      {
-        "name": "coreutils",
-        "epoch": 0,
-        "version": "8.32",
-        "release": "33.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/coreutils-8.32-33.el9.aarch64.rpm",
-        "checksum": "sha256:9aeca647e4c0c56b7161447403c96850b4adc99435b3878ef03499d343c9bac0",
-        "check_gpg": true
-      },
-      {
-        "name": "coreutils-common",
-        "epoch": 0,
-        "version": "8.32",
-        "release": "33.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/coreutils-common-8.32-33.el9.aarch64.rpm",
-        "checksum": "sha256:78a1e70cbf3d3dc7c4b3e37b23e57bb9ce73e2fe0710f09f7c0b161b33c39c52",
-        "check_gpg": true
-      },
-      {
-        "name": "cpio",
-        "epoch": 0,
-        "version": "2.13",
-        "release": "16.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cpio-2.13-16.el9.aarch64.rpm",
-        "checksum": "sha256:1a26a2ccc84e3c5c0a0c087a7228f74ff214a5e77ea88fd52467637bb6c4be78",
-        "check_gpg": true
-      },
-      {
-        "name": "cracklib",
-        "epoch": 0,
-        "version": "2.9.6",
-        "release": "27.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cracklib-2.9.6-27.el9.aarch64.rpm",
-        "checksum": "sha256:d92900088b558cd3c96c63db24b048a0f3ea575a0f8bfe66c26df4acfcb2f811",
-        "check_gpg": true
-      },
-      {
-        "name": "cracklib-dicts",
-        "epoch": 0,
-        "version": "2.9.6",
-        "release": "27.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cracklib-dicts-2.9.6-27.el9.aarch64.rpm",
-        "checksum": "sha256:bfd16ac0aebb165d43d3139448ab8eac66d4d67c9eac506c3f3bef799f1352c2",
-        "check_gpg": true
-      },
-      {
-        "name": "crypto-policies",
-        "epoch": 0,
-        "version": "20221003",
-        "release": "1.git04dee29.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/crypto-policies-20221003-1.git04dee29.el9.noarch.rpm",
-        "checksum": "sha256:14f3359e27f31564af576a0d1f128d150aee38ae9d80ea9d71d24bf92296e152",
-        "check_gpg": true
-      },
-      {
-        "name": "cryptsetup-libs",
-        "epoch": 0,
-        "version": "2.4.3",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cryptsetup-libs-2.4.3-5.el9.aarch64.rpm",
-        "checksum": "sha256:f4967c4e3c8e728973e57d7a92f2071800e1d7759f331afec49bea5324d18f63",
-        "check_gpg": true
-      },
-      {
-        "name": "cyrus-sasl-lib",
-        "epoch": 0,
-        "version": "2.1.27",
-        "release": "21.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cyrus-sasl-lib-2.1.27-21.el9.aarch64.rpm",
-        "checksum": "sha256:898d7094964022ca527a6596550b8d46499b3274f8c6a1ee632a98961012d80c",
-        "check_gpg": true
-      },
-      {
-        "name": "dbus",
-        "epoch": 1,
-        "version": "1.12.20",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dbus-1.12.20-7.el9.aarch64.rpm",
-        "checksum": "sha256:66b72600006e0be1b68bee4fb8fa0290a71ffa50586369d37a00128b1d3c4835",
-        "check_gpg": true
-      },
-      {
-        "name": "dbus-broker",
-        "epoch": 0,
-        "version": "28",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dbus-broker-28-7.el9.aarch64.rpm",
-        "checksum": "sha256:28a7abe52040dcda6e5d941206ef6e5c47478fcc06a9f05c2ab7dacc2afa9f42",
-        "check_gpg": true
-      },
-      {
-        "name": "dbus-common",
-        "epoch": 1,
-        "version": "1.12.20",
-        "release": "7.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dbus-common-1.12.20-7.el9.noarch.rpm",
-        "checksum": "sha256:b70a359af020f34116139d96e7f138c10e1bb32a219836b88045ffaa7f4a36a5",
-        "check_gpg": true
-      },
-      {
-        "name": "device-mapper",
-        "epoch": 9,
-        "version": "1.02.185",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/device-mapper-1.02.185-3.el9.aarch64.rpm",
-        "checksum": "sha256:2ea771954009edfe99fa060e1c4d02d3b17f3cf08bb8fea6c5f54389cb95cb5f",
-        "check_gpg": true
-      },
-      {
-        "name": "device-mapper-libs",
-        "epoch": 9,
-        "version": "1.02.185",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/device-mapper-libs-1.02.185-3.el9.aarch64.rpm",
-        "checksum": "sha256:cb93b4a6dbb5a16b5b972dc858e4750749caa4946c80c9a90b922f7cbb7c757b",
-        "check_gpg": true
-      },
-      {
-        "name": "dracut",
-        "epoch": 0,
-        "version": "057",
-        "release": "13.git20220816.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dracut-057-13.git20220816.el9.aarch64.rpm",
-        "checksum": "sha256:23f1371fcd4df638fa6e27d3d0fdc9b71143b28c30f387664ec7ebd3633d5418",
-        "check_gpg": true
-      },
-      {
-        "name": "expat",
-        "epoch": 0,
-        "version": "2.5.0",
-        "release": "1.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/expat-2.5.0-1.el9.aarch64.rpm",
-        "checksum": "sha256:2163792c7a297e441d7c3c0cbef7a6da0695e44e0b16fbb796cd90ab91dfe0cb",
-        "check_gpg": true
-      },
-      {
-        "name": "filesystem",
-        "epoch": 0,
-        "version": "3.16",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/filesystem-3.16-2.el9.aarch64.rpm",
-        "checksum": "sha256:0afb1f7582830fa9c8c58a6679ab3b4ccf8bbdf1c0c76908fea1429eec8b8a53",
-        "check_gpg": true
-      },
-      {
-        "name": "findutils",
-        "epoch": 1,
-        "version": "4.8.0",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/findutils-4.8.0-5.el9.aarch64.rpm",
-        "checksum": "sha256:3ae59472d5b58715c452f74cb865dbe4058d155ed30d3908a96c51ccccaf4e82",
-        "check_gpg": true
-      },
-      {
-        "name": "gawk",
-        "epoch": 0,
-        "version": "5.1.0",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gawk-5.1.0-6.el9.aarch64.rpm",
-        "checksum": "sha256:656d23c583b0705eaad75cffbe880f2ec39c7d5b7a756c6a8853c2977eec331b",
-        "check_gpg": true
-      },
-      {
-        "name": "gdbm-libs",
-        "epoch": 1,
-        "version": "1.19",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gdbm-libs-1.19-4.el9.aarch64.rpm",
-        "checksum": "sha256:4fc723b43287c971507ec7899a1517dcc91abab962707febc7fdd9c1d865ace8",
-        "check_gpg": true
-      },
-      {
-        "name": "glibc",
-        "epoch": 0,
-        "version": "2.34",
-        "release": "49.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/glibc-2.34-49.el9.aarch64.rpm",
-        "checksum": "sha256:391dd278a78e9b7b153b1f04bb8582b5759c86343f0b2a3c6d2f6b52704829d6",
-        "check_gpg": true
-      },
-      {
-        "name": "glibc-common",
-        "epoch": 0,
-        "version": "2.34",
-        "release": "49.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/glibc-common-2.34-49.el9.aarch64.rpm",
-        "checksum": "sha256:9e627d58826650e9231af80e3528141ab02992f2a819d1d76302761ac15d992d",
-        "check_gpg": true
-      },
-      {
-        "name": "glibc-gconv-extra",
-        "epoch": 0,
-        "version": "2.34",
-        "release": "49.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/glibc-gconv-extra-2.34-49.el9.aarch64.rpm",
-        "checksum": "sha256:48e553ef58c228b778ebdd8b866a97d1d8e71d8a536f4e1e6ea17ffb92234169",
-        "check_gpg": true
-      },
-      {
-        "name": "glibc-minimal-langpack",
-        "epoch": 0,
-        "version": "2.34",
-        "release": "49.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/glibc-minimal-langpack-2.34-49.el9.aarch64.rpm",
-        "checksum": "sha256:c90342669bee04bda110d2269b66340bb501a9ffe2cd0ee8a5bab791f54a0e97",
-        "check_gpg": true
-      },
-      {
-        "name": "gmp",
-        "epoch": 1,
-        "version": "6.2.0",
-        "release": "10.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gmp-6.2.0-10.el9.aarch64.rpm",
-        "checksum": "sha256:1fe837ca20f20f8291a32c0f4673ea2560f94d75d25ab5131f6ae271694a4b44",
-        "check_gpg": true
-      },
-      {
-        "name": "grep",
-        "epoch": 0,
-        "version": "3.6",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/grep-3.6-5.el9.aarch64.rpm",
-        "checksum": "sha256:33bdf571a62cb8b7d659617e9278e46043aa936f8e963202750d19463a805f60",
-        "check_gpg": true
-      },
-      {
-        "name": "gzip",
-        "epoch": 0,
-        "version": "1.12",
-        "release": "1.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gzip-1.12-1.el9.aarch64.rpm",
-        "checksum": "sha256:5a39a441dad01ccc8af601f1cca5bed46ac231fbdbe39ea3202bd54cf9390d81",
-        "check_gpg": true
-      },
-      {
-        "name": "json-c",
-        "epoch": 0,
-        "version": "0.14",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/json-c-0.14-11.el9.aarch64.rpm",
-        "checksum": "sha256:65a68a23f33540b4d7cd2d9227a63d7eda1a7ab7cdd52457fee9662c06731cfa",
-        "check_gpg": true
-      },
-      {
-        "name": "kbd",
-        "epoch": 0,
-        "version": "2.4.0",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kbd-2.4.0-8.el9.aarch64.rpm",
-        "checksum": "sha256:94f308144af23538bd6996ab86ef54c01ddab6e541e042a4f713b5fb99e6a29f",
-        "check_gpg": true
-      },
-      {
-        "name": "kbd-misc",
-        "epoch": 0,
-        "version": "2.4.0",
-        "release": "8.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kbd-misc-2.4.0-8.el9.noarch.rpm",
-        "checksum": "sha256:2dda3fe56c9a5bce5880dca58d905682c5e9f94ee023e43a3e311d2d411e1849",
-        "check_gpg": true
-      },
-      {
-        "name": "kernel",
-        "epoch": 0,
-        "version": "5.14.0",
-        "release": "200.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kernel-5.14.0-200.el9.aarch64.rpm",
-        "checksum": "sha256:13951cba5bdd848b81405eb0bdc41d9a59c87f69d8c1b63c98ecc7d4a669572c",
-        "check_gpg": true
-      },
-      {
-        "name": "kernel-core",
-        "epoch": 0,
-        "version": "5.14.0",
-        "release": "200.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kernel-core-5.14.0-200.el9.aarch64.rpm",
-        "checksum": "sha256:b08ff6c7286661c48c38635680b248fb5b7ac52b5c390b3c06f4d2ee6010f441",
-        "check_gpg": true
-      },
-      {
-        "name": "kernel-modules",
-        "epoch": 0,
-        "version": "5.14.0",
-        "release": "200.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kernel-modules-5.14.0-200.el9.aarch64.rpm",
-        "checksum": "sha256:5f07e83e78d76e1c9d5d5c3cc63a37474ad8783d6ec3d80eb51e50443bf19e1d",
-        "check_gpg": true
-      },
-      {
-        "name": "keyutils-libs",
-        "epoch": 0,
-        "version": "1.6.3",
-        "release": "1.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/keyutils-libs-1.6.3-1.el9.aarch64.rpm",
-        "checksum": "sha256:5d97ee3ed28533eb2ea01a6be97696fbbbc72f8178dcf7f1acf30e674a298a6e",
-        "check_gpg": true
-      },
-      {
-        "name": "kmod",
-        "epoch": 0,
-        "version": "28",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kmod-28-7.el9.aarch64.rpm",
-        "checksum": "sha256:9a3293fa629de83a0ce0e6326122a8ec8d66132f43dda4abe135a61ceeba739b",
-        "check_gpg": true
-      },
-      {
-        "name": "kmod-libs",
-        "epoch": 0,
-        "version": "28",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kmod-libs-28-7.el9.aarch64.rpm",
-        "checksum": "sha256:e7be371f66f08c54bc464cf376fce0f09ba07d1e10843c7f9bc35abbb3c38085",
-        "check_gpg": true
-      },
-      {
-        "name": "kpartx",
-        "epoch": 0,
-        "version": "0.8.7",
-        "release": "14.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kpartx-0.8.7-14.el9.aarch64.rpm",
-        "checksum": "sha256:a4ffe518febb4bee693ebad40785bbde102f8ebc106e2a53863a8ffa538881c0",
-        "check_gpg": true
-      },
-      {
-        "name": "krb5-libs",
-        "epoch": 0,
-        "version": "1.19.1",
-        "release": "22.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/krb5-libs-1.19.1-22.el9.aarch64.rpm",
-        "checksum": "sha256:24b7ef009af4066c4477edc2e0b145517d8d4469d050fa922d4cfb68d728fde2",
-        "check_gpg": true
-      },
-      {
-        "name": "libacl",
-        "epoch": 0,
-        "version": "2.3.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libacl-2.3.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:4975593414dfa1e822cd108e988d18453c2ff036b03e4cdbf38db0afb45e0c92",
-        "check_gpg": true
-      },
-      {
-        "name": "libattr",
-        "epoch": 0,
-        "version": "2.5.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libattr-2.5.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:a0101ccea66aef376f4067c1002ebdfb5dbeeecd334047459b3855eff17a6fda",
-        "check_gpg": true
-      },
-      {
-        "name": "libblkid",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libblkid-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:30f9f288185a85f20447994c0d2dba80665bf5ccce089d8c16fd8a9c8495c6a2",
-        "check_gpg": true
-      },
-      {
-        "name": "libbrotli",
-        "epoch": 0,
-        "version": "1.0.9",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libbrotli-1.0.9-6.el9.aarch64.rpm",
-        "checksum": "sha256:e2fafdd223332e004ffbfdb4e906fcf4016ccacf68e866db666f2893fe2ab746",
-        "check_gpg": true
-      },
-      {
-        "name": "libcap",
-        "epoch": 0,
-        "version": "2.48",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libcap-2.48-8.el9.aarch64.rpm",
-        "checksum": "sha256:881d4e7729633ce71b1a6bab3a84c1f79d5e7c49ef3ffdc1bc703cdd7ae3cd81",
-        "check_gpg": true
-      },
-      {
-        "name": "libcap-ng",
-        "epoch": 0,
-        "version": "0.8.2",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libcap-ng-0.8.2-7.el9.aarch64.rpm",
-        "checksum": "sha256:1dfa7208abe1af5522523cabdabb73783ed1df4424dc8846eab8a570d010deaa",
-        "check_gpg": true
-      },
-      {
-        "name": "libcom_err",
-        "epoch": 0,
-        "version": "1.46.5",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libcom_err-1.46.5-3.el9.aarch64.rpm",
-        "checksum": "sha256:a735b91094a13612830db66fd2021c9ec86c92697e526068e8b3919111cc2ba8",
-        "check_gpg": true
-      },
-      {
-        "name": "libcurl",
-        "epoch": 0,
-        "version": "7.76.1",
-        "release": "21.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libcurl-7.76.1-21.el9.aarch64.rpm",
-        "checksum": "sha256:802ee004e148c6fced3f473f2446065f4bbf40360066e50a6c381a97d2a7f8fa",
-        "check_gpg": true
-      },
-      {
-        "name": "libdb",
-        "epoch": 0,
-        "version": "5.3.28",
-        "release": "53.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libdb-5.3.28-53.el9.aarch64.rpm",
-        "checksum": "sha256:65a5743728c6c331dd8aadc9b51f261f90ffa47ffd0cfb448da8bdf28af6dd77",
-        "check_gpg": true
-      },
-      {
-        "name": "libeconf",
-        "epoch": 0,
-        "version": "0.4.1",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libeconf-0.4.1-2.el9.aarch64.rpm",
-        "checksum": "sha256:082dff130121fcdb7cb3fd432de482075b5003e0d95ff4ab6d8ba02404b69d6b",
-        "check_gpg": true
-      },
-      {
-        "name": "libevent",
-        "epoch": 0,
-        "version": "2.1.12",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libevent-2.1.12-6.el9.aarch64.rpm",
-        "checksum": "sha256:5ff00c047204190e3b2ee19f81d644c8f82ea7e8d1f36fdaaf6483f0fa3b3339",
-        "check_gpg": true
-      },
-      {
-        "name": "libfdisk",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libfdisk-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:dad6efc735b4078ec086bbd2c4981b2be5b0686b85207c282b25348c97a64306",
-        "check_gpg": true
-      },
-      {
-        "name": "libffi",
-        "epoch": 0,
-        "version": "3.4.2",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libffi-3.4.2-7.el9.aarch64.rpm",
-        "checksum": "sha256:6a42002c0b63a3c4d1e8da5cdf4822f442a7b458d80e69673715715d38ea977d",
-        "check_gpg": true
-      },
-      {
-        "name": "libgcc",
-        "epoch": 0,
-        "version": "11.3.1",
-        "release": "2.1.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libgcc-11.3.1-2.1.el9.aarch64.rpm",
-        "checksum": "sha256:9a99bd50285ee01446e6580eba3adbd8a402262d1d72e8474ac5b8f06cdc874f",
-        "check_gpg": true
-      },
-      {
-        "name": "libgcrypt",
-        "epoch": 0,
-        "version": "1.10.0",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libgcrypt-1.10.0-8.el9.aarch64.rpm",
-        "checksum": "sha256:00d9e47947352c66b890b50b0aa4f5667d296aaf7aaff3a29a26e2e667525c75",
-        "check_gpg": true
-      },
-      {
-        "name": "libgpg-error",
-        "epoch": 0,
-        "version": "1.42",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libgpg-error-1.42-5.el9.aarch64.rpm",
-        "checksum": "sha256:ffeb04823b5317c7e016542c8ecc5180c7824f8b59a180f2434fd096a34a9105",
-        "check_gpg": true
-      },
-      {
-        "name": "libidn2",
-        "epoch": 0,
-        "version": "2.3.0",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libidn2-2.3.0-7.el9.aarch64.rpm",
-        "checksum": "sha256:6ed96112059449aa37b99d4d4e3b5d089c34afefbd9b618691bed8c206c4d441",
-        "check_gpg": true
-      },
-      {
-        "name": "libkcapi",
-        "epoch": 0,
-        "version": "1.3.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libkcapi-1.3.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:da1d646f8ce14588cd7b666dc32fed0aae7cfb14d98998c1fc35ad0640cbff27",
-        "check_gpg": true
-      },
-      {
-        "name": "libkcapi-hmaccalc",
-        "epoch": 0,
-        "version": "1.3.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libkcapi-hmaccalc-1.3.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:065aa57e7068afb9b276f02c8b30a2d6dd7efffc69e8b60afa1daecdef6913a7",
-        "check_gpg": true
-      },
-      {
-        "name": "libmount",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libmount-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:36143d654f53c13d409a2be19970465dd61f4bf294f808a7dc9954e7a4414272",
-        "check_gpg": true
-      },
-      {
-        "name": "libnghttp2",
-        "epoch": 0,
-        "version": "1.43.0",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libnghttp2-1.43.0-5.el9.aarch64.rpm",
-        "checksum": "sha256:702abf0c5b1574b828132e4dbea17ad7099034db18f47fd1ac84b4d9534dcfea",
-        "check_gpg": true
-      },
-      {
-        "name": "libpsl",
-        "epoch": 0,
-        "version": "0.21.1",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libpsl-0.21.1-5.el9.aarch64.rpm",
-        "checksum": "sha256:ffb4b495921ab66fce510dac3d06a8fb924afacc7cd44bb0d8f5b0da09ca49cc",
-        "check_gpg": true
-      },
-      {
-        "name": "libpwquality",
-        "epoch": 0,
-        "version": "1.4.4",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libpwquality-1.4.4-8.el9.aarch64.rpm",
-        "checksum": "sha256:3c22a268ce022cb4722aa2d35a95c1174778f424fbf29e98990801651d468aeb",
-        "check_gpg": true
-      },
-      {
-        "name": "libseccomp",
-        "epoch": 0,
-        "version": "2.5.2",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libseccomp-2.5.2-2.el9.aarch64.rpm",
-        "checksum": "sha256:ee31abd3d1325b05c5ba336158ba3b235a718a99ad5cec5e6ab498ca99b688b5",
-        "check_gpg": true
-      },
-      {
-        "name": "libselinux",
-        "epoch": 0,
-        "version": "3.4",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libselinux-3.4-3.el9.aarch64.rpm",
-        "checksum": "sha256:bf2e3f00871a2d969a9cac61855c224fdcf127284f890a25564872d97b1043e9",
-        "check_gpg": true
-      },
-      {
-        "name": "libsemanage",
-        "epoch": 0,
-        "version": "3.4",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libsemanage-3.4-2.el9.aarch64.rpm",
-        "checksum": "sha256:df0712f9a86e48674eae975751de4dfd858a0b2744576db5cdd7878db26d5dc4",
-        "check_gpg": true
-      },
-      {
-        "name": "libsepol",
-        "epoch": 0,
-        "version": "3.4",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libsepol-3.4-3.el9.aarch64.rpm",
-        "checksum": "sha256:42b6d5920e058c2fb0bcc15a4769ab20bab29d72010f78f758b6b7007e597387",
-        "check_gpg": true
-      },
-      {
-        "name": "libsigsegv",
-        "epoch": 0,
-        "version": "2.13",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libsigsegv-2.13-4.el9.aarch64.rpm",
-        "checksum": "sha256:097399718ae50fb03fde85fa151c060c50445a1a5af185052cac6b92d6fdcdae",
-        "check_gpg": true
-      },
-      {
-        "name": "libsmartcols",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libsmartcols-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:db518be8ad99feee87bcbccbd5c1c740f8cbe610f3a1d59bd70637053c37fba8",
-        "check_gpg": true
-      },
-      {
-        "name": "libssh",
-        "epoch": 0,
-        "version": "0.10.4",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libssh-0.10.4-3.el9.aarch64.rpm",
-        "checksum": "sha256:dcd4d7f38cb5379ff2ddcb91d7e01f89ceda7ecde0e69ec3b192656712a73ab6",
-        "check_gpg": true
-      },
-      {
-        "name": "libssh-config",
-        "epoch": 0,
-        "version": "0.10.4",
-        "release": "3.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libssh-config-0.10.4-3.el9.noarch.rpm",
-        "checksum": "sha256:c74b239eb2040ca414b32492fde653439e10f1072cfc6ff557a4c5d054b39261",
-        "check_gpg": true
-      },
-      {
-        "name": "libtasn1",
-        "epoch": 0,
-        "version": "4.16.0",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libtasn1-4.16.0-7.el9.aarch64.rpm",
-        "checksum": "sha256:4eaa01b044d688793eb928170f3937bc8618b76d702d49a8843aa89461e43fa8",
-        "check_gpg": true
-      },
-      {
-        "name": "libunistring",
-        "epoch": 0,
-        "version": "0.9.10",
-        "release": "15.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libunistring-0.9.10-15.el9.aarch64.rpm",
-        "checksum": "sha256:09381b23c9d2343592b8b565dcbb23d055999ab1e521aa802b6d40a682b80e42",
-        "check_gpg": true
-      },
-      {
-        "name": "libutempter",
-        "epoch": 0,
-        "version": "1.2.1",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libutempter-1.2.1-6.el9.aarch64.rpm",
-        "checksum": "sha256:65cd8c3813afc69dd2ea9eeb6e2fc7db4a7d626b51efe376b8000dfdaa10402a",
-        "check_gpg": true
-      },
-      {
-        "name": "libuuid",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libuuid-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:1de486c59df5317dc192a194df9ca548c4fb2cc3d3d1a4dde20bef6eaad62f1f",
-        "check_gpg": true
-      },
-      {
-        "name": "libverto",
-        "epoch": 0,
-        "version": "0.3.2",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libverto-0.3.2-3.el9.aarch64.rpm",
-        "checksum": "sha256:1190ea8310b0dab3ebbade3180b4c2cf7064e90c894e5415711d7751e709be8a",
-        "check_gpg": true
-      },
-      {
-        "name": "libxcrypt",
-        "epoch": 0,
-        "version": "4.4.18",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libxcrypt-4.4.18-3.el9.aarch64.rpm",
-        "checksum": "sha256:f697d91abb19e9be9b69b8836a802711d2cf7989af27a4e1ba261f35ce53b8b5",
-        "check_gpg": true
-      },
-      {
-        "name": "libzstd",
-        "epoch": 0,
-        "version": "1.5.1",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libzstd-1.5.1-2.el9.aarch64.rpm",
-        "checksum": "sha256:68101e014106305c840611b64d71311600edb30a34e09514c169c9eef6090d42",
-        "check_gpg": true
-      },
-      {
-        "name": "linux-firmware",
-        "epoch": 0,
-        "version": "20221012",
-        "release": "128.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/linux-firmware-20221012-128.el9.noarch.rpm",
-        "checksum": "sha256:95c8fd81fdcda1696d383288ae4e2f4b886839eb1f0dac068b3028ae1824ecb7",
-        "check_gpg": true
-      },
-      {
-        "name": "linux-firmware-whence",
-        "epoch": 0,
-        "version": "20221012",
-        "release": "128.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/linux-firmware-whence-20221012-128.el9.noarch.rpm",
-        "checksum": "sha256:5945b24de16e777c244cddbc793ffe30409b3390715471ed326bc661400574c6",
-        "check_gpg": true
-      },
-      {
-        "name": "lz4-libs",
-        "epoch": 0,
-        "version": "1.9.3",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/lz4-libs-1.9.3-5.el9.aarch64.rpm",
-        "checksum": "sha256:9aa14d26393dd46c0a390cf04f939f7f759a33165bdb506f8bee0653f3b70f45",
-        "check_gpg": true
-      },
-      {
-        "name": "mpfr",
-        "epoch": 0,
-        "version": "4.1.0",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/mpfr-4.1.0-7.el9.aarch64.rpm",
-        "checksum": "sha256:f3bd8510505a53450abe05dc34edbc5313fe89a6f88d0252624205dc7bb884c7",
-        "check_gpg": true
-      },
-      {
-        "name": "ncurses-base",
-        "epoch": 0,
-        "version": "6.2",
-        "release": "8.20210508.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/ncurses-base-6.2-8.20210508.el9.noarch.rpm",
-        "checksum": "sha256:e4cc4a4a479b8c27776debba5c20e8ef21dc4b513da62a25ed09f88386ac08a8",
-        "check_gpg": true
-      },
-      {
-        "name": "ncurses-libs",
-        "epoch": 0,
-        "version": "6.2",
-        "release": "8.20210508.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/ncurses-libs-6.2-8.20210508.el9.aarch64.rpm",
-        "checksum": "sha256:26a21395b0bb4f7b60ab89bacaa8fc210c9921f1aba90ec950b91b3ee9e25dcc",
-        "check_gpg": true
-      },
-      {
-        "name": "openldap",
-        "epoch": 0,
-        "version": "2.6.2",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/openldap-2.6.2-3.el9.aarch64.rpm",
-        "checksum": "sha256:492daf98d77aa62021d3956e0a0727c66bd13c2322267c8e6556bfbb68c06fa5",
-        "check_gpg": true
-      },
-      {
-        "name": "openssl",
-        "epoch": 1,
-        "version": "3.0.1",
-        "release": "43.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/openssl-3.0.1-43.el9.aarch64.rpm",
-        "checksum": "sha256:91efd5368dd12dfde12fc56096fe8ebdf9b107ffb21e7b2eff20b3bf1a92e01d",
-        "check_gpg": true
-      },
-      {
-        "name": "openssl-libs",
-        "epoch": 1,
-        "version": "3.0.1",
-        "release": "43.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/openssl-libs-3.0.1-43.el9.aarch64.rpm",
-        "checksum": "sha256:0acca92927d5b2d2ed2ab5810406606020f32b538c7f6b300be34efd7d4ba87f",
-        "check_gpg": true
-      },
-      {
-        "name": "openssl-pkcs11",
-        "epoch": 0,
-        "version": "0.4.11",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/openssl-pkcs11-0.4.11-7.el9.aarch64.rpm",
-        "checksum": "sha256:7478ffbc4b219ef6fdcacb95d59a8ab4dda13525bd61a382e3ac6fd5df22e210",
-        "check_gpg": true
-      },
-      {
-        "name": "p11-kit",
-        "epoch": 0,
-        "version": "0.24.1",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/p11-kit-0.24.1-2.el9.aarch64.rpm",
-        "checksum": "sha256:98e7f00d012549fa8fbaba21626388a0b07731f3f25a5801418247d66a5a985f",
-        "check_gpg": true
-      },
-      {
-        "name": "p11-kit-trust",
-        "epoch": 0,
-        "version": "0.24.1",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/p11-kit-trust-0.24.1-2.el9.aarch64.rpm",
-        "checksum": "sha256:80e288a5b62f20f7794674c6fdf2f0765a322cd0e81df9359e37582fe950289c",
-        "check_gpg": true
-      },
-      {
-        "name": "pam",
-        "epoch": 0,
-        "version": "1.5.1",
-        "release": "13.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pam-1.5.1-13.el9.aarch64.rpm",
-        "checksum": "sha256:eb7071e8799762e82fdc64e677d313ab3fe1679477d43e062fdac87b643df067",
-        "check_gpg": true
-      },
-      {
-        "name": "pcre",
-        "epoch": 0,
-        "version": "8.44",
-        "release": "3.el9.3",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pcre-8.44-3.el9.3.aarch64.rpm",
-        "checksum": "sha256:0331efd537704e75e26324ba6bb1568762d01bafe7fbce5b981ff0ee0d3ea80c",
-        "check_gpg": true
-      },
-      {
-        "name": "pcre2",
-        "epoch": 0,
-        "version": "10.40",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pcre2-10.40-2.el9.aarch64.rpm",
-        "checksum": "sha256:8879da4bf6f8ec1a17105a3d54130d77afad48021c7280d8edb3f63fed80c4a5",
-        "check_gpg": true
-      },
-      {
-        "name": "pcre2-syntax",
-        "epoch": 0,
-        "version": "10.40",
-        "release": "2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pcre2-syntax-10.40-2.el9.noarch.rpm",
-        "checksum": "sha256:4dad144194fe6794c7621c38b6a7f917a81ceaeb3f2be25833b9b0af1181ebe2",
-        "check_gpg": true
-      },
-      {
-        "name": "pigz",
-        "epoch": 0,
-        "version": "2.5",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pigz-2.5-4.el9.aarch64.rpm",
-        "checksum": "sha256:780611af8a7121ae2e6a651ca7fbb0274ca7e237017f70e538635a502fd08ae5",
-        "check_gpg": true
-      },
-      {
-        "name": "procps-ng",
-        "epoch": 0,
-        "version": "3.3.17",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/procps-ng-3.3.17-8.el9.aarch64.rpm",
-        "checksum": "sha256:530b2c7b32c0664dbaf19afb07af2f05796eadda02d0b45e75aa1b1c0fa3ee76",
-        "check_gpg": true
-      },
-      {
-        "name": "publicsuffix-list-dafsa",
-        "epoch": 0,
-        "version": "20210518",
-        "release": "3.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/publicsuffix-list-dafsa-20210518-3.el9.noarch.rpm",
-        "checksum": "sha256:992c17312bf5f144ec17b3c9733ab180c6c3641323d2deaf7c13e6bd1971f7a6",
-        "check_gpg": true
-      },
-      {
-        "name": "readline",
-        "epoch": 0,
-        "version": "8.1",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/readline-8.1-4.el9.aarch64.rpm",
-        "checksum": "sha256:2ecec47a882ff434cc869b691a7e1e8d7639bc1af44bcb214ff4921f675776aa",
-        "check_gpg": true
-      },
-      {
-        "name": "sed",
-        "epoch": 0,
-        "version": "4.8",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/sed-4.8-9.el9.aarch64.rpm",
-        "checksum": "sha256:cfdec0f026af984c11277ae613f16af7a86ea6170aac3da495a027599fdc8e3d",
-        "check_gpg": true
-      },
-      {
-        "name": "setup",
-        "epoch": 0,
-        "version": "2.13.7",
-        "release": "7.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/setup-2.13.7-7.el9.noarch.rpm",
-        "checksum": "sha256:ae0994cdf4ae34de6acb668f5672c77eaaa99be9b630cbc2dbe26c756b87790b",
-        "check_gpg": true
-      },
-      {
-        "name": "shadow-utils",
-        "epoch": 2,
-        "version": "4.9",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/shadow-utils-4.9-6.el9.aarch64.rpm",
-        "checksum": "sha256:8d04bd9c627fdcfae1ff8a2ee8e4e75a6eb2391566a7cdfe89f6380c1cec06bf",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-250-11.el9.aarch64.rpm",
-        "checksum": "sha256:812fbb20eadb23bd6248e71bbfaaae3e9e30660587ed55b9bdffe10df760274d",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd-libs",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-libs-250-11.el9.aarch64.rpm",
-        "checksum": "sha256:729291dddd0a27b741e954116b9ab143e27c3535b08f625ea9925ff488d6d126",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd-pam",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-pam-250-11.el9.aarch64.rpm",
-        "checksum": "sha256:133fc234ac61d9d3efe417a66bdab02747441c9af3b88216ba7da889d929c1dd",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd-rpm-macros",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-rpm-macros-250-11.el9.noarch.rpm",
-        "checksum": "sha256:de785470787458bf69cc884d1fe39acf7fbba30f95c725ae48d9645ff19c9936",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd-udev",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-udev-250-11.el9.aarch64.rpm",
-        "checksum": "sha256:0ed53eaba4e3fb95632137fe1a1c018c5d566cd7aef696fd3ef1c33dcec0f696",
-        "check_gpg": true
-      },
-      {
-        "name": "tpm2-tss",
-        "epoch": 0,
-        "version": "3.0.3",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/tpm2-tss-3.0.3-8.el9.aarch64.rpm",
-        "checksum": "sha256:94b2077383d2ec520322f73cc6e5b6c4a896ba029a085086ec735883c654ec47",
-        "check_gpg": true
-      },
-      {
-        "name": "tzdata",
-        "epoch": 0,
-        "version": "2022f",
-        "release": "1.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/tzdata-2022f-1.el9.noarch.rpm",
-        "checksum": "sha256:98f2669159bacb720d0ce036c28e7a0698a5ca829cfc4c8c8240f6507ed6554a",
-        "check_gpg": true
-      },
-      {
-        "name": "util-linux",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/util-linux-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:b731fe83b08f43336d436a2f6400aa6251171d1d9261fcca6ff5734460571729",
-        "check_gpg": true
-      },
-      {
-        "name": "util-linux-core",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/util-linux-core-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:d5a6df418f446d3d983845d6155f137eca79cc55017faa8e9278fd2235a4ab12",
-        "check_gpg": true
-      },
-      {
-        "name": "xz",
-        "epoch": 0,
-        "version": "5.2.5",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/xz-5.2.5-8.el9.aarch64.rpm",
-        "checksum": "sha256:c543b995056f118a141b499548ad00e566cc2062da2c36b2fc1e1b058c81dec1",
-        "check_gpg": true
-      },
-      {
-        "name": "xz-libs",
-        "epoch": 0,
-        "version": "5.2.5",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/xz-libs-5.2.5-8.el9.aarch64.rpm",
-        "checksum": "sha256:99784163a31515239be42e68608478b8337fd168cdb12bcba31de9dd78e35a25",
-        "check_gpg": true
-      },
-      {
-        "name": "zlib",
-        "epoch": 0,
-        "version": "1.2.11",
-        "release": "35.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/zlib-1.2.11-35.el9.aarch64.rpm",
-        "checksum": "sha256:d3ab7a72a9b19e0240df96502d6ddc4b3f5817da89cd884c8783bf09f89f1873",
-        "check_gpg": true
-      }
-    ],
     "build": [
       {
         "name": "checkpolicy",
@@ -9167,16 +8081,6 @@
         "check_gpg": true
       },
       {
-        "name": "qemu-img",
-        "epoch": 17,
-        "version": "7.1.0",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20221124/Packages/qemu-img-7.1.0-4.el9.aarch64.rpm",
-        "checksum": "sha256:e47cbf47c231a024657294db7a671e89546cc0760bfe0f88313af036c550f8d3",
-        "check_gpg": true
-      },
-      {
         "name": "rpm-ostree",
         "epoch": 0,
         "version": "2022.14",
@@ -9617,16 +8521,6 @@
         "check_gpg": true
       },
       {
-        "name": "dnf",
-        "epoch": 0,
-        "version": "4.14.0",
-        "release": "1.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dnf-4.14.0-1.el9.noarch.rpm",
-        "checksum": "sha256:d512bafd403bcbdd9d2be3248129e8064b430f11a6802066592a7fcb233e9de9",
-        "check_gpg": true
-      },
-      {
         "name": "dnf-data",
         "epoch": 0,
         "version": "4.14.0",
@@ -9654,6 +8548,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dracut-057-13.git20220816.el9.aarch64.rpm",
         "checksum": "sha256:23f1371fcd4df638fa6e27d3d0fdc9b71143b28c30f387664ec7ebd3633d5418",
+        "check_gpg": true
+      },
+      {
+        "name": "dracut-config-generic",
+        "epoch": 0,
+        "version": "057",
+        "release": "13.git20220816.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dracut-config-generic-057-13.git20220816.el9.aarch64.rpm",
+        "checksum": "sha256:b3f71150e9dbe76c4300cb8b9e6b22cecc1d43dae4f3a8e28aff407ef52e1f31",
         "check_gpg": true
       },
       {
@@ -11237,16 +10141,6 @@
         "check_gpg": true
       },
       {
-        "name": "python3-iniparse",
-        "epoch": 0,
-        "version": "0.4",
-        "release": "45.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/python3-iniparse-0.4-45.el9.noarch.rpm",
-        "checksum": "sha256:58adb858cd19e953c98745460355993baaaa7741be239e1e865dad5d745d4b65",
-        "check_gpg": true
-      },
-      {
         "name": "python3-libcomps",
         "epoch": 0,
         "version": "0.1.18",
@@ -11687,7 +10581,7 @@
         "check_gpg": true
       }
     ],
-    "installer": [
+    "coi-tree": [
       {
         "name": "anaconda-dracut",
         "epoch": 0,
@@ -12829,6 +11723,16 @@
         "check_gpg": true
       },
       {
+        "name": "freetype",
+        "epoch": 0,
+        "version": "2.10.4",
+        "release": "9.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/freetype-2.10.4-9.el9.aarch64.rpm",
+        "checksum": "sha256:06d3efbc9bc157b28002af281ab19f69daf1372a0ba88901a49b9a88a70e8adb",
+        "check_gpg": true
+      },
+      {
         "name": "fuse-libs",
         "epoch": 0,
         "version": "2.9.9",
@@ -12979,6 +11883,16 @@
         "check_gpg": true
       },
       {
+        "name": "graphite2",
+        "epoch": 0,
+        "version": "1.3.14",
+        "release": "9.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/graphite2-1.3.14-9.el9.aarch64.rpm",
+        "checksum": "sha256:5547be2aab25b50cbf3c3d72d802bf2067c116b2d8fc377d5dfca3b55e37b93b",
+        "check_gpg": true
+      },
+      {
         "name": "grep",
         "epoch": 0,
         "version": "3.6",
@@ -13009,6 +11923,16 @@
         "check_gpg": true
       },
       {
+        "name": "grub2-efi-aa64-cdboot",
+        "epoch": 1,
+        "version": "2.06",
+        "release": "46.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/grub2-efi-aa64-cdboot-2.06-46.el9.aarch64.rpm",
+        "checksum": "sha256:c7b3f66c0567ede2801b2282ccc73bf7401c62d2a4071feb2a71f72f03845d39",
+        "check_gpg": true
+      },
+      {
         "name": "grub2-tools",
         "epoch": 1,
         "version": "2.06",
@@ -13016,6 +11940,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/grub2-tools-2.06-46.el9.aarch64.rpm",
         "checksum": "sha256:6f82d810994199c4f6ad02d4df4b996044cbcf79bc4bf0319298d6d7cf42d3eb",
+        "check_gpg": true
+      },
+      {
+        "name": "grub2-tools-extra",
+        "epoch": 1,
+        "version": "2.06",
+        "release": "46.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/grub2-tools-extra-2.06-46.el9.aarch64.rpm",
+        "checksum": "sha256:9f564cc2c9a5bb85345f200dab5efdcc90a1ff1bcf4708d3655c46323c08a04d",
         "check_gpg": true
       },
       {
@@ -13056,6 +11990,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gzip-1.12-1.el9.aarch64.rpm",
         "checksum": "sha256:5a39a441dad01ccc8af601f1cca5bed46ac231fbdbe39ea3202bd54cf9390d81",
+        "check_gpg": true
+      },
+      {
+        "name": "harfbuzz",
+        "epoch": 0,
+        "version": "2.7.4",
+        "release": "8.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/harfbuzz-2.7.4-8.el9.aarch64.rpm",
+        "checksum": "sha256:d2926882457c7679c4bed0f7f8021404e131e7130e4a1cf13a09fec670a5b61c",
         "check_gpg": true
       },
       {
@@ -13946,6 +12890,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libpciaccess-0.16-6.el9.aarch64.rpm",
         "checksum": "sha256:30e787a579a65cfa78880f86cd41de1f8636c3694a94e6091538e4fdd438f354",
+        "check_gpg": true
+      },
+      {
+        "name": "libpng",
+        "epoch": 2,
+        "version": "1.6.37",
+        "release": "12.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libpng-1.6.37-12.el9.aarch64.rpm",
+        "checksum": "sha256:99f9eca159e41e315b9fe48ec6c6d1d7a944bd5d8fc0b308aba779a6608b3777",
         "check_gpg": true
       },
       {
@@ -15116,1218 +14070,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/xfsprogs-5.14.2-1.el9.aarch64.rpm",
         "checksum": "sha256:ec758e0c1ea7b81561de48b046f453827e1475c3fad54f0858ba7f027c01289e",
-        "check_gpg": true
-      },
-      {
-        "name": "xz",
-        "epoch": 0,
-        "version": "5.2.5",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/xz-5.2.5-8.el9.aarch64.rpm",
-        "checksum": "sha256:c543b995056f118a141b499548ad00e566cc2062da2c36b2fc1e1b058c81dec1",
-        "check_gpg": true
-      },
-      {
-        "name": "xz-libs",
-        "epoch": 0,
-        "version": "5.2.5",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/xz-libs-5.2.5-8.el9.aarch64.rpm",
-        "checksum": "sha256:99784163a31515239be42e68608478b8337fd168cdb12bcba31de9dd78e35a25",
-        "check_gpg": true
-      },
-      {
-        "name": "zlib",
-        "epoch": 0,
-        "version": "1.2.11",
-        "release": "35.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/zlib-1.2.11-35.el9.aarch64.rpm",
-        "checksum": "sha256:d3ab7a72a9b19e0240df96502d6ddc4b3f5817da89cd884c8783bf09f89f1873",
-        "check_gpg": true
-      }
-    ],
-    "packages": [
-      {
-        "name": "gawk-all-langpacks",
-        "epoch": 0,
-        "version": "5.1.0",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20221124/Packages/gawk-all-langpacks-5.1.0-6.el9.aarch64.rpm",
-        "checksum": "sha256:d2f9d8ff6e67f79bf6ca6fb09391dddb7f078e2b9ac74af71dd3fcff37cbb469",
-        "check_gpg": true
-      },
-      {
-        "name": "acl",
-        "epoch": 0,
-        "version": "2.3.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/acl-2.3.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:151d6542a39243b5f65698b31edfe2d9c59e2fd71a7dcaa237442fc5d1d9de1e",
-        "check_gpg": true
-      },
-      {
-        "name": "alternatives",
-        "epoch": 0,
-        "version": "1.20",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/alternatives-1.20-2.el9.aarch64.rpm",
-        "checksum": "sha256:4d9055232088f1ab181e4741358aa188749b8195f184817c04a61447606cdfb5",
-        "check_gpg": true
-      },
-      {
-        "name": "audit-libs",
-        "epoch": 0,
-        "version": "3.0.7",
-        "release": "103.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/audit-libs-3.0.7-103.el9.aarch64.rpm",
-        "checksum": "sha256:d76fb317d2c119de235f079463163dc5a6ed8df8073aa747463697cb667ca604",
-        "check_gpg": true
-      },
-      {
-        "name": "basesystem",
-        "epoch": 0,
-        "version": "11",
-        "release": "13.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/basesystem-11-13.el9.noarch.rpm",
-        "checksum": "sha256:a7a687ef39dd28d01d34fab18ea7e3e87f649f6c202dded82260b7ea625b9973",
-        "check_gpg": true
-      },
-      {
-        "name": "bash",
-        "epoch": 0,
-        "version": "5.1.8",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/bash-5.1.8-5.el9.aarch64.rpm",
-        "checksum": "sha256:a420094f613ae39a964b7fc2accebe9a95abae8f85a3b126950df9a86e419ca8",
-        "check_gpg": true
-      },
-      {
-        "name": "bzip2-libs",
-        "epoch": 0,
-        "version": "1.0.8",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/bzip2-libs-1.0.8-8.el9.aarch64.rpm",
-        "checksum": "sha256:6c20f6f13c274fa2487f95f1e3dddcee9b931ce222abebd2f1d9b3f7eb69fcde",
-        "check_gpg": true
-      },
-      {
-        "name": "ca-certificates",
-        "epoch": 0,
-        "version": "2022.2.54",
-        "release": "90.2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/ca-certificates-2022.2.54-90.2.el9.noarch.rpm",
-        "checksum": "sha256:24978e8dd3e054583da86036657ab16e93da97a0bafc148ec28d871d8c15257c",
-        "check_gpg": true
-      },
-      {
-        "name": "centos-gpg-keys",
-        "epoch": 0,
-        "version": "9.0",
-        "release": "18.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/centos-gpg-keys-9.0-18.el9.noarch.rpm",
-        "checksum": "sha256:4d08c97e3852712e5a46d37e1abf4fe234fbdbdfad0c3c047fe6f3f14881bd81",
-        "check_gpg": true
-      },
-      {
-        "name": "centos-stream-release",
-        "epoch": 0,
-        "version": "9.0",
-        "release": "18.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/centos-stream-release-9.0-18.el9.noarch.rpm",
-        "checksum": "sha256:7078f8a58d6749b6d755cf375291c283318b5fc1b81ba550513e4570d77b961d",
-        "check_gpg": true
-      },
-      {
-        "name": "centos-stream-repos",
-        "epoch": 0,
-        "version": "9.0",
-        "release": "18.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/centos-stream-repos-9.0-18.el9.noarch.rpm",
-        "checksum": "sha256:447442d183d82e93a9516258dc272ba87207c9d5e755ca8e37d562dea92f1875",
-        "check_gpg": true
-      },
-      {
-        "name": "coreutils",
-        "epoch": 0,
-        "version": "8.32",
-        "release": "33.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/coreutils-8.32-33.el9.aarch64.rpm",
-        "checksum": "sha256:9aeca647e4c0c56b7161447403c96850b4adc99435b3878ef03499d343c9bac0",
-        "check_gpg": true
-      },
-      {
-        "name": "coreutils-common",
-        "epoch": 0,
-        "version": "8.32",
-        "release": "33.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/coreutils-common-8.32-33.el9.aarch64.rpm",
-        "checksum": "sha256:78a1e70cbf3d3dc7c4b3e37b23e57bb9ce73e2fe0710f09f7c0b161b33c39c52",
-        "check_gpg": true
-      },
-      {
-        "name": "cpio",
-        "epoch": 0,
-        "version": "2.13",
-        "release": "16.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cpio-2.13-16.el9.aarch64.rpm",
-        "checksum": "sha256:1a26a2ccc84e3c5c0a0c087a7228f74ff214a5e77ea88fd52467637bb6c4be78",
-        "check_gpg": true
-      },
-      {
-        "name": "cracklib",
-        "epoch": 0,
-        "version": "2.9.6",
-        "release": "27.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cracklib-2.9.6-27.el9.aarch64.rpm",
-        "checksum": "sha256:d92900088b558cd3c96c63db24b048a0f3ea575a0f8bfe66c26df4acfcb2f811",
-        "check_gpg": true
-      },
-      {
-        "name": "cracklib-dicts",
-        "epoch": 0,
-        "version": "2.9.6",
-        "release": "27.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cracklib-dicts-2.9.6-27.el9.aarch64.rpm",
-        "checksum": "sha256:bfd16ac0aebb165d43d3139448ab8eac66d4d67c9eac506c3f3bef799f1352c2",
-        "check_gpg": true
-      },
-      {
-        "name": "crypto-policies",
-        "epoch": 0,
-        "version": "20221003",
-        "release": "1.git04dee29.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/crypto-policies-20221003-1.git04dee29.el9.noarch.rpm",
-        "checksum": "sha256:14f3359e27f31564af576a0d1f128d150aee38ae9d80ea9d71d24bf92296e152",
-        "check_gpg": true
-      },
-      {
-        "name": "cryptsetup-libs",
-        "epoch": 0,
-        "version": "2.4.3",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cryptsetup-libs-2.4.3-5.el9.aarch64.rpm",
-        "checksum": "sha256:f4967c4e3c8e728973e57d7a92f2071800e1d7759f331afec49bea5324d18f63",
-        "check_gpg": true
-      },
-      {
-        "name": "cyrus-sasl-lib",
-        "epoch": 0,
-        "version": "2.1.27",
-        "release": "21.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/cyrus-sasl-lib-2.1.27-21.el9.aarch64.rpm",
-        "checksum": "sha256:898d7094964022ca527a6596550b8d46499b3274f8c6a1ee632a98961012d80c",
-        "check_gpg": true
-      },
-      {
-        "name": "dbus",
-        "epoch": 1,
-        "version": "1.12.20",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dbus-1.12.20-7.el9.aarch64.rpm",
-        "checksum": "sha256:66b72600006e0be1b68bee4fb8fa0290a71ffa50586369d37a00128b1d3c4835",
-        "check_gpg": true
-      },
-      {
-        "name": "dbus-broker",
-        "epoch": 0,
-        "version": "28",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dbus-broker-28-7.el9.aarch64.rpm",
-        "checksum": "sha256:28a7abe52040dcda6e5d941206ef6e5c47478fcc06a9f05c2ab7dacc2afa9f42",
-        "check_gpg": true
-      },
-      {
-        "name": "dbus-common",
-        "epoch": 1,
-        "version": "1.12.20",
-        "release": "7.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dbus-common-1.12.20-7.el9.noarch.rpm",
-        "checksum": "sha256:b70a359af020f34116139d96e7f138c10e1bb32a219836b88045ffaa7f4a36a5",
-        "check_gpg": true
-      },
-      {
-        "name": "device-mapper",
-        "epoch": 9,
-        "version": "1.02.185",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/device-mapper-1.02.185-3.el9.aarch64.rpm",
-        "checksum": "sha256:2ea771954009edfe99fa060e1c4d02d3b17f3cf08bb8fea6c5f54389cb95cb5f",
-        "check_gpg": true
-      },
-      {
-        "name": "device-mapper-libs",
-        "epoch": 9,
-        "version": "1.02.185",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/device-mapper-libs-1.02.185-3.el9.aarch64.rpm",
-        "checksum": "sha256:cb93b4a6dbb5a16b5b972dc858e4750749caa4946c80c9a90b922f7cbb7c757b",
-        "check_gpg": true
-      },
-      {
-        "name": "dracut",
-        "epoch": 0,
-        "version": "057",
-        "release": "13.git20220816.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/dracut-057-13.git20220816.el9.aarch64.rpm",
-        "checksum": "sha256:23f1371fcd4df638fa6e27d3d0fdc9b71143b28c30f387664ec7ebd3633d5418",
-        "check_gpg": true
-      },
-      {
-        "name": "expat",
-        "epoch": 0,
-        "version": "2.5.0",
-        "release": "1.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/expat-2.5.0-1.el9.aarch64.rpm",
-        "checksum": "sha256:2163792c7a297e441d7c3c0cbef7a6da0695e44e0b16fbb796cd90ab91dfe0cb",
-        "check_gpg": true
-      },
-      {
-        "name": "filesystem",
-        "epoch": 0,
-        "version": "3.16",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/filesystem-3.16-2.el9.aarch64.rpm",
-        "checksum": "sha256:0afb1f7582830fa9c8c58a6679ab3b4ccf8bbdf1c0c76908fea1429eec8b8a53",
-        "check_gpg": true
-      },
-      {
-        "name": "findutils",
-        "epoch": 1,
-        "version": "4.8.0",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/findutils-4.8.0-5.el9.aarch64.rpm",
-        "checksum": "sha256:3ae59472d5b58715c452f74cb865dbe4058d155ed30d3908a96c51ccccaf4e82",
-        "check_gpg": true
-      },
-      {
-        "name": "gawk",
-        "epoch": 0,
-        "version": "5.1.0",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gawk-5.1.0-6.el9.aarch64.rpm",
-        "checksum": "sha256:656d23c583b0705eaad75cffbe880f2ec39c7d5b7a756c6a8853c2977eec331b",
-        "check_gpg": true
-      },
-      {
-        "name": "gdbm-libs",
-        "epoch": 1,
-        "version": "1.19",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gdbm-libs-1.19-4.el9.aarch64.rpm",
-        "checksum": "sha256:4fc723b43287c971507ec7899a1517dcc91abab962707febc7fdd9c1d865ace8",
-        "check_gpg": true
-      },
-      {
-        "name": "glibc",
-        "epoch": 0,
-        "version": "2.34",
-        "release": "49.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/glibc-2.34-49.el9.aarch64.rpm",
-        "checksum": "sha256:391dd278a78e9b7b153b1f04bb8582b5759c86343f0b2a3c6d2f6b52704829d6",
-        "check_gpg": true
-      },
-      {
-        "name": "glibc-common",
-        "epoch": 0,
-        "version": "2.34",
-        "release": "49.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/glibc-common-2.34-49.el9.aarch64.rpm",
-        "checksum": "sha256:9e627d58826650e9231af80e3528141ab02992f2a819d1d76302761ac15d992d",
-        "check_gpg": true
-      },
-      {
-        "name": "glibc-gconv-extra",
-        "epoch": 0,
-        "version": "2.34",
-        "release": "49.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/glibc-gconv-extra-2.34-49.el9.aarch64.rpm",
-        "checksum": "sha256:48e553ef58c228b778ebdd8b866a97d1d8e71d8a536f4e1e6ea17ffb92234169",
-        "check_gpg": true
-      },
-      {
-        "name": "glibc-minimal-langpack",
-        "epoch": 0,
-        "version": "2.34",
-        "release": "49.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/glibc-minimal-langpack-2.34-49.el9.aarch64.rpm",
-        "checksum": "sha256:c90342669bee04bda110d2269b66340bb501a9ffe2cd0ee8a5bab791f54a0e97",
-        "check_gpg": true
-      },
-      {
-        "name": "gmp",
-        "epoch": 1,
-        "version": "6.2.0",
-        "release": "10.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gmp-6.2.0-10.el9.aarch64.rpm",
-        "checksum": "sha256:1fe837ca20f20f8291a32c0f4673ea2560f94d75d25ab5131f6ae271694a4b44",
-        "check_gpg": true
-      },
-      {
-        "name": "grep",
-        "epoch": 0,
-        "version": "3.6",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/grep-3.6-5.el9.aarch64.rpm",
-        "checksum": "sha256:33bdf571a62cb8b7d659617e9278e46043aa936f8e963202750d19463a805f60",
-        "check_gpg": true
-      },
-      {
-        "name": "gzip",
-        "epoch": 0,
-        "version": "1.12",
-        "release": "1.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/gzip-1.12-1.el9.aarch64.rpm",
-        "checksum": "sha256:5a39a441dad01ccc8af601f1cca5bed46ac231fbdbe39ea3202bd54cf9390d81",
-        "check_gpg": true
-      },
-      {
-        "name": "json-c",
-        "epoch": 0,
-        "version": "0.14",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/json-c-0.14-11.el9.aarch64.rpm",
-        "checksum": "sha256:65a68a23f33540b4d7cd2d9227a63d7eda1a7ab7cdd52457fee9662c06731cfa",
-        "check_gpg": true
-      },
-      {
-        "name": "kbd",
-        "epoch": 0,
-        "version": "2.4.0",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kbd-2.4.0-8.el9.aarch64.rpm",
-        "checksum": "sha256:94f308144af23538bd6996ab86ef54c01ddab6e541e042a4f713b5fb99e6a29f",
-        "check_gpg": true
-      },
-      {
-        "name": "kbd-misc",
-        "epoch": 0,
-        "version": "2.4.0",
-        "release": "8.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kbd-misc-2.4.0-8.el9.noarch.rpm",
-        "checksum": "sha256:2dda3fe56c9a5bce5880dca58d905682c5e9f94ee023e43a3e311d2d411e1849",
-        "check_gpg": true
-      },
-      {
-        "name": "kernel",
-        "epoch": 0,
-        "version": "5.14.0",
-        "release": "200.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kernel-5.14.0-200.el9.aarch64.rpm",
-        "checksum": "sha256:13951cba5bdd848b81405eb0bdc41d9a59c87f69d8c1b63c98ecc7d4a669572c",
-        "check_gpg": true
-      },
-      {
-        "name": "kernel-core",
-        "epoch": 0,
-        "version": "5.14.0",
-        "release": "200.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kernel-core-5.14.0-200.el9.aarch64.rpm",
-        "checksum": "sha256:b08ff6c7286661c48c38635680b248fb5b7ac52b5c390b3c06f4d2ee6010f441",
-        "check_gpg": true
-      },
-      {
-        "name": "kernel-modules",
-        "epoch": 0,
-        "version": "5.14.0",
-        "release": "200.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kernel-modules-5.14.0-200.el9.aarch64.rpm",
-        "checksum": "sha256:5f07e83e78d76e1c9d5d5c3cc63a37474ad8783d6ec3d80eb51e50443bf19e1d",
-        "check_gpg": true
-      },
-      {
-        "name": "keyutils-libs",
-        "epoch": 0,
-        "version": "1.6.3",
-        "release": "1.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/keyutils-libs-1.6.3-1.el9.aarch64.rpm",
-        "checksum": "sha256:5d97ee3ed28533eb2ea01a6be97696fbbbc72f8178dcf7f1acf30e674a298a6e",
-        "check_gpg": true
-      },
-      {
-        "name": "kmod",
-        "epoch": 0,
-        "version": "28",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kmod-28-7.el9.aarch64.rpm",
-        "checksum": "sha256:9a3293fa629de83a0ce0e6326122a8ec8d66132f43dda4abe135a61ceeba739b",
-        "check_gpg": true
-      },
-      {
-        "name": "kmod-libs",
-        "epoch": 0,
-        "version": "28",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kmod-libs-28-7.el9.aarch64.rpm",
-        "checksum": "sha256:e7be371f66f08c54bc464cf376fce0f09ba07d1e10843c7f9bc35abbb3c38085",
-        "check_gpg": true
-      },
-      {
-        "name": "kpartx",
-        "epoch": 0,
-        "version": "0.8.7",
-        "release": "14.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/kpartx-0.8.7-14.el9.aarch64.rpm",
-        "checksum": "sha256:a4ffe518febb4bee693ebad40785bbde102f8ebc106e2a53863a8ffa538881c0",
-        "check_gpg": true
-      },
-      {
-        "name": "krb5-libs",
-        "epoch": 0,
-        "version": "1.19.1",
-        "release": "22.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/krb5-libs-1.19.1-22.el9.aarch64.rpm",
-        "checksum": "sha256:24b7ef009af4066c4477edc2e0b145517d8d4469d050fa922d4cfb68d728fde2",
-        "check_gpg": true
-      },
-      {
-        "name": "libacl",
-        "epoch": 0,
-        "version": "2.3.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libacl-2.3.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:4975593414dfa1e822cd108e988d18453c2ff036b03e4cdbf38db0afb45e0c92",
-        "check_gpg": true
-      },
-      {
-        "name": "libattr",
-        "epoch": 0,
-        "version": "2.5.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libattr-2.5.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:a0101ccea66aef376f4067c1002ebdfb5dbeeecd334047459b3855eff17a6fda",
-        "check_gpg": true
-      },
-      {
-        "name": "libblkid",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libblkid-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:30f9f288185a85f20447994c0d2dba80665bf5ccce089d8c16fd8a9c8495c6a2",
-        "check_gpg": true
-      },
-      {
-        "name": "libbrotli",
-        "epoch": 0,
-        "version": "1.0.9",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libbrotli-1.0.9-6.el9.aarch64.rpm",
-        "checksum": "sha256:e2fafdd223332e004ffbfdb4e906fcf4016ccacf68e866db666f2893fe2ab746",
-        "check_gpg": true
-      },
-      {
-        "name": "libcap",
-        "epoch": 0,
-        "version": "2.48",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libcap-2.48-8.el9.aarch64.rpm",
-        "checksum": "sha256:881d4e7729633ce71b1a6bab3a84c1f79d5e7c49ef3ffdc1bc703cdd7ae3cd81",
-        "check_gpg": true
-      },
-      {
-        "name": "libcap-ng",
-        "epoch": 0,
-        "version": "0.8.2",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libcap-ng-0.8.2-7.el9.aarch64.rpm",
-        "checksum": "sha256:1dfa7208abe1af5522523cabdabb73783ed1df4424dc8846eab8a570d010deaa",
-        "check_gpg": true
-      },
-      {
-        "name": "libcom_err",
-        "epoch": 0,
-        "version": "1.46.5",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libcom_err-1.46.5-3.el9.aarch64.rpm",
-        "checksum": "sha256:a735b91094a13612830db66fd2021c9ec86c92697e526068e8b3919111cc2ba8",
-        "check_gpg": true
-      },
-      {
-        "name": "libcurl",
-        "epoch": 0,
-        "version": "7.76.1",
-        "release": "21.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libcurl-7.76.1-21.el9.aarch64.rpm",
-        "checksum": "sha256:802ee004e148c6fced3f473f2446065f4bbf40360066e50a6c381a97d2a7f8fa",
-        "check_gpg": true
-      },
-      {
-        "name": "libdb",
-        "epoch": 0,
-        "version": "5.3.28",
-        "release": "53.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libdb-5.3.28-53.el9.aarch64.rpm",
-        "checksum": "sha256:65a5743728c6c331dd8aadc9b51f261f90ffa47ffd0cfb448da8bdf28af6dd77",
-        "check_gpg": true
-      },
-      {
-        "name": "libeconf",
-        "epoch": 0,
-        "version": "0.4.1",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libeconf-0.4.1-2.el9.aarch64.rpm",
-        "checksum": "sha256:082dff130121fcdb7cb3fd432de482075b5003e0d95ff4ab6d8ba02404b69d6b",
-        "check_gpg": true
-      },
-      {
-        "name": "libevent",
-        "epoch": 0,
-        "version": "2.1.12",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libevent-2.1.12-6.el9.aarch64.rpm",
-        "checksum": "sha256:5ff00c047204190e3b2ee19f81d644c8f82ea7e8d1f36fdaaf6483f0fa3b3339",
-        "check_gpg": true
-      },
-      {
-        "name": "libfdisk",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libfdisk-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:dad6efc735b4078ec086bbd2c4981b2be5b0686b85207c282b25348c97a64306",
-        "check_gpg": true
-      },
-      {
-        "name": "libffi",
-        "epoch": 0,
-        "version": "3.4.2",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libffi-3.4.2-7.el9.aarch64.rpm",
-        "checksum": "sha256:6a42002c0b63a3c4d1e8da5cdf4822f442a7b458d80e69673715715d38ea977d",
-        "check_gpg": true
-      },
-      {
-        "name": "libgcc",
-        "epoch": 0,
-        "version": "11.3.1",
-        "release": "2.1.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libgcc-11.3.1-2.1.el9.aarch64.rpm",
-        "checksum": "sha256:9a99bd50285ee01446e6580eba3adbd8a402262d1d72e8474ac5b8f06cdc874f",
-        "check_gpg": true
-      },
-      {
-        "name": "libgcrypt",
-        "epoch": 0,
-        "version": "1.10.0",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libgcrypt-1.10.0-8.el9.aarch64.rpm",
-        "checksum": "sha256:00d9e47947352c66b890b50b0aa4f5667d296aaf7aaff3a29a26e2e667525c75",
-        "check_gpg": true
-      },
-      {
-        "name": "libgpg-error",
-        "epoch": 0,
-        "version": "1.42",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libgpg-error-1.42-5.el9.aarch64.rpm",
-        "checksum": "sha256:ffeb04823b5317c7e016542c8ecc5180c7824f8b59a180f2434fd096a34a9105",
-        "check_gpg": true
-      },
-      {
-        "name": "libidn2",
-        "epoch": 0,
-        "version": "2.3.0",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libidn2-2.3.0-7.el9.aarch64.rpm",
-        "checksum": "sha256:6ed96112059449aa37b99d4d4e3b5d089c34afefbd9b618691bed8c206c4d441",
-        "check_gpg": true
-      },
-      {
-        "name": "libkcapi",
-        "epoch": 0,
-        "version": "1.3.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libkcapi-1.3.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:da1d646f8ce14588cd7b666dc32fed0aae7cfb14d98998c1fc35ad0640cbff27",
-        "check_gpg": true
-      },
-      {
-        "name": "libkcapi-hmaccalc",
-        "epoch": 0,
-        "version": "1.3.1",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libkcapi-hmaccalc-1.3.1-3.el9.aarch64.rpm",
-        "checksum": "sha256:065aa57e7068afb9b276f02c8b30a2d6dd7efffc69e8b60afa1daecdef6913a7",
-        "check_gpg": true
-      },
-      {
-        "name": "libmount",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libmount-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:36143d654f53c13d409a2be19970465dd61f4bf294f808a7dc9954e7a4414272",
-        "check_gpg": true
-      },
-      {
-        "name": "libnghttp2",
-        "epoch": 0,
-        "version": "1.43.0",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libnghttp2-1.43.0-5.el9.aarch64.rpm",
-        "checksum": "sha256:702abf0c5b1574b828132e4dbea17ad7099034db18f47fd1ac84b4d9534dcfea",
-        "check_gpg": true
-      },
-      {
-        "name": "libpsl",
-        "epoch": 0,
-        "version": "0.21.1",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libpsl-0.21.1-5.el9.aarch64.rpm",
-        "checksum": "sha256:ffb4b495921ab66fce510dac3d06a8fb924afacc7cd44bb0d8f5b0da09ca49cc",
-        "check_gpg": true
-      },
-      {
-        "name": "libpwquality",
-        "epoch": 0,
-        "version": "1.4.4",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libpwquality-1.4.4-8.el9.aarch64.rpm",
-        "checksum": "sha256:3c22a268ce022cb4722aa2d35a95c1174778f424fbf29e98990801651d468aeb",
-        "check_gpg": true
-      },
-      {
-        "name": "libseccomp",
-        "epoch": 0,
-        "version": "2.5.2",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libseccomp-2.5.2-2.el9.aarch64.rpm",
-        "checksum": "sha256:ee31abd3d1325b05c5ba336158ba3b235a718a99ad5cec5e6ab498ca99b688b5",
-        "check_gpg": true
-      },
-      {
-        "name": "libselinux",
-        "epoch": 0,
-        "version": "3.4",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libselinux-3.4-3.el9.aarch64.rpm",
-        "checksum": "sha256:bf2e3f00871a2d969a9cac61855c224fdcf127284f890a25564872d97b1043e9",
-        "check_gpg": true
-      },
-      {
-        "name": "libsemanage",
-        "epoch": 0,
-        "version": "3.4",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libsemanage-3.4-2.el9.aarch64.rpm",
-        "checksum": "sha256:df0712f9a86e48674eae975751de4dfd858a0b2744576db5cdd7878db26d5dc4",
-        "check_gpg": true
-      },
-      {
-        "name": "libsepol",
-        "epoch": 0,
-        "version": "3.4",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libsepol-3.4-3.el9.aarch64.rpm",
-        "checksum": "sha256:42b6d5920e058c2fb0bcc15a4769ab20bab29d72010f78f758b6b7007e597387",
-        "check_gpg": true
-      },
-      {
-        "name": "libsigsegv",
-        "epoch": 0,
-        "version": "2.13",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libsigsegv-2.13-4.el9.aarch64.rpm",
-        "checksum": "sha256:097399718ae50fb03fde85fa151c060c50445a1a5af185052cac6b92d6fdcdae",
-        "check_gpg": true
-      },
-      {
-        "name": "libsmartcols",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libsmartcols-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:db518be8ad99feee87bcbccbd5c1c740f8cbe610f3a1d59bd70637053c37fba8",
-        "check_gpg": true
-      },
-      {
-        "name": "libssh",
-        "epoch": 0,
-        "version": "0.10.4",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libssh-0.10.4-3.el9.aarch64.rpm",
-        "checksum": "sha256:dcd4d7f38cb5379ff2ddcb91d7e01f89ceda7ecde0e69ec3b192656712a73ab6",
-        "check_gpg": true
-      },
-      {
-        "name": "libssh-config",
-        "epoch": 0,
-        "version": "0.10.4",
-        "release": "3.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libssh-config-0.10.4-3.el9.noarch.rpm",
-        "checksum": "sha256:c74b239eb2040ca414b32492fde653439e10f1072cfc6ff557a4c5d054b39261",
-        "check_gpg": true
-      },
-      {
-        "name": "libtasn1",
-        "epoch": 0,
-        "version": "4.16.0",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libtasn1-4.16.0-7.el9.aarch64.rpm",
-        "checksum": "sha256:4eaa01b044d688793eb928170f3937bc8618b76d702d49a8843aa89461e43fa8",
-        "check_gpg": true
-      },
-      {
-        "name": "libunistring",
-        "epoch": 0,
-        "version": "0.9.10",
-        "release": "15.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libunistring-0.9.10-15.el9.aarch64.rpm",
-        "checksum": "sha256:09381b23c9d2343592b8b565dcbb23d055999ab1e521aa802b6d40a682b80e42",
-        "check_gpg": true
-      },
-      {
-        "name": "libutempter",
-        "epoch": 0,
-        "version": "1.2.1",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libutempter-1.2.1-6.el9.aarch64.rpm",
-        "checksum": "sha256:65cd8c3813afc69dd2ea9eeb6e2fc7db4a7d626b51efe376b8000dfdaa10402a",
-        "check_gpg": true
-      },
-      {
-        "name": "libuuid",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libuuid-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:1de486c59df5317dc192a194df9ca548c4fb2cc3d3d1a4dde20bef6eaad62f1f",
-        "check_gpg": true
-      },
-      {
-        "name": "libverto",
-        "epoch": 0,
-        "version": "0.3.2",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libverto-0.3.2-3.el9.aarch64.rpm",
-        "checksum": "sha256:1190ea8310b0dab3ebbade3180b4c2cf7064e90c894e5415711d7751e709be8a",
-        "check_gpg": true
-      },
-      {
-        "name": "libxcrypt",
-        "epoch": 0,
-        "version": "4.4.18",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libxcrypt-4.4.18-3.el9.aarch64.rpm",
-        "checksum": "sha256:f697d91abb19e9be9b69b8836a802711d2cf7989af27a4e1ba261f35ce53b8b5",
-        "check_gpg": true
-      },
-      {
-        "name": "libzstd",
-        "epoch": 0,
-        "version": "1.5.1",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/libzstd-1.5.1-2.el9.aarch64.rpm",
-        "checksum": "sha256:68101e014106305c840611b64d71311600edb30a34e09514c169c9eef6090d42",
-        "check_gpg": true
-      },
-      {
-        "name": "linux-firmware",
-        "epoch": 0,
-        "version": "20221012",
-        "release": "128.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/linux-firmware-20221012-128.el9.noarch.rpm",
-        "checksum": "sha256:95c8fd81fdcda1696d383288ae4e2f4b886839eb1f0dac068b3028ae1824ecb7",
-        "check_gpg": true
-      },
-      {
-        "name": "linux-firmware-whence",
-        "epoch": 0,
-        "version": "20221012",
-        "release": "128.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/linux-firmware-whence-20221012-128.el9.noarch.rpm",
-        "checksum": "sha256:5945b24de16e777c244cddbc793ffe30409b3390715471ed326bc661400574c6",
-        "check_gpg": true
-      },
-      {
-        "name": "lz4-libs",
-        "epoch": 0,
-        "version": "1.9.3",
-        "release": "5.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/lz4-libs-1.9.3-5.el9.aarch64.rpm",
-        "checksum": "sha256:9aa14d26393dd46c0a390cf04f939f7f759a33165bdb506f8bee0653f3b70f45",
-        "check_gpg": true
-      },
-      {
-        "name": "mpfr",
-        "epoch": 0,
-        "version": "4.1.0",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/mpfr-4.1.0-7.el9.aarch64.rpm",
-        "checksum": "sha256:f3bd8510505a53450abe05dc34edbc5313fe89a6f88d0252624205dc7bb884c7",
-        "check_gpg": true
-      },
-      {
-        "name": "ncurses-base",
-        "epoch": 0,
-        "version": "6.2",
-        "release": "8.20210508.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/ncurses-base-6.2-8.20210508.el9.noarch.rpm",
-        "checksum": "sha256:e4cc4a4a479b8c27776debba5c20e8ef21dc4b513da62a25ed09f88386ac08a8",
-        "check_gpg": true
-      },
-      {
-        "name": "ncurses-libs",
-        "epoch": 0,
-        "version": "6.2",
-        "release": "8.20210508.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/ncurses-libs-6.2-8.20210508.el9.aarch64.rpm",
-        "checksum": "sha256:26a21395b0bb4f7b60ab89bacaa8fc210c9921f1aba90ec950b91b3ee9e25dcc",
-        "check_gpg": true
-      },
-      {
-        "name": "openldap",
-        "epoch": 0,
-        "version": "2.6.2",
-        "release": "3.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/openldap-2.6.2-3.el9.aarch64.rpm",
-        "checksum": "sha256:492daf98d77aa62021d3956e0a0727c66bd13c2322267c8e6556bfbb68c06fa5",
-        "check_gpg": true
-      },
-      {
-        "name": "openssl",
-        "epoch": 1,
-        "version": "3.0.1",
-        "release": "43.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/openssl-3.0.1-43.el9.aarch64.rpm",
-        "checksum": "sha256:91efd5368dd12dfde12fc56096fe8ebdf9b107ffb21e7b2eff20b3bf1a92e01d",
-        "check_gpg": true
-      },
-      {
-        "name": "openssl-libs",
-        "epoch": 1,
-        "version": "3.0.1",
-        "release": "43.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/openssl-libs-3.0.1-43.el9.aarch64.rpm",
-        "checksum": "sha256:0acca92927d5b2d2ed2ab5810406606020f32b538c7f6b300be34efd7d4ba87f",
-        "check_gpg": true
-      },
-      {
-        "name": "openssl-pkcs11",
-        "epoch": 0,
-        "version": "0.4.11",
-        "release": "7.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/openssl-pkcs11-0.4.11-7.el9.aarch64.rpm",
-        "checksum": "sha256:7478ffbc4b219ef6fdcacb95d59a8ab4dda13525bd61a382e3ac6fd5df22e210",
-        "check_gpg": true
-      },
-      {
-        "name": "p11-kit",
-        "epoch": 0,
-        "version": "0.24.1",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/p11-kit-0.24.1-2.el9.aarch64.rpm",
-        "checksum": "sha256:98e7f00d012549fa8fbaba21626388a0b07731f3f25a5801418247d66a5a985f",
-        "check_gpg": true
-      },
-      {
-        "name": "p11-kit-trust",
-        "epoch": 0,
-        "version": "0.24.1",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/p11-kit-trust-0.24.1-2.el9.aarch64.rpm",
-        "checksum": "sha256:80e288a5b62f20f7794674c6fdf2f0765a322cd0e81df9359e37582fe950289c",
-        "check_gpg": true
-      },
-      {
-        "name": "pam",
-        "epoch": 0,
-        "version": "1.5.1",
-        "release": "13.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pam-1.5.1-13.el9.aarch64.rpm",
-        "checksum": "sha256:eb7071e8799762e82fdc64e677d313ab3fe1679477d43e062fdac87b643df067",
-        "check_gpg": true
-      },
-      {
-        "name": "pcre",
-        "epoch": 0,
-        "version": "8.44",
-        "release": "3.el9.3",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pcre-8.44-3.el9.3.aarch64.rpm",
-        "checksum": "sha256:0331efd537704e75e26324ba6bb1568762d01bafe7fbce5b981ff0ee0d3ea80c",
-        "check_gpg": true
-      },
-      {
-        "name": "pcre2",
-        "epoch": 0,
-        "version": "10.40",
-        "release": "2.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pcre2-10.40-2.el9.aarch64.rpm",
-        "checksum": "sha256:8879da4bf6f8ec1a17105a3d54130d77afad48021c7280d8edb3f63fed80c4a5",
-        "check_gpg": true
-      },
-      {
-        "name": "pcre2-syntax",
-        "epoch": 0,
-        "version": "10.40",
-        "release": "2.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pcre2-syntax-10.40-2.el9.noarch.rpm",
-        "checksum": "sha256:4dad144194fe6794c7621c38b6a7f917a81ceaeb3f2be25833b9b0af1181ebe2",
-        "check_gpg": true
-      },
-      {
-        "name": "pigz",
-        "epoch": 0,
-        "version": "2.5",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/pigz-2.5-4.el9.aarch64.rpm",
-        "checksum": "sha256:780611af8a7121ae2e6a651ca7fbb0274ca7e237017f70e538635a502fd08ae5",
-        "check_gpg": true
-      },
-      {
-        "name": "procps-ng",
-        "epoch": 0,
-        "version": "3.3.17",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/procps-ng-3.3.17-8.el9.aarch64.rpm",
-        "checksum": "sha256:530b2c7b32c0664dbaf19afb07af2f05796eadda02d0b45e75aa1b1c0fa3ee76",
-        "check_gpg": true
-      },
-      {
-        "name": "publicsuffix-list-dafsa",
-        "epoch": 0,
-        "version": "20210518",
-        "release": "3.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/publicsuffix-list-dafsa-20210518-3.el9.noarch.rpm",
-        "checksum": "sha256:992c17312bf5f144ec17b3c9733ab180c6c3641323d2deaf7c13e6bd1971f7a6",
-        "check_gpg": true
-      },
-      {
-        "name": "readline",
-        "epoch": 0,
-        "version": "8.1",
-        "release": "4.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/readline-8.1-4.el9.aarch64.rpm",
-        "checksum": "sha256:2ecec47a882ff434cc869b691a7e1e8d7639bc1af44bcb214ff4921f675776aa",
-        "check_gpg": true
-      },
-      {
-        "name": "sed",
-        "epoch": 0,
-        "version": "4.8",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/sed-4.8-9.el9.aarch64.rpm",
-        "checksum": "sha256:cfdec0f026af984c11277ae613f16af7a86ea6170aac3da495a027599fdc8e3d",
-        "check_gpg": true
-      },
-      {
-        "name": "setup",
-        "epoch": 0,
-        "version": "2.13.7",
-        "release": "7.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/setup-2.13.7-7.el9.noarch.rpm",
-        "checksum": "sha256:ae0994cdf4ae34de6acb668f5672c77eaaa99be9b630cbc2dbe26c756b87790b",
-        "check_gpg": true
-      },
-      {
-        "name": "shadow-utils",
-        "epoch": 2,
-        "version": "4.9",
-        "release": "6.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/shadow-utils-4.9-6.el9.aarch64.rpm",
-        "checksum": "sha256:8d04bd9c627fdcfae1ff8a2ee8e4e75a6eb2391566a7cdfe89f6380c1cec06bf",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-250-11.el9.aarch64.rpm",
-        "checksum": "sha256:812fbb20eadb23bd6248e71bbfaaae3e9e30660587ed55b9bdffe10df760274d",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd-libs",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-libs-250-11.el9.aarch64.rpm",
-        "checksum": "sha256:729291dddd0a27b741e954116b9ab143e27c3535b08f625ea9925ff488d6d126",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd-pam",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-pam-250-11.el9.aarch64.rpm",
-        "checksum": "sha256:133fc234ac61d9d3efe417a66bdab02747441c9af3b88216ba7da889d929c1dd",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd-rpm-macros",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-rpm-macros-250-11.el9.noarch.rpm",
-        "checksum": "sha256:de785470787458bf69cc884d1fe39acf7fbba30f95c725ae48d9645ff19c9936",
-        "check_gpg": true
-      },
-      {
-        "name": "systemd-udev",
-        "epoch": 0,
-        "version": "250",
-        "release": "11.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/systemd-udev-250-11.el9.aarch64.rpm",
-        "checksum": "sha256:0ed53eaba4e3fb95632137fe1a1c018c5d566cd7aef696fd3ef1c33dcec0f696",
-        "check_gpg": true
-      },
-      {
-        "name": "tpm2-tss",
-        "epoch": 0,
-        "version": "3.0.3",
-        "release": "8.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/tpm2-tss-3.0.3-8.el9.aarch64.rpm",
-        "checksum": "sha256:94b2077383d2ec520322f73cc6e5b6c4a896ba029a085086ec735883c654ec47",
-        "check_gpg": true
-      },
-      {
-        "name": "tzdata",
-        "epoch": 0,
-        "version": "2022f",
-        "release": "1.el9",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/tzdata-2022f-1.el9.noarch.rpm",
-        "checksum": "sha256:98f2669159bacb720d0ce036c28e7a0698a5ca829cfc4c8c8240f6507ed6554a",
-        "check_gpg": true
-      },
-      {
-        "name": "util-linux",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/util-linux-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:b731fe83b08f43336d436a2f6400aa6251171d1d9261fcca6ff5734460571729",
-        "check_gpg": true
-      },
-      {
-        "name": "util-linux-core",
-        "epoch": 0,
-        "version": "2.37.4",
-        "release": "9.el9",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20221124/Packages/util-linux-core-2.37.4-9.el9.aarch64.rpm",
-        "checksum": "sha256:d5a6df418f446d3d983845d6155f137eca79cc55017faa8e9278fd2235a4ab12",
         "check_gpg": true
       },
       {
