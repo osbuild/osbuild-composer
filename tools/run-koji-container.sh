@@ -106,6 +106,17 @@ koji_start() {
   psql_cmd -c "insert into content_generator (name) values ('osbuild')" >/dev/null
   psql_cmd -c "insert into cg_users (cg_id, user_id, creator_id, active) values (1, 2, 1, true), (1, 3, 1, true)" >/dev/null
 
+  # When the test upload a vhd.xz image to koji, it returns `koji.GenericError:
+  # multiple matches for file extension: vhd.xz`. It seems like the default
+  # schema is not valid for vhd.xz images because it contains two archive types
+  # for them which koji cannot handle. I reported this issue as
+  #
+  # https://pagure.io/koji/issue/3605
+  #
+  # This line works around that by removing one of the archive types, so koji
+  # isn't confused by two same records.
+  psql_cmd -c "delete from archivetypes where name='vhdx-compressed'" >/dev/null
+
   echo "Containers are running, to stop them use:"
   echo "$0 stop"
 
