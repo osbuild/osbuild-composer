@@ -597,7 +597,7 @@ func run(ctx context.Context, dnfJsonCmd []string, req *Request) ([]byte, error)
 
 	err = cmd.Start()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: %s", cmd.String(), err.Error())
 	}
 
 	err = json.NewEncoder(stdin).Encode(req)
