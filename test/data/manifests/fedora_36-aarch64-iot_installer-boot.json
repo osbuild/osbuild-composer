@@ -10837,12 +10837,7 @@
               "filename": "installer.iso",
               "volid": "Fedora-36-BaseOS-aarch64",
               "sysid": "LINUX",
-              "boot": {
-                "image": "isolinux/isolinux.bin",
-                "catalog": "isolinux/boot.cat"
-              },
               "efi": "images/efiboot.img",
-              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin",
               "isolevel": 3
             }
           },
