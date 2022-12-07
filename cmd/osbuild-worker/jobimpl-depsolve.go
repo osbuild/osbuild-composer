@@ -50,15 +50,15 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 			// Error originates from dnf-json
 			switch e.Kind {
 			case "DepsolveError":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, err.Error(), nil)
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, err.Error(), e.Reason)
 			case "MarkingErrors":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, err.Error(), nil)
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, err.Error(), e.Reason)
 			case "RepoError":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, err.Error(), nil)
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, err.Error(), e.Reason)
 			default:
 				// This still has the kind/reason format but a kind that's returned
 				// by dnf-json and not explicitly handled here.
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, err.Error(), nil)
+				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, err.Error(), e.Reason)
 				logWithId.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
 			}
 		case error:
