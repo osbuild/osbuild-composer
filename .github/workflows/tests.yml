@@ -60,7 +60,7 @@ jobs:
       # gpgme-devel is needed for container upload dependencies
     - name: Install test dependencies
       run: sudo apt-get install -y libgpgme-dev
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-go@v3
       with:
         go-version: 1.16
@@ -208,7 +208,7 @@ jobs:
     name: "🎀 kube-linter"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: redhat-actions/oc-installer@v1
     - name: Process template
       run: |
