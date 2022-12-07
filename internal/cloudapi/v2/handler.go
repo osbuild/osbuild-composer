@@ -313,6 +313,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				}
 				if ir.Ostree.Rhsm != nil {
 					ostreeOptions.RHSM = *ir.Ostree.Rhsm
+
+					// RHSM needs to be set on imageoptions directly in addition
+					// to the resolve job input
+					imageOptions.OSTree.RHSM = *ir.Ostree.Rhsm
 				}
 			}
 			if ostreeOptions.Ref == "" {
