@@ -95,6 +95,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 						ImageRef:      tt.ComposeRequest.OSTree.Ref,
 						FetchChecksum: tt.ComposeRequest.OSTree.Parent,
 						URL:           tt.ComposeRequest.OSTree.URL,
+						RHSM:          tt.ComposeRequest.OSTree.RHSM,
 					}
 				}
 			}

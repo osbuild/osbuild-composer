@@ -53,6 +53,7 @@ type ostreeOptions struct {
 	Ref    string `json:"ref"`
 	URL    string `json:"url"`
 	Parent string `json:"parent"`
+	RHSM   bool   `json:"rhsm"`
 }
 
 type crBlueprint struct {
@@ -120,6 +121,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			URL:           cr.OSTree.URL,
 			ImageRef:      cr.OSTree.Ref,
 			FetchChecksum: cr.OSTree.Parent,
+			RHSM:          cr.OSTree.RHSM,
 		}
 	}
 
