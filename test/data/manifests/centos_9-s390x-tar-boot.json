@@ -60,7 +60,479 @@
                     }
                   },
                   {
+                    "id": "sha256:fe3d9211cf713a58a8b4e10904742ef57b2dcfac97c895e9b784ccd0a30da78d",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:34e7241407d72c2bad191133752d9e9d8a54299150ef6145e91a0da4fd310c47",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:f1ca6aaa47ef96d6b47f20f3a2df2ce530228790f2c0330ece567cc77ddd5063",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:1cfb719169e88332200502321bb2d6ba6a092e24efebd3ae9fcfa704eebac487",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:a6f4d668df3cff11aa488fab1eecdc13df798fa3eb577f378e971f014672b94b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:de4b71c1cf818d48940ca0f68f5d3c520a321affe9e33b5afd7976c811f1d741",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:032a7f8100c97e7225e5faeba4110bd57fb440aabc8f0c15b7134d63e55e99d8",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:9e7e6b0fc298782ee5c538f90343851ac0b3cefc868ed72a063c16f249d37b72",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:30696fa3556f587c3b5372956fe8bf9e99cb2eea024e40215b38c5052a11da81",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:098c570e4b7213ed4df7022a5d36bbe4c6947ac341f8018d739160da0eb24e0d",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:1fefc5a7bc8cd31a853c090cdaa0758344cacc56561532dfef20ab70bd30bcab",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:62e316599585124817c5217e402bbbde48df6b6309d0b59af3ec4d8bc0fcf216",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:2ec3d80d08e7468dfeeec00d598c3015a3c0af2abc56b05a57557bcc84b01146",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:74b7f75cf3c8bf7191a8e6d88689d7aca1b1f60d56c890ead7d558a704a4a4cc",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:a1416670c051fdf7ea5e7ffac059d88e17b14a61cf75a95be6e3c6d2e730101b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:362bb253991b67fd82c6063483f2a2cb32b3c0198e9e42f7f8f8597433fe350b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:29afb66559fb138d410a2dd1acddd6ee210864bf654b43c8b0bb81c060c2e7a9",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:0053d63a5eb0bc399e2e56a2599a1a09dca20c5bcac36f713a56fec46abac391",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c1c61c0ebb588d0314ecba36879b53f2d7f0fc84375724bb282a48697be81bf5",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:368b2e96ca6be6b79d0e3b4f580c1a73edd6ea966af40b7ffdaacb2fdeda3e62",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:bf7e4138eafa78600420e0f1a5f5819affd45c59b1747bf6dc231e4f83882315",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:95babe1d96f2dfd85f161d3f82bb3ba4ad4a2591d0d90919132f1358377f53bf",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:888fb6d76d4d63b3d210a5da8b046c879fcfdaefb9fd00b2a34e65305596bb58",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b33971afed2b744ce6f578d5c8c691099439d708869730f4cab7199ddc905c94",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:904abfa862ecd90ef5bf869619efe77555f67077edf2e38d2879182342983cc9",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:27dfc72f604506654c671d164852668094da5e817e84b8192f21e29429a59838",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:25c28c9e3d5f2ec0ad1c3c7d3c2484284ef6aa31675f0cd2d347c6abadb6f2a8",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:e8e5f72e9a15488ce18a59626f69400e8faab466812489f2b66a7b2307b3ca18",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:29a03f6ad794f171ed8aa7a991aede7f006e9667a32ff1cf592aefd99e4b8c1a",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:eaf7ecd82cec96b7474850ae6de4d883e69fe531a66bdf74d2b93bf8f1c2c573",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c32ad4f02ecad264d2337837848706cc44f0502f39d978a6c055166fcf8ce917",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:fb38583786c1d851fe160de0e436ae2bb332f60e072a6e58db02b2affb9aab6c",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:4b70575a9f0ebc0f0026681112532243b0699ca7dc5dcb165cef856adc1ec0d8",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:2dded1efa254118c646affd59615237825f00e36b86a96a98fd59c8b6015612a",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:73db2d64e46f08667c4ad5225da81942072b0411c30b030bf1dcd16f8cd59936",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:f15acb9fda15f0bb8cdd37d3763af70510554bf5f1cc99b679af94ee1065a74a",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b9ae0cdc8113ae9b80204cc26c12dd7a5f83c5d9e68b49a0517e418c007a3bea",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:dfd3a0e15c81442c7b5d8a52bd183374e4d2dcb7dc5f586484877d8331ab5d4f",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:02186ed7d490b5d403c43282b8f448de509db85188c260378c5fb2cbe67a4353",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:d4e87c795780fa190baba5291c390e9af304e4f134e4aa4f2d03fc9b91ca5d60",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:5c38c53e562f24cbdb395b11358efaaf6aee82ccd385055c5ffcf1843593d8da",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:1264dd35d5deda51b4431955b2838cd18e0012dc27f0e0cb65061324216ff22c",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:11966231d2834b2a9c2c0bf2af231e1257ce030da1cfecdd16d08a6a23222b24",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:53f9616f9c60c8fb7befeff87f5b76c61ee75686a6c289f394c4793d3692de3b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:745f84fc781c84763cad8001841711d6142eb13f50e55de928d3d051a0435ef2",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:eeb8d0fd12dc02fa13dac763d7d035e7cb40ab2c3410e70a3c23467fafbc8f62",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:6a25cfb9d83c69bd767be0e30de26dbc9ece902c9e848965c3378ef1405ceb6e",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:7e961a7b4eeff849489a8e9a26f32906b3aa5dc2273573fe41a01a2f9cc4fd20",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:1ad31b9f568c1ae2508dbd7832047874a8e29d149f52d346509244febdda763f",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b882c8742426d278d387432a65220bd63ffd1670737aea43084994d2b638e5d4",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b78c857f8c1ae8a5b13dd914b08b118f39f0a2f7c0dc8b7df2b29ed353638acb",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:10f8b31849feda8da595ebe9c8e83c6d75745d157b899451507fc730ddc6a677",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:2e2013098c4a46adaa2d3531c23c9328b5b7b960d8d9135c50d6d0fbde4800b3",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:36081cad622d6c897c3b299c903ca652729861019b7241045b5ae2b7b03a8a57",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:342a7b84a44cd59bea045f679309ef6145a235897dedb8a9afd2d015bc17f72a",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:aac9b4c1ccd942afaec19299880eb89e1889b4531e7cab751c3be6a66f9c5fa6",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b7df2f1b732dd9c6ae1edba61e11d3c1da9003af529130ea98c62980147104e8",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:2f19f01a6382b276a1930b95080a69a6734b6cf54b4f4b67661852d4aeb25e40",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:eaa6b1a04ed162da5e5b1fcfe4e2618d2227fa980075e74ae15f11a38d939570",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:5f34596b206951c3c00c10df343614374ca0cc0955938de6ec68d7884a4caac7",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -284,6 +756,14 @@
                     }
                   },
                   {
+                    "id": "sha256:efe1c638da6ed71b4985ade0dacc7f3ae9ec41a1ee0bbbad75c5ace10d055eee",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:f801fe42eb6057abacd6d1f67ce9c87cd5df5a6f7e71384579af967cf97f31f5",
                     "options": {
                       "metadata": {
@@ -292,7 +772,31 @@
                     }
                   },
                   {
+                    "id": "sha256:3d3638132b7b9dfc387c71ec199f8bd0ae7e00725a43966068ea4f0e3bfffc1d",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:d73d7bc2e7974b56df5f727ea5915a6d909e24db5a37830f5a3f84c7f50ef68a",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:d7964cb337adb860a737828759fbd1c64a2ab2d2eb62411aa66525ece2ed62af",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c72647810ee5826d0523f597af1f17b64905918f40b6ec20cabc57eed8ca6dc6",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -309,6 +813,14 @@
                   },
                   {
                     "id": "sha256:e89a68ed69f39ef2cffbc37137d854966fa7fb5b9545774de7fb193aa67fb279",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:0d480d4efde0c605f4863133eb0f9bcbf3afd6f7912889d641d635018bbaf8a0",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -356,7 +868,23 @@
                     }
                   },
                   {
+                    "id": "sha256:2770fb71478e9effe5eb248a7ce01a93973c87fed8bd0381abbbe3fc2d243009",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:b6b83738fc6afb9ba28d0c2c57eaf17cdbe5b26ff89a8da17812dd261045df3e",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:21d30be749bc446799494a0671d12e76a2d03d26d0306a219d0dc8c14951402b",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -540,6 +1068,14 @@
                     }
                   },
                   {
+                    "id": "sha256:13cd29557725ee71c62724cc90d0347c00ca71117f01f3c2b843f251e7c32a71",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:613ac2b76e4c72b94a08e543413bdcf8a519ce337d761b2ef326b0d4f6862b32",
                     "options": {
                       "metadata": {
@@ -644,6 +1180,14 @@
                     }
                   },
                   {
+                    "id": "sha256:790e79118d14dc374eb682e5a54dff4555b669f9c28852c6caafbc9175011ece",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:3f5e75617bef4f791984c171fe4c0017894585519e4615cd3665a096b07fad09",
                     "options": {
                       "metadata": {
@@ -732,6 +1276,14 @@
                     }
                   },
                   {
+                    "id": "sha256:276e1f87c77d8713387434dd1d5d9044743ba2a8574a917971e6923b7dcec4e7",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:e4cc4a4a479b8c27776debba5c20e8ef21dc4b513da62a25ed09f88386ac08a8",
                     "options": {
                       "metadata": {
@@ -741,6 +1293,14 @@
                   },
                   {
                     "id": "sha256:7024aa44c86c2c169ffb9d36a9684ddb86ce70f487034226a15751fd183afcd8",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:04c044bbfa6d4f9e6492d81cda97310200668cd0e3f3acea0b3fb299d10e4be2",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -916,6 +1476,14 @@
                     }
                   },
                   {
+                    "id": "sha256:bd5c4016683263c546f901f70436720c78b40815fccff6df449f8d21f7cabe11",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:7185b39912949fe56bc0a9bd6463b1c2dc1206efa00dadecfd6e37c9028e1575",
                     "options": {
                       "metadata": {
@@ -941,6 +1509,22 @@
                   },
                   {
                     "id": "sha256:c0202712e8ec928cf61f3d777f23859ba6de2e85786e928ee5472fdde570aeee",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c4d75a26e481988ac84f26998cb6c2df021ae4c6a1d7bf92e3bb2becbff20b44",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:11a90d19c3cf1fa06aa66835a845f448ef81f049407e0dd9797a2cdad38b9bed",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -3497,6 +4081,586 @@
         "check_gpg": true
       },
       {
+        "name": "perl-AutoLoader",
+        "epoch": 0,
+        "version": "5.74",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-AutoLoader-5.74-479.el9.noarch.rpm",
+        "checksum": "sha256:fe3d9211cf713a58a8b4e10904742ef57b2dcfac97c895e9b784ccd0a30da78d",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-B",
+        "epoch": 0,
+        "version": "1.80",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-B-1.80-479.el9.s390x.rpm",
+        "checksum": "sha256:34e7241407d72c2bad191133752d9e9d8a54299150ef6145e91a0da4fd310c47",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Carp",
+        "epoch": 0,
+        "version": "1.50",
+        "release": "460.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Carp-1.50-460.el9.noarch.rpm",
+        "checksum": "sha256:f1ca6aaa47ef96d6b47f20f3a2df2ce530228790f2c0330ece567cc77ddd5063",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Class-Struct",
+        "epoch": 0,
+        "version": "0.66",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Class-Struct-0.66-479.el9.noarch.rpm",
+        "checksum": "sha256:1cfb719169e88332200502321bb2d6ba6a092e24efebd3ae9fcfa704eebac487",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Data-Dumper",
+        "epoch": 0,
+        "version": "2.174",
+        "release": "462.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Data-Dumper-2.174-462.el9.s390x.rpm",
+        "checksum": "sha256:a6f4d668df3cff11aa488fab1eecdc13df798fa3eb577f378e971f014672b94b",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Digest",
+        "epoch": 0,
+        "version": "1.19",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Digest-1.19-4.el9.noarch.rpm",
+        "checksum": "sha256:de4b71c1cf818d48940ca0f68f5d3c520a321affe9e33b5afd7976c811f1d741",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Digest-MD5",
+        "epoch": 0,
+        "version": "2.58",
+        "release": "4.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Digest-MD5-2.58-4.el9.s390x.rpm",
+        "checksum": "sha256:032a7f8100c97e7225e5faeba4110bd57fb440aabc8f0c15b7134d63e55e99d8",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Encode",
+        "epoch": 4,
+        "version": "3.08",
+        "release": "462.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Encode-3.08-462.el9.s390x.rpm",
+        "checksum": "sha256:9e7e6b0fc298782ee5c538f90343851ac0b3cefc868ed72a063c16f249d37b72",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-English",
+        "epoch": 0,
+        "version": "1.11",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-English-1.11-479.el9.noarch.rpm",
+        "checksum": "sha256:30696fa3556f587c3b5372956fe8bf9e99cb2eea024e40215b38c5052a11da81",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Errno",
+        "epoch": 0,
+        "version": "1.30",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Errno-1.30-479.el9.s390x.rpm",
+        "checksum": "sha256:098c570e4b7213ed4df7022a5d36bbe4c6947ac341f8018d739160da0eb24e0d",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Exporter",
+        "epoch": 0,
+        "version": "5.74",
+        "release": "461.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Exporter-5.74-461.el9.noarch.rpm",
+        "checksum": "sha256:1fefc5a7bc8cd31a853c090cdaa0758344cacc56561532dfef20ab70bd30bcab",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Fcntl",
+        "epoch": 0,
+        "version": "1.13",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Fcntl-1.13-479.el9.s390x.rpm",
+        "checksum": "sha256:62e316599585124817c5217e402bbbde48df6b6309d0b59af3ec4d8bc0fcf216",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-File-Basename",
+        "epoch": 0,
+        "version": "2.85",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-File-Basename-2.85-479.el9.noarch.rpm",
+        "checksum": "sha256:2ec3d80d08e7468dfeeec00d598c3015a3c0af2abc56b05a57557bcc84b01146",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-File-Path",
+        "epoch": 0,
+        "version": "2.18",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-File-Path-2.18-4.el9.noarch.rpm",
+        "checksum": "sha256:74b7f75cf3c8bf7191a8e6d88689d7aca1b1f60d56c890ead7d558a704a4a4cc",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-File-Temp",
+        "epoch": 1,
+        "version": "0.231.100",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-File-Temp-0.231.100-4.el9.noarch.rpm",
+        "checksum": "sha256:a1416670c051fdf7ea5e7ffac059d88e17b14a61cf75a95be6e3c6d2e730101b",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-File-stat",
+        "epoch": 0,
+        "version": "1.09",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-File-stat-1.09-479.el9.noarch.rpm",
+        "checksum": "sha256:362bb253991b67fd82c6063483f2a2cb32b3c0198e9e42f7f8f8597433fe350b",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-FileHandle",
+        "epoch": 0,
+        "version": "2.03",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-FileHandle-2.03-479.el9.noarch.rpm",
+        "checksum": "sha256:29afb66559fb138d410a2dd1acddd6ee210864bf654b43c8b0bb81c060c2e7a9",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Getopt-Long",
+        "epoch": 1,
+        "version": "2.52",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Getopt-Long-2.52-4.el9.noarch.rpm",
+        "checksum": "sha256:0053d63a5eb0bc399e2e56a2599a1a09dca20c5bcac36f713a56fec46abac391",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Getopt-Std",
+        "epoch": 0,
+        "version": "1.12",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Getopt-Std-1.12-479.el9.noarch.rpm",
+        "checksum": "sha256:c1c61c0ebb588d0314ecba36879b53f2d7f0fc84375724bb282a48697be81bf5",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-HTTP-Tiny",
+        "epoch": 0,
+        "version": "0.076",
+        "release": "460.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-HTTP-Tiny-0.076-460.el9.noarch.rpm",
+        "checksum": "sha256:368b2e96ca6be6b79d0e3b4f580c1a73edd6ea966af40b7ffdaacb2fdeda3e62",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-IO",
+        "epoch": 0,
+        "version": "1.43",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-IO-1.43-479.el9.s390x.rpm",
+        "checksum": "sha256:bf7e4138eafa78600420e0f1a5f5819affd45c59b1747bf6dc231e4f83882315",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-IO-Socket-IP",
+        "epoch": 0,
+        "version": "0.41",
+        "release": "5.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-IO-Socket-IP-0.41-5.el9.noarch.rpm",
+        "checksum": "sha256:95babe1d96f2dfd85f161d3f82bb3ba4ad4a2591d0d90919132f1358377f53bf",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-IO-Socket-SSL",
+        "epoch": 0,
+        "version": "2.073",
+        "release": "1.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-IO-Socket-SSL-2.073-1.el9.noarch.rpm",
+        "checksum": "sha256:888fb6d76d4d63b3d210a5da8b046c879fcfdaefb9fd00b2a34e65305596bb58",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-IPC-Open3",
+        "epoch": 0,
+        "version": "1.21",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-IPC-Open3-1.21-479.el9.noarch.rpm",
+        "checksum": "sha256:b33971afed2b744ce6f578d5c8c691099439d708869730f4cab7199ddc905c94",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-MIME-Base64",
+        "epoch": 0,
+        "version": "3.16",
+        "release": "4.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-MIME-Base64-3.16-4.el9.s390x.rpm",
+        "checksum": "sha256:904abfa862ecd90ef5bf869619efe77555f67077edf2e38d2879182342983cc9",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Mozilla-CA",
+        "epoch": 0,
+        "version": "20200520",
+        "release": "6.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Mozilla-CA-20200520-6.el9.noarch.rpm",
+        "checksum": "sha256:27dfc72f604506654c671d164852668094da5e817e84b8192f21e29429a59838",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-NDBM_File",
+        "epoch": 0,
+        "version": "1.15",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-NDBM_File-1.15-479.el9.s390x.rpm",
+        "checksum": "sha256:25c28c9e3d5f2ec0ad1c3c7d3c2484284ef6aa31675f0cd2d347c6abadb6f2a8",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Net-SSLeay",
+        "epoch": 0,
+        "version": "1.92",
+        "release": "1.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Net-SSLeay-1.92-1.el9.s390x.rpm",
+        "checksum": "sha256:e8e5f72e9a15488ce18a59626f69400e8faab466812489f2b66a7b2307b3ca18",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-POSIX",
+        "epoch": 0,
+        "version": "1.94",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-POSIX-1.94-479.el9.s390x.rpm",
+        "checksum": "sha256:29a03f6ad794f171ed8aa7a991aede7f006e9667a32ff1cf592aefd99e4b8c1a",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-PathTools",
+        "epoch": 0,
+        "version": "3.78",
+        "release": "461.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-PathTools-3.78-461.el9.s390x.rpm",
+        "checksum": "sha256:eaf7ecd82cec96b7474850ae6de4d883e69fe531a66bdf74d2b93bf8f1c2c573",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Pod-Escapes",
+        "epoch": 1,
+        "version": "1.07",
+        "release": "460.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Pod-Escapes-1.07-460.el9.noarch.rpm",
+        "checksum": "sha256:c32ad4f02ecad264d2337837848706cc44f0502f39d978a6c055166fcf8ce917",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Pod-Perldoc",
+        "epoch": 0,
+        "version": "3.28.01",
+        "release": "461.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Pod-Perldoc-3.28.01-461.el9.noarch.rpm",
+        "checksum": "sha256:fb38583786c1d851fe160de0e436ae2bb332f60e072a6e58db02b2affb9aab6c",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Pod-Simple",
+        "epoch": 1,
+        "version": "3.42",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Pod-Simple-3.42-4.el9.noarch.rpm",
+        "checksum": "sha256:4b70575a9f0ebc0f0026681112532243b0699ca7dc5dcb165cef856adc1ec0d8",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Pod-Usage",
+        "epoch": 4,
+        "version": "2.01",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Pod-Usage-2.01-4.el9.noarch.rpm",
+        "checksum": "sha256:2dded1efa254118c646affd59615237825f00e36b86a96a98fd59c8b6015612a",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Scalar-List-Utils",
+        "epoch": 4,
+        "version": "1.56",
+        "release": "461.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Scalar-List-Utils-1.56-461.el9.s390x.rpm",
+        "checksum": "sha256:73db2d64e46f08667c4ad5225da81942072b0411c30b030bf1dcd16f8cd59936",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-SelectSaver",
+        "epoch": 0,
+        "version": "1.02",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-SelectSaver-1.02-479.el9.noarch.rpm",
+        "checksum": "sha256:f15acb9fda15f0bb8cdd37d3763af70510554bf5f1cc99b679af94ee1065a74a",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Socket",
+        "epoch": 4,
+        "version": "2.031",
+        "release": "4.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Socket-2.031-4.el9.s390x.rpm",
+        "checksum": "sha256:b9ae0cdc8113ae9b80204cc26c12dd7a5f83c5d9e68b49a0517e418c007a3bea",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Storable",
+        "epoch": 1,
+        "version": "3.21",
+        "release": "460.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Storable-3.21-460.el9.s390x.rpm",
+        "checksum": "sha256:dfd3a0e15c81442c7b5d8a52bd183374e4d2dcb7dc5f586484877d8331ab5d4f",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Symbol",
+        "epoch": 0,
+        "version": "1.08",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Symbol-1.08-479.el9.noarch.rpm",
+        "checksum": "sha256:02186ed7d490b5d403c43282b8f448de509db85188c260378c5fb2cbe67a4353",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Term-ANSIColor",
+        "epoch": 0,
+        "version": "5.01",
+        "release": "461.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Term-ANSIColor-5.01-461.el9.noarch.rpm",
+        "checksum": "sha256:d4e87c795780fa190baba5291c390e9af304e4f134e4aa4f2d03fc9b91ca5d60",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Term-Cap",
+        "epoch": 0,
+        "version": "1.17",
+        "release": "460.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Term-Cap-1.17-460.el9.noarch.rpm",
+        "checksum": "sha256:5c38c53e562f24cbdb395b11358efaaf6aee82ccd385055c5ffcf1843593d8da",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Text-ParseWords",
+        "epoch": 0,
+        "version": "3.30",
+        "release": "460.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Text-ParseWords-3.30-460.el9.noarch.rpm",
+        "checksum": "sha256:1264dd35d5deda51b4431955b2838cd18e0012dc27f0e0cb65061324216ff22c",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Text-Tabs+Wrap",
+        "epoch": 0,
+        "version": "2013.0523",
+        "release": "460.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Text-Tabs+Wrap-2013.0523-460.el9.noarch.rpm",
+        "checksum": "sha256:11966231d2834b2a9c2c0bf2af231e1257ce030da1cfecdd16d08a6a23222b24",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-Time-Local",
+        "epoch": 2,
+        "version": "1.300",
+        "release": "7.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-Time-Local-1.300-7.el9.noarch.rpm",
+        "checksum": "sha256:53f9616f9c60c8fb7befeff87f5b76c61ee75686a6c289f394c4793d3692de3b",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-URI",
+        "epoch": 0,
+        "version": "5.09",
+        "release": "3.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-URI-5.09-3.el9.noarch.rpm",
+        "checksum": "sha256:745f84fc781c84763cad8001841711d6142eb13f50e55de928d3d051a0435ef2",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-base",
+        "epoch": 0,
+        "version": "2.27",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-base-2.27-479.el9.noarch.rpm",
+        "checksum": "sha256:eeb8d0fd12dc02fa13dac763d7d035e7cb40ab2c3410e70a3c23467fafbc8f62",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-constant",
+        "epoch": 0,
+        "version": "1.33",
+        "release": "461.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-constant-1.33-461.el9.noarch.rpm",
+        "checksum": "sha256:6a25cfb9d83c69bd767be0e30de26dbc9ece902c9e848965c3378ef1405ceb6e",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-if",
+        "epoch": 0,
+        "version": "0.60.800",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-if-0.60.800-479.el9.noarch.rpm",
+        "checksum": "sha256:7e961a7b4eeff849489a8e9a26f32906b3aa5dc2273573fe41a01a2f9cc4fd20",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-interpreter",
+        "epoch": 4,
+        "version": "5.32.1",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-interpreter-5.32.1-479.el9.s390x.rpm",
+        "checksum": "sha256:1ad31b9f568c1ae2508dbd7832047874a8e29d149f52d346509244febdda763f",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-libnet",
+        "epoch": 0,
+        "version": "3.13",
+        "release": "4.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-libnet-3.13-4.el9.noarch.rpm",
+        "checksum": "sha256:b882c8742426d278d387432a65220bd63ffd1670737aea43084994d2b638e5d4",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-libs",
+        "epoch": 4,
+        "version": "5.32.1",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-libs-5.32.1-479.el9.s390x.rpm",
+        "checksum": "sha256:b78c857f8c1ae8a5b13dd914b08b118f39f0a2f7c0dc8b7df2b29ed353638acb",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-mro",
+        "epoch": 0,
+        "version": "1.23",
+        "release": "479.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-mro-1.23-479.el9.s390x.rpm",
+        "checksum": "sha256:10f8b31849feda8da595ebe9c8e83c6d75745d157b899451507fc730ddc6a677",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-overload",
+        "epoch": 0,
+        "version": "1.31",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-overload-1.31-479.el9.noarch.rpm",
+        "checksum": "sha256:2e2013098c4a46adaa2d3531c23c9328b5b7b960d8d9135c50d6d0fbde4800b3",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-overloading",
+        "epoch": 0,
+        "version": "0.02",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-overloading-0.02-479.el9.noarch.rpm",
+        "checksum": "sha256:36081cad622d6c897c3b299c903ca652729861019b7241045b5ae2b7b03a8a57",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-parent",
+        "epoch": 1,
+        "version": "0.238",
+        "release": "460.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-parent-0.238-460.el9.noarch.rpm",
+        "checksum": "sha256:342a7b84a44cd59bea045f679309ef6145a235897dedb8a9afd2d015bc17f72a",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-podlators",
+        "epoch": 1,
+        "version": "4.14",
+        "release": "460.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-podlators-4.14-460.el9.noarch.rpm",
+        "checksum": "sha256:aac9b4c1ccd942afaec19299880eb89e1889b4531e7cab751c3be6a66f9c5fa6",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-subs",
+        "epoch": 0,
+        "version": "1.03",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-subs-1.03-479.el9.noarch.rpm",
+        "checksum": "sha256:b7df2f1b732dd9c6ae1edba61e11d3c1da9003af529130ea98c62980147104e8",
+        "check_gpg": true
+      },
+      {
+        "name": "perl-vars",
+        "epoch": 0,
+        "version": "1.05",
+        "release": "479.el9",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/perl-vars-1.05-479.el9.noarch.rpm",
+        "checksum": "sha256:2f19f01a6382b276a1930b95080a69a6734b6cf54b4f4b67661852d4aeb25e40",
+        "check_gpg": true
+      },
+      {
         "name": "python-unversioned-command",
         "epoch": 0,
         "version": "3.9.10",
@@ -3504,6 +4668,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/python-unversioned-command-3.9.10-1.el9.noarch.rpm",
         "checksum": "sha256:eaa6b1a04ed162da5e5b1fcfe4e2618d2227fa980075e74ae15f11a38d939570",
+        "check_gpg": true
+      },
+      {
+        "name": "s390utils-base",
+        "epoch": 2,
+        "version": "2.19.0",
+        "release": "2.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-appstream-20220208/Packages/s390utils-base-2.19.0-2.el9.s390x.rpm",
+        "checksum": "sha256:5f34596b206951c3c00c10df343614374ca0cc0955938de6ec68d7884a4caac7",
         "check_gpg": true
       },
       {
@@ -3777,6 +4951,16 @@
         "check_gpg": true
       },
       {
+        "name": "ethtool",
+        "epoch": 2,
+        "version": "5.10",
+        "release": "4.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/ethtool-5.10-4.el9.s390x.rpm",
+        "checksum": "sha256:efe1c638da6ed71b4985ade0dacc7f3ae9ec41a1ee0bbbad75c5ace10d055eee",
+        "check_gpg": true
+      },
+      {
         "name": "expat",
         "epoch": 0,
         "version": "2.2.10",
@@ -3787,6 +4971,26 @@
         "check_gpg": true
       },
       {
+        "name": "file",
+        "epoch": 0,
+        "version": "5.39",
+        "release": "8.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/file-5.39-8.el9.s390x.rpm",
+        "checksum": "sha256:3d3638132b7b9dfc387c71ec199f8bd0ae7e00725a43966068ea4f0e3bfffc1d",
+        "check_gpg": true
+      },
+      {
+        "name": "file-libs",
+        "epoch": 0,
+        "version": "5.39",
+        "release": "8.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/file-libs-5.39-8.el9.s390x.rpm",
+        "checksum": "sha256:d73d7bc2e7974b56df5f727ea5915a6d909e24db5a37830f5a3f84c7f50ef68a",
+        "check_gpg": true
+      },
+      {
         "name": "filesystem",
         "epoch": 0,
         "version": "3.16",
@@ -3794,6 +4998,16 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/filesystem-3.16-2.el9.s390x.rpm",
         "checksum": "sha256:d7964cb337adb860a737828759fbd1c64a2ab2d2eb62411aa66525ece2ed62af",
+        "check_gpg": true
+      },
+      {
+        "name": "fuse-libs",
+        "epoch": 0,
+        "version": "2.9.9",
+        "release": "15.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/fuse-libs-2.9.9-15.el9.s390x.rpm",
+        "checksum": "sha256:c72647810ee5826d0523f597af1f17b64905918f40b6ec20cabc57eed8ca6dc6",
         "check_gpg": true
       },
       {
@@ -3814,6 +5028,16 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/gdbm-libs-1.19-4.el9.s390x.rpm",
         "checksum": "sha256:e89a68ed69f39ef2cffbc37137d854966fa7fb5b9545774de7fb193aa67fb279",
+        "check_gpg": true
+      },
+      {
+        "name": "glib2",
+        "epoch": 0,
+        "version": "2.68.4",
+        "release": "5.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/glib2-2.68.4-5.el9.s390x.rpm",
+        "checksum": "sha256:0d480d4efde0c605f4863133eb0f9bcbf3afd6f7912889d641d635018bbaf8a0",
         "check_gpg": true
       },
       {
@@ -3867,6 +5091,16 @@
         "check_gpg": true
       },
       {
+        "name": "gnutls",
+        "epoch": 0,
+        "version": "3.7.3",
+        "release": "1.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/gnutls-3.7.3-1.el9.s390x.rpm",
+        "checksum": "sha256:2770fb71478e9effe5eb248a7ce01a93973c87fed8bd0381abbbe3fc2d243009",
+        "check_gpg": true
+      },
+      {
         "name": "grep",
         "epoch": 0,
         "version": "3.6",
@@ -3874,6 +5108,16 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/grep-3.6-5.el9.s390x.rpm",
         "checksum": "sha256:b6b83738fc6afb9ba28d0c2c57eaf17cdbe5b26ff89a8da17812dd261045df3e",
+        "check_gpg": true
+      },
+      {
+        "name": "groff-base",
+        "epoch": 0,
+        "version": "1.22.4",
+        "release": "10.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/groff-base-1.22.4-10.el9.s390x.rpm",
+        "checksum": "sha256:21d30be749bc446799494a0671d12e76a2d03d26d0306a219d0dc8c14951402b",
         "check_gpg": true
       },
       {
@@ -4097,6 +5341,16 @@
         "check_gpg": true
       },
       {
+        "name": "libmnl",
+        "epoch": 0,
+        "version": "1.0.4",
+        "release": "15.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/libmnl-1.0.4-15.el9.s390x.rpm",
+        "checksum": "sha256:13cd29557725ee71c62724cc90d0347c00ca71117f01f3c2b843f251e7c32a71",
+        "check_gpg": true
+      },
+      {
         "name": "libmount",
         "epoch": 0,
         "version": "2.37.2",
@@ -4227,6 +5481,16 @@
         "check_gpg": true
       },
       {
+        "name": "libstdc++",
+        "epoch": 0,
+        "version": "11.2.1",
+        "release": "9.1.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/libstdc++-11.2.1-9.1.el9.s390x.rpm",
+        "checksum": "sha256:790e79118d14dc374eb682e5a54dff4555b669f9c28852c6caafbc9175011ece",
+        "check_gpg": true
+      },
+      {
         "name": "libtasn1",
         "epoch": 0,
         "version": "4.16.0",
@@ -4337,6 +5601,16 @@
         "check_gpg": true
       },
       {
+        "name": "ncurses",
+        "epoch": 0,
+        "version": "6.2",
+        "release": "8.20210508.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/ncurses-6.2-8.20210508.el9.s390x.rpm",
+        "checksum": "sha256:276e1f87c77d8713387434dd1d5d9044743ba2a8574a917971e6923b7dcec4e7",
+        "check_gpg": true
+      },
+      {
         "name": "ncurses-base",
         "epoch": 0,
         "version": "6.2",
@@ -4354,6 +5628,16 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/ncurses-libs-6.2-8.20210508.el9.s390x.rpm",
         "checksum": "sha256:7024aa44c86c2c169ffb9d36a9684ddb86ce70f487034226a15751fd183afcd8",
+        "check_gpg": true
+      },
+      {
+        "name": "nettle",
+        "epoch": 0,
+        "version": "3.7.3",
+        "release": "2.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/nettle-3.7.3-2.el9.s390x.rpm",
+        "checksum": "sha256:04c044bbfa6d4f9e6492d81cda97310200668cd0e3f3acea0b3fb299d10e4be2",
         "check_gpg": true
       },
       {
@@ -4567,6 +5851,16 @@
         "check_gpg": true
       },
       {
+        "name": "s390utils-core",
+        "epoch": 2,
+        "version": "2.19.0",
+        "release": "2.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/s390utils-core-2.19.0-2.el9.s390x.rpm",
+        "checksum": "sha256:bd5c4016683263c546f901f70436720c78b40815fccff6df449f8d21f7cabe11",
+        "check_gpg": true
+      },
+      {
         "name": "sed",
         "epoch": 0,
         "version": "4.8",
@@ -4604,6 +5898,26 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/setup-2.13.7-6.el9.noarch.rpm",
         "checksum": "sha256:c0202712e8ec928cf61f3d777f23859ba6de2e85786e928ee5472fdde570aeee",
+        "check_gpg": true
+      },
+      {
+        "name": "sg3_utils",
+        "epoch": 0,
+        "version": "1.47",
+        "release": "6.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/sg3_utils-1.47-6.el9.s390x.rpm",
+        "checksum": "sha256:c4d75a26e481988ac84f26998cb6c2df021ae4c6a1d7bf92e3bb2becbff20b44",
+        "check_gpg": true
+      },
+      {
+        "name": "sg3_utils-libs",
+        "epoch": 0,
+        "version": "1.47",
+        "release": "6.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20220208/Packages/sg3_utils-libs-1.47-6.el9.s390x.rpm",
+        "checksum": "sha256:11a90d19c3cf1fa06aa66835a845f448ef81f049407e0dd9797a2cdad38b9bed",
         "check_gpg": true
       },
       {

@@ -16,3 +16,9 @@ func (p *S390X) GetPackages() []string {
 		"s390utils-core",
 	}
 }
+
+func (p *S390X) GetBuildPackages() []string {
+	return []string{
+		"s390utils-base",
+	}
+}
