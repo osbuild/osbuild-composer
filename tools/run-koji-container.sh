@@ -140,7 +140,7 @@ fi
 
 # this script must be run as root
 if [ $UID != 0 ]; then
-  echo This script must be run as root.
+  echo This script must be run as root, because the containers are running on privileged ports.
   exit 1
 fi
 
