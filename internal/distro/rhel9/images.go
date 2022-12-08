@@ -218,6 +218,9 @@ func edgeCommitImage(workload workload.Workload,
 			URL:        options.OSTree.URL,
 			ContentURL: options.OSTree.ContentURL,
 		}
+		if options.OSTree.RHSM {
+			img.OSTreeParent.Secrets = "org.osbuild.rhsm.consumer"
+		}
 	}
 
 	img.OSVersion = t.arch.distro.osVersion
@@ -249,6 +252,9 @@ func edgeContainerImage(workload workload.Workload,
 			URL:        options.OSTree.URL,
 			ContentURL: options.OSTree.ContentURL,
 		}
+		if options.OSTree.RHSM {
+			img.OSTreeParent.Secrets = "org.osbuild.rhsm.consumer"
+		}
 	}
 
 	img.OSVersion = t.arch.distro.osVersion
@@ -275,6 +281,9 @@ func edgeInstallerImage(workload workload.Workload,
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
 		Checksum:   options.OSTree.FetchChecksum,
+	}
+	if options.OSTree.RHSM {
+		commit.Secrets = "org.osbuild.rhsm.consumer"
 	}
 	img := image.NewOSTreeInstaller(commit)
 
