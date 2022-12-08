@@ -42,14 +42,16 @@ kdc_exec() {
 }
 
 koji_start() {
+  local cert_dir
+  cert_dir="$1"
   trap koji_clean_up_bad_start EXIT
 
   # create a share directory which is used to share files between the host and containers
   mkdir "${SHARE_DIR}"
 
-  cp /etc/osbuild-composer/kojihub-key.pem "${SHARE_DIR}/key.pem"
-  cp /etc/osbuild-composer/kojihub-crt.pem "${SHARE_DIR}/crt.pem"
-  cp /etc/osbuild-composer/ca-crt.pem "${SHARE_DIR}/ca-crt.pem"
+  cp "${cert_dir}/kojihub-key.pem" "${SHARE_DIR}/key.pem"
+  cp "${cert_dir}/kojihub-crt.pem" "${SHARE_DIR}/crt.pem"
+  cp "${cert_dir}/ca-crt.pem" "${SHARE_DIR}/ca-crt.pem"
 
   ${CONTAINER_RUNTIME} network create org.osbuild.koji
 
@@ -124,11 +126,13 @@ koji_start() {
 }
 
 # check arguments
-if [[ $# -ne 1 || ( "$1" != "start" && "$1" != "stop" ) ]]; then
+if [[ $# -lt 1 || ( "$1" != "start" && "$1" != "stop" ) ]]; then
   cat <<DOC
-usage: $0 start|stop
+usage: $0 command
 
-start - starts the koji containers
+Commands:
+start - starts the koji containers,
+        optionally takes a directory with kojihub certificates as an argument
 stop  - stops and removes the koji containers
 DOC
   exit 3
@@ -151,7 +155,11 @@ else
 fi
 
 if [ "$1" == "start" ]; then
-  koji_start
+  cert_dir="/etc/osbuild-composer"
+  if [[ $# -eq 2 ]]; then
+    cert_dir="$2"
+  fi
+  koji_start "$cert_dir"
 fi
 
 if [ "$1" == "stop" ]; then
