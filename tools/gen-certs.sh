@@ -1,11 +1,10 @@
 #!/bin/bash
-if (( $# != 3 )); then
-    echo "Usage: $0 <openssl-config> <certdir> <cadir>"
+if (( $# != 2 )); then
+    echo "Usage: $0 <openssl-config> <certdir>"
     echo
     echo "Positional arguments"
     echo "  <openssl-config>  OpenSSL configuration file"
     echo "  <certdir>         Destination directory for the generated files"
-    echo "  <cadir>           Working directory for the generation process"
     exit 1
 fi
 
@@ -15,7 +14,13 @@ set -euxo pipefail
 # it.
 OPENSSL_CONFIG="$1"
 CERTDIR="$2"
-CADIR="$3"
+CADIR=$(mktemp --directory)
+
+cleanup(){
+  rm -rf "$CADIR"
+}
+
+trap cleanup EXIT
 
 # The $CADIR might exist from a previous test (current Schutzbot's imperfection)
 rm -rf "$CADIR" || true

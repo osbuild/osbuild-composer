@@ -55,14 +55,11 @@ sudo mkdir -p /etc/osbuild-worker
 # scenario.
 if [[ "$AUTH_METHOD" != "$AUTH_METHOD_NONE" ]]; then
     # Generate all X.509 certificates for the tests
-    # The whole generation is done in a $CADIR to better represent how osbuild-ca
-    # it.
     CERTDIR=/etc/osbuild-composer
     OPENSSL_CONFIG=/usr/share/tests/osbuild-composer/x509/openssl.cnf
-    CADIR=/etc/osbuild-composer-test/ca
 
     scriptloc=$(dirname "$0")
-    sudo "${scriptloc}/gen-certs.sh" "${OPENSSL_CONFIG}" "${CERTDIR}" "${CADIR}"
+    sudo "${scriptloc}/gen-certs.sh" "${OPENSSL_CONFIG}" "${CERTDIR}"
     sudo chown _osbuild-composer "${CERTDIR}"/composer-*.pem
 
     # Copy the appropriate configuration files
