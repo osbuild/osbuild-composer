@@ -238,7 +238,7 @@ func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVers
 				"coreos.inst.crypt_root=1",
 				"coreos.inst.isoroot=" + isolabel,
 				"coreos.inst.install_dev=" + installDevice,
-				"coreos.inst.image_file=/run/media/iso/disk.img.xz",
+				"coreos.inst.image_file=/run/media/iso/image.raw.xz",
 				"coreos.inst.insecure"},
 		},
 		Architectures: architectures,

@@ -779,7 +779,7 @@ func edgeSimplifiedInstallerPipelines(t *imageType, customizations *blueprint.Cu
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
 	installerPackages := packageSetSpecs[installerPkgsKey]
 	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
-	imgName := "disk.img.xz"
+	imgName := "image.raw.xz"
 	installDevice := customizations.GetInstallationDevice()
 
 	// create the raw image
@@ -813,12 +813,12 @@ func simplifiedInstallerBootISOTreePipeline(archivePipelineName, kver string, rn
 		&osbuild.CopyStageOptions{
 			Paths: []osbuild.CopyStagePath{
 				{
-					From: "input://file/disk.img.xz",
-					To:   "tree:///disk.img.xz",
+					From: "input://file/image.raw.xz",
+					To:   "tree:///image.raw.xz",
 				},
 			},
 		},
-		osbuild.NewFilesInputs(osbuild.NewFilesInputReferencesPipeline(archivePipelineName, "disk.img.xz")),
+		osbuild.NewFilesInputs(osbuild.NewFilesInputReferencesPipeline(archivePipelineName, "image.raw.xz")),
 	))
 
 	p.AddStage(osbuild.NewMkdirStage(
