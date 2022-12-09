@@ -451,7 +451,7 @@ sudo sed -i 's/timeout=60/timeout=10/' "${GRUB_CFG}"
 sudo sed -i 's/coreos.inst.install_dev=\/dev\/sda/coreos.inst.install_dev=\/dev\/vda/' "${GRUB_CFG}"
 sudo sed -i 's/linux \/images\/pxeboot\/vmlinuz/linuxefi \/httpboot\/images\/pxeboot\/vmlinuz/' "${GRUB_CFG}"
 sudo sed -i 's/initrd \/images\/pxeboot\/initrd.img/initrdefi \/httpboot\/images\/pxeboot\/initrd.img/' "${GRUB_CFG}"
-sudo sed -i 's/coreos.inst.image_file=\/run\/media\/iso\/disk.img.xz/coreos.inst.image_url=http:\/\/192.168.100.1\/httpboot\/disk.img.xz/' "${GRUB_CFG}"
+sudo sed -i 's/coreos.inst.image_file=\/run\/media\/iso\/image.raw.xz/coreos.inst.image_url=http:\/\/192.168.100.1\/httpboot\/image.raw.xz/' "${GRUB_CFG}"
 
 greenprint "📋 Create libvirt image disk"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
