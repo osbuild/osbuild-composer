@@ -93,7 +93,7 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
-	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isoLabel, kspath)}
+	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", isoLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isoLabel, kspath)}
 
 	isoTreePipeline := manifest.NewAnacondaISOTree(m,
 		buildPipeline,

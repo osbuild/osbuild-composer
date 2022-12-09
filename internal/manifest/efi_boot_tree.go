@@ -44,11 +44,6 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 		panic("unsupported architecture")
 	}
 
-	kernelOpts := []string{}
-	if len(p.KernelOpts) > 0 {
-		kernelOpts = append(kernelOpts, p.KernelOpts...)
-	}
-
 	grubOptions := &osbuild.GrubISOStageOptions{
 		Product: osbuild.Product{
 			Name:    p.product,
@@ -56,7 +51,7 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 		},
 		Kernel: osbuild.ISOKernel{
 			Dir:  "/images/pxeboot",
-			Opts: kernelOpts,
+			Opts: p.KernelOpts,
 		},
 		ISOLabel:      p.ISOLabel,
 		Architectures: architectures,
