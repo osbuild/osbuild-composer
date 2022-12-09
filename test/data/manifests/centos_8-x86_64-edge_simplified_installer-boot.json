@@ -2973,7 +2973,7 @@
               }
             },
             "options": {
-              "filename": "disk.img.xz"
+              "filename": "image.raw.xz"
             }
           }
         ]
@@ -5931,7 +5931,7 @@
                   "coreos.inst.crypt_root=1",
                   "coreos.inst.isoroot=CentOS-Stream-8-x86_64-dvd",
                   "coreos.inst.install_dev=/dev/vda",
-                  "coreos.inst.image_file=/run/media/iso/disk.img.xz",
+                  "coreos.inst.image_file=/run/media/iso/image.raw.xz",
                   "coreos.inst.insecure",
                   "fdo.manufacturing_server_url=https;//fdo.example.com",
                   "fdo.diun_pub_key_insecure=true"
@@ -5959,7 +5959,7 @@
                 "origin": "org.osbuild.pipeline",
                 "references": {
                   "name:archive": {
-                    "file": "disk.img.xz"
+                    "file": "image.raw.xz"
                   }
                 }
               }
@@ -5967,8 +5967,8 @@
             "options": {
               "paths": [
                 {
-                  "from": "input://file/disk.img.xz",
-                  "to": "tree:///disk.img.xz"
+                  "from": "input://file/image.raw.xz",
+                  "to": "tree:///image.raw.xz"
                 }
               ]
             }
