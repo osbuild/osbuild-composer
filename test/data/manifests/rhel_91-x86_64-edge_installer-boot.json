@@ -9768,6 +9768,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
+                  "inst.stage2=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64",
                   "inst.ks=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               },
@@ -9861,6 +9862,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
+                  "inst.stage2=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64",
                   "inst.ks=hd:LABEL=RHEL-9-1-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               }

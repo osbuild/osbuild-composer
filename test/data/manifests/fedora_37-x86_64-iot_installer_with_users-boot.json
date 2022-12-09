@@ -10947,6 +10947,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
+                  "inst.stage2=hd:LABEL=Fedora-37-BaseOS-x86_64",
                   "inst.ks=hd:LABEL=Fedora-37-BaseOS-x86_64:/osbuild.ks"
                 ]
               },
@@ -11037,6 +11038,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
+                  "inst.stage2=hd:LABEL=Fedora-37-BaseOS-x86_64",
                   "inst.ks=hd:LABEL=Fedora-37-BaseOS-x86_64:/osbuild.ks"
                 ]
               }
