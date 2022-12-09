@@ -112,10 +112,9 @@ func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
 
 	kernelOpts := []string{}
 
+	kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", p.isoLabel))
 	if p.KSPath != "" {
 		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.isoLabel, p.KSPath))
-	} else {
-		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", p.isoLabel))
 	}
 
 	if len(p.KernelOpts) > 0 {
