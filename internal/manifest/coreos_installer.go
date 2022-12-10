@@ -126,6 +126,14 @@ func (p *CoreOSInstaller) serializeStart(packages []rpmmd.PackageSpec) {
 	}
 }
 
+func (p *CoreOSInstaller) getInline() []string {
+	// inline data for FDO cert
+	if p.FDO != nil && p.FDO.DiunPubKeyRootCerts != "" {
+		return []string{p.FDO.DiunPubKeyRootCerts}
+	}
+	return []string{}
+}
+
 func (p *CoreOSInstaller) serializeEnd() {
 	if len(p.packageSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
