@@ -9745,31 +9745,6 @@
             }
           },
           {
-            "type": "org.osbuild.isolinux",
-            "inputs": {
-              "data": {
-                "type": "org.osbuild.tree",
-                "origin": "org.osbuild.pipeline",
-                "references": [
-                  "name:anaconda-tree"
-                ]
-              }
-            },
-            "options": {
-              "product": {
-                "name": "Red Hat Enterprise Linux",
-                "version": "9.2"
-              },
-              "kernel": {
-                "dir": "/images/pxeboot",
-                "opts": [
-                  "inst.stage2=hd:LABEL=RHEL-9-2-0-BaseOS-aarch64",
-                  "inst.ks=hd:LABEL=RHEL-9-2-0-BaseOS-aarch64:/osbuild.ks"
-                ]
-              }
-            }
-          },
-          {
             "type": "org.osbuild.truncate",
             "options": {
               "filename": "images/efiboot.img",
