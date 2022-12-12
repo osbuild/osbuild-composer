@@ -119,7 +119,7 @@ func main() {
 	awsTarget.Created = time.Now()
 	awsTarget.OsbuildArtifact.ExportFilename = "image.ami"
 
-	d := fedora.NewF35()
+	d := fedora.NewF37()
 	a, err := d.GetArch(distro.X86_64ArchName)
 	if err != nil {
 		panic(err)
@@ -132,7 +132,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	allRepos, err := rpmmd.LoadRepositories([]string{cwd}, "fedora-35")
+	allRepos, err := rpmmd.LoadRepositories([]string{cwd}, "fedora-37")
 	if err != nil {
 		panic(err)
 	}

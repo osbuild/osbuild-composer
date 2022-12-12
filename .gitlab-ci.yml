@@ -93,8 +93,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
@@ -181,8 +179,6 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
@@ -231,8 +227,6 @@ Manifests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
@@ -479,7 +473,6 @@ Rebase OSTree UEFI:
 
 .fedora_runners: &fedora_runners
     RUNNER:
-      - aws/fedora-35-x86_64
       - aws/fedora-36-x86_64
       - aws/fedora-37-x86_64
 
@@ -606,7 +599,6 @@ API:
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
-          - aws/fedora-35-x86_64
           - aws/fedora-36-x86_64
           - aws/fedora-37-x86_64
       - IMAGE_TYPE: ["aws"]
@@ -804,7 +796,7 @@ ContainerUpload:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-upload.sh
   variables:
-    RUNNER: aws/fedora-35-x86_64
+    RUNNER: aws/fedora-37-x86_64
     INTERNAL_NETWORK: "false"
 
 ContainerEmbedding:
