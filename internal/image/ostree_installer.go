@@ -95,6 +95,9 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.ISOLabel = isoLabel
 	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", isoLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isoLabel, kspath)}
 
+	// enable ISOLinux on x86_64 only
+	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
+
 	isoTreePipeline := manifest.NewAnacondaISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
@@ -114,10 +117,11 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.PayloadPath = "/ostree/repo"
 
 	isoTreePipeline.OSTree = &img.Commit
+	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
 	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline, isoLabel)
 	isoPipeline.Filename = img.Filename
-	isoPipeline.ISOLinux = img.Platform.GetArch() == platform.ARCH_X86_64
+	isoPipeline.ISOLinux = isoLinuxEnabled
 	artifact := isoPipeline.Export()
 
 	return artifact, nil
