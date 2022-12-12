@@ -799,9 +799,6 @@ func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 }
 
 // New creates a new distro object, defining the supported architectures and image types
-func NewF35() distro.Distro {
-	return newDistro(35)
-}
 func NewF36() distro.Distro {
 	return newDistro(36)
 }
