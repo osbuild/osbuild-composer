@@ -128,6 +128,9 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
 
+	// enable ISOLinux on x86_64 only
+	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
+
 	isoTreePipeline := manifest.NewAnacondaISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
@@ -148,10 +151,11 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline.OSPipeline = osPipeline
 	isoTreePipeline.KernelOpts = img.AdditionalKernelOpts
+	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
 	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline, isoLabel)
 	isoPipeline.Filename = img.Filename
-	isoPipeline.ISOLinux = img.Platform.GetArch() == platform.ARCH_X86_64
+	isoPipeline.ISOLinux = isoLinuxEnabled
 
 	artifact := isoPipeline.Export()
 

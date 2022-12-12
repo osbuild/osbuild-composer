@@ -46,6 +46,9 @@ type AnacondaISOTree struct {
 	OSTree     *ostree.CommitSpec
 
 	KernelOpts []string
+
+	// Enable ISOLinux stage
+	ISOLinux bool
 }
 
 func NewAnacondaISOTree(m *Manifest,
@@ -169,18 +172,21 @@ func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
 	squashfsStage := osbuild.NewSquashfsStage(&squashfsOptions, p.rootfsPipeline.Name())
 	pipeline.AddStage(squashfsStage)
 
-	isoLinuxOptions := &osbuild.ISOLinuxStageOptions{
-		Product: osbuild.ISOLinuxProduct{
-			Name:    p.anacondaPipeline.product,
-			Version: p.anacondaPipeline.version,
-		},
-		Kernel: osbuild.ISOLinuxKernel{
-			Dir:  "/images/pxeboot",
-			Opts: kernelOpts,
-		},
+	if p.ISOLinux {
+		isoLinuxOptions := &osbuild.ISOLinuxStageOptions{
+			Product: osbuild.ISOLinuxProduct{
+				Name:    p.anacondaPipeline.product,
+				Version: p.anacondaPipeline.version,
+			},
+			Kernel: osbuild.ISOLinuxKernel{
+				Dir:  "/images/pxeboot",
+				Opts: kernelOpts,
+			},
+		}
+
+		isoLinuxStage := osbuild.NewISOLinuxStage(isoLinuxOptions, p.anacondaPipeline.Name())
+		pipeline.AddStage(isoLinuxStage)
 	}
-	isoLinuxStage := osbuild.NewISOLinuxStage(isoLinuxOptions, p.anacondaPipeline.Name())
-	pipeline.AddStage(isoLinuxStage)
 
 	filename := "images/efiboot.img"
 	pipeline.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{
