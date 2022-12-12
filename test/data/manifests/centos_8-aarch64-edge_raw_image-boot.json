@@ -21,7 +21,8 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "rhsm": false
     },
     "blueprint": {}
   },
