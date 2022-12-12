@@ -177,7 +177,7 @@
   "rhel-8.8": {
     "dependencies": {
       "osbuild": {
-        "commit": "f34bee944bdfc590cf25159521ee66c515d0cf10"
+        "commit": "cb989f79b110b4b18d372deace94a7c6c7137b93"
       }
     },
     "repos": [
@@ -237,7 +237,7 @@
   "rhel-9.2": {
     "dependencies": {
       "osbuild": {
-        "commit": "f34bee944bdfc590cf25159521ee66c515d0cf10"
+        "commit": "cb989f79b110b4b18d372deace94a7c6c7137b93"
       }
     },
     "repos": [
