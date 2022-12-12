@@ -26,7 +26,7 @@ def composer_repository_to_koji_repository(repository):
 
 
 def compose_request(distro, koji, arch):
-    with open(f"/usr/share/tests/osbuild-composer/repositories/{distro}.json") as f:
+    with open(f"/usr/share/tests/osbuild-composer/repositories/{distro}.json", encoding="utf-8") as f:
         test_repositories = json.load(f)
 
     repositories = [composer_repository_to_koji_repository(repo) for repo in test_repositories[arch]]
@@ -90,7 +90,7 @@ def upload_options_by_cloud_target(cloud_target):
 
 
 def compose_request_cloud_upload(distro, koji, arch, cloud_target, image_type):
-    with open(f"/usr/share/tests/osbuild-composer/repositories/{distro}.json") as f:
+    with open(f"/usr/share/tests/osbuild-composer/repositories/{distro}.json", encoding="utf-8") as f:
         test_repositories = json.load(f)
 
     repositories = [composer_repository_to_koji_repository(repo) for repo in test_repositories[arch]]
