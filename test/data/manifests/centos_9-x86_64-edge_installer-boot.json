@@ -27,7 +27,8 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "rhsm": true
     },
     "blueprint": {}
   },
@@ -12601,7 +12602,10 @@
         "items": {
           "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
             "remote": {
-              "url": "http://edge.example.com/repo"
+              "url": "http://edge.example.com/repo",
+              "secrets": {
+                "name": "org.osbuild.rhsm.consumer"
+              }
             }
           }
         }

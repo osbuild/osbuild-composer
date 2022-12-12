@@ -21,7 +21,8 @@
     "ostree": {
       "ref": "test/fedora/iot",
       "url": "http://fedora.example.com/repo",
-      "parent": ""
+      "parent": "",
+      "rhsm": false
     },
     "blueprint": {}
   },

@@ -21,7 +21,8 @@
     "ostree": {
       "ref": "test/iot",
       "url": "http://iot.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "rhsm": false
     },
     "blueprint": {
       "name": "iot-installer-users",
