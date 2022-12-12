@@ -13633,30 +13633,6 @@
             }
           },
           {
-            "type": "org.osbuild.isolinux",
-            "inputs": {
-              "data": {
-                "type": "org.osbuild.tree",
-                "origin": "org.osbuild.pipeline",
-                "references": [
-                  "name:anaconda-tree"
-                ]
-              }
-            },
-            "options": {
-              "product": {
-                "name": "Fedora",
-                "version": "36"
-              },
-              "kernel": {
-                "dir": "/images/pxeboot",
-                "opts": [
-                  "inst.stage2=hd:LABEL=Fedora-36-BaseOS-aarch64"
-                ]
-              }
-            }
-          },
-          {
             "type": "org.osbuild.truncate",
             "options": {
               "filename": "images/efiboot.img",

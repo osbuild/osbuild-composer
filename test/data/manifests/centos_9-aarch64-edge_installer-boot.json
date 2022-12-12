@@ -9588,31 +9588,6 @@
             }
           },
           {
-            "type": "org.osbuild.isolinux",
-            "inputs": {
-              "data": {
-                "type": "org.osbuild.tree",
-                "origin": "org.osbuild.pipeline",
-                "references": [
-                  "name:anaconda-tree"
-                ]
-              }
-            },
-            "options": {
-              "product": {
-                "name": "CentOS Stream",
-                "version": "9-stream"
-              },
-              "kernel": {
-                "dir": "/images/pxeboot",
-                "opts": [
-                  "inst.stage2=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64",
-                  "inst.ks=hd:LABEL=CentOS-Stream-9-BaseOS-aarch64:/osbuild.ks"
-                ]
-              }
-            }
-          },
-          {
             "type": "org.osbuild.truncate",
             "options": {
               "filename": "images/efiboot.img",
