@@ -9451,8 +9451,7 @@
               "kickstart-modules": [
                 "org.fedoraproject.Anaconda.Modules.Network",
                 "org.fedoraproject.Anaconda.Modules.Payloads",
-                "org.fedoraproject.Anaconda.Modules.Storage",
-                "org.fedoraproject.Anaconda.Modules.Users"
+                "org.fedoraproject.Anaconda.Modules.Storage"
               ]
             }
           },
