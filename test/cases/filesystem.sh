@@ -10,19 +10,7 @@ source /etc/os-release
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="osbuild-composer-test-${TEST_UUID}"
@@ -60,12 +48,8 @@ build_image() {
     greenprint "🚀 Starting compose"
     # this needs "|| true" at the end for the fail case scenario
     sudo composer-cli --json compose start "$blueprint_name" "$image_type" | tee "$COMPOSE_START" || true
-    if rpm -q --quiet weldr-client; then
-        STATUS=$(jq -r '.body.status' "$COMPOSE_START")
-    else
-        STATUS=$(jq -r '.status' "$COMPOSE_START")
-    fi
-    
+    STATUS=$(get_build_info ".status" "$COMPOSE_START")
+
     if [[ $want_fail == "$STATUS" ]]; then
         echo "Something went wrong with the compose. 😢"
         sudo pkill -P ${WORKER_JOURNAL_PID}
@@ -74,11 +58,9 @@ build_image() {
     elif [[ $want_fail == true && $STATUS == false ]]; then
         sudo pkill -P ${WORKER_JOURNAL_PID}
         trap - EXIT
-        if rpm -q --quiet weldr-client; then
-            ERROR_MSG=$(jq 'first(.body.errors[] | select(.id == "ManifestCreationFailed")) | .msg' "$COMPOSE_START")
-        else
-            ERROR_MSG=$(jq 'first(.errors[] | select(.id == "ManifestCreationFailed")) | .msg' "$COMPOSE_START")
-        fi
+        # use get_build_info to extract errors before picking the first
+        errors=$(get_build_info ".errors" "$COMPOSE_START")
+        ERROR_MSG=$(jq 'first(.[] | select(.id == "ManifestCreationFailed")) | .msg' <<< "${errors}")
         return
     else
         COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")

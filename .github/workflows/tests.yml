@@ -60,7 +60,7 @@ jobs:
       # gpgme-devel is needed for container upload dependencies
     - name: Install test dependencies
       run: sudo apt-get install -y libgpgme-dev
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: actions/setup-go@v3
       with:
         go-version: 1.16
@@ -74,8 +74,8 @@ jobs:
         WORKDIR=$(readlink -f pkg/jobqueue/dbjobqueue/schemas)
         pushd $(mktemp -d)
         go mod init temp
-        go get -u github.com/jackc/tern
-        go run github.com/jackc/tern migrate -m "$WORKDIR"
+        go install github.com/jackc/tern@latest
+        $(go env GOPATH)/bin/tern migrate -m "$WORKDIR"
         popd
     - run: go test -tags=integration ./cmd/osbuild-composer-dbjobqueue-tests
     - run: go test -tags=integration ./cmd/osbuild-service-maintenance
@@ -101,9 +101,8 @@ jobs:
 
   lint:
     name: "⌨ Lint"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-
       - name: Set up Go 1.16
         uses: actions/setup-go@v3
         with:
@@ -115,10 +114,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Install golangci-lint
-        run: curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.30.0
-
-        # This is needed to lint internal/upload/koji package
+      # This is needed to lint internal/upload/koji package
       - name: Install kerberos devel package
         run: sudo apt-get install -y libkrb5-dev
 
@@ -127,7 +123,10 @@ jobs:
         run: sudo apt-get install -y libgpgme-dev
 
       - name: Run golangci-lint
-        run: $(go env GOPATH)/bin/golangci-lint run --timeout 5m0s
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --verbose --timeout 5m0s
 
   prepare:
     name: "🔍 Check source preparation"
@@ -169,7 +168,9 @@ jobs:
       with:
         ignore: vendor # We don't want to fix the code in vendored dependencies
       env:
-        SHELLCHECK_OPTS: -e SC1091 -e SC2002 # don't check /etc/os-release sourcing and allow useless cats to live inside our codebase
+        # don't check /etc/os-release sourcing, allow useless cats to live inside our codebase, and
+        # allow seemingly unreachable commands
+        SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317
 
   rpmlint:
     name: "📦 RPMlint"
@@ -209,7 +210,7 @@ jobs:
     name: "🎀 kube-linter"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: redhat-actions/oc-installer@v1
     - name: Process template
       run: |

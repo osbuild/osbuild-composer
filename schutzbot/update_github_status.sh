@@ -39,3 +39,13 @@ curl \
     -H "Accept: application/vnd.github.v3+json" \
     "https://api.github.com/repos/osbuild/osbuild-composer/statuses/${CI_COMMIT_SHA}" \
     -d '{"state":"'"${GITHUB_NEW_STATE}"'", "description": "'"${GITHUB_NEW_DESC}"'", "context": "Schutzbot on GitLab", "target_url": "'"${CI_PIPELINE_URL}"'"}'
+
+# ff release branch on github if this ran on main
+if [ "$CI_COMMIT_BRANCH" = "main" ] && [ "$GITHUB_NEW_STATE" = "success" ]; then
+    if [ ! -d "release-ff-clone" ]; then
+        git clone --bare "https://${SCHUTZBOT_LOGIN#*:}@github.com/osbuild/osbuild-composer.git" release-ff-clone
+    fi
+    git -C release-ff-clone fetch origin
+    # || true to ignore non fast-forwards
+    git -C release-ff-clone push origin "${CI_COMMIT_SHA}:refs/heads/release" || true
+fi

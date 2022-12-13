@@ -7,6 +7,8 @@ echo "Deploy AWS credentials."
 
 echo "Write the bucket."
 # Always create the header and write the bucket, it's slightly ugly but it will work
+# The bucket is always set, becuase the instance can potentially authenticate to AWS
+# with its instance profile, without any explicit credentials.
 sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 [aws]
 bucket = "${WORKER_CONFIG_AWS_BUCKET:-}"

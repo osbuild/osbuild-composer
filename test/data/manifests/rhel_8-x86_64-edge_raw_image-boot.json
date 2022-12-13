@@ -19,7 +19,8 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "test/edge"
+      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "rhsm": false
     },
     "blueprint": {}
   },
@@ -979,7 +980,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "test/edge": {
+                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
                     "ref": "test/edge"
                   }
                 }
@@ -1033,7 +1034,8 @@
                 "label": "root"
               },
               "kernel_opts": [
-                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                "rw"
               ]
             }
           },
@@ -2336,7 +2338,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "test/edge": {
+          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
             "remote": {
               "url": "http://edge.example.com/repo"
             }

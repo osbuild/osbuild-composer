@@ -6,11 +6,8 @@
 
 set -xeuo pipefail
 
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
@@ -138,21 +135,13 @@ if [[ "${dummysourceurl}" != "${expectedurl}" ]]; then
 fi
 
 sudo composer-cli --json compose start dummy qcow2 | tee "${composestart}"
-if rpm -q --quiet weldr-client; then
-    composeid=$(jq -r '.body.build_id' "$composestart")
-else
-    composeid=$(jq -r '.build_id' "${composestart}")
-fi
+composeid=$(get_build_info '.build_id' "${composestart}")
 
 # Wait for the compose to finish.
 echo "⏱ Waiting for compose to finish: ${composeid}"
 while true; do
     sudo composer-cli --json compose info "${composeid}" | tee "${composeinfo}" > /dev/null
-    if rpm -q --quiet weldr-client; then
-        composestatus=$(jq -r '.body.queue_status' "${composeinfo}")
-    else
-        composestatus=$(jq -r '.queue_status' "${composeinfo}")
-    fi
+    composestatus=$(get_build_info '.queue_status' "${composeinfo}")
 
     # Is the compose finished?
     if [[ ${composestatus} != RUNNING ]] && [[ ${composestatus} != WAITING ]]; then

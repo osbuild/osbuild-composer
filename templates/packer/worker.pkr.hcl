@@ -26,15 +26,19 @@ source "amazon-ebs" "image_builder" {
 
 build {
   source "amazon-ebs.image_builder" {
-    name = "rhel-8-x86_64"
+    name = "rhel-9-x86_64"
 
-    # Use a static RHEL 8.6 Cloud Access Image.
-    source_ami = "ami-03debf3ebf61b20cd"
+    # Use a static RHEL 9.0 Cloud Access Image.
+    source_ami = "ami-0f7c7d22de9e097ea"
     ssh_username = "ec2-user"
     instance_type = "c6a.large"
+    aws_polling {
+      delay_seconds = 20
+      max_attempts  = 60
+    }
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}"
+    ami_name = "${var.image_name}-rhel-9-x86_64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
@@ -42,7 +46,7 @@ build {
       Name = "${var.image_name}"
       composer_commit = "${var.composer_commit}"
       os = "rhel"
-      os_version = "8"
+      os_version = "9"
       arch = "x86_64"
     }
 
@@ -55,24 +59,58 @@ build {
     }
   }
 
-  source "amazon-ebs.image_builder"  {
-    name = "fedora-35-x86_64"
+  source "amazon-ebs.image_builder" {
+    name = "rhel-9-aarch64"
 
-    # Use a static Fedora 35 Cloud Base Image.
-    source_ami = "ami-08b4ee602f76bff79"
-    ssh_username = "fedora"
-    instance_type = "c6a.large"
+    # Use a static RHEL 9.0 Cloud Access Image.
+    source_ami = "ami-019ece25c0f135889"
+    ssh_username = "ec2-user"
+    instance_type = "c6g.large"
+    aws_polling {
+      delay_seconds = 20
+      max_attempts  = 60
+    }
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-fedora-35-x86_64"
+    ami_name = "${var.image_name}-rhel-9-aarch64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}-fedora-35-x86_64"
+      Name = "${var.image_name}"
+      composer_commit = "${var.composer_commit}"
+      os = "rhel"
+      os_version = "9"
+      arch = "aarch64"
+    }
+
+    # Ensure that the EBS snapshot used for the AMI meets our requirements.
+    launch_block_device_mappings {
+      delete_on_termination = "true"
+      device_name           = "/dev/sda1"
+      volume_size           = 10
+      volume_type           = "gp2"
+    }
+  }
+
+  source "amazon-ebs.image_builder"  {
+    name = "fedora-36-x86_64"
+
+    # Use a static Fedora 36 Cloud Base Image.
+    source_ami = "ami-08b7bda26f4071b80"
+    ssh_username = "fedora"
+    instance_type = "c6a.large"
+
+    # Set a name for the resulting AMI.
+    ami_name = "${var.image_name}-fedora-36-x86_64"
+
+    # Apply tags to the resulting AMI/EBS snapshot.
+    tags = {
+      AppCode = "IMGB-001"
+      Name = "${var.image_name}-fedora-36-x86_64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
-      os_version = "35"
+      os_version = "36"
       arch = "x86_64"
     }
 
@@ -93,23 +131,23 @@ EOF
   }
 
   source "amazon-ebs.image_builder"  {
-    name = "fedora-35-aarch64"
+    name = "fedora-36-aarch64"
 
-    # Use a static Fedora 35 Cloud Base Image.
-    source_ami = "ami-068c123e1c1ca0d49"
+    # Use a static Fedora 36 Cloud Base Image.
+    source_ami = "ami-01925eb0821988986"
     ssh_username = "fedora"
     instance_type = "c6g.large"
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-fedora-35-aarch64"
+    ami_name = "${var.image_name}-fedora-36-aarch64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}-fedora-35-aarch64"
+      Name = "${var.image_name}-fedora-36-aarch64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
-      os_version = "35"
+      os_version = "36"
       arch = "aarch64"
     }
 

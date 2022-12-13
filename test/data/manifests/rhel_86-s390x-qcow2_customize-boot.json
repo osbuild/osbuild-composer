@@ -2619,8 +2619,10 @@
           {
             "type": "org.osbuild.chrony",
             "options": {
-              "timeservers": [
-                "time.example.com"
+              "servers": [
+                {
+                  "hostname": "time.example.com"
+                }
               ]
             }
           },
@@ -2725,6 +2727,14 @@
           {
             "type": "org.osbuild.zipl",
             "options": {}
+          },
+          {
+            "type": "org.osbuild.rhsm.facts",
+            "options": {
+              "facts": {
+                "image-builder.osbuild-composer.api-type": "test-manifest"
+              }
+            }
           },
           {
             "type": "org.osbuild.selinux",

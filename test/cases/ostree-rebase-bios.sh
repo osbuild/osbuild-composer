@@ -4,6 +4,8 @@ set -euo pipefail
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+
 # Get compose url if it's running on unsubscried RHEL
 if [[ ${ID} == "rhel" ]] && ! sudo subscription-manager status; then
     source /usr/libexec/osbuild-composer-test/define-compose-url.sh
@@ -11,20 +13,6 @@ fi
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
-
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"

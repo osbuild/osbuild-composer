@@ -8,20 +8,6 @@ set -euo pipefail
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
-
 
 # Install openshift client
 greenprint "🔧 Installing oenshift client(oc)"
@@ -91,6 +77,7 @@ INSTALLER_TYPE=edge-installer
 INSTALLER_FILENAME=installer.iso
 ANSIBLE_USER_FOR_BIOS="installeruser"
 OSTREE_OSNAME=rhel
+BOOT_ARGS="uefi"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -106,20 +93,12 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "fedora-35")
-        CONTAINER_TYPE=fedora-iot-container
-        INSTALLER_TYPE=fedora-iot-installer
-        OSTREE_REF="fedora/35/${ARCH}/iot"
+    "fedora-"*)
+        CONTAINER_TYPE=iot-container
+        INSTALLER_TYPE=iot-installer
+        OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
         OSTREE_OSNAME=fedora
-        OS_VARIANT="fedora35"
-        EMBEDED_CONTAINER="false"
-        ;;
-    "fedora-36")
-        CONTAINER_TYPE=fedora-iot-container
-        INSTALLER_TYPE=fedora-iot-installer
-        OSTREE_REF="fedora/36/${ARCH}/iot"
-        OSTREE_OSNAME=fedora
-        OS_VARIANT="fedora36"
+        OS_VARIANT="fedora-unknown"
         EMBEDED_CONTAINER="false"
         ;;
     "rhel-8.7")
@@ -141,6 +120,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="test/centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
         EMBEDED_CONTAINER="true"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -581,6 +561,7 @@ sudo rm -f "$LIBVIRT_BIOS_IMAGE_PATH"
 ## Install, upgrade and test Edge image on UEFI VM
 ##
 ##################################################
+
 # Install ostree image via anaconda.
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
 sudo virt-install  --name="${IMAGE_KEY}-uefi"\
@@ -591,7 +572,7 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --boot "$BOOT_ARGS" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \

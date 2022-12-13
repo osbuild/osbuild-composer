@@ -33,11 +33,11 @@ trap cleanup EXIT
 # resources in case the test unexpectedly fails or is canceled
 CI="${CI:-false}"
 if [[ "$CI" == true ]]; then
-  # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
-  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
+    # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
+    TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
 else
-  # if not running in Jenkins, generate ID not relying on specific env variables
-  TEST_ID=$(uuidgen);
+    # if not running in Jenkins, generate ID not relying on specific env variables
+    TEST_ID=$(uuidgen);
 fi
 
 # Set up temporary files.
@@ -47,7 +47,7 @@ MINIO_PROVIDER_CONFIG=${TEMPDIR}/minio.toml
 # We need MinIO Client to talk to the MinIO Server.
 if ! hash mc; then
     echo "Using 'mc' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_MINIO_CLIENT}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_MINIO_CLIENT}
 
     MC_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
         -v ${MINIO_CONFIG_DIR}:${MINIO_CONFIG_DIR}:Z \
@@ -88,8 +88,8 @@ ${CONTAINER_RUNTIME} run --rm -d \
     -e MINIO_ROOT_USER="${MINIO_ROOT_USER}" \
     -e MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD}" \
     ${CONTAINER_MINIO_SERVER} server /data
-# Kill the server once we're done
-trap '${CONTAINER_RUNTIME} kill ${MINIO_CONTAINER_NAME}' EXIT
+    # Kill the server once we're done
+    trap '${CONTAINER_RUNTIME} kill ${MINIO_CONTAINER_NAME}' EXIT
 
 # Configure the local server (retry until the service is up)
 MINIO_CONFIGURE_RETRY=0
@@ -99,13 +99,13 @@ until [ "${MINIO_CONFIGURE_RETRY}" -ge "${MINIO_CONFIGURE_MAX_RETRY}" ]
 do
     ${MC_CMD} alias set ${MINIO_SERVER_ALIAS} ${MINIO_ENDPOINT} ${MINIO_ROOT_USER} "${MINIO_ROOT_PASSWORD}" && break
     MINIO_CONFIGURE_RETRY=$(${MINIO_CONFIGURE_RETRY} + 1)
-	echo "Retrying [${MINIO_CONFIGURE_RETRY}/${MINIO_CONFIGURE_MAX_RETRY}] in ${MINIO_RETRY_INTERVAL}(s) "
-	sleep ${MINIO_RETRY_INTERVAL}
+    echo "Retrying [${MINIO_CONFIGURE_RETRY}/${MINIO_CONFIGURE_MAX_RETRY}] in ${MINIO_RETRY_INTERVAL}(s) "
+    sleep ${MINIO_RETRY_INTERVAL}
 done
 
 if [ "${MINIO_CONFIGURE_RETRY}" -ge "${MINIO_CONFIGURE_MAX_RETRY}" ]; then
-  echo "Failed to set MinIO alias after ${MINIO_CONFIGURE_MAX_RETRY} attempts!"
-  exit 1
+    echo "Failed to set MinIO alias after ${MINIO_CONFIGURE_MAX_RETRY} attempts!"
+    exit 1
 fi
 
 # Create the bucket

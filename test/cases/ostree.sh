@@ -3,32 +3,38 @@ set -euo pipefail
 
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Get compose url if it's running on unsubscried RHEL
 if [[ ${ID} == "rhel" ]] && ! sudo subscription-manager status; then
     source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 fi
 
+# Set up variables.
+FIREWALL_FEATURE="false"
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    "fedora-35")
-        IMAGE_TYPE=fedora-iot-commit
-        OSTREE_REF="fedora/35/${ARCH}/iot"
-        OS_VARIANT="fedora35"
-        USER_IN_COMMIT="false"
-        BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/35/Everything/x86_64/os/"
-        EMBEDED_CONTAINER="false"
-        ;;
     "fedora-36")
-        IMAGE_TYPE=fedora-iot-commit
+        IMAGE_TYPE=iot-commit
         OSTREE_REF="fedora/36/${ARCH}/iot"
         OS_VARIANT="fedora36"
         USER_IN_COMMIT="false"
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/36/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
+        ;;
+    "fedora-37")
+        IMAGE_TYPE=iot-commit
+        OSTREE_REF="fedora/37/${ARCH}/iot"
+        OS_VARIANT="fedora-unknown"
+        USER_IN_COMMIT="false"
+        BOOT_LOCATION="https://mirrors.kernel.org/fedora/development/37/Everything/x86_64/os/"
+        EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "rhel-8.4")
         IMAGE_TYPE=edge-commit
@@ -37,6 +43,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "rhel-8.6")
         IMAGE_TYPE=edge-commit
@@ -45,6 +52,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "rhel-8.7")
         IMAGE_TYPE=edge-commit
@@ -52,6 +60,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel8-unknown"
         USER_IN_COMMIT="true"
         EMBEDED_CONTAINER="true"
+        FIREWALL_FEATURE="true"
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
@@ -66,6 +75,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
+        FIREWALL_FEATURE="false"
         ;;
     "rhel-9.1")
         IMAGE_TYPE=edge-commit
@@ -73,6 +83,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel9-unknown"
         USER_IN_COMMIT="true"
         EMBEDED_CONTAINER="true"
+        FIREWALL_FEATURE="true"
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
@@ -87,6 +98,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="true"
+        FIREWALL_FEATURE="false"
         ;;
     "centos-9")
         IMAGE_TYPE=edge-commit
@@ -95,26 +107,13 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         BOOT_LOCATION="https://odcs.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="true"
+        FIREWALL_FEATURE="false"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
 esac
 
-
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
@@ -529,6 +528,17 @@ source = "quay.io/fedora/fedora:latest"
 EOF
 fi
 
+if [[ "${FIREWALL_FEATURE}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.firewall.zones]]
+name = "trusted"
+sources = ["192.168.100.51"]
+[[customizations.firewall.zones]]
+name = "work"
+sources = ["192.168.100.52"]
+EOF
+fi
+
 # Build upgrade image.
 build_image "$BLUEPRINT_FILE" upgrade
 
@@ -595,7 +605,7 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="${EMBEDED_CONTAINER}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=${IMAGE_TYPE} -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="${EMBEDED_CONTAINER}" -e firewall_feature="${FIREWALL_FEATURE}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up

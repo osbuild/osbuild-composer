@@ -20,7 +20,7 @@ rm -f /tmp/client-credentials.json
 
 sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 [authentication]
-oauth_url = "https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token"
+oauth_url = "${TOKEN_URL:-https://identity.api.openshift.com/auth/realms/rhoas/protocol/openid-connect/token}"
 client_id = "${CLIENT_ID}"
 client_secret = "/etc/osbuild-worker/client-secret"
 EOF

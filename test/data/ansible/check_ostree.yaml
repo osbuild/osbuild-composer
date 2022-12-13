@@ -5,9 +5,11 @@
     workspace: "{{ lookup('env', 'WORKSPACE') }}"
     skip_rollback_test: "false"
     fdo_credential: "false"
+    edge_type: "none"
     embeded_container: "false"
     total_counter: "0"
     failed_counter: "0"
+    firewall_feature: "false"
 
   tasks:
     # current target host's IP address
@@ -46,24 +48,19 @@
     - set_fact:
         checking_stage: "{{ result_stage.stdout }}"
 
-    # case: check /boot/device-credentials exists
-    # simplified installer installed Edge system ONLY
-    - name: check /boot/device-credentials exists
-      stat:
-        path: /boot/device-credentials
-      register: stat_result
-
-    - name: check commit deployed and built
+    - name: wait for FDO onboarding
       block:
-        - assert:
-            that:
-              - stat_result.stat.exists
-            fail_msg: "/boot/device-credentials does not exist"
-            success_msg: "/boot/device-credentials exists"
+        - wait_for:
+            path:  "/etc/device-credentials"
+            delay: 10
+            timeout: 600
+            state: present
+            msg: "FDO onboarding credentials not created"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
       rescue:
+        # TODO: gather fdo-client-linuxapp.service logs
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
@@ -134,40 +131,27 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
-    # bios or uefi
-    - name: bios or uefi
-      stat:
-        path: /sys/firmware/efi
-      register: result_uefi
-
-    - set_fact:
-        device_name: /dev/vda2
-
-    - set_fact:
-        device_name: /dev/vda3
-      when: result_uefi.stat.exists
-
-    # Check if it is raw-image or simplified-installer, the disk are encrypted, and mount point starts with /dev/mapper/luks-
-    - name: check if it is simplified-installer or raw-image
+    - name: set mount point device name
       command: findmnt -r -o SOURCE -n /sysroot
-      register: result_encrypted
+      register: result_sysroot_source
 
     - set_fact:
-        device_name: "{{ result_encrypted.stdout }}"
-      when: "'/dev/mapper/luks-' in result_encrypted.stdout"
+        device_name: "{{ result_sysroot_source.stdout }}"
 
-    # case: check /sysroot moutn point
-    - name: check /sysroot mount point
-      command: findmnt -r -o SOURCE -n /sysroot
-      register: result_sysroot_mount_point
+    # case: check pv format
+    - name: check pv format
+      shell: pvs --reportformat json | jq .report[0].pv[0].pv_fmt -r
+      become: yes
+      register: result_pv_fmt
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
 
-    - name: "/sysroot should be mounted on {{ device_name }}"
+    - name: "pv format should be lvm2"
       block:
         - assert:
             that:
-              - result_sysroot_mount_point.stdout == "{{ device_name }}"
-            fail_msg: "/sysroot does not mount on {{ device_name }}"
-            success_msg: "/sysroot mounts on {{ device_name }}"
+              - result_pv_fmt.stdout == "lvm2"
+            fail_msg: "pv format is not lvm2"
+            success_msg: "pv format is lvm2"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
@@ -175,13 +159,102 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+
+    # case: check pv size
+    - name: check pv size
+      shell: pvs --reportformat json | jq .report[0].pv[0].pv_size -r
+      become: yes
+      register: result_pv_size
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+
+    # simplified installer uses coreos-installer to grow fs to 19G
+    - name: "pv size should bigger than 19G for simplified installer"
+      block:
+        - assert:
+            that:
+              - "'19' in result_pv_size.stdout"
+            fail_msg: "pv size is not bigger than 19G"
+            success_msg: "pv size is bigger than 19G"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - fdo_credential == "true"
+
+    # raw image does not have coreos-installer to grow fs to 19G
+    - name: "pv size should keep at 9G for raw image"
+      block:
+        - assert:
+            that:
+              - "'9' in result_pv_size.stdout"
+            fail_msg: "pv size does not keep at 9G"
+            success_msg: "pv size keeps at 9G"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - fdo_credential == "false"
+
+    # case: check /sysroot lv size
+    - name: check sysroot lv size
+      shell: df -h | grep sysroot
+      register: result_sysroot_lv_size
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+
+    - name: "/sysroot lv size should be 9G"
+      block:
+        - assert:
+            that:
+              - "'9.0G' in result_sysroot_lv_size.stdout"
+            fail_msg: "pv size is not 9G"
+            success_msg: "pv size is 9G"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
 
     # case: check /sysroot mount status
     - name: check /sysroot mount status
       shell: findmnt -r -o OPTIONS -n /sysroot | awk -F "," '{print $1}'
       register: result_sysroot_mount_status
 
-    - name: /sysroot should be mount with rw permission
+    # https://fedoraproject.org/wiki/Changes/Silverblue_Kinoite_readonly_sysroot
+    # There are three checks here for /sysroot permission based on pr https://github.com/osbuild/osbuild-composer/pull/3053
+    # 1. for edge-commit and edge-installer, check ro when fedora >= 37
+    # 2. for edge-commit and edge-installer, check rw for other os.
+    # 3. for edge-simplified-installer and edge-raw-image, check ro for all os.
+    - name: /sysroot should be mount with ro permission for edge-commit and edge-installer on Fedora >= 37
+      block:
+        - assert:
+            that:
+              - result_sysroot_mount_status.stdout == "ro"
+            fail_msg: "/sysroot is not mounted with ro permission"
+            success_msg: "/sysroot is mounted with ro permission"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: (edge_type == "none") and (ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '>='))
+
+    - name: /sysroot should be mount with rw permission for edge-commit and edge-installer on all OS except Fedora >= 37
       block:
         - assert:
             that:
@@ -195,6 +268,24 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: (edge_type == "none") and ((ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '<')) or
+            (ansible_facts['distribution'] == 'CentOS') or (ansible_facts['distribution'] == 'RedHat'))
+
+    - name: /sysroot should be mount with ro permission for edge-simplified-installer and edge-raw-image
+      block:
+        - assert:
+            that:
+              - result_sysroot_mount_status.stdout == "ro"
+            fail_msg: "/sysroot is not mounted with ro permission"
+            success_msg: "/sysroot is mounted with ro permission"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: edge_type == "edge-simplified-installer" or edge_type == "edge-raw-image"
 
     # case: check /var mount point
     - name: check /var mount point
@@ -327,6 +418,8 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: (edge_type == "none") and ((ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '<')) or
+            (ansible_facts['distribution'] == 'CentOS') or (ansible_facts['distribution'] == 'RedHat'))
 
     # case: check dmesg error and failed log
     - name: check dmesg output
@@ -440,7 +533,7 @@
 
     # case: check installed greenboot packages
     # https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/rhel8/distro.go#L634
-    - name: greenboot and it's related packages should be installed (RHEL 8.6+, CS8, and CS9)
+    - name: greenboot and it's related packages should be installed (RHEL 8.6+, CS8, CS9 and Fedora 36+)
       block:
         - name: greenboot and it's related packages should be installed
           shell: rpm -qa | grep greenboot
@@ -460,9 +553,10 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.6', '>=')) or
-            (ansible_facts['distribution'] == 'CentOS')
+            (ansible_facts['distribution'] == 'CentOS') or
+            (ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('36', '>='))
 
-    - name: greenboot and it's related packages should be installed (RHEL 8.5 and Fedora)
+    - name: greenboot and it's related packages should be installed (RHEL 8.5 and Fedora 35)
       block:
         - name: greenboot and it's related packages should be installed
           shell: rpm -qa | grep greenboot
@@ -485,7 +579,7 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.6', '<')) or
-            (ansible_facts['distribution'] == 'Fedora')
+            (ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('35', '<='))
 
     - name: greenboot should be installed
       block:
@@ -530,8 +624,13 @@
     # case: check greenboot* services log
     - name: all greenboot* service should run without error
       block:
+        - name: check boot-complete.target
+          # will fail if the target was not reached
+          command: systemctl --no-pager status boot-complete.target
+
+        # TODO: check service/target status instead of string matching messages
         - name: all greenboot* service should run without error
-          command: journalctl -b -0 -u boot-complete.target -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
+          command: journalctl -b -0 -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
           register: result_greenboot_log
 
         - assert:
@@ -539,7 +638,6 @@
               - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot Health Checks Runner' in result_greenboot_log.stdout"
-              - "'Reached target Boot Completion Check' in result_greenboot_log.stdout"
               - "'Mark boot as successful in grubenv' in result_greenboot_log.stdout"
               - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot MotD Generator' in result_greenboot_log.stdout"
@@ -574,6 +672,13 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - name: check fdo-client-linuxapp logs
+      command: journalctl -u fdo-client-linuxapp
+      register: result_fdo_client_linuxapp_journalctl
+
+    - debug: 
+        var: result_fdo_client_linuxapp_journalctl
 
     # case: check rollback function if boot error found
     - name: install sanely failing health check unit to test red boot status behavior
@@ -616,6 +721,28 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: skip_rollback_test == "false"
 
+    - name: check journald has persistent logging
+      block:
+        - name: lsit boots
+          shell: journalctl --list-boots
+          register: result_list_boots
+
+        - assert:
+            that:
+              - result_list_boots.stdout_lines | length > 1
+            fail_msg: "journald hasn't persistent logging"
+            success_msg: "journald has persistent logging"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - skip_rollback_test == "false"
+        - result_rollback is succeeded
+
     # case: check ostree commit after rollback
     - name: check ostree commit after rollback
       block:
@@ -643,11 +770,47 @@
         - skip_rollback_test == "false"
         - result_rollback is succeeded
 
+    - name: check fdo-client-linuxapp logs
+      command: journalctl -u fdo-client-linuxapp
+      register: result_fdo_client_linuxapp_journalctl
+
+    - debug: 
+        var: result_fdo_client_linuxapp_journalctl
+
+    - name: wait for FDO re-encryption
+      block:
+        - shell: cryptsetup luksDump /dev/vda4
+          register: result
+          until: not result.stdout_lines is search("cipher_null-ecb")
+          retries: 30
+          delay: 60
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: fdo_credential == "true"
+
+    - name: check fdo-client-linuxapp logs
+      command: journalctl -u fdo-client-linuxapp
+      register: result_fdo_client_linuxapp_journalctl
+
+    - debug: 
+        var: result_fdo_client_linuxapp_journalctl
+
     # case: check greenboot* services log again
     - name: fallback log should be found here
       block:
+
+        - name: check boot-complete.target
+          # will fail if the target was not reached
+          command: systemctl --no-pager status boot-complete.target
+
+        # TODO: check service/target status instead of string matching messages
         - name: fallback log should be found here
-          command: journalctl -b -0 -u boot-complete.target -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
+          command: journalctl -b -0 -u greenboot -u greenboot-healthcheck -u greenboot-rpm-ostree-grub2-check-fallback -u greenboot-grub2-set-counter -u greenboot-grub2-set-success -u greenboot-status -u redboot -u redboot-auto-reboot -u redboot.target
           register: result_greenboot_log
 
         - assert:
@@ -656,7 +819,6 @@
               - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot Health Checks Runner' in result_greenboot_log.stdout"
-              - "'Reached target Boot Completion Check' in result_greenboot_log.stdout"
               - "'Mark boot as successful in grubenv' in result_greenboot_log.stdout"
               - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot MotD Generator' in result_greenboot_log.stdout"
@@ -697,6 +859,33 @@
       when:
         - skip_rollback_test == "false"
         - result_rollback is succeeded
+
+    # case: checking firewall customizations
+    - name: Check applied firewall customizations
+      block:
+        - name: Ensure firewall customizations applied from blueprint in trusted zone
+          command: firewall-cmd --info-zone=trusted
+          register: result_trusted_zone
+          become: yes
+        - name: Ensure firewall customizations applied from blueprint in work zone
+          command: firewall-cmd --info-zone=work
+          register: result_work_zone
+          become: yes
+
+        - assert:
+            that:
+              - "'192.168.100.51' in result_trusted_zone.stdout"
+              - "'192.168.100.52' in result_work_zone.stdout"
+            fail_msg: "No firewall customizations found"
+            success_msg: "Firewall customizations added from blueprint"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: firewall_feature == "true"
 
     - assert:
         that:

@@ -2257,8 +2257,10 @@
           {
             "type": "org.osbuild.chrony",
             "options": {
-              "timeservers": [
-                "metadata.google.internal"
+              "servers": [
+                {
+                  "hostname": "metadata.google.internal"
+                }
               ]
             }
           },
@@ -2376,6 +2378,17 @@
             }
           },
           {
+            "type": "org.osbuild.gcp.guest-agent.conf",
+            "options": {
+              "config_scope": "distro",
+              "config": {
+                "InstanceSetup": {
+                  "set_boto_config": false
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.fstab",
             "options": {
               "filesystems": [
@@ -2407,6 +2420,14 @@
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-305.el8.x86_64",
               "config": {
                 "default": "saved"
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.rhsm.facts",
+            "options": {
+              "facts": {
+                "image-builder.osbuild-composer.api-type": "test-manifest"
               }
             }
           },
@@ -10335,5 +10356,6 @@
         "check_gpg": true
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

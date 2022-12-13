@@ -2673,6 +2673,18 @@
             }
           },
           {
+            "type": "org.osbuild.modprobe",
+            "options": {
+              "filename": "blacklist-amdgpu.conf",
+              "commands": [
+                {
+                  "command": "blacklist",
+                  "modulename": "amdgpu"
+                }
+              ]
+            }
+          },
+          {
             "type": "org.osbuild.dracut.conf",
             "options": {
               "filename": "sgdisk.conf",
@@ -2743,6 +2755,14 @@
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-348.el8.x86_64",
               "config": {
                 "default": "saved"
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.rhsm.facts",
+            "options": {
+              "facts": {
+                "image-builder.osbuild-composer.api-type": "test-manifest"
               }
             }
           },

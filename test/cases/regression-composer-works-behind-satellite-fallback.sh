@@ -7,19 +7,6 @@
 
 set -exuo pipefail
 
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
-
 function generate_certificates {
     # Generate CA root key
     sudo openssl genrsa -out ca.key
@@ -39,6 +26,7 @@ function generate_certificates {
 }
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Provision the software under tet.
 /usr/libexec/osbuild-composer-test/provision.sh none

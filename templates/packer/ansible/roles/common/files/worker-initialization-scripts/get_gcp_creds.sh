@@ -4,6 +4,15 @@ source /tmp/cloud_init_vars
 
 echo "Deploy GCP credentials."
 
+echo "Write the bucket."
+# Always create the header and write the bucket, it's slightly ugly but it will work
+# The bucket is always set, becuase the instance can potentially authenticate to GCP
+# with a service account connected to it, without any explicit credentials.
+sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+[gcp]
+bucket = "${WORKER_CONFIG_GCP_BUCKET:-}"
+EOF
+
 if [[ -z "$GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
   echo "GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN not defined, skipping."
   exit 0
@@ -16,6 +25,5 @@ fi
 
 
 sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
-[gcp]
 credentials = "/etc/osbuild-worker/gcp_credentials.json"
 EOF

@@ -34,7 +34,8 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "iteration": 1659445869463,
+      "id": 547,
+      "iteration": 1663169204689,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -133,7 +134,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -437,7 +438,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -653,7 +654,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.1",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -1009,7 +1010,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -1076,7 +1077,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -1174,7 +1176,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red"
+                    "color": "red",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -1223,7 +1226,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -1284,7 +1287,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red"
+                    "color": "red",
+                    "value": null
                   }
                 ]
               },
@@ -1401,7 +1405,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red"
+                    "color": "red",
+                    "value": null
                   }
                 ]
               },
@@ -1484,7 +1489,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red"
+                    "color": "red",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -1526,7 +1532,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -1594,7 +1600,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -1692,7 +1699,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -1741,7 +1749,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -1803,7 +1811,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "dark-purple",
@@ -1966,7 +1975,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -2051,7 +2061,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red"
+                    "color": "red",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -2093,7 +2104,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -2161,7 +2172,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -2216,7 +2228,7 @@ data:
           "type": "timeseries"
         },
         {
-          "collapsed": true,
+          "collapsed": false,
           "datasource": {
             "uid": "${datasource}"
           },
@@ -2227,340 +2239,342 @@ data:
             "y": 68
           },
           "id": 207,
-          "panels": [
-            {
-              "datasource": {
-                "uid": "${datasource}"
+          "panels": [],
+          "title": "Job Wait Duration",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "description": "The duration of 95% of jobs waiting for execution in the job queue",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
               },
-              "description": "The duration of 95% of jobs waiting for execution in the job queue",
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "thresholds"
-                  },
-                  "decimals": 0,
-                  "mappings": [
-                    {
-                      "options": {
-                        "match": "null",
-                        "result": {
-                          "index": 0,
-                          "text": "N/A"
-                        }
-                      },
-                      "type": "special"
-                    }
-                  ],
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green"
-                      },
-                      {
-                        "color": "#EAB839",
-                        "value": "1228"
-                      },
-                      {
-                        "color": "red",
-                        "value": "1536"
-                      }
-                    ]
-                  },
-                  "unit": "s"
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 5,
-                "x": 0,
-                "y": 5
-              },
-              "id": 208,
+              "decimals": 0,
               "mappings": [
                 {
                   "options": {
                     "match": "null",
                     "result": {
+                      "index": 0,
                       "text": "N/A"
                     }
                   },
                   "type": "special"
                 }
               ],
-              "options": {
-                "colorMode": "value",
-                "graphMode": "none",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                  "calcs": [
-                    "lastNotNull"
-                  ],
-                  "fields": "",
-                  "values": false
-                },
-                "text": {},
-                "textMode": "auto"
-              },
-              "pluginVersion": "8.5.2",
-              "targets": [
-                {
-                  "exemplar": true,
-                  "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$__range])) by (le))",
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
-              ],
-              "title": "Job Wait Duration",
-              "type": "stat"
-            },
-            {
-              "datasource": {
-                "uid": "${datasource}"
-              },
-              "description": "The  duration for jobs waiting in the job queue over the selected date range",
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "thresholds"
-                  },
-                  "custom": {
-                    "axisLabel": "seconds",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "drawStyle": "line",
-                    "fillOpacity": 35,
-                    "gradientMode": "scheme",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "lineInterpolation": "linear",
-                    "lineWidth": 3,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "never",
-                    "spanNulls": true,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  },
-                  "mappings": [],
-                  "min": 0,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green"
-                      },
-                      {
-                        "color": "#EAB839",
-                        "value": "175"
-                      },
-                      {
-                        "color": "red",
-                        "value": "200"
-                      }
-                    ]
-                  },
-                  "unit": "s"
-                },
-                "overrides": [
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
                   {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "p50"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "light-red",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
+                    "color": "green",
+                    "value": null
                   },
                   {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "p95"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "yellow",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
+                    "color": "#EAB839",
+                    "value": "1228"
                   },
                   {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "p99"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "blue",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
+                    "color": "red",
+                    "value": "1536"
                   }
                 ]
               },
-              "gridPos": {
-                "h": 8,
-                "w": 11,
-                "x": 5,
-                "y": 5
-              },
-              "id": 209,
-              "options": {
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "list",
-                  "placement": "bottom"
-                },
-                "tooltip": {
-                  "mode": "single",
-                  "sort": "none"
-                }
-              },
-              "targets": [
-                {
-                  "exemplar": true,
-                  "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
-                  "hide": false,
-                  "interval": "",
-                  "legendFormat": "p99",
-                  "refId": "C"
-                },
-                {
-                  "editorMode": "code",
-                  "exemplar": true,
-                  "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
-                  "hide": false,
-                  "interval": "",
-                  "legendFormat": "p95",
-                  "range": true,
-                  "refId": "B"
-                },
-                {
-                  "exemplar": true,
-                  "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
-                  "interval": "",
-                  "legendFormat": "p50",
-                  "refId": "A"
-                }
-              ],
-              "title": "Job Wait Duration",
-              "type": "timeseries"
+              "unit": "s"
             },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 5,
+            "x": 0,
+            "y": 69
+          },
+          "id": 208,
+          "mappings": [
             {
-              "datasource": {
-                "uid": "${datasource}"
-              },
-              "description": "Percent of requests exceeding duration allowed by SLO",
-              "fieldConfig": {
-                "defaults": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisLabel": "",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "drawStyle": "line",
-                    "fillOpacity": 0,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "lineInterpolation": "linear",
-                    "lineWidth": 1,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  },
-                  "mappings": [],
-                  "max": 1,
-                  "min": 0,
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "color": "green"
-                      },
-                      {
-                        "color": "red",
-                        "value": 80
-                      }
-                    ]
-                  },
-                  "unit": "percentunit"
-                },
-                "overrides": []
-              },
-              "gridPos": {
-                "h": 8,
-                "w": 8,
-                "x": 16,
-                "y": 5
-              },
-              "id": 204,
               "options": {
-                "legend": {
-                  "calcs": [],
-                  "displayMode": "hidden",
-                  "placement": "bottom"
-                },
-                "tooltip": {
-                  "mode": "single",
-                  "sort": "none"
+                "match": "null",
+                "result": {
+                  "text": "N/A"
                 }
               },
-              "targets": [
-                {
-                  "exemplar": true,
-                  "expr": "1 - sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{le=\"1536\"}[$interval]))/sum(rate(image_builder_worker_job_wait_duration_seconds_count[$interval]))",
-                  "interval": "",
-                  "legendFormat": "",
-                  "refId": "A"
-                }
+              "type": "special"
+            }
+          ],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
               ],
-              "title": "Slow Request Rate",
-              "type": "timeseries"
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.0.3",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$__range])) by (le))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
             }
           ],
           "title": "Job Wait Duration",
-          "type": "row"
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "description": "The  duration for jobs waiting in the job queue over the selected date range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "seconds",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 35,
+                "gradientMode": "scheme",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 3,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": "175"
+                  },
+                  {
+                    "color": "red",
+                    "value": "200"
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p50"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "light-red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p95"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "yellow",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "p99"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 11,
+            "x": 5,
+            "y": 69
+          },
+          "id": 209,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "p99",
+              "refId": "C"
+            },
+            {
+              "editorMode": "code",
+              "exemplar": true,
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "p95",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "exemplar": true,
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket[$interval])) by (le))",
+              "interval": "",
+              "legendFormat": "p50",
+              "refId": "A"
+            }
+          ],
+          "title": "Job Wait Duration",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "${datasource}"
+          },
+          "description": "Percent of requests exceeding duration allowed by SLO",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 69
+          },
+          "id": 204,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "hidden",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "1 - sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{le=\"1536\"}[$interval]))/sum(rate(image_builder_worker_job_wait_duration_seconds_count[$interval]))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Slow Request Rate",
+          "type": "timeseries"
         }
       ],
       "refresh": false,
@@ -2686,12 +2700,12 @@ data:
               {
                 "selected": false,
                 "text": "crc stage",
-                "value": "org-15842261"
+                "value": "org-15877963"
               },
               {
                 "selected": false,
                 "text": "fedora stage",
-                "value": "org-15877963"
+                "value": "org-15842261"
               },
               {
                 "selected": false,
@@ -2800,6 +2814,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 9,
+      "version": 10,
       "weekStart": ""
     }

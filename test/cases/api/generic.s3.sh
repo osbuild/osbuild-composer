@@ -1,10 +1,15 @@
 #!/usr/bin/bash
 
 source /usr/libexec/tests/osbuild-composer/api/common/common.sh
+source /usr/libexec/tests/osbuild-composer/api/common/vsphere.sh
 source /usr/libexec/tests/osbuild-composer/api/common/s3.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 function checkEnv() {
     printenv AWS_REGION > /dev/null
+    if [ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]; then
+        checkEnvVSphere
+    fi
 }
 
 # Global var for ostree ref
@@ -14,6 +19,9 @@ function cleanup() {
   MINIO_CONTAINER_NAME="${MINIO_CONTAINER_NAME:-}"
   if [ -n "${MINIO_CONTAINER_NAME}" ]; then
     sudo "${CONTAINER_RUNTIME}" kill "${MINIO_CONTAINER_NAME}"
+  fi
+  if [ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]; then
+    cleanupVSphere
   fi
 }
 
@@ -54,6 +62,10 @@ function installClient() {
   fi
   AWS_CMD+=" --region $MINIO_REGION --output json --color on --endpoint-url $MINIO_ENDPOINT"
   $AWS_CMD --version
+
+  if [ "${IMAGE_TYPE}" == "${IMAGE_TYPE_VSPHERE}" ]; then
+    installClientVSphere
+  fi
 
   # Configure the local server (retry until the service is up)
   MINIO_CONFIGURE_RETRY=0

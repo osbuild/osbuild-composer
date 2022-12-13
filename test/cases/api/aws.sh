@@ -13,15 +13,23 @@ function cleanup() {
   AWS_INSTANCE_ID="${AWS_INSTANCE_ID:-}"
   AMI_IMAGE_ID="${AMI_IMAGE_ID:-}"
   AWS_SNAPSHOT_ID="${AWS_SNAPSHOT_ID:-}"
+  AMI_ID_2="${AMI_ID_2:-}"
+  SNAPSHOT_ID_2="${SNAPSHOT_ID_2:-}"
 
   if [ -n "$AWS_CMD" ]; then
     $AWS_CMD ec2 terminate-instances --instance-ids "$AWS_INSTANCE_ID"
     $AWS_CMD ec2 deregister-image --image-id "$AMI_IMAGE_ID"
     $AWS_CMD ec2 delete-snapshot --snapshot-id "$AWS_SNAPSHOT_ID"
     $AWS_CMD ec2 delete-key-pair --key-name "key-for-$AMI_IMAGE_ID"
+
+    $AWS_CMD ec2 deregister-image --region "$REGION_2" --image-id "$AMI_ID_2"
+    $AWS_CMD ec2 delete-snapshot --region "$REGION_2" --snapshot-id "$SNAPSHOT_ID_2"
   fi
 }
 
+function installClient() {
+  installAWSClient
+}
 
 function createReqFile() {
   AWS_SNAPSHOT_NAME=${TEST_ID}
@@ -67,6 +75,13 @@ function createReqFile() {
         "share_with_accounts": ["${AWS_API_TEST_SHARE_ACCOUNT}"]
     }
   }
+}
+EOF
+
+  cat > "$IMG_COMPOSE_REQ_FILE" <<EOF
+{
+  "region": "${AWS_REGION_2}",
+  "share_with_accounts":  ["${AWS_API_TEST_SHARE_ACCOUNT_2}"]
 }
 EOF
 }
@@ -122,12 +137,61 @@ function verify() {
     exit 1
   fi
 
+  # Verify that the 2nd image from the same compose was copied and shared with existing and new account
+  AMI_ID_2=$(echo "$IMG_UPLOAD_OPTIONS" | jq -r .ami)
+  REGION_2=$(echo "$IMG_UPLOAD_OPTIONS" | jq -r .region)
+  $AWS_CMD ec2 describe-images --owners self --region "$REGION_2" --image-ids "$AMI_ID_2" \
+           > "$WORKDIR/ami2.json"
+
+  SNAPSHOT_ID_2=$(jq -r '.Images[].BlockDeviceMappings[].Ebs.SnapshotId' "$WORKDIR/ami2.json")
+  $AWS_CMD ec2 describe-snapshot-attribute --region "$REGION_2" --snapshot-id "$SNAPSHOT_ID_2" \
+           --attribute createVolumePermission > "$WORKDIR/snapshot-attributes2.json"
+
+  # Tag cloned image and snapshot with "gitlab-ci-test" tag
+  $AWS_CMD ec2 create-tags --region "$REGION_2" \
+    --resources "${SNAPSHOT_ID_2}" "${AMI_ID_2}" \
+    --tags Key=gitlab-ci-test,Value=true
+
+  SHARED_ID_2=$(jq -r ".CreateVolumePermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT\").UserId" "$WORKDIR/snapshot-attributes2.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID_2" ]; then
+      echo "EC2 Snapshot wasn't shared with AWS_API_TEST_SHARE_ACCOUNT"
+      exit 1
+  fi
+  SHARED_ID_2=$(jq -r ".CreateVolumePermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT_2\").UserId" "$WORKDIR/snapshot-attributes2.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT_2" != "$SHARED_ID_2" ]; then
+      echo "EC2 Snapshot wasn't shared with AWS_API_TEST_SHARE_ACCOUNT_2"
+      exit 1
+  fi
+
+  $AWS_CMD ec2 describe-image-attribute --attribute launchPermission --region "$REGION_2" --image-id "$AMI_ID_2" > "$WORKDIR/ami-attributes2.json"
+  SHARED_ID_2=$(jq -r ".LaunchPermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT\").UserId" "$WORKDIR/ami-attributes2.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT" != "$SHARED_ID_2" ]; then
+      echo "EC2 ami wasn't shared with AWS_API_TEST_SHARE_ACCOUNT"
+      exit 1
+  fi
+  SHARED_ID_2=$(jq -r ".LaunchPermissions[] | select(.UserId==\"$AWS_API_TEST_SHARE_ACCOUNT_2\").UserId" "$WORKDIR/ami-attributes2.json")
+  if [ "$AWS_API_TEST_SHARE_ACCOUNT_2" != "$SHARED_ID_2" ]; then
+      echo "EC2 ami wasn't shared with AWS_API_TEST_SHARE_ACCOUNT_2"
+      exit 1
+  fi
+
   # Create key-pair
   $AWS_CMD ec2 create-key-pair --key-name "key-for-$AMI_IMAGE_ID" --query 'KeyMaterial' --output text > keypair.pem
   chmod 400 ./keypair.pem
 
+  echo "ARCH is $ARCH"
+
+  if [ "$ARCH" = "aarch64" ]; then
+    INST_TYPE="t4g.micro"
+  elif [ "$ARCH" = "x86_64" ]; then
+    INST_TYPE="t2.micro"
+  else
+    echo "Unsupported architecture ❌"
+    exit 1
+  fi
+
   # Create an instance based on the ami
-  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type t2.micro --key-name "key-for-$AMI_IMAGE_ID" --tag-specifications 'ResourceType=instance,Tags=[{Key=gitlab-ci-test,Value=true}]' > "$WORKDIR/instances.json"
+  $AWS_CMD ec2 run-instances --image-id "$AMI_IMAGE_ID" --count 1 --instance-type "$INST_TYPE" --key-name "key-for-$AMI_IMAGE_ID" --tag-specifications 'ResourceType=instance,Tags=[{Key=gitlab-ci-test,Value=true}]' > "$WORKDIR/instances.json"
   AWS_INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "$WORKDIR/instances.json")
 
   $AWS_CMD ec2 wait instance-running --instance-ids "$AWS_INSTANCE_ID"

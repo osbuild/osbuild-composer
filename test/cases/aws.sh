@@ -10,20 +10,8 @@
 set -euo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
@@ -72,7 +60,7 @@ AMI_DATA=${TEMPDIR}/ami-data-${TEST_ID}.json
 # We need awscli to talk to AWS.
 if ! hash aws; then
     echo "Using 'awscli' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
         -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
@@ -109,14 +97,6 @@ get_compose_metadata () {
 
     # Move the JSON file into place.
     sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
-}
-
-is_weldr_client_installed () {
-    if rpm --quiet -q weldr-client; then
-        echo true
-    else
-        echo false
-    fi
 }
 
 # Write an AWS TOML file
@@ -226,7 +206,7 @@ fi
 
 CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
 
-sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_CLOUD_IMAGE_VAL}
+sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
 
 greenprint "Running cloud-image-val on generated image"
 
@@ -245,13 +225,17 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
 }
 EOF
 
-sudo ${CONTAINER_RUNTIME} run \
+if [ "$ARCH" == "aarch64" ]; then
+    sed -i s/t3.medium/a1.large/ "${TEMPDIR}/resource-file.json"
+fi
+
+sudo "${CONTAINER_RUNTIME}" run \
     -a stdout -a stderr \
     -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
     -e AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY}" \
     -e AWS_REGION="${AWS_REGION}" \
     -v "${TEMPDIR}":/tmp:Z \
-    ${CONTAINER_CLOUD_IMAGE_VAL} \
+    "${CONTAINER_CLOUD_IMAGE_VAL}" \
     python cloud-image-val.py -r /tmp/resource-file.json -d -o /tmp/report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
 
 mv "${TEMPDIR}"/report.html "${ARTIFACTS}"

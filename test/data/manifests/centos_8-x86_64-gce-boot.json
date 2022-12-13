@@ -5428,8 +5428,10 @@
           {
             "type": "org.osbuild.chrony",
             "options": {
-              "timeservers": [
-                "metadata.google.internal"
+              "servers": [
+                {
+                  "hostname": "metadata.google.internal"
+                }
               ]
             }
           },
@@ -5526,6 +5528,17 @@
                   "repo_gpgcheck": false
                 }
               ]
+            }
+          },
+          {
+            "type": "org.osbuild.gcp.guest-agent.conf",
+            "options": {
+              "config_scope": "distro",
+              "config": {
+                "InstanceSetup": {
+                  "set_boto_config": false
+                }
+              }
             }
           },
           {
@@ -13734,5 +13747,6 @@
         "check_gpg": true
       }
     ]
-  }
+  },
+  "no-image-info": true
 }

@@ -4,23 +4,12 @@ set -euo pipefail
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
@@ -79,8 +68,10 @@ STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
-INSTALLER_TYPE=edge-raw-image
-INSTALLER_FILENAME=image.raw.xz
+RAW_IMAGE_TYPE=edge-raw-image
+RAW_IMAGE_FILENAME=image.raw.xz
+OSTREE_OSNAME=redhat
+BOOT_ARGS="uefi"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -110,6 +101,14 @@ case "${ID}-${VERSION_ID}" in
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
+        ;;
+    "fedora-"*)
+        CONTAINER_TYPE=iot-container
+        RAW_IMAGE_TYPE=iot-raw-image
+        OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
+        OS_VARIANT="fedora-unknown"
+        OSTREE_OSNAME="fedora-iot"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -290,10 +289,27 @@ version = "*"
 [[packages]]
 name = "sssd"
 version = "*"
+EOF
 
+# No RT kernel in Fedora
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
 name = "kernel-rt"
+EOF
+fi
 
+# User in raw image blueprint is not for RHEL 9.1 and 8.7
+# Workaround for RHEL 9.1 and 8.7 nightly test
+# Check osbuild-composer version first
+if ! nvrGreaterOrEqual "osbuild-composer" "64"; then
+    USER_IN_RAW="false"
+else
+    USER_IN_RAW="true"
+fi
+
+if [[ "$USER_IN_RAW" == "false" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -302,6 +318,7 @@ key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
+fi
 
 greenprint "📄 container blueprint"
 cat "$BLUEPRINT_FILE"
@@ -343,8 +360,8 @@ until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; 
     sleep 1;
 done;
 
-# Sync installer edge content
-greenprint "📡 Sync installer content from stage repo"
+# Sync edge content
+greenprint "📡 Sync content from stage repo"
 sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage "$OSTREE_REF"
 
 # Clean compose and blueprints.
@@ -358,14 +375,28 @@ sudo composer-cli blueprints delete container > /dev/null
 ##
 ############################################################
 
-# Write a blueprint for installer image.
+# Write a blueprint for raw image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "installer"
+name = "raw-image"
 description = "A rhel-edge raw image"
 version = "0.0.1"
 modules = []
 groups = []
 EOF
+
+# User in raw image blueprint is not for RHEL 9.1 and 8.7
+# Workaround for RHEL 9.1 and 8.7 nightly test
+if [[ "$USER_IN_RAW" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/admin/"
+groups = ["wheel"]
+EOF
+fi
 
 greenprint "📄 raw image blueprint"
 cat "$BLUEPRINT_FILE"
@@ -373,76 +404,79 @@ cat "$BLUEPRINT_FILE"
 # Prepare the blueprint for the compose.
 greenprint "📋 Preparing raw image blueprint"
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli blueprints depsolve installer
+sudo composer-cli blueprints depsolve raw-image
 
-# Build installer image.
+# Build raw image.
 # Test --url arg following by URL with tailling slash for bz#1942029
-build_image installer "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+build_image raw-image "${RAW_IMAGE_TYPE}" "${PROD_REPO_URL}/"
 
 # Download the image
 greenprint "📥 Downloading the raw image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+ISO_FILENAME="${COMPOSE_ID}-${RAW_IMAGE_FILENAME}"
 
 greenprint "Extracting and converting the raw image to a qcow2 file"
 sudo xz -d "${ISO_FILENAME}"
 sudo qemu-img convert -f raw "${COMPOSE_ID}-image.raw" -O qcow2 "${IMAGE_KEY}.qcow2"
 
 # Clean compose and blueprints.
-greenprint "🧹 Clean up installer blueprint and compose"
+greenprint "🧹 Clean up raw-image blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete installer > /dev/null
+sudo composer-cli blueprints delete raw-image > /dev/null
 
-##################################################################
-##
-## Install and test edge vm with edge-raw-image (BIOS)
-##
-##################################################################
-# Prepare qcow2 file for BIOS
-sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
 
-# Ensure SELinux is happy with our new images.
-greenprint "👿 Running restorecon on image directory"
-sudo restorecon -Rv /var/lib/libvirt/images/
+if [[ "$ID" != "fedora" ]]; then
+    ##################################################################
+    ##
+    ## Install and test edge vm with edge-raw-image (BIOS)
+    ##
+    ##################################################################
+    # Prepare qcow2 file for BIOS
+    sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 
-greenprint "💿 Installing raw image on BIOS VM"
-sudo virt-install  --name="${IMAGE_KEY}-bios"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:30 \
-                   --import \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --noreboot
+    # Ensure SELinux is happy with our new images.
+    greenprint "👿 Running restorecon on image directory"
+    sudo restorecon -Rv /var/lib/libvirt/images/
 
-# Start VM.
-greenprint "💻 Start BIOS VM"
-sudo virsh start "${IMAGE_KEY}-bios"
+    greenprint "💿 Installing raw image on BIOS VM"
+    # TODO: os-type is deprecated in newer versions; remove conditionally
+    sudo virt-install  --name="${IMAGE_KEY}-bios"\
+                       --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                       --ram 3072 \
+                       --vcpus 2 \
+                       --network network=integration,mac=34:49:22:B0:83:30 \
+                       --import \
+                       --os-type linux \
+                       --os-variant ${OS_VARIANT} \
+                       --nographics \
+                       --noautoconsole \
+                       --wait=-1 \
+                       --noreboot
 
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
+    # Start VM.
+    greenprint "💻 Start BIOS VM"
+    sudo virsh start "${IMAGE_KEY}-bios"
 
-# Check image installation result
-check_result
+    # Check for ssh ready to go.
+    greenprint "🛃 Checking for SSH is ready to go"
+    for LOOP_COUNTER in $(seq 0 30); do
+        RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
+        if [[ $RESULTS == 1 ]]; then
+            echo "SSH is ready now! 🥳"
+            break
+        fi
+        sleep 10
+    done
 
-greenprint "🕹 Get ostree install commit value"
-INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+    # Check image installation result
+    check_result
 
-# Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+    greenprint "🕹 Get ostree install commit value"
+    INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+    # Add instance IP address into /etc/ansible/hosts
+    sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
 ${BIOS_GUEST_ADDRESS}
 
@@ -451,22 +485,25 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
-# Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-check_result
+    # Test IoT/Edge OS
+    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+    check_result
 
-# Clean up BIOS VM
-greenprint "🧹 Clean up BIOS VM"
-if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
-    sudo virsh destroy "${IMAGE_KEY}-bios"
+    # Clean up BIOS VM
+    greenprint "🧹 Clean up BIOS VM"
+    if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
+        sudo virsh destroy "${IMAGE_KEY}-bios"
+    fi
+    sudo virsh undefine "${IMAGE_KEY}-bios"
+    sudo rm -fr LIBVIRT_IMAGE_PATH
+else
+    greenprint "Skipping BIOS boot for Fedora IoT (not supported)"
 fi
-sudo virsh undefine "${IMAGE_KEY}-bios"
-sudo rm -fr LIBVIRT_IMAGE_PATH
 
 ##################################################################
 ##
@@ -479,19 +516,19 @@ sudo cp "${IMAGE_KEY}.qcow2" /var/lib/libvirt/images/
 greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
-greenprint "💿 Installing raw image on UEFI VM"
-sudo virt-install  --name="${IMAGE_KEY}-uefi"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:31 \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=-1 \
-                   --noreboot
+sudo virt-install --name="${IMAGE_KEY}-uefi"\
+               --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+               --ram 3072 \
+               --vcpus 2 \
+               --network network=integration,mac=34:49:22:B0:83:31 \
+               --os-type linux \
+               --import \
+               --os-variant ${OS_VARIANT} \
+               --boot "$BOOT_ARGS" \
+               --nographics \
+               --noautoconsole \
+               --wait=-1 \
+               --noreboot
 
 # Start VM.
 greenprint "💻 Start UEFI VM"
@@ -524,13 +561,13 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 ##################################################################
@@ -559,10 +596,20 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
+EOF
 
+# No RT kernel in Fedora
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
 name = "kernel-rt"
+EOF
+fi
 
+# User in raw image blueprint is not for RHEL 9.1 and 8.7
+# Workaround for RHEL 9.1 and 8.7 nightly test
+if [[ "$USER_IN_RAW" == "false" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -570,6 +617,7 @@ password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHB
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
+fi
 
 greenprint "📄 upgrade blueprint"
 cat "$BLUEPRINT_FILE"
@@ -626,6 +674,14 @@ greenprint "🧽 Clean up upgrade blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
 
+if [[ "$ID" == "fedora" ]]; then
+    # The Fedora IoT Raw image sets the fedora-iot remote URL to https://ostree.fedoraproject.org/iot
+    # Replacing with our own local repo
+    greenprint "Replacing default remote"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote delete ${OSTREE_OSNAME}"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote add --no-gpg-verify ${OSTREE_OSNAME} ${STAGE_REPO_URL}"
+fi
+
 # Upgrade image/commit.
 greenprint "🗳 Upgrade ostree image/commit"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
@@ -659,13 +715,13 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e edge_type=edge-raw-image -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up

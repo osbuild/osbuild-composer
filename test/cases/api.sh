@@ -35,6 +35,7 @@ export IMAGE_TYPE_GCP="gcp"
 export IMAGE_TYPE_IMAGE_INSTALLER="image-installer"
 export IMAGE_TYPE_GUEST="guest-image"
 export IMAGE_TYPE_VSPHERE="vsphere"
+export IMAGE_TYPE_IOT_COMMIT="iot-commit"
 
 if (( $# > 2 )); then
     echo "$0 does not support more than two arguments"
@@ -66,7 +67,7 @@ case ${IMAGE_TYPE} in
     "$IMAGE_TYPE_EDGE_CONTAINER")
         CLOUD_PROVIDER="${CLOUD_PROVIDER_CONTAINER_IMAGE_REGISTRY}"
         ;;
-    "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_VSPHERE")
+    "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_IOT_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_VSPHERE")
         # blobby image types: upload to s3 and provide download link
         CLOUD_PROVIDER="${2:-$CLOUD_PROVIDER_AWS_S3}"
         if [ "${CLOUD_PROVIDER}" != "${CLOUD_PROVIDER_AWS_S3}" ] && [ "${CLOUD_PROVIDER}" != "${CLOUD_PROVIDER_GENERIC_S3}" ]; then
@@ -79,14 +80,11 @@ case ${IMAGE_TYPE} in
         exit 1
 esac
 
-# Colorful timestamped output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
 
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Container image used for cloud provider CLI tools
 export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
@@ -111,7 +109,7 @@ fi
 
 # Start the db
 DB_CONTAINER_NAME="osbuild-composer-db"
-sudo ${CONTAINER_RUNTIME} run -d --name "${DB_CONTAINER_NAME}" \
+sudo "${CONTAINER_RUNTIME}" run -d --name "${DB_CONTAINER_NAME}" \
     --health-cmd "pg_isready -U postgres -d osbuildcomposer" --health-interval 2s \
     --health-timeout 2s --health-retries 10 \
     -e POSTGRES_USER=postgres \
@@ -121,16 +119,16 @@ sudo ${CONTAINER_RUNTIME} run -d --name "${DB_CONTAINER_NAME}" \
     quay.io/osbuild/postgres:13-alpine
 
 # Dump the logs once to have a little more output
-sudo ${CONTAINER_RUNTIME} logs osbuild-composer-db
+sudo "${CONTAINER_RUNTIME}" logs osbuild-composer-db
 
 # Initialize a module in a temp dir so we can get tern without introducing
 # vendoring inconsistency
 pushd "$(mktemp -d)"
 sudo dnf install -y go
 go mod init temp
-go get github.com/jackc/tern
+go install github.com/jackc/tern@latest
 PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PGPORT=5432 \
-      go run github.com/jackc/tern migrate -m /usr/share/tests/osbuild-composer/schemas
+    "$(go env GOPATH)"/bin/tern migrate -m /usr/share/tests/osbuild-composer/schemas
 popd
 
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
@@ -170,8 +168,8 @@ case $CLOUD_PROVIDER in
     source /usr/libexec/tests/osbuild-composer/api/aws.s3.sh
     ;;
   "$CLOUD_PROVIDER_GENERIC_S3")
-      source /usr/libexec/tests/osbuild-composer/api/generic.s3.sh
-      ;;
+    source /usr/libexec/tests/osbuild-composer/api/generic.s3.sh
+    ;;
   "$CLOUD_PROVIDER_GCP")
     source /usr/libexec/tests/osbuild-composer/api/gcp.sh
     ;;
@@ -195,11 +193,8 @@ function dump_db() {
   # Disable -x for these commands to avoid printing the whole result and manifest into the log
   set +x
 
-  # Make sure we get 3 job entries in the db per compose (depsolve + manifest + build)
-  sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT * FROM jobs;" | grep "9 rows" > /dev/null
-
   # Save the result, including the manifest, for the job, straight from the db
-  sudo ${CONTAINER_RUNTIME} exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
+  sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
     | sudo tee "${ARTIFACTS}/build-result.txt"
   set -x
 }
@@ -214,8 +209,8 @@ function cleanups() {
   # dump the DB here to ensure that it gets dumped even if the test fails
   dump_db
 
-  sudo ${CONTAINER_RUNTIME} kill "${DB_CONTAINER_NAME}"
-  sudo ${CONTAINER_RUNTIME} rm "${DB_CONTAINER_NAME}"
+  sudo "${CONTAINER_RUNTIME}" kill "${DB_CONTAINER_NAME}"
+  sudo "${CONTAINER_RUNTIME}" rm "${DB_CONTAINER_NAME}"
 
   sudo rm -rf "$WORKDIR"
 
@@ -284,7 +279,8 @@ curl \
 # Prepare a request to be sent to the composer API.
 #
 
-REQUEST_FILE="${WORKDIR}/request.json"
+REQUEST_FILE="${WORKDIR}/compose_request.json"
+IMG_COMPOSE_REQ_FILE="${WORKDIR}/img_compose_request.json"
 ARCH=$(uname -m)
 SSH_USER=
 TEST_ID="$(uuidgen)"
@@ -418,6 +414,64 @@ function waitForState() {
     export UPLOAD_OPTIONS
 }
 
+function sendImgFromCompose() {
+    OUTPUT=$(mktemp)
+    HTTPSTATUS=$(curl \
+                 --silent \
+                 --show-error \
+                 --cacert /etc/osbuild-composer/ca-crt.pem \
+                 --key /etc/osbuild-composer/client-key.pem \
+                 --cert /etc/osbuild-composer/client-crt.pem \
+                 --header 'Content-Type: application/json' \
+                 --request POST \
+                 --data @"$1" \
+                 --write-out '%{http_code}' \
+                 --output "$OUTPUT" \
+                 https://localhost/api/image-builder-composer/v2/composes/"$COMPOSE_ID"/clone)
+
+    test "$HTTPSTATUS" = "201"
+    IMG_ID=$(jq -r '.id' "$OUTPUT")
+}
+
+function waitForImgState() {
+    while true
+    do
+        OUTPUT=$(curl \
+                     --silent \
+                     --show-error \
+                     --cacert /etc/osbuild-composer/ca-crt.pem \
+                     --key /etc/osbuild-composer/client-key.pem \
+                     --cert /etc/osbuild-composer/client-crt.pem \
+                     "https://localhost/api/image-builder-composer/v2/clones/$IMG_ID")
+
+        IMG_UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.status')
+        IMG_UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.options')
+
+        case "$IMG_UPLOAD_STATUS" in
+            "success")
+                break
+                ;;
+            # all valid status values for a compose which hasn't finished yet
+            "pending"|"running")
+                ;;
+            # default undesired state
+            "failure")
+                echo "Image compose failed"
+                exit 1
+                ;;
+            *)
+                echo "API returned unexpected image status value: '$IMG_UPLOAD_STATUS'"
+                exit 1
+                ;;
+        esac
+
+        sleep 30
+    done
+
+    # export for use in subcases
+    export IMG_UPLOAD_OPTIONS
+}
+
 #
 # Make sure that requesting a non existing paquet results in failure
 #
@@ -427,12 +481,29 @@ jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE
 sendCompose "$REQUEST_FILE2"
 waitForState "failure"
 
-
-# crashed/stopped/killed worker should result in a failed state
+# crashed/stopped/killed worker should result in the job being retried
 sendCompose "$REQUEST_FILE"
 waitForState "building"
 sudo systemctl stop "osbuild-remote-worker@*"
-waitForState "failure"
+RETRIED=0
+for RETRY in {1..10}; do
+    ROWS=$(sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c \
+                "SELECT retries FROM jobs WHERE id = '$COMPOSE_ID' AND retries = 1")
+    if grep -q "1 row" <<< "$ROWS"; then
+        RETRIED=1
+        break
+    else
+        echo "Waiting until job is retried ($RETRY/10)"
+        sleep 30
+    fi
+done
+if [ "$RETRIED" != 1 ]; then
+    echo "Job $COMPOSE_ID wasn't retried after killing the worker"
+    exit 1
+fi
+# remove the job from the queue so the worker doesn't pick it up again
+sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c \
+     "DELETE FROM jobs WHERE id = '$COMPOSE_ID'"
 sudo systemctl start "osbuild-remote-worker@localhost:8700.service"
 
 # full integration case
@@ -448,6 +519,12 @@ if [ "${CLOUD_PROVIDER}" == "${CLOUD_PROVIDER_GENERIC_S3}" ]; then
 fi
 test "$UPLOAD_TYPE" = "$EXPECTED_UPLOAD_TYPE"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
+
+
+if [ -s "$IMG_COMPOSE_REQ_FILE" ]; then
+    sendImgFromCompose "$IMG_COMPOSE_REQ_FILE"
+    waitForImgState
+fi
 
 #
 # Verify the Cloud-provider specific upload_status options

@@ -2,21 +2,14 @@
 
 set -euxo pipefail
 
+source shared_lib.sh
+
 WORKSPACE=$(mktemp -d)
 function cleanup() {
     echo "== Script execution stopped or finished - Cleaning up =="
     rm -rf "$WORKSPACE"
 }
 trap cleanup EXIT
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Get the compose log.
 get_compose_log () {
@@ -50,9 +43,6 @@ COMPOSE_INFO=${WORKSPACE}/compose-info-${IMAGE_KEY}.json
 
 # check installed osbuild-composer version
 rpm -qi osbuild-composer
-
-# install jq in case it's not present
-dnf install -y jq
 
 # Prepare repository override
 mkdir -p /etc/osbuild-composer/repositories

@@ -287,7 +287,7 @@ objects:
       <match **>
         @type splunk_hec
         hec_host "#{ENV['SPLUNK_HEC_URL']}"
-        hec_port 8088
+        hec_port "${SPLUNK_HEC_PORT}"
         hec_token "#{ENV['SPLUNK_HEC_TOKEN']}"
       </match>
 - apiVersion: batch/v1
@@ -498,4 +498,8 @@ parameters:
   - description: composer-maintenance max concurrent requests
     name: MAINTENANCE_MAX_CONCURRENT_REQUESTS
     value: "10"
+    required: true
+  - description: fluentd-hec splunk port
+    name: SPLUNK_HEC_PORT
+    value: "443"
     required: true

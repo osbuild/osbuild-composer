@@ -19,7 +19,8 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "test/edge"
+      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "rhsm": false
     },
     "blueprint": {
       "customizations": {
@@ -1005,7 +1006,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "test/edge": {
+                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
                     "ref": "test/edge"
                   }
                 }
@@ -1059,7 +1060,8 @@
                 "label": "root"
               },
               "kernel_opts": [
-                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75"
+                "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+                "rw"
               ]
             }
           },
@@ -1431,7 +1433,7 @@
               }
             },
             "options": {
-              "filename": "disk.img.xz"
+              "filename": "image.raw.xz"
             }
           }
         ]
@@ -2611,7 +2613,7 @@
                   "coreos.inst.crypt_root=1",
                   "coreos.inst.isoroot=RHEL-8-6-0-BaseOS-x86_64",
                   "coreos.inst.install_dev=/dev/vda",
-                  "coreos.inst.image_file=/run/media/iso/disk.img.xz",
+                  "coreos.inst.image_file=/run/media/iso/image.raw.xz",
                   "coreos.inst.insecure",
                   "fdo.manufacturing_server_url=https;//fdo.example.com",
                   "fdo.diun_pub_key_insecure=true"
@@ -2639,7 +2641,7 @@
                 "origin": "org.osbuild.pipeline",
                 "references": {
                   "name:archive": {
-                    "file": "disk.img.xz"
+                    "file": "image.raw.xz"
                   }
                 }
               }
@@ -2647,8 +2649,8 @@
             "options": {
               "paths": [
                 {
-                  "from": "input://file/disk.img.xz",
-                  "to": "tree:///disk.img.xz"
+                  "from": "input://file/image.raw.xz",
+                  "to": "tree:///image.raw.xz"
                 }
               ]
             }
@@ -4023,7 +4025,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "test/edge": {
+          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
             "remote": {
               "url": "http://edge.example.com/repo"
             }

@@ -11,23 +11,11 @@ shopt -s expand_aliases
 set -euo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+
 BRANCH_NAME="${CI_COMMIT_BRANCH:-local}"
 BUILD_ID="${CI_BUILD_ID:-$(uuidgen)}"
 HYPER_V_GEN="${HYPER_V_GEN:-V1}"
-
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
@@ -55,7 +43,7 @@ trap cleanup EXIT
 # Terraform needs azure-cli to talk to Azure.
 if ! hash az; then
     echo "Using 'azure-cli' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     # directory mounted to the container, in which azure-cli stores the credentials after logging in
     AZURE_CMD_CREDS_DIR="${TEMPDIR}/azure-cli_credentials"
@@ -71,25 +59,6 @@ else
 fi
 az version
 
-# We need terraform to provision the vm in azure and then destroy it
-if [ "$ID" == "rhel" ] || [ "$ID" == "centos" ]
-then
-    release="RHEL"
-elif [ "$ID" == "fedora" ]
-then
-    release="fedora"
-else
-    echo "Test is not running on neither Fedora, RHEL or CentOS, terminating!"
-    exit 1
-fi
-sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/$release/hashicorp.repo
-# set $releasever to 8 when running on RHEL-9 because there is no hashicorp repo for it yet
-if [[ $ID == rhel || $ID == centos ]] && [[ ${VERSION_ID%.*} == 9 ]]; then
-    # shellcheck disable=SC2016
-    sudo sed -i 's/$releasever/8/g' /etc/yum.repos.d/hashicorp.repo
-fi
-sudo dnf install -y terraform
-
 ARCH=$(uname -m)
 TEST_ID="$DISTRO_CODE-$ARCH-$BRANCH_NAME-$BUILD_ID"
 IMAGE_KEY=image-${TEST_ID}
@@ -101,16 +70,6 @@ AZURE_CONFIG=${TEMPDIR}/azure.toml
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
-
-# Check for the smoke test file on the Azure instance that we start.
-smoke_test_check () {
-    SMOKE_TEST=$(sudo ssh -i key.rsa redhat@"${1}" -o StrictHostKeyChecking=no 'cat /etc/smoke-test.txt')
-    if [[ $SMOKE_TEST == smoke-test ]]; then
-        echo 1
-    else
-        echo 0
-    fi
-}
 
 # Get the compose log.
 get_compose_log () {
@@ -136,14 +95,6 @@ get_compose_metadata () {
 
     # Move the JSON file into place.
     sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
-}
-
-is_weldr_client_installed () {
-    if rpm --quiet -q weldr-client; then
-        echo true
-    else
-        echo false
-    fi
 }
 
 # Export Azure credentials if running on Jenkins
@@ -241,53 +192,50 @@ if [[ $COMPOSE_STATUS != FINISHED ]]; then
     exit 1
 fi
 
-# Set up necessary variables for terraform
-export TF_VAR_RESOURCE_GROUP="$AZURE_RESOURCE_GROUP"
-export TF_VAR_STORAGE_ACCOUNT="$AZURE_STORAGE_ACCOUNT"
-export TF_VAR_CONTAINER_NAME="$AZURE_CONTAINER_NAME"
-export TF_VAR_BLOB_NAME="$IMAGE_KEY".vhd
-export TF_VAR_TEST_ID="$TEST_ID"
-# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/image#argument-reference
-export TF_VAR_HYPER_V_GEN="${HYPER_V_GEN}"
 export BLOB_URL="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_CONTAINER_NAME/$IMAGE_KEY.vhd"
-export ARM_CLIENT_ID="$V2_AZURE_CLIENT_ID" > /dev/null
-export ARM_CLIENT_SECRET="$V2_AZURE_CLIENT_SECRET" > /dev/null
-export ARM_SUBSCRIPTION_ID="$AZURE_SUBSCRIPTION_ID" > /dev/null
-export ARM_TENANT_ID="$AZURE_TENANT_ID" > /dev/null
 
-SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
+greenprint "Pulling cloud-image-val container"
 
-# Copy terraform main file and cloud-init to current working directory
-cp /usr/share/tests/osbuild-composer/azure/main.tf .
-cp "${SSH_DATA_DIR}"/user-data .
+if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
+  # If running on CIV, get dev container
+  TAG=${CI_COMMIT_REF_SLUG}
+else
+  # If not, get prod container
+  TAG="prod"
+fi
 
-# Initialize terraform
-terraform init
+CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
 
-# Import the uploaded page blob to terraform
-terraform import azurerm_storage_blob.testBlob "$BLOB_URL"
+sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
 
-# Apply the configuration
-terraform apply -auto-approve
+greenprint "Running cloud-image-val on generated image"
 
-PUBLIC_IP=$(terraform output -raw public_IP)
-terraform output -raw tls_private_key > key.rsa
-chmod 400 key.rsa
+tee "${TEMPDIR}/resource-file.json" <<EOF
+{
+  "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
+  "resource_group": "${AZURE_RESOURCE_GROUP}",
+  "provider": "azure",
+  "instances": [
+    {
+      "vhd_uri": "${BLOB_URL}",
+      "location": "${AZURE_LOCATION}",
+      "name": "${IMAGE_KEY}"
+    }
+  ]
+}
+EOF
 
-# Check for our smoke test file.
-greenprint "🛃 Checking for smoke test file"
-for _ in {0..10}; do
-    RESULTS="$(smoke_test_check "$PUBLIC_IP")"
-    if [[ $RESULTS == 1 ]]; then
-        echo "Smoke test passed! 🥳"
-        break
-    fi
-    echo "Machine is not ready yet, retrying connection."
-    sleep 5
-done
+sudo "${CONTAINER_RUNTIME}" run \
+    -a stdout -a stderr \
+    -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
+    -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
+    -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
+    -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
+    -v "${TEMPDIR}":/tmp:Z \
+    "${CONTAINER_CLOUD_IMAGE_VAL}" \
+    python cloud-image-val.py -r /tmp/resource-file.json -d -o /tmp/report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
 
-# Clean up resources in Azure
-terraform destroy -auto-approve
+mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
 
 # Also delete the compose so we don't run out of disk space
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null

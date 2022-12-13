@@ -8,22 +8,10 @@
 #
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 set -euo pipefail
 
-# Colorful output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
-}
 
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
@@ -89,7 +77,7 @@ SSH_USER="cloud-user"
 # Need gcloud to talk to GCP
 if ! hash gcloud; then
     echo "Using 'gcloud' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     # directory mounted to the container, in which gcloud stores the credentials after logging in
     GCP_CMD_CREDS_DIR="${TEMPDIR}/gcloud_credentials"
@@ -206,14 +194,6 @@ get_compose_metadata () {
     sudo cat "${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
 }
 
-is_weldr_client_installed () {
-    if rpm --quiet -q weldr-client; then
-        echo true
-    else
-        echo false
-    fi
-}
-
 # Write an GCP TOML file
 tee "$GCP_CONFIG" > /dev/null << EOF
 provider = "gcp"
@@ -221,7 +201,6 @@ provider = "gcp"
 [settings]
 bucket = "${GCP_BUCKET}"
 region = "${GCP_REGION}"
-object = "${GCP_IMAGE_NAME}"
 credentials = "$(base64 -w 0 "${GOOGLE_APPLICATION_CREDENTIALS}")"
 EOF
 
@@ -278,6 +257,8 @@ get_compose_metadata "$COMPOSE_ID"
 # Kill the journal monitor immediately and remove the trap
 sudo pkill -P ${WORKER_JOURNAL_PID}
 trap - EXIT
+# trap cleanup again
+trap cleanup EXIT
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then

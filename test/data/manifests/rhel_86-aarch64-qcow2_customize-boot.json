@@ -2369,8 +2369,10 @@
           {
             "type": "org.osbuild.chrony",
             "options": {
-              "timeservers": [
-                "time.example.com"
+              "servers": [
+                {
+                  "hostname": "time.example.com"
+                }
               ]
             }
           },
@@ -2491,6 +2493,14 @@
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-361.el8.aarch64",
               "config": {
                 "default": "saved"
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.rhsm.facts",
+            "options": {
+              "facts": {
+                "image-builder.osbuild-composer.api-type": "test-manifest"
               }
             }
           },
