@@ -77,7 +77,7 @@ SSH_USER="cloud-user"
 # Need gcloud to talk to GCP
 if ! hash gcloud; then
     echo "Using 'gcloud' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     # directory mounted to the container, in which gcloud stores the credentials after logging in
     GCP_CMD_CREDS_DIR="${TEMPDIR}/gcloud_credentials"

@@ -47,7 +47,7 @@ MINIO_PROVIDER_CONFIG=${TEMPDIR}/minio.toml
 # We need MinIO Client to talk to the MinIO Server.
 if ! hash mc; then
     echo "Using 'mc' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_MINIO_CLIENT}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_MINIO_CLIENT}
 
     MC_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
         -v ${MINIO_CONFIG_DIR}:${MINIO_CONFIG_DIR}:Z \

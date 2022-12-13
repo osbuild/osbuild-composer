@@ -43,7 +43,7 @@ trap cleanup EXIT
 # Terraform needs azure-cli to talk to Azure.
 if ! hash az; then
     echo "Using 'azure-cli' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     # directory mounted to the container, in which azure-cli stores the credentials after logging in
     AZURE_CMD_CREDS_DIR="${TEMPDIR}/azure-cli_credentials"
@@ -206,7 +206,7 @@ fi
 
 CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
 
-sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_CLOUD_IMAGE_VAL}
+sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
 
 greenprint "Running cloud-image-val on generated image"
 
@@ -225,14 +225,14 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
 }
 EOF
 
-sudo ${CONTAINER_RUNTIME} run \
+sudo "${CONTAINER_RUNTIME}" run \
     -a stdout -a stderr \
     -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
     -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
     -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
     -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
     -v "${TEMPDIR}":/tmp:Z \
-    ${CONTAINER_CLOUD_IMAGE_VAL} \
+    "${CONTAINER_CLOUD_IMAGE_VAL}" \
     python cloud-image-val.py -r /tmp/resource-file.json -d -o /tmp/report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
 
 mv "${TEMPDIR}"/report.html "${ARTIFACTS}"

@@ -45,7 +45,7 @@ AWS_S3_PROVIDER_CONFIG=${TEMPDIR}/aws.toml
 # We need awscli to talk to AWS.
 if ! hash aws; then
     echo "Using 'awscli' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
         -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \

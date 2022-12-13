@@ -78,7 +78,7 @@ fi
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 
 greenprint "Pulling and running composer container for this commit"
-sudo ${CONTAINER_RUNTIME} pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
+sudo "${CONTAINER_RUNTIME}" pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWORD}" \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
 
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
@@ -93,7 +93,7 @@ EOF
 
 # The host entitlement doesn't get picked up by composer
 # see https://github.com/osbuild/osbuild-composer/issues/1845
-sudo ${CONTAINER_RUNTIME} run  \
+sudo "${CONTAINER_RUNTIME}" run  \
      --name=composer \
      -d \
      -v /etc/osbuild-composer:/etc/osbuild-composer:Z \
@@ -166,8 +166,8 @@ function cleanup() {
   set +eu
   cleanupAWSS3
 
-  sudo ${CONTAINER_RUNTIME} kill composer
-  sudo ${CONTAINER_RUNTIME} rm composer
+  sudo "${CONTAINER_RUNTIME}" kill composer
+  sudo "${CONTAINER_RUNTIME}" rm composer
 
   sudo rm -rf "$WORKDIR"
 
@@ -216,7 +216,7 @@ popd
 greenprint "Installing aws client tools"
 if ! hash aws; then
   echo "Using 'awscli' from a container"
-  sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+  sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_IMAGE_CLOUD_TOOLS}"
 
   AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
     -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \

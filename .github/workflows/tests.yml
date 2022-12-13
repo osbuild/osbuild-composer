@@ -168,7 +168,9 @@ jobs:
       with:
         ignore: vendor # We don't want to fix the code in vendored dependencies
       env:
-        SHELLCHECK_OPTS: -e SC1091 -e SC2002 # don't check /etc/os-release sourcing and allow useless cats to live inside our codebase
+        # don't check /etc/os-release sourcing, allow useless cats to live inside our codebase, and
+        # allow seemingly unreachable commands
+        SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317
 
   rpmlint:
     name: "📦 RPMlint"
