@@ -885,6 +885,60 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
+########################################################################
+##
+## Build edge-simplified-installer with ignition embedded 
+## (only on rhel9+)
+##
+########################################################################
+
+if [[ "${ID}-${VERSION_ID}" = "rhel-9.1" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
+   tee "$BLUEPRINT_FILE" > /dev/null <<EOF
+name = "simplified_iso_with_ignition_embedded_url"
+description = "A rhel-edge simplified-installer image with an embedded ignition config URL"
+version = "0.0.1"
+
+[customizations]
+installation_device = "/dev/vda"
+
+[customizations.ignition.embedded]
+url = "http://some-server/config.ig"
+EOF
+
+   greenprint "📄 simplified_iso_with_ignition_embedded_url blueprint "
+   cat "$BLUEPRINT_FILE"
+
+   # Prepare the blueprint for the compose.
+   greenprint "📋 Preparing installer blueprint"
+   sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+   sudo composer-cli blueprints depsolve simplified_iso_with_ignition_embedded_url
+
+   # Build simplified installer iso image.
+   build_image simplified_iso_with_ignition_embedded_url "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+
+   # Download the image
+   greenprint "📥 Downloading the simplified_iso_with_ignition_embedded_url image"
+   sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+   ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+
+   # Mount the image
+   sudo mkdir /mnt/installer
+   sudo mount -o loop "${ISO_FILENAME}" /mnt/installer
+
+   # Check that the image contains the ignition_url file
+   if [[ -f "/mnt/installer/ignition_url" ]]; then
+       RESULTS=1
+   fi
+
+   # Check the resulting image
+   check_result
+
+   sudo umount /mnt/installer
+else
+    greenprint "Skipping ignition embedded url test, it's only for RHEL9"
+fi
+
+
 ########################
 ##
 ## Build upgrade image
