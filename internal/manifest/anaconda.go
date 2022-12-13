@@ -198,7 +198,7 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 
 	pipeline.AddStage(osbuild.NewUsersStage(usersStageOptions))
 
-	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(false, p.AdditionalAnacondaModules)))
+	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules)))
 	pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
 		Path:     "99-generic/runtime-postinstall.tmpl",
 		BaseArch: p.platform.GetArch().String(),

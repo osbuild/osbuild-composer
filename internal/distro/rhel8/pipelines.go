@@ -1069,7 +1069,7 @@ func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec
 	if users {
 		anacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 	}
-	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(false, anacondaModules)))
+	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(anacondaModules)))
 	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
 	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
 		"anaconda",
