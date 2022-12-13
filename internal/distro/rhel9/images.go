@@ -294,7 +294,11 @@ func edgeInstallerImage(workload workload.Workload,
 
 	img.SquashfsCompression = "xz"
 	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
-	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
+
+	if len(img.Users)+len(img.Groups) > 0 {
+		// only enable the users module if needed
+		img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
+	}
 
 	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
