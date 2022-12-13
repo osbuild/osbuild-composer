@@ -294,6 +294,7 @@ func edgeInstallerImage(workload workload.Workload,
 
 	img.SquashfsCompression = "xz"
 	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
+	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 
 	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
@@ -436,6 +437,7 @@ func imageInstallerImage(workload workload.Workload,
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
 	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
+	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 
 	img.SquashfsCompression = "xz"
 
