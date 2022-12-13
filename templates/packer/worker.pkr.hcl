@@ -33,7 +33,7 @@ build {
     ssh_username = "ec2-user"
     instance_type = "c6a.large"
     aws_polling {
-      delay_seconds = 10
+      delay_seconds = 20
       max_attempts  = 60
     }
 
@@ -67,7 +67,7 @@ build {
     ssh_username = "ec2-user"
     instance_type = "c6g.large"
     aws_polling {
-      delay_seconds = 10
+      delay_seconds = 20
       max_attempts  = 60
     }
 
