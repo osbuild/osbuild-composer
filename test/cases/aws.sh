@@ -72,7 +72,7 @@ AMI_DATA=${TEMPDIR}/ami-data-${TEST_ID}.json
 # We need awscli to talk to AWS.
 if ! hash aws; then
     echo "Using 'awscli' from a container"
-    sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
+    sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
     AWS_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
         -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
@@ -226,7 +226,7 @@ fi
 
 CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
 
-sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_CLOUD_IMAGE_VAL}
+sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
 
 greenprint "Running cloud-image-val on generated image"
 
@@ -251,7 +251,7 @@ sudo ${CONTAINER_RUNTIME} run \
     -e AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY}" \
     -e AWS_REGION="${AWS_REGION}" \
     -v "${TEMPDIR}":/tmp:Z \
-    ${CONTAINER_CLOUD_IMAGE_VAL} \
+    "${CONTAINER_CLOUD_IMAGE_VAL}" \
     python cloud-image-val.py -r /tmp/resource-file.json -d -o /tmp/report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
 
 mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
