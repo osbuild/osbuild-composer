@@ -211,12 +211,12 @@ func imageInstallerImage(workload workload.Workload,
 	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "38") {
 		img.AdditionalAnacondaModules = []string{
 			"org.fedoraproject.Anaconda.Modules.Security",
-			"org.fedoraproject.Anaconda.Modules.Users",
 			"org.fedoraproject.Anaconda.Modules.Timezone",
 			"org.fedoraproject.Anaconda.Modules.Localization",
 		}
 		img.AdditionalKernelOpts = []string{"inst.webui", "inst.webui.remote"}
 	}
+	img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, "org.fedoraproject.Anaconda.Modules.Users")
 
 	img.Platform = t.platform
 	img.Workload = workload
@@ -325,6 +325,7 @@ func iotInstallerImage(workload workload.Workload,
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 
 	img.SquashfsCompression = "lz4"
 
