@@ -4,6 +4,7 @@ set -euo pipefail
 # NOTE: This script is executed differently in .gitlab-ci.yml so use a relative path
 source ./test/cases/shared_lib.sh
 
+# shellcheck disable=SC2317
 function revert_to_head {
    git checkout "$head"
 }

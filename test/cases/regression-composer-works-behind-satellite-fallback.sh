@@ -62,6 +62,7 @@ case "${ID}" in
         exit 1
 esac
 
+# shellcheck disable=SC2317
 function cleanup {
     greenprint "== Script execution stopped or finished - Cleaning up =="
     # Make the cleanup function best effort

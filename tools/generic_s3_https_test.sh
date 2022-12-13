@@ -29,4 +29,4 @@ sudo mv private.key public.crt "${CERTS_DIR}"
 popd
 
 # Test upload to HTTPS S3 server
-/usr/libexec/osbuild-composer-test/generic_s3_test.sh "${CERTS_DIR}" ${CA_CERT_NAME:-""}
+/usr/libexec/osbuild-composer-test/generic_s3_test.sh "${CERTS_DIR}" "${CA_CERT_NAME:-''}"

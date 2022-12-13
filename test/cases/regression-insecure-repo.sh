@@ -14,6 +14,7 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 greenprint "Registering clean ups"
 kill_pids=()
+# shellcheck disable=SC2317
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
     set +eu

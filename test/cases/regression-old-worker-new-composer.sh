@@ -136,6 +136,7 @@ printenv AWS_REGION AWS_BUCKET V2_AWS_ACCESS_KEY_ID V2_AWS_SECRET_ACCESS_KEY AWS
 # Check that needed variables are set to register to RHSM
 printenv API_TEST_SUBSCRIPTION_ORG_ID API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2 > /dev/null
 
+# shellcheck disable=SC2317
 function cleanupAWSS3() {
   local S3_URL
   S3_URL=$(echo "$UPLOAD_OPTIONS" | jq -r '.url')
@@ -161,13 +162,15 @@ function cleanupAWSS3() {
 # terminates in any way.
 WORKDIR=$(mktemp -d)
 KILL_PIDS=()
+
+# shellcheck disable=SC2317
 function cleanup() {
   greenprint "== Script execution stopped or finished - Cleaning up =="
   set +eu
   cleanupAWSS3
 
-  sudo ${CONTAINER_RUNTIME} kill composer
-  sudo ${CONTAINER_RUNTIME} rm composer
+  sudo "${CONTAINER_RUNTIME}" kill composer
+  sudo "${CONTAINER_RUNTIME}" rm composer
 
   sudo rm -rf "$WORKDIR"
 

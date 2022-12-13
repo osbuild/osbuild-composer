@@ -5,6 +5,7 @@ set -euxo pipefail
 source shared_lib.sh
 
 WORKSPACE=$(mktemp -d)
+# shellcheck disable=SC2317
 function cleanup() {
     echo "== Script execution stopped or finished - Cleaning up =="
     rm -rf "$WORKSPACE"

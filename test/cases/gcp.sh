@@ -29,6 +29,7 @@ else
     exit 2
 fi
 
+# shellcheck disable=SC2317
 function cleanupGCP() {
     # since this function can be called at any time, ensure that we don't expand unbound variables
     GCP_CMD="${GCP_CMD:-}"
@@ -43,6 +44,7 @@ function cleanupGCP() {
 }
 
 TEMPDIR=$(mktemp -d)
+# shellcheck disable=SC2317
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
     cleanupGCP

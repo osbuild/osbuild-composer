@@ -139,6 +139,7 @@ function modksiso {
     echo "Mounting ${iso} -> ${isomount}"
     sudo mount -v -o ro "${iso}" "${isomount}"
 
+    # shellcheck disable=SC2317
     cleanup() {
         sudo umount -v "${isomount}"
         rmdir -v "${isomount}"

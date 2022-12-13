@@ -28,6 +28,7 @@ function generate_certificates {
     sudo openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365 -sha256
 }
 
+# shellcheck disable=SC2317
 function cleanup {
     greenprint "== Script execution stopped or finished - Cleaning up =="
     # Make the cleanup function best effort

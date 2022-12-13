@@ -30,6 +30,7 @@ else
 fi
 
 TEMPDIR=$(mktemp -d)
+# shellcheck disable=SC2317
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
     sudo rm -rf "$TEMPDIR"
@@ -206,7 +207,7 @@ fi
 
 CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
 
-sudo ${CONTAINER_RUNTIME} pull ${CONTAINER_CLOUD_IMAGE_VAL}
+sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
 
 greenprint "Running cloud-image-val on generated image"
 
@@ -229,13 +230,13 @@ if [ "$ARCH" == "aarch64" ]; then
     sed -i s/t3.medium/a1.large/ "${TEMPDIR}/resource-file.json"
 fi
 
-sudo ${CONTAINER_RUNTIME} run \
+sudo "${CONTAINER_RUNTIME}" run \
     -a stdout -a stderr \
     -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
     -e AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY}" \
     -e AWS_REGION="${AWS_REGION}" \
     -v "${TEMPDIR}":/tmp:Z \
-    ${CONTAINER_CLOUD_IMAGE_VAL} \
+    "${CONTAINER_CLOUD_IMAGE_VAL}" \
     python cloud-image-val.py -r /tmp/resource-file.json -d -o /tmp/report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
 
 mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
