@@ -137,9 +137,9 @@ koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass
 
 # Always build the latest RHEL - that suits the koji API usecase the most.
 if [[ "$DISTRO_CODE" == rhel-8* ]]; then
-    DISTRO_CODE=rhel-87
+    DISTRO_CODE=rhel-88
 elif [[ "$DISTRO_CODE" == rhel-9* ]]; then
-    DISTRO_CODE=rhel-91
+    DISTRO_CODE=rhel-92
 fi
 
 case ${TEST_TYPE} in
