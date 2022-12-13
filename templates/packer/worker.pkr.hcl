@@ -34,7 +34,7 @@ build {
     instance_type = "c6a.large"
     aws_polling {
       delay_seconds = 20
-      max_attempts  = 60
+      max_attempts  = 180
     }
 
     # Set a name for the resulting AMI.
@@ -68,7 +68,7 @@ build {
     instance_type = "c6g.large"
     aws_polling {
       delay_seconds = 20
-      max_attempts  = 60
+      max_attempts  = 180
     }
 
     # Set a name for the resulting AMI.
