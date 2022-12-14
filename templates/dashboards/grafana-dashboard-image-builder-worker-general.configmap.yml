@@ -34,8 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 547,
-      "iteration": 1663169204689,
+      "iteration": 1671021259036,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -134,7 +133,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "datasource": {
@@ -438,7 +437,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "datasource": {
@@ -654,7 +653,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "datasource": {
@@ -1010,7 +1009,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "datasource": {
@@ -1226,7 +1225,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "datasource": {
@@ -1532,7 +1531,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "datasource": {
@@ -1749,7 +1748,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "datasource": {
@@ -2104,7 +2103,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "datasource": {
@@ -2320,7 +2319,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.3",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "exemplar": true,
@@ -2575,6 +2574,319 @@ data:
           ],
           "title": "Slow Request Rate",
           "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 77
+          },
+          "id": 244,
+          "panels": [],
+          "title": "Request Stability",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "The percentage of successful osbuild jobs for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 0,
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "index": 0,
+                      "text": "0%"
+                    }
+                  },
+                  "type": "special"
+                }
+              ],
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": "0.95"
+                  },
+                  {
+                    "color": "green",
+                    "value": "0.955"
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 5,
+            "x": 0,
+            "y": 78
+          },
+          "id": 240,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.0.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "exemplar": true,
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_request_count{code!~\"4.*\", subsystem=\"worker\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Request Success Rate",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "The throughput rate of osbuild job errors and non-errors over time for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 11,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success/sec"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "green",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 11,
+            "x": 5,
+            "y": 78
+          },
+          "id": 241,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "exemplar": true,
+              "expr": "(sum(rate(image_builder_worker_request_count{code!~\"4.*\", subsystem=\"worker\"}[$interval])) OR on() vector(0))\n- \n(sum(rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval])) OR on() vector(0))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "success/sec",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "exemplar": true,
+              "expr": "(sum(rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval])) OR on() vector(0))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "errors/sec",
+              "refId": "B"
+            }
+          ],
+          "title": "Request Throughput Rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "The number of osbuild job errors (as a percentage) over time for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "bars",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 78
+          },
+          "id": 242,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "hidden",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "exemplar": true,
+              "expr": "(\n  sum(rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_request_count{code!~\"4.*\", subsystem=\"worker\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Build Job Error Rate",
+          "type": "timeseries"
         }
       ],
       "refresh": false,
@@ -2814,6 +3126,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 10,
+      "version": 11,
       "weekStart": ""
     }
