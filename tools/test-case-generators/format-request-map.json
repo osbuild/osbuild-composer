@@ -19,10 +19,7 @@
       "filename": "disk.vhd.xz",
       "blueprint": {}
     },
-    "overrides": {},
-    "supported_arches": [
-      "x86_64"
-    ]
+    "overrides": {}
   },
   "azure-sap-rhui": {
     "compose-request": {
