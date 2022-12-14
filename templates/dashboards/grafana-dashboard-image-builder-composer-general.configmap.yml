@@ -34,8 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 32,
-      "iteration": 1652788675679,
+      "iteration": 1671021530884,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -57,6 +56,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The percentage of successful compose requests for the selected time range",
@@ -132,9 +132,13 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "1 - (\n  (\n    sum(increase(image_builder_composer_total_failed_compose_requests[$__range]))\n    /\n    sum(increase(image_builder_composer_total_compose_requests[$__range]))\n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
@@ -147,6 +151,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The number of total compose requests for the selected date range",
@@ -191,9 +196,13 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "sum(increase(image_builder_composer_total_compose_requests[$__range]))",
               "interval": "",
@@ -206,6 +215,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The throughput rate of Compose errors and non-errors over time for the selected time range",
@@ -292,6 +302,10 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "(sum(rate(image_builder_composer_total_compose_requests[$interval])) OR on() vector(0)) \n- \n(sum(rate(image_builder_composer_total_failed_compose_requests[$interval])) OR on() vector(0))",
               "hide": false,
@@ -300,6 +314,10 @@ data:
               "refId": "A"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "(sum(rate(image_builder_composer_total_failed_compose_requests[$interval])) OR on() vector(0))",
               "hide": false,
@@ -313,6 +331,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The number of compose errors (as a percentage) over time for the selected time range",
@@ -370,7 +389,7 @@ data:
             "x": 16,
             "y": 1
           },
-          "id": 194,
+          "id": 209,
           "options": {
             "legend": {
               "calcs": [],
@@ -384,6 +403,10 @@ data:
           },
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "(\n  sum(rate(image_builder_composer_total_failed_compose_requests[$interval]))\n  /\n  sum(rate(image_builder_composer_total_compose_requests[$interval]))\n) OR on() vector(0)",
               "interval": "",
@@ -397,6 +420,7 @@ data:
         {
           "cacheTimeout": 1,
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "How long will it take to consume all our budget if our error consumption remains at the current rate for the selected date range.",
@@ -476,9 +500,13 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "28 * 24 * (1 - $stability_slo)\n/\n(\n  (\n    sum(rate(image_builder_composer_total_failed_compose_requests[28d]))\n    / \n    sum(rate(image_builder_composer_total_compose_requests[28d]))\n  ) OR on() vector(0.01) # set fallback incase the above query result is empty\n)",
               "format": "time_series",
@@ -493,6 +521,7 @@ data:
         },
         {
           "datasource": {
+            "type": "prometheus",
             "uid": "${datasource}"
           },
           "description": "The percentage of error budget consumed for the selected time range. ",
@@ -577,6 +606,10 @@ data:
           "pluginVersion": "8.2.1",
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
               "exemplar": true,
               "expr": "1 - (\n  (\n    1 - $stability_slo - (\n      (\n        sum(increase(image_builder_composer_total_failed_compose_requests[28d]))\n        /\n        sum(increase(image_builder_composer_total_compose_requests[28d]))\n      ) OR on() vector(0) # set fallback for empty query result\n    )\n  )\n)\n/\n(1 - $stability_slo)",
               "instant": false,
@@ -591,6 +624,318 @@ data:
         },
         {
           "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 17
+          },
+          "id": 206,
+          "panels": [],
+          "title": "Request Stability",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "The percentage of successful compose requests for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 0,
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "index": 0,
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "special"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "#EAB839",
+                    "value": "0.95"
+                  },
+                  {
+                    "color": "green",
+                    "value": "0.955"
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 5,
+            "x": 0,
+            "y": 18
+          },
+          "id": 207,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "text": {},
+            "textMode": "auto"
+          },
+          "pluginVersion": "9.0.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "exemplar": true,
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_composer_request_count{code=~\"5.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\"}[$__range]))\n    /\n    sum(increase(image_builder_composer_request_count{code!~\"4.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\"}[$__range]))\n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Non-compose Request Success Rate",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "The throughput rate of Compose errors and non-errors over time for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 11,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success/sec"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "green",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 11,
+            "x": 5,
+            "y": 18
+          },
+          "id": 210,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "exemplar": true,
+              "expr": "(sum(rate(image_builder_composer_request_count{code!~\"4.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\"}[$interval])) OR on() vector(0)) \n- \n(sum(rate(image_builder_composer_request_count{code=~\"5.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\"}[$interval])) OR on() vector(0))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "success/sec",
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "exemplar": true,
+              "expr": "(sum(rate(image_builder_composer_request_count{code=~\"5.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\"}[$interval])) OR on() vector(0))",
+              "hide": false,
+              "interval": "",
+              "legendFormat": "errors/sec",
+              "refId": "B"
+            }
+          ],
+          "title": "Non-compose Throughput Rate",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "description": "The number of compose errors (as a percentage) over time for the selected time range",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "bars",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 18
+          },
+          "id": 194,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "hidden",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${datasource}"
+              },
+              "exemplar": true,
+              "expr": "(\n  sum(rate(image_builder_composer_request_count{code=~\"5.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\"}[$interval]))\n  /\n  sum(rate(image_builder_composer_request_count{code!~\"4.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\"}[$interval]))\n) OR on() vector(0)",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "title": "Non-compose Error Rate",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
           "datasource": {
             "uid": "${datasource}"
           },
@@ -598,7 +943,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 17
+            "y": 26
           },
           "id": 129,
           "panels": [],
@@ -653,7 +998,7 @@ data:
             "h": 8,
             "w": 5,
             "x": 0,
-            "y": 18
+            "y": 27
           },
           "id": 200,
           "mappings": [
@@ -682,7 +1027,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "exemplar": true,
@@ -802,7 +1147,7 @@ data:
             "h": 8,
             "w": 11,
             "x": 5,
-            "y": 18
+            "y": 27
           },
           "id": 201,
           "options": {
@@ -908,7 +1253,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 18
+            "y": 27
           },
           "id": 204,
           "options": {
@@ -994,7 +1339,7 @@ data:
             "h": 8,
             "w": 4,
             "x": 0,
-            "y": 26
+            "y": 35
           },
           "id": 198,
           "links": [],
@@ -1016,7 +1361,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "8.5.2",
+          "pluginVersion": "9.0.2",
           "targets": [
             {
               "exemplar": true,
@@ -1099,7 +1444,7 @@ data:
             "h": 8,
             "w": 20,
             "x": 4,
-            "y": 26
+            "y": 35
           },
           "id": 199,
           "links": [],
@@ -1263,6 +1608,6 @@ data:
       "timezone": "",
       "title": "Image Builder Composer",
       "uid": "image-builder-composer",
-      "version": 5,
+      "version": 6,
       "weekStart": ""
     }
