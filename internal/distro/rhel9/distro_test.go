@@ -307,6 +307,8 @@ func TestImageType_Name(t *testing.T) {
 				"edge-container",
 				"tar",
 				"image-installer",
+				"vhd",
+				"azure-rhui",
 			},
 		},
 		{
@@ -503,6 +505,8 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-raw-image",
 				"tar",
 				"image-installer",
+				"vhd",
+				"azure-rhui",
 			},
 		},
 		{
