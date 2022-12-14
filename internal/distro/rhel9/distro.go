@@ -273,6 +273,13 @@ func newDistro(name string, major, minor int) distro.Distro {
 		},
 	}
 
+	azureAarch64Platform := &platform.Aarch64{
+		UEFIVendor: rd.vendor,
+		BasePlatform: platform.BasePlatform{
+			ImageFormat: platform.FORMAT_VHD,
+		},
+	}
+
 	x86_64.addImageTypes(
 		&platform.X86{
 			BIOS:       true,
@@ -439,6 +446,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 	if rd.isRHEL() {
 		// add azure to RHEL distro only
 		x86_64.addImageTypes(azureX64Platform, azureRhuiImgType, azureByosImgType)
+		aarch64.addImageTypes(azureAarch64Platform, azureRhuiImgType, azureByosImgType)
 
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(rawX86Platform, mkEc2ImgTypeX86_64(rd.osVersion, rd.isRHEL()), mkEc2HaImgTypeX86_64(rd.osVersion, rd.isRHEL()), mkEC2SapImgTypeX86_64(rd.osVersion, rd.isRHEL()))
@@ -457,6 +465,7 @@ func newDistro(name string, major, minor int) distro.Distro {
 		x86_64.addImageTypes(gceX86Platform, mkGCERHUIImageType(rd.isRHEL()))
 	} else {
 		x86_64.addImageTypes(azureX64Platform, azureImgType)
+		aarch64.addImageTypes(azureAarch64Platform, azureImgType)
 	}
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
