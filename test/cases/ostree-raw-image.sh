@@ -17,7 +17,7 @@ function get_build_info() {
     key="$1"
     fname="$2"
     if rpm -q --quiet weldr-client; then
-        key=".[0].body${key}"
+        key=".body${key}"
     fi
     jq -r "${key}" "${fname}"
 }
