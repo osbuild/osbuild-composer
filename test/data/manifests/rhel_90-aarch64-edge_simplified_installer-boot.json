@@ -19,8 +19,7 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-      "rhsm": false
+      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     },
     "blueprint": {
       "customizations": {
@@ -32,6 +31,7 @@
       }
     }
   },
+  "no-image-info": true,
   "manifest": {
     "version": "2",
     "pipelines": [
@@ -9785,6 +9785,5 @@
         "checksum": "sha256:4d3605105404fa6c82ff03f8bf3254fef7c04160878f92a7345b37a4e411141f"
       }
     ]
-  },
-  "no-image-info": true
+  }
 }

@@ -27,8 +27,7 @@
     "blueprint": {
       "customizations": {
         "kernel": {
-          "name": "kernel-rt",
-          "append": ""
+          "name": "kernel-rt"
         }
       }
     }
@@ -12050,6 +12049,5 @@
         "check_gpg": true
       }
     ]
-  },
-  "no-image-info": true
+  }
 }

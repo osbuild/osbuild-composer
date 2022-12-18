@@ -30,8 +30,7 @@
     "blueprint": {
       "customizations": {
         "kernel": {
-          "name": "kernel-rt",
-          "append": ""
+          "name": "kernel-rt"
         }
       }
     }
@@ -5126,14 +5125,6 @@
               "network": {
                 "networking": true,
                 "no_zero_conf": true
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm.facts",
-            "options": {
-              "facts": {
-                "image-builder.osbuild-composer.api-type": "test-manifest"
               }
             }
           },
@@ -12751,6 +12742,5 @@
         "check_gpg": true
       }
     ]
-  },
-  "no-image-info": true
+  }
 }

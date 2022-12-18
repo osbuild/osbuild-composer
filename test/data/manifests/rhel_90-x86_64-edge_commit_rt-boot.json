@@ -27,8 +27,7 @@
     "blueprint": {
       "customizations": {
         "kernel": {
-          "name": "kernel-rt",
-          "append": ""
+          "name": "kernel-rt"
         }
       }
     }
@@ -1934,14 +1933,6 @@
               "network": {
                 "networking": true,
                 "no_zero_conf": true
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.rhsm.facts",
-            "options": {
-              "facts": {
-                "image-builder.osbuild-composer.api-type": "test-manifest"
               }
             }
           },
@@ -8728,6 +8719,5 @@
         "checksum": "sha256:3bc65e818b94d23c7ff6cc66633c25b0368da38ab38cadac9569633140b45d2b"
       }
     ]
-  },
-  "no-image-info": true
+  }
 }

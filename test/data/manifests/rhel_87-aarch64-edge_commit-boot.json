@@ -1961,14 +1961,6 @@
             }
           },
           {
-            "type": "org.osbuild.rhsm.facts",
-            "options": {
-              "facts": {
-                "image-builder.osbuild-composer.api-type": "test-manifest"
-              }
-            }
-          },
-          {
             "type": "org.osbuild.systemd-journald",
             "options": {
               "filename": "10-persistent.conf",
@@ -8811,6 +8803,5 @@
         "checksum": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
       }
     ]
-  },
-  "no-image-info": true
+  }
 }
