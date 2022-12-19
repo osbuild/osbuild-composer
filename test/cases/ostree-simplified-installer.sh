@@ -892,7 +892,7 @@ check_result
 ##
 ########################################################################
 
-if [[ "${ID}-${VERSION_ID}" = "rhel-9.1" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
+if [[ "${ID}-${VERSION_ID}" = "rhel-9.2" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
    tee "$BLUEPRINT_FILE" > /dev/null <<EOF
 name = "simplified_iso_with_ignition_embedded_url"
 description = "A rhel-edge simplified-installer image with an embedded ignition config URL"
