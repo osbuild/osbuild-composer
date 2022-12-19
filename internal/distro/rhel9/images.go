@@ -211,6 +211,9 @@ func edgeCommitImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !common.VersionLessThan(t.arch.distro.osVersion, "9-stream") {
+		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues", "coreos-ignition-write-issues")
+	}
 	img.Environment = t.environment
 	img.Workload = workload
 
