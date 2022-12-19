@@ -352,6 +352,15 @@ func edgeRawImage(workload workload.Workload,
 	}
 	img.OSName = "redhat"
 
+	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+		img.KernelOptionsAppend = append(img.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
+	}
+
+	// 92+ only
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		img.KernelOptionsAppend = append(img.KernelOptionsAppend, kopts.Append)
+	}
+
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
@@ -408,6 +417,11 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.PartitionTable = pt
 
 	rawImg.Filename = t.Filename()
+
+	// 92+ only
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, kopts.Append)
+	}
 
 	img := image.NewOSTreeSimplifiedInstaller(rawImg, customizations.InstallationDevice)
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
