@@ -74,10 +74,6 @@ init:
   RUNNER:
     - aws/rhel-8.8-nightly-x86_64
     - aws/rhel-8.8-nightly-aarch64
-    - aws/rhel-8.8-nightly-x86_64
-    - aws/rhel-8.8-nightly-aarch64
-    - aws/rhel-9.2-nightly-x86_64
-    - aws/rhel-9.2-nightly-aarch64
     - aws/rhel-9.2-nightly-x86_64
     - aws/rhel-9.2-nightly-aarch64
 
@@ -252,7 +248,7 @@ regression-bigiso:
   extends: .regression
   rules: 
     # WHITELIST: Run only on x86_64 and rhel like systems
-    - if: $RUNNER =~ "/^.*(rhel-8.6.*x86_64|rhel-9.0.*x86_64|centos-stream-8.*x86_64|centos-stream-9.*x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER =~ "/^.*(rhel-8.*x86_64|rhel-9.*x86_64|centos-stream-8.*x86_64|centos-stream-9.*x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
     SCRIPT: regression-bigiso.sh
 
@@ -278,7 +274,7 @@ regression-excluded-dependency:
   extends: .regression
   rules: 
     # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel-8.6|rhel-9.0|centos-stream-8|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-8|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
     - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-excluded-dependency.sh
@@ -500,7 +496,7 @@ koji.sh (cloud upload):
   parallel:
     matrix:
       - RUNNER:
-          # Brew workers use RHEL-8.6
+          # Brew workers use RHEL-8.7
           - aws/rhel-8.7-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: aws
@@ -680,7 +676,7 @@ Multi-tenancy:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/multi-tenancy.sh
   variables:
-    # only 8.6 GA b/c the Image Builder service runs on RHEL 8
+    # only 8.7 GA b/c the Image Builder service runs on RHEL 8
     RUNNER: aws/rhel-8.7-ga-x86_64
     INTERNAL_NETWORK: "true"
 
