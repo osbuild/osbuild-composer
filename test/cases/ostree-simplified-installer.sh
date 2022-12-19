@@ -777,6 +777,13 @@ fi
 sudo virsh undefine "${IMAGE_KEY}-fdorootcert" --nvram
 sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
 
+IGNITION=1
+HAS_IGNITION="false"
+if [[ "${ID}-${VERSION_ID}" = "rhel-9.2" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
+  IGNITION=0
+  HAS_IGNITION="true"
+fi
+
 ##################################################################
 ##
 ## Build edge-simplified-installer without FDO & with Ignition
@@ -860,19 +867,32 @@ sudo tee "$IGN_CONFIG_SAMPLE_PATH" > /dev/null << EOF
 EOF
 sudo chmod -R +r ${HTTPD_PATH}/ignition/*
 
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "simplified_iso_without_fdo"
-description = "A rhel-edge simplified-installer image without FDO with Ignition"
-version = "0.0.1"
-modules = []
-groups = []
+if [[ ${IGNITION} -eq 0 ]]; then
+  tee "$BLUEPRINT_FILE" > /dev/null << EOF
+  name = "simplified_iso_without_fdo"
+  description = "A rhel-edge simplified-installer image without FDO with Ignition"
+  version = "0.0.1"
+  modules = []
+  groups = []
 
-[customizations]
-installation_device = "/dev/vda"
+  [customizations]
+  installation_device = "/dev/vda"
 
-[customizations.kernel]
-append = "ignition.config.url=http://192.168.100.1/ignition/config.ign"
+  [customizations.kernel]
+  append = "ignition.config.url=http://192.168.100.1/ignition/config.ign"
 EOF
+else
+  tee "$BLUEPRINT_FILE" > /dev/null << EOF
+  name = "simplified_iso_without_fdo"
+  description = "A rhel-edge simplified-installer image without FDO"
+  version = "0.0.1"
+  modules = []
+  groups = []
+
+  [customizations]
+  installation_device = "/dev/vda"
+EOF
+fi
 
 greenprint "📄 simplified_iso_without_fdo blueprint"
 cat "$BLUEPRINT_FILE"
@@ -947,24 +967,26 @@ check_result
 greenprint "🕹 Get ostree install commit value"
 INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
-# Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${IGNITION_GUEST_ADDRESS}
+if [[ ${IGNITION} -eq 0 ]]; then
+  # Add instance IP address into /etc/ansible/hosts
+  sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+  [ostree_guest]
+  ${IGNITION_GUEST_ADDRESS}
 
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=core
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes
-ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
+  [ostree_guest:vars]
+  ansible_python_interpreter=/usr/bin/python3
+  ansible_user=core
+  ansible_private_key_file=${SSH_KEY}
+  ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+  ansible_become=yes
+  ansible_become_method=sudo
+  ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
-# Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-check_result
+  # Test IoT/Edge OS
+  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+  check_result
+fi
 
 # now try with blueprint user
 
@@ -984,13 +1006,13 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 ########################################################################
 ##
 ## Build edge-simplified-installer with ignition embedded 
-## (only on rhel9+)
+## (only on rhel92+)
 ##
 ########################################################################
 
@@ -1160,24 +1182,26 @@ check_result
 
 # try with core user
 
-# Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${IGNITION_GUEST_ADDRESS}
+if [[ ${IGNITION} -eq 0 ]]; then
+  # Add instance IP address into /etc/ansible/hosts
+  sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+  [ostree_guest]
+  ${IGNITION_GUEST_ADDRESS}
 
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=core
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes
-ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
+  [ostree_guest:vars]
+  ansible_python_interpreter=/usr/bin/python3
+  ansible_user=core
+  ansible_private_key_file=${SSH_KEY}
+  ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+  ansible_become=yes
+  ansible_become_method=sudo
+  ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
-# Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-check_result
+  # Test IoT/Edge OS
+  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+  check_result
+fi
 
 # now try with blueprint user
 
