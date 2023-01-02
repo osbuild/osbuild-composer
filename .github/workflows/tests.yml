@@ -29,6 +29,9 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Mark the working directory as safe for git
+        run: git config --global --add safe.directory "$(pwd)"
+
       - name: Run unit tests
         run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
 
