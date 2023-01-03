@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -71,36 +70,6 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 	},
 }
 
-func getCentOSDistro(version int) distribution {
-	return distribution{
-		name:               fmt.Sprintf("centos-%d", version),
-		product:            "CentOS Stream",
-		osVersion:          fmt.Sprintf("%d-stream", version),
-		releaseVersion:     strconv.Itoa(version),
-		modulePlatformID:   fmt.Sprintf("platform:el%d", version),
-		vendor:             "centos",
-		ostreeRefTmpl:      fmt.Sprintf("centos/%d/%%s/edge", version),
-		isolabelTmpl:       fmt.Sprintf("CentOS-Stream-%d-BaseOS-%%s", version),
-		runner:             &runner.CentOS{Version: uint64(version)},
-		defaultImageConfig: defaultDistroImageConfig,
-	}
-}
-
-func getRHELDistro(major, minor int) distribution {
-	return distribution{
-		name:               fmt.Sprintf("rhel-%d%d", major, minor),
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          fmt.Sprintf("%d.%d", major, minor),
-		releaseVersion:     strconv.Itoa(major),
-		modulePlatformID:   fmt.Sprintf("platform:el%d", major),
-		vendor:             "redhat",
-		ostreeRefTmpl:      fmt.Sprintf("rhel/%d/%%s/edge", major),
-		isolabelTmpl:       fmt.Sprintf("RHEL-%d-%d-0-BaseOS-%%s", major, minor),
-		runner:             &runner.RHEL{Major: uint64(major), Minor: uint64(minor)},
-		defaultImageConfig: defaultDistroImageConfig,
-	}
-}
-
 func (d *distribution) Name() string {
 	return d.name
 }
@@ -156,16 +125,19 @@ func (d *distribution) getDefaultImageConfig() *distro.ImageConfig {
 }
 
 func New() distro.Distro {
-	return NewRHEL90()
+	// default minor: create default minor version (current GA) and rename it
+	d := newDistro("rhel", 0)
+	d.name = "rhel-9"
+	return d
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 	// NOTE: args are ignored - host distro constructors are deprecated
-	return NewRHEL90()
+	return New()
 }
 
 func NewCentOS9() distro.Distro {
-	return newDistro("centos", 9, 0)
+	return newDistro("centos", 0)
 }
 
 func NewCentOS9HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
@@ -174,7 +146,7 @@ func NewCentOS9HostDistro(name, modulePlatformID, ostreeRef string) distro.Distr
 }
 
 func NewRHEL90() distro.Distro {
-	return newDistro("rhel", 9, 0)
+	return newDistro("rhel", 0)
 }
 
 func NewRHEL90HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
@@ -183,7 +155,7 @@ func NewRHEL90HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro
 }
 
 func NewRHEL91() distro.Distro {
-	return newDistro("rhel", 9, 1)
+	return newDistro("rhel", 1)
 }
 
 func NewRHEL91HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
@@ -192,7 +164,7 @@ func NewRHEL91HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro
 }
 
 func NewRHEL92() distro.Distro {
-	return newDistro("rhel", 9, 2)
+	return newDistro("rhel", 2)
 }
 
 func NewRHEL92HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
@@ -200,13 +172,35 @@ func NewRHEL92HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro
 	return NewRHEL92()
 }
 
-func newDistro(name string, major, minor int) distro.Distro {
+func newDistro(name string, minor int) *distribution {
 	var rd distribution
 	switch name {
 	case "rhel":
-		rd = getRHELDistro(major, minor)
+		rd = distribution{
+			name:               fmt.Sprintf("rhel-9%d", minor),
+			product:            "Red Hat Enterprise Linux",
+			osVersion:          fmt.Sprintf("9.%d", minor),
+			releaseVersion:     "9",
+			modulePlatformID:   "platform:el9",
+			vendor:             "redhat",
+			ostreeRefTmpl:      "rhel/9/%s/edge",
+			isolabelTmpl:       fmt.Sprintf("RHEL-9-%d-0-BaseOS-%%s", minor),
+			runner:             &runner.RHEL{Major: uint64(9), Minor: uint64(minor)},
+			defaultImageConfig: defaultDistroImageConfig,
+		}
 	case "centos":
-		rd = getCentOSDistro(major)
+		rd = distribution{
+			name:               "centos-9",
+			product:            "CentOS Stream",
+			osVersion:          "9-stream",
+			releaseVersion:     "9",
+			modulePlatformID:   "platform:el9",
+			vendor:             "centos",
+			ostreeRefTmpl:      "centos/9/%s/edge",
+			isolabelTmpl:       "CentOS-Stream-9-BaseOS-%s",
+			runner:             &runner.CentOS{Version: uint64(9)},
+			defaultImageConfig: defaultDistroImageConfig,
+		}
 	default:
 		panic(fmt.Sprintf("unknown distro name: %s", name))
 	}

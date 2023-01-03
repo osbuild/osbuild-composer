@@ -19,7 +19,9 @@ var supportedDistros = []supportedDistro{
 	{fedora.NewF36, fedora.NewHostDistro},
 	{fedora.NewF37, fedora.NewHostDistro},
 	{fedora.NewF38, fedora.NewHostDistro},
+
 	{rhel7.New, rhel7.NewHostDistro},
+
 	{rhel8.New, rhel8.NewHostDistro},
 	{rhel8.NewRHEL84, rhel8.NewRHEL84HostDistro},
 	{rhel8.NewRHEL85, rhel8.NewRHEL85HostDistro},
@@ -27,7 +29,9 @@ var supportedDistros = []supportedDistro{
 	{rhel8.NewRHEL87, rhel8.NewRHEL87HostDistro},
 	{rhel8.NewRHEL88, rhel8.NewRHEL88HostDistro},
 	{rhel8.NewCentos, rhel8.NewCentosHostDistro},
+
 	{rhel9.New, rhel9.NewHostDistro},
+	{rhel9.NewRHEL90, rhel9.NewRHEL90HostDistro},
 	{rhel9.NewRHEL91, rhel9.NewRHEL91HostDistro},
 	{rhel9.NewRHEL92, rhel9.NewRHEL92HostDistro},
 	{rhel9.NewCentOS9, rhel9.NewCentOS9HostDistro},
