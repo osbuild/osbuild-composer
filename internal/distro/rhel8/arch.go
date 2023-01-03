@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
 type architecture struct {
@@ -45,13 +46,17 @@ func (a *architecture) GetImageType(name string) (distro.ImageType, error) {
 	return t, nil
 }
 
-func (a *architecture) addImageTypes(imageTypes ...imageType) {
+func (a *architecture) addImageTypes(platform platform.Platform, imageTypes ...imageType) {
 	if a.imageTypes == nil {
 		a.imageTypes = map[string]distro.ImageType{}
 	}
 	for idx := range imageTypes {
 		it := imageTypes[idx]
+		if _, e := a.imageTypes[it.name]; e {
+			panic("already added: " + it.name)
+		}
 		it.arch = a
+		it.platform = platform
 		a.imageTypes[it.name] = &it
 		for _, alias := range it.nameAliases {
 			if a.imageTypeAliases == nil {
