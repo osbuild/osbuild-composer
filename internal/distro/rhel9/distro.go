@@ -131,45 +131,20 @@ func New() distro.Distro {
 	return d
 }
 
-func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	// NOTE: args are ignored - host distro constructors are deprecated
-	return New()
-}
-
 func NewCentOS9() distro.Distro {
 	return newDistro("centos", 0)
-}
-
-func NewCentOS9HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	// NOTE: args are ignored - host distro constructors are deprecated
-	return NewCentOS9()
 }
 
 func NewRHEL90() distro.Distro {
 	return newDistro("rhel", 0)
 }
 
-func NewRHEL90HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	// NOTE: args are ignored - host distro constructors are deprecated
-	return NewRHEL90()
-}
-
 func NewRHEL91() distro.Distro {
 	return newDistro("rhel", 1)
 }
 
-func NewRHEL91HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	// NOTE: args are ignored - host distro constructors are deprecated
-	return NewRHEL91()
-}
-
 func NewRHEL92() distro.Distro {
 	return newDistro("rhel", 2)
-}
-
-func NewRHEL92HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	// NOTE: args are ignored - host distro constructors are deprecated
-	return NewRHEL92()
 }
 
 func newDistro(name string, minor int) *distribution {
