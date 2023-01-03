@@ -784,20 +784,6 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 	return nil
 }
 
-func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	parts := strings.Split(name, "-")
-	if len(parts) != 2 || parts[0] != "fedora" {
-		panic("invalid distro name: " + name)
-	}
-
-	version, err := strconv.Atoi(parts[1])
-	if err != nil {
-		panic("invalid distro version: " + name + ": " + err.Error())
-	}
-
-	return newDistro(version)
-}
-
 // New creates a new distro object, defining the supported architectures and image types
 func NewF36() distro.Distro {
 	return newDistro(36)

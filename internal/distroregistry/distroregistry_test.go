@@ -15,7 +15,7 @@ func TestRegistry_List(t *testing.T) {
 	// build expected distros
 	var expected []string
 	for _, supportedDistro := range supportedDistros {
-		d := supportedDistro.defaultDistro()
+		d := supportedDistro()
 		expected = append(expected, d.Name())
 	}
 
@@ -98,7 +98,7 @@ func TestRegistry_FromHost(t *testing.T) {
 	//  expected distros
 	var distros []distro.Distro
 	for _, supportedDistro := range supportedDistros {
-		distros = append(distros, supportedDistro.defaultDistro())
+		distros = append(distros, supportedDistro())
 	}
 
 	t.Run("host distro is nil", func(t *testing.T) {
@@ -109,9 +109,7 @@ func TestRegistry_FromHost(t *testing.T) {
 	})
 
 	t.Run("host distro not nil", func(t *testing.T) {
-		// NOTE(akoutsou): The arguments to NewHostDistro are ignored since RHEL 8.6
-		// The function signature will change in the near future.
-		hostDistro := rhel8.NewHostDistro("", "", "")
+		hostDistro := rhel8.New()
 		fmt.Println(hostDistro.Name())
 		registry, err := New(hostDistro, distros...)
 		require.Nil(t, err)

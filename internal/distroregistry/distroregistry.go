@@ -15,31 +15,26 @@ import (
 
 // When adding support for a new distribution, add it here.
 // Note that this is a constant, do not write to this array.
-var supportedDistros = []supportedDistro{
-	{fedora.NewF36, fedora.NewHostDistro},
-	{fedora.NewF37, fedora.NewHostDistro},
-	{fedora.NewF38, fedora.NewHostDistro},
+var supportedDistros = []func() distro.Distro{
+	fedora.NewF36,
+	fedora.NewF37,
+	fedora.NewF38,
 
-	{rhel7.New, rhel7.NewHostDistro},
+	rhel7.New,
 
-	{rhel8.New, rhel8.NewHostDistro},
-	{rhel8.NewRHEL84, rhel8.NewRHEL84HostDistro},
-	{rhel8.NewRHEL85, rhel8.NewRHEL85HostDistro},
-	{rhel8.NewRHEL86, rhel8.NewRHEL86HostDistro},
-	{rhel8.NewRHEL87, rhel8.NewRHEL87HostDistro},
-	{rhel8.NewRHEL88, rhel8.NewRHEL88HostDistro},
-	{rhel8.NewCentos, rhel8.NewCentosHostDistro},
+	rhel8.New,
+	rhel8.NewRHEL84,
+	rhel8.NewRHEL85,
+	rhel8.NewRHEL86,
+	rhel8.NewRHEL87,
+	rhel8.NewRHEL88,
+	rhel8.NewCentos,
 
-	{rhel9.New, rhel9.NewHostDistro},
-	{rhel9.NewRHEL90, rhel9.NewRHEL90HostDistro},
-	{rhel9.NewRHEL91, rhel9.NewRHEL91HostDistro},
-	{rhel9.NewRHEL92, rhel9.NewRHEL92HostDistro},
-	{rhel9.NewCentOS9, rhel9.NewCentOS9HostDistro},
-}
-
-type supportedDistro struct {
-	defaultDistro func() distro.Distro
-	hostDistro    func(name, modulePlatformID, ostreeRef string) distro.Distro
+	rhel9.New,
+	rhel9.NewRHEL90,
+	rhel9.NewRHEL91,
+	rhel9.NewRHEL92,
+	rhel9.NewCentOS9,
 }
 
 type Registry struct {
@@ -75,19 +70,12 @@ func NewDefault() *Registry {
 	// If there was an error, then the hostDistroName will be an empty string
 	// and as a result, the hostDistro will have a nil value when calling New().
 	// Getting the host distro later using FromHost() will return nil as well.
-	hostDistroName, hostDistroIsBeta, hostDistroIsStream, _ := common.GetHostDistroName()
-
+	hostDistroName, _, _, _ := common.GetHostDistroName()
 	for _, supportedDistro := range supportedDistros {
-		distro := supportedDistro.defaultDistro()
-
+		distro := supportedDistro()
 		if distro.Name() == hostDistroName {
-			hostDistro = supportedDistro.hostDistro(
-				mangleHostDistroName(distro.Name(), hostDistroIsBeta, hostDistroIsStream),
-				distro.ModulePlatformID(),
-				distro.OSTreeRef(),
-			)
+			hostDistro = supportedDistro()
 		}
-
 		distros = append(distros, distro)
 	}
 
