@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
 const (
@@ -69,7 +70,7 @@ type distribution struct {
 	vendor             string
 	ostreeRefTmpl      string
 	isolabelTmpl       string
-	runner             string
+	runner             runner.Runner
 	arches             map[string]distro.Arch
 	defaultImageConfig *distro.ImageConfig
 }
@@ -89,94 +90,6 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 				NoZeroConf: true,
 			},
 		},
-	},
-}
-
-// distribution objects without the arches > image types
-var distroMap = map[string]distribution{
-	"rhel-8": {
-		name:               "rhel-8",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "8.6",
-		releaseVersion:     "8",
-		modulePlatformID:   "platform:el8",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/8/%s/edge",
-		isolabelTmpl:       "RHEL-8-6-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel86",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"rhel-84": {
-		name:               "rhel-84",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "8.4",
-		releaseVersion:     "8",
-		modulePlatformID:   "platform:el8",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/8/%s/edge",
-		isolabelTmpl:       "RHEL-8-4-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel84",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"rhel-85": {
-		name:               "rhel-85",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "8.5",
-		releaseVersion:     "8",
-		modulePlatformID:   "platform:el8",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/8/%s/edge",
-		isolabelTmpl:       "RHEL-8-5-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel85",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"rhel-86": {
-		name:               "rhel-86",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "8.6",
-		releaseVersion:     "8",
-		modulePlatformID:   "platform:el8",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/8/%s/edge",
-		isolabelTmpl:       "RHEL-8-6-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel86",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"rhel-87": {
-		name:               "rhel-87",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "8.7",
-		releaseVersion:     "8",
-		modulePlatformID:   "platform:el8",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/8/%s/edge",
-		isolabelTmpl:       "RHEL-8-7-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel87",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"rhel-88": {
-		name:               "rhel-88",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "8.8",
-		releaseVersion:     "8",
-		modulePlatformID:   "platform:el8",
-		vendor:             "redhat",
-		ostreeRefTmpl:      "rhel/8/%s/edge",
-		isolabelTmpl:       "RHEL-8-8-0-BaseOS-%s",
-		runner:             "org.osbuild.rhel88",
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-	"centos-8": {
-		name:               "centos-8",
-		product:            "CentOS Stream",
-		osVersion:          "8-stream",
-		releaseVersion:     "8",
-		modulePlatformID:   "platform:el8",
-		vendor:             "centos",
-		ostreeRefTmpl:      "centos/8/%s/edge",
-		isolabelTmpl:       "CentOS-Stream-8-%s-dvd",
-		runner:             "org.osbuild.centos8",
-		defaultImageConfig: defaultDistroImageConfig,
 	},
 }
 
@@ -678,63 +591,97 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
-	return newDistro("rhel-8")
+	// default minor: create default minor version (current GA) and rename it
+	d := newDistro("rhel", 6)
+	d.name = "rhel-8"
+	return d
+
 }
 
 func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-8")
+	return New()
 }
 
 func NewRHEL84() distro.Distro {
-	return newDistro("rhel-84")
+	return newDistro("rhel", 4)
 }
 
 func NewRHEL84HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-84")
+	return NewRHEL84()
 }
 
 func NewRHEL85() distro.Distro {
-	return newDistro("rhel-85")
+	return newDistro("rhel", 5)
 }
 
 func NewRHEL85HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-85")
+	return NewRHEL85()
 }
 
 func NewRHEL86() distro.Distro {
-	return newDistro("rhel-86")
+	return newDistro("rhel", 6)
 }
 
 func NewRHEL86HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-86")
+	return NewRHEL86()
 }
 
 func NewRHEL87() distro.Distro {
-	return newDistro("rhel-87")
+	return newDistro("rhel", 7)
 }
 
 func NewRHEL87HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-87")
+	return NewRHEL87()
 }
 
 func NewRHEL88() distro.Distro {
-	return newDistro("rhel-88")
+	return newDistro("rhel", 8)
 }
 
 func NewRHEL88HostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("rhel-88")
+	return NewRHEL88()
 }
 
 func NewCentos() distro.Distro {
-	return newDistro("centos-8")
+	return newDistro("centos", 0)
 }
 
 func NewCentosHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
-	return newDistro("centos-8")
+	return NewCentos()
 }
 
-func newDistro(distroName string) distro.Distro {
-	rd := distroMap[distroName]
+func newDistro(name string, minor int) *distribution {
+	var rd distribution
+	switch name {
+	case "rhel":
+		rd = distribution{
+			name:               fmt.Sprintf("rhel-8%d", minor),
+			product:            "Red Hat Enterprise Linux",
+			osVersion:          fmt.Sprintf("8.%d", minor),
+			releaseVersion:     "8",
+			modulePlatformID:   "platform:el8",
+			vendor:             "redhat",
+			ostreeRefTmpl:      "rhel/8/%s/edge",
+			isolabelTmpl:       fmt.Sprintf("RHEL-8-%d-0-BaseOS-%%s", minor),
+			runner:             &runner.RHEL{Major: uint64(8), Minor: uint64(minor)},
+			defaultImageConfig: defaultDistroImageConfig,
+		}
+	case "centos":
+		rd = distribution{
+			name:               "centos-8",
+			product:            "CentOS Stream",
+			osVersion:          "8-stream",
+			releaseVersion:     "8",
+			modulePlatformID:   "platform:el8",
+			vendor:             "centos",
+			ostreeRefTmpl:      "centos/8/%s/edge",
+			isolabelTmpl:       "CentOS-Stream-8-%s-dvd",
+			runner:             &runner.CentOS{Version: uint64(8)},
+			defaultImageConfig: defaultDistroImageConfig,
+		}
+	default:
+		panic(fmt.Sprintf("unknown distro name: %s", name))
+	}
 
 	// Architecture definitions
 	x86_64 := architecture{
