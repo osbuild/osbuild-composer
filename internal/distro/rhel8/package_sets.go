@@ -5,7 +5,6 @@ package rhel8
 import (
 	"fmt"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -59,31 +58,6 @@ func ppc64leBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{"grub2-ppc64le", "grub2-ppc64le-modules"},
 	}
-}
-
-// common ec2 image build package set
-func ec2BuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{"python3-pyyaml"},
-		})
-}
-
-// common edge image build package set
-func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{
-				"rpm-ostree",
-			},
-			Exclude: nil,
-		})
-}
-
-func edgeRawImageBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return edgeBuildPackageSet(t).Append(edgeEncryptionBuildPackageSet(t)).Append(
-		bootPackageSet(t),
-	)
 }
 
 // installer boot package sets, needed for booting and
@@ -162,28 +136,6 @@ func anacondaBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	ps = ps.Append(anacondaBootPackageSet(t))
 
 	return ps
-}
-
-func edgeInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return anacondaBuildPackageSet(t).Append(
-		edgeBuildPackageSet(t),
-	)
-}
-
-func edgeSimplifiedInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return edgeInstallerBuildPackageSet(t).Append(
-		edgeEncryptionBuildPackageSet(t),
-	)
-}
-
-func edgeEncryptionBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"clevis",
-			"clevis-luks",
-			"cryptsetup",
-		},
-	}
 }
 
 // BOOT PACKAGE SETS
@@ -412,105 +364,6 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 
 }
 
-// common package set for RHEL (BYOS/RHUI) and CentOS Stream images
-func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"@core",
-			"authselect-compat",
-			"chrony",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"dhcp-client",
-			"dracut-config-generic",
-			"dracut-norescue",
-			"gdisk",
-			"grub2",
-			"langpacks-en",
-			"NetworkManager",
-			"NetworkManager-cloud-setup",
-			"redhat-release",
-			"redhat-release-eula",
-			"rsync",
-			"tar",
-			"yum-utils",
-		},
-		Exclude: []string{
-			"aic94xx-firmware",
-			"alsa-firmware",
-			"alsa-tools-firmware",
-			"biosdevname",
-			"firewalld",
-			"iprutils",
-			"ivtv-firmware",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl3945-firmware",
-			"iwl4965-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-			"libertas-sd8686-firmware",
-			"libertas-sd8787-firmware",
-			"libertas-usb8388-firmware",
-			"plymouth",
-			// RHBZ#2075815
-			"qemu-guest-agent",
-		},
-	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
-}
-
-// common rhel ec2 RHUI image package set
-func rhelEc2CommonPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := ec2CommonPackageSet(t)
-	// Include "redhat-cloud-client-configuration" on 8.7+ (COMPOSER-1804)
-	if !common.VersionLessThan(t.arch.distro.osVersion, "8.7") {
-		ps.Include = append(ps.Include, "redhat-cloud-client-configuration")
-	}
-	return ps
-}
-
-// rhel-ec2 image package set
-func rhelEc2PackageSet(t *imageType) rpmmd.PackageSet {
-	ec2PackageSet := rhelEc2CommonPackageSet(t)
-	ec2PackageSet.Include = append(ec2PackageSet.Include, "rh-amazon-rhui-client")
-	ec2PackageSet.Exclude = append(ec2PackageSet.Exclude, "alsa-lib")
-	return ec2PackageSet
-}
-
-// rhel-ha-ec2 image package set
-func rhelEc2HaPackageSet(t *imageType) rpmmd.PackageSet {
-	ec2HaPackageSet := rhelEc2CommonPackageSet(t)
-	ec2HaPackageSet.Include = append(ec2HaPackageSet.Include,
-		"fence-agents-all",
-		"pacemaker",
-		"pcs",
-		"rh-amazon-rhui-client-ha",
-	)
-	ec2HaPackageSet.Exclude = append(ec2HaPackageSet.Exclude, "alsa-lib")
-	return ec2HaPackageSet
-}
-
-// rhel-sap-ec2 image package set
-// Includes the common ec2 package set, the common SAP packages, and
-// the amazon rhui sap package
-func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"rh-amazon-rhui-client-sap-bundle-e4s",
-		},
-	}.Append(rhelEc2CommonPackageSet(t)).Append(SapPackageSet(t))
-}
-
 // common GCE image
 func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
@@ -593,156 +446,6 @@ func gceRhuiPackageSet(t *imageType) rpmmd.PackageSet {
 			"google-rhui-client-rhel8",
 		},
 	}.Append(gceCommonPackageSet(t))
-}
-
-// edge commit OS package set
-func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"attr",
-			"audit",
-			"basesystem",
-			"bash",
-			"bash-completion",
-			"chrony",
-			"clevis",
-			"clevis-dracut",
-			"clevis-luks",
-			"container-selinux",
-			"coreutils",
-			"criu",
-			"cryptsetup",
-			"curl",
-			"dnsmasq",
-			"dosfstools",
-			"dracut-config-generic",
-			"dracut-network",
-			"e2fsprogs",
-			"firewalld",
-			"fuse-overlayfs",
-			"fwupd",
-			"glibc",
-			"glibc-minimal-langpack",
-			"gnupg2",
-			"greenboot",
-			"gzip",
-			"hostname",
-			"ima-evm-utils",
-			"iproute",
-			"iptables",
-			"iputils",
-			"keyutils",
-			"less",
-			"lvm2",
-			"NetworkManager",
-			"NetworkManager-wifi",
-			"NetworkManager-wwan",
-			"nss-altfiles",
-			"openssh-clients",
-			"openssh-server",
-			"passwd",
-			"pinentry",
-			"platform-python",
-			"podman",
-			"policycoreutils",
-			"policycoreutils-python-utils",
-			"polkit",
-			"procps-ng",
-			"redhat-release",
-			"rootfiles",
-			"rpm",
-			"rpm-ostree",
-			"rsync",
-			"selinux-policy-targeted",
-			"setools-console",
-			"setup",
-			"shadow-utils",
-			"shadow-utils",
-			"skopeo",
-			"slirp4netns",
-			"sudo",
-			"systemd",
-			"tar",
-			"tmux",
-			"traceroute",
-			"usbguard",
-			"util-linux",
-			"vim-minimal",
-			"wpa_supplicant",
-			"xz",
-		},
-		Exclude: []string{"rng-tools"},
-	}
-
-	ps = ps.Append(bootPackageSet(t))
-
-	switch t.arch.Name() {
-	case distro.X86_64ArchName:
-		ps = ps.Append(x8664EdgeCommitPackageSet(t))
-
-	case distro.Aarch64ArchName:
-		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
-	}
-
-	if t.arch.distro.isRHEL() && common.VersionLessThan(t.arch.distro.osVersion, "8.6") {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"greenboot-grub2",
-				"greenboot-reboot",
-				"greenboot-rpm-ostree-grub2",
-				"greenboot-status",
-			},
-		})
-	} else {
-		// 8.6+ and CS8
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"fdo-client",
-				"fdo-owner-cli",
-				"greenboot-default-health-checks",
-			},
-		})
-	}
-
-	return ps
-
-}
-
-func x8664EdgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"efibootmgr",
-			"grub2",
-			"grub2-efi-x64",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-			"microcode_ctl",
-			"shim-x64",
-		},
-		Exclude: nil,
-	}
-}
-
-func aarch64EdgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"efibootmgr",
-			"grub2-efi-aa64",
-			"iwl7260-firmware",
-			"shim-aa64",
-		},
-		Exclude: nil,
-	}
 }
 
 func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
@@ -1004,69 +707,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 				"dmidecode",
 			},
 		})
-
-	default:
-		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
-	}
-
-	return ps
-}
-
-func edgeInstallerPackageSet(t *imageType) rpmmd.PackageSet {
-	return anacondaPackageSet(t)
-}
-
-func edgeSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
-	// common installer packages
-	ps := installerPackageSet(t)
-
-	ps = ps.Append(rpmmd.PackageSet{
-		Include: []string{
-			"attr",
-			"basesystem",
-			"binutils",
-			"bsdtar",
-			"clevis-dracut",
-			"clevis-luks",
-			"cloud-utils-growpart",
-			"coreos-installer",
-			"coreos-installer-dracut",
-			"coreutils",
-			"device-mapper-multipath",
-			"dnsmasq",
-			"dosfstools",
-			"dracut-live",
-			"e2fsprogs",
-			"fcoe-utils",
-			"fdo-init",
-			"gzip",
-			"ima-evm-utils",
-			"iproute",
-			"iptables",
-			"iputils",
-			"iscsi-initiator-utils",
-			"keyutils",
-			"lldpad",
-			"lvm2",
-			"passwd",
-			"policycoreutils",
-			"policycoreutils-python-utils",
-			"procps-ng",
-			"rootfiles",
-			"setools-console",
-			"sudo",
-			"traceroute",
-			"util-linux",
-		},
-		Exclude: nil,
-	})
-
-	switch t.arch.Name() {
-
-	case distro.X86_64ArchName:
-		ps = ps.Append(x8664EdgeCommitPackageSet(t))
-	case distro.Aarch64ArchName:
-		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
 
 	default:
 		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
