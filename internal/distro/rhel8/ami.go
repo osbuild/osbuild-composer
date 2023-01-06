@@ -359,14 +359,6 @@ func defaultEc2SapImageConfigX86_64(rd distribution) *distro.ImageConfig {
 	return SapImageConfig(rd).InheritFrom(defaultEc2ImageConfigX86_64(rd))
 }
 
-// common ec2 image build package set
-func ec2BuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{"python3-pyyaml"},
-		})
-}
-
 // common package set for RHEL (BYOS/RHUI) and CentOS Stream images
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
