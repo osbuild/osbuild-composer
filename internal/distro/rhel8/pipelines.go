@@ -16,32 +16,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
-func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-
-	diskfile := "disk.img"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "0.10"})
-	pipelines = append(pipelines, *qemuPipeline)
-
-	return pipelines, nil
-}
-
 func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *disk.PartitionTable) *osbuild.Pipeline {
 	if t.Arch().Name() == distro.S390xArchName {
 		rootFs := pt.FindMountable("/")
@@ -78,34 +52,6 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	}
 
 	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{Subformat: osbuild.VMDKSubformatStreamOptimized})
-	pipelines = append(pipelines, *qemuPipeline)
-	return pipelines, nil
-}
-
-func openstackPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-
-	diskfile := "disk.img"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-	if err != nil {
-		return nil, err
-	}
-
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, nil)
 	pipelines = append(pipelines, *qemuPipeline)
 	return pipelines, nil
 }
