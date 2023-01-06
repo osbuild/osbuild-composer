@@ -215,43 +215,6 @@ func newDistro(name string, minor int) *distribution {
 		bootType: distro.LegacyBootType,
 	}
 
-	// Image Definitions
-	qcow2ImgType := imageType{
-		name:          "qcow2",
-		filename:      "disk.qcow2",
-		mimeType:      "application/x-qemu-disk",
-		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
-		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    qcow2CommonPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			DefaultTarget: common.ToPtr("multi-user.target"),
-			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-				distro.RHSMConfigNoSubscription: {
-					DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-						ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-							Enabled: false,
-						},
-						SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-							Enabled: false,
-						},
-					},
-				},
-			},
-		},
-		bootable:            true,
-		defaultSize:         10 * common.GibiByte,
-		pipelines:           qcow2Pipelines,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "qcow2"},
-		exports:             []string{"qcow2"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
 	vmdkImgType := imageType{
 		name:     "vmdk",
 		filename: "disk.vmdk",
@@ -270,27 +233,6 @@ func newDistro(name string, minor int) *distribution {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk"},
 		exports:             []string{"vmdk"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
-	openstackImgType := imageType{
-		name:     "openstack",
-		filename: "disk.qcow2",
-		mimeType: "application/x-qemu-disk",
-		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    openstackCommonPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
-		kernelOptions:       "ro net.ifnames=0",
-		bootable:            true,
-		defaultSize:         4 * common.GibiByte,
-		pipelines:           openstackPipelines,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "qcow2"},
-		exports:             []string{"qcow2"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
@@ -537,7 +479,7 @@ func newDistro(name string, minor int) *distribution {
 		exports:          []string{"bootiso"},
 	}
 
-	ociImgType := qcow2ImgType
+	ociImgType := qcow2ImgType(rd)
 	ociImgType.name = "oci"
 
 	x86_64.addImageTypes(
@@ -549,7 +491,7 @@ func newDistro(name string, minor int) *distribution {
 				QCOW2Compat: "0.10",
 			},
 		},
-		qcow2ImgType,
+		qcow2ImgType(rd),
 		ociImgType,
 	)
 
@@ -561,7 +503,7 @@ func newDistro(name string, minor int) *distribution {
 				ImageFormat: platform.FORMAT_QCOW2,
 			},
 		},
-		openstackImgType,
+		openstackImgType(),
 	)
 
 	rawX86Platform := &platform.X86{
@@ -641,7 +583,7 @@ func newDistro(name string, minor int) *distribution {
 				QCOW2Compat: "0.10",
 			},
 		},
-		qcow2ImgType,
+		qcow2ImgType(rd),
 	)
 
 	aarch64.addImageTypes(
@@ -651,7 +593,7 @@ func newDistro(name string, minor int) *distribution {
 				ImageFormat: platform.FORMAT_QCOW2,
 			},
 		},
-		openstackImgType,
+		openstackImgType(),
 	)
 
 	aarch64.addImageTypes(
@@ -692,7 +634,7 @@ func newDistro(name string, minor int) *distribution {
 				QCOW2Compat: "0.10",
 			},
 		},
-		qcow2ImgType,
+		qcow2ImgType(rd),
 	)
 
 	ppc64le.addImageTypes(
@@ -708,7 +650,7 @@ func newDistro(name string, minor int) *distribution {
 				QCOW2Compat: "0.10",
 			},
 		},
-		qcow2ImgType,
+		qcow2ImgType(rd),
 	)
 
 	s390x.addImageTypes(
