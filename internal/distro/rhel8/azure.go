@@ -450,6 +450,23 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 		},
 	},
 	DefaultTarget: common.StringToPtr("multi-user.target"),
+	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+		// Nowadays, we want autoregistration everywhere.
+		distro.RHSMConfigNoSubscription: {
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.BoolToPtr(true),
+				},
+			},
+		},
+		distro.RHSMConfigWithSubscription: {
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.BoolToPtr(true),
+				},
+			},
+		},
+	},
 }
 
 // Azure non-RHEL image type
@@ -480,31 +497,6 @@ var azureImgType = imageType{
 var defaultAzureByosImageConfig = &distro.ImageConfig{
 	GPGKeyFiles: []string{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
-	},
-	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-		distro.RHSMConfigNoSubscription: {
-			SubMan: &osbuild.RHSMStageOptionsSubMan{
-				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-					AutoRegistration: common.BoolToPtr(true),
-				},
-				// Don't disable RHSM redhat.repo management on the GCE
-				// image, which is BYOS and does not use RHUI for content.
-				// Otherwise subscribing the system manually after booting
-				// it would result in empty redhat.repo. Without RHUI, such
-				// system would have no way to get Red Hat content, but
-				// enable the repo management manually, which would be very
-				// confusing.
-			},
-		},
-		distro.RHSMConfigWithSubscription: {
-			SubMan: &osbuild.RHSMStageOptionsSubMan{
-				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-					AutoRegistration: common.BoolToPtr(true),
-				},
-				// do not disable the redhat.repo management if the user
-				// explicitly request the system to be subscribed
-			},
-		},
 	},
 }
 
@@ -539,6 +531,8 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
 	},
 	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+		// This is a RHUI-enabled image, thus we don't want dnf to use subman
+		// nor subman to manage the redhat.repo file.
 		distro.RHSMConfigNoSubscription: {
 			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
 				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{

@@ -3278,6 +3278,16 @@
             }
           },
           {
+            "type": "org.osbuild.rhsm",
+            "options": {
+              "subscription-manager": {
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.cloud-init",
             "options": {
               "filename": "10-azure-kvp.cfg",
