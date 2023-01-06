@@ -16,7 +16,7 @@ var (
 			osPkgsKey: openstackCommonPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.StringToPtr("en_US.UTF-8"),
+			Locale: common.ToPtr("en_US.UTF-8"),
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
@@ -129,7 +129,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 
 func qcowImageConfig(d distribution) *distro.ImageConfig {
 	ic := &distro.ImageConfig{
-		DefaultTarget: common.StringToPtr("multi-user.target"),
+		DefaultTarget: common.ToPtr("multi-user.target"),
 	}
 	if d.isRHEL() {
 		ic.RHSMConfig = map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{

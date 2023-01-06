@@ -14,8 +14,9 @@ import (
 	_ "github.com/containers/image/v5/docker/archive"
 	_ "github.com/containers/image/v5/oci/archive"
 	_ "github.com/containers/image/v5/oci/layout"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"golang.org/x/sys/unix"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 
 	"github.com/containers/common/pkg/retry"
 	"github.com/containers/image/v5/copy"
@@ -233,13 +234,13 @@ func (cl *Client) GetTLSVerify() *bool {
 	}
 
 	// NB: we invert the state, i.e. verify == (skip == false)
-	return common.BoolToPtr(skip == types.OptionalBoolFalse)
+	return common.ToPtr(skip == types.OptionalBoolFalse)
 }
 
 // SkipTLSVerify is a convenience helper that internally calls
 // SetTLSVerify with false
 func (cl *Client) SkipTLSVerify() {
-	cl.SetTLSVerify(common.BoolToPtr(false))
+	cl.SetTLSVerify(common.ToPtr(false))
 }
 
 func parseImageName(name string) (types.ImageReference, error) {

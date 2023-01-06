@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewGrub2InstStage(t *testing.T) {
@@ -24,7 +25,7 @@ func TestNewGrub2InstStage(t *testing.T) {
 			Number:    1,
 			Path:      "/boot/grub2",
 		},
-		SectorSize: common.Uint64ToPtr(512),
+		SectorSize: common.ToPtr(uint64(512)),
 	}
 
 	expectedStage := &Stage{
@@ -53,7 +54,7 @@ func TestMarshalGrub2InstStage(t *testing.T) {
 				Number:    1,
 				Path:      "/boot/grub2",
 			},
-			SectorSize: common.Uint64ToPtr(512),
+			SectorSize: common.ToPtr(uint64(512)),
 		}
 	}
 

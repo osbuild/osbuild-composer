@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/stretchr/testify/assert"
 )
 
 type lessCompare func(i, j int) bool
@@ -43,7 +44,7 @@ func TestResolver(t *testing.T) {
 	resolver := container.NewResolver("amd64")
 
 	for _, r := range refs {
-		resolver.Add(r, "", common.BoolToPtr(false))
+		resolver.Add(r, "", common.ToPtr(false))
 	}
 
 	have, err := resolver.Finish()
@@ -68,7 +69,7 @@ func TestResolver(t *testing.T) {
 func TestResolverFail(t *testing.T) {
 	resolver := container.NewResolver("amd64")
 
-	resolver.Add("invalid-reference@${IMAGE_DIGEST}", "", common.BoolToPtr(false))
+	resolver.Add("invalid-reference@${IMAGE_DIGEST}", "", common.ToPtr(false))
 
 	specs, err := resolver.Finish()
 	assert.Error(t, err)
@@ -77,7 +78,7 @@ func TestResolverFail(t *testing.T) {
 	registry := NewTestRegistry()
 	defer registry.Close()
 
-	resolver.Add(registry.GetRef("repo"), "", common.BoolToPtr(false))
+	resolver.Add(registry.GetRef("repo"), "", common.ToPtr(false))
 	specs, err = resolver.Finish()
 	assert.Error(t, err)
 	assert.Len(t, specs, 0)

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/opencontainers/go-digest"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 
@@ -373,7 +374,7 @@ func (reg *Registry) Resolve(target, arch string) (container.Spec, error) {
 		Digest:    checksum,
 		ImageID:   mf.ConfigDescriptor.Digest.String(),
 		LocalName: ref.String(),
-		TLSVerify: common.BoolToPtr(false),
+		TLSVerify: common.ToPtr(false),
 	}, nil
 }
 

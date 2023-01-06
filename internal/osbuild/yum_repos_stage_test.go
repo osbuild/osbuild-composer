@@ -3,8 +3,9 @@ package osbuild
 import (
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewYumReposStage(t *testing.T) {
@@ -125,12 +126,12 @@ func TestYumReposStageOptionsValidate(t *testing.T) {
 				Repos: []YumRepository{
 					{
 						Id:             "cool-id",
-						Cost:           common.IntToPtr(0),
-						Enabled:        common.BoolToPtr(false),
-						ModuleHotfixes: common.BoolToPtr(false),
+						Cost:           common.ToPtr(0),
+						Enabled:        common.ToPtr(false),
+						ModuleHotfixes: common.ToPtr(false),
 						Name:           "c@@l-name",
-						GPGCheck:       common.BoolToPtr(true),
-						RepoGPGCheck:   common.BoolToPtr(true),
+						GPGCheck:       common.ToPtr(true),
+						RepoGPGCheck:   common.ToPtr(true),
 						BaseURL:        []string{"http://example.org/repo"},
 						GPGKey:         []string{"secretkey"},
 					},
@@ -145,12 +146,12 @@ func TestYumReposStageOptionsValidate(t *testing.T) {
 				Repos: []YumRepository{
 					{
 						Id:             "cool-id",
-						Cost:           common.IntToPtr(200),
-						Enabled:        common.BoolToPtr(true),
-						ModuleHotfixes: common.BoolToPtr(true),
+						Cost:           common.ToPtr(200),
+						Enabled:        common.ToPtr(true),
+						ModuleHotfixes: common.ToPtr(true),
 						Name:           "c@@l-name",
-						GPGCheck:       common.BoolToPtr(false),
-						RepoGPGCheck:   common.BoolToPtr(false),
+						GPGCheck:       common.ToPtr(false),
+						RepoGPGCheck:   common.ToPtr(false),
 						Mirrorlist:     "http://example.org/mirrorlist",
 						GPGKey:         []string{"secretkey"},
 					},

@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewCloudInitStage(t *testing.T) {
@@ -190,7 +191,7 @@ func TestCloudInitStage_UnmarshalJSON(t *testing.T) {
 				Filename: "06_logging_override.cfg",
 				Config: CloudInitConfigFile{
 					Output: &CloudInitConfigOutput{
-						All: common.StringToPtr(">> /var/log/cloud-init-all.log"),
+						All: common.ToPtr(">> /var/log/cloud-init-all.log"),
 					},
 				},
 			},

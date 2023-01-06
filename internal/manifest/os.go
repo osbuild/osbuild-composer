@@ -22,8 +22,9 @@ import (
 // operating system independently of where and how it is integrated and what
 // workload it is running.
 // TODO: move out kernel/bootloader/cloud-init/... to other
-//       abstractions, this should ideally only contain things that
-//       can always be applied.
+//
+//	abstractions, this should ideally only contain things that
+//	can always be applied.
 type OSCustomizations struct {
 
 	// Packages to install in addition to the ones required by the
@@ -274,7 +275,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 	rpmOptions.GPGKeysFromTree = p.GPGKeyFiles
 	if p.OSTreeRef != "" {
-		rpmOptions.OSTreeBooted = common.BoolToPtr(true)
+		rpmOptions.OSTreeBooted = common.ToPtr(true)
 		rpmOptions.DBPath = "/usr/share/rpm"
 	}
 	pipeline.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
@@ -283,7 +284,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if p.PartitionTable == nil || p.PartitionTable.FindMountable("/boot") == nil {
 		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	} else {
-		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.ToPtr("")}))
 	}
 
 	if len(p.Containers) > 0 {

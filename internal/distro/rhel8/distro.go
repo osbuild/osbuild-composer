@@ -76,8 +76,8 @@ type distribution struct {
 
 // RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
-	Timezone: common.StringToPtr("America/New_York"),
-	Locale:   common.StringToPtr("en_US.UTF-8"),
+	Timezone: common.ToPtr("America/New_York"),
+	Locale:   common.ToPtr("en_US.UTF-8"),
 	Sysconfig: []*osbuild.SysconfigStageOptions{
 		{
 			Kernel: &osbuild.SysconfigKernelOptions{
@@ -932,7 +932,7 @@ func newDistro(distroName string) distro.Distro {
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			DefaultTarget: common.StringToPtr("multi-user.target"),
+			DefaultTarget: common.ToPtr("multi-user.target"),
 			RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
 				distro.RHSMConfigNoSubscription: {
 					DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
@@ -999,19 +999,19 @@ func newDistro(distroName string) distro.Distro {
 
 	// default EC2 images config (common for all architectures)
 	defaultEc2ImageConfig := &distro.ImageConfig{
-		Timezone: common.StringToPtr("UTC"),
+		Timezone: common.ToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Servers: []osbuild.ChronyConfigServer{
 				{
 					Hostname: "169.254.169.123",
-					Prefer:   common.BoolToPtr(true),
-					Iburst:   common.BoolToPtr(true),
-					Minpoll:  common.IntToPtr(4),
-					Maxpoll:  common.IntToPtr(4),
+					Prefer:   common.ToPtr(true),
+					Iburst:   common.ToPtr(true),
+					Minpoll:  common.ToPtr(4),
+					Maxpoll:  common.ToPtr(4),
 				},
 			},
 			// empty string will remove any occurrences of the option from the configuration
-			LeapsecTz: common.StringToPtr(""),
+			LeapsecTz: common.ToPtr(""),
 		},
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
@@ -1030,7 +1030,7 @@ func newDistro(distroName string) distro.Distro {
 			"cloud-final",
 			"reboot.target",
 		},
-		DefaultTarget: common.StringToPtr("multi-user.target"),
+		DefaultTarget: common.ToPtr("multi-user.target"),
 		Sysconfig: []*osbuild.SysconfigStageOptions{
 			{
 				Kernel: &osbuild.SysconfigKernelOptions{
@@ -1046,11 +1046,11 @@ func newDistro(distroName string) distro.Distro {
 						"eth0": {
 							Device:    "eth0",
 							Bootproto: osbuild.IfcfgBootprotoDHCP,
-							OnBoot:    common.BoolToPtr(true),
+							OnBoot:    common.ToPtr(true),
 							Type:      osbuild.IfcfgTypeEthernet,
-							UserCtl:   common.BoolToPtr(true),
-							PeerDNS:   common.BoolToPtr(true),
-							IPv6Init:  common.BoolToPtr(false),
+							UserCtl:   common.ToPtr(true),
+							PeerDNS:   common.ToPtr(true),
+							IPv6Init:  common.ToPtr(false),
 						},
 					},
 				},
@@ -1061,10 +1061,10 @@ func newDistro(distroName string) distro.Distro {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.BoolToPtr(false),
+						ManageRepos: common.ToPtr(false),
 					},
 				},
 			},
@@ -1072,7 +1072,7 @@ func newDistro(distroName string) distro.Distro {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user
 					// explicitly request the system to be subscribed
@@ -1085,7 +1085,7 @@ func newDistro(distroName string) distro.Distro {
 				Config: osbuild.SystemdLogindConfigDropin{
 
 					Login: osbuild.SystemdLogindConfigLoginSection{
-						NAutoVTs: common.IntToPtr(0),
+						NAutoVTs: common.ToPtr(0),
 					},
 				},
 			},
@@ -1142,7 +1142,7 @@ func newDistro(distroName string) distro.Distro {
 		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
-				PasswordAuthentication: common.BoolToPtr(false),
+				PasswordAuthentication: common.ToPtr(false),
 			},
 		},
 	}
@@ -1179,7 +1179,7 @@ func newDistro(distroName string) distro.Distro {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// Don't disable RHSM redhat.repo management on the AMI
 					// image, which is BYOS and does not use RHUI for content.
@@ -1194,7 +1194,7 @@ func newDistro(distroName string) distro.Distro {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user
 					// explicitly request the system to be subscribed
@@ -1346,7 +1346,7 @@ func newDistro(distroName string) distro.Distro {
 
 	// GCE BYOS image
 	defaultGceByosImageConfig := &distro.ImageConfig{
-		Timezone: common.StringToPtr("UTC"),
+		Timezone: common.ToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Servers: []osbuild.ChronyConfigServer{{Hostname: "metadata.google.internal"}},
 		},
@@ -1362,8 +1362,8 @@ func newDistro(distroName string) distro.Distro {
 			"sshd-keygen@",
 			"reboot.target",
 		},
-		DefaultTarget: common.StringToPtr("multi-user.target"),
-		Locale:        common.StringToPtr("en_US.UTF-8"),
+		DefaultTarget: common.ToPtr("multi-user.target"),
+		Locale:        common.ToPtr("en_US.UTF-8"),
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
 		},
@@ -1379,7 +1379,7 @@ func newDistro(distroName string) distro.Distro {
 		DNFAutomaticConfig: &osbuild.DNFAutomaticConfigStageOptions{
 			Config: &osbuild.DNFAutomaticConfig{
 				Commands: &osbuild.DNFAutomaticConfigCommands{
-					ApplyUpdates: common.BoolToPtr(true),
+					ApplyUpdates: common.ToPtr(true),
 					UpgradeType:  osbuild.DNFAutomaticUpgradeTypeSecurity,
 				},
 			},
@@ -1392,9 +1392,9 @@ func newDistro(distroName string) distro.Distro {
 						Id:           "google-compute-engine",
 						Name:         "Google Compute Engine",
 						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"},
-						Enabled:      common.BoolToPtr(true),
-						GPGCheck:     common.BoolToPtr(true),
-						RepoGPGCheck: common.BoolToPtr(false),
+						Enabled:      common.ToPtr(true),
+						GPGCheck:     common.ToPtr(true),
+						RepoGPGCheck: common.ToPtr(false),
 						GPGKey: []string{
 							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
 							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
@@ -1407,7 +1407,7 @@ func newDistro(distroName string) distro.Distro {
 			distro.RHSMConfigNoSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// Don't disable RHSM redhat.repo management on the GCE
 					// image, which is BYOS and does not use RHUI for content.
@@ -1421,7 +1421,7 @@ func newDistro(distroName string) distro.Distro {
 			distro.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user
 					// explicitly request the system to be subscribed
@@ -1430,8 +1430,8 @@ func newDistro(distroName string) distro.Distro {
 		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
-				PasswordAuthentication: common.BoolToPtr(false),
-				ClientAliveInterval:    common.IntToPtr(420),
+				PasswordAuthentication: common.ToPtr(false),
+				ClientAliveInterval:    common.ToPtr(420),
 				PermitRootLogin:        osbuild.PermitRootLoginValueNo,
 			},
 		},
@@ -1455,7 +1455,7 @@ func newDistro(distroName string) distro.Distro {
 			ConfigScope: osbuild.GcpGuestAgentConfigScopeDistro,
 			Config: &osbuild.GcpGuestAgentConfig{
 				InstanceSetup: &osbuild.GcpGuestAgentConfigInstanceSetup{
-					SetBotoConfig: common.BoolToPtr(false),
+					SetBotoConfig: common.ToPtr(false),
 				},
 			},
 		},
@@ -1502,17 +1502,17 @@ func newDistro(distroName string) distro.Distro {
 			distro.RHSMConfigNoSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.BoolToPtr(false),
+						ManageRepos: common.ToPtr(false),
 					},
 				},
 			},
 			distro.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user
 					// explicitly request the system to be subscribed

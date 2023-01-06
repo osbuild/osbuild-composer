@@ -177,9 +177,9 @@ func gcePipelines(t *imageType, customizations *blueprint.Customizations, option
 		Format:   osbuild.TarArchiveFormatOldgnu,
 		RootNode: osbuild.TarRootNodeOmit,
 		// import of the image to GCP fails in case the options below are enabled, which is the default
-		ACLs:    common.BoolToPtr(false),
-		SELinux: common.BoolToPtr(false),
-		Xattrs:  common.BoolToPtr(false),
+		ACLs:    common.ToPtr(false),
+		SELinux: common.ToPtr(false),
+		Xattrs:  common.ToPtr(false),
 	})
 	pipelines = append(pipelines, *archivePipeline)
 
@@ -392,7 +392,7 @@ func osPipeline(t *imageType,
 	if pt == nil || pt.FindMountable("/boot") == nil {
 		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 	} else {
-		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.StringToPtr("")}))
+		p.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.ToPtr("")}))
 	}
 
 	if len(containers) > 0 {

@@ -146,20 +146,20 @@ var (
 // default EC2 images config (common for all architectures)
 func baseEc2ImageConfig() *distro.ImageConfig {
 	return &distro.ImageConfig{
-		Locale:   common.StringToPtr("en_US.UTF-8"),
-		Timezone: common.StringToPtr("UTC"),
+		Locale:   common.ToPtr("en_US.UTF-8"),
+		Timezone: common.ToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Servers: []osbuild.ChronyConfigServer{
 				{
 					Hostname: "169.254.169.123",
-					Prefer:   common.BoolToPtr(true),
-					Iburst:   common.BoolToPtr(true),
-					Minpoll:  common.IntToPtr(4),
-					Maxpoll:  common.IntToPtr(4),
+					Prefer:   common.ToPtr(true),
+					Iburst:   common.ToPtr(true),
+					Minpoll:  common.ToPtr(4),
+					Maxpoll:  common.ToPtr(4),
 				},
 			},
 			// empty string will remove any occurrences of the option from the configuration
-			LeapsecTz: common.StringToPtr(""),
+			LeapsecTz: common.ToPtr(""),
 		},
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
@@ -179,7 +179,7 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 			"reboot.target",
 			"tuned",
 		},
-		DefaultTarget: common.StringToPtr("multi-user.target"),
+		DefaultTarget: common.ToPtr("multi-user.target"),
 		Sysconfig: []*osbuild.SysconfigStageOptions{
 			{
 				Kernel: &osbuild.SysconfigKernelOptions{
@@ -195,11 +195,11 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 						"eth0": {
 							Device:    "eth0",
 							Bootproto: osbuild.IfcfgBootprotoDHCP,
-							OnBoot:    common.BoolToPtr(true),
+							OnBoot:    common.ToPtr(true),
 							Type:      osbuild.IfcfgTypeEthernet,
-							UserCtl:   common.BoolToPtr(true),
-							PeerDNS:   common.BoolToPtr(true),
-							IPv6Init:  common.BoolToPtr(false),
+							UserCtl:   common.ToPtr(true),
+							PeerDNS:   common.ToPtr(true),
+							IPv6Init:  common.ToPtr(false),
 						},
 					},
 				},
@@ -211,7 +211,7 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 				Config: osbuild.SystemdLogindConfigDropin{
 
 					Login: osbuild.SystemdLogindConfigLoginSection{
-						NAutoVTs: common.IntToPtr(0),
+						NAutoVTs: common.ToPtr(0),
 					},
 				},
 			},
@@ -268,7 +268,7 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
-				PasswordAuthentication: common.BoolToPtr(false),
+				PasswordAuthentication: common.ToPtr(false),
 			},
 		},
 	}
@@ -280,7 +280,7 @@ func defaultEc2ImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
 		ic = appendRHSM(ic)
 		// Disable RHSM redhat.repo management
 		rhsmConf := ic.RHSMConfig[distro.RHSMConfigNoSubscription]
-		rhsmConf.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{ManageRepos: common.BoolToPtr(false)}
+		rhsmConf.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{ManageRepos: common.ToPtr(false)}
 		ic.RHSMConfig[distro.RHSMConfigNoSubscription] = rhsmConf
 	}
 	return ic
@@ -455,7 +455,7 @@ func appendRHSM(ic *distro.ImageConfig) *distro.ImageConfig {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// Don't disable RHSM redhat.repo management on the AMI
 					// image, which is BYOS and does not use RHUI for content.
@@ -470,7 +470,7 @@ func appendRHSM(ic *distro.ImageConfig) *distro.ImageConfig {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user
 					// explicitly request the system to be subscribed

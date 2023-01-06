@@ -127,7 +127,7 @@ func nginxConfigStageOptions(path, htmlRoot, listen string) *osbuild.NginxConfig
 	cfg := &osbuild.NginxConfig{
 		Listen: listen,
 		Root:   htmlRoot,
-		Daemon: common.BoolToPtr(false),
+		Daemon: common.ToPtr(false),
 		PID:    "/tmp/nginx.pid",
 	}
 	return &osbuild.NginxConfigStageOptions{

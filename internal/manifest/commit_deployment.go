@@ -183,7 +183,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		userOptions := &osbuild.UsersStageOptions{
 			Users: map[string]osbuild.UsersStageOptionsUser{
 				"root": {
-					Password: common.StringToPtr("!locked"), // this is treated as crypted and locks/disables the password
+					Password: common.ToPtr("!locked"), // this is treated as crypted and locks/disables the password
 				},
 			},
 		}

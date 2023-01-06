@@ -546,7 +546,7 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 			},
 		},
 		Customizations: &blueprint.Customizations{
-			Hostname: common.StringToPtr("custombase"),
+			Hostname: common.ToPtr("custombase"),
 			Kernel: &blueprint.KernelCustomization{
 				Append: "nosmt=force",
 			},
@@ -556,12 +556,12 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 			User: []blueprint.UserCustomization{
 				blueprint.UserCustomization{
 					Name:        "admin",
-					Description: common.StringToPtr("Widget admin account"),
-					Password:    common.StringToPtr("$6$CHO2$3rN8eviE2t50lmVyBYihTgVRHcaecmeCk31LeOUleVK/R/aeWVHVZDi26zAH.o0ywBKH9Tc0/wm7sW/q39uyd1"),
-					Home:        common.StringToPtr("/srv/widget/"),
-					Shell:       common.StringToPtr("/usr/bin/bash"),
+					Description: common.ToPtr("Widget admin account"),
+					Password:    common.ToPtr("$6$CHO2$3rN8eviE2t50lmVyBYihTgVRHcaecmeCk31LeOUleVK/R/aeWVHVZDi26zAH.o0ywBKH9Tc0/wm7sW/q39uyd1"),
+					Home:        common.ToPtr("/srv/widget/"),
+					Shell:       common.ToPtr("/usr/bin/bash"),
 					Groups:      []string{"widget", "users", "students"},
-					UID:         common.IntToPtr(1200),
+					UID:         common.ToPtr(1200),
 				},
 			},
 			Group: []blueprint.GroupCustomization{
@@ -573,12 +573,12 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 				},
 			},
 			Timezone: &blueprint.TimezoneCustomization{
-				Timezone:   common.StringToPtr("US/Eastern"),
+				Timezone:   common.ToPtr("US/Eastern"),
 				NTPServers: []string{"0.north-america.pool.ntp.org", "1.north-america.pool.ntp.org"},
 			},
 			Locale: &blueprint.LocaleCustomization{
 				Languages: []string{"en_US.UTF-8"},
-				Keyboard:  common.StringToPtr("us"),
+				Keyboard:  common.ToPtr("us"),
 			},
 			Firewall: &blueprint.FirewallCustomization{
 				Ports: []string{"22:tcp", "80:tcp", "imap:tcp", "53:tcp", "53:udp"},

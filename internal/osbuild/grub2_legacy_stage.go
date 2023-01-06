@@ -107,7 +107,7 @@ func (GRUB2LegacyStageOptions) isStageOptions() {}
 func MakeGrub2MenuEntries(id string, kernelVer string, product GRUB2Product, rescue bool) []GRUB2MenuEntry {
 	entries := []GRUB2MenuEntry{
 		{
-			Default: common.BoolToPtr(true),
+			Default: common.ToPtr(true),
 			Id:      id,
 			Product: product,
 			Kernel:  kernelVer,

@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewMkfsStage(t *testing.T) {
@@ -13,7 +14,7 @@ func TestNewMkfsStage(t *testing.T) {
 		Filename:   "file.img",
 		Start:      0,
 		Size:       1024,
-		SectorSize: common.Uint64ToPtr(512),
+		SectorSize: common.ToPtr(uint64(512)),
 	}
 	device := NewLoopbackDevice(&devOpts)
 
@@ -48,7 +49,7 @@ func TestNewMkfsStage(t *testing.T) {
 	fatOptions := &MkfsFATStageOptions{
 		VolID:   "7B7795E7",
 		Label:   "test",
-		FATSize: common.IntToPtr(12),
+		FATSize: common.ToPtr(12),
 	}
 	mkfat := NewMkfsFATStage(fatOptions, devices)
 	mkfatExpected := &Stage{
