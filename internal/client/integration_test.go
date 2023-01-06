@@ -1,6 +1,7 @@
 // Package client - integration_test contains functions to setup integration tests
 // Copyright (C) 2020 by Red Hat, Inc.
 
+//go:build integration
 // +build integration
 
 package client
