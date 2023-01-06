@@ -60,7 +60,7 @@ var (
 		mimeType:    "application/xz",
 		packageSets: nil,
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.StringToPtr("en_US.UTF-8"),
+			Locale: common.ToPtr("en_US.UTF-8"),
 		},
 		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
@@ -89,7 +89,7 @@ var (
 			installerPkgsKey: edgeInstallerPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale:          common.StringToPtr("en_US.UTF-8"),
+			Locale:          common.ToPtr("en_US.UTF-8"),
 			EnabledServices: edgeServices,
 		},
 		rpmOstree:        true,

@@ -3,8 +3,9 @@ package disk
 import (
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewPathTrieFromMap(t *testing.T) {
@@ -24,59 +25,59 @@ func TestNewPathTrieFromMap(t *testing.T) {
 		},
 		{
 			entries: map[string]interface{}{
-				"/": common.IntToPtr(1),
+				"/": common.ToPtr(1),
 			},
 			trie: &PathTrie{
 				Name:    []string{},
-				Payload: common.IntToPtr(1),
+				Payload: common.ToPtr(1),
 			},
 		},
 		{
 			entries: map[string]interface{}{
-				"/":                            common.IntToPtr(1),
-				"/var":                         common.IntToPtr(2),
-				"/var/lib/chrony":              common.IntToPtr(3),
-				"/var/lib/chrony/logs":         common.IntToPtr(4),
-				"/var/lib/osbuild":             common.IntToPtr(5),
-				"/var/lib/osbuild/store/cache": common.IntToPtr(6),
-				"/boot":                        common.IntToPtr(7),
-				"/boot/efi":                    common.IntToPtr(8),
+				"/":                            common.ToPtr(1),
+				"/var":                         common.ToPtr(2),
+				"/var/lib/chrony":              common.ToPtr(3),
+				"/var/lib/chrony/logs":         common.ToPtr(4),
+				"/var/lib/osbuild":             common.ToPtr(5),
+				"/var/lib/osbuild/store/cache": common.ToPtr(6),
+				"/boot":                        common.ToPtr(7),
+				"/boot/efi":                    common.ToPtr(8),
 			},
 			trie: &PathTrie{
 				Name:    []string{},
-				Payload: common.IntToPtr(1),
+				Payload: common.ToPtr(1),
 				Paths: []*PathTrie{
 					{
 						Name:    []string{"boot"},
-						Payload: common.IntToPtr(7),
+						Payload: common.ToPtr(7),
 						Paths: []*PathTrie{
 							{
 								Name:    []string{"efi"},
-								Payload: common.IntToPtr(8),
+								Payload: common.ToPtr(8),
 							},
 						},
 					},
 					{
 						Name:    []string{"var"},
-						Payload: common.IntToPtr(2),
+						Payload: common.ToPtr(2),
 						Paths: []*PathTrie{
 							{
 								Name:    []string{"lib", "chrony"},
-								Payload: common.IntToPtr(3),
+								Payload: common.ToPtr(3),
 								Paths: []*PathTrie{
 									{
 										Name:    []string{"logs"},
-										Payload: common.IntToPtr(4),
+										Payload: common.ToPtr(4),
 									},
 								},
 							},
 							{
 								Name:    []string{"lib", "osbuild"},
-								Payload: common.IntToPtr(5),
+								Payload: common.ToPtr(5),
 								Paths: []*PathTrie{
 									{
 										Name:    []string{"store", "cache"},
-										Payload: common.IntToPtr(6),
+										Payload: common.ToPtr(6),
 									},
 								},
 							},

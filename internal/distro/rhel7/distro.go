@@ -32,8 +32,8 @@ const (
 
 // RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
-	Timezone: common.StringToPtr("America/New_York"),
-	Locale:   common.StringToPtr("en_US.UTF-8"),
+	Timezone: common.ToPtr("America/New_York"),
+	Locale:   common.ToPtr("en_US.UTF-8"),
 	GPGKeyFiles: []string{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
 	},

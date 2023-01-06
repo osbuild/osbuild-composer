@@ -16,7 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-//struct for sharing state between tests
+// struct for sharing state between tests
 type storeTest struct {
 	suite.Suite
 	dir              string
@@ -41,7 +41,7 @@ type storeTest struct {
 	myPackages       []rpmmd.PackageSpec
 }
 
-//func to initialize some default values before the suite is ran
+// func to initialize some default values before the suite is ran
 func (suite *storeTest) SetupSuite() {
 	suite.myRepoConfig = []rpmmd.RepoConfig{rpmmd.RepoConfig{
 		Name:       "testRepo",
@@ -93,7 +93,7 @@ func (suite *storeTest) SetupSuite() {
 			{
 				Source:    "https://registry.example.com/container",
 				Name:      "example-container",
-				TLSVerify: common.BoolToPtr(true),
+				TLSVerify: common.ToPtr(true),
 			},
 		},
 		Customizations: &suite.myCustomizations,
@@ -137,7 +137,7 @@ func (suite *storeTest) SetupSuite() {
 
 }
 
-//setup before each test
+// setup before each test
 func (suite *storeTest) SetupTest() {
 	distro := test_distro.New()
 	_, err := distro.GetArch(test_distro.TestArchName)
@@ -153,7 +153,7 @@ func (suite *storeTest) TestRandomSHA1String() {
 	suite.Len(hash, 40)
 }
 
-//Check initial state of fields
+// Check initial state of fields
 func (suite *storeTest) TestNewEmpty() {
 	suite.Empty(suite.myStore.blueprints)
 	suite.Empty(suite.myStore.workspace)
@@ -164,7 +164,7 @@ func (suite *storeTest) TestNewEmpty() {
 	suite.Equal(&suite.dir, suite.myStore.stateDir)
 }
 
-//Push a blueprint
+// Push a blueprint
 func (suite *storeTest) TestPushBlueprint() {
 	suite.myStore.PushBlueprint(suite.myBP, "testing commit")
 	suite.Equal(suite.myBP, suite.myStore.blueprints["testBP"])
@@ -173,13 +173,13 @@ func (suite *storeTest) TestPushBlueprint() {
 	suite.Equal("0.0.2", suite.myStore.blueprints["testBP"].Version)
 }
 
-//List the blueprint
+// List the blueprint
 func (suite *storeTest) TestListBlueprints() {
 	suite.myStore.blueprints["testBP"] = suite.myBP
 	suite.Equal([]string{"testBP"}, suite.myStore.ListBlueprints())
 }
 
-//Push a blueprint to workspace
+// Push a blueprint to workspace
 func (suite *storeTest) TestPushBlueprintToWorkspace() {
 	suite.NoError(suite.myStore.PushBlueprintToWorkspace(suite.myBP))
 	suite.Equal(suite.myBP, suite.myStore.workspace["testBP"])

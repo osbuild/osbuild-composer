@@ -67,7 +67,7 @@ func mkGCERHUIImageType(rhsm bool) imageType {
 
 func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 	ic := &distro.ImageConfig{
-		Timezone: common.StringToPtr("UTC"),
+		Timezone: common.ToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Servers: []osbuild.ChronyConfigServer{{Hostname: "metadata.google.internal"}},
 		},
@@ -83,8 +83,8 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 			"sshd-keygen@",
 			"reboot.target",
 		},
-		DefaultTarget: common.StringToPtr("multi-user.target"),
-		Locale:        common.StringToPtr("en_US.UTF-8"),
+		DefaultTarget: common.ToPtr("multi-user.target"),
+		Locale:        common.ToPtr("en_US.UTF-8"),
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
 		},
@@ -100,7 +100,7 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 		DNFAutomaticConfig: &osbuild.DNFAutomaticConfigStageOptions{
 			Config: &osbuild.DNFAutomaticConfig{
 				Commands: &osbuild.DNFAutomaticConfigCommands{
-					ApplyUpdates: common.BoolToPtr(true),
+					ApplyUpdates: common.ToPtr(true),
 					UpgradeType:  osbuild.DNFAutomaticUpgradeTypeSecurity,
 				},
 			},
@@ -113,11 +113,11 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 						Id:      "google-compute-engine",
 						Name:    "Google Compute Engine",
 						BaseURL: []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable"},
-						Enabled: common.BoolToPtr(true),
+						Enabled: common.ToPtr(true),
 						// TODO: enable GPG check once Google stops using SHA-1 in their keys
 						// https://issuetracker.google.com/issues/223626963
-						GPGCheck:     common.BoolToPtr(false),
-						RepoGPGCheck: common.BoolToPtr(false),
+						GPGCheck:     common.ToPtr(false),
+						RepoGPGCheck: common.ToPtr(false),
 						GPGKey: []string{
 							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
 							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
@@ -128,8 +128,8 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
-				PasswordAuthentication: common.BoolToPtr(false),
-				ClientAliveInterval:    common.IntToPtr(420),
+				PasswordAuthentication: common.ToPtr(false),
+				ClientAliveInterval:    common.ToPtr(420),
 				PermitRootLogin:        osbuild.PermitRootLoginValueNo,
 			},
 		},
@@ -153,7 +153,7 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 			ConfigScope: osbuild.GcpGuestAgentConfigScopeDistro,
 			Config: &osbuild.GcpGuestAgentConfig{
 				InstanceSetup: &osbuild.GcpGuestAgentConfigInstanceSetup{
-					SetBotoConfig: common.BoolToPtr(false),
+					SetBotoConfig: common.ToPtr(false),
 				},
 			},
 		},
@@ -164,7 +164,7 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 			distro.RHSMConfigNoSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// Don't disable RHSM redhat.repo management on the GCE
 					// image, which is BYOS and does not use RHUI for content.
@@ -178,7 +178,7 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 			distro.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user
 					// explicitly request the system to be subscribed
@@ -195,17 +195,17 @@ func defaultGceRhuiImageConfig(rhsm bool) *distro.ImageConfig {
 			distro.RHSMConfigNoSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.BoolToPtr(false),
+						ManageRepos: common.ToPtr(false),
 					},
 				},
 			},
 			distro.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user
 					// explicitly request the system to be subscribed

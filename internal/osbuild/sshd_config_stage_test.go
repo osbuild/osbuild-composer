@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewSshdConfigStage(t *testing.T) {
@@ -22,9 +23,9 @@ func TestJsonSshdConfigStage(t *testing.T) {
 	// First test that the JSON can be parsed into the expected structure.
 	expectedOptions := SshdConfigStageOptions{
 		Config: SshdConfigConfig{
-			PasswordAuthentication:          common.BoolToPtr(false),
-			ChallengeResponseAuthentication: common.BoolToPtr(false),
-			ClientAliveInterval:             common.IntToPtr(180),
+			PasswordAuthentication:          common.ToPtr(false),
+			ChallengeResponseAuthentication: common.ToPtr(false),
+			ClientAliveInterval:             common.ToPtr(180),
 			PermitRootLogin:                 PermitRootLoginValueProhibitPassword,
 		},
 	}
@@ -45,7 +46,7 @@ func TestJsonSshdConfigStage(t *testing.T) {
 	// for those parameters that the user didn't specify.
 	inputOptions = SshdConfigStageOptions{
 		Config: SshdConfigConfig{
-			PasswordAuthentication: common.BoolToPtr(true),
+			PasswordAuthentication: common.ToPtr(true),
 		},
 	}
 	expectedString := `{"config":{"PasswordAuthentication":true}}`

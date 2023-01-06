@@ -49,7 +49,7 @@ func selinuxStageOptions(labelcp bool) *osbuild.SELinuxStageOptions {
 			"/usr/bin/tar": "system_u:object_r:install_exec_t:s0",
 		}
 	} else {
-		options.ForceAutorelabel = common.BoolToPtr(true)
+		options.ForceAutorelabel = common.ToPtr(true)
 	}
 	return options
 }

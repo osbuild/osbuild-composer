@@ -3,8 +3,9 @@ package osbuild
 import (
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewSkopeoSource(t *testing.T) {
@@ -13,14 +14,14 @@ func TestNewSkopeoSource(t *testing.T) {
 
 	source := NewSkopeoSource()
 
-	source.AddItem("name", testDigest, imageID, common.BoolToPtr(false))
+	source.AddItem("name", testDigest, imageID, common.ToPtr(false))
 	assert.Len(t, source.Items, 1)
 
 	item, ok := source.Items[imageID]
 	assert.True(t, ok)
 	assert.Equal(t, item.Image.Name, "name")
 	assert.Equal(t, item.Image.Digest, testDigest)
-	assert.Equal(t, item.Image.TLSVerify, common.BoolToPtr(false))
+	assert.Equal(t, item.Image.TLSVerify, common.ToPtr(false))
 
 	testDigest = "sha256:d49eebefb6c7ce5505594bef652bd4adc36f413861bd44209d9b9486310b1264"
 	imageID = "sha256:d2ab8fea7f08a22f03b30c13c6ea443121f25e87202a7496e93736efa6fe345a"

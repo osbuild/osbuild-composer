@@ -103,7 +103,7 @@ var qcow2ImgType = imageType{
 		osPkgsKey:    qcow2CommonPackageSet,
 	},
 	defaultImageConfig: &distro.ImageConfig{
-		DefaultTarget: common.StringToPtr("multi-user.target"),
+		DefaultTarget: common.ToPtr("multi-user.target"),
 		Sysconfig: []*osbuild.SysconfigStageOptions{
 			{
 				Kernel: &osbuild.SysconfigKernelOptions{
@@ -119,11 +119,11 @@ var qcow2ImgType = imageType{
 						"eth0": {
 							Device:    "eth0",
 							Bootproto: osbuild.IfcfgBootprotoDHCP,
-							OnBoot:    common.BoolToPtr(true),
+							OnBoot:    common.ToPtr(true),
 							Type:      osbuild.IfcfgTypeEthernet,
-							UserCtl:   common.BoolToPtr(true),
-							PeerDNS:   common.BoolToPtr(true),
-							IPv6Init:  common.BoolToPtr(false),
+							UserCtl:   common.ToPtr(true),
+							PeerDNS:   common.ToPtr(true),
+							IPv6Init:  common.ToPtr(false),
 						},
 					},
 				},

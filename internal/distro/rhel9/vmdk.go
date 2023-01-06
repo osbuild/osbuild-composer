@@ -14,7 +14,7 @@ var vmdkImgType = imageType{
 		osPkgsKey: vmdkCommonPackageSet,
 	},
 	defaultImageConfig: &distro.ImageConfig{
-		Locale: common.StringToPtr("en_US.UTF-8"),
+		Locale: common.ToPtr("en_US.UTF-8"),
 	},
 	kernelOptions:       "ro net.ifnames=0",
 	bootable:            true,

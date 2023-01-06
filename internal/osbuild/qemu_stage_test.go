@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewQemuStage(t *testing.T) {
@@ -138,13 +139,13 @@ func TestNewQEMUStageOptions(t *testing.T) {
 			Filename: "image.vpc",
 			Format:   QEMUFormatVPC,
 			FormatOptions: VPCOptions{
-				ForceSize: common.BoolToPtr(false),
+				ForceSize: common.ToPtr(false),
 			},
 			ExpectedOptions: &QEMUStageOptions{
 				Filename: "image.vpc",
 				Format: VPCOptions{
 					Type:      QEMUFormatVPC,
-					ForceSize: common.BoolToPtr(false),
+					ForceSize: common.ToPtr(false),
 				},
 			},
 		},
