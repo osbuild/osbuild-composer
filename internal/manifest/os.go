@@ -50,6 +50,13 @@ type OSCustomizations struct {
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
 
+	// KernelOptionsBootloader controls whether kernel command line options
+	// should be specified in the bootloader configuration. Otherwise they are
+	// specified in /etc/kernel/cmdline (default).
+	// This should only be used for RHEL 8 and CentOS 8 images that use grub
+	// (non s390x).  Newer releases (9+) should keep this disabled.
+	KernelOptionsBootloader bool
+
 	GPGKeyFiles      []string
 	Language         string
 	Keyboard         *string
@@ -489,7 +496,9 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if pt := p.PartitionTable; pt != nil {
 		kernelOptions := osbuild.GenImageKernelOptions(p.PartitionTable)
 		kernelOptions = append(kernelOptions, p.KernelOptionsAppend...)
-		pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
+		if !p.KernelOptionsBootloader {
+			pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
+		}
 
 		pipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
 
@@ -498,7 +507,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 		case platform.ARCH_S390X:
 			bootloader = osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 		default:
-			options := osbuild.NewGrub2StageOptionsUnified(pt,
+			var options *osbuild.GRUB2StageOptions
+			options = osbuild.NewGrub2StageOptionsUnified(pt,
 				p.kernelVer,
 				p.platform.GetUEFIVendor() != "",
 				p.platform.GetBIOSPlatform(),
@@ -512,6 +522,13 @@ func (p *OS) serialize() osbuild.Pipeline {
 				}
 
 				options.Config = cfg
+			}
+			if p.KernelOptionsBootloader {
+				options.WriteCmdLine = nil
+				if options.UEFI != nil {
+					options.UEFI.Unified = false
+				}
+				options.KernelOptions = strings.Join(kernelOptions, " ")
 			}
 			bootloader = osbuild.NewGRUB2Stage(options)
 		}

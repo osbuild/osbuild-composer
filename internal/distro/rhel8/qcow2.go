@@ -14,8 +14,7 @@ func qcow2ImgType(rd distribution) imageType {
 		mimeType:      "application/x-qemu-disk",
 		kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    qcow2CommonPackageSet,
+			osPkgsKey: qcow2CommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -25,7 +24,7 @@ func qcow2ImgType(rd distribution) imageType {
 		},
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           qcow2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
@@ -56,8 +55,7 @@ func openstackImgType() imageType {
 		filename: "disk.qcow2",
 		mimeType: "application/x-qemu-disk",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    openstackCommonPackageSet,
+			osPkgsKey: openstackCommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -65,7 +63,7 @@ func openstackImgType() imageType {
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
 		defaultSize:         4 * common.GibiByte,
-		pipelines:           openstackPipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
