@@ -11,7 +11,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/platform"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
@@ -215,48 +214,6 @@ func newDistro(name string, minor int) *distribution {
 		bootType: distro.LegacyBootType,
 	}
 
-	tarImgType := imageType{
-		name:     "tar",
-		filename: "root.tar.xz",
-		mimeType: "application/x-tar",
-		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey: func(t *imageType) rpmmd.PackageSet {
-				return rpmmd.PackageSet{
-					Include: []string{"policycoreutils", "selinux-policy-targeted"},
-					Exclude: []string{"rng-tools"},
-				}
-			},
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
-		pipelines:        tarPipelines,
-		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "root-tar"},
-		exports:          []string{"root-tar"},
-	}
-	imageInstaller := imageType{
-		name:     "image-installer",
-		filename: "installer.iso",
-		mimeType: "application/x-iso9660-image",
-		packageSets: map[string]packageSetFunc{
-			buildPkgsKey:     anacondaBuildPackageSet,
-			osPkgsKey:        bareMetalPackageSet,
-			installerPkgsKey: anacondaPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
-		rpmOstree:        false,
-		bootISO:          true,
-		bootable:         true,
-		pipelines:        imageInstallerPipelines,
-		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
-		exports:          []string{"bootiso"},
-	}
-
 	ociImgType := qcow2ImgType(rd)
 	ociImgType.name = "oci"
 
@@ -321,7 +278,7 @@ func newDistro(name string, minor int) *distribution {
 		edgeOCIImgType(rd),
 		edgeCommitImgType(rd),
 		edgeInstallerImgType(rd),
-		imageInstaller,
+		imageInstaller(),
 	)
 
 	gceX86Platform := &platform.X86{
@@ -350,7 +307,7 @@ func newDistro(name string, minor int) *distribution {
 
 	x86_64.addImageTypes(
 		&platform.X86{},
-		tarImgType,
+		tarImgType(),
 	)
 
 	aarch64.addImageTypes(
@@ -376,7 +333,7 @@ func newDistro(name string, minor int) *distribution {
 
 	aarch64.addImageTypes(
 		&platform.Aarch64{},
-		tarImgType,
+		tarImgType(),
 	)
 
 	bareMetalAarch64Platform := &platform.Aarch64{
@@ -389,7 +346,7 @@ func newDistro(name string, minor int) *distribution {
 		edgeOCIImgType(rd),
 		edgeCommitImgType(rd),
 		edgeInstallerImgType(rd),
-		imageInstaller,
+		imageInstaller(),
 	)
 
 	rawAarch64Platform := &platform.Aarch64{
@@ -417,7 +374,7 @@ func newDistro(name string, minor int) *distribution {
 
 	ppc64le.addImageTypes(
 		&platform.PPC64LE{},
-		tarImgType,
+		tarImgType(),
 	)
 
 	s390x.addImageTypes(
@@ -433,7 +390,7 @@ func newDistro(name string, minor int) *distribution {
 
 	s390x.addImageTypes(
 		&platform.S390X{},
-		tarImgType,
+		tarImgType(),
 	)
 
 	azureX64Platform := &platform.X86{
