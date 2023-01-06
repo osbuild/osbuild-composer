@@ -241,27 +241,6 @@ func s390xLegacyBootPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 }
 
-// OS package sets
-
-func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"@core",
-			"chrony",
-			"cloud-init",
-			"firewalld",
-			"langpacks-en",
-			"open-vm-tools",
-			"selinux-policy-targeted",
-		},
-		Exclude: []string{
-			"dracut-config-rescue",
-			"rng-tools",
-		},
-	}.Append(bootPackageSet(t))
-
-}
-
 // common GCE image
 func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
