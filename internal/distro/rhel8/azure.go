@@ -1,16 +1,111 @@
 package rhel8
 
 import (
-	"math/rand"
-
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
+
+const defaultAzureKernelOptions = "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
+
+func azureRhuiImgType() imageType {
+	return imageType{
+		name:        "azure-rhui",
+		filename:    "disk.vhd.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: azureRhuiPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
+		defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(defaultAzureImageConfig),
+		kernelOptions:       defaultAzureKernelOptions,
+		bootable:            true,
+		defaultSize:         64 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc", "xz"},
+		exports:             []string{"xz"},
+		basePartitionTables: azureRhuiBasePartitionTables,
+	}
+}
+
+func azureSapImgType(rd distribution) imageType {
+	return imageType{
+		name:        "azure-sap-rhui",
+		filename:    "disk.vhd.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: azureSapPackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
+		defaultImageConfig:  SapAzureImageConfig(rd),
+		kernelOptions:       defaultAzureKernelOptions,
+		bootable:            true,
+		defaultSize:         64 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc", "xz"},
+		exports:             []string{"xz"},
+		basePartitionTables: azureRhuiBasePartitionTables,
+	}
+}
+
+func azureByosImgType() imageType {
+	return imageType{
+		name:     "vhd",
+		filename: "disk.vhd",
+		mimeType: "application/x-vhd",
+		packageSets: map[string]packageSetFunc{
+			// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
+			osPkgsKey: azurePackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
+		defaultImageConfig:  defaultAzureByosImageConfig.InheritFrom(defaultAzureImageConfig),
+		kernelOptions:       defaultAzureKernelOptions,
+		bootable:            true,
+		defaultSize:         4 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc"},
+		exports:             []string{"vpc"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+}
+
+// Azure non-RHEL image type
+func azureImgType() imageType {
+	return imageType{
+		name:     "vhd",
+		filename: "disk.vhd",
+		mimeType: "application/x-vhd",
+		packageSets: map[string]packageSetFunc{
+			// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
+			osPkgsKey: azurePackageSet,
+		},
+		packageSetChains: map[string][]string{
+			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+		},
+		defaultImageConfig:  defaultAzureImageConfig,
+		kernelOptions:       defaultAzureKernelOptions,
+		bootable:            true,
+		defaultSize:         4 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc"},
+		exports:             []string{"vpc"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+}
 
 // PACKAGE SETS
 
@@ -252,55 +347,6 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 	},
 }
 
-// PIPELINE GENERATORS
-
-func vhdPipelines(compress bool) pipelinesFunc {
-	return func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-		pipelines := make([]osbuild.Pipeline, 0)
-		pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-		partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-		if err != nil {
-			return nil, err
-		}
-
-		treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
-		if err != nil {
-			return nil, err
-		}
-		pipelines = append(pipelines, *treePipeline)
-
-		diskfile := "disk.img"
-		kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-		imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-		pipelines = append(pipelines, *imagePipeline)
-		if err != nil {
-			return nil, err
-		}
-
-		var qemufile string
-		if compress {
-			qemufile = "disk.vhd"
-		} else {
-			qemufile = t.filename
-		}
-
-		qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, qemufile, osbuild.QEMUFormatVPC, nil)
-		pipelines = append(pipelines, *qemuPipeline)
-
-		if compress {
-			lastPipeline := pipelines[len(pipelines)-1]
-			pipelines = append(pipelines, *xzArchivePipeline(lastPipeline.Name, qemufile, t.Filename()))
-		}
-
-		return pipelines, nil
-	}
-}
-
-// IMAGE DEFINITIONS
-
-var defaultAzureKernelOptions = "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
-
 var defaultAzureImageConfig = &distro.ImageConfig{
 	Timezone: common.ToPtr("Etc/UTC"),
 	Locale:   common.ToPtr("en_US.UTF-8"),
@@ -452,30 +498,6 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 	DefaultTarget: common.ToPtr("multi-user.target"),
 }
 
-// Azure non-RHEL image type
-var azureImgType = imageType{
-	name:     "vhd",
-	filename: "disk.vhd",
-	mimeType: "application/x-vhd",
-	packageSets: map[string]packageSetFunc{
-		// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
-		buildPkgsKey: ec2BuildPackageSet,
-		osPkgsKey:    azurePackageSet,
-	},
-	packageSetChains: map[string][]string{
-		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-	},
-	defaultImageConfig:  defaultAzureImageConfig,
-	kernelOptions:       defaultAzureKernelOptions,
-	bootable:            true,
-	defaultSize:         4 * common.GibiByte,
-	pipelines:           vhdPipelines(false),
-	buildPipelines:      []string{"build"},
-	payloadPipelines:    []string{"os", "image", "vpc"},
-	exports:             []string{"vpc"},
-	basePartitionTables: defaultBasePartitionTables,
-}
-
 // Diff of the default Image Config compare to the `defaultAzureImageConfig`
 var defaultAzureByosImageConfig = &distro.ImageConfig{
 	GPGKeyFiles: []string{
@@ -506,30 +528,6 @@ var defaultAzureByosImageConfig = &distro.ImageConfig{
 			},
 		},
 	},
-}
-
-// Azure BYOS image type
-var azureByosImgType = imageType{
-	name:     "vhd",
-	filename: "disk.vhd",
-	mimeType: "application/x-vhd",
-	packageSets: map[string]packageSetFunc{
-		// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
-		buildPkgsKey: ec2BuildPackageSet,
-		osPkgsKey:    azurePackageSet,
-	},
-	packageSetChains: map[string][]string{
-		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-	},
-	defaultImageConfig:  defaultAzureByosImageConfig.InheritFrom(defaultAzureImageConfig),
-	kernelOptions:       defaultAzureKernelOptions,
-	bootable:            true,
-	defaultSize:         4 * common.GibiByte,
-	pipelines:           vhdPipelines(false),
-	buildPipelines:      []string{"build"},
-	payloadPipelines:    []string{"os", "image", "vpc"},
-	exports:             []string{"vpc"},
-	basePartitionTables: defaultBasePartitionTables,
 }
 
 // Diff of the default Image Config compare to the `defaultAzureImageConfig`
@@ -566,54 +564,6 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 	},
 }
 
-var azureRhuiImgType = imageType{
-	name:     "azure-rhui",
-	filename: "disk.vhd.xz",
-	mimeType: "application/xz",
-	packageSets: map[string]packageSetFunc{
-		// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
-		buildPkgsKey: ec2BuildPackageSet,
-		osPkgsKey:    azureRhuiPackageSet,
-	},
-	packageSetChains: map[string][]string{
-		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-	},
-	defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(defaultAzureImageConfig),
-	kernelOptions:       defaultAzureKernelOptions,
-	bootable:            true,
-	defaultSize:         64 * common.GibiByte,
-	pipelines:           vhdPipelines(true),
-	buildPipelines:      []string{"build"},
-	payloadPipelines:    []string{"os", "image", "vpc", "archive"},
-	exports:             []string{"archive"},
-	basePartitionTables: azureRhuiBasePartitionTables,
-}
-
 func SapAzureImageConfig(rd distribution) *distro.ImageConfig {
 	return SapImageConfig(rd).InheritFrom(defaultAzureImageConfig)
-}
-
-func azureSapImgType(rd distribution) imageType {
-	return imageType{
-		name:     "azure-sap-rhui",
-		filename: "disk.vhd.xz",
-		mimeType: "application/xz",
-		packageSets: map[string]packageSetFunc{
-			// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    azureSapPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
-		defaultImageConfig:  SapAzureImageConfig(rd),
-		kernelOptions:       defaultAzureKernelOptions,
-		bootable:            true,
-		defaultSize:         64 * common.GibiByte,
-		pipelines:           vhdPipelines(true),
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "vpc", "archive"},
-		exports:             []string{"archive"},
-		basePartitionTables: azureRhuiBasePartitionTables,
-	}
 }
