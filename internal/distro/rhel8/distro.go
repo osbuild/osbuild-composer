@@ -215,207 +215,6 @@ func newDistro(name string, minor int) *distribution {
 		bootType: distro.LegacyBootType,
 	}
 
-	// GCE BYOS image
-	defaultGceByosImageConfig := &distro.ImageConfig{
-		Timezone: common.ToPtr("UTC"),
-		TimeSynchronization: &osbuild.ChronyStageOptions{
-			Servers: []osbuild.ChronyConfigServer{{Hostname: "metadata.google.internal"}},
-		},
-		Firewall: &osbuild.FirewallStageOptions{
-			DefaultZone: "trusted",
-		},
-		EnabledServices: []string{
-			"sshd",
-			"rngd",
-			"dnf-automatic.timer",
-		},
-		DisabledServices: []string{
-			"sshd-keygen@",
-			"reboot.target",
-		},
-		DefaultTarget: common.ToPtr("multi-user.target"),
-		Locale:        common.ToPtr("en_US.UTF-8"),
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-		},
-		DNFConfig: []*osbuild.DNFConfigStageOptions{
-			{
-				Config: &osbuild.DNFConfig{
-					Main: &osbuild.DNFConfigMain{
-						IPResolve: "4",
-					},
-				},
-			},
-		},
-		DNFAutomaticConfig: &osbuild.DNFAutomaticConfigStageOptions{
-			Config: &osbuild.DNFAutomaticConfig{
-				Commands: &osbuild.DNFAutomaticConfigCommands{
-					ApplyUpdates: common.ToPtr(true),
-					UpgradeType:  osbuild.DNFAutomaticUpgradeTypeSecurity,
-				},
-			},
-		},
-		YUMRepos: []*osbuild.YumReposStageOptions{
-			{
-				Filename: "google-cloud.repo",
-				Repos: []osbuild.YumRepository{
-					{
-						Id:           "google-compute-engine",
-						Name:         "Google Compute Engine",
-						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"},
-						Enabled:      common.ToPtr(true),
-						GPGCheck:     common.ToPtr(true),
-						RepoGPGCheck: common.ToPtr(false),
-						GPGKey: []string{
-							"https://packages.cloud.google.com/yum/doc/yum-key.gpg",
-							"https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg",
-						},
-					},
-				},
-			},
-		},
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// Don't disable RHSM redhat.repo management on the GCE
-					// image, which is BYOS and does not use RHUI for content.
-					// Otherwise subscribing the system manually after booting
-					// it would result in empty redhat.repo. Without RHUI, such
-					// system would have no way to get Red Hat content, but
-					// enable the repo management manually, which would be very
-					// confusing.
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
-		SshdConfig: &osbuild.SshdConfigStageOptions{
-			Config: osbuild.SshdConfigConfig{
-				PasswordAuthentication: common.ToPtr(false),
-				ClientAliveInterval:    common.ToPtr(420),
-				PermitRootLogin:        osbuild.PermitRootLoginValueNo,
-			},
-		},
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					DefaultKernel: "kernel-core",
-					UpdateDefault: true,
-				},
-			},
-		},
-		Modprobe: []*osbuild.ModprobeStageOptions{
-			{
-				Filename: "blacklist-floppy.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("floppy"),
-				},
-			},
-		},
-		GCPGuestAgentConfig: &osbuild.GcpGuestAgentConfigOptions{
-			ConfigScope: osbuild.GcpGuestAgentConfigScopeDistro,
-			Config: &osbuild.GcpGuestAgentConfig{
-				InstanceSetup: &osbuild.GcpGuestAgentConfigInstanceSetup{
-					SetBotoConfig: common.ToPtr(false),
-				},
-			},
-		},
-	}
-
-	if rd.osVersion == "8.4" {
-		// NOTE(akoutsou): these are enabled in the package preset, but for
-		// some reason do not get enabled on 8.4.
-		// the reason is unknown and deeply myserious
-		defaultGceByosImageConfig.EnabledServices = append(defaultGceByosImageConfig.EnabledServices,
-			"google-oslogin-cache.timer",
-			"google-guest-agent.service",
-			"google-shutdown-scripts.service",
-			"google-startup-scripts.service",
-			"google-osconfig-agent.service",
-		)
-	}
-
-	gceImgType := imageType{
-		name:     "gce",
-		filename: "image.tar.gz",
-		mimeType: "application/gzip",
-		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    gcePackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
-		defaultImageConfig:  defaultGceByosImageConfig,
-		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
-		bootable:            true,
-		bootType:            distro.UEFIBootType,
-		defaultSize:         20 * common.GibiByte,
-		pipelines:           gcePipelines,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
-	defaultGceRhuiImageConfig := &distro.ImageConfig{
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.ToPtr(false),
-					},
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
-	}
-	defaultGceRhuiImageConfig = defaultGceRhuiImageConfig.InheritFrom(defaultGceByosImageConfig)
-
-	gceRhuiImgType := imageType{
-		name:     "gce-rhui",
-		filename: "image.tar.gz",
-		mimeType: "application/gzip",
-		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    gceRhuiPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
-		defaultImageConfig:  defaultGceRhuiImageConfig,
-		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
-		bootable:            true,
-		bootType:            distro.UEFIBootType,
-		defaultSize:         20 * common.GibiByte,
-		pipelines:           gcePipelines,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
 	tarImgType := imageType{
 		name:     "tar",
 		filename: "root.tar.xz",
@@ -535,7 +334,7 @@ func newDistro(name string, minor int) *distribution {
 
 	x86_64.addImageTypes(
 		gceX86Platform,
-		gceImgType,
+		gceImgType(rd),
 	)
 
 	x86_64.addImageTypes(
@@ -689,7 +488,7 @@ func newDistro(name string, minor int) *distribution {
 		}
 
 		// add GCE RHUI image to RHEL only
-		x86_64.addImageTypes(gceX86Platform, gceRhuiImgType)
+		x86_64.addImageTypes(gceX86Platform, gceRhuiImgType(rd))
 
 		// add s390x to RHEL distro only
 		rd.addArches(s390x)
