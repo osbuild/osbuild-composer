@@ -619,7 +619,7 @@ github.com/stretchr/testify/suite
 # github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635
 ## explicit
 github.com/syndtr/gocapability/capability
-# github.com/theupdateframework/go-tuf v0.3.1
+# github.com/theupdateframework/go-tuf v0.3.2
 ## explicit; go 1.18
 github.com/theupdateframework/go-tuf/encrypted
 # github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
