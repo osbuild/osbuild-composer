@@ -393,11 +393,7 @@ OSTree raw image:
   stage: test
   extends: OSTree
   rules:
-    # run only this edge test on nightly to have some testing for sign-off
-    # but still reduce duplication with virt-qe Jenkins and increase nightly
-    # pipelines stability
     - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
