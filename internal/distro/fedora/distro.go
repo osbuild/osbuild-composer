@@ -319,6 +319,24 @@ var (
 		payloadPipelines: []string{"os", "container"},
 		exports:          []string{"container"},
 	}
+
+	minimalrawImgType = imageType{
+		name:     "minimal-raw",
+		filename: "raw.img",
+		mimeType: "application/disk",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: minimalrpmPackageSet,
+		},
+		rpmOstree:           false,
+		kernelOptions:       defaultKernelOptions,
+		bootable:            true,
+		defaultSize:         2 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image"},
+		exports:             []string{"image"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
 )
 
 type distribution struct {
@@ -965,6 +983,24 @@ func newDistro(version int) distro.Distro {
 			UEFIVendor: "fedora",
 		},
 		iotRawImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+		},
+		minimalrawImgType,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+		},
+		minimalrawImgType,
 	)
 
 	s390x.addImageTypes(nil)

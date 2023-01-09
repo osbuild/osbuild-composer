@@ -165,6 +165,14 @@ func TestFilenameFromType(t *testing.T) {
 			args: args{"foobar"},
 			want: wantResult{wantErr: true},
 		},
+		{
+			name: "minimal-raw",
+			args: args{"minimal-raw"},
+			want: wantResult{
+				filename: "raw.img",
+				mimeType: "application/disk",
+			},
+		},
 	}
 	for _, dist := range fedoraFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
@@ -263,6 +271,7 @@ func TestImageType_Name(t *testing.T) {
 				"iot-raw-image",
 				"oci",
 				"image-installer",
+				"minimal-raw",
 			},
 		},
 		{
@@ -277,6 +286,7 @@ func TestImageType_Name(t *testing.T) {
 				"iot-installer",
 				"iot-raw-image",
 				"image-installer",
+				"minimal-raw",
 			},
 		},
 	}
@@ -438,6 +448,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"oci",
 				"container",
 				"image-installer",
+				"minimal-raw",
 			},
 		},
 		{
@@ -453,6 +464,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"oci",
 				"container",
 				"image-installer",
+				"minimal-raw",
 			},
 		},
 	}

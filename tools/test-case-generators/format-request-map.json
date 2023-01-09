@@ -1095,5 +1095,17 @@
       }
     },
     "overrides": {}
+  },
+  "minimal-raw": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "minimal-raw",
+      "repositories": [],
+      "filename": "raw.img",
+      "blueprint": {}
+    },
+    "no-image-info": true,
+    "overrides": {}
   }
 }
