@@ -371,6 +371,7 @@ var imageTypeCompatMapping = map[string]string{
 	"tar":              "Tar",
 	"gce":              "GCP",
 	"gce-rhui":         "GCE RHUI",
+	"minimal-raw":      "minimal-raw",
 }
 
 func imageTypeToCompatString(imgType distro.ImageType) string {

@@ -571,3 +571,11 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}
 }
+
+func minimalrpmPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"@core",
+		},
+	}
+}
