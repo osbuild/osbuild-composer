@@ -82,7 +82,7 @@ CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-simplified-installer
 INSTALLER_FILENAME=simplified-installer.iso
-MEMORY=3072
+MEMORY=2048
 BOOT_ARGS="uefi"
 
 # Set up temporary files.

@@ -351,18 +351,23 @@ echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 %end
 STOPHERE
 
+# Get the boot.iso from BOOT_LOCATION
+curl -O "$BOOT_LOCATION"/images/boot.iso
+sudo mv boot.iso /var/lib/libvirt/images
+LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
+
 # Install ostree image via anaconda on BIOS vm.
 greenprint "Install ostree image via anaconda on BIOS vm"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
                    --name="${IMAGE_KEY}-bios"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "${BOOT_LOCATION}" \
+                   --location "${LOCAL_BOOT_LOCATION}" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \

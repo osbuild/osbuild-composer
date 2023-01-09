@@ -497,7 +497,7 @@ sudo qemu-img create -f qcow2 "${LIBVIRT_UEFI_IMAGE_PATH}" 20G
 greenprint "💿 Install ostree image via installer(ISO) on BIOS VM"
 sudo virt-install  --name="${IMAGE_KEY}-bios" \
                    --disk path="${LIBVIRT_BIOS_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
@@ -566,7 +566,7 @@ sudo rm -f "$LIBVIRT_BIOS_IMAGE_PATH"
 greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
 sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --disk path="${LIBVIRT_UEFI_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:31 \
                    --os-type linux \
