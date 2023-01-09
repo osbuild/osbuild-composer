@@ -353,18 +353,23 @@ greenprint "Create uefi vm qcow2 file for virt install"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}-uefi.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
 
+# Get the boot.iso from BOOT_LOCATION
+curl -O "$BOOT_LOCATION"/images/boot.iso
+sudo mv boot.iso /var/lib/libvirt/images
+LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
+
 # Install ostree image via anaconda on UEFI vm.
 greenprint "Install ostree image via anaconda on UEFI vm"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
                    --name="${IMAGE_KEY}-uefi"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:31 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "${BOOT_LOCATION}" \
+                   --location "${LOCAL_BOOT_LOCATION}" \
                    --boot "$BOOT_ARGS"\
                    --nographics \
                    --noautoconsole \
