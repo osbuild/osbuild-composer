@@ -114,6 +114,9 @@ func (s *Server) WatchHeartbeats() {
 	//nolint:staticcheck // avoid SA1015, this is an endless function
 	for range time.Tick(time.Second * 30) {
 		for _, token := range s.jobs.Heartbeats(time.Second * 120) {
+			id, _ := s.jobs.IdFromToken(token)
+			logrus.Infof("Removing unresponsive job: %s\n", id)
+
 			missingHeartbeatResult := JobResult{
 				JobError: clienterrors.WorkerClientError(clienterrors.ErrorJobMissingHeartbeat,
 					fmt.Sprintf("Workers running this job stopped responding more than %d times.", maxHeartbeatRetries),
