@@ -281,11 +281,14 @@ func newDistro(name string, minor int) *distribution {
 		imageInstaller(),
 	)
 
-	gceX86Platform := &platform.X86{
-		BIOS:       true,
-		UEFIVendor: rd.vendor,
-		BasePlatform: platform.BasePlatform{
-			ImageFormat: platform.FORMAT_GCE,
+	// TODO: review requirement for platform with overridden packages for GCE
+	gceX86Platform := &gceX86{
+		X86: platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_GCE,
+			},
 		},
 	}
 
