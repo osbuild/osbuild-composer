@@ -15,16 +15,6 @@ var (
 )
 
 var (
-	// update this to count all 500s
-	ComposeFailures = promauto.NewCounter(prometheus.CounterOpts{
-		Name:      "total_failed_compose_requests",
-		Namespace: Namespace,
-		Subsystem: ComposerSubsystem,
-		Help:      "total number of failed compose requests",
-	})
-)
-
-var (
 	ComposeRequests = promauto.NewCounter(prometheus.CounterOpts{
 		Name:      "total_compose_requests",
 		Namespace: Namespace,
