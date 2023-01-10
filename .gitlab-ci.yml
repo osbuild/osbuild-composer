@@ -61,23 +61,19 @@ init:
 
 .nightly_rules_all:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.1-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.7-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.2-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.8-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
 .nightly_rules_x86_64:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.1-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.7-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.2-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.8-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-8.7-nightly-x86_64
-    - aws/rhel-8.7-nightly-aarch64
     - aws/rhel-8.8-nightly-x86_64
     - aws/rhel-8.8-nightly-aarch64
-    - aws/rhel-9.1-nightly-x86_64
-    - aws/rhel-9.1-nightly-aarch64
     - aws/rhel-9.2-nightly-x86_64
     - aws/rhel-9.2-nightly-aarch64
 
@@ -93,18 +89,16 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-8.6-ga-aarch64
-          - aws/rhel-9.0-ga-x86_64
-          - aws/rhel-9.0-ga-aarch64
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.7-ga-aarch64
+          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-9.1-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
           - aws/centos-stream-9-x86_64
@@ -136,7 +130,7 @@ Container:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-ga-x86_64
+          - aws/rhel-8.7-ga-x86_64
 
 Packer:
   stage: test
@@ -146,7 +140,7 @@ Packer:
   script:
     - tools/appsre-build-worker-packer.sh
   variables:
-    RUNNER: aws/rhel-9.0-ga-x86_64
+    RUNNER: aws/rhel-9.1-ga-x86_64
 
 Prepare-rhel-internal:
   stage: prepare-rhel-internal
@@ -165,8 +159,8 @@ Prepare-rhel-internal:
       - RUNNER:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-9.1-nightly-x86_64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-9.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -181,25 +175,23 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-8.6-ga-aarch64
-          - aws/rhel-9.0-ga-x86_64
-          - aws/rhel-9.0-ga-aarch64
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.7-ga-aarch64
+          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-9.1-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-8.8-nightly-aarch64
+          - aws/rhel-9.2-nightly-x86_64
+          - aws/rhel-9.2-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -216,7 +208,7 @@ Manifests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.1-nightly-x86_64
+          - aws/rhel-9.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .regression:
@@ -231,8 +223,6 @@ Manifests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-35-x86_64
-          - aws/fedora-35-aarch64
           - aws/fedora-36-x86_64
           - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
@@ -242,14 +232,14 @@ Manifests:
       - RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-8.6-ga-aarch64
-          - aws/rhel-9.0-ga-x86_64
-          - aws/rhel-9.0-ga-aarch64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.7-ga-aarch64
+          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-9.1-ga-aarch64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-8.8-nightly-aarch64
+          - aws/rhel-9.2-nightly-x86_64
+          - aws/rhel-9.2-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -258,7 +248,7 @@ regression-bigiso:
   extends: .regression
   rules: 
     # WHITELIST: Run only on x86_64 and rhel like systems
-    - if: $RUNNER =~ "/^.*(rhel-8.6.*x86_64|rhel-9.0.*x86_64|centos-stream-8.*x86_64|centos-stream-9.*x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER =~ "/^.*(rhel-8.*x86_64|rhel-9.*x86_64|centos-stream-8.*x86_64|centos-stream-9.*x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
     SCRIPT: regression-bigiso.sh
 
@@ -284,7 +274,7 @@ regression-excluded-dependency:
   extends: .regression
   rules: 
     # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel-8.6|rhel-9.0|centos-stream-8|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-8|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
     - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-excluded-dependency.sh
@@ -302,8 +292,8 @@ regression-old-worker-new-composer:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-9.0-ga-x86_64
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-9.1-ga-x86_64
         INTERNAL_NETWORK: ["true"]
   extends: .regression
   variables:
@@ -313,7 +303,7 @@ regression-insecure-repo:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.0-ga-x86_64
+          - aws/rhel-9.1-ga-x86_64
         INTERNAL_NETWORK: ["true"]
   extends: .regression
   variables:
@@ -342,10 +332,10 @@ Image Tests:
       - RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-8.7-nightly-aarch64
-          - aws/rhel-9.1-nightly-x86_64
-          - aws/rhel-9.1-nightly-aarch64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-8.8-nightly-aarch64
+          - aws/rhel-9.2-nightly-x86_64
+          - aws/rhel-9.2-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 OSTree:
@@ -362,10 +352,10 @@ OSTree:
           - rhos-01/fedora-36-x86_64
           - rhos-01/fedora-37-x86_64
           - rhos-01/rhel-8.4-ga-x86_64
-          - rhos-01/rhel-8.6-ga-x86_64
-          - rhos-01/rhel-9.0-ga-x86_64
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.7-ga-x86_64
+          - rhos-01/rhel-9.1-ga-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -380,8 +370,8 @@ New OSTree:
       - RUNNER:
           - rhos-01/fedora-36-x86_64
           - rhos-01/fedora-37-x86_64
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -394,29 +384,25 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 OSTree raw image:
   stage: test
   extends: OSTree
   rules:
-    # run only this edge test on nightly to have some testing for sign-off
-    # but still reduce duplication with virt-qe Jenkins and increase nightly
-    # pipelines stability
     - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
           - rhos-01/fedora-37-x86_64
 
@@ -429,8 +415,8 @@ Rebase OSTree BIOS:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -443,8 +429,8 @@ Rebase OSTree UEFI:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
@@ -462,12 +448,12 @@ Rebase OSTree UEFI:
     RUNNER:
       - aws/centos-stream-8-x86_64
       - aws/rhel-8.4-ga-x86_64
-      - aws/rhel-8.6-ga-x86_64
-      - aws/rhel-9.0-ga-x86_64
-      - aws/rhel-8.7-nightly-x86_64
-      - aws/rhel-8.7-nightly-aarch64
-      - aws/rhel-9.1-nightly-x86_64
-      - aws/rhel-9.1-nightly-aarch64
+      - aws/rhel-8.7-ga-x86_64
+      - aws/rhel-9.1-ga-x86_64
+      - aws/rhel-8.8-nightly-x86_64
+      - aws/rhel-8.8-nightly-aarch64
+      - aws/rhel-9.2-nightly-x86_64
+      - aws/rhel-9.2-nightly-aarch64
       - aws/centos-stream-9-x86_64
     INTERNAL_NETWORK: ["true"]
 
@@ -479,7 +465,6 @@ Rebase OSTree UEFI:
 
 .fedora_runners: &fedora_runners
     RUNNER:
-      - aws/fedora-35-x86_64
       - aws/fedora-36-x86_64
       - aws/fedora-37-x86_64
 
@@ -507,20 +492,20 @@ koji.sh (cloud upload):
   parallel:
     matrix:
       - RUNNER:
-          # Brew workers use RHEL-8.6
-          - aws/rhel-8.6-ga-x86_64
+          # Brew workers use RHEL-8.7
+          - aws/rhel-8.7-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: aws
         IMAGE_TYPE: aws-rhui
       - RUNNER:
           # Brew workers use RHEL-8.6
-          - aws/rhel-8.6-ga-x86_64
+          - aws/rhel-8.7-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: azure
         IMAGE_TYPE: azure-rhui
       - RUNNER:
           # Brew workers use RHEL-8.6
-          - aws/rhel-8.6-ga-x86_64
+          - aws/rhel-8.7-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: gcp
         IMAGE_TYPE: gcp-rhui
@@ -599,20 +584,19 @@ API:
     matrix:
       - <<: *API_TESTS
         RUNNER:
-          - aws/rhel-8.6-ga-x86_64
-          - aws/rhel-9.0-ga-x86_64
-          - aws/rhel-8.7-nightly-x86_64
-          - aws/rhel-9.1-nightly-x86_64
+          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-8.8-nightly-x86_64
+          - aws/rhel-9.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
-          - aws/fedora-35-x86_64
           - aws/fedora-36-x86_64
           - aws/fedora-37-x86_64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
-          - aws/rhel-8.6-ga-aarch64
-          - aws/rhel-9.0-ga-aarch64
+          - aws/rhel-8.7-ga-aarch64
+          - aws/rhel-9.1-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
 .libvirt_integration:
@@ -628,10 +612,10 @@ API:
     matrix:
       - RUNNER:
           - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-8.6-ga-x86_64
-          - rhos-01/rhel-9.0-ga-x86_64
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.7-ga-x86_64
+          - rhos-01/rhel-9.1-ga-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 libvirt.sh:
@@ -643,7 +627,7 @@ libvirt.sh:
   extends: .libvirt_integration
   rules:
     # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-8.7|rhel-9.1).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
+    - if: $RUNNER !~ "/^.*(rhel-8.8|rhel-9.2).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
     - !reference [.nightly_rules_all, rules]
 
 generic_s3_http.sh:
@@ -675,7 +659,7 @@ RHEL 9 on 8:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
-    RUNNER: aws/rhel-8.6-ga-x86_64
+    RUNNER: aws/rhel-8.7-ga-x86_64
     INTERNAL_NETWORK: "true"
     DISTRO_CODE: rhel-91
 
@@ -688,8 +672,8 @@ Multi-tenancy:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/multi-tenancy.sh
   variables:
-    # only 8.6 GA b/c the Image Builder service runs on RHEL 8
-    RUNNER: aws/rhel-8.6-ga-x86_64
+    # only 8.7 GA b/c the Image Builder service runs on RHEL 8
+    RUNNER: aws/rhel-8.7-ga-x86_64
     INTERNAL_NETWORK: "true"
 
 OpenSCAP:
@@ -703,8 +687,8 @@ OpenSCAP:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
 
 Upgrade:
   stage: test
@@ -715,7 +699,7 @@ Upgrade:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
   variables:
-    RUNNER: rhos-01/rhel-9.1-nightly-x86_64
+    RUNNER: rhos-01/rhel-9.2-nightly-x86_64
 
 NIGHTLY_FAIL:
   stage: finish
@@ -748,8 +732,8 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.7-nightly-x86_64
-          - rhos-01/rhel-9.1-nightly-x86_64
+          - rhos-01/rhel-8.8-nightly-x86_64
+          - rhos-01/rhel-9.2-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 Manifest-diff:
@@ -761,7 +745,7 @@ Manifest-diff:
   script:
     - ./test/cases/diff-manifests.sh
   variables:
-    RUNNER: aws/rhel-9.0-ga-x86_64
+    RUNNER: aws/rhel-9.1-ga-x86_64
     INTERNAL_NETWORK: "true"
     GIT_STRATEGY: "clone"
     GIT_CHECKOUT: "true"
@@ -804,7 +788,7 @@ ContainerUpload:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-upload.sh
   variables:
-    RUNNER: aws/fedora-35-x86_64
+    RUNNER: aws/fedora-37-x86_64
     INTERNAL_NETWORK: "false"
 
 ContainerEmbedding:

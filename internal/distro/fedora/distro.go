@@ -139,7 +139,7 @@ var (
 			installerPkgsKey: iotInstallerPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale:          common.StringToPtr("en_US.UTF-8"),
+			Locale:          common.ToPtr("en_US.UTF-8"),
 			EnabledServices: iotServices,
 		},
 		rpmOstree:        true,
@@ -157,7 +157,7 @@ var (
 		mimeType:    "application/xz",
 		packageSets: map[string]packageSetFunc{},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.StringToPtr("en_US.UTF-8"),
+			Locale: common.ToPtr("en_US.UTF-8"),
 		},
 		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
@@ -177,7 +177,7 @@ var (
 			osPkgsKey: qcow2CommonPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			DefaultTarget: common.StringToPtr("multi-user.target"),
+			DefaultTarget: common.ToPtr("multi-user.target"),
 			EnabledServices: []string{
 				"cloud-init.service",
 				"cloud-config.service",
@@ -203,11 +203,11 @@ var (
 			osPkgsKey: vhdCommonPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.StringToPtr("en_US.UTF-8"),
+			Locale: common.ToPtr("en_US.UTF-8"),
 			EnabledServices: []string{
 				"sshd",
 			},
-			DefaultTarget: common.StringToPtr("multi-user.target"),
+			DefaultTarget: common.ToPtr("multi-user.target"),
 			DisabledServices: []string{
 				"proc-sys-fs-binfmt_misc.mount",
 				"loadmodules.service",
@@ -232,7 +232,7 @@ var (
 			osPkgsKey: vmdkCommonPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.StringToPtr("en_US.UTF-8"),
+			Locale: common.ToPtr("en_US.UTF-8"),
 			EnabledServices: []string{
 				"cloud-init.service",
 				"cloud-config.service",
@@ -258,7 +258,7 @@ var (
 			osPkgsKey: openstackCommonPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.StringToPtr("en_US.UTF-8"),
+			Locale: common.ToPtr("en_US.UTF-8"),
 			EnabledServices: []string{
 				"cloud-init.service",
 				"cloud-config.service",
@@ -278,7 +278,7 @@ var (
 
 	// default EC2 images config (common for all architectures)
 	defaultEc2ImageConfig = &distro.ImageConfig{
-		DefaultTarget: common.StringToPtr("multi-user.target"),
+		DefaultTarget: common.ToPtr("multi-user.target"),
 	}
 
 	amiImgType = imageType{
@@ -308,10 +308,10 @@ var (
 			osPkgsKey: containerPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
-			NoSElinux:   common.BoolToPtr(true),
-			ExcludeDocs: common.BoolToPtr(true),
-			Locale:      common.StringToPtr("C.UTF-8"),
-			Timezone:    common.StringToPtr("Etc/UTC"),
+			NoSElinux:   common.ToPtr(true),
+			ExcludeDocs: common.ToPtr(true),
+			Locale:      common.ToPtr("C.UTF-8"),
+			Timezone:    common.ToPtr("Etc/UTC"),
 		},
 		image:            containerImage,
 		bootable:         false,
@@ -336,8 +336,8 @@ type distribution struct {
 
 // Fedora based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
-	Timezone: common.StringToPtr("UTC"),
-	Locale:   common.StringToPtr("en_US"),
+	Timezone: common.ToPtr("UTC"),
+	Locale:   common.ToPtr("en_US"),
 }
 
 func getDistro(version int) distribution {
@@ -799,9 +799,6 @@ func NewHostDistro(name, modulePlatformID, ostreeRef string) distro.Distro {
 }
 
 // New creates a new distro object, defining the supported architectures and image types
-func NewF35() distro.Distro {
-	return newDistro(35)
-}
 func NewF36() distro.Distro {
 	return newDistro(36)
 }

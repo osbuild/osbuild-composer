@@ -292,7 +292,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 				Payload: ir.imageType.PayloadPipelines(),
 			},
 			Targets:            targets,
-			ManifestDynArgsIdx: common.IntToPtr(1),
+			ManifestDynArgsIdx: common.ToPtr(1),
 		}, []uuid.UUID{initID, manifestJobID}, channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)

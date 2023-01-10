@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestStageResult_UnmarshalJSON(t *testing.T) {
@@ -256,7 +257,7 @@ func TestWrite(t *testing.T) {
 							Name:    "vim-minimal",
 							Version: "8.0.1763",
 							Release: "15.el8",
-							Epoch:   common.StringToPtr("2"),
+							Epoch:   common.ToPtr("2"),
 							Arch:    "x86_64",
 							SigMD5:  "4b3ddc56cbb1be95e0973b4a98047820",
 							SigPGP:  "8902150305005ed77b28199e2f91fd431d510108a4141000995156bc9f610ad386ee49c42ab31c864fc605cae26592ba58f973fe97b54ea12b42c8e7ee2d716162714fe815de63b60cadb7400a0c71aa56dd3b0af656c6ea413eaaada53374e2e910e556d90e4d157a5b41a6540e355a0176fb3879bf17d90533d1aa3b3d23f06a99a42ad80f17498af2c321193b7be5a504f5dc759d6787a180f9fb3c1903be75f448429537eb0abeb96bb2e73cdc5fe91465c3d54154f6717ffd0a1b42a178e5093500d475639ef60ee483a1ec0d3148d23e0c2ab7bde7c68e5dfdd1103f8e9da7d53ec637c057bc1496d0504fe92760942f9f6de7382fbdef481489c7f6f943bf7fb8c8aadb6484569a6a8f074db78f84579dbaccc86c1eb49379b47033a9eca2577df00d60b353b08bc3850d852365792f194dd8b2b9ba4a1ad5c103afd4db853382520a64ecc362339f3642f4f1ad4e52d8f67b2e731b8d10cef29cb3ed05837245bfca37335f3760f3fb64cbf7acae7e18916a3d4272b0d1589320ab963123649eb9722c8c0e444952900caf39caa371fa77bec8a0e4b010f370eab3d4fe5653a38d88a5a4a415a89f917a31da856a4616ae07ce5749d90ac84bb9189263b162e0cf54ba58a8012d64c89196abae9113e0cda60b4e86879e23d8693691a234784ad3e161733798a0aa41416c045feeb8e2f5859a8a64272298da3d2c1ece675ee802fe8cb273e0b3c1b0f00960d3da09adbdbc531e",

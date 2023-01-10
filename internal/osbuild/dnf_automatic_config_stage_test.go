@@ -3,8 +3,9 @@ package osbuild
 import (
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewDNFAutomaticConfigStage(t *testing.T) {
@@ -33,7 +34,7 @@ func TestDNFAutomaticConfigStageOptionsValidate(t *testing.T) {
 			options: DNFAutomaticConfigStageOptions{
 				Config: &DNFAutomaticConfig{
 					Commands: &DNFAutomaticConfigCommands{
-						ApplyUpdates: common.BoolToPtr(true),
+						ApplyUpdates: common.ToPtr(true),
 						UpgradeType:  "invalid",
 					},
 				},
@@ -45,7 +46,7 @@ func TestDNFAutomaticConfigStageOptionsValidate(t *testing.T) {
 			options: DNFAutomaticConfigStageOptions{
 				Config: &DNFAutomaticConfig{
 					Commands: &DNFAutomaticConfigCommands{
-						ApplyUpdates: common.BoolToPtr(true),
+						ApplyUpdates: common.ToPtr(true),
 						UpgradeType:  DNFAutomaticUpgradeTypeDefault,
 					},
 				},
@@ -57,7 +58,7 @@ func TestDNFAutomaticConfigStageOptionsValidate(t *testing.T) {
 			options: DNFAutomaticConfigStageOptions{
 				Config: &DNFAutomaticConfig{
 					Commands: &DNFAutomaticConfigCommands{
-						ApplyUpdates: common.BoolToPtr(false),
+						ApplyUpdates: common.ToPtr(false),
 						UpgradeType:  DNFAutomaticUpgradeTypeSecurity,
 					},
 				},

@@ -34,10 +34,10 @@ func TestCollectRepos(t *testing.T) {
 	// user repositories from request customizations
 	customRepos := []Repository{
 		{
-			Baseurl: common.StringToPtr("http://example.com/repoone"),
+			Baseurl: common.ToPtr("http://example.com/repoone"),
 		},
 		{
-			Baseurl:     common.StringToPtr("http://example.com/repotwo"),
+			Baseurl:     common.ToPtr("http://example.com/repotwo"),
 			PackageSets: &[]string{"should-be-ignored"},
 		},
 	}
@@ -45,21 +45,21 @@ func TestCollectRepos(t *testing.T) {
 	// repos from the image request (standard repos + package set repos)
 	irRepos := []Repository{
 		{
-			Baseurl: common.StringToPtr("http://example.com/baseos"), // empty field -> all package sets
+			Baseurl: common.ToPtr("http://example.com/baseos"), // empty field -> all package sets
 		},
 		{
-			Baseurl: common.StringToPtr("http://example.com/appstream"), // empty field -> all package sets
+			Baseurl: common.ToPtr("http://example.com/appstream"), // empty field -> all package sets
 		},
 		{
-			Baseurl:     common.StringToPtr("http://example.com/baseos-rhel7"), // build only
+			Baseurl:     common.ToPtr("http://example.com/baseos-rhel7"), // build only
 			PackageSets: &[]string{"build"},
 		},
 		{
-			Baseurl:     common.StringToPtr("http://example.com/extra-tools"), // build and archive
+			Baseurl:     common.ToPtr("http://example.com/extra-tools"), // build and archive
 			PackageSets: &[]string{"build", "archive"},
 		},
 		{
-			Baseurl:     common.StringToPtr("http://example.com/custom-os-stuff"), // blueprint only
+			Baseurl:     common.ToPtr("http://example.com/custom-os-stuff"), // blueprint only
 			PackageSets: &[]string{"blueprint"},
 		},
 	}
@@ -93,13 +93,13 @@ func TestRepoConfigConversion(t *testing.T) {
 	testCases := []testCase{
 		{
 			repo: Repository{
-				Baseurl:     common.StringToPtr("http://base.url"),
-				CheckGpg:    common.BoolToPtr(true),
-				Gpgkey:      common.StringToPtr("some-kind-of-key"),
-				IgnoreSsl:   common.BoolToPtr(false),
+				Baseurl:     common.ToPtr("http://base.url"),
+				CheckGpg:    common.ToPtr(true),
+				Gpgkey:      common.ToPtr("some-kind-of-key"),
+				IgnoreSsl:   common.ToPtr(false),
 				Metalink:    nil,
 				Mirrorlist:  nil,
-				Rhsm:        common.BoolToPtr(false),
+				Rhsm:        common.ToPtr(false),
 				PackageSets: nil,
 			},
 			repoConfig: rpmmd.RepoConfig{
@@ -117,13 +117,13 @@ func TestRepoConfigConversion(t *testing.T) {
 		},
 		{
 			repo: Repository{
-				Baseurl:     common.StringToPtr("http://base.url"),
+				Baseurl:     common.ToPtr("http://base.url"),
 				CheckGpg:    nil,
 				Gpgkey:      nil,
-				IgnoreSsl:   common.BoolToPtr(true),
-				Metalink:    common.StringToPtr("http://example.org/metalink"),
-				Mirrorlist:  common.StringToPtr("http://example.org/mirrorlist"),
-				Rhsm:        common.BoolToPtr(false),
+				IgnoreSsl:   common.ToPtr(true),
+				Metalink:    common.ToPtr("http://example.org/metalink"),
+				Mirrorlist:  common.ToPtr("http://example.org/mirrorlist"),
+				Rhsm:        common.ToPtr(false),
 				PackageSets: nil,
 			},
 			repoConfig: rpmmd.RepoConfig{
@@ -144,10 +144,10 @@ func TestRepoConfigConversion(t *testing.T) {
 				Baseurl:     nil,
 				CheckGpg:    nil,
 				Gpgkey:      nil,
-				IgnoreSsl:   common.BoolToPtr(true),
-				Metalink:    common.StringToPtr("http://example.org/metalink"),
-				Mirrorlist:  common.StringToPtr("http://example.org/mirrorlist"),
-				Rhsm:        common.BoolToPtr(false),
+				IgnoreSsl:   common.ToPtr(true),
+				Metalink:    common.ToPtr("http://example.org/metalink"),
+				Mirrorlist:  common.ToPtr("http://example.org/mirrorlist"),
+				Rhsm:        common.ToPtr(false),
 				PackageSets: nil,
 			},
 			repoConfig: rpmmd.RepoConfig{
@@ -168,10 +168,10 @@ func TestRepoConfigConversion(t *testing.T) {
 				Baseurl:     nil,
 				CheckGpg:    nil,
 				Gpgkey:      nil,
-				IgnoreSsl:   common.BoolToPtr(true),
-				Metalink:    common.StringToPtr("http://example.org/metalink"),
+				IgnoreSsl:   common.ToPtr(true),
+				Metalink:    common.ToPtr("http://example.org/metalink"),
 				Mirrorlist:  nil,
-				Rhsm:        common.BoolToPtr(true),
+				Rhsm:        common.ToPtr(true),
 				PackageSets: nil,
 			},
 			repoConfig: rpmmd.RepoConfig{
@@ -208,7 +208,7 @@ func TestRepoConfigConversion(t *testing.T) {
 				IgnoreSsl:   nil,
 				Metalink:    nil,
 				Mirrorlist:  nil,
-				Rhsm:        common.BoolToPtr(true),
+				Rhsm:        common.ToPtr(true),
 				PackageSets: nil,
 			},
 			err: HTTPError(ErrorInvalidRepository).Error(),
@@ -218,12 +218,12 @@ func TestRepoConfigConversion(t *testing.T) {
 		{
 			repo: Repository{
 				Baseurl:     nil,
-				CheckGpg:    common.BoolToPtr(true),
+				CheckGpg:    common.ToPtr(true),
 				Gpgkey:      nil,
-				IgnoreSsl:   common.BoolToPtr(true),
-				Metalink:    common.StringToPtr("http://example.org/metalink"),
+				IgnoreSsl:   common.ToPtr(true),
+				Metalink:    common.ToPtr("http://example.org/metalink"),
 				Mirrorlist:  nil,
-				Rhsm:        common.BoolToPtr(true),
+				Rhsm:        common.ToPtr(true),
 				PackageSets: nil,
 			},
 			err: HTTPError(ErrorNoGPGKey).Error(),

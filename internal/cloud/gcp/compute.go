@@ -6,26 +6,27 @@ import (
 	"strings"
 
 	compute "cloud.google.com/go/compute/apiv1"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"google.golang.org/api/option"
 	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 // Guest OS Features for RHEL8 images
 var GuestOsFeaturesRHEL8 []*computepb.GuestOsFeature = []*computepb.GuestOsFeature{
-	{Type: common.StringToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
-	{Type: common.StringToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
-	{Type: common.StringToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
 }
 
 // Guest OS Features for RHEL9 images.  Note that if you update this, also
 // consider changing the code in https://github.com/coreos/coreos-assembler/blob/0083086c4720b602b8243effb85c0a1f73f013dd/mantle/platform/api/gcloud/image.go#L105
 // for RHEL CoreOS which uses coreos-assembler today.
 var GuestOsFeaturesRHEL9 []*computepb.GuestOsFeature = []*computepb.GuestOsFeature{
-	{Type: common.StringToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
-	{Type: common.StringToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
-	{Type: common.StringToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
-	{Type: common.StringToPtr(computepb.GuestOsFeature_GVNIC.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_GVNIC.String())},
 }
 
 // GuestOsFeaturesByDistro returns the the list of Guest OS Features, which
@@ -60,13 +61,15 @@ func GuestOsFeaturesByDistro(distroName string) []*computepb.GuestOsFeature {
 // object - Google storage object name of the uploaded image
 // imageName - Desired image name after the import. This must be unique within the whole project.
 // regions - A list of valid Google Storage regions where the resulting image should be located.
-//           It is possible to specify multiple regions. Also multi and dual regions are allowed.
-//           If not provided, the region of the used Storage object is used.
-//           See: https://cloud.google.com/storage/docs/locations
+//
+//	It is possible to specify multiple regions. Also multi and dual regions are allowed.
+//	If not provided, the region of the used Storage object is used.
+//	See: https://cloud.google.com/storage/docs/locations
+//
 // guestOsFeatures - A list of features supported by the Guest OS on the imported image.
 //
 // Uses:
-//	- Compute Engine API
+//   - Compute Engine API
 func (g *GCP) ComputeImageInsert(
 	ctx context.Context,
 	bucket, object, imageName string,
@@ -91,8 +94,8 @@ func (g *GCP) ComputeImageInsert(
 			StorageLocations: regions,
 			GuestOsFeatures:  guestOsFeatures,
 			RawDisk: &computepb.RawDisk{
-				ContainerType: common.StringToPtr(computepb.RawDisk_TAR.String()),
-				Source:        common.StringToPtr(fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, object)),
+				ContainerType: common.ToPtr(computepb.RawDisk_TAR.String()),
+				Source:        common.ToPtr(fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, object)),
 			},
 		},
 	}
@@ -152,20 +155,20 @@ func (g *GCP) ComputeImageURL(imageName string) string {
 // "shareWith" is a list of accounts to share the image with. Items can be one
 // of the following options:
 //
-// - `user:{emailid}`: An email address that represents a specific
-//	 Google account. For example, `alice@example.com`.
+//   - `user:{emailid}`: An email address that represents a specific
+//     Google account. For example, `alice@example.com`.
 //
-// - `serviceAccount:{emailid}`: An email address that represents a
-//   service account. For example, `my-other-app@appspot.gserviceaccount.com`.
+//   - `serviceAccount:{emailid}`: An email address that represents a
+//     service account. For example, `my-other-app@appspot.gserviceaccount.com`.
 //
-// - `group:{emailid}`: An email address that represents a Google group.
-//   For example, `admins@example.com`.
+//   - `group:{emailid}`: An email address that represents a Google group.
+//     For example, `admins@example.com`.
 //
-// - `domain:{domain}`: The G Suite domain (primary) that represents all
-//   the users of that domain. For example, `google.com` or `example.com`.
+//   - `domain:{domain}`: The G Suite domain (primary) that represents all
+//     the users of that domain. For example, `google.com` or `example.com`.
 //
 // Uses:
-//	- Compute Engine API
+//   - Compute Engine API
 func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith []string) error {
 	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
@@ -190,7 +193,7 @@ func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith
 	// Completely override the old policy
 	userBinding := &computepb.Binding{
 		Members: shareWith,
-		Role:    common.StringToPtr(imageDesiredRole),
+		Role:    common.ToPtr(imageDesiredRole),
 	}
 	newPolicy := &computepb.Policy{
 		Bindings: []*computepb.Binding{userBinding},
@@ -234,7 +237,7 @@ func (g *GCP) ComputeImageShare(ctx context.Context, imageName string, shareWith
 // image existed and was successfully deleted, no error is returned.
 //
 // Uses:
-//	- Compute Engine API
+//   - Compute Engine API
 func (g *GCP) ComputeImageDelete(ctx context.Context, name string) error {
 	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
@@ -254,7 +257,7 @@ func (g *GCP) ComputeImageDelete(ctx context.Context, name string) error {
 // ComputeExecuteFunctionForImages will pass all the compute images in the account to a function,
 // which is able to iterate over the images. Useful if something needs to be execute for each image.
 // Uses:
-//	- Compute Engine API
+//   - Compute Engine API
 func (g *GCP) ComputeExecuteFunctionForImages(ctx context.Context, f func(*compute.ImageIterator) error) error {
 	imagesClient, err := compute.NewImagesRESTClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {

@@ -82,21 +82,21 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.7")
+    "rhel-8.8")
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.7.0/BaseOS/x86_64/os/"
         if [ "${NIGHTLY:=false}" == "true" ]; then
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
         PARENT_REF="rhel/8/${ARCH}/edge"
         ;;
-    "rhel-9.1")
+    "rhel-9.2")
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.1.0/BaseOS/x86_64/os/"
         if [ "${NIGHTLY:=false}" == "true" ]; then
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
@@ -351,18 +351,23 @@ echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 %end
 STOPHERE
 
+# Get the boot.iso from BOOT_LOCATION
+curl -O "$BOOT_LOCATION"/images/boot.iso
+sudo mv boot.iso /var/lib/libvirt/images
+LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
+
 # Install ostree image via anaconda on BIOS vm.
 greenprint "Install ostree image via anaconda on BIOS vm"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
                    --name="${IMAGE_KEY}-bios"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "${BOOT_LOCATION}" \
+                   --location "${LOCAL_BOOT_LOCATION}" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \

@@ -82,7 +82,7 @@ CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-simplified-installer
 INSTALLER_FILENAME=simplified-installer.iso
-MEMORY=3072
+MEMORY=2048
 BOOT_ARGS="uefi"
 
 # Set up temporary files.
@@ -98,11 +98,11 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.7")
+    "rhel-8.8")
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         ;;
-    "rhel-9.1")
+    "rhel-9.2")
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         ;;
@@ -892,7 +892,7 @@ check_result
 ##
 ########################################################################
 
-if [[ "${ID}-${VERSION_ID}" = "rhel-9.1" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
+if [[ "${ID}-${VERSION_ID}" = "rhel-9.2" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
    tee "$BLUEPRINT_FILE" > /dev/null <<EOF
 name = "simplified_iso_with_ignition_embedded_url"
 description = "A rhel-edge simplified-installer image with an embedded ignition config URL"

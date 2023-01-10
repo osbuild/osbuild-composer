@@ -86,11 +86,11 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.7")
+    "rhel-8.8")
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         ;;
-    "rhel-9.1")
+    "rhel-9.2")
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         ;;
@@ -298,6 +298,8 @@ if [[ "$ID" != "fedora" ]]; then
 name = "kernel-rt"
 EOF
 fi
+
+# TODO: remove this workaround
 
 # User in raw image blueprint is not for RHEL 9.1 and 8.7
 # Workaround for RHEL 9.1 and 8.7 nightly test

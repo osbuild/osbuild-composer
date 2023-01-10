@@ -87,9 +87,9 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 		archivePipeline.Format = osbuild.TarArchiveFormatOldgnu
 		archivePipeline.RootNode = osbuild.TarRootNodeOmit
 		// these are required to successfully import the image to GCP
-		archivePipeline.ACLs = common.BoolToPtr(false)
-		archivePipeline.SELinux = common.BoolToPtr(false)
-		archivePipeline.Xattrs = common.BoolToPtr(false)
+		archivePipeline.ACLs = common.ToPtr(false)
+		archivePipeline.SELinux = common.ToPtr(false)
+		archivePipeline.Xattrs = common.ToPtr(false)
 		archivePipeline.Filename = img.Filename // filename extension will determine compression
 	default:
 		panic("invalid image format for image kind")

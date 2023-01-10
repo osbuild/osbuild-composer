@@ -5,8 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewPwqualityConfStage(t *testing.T) {
@@ -22,9 +23,9 @@ func TestJsonPwqualityConfStage(t *testing.T) {
 	// First test that the JSON can be parsed into the expected structure.
 	expectedOptions := PwqualityConfStageOptions{
 		Config: PwqualityConfConfig{
-			Minlen:   common.IntToPtr(9),
-			Minclass: common.IntToPtr(0),
-			Dcredit:  common.IntToPtr(1),
+			Minlen:   common.ToPtr(9),
+			Minclass: common.ToPtr(0),
+			Dcredit:  common.ToPtr(1),
 		},
 	}
 	inputString := `{
@@ -43,8 +44,8 @@ func TestJsonPwqualityConfStage(t *testing.T) {
 	// for those parameters that the user didn't specify.
 	inputOptions = PwqualityConfStageOptions{
 		Config: PwqualityConfConfig{
-			Minlen:   common.IntToPtr(9),
-			Minclass: common.IntToPtr(0),
+			Minlen:   common.ToPtr(9),
+			Minclass: common.ToPtr(0),
 		},
 	}
 	expectedString := `{"config":{"minlen":9,"minclass":0}}`

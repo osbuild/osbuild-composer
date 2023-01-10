@@ -10,6 +10,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -18,8 +21,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // MustParseTime parses a time string and panics if there is an error
@@ -307,8 +308,8 @@ func Test_upgrade(t *testing.T) {
 		assert.NoErrorf(err, "Could not read test-store '%s': %v", fileName, err)
 		err = json.Unmarshal([]byte(file), &storeStruct)
 		assert.NoErrorf(err, "Could not parse test-store '%s': %v", fileName, err)
-		f35 := fedora.NewF35()
-		registry, err := distroregistry.New(f35, f35)
+		f37 := fedora.NewF37()
+		registry, err := distroregistry.New(f37, f37)
 		assert.NoError(err)
 
 		// The test data has image types only supported on Fedora X86_64

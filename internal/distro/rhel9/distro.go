@@ -55,8 +55,8 @@ type distribution struct {
 
 // CentOS- and RHEL-based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
-	Timezone: common.StringToPtr("America/New_York"),
-	Locale:   common.StringToPtr("C.UTF-8"),
+	Timezone: common.ToPtr("America/New_York"),
+	Locale:   common.ToPtr("C.UTF-8"),
 	Sysconfig: []*osbuild.SysconfigStageOptions{
 		{
 			Kernel: &osbuild.SysconfigKernelOptions{

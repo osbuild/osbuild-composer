@@ -204,7 +204,7 @@ func vhdPipelines(compress bool) pipelinesFunc {
 			qemufile = t.filename
 		}
 
-		qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, qemufile, osbuild.QEMUFormatVPC, osbuild.VPCOptions{ForceSize: common.BoolToPtr(false)})
+		qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, qemufile, osbuild.QEMUFormatVPC, osbuild.VPCOptions{ForceSize: common.ToPtr(false)})
 		pipelines = append(pipelines, *qemuPipeline)
 
 		if compress {
@@ -228,8 +228,8 @@ var azureRhuiImgType = imageType{
 		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 	},
 	defaultImageConfig: &distro.ImageConfig{
-		Timezone: common.StringToPtr("Etc/UTC"),
-		Locale:   common.StringToPtr("en_US.UTF-8"),
+		Timezone: common.ToPtr("Etc/UTC"),
+		Locale:   common.ToPtr("en_US.UTF-8"),
 		GPGKeyFiles: []string{
 			"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
 			"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
@@ -259,7 +259,7 @@ var azureRhuiImgType = imageType{
 		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
-				ClientAliveInterval: common.IntToPtr(180),
+				ClientAliveInterval: common.ToPtr(180),
 			},
 		},
 		Modprobe: []*osbuild.ModprobeStageOptions{
@@ -300,7 +300,7 @@ var azureRhuiImgType = imageType{
 				Filename: "06_logging_override.cfg",
 				Config: osbuild.CloudInitConfigFile{
 					Output: &osbuild.CloudInitConfigOutput{
-						All: common.StringToPtr("| tee -a /var/log/cloud-init-output.log"),
+						All: common.ToPtr("| tee -a /var/log/cloud-init-output.log"),
 					},
 				},
 			},
@@ -333,18 +333,18 @@ var azureRhuiImgType = imageType{
 		},
 		PwQuality: &osbuild.PwqualityConfStageOptions{
 			Config: osbuild.PwqualityConfConfig{
-				Minlen:   common.IntToPtr(6),
-				Minclass: common.IntToPtr(3),
-				Dcredit:  common.IntToPtr(0),
-				Ucredit:  common.IntToPtr(0),
-				Lcredit:  common.IntToPtr(0),
-				Ocredit:  common.IntToPtr(0),
+				Minlen:   common.ToPtr(6),
+				Minclass: common.ToPtr(3),
+				Dcredit:  common.ToPtr(0),
+				Ucredit:  common.ToPtr(0),
+				Lcredit:  common.ToPtr(0),
+				Ocredit:  common.ToPtr(0),
 			},
 		},
 		WAAgentConfig: &osbuild.WAAgentConfStageOptions{
 			Config: osbuild.WAAgentConfig{
-				RDFormat:     common.BoolToPtr(false),
-				RDEnableSwap: common.BoolToPtr(false),
+				RDFormat:     common.ToPtr(false),
+				RDEnableSwap: common.ToPtr(false),
 			},
 		},
 		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
@@ -356,17 +356,17 @@ var azureRhuiImgType = imageType{
 				},
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.BoolToPtr(false),
+						ManageRepos: common.ToPtr(false),
 					},
 				},
 			},
 			distro.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.BoolToPtr(true),
+						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user
 					// explicitly request the system to be subscribed
@@ -401,7 +401,7 @@ var azureRhuiImgType = imageType{
 		},
 		YumConfig: &osbuild.YumConfigStageOptions{
 			Config: &osbuild.YumConfigConfig{
-				HttpCaching: common.StringToPtr("packages"),
+				HttpCaching: common.ToPtr("packages"),
 			},
 			Plugins: &osbuild.YumConfigPlugins{
 				Langpacks: &osbuild.YumConfigPluginsLangpacks{
@@ -409,7 +409,7 @@ var azureRhuiImgType = imageType{
 				},
 			},
 		},
-		DefaultTarget: common.StringToPtr("multi-user.target"),
+		DefaultTarget: common.ToPtr("multi-user.target"),
 	},
 	kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y",
 	bootable:            true,

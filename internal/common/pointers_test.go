@@ -6,26 +6,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIntToPtr(t *testing.T) {
-	var value int = 42
-	got := IntToPtr(value)
-	assert.Equal(t, value, *got)
-}
+func TestToPtr(t *testing.T) {
+	var valueInt int = 42
+	gotInt := ToPtr(valueInt)
+	assert.Equal(t, valueInt, *gotInt)
 
-func TestBoolToPtr(t *testing.T) {
-	var value bool = true
-	got := BoolToPtr(value)
-	assert.Equal(t, value, *got)
-}
+	var valueBool bool = true
+	gotBool := ToPtr(valueBool)
+	assert.Equal(t, valueBool, *gotBool)
 
-func TestUint64ToPtr(t *testing.T) {
-	var value uint64 = 1
-	got := Uint64ToPtr(value)
-	assert.Equal(t, value, *got)
-}
+	var valueUint64 uint64 = 1
+	gotUint64 := ToPtr(valueUint64)
+	assert.Equal(t, valueUint64, *gotUint64)
 
-func TestStringToPtr(t *testing.T) {
-	var value string = "the-greatest-test-value"
-	got := StringToPtr(value)
-	assert.Equal(t, value, *got)
+	var valueStr string = "the-greatest-test-value"
+	gotStr := ToPtr(valueStr)
+	assert.Equal(t, valueStr, *gotStr)
+
 }

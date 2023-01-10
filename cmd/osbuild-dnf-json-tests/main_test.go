@@ -13,7 +13,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -27,7 +26,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 	repoDir := "/usr/share/tests/osbuild-composer"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	for _, distroStruct := range []distro.Distro{fedora.NewF35()} {
+	for _, distroStruct := range []distro.Distro{rhel.NewCentos()} {
 		t.Run(distroStruct.Name(), func(t *testing.T) {
 
 			// Run tests in parallel to speed up run times.

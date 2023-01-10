@@ -29,7 +29,7 @@ Summary:        An image building service based on osbuild
 ExcludeArch:    i686 armv7hl
 
 # Upstream license specification: Apache-2.0
-License:        ASL 2.0
+License:        Apache-2.0
 URL:            %{gourl}
 Source0:        %{gosource}
 
@@ -55,17 +55,6 @@ Requires: %{name}-worker = %{version}-%{release}
 Requires: systemd
 
 Provides: weldr
-
-%if 0%{?rhel}
-Obsoletes: lorax-composer <= 29
-Conflicts: lorax-composer
-%endif
-
-# Remove when we stop releasing into Fedora 35
-%if 0%{?fedora} >= 34
-# lorax 34.3 is the first one without the composer subpackage
-Obsoletes: lorax-composer < 34.3
-%endif
 
 %description
 %{common_description}
@@ -342,7 +331,7 @@ fi
 Summary: The dnf-json binary used by osbuild-composer and the workers
 
 # Conflicts with older versions of composer that provide the same files
-# this can be removed when RHEL 8 and Fedora 35 reach EOL
+# this can be removed when RHEL 8 reaches EOL
 Conflicts: osbuild-composer <= 35
 
 %description dnf-json

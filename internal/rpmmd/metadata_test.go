@@ -5,10 +5,11 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestRPMDeduplication(t *testing.T) {
@@ -54,7 +55,7 @@ func TestRPMDeduplication(t *testing.T) {
 					Name:    "package-with-epoch",
 					Version: "0.1",
 					Release: "a",
-					Epoch:   common.StringToPtr("8"),
+					Epoch:   common.ToPtr("8"),
 					Arch:    "x86_64",
 					SigMD5:  "*",
 					SigPGP:  "*",
@@ -70,7 +71,7 @@ func TestRPMDeduplication(t *testing.T) {
 					Name:    "vim-minimal",
 					Version: "8.0.1763",
 					Release: "15.el8",
-					Epoch:   common.StringToPtr("2"),
+					Epoch:   common.ToPtr("2"),
 					Arch:    "x86_64",
 					SigMD5:  "v",
 					SigPGP:  "v",
@@ -80,7 +81,7 @@ func TestRPMDeduplication(t *testing.T) {
 					Name:    "vim-minimal",
 					Version: "8.0.1763",
 					Release: "15.el8",
-					Epoch:   common.StringToPtr("2"),
+					Epoch:   common.ToPtr("2"),
 					Arch:    "x86_64",
 					SigMD5:  "v",
 					SigPGP:  "v",

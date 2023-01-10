@@ -16,7 +16,6 @@ import (
 // When adding support for a new distribution, add it here.
 // Note that this is a constant, do not write to this array.
 var supportedDistros = []supportedDistro{
-	{fedora.NewF35, fedora.NewHostDistro},
 	{fedora.NewF36, fedora.NewHostDistro},
 	{fedora.NewF37, fedora.NewHostDistro},
 	{fedora.NewF38, fedora.NewHostDistro},

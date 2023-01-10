@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package main
@@ -8,8 +9,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 )
 
 const url = "postgres://postgres:foobar@localhost:5432/osbuildcomposer"

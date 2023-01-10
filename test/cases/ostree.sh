@@ -45,16 +45,16 @@ case "${ID}-${VERSION_ID}" in
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
         ;;
-    "rhel-8.6")
+    "rhel-8.7")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.7.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
         ;;
-    "rhel-8.7")
+    "rhel-8.8")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
@@ -68,16 +68,16 @@ case "${ID}-${VERSION_ID}" in
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
         ;;
-    "rhel-9.0")
+    "rhel-9.1")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
-        OS_VARIANT="rhel9.0"
+        OS_VARIANT="rhel9.1"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.1.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
         ;;
-    "rhel-9.1")
+    "rhel-9.2")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
@@ -445,18 +445,23 @@ if [[ "${USER_IN_COMMIT}" == "true" ]]; then
     sudo sed -i '/^user\|^sshkey/d' "${KS_FILE}"
 fi
 
+# Get the boot.iso from BOOT_LOCATION
+curl -O "$BOOT_LOCATION"/images/boot.iso
+sudo mv boot.iso /var/lib/libvirt/images
+LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
+
 # Install ostree image via anaconda.
 greenprint "Install ostree image via anaconda"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
                    --name="${IMAGE_KEY}"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "${BOOT_LOCATION}" \
+                   --location "${LOCAL_BOOT_LOCATION}" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \

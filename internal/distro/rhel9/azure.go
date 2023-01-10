@@ -396,8 +396,8 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 var defaultAzureKernelOptions = "ro console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
 
 var defaultAzureImageConfig = &distro.ImageConfig{
-	Timezone: common.StringToPtr("Etc/UTC"),
-	Locale:   common.StringToPtr("en_US.UTF-8"),
+	Timezone: common.ToPtr("Etc/UTC"),
+	Locale:   common.ToPtr("en_US.UTF-8"),
 	Keyboard: &osbuild.KeymapStageOptions{
 		Keymap: "us",
 		X11Keymap: &osbuild.X11KeymapOptions{
@@ -425,7 +425,7 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 	},
 	SshdConfig: &osbuild.SshdConfigStageOptions{
 		Config: osbuild.SshdConfigConfig{
-			ClientAliveInterval: common.IntToPtr(180),
+			ClientAliveInterval: common.ToPtr(180),
 		},
 	},
 	Modprobe: []*osbuild.ModprobeStageOptions{
@@ -479,18 +479,18 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 	},
 	PwQuality: &osbuild.PwqualityConfStageOptions{
 		Config: osbuild.PwqualityConfConfig{
-			Minlen:   common.IntToPtr(6),
-			Minclass: common.IntToPtr(3),
-			Dcredit:  common.IntToPtr(0),
-			Ucredit:  common.IntToPtr(0),
-			Lcredit:  common.IntToPtr(0),
-			Ocredit:  common.IntToPtr(0),
+			Minlen:   common.ToPtr(6),
+			Minclass: common.ToPtr(3),
+			Dcredit:  common.ToPtr(0),
+			Ucredit:  common.ToPtr(0),
+			Lcredit:  common.ToPtr(0),
+			Ocredit:  common.ToPtr(0),
 		},
 	},
 	WAAgentConfig: &osbuild.WAAgentConfStageOptions{
 		Config: osbuild.WAAgentConfig{
-			RDFormat:     common.BoolToPtr(false),
-			RDEnableSwap: common.BoolToPtr(false),
+			RDFormat:     common.ToPtr(false),
+			RDEnableSwap: common.ToPtr(false),
 		},
 	},
 	Grub2Config: &osbuild.GRUB2Config{
@@ -530,7 +530,7 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 			},
 		},
 	},
-	DefaultTarget: common.StringToPtr("multi-user.target"),
+	DefaultTarget: common.ToPtr("multi-user.target"),
 }
 
 // Diff of the default Image Config compare to the `defaultAzureImageConfig`
@@ -542,7 +542,7 @@ var defaultAzureByosImageConfig = &distro.ImageConfig{
 		distro.RHSMConfigNoSubscription: {
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-					AutoRegistration: common.BoolToPtr(true),
+					AutoRegistration: common.ToPtr(true),
 				},
 				// Don't disable RHSM redhat.repo management on the GCE
 				// image, which is BYOS and does not use RHUI for content.
@@ -556,7 +556,7 @@ var defaultAzureByosImageConfig = &distro.ImageConfig{
 		distro.RHSMConfigWithSubscription: {
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-					AutoRegistration: common.BoolToPtr(true),
+					AutoRegistration: common.ToPtr(true),
 				},
 				// do not disable the redhat.repo management if the user
 				// explicitly request the system to be subscribed
@@ -580,17 +580,17 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 			},
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-					AutoRegistration: common.BoolToPtr(true),
+					AutoRegistration: common.ToPtr(true),
 				},
 				Rhsm: &osbuild.SubManConfigRHSMSection{
-					ManageRepos: common.BoolToPtr(false),
+					ManageRepos: common.ToPtr(false),
 				},
 			},
 		},
 		distro.RHSMConfigWithSubscription: {
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-					AutoRegistration: common.BoolToPtr(true),
+					AutoRegistration: common.ToPtr(true),
 				},
 				// do not disable the redhat.repo management if the user
 				// explicitly request the system to be subscribed

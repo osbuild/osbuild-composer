@@ -5,9 +5,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func TestNewYumConfigStage(t *testing.T) {
@@ -22,7 +23,7 @@ func TestNewYumConfigStage(t *testing.T) {
 func TestJsonYumConfigStage(t *testing.T) {
 	expectedOptions := YumConfigStageOptions{
 		Config: &YumConfigConfig{
-			HttpCaching: common.StringToPtr("packages"),
+			HttpCaching: common.ToPtr("packages"),
 		},
 		Plugins: &YumConfigPlugins{
 			&YumConfigPluginsLangpacks{
@@ -47,7 +48,7 @@ func TestJsonYumConfigStage(t *testing.T) {
 
 	inputOptions = YumConfigStageOptions{
 		Config: &YumConfigConfig{
-			HttpCaching: common.StringToPtr("packages"),
+			HttpCaching: common.ToPtr("packages"),
 		},
 	}
 	expectedString := `{"config":{"http_caching":"packages"}}`
@@ -88,7 +89,7 @@ func TestYumConfigValidate(t *testing.T) {
 		{
 			YumConfigStageOptions{
 				Config: &YumConfigConfig{
-					HttpCaching: common.StringToPtr(""),
+					HttpCaching: common.ToPtr(""),
 				},
 			},
 			false,
@@ -96,7 +97,7 @@ func TestYumConfigValidate(t *testing.T) {
 		{
 			YumConfigStageOptions{
 				Config: &YumConfigConfig{
-					HttpCaching: common.StringToPtr("all"),
+					HttpCaching: common.ToPtr("all"),
 				},
 			},
 			true,

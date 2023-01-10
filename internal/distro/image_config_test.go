@@ -3,9 +3,10 @@ package distro
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestImageConfigInheritFrom(t *testing.T) {
@@ -18,17 +19,17 @@ func TestImageConfigInheritFrom(t *testing.T) {
 		{
 			name: "inheritance with overridden values",
 			distroConfig: &ImageConfig{
-				Timezone: common.StringToPtr("America/New_York"),
+				Timezone: common.ToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{{Hostname: "127.0.0.1"}},
 				},
-				Locale: common.StringToPtr("en_US.UTF-8"),
+				Locale: common.ToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    common.StringToPtr("multi-user.target"),
+				DefaultTarget:    common.ToPtr("multi-user.target"),
 				Sysconfig: []*osbuild.SysconfigStageOptions{
 					{
 						Kernel: &osbuild.SysconfigKernelOptions{
@@ -44,11 +45,11 @@ func TestImageConfigInheritFrom(t *testing.T) {
 								"eth0": {
 									Device:    "eth0",
 									Bootproto: osbuild.IfcfgBootprotoDHCP,
-									OnBoot:    common.BoolToPtr(true),
+									OnBoot:    common.ToPtr(true),
 									Type:      osbuild.IfcfgTypeEthernet,
-									UserCtl:   common.BoolToPtr(true),
-									PeerDNS:   common.BoolToPtr(true),
-									IPv6Init:  common.BoolToPtr(false),
+									UserCtl:   common.ToPtr(true),
+									PeerDNS:   common.ToPtr(true),
+									IPv6Init:  common.ToPtr(false),
 								},
 							},
 						},
@@ -56,41 +57,41 @@ func TestImageConfigInheritFrom(t *testing.T) {
 				},
 			},
 			imageConfig: &ImageConfig{
-				Timezone: common.StringToPtr("UTC"),
+				Timezone: common.ToPtr("UTC"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{
 						{
 							Hostname: "169.254.169.123",
-							Prefer:   common.BoolToPtr(true),
-							Iburst:   common.BoolToPtr(true),
-							Minpoll:  common.IntToPtr(4),
-							Maxpoll:  common.IntToPtr(4),
+							Prefer:   common.ToPtr(true),
+							Iburst:   common.ToPtr(true),
+							Minpoll:  common.ToPtr(4),
+							Maxpoll:  common.ToPtr(4),
 						},
 					},
-					LeapsecTz: common.StringToPtr(""),
+					LeapsecTz: common.ToPtr(""),
 				},
 			},
 			expectedConfig: &ImageConfig{
-				Timezone: common.StringToPtr("UTC"),
+				Timezone: common.ToPtr("UTC"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{
 						{
 							Hostname: "169.254.169.123",
-							Prefer:   common.BoolToPtr(true),
-							Iburst:   common.BoolToPtr(true),
-							Minpoll:  common.IntToPtr(4),
-							Maxpoll:  common.IntToPtr(4),
+							Prefer:   common.ToPtr(true),
+							Iburst:   common.ToPtr(true),
+							Minpoll:  common.ToPtr(4),
+							Maxpoll:  common.ToPtr(4),
 						},
 					},
-					LeapsecTz: common.StringToPtr(""),
+					LeapsecTz: common.ToPtr(""),
 				},
-				Locale: common.StringToPtr("en_US.UTF-8"),
+				Locale: common.ToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    common.StringToPtr("multi-user.target"),
+				DefaultTarget:    common.ToPtr("multi-user.target"),
 				Sysconfig: []*osbuild.SysconfigStageOptions{
 					{
 						Kernel: &osbuild.SysconfigKernelOptions{
@@ -106,11 +107,11 @@ func TestImageConfigInheritFrom(t *testing.T) {
 								"eth0": {
 									Device:    "eth0",
 									Bootproto: osbuild.IfcfgBootprotoDHCP,
-									OnBoot:    common.BoolToPtr(true),
+									OnBoot:    common.ToPtr(true),
 									Type:      osbuild.IfcfgTypeEthernet,
-									UserCtl:   common.BoolToPtr(true),
-									PeerDNS:   common.BoolToPtr(true),
-									IPv6Init:  common.BoolToPtr(false),
+									UserCtl:   common.ToPtr(true),
+									PeerDNS:   common.ToPtr(true),
+									IPv6Init:  common.ToPtr(false),
 								},
 							},
 						},
@@ -121,91 +122,91 @@ func TestImageConfigInheritFrom(t *testing.T) {
 		{
 			name: "empty image type configuration",
 			distroConfig: &ImageConfig{
-				Timezone: common.StringToPtr("America/New_York"),
+				Timezone: common.ToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{{Hostname: "127.0.0.1"}},
 				},
-				Locale: common.StringToPtr("en_US.UTF-8"),
+				Locale: common.ToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    common.StringToPtr("multi-user.target"),
+				DefaultTarget:    common.ToPtr("multi-user.target"),
 			},
 			imageConfig: &ImageConfig{},
 			expectedConfig: &ImageConfig{
-				Timezone: common.StringToPtr("America/New_York"),
+				Timezone: common.ToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{{Hostname: "127.0.0.1"}},
 				},
-				Locale: common.StringToPtr("en_US.UTF-8"),
+				Locale: common.ToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    common.StringToPtr("multi-user.target"),
+				DefaultTarget:    common.ToPtr("multi-user.target"),
 			},
 		},
 		{
 			name:         "empty distro configuration",
 			distroConfig: &ImageConfig{},
 			imageConfig: &ImageConfig{
-				Timezone: common.StringToPtr("America/New_York"),
+				Timezone: common.ToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{{Hostname: "127.0.0.1"}},
 				},
-				Locale: common.StringToPtr("en_US.UTF-8"),
+				Locale: common.ToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    common.StringToPtr("multi-user.target"),
+				DefaultTarget:    common.ToPtr("multi-user.target"),
 			},
 			expectedConfig: &ImageConfig{
-				Timezone: common.StringToPtr("America/New_York"),
+				Timezone: common.ToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{{Hostname: "127.0.0.1"}},
 				},
-				Locale: common.StringToPtr("en_US.UTF-8"),
+				Locale: common.ToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    common.StringToPtr("multi-user.target"),
+				DefaultTarget:    common.ToPtr("multi-user.target"),
 			},
 		},
 		{
 			name:         "empty distro configuration",
 			distroConfig: nil,
 			imageConfig: &ImageConfig{
-				Timezone: common.StringToPtr("America/New_York"),
+				Timezone: common.ToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{{Hostname: "127.0.0.1"}},
 				},
-				Locale: common.StringToPtr("en_US.UTF-8"),
+				Locale: common.ToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    common.StringToPtr("multi-user.target"),
+				DefaultTarget:    common.ToPtr("multi-user.target"),
 			},
 			expectedConfig: &ImageConfig{
-				Timezone: common.StringToPtr("America/New_York"),
+				Timezone: common.ToPtr("America/New_York"),
 				TimeSynchronization: &osbuild.ChronyStageOptions{
 					Servers: []osbuild.ChronyConfigServer{{Hostname: "127.0.0.1"}},
 				},
-				Locale: common.StringToPtr("en_US.UTF-8"),
+				Locale: common.ToPtr("en_US.UTF-8"),
 				Keyboard: &osbuild.KeymapStageOptions{
 					Keymap: "us",
 				},
 				EnabledServices:  []string{"sshd"},
 				DisabledServices: []string{"named"},
-				DefaultTarget:    common.StringToPtr("multi-user.target"),
+				DefaultTarget:    common.ToPtr("multi-user.target"),
 			},
 		},
 	}

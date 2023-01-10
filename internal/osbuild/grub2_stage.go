@@ -2,6 +2,7 @@ package osbuild
 
 import (
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
@@ -113,7 +114,7 @@ func NewGrub2StageOptionsUnified(pt *disk.PartitionTable,
 	stageOptions := GRUB2StageOptions{
 		RootFilesystemUUID: uuid.MustParse(rootFs.GetFSSpec().UUID),
 		Legacy:             legacy,
-		WriteCmdLine:       common.BoolToPtr(false),
+		WriteCmdLine:       common.ToPtr(false),
 	}
 
 	bootFs := pt.FindMountable("/boot")

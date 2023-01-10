@@ -22,10 +22,6 @@ type fedoraFamilyDistro struct {
 var fedoraFamilyDistros = []fedoraFamilyDistro{
 	{
 		name:   "fedora",
-		distro: fedora.NewF35(),
-	},
-	{
-		name:   "fedora",
 		distro: fedora.NewF36(),
 	},
 	{
@@ -390,7 +386,7 @@ func TestImageTypeAliases(t *testing.T) {
 func TestDistro_ManifestError(t *testing.T) {
 	// Currently, the only unsupported configuration is OSTree commit types
 	// with Kernel boot options
-	fedoraDistro := fedora.NewF35()
+	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Kernel: &blueprint.KernelCustomization{
@@ -481,11 +477,11 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 }
 
 func TestFedora_ListArches(t *testing.T) {
-	arches := fedora.NewF35().ListArches()
+	arches := fedora.NewF37().ListArches()
 	assert.Equal(t, []string{"aarch64", "s390x", "x86_64"}, arches)
 }
 
-func TestFedora35_GetArch(t *testing.T) {
+func TestFedora37_GetArch(t *testing.T) {
 	arches := []struct {
 		name                  string
 		errorExpected         bool
@@ -522,17 +518,17 @@ func TestFedora35_GetArch(t *testing.T) {
 	}
 }
 
-func TestFedora35_Name(t *testing.T) {
-	distro := fedora.NewF35()
-	assert.Equal(t, "fedora-35", distro.Name())
+func TestFedora37_Name(t *testing.T) {
+	distro := fedora.NewF37()
+	assert.Equal(t, "fedora-37", distro.Name())
 }
 
-func TestFedora35_KernelOption(t *testing.T) {
-	distro_test_common.TestDistro_KernelOption(t, fedora.NewF35())
+func TestFedora37_KernelOption(t *testing.T) {
+	distro_test_common.TestDistro_KernelOption(t, fedora.NewF37())
 }
 
 func TestDistro_CustomFileSystemManifestError(t *testing.T) {
-	fedoraDistro := fedora.NewF35()
+	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -560,7 +556,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 }
 
 func TestDistro_TestRootMountPoint(t *testing.T) {
-	fedoraDistro := fedora.NewF35()
+	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -589,7 +585,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 }
 
 func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
-	fedoraDistro := fedora.NewF35()
+	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -620,7 +616,7 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 }
 
 func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
-	fedoraDistro := fedora.NewF35()
+	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -659,7 +655,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 }
 
 func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
-	fedoraDistro := fedora.NewF35()
+	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -693,7 +689,7 @@ func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
 }
 
 func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
-	fedoraDistro := fedora.NewF35()
+	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
@@ -725,7 +721,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 }
 
 func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
-	fedoraDistro := fedora.NewF35()
+	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
 		Customizations: &blueprint.Customizations{
 			Filesystem: []blueprint.FilesystemCustomization{
