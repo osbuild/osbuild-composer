@@ -56,48 +56,6 @@ func vmdkPipelines(t *imageType, customizations *blueprint.Customizations, optio
 	return pipelines, nil
 }
 
-func ec2CommonPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions,
-	repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec,
-	rng *rand.Rand, diskfile string) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, partitionTable)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-	return pipelines, nil
-}
-
-// ec2Pipelines returns pipelines which produce uncompressed EC2 images which are expected to use RHSM for content
-func ec2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	return ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, containers, rng, t.Filename())
-}
-
-// rhelEc2Pipelines returns pipelines which produce XZ-compressed EC2 images which are expected to use RHUI for content
-func rhelEc2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	rawImageFilename := "image.raw"
-
-	pipelines, err := ec2CommonPipelines(t, customizations, options, repos, packageSetSpecs, containers, rng, rawImageFilename)
-	if err != nil {
-		return nil, err
-	}
-
-	lastPipeline := pipelines[len(pipelines)-1]
-	pipelines = append(pipelines, *xzArchivePipeline(lastPipeline.Name, rawImageFilename, t.Filename()))
-
-	return pipelines, nil
-}
-
 func gcePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
