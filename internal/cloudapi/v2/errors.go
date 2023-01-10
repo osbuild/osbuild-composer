@@ -3,11 +3,8 @@ package v2
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v4"
-
-	"github.com/osbuild/osbuild-composer/internal/prometheus"
 )
 
 const (
@@ -300,13 +297,6 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 		c.Logger().Errorf("ErrorNotHTTPError %v", echoError)
 		doResponse(nil, ErrorNotHTTPError, c, echoError)
 		return
-	}
-
-	internalError := he.Code >= http.StatusInternalServerError && he.Code <= http.StatusNetworkAuthenticationRequired
-	if internalError {
-		if strings.HasSuffix(c.Path(), "/compose") {
-			prometheus.ComposeFailures.Inc()
-		}
 	}
 
 	err, ok := he.Message.(detailsError)
