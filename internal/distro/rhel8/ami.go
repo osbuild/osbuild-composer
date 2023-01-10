@@ -13,8 +13,7 @@ func amiImgTypeX86_64(rd distribution) imageType {
 		filename: "image.raw",
 		mimeType: "application/octet-stream",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    ec2CommonPackageSet,
+			osPkgsKey: ec2CommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -24,7 +23,7 @@ func amiImgTypeX86_64(rd distribution) imageType {
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           ec2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
@@ -36,12 +35,12 @@ func amiImgTypeX86_64(rd distribution) imageType {
 
 func ec2ImgTypeX86_64(rd distribution) imageType {
 	it := imageType{
-		name:     "ec2",
-		filename: "image.raw.xz",
-		mimeType: "application/xz",
+		name:        "ec2",
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    rhelEc2PackageSet,
+			osPkgsKey: rhelEc2PackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -51,10 +50,10 @@ func ec2ImgTypeX86_64(rd distribution) imageType {
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           rhelEc2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
 	return it
@@ -62,12 +61,12 @@ func ec2ImgTypeX86_64(rd distribution) imageType {
 
 func ec2HaImgTypeX86_64(rd distribution) imageType {
 	it := imageType{
-		name:     "ec2-ha",
-		filename: "image.raw.xz",
-		mimeType: "application/xz",
+		name:        "ec2-ha",
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    rhelEc2HaPackageSet,
+			osPkgsKey: rhelEc2HaPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -77,10 +76,10 @@ func ec2HaImgTypeX86_64(rd distribution) imageType {
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           rhelEc2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
 	return it
@@ -92,8 +91,7 @@ func amiImgTypeAarch64(rd distribution) imageType {
 		filename: "image.raw",
 		mimeType: "application/octet-stream",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    ec2CommonPackageSet,
+			osPkgsKey: ec2CommonPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -102,7 +100,7 @@ func amiImgTypeAarch64(rd distribution) imageType {
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           ec2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
@@ -113,12 +111,12 @@ func amiImgTypeAarch64(rd distribution) imageType {
 
 func ec2ImgTypeAarch64(rd distribution) imageType {
 	it := imageType{
-		name:     "ec2",
-		filename: "image.raw.xz",
-		mimeType: "application/xz",
+		name:        "ec2",
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    rhelEc2PackageSet,
+			osPkgsKey: rhelEc2PackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -127,10 +125,10 @@ func ec2ImgTypeAarch64(rd distribution) imageType {
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           rhelEc2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
 	return it
@@ -138,12 +136,12 @@ func ec2ImgTypeAarch64(rd distribution) imageType {
 
 func ec2SapImgTypeX86_64(rd distribution) imageType {
 	it := imageType{
-		name:     "ec2-sap",
-		filename: "image.raw.xz",
-		mimeType: "application/xz",
+		name:        "ec2-sap",
+		filename:    "image.raw.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: ec2BuildPackageSet,
-			osPkgsKey:    rhelEc2SapPackageSet,
+			osPkgsKey: rhelEc2SapPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -153,10 +151,10 @@ func ec2SapImgTypeX86_64(rd distribution) imageType {
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
 		defaultSize:         10 * common.GibiByte,
-		pipelines:           rhelEc2Pipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: ec2BasePartitionTables,
 	}
 	return it
