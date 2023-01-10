@@ -116,31 +116,6 @@ func defaultGceByosImageConfig(rd distribution) *distro.ImageConfig {
 				},
 			},
 		},
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// Don't disable RHSM redhat.repo management on the GCE
-					// image, which is BYOS and does not use RHUI for content.
-					// Otherwise subscribing the system manually after booting
-					// it would result in empty redhat.repo. Without RHUI, such
-					// system would have no way to get Red Hat content, but
-					// enable the repo management manually, which would be very
-					// confusing.
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
 				PasswordAuthentication: common.ToPtr(false),
@@ -186,6 +161,33 @@ func defaultGceByosImageConfig(rd distribution) *distro.ImageConfig {
 		)
 	}
 
+	if rd.isRHEL() {
+		ic.RHSMConfig = map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+			distro.RHSMConfigNoSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.ToPtr(true),
+					},
+					// Don't disable RHSM redhat.repo management on the GCE
+					// image, which is BYOS and does not use RHUI for content.
+					// Otherwise subscribing the system manually after booting
+					// it would result in empty redhat.repo. Without RHUI, such
+					// system would have no way to get Red Hat content, but
+					// enable the repo management manually, which would be very
+					// confusing.
+				},
+			},
+			distro.RHSMConfigWithSubscription: {
+				SubMan: &osbuild.RHSMStageOptionsSubMan{
+					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+						AutoRegistration: common.ToPtr(true),
+					},
+					// do not disable the redhat.repo management if the user
+					// explicitly request the system to be subscribed
+				},
+			},
+		}
+	}
 	return ic
 }
 
