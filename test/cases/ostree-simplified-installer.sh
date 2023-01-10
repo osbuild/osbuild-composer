@@ -456,6 +456,8 @@ sudo sed -i 's/coreos.inst.image_file=\/run\/media\/iso\/image.raw.xz/coreos.ins
 greenprint "📋 Create libvirt image disk"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+LIBVIRT_FAKE_USB_PATH=/var/lib/libvirt/images/usb.qcow2
+sudo qemu-img create -f qcow2 "${LIBVIRT_FAKE_USB_PATH}" 16G
 
 greenprint "checking running containers"
 sudo podman ps -a
@@ -463,6 +465,7 @@ sudo podman ps -a
 greenprint "📋 Install edge vm via http boot"
 sudo virt-install --name="${IMAGE_KEY}-http"\
                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                  --disk path="${LIBVIRT_FAKE_USB_PATH}",format=qcow2 \
                   --ram "${MEMORY}" \
                   --vcpus 2 \
                   --network network=integration,mac=34:49:22:B0:83:30 \
