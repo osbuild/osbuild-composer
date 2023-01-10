@@ -8,24 +8,25 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const gceKernelOptions = "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d"
+
 func gceImgType(rd distribution) imageType {
 	return imageType{
 		name:     "gce",
 		filename: "image.tar.gz",
 		mimeType: "application/gzip",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    gcePackageSet,
+			osPkgsKey: gcePackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultGceByosImageConfig(rd),
-		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
+		kernelOptions:       gceKernelOptions,
 		bootable:            true,
 		bootType:            distro.UEFIBootType,
 		defaultSize:         20 * common.GibiByte,
-		pipelines:           gcePipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
@@ -39,18 +40,17 @@ func gceRhuiImgType(rd distribution) imageType {
 		filename: "image.tar.gz",
 		mimeType: "application/gzip",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
-			osPkgsKey:    gceRhuiPackageSet,
+			osPkgsKey: gceRhuiPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultGceRhuiImageConfig(rd),
-		kernelOptions:       "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
+		kernelOptions:       gceKernelOptions,
 		bootable:            true,
 		bootType:            distro.UEFIBootType,
 		defaultSize:         20 * common.GibiByte,
-		pipelines:           gcePipelines,
+		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "archive"},
 		exports:             []string{"archive"},
