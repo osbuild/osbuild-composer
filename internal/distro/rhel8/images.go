@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/users"
@@ -216,4 +217,52 @@ func tarImage(workload workload.Workload,
 
 	return img, nil
 
+}
+
+func edgeRawImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	commit := ostree.CommitSpec{
+		Ref:        options.OSTree.ImageRef,
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+		Checksum:   options.OSTree.FetchChecksum,
+	}
+	img := image.NewOSTreeRawImage(commit)
+
+	img.Users = users.UsersFromBP(customizations.GetUsers())
+	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	// "rw" kernel option is required when /sysroot is mounted read-only to
+	// keep stateful parts of the filesystem writeable (/var/ and /etc)
+	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
+	// TODO: move to image config
+	img.Keyboard = "us"
+	img.Locale = "C.UTF-8"
+	img.SysrootReadOnly = true
+
+	img.Platform = t.platform
+	img.Workload = workload
+	img.Remote = ostree.Remote{
+		Name:       "rhel-edge",
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+	}
+	img.OSName = "redhat"
+
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+	img.PartitionTable = pt
+
+	img.Filename = t.Filename()
+
+	return img, nil
 }
