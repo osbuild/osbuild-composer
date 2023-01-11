@@ -65,21 +65,19 @@ func edgeOCIImgType(rd distribution) imageType {
 }
 func edgeRawImgType() imageType {
 	it := imageType{
-		name:        "edge-raw-image",
-		nameAliases: []string{"rhel-edge-raw-image"},
-		filename:    "image.raw.xz",
-		mimeType:    "application/xz",
-		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: edgeRawImageBuildPackageSet,
-		},
+		name:                "edge-raw-image",
+		nameAliases:         []string{"rhel-edge-raw-image"},
+		filename:            "image.raw.xz",
+		mimeType:            "application/xz",
+		packageSets:         nil,
 		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
 		bootISO:             false,
-		pipelines:           edgeRawImagePipelines,
+		image:               edgeRawImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"image-tree", "image", "archive"},
-		exports:             []string{"archive"},
+		payloadPipelines:    []string{"image-tree", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: edgeBasePartitionTables,
 	}
 	return it
@@ -161,12 +159,6 @@ func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
 			},
 			Exclude: nil,
 		})
-}
-
-func edgeRawImageBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return edgeBuildPackageSet(t).Append(edgeEncryptionBuildPackageSet(t)).Append(
-		bootPackageSet(t),
-	)
 }
 
 // edge commit OS package set
