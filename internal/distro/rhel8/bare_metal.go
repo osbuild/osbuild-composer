@@ -36,7 +36,6 @@ func tarImgType() imageType {
 		filename: "root.tar.xz",
 		mimeType: "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: distroBuildPackageSet,
 			osPkgsKey: func(t *imageType) rpmmd.PackageSet {
 				return rpmmd.PackageSet{
 					Include: []string{"policycoreutils", "selinux-policy-targeted"},
@@ -47,10 +46,10 @@ func tarImgType() imageType {
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
-		pipelines:        tarPipelines,
+		image:            tarImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "root-tar"},
-		exports:          []string{"root-tar"},
+		payloadPipelines: []string{"os", "archive"},
+		exports:          []string{"archive"},
 	}
 }
 

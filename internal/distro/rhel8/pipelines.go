@@ -28,20 +28,6 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *dis
 	return pipeline
 }
 
-func tarPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, nil)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-	tarPipeline := tarArchivePipeline("root-tar", treePipeline.Name, &osbuild.TarStageOptions{Filename: "root.tar.xz"})
-	pipelines = append(pipelines, *tarPipeline)
-	return pipelines, nil
-}
-
 // makeISORootPath return a path that can be used to address files and folders in
 // the root of the iso
 func makeISORootPath(p string) string {
