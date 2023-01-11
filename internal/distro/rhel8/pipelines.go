@@ -3,7 +3,6 @@ package rhel8
 import (
 	"fmt"
 	"math/rand"
-	"path"
 	"path/filepath"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -26,34 +25,6 @@ func prependKernelCmdlineStage(pipeline *osbuild.Pipeline, t *imageType, pt *dis
 		pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	}
 	return pipeline
-}
-
-// makeISORootPath return a path that can be used to address files and folders in
-// the root of the iso
-func makeISORootPath(p string) string {
-	fullpath := path.Join("/run/install/repo", p)
-	return fmt.Sprintf("file://%s", fullpath)
-}
-
-func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-	installerPackages := packageSetSpecs[installerPkgsKey]
-	d := t.arch.distro
-	archName := t.Arch().Name()
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(installerPackages, "kernel")
-	ostreeRepoPath := "/ostree/repo"
-	payloadStages := ostreePayloadStages(options, ostreeRepoPath)
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, "", users.UsersFromBP(customizations.GetUsers()), users.GroupsFromBP(customizations.GetGroups()), makeISORootPath(ostreeRepoPath), options.OSTree.ImageRef, "rhel")
-	if err != nil {
-		return nil, err
-	}
-	ksUsers := len(customizations.GetUsers())+len(customizations.GetGroups()) > 0
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "edge", ksUsers))
-	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
-	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, payloadStages))
-	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, archName, t.Arch().Name() == "x86_64"))
-	return pipelines, nil
 }
 
 func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec) ([]osbuild.Pipeline, error) {
@@ -504,101 +475,6 @@ func containerPipeline(t *imageType, nginxConfigPath, listenPort string) *osbuil
 	baseInput := osbuild.NewTreeInput("name:container-tree")
 	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}
 	p.AddStage(osbuild.NewOCIArchiveStage(options, inputs))
-	return p
-}
-
-func ostreePayloadStages(options distro.ImageOptions, ostreeRepoPath string) []*osbuild.Stage {
-	stages := make([]*osbuild.Stage, 0)
-
-	// ostree commit payload
-	stages = append(stages, osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: ostreeRepoPath}))
-	stages = append(stages, osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: ostreeRepoPath},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", options.OSTree.FetchChecksum, options.OSTree.ImageRef),
-	))
-
-	return stages
-}
-
-func anacondaTreePipeline(repos []rpmmd.RepoConfig, packages []rpmmd.PackageSpec, kernelVer, arch, product, osVersion, variant string, users bool) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "anaconda-tree"
-	p.Build = "name:build"
-	p.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(repos), osbuild.NewRpmStageSourceFilesInputs(packages)))
-	p.AddStage(osbuild.NewBuildstampStage(buildStampStageOptions(arch, product, osVersion, variant)))
-	p.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
-
-	rootPassword := ""
-	rootUser := osbuild.UsersStageOptionsUser{
-		Password: &rootPassword,
-	}
-
-	installUID := 0
-	installGID := 0
-	installHome := "/root"
-	installShell := "/usr/libexec/anaconda/run-anaconda"
-	installPassword := ""
-	installUser := osbuild.UsersStageOptionsUser{
-		UID:      &installUID,
-		GID:      &installGID,
-		Home:     &installHome,
-		Shell:    &installShell,
-		Password: &installPassword,
-	}
-	usersStageOptions := &osbuild.UsersStageOptions{
-		Users: map[string]osbuild.UsersStageOptionsUser{
-			"root":    rootUser,
-			"install": installUser,
-		},
-	}
-
-	p.AddStage(osbuild.NewUsersStage(usersStageOptions))
-
-	anacondaModules := []string{}
-	if users {
-		anacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
-	}
-	p.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(anacondaModules)))
-	p.AddStage(osbuild.NewLoraxScriptStage(loraxScriptStageOptions(arch)))
-	p.AddStage(osbuild.NewDracutStage(dracutStageOptions(kernelVer, arch, []string{
-		"anaconda",
-		"rdma",
-		"rngd",
-		"multipath",
-		"fcoe",
-		"fcoe-uefi",
-		"iscsi",
-		"lunmask",
-		"nfs",
-	})))
-	p.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
-
-	return p
-}
-
-func bootISOTreePipeline(kernelVer, arch, vendor, product, osVersion, isolabel string, ksOptions *osbuild.KickstartStageOptions, payloadStages []*osbuild.Stage) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "bootiso-tree"
-	p.Build = "name:build"
-
-	p.AddStage(osbuild.NewBootISOMonoStage(bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolabel), osbuild.NewBootISOMonoStagePipelineTreeInputs("anaconda-tree")))
-	p.AddStage(osbuild.NewKickstartStage(ksOptions))
-	p.AddStage(osbuild.NewDiscinfoStage(discinfoStageOptions(arch)))
-
-	for _, stage := range payloadStages {
-		p.AddStage(stage)
-	}
-
-	return p
-}
-func bootISOPipeline(filename, isolabel, arch string, isolinux bool) *osbuild.Pipeline {
-	p := new(osbuild.Pipeline)
-	p.Name = "bootiso"
-	p.Build = "name:build"
-
-	p.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(filename, isolabel, arch, isolinux), "bootiso-tree"))
-	p.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: filename}))
-
 	return p
 }
 

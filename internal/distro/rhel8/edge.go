@@ -97,21 +97,16 @@ func edgeInstallerImgType(rd distribution) imageType {
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     edgeInstallerBuildPackageSet,
-			osPkgsKey:        edgeCommitPackageSet,
 			installerPkgsKey: edgeInstallerPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices(rd),
 		},
 		rpmOstree:        true,
 		bootISO:          true,
-		pipelines:        edgeInstallerPipelines,
+		image:            edgeInstallerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"anaconda-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
 	}
 	return it
@@ -371,12 +366,6 @@ func edgeSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	return ps
-}
-
-func edgeInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return anacondaBuildPackageSet(t).Append(
-		edgeBuildPackageSet(t),
-	)
 }
 
 func edgeServices(rd distribution) []string {
