@@ -6,6 +6,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/fdo"
+	"github.com/osbuild/osbuild-composer/internal/ignition"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -263,6 +265,83 @@ func edgeRawImage(workload workload.Workload,
 	img.PartitionTable = pt
 
 	img.Filename = t.Filename()
+
+	return img, nil
+}
+
+func edgeSimplifiedInstallerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	commit := ostree.CommitSpec{
+		Ref:        options.OSTree.ImageRef,
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+		Checksum:   options.OSTree.FetchChecksum,
+	}
+	rawImg := image.NewOSTreeRawImage(commit)
+
+	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
+	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	// "rw" kernel option is required when /sysroot is mounted read-only to
+	// keep stateful parts of the filesystem writeable (/var/ and /etc)
+	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
+	rawImg.Keyboard = "us"
+	rawImg.Locale = "C.UTF-8"
+	rawImg.SysrootReadOnly = true
+
+	rawImg.Platform = t.platform
+	rawImg.Workload = workload
+	rawImg.Remote = ostree.Remote{
+		Name:       "rhel-edge",
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+	}
+	rawImg.OSName = "redhat"
+
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+	rawImg.PartitionTable = pt
+
+	rawImg.Filename = t.Filename()
+
+	img := image.NewOSTreeSimplifiedInstaller(rawImg, customizations.InstallationDevice)
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+	// img.Workload = workload
+	img.Platform = t.platform
+	img.Filename = t.Filename()
+	if bpFDO := customizations.GetFDO(); bpFDO != nil {
+		img.FDO = fdo.FromBP(*bpFDO)
+	}
+	// ignition configs from blueprint
+	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil {
+		if bpIgnition.FirstBoot != nil {
+			img.IgnitionFirstBoot = ignition.FirstbootOptionsFromBP(*bpIgnition.FirstBoot)
+		}
+		if bpIgnition.Embedded != nil {
+			var err error
+			img.IgnitionEmbedded, err = ignition.EmbeddedOptionsFromBP(*bpIgnition.Embedded)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	d := t.arch.distro
+	img.ISOLabelTempl = d.isolabelTmpl
+	img.Product = d.product
+	img.Variant = "edge"
+	img.OSName = "redhat"
+	img.OSVersion = d.osVersion
+	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
 
 	return img, nil
 }

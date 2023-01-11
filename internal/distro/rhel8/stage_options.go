@@ -2,7 +2,6 @@ package rhel8
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -215,51 +214,6 @@ func bootISOMonoStageOptions(kernelVer, arch, vendor, product, osVersion, isolab
 	}
 }
 
-func grubISOStageOptions(installDevice, kernelVer, arch, vendor, product, osVersion, isolabel string, fdo *blueprint.FDOCustomization) *osbuild.GrubISOStageOptions {
-	var architectures []string
-
-	if arch == distro.X86_64ArchName {
-		architectures = []string{"IA32", "X64"}
-	} else if arch == distro.Aarch64ArchName {
-		architectures = []string{"AA64"}
-	} else {
-		panic("unsupported architecture")
-	}
-
-	grubISOStageOptions := &osbuild.GrubISOStageOptions{
-		Product: osbuild.Product{
-			Name:    product,
-			Version: osVersion,
-		},
-		ISOLabel: isolabel,
-		Kernel: osbuild.ISOKernel{
-			Dir: "/images/pxeboot",
-			Opts: []string{"rd.neednet=1",
-				"coreos.inst.crypt_root=1",
-				"coreos.inst.isoroot=" + isolabel,
-				"coreos.inst.install_dev=" + installDevice,
-				"coreos.inst.image_file=/run/media/iso/image.raw.xz",
-				"coreos.inst.insecure"},
-		},
-		Architectures: architectures,
-		Vendor:        vendor,
-	}
-
-	if fdo.HasFDO() {
-		grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.manufacturing_server_url="+fdo.ManufacturingServerURL)
-		if fdo.DiunPubKeyInsecure != "" {
-			grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_insecure="+fdo.DiunPubKeyInsecure)
-		}
-		if fdo.DiunPubKeyHash != "" {
-			grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_hash="+fdo.DiunPubKeyHash)
-		}
-		if fdo.DiunPubKeyRootCerts != "" {
-			grubISOStageOptions.Kernel.Opts = append(grubISOStageOptions.Kernel.Opts, "fdo.diun_pub_key_root_certs=/fdo_diun_pub_key_root_certs.pem")
-		}
-	}
-	return grubISOStageOptions
-}
-
 func discinfoStageOptions(arch string) *osbuild.DiscinfoStageOptions {
 	return &osbuild.DiscinfoStageOptions{
 		BaseArch: arch,
@@ -306,29 +260,6 @@ func chmodStageOptions(path, mode string, recursive bool) *osbuild.ChmodStageOpt
 	return &osbuild.ChmodStageOptions{
 		Items: map[string]osbuild.ChmodStagePathOptions{
 			path: {Mode: mode, Recursive: recursive},
-		},
-	}
-}
-
-func ostreeConfigStageOptions(repo string, readOnly bool) *osbuild.OSTreeConfigStageOptions {
-	return &osbuild.OSTreeConfigStageOptions{
-		Repo: repo,
-		Config: &osbuild.OSTreeConfig{
-			Sysroot: &osbuild.SysrootOptions{
-				ReadOnly:   common.ToPtr(readOnly),
-				Bootloader: "none",
-			},
-		},
-	}
-}
-
-func efiMkdirStageOptions() *osbuild.MkdirStageOptions {
-	return &osbuild.MkdirStageOptions{
-		Paths: []osbuild.Path{
-			{
-				Path: "/boot/efi",
-				Mode: os.FileMode(0700),
-			},
 		},
 	}
 }

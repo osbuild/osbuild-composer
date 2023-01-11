@@ -131,7 +131,6 @@ func edgeSimplifiedInstallerImgType(rd distribution) imageType {
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			buildPkgsKey:     edgeSimplifiedInstallerBuildPackageSet,
 			installerPkgsKey: edgeSimplifiedInstallerPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
@@ -141,9 +140,9 @@ func edgeSimplifiedInstallerImgType(rd distribution) imageType {
 		rpmOstree:           true,
 		bootable:            true,
 		bootISO:             true,
-		pipelines:           edgeSimplifiedInstallerPipelines,
+		image:               edgeSimplifiedInstallerImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"image-tree", "image", "archive", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines:    []string{"image-tree", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:             []string{"bootiso"},
 		basePartitionTables: edgeBasePartitionTables,
 	}
@@ -378,22 +377,6 @@ func edgeInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
 	return anacondaBuildPackageSet(t).Append(
 		edgeBuildPackageSet(t),
 	)
-}
-
-func edgeSimplifiedInstallerBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return edgeInstallerBuildPackageSet(t).Append(
-		edgeEncryptionBuildPackageSet(t),
-	)
-}
-
-func edgeEncryptionBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"clevis",
-			"clevis-luks",
-			"cryptsetup",
-		},
-	}
 }
 
 func edgeServices(rd distribution) []string {
