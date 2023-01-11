@@ -1,6 +1,7 @@
 package rhel8
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -195,6 +196,44 @@ func liveImage(workload workload.Workload,
 		return nil, err
 	}
 	img.PartitionTable = pt
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
+func imageInstallerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewImageInstaller()
+
+	img.Platform = t.platform
+	img.Workload = workload
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+	img.Users = users.UsersFromBP(customizations.GetUsers())
+	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
+	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
+
+	img.SquashfsCompression = "xz"
+
+	// put the kickstart file in the root of the iso
+	img.ISORootKickstart = true
+
+	d := t.arch.distro
+
+	img.ISOLabelTempl = d.isolabelTmpl
+	img.Product = d.product
+	img.OSName = "redhat"
+	img.OSVersion = d.osVersion
+	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
 
 	img.Filename = t.Filename()
 
