@@ -13,19 +13,15 @@ func imageInstaller() imageType {
 		filename: "installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey:     anacondaBuildPackageSet,
 			osPkgsKey:        bareMetalPackageSet,
 			installerPkgsKey: anacondaPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		rpmOstree:        false,
 		bootISO:          true,
 		bootable:         true,
-		pipelines:        imageInstallerPipelines,
+		image:            imageInstallerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
 	}
 }

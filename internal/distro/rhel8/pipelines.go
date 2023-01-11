@@ -56,46 +56,6 @@ func edgeInstallerPipelines(t *imageType, customizations *blueprint.Customizatio
 	return pipelines, nil
 }
 
-func imageInstallerPipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], containers, customizations, options, nil)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-
-	var kernelPkg *rpmmd.PackageSpec
-	installerPackages := packageSetSpecs[installerPkgsKey]
-	for _, pkg := range installerPackages {
-		if pkg.Name == "kernel" {
-			// Implicit memory alasing doesn't couse any bug in this case
-			/* #nosec G601 */
-			kernelPkg = &pkg
-			break
-		}
-	}
-	if kernelPkg == nil {
-		return nil, fmt.Errorf("kernel package not found in installer package set")
-	}
-	kernelVer := fmt.Sprintf("%s-%s.%s", kernelPkg.Version, kernelPkg.Release, kernelPkg.Arch)
-
-	tarPath := "/liveimg.tar"
-	tarPayloadStages := []*osbuild.Stage{osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: tarPath}, treePipeline.Name)}
-	kickstartOptions, err := osbuild.NewKickstartStageOptions(kspath, makeISORootPath(tarPath), users.UsersFromBP(customizations.GetUsers()), users.GroupsFromBP(customizations.GetGroups()), "", "", "rhel")
-	if err != nil {
-		return nil, err
-	}
-	archName := t.Arch().Name()
-	d := t.arch.distro
-	pipelines = append(pipelines, *anacondaTreePipeline(repos, installerPackages, kernelVer, archName, d.product, d.osVersion, "BaseOS", true))
-	isolabel := fmt.Sprintf(d.isolabelTmpl, archName)
-	pipelines = append(pipelines, *bootISOTreePipeline(kernelVer, archName, d.vendor, d.product, d.osVersion, isolabel, kickstartOptions, tarPayloadStages))
-	pipelines = append(pipelines, *bootISOPipeline(t.Filename(), d.isolabelTmpl, t.Arch().Name(), t.Arch().Name() == "x86_64"))
-	return pipelines, nil
-}
-
 func edgeCorePipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, containers []container.Spec) ([]osbuild.Pipeline, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
