@@ -260,6 +260,52 @@ func tarImage(workload workload.Workload,
 
 }
 
+func edgeInstallerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	d := t.arch.distro
+
+	commit := ostree.CommitSpec{
+		Ref:        options.OSTree.ImageRef,
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+		Checksum:   options.OSTree.FetchChecksum,
+	}
+	if options.OSTree.RHSM {
+		commit.Secrets = "org.osbuild.rhsm.consumer"
+	}
+	img := image.NewOSTreeInstaller(commit)
+
+	img.Platform = t.platform
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+	img.Users = users.UsersFromBP(customizations.GetUsers())
+	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.SquashfsCompression = "xz"
+	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
+
+	if len(img.Users)+len(img.Groups) > 0 {
+		// only enable the users module if needed
+		img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
+	}
+
+	img.ISOLabelTempl = d.isolabelTmpl
+	img.Product = d.product
+	img.Variant = "edge"
+	img.OSName = "rhel"
+	img.OSVersion = d.osVersion
+	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
 func edgeRawImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
