@@ -72,9 +72,9 @@ func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 		copyInput := ""
 		// These specific filenames in the root of the ISO are expected by
 		// coreos-installer-dracut during installation
-		if p.coiPipeline.Ignition.Data64 != "" {
+		if p.coiPipeline.Ignition.Config != "" {
 			filename = "ignition_config"
-			copyInput = p.coiPipeline.Ignition.Data64
+			copyInput = p.coiPipeline.Ignition.Config
 		} else {
 			filename = "ignition_url"
 			copyInput = p.coiPipeline.Ignition.ProvisioningURL

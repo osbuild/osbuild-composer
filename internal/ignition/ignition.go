@@ -1,6 +1,11 @@
 package ignition
 
-import "github.com/osbuild/osbuild-composer/internal/blueprint"
+import (
+	"encoding/base64"
+	"errors"
+
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
+)
 
 type FirstBootOptions struct {
 	ProvisioningURL string
@@ -13,10 +18,16 @@ func FirstbootOptionsFromBP(bpIgnitionFirstboot blueprint.FirstBootIgnitionCusto
 
 type EmbeddedOptions struct {
 	ProvisioningURL string
-	Data64          string
+	Config          string
 }
 
-func EmbeddedOptionsFromBP(bpIgnitionEmbedded blueprint.EmbeddedIgnitionCustomization) *EmbeddedOptions {
-	ignition := EmbeddedOptions(bpIgnitionEmbedded)
-	return &ignition
+func EmbeddedOptionsFromBP(bpIgnitionEmbedded blueprint.EmbeddedIgnitionCustomization) (*EmbeddedOptions, error) {
+	decodedConfig, err := base64.StdEncoding.DecodeString(bpIgnitionEmbedded.Config)
+	if err != nil {
+		return nil, errors.New("can't decode Ignition config")
+	}
+	return &EmbeddedOptions{
+		ProvisioningURL: bpIgnitionEmbedded.ProvisioningURL,
+		Config:          string(decodedConfig),
+	}, nil
 }

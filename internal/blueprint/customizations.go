@@ -33,7 +33,7 @@ type IgnitionCustomization struct {
 
 type EmbeddedIgnitionCustomization struct {
 	ProvisioningURL string `json:"url,omitempty" toml:"url,omitempty"`
-	Data64          string `json:"data,omitempty" toml:"data,omitempty"`
+	Config          string `json:"config,omitempty" toml:"config,omitempty"`
 }
 
 type FirstBootIgnitionCustomization struct {
@@ -421,7 +421,7 @@ func (c *EmbeddedIgnitionCustomization) CheckEmbeddedIgnition() error {
 	if c == nil {
 		return nil
 	}
-	if c.Data64 != "" && c.ProvisioningURL != "" {
+	if c.Config != "" && c.ProvisioningURL != "" {
 		t := reflect.TypeOf(*c)
 		return &CustomizationError{fmt.Sprintf("'%s' and '%s' are not allowed at the same time", t.Field(0).Name, t.Field(1).Name)}
 	}

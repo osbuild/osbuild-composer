@@ -827,6 +827,8 @@ sudo tee "$IGN_CONFIG_PATH" > /dev/null << EOF
 }
 EOF
 
+BASE64_IGN_CONFIG=$(cat "$IGN_CONFIG_PATH" | base64)
+
 IGN_CONFIG_SAMPLE_PATH="${IGN_PATH}/sample.ign"
 sudo tee "$IGN_CONFIG_SAMPLE_PATH" > /dev/null << EOF
 {
@@ -867,6 +869,290 @@ sudo tee "$IGN_CONFIG_SAMPLE_PATH" > /dev/null << EOF
 EOF
 sudo chmod -R +r ${HTTPD_PATH}/ignition/*
 
+########################################################################
+##
+## Build edge-simplified-installer with ignition embedded 
+## (only on rhel92+)
+##
+########################################################################
+
+if [[ "${ID}-${VERSION_ID}" = "rhel-9.2" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
+#   tee "$BLUEPRINT_FILE" > /dev/null <<EOF
+# name = "simplified_iso_with_ignition_embedded_url"
+# description = "A rhel-edge simplified-installer image with an embedded ignition config URL"
+# version = "0.0.1"
+
+# [customizations]
+# installation_device = "/dev/vda"
+
+# [customizations.ignition.embedded]
+# url = "http://192.168.100.1/ignition/config.ign"
+# EOF
+
+#   greenprint "📄 simplified_iso_with_ignition_embedded_url blueprint "
+#   cat "$BLUEPRINT_FILE"
+
+#   # Prepare the blueprint for the compose.
+#   greenprint "📋 Preparing installer blueprint"
+#   sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+#   sudo composer-cli blueprints depsolve simplified_iso_with_ignition_embedded_url
+
+#   # Build simplified installer iso image.
+#   build_image simplified_iso_with_ignition_embedded_url "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+
+#   # Download the image
+#   greenprint "📥 Downloading the simplified_iso_with_ignition_embedded_url image"
+#   sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+#   ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+#   sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
+
+#   # Clean compose and blueprints.
+#   greenprint "🧹 Clean up simplified_iso_with_ignition_embedded_url blueprint and compose"
+#   sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+#   sudo composer-cli blueprints delete simplified_iso_with_ignition_embedded_url > /dev/null
+
+#   # Ensure SELinux is happy with our new images.
+#   greenprint "👿 Running restorecon on image directory"
+#   sudo restorecon -Rv /var/lib/libvirt/images/
+
+#   # Create qcow2 file for virt install.
+#   greenprint "🖥 Create qcow2 file for virt install"
+#   sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+
+#   greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
+#   sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_with_ignition_embedded_url"\
+#                     --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+#                     --ram "${MEMORY}" \
+#                     --vcpus 2 \
+#                     --network network=integration,mac=34:49:22:B0:83:33 \
+#                     --os-type linux \
+#                     --os-variant ${OS_VARIANT} \
+#                     --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+#                     --boot "$BOOT_ARGS" \
+#                     --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
+#                     --nographics \
+#                     --noautoconsole \
+#                     --wait=15 \
+#                     --noreboot
+
+#   # Installation can get stuck, destroying VM helps
+#   # See https://github.com/osbuild/osbuild-composer/issues/2413
+#   if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_url") == "running" ]]; then
+#       sudo virsh destroy "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_url"
+#   fi
+
+#   # Start VM.
+#   greenprint "💻 Start UEFI VM"
+#   sudo virsh start "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_url"
+
+#   # Check for ssh ready to go.
+#   greenprint "🛃 Checking for SSH is ready to go"
+#   for LOOP_COUNTER in $(seq 0 30); do
+#       RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
+#       if [[ $RESULTS == 1 ]]; then
+#           echo "SSH is ready now! 🥳"
+#           break
+#       fi
+#       sleep 10
+#   done
+
+#   # Check image installation result
+#   check_result
+
+#   greenprint "🕹 Get ostree install commit value"
+#   INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+#   if [[ ${IGNITION} -eq 0 ]]; then
+#     # Add instance IP address into /etc/ansible/hosts
+#     sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+# [ostree_guest]
+# ${IGNITION_GUEST_ADDRESS}
+
+# [ostree_guest:vars]
+# ansible_python_interpreter=/usr/bin/python3
+# ansible_user=core
+# ansible_private_key_file=${SSH_KEY}
+# ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+# ansible_become=yes
+# ansible_become_method=sudo
+# ansible_become_pass=${EDGE_USER_PASSWORD}
+# EOF
+
+#     # Test IoT/Edge OS
+#     sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+#     check_result
+#   fi
+
+#   # now try with blueprint user
+
+#   # Add instance IP address into /etc/ansible/hosts
+#   sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+# [ostree_guest]
+# ${IGNITION_GUEST_ADDRESS}
+
+# [ostree_guest:vars]
+# ansible_python_interpreter=/usr/bin/python3
+# ansible_user=admin
+# ansible_private_key_file=${SSH_KEY}
+# ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+# ansible_become=yes
+# ansible_become_method=sudo
+# ansible_become_pass=${EDGE_USER_PASSWORD}
+# EOF
+
+#   # Test IoT/Edge OS
+#   sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+#   check_result
+
+#   greenprint "🧹 Clean up VM"
+#   if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_url") == "running" ]]; then
+#       sudo virsh destroy "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_url"
+#   fi
+#   sudo virsh undefine "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_url" --nvram
+#   sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
+
+  # embedded base64 ign config
+
+  tee "$BLUEPRINT_FILE" > /dev/null <<EOF
+name = "simplified_iso_with_ignition_embedded_config"
+description = "A rhel-edge simplified-installer image with an embedded ignition config"
+version = "0.0.1"
+
+[customizations]
+installation_device = "/dev/vda"
+
+[customizations.ignition.embedded]
+config = """
+${BASE64_IGN_CONFIG}"""
+EOF
+
+  greenprint "📄 simplified_iso_with_ignition_embedded_config blueprint "
+  cat "$BLUEPRINT_FILE"
+
+  # Prepare the blueprint for the compose.
+  greenprint "📋 Preparing installer blueprint"
+  sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+  sudo composer-cli blueprints depsolve simplified_iso_with_ignition_embedded_config
+
+  # Build simplified installer iso image.
+  build_image simplified_iso_with_ignition_embedded_config "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+
+  # Download the image
+  greenprint "📥 Downloading the simplified_iso_with_ignition_embedded_config image"
+  sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+  ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+  sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
+
+  # Clean compose and blueprints.
+  greenprint "🧹 Clean up simplified_iso_with_ignition_embedded_config blueprint and compose"
+  sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+  sudo composer-cli blueprints delete simplified_iso_with_ignition_embedded_config > /dev/null
+
+  # Ensure SELinux is happy with our new images.
+  greenprint "👿 Running restorecon on image directory"
+  sudo restorecon -Rv /var/lib/libvirt/images/
+
+  # Create qcow2 file for virt install.
+  greenprint "🖥 Create qcow2 file for virt install"
+  sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+
+  greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
+  sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config"\
+                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                    --ram "${MEMORY}" \
+                    --vcpus 2 \
+                    --network network=integration,mac=34:49:22:B0:83:33 \
+                    --os-type linux \
+                    --os-variant ${OS_VARIANT} \
+                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                    --boot "$BOOT_ARGS" \
+                    --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
+                    --nographics \
+                    --noautoconsole \
+                    --wait=15 \
+                    --noreboot
+
+  # Installation can get stuck, destroying VM helps
+  # See https://github.com/osbuild/osbuild-composer/issues/2413
+  if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config") == "running" ]]; then
+      sudo virsh destroy "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config"
+  fi
+
+  # Start VM.
+  greenprint "💻 Start UEFI VM"
+  sudo virsh start "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config"
+
+  # Check for ssh ready to go.
+  greenprint "🛃 Checking for SSH is ready to go"
+  for LOOP_COUNTER in $(seq 0 30); do
+      RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
+      if [[ $RESULTS == 1 ]]; then
+          echo "SSH is ready now! 🥳"
+          break
+      fi
+      sleep 10
+  done
+
+  # Check image installation result
+  check_result
+
+  greenprint "🕹 Get ostree install commit value"
+  INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+  if [[ ${IGNITION} -eq 0 ]]; then
+    # Add instance IP address into /etc/ansible/hosts
+    sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${IGNITION_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=core
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+    # Test IoT/Edge OS
+    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+    check_result
+  fi
+
+  # now try with blueprint user
+
+  # Add instance IP address into /etc/ansible/hosts
+  sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${IGNITION_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+  # Test IoT/Edge OS
+  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+  check_result
+
+  greenprint "🧹 Clean up VM"
+  if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config") == "running" ]]; then
+      sudo virsh destroy "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config"
+  fi
+  sudo virsh undefine "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config" --nvram
+  sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
+else
+    greenprint "Skipping ignition embedded url test, it's only for RHEL9"
+fi
+
+# TODO(runcom): 
+
 if [[ ${IGNITION} -eq 0 ]]; then
   tee "$BLUEPRINT_FILE" > /dev/null << EOF
   name = "simplified_iso_without_fdo"
@@ -878,8 +1164,8 @@ if [[ ${IGNITION} -eq 0 ]]; then
   [customizations]
   installation_device = "/dev/vda"
 
-  [customizations.kernel]
-  append = "ignition.config.url=http://192.168.100.1/ignition/config.ign"
+  [customizations.ignition.firstboot]
+  url = "http://192.168.100.1/ignition/config.ign"
 EOF
 else
   tee "$BLUEPRINT_FILE" > /dev/null << EOF
@@ -1008,62 +1294,6 @@ EOF
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
-
-########################################################################
-##
-## Build edge-simplified-installer with ignition embedded 
-## (only on rhel92+)
-##
-########################################################################
-
-if [[ "${ID}-${VERSION_ID}" = "rhel-9.2" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
-   tee "$BLUEPRINT_FILE" > /dev/null <<EOF
-name = "simplified_iso_with_ignition_embedded_url"
-description = "A rhel-edge simplified-installer image with an embedded ignition config URL"
-version = "0.0.1"
-
-[customizations]
-installation_device = "/dev/vda"
-
-[customizations.ignition.embedded]
-url = "http://192.168.100.1/ignition/config.ign"
-EOF
-
-   greenprint "📄 simplified_iso_with_ignition_embedded_url blueprint "
-   cat "$BLUEPRINT_FILE"
-
-   # Prepare the blueprint for the compose.
-   greenprint "📋 Preparing installer blueprint"
-   sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-   sudo composer-cli blueprints depsolve simplified_iso_with_ignition_embedded_url
-
-   # Build simplified installer iso image.
-   build_image simplified_iso_with_ignition_embedded_url "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
-
-   # Download the image
-   greenprint "📥 Downloading the simplified_iso_with_ignition_embedded_url image"
-   sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-   ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
-
-   # Mount the image
-   sudo mkdir /mnt/installer
-   sudo mount -o loop "${ISO_FILENAME}" /mnt/installer
-
-   # Check that the image contains the ignition_url file
-   if [[ -f "/mnt/installer/ignition_url" ]]; then
-       RESULTS=1
-   fi
-
-   # Check the resulting image
-   check_result
-
-   sudo umount /mnt/installer
-
-   # TODO(runcom): run with this image and basically check the same as the previous test with core user
-else
-    greenprint "Skipping ignition embedded url test, it's only for RHEL9"
-fi
-
 
 ########################
 ##
