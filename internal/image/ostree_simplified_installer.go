@@ -127,11 +127,6 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 		}
 	}
 
-	// ignition firstboot options
-	if img.IgnitionFirstBoot != nil {
-		kernelOpts = append(kernelOpts, "coreos.inst.append ignition.config.url="+img.IgnitionFirstBoot.ProvisioningURL)
-	}
-
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	rootfsPartitionTable := &disk.PartitionTable{

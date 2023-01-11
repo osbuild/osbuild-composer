@@ -138,8 +138,8 @@ func (p *CoreOSInstaller) getInline() []string {
 	}
 	// inline data for ignition embedded (url or data)
 	if p.Ignition != nil {
-		if p.Ignition.Data64 != "" {
-			inlineData = append(inlineData, p.Ignition.Data64)
+		if p.Ignition.Config != "" {
+			inlineData = append(inlineData, p.Ignition.Config)
 		} else {
 			inlineData = append(inlineData, p.Ignition.ProvisioningURL)
 		}

@@ -211,8 +211,8 @@ func edgeCommitImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !common.VersionLessThan(t.arch.distro.osVersion, "9-stream") {
-		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues", "coreos-ignition-write-issues")
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
+		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues.service")
 	}
 	img.Environment = t.environment
 	img.Workload = workload
@@ -247,8 +247,8 @@ func edgeContainerImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !common.VersionLessThan(t.arch.distro.osVersion, "9-stream") {
-		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues", "coreos-ignition-write-issues")
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
+		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues.service")
 	}
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
@@ -421,6 +421,10 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 
 	rawImg.Filename = t.Filename()
 
+	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
+	}
+
 	// 92+ only
 	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
 		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, kopts.Append)
@@ -436,11 +440,12 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	}
 	// ignition configs from blueprint
 	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil {
-		if bpIgnition.FirstBoot != nil {
-			img.IgnitionFirstBoot = ignition.FirstbootOptionsFromBP(*bpIgnition.FirstBoot)
-		}
 		if bpIgnition.Embedded != nil {
-			img.IgnitionEmbedded = ignition.EmbeddedOptionsFromBP(*bpIgnition.Embedded)
+			var err error
+			img.IgnitionEmbedded, err = ignition.EmbeddedOptionsFromBP(*bpIgnition.Embedded)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
