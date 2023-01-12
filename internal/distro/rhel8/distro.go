@@ -505,9 +505,13 @@ func (t *imageType) getPartitionTable(
 
 	imageSize := t.Size(options.Size)
 
-	partitioningMode := disk.AutoLVMPartitioningMode
+	partitioningMode := options.PartitioningMode
 	if t.rpmOstree {
 		// Edge supports only raw, force it.
+		// If the caller specifically wants LVM, this is an error.
+		if partitioningMode == disk.LVMPartitioningMode {
+			return nil, fmt.Errorf("partitioning mode lvm not supported for %s on %s", t.Name(), t.arch.Name())
+		}
 		partitioningMode = disk.RawPartitioningMode
 	}
 

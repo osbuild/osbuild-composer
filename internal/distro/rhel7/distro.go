@@ -366,7 +366,7 @@ func (t *imageType) getPartitionTable(
 
 	imageSize := t.Size(options.Size)
 
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, disk.AutoLVMPartitioningMode, rng)
+	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, options.PartitioningMode, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {

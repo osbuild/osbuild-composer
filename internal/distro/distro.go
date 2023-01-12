@@ -123,12 +123,15 @@ type ImageType interface {
 	Manifest(b *blueprint.Customizations, options ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (Manifest, error)
 }
 
+type PartitioningMode string
+
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	Size         uint64
-	OSTree       OSTreeImageOptions
-	Subscription *SubscriptionImageOptions
-	Facts        *FactsImageOptions
+	Size             uint64
+	PartitioningMode disk.PartitioningMode
+	OSTree           OSTreeImageOptions
+	Subscription     *SubscriptionImageOptions
+	Facts            *FactsImageOptions
 }
 
 // The OSTreeImageOptions specify an ostree ref, checksum, URL, ContentURL, and RHSM. The meaning of
