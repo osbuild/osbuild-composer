@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 )
 
@@ -19,14 +20,47 @@ type PartitionTable struct {
 	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
 }
 
-func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, lvmify bool, rng *rand.Rand) (*PartitionTable, error) {
+type PartitioningMode string
+
+const (
+	// AutoLVMPartitioningMode creates a LVM layout if the filesystem
+	// contains a mountpoint that's not defined in the base partition table
+	// of the specified image type. In the other case, a raw layout is used.
+	//
+	// This is the default mode.
+	AutoLVMPartitioningMode PartitioningMode = ""
+
+	// LVMPartitioningMode always creates an LVM layout.
+	LVMPartitioningMode PartitioningMode = "lvm"
+
+	// RawPartitioningMode always creates a raw layout.
+	RawPartitioningMode PartitioningMode = "raw"
+)
+
+func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode PartitioningMode, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
+
+	if basePT.introspect().LVM && mode == RawPartitioningMode {
+		return nil, fmt.Errorf("raw partitioning mode set for a base partition table with LVM, this is unsupported")
+	}
 
 	// first pass: enlarge existing mountpoints and collect new ones
 	newMountpoints, _ := newPT.applyCustomization(mountpoints, false)
 
-	// if there is any new mountpoint and lvmify is enabled, ensure we have LVM layout
-	if lvmify && len(newMountpoints) > 0 {
+	var ensureLVM bool
+
+	switch mode {
+	case LVMPartitioningMode:
+		ensureLVM = true
+	case RawPartitioningMode:
+		ensureLVM = false
+	case AutoLVMPartitioningMode:
+		ensureLVM = len(newMountpoints) > 0
+	default:
+		panic(fmt.Sprintf("NewPartitionTable got an unexpected partitioning mode (%s)l this is a programming error", mode))
+	}
+
+	if ensureLVM {
 		err := newPT.ensureLVM()
 		if err != nil {
 			return nil, err

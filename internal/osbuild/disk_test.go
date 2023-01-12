@@ -4,9 +4,10 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGenImageKernelOptions(t *testing.T) {
@@ -18,7 +19,7 @@ func TestGenImageKernelOptions(t *testing.T) {
 
 	luks_lvm := testPartitionTables["luks+lvm"]
 
-	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, rng)
+	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, disk.RawPartitioningMode, rng)
 	assert.NoError(err)
 
 	var uuid string

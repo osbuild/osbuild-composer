@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
@@ -17,7 +19,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -157,9 +158,13 @@ func (t *imageType) getPartitionTable(
 
 	imageSize := t.Size(options.Size)
 
-	lvmify := !t.rpmOstree
+	partitioningMode := disk.AutoLVMPartitioningMode
+	if t.rpmOstree {
+		// Edge supports only LVM, force it.
+		partitioningMode = disk.LVMPartitioningMode
+	}
 
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, lvmify, rng)
+	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, partitioningMode, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {

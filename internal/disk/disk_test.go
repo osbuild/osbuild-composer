@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 )
 
 const (
@@ -74,7 +75,7 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(0))
-	newpt, err := NewPartitionTable(&pt, mountpoints, 1024, false, rng)
+	newpt, err := NewPartitionTable(&pt, mountpoints, 1024, RawPartitioningMode, rng)
 	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, newpt.Size, expectedSize)
 }
@@ -449,7 +450,7 @@ func TestCreatePartitionTable(t *testing.T) {
 	for ptName := range testPartitionTables {
 		pt := testPartitionTables[ptName]
 		for bpName, bp := range testBlueprints {
-			mpt, err := NewPartitionTable(&pt, bp, uint64(13*MiB), false, rng)
+			mpt, err := NewPartitionTable(&pt, bp, uint64(13*MiB), RawPartitioningMode, rng)
 			assert.NoError(err, "Partition table generation failed: PT %q BP %q (%s)", ptName, bpName, err)
 			assert.NotNil(mpt, "Partition table generation failed: PT %q BP %q (nil partition table)", ptName, bpName)
 			assert.Greater(mpt.GetSize(), sumSizes(bp))
@@ -475,12 +476,12 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 
 			if tbp != nil && (ptName == "btrfs" || ptName == "luks") {
 				assert.Panics(func() {
-					_, _ = NewPartitionTable(&pt, tbp, uint64(13*MiB), true, rng)
+					_, _ = NewPartitionTable(&pt, tbp, uint64(13*MiB), AutoLVMPartitioningMode, rng)
 				}, fmt.Sprintf("PT %q BP %q: should panic", ptName, bpName))
 				continue
 			}
 
-			mpt, err := NewPartitionTable(&pt, tbp, uint64(13*MiB), true, rng)
+			mpt, err := NewPartitionTable(&pt, tbp, uint64(13*MiB), AutoLVMPartitioningMode, rng)
 			assert.NoError(err, "PT %q BP %q: Partition table generation failed: (%s)", ptName, bpName, err)
 
 			rootPath := entityPath(mpt, "/")
@@ -588,7 +589,7 @@ func TestMinimumSizes(t *testing.T) {
 
 	for idx, tc := range testCases {
 		{ // without LVM
-			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), false, rng)
+			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), RawPartitioningMode, rng)
 			assert.NoError(err)
 			for mnt, minSize := range tc.ExpectedMinSizes {
 				path := entityPath(mpt, mnt)
@@ -602,7 +603,7 @@ func TestMinimumSizes(t *testing.T) {
 		}
 
 		{ // with LVM
-			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, rng)
+			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), AutoLVMPartitioningMode, rng)
 			assert.NoError(err)
 			for mnt, minSize := range tc.ExpectedMinSizes {
 				path := entityPath(mpt, mnt)
@@ -689,7 +690,7 @@ func TestLVMExtentAlignment(t *testing.T) {
 	}
 
 	for idx, tc := range testCases {
-		mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, rng)
+		mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), AutoLVMPartitioningMode, rng)
 		assert.NoError(err)
 		for mnt, expSize := range tc.ExpectedSizes {
 			path := entityPath(mpt, mnt)
@@ -718,7 +719,7 @@ func TestNewBootWithSizeLVMify(t *testing.T) {
 		},
 	}
 
-	mpt, err := NewPartitionTable(&pt, custom, uint64(3*GiB), true, rng)
+	mpt, err := NewPartitionTable(&pt, custom, uint64(3*GiB), AutoLVMPartitioningMode, rng)
 	assert.NoError(err)
 
 	for idx, c := range custom {
