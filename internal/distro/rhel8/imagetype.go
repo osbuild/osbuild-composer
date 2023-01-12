@@ -413,8 +413,39 @@ func (t *imageType) PackageSetsNew(bp blueprint.Blueprint, options distro.ImageO
 		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
 		return nil
 	}
+	return overridePackageNamesInSets(manifest.GetPackageSetChains())
+}
 
-	return manifest.GetPackageSetChains()
+// Runs overridePackageNames() on each package set's Include and Exclude list
+// and replaces package names.
+func overridePackageNamesInSets(chains map[string][]rpmmd.PackageSet) map[string][]rpmmd.PackageSet {
+	pkgSetChains := make(map[string][]rpmmd.PackageSet)
+	for name, chain := range chains {
+		cc := make([]rpmmd.PackageSet, len(chain))
+		for idx := range chain {
+			cc[idx] = rpmmd.PackageSet{
+				Include:      overridePackageNames(chain[idx].Include),
+				Exclude:      overridePackageNames(chain[idx].Exclude),
+				Repositories: chain[idx].Repositories,
+			}
+		}
+		pkgSetChains[name] = cc
+	}
+	return pkgSetChains
+}
+
+// Resolve packages to their distro-specific name. This function is a temporary
+// workaround to the issue of having packages specified outside of distros (in
+// internal/manifest/os.go), which should be distro agnostic. In the future,
+// this should be handled more generally.
+func overridePackageNames(packages []string) []string {
+	for idx := range packages {
+		switch packages[idx] {
+		case "python3-toml":
+			packages[idx] = "python3-pytoml"
+		}
+	}
+	return packages
 }
 
 func (t *imageType) Manifest(customizations *blueprint.Customizations,
