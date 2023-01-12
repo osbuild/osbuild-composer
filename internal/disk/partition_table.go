@@ -623,57 +623,66 @@ func (pt *PartitionTable) ensureLVM() error {
 	return nil
 }
 
-func (pt *PartitionTable) GetBuildPackages() []string {
-	packages := []string{}
+type partitionTableFeatures struct {
+	LVM   bool
+	Btrfs bool
+	XFS   bool
+	FAT   bool
+	EXT4  bool
+	LUKS  bool
+}
 
-	hasLVM := false
-	hasBtrfs := false
-	hasXFS := false
-	hasFAT := false
-	hasEXT4 := false
-	hasLUKS := false
+func (pt *PartitionTable) introspect() partitionTableFeatures {
+	var features partitionTableFeatures
 
 	introspectPT := func(e Entity, path []Entity) error {
 		switch ent := e.(type) {
 		case *LVMLogicalVolume:
-			hasLVM = true
+			features.LVM = true
 		case *Btrfs:
-			hasBtrfs = true
+			features.Btrfs = true
 		case *Filesystem:
 			switch ent.GetFSType() {
 			case "vfat":
-				hasFAT = true
+				features.FAT = true
 			case "btrfs":
-				hasBtrfs = true
+				features.Btrfs = true
 			case "xfs":
-				hasXFS = true
+				features.XFS = true
 			case "ext4":
-				hasEXT4 = true
+				features.EXT4 = true
 			}
 		case *LUKSContainer:
-			hasLUKS = true
+			features.LUKS = true
 		}
 		return nil
 	}
 	_ = pt.ForEachEntity(introspectPT)
 
-	// TODO: LUKS
-	if hasLVM {
+	return features
+}
+
+func (pt *PartitionTable) GetBuildPackages() []string {
+	packages := []string{}
+
+	features := pt.introspect()
+
+	if features.LVM {
 		packages = append(packages, "lvm2")
 	}
-	if hasBtrfs {
+	if features.Btrfs {
 		packages = append(packages, "btrfs-progs")
 	}
-	if hasXFS {
+	if features.XFS {
 		packages = append(packages, "xfsprogs")
 	}
-	if hasFAT {
+	if features.FAT {
 		packages = append(packages, "dosfstools")
 	}
-	if hasEXT4 {
+	if features.EXT4 {
 		packages = append(packages, "e2fsprogs")
 	}
-	if hasLUKS {
+	if features.LUKS {
 		packages = append(packages,
 			"clevis",
 			"clevis-luks",
