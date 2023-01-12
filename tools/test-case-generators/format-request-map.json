@@ -155,7 +155,17 @@
         }
       }
     },
-    "overrides": {},
+    "overrides": {
+      "centos-8": {
+        "blueprint": {
+          "customizations": {
+            "kernel": {
+              "name": "kernel-rt-core"
+            }
+          }
+        }
+      }
+    },
     "supported_arches": [
       "x86_64"
     ]
