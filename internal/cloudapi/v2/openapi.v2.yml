@@ -1003,6 +1003,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Filesystem'
+        partitioning_mode:
+          type: string
+          enum:
+            - raw
+            - lvm
+            - auto-lvm
+          default: auto-lvm
         services:
           type: object
           additionalProperties: false

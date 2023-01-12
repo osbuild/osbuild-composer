@@ -16,6 +16,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
@@ -269,7 +270,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			return err
 		}
 
-		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
+		imageOptions := distro.ImageOptions{
+			Size:             imageType.Size(0),
+			PartitioningMode: disk.AutoLVMPartitioningMode,
+		}
 
 		if request.Koji == nil {
 			imageOptions.Facts = &distro.FactsImageOptions{
@@ -284,6 +288,19 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				ServerUrl:     request.Customizations.Subscription.ServerUrl,
 				BaseUrl:       request.Customizations.Subscription.BaseUrl,
 				Insights:      request.Customizations.Subscription.Insights,
+			}
+		}
+
+		if request.Customizations != nil && request.Customizations.PartitioningMode != nil {
+			switch *request.Customizations.PartitioningMode {
+			case CustomizationsPartitioningModeRaw:
+				imageOptions.PartitioningMode = disk.RawPartitioningMode
+			case CustomizationsPartitioningModeLvm:
+				imageOptions.PartitioningMode = disk.LVMPartitioningMode
+			case CustomizationsPartitioningModeAutoLvm:
+				imageOptions.PartitioningMode = disk.AutoLVMPartitioningMode
+			default:
+				return HTTPError(ErrorInvalidPartitioningMode)
 			}
 		}
 
