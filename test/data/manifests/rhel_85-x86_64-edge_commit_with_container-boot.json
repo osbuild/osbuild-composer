@@ -116,9 +116,6 @@
                     "id": "sha256:6bcccf9b83afccc64dbf7d7121f54b5cacd261342d8019785459d981296e4f2a"
                   },
                   {
-                    "id": "sha256:802263173d9c487fc3ca584cc2a5b7b7bb49ac0d12d9026b3246d50fd0888fb1"
-                  },
-                  {
                     "id": "sha256:d73fd1fbcddb48fdbc97c9065d385b25aedd78d58dcdd7b02c464ac26344f0f4"
                   },
                   {
@@ -128,37 +125,13 @@
                     "id": "sha256:1f3f72e58dfcb414acbee939b4be570c3fa846c97587db5a5c96fc59c5046849"
                   },
                   {
-                    "id": "sha256:516602e5bec3bdfb79704efc8e478f8c80279999dc3cee21adb84e9e72b24433"
-                  },
-                  {
-                    "id": "sha256:c64f416a362174b5b825403453cfda25e06c0f1c1749f4ddd1e17233781a11be"
-                  },
-                  {
                     "id": "sha256:5cff7d4df4b7cf4a5e3e127dc4410b703f543caa7be4cb35220fd1ec5cff78c3"
-                  },
-                  {
-                    "id": "sha256:7502acab1d4b9c83d94fef654f4dd6fbe570079fabd371bceafc1ef4ae40f55d"
                   },
                   {
                     "id": "sha256:f7fc94ac5b5df2051aa2811c0cebecd7e04353ac871f1a792bc6c68f2c2aa6ce"
                   },
                   {
-                    "id": "sha256:25f6f93557fa8ab54e80ddea0a396f0acb93171304963c231ca1347893b2e97b"
-                  },
-                  {
-                    "id": "sha256:c7c9866330bf0570689d413178d0b5fe0c04bfe2d9043771c7759d35e6a75258"
-                  },
-                  {
-                    "id": "sha256:fc6f294d87c32dd80d09ad1e31005a6c379c476539fec9cd52b51f0bbc3384e3"
-                  },
-                  {
                     "id": "sha256:f72118d72067987ac1eeded4b04e95e709b263c27877f3eb1112859db33cb403"
-                  },
-                  {
-                    "id": "sha256:53849d779914a944acc126459911030c8ac8310ffcab354c6a7bcc4ef4af5bab"
-                  },
-                  {
-                    "id": "sha256:39f86feba904fc4c4a9a04a54576d6d3b4e9af344155aee9e4321c27b4742f0a"
                   },
                   {
                     "id": "sha256:1291973fb1c479d3d3dab62d7dbcda052ab998779a0eb2e45427d0e2257d8db4"
@@ -281,9 +254,6 @@
                     "id": "sha256:e4a7bd8a320c7fa2ff5569479d31e682fd21d8646964ca90cc30da55757681db"
                   },
                   {
-                    "id": "sha256:b41c194ecf358e8e6cec46068c4fb6f34780ee2bd65200c367b94170103a8aa9"
-                  },
-                  {
                     "id": "sha256:e233a9ecfbf657192902180f6a67a225e5ec0194834df672eaeb2b3a50e8fb49"
                   },
                   {
@@ -326,9 +296,6 @@
                     "id": "sha256:9461fa7a5e74bfd8d9e9961af9d3003d9d2b496830c2fd6b0641ae8b8bc8e178"
                   },
                   {
-                    "id": "sha256:d8f93540a6a7329a5158d3e543f77110104f30494f4d6f187427e5010d8df379"
-                  },
-                  {
                     "id": "sha256:7795715412f1a518529241d6254130fffda54b8026021743d31edc591f415f34"
                   },
                   {
@@ -350,9 +317,6 @@
                     "id": "sha256:1e445a02e73fcfda766f890b06cf6fd14996be4f84da1f8d66cd3572db082f31"
                   },
                   {
-                    "id": "sha256:d3d638bc584e002210bceb9ce6c2af39142a33f8b8a36a6c90e5e9ad2da85da6"
-                  },
-                  {
                     "id": "sha256:d0982bac60512aaf37a99078e24446337ab6210db07ed95c49baeb9a3811dd2b"
                   },
                   {
@@ -363,12 +327,6 @@
                   },
                   {
                     "id": "sha256:6b52102af0aab3b41a5d410b7717713aef3adc48c41015a745c9c5a2ba7b814f"
-                  },
-                  {
-                    "id": "sha256:004e45aef6912402be87943055407549795af0fd978964ab8fd8e95747c1c6e3"
-                  },
-                  {
-                    "id": "sha256:7e95dc277991981a081f73f4410219a196b7b0d02dbe1ad2ebfce172c215669e"
                   },
                   {
                     "id": "sha256:c3545977af96868ff2f1c58bba89c80e11a4f09733d2450d793d307e12650e2d"
@@ -440,12 +398,6 @@
                     "id": "sha256:40857d6b70f5b74a58da97a8cfcfcee56c08157c6d1eed56c92057b731a8ea95"
                   },
                   {
-                    "id": "sha256:4a95dbaad30dfee445cb89fa5c047f56b4588c16a5442ef4043158f709c857c9"
-                  },
-                  {
-                    "id": "sha256:bd37c05e277205686dade257e19f95839fad32f2278872dbc9969c50ec9da0b6"
-                  },
-                  {
                     "id": "sha256:3e79690d58e6a213278c4f2789ad4dae58b09b8f5c0890e1ac7d843ae3f25c7b"
                   },
                   {
@@ -471,9 +423,6 @@
                   },
                   {
                     "id": "sha256:66d7caeabd800bbe2f34163fc4605f5762a6ffc3af94bc275acbfac0b56d66c7"
-                  },
-                  {
-                    "id": "sha256:434deddc21ede7c5fe28b6cbe8c42330a6f310eac9f9559f4138f930c5357013"
                   },
                   {
                     "id": "sha256:fdef90440ec3fcb1fb8385de7e6c5b3755639184b56e203f447713584ebfdf48"
@@ -521,25 +470,13 @@
                     "id": "sha256:1c040f943aba945547ebd7a060f1df910dca5d65cb353d6c7e7edbb51243d4c0"
                   },
                   {
-                    "id": "sha256:0cd236af02bce0d04b36624a311d4d6e4fddf527d24cb88a6bc9e6e9199b8c85"
-                  },
-                  {
-                    "id": "sha256:103cce1307cae33d3bd9d6432f55b2886d4fd9041c42ba8bdbfcfd58109ef52a"
-                  },
-                  {
                     "id": "sha256:f0e3f336e2910f8282c39a5bce21ffa35d6037842d219761ed8c58b4208077cc"
-                  },
-                  {
-                    "id": "sha256:a3dedf8c077b4656d3cd4ef641e696397a3fff83ee8b14f0e3fc69d7c10cebcf"
                   },
                   {
                     "id": "sha256:55a58ea1e63e2cc102d82ab4d02e04e90e2c03819b2a2dee74395905868eb5fd"
                   },
                   {
                     "id": "sha256:28ccf9ff472c824f6c5a3c2a0c076bfa221b8e48368e43de9b3c2e83d67e8b5d"
-                  },
-                  {
-                    "id": "sha256:9fa50a4864795cfb8eba32bde7bc76abd2453d876c9884508d9d070e80c4cf09"
                   },
                   {
                     "id": "sha256:6d7a41fb238610416349a53d024cc505ab7f3f6e9953cc2244abb663ec404dad"
@@ -584,9 +521,6 @@
                     "id": "sha256:f7869ec212d50dac8e27645ae446e10383dfa46e8f770d46d43ad209bd4a5bed"
                   },
                   {
-                    "id": "sha256:fec32d37b2f34c891a64a8c5e2faf3d08de25d144289b6f2b7f5fafdd5eec4d2"
-                  },
-                  {
                     "id": "sha256:d9dcb469e4c1a90f2e0ed3332d37feb88f804c882aae21fb6dfdeb6564dccfe5"
                   },
                   {
@@ -626,40 +560,10 @@
                     "id": "sha256:49f89e7b459eaa297e518c0e55d81d1b0d8181959346673babb158103422652d"
                   },
                   {
-                    "id": "sha256:e22840ee14aa1993e75fd690749c01dbb7d4419c2b210fef173ff99a76f61ff6"
-                  },
-                  {
                     "id": "sha256:f8c191d8b952621d10a1055be960bbe07be66f557c5a9d007f8908abcde1b9af"
                   },
                   {
                     "id": "sha256:8f00781eb679c6baf359099fa2a672ffccfc8e43b7c03c1dc635619cb25ff01d"
-                  },
-                  {
-                    "id": "sha256:352af964ab839022310eaf2a4d1ed3d7824eaa1ff948088d4414768ee649f786"
-                  },
-                  {
-                    "id": "sha256:ce8d784df6e1292765cf1de462467cf828bbd8a8a60d89f55a85dfa269636cb4"
-                  },
-                  {
-                    "id": "sha256:b85a224c200cfb593bb97ec77dabfa749cd1e0522fed7a3093c0c848058af9fd"
-                  },
-                  {
-                    "id": "sha256:6ba1a823aea313bf5b4dfec122e4815832fb7f51a058cea2528d8184ef03473e"
-                  },
-                  {
-                    "id": "sha256:c2f85c9746f79cd848329f46d348deca481b09fb4b4bc71cd7ab42b57e1c2a20"
-                  },
-                  {
-                    "id": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
-                  },
-                  {
-                    "id": "sha256:17bf6351961fba4a5b5df923dcc4de54b5f8059a36f0d6a9f6b446a4e9b018e4"
-                  },
-                  {
-                    "id": "sha256:9684e567554899e75aa51d3e63b04137cdb4fe84f93dbb4900b906a6dca901b5"
-                  },
-                  {
-                    "id": "sha256:2bf6a5835ee856272ad37abc4f695536a157f4c51dcf5621bfcf323d22d091bc"
                   },
                   {
                     "id": "sha256:0041465f1b23f8d476bb7f1296abe9933c490a815697a321d65bd9ccb6d517be"
@@ -677,15 +581,6 @@
                     "id": "sha256:781e549d1c8c4fbd9002bcb11550e4ee89c9b293de0aa1628db8471addac5b58"
                   },
                   {
-                    "id": "sha256:a7a6053537ea1476969ad10005915cfd6618a5d573fb3320547712abbb6e4280"
-                  },
-                  {
-                    "id": "sha256:d94ea399f82d4f9537af1098a588c5cc9a80454ba7c1de9b26dd11cb5c730d8a"
-                  },
-                  {
-                    "id": "sha256:deb0d0ad2726988b4dfb9c12c7217f868269b45fee929431e2b32e1d4c772a77"
-                  },
-                  {
                     "id": "sha256:db8bc154626bdd906a1f50104031a5042bbe91db7f5a1473657795eedd4158c6"
                   },
                   {
@@ -693,12 +588,6 @@
                   },
                   {
                     "id": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
-                  },
-                  {
-                    "id": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
-                  },
-                  {
-                    "id": "sha256:fd60066d9141529ea385fa8fc3af88d0f6ac0cb7a8515af0abe9b65498707f6f"
                   },
                   {
                     "id": "sha256:88b31b937fb9a3d1a2a9efbc2b686210aedae4126a5afa9d47e412151ac8188f"
@@ -716,16 +605,10 @@
                     "id": "sha256:d951e5ead816fedfdf0e224385832c36f4550d6ba06fd74e85d0f5dccf188ae9"
                   },
                   {
-                    "id": "sha256:7c2ab25d05a02481d82bc8367695d754a7bdd7e35240bfbdb159cb5662396060"
-                  },
-                  {
                     "id": "sha256:3f80d41786bca35be087ee38b16bc578a9714d1f857a7dc6cd01a521dcfe71f4"
                   },
                   {
                     "id": "sha256:7a3420d3db86db6ca479c049e491d52e229e76936c72be846b7d16a7acb9367a"
-                  },
-                  {
-                    "id": "sha256:8ed014e27c24fae00ff51fbd6dff4ba41c9861c1dfd8a607d4296d4fb433012a"
                   },
                   {
                     "id": "sha256:f39e031ea848d9605601b3e8e9424339cec44ecb521fbd1a415915a5f373eb37"
@@ -749,15 +632,6 @@
                     "id": "sha256:645419874806713b904eed22d9e7dd2ba076452c733f47822d0c05723311a951"
                   },
                   {
-                    "id": "sha256:f52434c2edd4de318b4dde9eb47941de86f805d096145277eb9a2f31e1ebe315"
-                  },
-                  {
-                    "id": "sha256:7f564d267644d0e24ea856599ab95dba3bbdd7a0fc6554c803185d771a12d8e6"
-                  },
-                  {
-                    "id": "sha256:b4f1b695d96c86edffdc0996e2cfe78e343674ce3d8f42387412e34d5cb95fd8"
-                  },
-                  {
                     "id": "sha256:633b4eb78ff5fa0e9d7ae07a21fda93786d495ba4ee0f74f937051e3521511c2"
                   },
                   {
@@ -771,9 +645,6 @@
                   },
                   {
                     "id": "sha256:3e4ea07a068ac27709ed9ed3ddea98cffdb45c7bec92ff80252cfbaccb52797c"
-                  },
-                  {
-                    "id": "sha256:d100618c7db3b14b4ea477c25267e663e2e787dc453a0f029213b82dccf20627"
                   },
                   {
                     "id": "sha256:c0ffafde9475718f2b1460d400b84a90b47a23973f38f45b5853c4d56185c48b"
@@ -791,9 +662,6 @@
                     "id": "sha256:1cee3daa217cea4534d4b90805907236846539013283adb9f79009c06f490669"
                   },
                   {
-                    "id": "sha256:1be810c1a0216afcfc8343e36892c8853a680a7bcf1ae2d1e6dc61d3b39c4e58"
-                  },
-                  {
                     "id": "sha256:1b6fe19e2856f752a2cd8f917db539dbe9fc1b1560fff3341864b13ffb0ccae0"
                   },
                   {
@@ -801,9 +669,6 @@
                   },
                   {
                     "id": "sha256:43a4f1c39b2a8b212d50af73d0d510adfdc4ac61be8ecdc6bd718f6cab0e5afc"
-                  },
-                  {
-                    "id": "sha256:aed1436b76055b10cc1f78fb6519687cdadf02bc53c440e792217986b7314eec"
                   },
                   {
                     "id": "sha256:af4ca296362133a4d6dfe65dc212cfa96ce5a91a11579610fe9268fb72d9ff07"
@@ -818,31 +683,13 @@
                     "id": "sha256:d80e23533ad5a619a0d4c8533fe3d641a80de50ab804c56d6e493a5507c8537a"
                   },
                   {
-                    "id": "sha256:8abcb3e48f4d92e1e311bf462968a3b9db429eca9fd70fbeae9222601b8dff93"
-                  },
-                  {
-                    "id": "sha256:b202816022b9cecdc4d34dc31f29146eee7de3a32d065be73e4c25adcd230484"
-                  },
-                  {
                     "id": "sha256:09c8dd96ccb066d458edd30dba99ae72cc3941c1563d260cb259d33d9bf6fe12"
                   },
                   {
                     "id": "sha256:ef10423a9ab29aeb74aa06f71fba2935b05a35b14e1e2f371eaf0dbc1c673a6c"
                   },
                   {
-                    "id": "sha256:a049cfb6609f54daf5413c44fa426a5bdc45c3f784a6c225924d70ae788c8bf0"
-                  },
-                  {
                     "id": "sha256:25b13ea50e21233dc5fccf42da344fbf24605dde38db9b94e49739ae39faa072"
-                  },
-                  {
-                    "id": "sha256:707db58b819782033d3480e945757601463b18804567ea6d6f3683742cf1e922"
-                  },
-                  {
-                    "id": "sha256:a8a81d5523311634b3bb27a737c7646e5d9b464fff1c0e7b7d78994711b6301d"
-                  },
-                  {
-                    "id": "sha256:a771c776f1e8bdf82bd2db42b39df6fc3f74ed92e37234a280441c44c1f48549"
                   },
                   {
                     "id": "sha256:fb56bbee83111123127af8fa30e8d8cb184698ab2d5097f3f2da8c6279d277da"
@@ -857,31 +704,13 @@
                     "id": "sha256:9891bce6c368d49fd189fb184c8a96489ed0d15e8bc58039768854425d8cc6a4"
                   },
                   {
-                    "id": "sha256:4d1f1a45a34e3eab4b663c895b8378a3b672fd408b3d67a31c522f1661fc98f3"
-                  },
-                  {
-                    "id": "sha256:58cf5aa3c5b3f7bed1433b33818fb6327ec4d6cebe3772c99249e19bb14a8c03"
-                  },
-                  {
-                    "id": "sha256:e868499743c399baa6463fa64a2534a7d32f8e1cca7b1b47ec00c60b34250bfe"
-                  },
-                  {
-                    "id": "sha256:53d3c15711e89c48416a7e134576b62abfb8bdbdfc5db0e65bd423f4bfa8e428"
-                  },
-                  {
                     "id": "sha256:e1382a5e1960353d613f453853e614ec9a66854119eefa0b3ddf19c5d9fcdce3"
                   },
                   {
                     "id": "sha256:895e12e1f7431edd325fb07ed70bdfd229b6bdf28619e003fa51f0783efd900b"
                   },
                   {
-                    "id": "sha256:3ded289944ae1be6daded7105456bcb8508f155cc7fd2807e546b2fe32f9b002"
-                  },
-                  {
                     "id": "sha256:ee2ba576f07f5cdd9cf24e788d60071869107aa313addbba0a311448bb32a86c"
-                  },
-                  {
-                    "id": "sha256:c4a3b559c2d3ea992a88f86c2d2c5dd219b30a997232cb295978691c81bd0e70"
                   },
                   {
                     "id": "sha256:bb8931de04b141c1e0818c3bee8856372c9e08f4286390318bc6c4192a60ee83"
@@ -897,9 +726,6 @@
                   },
                   {
                     "id": "sha256:cd218da4a3db9a1c219de587a48392c08397e737c9b1fdc0d8ed69e7b8c489bb"
-                  },
-                  {
-                    "id": "sha256:e920a82cda55b110690f3c946ec2cd85f969599c71212463279763afcc33303d"
                   },
                   {
                     "id": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
@@ -928,7 +754,7 @@
         ]
       },
       {
-        "name": "ostree-tree",
+        "name": "os",
         "build": "name:build",
         "stages": [
           {
@@ -2094,11 +1920,13 @@
               }
             },
             "options": {
+              "dbpath": "/usr/share/rpm",
               "gpgkeys": [
                 "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBErgSTsBEACh2A4b0O9t+vzC9VrVtL1AKvUWi9OPCjkvR7Xd8DtJxeeMZ5eF\n0HtzIG58qDRybwUe89FZprB1ffuUKzdE+HcL3FbNWSSOXVjZIersdXyH3NvnLLLF\n0DNRB2ix3bXG9Rh/RXpFsNxDp2CEMdUvbYCzE79K1EnUTVh1L0Of023FtPSZXX0c\nu7Pb5DI5lX5YeoXO6RoodrIGYJsVBQWnrWw4xNTconUfNPk0EGZtEnzvH2zyPoJh\nXGF+Ncu9XwbalnYde10OCvSWAZ5zTCpoLMTvQjWpbCdWXJzCm6G+/hx9upke546H\n5IjtYm4dTIVTnc3wvDiODgBKRzOl9rEOCIgOuGtDxRxcQkjrC+xvg5Vkqn7vBUyW\n9pHedOU+PoF3DGOM+dqv+eNKBvh9YF9ugFAQBkcG7viZgvGEMGGUpzNgN7XnS1gj\n/DPo9mZESOYnKceve2tIC87p2hqjrxOHuI7fkZYeNIcAoa83rBltFXaBDYhWAKS1\nPcXS1/7JzP0ky7d0L6Xbu/If5kqWQpKwUInXtySRkuraVfuK3Bpa+X1XecWi24JY\nHVtlNX025xx1ewVzGNCTlWn1skQN2OOoQTV4C8/qFpTW6DTWYurd4+fE0OJFJZQF\nbuhfXYwmRlVOgN5i77NTIJZJQfYFj38c/Iv5vZBPokO6mffrOTv3MHWVgQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChyZWxlYXNlIGtleSAyKSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjYEEwECACAFAkrgSTsCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK\nCRAZni+R/UMdUWzpD/9s5SFR/ZF3yjY5VLUFLMXIKUztNN3oc45fyLdTI3+UClKC\n2tEruzYjqNHhqAEXa2sN1fMrsuKec61Ll2NfvJjkLKDvgVIh7kM7aslNYVOP6BTf\nC/JJ7/ufz3UZmyViH/WDl+AYdgk3JqCIO5w5ryrC9IyBzYv2m0HqYbWfphY3uHw5\nun3ndLJcu8+BGP5F+ONQEGl+DRH58Il9Jp3HwbRa7dvkPgEhfFR+1hI+Btta2C7E\n0/2NKzCxZw7Lx3PBRcU92YKyaEihfy/aQKZCAuyfKiMvsmzs+4poIX7I9NQCJpyE\nIGfINoZ7VxqHwRn/d5mw2MZTJjbzSf+Um9YJyA0iEEyD6qjriWQRbuxpQXmlAJbh\n8okZ4gbVFv1F8MzK+4R8VvWJ0XxgtikSo72fHjwha7MAjqFnOq6eo6fEC/75g3NL\nGht5VdpGuHk0vbdENHMC8wS99e5qXGNDued3hlTavDMlEAHl34q2H9nakTGRF5Ki\nJUfNh3DVRGhg8cMIti21njiRh7gyFI2OccATY7bBSr79JhuNwelHuxLrCFpY7V25\nOFktl15jZJaMxuQBqYdBgSay2G0U6D1+7VsWufpzd/Abx1/c3oi9ZaJvW22kAggq\ndzdA27UUYjWvx42w9menJwh/0jeQcTecIUd0d0rFcw/c1pvgMMl/Q73yzKgKYw==\n=zbHE\n-----END PGP PUBLIC KEY BLOCK-----\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBFsy23UBEACUKSphFEIEvNpy68VeW4Dt6qv+mU6am9a2AAl10JANLj1oqWX+\noYk3en1S6cVe2qehSL5DGVa3HMUZkP3dtbD4SgzXzxPodebPcr4+0QNWigkUisri\nXGL5SCEcOP30zDhZvg+4mpO2jMi7Kc1DLPzBBkgppcX91wa0L1pQzBcvYMPyV/Dh\nKbQHR75WdkP6OA2JXdfC94nxYq+2e0iPqC1hCP3Elh+YnSkOkrawDPmoB1g4+ft/\nxsiVGVy/W0ekXmgvYEHt6si6Y8NwXgnTMqxeSXQ9YUgVIbTpsxHQKGy76T5lMlWX\n4LCOmEVomBJg1SqF6yi9Vu8TeNThaDqT4/DddYInd0OO69s0kGIXalVgGYiW2HOD\nx2q5R1VGCoJxXomz+EbOXY+HpKPOHAjU0DB9MxbU3S248LQ69nIB5uxysy0PSco1\nsdZ8sxRNQ9Dw6on0Nowx5m6Thefzs5iK3dnPGBqHTT43DHbnWc2scjQFG+eZhe98\nEll/kb6vpBoY4bG9/wCG9qu7jj9Z+BceCNKeHllbezVLCU/Hswivr7h2dnaEFvPD\nO4GqiWiwOF06XaBMVgxA8p2HRw0KtXqOpZk+o+sUvdPjsBw42BB96A1yFX4jgFNA\nPyZYnEUdP6OOv9HSjnl7k/iEkvHq/jGYMMojixlvXpGXhnt5jNyc4GSUJQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChhdXhpbGlhcnkga2V5KSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjkEEwECACMFAlsy23UCGwMHCwkIBwMCAQYVCAIJCgsEFgIDAQIeAQIX\ngAAKCRD3b2bD1AgnknqOD/9fB2ASuG2aJIiap4kK58R+RmOVM4qgclAnaG57+vjI\nnKvyfV3NH/keplGNRxwqHekfPCqvkpABwhdGEXIE8ILqnPewIMr6PZNZWNJynZ9i\neSMzVuCG7jDoGyQ5/6B0f6xeBtTeBDiRl7+Alehet1twuGL1BJUYG0QuLgcEzkaE\n/gkuumeVcazLzz7L12D22nMk66GxmgXfqS5zcbqOAuZwaA6VgSEgFdV2X2JU79zS\nBQJXv7NKc+nDXFG7M7EHjY3Rma3HXkDbkT8bzh9tJV7Z7TlpT829pStWQyoxKCVq\nsEX8WsSapTKA3P9YkYCwLShgZu4HKRFvHMaIasSIZWzLu+RZH/4yyHOhj0QB7XMY\neHQ6fGSbtJ+K6SrpHOOsKQNAJ0hVbSrnA1cr5+2SDfel1RfYt0W9FA6DoH/S5gAR\ndzT1u44QVwwp3U+eFpHphFy//uzxNMtCjjdkpzhYYhOCLNkDrlRPb+bcoL/6ePSr\n016PA7eEnuC305YU1Ml2WcCn7wQV8x90o33klJmEkWtXh3X39vYtI4nCPIvZn1eP\nVy+F+wWt4vN2b8oOdlzc2paOembbCo2B+Wapv5Y9peBvlbsDSgqtJABfK8KQq/jK\nYl3h5elIa1I3uNfczeHOnf1enLOUOlq630yeM/yHizz99G1g+z/guMh5+x/OHraW\niA==\n=+Gxh\n-----END PGP PUBLIC KEY BLOCK-----\n",
                 "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBErgSTsBEACh2A4b0O9t+vzC9VrVtL1AKvUWi9OPCjkvR7Xd8DtJxeeMZ5eF\n0HtzIG58qDRybwUe89FZprB1ffuUKzdE+HcL3FbNWSSOXVjZIersdXyH3NvnLLLF\n0DNRB2ix3bXG9Rh/RXpFsNxDp2CEMdUvbYCzE79K1EnUTVh1L0Of023FtPSZXX0c\nu7Pb5DI5lX5YeoXO6RoodrIGYJsVBQWnrWw4xNTconUfNPk0EGZtEnzvH2zyPoJh\nXGF+Ncu9XwbalnYde10OCvSWAZ5zTCpoLMTvQjWpbCdWXJzCm6G+/hx9upke546H\n5IjtYm4dTIVTnc3wvDiODgBKRzOl9rEOCIgOuGtDxRxcQkjrC+xvg5Vkqn7vBUyW\n9pHedOU+PoF3DGOM+dqv+eNKBvh9YF9ugFAQBkcG7viZgvGEMGGUpzNgN7XnS1gj\n/DPo9mZESOYnKceve2tIC87p2hqjrxOHuI7fkZYeNIcAoa83rBltFXaBDYhWAKS1\nPcXS1/7JzP0ky7d0L6Xbu/If5kqWQpKwUInXtySRkuraVfuK3Bpa+X1XecWi24JY\nHVtlNX025xx1ewVzGNCTlWn1skQN2OOoQTV4C8/qFpTW6DTWYurd4+fE0OJFJZQF\nbuhfXYwmRlVOgN5i77NTIJZJQfYFj38c/Iv5vZBPokO6mffrOTv3MHWVgQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChyZWxlYXNlIGtleSAyKSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjYEEwECACAFAkrgSTsCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK\nCRAZni+R/UMdUWzpD/9s5SFR/ZF3yjY5VLUFLMXIKUztNN3oc45fyLdTI3+UClKC\n2tEruzYjqNHhqAEXa2sN1fMrsuKec61Ll2NfvJjkLKDvgVIh7kM7aslNYVOP6BTf\nC/JJ7/ufz3UZmyViH/WDl+AYdgk3JqCIO5w5ryrC9IyBzYv2m0HqYbWfphY3uHw5\nun3ndLJcu8+BGP5F+ONQEGl+DRH58Il9Jp3HwbRa7dvkPgEhfFR+1hI+Btta2C7E\n0/2NKzCxZw7Lx3PBRcU92YKyaEihfy/aQKZCAuyfKiMvsmzs+4poIX7I9NQCJpyE\nIGfINoZ7VxqHwRn/d5mw2MZTJjbzSf+Um9YJyA0iEEyD6qjriWQRbuxpQXmlAJbh\n8okZ4gbVFv1F8MzK+4R8VvWJ0XxgtikSo72fHjwha7MAjqFnOq6eo6fEC/75g3NL\nGht5VdpGuHk0vbdENHMC8wS99e5qXGNDued3hlTavDMlEAHl34q2H9nakTGRF5Ki\nJUfNh3DVRGhg8cMIti21njiRh7gyFI2OccATY7bBSr79JhuNwelHuxLrCFpY7V25\nOFktl15jZJaMxuQBqYdBgSay2G0U6D1+7VsWufpzd/Abx1/c3oi9ZaJvW22kAggq\ndzdA27UUYjWvx42w9menJwh/0jeQcTecIUd0d0rFcw/c1pvgMMl/Q73yzKgKYw==\n=zbHE\n-----END PGP PUBLIC KEY BLOCK-----\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBFsy23UBEACUKSphFEIEvNpy68VeW4Dt6qv+mU6am9a2AAl10JANLj1oqWX+\noYk3en1S6cVe2qehSL5DGVa3HMUZkP3dtbD4SgzXzxPodebPcr4+0QNWigkUisri\nXGL5SCEcOP30zDhZvg+4mpO2jMi7Kc1DLPzBBkgppcX91wa0L1pQzBcvYMPyV/Dh\nKbQHR75WdkP6OA2JXdfC94nxYq+2e0iPqC1hCP3Elh+YnSkOkrawDPmoB1g4+ft/\nxsiVGVy/W0ekXmgvYEHt6si6Y8NwXgnTMqxeSXQ9YUgVIbTpsxHQKGy76T5lMlWX\n4LCOmEVomBJg1SqF6yi9Vu8TeNThaDqT4/DddYInd0OO69s0kGIXalVgGYiW2HOD\nx2q5R1VGCoJxXomz+EbOXY+HpKPOHAjU0DB9MxbU3S248LQ69nIB5uxysy0PSco1\nsdZ8sxRNQ9Dw6on0Nowx5m6Thefzs5iK3dnPGBqHTT43DHbnWc2scjQFG+eZhe98\nEll/kb6vpBoY4bG9/wCG9qu7jj9Z+BceCNKeHllbezVLCU/Hswivr7h2dnaEFvPD\nO4GqiWiwOF06XaBMVgxA8p2HRw0KtXqOpZk+o+sUvdPjsBw42BB96A1yFX4jgFNA\nPyZYnEUdP6OOv9HSjnl7k/iEkvHq/jGYMMojixlvXpGXhnt5jNyc4GSUJQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChhdXhpbGlhcnkga2V5KSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjkEEwECACMFAlsy23UCGwMHCwkIBwMCAQYVCAIJCgsEFgIDAQIeAQIX\ngAAKCRD3b2bD1AgnknqOD/9fB2ASuG2aJIiap4kK58R+RmOVM4qgclAnaG57+vjI\nnKvyfV3NH/keplGNRxwqHekfPCqvkpABwhdGEXIE8ILqnPewIMr6PZNZWNJynZ9i\neSMzVuCG7jDoGyQ5/6B0f6xeBtTeBDiRl7+Alehet1twuGL1BJUYG0QuLgcEzkaE\n/gkuumeVcazLzz7L12D22nMk66GxmgXfqS5zcbqOAuZwaA6VgSEgFdV2X2JU79zS\nBQJXv7NKc+nDXFG7M7EHjY3Rma3HXkDbkT8bzh9tJV7Z7TlpT829pStWQyoxKCVq\nsEX8WsSapTKA3P9YkYCwLShgZu4HKRFvHMaIasSIZWzLu+RZH/4yyHOhj0QB7XMY\neHQ6fGSbtJ+K6SrpHOOsKQNAJ0hVbSrnA1cr5+2SDfel1RfYt0W9FA6DoH/S5gAR\ndzT1u44QVwwp3U+eFpHphFy//uzxNMtCjjdkpzhYYhOCLNkDrlRPb+bcoL/6ePSr\n016PA7eEnuC305YU1Ml2WcCn7wQV8x90o33klJmEkWtXh3X39vYtI4nCPIvZn1eP\nVy+F+wWt4vN2b8oOdlzc2paOembbCo2B+Wapv5Y9peBvlbsDSgqtJABfK8KQq/jK\nYl3h5elIa1I3uNfczeHOnf1enLOUOlq630yeM/yHizz99G1g+z/guMh5+x/OHraW\niA==\n=+Gxh\n-----END PGP PUBLIC KEY BLOCK-----\n",
                 "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBErgSTsBEACh2A4b0O9t+vzC9VrVtL1AKvUWi9OPCjkvR7Xd8DtJxeeMZ5eF\n0HtzIG58qDRybwUe89FZprB1ffuUKzdE+HcL3FbNWSSOXVjZIersdXyH3NvnLLLF\n0DNRB2ix3bXG9Rh/RXpFsNxDp2CEMdUvbYCzE79K1EnUTVh1L0Of023FtPSZXX0c\nu7Pb5DI5lX5YeoXO6RoodrIGYJsVBQWnrWw4xNTconUfNPk0EGZtEnzvH2zyPoJh\nXGF+Ncu9XwbalnYde10OCvSWAZ5zTCpoLMTvQjWpbCdWXJzCm6G+/hx9upke546H\n5IjtYm4dTIVTnc3wvDiODgBKRzOl9rEOCIgOuGtDxRxcQkjrC+xvg5Vkqn7vBUyW\n9pHedOU+PoF3DGOM+dqv+eNKBvh9YF9ugFAQBkcG7viZgvGEMGGUpzNgN7XnS1gj\n/DPo9mZESOYnKceve2tIC87p2hqjrxOHuI7fkZYeNIcAoa83rBltFXaBDYhWAKS1\nPcXS1/7JzP0ky7d0L6Xbu/If5kqWQpKwUInXtySRkuraVfuK3Bpa+X1XecWi24JY\nHVtlNX025xx1ewVzGNCTlWn1skQN2OOoQTV4C8/qFpTW6DTWYurd4+fE0OJFJZQF\nbuhfXYwmRlVOgN5i77NTIJZJQfYFj38c/Iv5vZBPokO6mffrOTv3MHWVgQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChyZWxlYXNlIGtleSAyKSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjYEEwECACAFAkrgSTsCGwMGCwkIBwMCBBUCCAMEFgIDAQIeAQIXgAAK\nCRAZni+R/UMdUWzpD/9s5SFR/ZF3yjY5VLUFLMXIKUztNN3oc45fyLdTI3+UClKC\n2tEruzYjqNHhqAEXa2sN1fMrsuKec61Ll2NfvJjkLKDvgVIh7kM7aslNYVOP6BTf\nC/JJ7/ufz3UZmyViH/WDl+AYdgk3JqCIO5w5ryrC9IyBzYv2m0HqYbWfphY3uHw5\nun3ndLJcu8+BGP5F+ONQEGl+DRH58Il9Jp3HwbRa7dvkPgEhfFR+1hI+Btta2C7E\n0/2NKzCxZw7Lx3PBRcU92YKyaEihfy/aQKZCAuyfKiMvsmzs+4poIX7I9NQCJpyE\nIGfINoZ7VxqHwRn/d5mw2MZTJjbzSf+Um9YJyA0iEEyD6qjriWQRbuxpQXmlAJbh\n8okZ4gbVFv1F8MzK+4R8VvWJ0XxgtikSo72fHjwha7MAjqFnOq6eo6fEC/75g3NL\nGht5VdpGuHk0vbdENHMC8wS99e5qXGNDued3hlTavDMlEAHl34q2H9nakTGRF5Ki\nJUfNh3DVRGhg8cMIti21njiRh7gyFI2OccATY7bBSr79JhuNwelHuxLrCFpY7V25\nOFktl15jZJaMxuQBqYdBgSay2G0U6D1+7VsWufpzd/Abx1/c3oi9ZaJvW22kAggq\ndzdA27UUYjWvx42w9menJwh/0jeQcTecIUd0d0rFcw/c1pvgMMl/Q73yzKgKYw==\n=zbHE\n-----END PGP PUBLIC KEY BLOCK-----\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBFsy23UBEACUKSphFEIEvNpy68VeW4Dt6qv+mU6am9a2AAl10JANLj1oqWX+\noYk3en1S6cVe2qehSL5DGVa3HMUZkP3dtbD4SgzXzxPodebPcr4+0QNWigkUisri\nXGL5SCEcOP30zDhZvg+4mpO2jMi7Kc1DLPzBBkgppcX91wa0L1pQzBcvYMPyV/Dh\nKbQHR75WdkP6OA2JXdfC94nxYq+2e0iPqC1hCP3Elh+YnSkOkrawDPmoB1g4+ft/\nxsiVGVy/W0ekXmgvYEHt6si6Y8NwXgnTMqxeSXQ9YUgVIbTpsxHQKGy76T5lMlWX\n4LCOmEVomBJg1SqF6yi9Vu8TeNThaDqT4/DddYInd0OO69s0kGIXalVgGYiW2HOD\nx2q5R1VGCoJxXomz+EbOXY+HpKPOHAjU0DB9MxbU3S248LQ69nIB5uxysy0PSco1\nsdZ8sxRNQ9Dw6on0Nowx5m6Thefzs5iK3dnPGBqHTT43DHbnWc2scjQFG+eZhe98\nEll/kb6vpBoY4bG9/wCG9qu7jj9Z+BceCNKeHllbezVLCU/Hswivr7h2dnaEFvPD\nO4GqiWiwOF06XaBMVgxA8p2HRw0KtXqOpZk+o+sUvdPjsBw42BB96A1yFX4jgFNA\nPyZYnEUdP6OOv9HSjnl7k/iEkvHq/jGYMMojixlvXpGXhnt5jNyc4GSUJQARAQAB\ntDNSZWQgSGF0LCBJbmMuIChhdXhpbGlhcnkga2V5KSA8c2VjdXJpdHlAcmVkaGF0\nLmNvbT6JAjkEEwECACMFAlsy23UCGwMHCwkIBwMCAQYVCAIJCgsEFgIDAQIeAQIX\ngAAKCRD3b2bD1AgnknqOD/9fB2ASuG2aJIiap4kK58R+RmOVM4qgclAnaG57+vjI\nnKvyfV3NH/keplGNRxwqHekfPCqvkpABwhdGEXIE8ILqnPewIMr6PZNZWNJynZ9i\neSMzVuCG7jDoGyQ5/6B0f6xeBtTeBDiRl7+Alehet1twuGL1BJUYG0QuLgcEzkaE\n/gkuumeVcazLzz7L12D22nMk66GxmgXfqS5zcbqOAuZwaA6VgSEgFdV2X2JU79zS\nBQJXv7NKc+nDXFG7M7EHjY3Rma3HXkDbkT8bzh9tJV7Z7TlpT829pStWQyoxKCVq\nsEX8WsSapTKA3P9YkYCwLShgZu4HKRFvHMaIasSIZWzLu+RZH/4yyHOhj0QB7XMY\neHQ6fGSbtJ+K6SrpHOOsKQNAJ0hVbSrnA1cr5+2SDfel1RfYt0W9FA6DoH/S5gAR\ndzT1u44QVwwp3U+eFpHphFy//uzxNMtCjjdkpzhYYhOCLNkDrlRPb+bcoL/6ePSr\n016PA7eEnuC305YU1Ml2WcCn7wQV8x90o33klJmEkWtXh3X39vYtI4nCPIvZn1eP\nVy+F+wWt4vN2b8oOdlzc2paOembbCo2B+Wapv5Y9peBvlbsDSgqtJABfK8KQq/jK\nYl3h5elIa1I3uNfczeHOnf1enLOUOlq630yeM/yHizz99G1g+z/guMh5+x/OHraW\niA==\n=+Gxh\n-----END PGP PUBLIC KEY BLOCK-----\n"
-              ]
+              ],
+              "ostree_booted": true
             }
           },
           {
@@ -2228,7 +2056,7 @@
                 "type": "org.osbuild.tree",
                 "origin": "org.osbuild.pipeline",
                 "references": [
-                  "name:ostree-tree"
+                  "name:os"
                 ]
               }
             },
@@ -2266,9 +2094,6 @@
         "items": {
           "sha256:0041465f1b23f8d476bb7f1296abe9933c490a815697a321d65bd9ccb6d517be": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-libs-3.6.8-41.el8.x86_64.rpm"
-          },
-          "sha256:004e45aef6912402be87943055407549795af0fd978964ab8fd8e95747c1c6e3": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libdnf-0.63.0-3.el8.x86_64.rpm"
           },
           "sha256:0129696c208f60326723c650295167b0600791ccb2e9c3d446c4caf9adecb3d7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libnl3-3.5.0-1.el8.x86_64.rpm"
@@ -2366,9 +2191,6 @@
           "sha256:17b847a40817f2d3daead8c90aa4345c81964ca599c95abf02fbf91f7cd56612": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/nss-3.67.0-6.el8_4.x86_64.rpm"
           },
-          "sha256:17bf6351961fba4a5b5df923dcc4de54b5f8059a36f0d6a9f6b446a4e9b018e4": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-libcomps-0.1.16-2.el8.x86_64.rpm"
-          },
           "sha256:183ef2c43b02cf2881f3321de280e97b0d626e1a5fa853245baaa2c8a3d82546": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/polkit-0.115-12.el8.x86_64.rpm"
           },
@@ -2456,9 +2278,6 @@
           "sha256:25b96d1432d32197ea5d769948649c431d7e289b18d779994d3d75d6f8d8c2a5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/kbd-2.0.4-10.el8.x86_64.rpm"
           },
-          "sha256:25f6f93557fa8ab54e80ddea0a396f0acb93171304963c231ca1347893b2e97b": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dnf-4.7.0-4.el8.noarch.rpm"
-          },
           "sha256:267858a95e543459a0cd683e641955d7c04c13bcda830c5f7db5a0529077428a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/brotli-1.0.6-3.el8.x86_64.rpm"
           },
@@ -2488,9 +2307,6 @@
           },
           "sha256:2ae7eca09c469bbf5c362daa544ccb453f22d7267a85e7aec006a83cce163aa8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/pcre2-10.32-2.el8.x86_64.rpm"
-          },
-          "sha256:2bf6a5835ee856272ad37abc4f695536a157f4c51dcf5621bfcf323d22d091bc": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-librepo-1.14.0-2.el8.x86_64.rpm"
           },
           "sha256:2d7bb5cff7b7f741621d92e12e56d3a32143fee999ab96d4ce4b148bcb387a70": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libudisks2-2.9.0-7.el8.x86_64.rpm"
@@ -2540,9 +2356,6 @@
           "sha256:346e6b3c39027baa01374fbd3e4f3cb64f2ae5fcfb074c499e1a28f418007ac8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/greenboot-rpm-ostree-grub2-0.11-1.el8.x86_64.rpm"
           },
-          "sha256:352af964ab839022310eaf2a4d1ed3d7824eaa1ff948088d4414768ee649f786": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-chardet-3.0.4-7.el8.noarch.rpm"
-          },
           "sha256:37582049ed88df6e03737825880fee090de4be0e13859b8f055973b6e1828d86": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/fuse3-libs-3.2.1-12.el8.x86_64.rpm"
           },
@@ -2575,9 +2388,6 @@
           },
           "sha256:3d807ee0bd43ba2cfbc5fa3678963fb706898bd41588a29330c315a9d88ab2a7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/ipset-libs-7.1-1.el8.x86_64.rpm"
-          },
-          "sha256:3ded289944ae1be6daded7105456bcb8508f155cc7fd2807e546b2fe32f9b002": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-unbound-1.7.3-17.el8.x86_64.rpm"
           },
           "sha256:3e4ea07a068ac27709ed9ed3ddea98cffdb45c7bec92ff80252cfbaccb52797c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/tar-1.30-5.el8.x86_64.rpm"
@@ -2639,9 +2449,6 @@
           "sha256:4d1be1a327a1ef7f0fa6a0005f32b962d446597febebae80b21d8f8f1355a8aa": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/bzip2-libs-1.0.6-26.el8.x86_64.rpm"
           },
-          "sha256:4d1f1a45a34e3eab4b663c895b8378a3b672fd408b3d67a31c522f1661fc98f3": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-kickstart-3.16.14-1.el8.noarch.rpm"
-          },
           "sha256:4d4af7b2331da855a89f25883b02d570043b4cede9fb85ef47716b0c6f4d60cb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/policycoreutils-2.9-16.el8.x86_64.rpm"
           },
@@ -2678,9 +2485,6 @@
           "sha256:53849d779914a944acc126459911030c8ac8310ffcab354c6a7bcc4ef4af5bab": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/e2fsprogs-1.45.6-2.el8.x86_64.rpm"
           },
-          "sha256:53d3c15711e89c48416a7e134576b62abfb8bdbdfc5db0e65bd423f4bfa8e428": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-ordered-set-2.0.2-4.el8.noarch.rpm"
-          },
           "sha256:53d9bb412615966acdf9a6b1c26c5899a9c2c0b76a27f360d3d6076536d2540a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libpng-1.6.34-5.el8.x86_64.rpm"
           },
@@ -2698,9 +2502,6 @@
           },
           "sha256:589fa333c866d9a59bc607ec6c45b7df30c8602c80c16b2aac2c0f916ebed6e7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-decorator-4.2.1-2.el8.noarch.rpm"
-          },
-          "sha256:58cf5aa3c5b3f7bed1433b33818fb6327ec4d6cebe3772c99249e19bb14a8c03": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-mako-1.0.6-13.el8.noarch.rpm"
           },
           "sha256:58e9f72f622d5d8182f605a0e7c8f6413e1f2c31d770a09476eed7388130f5bd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libluksmeta-9-4.el8.x86_64.rpm"
@@ -2780,9 +2581,6 @@
           "sha256:6b52102af0aab3b41a5d410b7717713aef3adc48c41015a745c9c5a2ba7b814f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libdb-utils-5.3.28-42.el8_4.x86_64.rpm"
           },
-          "sha256:6ba1a823aea313bf5b4dfec122e4815832fb7f51a058cea2528d8184ef03473e": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-hawkey-0.63.0-3.el8.x86_64.rpm"
-          },
           "sha256:6bcccf9b83afccc64dbf7d7121f54b5cacd261342d8019785459d981296e4f2a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dbus-daemon-1.12.8-14.el8.x86_64.rpm"
           },
@@ -2803,9 +2601,6 @@
           },
           "sha256:6ff975465dcff2d8b7f6f1efb8c865aff9baed1500e8f48e4a569700fb1208ea": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/p11-kit-trust-0.23.22-1.el8.x86_64.rpm"
-          },
-          "sha256:707db58b819782033d3480e945757601463b18804567ea6d6f3683742cf1e922": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/lorax-28.14.62-1.el8.x86_64.rpm"
           },
           "sha256:713ec69b972a8e88622b3fcd3b84fccdbd6c333b68b6c52151c2350edad2576a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libgudev-232-4.el8.x86_64.rpm"
@@ -2870,9 +2665,6 @@
           "sha256:7c0b2b064dad700cba2754b46f483e3e59aaf798740470df1daad3d5239fb893": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/passwd-0.80-3.el8.x86_64.rpm"
           },
-          "sha256:7c2ab25d05a02481d82bc8367695d754a7bdd7e35240bfbdb159cb5662396060": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/rpm-build-libs-4.14.3-19.el8.x86_64.rpm"
-          },
           "sha256:7e8447a3de51ea3fa2e3e95683e22256682d3a1b632fe126bd0842c8577a43c7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/keyutils-1.5.10-9.el8.x86_64.rpm"
           },
@@ -2881,9 +2673,6 @@
           },
           "sha256:7f2436df92ce3dacaf5a52d988e65b2cbfc6af8be917bdc14119940480efd7bb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-slip-0.6.4-11.el8.noarch.rpm"
-          },
-          "sha256:7f564d267644d0e24ea856599ab95dba3bbdd7a0fc6554c803185d771a12d8e6": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/syslinux-6.04-5.el8.x86_64.rpm"
           },
           "sha256:7f7f559d65b4b29a1695a644c3d0e04f36565feaa65416f4b84b309716ecf17f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/gdisk-1.0.3-6.el8.x86_64.rpm"
@@ -2921,9 +2710,6 @@
           "sha256:8a2de5f0e170c44199145a6fa047c888eb6fcc00f67da35e452ab493b30c3f2e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libsmbios-2.4.1-2.el8.x86_64.rpm"
           },
-          "sha256:8abcb3e48f4d92e1e311bf462968a3b9db429eca9fd70fbeae9222601b8dff93": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/genisoimage-1.1.11-39.el8.x86_64.rpm"
-          },
           "sha256:8b05d986058c83b2041499ed8d1466073bd492319db781a50f8c5f2b9bbe447e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libblockdev-part-2.24-7.el8.x86_64.rpm"
           },
@@ -2938,9 +2724,6 @@
           },
           "sha256:8e673f0900f3a18c2632ba0c0403485b86136d06ced389af06d3a0a3ac043a64": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/cryptsetup-libs-2.3.3-4.el8.x86_64.rpm"
-          },
-          "sha256:8ed014e27c24fae00ff51fbd6dff4ba41c9861c1dfd8a607d4296d4fb433012a": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/rpm-plugin-systemd-inhibit-4.14.3-19.el8.x86_64.rpm"
           },
           "sha256:8f00781eb679c6baf359099fa2a672ffccfc8e43b7c03c1dc635619cb25ff01d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-audit-3.0-0.17.20191104git1c2f876.el8.x86_64.rpm"
@@ -2981,9 +2764,6 @@
           "sha256:9649b49d9992f28fc1e4f5eb95e31e24ba2a126e3192320d36e6e779c624fc6f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/nss-util-3.67.0-6.el8_4.x86_64.rpm"
           },
-          "sha256:9684e567554899e75aa51d3e63b04137cdb4fe84f93dbb4900b906a6dca901b5": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-libdnf-0.63.0-3.el8.x86_64.rpm"
-          },
           "sha256:96b090a6696ca4c8b3f701c3a7b95b91c892db389e023c4b2d500a5162e43e8d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-slip-dbus-0.6.4-11.el8.noarch.rpm"
           },
@@ -3001,9 +2781,6 @@
           },
           "sha256:995831ad6397fbd6e91038c6889981a0b7c649c95192999dc184b98c26d48fea": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/initscripts-10.00.15-1.el8.x86_64.rpm"
-          },
-          "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-iniparse-0.4-31.el8.noarch.rpm"
           },
           "sha256:9a89874a5b8326c85c0b34b02c122ffc052b32a12b20354ce95859ac5296a159": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/pkgconf-m4-1.4.2-1.el8.noarch.rpm"
@@ -3026,12 +2803,6 @@
           "sha256:9dfef9a2900c658a3379ad843127609d4cbde7718f4f5b223f207288a978254a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libblockdev-mdraid-2.24-7.el8.x86_64.rpm"
           },
-          "sha256:9fa50a4864795cfb8eba32bde7bc76abd2453d876c9884508d9d070e80c4cf09": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/mtools-4.0.18-14.el8.x86_64.rpm"
-          },
-          "sha256:a049cfb6609f54daf5413c44fa426a5bdc45c3f784a6c225924d70ae788c8bf0": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libusal-1.1.11-39.el8.x86_64.rpm"
-          },
           "sha256:a1dcfb41bc9a8dc4533ebe66449f0101e4da7548b7f3d6f17e0d815025b9c437": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/json-glib-1.4.4-1.el8.x86_64.rpm"
           },
@@ -3040,9 +2811,6 @@
           },
           "sha256:a38b78c7097b0aa92c819602ea8813f5338174cce7be87ee53deafe3a24509dd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/kernel-modules-4.18.0-348.el8.x86_64.rpm"
-          },
-          "sha256:a3dedf8c077b4656d3cd4ef641e696397a3fff83ee8b14f0e3fc69d7c10cebcf": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/lzo-2.08-14.el8.x86_64.rpm"
           },
           "sha256:a41eef48b706b929464a45a4dbdca5b16201931fe56ff6ada4da0157db5e4b73": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/kbd-misc-2.0.4-10.el8.noarch.rpm"
@@ -3056,17 +2824,8 @@
           "sha256:a59ca3dcee943068555e5add6b1f702988bd5c89c4747b5b21f4be3aa3b25454": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/iwl2030-firmware-18.168.6.1-103.el8.1.noarch.rpm"
           },
-          "sha256:a771c776f1e8bdf82bd2db42b39df6fc3f74ed92e37234a280441c44c1f48549": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/lorax-templates-rhel-8.5-2.el8.noarch.rpm"
-          },
-          "sha256:a7a6053537ea1476969ad10005915cfd6618a5d573fb3320547712abbb6e4280": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-pysocks-1.6.8-3.el8.noarch.rpm"
-          },
           "sha256:a8808c053ffb7ccf826d80fdd458b6521f2cc63e55eb90d79a504fbb66c36cb0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/checkpolicy-2.9-1.el8.x86_64.rpm"
-          },
-          "sha256:a8a81d5523311634b3bb27a737c7646e5d9b464fff1c0e7b7d78994711b6301d": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/lorax-templates-generic-28.14.62-1.el8.x86_64.rpm"
           },
           "sha256:a8c46a004231a09b9b2d54d51e6aadeda3c08f26f9600eac99af1e019f63938f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/podman-catatonit-3.3.1-9.module+el8.5.0+12697+018f24d7.x86_64.rpm"
@@ -3098,9 +2857,6 @@
           "sha256:aecd902d4dd2636c381d15ed39eb556d828c16dd3ce7d53e5a8ff92c499ba080": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libxmlb-0.1.15-1.el8.x86_64.rpm"
           },
-          "sha256:aed1436b76055b10cc1f78fb6519687cdadf02bc53c440e792217986b7314eec": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/GConf2-3.2.6-22.el8.x86_64.rpm"
-          },
           "sha256:af4ca296362133a4d6dfe65dc212cfa96ce5a91a11579610fe9268fb72d9ff07": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/container-selinux-2.167.0-1.module+el8.5.0+12582+56d94c81.noarch.rpm"
           },
@@ -3122,17 +2878,11 @@
           "sha256:b1ce343456452d02648d8a0c4ff277e25eb32113b800ed3f16fca91939193e0f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libtasn1-4.13-3.el8.x86_64.rpm"
           },
-          "sha256:b202816022b9cecdc4d34dc31f29146eee7de3a32d065be73e4c25adcd230484": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/isomd5sum-1.2.3-3.el8.x86_64.rpm"
-          },
           "sha256:b2dcbd3b81196b16e33054d31c0129c432cf59fb591035845cc299bbb46000c1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libuser-0.62-23.el8.x86_64.rpm"
           },
           "sha256:b41c194ecf358e8e6cec46068c4fb6f34780ee2bd65200c367b94170103a8aa9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/ima-evm-utils-1.3.2-12.el8.x86_64.rpm"
-          },
-          "sha256:b4f1b695d96c86edffdc0996e2cfe78e343674ce3d8f42387412e34d5cb95fd8": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/syslinux-nonlinux-6.04-5.el8.noarch.rpm"
           },
           "sha256:b65376f91b270c4d8e122b2ee59bae690c727833feaefa95fb338825a0e8ca9a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/cryptsetup-2.3.3-4.el8.x86_64.rpm"
@@ -3152,9 +2902,6 @@
           "sha256:b83c606249d5fbb8fa7935eed84edb0d12c76373e2ce4507945eabbbf292d0ce": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/nftables-0.9.3-21.el8.x86_64.rpm"
           },
-          "sha256:b85a224c200cfb593bb97ec77dabfa749cd1e0522fed7a3093c0c848058af9fd": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-gpg-1.13.1-9.el8.x86_64.rpm"
-          },
           "sha256:b92a1778cf0cbd78f528fe508fa3859c113a413fdbaead1b5a1070b2f93af164": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/gnupg2-2.2.20-2.el8.x86_64.rpm"
           },
@@ -3172,9 +2919,6 @@
           },
           "sha256:bb8931de04b141c1e0818c3bee8856372c9e08f4286390318bc6c4192a60ee83": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/rpm-ostree-2021.5-2.el8.x86_64.rpm"
-          },
-          "sha256:bd37c05e277205686dade257e19f95839fad32f2278872dbc9969c50ec9da0b6": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/librhsm-0.0.3-4.el8.x86_64.rpm"
           },
           "sha256:bd681eb5ac727590611d25d1c1ba71a9fe80751bc178e1e64bf6680e481d77e6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/iwl3160-firmware-25.30.13.0-103.el8.1.noarch.rpm"
@@ -3200,14 +2944,8 @@
           "sha256:c2ca16e84cca561fb94b13e4ef72b0c5ea2c463b8710d40aedce83a833c663e5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/openssl-pkcs11-0.4.10-2.el8.x86_64.rpm"
           },
-          "sha256:c2f85c9746f79cd848329f46d348deca481b09fb4b4bc71cd7ab42b57e1c2a20": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-idna-2.5-5.el8.noarch.rpm"
-          },
           "sha256:c3545977af96868ff2f1c58bba89c80e11a4f09733d2450d793d307e12650e2d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libfdisk-2.32.1-28.el8.x86_64.rpm"
-          },
-          "sha256:c4a3b559c2d3ea992a88f86c2d2c5dd219b30a997232cb295978691c81bd0e70": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/qemu-img-4.2.0-59.module+el8.5.0+12817+cb650d43.x86_64.rpm"
           },
           "sha256:c5f67538f6bac774f5c19993235cfe1775fab92555791a0c375ff227a87538ec": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/NetworkManager-wwan-1.32.10-4.el8.x86_64.rpm"
@@ -3220,9 +2958,6 @@
           },
           "sha256:c743e53eef328c6cdb5a24ff2034b58bb64380cfe4532125c1e930984dfb1ee8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libssh-config-0.9.4-3.el8.noarch.rpm"
-          },
-          "sha256:c7c9866330bf0570689d413178d0b5fe0c04bfe2d9043771c7759d35e6a75258": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dnf-data-4.7.0-4.el8.noarch.rpm"
           },
           "sha256:c82f9d74c138a866cd2636064ce3d21fc12dd006698029049fbe74cffa0ac3f7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/openssh-server-8.0p1-10.el8.x86_64.rpm"
@@ -3266,9 +3001,6 @@
           "sha256:ce7e129103cab9de8081b9752a9990a632b5930e371988892e671bb47d42d14e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/acl-2.2.53-1.el8.x86_64.rpm"
           },
-          "sha256:ce8d784df6e1292765cf1de462467cf828bbd8a8a60d89f55a85dfa269636cb4": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-dnf-4.7.0-4.el8.noarch.rpm"
-          },
           "sha256:d0188d22323619c9069c2de6f85ebe5302c76fde5f52ebd148988e75a75110dc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libsigsegv-2.11-5.el8.x86_64.rpm"
           },
@@ -3301,9 +3033,6 @@
           },
           "sha256:d38bb13b6315f1a366f0c8c7d88975824c5c7be1282b10339f689b27d4b2fb71": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/openssh-clients-8.0p1-10.el8.x86_64.rpm"
-          },
-          "sha256:d3d638bc584e002210bceb9ce6c2af39142a33f8b8a36a6c90e5e9ad2da85da6": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libcomps-0.1.16-2.el8.x86_64.rpm"
           },
           "sha256:d4dc248be7aacad57e6684036d48d7fc1697bb0f1aa880c2a77dbd3ed714c642": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/timedatex-0.5-3.el8.x86_64.rpm"
@@ -3341,9 +3070,6 @@
           "sha256:d8f93540a6a7329a5158d3e543f77110104f30494f4d6f187427e5010d8df379": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libaio-0.3.112-1.el8.x86_64.rpm"
           },
-          "sha256:d94ea399f82d4f9537af1098a588c5cc9a80454ba7c1de9b26dd11cb5c730d8a": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-requests-2.20.0-2.1.el8_1.noarch.rpm"
-          },
           "sha256:d951e5ead816fedfdf0e224385832c36f4550d6ba06fd74e85d0f5dccf188ae9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/rpm-4.14.3-19.el8.x86_64.rpm"
           },
@@ -3362,9 +3088,6 @@
           "sha256:dc8ac59d860fa399f43f2d46d6cc20fcbee53c6a1cf6a8f563793ade8a9e32e0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/conmon-2.0.29-1.module+el8.5.0+12582+56d94c81.x86_64.rpm"
           },
-          "sha256:deb0d0ad2726988b4dfb9c12c7217f868269b45fee929431e2b32e1d4c772a77": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-rpm-4.14.3-19.el8.x86_64.rpm"
-          },
           "sha256:df169d238e43e575b61b9eb02a392d9c2c75fe6b0bb678f8d8ca27e169347372": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libpwquality-1.4.4-3.el8.x86_64.rpm"
           },
@@ -3376,9 +3099,6 @@
           },
           "sha256:e1382a5e1960353d613f453853e614ec9a66854119eefa0b3ddf19c5d9fcdce3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-pip-9.0.3-20.el8.noarch.rpm"
-          },
-          "sha256:e22840ee14aa1993e75fd690749c01dbb7d4419c2b210fef173ff99a76f61ff6": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/psmisc-23.1-5.el8.x86_64.rpm"
           },
           "sha256:e233a9ecfbf657192902180f6a67a225e5ec0194834df672eaeb2b3a50e8fb49": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/info-6.5-6.el8.x86_64.rpm"
@@ -3409,12 +3129,6 @@
           },
           "sha256:e7fb0b1c8cac6c9d79dc0fb6d974de2b0cd8e004ddf438df12545a366d1838d9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/kpartx-0.8.4-17.el8.x86_64.rpm"
-          },
-          "sha256:e868499743c399baa6463fa64a2534a7d32f8e1cca7b1b47ec00c60b34250bfe": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-markupsafe-0.23-19.el8.x86_64.rpm"
-          },
-          "sha256:e920a82cda55b110690f3c946ec2cd85f969599c71212463279763afcc33303d": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/unbound-libs-1.7.3-17.el8.x86_64.rpm"
           },
           "sha256:e99352a333edf7ac230aa0362464fee3ac80f6596e32a8aa1f6244ea4310aa41": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libqmi-utils-1.24.0-3.el8.x86_64.rpm"
@@ -3473,9 +3187,6 @@
           "sha256:f39f336176aa2493a43d1520bab65c055e8663505cf29b770a71be22e8da16e8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/iwl135-firmware-18.168.6.1-103.el8.1.noarch.rpm"
           },
-          "sha256:f52434c2edd4de318b4dde9eb47941de86f805d096145277eb9a2f31e1ebe315": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/squashfs-tools-4.3-20.el8.x86_64.rpm"
-          },
           "sha256:f5361f959d87ceb9c6fa101c443a20b28c769d5adcd0a0b6fd2bce871204183e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/selinux-policy-targeted-3.14.3-80.el8.noarch.rpm"
           },
@@ -3532,9 +3243,6 @@
           },
           "sha256:fd2939c337fdc6f9d1aa4aeb19c182135116e495eef0afd49c7ba916f28cf72b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dracut-config-generic-049-191.git20210920.el8.x86_64.rpm"
-          },
-          "sha256:fd60066d9141529ea385fa8fc3af88d0f6ac0cb7a8515af0abe9b65498707f6f": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-urllib3-1.24.2-5.el8.noarch.rpm"
           },
           "sha256:fd9e5c379cd3482d32686fb13881827a39037e7a7afa92c62d58c1f05fcb797f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/mozjs60-60.9.0-4.el8.x86_64.rpm"
@@ -3775,15 +3483,6 @@
         "checksum": "sha256:6bcccf9b83afccc64dbf7d7121f54b5cacd261342d8019785459d981296e4f2a"
       },
       {
-        "name": "dbus-glib",
-        "epoch": 0,
-        "version": "0.110",
-        "release": "2.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dbus-glib-0.110-2.el8.x86_64.rpm",
-        "checksum": "sha256:802263173d9c487fc3ca584cc2a5b7b7bb49ac0d12d9026b3246d50fd0888fb1"
-      },
-      {
         "name": "dbus-libs",
         "epoch": 1,
         "version": "1.12.8",
@@ -3811,24 +3510,6 @@
         "checksum": "sha256:1f3f72e58dfcb414acbee939b4be570c3fa846c97587db5a5c96fc59c5046849"
       },
       {
-        "name": "device-mapper-event",
-        "epoch": 8,
-        "version": "1.02.177",
-        "release": "10.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/device-mapper-event-1.02.177-10.el8.x86_64.rpm",
-        "checksum": "sha256:516602e5bec3bdfb79704efc8e478f8c80279999dc3cee21adb84e9e72b24433"
-      },
-      {
-        "name": "device-mapper-event-libs",
-        "epoch": 8,
-        "version": "1.02.177",
-        "release": "10.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/device-mapper-event-libs-1.02.177-10.el8.x86_64.rpm",
-        "checksum": "sha256:c64f416a362174b5b825403453cfda25e06c0f1c1749f4ddd1e17233781a11be"
-      },
-      {
         "name": "device-mapper-libs",
         "epoch": 8,
         "version": "1.02.177",
@@ -3836,15 +3517,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/device-mapper-libs-1.02.177-10.el8.x86_64.rpm",
         "checksum": "sha256:5cff7d4df4b7cf4a5e3e127dc4410b703f543caa7be4cb35220fd1ec5cff78c3"
-      },
-      {
-        "name": "device-mapper-persistent-data",
-        "epoch": 0,
-        "version": "0.9.0",
-        "release": "4.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/device-mapper-persistent-data-0.9.0-4.el8.x86_64.rpm",
-        "checksum": "sha256:7502acab1d4b9c83d94fef654f4dd6fbe570079fabd371bceafc1ef4ae40f55d"
       },
       {
         "name": "diffutils",
@@ -3856,33 +3528,6 @@
         "checksum": "sha256:f7fc94ac5b5df2051aa2811c0cebecd7e04353ac871f1a792bc6c68f2c2aa6ce"
       },
       {
-        "name": "dnf",
-        "epoch": 0,
-        "version": "4.7.0",
-        "release": "4.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dnf-4.7.0-4.el8.noarch.rpm",
-        "checksum": "sha256:25f6f93557fa8ab54e80ddea0a396f0acb93171304963c231ca1347893b2e97b"
-      },
-      {
-        "name": "dnf-data",
-        "epoch": 0,
-        "version": "4.7.0",
-        "release": "4.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dnf-data-4.7.0-4.el8.noarch.rpm",
-        "checksum": "sha256:c7c9866330bf0570689d413178d0b5fe0c04bfe2d9043771c7759d35e6a75258"
-      },
-      {
-        "name": "dosfstools",
-        "epoch": 0,
-        "version": "4.1",
-        "release": "6.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dosfstools-4.1-6.el8.x86_64.rpm",
-        "checksum": "sha256:fc6f294d87c32dd80d09ad1e31005a6c379c476539fec9cd52b51f0bbc3384e3"
-      },
-      {
         "name": "dracut",
         "epoch": 0,
         "version": "049",
@@ -3890,24 +3535,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/dracut-049-191.git20210920.el8.x86_64.rpm",
         "checksum": "sha256:f72118d72067987ac1eeded4b04e95e709b263c27877f3eb1112859db33cb403"
-      },
-      {
-        "name": "e2fsprogs",
-        "epoch": 0,
-        "version": "1.45.6",
-        "release": "2.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/e2fsprogs-1.45.6-2.el8.x86_64.rpm",
-        "checksum": "sha256:53849d779914a944acc126459911030c8ac8310ffcab354c6a7bcc4ef4af5bab"
-      },
-      {
-        "name": "e2fsprogs-libs",
-        "epoch": 0,
-        "version": "1.45.6",
-        "release": "2.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/e2fsprogs-libs-1.45.6-2.el8.x86_64.rpm",
-        "checksum": "sha256:39f86feba904fc4c4a9a04a54576d6d3b4e9af344155aee9e4321c27b4742f0a"
       },
       {
         "name": "elfutils-debuginfod-client",
@@ -4270,15 +3897,6 @@
         "checksum": "sha256:e4a7bd8a320c7fa2ff5569479d31e682fd21d8646964ca90cc30da55757681db"
       },
       {
-        "name": "ima-evm-utils",
-        "epoch": 0,
-        "version": "1.3.2",
-        "release": "12.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/ima-evm-utils-1.3.2-12.el8.x86_64.rpm",
-        "checksum": "sha256:b41c194ecf358e8e6cec46068c4fb6f34780ee2bd65200c367b94170103a8aa9"
-      },
-      {
         "name": "info",
         "epoch": 0,
         "version": "6.5",
@@ -4405,15 +4023,6 @@
         "checksum": "sha256:9461fa7a5e74bfd8d9e9961af9d3003d9d2b496830c2fd6b0641ae8b8bc8e178"
       },
       {
-        "name": "libaio",
-        "epoch": 0,
-        "version": "0.3.112",
-        "release": "1.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libaio-0.3.112-1.el8.x86_64.rpm",
-        "checksum": "sha256:d8f93540a6a7329a5158d3e543f77110104f30494f4d6f187427e5010d8df379"
-      },
-      {
         "name": "libarchive",
         "epoch": 0,
         "version": "3.3.3",
@@ -4477,15 +4086,6 @@
         "checksum": "sha256:1e445a02e73fcfda766f890b06cf6fd14996be4f84da1f8d66cd3572db082f31"
       },
       {
-        "name": "libcomps",
-        "epoch": 0,
-        "version": "0.1.16",
-        "release": "2.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libcomps-0.1.16-2.el8.x86_64.rpm",
-        "checksum": "sha256:d3d638bc584e002210bceb9ce6c2af39142a33f8b8a36a6c90e5e9ad2da85da6"
-      },
-      {
         "name": "libcroco",
         "epoch": 0,
         "version": "0.6.12",
@@ -4520,24 +4120,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libdb-utils-5.3.28-42.el8_4.x86_64.rpm",
         "checksum": "sha256:6b52102af0aab3b41a5d410b7717713aef3adc48c41015a745c9c5a2ba7b814f"
-      },
-      {
-        "name": "libdnf",
-        "epoch": 0,
-        "version": "0.63.0",
-        "release": "3.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libdnf-0.63.0-3.el8.x86_64.rpm",
-        "checksum": "sha256:004e45aef6912402be87943055407549795af0fd978964ab8fd8e95747c1c6e3"
-      },
-      {
-        "name": "libevent",
-        "epoch": 0,
-        "version": "2.1.8",
-        "release": "5.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libevent-2.1.8-5.el8.x86_64.rpm",
-        "checksum": "sha256:7e95dc277991981a081f73f4410219a196b7b0d02dbe1ad2ebfce172c215669e"
       },
       {
         "name": "libfdisk",
@@ -4747,24 +4329,6 @@
         "checksum": "sha256:40857d6b70f5b74a58da97a8cfcfcee56c08157c6d1eed56c92057b731a8ea95"
       },
       {
-        "name": "libreport-filesystem",
-        "epoch": 0,
-        "version": "2.9.5",
-        "release": "15.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libreport-filesystem-2.9.5-15.el8.x86_64.rpm",
-        "checksum": "sha256:4a95dbaad30dfee445cb89fa5c047f56b4588c16a5442ef4043158f709c857c9"
-      },
-      {
-        "name": "librhsm",
-        "epoch": 0,
-        "version": "0.0.3",
-        "release": "4.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/librhsm-0.0.3-4.el8.x86_64.rpm",
-        "checksum": "sha256:bd37c05e277205686dade257e19f95839fad32f2278872dbc9969c50ec9da0b6"
-      },
-      {
         "name": "libseccomp",
         "epoch": 0,
         "version": "2.5.1",
@@ -4844,15 +4408,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libsolv-0.7.19-1.el8.x86_64.rpm",
         "checksum": "sha256:66d7caeabd800bbe2f34163fc4605f5762a6ffc3af94bc275acbfac0b56d66c7"
-      },
-      {
-        "name": "libss",
-        "epoch": 0,
-        "version": "1.45.6",
-        "release": "2.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libss-1.45.6-2.el8.x86_64.rpm",
-        "checksum": "sha256:434deddc21ede7c5fe28b6cbe8c42330a6f310eac9f9559f4138f930c5357013"
       },
       {
         "name": "libssh",
@@ -4990,24 +4545,6 @@
         "checksum": "sha256:1c040f943aba945547ebd7a060f1df910dca5d65cb353d6c7e7edbb51243d4c0"
       },
       {
-        "name": "lvm2",
-        "epoch": 8,
-        "version": "2.03.12",
-        "release": "10.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/lvm2-2.03.12-10.el8.x86_64.rpm",
-        "checksum": "sha256:0cd236af02bce0d04b36624a311d4d6e4fddf527d24cb88a6bc9e6e9199b8c85"
-      },
-      {
-        "name": "lvm2-libs",
-        "epoch": 8,
-        "version": "2.03.12",
-        "release": "10.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/lvm2-libs-2.03.12-10.el8.x86_64.rpm",
-        "checksum": "sha256:103cce1307cae33d3bd9d6432f55b2886d4fd9041c42ba8bdbfcfd58109ef52a"
-      },
-      {
         "name": "lz4-libs",
         "epoch": 0,
         "version": "1.8.3",
@@ -5015,15 +4552,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/lz4-libs-1.8.3-3.el8_4.x86_64.rpm",
         "checksum": "sha256:f0e3f336e2910f8282c39a5bce21ffa35d6037842d219761ed8c58b4208077cc"
-      },
-      {
-        "name": "lzo",
-        "epoch": 0,
-        "version": "2.08",
-        "release": "14.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/lzo-2.08-14.el8.x86_64.rpm",
-        "checksum": "sha256:a3dedf8c077b4656d3cd4ef641e696397a3fff83ee8b14f0e3fc69d7c10cebcf"
       },
       {
         "name": "memstrack",
@@ -5042,15 +4570,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/mpfr-3.1.6-1.el8.x86_64.rpm",
         "checksum": "sha256:28ccf9ff472c824f6c5a3c2a0c076bfa221b8e48368e43de9b3c2e83d67e8b5d"
-      },
-      {
-        "name": "mtools",
-        "epoch": 0,
-        "version": "4.0.18",
-        "release": "14.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/mtools-4.0.18-14.el8.x86_64.rpm",
-        "checksum": "sha256:9fa50a4864795cfb8eba32bde7bc76abd2453d876c9884508d9d070e80c4cf09"
       },
       {
         "name": "ncurses",
@@ -5179,15 +4698,6 @@
         "checksum": "sha256:f7869ec212d50dac8e27645ae446e10383dfa46e8f770d46d43ad209bd4a5bed"
       },
       {
-        "name": "parted",
-        "epoch": 0,
-        "version": "3.2",
-        "release": "39.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/parted-3.2-39.el8.x86_64.rpm",
-        "checksum": "sha256:fec32d37b2f34c891a64a8c5e2faf3d08de25d144289b6f2b7f5fafdd5eec4d2"
-      },
-      {
         "name": "pciutils",
         "epoch": 0,
         "version": "3.7.0",
@@ -5305,15 +4815,6 @@
         "checksum": "sha256:49f89e7b459eaa297e518c0e55d81d1b0d8181959346673babb158103422652d"
       },
       {
-        "name": "psmisc",
-        "epoch": 0,
-        "version": "23.1",
-        "release": "5.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/psmisc-23.1-5.el8.x86_64.rpm",
-        "checksum": "sha256:e22840ee14aa1993e75fd690749c01dbb7d4419c2b210fef173ff99a76f61ff6"
-      },
-      {
         "name": "publicsuffix-list-dafsa",
         "epoch": 0,
         "version": "20180723",
@@ -5330,87 +4831,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-audit-3.0-0.17.20191104git1c2f876.el8.x86_64.rpm",
         "checksum": "sha256:8f00781eb679c6baf359099fa2a672ffccfc8e43b7c03c1dc635619cb25ff01d"
-      },
-      {
-        "name": "python3-chardet",
-        "epoch": 0,
-        "version": "3.0.4",
-        "release": "7.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-chardet-3.0.4-7.el8.noarch.rpm",
-        "checksum": "sha256:352af964ab839022310eaf2a4d1ed3d7824eaa1ff948088d4414768ee649f786"
-      },
-      {
-        "name": "python3-dnf",
-        "epoch": 0,
-        "version": "4.7.0",
-        "release": "4.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-dnf-4.7.0-4.el8.noarch.rpm",
-        "checksum": "sha256:ce8d784df6e1292765cf1de462467cf828bbd8a8a60d89f55a85dfa269636cb4"
-      },
-      {
-        "name": "python3-gpg",
-        "epoch": 0,
-        "version": "1.13.1",
-        "release": "9.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-gpg-1.13.1-9.el8.x86_64.rpm",
-        "checksum": "sha256:b85a224c200cfb593bb97ec77dabfa749cd1e0522fed7a3093c0c848058af9fd"
-      },
-      {
-        "name": "python3-hawkey",
-        "epoch": 0,
-        "version": "0.63.0",
-        "release": "3.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-hawkey-0.63.0-3.el8.x86_64.rpm",
-        "checksum": "sha256:6ba1a823aea313bf5b4dfec122e4815832fb7f51a058cea2528d8184ef03473e"
-      },
-      {
-        "name": "python3-idna",
-        "epoch": 0,
-        "version": "2.5",
-        "release": "5.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-idna-2.5-5.el8.noarch.rpm",
-        "checksum": "sha256:c2f85c9746f79cd848329f46d348deca481b09fb4b4bc71cd7ab42b57e1c2a20"
-      },
-      {
-        "name": "python3-iniparse",
-        "epoch": 0,
-        "version": "0.4",
-        "release": "31.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-iniparse-0.4-31.el8.noarch.rpm",
-        "checksum": "sha256:9a6eb680e8debcd0b97575a76e9cf0d0655ef7f875b362542e0d129f5e423419"
-      },
-      {
-        "name": "python3-libcomps",
-        "epoch": 0,
-        "version": "0.1.16",
-        "release": "2.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-libcomps-0.1.16-2.el8.x86_64.rpm",
-        "checksum": "sha256:17bf6351961fba4a5b5df923dcc4de54b5f8059a36f0d6a9f6b446a4e9b018e4"
-      },
-      {
-        "name": "python3-libdnf",
-        "epoch": 0,
-        "version": "0.63.0",
-        "release": "3.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-libdnf-0.63.0-3.el8.x86_64.rpm",
-        "checksum": "sha256:9684e567554899e75aa51d3e63b04137cdb4fe84f93dbb4900b906a6dca901b5"
-      },
-      {
-        "name": "python3-librepo",
-        "epoch": 0,
-        "version": "1.14.0",
-        "release": "2.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-librepo-1.14.0-2.el8.x86_64.rpm",
-        "checksum": "sha256:2bf6a5835ee856272ad37abc4f695536a157f4c51dcf5621bfcf323d22d091bc"
       },
       {
         "name": "python3-libs",
@@ -5458,33 +4878,6 @@
         "checksum": "sha256:781e549d1c8c4fbd9002bcb11550e4ee89c9b293de0aa1628db8471addac5b58"
       },
       {
-        "name": "python3-pysocks",
-        "epoch": 0,
-        "version": "1.6.8",
-        "release": "3.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-pysocks-1.6.8-3.el8.noarch.rpm",
-        "checksum": "sha256:a7a6053537ea1476969ad10005915cfd6618a5d573fb3320547712abbb6e4280"
-      },
-      {
-        "name": "python3-requests",
-        "epoch": 0,
-        "version": "2.20.0",
-        "release": "2.1.el8_1",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-requests-2.20.0-2.1.el8_1.noarch.rpm",
-        "checksum": "sha256:d94ea399f82d4f9537af1098a588c5cc9a80454ba7c1de9b26dd11cb5c730d8a"
-      },
-      {
-        "name": "python3-rpm",
-        "epoch": 0,
-        "version": "4.14.3",
-        "release": "19.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-rpm-4.14.3-19.el8.x86_64.rpm",
-        "checksum": "sha256:deb0d0ad2726988b4dfb9c12c7217f868269b45fee929431e2b32e1d4c772a77"
-      },
-      {
         "name": "python3-setools",
         "epoch": 0,
         "version": "4.3.0",
@@ -5510,24 +4903,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-setuptools-wheel-39.2.0-6.el8.noarch.rpm",
         "checksum": "sha256:1ed3940c0466986fa38fe9d3bd5fc6370b5e62edba51f7a8359eab786b4b81ec"
-      },
-      {
-        "name": "python3-six",
-        "epoch": 0,
-        "version": "1.11.0",
-        "release": "8.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-six-1.11.0-8.el8.noarch.rpm",
-        "checksum": "sha256:932cca0b2aa28d64538fca0401acc35bec34f14bfe99d3e22ea8452b79890eac"
-      },
-      {
-        "name": "python3-urllib3",
-        "epoch": 0,
-        "version": "1.24.2",
-        "release": "5.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-urllib3-1.24.2-5.el8.noarch.rpm",
-        "checksum": "sha256:fd60066d9141529ea385fa8fc3af88d0f6ac0cb7a8515af0abe9b65498707f6f"
       },
       {
         "name": "rdma-core",
@@ -5575,15 +4950,6 @@
         "checksum": "sha256:d951e5ead816fedfdf0e224385832c36f4550d6ba06fd74e85d0f5dccf188ae9"
       },
       {
-        "name": "rpm-build-libs",
-        "epoch": 0,
-        "version": "4.14.3",
-        "release": "19.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/rpm-build-libs-4.14.3-19.el8.x86_64.rpm",
-        "checksum": "sha256:7c2ab25d05a02481d82bc8367695d754a7bdd7e35240bfbdb159cb5662396060"
-      },
-      {
         "name": "rpm-libs",
         "epoch": 0,
         "version": "4.14.3",
@@ -5600,15 +4966,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/rpm-plugin-selinux-4.14.3-19.el8.x86_64.rpm",
         "checksum": "sha256:7a3420d3db86db6ca479c049e491d52e229e76936c72be846b7d16a7acb9367a"
-      },
-      {
-        "name": "rpm-plugin-systemd-inhibit",
-        "epoch": 0,
-        "version": "4.14.3",
-        "release": "19.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/rpm-plugin-systemd-inhibit-4.14.3-19.el8.x86_64.rpm",
-        "checksum": "sha256:8ed014e27c24fae00ff51fbd6dff4ba41c9861c1dfd8a607d4296d4fb433012a"
       },
       {
         "name": "sed",
@@ -5674,33 +5031,6 @@
         "checksum": "sha256:645419874806713b904eed22d9e7dd2ba076452c733f47822d0c05723311a951"
       },
       {
-        "name": "squashfs-tools",
-        "epoch": 0,
-        "version": "4.3",
-        "release": "20.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/squashfs-tools-4.3-20.el8.x86_64.rpm",
-        "checksum": "sha256:f52434c2edd4de318b4dde9eb47941de86f805d096145277eb9a2f31e1ebe315"
-      },
-      {
-        "name": "syslinux",
-        "epoch": 0,
-        "version": "6.04",
-        "release": "5.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/syslinux-6.04-5.el8.x86_64.rpm",
-        "checksum": "sha256:7f564d267644d0e24ea856599ab95dba3bbdd7a0fc6554c803185d771a12d8e6"
-      },
-      {
-        "name": "syslinux-nonlinux",
-        "epoch": 0,
-        "version": "6.04",
-        "release": "5.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/syslinux-nonlinux-6.04-5.el8.noarch.rpm",
-        "checksum": "sha256:b4f1b695d96c86edffdc0996e2cfe78e343674ce3d8f42387412e34d5cb95fd8"
-      },
-      {
         "name": "systemd",
         "epoch": 0,
         "version": "239",
@@ -5744,15 +5074,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/tar-1.30-5.el8.x86_64.rpm",
         "checksum": "sha256:3e4ea07a068ac27709ed9ed3ddea98cffdb45c7bec92ff80252cfbaccb52797c"
-      },
-      {
-        "name": "tpm2-tss",
-        "epoch": 0,
-        "version": "2.3.2",
-        "release": "4.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/tpm2-tss-2.3.2-4.el8.x86_64.rpm",
-        "checksum": "sha256:d100618c7db3b14b4ea477c25267e663e2e787dc453a0f029213b82dccf20627"
       },
       {
         "name": "trousers",
@@ -5800,15 +5121,6 @@
         "checksum": "sha256:1cee3daa217cea4534d4b90805907236846539013283adb9f79009c06f490669"
       },
       {
-        "name": "xfsprogs",
-        "epoch": 0,
-        "version": "5.0.0",
-        "release": "9.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/xfsprogs-5.0.0-9.el8.x86_64.rpm",
-        "checksum": "sha256:1be810c1a0216afcfc8343e36892c8853a680a7bcf1ae2d1e6dc61d3b39c4e58"
-      },
-      {
         "name": "xz",
         "epoch": 0,
         "version": "5.2.4",
@@ -5834,15 +5146,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/zlib-1.2.11-17.el8.x86_64.rpm",
         "checksum": "sha256:43a4f1c39b2a8b212d50af73d0d510adfdc4ac61be8ecdc6bd718f6cab0e5afc"
-      },
-      {
-        "name": "GConf2",
-        "epoch": 0,
-        "version": "3.2.6",
-        "release": "22.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/GConf2-3.2.6-22.el8.x86_64.rpm",
-        "checksum": "sha256:aed1436b76055b10cc1f78fb6519687cdadf02bc53c440e792217986b7314eec"
       },
       {
         "name": "container-selinux",
@@ -5881,24 +5184,6 @@
         "checksum": "sha256:d80e23533ad5a619a0d4c8533fe3d641a80de50ab804c56d6e493a5507c8537a"
       },
       {
-        "name": "genisoimage",
-        "epoch": 0,
-        "version": "1.1.11",
-        "release": "39.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/genisoimage-1.1.11-39.el8.x86_64.rpm",
-        "checksum": "sha256:8abcb3e48f4d92e1e311bf462968a3b9db429eca9fd70fbeae9222601b8dff93"
-      },
-      {
-        "name": "isomd5sum",
-        "epoch": 1,
-        "version": "1.2.3",
-        "release": "3.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/isomd5sum-1.2.3-3.el8.x86_64.rpm",
-        "checksum": "sha256:b202816022b9cecdc4d34dc31f29146eee7de3a32d065be73e4c25adcd230484"
-      },
-      {
         "name": "libnet",
         "epoch": 0,
         "version": "1.1.6",
@@ -5917,15 +5202,6 @@
         "checksum": "sha256:ef10423a9ab29aeb74aa06f71fba2935b05a35b14e1e2f371eaf0dbc1c673a6c"
       },
       {
-        "name": "libusal",
-        "epoch": 0,
-        "version": "1.1.11",
-        "release": "39.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libusal-1.1.11-39.el8.x86_64.rpm",
-        "checksum": "sha256:a049cfb6609f54daf5413c44fa426a5bdc45c3f784a6c225924d70ae788c8bf0"
-      },
-      {
         "name": "libxkbcommon",
         "epoch": 0,
         "version": "0.9.1",
@@ -5933,33 +5209,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libxkbcommon-0.9.1-1.el8.x86_64.rpm",
         "checksum": "sha256:25b13ea50e21233dc5fccf42da344fbf24605dde38db9b94e49739ae39faa072"
-      },
-      {
-        "name": "lorax",
-        "epoch": 0,
-        "version": "28.14.62",
-        "release": "1.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/lorax-28.14.62-1.el8.x86_64.rpm",
-        "checksum": "sha256:707db58b819782033d3480e945757601463b18804567ea6d6f3683742cf1e922"
-      },
-      {
-        "name": "lorax-templates-generic",
-        "epoch": 0,
-        "version": "28.14.62",
-        "release": "1.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/lorax-templates-generic-28.14.62-1.el8.x86_64.rpm",
-        "checksum": "sha256:a8a81d5523311634b3bb27a737c7646e5d9b464fff1c0e7b7d78994711b6301d"
-      },
-      {
-        "name": "lorax-templates-rhel",
-        "epoch": 0,
-        "version": "8.5",
-        "release": "2.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/lorax-templates-rhel-8.5-2.el8.noarch.rpm",
-        "checksum": "sha256:a771c776f1e8bdf82bd2db42b39df6fc3f74ed92e37234a280441c44c1f48549"
       },
       {
         "name": "ostree",
@@ -5998,42 +5247,6 @@
         "checksum": "sha256:9891bce6c368d49fd189fb184c8a96489ed0d15e8bc58039768854425d8cc6a4"
       },
       {
-        "name": "python3-kickstart",
-        "epoch": 0,
-        "version": "3.16.14",
-        "release": "1.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-kickstart-3.16.14-1.el8.noarch.rpm",
-        "checksum": "sha256:4d1f1a45a34e3eab4b663c895b8378a3b672fd408b3d67a31c522f1661fc98f3"
-      },
-      {
-        "name": "python3-mako",
-        "epoch": 0,
-        "version": "1.0.6",
-        "release": "13.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-mako-1.0.6-13.el8.noarch.rpm",
-        "checksum": "sha256:58cf5aa3c5b3f7bed1433b33818fb6327ec4d6cebe3772c99249e19bb14a8c03"
-      },
-      {
-        "name": "python3-markupsafe",
-        "epoch": 0,
-        "version": "0.23",
-        "release": "19.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-markupsafe-0.23-19.el8.x86_64.rpm",
-        "checksum": "sha256:e868499743c399baa6463fa64a2534a7d32f8e1cca7b1b47ec00c60b34250bfe"
-      },
-      {
-        "name": "python3-ordered-set",
-        "epoch": 0,
-        "version": "2.0.2",
-        "release": "4.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-ordered-set-2.0.2-4.el8.noarch.rpm",
-        "checksum": "sha256:53d3c15711e89c48416a7e134576b62abfb8bdbdfc5db0e65bd423f4bfa8e428"
-      },
-      {
         "name": "python3-pip",
         "epoch": 0,
         "version": "9.0.3",
@@ -6052,15 +5265,6 @@
         "checksum": "sha256:895e12e1f7431edd325fb07ed70bdfd229b6bdf28619e003fa51f0783efd900b"
       },
       {
-        "name": "python3-unbound",
-        "epoch": 0,
-        "version": "1.7.3",
-        "release": "17.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python3-unbound-1.7.3-17.el8.x86_64.rpm",
-        "checksum": "sha256:3ded289944ae1be6daded7105456bcb8508f155cc7fd2807e546b2fe32f9b002"
-      },
-      {
         "name": "python36",
         "epoch": 0,
         "version": "3.6.8",
@@ -6068,15 +5272,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/python36-3.6.8-38.module+el8.5.0+12207+5c5719bc.x86_64.rpm",
         "checksum": "sha256:ee2ba576f07f5cdd9cf24e788d60071869107aa313addbba0a311448bb32a86c"
-      },
-      {
-        "name": "qemu-img",
-        "epoch": 15,
-        "version": "4.2.0",
-        "release": "59.module+el8.5.0+12817+cb650d43",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/qemu-img-4.2.0-59.module+el8.5.0+12817+cb650d43.x86_64.rpm",
-        "checksum": "sha256:c4a3b559c2d3ea992a88f86c2d2c5dd219b30a997232cb295978691c81bd0e70"
       },
       {
         "name": "rpm-ostree",
@@ -6124,15 +5319,6 @@
         "checksum": "sha256:cd218da4a3db9a1c219de587a48392c08397e737c9b1fdc0d8ed69e7b8c489bb"
       },
       {
-        "name": "unbound-libs",
-        "epoch": 0,
-        "version": "1.7.3",
-        "release": "17.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/unbound-libs-1.7.3-17.el8.x86_64.rpm",
-        "checksum": "sha256:e920a82cda55b110690f3c946ec2cd85f969599c71212463279763afcc33303d"
-      },
-      {
         "name": "xkeyboard-config",
         "epoch": 0,
         "version": "2.28",
@@ -6142,7 +5328,7 @@
         "checksum": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
       }
     ],
-    "packages": [
+    "os": [
       {
         "name": "ModemManager",
         "epoch": 0,
