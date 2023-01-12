@@ -260,6 +260,75 @@ func tarImage(workload workload.Workload,
 
 }
 
+func edgeCommitImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
+
+	img.Platform = t.platform
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+	img.Environment = t.environment
+	img.Workload = workload
+
+	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+		img.OSTreeParent = &ostree.CommitSpec{
+			Checksum:   options.OSTree.FetchChecksum,
+			URL:        options.OSTree.URL,
+			ContentURL: options.OSTree.ContentURL,
+		}
+		if options.OSTree.RHSM {
+			img.OSTreeParent.Secrets = "org.osbuild.rhsm.consumer"
+		}
+	}
+
+	img.OSVersion = t.arch.distro.osVersion
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
+func edgeContainerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
+
+	img.Platform = t.platform
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+	img.ContainerLanguage = img.OSCustomizations.Language
+	img.Environment = t.environment
+	img.Workload = workload
+
+	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+		img.OSTreeParent = &ostree.CommitSpec{
+			Checksum:   options.OSTree.FetchChecksum,
+			URL:        options.OSTree.URL,
+			ContentURL: options.OSTree.ContentURL,
+		}
+		if options.OSTree.RHSM {
+			img.OSTreeParent.Secrets = "org.osbuild.rhsm.consumer"
+		}
+	}
+
+	img.OSVersion = t.arch.distro.osVersion
+
+	img.ExtraContainerPackages = packageSets[containerPkgsKey]
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
 func edgeInstallerImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,

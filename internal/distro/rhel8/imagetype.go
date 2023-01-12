@@ -239,14 +239,6 @@ func (t *imageType) getBootType() distro.BootType {
 	return bootType
 }
 
-func (t *imageType) supportsUEFI() bool {
-	bootType := t.getBootType()
-	if bootType == distro.HybridBootType || bootType == distro.UEFIBootType {
-		return true
-	}
-	return false
-}
-
 func (t *imageType) getPartitionTable(
 	mountpoints []blueprint.FilesystemCustomization,
 	options distro.ImageOptions,

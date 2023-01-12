@@ -9,57 +9,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-// BUILD PACKAGE SETS
-
-// distro-wide build package set
-func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"dnf",
-			"dosfstools",
-			"e2fsprogs",
-			"glibc",
-			"lorax-templates-generic",
-			"lorax-templates-rhel",
-			"lvm2",
-			"policycoreutils",
-			"python36",
-			"python3-iniparse",
-			"qemu-img",
-			"selinux-policy-targeted",
-			"systemd",
-			"tar",
-			"xfsprogs",
-			"xz",
-		},
-	}
-
-	switch t.arch.Name() {
-
-	case distro.X86_64ArchName:
-		ps = ps.Append(x8664BuildPackageSet(t))
-
-	case distro.Ppc64leArchName:
-		ps = ps.Append(ppc64leBuildPackageSet(t))
-	}
-
-	return ps
-}
-
-// x86_64 build package set
-func x8664BuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{"grub2-pc"},
-	}
-}
-
-// ppc64le build package set
-func ppc64leBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{"grub2-ppc64le", "grub2-ppc64le-modules"},
-	}
-}
-
 // installer boot package sets, needed for booting and
 // also in the build host
 

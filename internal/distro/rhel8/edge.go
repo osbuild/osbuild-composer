@@ -15,8 +15,7 @@ func edgeCommitImgType(rd distribution) imageType {
 		filename:    "commit.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: edgeBuildPackageSet,
-			osPkgsKey:    edgeCommitPackageSet,
+			osPkgsKey: edgeCommitPackageSet,
 		},
 		packageSetChains: map[string][]string{
 			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -25,9 +24,9 @@ func edgeCommitImgType(rd distribution) imageType {
 			EnabledServices: edgeServices(rd),
 		},
 		rpmOstree:        true,
-		pipelines:        edgeCommitPipelines,
+		image:            edgeCommitImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"ostree-tree", "ostree-commit", "commit-archive"},
+		payloadPipelines: []string{"os", "ostree-commit", "commit-archive"},
 		exports:          []string{"commit-archive"},
 	}
 	return it
@@ -40,8 +39,7 @@ func edgeOCIImgType(rd distribution) imageType {
 		filename:    "container.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			buildPkgsKey: edgeBuildPackageSet,
-			osPkgsKey:    edgeCommitPackageSet,
+			osPkgsKey: edgeCommitPackageSet,
 			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
 				return rpmmd.PackageSet{
 					Include: []string{"nginx"},
@@ -56,13 +54,14 @@ func edgeOCIImgType(rd distribution) imageType {
 		},
 		rpmOstree:        true,
 		bootISO:          false,
-		pipelines:        edgeContainerPipelines,
+		image:            edgeContainerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "container"},
+		payloadPipelines: []string{"os", "ostree-commit", "container-tree", "container"},
 		exports:          []string{"container"},
 	}
 	return it
 }
+
 func edgeRawImgType() imageType {
 	it := imageType{
 		name:                "edge-raw-image",
@@ -142,17 +141,6 @@ func edgeSimplifiedInstallerImgType(rd distribution) imageType {
 		basePartitionTables: edgeBasePartitionTables,
 	}
 	return it
-}
-
-// common edge image build package set
-func edgeBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{
-				"rpm-ostree",
-			},
-			Exclude: nil,
-		})
 }
 
 // edge commit OS package set
