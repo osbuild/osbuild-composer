@@ -15,7 +15,7 @@ type MkdirStagePath struct {
 
 func (MkdirStageOptions) isStageOptions() {}
 
-// A new org.osbuild.ostree.init stage to create an OSTree repository
+// NewMkdirStage creates a new org.osbuild.mkdir stage to create FS directories
 func NewMkdirStage(options *MkdirStageOptions) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.mkdir",
