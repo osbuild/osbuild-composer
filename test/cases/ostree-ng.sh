@@ -92,6 +92,9 @@ SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
+# kernel-rt package name (differs in CS8)
+KERNEL_RT_PKG="kernel-rt"
+
 case "${ID}-${VERSION_ID}" in
     "fedora-"*)
         CONTAINER_TYPE=iot-container
@@ -115,6 +118,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="test/centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
         EMBEDED_CONTAINER="true"
+        KERNEL_RT_PKG="kernel-rt-core"
         ;;
     "centos-9")
         OSTREE_REF="test/centos/9/${ARCH}/edge"
@@ -645,11 +649,12 @@ name = "wget"
 version = "*"
 EOF
 
+
 # No RT kernel in Fedora
 if [[ "$ID" != "fedora" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
-name = "kernel-rt"
+name = "${KERNEL_RT_PKG}"
 EOF
 fi
 

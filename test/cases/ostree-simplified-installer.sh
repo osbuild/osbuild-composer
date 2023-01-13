@@ -98,6 +98,9 @@ SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o Conn
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
+#
+# kernel-rt package name (differs in CS8)
+KERNEL_RT_PKG="kernel-rt"
 
 case "${ID}-${VERSION_ID}" in
     "rhel-8.8")
@@ -111,6 +114,7 @@ case "${ID}-${VERSION_ID}" in
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
+        KERNEL_RT_PKG="kernel-rt-core"
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
@@ -342,7 +346,7 @@ name = "sssd"
 version = "*"
 
 [customizations.kernel]
-name = "kernel-rt"
+name = "${KERNEL_RT_PKG}"
 
 [[customizations.user]]
 name = "admin"
@@ -1323,7 +1327,7 @@ name = "wget"
 version = "*"
 
 [customizations.kernel]
-name = "kernel-rt"
+name = "${KERNEL_RT_PKG}"
 
 [[customizations.user]]
 name = "admin"

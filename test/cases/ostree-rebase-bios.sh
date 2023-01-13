@@ -81,6 +81,9 @@ SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
+# kernel-rt package name (differs in CS8)
+KERNEL_RT_PKG="kernel-rt"
+
 case "${ID}-${VERSION_ID}" in
     "rhel-8.8")
         OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -107,6 +110,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos8"
         BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
         PARENT_REF="centos/8/${ARCH}/edge"
+        KERNEL_RT_PKG="kernel-rt-core"
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
@@ -426,7 +430,7 @@ key = "${SSH_KEY_PUB}"
 groups = ["wheel"]
 
 [customizations.kernel]
-name = "kernel-rt"
+name = "${KERNEL_RT_PKG}"
 EOF
 
 greenprint "📄 upgrade blueprint"
