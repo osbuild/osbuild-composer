@@ -125,7 +125,7 @@ func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
 	}
 
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
-		Paths: []osbuild.Path{
+		Paths: []osbuild.MkdirStagePath{
 			{
 				Path: "images",
 			},

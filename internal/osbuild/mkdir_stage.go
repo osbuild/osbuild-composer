@@ -4,10 +4,10 @@ import "os"
 
 // Options for the org.osbuild.ostree.config stage.
 type MkdirStageOptions struct {
-	Paths []Path `json:"paths"`
+	Paths []MkdirStagePath `json:"paths"`
 }
 
-type Path struct {
+type MkdirStagePath struct {
 	Path string `json:"path"`
 
 	Mode os.FileMode `json:"mode,omitempty"`

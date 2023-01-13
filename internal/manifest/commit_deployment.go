@@ -90,7 +90,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		},
 	))
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
-		Paths: []osbuild.Path{
+		Paths: []osbuild.MkdirStagePath{
 			{
 				Path: "/boot/efi",
 				Mode: os.FileMode(0700),
