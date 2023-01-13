@@ -126,7 +126,7 @@ func (d *distribution) getDefaultImageConfig() *distro.ImageConfig {
 
 func New() distro.Distro {
 	// default minor: create default minor version (current GA) and rename it
-	d := newDistro("rhel", 0)
+	d := newDistro("rhel", 1)
 	d.name = "rhel-9"
 	return d
 }
