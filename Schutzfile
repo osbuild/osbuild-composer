@@ -156,21 +156,21 @@
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "fdf064b15a1ef42bd13abdfcb7e08f764f596a60"
+        "commit": "ae563ff8962be0ae13e5becd0a3c2c646eeacc24"
       }
     }
   },
   "rhel-8.6": {
     "dependencies": {
       "osbuild": {
-        "commit": "fdf064b15a1ef42bd13abdfcb7e08f764f596a60"
+        "commit": "ae563ff8962be0ae13e5becd0a3c2c646eeacc24"
       }
     }
   },
   "rhel-8.7": {
     "dependencies": {
       "osbuild": {
-        "commit": "fdf064b15a1ef42bd13abdfcb7e08f764f596a60"
+        "commit": "ae563ff8962be0ae13e5becd0a3c2c646eeacc24"
       }
     }
   },
@@ -223,14 +223,14 @@
   "rhel-9.0": {
     "dependencies": {
       "osbuild": {
-        "commit": "fdf064b15a1ef42bd13abdfcb7e08f764f596a60"
+        "commit": "ae563ff8962be0ae13e5becd0a3c2c646eeacc24"
       }
     }
   },
   "rhel-9.1": {
     "dependencies": {
       "osbuild": {
-        "commit": "fdf064b15a1ef42bd13abdfcb7e08f764f596a60"
+        "commit": "ae563ff8962be0ae13e5becd0a3c2c646eeacc24"
       }
     }
   },
