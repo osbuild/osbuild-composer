@@ -28,7 +28,7 @@ func (p *ISORootfsImg) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
-		Paths: []osbuild.Path{
+		Paths: []osbuild.MkdirStagePath{
 			{
 				Path: "LiveOS",
 			},
