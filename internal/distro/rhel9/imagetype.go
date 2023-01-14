@@ -53,7 +53,6 @@ type imageType struct {
 	compression        string // TODO: remove from image definition and make it a transport option
 	mimeType           string
 	packageSets        map[string]packageSetFunc
-	packageSetChains   map[string][]string
 	defaultImageConfig *distro.ImageConfig
 	kernelOptions      string
 	defaultSize        uint64
@@ -122,7 +121,7 @@ func (t *imageType) PayloadPackageSets() []string {
 }
 
 func (t *imageType) PackageSetsChains() map[string][]string {
-	return t.packageSetChains
+	return nil
 }
 
 func (t *imageType) Exports() []string {

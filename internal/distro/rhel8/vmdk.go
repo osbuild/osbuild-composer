@@ -13,9 +13,6 @@ func vmdkImgType() imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: vmdkCommonPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,
 		defaultSize:         4 * common.GibiByte,

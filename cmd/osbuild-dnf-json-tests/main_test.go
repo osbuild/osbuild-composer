@@ -101,29 +101,8 @@ func TestDepsolvePackageSets(t *testing.T) {
 			require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, distroStruct.Name(), distro.X86_64ArchName)
 
 			imagePkgSets := qcow2Image.PackageSets(blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, distro.ImageOptions{}, x86Repos)
-			imagePkgSetChains := qcow2Image.PackageSetsChains()
-			require.NotEmptyf(t, imagePkgSetChains, "the %q image has no package set chains defined", qcow2ImageTypeName)
-
-			expectedPackageSpecsSetNames := func(pkgSets map[string][]rpmmd.PackageSet, pkgSetChains map[string][]string) []string {
-				expectedPkgSpecsSetNames := make([]string, 0, len(pkgSets))
-				chainPkgSets := make(map[string]struct{}, len(pkgSets))
-				for name, pkgSetChain := range pkgSetChains {
-					expectedPkgSpecsSetNames = append(expectedPkgSpecsSetNames, name)
-					for _, pkgSetName := range pkgSetChain {
-						chainPkgSets[pkgSetName] = struct{}{}
-					}
-				}
-				for name := range pkgSets {
-					if _, ok := chainPkgSets[name]; ok {
-						continue
-					}
-					expectedPkgSpecsSetNames = append(expectedPkgSpecsSetNames, name)
-				}
-				return expectedPkgSpecsSetNames
-			}(imagePkgSets, imagePkgSetChains)
 
 			gotPackageSpecsSets := make(map[string][]rpmmd.PackageSpec, len(imagePkgSets))
-
 			for name, pkgSet := range imagePkgSets {
 				res, err := solver.Depsolve(pkgSet)
 				if err != nil {
@@ -131,6 +110,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 				}
 				gotPackageSpecsSets[name] = res
 			}
+			expectedPackageSpecsSetNames := []string{"build", "os"}
 			require.EqualValues(t, len(expectedPackageSpecsSetNames), len(gotPackageSpecsSets))
 			for _, name := range expectedPackageSpecsSetNames {
 				_, ok := gotPackageSpecsSets[name]

@@ -39,9 +39,6 @@ func tarImgType() imageType {
 				}
 			},
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		image:            tarImage,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "archive"},

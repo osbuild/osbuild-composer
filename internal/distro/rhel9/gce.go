@@ -17,9 +17,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: gcePackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		kernelOptions:       gceKernelOptions,
 		bootable:            true,
 		bootType:            distro.UEFIBootType,
@@ -37,9 +34,6 @@ var (
 		mimeType: "application/gzip",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: gceRhuiPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		kernelOptions:       gceKernelOptions,
 		bootable:            true,

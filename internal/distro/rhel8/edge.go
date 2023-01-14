@@ -17,9 +17,6 @@ func edgeCommitImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: edgeCommitPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices(rd),
 		},
@@ -45,9 +42,6 @@ func edgeOCIImgType(rd distribution) imageType {
 					Include: []string{"nginx"},
 				}
 			},
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices(rd),
