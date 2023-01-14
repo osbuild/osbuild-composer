@@ -16,9 +16,6 @@ func qcow2ImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: qcow2CommonPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: common.ToPtr("multi-user.target"),
 		},
@@ -56,9 +53,6 @@ func openstackImgType() imageType {
 		mimeType: "application/x-qemu-disk",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: openstackCommonPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		kernelOptions:       "ro net.ifnames=0",
 		bootable:            true,

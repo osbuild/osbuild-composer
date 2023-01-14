@@ -20,9 +20,6 @@ var (
 				}
 			},
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		image:            tarImage,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"os", "root-tar"},
@@ -36,9 +33,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey:        bareMetalPackageSet,
 			installerPkgsKey: anacondaPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		rpmOstree:        false,
 		bootISO:          true,

@@ -19,9 +19,6 @@ func azureRhuiImgType() imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: azureRhuiPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(defaultAzureImageConfig),
 		kernelOptions:       defaultAzureKernelOptions,
 		bootable:            true,
@@ -42,9 +39,6 @@ func azureSapImgType(rd distribution) imageType {
 		compression: "xz",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: azureSapPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  SapAzureImageConfig(rd),
 		kernelOptions:       defaultAzureKernelOptions,
@@ -67,9 +61,6 @@ func azureByosImgType() imageType {
 			// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
 			osPkgsKey: azurePackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultAzureByosImageConfig.InheritFrom(defaultAzureImageConfig),
 		kernelOptions:       defaultAzureKernelOptions,
 		bootable:            true,
@@ -91,9 +82,6 @@ func azureImgType() imageType {
 		packageSets: map[string]packageSetFunc{
 			// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
 			osPkgsKey: azurePackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultAzureImageConfig,
 		kernelOptions:       defaultAzureKernelOptions,

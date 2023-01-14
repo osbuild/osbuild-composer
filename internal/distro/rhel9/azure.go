@@ -17,9 +17,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: azurePackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultAzureImageConfig,
 		kernelOptions:       defaultAzureKernelOptions,
 		bootable:            true,
@@ -38,9 +35,6 @@ var (
 		mimeType: "application/x-vhd",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: azurePackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultAzureByosImageConfig.InheritFrom(defaultAzureImageConfig),
 		kernelOptions:       defaultAzureKernelOptions,

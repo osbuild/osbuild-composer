@@ -15,9 +15,6 @@ func amiImgTypeX86_64(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: ec2CommonPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultAMIImageConfigX86_64(rd),
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
@@ -42,9 +39,6 @@ func ec2ImgTypeX86_64(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: rhelEc2PackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultEc2ImageConfigX86_64(rd),
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
@@ -68,9 +62,6 @@ func ec2HaImgTypeX86_64(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: rhelEc2HaPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultEc2ImageConfigX86_64(rd),
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
@@ -92,9 +83,6 @@ func amiImgTypeAarch64(rd distribution) imageType {
 		mimeType: "application/octet-stream",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: ec2CommonPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultAMIImageConfig(rd),
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
@@ -118,9 +106,6 @@ func ec2ImgTypeAarch64(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: rhelEc2PackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultEc2ImageConfig(rd),
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
@@ -142,9 +127,6 @@ func ec2SapImgTypeX86_64(rd distribution) imageType {
 		compression: "xz",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: rhelEc2SapPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultEc2SapImageConfigX86_64(rd),
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",

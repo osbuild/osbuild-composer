@@ -17,9 +17,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: ec2CommonPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		kernelOptions:       amiKernelOptions,
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -38,9 +35,6 @@ var (
 		compression: "xz",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: rhelEc2PackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		kernelOptions:       amiKernelOptions,
 		bootable:            true,
@@ -62,9 +56,6 @@ var (
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2HaPackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		kernelOptions:       amiKernelOptions,
 		bootable:            true,
 		bootType:            distro.LegacyBootType,
@@ -83,9 +74,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    ec2CommonPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0",
 		bootable:            true,
@@ -106,9 +94,6 @@ var (
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2PackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0",
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
@@ -127,9 +112,6 @@ var (
 		packageSets: map[string]packageSetFunc{
 			buildPkgsKey: ec2BuildPackageSet,
 			osPkgsKey:    rhelEc2SapPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1",
 		bootable:            true,

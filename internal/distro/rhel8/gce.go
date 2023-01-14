@@ -18,9 +18,6 @@ func gceImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: gcePackageSet,
 		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-		},
 		defaultImageConfig:  defaultGceByosImageConfig(rd),
 		kernelOptions:       gceKernelOptions,
 		bootable:            true,
@@ -41,9 +38,6 @@ func gceRhuiImgType(rd distribution) imageType {
 		mimeType: "application/gzip",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: gceRhuiPackageSet,
-		},
-		packageSetChains: map[string][]string{
-			osPkgsKey: {osPkgsKey, blueprintPkgsKey},
 		},
 		defaultImageConfig:  defaultGceRhuiImageConfig(rd),
 		kernelOptions:       gceKernelOptions,
