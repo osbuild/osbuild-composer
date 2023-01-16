@@ -450,6 +450,13 @@ curl -O "$BOOT_LOCATION"/images/boot.iso
 sudo mv boot.iso /var/lib/libvirt/images
 LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
 
+# Workaround to fix issue https://github.com/osbuild/osbuild-composer/issues/3216
+if [[ "${ID}-${VERSION_ID}" == "fedora-37" ]]; then
+    location_arg="${LOCAL_BOOT_LOCATION}",initrd=images/pxeboot/initrd.img,kernel=images/pxeboot/vmlinuz
+else
+    location_arg="${LOCAL_BOOT_LOCATION}"
+fi
+
 # Install ostree image via anaconda.
 greenprint "Install ostree image via anaconda"
 sudo virt-install  --initrd-inject="${KS_FILE}" \
@@ -461,7 +468,7 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
-                   --location "${LOCAL_BOOT_LOCATION}" \
+                   --location ${location_arg} \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
