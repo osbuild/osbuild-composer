@@ -596,3 +596,16 @@ func (a *AWS) MarkS3ObjectAsPublic(bucket, objectKey string) error {
 
 	return nil
 }
+
+func (a *AWS) Regions() ([]string, error) {
+	out, err := a.ec2.DescribeRegions(&ec2.DescribeRegionsInput{})
+	if err != nil {
+		return nil, err
+	}
+
+	result := []string{}
+	for _, r := range out.Regions {
+		result = append(result, aws.StringValue(r.RegionName))
+	}
+	return result, nil
+}
