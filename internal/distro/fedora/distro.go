@@ -86,7 +86,7 @@ var (
 		rpmOstree:        false,
 		image:            imageInstallerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree"},
+		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
 	}
 
@@ -126,7 +126,7 @@ var (
 		bootISO:          false,
 		image:            iotContainerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"ostree-tree", "ostree-commit", "container-tree", "container"},
+		payloadPipelines: []string{"os", "ostree-commit", "container-tree", "container"},
 		exports:          []string{"container"},
 	}
 
@@ -146,7 +146,7 @@ var (
 		bootISO:          true,
 		image:            iotInstallerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree"},
+		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
 	}
 
