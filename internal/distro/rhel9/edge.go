@@ -124,7 +124,7 @@ var (
 		bootISO:             true,
 		image:               edgeSimplifiedInstallerImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"image-tree", "image", "archive", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines:    []string{"image-tree", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:             []string{"bootiso"},
 		basePartitionTables: edgeBasePartitionTables,
 	}

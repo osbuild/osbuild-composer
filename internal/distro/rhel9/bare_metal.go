@@ -22,8 +22,8 @@ var (
 		},
 		image:            tarImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "root-tar"},
-		exports:          []string{"root-tar"},
+		payloadPipelines: []string{"os", "archive"},
+		exports:          []string{"archive"},
 	}
 
 	imageInstaller = imageType{
@@ -39,7 +39,7 @@ var (
 		bootable:         true,
 		image:            imageInstallerImage,
 		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "anaconda-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
 	}
 )
