@@ -179,7 +179,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 func vhdPipelines(compress bool) pipelinesFunc {
 	return func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
 		pipelines := make([]osbuild.Pipeline, 0)
-		pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner))
+		pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
 
 		partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 		if err != nil {
