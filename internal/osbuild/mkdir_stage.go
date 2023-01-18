@@ -8,9 +8,9 @@ type MkdirStageOptions struct {
 }
 
 type MkdirStagePath struct {
-	Path string `json:"path"`
-
-	Mode os.FileMode `json:"mode,omitempty"`
+	Path    string      `json:"path"`
+	Mode    os.FileMode `json:"mode,omitempty"`    // If not specified, the default mode is 0777
+	Parents bool        `json:"parents,omitempty"` // If true, create parent directories as needed
 }
 
 func (MkdirStageOptions) isStageOptions() {}
