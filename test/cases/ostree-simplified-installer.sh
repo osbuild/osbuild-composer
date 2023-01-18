@@ -856,41 +856,40 @@ fi
 ##
 ##################################################################
 
-# TODO(runcom): change this to butane to check that too
+BU_PATH="${HTTPD_PATH}"/butane
+sudo mkdir -p ${BU_PATH}
+BU_CONFIG_PATH="${BU_PATH}/bu_config.bu"
+sudo tee "$BU_CONFIG_PATH" > /dev/null << EOF
+variant: r4e
+version: 1.0.0
+ignition:
+  config:
+    merge:
+      - source: "http://192.168.100.1/ignition/sample.ign"
+  timeouts:
+    http_total: 30
+passwd:
+  users:
+    - name: core
+      password_hash: "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+      ssh_authorized_keys:
+        - "${SSH_KEY_PUB}"
+      groups:
+        - wheel
+EOF
+
 IGN_PATH="${HTTPD_PATH}/ignition"
 sudo mkdir -p ${IGN_PATH}
 IGN_CONFIG_PATH="${IGN_PATH}/config.ign"
-sudo tee "$IGN_CONFIG_PATH" > /dev/null << EOF
-{
-  "ignition": {
-    "config": {
-      "merge": [
-        {
-          "source": "http://192.168.100.1/ignition/sample.ign"
-        }
-      ]
-    },
-    "timeouts": {
-      "httpTotal": 30
-    },
-    "version": "3.3.0"
-  },
-  "passwd": {
-    "users": [
-      {
-        "groups": [
-          "wheel"
-        ],
-        "name": "core",
-        "passwordHash": "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl.",
-        "sshAuthorizedKeys": [
-          "${SSH_KEY_PUB}"
-        ]
-      }
-    ]
-  }
-}
-EOF
+
+# Run butane using standard in and standard out
+greenprint "Running butane using butane's configuration file"
+podman run -i --rm quay.io/coreos/butane:release --pretty --strict < "${BU_CONFIG_PATH}" > config.ign
+sudo cp config.ign "${IGN_CONFIG_PATH}"
+sudo rm -rf ./config.ign
+# Output Ignition configuration
+greenprint "Generated Ignition configuration"
+cat "${IGN_CONFIG_PATH}"
 
 BASE64_IGN_CONFIG=$(cat "$IGN_CONFIG_PATH" | base64)
 
