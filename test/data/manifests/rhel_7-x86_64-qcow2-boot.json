@@ -51,7 +51,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel7",
+        "runner": "org.osbuild.rhel79",
         "stages": [
           {
             "type": "org.osbuild.rpm",

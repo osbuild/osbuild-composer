@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
 const (
@@ -61,7 +62,7 @@ var distroMap = map[string]distribution{
 		releaseVersion:     "7",
 		modulePlatformID:   "platform:el7",
 		vendor:             "redhat",
-		runner:             "org.osbuild.rhel7",
+		runner:             &runner.RHEL{Major: uint64(7), Minor: uint64(9)},
 		defaultImageConfig: defaultDistroImageConfig,
 	},
 }
@@ -75,7 +76,7 @@ type distribution struct {
 	releaseVersion     string
 	modulePlatformID   string
 	vendor             string
-	runner             string
+	runner             runner.Runner
 	arches             map[string]distro.Arch
 	defaultImageConfig *distro.ImageConfig
 }
