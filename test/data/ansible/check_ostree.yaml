@@ -65,7 +65,8 @@
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
       rescue:
-        # TODO: gather Ignition logs
+        - name: Gather Ignition logs
+          shell: journalctl --identifier=ignition --all
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
