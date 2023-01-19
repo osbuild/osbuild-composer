@@ -23,6 +23,7 @@ type Customizations struct {
 	Ignition           *IgnitionCustomization    `json:"ignition,omitempty" toml:"ignition,omitempty"`
 	Directories        []DirectoryCustomization  `json:"directories,omitempty" toml:"directories,omitempty"`
 	Files              []FileCustomization       `json:"files,omitempty" toml:"files,omitempty"`
+	Repositories       []RepositoryCustomization `json:"repositories,omitempty" toml:"repositories,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -332,4 +333,19 @@ func (c *Customizations) GetFiles() []FileCustomization {
 		return nil
 	}
 	return c.Files
+}
+
+func (c *Customizations) GetRepositories() ([]RepositoryCustomization, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	for idx := range c.Repositories {
+		err := validateCustomRepository(&c.Repositories[idx])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c.Repositories, nil
 }
