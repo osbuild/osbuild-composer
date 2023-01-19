@@ -248,6 +248,8 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			Metalink:       rr.Metalink,
 			MirrorList:     rr.MirrorList,
 			GPGKeys:        rr.GPGKeys,
+			CheckGPG:       rr.CheckGPG,
+			CheckRepoGPG:   rr.CheckRepoGPG,
 			IgnoreSSL:      rr.IgnoreSSL,
 			MetadataExpire: rr.MetadataExpire,
 		}
@@ -277,6 +279,8 @@ type repoConfig struct {
 	Metalink       string   `json:"metalink,omitempty"`
 	MirrorList     string   `json:"mirrorlist,omitempty"`
 	GPGKeys        []string `json:"gpgkeys,omitempty"`
+	CheckGPG       bool     `json:"gpgcheck"`
+	CheckRepoGPG   bool     `json:"check_repogpg"`
 	IgnoreSSL      bool     `json:"ignoressl"`
 	SSLCACert      string   `json:"sslcacert,omitempty"`
 	SSLClientKey   string   `json:"sslclientkey,omitempty"`

@@ -82,6 +82,29 @@ class Solver():
         if "sslclientcert" in desc:
             repo.sslclientcert = desc["sslclientcert"]
 
+        if "check_gpg" in desc:
+            repo.gpgcheck = desc["check_gpg"]
+        if "check_repogpg" in desc:
+            repo.repo_gpgcheck = desc["check_repogpg"]
+        if "gpgkey" in desc:
+            repo.gpgkey = [desc["gpgkey"]]
+        if "gpgkeys" in desc:
+            # gpgkeys can contain a full key, or it can be a URL
+            # dnf expects urls, so write the key to a temporary location and add the file://
+            # path to repo.gpgkey
+            keydir = os.path.join(parent_conf.persistdir, "gpgkeys")
+            if not os.path.exists(keydir):
+                os.makedirs(keydir, mode=0o700, exist_ok=True)
+
+            for key in desc["gpgkeys"]:
+                if key.startswith("-----BEGIN PGP PUBLIC KEY BLOCK-----"):
+                    keyfile = tempfile.NamedTemporaryFile(dir=keydir, delete=False)
+                    keyfile.write(key.encode("utf-8"))
+                    repo.gpgkey.append(f"file://{keyfile.name}")
+                    keyfile.close()
+                else:
+                    repo.gpgkey.append(key)
+
         # In dnf, the default metadata expiration time is 48 hours. However,
         # some repositories never expire the metadata, and others expire it much
         # sooner than that. We therefore allow this to be configured. If nothing
