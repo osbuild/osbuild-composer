@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
@@ -174,13 +175,14 @@ func (a *architecture) GetImageType(name string) (distro.ImageType, error) {
 	return t, nil
 }
 
-func (a *architecture) addImageTypes(imageTypes ...imageType) {
+func (a *architecture) addImageTypes(platform platform.Platform, imageTypes ...imageType) {
 	if a.imageTypes == nil {
 		a.imageTypes = map[string]distro.ImageType{}
 	}
 	for idx := range imageTypes {
 		it := imageTypes[idx]
 		it.arch = a
+		it.platform = platform
 		a.imageTypes[it.name] = &it
 		for _, alias := range it.nameAliases {
 			if a.imageTypeAliases == nil {
@@ -205,6 +207,7 @@ type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
 type imageType struct {
 	arch               *architecture
+	platform           platform.Platform
 	name               string
 	nameAliases        []string
 	filename           string
@@ -465,7 +468,25 @@ func newDistro(distroName string) distro.Distro {
 	}
 
 	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "0.10",
+			},
+		},
 		qcow2ImgType,
+	)
+
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_VHD,
+			},
+		},
 		azureRhuiImgType,
 	)
 
