@@ -120,7 +120,7 @@ type SourceConfig interface {
 }
 
 // NewSourceConfigV0 converts a store.SourceConfig to a SourceConfigV0
-// The store does not support proxy and gpgkey_urls
+// The store does not support proxy and gpgkeys
 func NewSourceConfigV0(s store.SourceConfig) SourceConfigV0 {
 	var sc SourceConfigV0
 
@@ -143,7 +143,7 @@ type SourceConfigV0 struct {
 	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
 	System   bool     `json:"system" toml:"system"`
 	Proxy    string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
-	GPGUrls  []string `json:"gpgkey_urls,omitempty" toml:"gpgkey_urls,omitempty"`
+	GPGKeys  []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
 }
 
 // Key return the key, .Name in this case
@@ -162,7 +162,7 @@ func (s SourceConfigV0) GetType() string {
 }
 
 // SourceConfig returns a SourceConfig struct populated with the supported variables
-// The store does not support proxy and gpgkey_urls
+// The store does not support proxy and gpgkeys
 func (s SourceConfigV0) SourceConfig() (ssc store.SourceConfig) {
 	ssc.Name = s.Name
 	ssc.Type = s.Type
@@ -180,7 +180,7 @@ type SourceInfoResponseV0 struct {
 }
 
 // NewSourceConfigV1 converts a store.SourceConfig to a SourceConfigV1
-// The store does not support proxy and gpgkey_urls
+// The store does not support proxy and gpgkeys
 func NewSourceConfigV1(id string, s store.SourceConfig) SourceConfigV1 {
 	var sc SourceConfigV1
 
@@ -207,7 +207,7 @@ type SourceConfigV1 struct {
 	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
 	System   bool     `json:"system" toml:"system"`
 	Proxy    string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
-	GPGUrls  []string `json:"gpgkey_urls,omitempty" toml:"gpgkey_urls,omitempty"`
+	GPGKeys  []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
 	Distros  []string `json:"distros,omitempty" toml:"distros,omitempty"`
 	RHSM     bool     `json:"rhsm" toml:"rhsm"`
 }
@@ -228,7 +228,7 @@ func (s SourceConfigV1) GetType() string {
 }
 
 // SourceConfig returns a SourceConfig struct populated with the supported variables
-// The store does not support proxy and gpgkey_urls
+// The store does not support proxy and gpgkeys
 func (s SourceConfigV1) SourceConfig() (ssc store.SourceConfig) {
 	ssc.Name = s.Name
 	ssc.Type = s.Type

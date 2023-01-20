@@ -1,4 +1,4 @@
-// +build integration
+//go:build integration
 
 package main
 
@@ -171,7 +171,7 @@ type = "yum-baseurl"
 proxy = "https://proxy-url/"
 check_ssl = true
 check_gpg = true
-gpgkey_urls = ["https://url/path/to/gpg-key"]
+gpgkeys = ["https://url/path/to/gpg-key"]
 `))
 	require.NoError(t, err)
 
