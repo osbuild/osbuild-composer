@@ -25,7 +25,7 @@ func TestPOSTJSONSourceV0(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`
 	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
 
@@ -62,7 +62,7 @@ func TestPOSTInvalidJSONSourceV0(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`
 
 	resp, err := PostJSONSourceV0(testState.socket, source)
@@ -81,7 +81,7 @@ func TestPOSTInvalidJSONSourceV1(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`
 
 	resp, err := PostJSONSourceV1(testState.socket, source)
@@ -103,7 +103,7 @@ func TestPOSTSystemJSONSourceV0(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`
 
 	for _, repoName := range []string{"test-system-repo", "fedora", "baseos"} {
@@ -137,7 +137,7 @@ func TestPOSTSystemJSONSourceV1(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`
 
 	for _, repoName := range []string{"test-system-repo", "fedora", "baseos"} {
@@ -165,7 +165,7 @@ func TestPOSTTOMLSourceV0(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
 
@@ -188,7 +188,7 @@ func TestPOSTTOMLSourceV1(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
 
@@ -225,7 +225,7 @@ func TestPOSTInvalidTOMLSourceV0(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 
 	resp, err := PostTOMLSourceV0(testState.socket, source)
@@ -244,7 +244,7 @@ func TestPOSTInvalidTOMLSourceV1(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 
 	resp, err := PostTOMLSourceV1(testState.socket, source)
@@ -263,7 +263,7 @@ func TestPOSTWrongTOMLSourceV0(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 
 	resp, err := PostTOMLSourceV0(testState.socket, source)
@@ -283,7 +283,7 @@ func TestPOSTWrongTOMLSourceV1(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 
 	resp, err := PostTOMLSourceV1(testState.socket, source)
@@ -304,7 +304,7 @@ func TestPOSTTOMLSystemSourceV0(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
 	for _, repoName := range []string{"test-system-repo", "fedora", "baseos"} {
@@ -337,7 +337,7 @@ func TestPOSTTOMLSystemSourceV1(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
 	for _, repoName := range []string{"test-system-repo", "fedora", "baseos"} {
@@ -365,7 +365,7 @@ func TestListSourcesV0(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`,
 		`{
 		"name": "package-repo-2",
@@ -374,7 +374,7 @@ func TestListSourcesV0(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`}
 
 	for i := range sources {
@@ -412,7 +412,7 @@ func TestListSourcesV1(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`,
 		`{
 		"id": "package-repo-2",
@@ -422,7 +422,7 @@ func TestListSourcesV1(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`}
 
 	for i := range sources {
@@ -459,7 +459,7 @@ func TestGetSourceInfoV0(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 	`
 	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
 
@@ -489,7 +489,7 @@ func TestGetSourceInfoV1(t *testing.T) {
 		proxy = "https://proxy-url/"
 		check_ssl = true
 		check_gpg = true
-		gpgkey_urls = ["https://url/path/to/gpg-key"]
+		gpgkeys = ["https://url/path/to/gpg-key"]
 		rhsm = false
 	`
 	source = strings.Replace(source, "REPO-PATH", testState.repoDir, 1)
@@ -560,7 +560,7 @@ func TestDeleteUserDefinedSourcesV0(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`,
 		`{
 		"name": "package-repo-2",
@@ -569,7 +569,7 @@ func TestDeleteUserDefinedSourcesV0(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`}
 
 	// verify test starts without user defined sources
@@ -601,7 +601,7 @@ func TestDeleteUserDefinedSourcesV1(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`,
 		`{
 		"id": "package-repo-2",
@@ -611,7 +611,7 @@ func TestDeleteUserDefinedSourcesV1(t *testing.T) {
 		"proxy": "https://proxy-url/",
 		"check_ssl": true,
 		"check_gpg": true,
-		"gpgkey_urls": ["https://url/path/to/gpg-key"]
+		"gpgkeys": ["https://url/path/to/gpg-key"]
 	}`}
 
 	// verify test starts without user defined sources
