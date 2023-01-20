@@ -1549,6 +1549,7 @@ func TestSourcesNew(t *testing.T) {
 		{"POST", "/api/v1/projects/source/new", `{"id": "test-id", "name": "test system repo", "url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false}`, http.StatusBadRequest, `{"errors": [{"id": "SystemSource","msg": "test-id is a system source, it cannot be changed."}],"status":false}`},
 		{"POST", "/api/v1/projects/source/new", `{"id": "fish","name":"fish repo","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false,"distros":["test-distro", "test-distro-2"]}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v1/projects/source/new", `{"id": "fish","name":"fish repo","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": false,"distros":["fedora-1"]}`, http.StatusBadRequest, `{"status":false, "errors":[{"id":"ProjectsError", "msg":"Invalid distributions: fedora-1"}]}`},
+		{"POST", "/api/v1/projects/source/new", `{"id": "fish","name":"fish repo","url": "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","type": "yum-baseurl","check_ssl": false,"check_gpg": true,"check_repogpg":true,"gpgkeys": ["https://repourl/path/to/key.pub"]}`, http.StatusOK, `{"status":true}`},
 	}
 
 	tempdir := t.TempDir()
@@ -1638,6 +1639,45 @@ url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedor
 type = "yum-baseurl"
 check_ssl = false
 check_gpg = false
+`, `id = "fish"
+name = "fish or cut bait"
+url = "https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"
+type = "yum-baseurl"
+check_ssl = false
+check_gpg = true
+check_repogpg = true
+gpgkeys = ['''-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GnuPG v1.4.10 (GNU/Linux)
+
+mQENBEt+xXMBCACkA1ZtcO4H7ZUG/0aL4RlZIozsorXzFrrTAsJEHvdy+rHCH3xR
+cFz6IMbfCOdV+oKxlDP7PS0vWKfqxwkenOUut5o9b32uDdFMW4IbFXEQ94AuSQpS
+jo8PlVMm/51pmmRxdJzyPnr0YD38mVK6qUEYLI/4zXSgFk493GT8Y4m3N18O/+ye
+PnOOItj7qbrCMASoBx1TG8Zdg8ufehMnfb85x4xxAebXkqJQpEVTjt4lj4p6BhrW
+R+pIW/nBUrz3OsV7WwPKjSLjJtTJFxYX+RFSCqOdfusuysoOxpIHOx1WxjGUOB5j
+fnhmq41nWXf8ozb58zSpjDrJ7jGQ9pdUpAtRABEBAAG0HkJyaWFuIEMuIExhbmUg
+PGJjbEByZWRoYXQuY29tPokBOAQTAQIAIgUCS37FcwIbAwYLCQgHAwIGFQgCCQoL
+BBYCAwECHgECF4AACgkQEX6MFo7+On9dgAf9Hi2K1MKcmLkDeSUIXkXIAw0nAzl2
+UDGLWEdDqAgFxP6UaCVtOIRCr7z4EDOQoxD7mkdekbH2W5GcTO4h8MQBHYD9EkY7
+H/lTKchlFfsmafOoA3Y/tDLPKu+OIfH9Mqn2Mf7wMYGrnWSRNKYgvC5zkMgkhoPU
+mSPPHyBabsdS/Kg5ZAf43ac/MXY9V8Mk6zqbBlj6QYqjJ0nBD6vwozrDQ5gJtDUL
+mQho13zPn4lBJl9YJVjcgRB2WbzgSZOln0DfV22Seai66vnr5NyaOIw5B9QLSNhN
+EaPFswEDLKCsns9dkDuGFX52/Mt/i7JySvwhMBqHElPzWmwCHeY45M8gBYhGBBAR
+AgAGBQJLfsbpAAoJECH7Y/6XEsLNuasAn0Q0jB4Ea/95EREUkCFTm9L6nOpAAJ9t
+QzwGXhrLFZzOdRWYiWcCQbX5/7kBDQRLfsVzAQgAvN5jr95pJthv2w9co9/7omhM
+5rAnr9WJfbMLLiUfPPUvpL24RGO6SKy03aiVTUjlaHc+cGqOciwnNKMCSt+noyG2
+kNnAESTDtCivpsjonaFP8jA3TqL0QK+yzBRKJnMnLEY1nWE1FtkMRccXvzi0Z/XQ
+VhiWQyTvDFoKtepBFrH9UqWbNHyki22aighumUsW01pcPH2ogSj+HR01r7SfI/y2
+EkE6loHQfCDycHmlqYV+X6GZEvf1qu2+EHEQChsHIAxWyshsxM/ZPmx/8e5S3Xmj
+l7h/6E9wcsIpvnf504sLX5j4Km9I5HgJSRxHxgRPpqJ2/XiClAJanO5gCw0RdQAR
+AQABiQEfBBgBAgAJBQJLfsVzAhsMAAoJEBF+jBaO/jp/SqEH/iArzrfVOhZQGuy1
+KmG0+/FdJGqAEHP5HWpsaeYJok1VmhTPZd4IVFBz/bGJYyvsrPU0pJ6QLkdGxNnb
+KulJocgkW5MKEL/CRc54ESKwYngigmbY4qLwhS+gB3BJg1TvoHD810MSj4wdxNNo
+6JQmFmuoDsLRwaRYbKQDz95XXoGQtmV1o57T05WkLuC5OmHqnWv3rggVC8madpUJ
+moUUvUWgU1qyXe3PrgMGFOibWIl7lPZ08nzKXBRvSK/xoTGxl+570AevfVHMu5Uk
+Yu2U6D6/DYohtTYp0s1ekS5KQkCJM7lfqecDsQhfVfOfR0w4aF8k8u3HmWdOfUz+
+9+2ZsBo=
+=myjM
+-----END PGP PUBLIC KEY BLOCK-----''']
 `}
 	for _, source := range sources {
 		req := httptest.NewRequest("POST", "/api/v1/projects/source/new", bytes.NewReader([]byte(source)))
@@ -1663,7 +1703,7 @@ type = "yum-baseurl"
 rhsm = true
 `
 
-	sourceStr := `{"check_gpg":false,"check_ssl":false,"id":"fish","name":"fish","rhsm":true,"system":false,"type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"}`
+	sourceStr := `{"check_gpg":false,"check_repogpg":false,"check_ssl":false,"id":"fish","name":"fish","rhsm":true,"system":false,"type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/"}`
 
 	req := httptest.NewRequest("POST", "/api/v1/projects/source/new", bytes.NewReader([]byte(source)))
 	req.Header.Set("Content-Type", "text/x-toml")
@@ -1674,6 +1714,15 @@ rhsm = true
 
 	r := recorder.Result()
 	require.Equal(t, http.StatusOK, r.StatusCode)
+	test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
+	test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
+}
+
+func TestSourcesInfoGPGKeysV1(t *testing.T) {
+	sourceStr := `{"id":"fish","name":"fish repo","type":"yum-baseurl","url":"https://download.opensuse.org/repositories/shells:/fish:/release:/3/Fedora_29/","check_gpg":true,"check_repogpg":true,"check_ssl":false,"gpgkeys":["https://repourl/path/to/key.pub"],"rhsm":false,"system":false}`
+
+	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
+	test.SendHTTP(api, true, "POST", "/api/v1/projects/source/new", sourceStr)
 	test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
 	test.TestRoute(t, api, true, "GET", "/api/v1/projects/source/info/fish?format=json", ``, 200, `{"sources":{"fish":`+sourceStr+`},"errors":[]}`)
 }

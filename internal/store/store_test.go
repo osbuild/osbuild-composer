@@ -450,6 +450,18 @@ func (suite *storeTest) TestNewSourceConfigWithMirrorList() {
 	suite.Equal(expectedSource, actualSource)
 }
 
+// Test converting a SourceConfig with GPGkeys to a RepoConfig
+func (suite *storeTest) TestRepoConfigGPGKeys() {
+	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "testURL", Metalink: "", MirrorList: "", IgnoreSSL: true, MetadataExpire: "", CheckRepoGPG: true, GPGKeys: []string{"http://path.to.gpgkeys/key.pub", "-----BEGIN PGP PUBLIC KEY BLOCK-----\nFULL GPG KEY HERE\n-----END PGP PUBLIC KEY BLOCK-----"}}
+	mySourceConfig := suite.mySourceConfig
+	mySourceConfig.Type = "yum-baseurl"
+	mySourceConfig.URL = "testURL"
+	mySourceConfig.CheckRepoGPG = true
+	mySourceConfig.GPGKeys = []string{"http://path.to.gpgkeys/key.pub", "-----BEGIN PGP PUBLIC KEY BLOCK-----\nFULL GPG KEY HERE\n-----END PGP PUBLIC KEY BLOCK-----"}
+	actualRepo := mySourceConfig.RepoConfig("testSourceConfig")
+	suite.Equal(expectedRepo, actualRepo)
+}
+
 func (suite *storeTest) TestRepoConfigBaseURL() {
 	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "testURL", Metalink: "", MirrorList: "", IgnoreSSL: true, MetadataExpire: ""}
 	suite.mySourceConfig.Type = "yum-baseurl"
@@ -473,6 +485,7 @@ func (suite *storeTest) TestRepoConfigMirrorlist() {
 	actualRepo := suite.mySourceConfig.RepoConfig("testSourceConfig")
 	suite.Equal(expectedRepo, actualRepo)
 }
+
 func TestStore(t *testing.T) {
 	suite.Run(t, new(storeTest))
 }
