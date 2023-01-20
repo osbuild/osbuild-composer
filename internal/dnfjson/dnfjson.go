@@ -247,7 +247,7 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			BaseURL:        rr.BaseURL,
 			Metalink:       rr.Metalink,
 			MirrorList:     rr.MirrorList,
-			GPGKey:         rr.GPGKey,
+			GPGKeys:        rr.GPGKeys,
 			IgnoreSSL:      rr.IgnoreSSL,
 			MetadataExpire: rr.MetadataExpire,
 		}
@@ -271,17 +271,17 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 // Repository configuration for resolving dependencies for a set of packages. A
 // Solver needs at least one RPM repository configured to be able to depsolve.
 type repoConfig struct {
-	ID             string `json:"id"`
-	Name           string `json:"name,omitempty"`
-	BaseURL        string `json:"baseurl,omitempty"`
-	Metalink       string `json:"metalink,omitempty"`
-	MirrorList     string `json:"mirrorlist,omitempty"`
-	GPGKey         string `json:"gpgkey,omitempty"`
-	IgnoreSSL      bool   `json:"ignoressl"`
-	SSLCACert      string `json:"sslcacert,omitempty"`
-	SSLClientKey   string `json:"sslclientkey,omitempty"`
-	SSLClientCert  string `json:"sslclientcert,omitempty"`
-	MetadataExpire string `json:"metadata_expire,omitempty"`
+	ID             string   `json:"id"`
+	Name           string   `json:"name,omitempty"`
+	BaseURL        string   `json:"baseurl,omitempty"`
+	Metalink       string   `json:"metalink,omitempty"`
+	MirrorList     string   `json:"mirrorlist,omitempty"`
+	GPGKeys        []string `json:"gpgkeys,omitempty"`
+	IgnoreSSL      bool     `json:"ignoressl"`
+	SSLCACert      string   `json:"sslcacert,omitempty"`
+	SSLClientKey   string   `json:"sslclientkey,omitempty"`
+	SSLClientCert  string   `json:"sslclientcert,omitempty"`
+	MetadataExpire string   `json:"metadata_expire,omitempty"`
 }
 
 // Hash calculates an ID string that uniquely represents a repository
@@ -292,7 +292,15 @@ func (r *repoConfig) Hash() string {
 	bts := func(b bool) string {
 		return fmt.Sprintf("%T", b)
 	}
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(r.BaseURL+r.Metalink+r.MirrorList+r.GPGKey+bts(r.IgnoreSSL)+r.MetadataExpire)))
+	ats := func(s []string) string {
+		return strings.Join(s, "")
+	}
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(r.BaseURL+
+		r.Metalink+
+		r.MirrorList+
+		ats(r.GPGKeys)+
+		bts(r.IgnoreSSL)+
+		r.MetadataExpire)))
 }
 
 // Helper function for creating a depsolve request payload.

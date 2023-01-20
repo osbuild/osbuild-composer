@@ -33,8 +33,9 @@ type RepoConfig struct {
 	BaseURL        string
 	Metalink       string
 	MirrorList     string
-	GPGKey         string
+	GPGKeys        []string
 	CheckGPG       bool
+	CheckRepoGPG   bool
 	IgnoreSSL      bool
 	MetadataExpire string
 	RHSM           bool
@@ -49,7 +50,18 @@ func (r *RepoConfig) Hash() string {
 	bts := func(b bool) string {
 		return fmt.Sprintf("%T", b)
 	}
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(r.BaseURL+r.Metalink+r.MirrorList+r.GPGKey+bts(r.CheckGPG)+bts(r.IgnoreSSL)+r.MetadataExpire+bts(r.RHSM))))
+	ats := func(s []string) string {
+		return strings.Join(s, "")
+	}
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(r.BaseURL+
+		r.Metalink+
+		r.MirrorList+
+		ats(r.GPGKeys)+
+		bts(r.CheckGPG)+
+		bts(r.CheckRepoGPG)+
+		bts(r.IgnoreSSL)+
+		r.MetadataExpire+
+		bts(r.RHSM))))
 }
 
 type DistrosRepoConfigs map[string]map[string][]RepoConfig
@@ -212,12 +224,17 @@ func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 
 	for arch, repos := range reposMap {
 		for _, repo := range repos {
+			var keys []string
+			if repo.GPGKey != "" {
+				keys = []string{repo.GPGKey}
+			}
+
 			config := RepoConfig{
 				Name:           repo.Name,
 				BaseURL:        repo.BaseURL,
 				Metalink:       repo.Metalink,
 				MirrorList:     repo.MirrorList,
-				GPGKey:         repo.GPGKey,
+				GPGKeys:        keys,
 				CheckGPG:       repo.CheckGPG,
 				RHSM:           repo.RHSM,
 				MetadataExpire: repo.MetadataExpire,

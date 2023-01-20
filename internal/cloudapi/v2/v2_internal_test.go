@@ -107,7 +107,7 @@ func TestRepoConfigConversion(t *testing.T) {
 				BaseURL:        "http://base.url",
 				Metalink:       "",
 				MirrorList:     "",
-				GPGKey:         "some-kind-of-key",
+				GPGKeys:        []string{"some-kind-of-key"},
 				CheckGPG:       true,
 				IgnoreSSL:      false,
 				MetadataExpire: "",
@@ -131,7 +131,6 @@ func TestRepoConfigConversion(t *testing.T) {
 				BaseURL:        "http://base.url",
 				Metalink:       "", // since BaseURL is specified, MetaLink is not copied
 				MirrorList:     "", // since BaseURL is specified, MirrorList is not copied
-				GPGKey:         "",
 				CheckGPG:       false,
 				IgnoreSSL:      true,
 				MetadataExpire: "",
@@ -155,7 +154,6 @@ func TestRepoConfigConversion(t *testing.T) {
 				BaseURL:        "",
 				Metalink:       "", // since MirrorList is specified, MetaLink is not copied
 				MirrorList:     "http://example.org/mirrorlist",
-				GPGKey:         "",
 				CheckGPG:       false,
 				IgnoreSSL:      true,
 				MetadataExpire: "",
@@ -179,7 +177,6 @@ func TestRepoConfigConversion(t *testing.T) {
 				BaseURL:        "",
 				Metalink:       "http://example.org/metalink",
 				MirrorList:     "",
-				GPGKey:         "",
 				CheckGPG:       false,
 				IgnoreSSL:      true,
 				MetadataExpire: "",

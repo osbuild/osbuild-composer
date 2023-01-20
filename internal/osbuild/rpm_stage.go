@@ -143,10 +143,10 @@ func pkgRefs(specs []rpmmd.PackageSpec) FilesInputRef {
 func NewRPMStageOptions(repos []rpmmd.RepoConfig) *RPMStageOptions {
 	var gpgKeys []string
 	for _, repo := range repos {
-		if repo.GPGKey == "" {
+		if len(repo.GPGKeys) == 0 {
 			continue
 		}
-		gpgKeys = append(gpgKeys, repo.GPGKey)
+		gpgKeys = append(gpgKeys, repo.GPGKeys...)
 	}
 
 	return &RPMStageOptions{
