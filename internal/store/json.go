@@ -58,14 +58,16 @@ type imageBuildV0 struct {
 }
 
 type sourceV0 struct {
-	Name     string   `json:"name"`
-	Type     string   `json:"type"`
-	URL      string   `json:"url"`
-	CheckGPG bool     `json:"check_gpg"`
-	CheckSSL bool     `json:"check_ssl"`
-	System   bool     `json:"system"`
-	Distros  []string `json:"distros"`
-	RHSM     bool     `json:"rhsm"`
+	Name         string   `json:"name"`
+	Type         string   `json:"type"`
+	URL          string   `json:"url"`
+	CheckGPG     bool     `json:"check_gpg"`
+	CheckSSL     bool     `json:"check_ssl"`
+	System       bool     `json:"system"`
+	Distros      []string `json:"distros"`
+	RHSM         bool     `json:"rhsm"`
+	CheckRepoGPG bool     `json:"check_repogpg"`
+	GPGKeys      []string `json:"gpgkeys"`
 }
 
 type sourcesV0 map[string]sourceV0

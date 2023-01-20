@@ -54,14 +54,16 @@ type Store struct {
 }
 
 type SourceConfig struct {
-	Name     string   `json:"name" toml:"name"`
-	Type     string   `json:"type" toml:"type"`
-	URL      string   `json:"url" toml:"url"`
-	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
-	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
-	System   bool     `json:"system" toml:"system"`
-	Distros  []string `json:"distros" toml:"distros"`
-	RHSM     bool     `json:"rhsm" toml:"rhsm"`
+	Name         string   `json:"name" toml:"name"`
+	Type         string   `json:"type" toml:"type"`
+	URL          string   `json:"url" toml:"url"`
+	CheckGPG     bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL     bool     `json:"check_ssl" toml:"check_ssl"`
+	System       bool     `json:"system" toml:"system"`
+	Distros      []string `json:"distros" toml:"distros"`
+	RHSM         bool     `json:"rhsm" toml:"rhsm"`
+	CheckRepoGPG bool     `json:"check_repogpg" toml:"check_repogpg"`
+	GPGKeys      []string `json:"gpgkeys"`
 }
 
 type NotFoundError struct {
@@ -578,11 +580,13 @@ func (s *Store) GetAllDistroSources(distro string) map[string]SourceConfig {
 
 func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 	sc := SourceConfig{
-		Name:     repo.Name,
-		CheckGPG: repo.CheckGPG,
-		CheckSSL: !repo.IgnoreSSL,
-		System:   system,
-		RHSM:     repo.RHSM,
+		Name:         repo.Name,
+		CheckGPG:     repo.CheckGPG,
+		CheckSSL:     !repo.IgnoreSSL,
+		System:       system,
+		RHSM:         repo.RHSM,
+		CheckRepoGPG: repo.CheckRepoGPG,
+		GPGKeys:      repo.GPGKeys,
 	}
 
 	if repo.BaseURL != "" {
@@ -606,6 +610,8 @@ func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 	repo.IgnoreSSL = !s.CheckSSL
 	repo.CheckGPG = s.CheckGPG
 	repo.RHSM = s.RHSM
+	repo.CheckRepoGPG = s.CheckRepoGPG
+	repo.GPGKeys = s.GPGKeys
 
 	if s.Type == "yum-baseurl" {
 		repo.BaseURL = s.URL

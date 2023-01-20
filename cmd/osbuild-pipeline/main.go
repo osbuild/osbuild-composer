@@ -140,12 +140,18 @@ func main() {
 		if repoName == "" {
 			repoName = fmt.Sprintf("repo-%d", i)
 		}
+
+		var keys []string
+		if repo.GPGKey != "" {
+			keys = []string{repo.GPGKey}
+		}
+
 		repos[i] = rpmmd.RepoConfig{
 			Name:        repoName,
 			BaseURL:     repo.BaseURL,
 			Metalink:    repo.Metalink,
 			MirrorList:  repo.MirrorList,
-			GPGKey:      repo.GPGKey,
+			GPGKeys:     keys,
 			CheckGPG:    repo.CheckGPG,
 			PackageSets: repo.PackageSets,
 		}
