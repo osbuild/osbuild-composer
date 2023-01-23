@@ -62,14 +62,17 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 
 		repos := make([]rpmmd.RepoConfig, len(tt.ComposeRequest.Repositories))
 		for i, repo := range tt.ComposeRequest.Repositories {
+			var urls []string
+			if repo.BaseURL != "" {
+				urls = []string{repo.BaseURL}
+			}
 			var keys []string
 			if repo.GPGKey != "" {
 				keys = []string{repo.GPGKey}
 			}
-
 			repos[i] = rpmmd.RepoConfig{
 				Name:        fmt.Sprintf("repo-%d", i),
-				BaseURL:     repo.BaseURL,
+				BaseURLs:    urls,
 				Metalink:    repo.Metalink,
 				MirrorList:  repo.MirrorList,
 				GPGKeys:     keys,

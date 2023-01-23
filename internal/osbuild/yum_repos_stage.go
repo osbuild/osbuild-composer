@@ -11,7 +11,7 @@ const repoIDRegex = "^[\\w.\\-:]+$"
 // YumRepository represents a single DNF / YUM repository.
 type YumRepository struct {
 	Id             string   `json:"id"`
-	BaseURL        []string `json:"baseurl,omitempty"`
+	BaseURLs       []string `json:"baseurl,omitempty"`
 	Cost           *int     `json:"cost,omitempty"`
 	Enabled        *bool    `json:"enabled,omitempty"`
 	GPGKey         []string `json:"gpgkey,omitempty"`
@@ -38,11 +38,11 @@ func (r YumRepository) validate() error {
 	}
 
 	// at least one of baseurl, metalink or mirrorlist must be provided
-	if len(r.BaseURL) == 0 && r.Metalink == "" && r.Mirrorlist == "" {
+	if len(r.BaseURLs) == 0 && r.Metalink == "" && r.Mirrorlist == "" {
 		return fmt.Errorf("at least one of baseurl, metalink or mirrorlist values must be provided")
 	}
 
-	for idx, url := range r.BaseURL {
+	for idx, url := range r.BaseURLs {
 		if url == "" {
 			return fmt.Errorf("baseurl must not be an empty string (idx %d)", idx)
 		}

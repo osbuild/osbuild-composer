@@ -1,6 +1,7 @@
 package rpmmdtests
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"reflect"
@@ -186,6 +187,101 @@ func TestPackageSetResolveConflictExclude(t *testing.T) {
 			if !reflect.DeepEqual(tt.got.ResolveConflictsExclude(), tt.want) {
 				t.Errorf("ResolveConflictExclude() returned unexpected result got: %#v\n want: %#v", tt.got.ResolveConflictsExclude(), tt.want)
 			}
+		})
+	}
+}
+
+func TestOldWorkerRepositoryCompatUnmarshal(t *testing.T) {
+	testCases := []struct {
+		repoJSON []byte
+		repo     rpmmd.RepoConfig
+	}{
+		{
+			repoJSON: []byte(`{"name":"fedora","baseurl":"http://example.com/fedora"}`),
+			repo: rpmmd.RepoConfig{
+				Name:     "fedora",
+				BaseURLs: []string{"http://example.com/fedora"},
+			},
+		},
+		{
+			repoJSON: []byte(`{"name":"multiple","baseurl":"http://example.com/one,http://example.com/two"}`),
+			repo: rpmmd.RepoConfig{
+				Name:     "multiple",
+				BaseURLs: []string{"http://example.com/one", "http://example.com/two"},
+			},
+		},
+		{
+			repoJSON: []byte(`{"name":"all","baseurls":["http://example.com/all"],"metalink":"http://example.com/metalink","mirrorlist":"http://example.com/mirrorlist","gpgkeys":["key1","key2"],"check_gpg":true,"check_repo_gpg":true,"ignore_ssl":true,"metadata_expire":"test","rhsm":true,"image_type_tags":["one","two"],"package_sets":["1","2"],"baseurl":"http://example.com/all"}`),
+			repo: rpmmd.RepoConfig{
+				Name:           "all",
+				BaseURLs:       []string{"http://example.com/all"},
+				Metalink:       "http://example.com/metalink",
+				MirrorList:     "http://example.com/mirrorlist",
+				GPGKeys:        []string{"key1", "key2"},
+				CheckGPG:       true,
+				CheckRepoGPG:   true,
+				IgnoreSSL:      true,
+				MetadataExpire: "test",
+				RHSM:           true,
+				ImageTypeTags:  []string{"one", "two"},
+				PackageSets:    []string{"1", "2"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.repo.Name, func(t *testing.T) {
+			var repo rpmmd.RepoConfig
+			err := json.Unmarshal(tc.repoJSON, &repo)
+			assert.Nil(t, err)
+			assert.Equal(t, tc.repo, repo)
+		})
+	}
+}
+
+func TestOldWorkerRepositoryCompatMarshal(t *testing.T) {
+	testCases := []struct {
+		repoJSON []byte
+		repo     rpmmd.RepoConfig
+	}{
+		{
+			repoJSON: []byte(`{"name":"fedora","baseurls":["http://example.com/fedora"],"baseurl":"http://example.com/fedora"}`),
+			repo: rpmmd.RepoConfig{
+				Name:     "fedora",
+				BaseURLs: []string{"http://example.com/fedora"},
+			},
+		},
+		{
+			repoJSON: []byte(`{"name":"multiple","baseurls":["http://example.com/one","http://example.com/two"],"baseurl":"http://example.com/one,http://example.com/two"}`),
+			repo: rpmmd.RepoConfig{
+				Name:     "multiple",
+				BaseURLs: []string{"http://example.com/one", "http://example.com/two"},
+			},
+		},
+		{
+			repoJSON: []byte(`{"name":"all","baseurls":["http://example.com/all"],"metalink":"http://example.com/metalink","mirrorlist":"http://example.com/mirrorlist","gpgkeys":["key1","key2"],"check_gpg":true,"check_repo_gpg":true,"ignore_ssl":true,"metadata_expire":"test","rhsm":true,"image_type_tags":["one","two"],"package_sets":["1","2"],"baseurl":"http://example.com/all"}`),
+			repo: rpmmd.RepoConfig{
+				Name:           "all",
+				BaseURLs:       []string{"http://example.com/all"},
+				Metalink:       "http://example.com/metalink",
+				MirrorList:     "http://example.com/mirrorlist",
+				GPGKeys:        []string{"key1", "key2"},
+				CheckGPG:       true,
+				CheckRepoGPG:   true,
+				IgnoreSSL:      true,
+				MetadataExpire: "test",
+				RHSM:           true,
+				ImageTypeTags:  []string{"one", "two"},
+				PackageSets:    []string{"1", "2"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.repo.Name, func(t *testing.T) {
+			gotJson, err := json.Marshal(tc.repo)
+			assert.Nil(t, err)
+			assert.Equal(t, tc.repoJSON, gotJson)
 		})
 	}
 }

@@ -421,7 +421,7 @@ func (suite *storeTest) TestGetAllSourcesByID() {
 func (suite *storeTest) TestNewSourceConfigWithBaseURL() {
 	myRepoConfig := rpmmd.RepoConfig{
 		Name:     "testRepo",
-		BaseURL:  "testURL",
+		BaseURLs: []string{"testURL"},
 		CheckGPG: true,
 	}
 	expectedSource := SourceConfig{Name: "testRepo", Type: "yum-baseurl", URL: "testURL", CheckGPG: true, CheckSSL: true, System: true}
@@ -452,7 +452,7 @@ func (suite *storeTest) TestNewSourceConfigWithMirrorList() {
 
 // Test converting a SourceConfig with GPGkeys to a RepoConfig
 func (suite *storeTest) TestRepoConfigGPGKeys() {
-	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "testURL", Metalink: "", MirrorList: "", IgnoreSSL: true, MetadataExpire: "", CheckRepoGPG: true, GPGKeys: []string{"http://path.to.gpgkeys/key.pub", "-----BEGIN PGP PUBLIC KEY BLOCK-----\nFULL GPG KEY HERE\n-----END PGP PUBLIC KEY BLOCK-----"}}
+	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURLs: []string{"testURL"}, Metalink: "", MirrorList: "", IgnoreSSL: true, MetadataExpire: "", CheckRepoGPG: true, GPGKeys: []string{"http://path.to.gpgkeys/key.pub", "-----BEGIN PGP PUBLIC KEY BLOCK-----\nFULL GPG KEY HERE\n-----END PGP PUBLIC KEY BLOCK-----"}}
 	mySourceConfig := suite.mySourceConfig
 	mySourceConfig.Type = "yum-baseurl"
 	mySourceConfig.URL = "testURL"
@@ -463,7 +463,7 @@ func (suite *storeTest) TestRepoConfigGPGKeys() {
 }
 
 func (suite *storeTest) TestRepoConfigBaseURL() {
-	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "testURL", Metalink: "", MirrorList: "", IgnoreSSL: true, MetadataExpire: ""}
+	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURLs: []string{"testURL"}, Metalink: "", MirrorList: "", IgnoreSSL: true, MetadataExpire: ""}
 	suite.mySourceConfig.Type = "yum-baseurl"
 	suite.mySourceConfig.URL = "testURL"
 	actualRepo := suite.mySourceConfig.RepoConfig("testSourceConfig")
@@ -471,7 +471,7 @@ func (suite *storeTest) TestRepoConfigBaseURL() {
 }
 
 func (suite *storeTest) TestRepoConfigMetalink() {
-	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "", Metalink: "testURL", MirrorList: "", IgnoreSSL: true, MetadataExpire: ""}
+	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", Metalink: "testURL", MirrorList: "", IgnoreSSL: true, MetadataExpire: ""}
 	suite.mySourceConfig.Type = "yum-metalink"
 	suite.mySourceConfig.URL = "testURL"
 	actualRepo := suite.mySourceConfig.RepoConfig("testSourceConfig")
@@ -479,7 +479,7 @@ func (suite *storeTest) TestRepoConfigMetalink() {
 }
 
 func (suite *storeTest) TestRepoConfigMirrorlist() {
-	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", BaseURL: "", Metalink: "", MirrorList: "testURL", IgnoreSSL: true, MetadataExpire: ""}
+	expectedRepo := rpmmd.RepoConfig{Name: "testSourceConfig", Metalink: "", MirrorList: "testURL", IgnoreSSL: true, MetadataExpire: ""}
 	suite.mySourceConfig.Type = "yum-mirrorlist"
 	suite.mySourceConfig.URL = "testURL"
 	actualRepo := suite.mySourceConfig.RepoConfig("testSourceConfig")

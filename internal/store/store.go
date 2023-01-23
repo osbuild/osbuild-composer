@@ -4,6 +4,8 @@ package store
 
 import (
 	"crypto/rand"
+	"strings"
+
 	// The use of SHA1 is valid here
 	/* #nosec G505 */
 	"crypto/sha1"
@@ -589,8 +591,8 @@ func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 		GPGKeys:      repo.GPGKeys,
 	}
 
-	if repo.BaseURL != "" {
-		sc.URL = repo.BaseURL
+	if len(repo.BaseURLs) != 0 {
+		sc.URL = strings.Join(repo.BaseURLs, ",")
 		sc.Type = "yum-baseurl"
 	} else if repo.Metalink != "" {
 		sc.URL = repo.Metalink
@@ -613,8 +615,13 @@ func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 	repo.CheckRepoGPG = s.CheckRepoGPG
 	repo.GPGKeys = s.GPGKeys
 
+	var urls []string
+	if s.URL != "" {
+		urls = []string{s.URL}
+	}
+
 	if s.Type == "yum-baseurl" {
-		repo.BaseURL = s.URL
+		repo.BaseURLs = urls
 	} else if s.Type == "yum-metalink" {
 		repo.Metalink = s.URL
 	} else if s.Type == "yum-mirrorlist" {

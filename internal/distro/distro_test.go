@@ -200,7 +200,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 					repos := []rpmmd.RepoConfig{
 						{
 							Name:        "payload",
-							BaseURL:     "http://payload.example.com",
+							BaseURLs:    []string{"http://payload.example.com"},
 							PackageSets: imageType.PayloadPackageSets(),
 							GPGKeys:     []string{"payload-gpg-key"},
 							CheckGPG:    true,
@@ -287,12 +287,12 @@ func TestPipelineRepositories(t *testing.T) {
 		"globalonly": { // only global repos: most common scenario
 			repos: []rpmmd.RepoConfig{
 				{
-					Name:    "global-1",
-					BaseURL: "http://global-1.example.com",
+					Name:     "global-1",
+					BaseURLs: []string{"http://global-1.example.com"},
 				},
 				{
-					Name:    "global-2",
-					BaseURL: "http://global-2.example.com",
+					Name:     "global-2",
+					BaseURLs: []string{"http://global-2.example.com"},
 				},
 			},
 			result: map[string][]stringSet{
@@ -302,21 +302,21 @@ func TestPipelineRepositories(t *testing.T) {
 		"global+build": { // global repos with build-specific repos: secondary common scenario
 			repos: []rpmmd.RepoConfig{
 				{
-					Name:    "global-11",
-					BaseURL: "http://global-11.example.com",
+					Name:     "global-11",
+					BaseURLs: []string{"http://global-11.example.com"},
 				},
 				{
-					Name:    "global-12",
-					BaseURL: "http://global-12.example.com",
+					Name:     "global-12",
+					BaseURLs: []string{"http://global-12.example.com"},
 				},
 				{
 					Name:        "build-1",
-					BaseURL:     "http://build-1.example.com",
+					BaseURLs:    []string{"http://build-1.example.com"},
 					PackageSets: []string{"build"},
 				},
 				{
 					Name:        "build-2",
-					BaseURL:     "http://build-2.example.com",
+					BaseURLs:    []string{"http://build-2.example.com"},
 					PackageSets: []string{"build"},
 				},
 			},
@@ -328,21 +328,21 @@ func TestPipelineRepositories(t *testing.T) {
 		"global+os": { // global repos with os-specific repos
 			repos: []rpmmd.RepoConfig{
 				{
-					Name:    "global-21",
-					BaseURL: "http://global-11.example.com",
+					Name:     "global-21",
+					BaseURLs: []string{"http://global-11.example.com"},
 				},
 				{
-					Name:    "global-22",
-					BaseURL: "http://global-12.example.com",
+					Name:     "global-22",
+					BaseURLs: []string{"http://global-12.example.com"},
 				},
 				{
 					Name:        "os-1",
-					BaseURL:     "http://os-1.example.com",
+					BaseURLs:    []string{"http://os-1.example.com"},
 					PackageSets: []string{"os"},
 				},
 				{
 					Name:        "os-2",
-					BaseURL:     "http://os-2.example.com",
+					BaseURLs:    []string{"http://os-2.example.com"},
 					PackageSets: []string{"os"},
 				},
 			},
@@ -354,26 +354,26 @@ func TestPipelineRepositories(t *testing.T) {
 		"global+os+payload": { // global repos with os-specific repos and (user-defined) payload repositories
 			repos: []rpmmd.RepoConfig{
 				{
-					Name:    "global-21",
-					BaseURL: "http://global-11.example.com",
+					Name:     "global-21",
+					BaseURLs: []string{"http://global-11.example.com"},
 				},
 				{
-					Name:    "global-22",
-					BaseURL: "http://global-12.example.com",
+					Name:     "global-22",
+					BaseURLs: []string{"http://global-12.example.com"},
 				},
 				{
 					Name:        "os-1",
-					BaseURL:     "http://os-1.example.com",
+					BaseURLs:    []string{"http://os-1.example.com"},
 					PackageSets: []string{"os"},
 				},
 				{
 					Name:        "os-2",
-					BaseURL:     "http://os-2.example.com",
+					BaseURLs:    []string{"http://os-2.example.com"},
 					PackageSets: []string{"os"},
 				},
 				{
-					Name:    "payload",
-					BaseURL: "http://payload.example.com",
+					Name:     "payload",
+					BaseURLs: []string{"http://payload.example.com"},
 					// User-defined payload repositories automatically get the "blueprint" key.
 					// This is handled by the APIs.
 					PackageSets: []string{"blueprint"},
@@ -391,37 +391,37 @@ func TestPipelineRepositories(t *testing.T) {
 			repos: []rpmmd.RepoConfig{
 				{
 					Name:        "build-1",
-					BaseURL:     "http://build-1.example.com",
+					BaseURLs:    []string{"http://build-1.example.com"},
 					PackageSets: []string{"build"},
 				},
 				{
 					Name:        "build-2",
-					BaseURL:     "http://build-2.example.com",
+					BaseURLs:    []string{"http://build-2.example.com"},
 					PackageSets: []string{"build"},
 				},
 				{
 					Name:        "os-1",
-					BaseURL:     "http://os-1.example.com",
+					BaseURLs:    []string{"http://os-1.example.com"},
 					PackageSets: []string{"os"},
 				},
 				{
 					Name:        "os-2",
-					BaseURL:     "http://os-2.example.com",
+					BaseURLs:    []string{"http://os-2.example.com"},
 					PackageSets: []string{"os"},
 				},
 				{
 					Name:        "anaconda-1",
-					BaseURL:     "http://anaconda-1.example.com",
+					BaseURLs:    []string{"http://anaconda-1.example.com"},
 					PackageSets: []string{"anaconda-tree"},
 				},
 				{
 					Name:        "container-1",
-					BaseURL:     "http://container-1.example.com",
+					BaseURLs:    []string{"http://container-1.example.com"},
 					PackageSets: []string{"container-tree"},
 				},
 				{
 					Name:        "coi-1",
-					BaseURL:     "http://coi-1.example.com",
+					BaseURLs:    []string{"http://coi-1.example.com"},
 					PackageSets: []string{"coi-tree"},
 				},
 			},
@@ -437,16 +437,16 @@ func TestPipelineRepositories(t *testing.T) {
 		"global+unknown": { // package set names that don't match a pipeline are ignored
 			repos: []rpmmd.RepoConfig{
 				{
-					Name:    "global-1",
-					BaseURL: "http://global-1.example.com",
+					Name:     "global-1",
+					BaseURLs: []string{"http://global-1.example.com"},
 				},
 				{
-					Name:    "global-2",
-					BaseURL: "http://global-2.example.com",
+					Name:     "global-2",
+					BaseURLs: []string{"http://global-2.example.com"},
 				},
 				{
 					Name:        "custom-1",
-					BaseURL:     "http://custom.example.com",
+					BaseURLs:    []string{"http://custom.example.com"},
 					PackageSets: []string{"notapipeline"},
 				},
 			},

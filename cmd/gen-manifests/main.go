@@ -187,6 +187,11 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 type DistroArchRepoMap map[string]map[string][]repository
 
 func convertRepo(r repository) rpmmd.RepoConfig {
+	var urls []string
+	if r.BaseURL != "" {
+		urls = []string{r.BaseURL}
+	}
+
 	var keys []string
 	if r.GPGKey != "" {
 		keys = []string{r.GPGKey}
@@ -194,7 +199,7 @@ func convertRepo(r repository) rpmmd.RepoConfig {
 
 	return rpmmd.RepoConfig{
 		Name:           r.Name,
-		BaseURL:        r.BaseURL,
+		BaseURLs:       urls,
 		Metalink:       r.Metalink,
 		MirrorList:     r.MirrorList,
 		GPGKeys:        keys,

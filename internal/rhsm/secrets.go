@@ -168,16 +168,18 @@ func parseRepoFile(content []byte) ([]subscription, error) {
 }
 
 // GetSecretsForBaseurl queries the Subscriptions structure for a RHSMSecrets of a single repository.
-func (s *Subscriptions) GetSecretsForBaseurl(baseurl string, arch, releasever string) (*RHSMSecrets, error) {
+func (s *Subscriptions) GetSecretsForBaseurl(baseurls []string, arch, releasever string) (*RHSMSecrets, error) {
 	for _, subs := range s.available {
-		url := strings.Replace(subs.baseurl, "$basearch", arch, -1)
-		url = strings.Replace(url, "$releasever", releasever, -1)
-		if url == baseurl {
-			return &RHSMSecrets{
-				SSLCACert:     subs.sslCACert,
-				SSLClientKey:  subs.sslClientKey,
-				SSLClientCert: subs.sslClientCert,
-			}, nil
+		for _, baseurl := range baseurls {
+			url := strings.Replace(subs.baseurl, "$basearch", arch, -1)
+			url = strings.Replace(url, "$releasever", releasever, -1)
+			if url == baseurl {
+				return &RHSMSecrets{
+					SSLCACert:     subs.sslCACert,
+					SSLClientKey:  subs.sslClientKey,
+					SSLClientCert: subs.sslClientCert,
+				}, nil
+			}
 		}
 	}
 	// If there is no matching URL, fall back to the global secrets
