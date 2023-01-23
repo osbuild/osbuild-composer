@@ -19,14 +19,17 @@ import (
 )
 
 type repository struct {
-	Name        string   `json:"name,omitempty"`
-	BaseURL     string   `json:"baseurl,omitempty"`
-	Metalink    string   `json:"metalink,omitempty"`
-	MirrorList  string   `json:"mirrorlist,omitempty"`
-	GPGKey      string   `json:"gpgkey,omitempty"`
-	CheckGPG    bool     `json:"check_gpg,omitempty"`
-	PackageSets []string `json:"package_sets,omitempty"`
-	RHSM        bool     `json:"rhsm,omitempty"`
+	Id           string   `json:"id,omitempty"`
+	Name         string   `json:"name,omitempty"`
+	BaseURL      string   `json:"baseurl,omitempty"`
+	Metalink     string   `json:"metalink,omitempty"`
+	MirrorList   string   `json:"mirrorlist,omitempty"`
+	GPGKey       string   `json:"gpgkey,omitempty"`
+	CheckGPG     bool     `json:"check_gpg,omitempty"`
+	CheckRepoGPG bool     `json:"repo_check_gpg,omitempty"`
+	IgnoreSSL    bool     `json:"ignore_ssl,omitempty"`
+	PackageSets  []string `json:"package_sets,omitempty"`
+	RHSM         bool     `json:"rhsm,omitempty"`
 }
 
 type ostreeOptions struct {
@@ -141,6 +144,10 @@ func main() {
 		if repoName == "" {
 			repoName = fmt.Sprintf("repo-%d", i)
 		}
+		repoId := repo.Id
+		if repoId == "" {
+			repoId = fmt.Sprintf("repo-%d", i)
+		}
 		var urls []string
 		if repo.BaseURL != "" {
 			urls = []string{repo.BaseURL}
@@ -149,7 +156,9 @@ func main() {
 		if repo.GPGKey != "" {
 			keys = []string{repo.GPGKey}
 		}
+
 		repos[i] = rpmmd.RepoConfig{
+			Id:           repoId,
 			Name:         repoName,
 			BaseURLs:     urls,
 			Metalink:     repo.Metalink,

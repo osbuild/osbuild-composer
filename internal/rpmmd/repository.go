@@ -28,6 +28,10 @@ type repository struct {
 }
 
 type RepoConfig struct {
+	// the repo id is not always required and is ignored in some cases.
+	// For example, it is not required in dnf-json, but it is a required
+	// field for creating a repo file in `/etc/yum.repos.d/`
+	Id             string   `json:"id,omitempty"`
 	Name           string   `json:"name,omitempty"`
 	BaseURLs       []string `json:"baseurls,omitempty"`
 	Metalink       string   `json:"metalink,omitempty"`
@@ -35,9 +39,11 @@ type RepoConfig struct {
 	GPGKeys        []string `json:"gpgkeys,omitempty"`
 	CheckGPG       *bool    `json:"check_gpg,omitempty"`
 	CheckRepoGPG   *bool    `json:"check_repo_gpg,omitempty"`
+	Priority       *int     `json:"priority,omitempty"`
 	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
+	Enabled        *bool    `json:"enabled,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 	PackageSets    []string `json:"package_sets,omitempty"`
 }
