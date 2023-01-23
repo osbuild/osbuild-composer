@@ -56,6 +56,7 @@ class Solver():
             self.base.repos.add(self._dnfrepo(repo, self.base.conf))
         self.base.fill_sack(load_system_repo=False)
 
+    # pylint: disable=too-many-branches
     @staticmethod
     def _dnfrepo(desc, parent_conf=None):
         """Makes a dnf.repo.Repo out of a JSON repository description"""
@@ -98,6 +99,9 @@ class Solver():
 
             for key in desc["gpgkeys"]:
                 if key.startswith("-----BEGIN PGP PUBLIC KEY BLOCK-----"):
+                    # Not using with because it needs to be a valid file for the duration. It
+                    # is inside the temporary persistdir so will be cleaned up on exit.
+                    # pylint: disable=consider-using-with
                     keyfile = tempfile.NamedTemporaryFile(dir=keydir, delete=False)
                     keyfile.write(key.encode("utf-8"))
                     repo.gpgkey.append(f"file://{keyfile.name}")
