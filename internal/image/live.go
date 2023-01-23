@@ -26,6 +26,11 @@ type LiveImage struct {
 	Filename         string
 	Compression      string
 	PartTool         osbuild.PartTool
+
+	NoBLS     bool
+	OSProduct string
+	OSVersion string
+	OSNick    string
 }
 
 func NewLiveImage() *LiveImage {
@@ -47,6 +52,10 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
+	osPipeline.NoBLS = img.NoBLS
+	osPipeline.OSProduct = img.OSProduct
+	osPipeline.OSVersion = img.OSVersion
+	osPipeline.OSNick = img.OSNick
 
 	imagePipeline := manifest.NewRawImage(m, buildPipeline, osPipeline)
 	imagePipeline.PartTool = img.PartTool
