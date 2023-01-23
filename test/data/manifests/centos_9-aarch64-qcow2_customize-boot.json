@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -1776,6 +1780,14 @@
                   },
                   {
                     "id": "sha256:adbea9afe78b2f67de854fdf5440326dda5383763797eb9ac486969edeecaef0",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c7d855d0ba4d5cd6e6a51f086c72f9f63accdbce0f10cab833e811782c476e44",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6147,6 +6159,9 @@
           "sha256:c79fa96aa7fb447975497dd50c94002ee73d01171343f8ee14032d06adb58a92": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20230101/Packages/fonts-filesystem-2.0.5-7.el9.1.noarch.rpm"
           },
+          "sha256:c7d855d0ba4d5cd6e6a51f086c72f9f63accdbce0f10cab833e811782c476e44": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20230101/Packages/bluez-5.56-6.el9.aarch64.rpm"
+          },
           "sha256:c862cafcf9eef105043a07035a4d78fee7752344c236dd9e497650b7ffa675c6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20230101/Packages/rpm-plugin-systemd-inhibit-4.16.1.3-21.el9.aarch64.rpm"
           },
@@ -8487,6 +8502,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20230101/Packages/bash-5.1.8-6.el9.aarch64.rpm",
         "checksum": "sha256:adbea9afe78b2f67de854fdf5440326dda5383763797eb9ac486969edeecaef0",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "6.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20230101/Packages/bluez-5.56-6.el9.aarch64.rpm",
+        "checksum": "sha256:c7d855d0ba4d5cd6e6a51f086c72f9f63accdbce0f10cab833e811782c476e44",
         "check_gpg": true
       },
       {

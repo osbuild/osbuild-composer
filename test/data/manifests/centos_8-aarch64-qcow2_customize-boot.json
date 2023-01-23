@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -1657,6 +1661,14 @@
                   },
                   {
                     "id": "sha256:a06f199eb558420baa213d65e30e85e754eacadd97dbd4f05f0c108a9a0fd7a0",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:40a4e84e4d3f2e14fa2d730ad6a6f03b1d31f793fb8c1697d5fe7b9d18a39abb",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6102,6 +6114,9 @@
           "sha256:406140d0a2d6fe921875898b24b91376870fb9ab1b1baf7778cff060bbbe0d72": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/unbound-libs-1.7.3-17.el8.aarch64.rpm"
           },
+          "sha256:40a4e84e4d3f2e14fa2d730ad6a6f03b1d31f793fb8c1697d5fe7b9d18a39abb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/bluez-5.56-3.el8.aarch64.rpm"
+          },
           "sha256:4156413385dce1692e46bc8bc42c74bc6b4f9748230bbd4a2134a17e69ea79d9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/libini_config-1.3.1-39.el8.aarch64.rpm"
           },
@@ -9079,6 +9094,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/bind-export-libs-9.11.36-2.el8.aarch64.rpm",
         "checksum": "sha256:a06f199eb558420baa213d65e30e85e754eacadd97dbd4f05f0c108a9a0fd7a0",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "3.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/bluez-5.56-3.el8.aarch64.rpm",
+        "checksum": "sha256:40a4e84e4d3f2e14fa2d730ad6a6f03b1d31f793fb8c1697d5fe7b9d18a39abb",
         "check_gpg": true
       },
       {

@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -731,6 +735,9 @@
                   },
                   {
                     "id": "sha256:78926ec2c75db8bcbdd4f4fbd8c06b373f85bd7ecce0e6aac8c75dda95fcae2c"
+                  },
+                  {
+                    "id": "sha256:2c80c4561489a13cc092992d30639e3cebb7acd1e282eedf1df285c8640dc2e0"
                   },
                   {
                     "id": "sha256:267858a95e543459a0cd683e641955d7c04c13bcda830c5f7db5a0529077428a"
@@ -2913,6 +2920,9 @@
           },
           "sha256:2c64abeeb3befc3f627cc10a1a6ef5b0bfc194d4698195c73162b64228882711": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/dnf-plugins-core-4.0.21-14.1.el8.noarch.rpm"
+          },
+          "sha256:2c80c4561489a13cc092992d30639e3cebb7acd1e282eedf1df285c8640dc2e0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/bluez-5.63-1.el8.x86_64.rpm"
           },
           "sha256:2cd7f54b726250042483f37e513645c240beec147cbfa959cd689b306d36d103": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/libgcc-8.5.0-17.el8.x86_64.rpm"
@@ -5948,6 +5958,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/biosdevname-0.7.3-2.el8.x86_64.rpm",
         "checksum": "sha256:78926ec2c75db8bcbdd4f4fbd8c06b373f85bd7ecce0e6aac8c75dda95fcae2c"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.63",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/bluez-5.63-1.el8.x86_64.rpm",
+        "checksum": "sha256:2c80c4561489a13cc092992d30639e3cebb7acd1e282eedf1df285c8640dc2e0"
       },
       {
         "name": "brotli",

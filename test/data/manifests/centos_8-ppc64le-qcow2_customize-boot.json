@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -1705,6 +1709,14 @@
                   },
                   {
                     "id": "sha256:61ef33407ce28bd2476544ed9d5b21b10134a5e63ccff1c80b3fbb20ae4c2f66",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:4f99a22d0596b33d7d59ef478bdff0384ce4b9448e52066c4a3f05f6193f7803",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6588,6 +6600,9 @@
           "sha256:4f92835a6e4ee4276df49019e068d1871b75821f52b405c699bd9f199df58b80": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/diffutils-3.6-6.el8.ppc64le.rpm"
           },
+          "sha256:4f99a22d0596b33d7d59ef478bdff0384ce4b9448e52066c4a3f05f6193f7803": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/bluez-5.56-3.el8.ppc64le.rpm"
+          },
           "sha256:4fc1c84b4434df8a5ccd960d906896e4094236f43ad4aea083a12fb5b8a824f9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/gdk-pixbuf2-2.36.12-5.el8.ppc64le.rpm"
           },
@@ -9649,6 +9664,16 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/bind-export-libs-9.11.36-2.el8.ppc64le.rpm",
         "checksum": "sha256:61ef33407ce28bd2476544ed9d5b21b10134a5e63ccff1c80b3fbb20ae4c2f66",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "3.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-ppc64le-baseos-20220208/Packages/bluez-5.56-3.el8.ppc64le.rpm",
+        "checksum": "sha256:4f99a22d0596b33d7d59ef478bdff0384ce4b9448e52066c4a3f05f6193f7803",
         "check_gpg": true
       },
       {

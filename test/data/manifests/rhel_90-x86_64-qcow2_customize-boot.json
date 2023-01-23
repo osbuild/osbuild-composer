@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -687,6 +691,9 @@
                   },
                   {
                     "id": "sha256:f835cc738fa003147087d68427c407e17c08587156ae961d641b2dfcee1fe7af"
+                  },
+                  {
+                    "id": "sha256:a94d6b04e12c27423a13284939362035683099bc295e5b3aded531b7508639da"
                   },
                   {
                     "id": "sha256:327920d59130c2a3a318774b2300babfd2e5ac2994ca4123dfa10f08f5e1d9e7"
@@ -3442,6 +3449,9 @@
           "sha256:a891d5fb2fcfab640f66d16eb802eebf8ea9dcc5f14048937c52e3fb812032b3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/libfastjson-0.99.9-3.el9.x86_64.rpm"
           },
+          "sha256:a94d6b04e12c27423a13284939362035683099bc295e5b3aded531b7508639da": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/bluez-5.56-8.el9.x86_64.rpm"
+          },
           "sha256:a96e1ce52455d5b16a66fe359b864bd4454160e0bab514b7f0e1ce0bbfb04282": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/quota-nls-4.06-6.el9.noarch.rpm"
           },
@@ -5543,6 +5553,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/bash-5.1.8-2.el9.x86_64.rpm",
         "checksum": "sha256:f835cc738fa003147087d68427c407e17c08587156ae961d641b2dfcee1fe7af"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "8.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/bluez-5.56-8.el9.x86_64.rpm",
+        "checksum": "sha256:a94d6b04e12c27423a13284939362035683099bc295e5b3aded531b7508639da"
       },
       {
         "name": "bubblewrap",

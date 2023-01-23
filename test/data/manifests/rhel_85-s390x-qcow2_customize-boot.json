@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -834,6 +838,9 @@
                   },
                   {
                     "id": "sha256:97b07bfd05de6fa982fd370fa1718b461fded2521c81220cf4a87739b881e619"
+                  },
+                  {
+                    "id": "sha256:27d99d453cd8c984f2aee19b4ee72aa7ccd398a985083031a16edebbd6f65dc1"
                   },
                   {
                     "id": "sha256:e134da086a66848af20f21dcebbeca19fde6a4af3016a09d5fde3984317e2c33"
@@ -3059,6 +3066,9 @@
           },
           "sha256:27978a24f19805d828fb29c6fd8306260484859bc234e86e42255ab716b1a169": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.5-20210326/Packages/bzip2-1.0.6-26.el8.s390x.rpm"
+          },
+          "sha256:27d99d453cd8c984f2aee19b4ee72aa7ccd398a985083031a16edebbd6f65dc1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.5-20210326/Packages/bluez-5.52-4.el8.s390x.rpm"
           },
           "sha256:2829ee7cd506bfadd391e04c6281fec277f2681e6b360bdbfc0305c48d429c3c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.5-20210326/Packages/abattis-cantarell-fonts-0.0.25-6.el8.noarch.rpm"
@@ -6427,6 +6437,15 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.5-20210326/Packages/bind-export-libs-9.11.26-3.el8.s390x.rpm",
         "checksum": "sha256:97b07bfd05de6fa982fd370fa1718b461fded2521c81220cf4a87739b881e619"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.52",
+        "release": "4.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.5-20210326/Packages/bluez-5.52-4.el8.s390x.rpm",
+        "checksum": "sha256:27d99d453cd8c984f2aee19b4ee72aa7ccd398a985083031a16edebbd6f65dc1"
       },
       {
         "name": "brotli",

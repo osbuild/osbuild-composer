@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -731,6 +735,9 @@
                   },
                   {
                     "id": "sha256:93a2f00fd5ff983abf2923d2fe0cde54628302aa3e180ccec7e5686f74a62bfb"
+                  },
+                  {
+                    "id": "sha256:cede866e5700f9fce4664ef7731a6e208eb598f2391642b9aefd708d225f3ed1"
                   },
                   {
                     "id": "sha256:e695072a3790e6c1229abfa1f703f081941be82064a9faab686cb7122838759f"
@@ -4044,6 +4051,9 @@
           "sha256:ce4c3c1a7b545ba47da5993965acb341461487edd2f3f0f2eba662e85ac4ff24": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-ppc64le-baseos-n8.8-20221025/Packages/ncurses-libs-6.1-9.20180224.el8.ppc64le.rpm"
           },
+          "sha256:cede866e5700f9fce4664ef7731a6e208eb598f2391642b9aefd708d225f3ed1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-ppc64le-baseos-n8.8-20221025/Packages/bluez-5.63-1.el8.ppc64le.rpm"
+          },
           "sha256:cef90773f78323d7e827424b6f0926d4c167d397461a44a478df3a740a1ad63d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-ppc64le-baseos-n8.8-20221025/Packages/teamd-1.31-3.el8.ppc64le.rpm"
           },
@@ -6136,6 +6146,15 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-ppc64le-baseos-n8.8-20221025/Packages/bind-export-libs-9.11.36-5.el8.ppc64le.rpm",
         "checksum": "sha256:93a2f00fd5ff983abf2923d2fe0cde54628302aa3e180ccec7e5686f74a62bfb"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.63",
+        "release": "1.el8",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-ppc64le-baseos-n8.8-20221025/Packages/bluez-5.63-1.el8.ppc64le.rpm",
+        "checksum": "sha256:cede866e5700f9fce4664ef7731a6e208eb598f2391642b9aefd708d225f3ed1"
       },
       {
         "name": "brotli",

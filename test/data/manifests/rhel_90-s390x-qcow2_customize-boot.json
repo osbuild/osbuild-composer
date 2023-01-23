@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -817,6 +821,9 @@
                   },
                   {
                     "id": "sha256:25d5d485f555c3eeba77efbd2d0e2f0963091942ecf0c3947f3747ae58c67a8a"
+                  },
+                  {
+                    "id": "sha256:09755d60e204218bd9b7ab2e4532200d9f98271e669a9b72f3ee3f6617b9eb25"
                   },
                   {
                     "id": "sha256:aafcf70d0bcfeebf5da0c21c2a828b0e780c9fcc7d92e0b23f0fd79580bc9ed2"
@@ -2740,6 +2747,9 @@
           },
           "sha256:094cad3adcdab274d2bd7327c0df337b142a4fec247ed6d5ec023a6609c1c300": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.0-20220208/Packages/iproute-5.15.0-2.el9.s390x.rpm"
+          },
+          "sha256:09755d60e204218bd9b7ab2e4532200d9f98271e669a9b72f3ee3f6617b9eb25": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.0-20220208/Packages/bluez-5.56-8.el9.s390x.rpm"
           },
           "sha256:0a81b062391ac6dac3ec28ff1e435001dd798cf1ff19fdb52cfe1e0720d5de03": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-appstream-n9.0-20220208/Packages/perl-File-Temp-0.231.100-4.el9.noarch.rpm"
@@ -6147,6 +6157,15 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.0-20220208/Packages/bash-5.1.8-2.el9.s390x.rpm",
         "checksum": "sha256:25d5d485f555c3eeba77efbd2d0e2f0963091942ecf0c3947f3747ae58c67a8a"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "8.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.0-20220208/Packages/bluez-5.56-8.el9.s390x.rpm",
+        "checksum": "sha256:09755d60e204218bd9b7ab2e4532200d9f98271e669a9b72f3ee3f6617b9eb25"
       },
       {
         "name": "bzip2",

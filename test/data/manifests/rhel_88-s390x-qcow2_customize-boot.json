@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -805,6 +809,9 @@
                   },
                   {
                     "id": "sha256:e22b5160fff19bdd88bc0d3097584970f476ca09397ae120e02022296b984f7a"
+                  },
+                  {
+                    "id": "sha256:ead363f014185dd1882513c5309f780104e0c52e6adf093d8a5ff0c3324bcdca"
                   },
                   {
                     "id": "sha256:e134da086a66848af20f21dcebbeca19fde6a4af3016a09d5fde3984317e2c33"
@@ -4213,6 +4220,9 @@
           "sha256:ea8e98525aaeb63aea1e85a98ea93207cb2a88c82e921047e56f50a13b74a4fa": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.8-20221025/Packages/prefixdevname-0.1.0-6.el8.s390x.rpm"
           },
+          "sha256:ead363f014185dd1882513c5309f780104e0c52e6adf093d8a5ff0c3324bcdca": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.8-20221025/Packages/bluez-5.63-1.el8.s390x.rpm"
+          },
           "sha256:eaea4907a76867e75875d14a5ec659f6a80dfca805a21d3d1d3f55b4329cd8f1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-appstream-n8.8-20221025/Packages/rhc-0.2.1-9.el8.s390x.rpm"
           },
@@ -6329,6 +6339,15 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.8-20221025/Packages/bind-export-libs-9.11.36-5.el8.s390x.rpm",
         "checksum": "sha256:e22b5160fff19bdd88bc0d3097584970f476ca09397ae120e02022296b984f7a"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.63",
+        "release": "1.el8",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-s390x-baseos-n8.8-20221025/Packages/bluez-5.63-1.el8.s390x.rpm",
+        "checksum": "sha256:ead363f014185dd1882513c5309f780104e0c52e6adf093d8a5ff0c3324bcdca"
       },
       {
         "name": "brotli",

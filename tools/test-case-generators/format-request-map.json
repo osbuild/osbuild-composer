@@ -705,6 +705,10 @@
           {
             "name": "bash",
             "version": "*"
+          },
+          {
+            "name": "bluez",
+            "version": "*"
           }
         ],
         "modules": [],
@@ -786,6 +790,10 @@
           "packages": [
             {
               "name": "bash",
+              "version": "*"
+            },
+            {
+              "name": "bluez",
               "version": "*"
             }
           ],
@@ -873,6 +881,10 @@
             {
               "name": "bash",
               "version": "*"
+            },
+            {
+              "name": "bluez",
+              "version": "*"
             }
           ],
           "modules": [],
@@ -947,6 +959,10 @@
           "packages": [
             {
               "name": "bash",
+              "version": "*"
+            },
+            {
+              "name": "bluez",
               "version": "*"
             }
           ],
