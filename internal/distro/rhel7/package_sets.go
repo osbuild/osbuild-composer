@@ -7,50 +7,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-// BUILD PACKAGE SETS
-
-// distro-wide build package set
-func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"dosfstools",
-			"e2fsprogs",
-			"gdisk",
-			"lvm2",
-			"parted",
-			"policycoreutils",
-			"python3",
-			"python3-iniparse",
-			"python3-PyYAML",
-			"qemu-img",
-			"rpm",
-			"selinux-policy-targeted",
-			"systemd",
-			"tar",
-			"util-linux",
-			"xfsprogs",
-			"xz",
-		},
-	}
-
-	switch t.arch.Name() {
-
-	case distro.X86_64ArchName:
-		ps = ps.Append(x8664BuildPackageSet(t))
-	}
-
-	return ps
-}
-
-// x86_64 build package set
-func x8664BuildPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"grub2-pc",
-		},
-	}
-}
-
 // BOOT PACKAGE SETS
 
 func bootPackageSet(t *imageType) rpmmd.PackageSet {

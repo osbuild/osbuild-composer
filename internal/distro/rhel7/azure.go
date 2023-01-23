@@ -1,9 +1,6 @@
 package rhel7
 
 import (
-	"math/rand"
-
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
@@ -381,44 +378,4 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-}
-
-func vhdPipelines(compress bool) pipelinesFunc {
-	return func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-		pipelines := make([]osbuild.Pipeline, 0)
-		pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-		partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-		if err != nil {
-			return nil, err
-		}
-
-		treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
-		if err != nil {
-			return nil, err
-		}
-		pipelines = append(pipelines, *treePipeline)
-
-		diskfile := "disk.img"
-		kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-		imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-		pipelines = append(pipelines, *imagePipeline)
-
-		var qemufile string
-		if compress {
-			qemufile = "disk.vhd"
-		} else {
-			qemufile = t.filename
-		}
-
-		qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, qemufile, osbuild.QEMUFormatVPC, osbuild.VPCOptions{ForceSize: common.ToPtr(false)})
-		pipelines = append(pipelines, *qemuPipeline)
-
-		if compress {
-			lastPipeline := pipelines[len(pipelines)-1]
-			pipelines = append(pipelines, *xzArchivePipeline(lastPipeline.Name, qemufile, t.Filename()))
-		}
-
-		return pipelines, nil
-	}
 }
