@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
@@ -39,11 +38,14 @@ func (mv *multiValue) Set(v string) error {
 
 type repository struct {
 	Name           string   `json:"name"`
+	Id             string   `json:"id,omitempty"`
 	BaseURL        string   `json:"baseurl,omitempty"`
 	Metalink       string   `json:"metalink,omitempty"`
 	MirrorList     string   `json:"mirrorlist,omitempty"`
 	GPGKey         string   `json:"gpgkey,omitempty"`
 	CheckGPG       bool     `json:"check_gpg,omitempty"`
+	CheckRepoGPG   bool     `json:"check_repo_gpg,omitempty"`
+	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
@@ -199,14 +201,15 @@ func convertRepo(r repository) rpmmd.RepoConfig {
 	}
 
 	return rpmmd.RepoConfig{
+		Id:             r.Id,
 		Name:           r.Name,
 		BaseURLs:       urls,
 		Metalink:       r.Metalink,
 		MirrorList:     r.MirrorList,
 		GPGKeys:        keys,
 		CheckGPG:       &r.CheckGPG,
-		CheckRepoGPG:   common.ToPtr(false),
-		IgnoreSSL:      false,
+		CheckRepoGPG:   &r.CheckRepoGPG,
+		IgnoreSSL:      r.IgnoreSSL,
 		MetadataExpire: r.MetadataExpire,
 		RHSM:           r.RHSM,
 		ImageTypeTags:  r.ImageTypeTags,
