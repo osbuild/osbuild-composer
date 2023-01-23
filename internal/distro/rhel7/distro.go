@@ -13,10 +13,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/environment"
+	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
+	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
 const (
@@ -205,12 +208,16 @@ type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, 
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
+type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.Spec, rng *rand.Rand) (image.ImageKind, error)
+
 type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
+	environment        environment.Environment
 	name               string
 	nameAliases        []string
 	filename           string
+	compression        string // TODO: remove from image definition and make it a transport option
 	mimeType           string
 	packageSets        map[string]packageSetFunc
 	packageSetChains   map[string][]string
@@ -221,6 +228,7 @@ type imageType struct {
 	payloadPipelines   []string
 	exports            []string
 	pipelines          pipelinesFunc
+	image              imageFunc
 
 	// bootable image
 	bootable bool
