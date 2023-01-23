@@ -1,9 +1,6 @@
 package rhel7
 
 import (
-	"math/rand"
-
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -124,30 +121,4 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
 
 	return ps
-}
-
-func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	pipelines = append(pipelines, *buildPipeline(repos, packageSetSpecs[buildPkgsKey], t.arch.distro.runner.String()))
-
-	partitionTable, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	treePipeline, err := osPipeline(t, repos, packageSetSpecs[osPkgsKey], customizations, options, partitionTable)
-	if err != nil {
-		return nil, err
-	}
-	pipelines = append(pipelines, *treePipeline)
-
-	diskfile := "disk.img"
-	kernelVer := rpmmd.GetVerStrFromPackageSpecListPanic(packageSetSpecs[osPkgsKey], customizations.GetKernel().Name)
-	imagePipeline := liveImagePipeline(treePipeline.Name, diskfile, partitionTable, t.arch, kernelVer)
-	pipelines = append(pipelines, *imagePipeline)
-
-	qemuPipeline := qemuPipeline(imagePipeline.Name, diskfile, t.filename, osbuild.QEMUFormatQCOW2, osbuild.QCOW2Options{Compat: "0.10"})
-	pipelines = append(pipelines, *qemuPipeline)
-
-	return pipelines, nil
 }

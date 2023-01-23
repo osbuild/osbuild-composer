@@ -26,9 +26,6 @@ import (
 const (
 	// package set names
 
-	// build package set name
-	buildPkgsKey = "build"
-
 	// main/common os image package set name
 	osPkgsKey = "packages"
 
@@ -205,8 +202,6 @@ func (a *architecture) Distro() distro.Distro {
 }
 
 // --- Image Type ---
-type pipelinesFunc func(t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSetSpecs map[string][]rpmmd.PackageSpec, rng *rand.Rand) ([]osbuild.Pipeline, error)
-
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
 type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.Spec, rng *rand.Rand) (image.ImageKind, error)
@@ -228,7 +223,6 @@ type imageType struct {
 	buildPipelines     []string
 	payloadPipelines   []string
 	exports            []string
-	pipelines          pipelinesFunc
 	image              imageFunc
 
 	// bootable image
@@ -265,15 +259,6 @@ func (t *imageType) Size(size uint64) uint64 {
 		size = t.defaultSize
 	}
 	return size
-}
-
-func (t *imageType) getPackages(name string) rpmmd.PackageSet {
-	getter := t.packageSets[name]
-	if getter == nil {
-		return rpmmd.PackageSet{}
-	}
-
-	return getter(t)
 }
 
 func (t *imageType) BuildPipelines() []string {
