@@ -10,6 +10,66 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+var qcow2ImgType = imageType{
+	name:          "qcow2",
+	filename:      "disk.qcow2",
+	mimeType:      "application/x-qemu-disk",
+	kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+	packageSets: map[string]packageSetFunc{
+		buildPkgsKey: distroBuildPackageSet,
+		osPkgsKey:    qcow2CommonPackageSet,
+	},
+	defaultImageConfig:  qcow2DefaultImgConfig,
+	bootable:            true,
+	defaultSize:         10 * common.GibiByte,
+	pipelines:           qcow2Pipelines,
+	buildPipelines:      []string{"build"},
+	payloadPipelines:    []string{"os", "image", "qcow2"},
+	exports:             []string{"qcow2"},
+	basePartitionTables: defaultBasePartitionTables,
+}
+
+var qcow2DefaultImgConfig = &distro.ImageConfig{
+	DefaultTarget: common.ToPtr("multi-user.target"),
+	Sysconfig: []*osbuild.SysconfigStageOptions{
+		{
+			Kernel: &osbuild.SysconfigKernelOptions{
+				UpdateDefault: true,
+				DefaultKernel: "kernel",
+			},
+			Network: &osbuild.SysconfigNetworkOptions{
+				Networking: true,
+				NoZeroConf: true,
+			},
+			NetworkScripts: &osbuild.NetworkScriptsOptions{
+				IfcfgFiles: map[string]osbuild.IfcfgFile{
+					"eth0": {
+						Device:    "eth0",
+						Bootproto: osbuild.IfcfgBootprotoDHCP,
+						OnBoot:    common.ToPtr(true),
+						Type:      osbuild.IfcfgTypeEthernet,
+						UserCtl:   common.ToPtr(true),
+						PeerDNS:   common.ToPtr(true),
+						IPv6Init:  common.ToPtr(false),
+					},
+				},
+			},
+		},
+	},
+	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+		distro.RHSMConfigNoSubscription: {
+			YumPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+				ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
+					Enabled: false,
+				},
+				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+					Enabled: false,
+				},
+			},
+		},
+	},
+}
+
 func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
@@ -91,65 +151,4 @@ func qcow2Pipelines(t *imageType, customizations *blueprint.Customizations, opti
 	pipelines = append(pipelines, *qemuPipeline)
 
 	return pipelines, nil
-}
-
-var qcow2ImgType = imageType{
-	name:          "qcow2",
-	filename:      "disk.qcow2",
-	mimeType:      "application/x-qemu-disk",
-	kernelOptions: "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
-	packageSets: map[string]packageSetFunc{
-		buildPkgsKey: distroBuildPackageSet,
-		osPkgsKey:    qcow2CommonPackageSet,
-	},
-	packageSetChains: map[string][]string{
-		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-	},
-	defaultImageConfig: &distro.ImageConfig{
-		DefaultTarget: common.ToPtr("multi-user.target"),
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					UpdateDefault: true,
-					DefaultKernel: "kernel",
-				},
-				Network: &osbuild.SysconfigNetworkOptions{
-					Networking: true,
-					NoZeroConf: true,
-				},
-				NetworkScripts: &osbuild.NetworkScriptsOptions{
-					IfcfgFiles: map[string]osbuild.IfcfgFile{
-						"eth0": {
-							Device:    "eth0",
-							Bootproto: osbuild.IfcfgBootprotoDHCP,
-							OnBoot:    common.ToPtr(true),
-							Type:      osbuild.IfcfgTypeEthernet,
-							UserCtl:   common.ToPtr(true),
-							PeerDNS:   common.ToPtr(true),
-							IPv6Init:  common.ToPtr(false),
-						},
-					},
-				},
-			},
-		},
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				YumPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-					ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-						Enabled: false,
-					},
-					SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-						Enabled: false,
-					},
-				},
-			},
-		},
-	},
-	bootable:            true,
-	defaultSize:         10 * common.GibiByte,
-	pipelines:           qcow2Pipelines,
-	buildPipelines:      []string{"build"},
-	payloadPipelines:    []string{"os", "image", "qcow2"},
-	exports:             []string{"qcow2"},
-	basePartitionTables: defaultBasePartitionTables,
 }
