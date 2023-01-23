@@ -13,14 +13,15 @@ func (r *RHEL) String() string {
 
 func (p *RHEL) GetBuildPackages() []string {
 	packages := []string{
-		"glibc",           // ldconfig
-		"platform-python", // osbuild
+		"glibc", // ldconfig
 	}
 	if p.Major >= 8 {
 		packages = append(packages,
-			"systemd", // systemd-tmpfiles and systemd-sysusers
+			"systemd",         // systemd-tmpfiles and systemd-sysusers
+			"platform-python", // osbuild
 		)
 	}
+
 	if p.Major < 9 {
 		packages = append(packages,
 			// The RHEL 8 runner in osbuild runs with platform-python but
