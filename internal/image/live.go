@@ -25,11 +25,13 @@ type LiveImage struct {
 	Workload         workload.Workload
 	Filename         string
 	Compression      string
+	PartTool         osbuild.PartTool
 }
 
 func NewLiveImage() *LiveImage {
 	return &LiveImage{
-		Base: NewBase("live-image"),
+		Base:     NewBase("live-image"),
+		PartTool: osbuild.PTSfdisk,
 	}
 }
 
@@ -47,6 +49,7 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Workload = img.Workload
 
 	imagePipeline := manifest.NewRawImage(m, buildPipeline, osPipeline)
+	imagePipeline.PartTool = img.PartTool
 
 	var artifact *artifact.Artifact
 	var artifactPipeline manifest.Pipeline

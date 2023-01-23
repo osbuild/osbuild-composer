@@ -181,6 +181,8 @@ func liveImage(workload workload.Workload,
 	img.Environment = t.environment
 	img.Workload = workload
 	img.Compression = t.compression
+	img.PartTool = osbuild.PTSgdisk // all RHEL 7 images should use sgdisk
+
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {

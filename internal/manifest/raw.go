@@ -12,6 +12,7 @@ type RawImage struct {
 	Base
 	treePipeline *OS
 	Filename     string
+	PartTool     osbuild.PartTool
 }
 
 func NewRawImage(m *Manifest,
@@ -26,12 +27,17 @@ func NewRawImage(m *Manifest,
 	if treePipeline.Base.manifest != m {
 		panic("tree pipeline from different manifest")
 	}
+	p.PartTool = osbuild.PTSfdisk // default; can be changed after initialisation
 	m.addPipeline(p)
 	return p
 }
 
 func (p *RawImage) getBuildPackages() []string {
-	return p.treePipeline.getBuildPackages()
+	pkgs := p.treePipeline.getBuildPackages()
+	if p.PartTool == osbuild.PTSgdisk {
+		pkgs = append(pkgs, "gdisk")
+	}
+	return pkgs
 }
 
 func (p *RawImage) serialize() osbuild.Pipeline {
@@ -42,7 +48,7 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 		panic("no partition table in live image")
 	}
 
-	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename, osbuild.PTSfdisk) {
+	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename, p.PartTool) {
 		pipeline.AddStage(stage)
 	}
 
