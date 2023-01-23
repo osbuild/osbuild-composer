@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -2841,6 +2845,14 @@
                   },
                   {
                     "id": "sha256:033abec66b742dff9768dc97aea81b4ac9662c8129ee1aca541f8d4d9e02ccf5",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:33c00415720bba4b323bb36b039de0666aab6f2b06e84e3db9b276d29729b507",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6371,6 +6383,9 @@
           },
           "sha256:334c9689bd1dab7d37a807bb167c43b0dfcddc4c0ef042d6594202dec9f39221": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20221124/Packages/libeconf-0.4.1-2.el9.s390x.rpm"
+          },
+          "sha256:33c00415720bba4b323bb36b039de0666aab6f2b06e84e3db9b276d29729b507": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20221124/Packages/bluez-5.56-6.el9.s390x.rpm"
           },
           "sha256:33dd7f7bdf677e4a235d57afe612b76a681700cc1db3018fac9f74e1145e3e99": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20221124/Packages/python3-3.9.14-1.el9.s390x.rpm"
@@ -10810,6 +10825,16 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20221124/Packages/bash-5.1.8-5.el9.s390x.rpm",
         "checksum": "sha256:033abec66b742dff9768dc97aea81b4ac9662c8129ee1aca541f8d4d9e02ccf5",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "6.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-s390x-baseos-20221124/Packages/bluez-5.56-6.el9.s390x.rpm",
+        "checksum": "sha256:33c00415720bba4b323bb36b039de0666aab6f2b06e84e3db9b276d29729b507",
         "check_gpg": true
       },
       {

@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -718,6 +722,9 @@
                   },
                   {
                     "id": "sha256:61b05a9f1e7711d6efa379e5038cc0b8888f672f7b2797981972c238197b84bf"
+                  },
+                  {
+                    "id": "sha256:83ec68da01c42465248083ed7e699d789df66b5885cabd83a03b24bb31532f61"
                   },
                   {
                     "id": "sha256:14df7263bcc35cb6633321f36149ddadd479ca334798bb33544109a2c61a6213"
@@ -3356,6 +3363,9 @@
           "sha256:83be16b0b671433e3d838d270818827eec46649b09e3dbc32850c2a6c6b51c1d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.5-20220504/Packages/python3-syspurpose-1.28.21-3.el8.aarch64.rpm"
           },
+          "sha256:83ec68da01c42465248083ed7e699d789df66b5885cabd83a03b24bb31532f61": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.5-20220504/Packages/bluez-5.56-2.el8.aarch64.rpm"
+          },
           "sha256:8450db29ac9604e8bd5ca8dfa2254138a933689bfb987f89d7faeeb5d49b22b5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.5-20220504/Packages/yum-utils-4.0.21-3.el8.noarch.rpm"
           },
@@ -5847,6 +5857,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.5-20220504/Packages/bind-export-libs-9.11.26-6.el8.aarch64.rpm",
         "checksum": "sha256:61b05a9f1e7711d6efa379e5038cc0b8888f672f7b2797981972c238197b84bf"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "2.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-r8.5-20220504/Packages/bluez-5.56-2.el8.aarch64.rpm",
+        "checksum": "sha256:83ec68da01c42465248083ed7e699d789df66b5885cabd83a03b24bb31532f61"
       },
       {
         "name": "brotli",

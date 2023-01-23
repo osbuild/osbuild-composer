@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -1705,6 +1709,14 @@
                   },
                   {
                     "id": "sha256:0caa72888379f82fae1bc8f448bcf0dbaead20e92f2ef4c714afadf8979c3181",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:55c14cc832750339fe5d988cb398f1959622a76d987744fa5cfbe1f98e960bd7",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6321,6 +6333,9 @@
           "sha256:54609dd070a57a14a6103f0c06bea99bb0a4e568d1fbc6a22b8ba67c954d90bf": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/ncurses-libs-6.1-9.20180224.el8.x86_64.rpm"
           },
+          "sha256:55c14cc832750339fe5d988cb398f1959622a76d987744fa5cfbe1f98e960bd7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/bluez-5.56-3.el8.x86_64.rpm"
+          },
           "sha256:561b5fdadd60370b5d0a91b7ed35df95d7f60650cbade8c7e744323982ac82db": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/chkconfig-1.19.1-1.el8.x86_64.rpm"
           },
@@ -9250,6 +9265,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/biosdevname-0.7.3-2.el8.x86_64.rpm",
         "checksum": "sha256:0caa72888379f82fae1bc8f448bcf0dbaead20e92f2ef4c714afadf8979c3181",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/bluez-5.56-3.el8.x86_64.rpm",
+        "checksum": "sha256:55c14cc832750339fe5d988cb398f1959622a76d987744fa5cfbe1f98e960bd7",
         "check_gpg": true
       },
       {

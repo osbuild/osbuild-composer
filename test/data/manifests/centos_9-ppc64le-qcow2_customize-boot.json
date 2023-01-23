@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -2464,6 +2468,14 @@
                   },
                   {
                     "id": "sha256:9f9f06e225620fac21139163bef58102acca8e589098ce549af21df43beb120b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:fbad0ce273c27454325491a7014084275d5ef0b6cb119b2aebd348afd881efa6",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -7182,6 +7194,9 @@
           "sha256:fb8c67957abedd57e6ba2f5f6d191291598af351079aa61fdf1aeeecf67fd967": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20221124/Packages/systemd-udev-250-11.el9.ppc64le.rpm"
           },
+          "sha256:fbad0ce273c27454325491a7014084275d5ef0b6cb119b2aebd348afd881efa6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20221124/Packages/bluez-5.56-6.el9.ppc64le.rpm"
+          },
           "sha256:fbafe805fea4fcfc03449684589e80db162894d7f09a972cf9370200aee57bbb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20221124/Packages/zlib-1.2.11-35.el9.ppc64le.rpm"
           },
@@ -10106,6 +10121,16 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20221124/Packages/bc-1.07.1-14.el9.ppc64le.rpm",
         "checksum": "sha256:9f9f06e225620fac21139163bef58102acca8e589098ce549af21df43beb120b",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "6.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-ppc64le-baseos-20221124/Packages/bluez-5.56-6.el9.ppc64le.rpm",
+        "checksum": "sha256:fbad0ce273c27454325491a7014084275d5ef0b6cb119b2aebd348afd881efa6",
         "check_gpg": true
       },
       {

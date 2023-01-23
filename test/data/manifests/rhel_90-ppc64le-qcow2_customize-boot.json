@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -687,6 +691,9 @@
                   },
                   {
                     "id": "sha256:2f2d050bb10a3dbfe20dcbd42bfa16344d9356c0ec004b517ff77f389247e304"
+                  },
+                  {
+                    "id": "sha256:4b6283ae331c7700c99dfb2036349783f88a0ec4bf94acbc61c73cd7c14f4901"
                   },
                   {
                     "id": "sha256:44dd2e683d1a912032da388fd0539ab2479b0f4dd670caf2ad261f289bcd187d"
@@ -2989,6 +2996,9 @@
           },
           "sha256:4a876e7ddd2d9b8879e2e6982654ea7e8119a8200f8885478e72e415b0282e8d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20220208/Packages/pcre-8.44-3.el9.3.ppc64le.rpm"
+          },
+          "sha256:4b6283ae331c7700c99dfb2036349783f88a0ec4bf94acbc61c73cd7c14f4901": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20220208/Packages/bluez-5.56-8.el9.ppc64le.rpm"
           },
           "sha256:4b92bfb55c4e356a7960b721ec7f16c191e0081f9cb1bae98b1411078a706e48": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.0-20220208/Packages/abattis-cantarell-fonts-0.301-4.el9.noarch.rpm"
@@ -5691,6 +5701,15 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20220208/Packages/bc-1.07.1-14.el9.ppc64le.rpm",
         "checksum": "sha256:2f2d050bb10a3dbfe20dcbd42bfa16344d9356c0ec004b517ff77f389247e304"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "8.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.0-20220208/Packages/bluez-5.56-8.el9.ppc64le.rpm",
+        "checksum": "sha256:4b6283ae331c7700c99dfb2036349783f88a0ec4bf94acbc61c73cd7c14f4901"
       },
       {
         "name": "bzip2",

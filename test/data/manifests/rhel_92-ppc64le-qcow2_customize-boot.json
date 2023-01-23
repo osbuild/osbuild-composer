@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -1568,6 +1572,14 @@
                   },
                   {
                     "id": "sha256:2f2d050bb10a3dbfe20dcbd42bfa16344d9356c0ec004b517ff77f389247e304",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:ce41c74a8ac332411b53ea63e1bb4c0e0755117b883485ee9f5b030bf8112add",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -7159,6 +7171,9 @@
           "sha256:ce140e68125c6dcd448acb01ec6c5523f1568b5270711f9d0cfdc4708babdcc0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.2-20221025/Packages/lzo-2.10-7.el9.ppc64le.rpm"
           },
+          "sha256:ce41c74a8ac332411b53ea63e1bb4c0e0755117b883485ee9f5b030bf8112add": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.2-20221025/Packages/bluez-5.64-2.el9.ppc64le.rpm"
+          },
           "sha256:cfb5e8fddaed92b1b22c957183d0ea626a4468f42a46dae4e68a795cb8c20393": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-appstream-n9.2-20221025/Packages/adobe-source-code-pro-fonts-2.030.1.050-12.el9.1.noarch.rpm"
           },
@@ -9224,6 +9239,16 @@
         "arch": "ppc64le",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.2-20221025/Packages/bc-1.07.1-14.el9.ppc64le.rpm",
         "checksum": "sha256:2f2d050bb10a3dbfe20dcbd42bfa16344d9356c0ec004b517ff77f389247e304",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.64",
+        "release": "2.el9",
+        "arch": "ppc64le",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-ppc64le-baseos-n9.2-20221025/Packages/bluez-5.64-2.el9.ppc64le.rpm",
+        "checksum": "sha256:ce41c74a8ac332411b53ea63e1bb4c0e0755117b883485ee9f5b030bf8112add",
         "check_gpg": true
       },
       {

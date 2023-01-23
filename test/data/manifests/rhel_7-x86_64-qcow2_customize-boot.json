@@ -40,6 +40,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -2775,6 +2779,9 @@
           "sha256:728834a32b4fe0645fc53f094d243d26aa98baa514fb704bda0760204779638b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/nss-pem-1.0.3-7.el7.x86_64.rpm"
           },
+          "sha256:72e259b72e9345c09d6d06056fd93f8ea31c10cd69e78c95899f44a8777a04b5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libical-3.0.3-2.el7.x86_64.rpm"
+          },
           "sha256:732503bcffcd921ba9b084090852726b5d443c82a2fc3bbe4a7928eb743c8061": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libbasicobjects-0.1.1-32.el7.x86_64.rpm"
           },
@@ -2867,6 +2874,9 @@
           },
           "sha256:863368533ab642f516054ac4f6a5368f8995229d1ad808478b5bf03d0c69472b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libsemanage-2.5-14.el7.x86_64.rpm"
+          },
+          "sha256:86fa352092d56520903a819fc02fb0bc7396ef86df9b89f7b6689dc492ba392d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/bluez-5.44-7.el7.x86_64.rpm"
           },
           "sha256:88e7108ff671d4e161a1fc1bd72c41c4cec8e80b74c5300b327183551824cc49": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libpath_utils-0.2.1-32.el7.x86_64.rpm"
@@ -2966,6 +2976,9 @@
           },
           "sha256:9ae89ba6e5533df2ee1af8cab3ed8fd6be99a432eff3519783095a37cd710a66": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/NetworkManager-config-server-1.18.8-1.el7.noarch.rpm"
+          },
+          "sha256:9b8a185b88e6d414b5d744aabd5817950d112a8f351bff3c2a01b1ab2b766b1e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libicu-50.2-4.el7_7.x86_64.rpm"
           },
           "sha256:9bfc868c97a1998e18e7ff32657478d895e87a2d1d919ffeca60a4e9dc5cec43": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libgudev1-219-78.el7.x86_64.rpm"
@@ -3614,6 +3627,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/biosdevname-0.7.3-2.el7.x86_64.rpm",
         "checksum": "sha256:838e27cadbb77a140e9c26664d37cd22d38f22500b8e9b587405e926bbb7c18f"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.44",
+        "release": "7.el7",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/bluez-5.44-7.el7.x86_64.rpm",
+        "checksum": "sha256:86fa352092d56520903a819fc02fb0bc7396ef86df9b89f7b6689dc492ba392d"
       },
       {
         "name": "btrfs-progs",
@@ -4766,6 +4788,24 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libgudev1-219-78.el7.x86_64.rpm",
         "checksum": "sha256:9bfc868c97a1998e18e7ff32657478d895e87a2d1d919ffeca60a4e9dc5cec43"
+      },
+      {
+        "name": "libical",
+        "epoch": 0,
+        "version": "3.0.3",
+        "release": "2.el7",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libical-3.0.3-2.el7.x86_64.rpm",
+        "checksum": "sha256:72e259b72e9345c09d6d06056fd93f8ea31c10cd69e78c95899f44a8777a04b5"
+      },
+      {
+        "name": "libicu",
+        "epoch": 0,
+        "version": "50.2",
+        "release": "4.el7_7",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libicu-50.2-4.el7_7.x86_64.rpm",
+        "checksum": "sha256:9b8a185b88e6d414b5d744aabd5817950d112a8f351bff3c2a01b1ab2b766b1e"
       },
       {
         "name": "libidn",

@@ -23,6 +23,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -736,6 +740,9 @@
                   },
                   {
                     "id": "sha256:78926ec2c75db8bcbdd4f4fbd8c06b373f85bd7ecce0e6aac8c75dda95fcae2c"
+                  },
+                  {
+                    "id": "sha256:f55ad3fefb28c7a504e4fa81c251cc95185f72167b9e700acaf5d149101b7693"
                   },
                   {
                     "id": "sha256:267858a95e543459a0cd683e641955d7c04c13bcda830c5f7db5a0529077428a"
@@ -4136,6 +4143,9 @@
           "sha256:f5361f959d87ceb9c6fa101c443a20b28c769d5adcd0a0b6fd2bce871204183e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/selinux-policy-targeted-3.14.3-80.el8.noarch.rpm"
           },
+          "sha256:f55ad3fefb28c7a504e4fa81c251cc95185f72167b9e700acaf5d149101b7693": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/bluez-5.56-2.el8.x86_64.rpm"
+          },
           "sha256:f6f157776ee3fe21dd7af7a5af8dc55e25420cda37d01051d0e9746c68e508c0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/kexec-tools-2.0.20-57.el8.x86_64.rpm"
           },
@@ -5973,6 +5983,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/biosdevname-0.7.3-2.el8.x86_64.rpm",
         "checksum": "sha256:78926ec2c75db8bcbdd4f4fbd8c06b373f85bd7ecce0e6aac8c75dda95fcae2c"
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.56",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/bluez-5.56-2.el8.x86_64.rpm",
+        "checksum": "sha256:f55ad3fefb28c7a504e4fa81c251cc95185f72167b9e700acaf5d149101b7693"
       },
       {
         "name": "brotli",

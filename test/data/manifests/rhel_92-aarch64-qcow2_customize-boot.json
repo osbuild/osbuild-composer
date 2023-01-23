@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -1352,6 +1356,14 @@
                   },
                   {
                     "id": "sha256:e3b5b62c6ab76438013789260cefe41f3ea409acb4257f6215da364566f56ad1",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:a992e7d9c5424ed394b1a96cf2bd5066590cfe70b2dc0298da9cad1636b9e975",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6188,6 +6200,9 @@
           "sha256:a96e1ce52455d5b16a66fe359b864bd4454160e0bab514b7f0e1ce0bbfb04282": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.2-20230101/Packages/quota-nls-4.06-6.el9.noarch.rpm"
           },
+          "sha256:a992e7d9c5424ed394b1a96cf2bd5066590cfe70b2dc0298da9cad1636b9e975": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.2-20230101/Packages/bluez-5.64-2.el9.aarch64.rpm"
+          },
           "sha256:ab46c2ef8d3084aa5fa37eea7306afd0253ccd43004e5e60c280edf9260782b0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.2-20230101/Packages/NetworkManager-team-1.41.7-2.el9.aarch64.rpm"
           },
@@ -8181,6 +8196,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.2-20230101/Packages/bash-5.1.8-6.el9_1.aarch64.rpm",
         "checksum": "sha256:e3b5b62c6ab76438013789260cefe41f3ea409acb4257f6215da364566f56ad1",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.64",
+        "release": "2.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.2-20230101/Packages/bluez-5.64-2.el9.aarch64.rpm",
+        "checksum": "sha256:a992e7d9c5424ed394b1a96cf2bd5066590cfe70b2dc0298da9cad1636b9e975",
         "check_gpg": true
       },
       {
