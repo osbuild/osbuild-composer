@@ -16,32 +16,32 @@ func getTestingRepoRegistry() *RepoRegistry {
 			test_distro.TestDistroName: {
 				test_distro.TestArchName: {
 					{
-						Name:    "baseos",
-						BaseURL: "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os",
+						Name:     "baseos",
+						BaseURLs: []string{"https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os"},
 					},
 					{
-						Name:    "appstream",
-						BaseURL: "https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os",
+						Name:     "appstream",
+						BaseURLs: []string{"https://cdn.redhat.com/content/dist/rhel8/8/x86_64/appstream/os"},
 					},
 				},
 				test_distro.TestArch2Name: {
 					{
-						Name:    "baseos",
-						BaseURL: "https://cdn.redhat.com/content/dist/rhel8/8/aarch64/baseos/os",
+						Name:     "baseos",
+						BaseURLs: []string{"https://cdn.redhat.com/content/dist/rhel8/8/aarch64/baseos/os"},
 					},
 					{
 						Name:          "appstream",
-						BaseURL:       "https://cdn.redhat.com/content/dist/rhel8/8/aarch64/appstream/os",
+						BaseURLs:      []string{"https://cdn.redhat.com/content/dist/rhel8/8/aarch64/appstream/os"},
 						ImageTypeTags: []string{},
 					},
 					{
 						Name:          "google-compute-engine",
-						BaseURL:       "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable",
+						BaseURLs:      []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"},
 						ImageTypeTags: []string{test_distro.TestImageType2Name},
 					},
 					{
 						Name:          "google-cloud-sdk",
-						BaseURL:       "https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64",
+						BaseURLs:      []string{"https://packages.cloud.google.com/yum/repos/cloud-sdk-el8-x86_64"},
 						ImageTypeTags: []string{test_distro.TestImageType2Name},
 					},
 				},

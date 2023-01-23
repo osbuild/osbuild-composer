@@ -75,7 +75,7 @@ func executeTests(m *testing.M) int {
 	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
 		test_distro.TestDistroName: {
 			test_distro.TestArchName: {
-				{Name: "test-system-repo", BaseURL: "http://example.com/test/os/test_arch"},
+				{Name: "test-system-repo", BaseURLs: []string{"http://example.com/test/os/test_arch"}},
 			},
 		},
 	})

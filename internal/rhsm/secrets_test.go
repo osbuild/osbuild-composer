@@ -41,7 +41,7 @@ func TestParseRepoFile(t *testing.T) {
 	subscriptions := Subscriptions{
 		available: repoFileContent,
 	}
-	secrets, err := subscriptions.GetSecretsForBaseurl("https://cdn.redhat.com/content/dist/middleware/jws/1.0/x86_64/os", "x86_64", "")
+	secrets, err := subscriptions.GetSecretsForBaseurl([]string{"https://cdn.redhat.com/content/dist/middleware/jws/1.0/x86_64/os"}, "x86_64", "")
 	require.NoError(t, err, "Failed to get secrets for a baseurl")
 	assert.Equal(t, secrets.SSLCACert, "/etc/rhsm/ca/redhat-uep.pem", "Unexpected path to the CA certificate")
 	assert.Equal(t, secrets.SSLClientCert, "/etc/pki/entitlement/456.pem", "Unexpected path to the client cert")

@@ -1352,8 +1352,8 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 
 	repoConfig.RHSM = repo.Rhsm != nil && *repo.Rhsm
 
-	if repo.Baseurl != nil {
-		repoConfig.BaseURL = *repo.Baseurl
+	if repo.Baseurl != nil && *repo.Baseurl != "" {
+		repoConfig.BaseURLs = []string{*repo.Baseurl}
 	} else if repo.Mirrorlist != nil {
 		repoConfig.MirrorList = *repo.Mirrorlist
 	} else if repo.Metalink != nil {

@@ -616,20 +616,20 @@ func TestDepsolveJobArgsCompat(t *testing.T) {
 
 	// common elements
 	baseos := rpmmd.RepoConfig{
-		Name:    "baseos",
-		BaseURL: "https://example.com/baseos",
+		Name:     "baseos",
+		BaseURLs: []string{"https://example.com/baseos"},
 	}
 	appstream := rpmmd.RepoConfig{
-		Name:    "appstream",
-		BaseURL: "https://example.com/appstream",
+		Name:     "appstream",
+		BaseURLs: []string{"https://example.com/appstream"},
 	}
 	user1 := rpmmd.RepoConfig{
-		Name:    "user1",
-		BaseURL: "https://example.com/user/1",
+		Name:     "user1",
+		BaseURLs: []string{"https://example.com/user/1"},
 	}
 	user2 := rpmmd.RepoConfig{
-		Name:    "user2",
-		BaseURL: "https://example.com/user/2",
+		Name:     "user2",
+		BaseURLs: []string{"https://example.com/user/2"},
 	}
 
 	osIncludes := []string{"os1", "os2", "os3"}

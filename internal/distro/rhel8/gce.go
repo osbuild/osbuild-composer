@@ -99,7 +99,7 @@ func defaultGceByosImageConfig(rd distribution) *distro.ImageConfig {
 					{
 						Id:           "google-compute-engine",
 						Name:         "Google Compute Engine",
-						BaseURL:      []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"},
+						BaseURLs:     []string{"https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"},
 						Enabled:      common.ToPtr(true),
 						GPGCheck:     common.ToPtr(true),
 						RepoGPGCheck: common.ToPtr(false),

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/mocks/rpmrepo"
@@ -69,20 +70,20 @@ func TestDepsolver(t *testing.T) {
 func TestMakeDepsolveRequest(t *testing.T) {
 
 	baseOS := rpmmd.RepoConfig{
-		Name:    "baseos",
-		BaseURL: "https://example.org/baseos",
+		Name:     "baseos",
+		BaseURLs: []string{"https://example.org/baseos"},
 	}
 	appstream := rpmmd.RepoConfig{
-		Name:    "appstream",
-		BaseURL: "https://example.org/appstream",
+		Name:     "appstream",
+		BaseURLs: []string{"https://example.org/appstream"},
 	}
 	userRepo := rpmmd.RepoConfig{
-		Name:    "user-repo",
-		BaseURL: "https://example.org/user-repo",
+		Name:     "user-repo",
+		BaseURLs: []string{"https://example.org/user-repo"},
 	}
 	userRepo2 := rpmmd.RepoConfig{
-		Name:    "user-repo-2",
-		BaseURL: "https://example.org/user-repo-2",
+		Name:     "user-repo-2",
+		BaseURLs: []string{"https://example.org/user-repo-2"},
 	}
 	tests := []struct {
 		packageSets []rpmmd.PackageSet
@@ -111,14 +112,14 @@ func TestMakeDepsolveRequest(t *testing.T) {
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      baseOS.Hash(),
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
+					ID:       baseOS.Hash(),
+					Name:     "baseos",
+					BaseURLs: []string{"https://example.org/baseos"},
 				},
 				{
-					ID:      appstream.Hash(),
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
+					ID:       appstream.Hash(),
+					Name:     "appstream",
+					BaseURLs: []string{"https://example.org/appstream"},
 				},
 			},
 		},
@@ -148,19 +149,19 @@ func TestMakeDepsolveRequest(t *testing.T) {
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      baseOS.Hash(),
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
+					ID:       baseOS.Hash(),
+					Name:     "baseos",
+					BaseURLs: []string{"https://example.org/baseos"},
 				},
 				{
-					ID:      appstream.Hash(),
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
+					ID:       appstream.Hash(),
+					Name:     "appstream",
+					BaseURLs: []string{"https://example.org/appstream"},
 				},
 				{
-					ID:      userRepo.Hash(),
-					Name:    "user-repo",
-					BaseURL: "https://example.org/user-repo",
+					ID:       userRepo.Hash(),
+					Name:     "user-repo",
+					BaseURLs: []string{"https://example.org/user-repo"},
 				},
 			},
 		},
@@ -190,14 +191,14 @@ func TestMakeDepsolveRequest(t *testing.T) {
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      baseOS.Hash(),
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
+					ID:       baseOS.Hash(),
+					Name:     "baseos",
+					BaseURLs: []string{"https://example.org/baseos"},
 				},
 				{
-					ID:      appstream.Hash(),
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
+					ID:       appstream.Hash(),
+					Name:     "appstream",
+					BaseURLs: []string{"https://example.org/appstream"},
 				},
 			},
 		},
@@ -235,19 +236,19 @@ func TestMakeDepsolveRequest(t *testing.T) {
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      baseOS.Hash(),
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
+					ID:       baseOS.Hash(),
+					Name:     "baseos",
+					BaseURLs: []string{"https://example.org/baseos"},
 				},
 				{
-					ID:      appstream.Hash(),
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
+					ID:       appstream.Hash(),
+					Name:     "appstream",
+					BaseURLs: []string{"https://example.org/appstream"},
 				},
 				{
-					ID:      userRepo.Hash(),
-					Name:    "user-repo",
-					BaseURL: "https://example.org/user-repo",
+					ID:       userRepo.Hash(),
+					Name:     "user-repo",
+					BaseURLs: []string{"https://example.org/user-repo"},
 				},
 			},
 		},
@@ -286,24 +287,24 @@ func TestMakeDepsolveRequest(t *testing.T) {
 			},
 			wantRepos: []repoConfig{
 				{
-					ID:      baseOS.Hash(),
-					Name:    "baseos",
-					BaseURL: "https://example.org/baseos",
+					ID:       baseOS.Hash(),
+					Name:     "baseos",
+					BaseURLs: []string{"https://example.org/baseos"},
 				},
 				{
-					ID:      appstream.Hash(),
-					Name:    "appstream",
-					BaseURL: "https://example.org/appstream",
+					ID:       appstream.Hash(),
+					Name:     "appstream",
+					BaseURLs: []string{"https://example.org/appstream"},
 				},
 				{
-					ID:      userRepo.Hash(),
-					Name:    "user-repo",
-					BaseURL: "https://example.org/user-repo",
+					ID:       userRepo.Hash(),
+					Name:     "user-repo",
+					BaseURLs: []string{"https://example.org/user-repo"},
 				},
 				{
-					ID:      userRepo2.Hash(),
-					Name:    "user-repo-2",
-					BaseURL: "https://example.org/user-repo-2",
+					ID:       userRepo2.Hash(),
+					Name:     "user-repo-2",
+					BaseURLs: []string{"https://example.org/user-repo-2"},
 				},
 			},
 		},
@@ -479,7 +480,7 @@ func expectedResult(repo rpmmd.RepoConfig) []rpmmd.PackageSpec {
 	exp := []rpmmd.PackageSpec(expectedTemplate)
 	for idx := range exp {
 		urlTemplate := exp[idx].RemoteLocation
-		exp[idx].RemoteLocation = fmt.Sprintf(urlTemplate, repo.BaseURL)
+		exp[idx].RemoteLocation = fmt.Sprintf(urlTemplate, strings.Join(repo.BaseURLs, ","))
 	}
 	return exp
 }
@@ -503,7 +504,7 @@ func TestErrorRepoInfo(t *testing.T) {
 		{
 			repo: rpmmd.RepoConfig{
 				Name:     "",
-				BaseURL:  "https://0.0.0.0/baseos/repo",
+				BaseURLs: []string{"https://0.0.0.0/baseos/repo"},
 				Metalink: "https://0.0.0.0/baseos/metalink",
 			},
 			expMsg: "[https://0.0.0.0/baseos/repo]",
@@ -511,7 +512,7 @@ func TestErrorRepoInfo(t *testing.T) {
 		{
 			repo: rpmmd.RepoConfig{
 				Name:     "baseos",
-				BaseURL:  "https://0.0.0.0/baseos/repo",
+				BaseURLs: []string{"https://0.0.0.0/baseos/repo"},
 				Metalink: "https://0.0.0.0/baseos/metalink",
 			},
 			expMsg: "[baseos: https://0.0.0.0/baseos/repo]",
@@ -553,14 +554,14 @@ func TestRepoConfigHash(t *testing.T) {
 	rc := repoConfig{
 		ID:        "repoid-1",
 		Name:      "A test repository",
-		BaseURL:   "https://arepourl/",
+		BaseURLs:  []string{"https://arepourl/"},
 		IgnoreSSL: false,
 	}
 
 	hash := rc.Hash()
 	assert.Equal(t, 64, len(hash))
 
-	rc.BaseURL = "https://adifferenturl/"
+	rc.BaseURLs = []string{"https://adifferenturl/"}
 	assert.NotEqual(t, hash, rc.Hash())
 }
 
@@ -569,7 +570,7 @@ func TestRequestHash(t *testing.T) {
 	repos := []rpmmd.RepoConfig{
 		rpmmd.RepoConfig{
 			Name:      "A test repository",
-			BaseURL:   "https://arepourl/",
+			BaseURLs:  []string{"https://arepourl/"},
 			IgnoreSSL: false,
 		},
 	}

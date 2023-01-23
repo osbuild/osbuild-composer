@@ -18,7 +18,7 @@ func NewTestServer() *testRepoServer {
 	server := httptest.NewServer(http.FileServer(http.Dir("../../test/data/testrepo/")))
 	testrepo := rpmmd.RepoConfig{
 		Name:      "cs9-baseos",
-		BaseURL:   server.URL,
+		BaseURLs:  []string{server.URL},
 		CheckGPG:  false,
 		IgnoreSSL: true,
 		RHSM:      false,
