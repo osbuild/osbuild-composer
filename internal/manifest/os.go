@@ -130,6 +130,13 @@ type OS struct {
 	packageSpecs []rpmmd.PackageSpec
 	platform     platform.Platform
 	kernelVer    string
+
+	// NoBLS configures the image bootloader with traditional menu entries
+	// instead of BLS. Required for legacy systems like RHEL 7.
+	NoBLS     bool
+	OSProduct string
+	OSVersion string
+	OSNick    string
 }
 
 // NewOS creates a new OS pipeline. build is the build pipeline to use for
@@ -287,11 +294,13 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 	pipeline.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
-	// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-	if p.PartitionTable == nil || p.PartitionTable.FindMountable("/boot") == nil {
-		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
-	} else {
-		pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.ToPtr("")}))
+	if !p.NoBLS {
+		// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
+		if p.PartitionTable == nil || p.PartitionTable.FindMountable("/boot") == nil {
+			pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
+		} else {
+			pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.ToPtr("")}))
+		}
 	}
 
 	if len(p.Containers) > 0 {
@@ -507,30 +516,52 @@ func (p *OS) serialize() osbuild.Pipeline {
 		case platform.ARCH_S390X:
 			bootloader = osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 		default:
-			var options *osbuild.GRUB2StageOptions
-			options = osbuild.NewGrub2StageOptionsUnified(pt,
-				p.kernelVer,
-				p.platform.GetUEFIVendor() != "",
-				p.platform.GetBIOSPlatform(),
-				p.platform.GetUEFIVendor(), false)
-			if cfg := p.Grub2Config; cfg != nil {
-				// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
-				// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`
-				// and thus we need to preserve it
-				if options.Config != nil {
-					cfg.Default = options.Config.Default
+			if p.NoBLS {
+				// BLS entries not supported: use grub2.legacy
+				id := "76a22bf4-f153-4541-b6c7-0332c0dfaeac"
+				product := osbuild.GRUB2Product{
+					Name:    p.OSProduct,
+					Version: p.OSVersion,
+					Nick:    p.OSNick,
 				}
 
-				options.Config = cfg
-			}
-			if p.KernelOptionsBootloader {
-				options.WriteCmdLine = nil
-				if options.UEFI != nil {
-					options.UEFI.Unified = false
+				rescueVer, _ := rpmmd.GetVerStrFromPackageSpecList(p.packageSpecs, "dracut-config-rescue")
+				hasRescue := rescueVer != ""
+				bootloader = osbuild.NewGrub2LegacyStage(
+					osbuild.NewGrub2LegacyStageOptions(
+						p.Grub2Config,
+						p.PartitionTable,
+						kernelOptions,
+						p.platform.GetBIOSPlatform(),
+						p.platform.GetUEFIVendor(),
+						osbuild.MakeGrub2MenuEntries(id, p.kernelVer, product, hasRescue),
+					),
+				)
+			} else {
+				options := osbuild.NewGrub2StageOptionsUnified(pt,
+					p.kernelVer,
+					p.platform.GetUEFIVendor() != "",
+					p.platform.GetBIOSPlatform(),
+					p.platform.GetUEFIVendor(), false)
+				if cfg := p.Grub2Config; cfg != nil {
+					// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
+					// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`
+					// and thus we need to preserve it
+					if options.Config != nil {
+						cfg.Default = options.Config.Default
+					}
+
+					options.Config = cfg
 				}
-				options.KernelOptions = strings.Join(kernelOptions, " ")
+				if p.KernelOptionsBootloader {
+					options.WriteCmdLine = nil
+					if options.UEFI != nil {
+						options.UEFI.Unified = false
+					}
+					options.KernelOptions = strings.Join(kernelOptions, " ")
+				}
+				bootloader = osbuild.NewGRUB2Stage(options)
 			}
-			bootloader = osbuild.NewGRUB2Stage(options)
 		}
 
 		pipeline.AddStage(bootloader)
