@@ -1,7 +1,6 @@
 package rhel7
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -15,11 +14,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/image"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 	"github.com/osbuild/osbuild-composer/internal/workload"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -275,61 +276,6 @@ func (t *imageType) getPackages(name string) rpmmd.PackageSet {
 	return getter(t)
 }
 
-func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
-	// merge package sets that appear in the image type with the package sets
-	// of the same name from the distro and arch
-	mergedSets := make(map[string]rpmmd.PackageSet)
-
-	imageSets := t.packageSets
-
-	for name := range imageSets {
-		mergedSets[name] = t.getPackages(name)
-	}
-
-	if _, hasPackages := imageSets[osPkgsKey]; !hasPackages {
-		// should this be possible??
-		mergedSets[osPkgsKey] = rpmmd.PackageSet{}
-	}
-
-	// every image type must define a 'build' package set
-	if _, hasBuild := imageSets[buildPkgsKey]; !hasBuild {
-		panic(fmt.Sprintf("'%s' image type has no '%s' package set defined", t.name, buildPkgsKey))
-	}
-
-	// blueprint packages
-	bpPackages := bp.GetPackages()
-	timezone, _ := bp.Customizations.GetTimezoneSettings()
-	if timezone != nil {
-		bpPackages = append(bpPackages, "chrony")
-	}
-
-	// if we have file system customization that will need to a new mount point
-	// the layout is converted to LVM so we need to corresponding packages
-	archName := t.arch.Name()
-	pt := t.basePartitionTables[archName]
-	haveNewMountpoint := false
-
-	if fs := bp.Customizations.GetFilesystems(); fs != nil {
-		for i := 0; !haveNewMountpoint && i < len(fs); i++ {
-			haveNewMountpoint = !pt.ContainsMountpoint(fs[i].Mountpoint)
-		}
-	}
-
-	if haveNewMountpoint {
-		bpPackages = append(bpPackages, "lvm2")
-	}
-
-	// depsolve bp packages separately
-	// bp packages aren't restricted by exclude lists
-	mergedSets[blueprintPkgsKey] = rpmmd.PackageSet{Include: bpPackages}
-	kernel := bp.Customizations.GetKernel().Name
-
-	// add bp kernel to main OS package set to avoid duplicate kernels
-	mergedSets[osPkgsKey] = mergedSets[osPkgsKey].Append(rpmmd.PackageSet{Include: []string{kernel}})
-
-	return distro.MakePackageSetChains(t, mergedSets, repos)
-}
-
 func (t *imageType) BuildPipelines() []string {
 	return t.buildPipelines
 }
@@ -401,15 +347,28 @@ func (t *imageType) PartitionType() string {
 	return basePartitionTable.Type
 }
 
-func (t *imageType) Manifest(customizations *blueprint.Customizations,
+func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSpecSets map[string][]rpmmd.PackageSpec,
+	packageSets map[string]rpmmd.PackageSet,
 	containers []container.Spec,
-	seed int64) (distro.Manifest, error) {
+	seed int64) (*manifest.Manifest, error) {
 
-	if err := t.checkOptions(customizations, options, containers); err != nil {
-		return distro.Manifest{}, err
+	if err := t.checkOptions(bp.Customizations, options, containers); err != nil {
+		return nil, err
+	}
+
+	// TODO: let image types specify valid workloads, rather than
+	// always assume Custom.
+	w := &workload.Custom{
+		BaseWorkload: workload.BaseWorkload{
+			Repos: packageSets[blueprintPkgsKey].Repositories,
+		},
+		Packages: bp.GetPackagesEx(false),
+	}
+	if services := bp.Customizations.GetServices(); services != nil {
+		w.Services = services.Enabled
+		w.DisabledServices = services.Disabled
 	}
 
 	source := rand.NewSource(seed)
@@ -417,24 +376,126 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	pipelines, err := t.pipelines(t, customizations, options, repos, packageSpecSets, rng)
+	if t.image == nil {
+		return nil, nil
+	}
+	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
+	if err != nil {
+		return nil, err
+	}
+	manifest := manifest.New()
+	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
+	if err != nil {
+		return nil, err
+	}
+	return &manifest, err
+}
+
+func (t *imageType) Manifest(customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	repos []rpmmd.RepoConfig,
+	packageSets map[string][]rpmmd.PackageSpec,
+	containers []container.Spec,
+	seed int64) (distro.Manifest, error) {
+
+	bp := &blueprint.Blueprint{Name: "empty blueprint"}
+	err := bp.Initialize()
+	if err != nil {
+		panic("could not initialize empty blueprint: " + err.Error())
+	}
+	bp.Customizations = customizations
+
+	manifest, err := t.initializeManifest(bp, options, repos, nil, containers, seed)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
 
-	// flatten spec sets for sources
-	allPackageSpecs := make([]rpmmd.PackageSpec, 0)
-	for _, specs := range packageSpecSets {
-		allPackageSpecs = append(allPackageSpecs, specs...)
+	return manifest.Serialize(packageSets)
+}
+
+func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
+	// merge package sets that appear in the image type with the package sets
+	// of the same name from the distro and arch
+	packageSets := make(map[string]rpmmd.PackageSet)
+
+	for name, getter := range t.packageSets {
+		packageSets[name] = getter(t)
 	}
 
-	return json.Marshal(
-		osbuild.Manifest{
-			Version:   "2",
-			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(allPackageSpecs, nil, nil, containers),
-		},
-	)
+	// amend with repository information
+	globalRepos := make([]rpmmd.RepoConfig, 0)
+	for _, repo := range repos {
+		if len(repo.PackageSets) > 0 {
+			// only apply the repo to the listed package sets
+			for _, psName := range repo.PackageSets {
+				ps := packageSets[psName]
+				ps.Repositories = append(ps.Repositories, repo)
+				packageSets[psName] = ps
+			}
+		} else {
+			// no package sets were listed, so apply the repo
+			// to all package sets
+			globalRepos = append(globalRepos, repo)
+		}
+	}
+
+	// Similar to above, for edge-commit and edge-container, we need to set an
+	// ImageRef in order to properly initialize the manifest and package
+	// selection.
+	options.OSTree.ImageRef = t.OSTreeRef()
+
+	// create a temporary container spec array with the info from the blueprint
+	// to initialize the manifest
+	containers := make([]container.Spec, len(bp.Containers))
+	for idx := range bp.Containers {
+		containers[idx] = container.Spec{
+			Source:    bp.Containers[idx].Source,
+			TLSVerify: bp.Containers[idx].TLSVerify,
+			LocalName: bp.Containers[idx].Name,
+		}
+	}
+
+	// create a manifest object and instantiate it with the computed packageSetChains
+	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, containers, 0)
+	if err != nil {
+		// TODO: handle manifest initialization errors more gracefully, we
+		// refuse to initialize manifests with invalid config.
+		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
+		return nil
+	}
+	return overridePackageNamesInSets(manifest.GetPackageSetChains())
+}
+
+// Runs overridePackageNames() on each package set's Include and Exclude list
+// and replaces package names.
+func overridePackageNamesInSets(chains map[string][]rpmmd.PackageSet) map[string][]rpmmd.PackageSet {
+	pkgSetChains := make(map[string][]rpmmd.PackageSet)
+	for name, chain := range chains {
+		cc := make([]rpmmd.PackageSet, len(chain))
+		for idx := range chain {
+			cc[idx] = rpmmd.PackageSet{
+				Include:      overridePackageNames(chain[idx].Include),
+				Exclude:      overridePackageNames(chain[idx].Exclude),
+				Repositories: chain[idx].Repositories,
+			}
+		}
+		pkgSetChains[name] = cc
+	}
+	return pkgSetChains
+}
+
+// Resolve packages to their distro-specific name. This function is a temporary
+// workaround to the issue of having packages specified outside of distros (in
+// internal/manifest/os.go), which should be distro agnostic. In the future,
+// this should be handled more generally.
+func overridePackageNames(packages []string) []string {
+	for idx := range packages {
+		switch packages[idx] {
+		case "python3-pyyaml":
+			packages[idx] = "python3-PyYAML"
+		}
+	}
+	return packages
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.

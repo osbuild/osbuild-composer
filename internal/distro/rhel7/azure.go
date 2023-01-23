@@ -12,12 +12,12 @@ import (
 )
 
 var azureRhuiImgType = imageType{
-	name:     "azure-rhui",
-	filename: "disk.vhd.xz",
-	mimeType: "application/xz",
+	name:        "azure-rhui",
+	filename:    "disk.vhd.xz",
+	mimeType:    "application/xz",
+	compression: "xz",
 	packageSets: map[string]packageSetFunc{
-		buildPkgsKey: distroBuildPackageSet,
-		osPkgsKey:    azureRhuiCommonPackageSet,
+		osPkgsKey: azureRhuiCommonPackageSet,
 	},
 	packageSetChains: map[string][]string{
 		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
@@ -26,10 +26,10 @@ var azureRhuiImgType = imageType{
 	kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y",
 	bootable:            true,
 	defaultSize:         64 * common.GibiByte,
-	pipelines:           vhdPipelines(true),
+	image:               liveImage,
 	buildPipelines:      []string{"build"},
-	payloadPipelines:    []string{"os", "image", "vpc", "archive"},
-	exports:             []string{"archive"},
+	payloadPipelines:    []string{"os", "image", "vpc", "xz"},
+	exports:             []string{"xz"},
 	basePartitionTables: azureRhuiBasePartitionTables,
 }
 
