@@ -434,7 +434,7 @@ func newDistro(name string, minor int) *distribution {
 		}
 
 		// add azure to RHEL distro only
-		x86_64.addImageTypes(azureX64Platform, azureRhuiImgType(), azureByosImgType(), azureSapImgType(rd))
+		x86_64.addImageTypes(azureX64Platform, azureRhuiImgType(), azureByosImgType(), azureSapRhuiImgType(rd))
 
 		// add ec2 image types to RHEL distro only
 		x86_64.addImageTypes(rawX86Platform, ec2ImgTypeX86_64(rd), ec2HaImgTypeX86_64(rd))

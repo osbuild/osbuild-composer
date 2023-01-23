@@ -31,7 +31,7 @@ func azureRhuiImgType() imageType {
 	}
 }
 
-func azureSapImgType(rd distribution) imageType {
+func azureSapRhuiImgType(rd distribution) imageType {
 	return imageType{
 		name:        "azure-sap-rhui",
 		filename:    "disk.vhd.xz",
@@ -40,7 +40,7 @@ func azureSapImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: azureSapPackageSet,
 		},
-		defaultImageConfig:  SapAzureImageConfig(rd),
+		defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(SapAzureImageConfig(rd)),
 		kernelOptions:       defaultAzureKernelOptions,
 		bootable:            true,
 		defaultSize:         64 * common.GibiByte,
