@@ -11,6 +11,213 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+var azureRhuiImgType = imageType{
+	name:     "azure-rhui",
+	filename: "disk.vhd.xz",
+	mimeType: "application/xz",
+	packageSets: map[string]packageSetFunc{
+		buildPkgsKey: distroBuildPackageSet,
+		osPkgsKey:    azureRhuiCommonPackageSet,
+	},
+	packageSetChains: map[string][]string{
+		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+	},
+	defaultImageConfig:  azureDefaultImgConfig,
+	kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y",
+	bootable:            true,
+	defaultSize:         64 * common.GibiByte,
+	pipelines:           vhdPipelines(true),
+	buildPipelines:      []string{"build"},
+	payloadPipelines:    []string{"os", "image", "vpc", "archive"},
+	exports:             []string{"archive"},
+	basePartitionTables: azureRhuiBasePartitionTables,
+}
+
+var azureDefaultImgConfig = &distro.ImageConfig{
+	Timezone: common.ToPtr("Etc/UTC"),
+	Locale:   common.ToPtr("en_US.UTF-8"),
+	GPGKeyFiles: []string{
+		"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
+		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+	},
+	Authconfig: &osbuild.AuthconfigStageOptions{},
+	Sysconfig: []*osbuild.SysconfigStageOptions{
+		{
+			Kernel: &osbuild.SysconfigKernelOptions{
+				UpdateDefault: true,
+				DefaultKernel: "kernel-core",
+			},
+			Network: &osbuild.SysconfigNetworkOptions{
+				Networking: true,
+				NoZeroConf: true,
+			},
+		},
+	},
+	EnabledServices: []string{
+		"cloud-config",
+		"cloud-final",
+		"cloud-init-local",
+		"cloud-init",
+		"firewalld",
+		"NetworkManager",
+		"sshd",
+		"waagent",
+	},
+	SshdConfig: &osbuild.SshdConfigStageOptions{
+		Config: osbuild.SshdConfigConfig{
+			ClientAliveInterval: common.ToPtr(180),
+		},
+	},
+	Modprobe: []*osbuild.ModprobeStageOptions{
+		{
+			Filename: "blacklist-amdgpu.conf",
+			Commands: osbuild.ModprobeConfigCmdList{
+				osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
+			},
+		},
+		{
+			Filename: "blacklist-intel-cstate.conf",
+			Commands: osbuild.ModprobeConfigCmdList{
+				osbuild.NewModprobeConfigCmdBlacklist("intel_cstate"),
+			},
+		},
+		{
+			Filename: "blacklist-floppy.conf",
+			Commands: osbuild.ModprobeConfigCmdList{
+				osbuild.NewModprobeConfigCmdBlacklist("floppy"),
+			},
+		},
+		{
+			Filename: "blacklist-nouveau.conf",
+			Commands: osbuild.ModprobeConfigCmdList{
+				osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
+				osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
+			},
+		},
+		{
+			Filename: "blacklist-skylake-edac.conf",
+			Commands: osbuild.ModprobeConfigCmdList{
+				osbuild.NewModprobeConfigCmdBlacklist("skx_edac"),
+			},
+		},
+	},
+	CloudInit: []*osbuild.CloudInitStageOptions{
+		{
+			Filename: "06_logging_override.cfg",
+			Config: osbuild.CloudInitConfigFile{
+				Output: &osbuild.CloudInitConfigOutput{
+					All: common.ToPtr("| tee -a /var/log/cloud-init-output.log"),
+				},
+			},
+		},
+		{
+			Filename: "10-azure-kvp.cfg",
+			Config: osbuild.CloudInitConfigFile{
+				Reporting: &osbuild.CloudInitConfigReporting{
+					Logging: &osbuild.CloudInitConfigReportingHandlers{
+						Type: "log",
+					},
+					Telemetry: &osbuild.CloudInitConfigReportingHandlers{
+						Type: "hyperv",
+					},
+				},
+			},
+		},
+		{
+			Filename: "91-azure_datasource.cfg",
+			Config: osbuild.CloudInitConfigFile{
+				Datasource: &osbuild.CloudInitConfigDatasource{
+					Azure: &osbuild.CloudInitConfigDatasourceAzure{
+						ApplyNetworkConfig: false,
+					},
+				},
+				DatasourceList: []string{
+					"Azure",
+				},
+			},
+		},
+	},
+	PwQuality: &osbuild.PwqualityConfStageOptions{
+		Config: osbuild.PwqualityConfConfig{
+			Minlen:   common.ToPtr(6),
+			Minclass: common.ToPtr(3),
+			Dcredit:  common.ToPtr(0),
+			Ucredit:  common.ToPtr(0),
+			Lcredit:  common.ToPtr(0),
+			Ocredit:  common.ToPtr(0),
+		},
+	},
+	WAAgentConfig: &osbuild.WAAgentConfStageOptions{
+		Config: osbuild.WAAgentConfig{
+			RDFormat:     common.ToPtr(false),
+			RDEnableSwap: common.ToPtr(false),
+		},
+	},
+	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
+		distro.RHSMConfigNoSubscription: {
+			YumPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
+				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
+					Enabled: false,
+				},
+			},
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.ToPtr(true),
+				},
+				Rhsm: &osbuild.SubManConfigRHSMSection{
+					ManageRepos: common.ToPtr(false),
+				},
+			},
+		},
+		distro.RHSMConfigWithSubscription: {
+			SubMan: &osbuild.RHSMStageOptionsSubMan{
+				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+					AutoRegistration: common.ToPtr(true),
+				},
+				// do not disable the redhat.repo management if the user
+				// explicitly request the system to be subscribed
+			},
+		},
+	},
+	Grub2Config: &osbuild.GRUB2Config{
+		TerminalInput:  []string{"serial", "console"},
+		TerminalOutput: []string{"serial", "console"},
+		Serial:         "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
+		Timeout:        10,
+	},
+	UdevRules: &osbuild.UdevRulesStageOptions{
+		Filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
+		Rules: osbuild.UdevRules{
+			osbuild.UdevRuleComment{
+				Comment: []string{
+					"Accelerated Networking on Azure exposes a new SRIOV interface to the VM.",
+					"This interface is transparently bonded to the synthetic interface,",
+					"so NetworkManager should just ignore any SRIOV interfaces.",
+				},
+			},
+			osbuild.NewUdevRule(
+				[]osbuild.UdevKV{
+					{K: "SUBSYSTEM", O: "==", V: "net"},
+					{K: "DRIVERS", O: "==", V: "hv_pci"},
+					{K: "ACTION", O: "==", V: "add"},
+					{K: "ENV", A: "NM_UNMANAGED", O: "=", V: "1"},
+				},
+			),
+		},
+	},
+	YumConfig: &osbuild.YumConfigStageOptions{
+		Config: &osbuild.YumConfigConfig{
+			HttpCaching: common.ToPtr("packages"),
+		},
+		Plugins: &osbuild.YumConfigPlugins{
+			Langpacks: &osbuild.YumConfigPluginsLangpacks{
+				Locales: []string{"en_US.UTF-8"},
+			},
+		},
+	},
+	DefaultTarget: common.ToPtr("multi-user.target"),
+}
+
 func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
@@ -214,209 +421,4 @@ func vhdPipelines(compress bool) pipelinesFunc {
 
 		return pipelines, nil
 	}
-}
-
-var azureRhuiImgType = imageType{
-	name:     "azure-rhui",
-	filename: "disk.vhd.xz",
-	mimeType: "application/xz",
-	packageSets: map[string]packageSetFunc{
-		buildPkgsKey: distroBuildPackageSet,
-		osPkgsKey:    azureRhuiCommonPackageSet,
-	},
-	packageSetChains: map[string][]string{
-		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-	},
-	defaultImageConfig: &distro.ImageConfig{
-		Timezone: common.ToPtr("Etc/UTC"),
-		Locale:   common.ToPtr("en_US.UTF-8"),
-		GPGKeyFiles: []string{
-			"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
-			"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
-		},
-		Authconfig: &osbuild.AuthconfigStageOptions{},
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					UpdateDefault: true,
-					DefaultKernel: "kernel-core",
-				},
-				Network: &osbuild.SysconfigNetworkOptions{
-					Networking: true,
-					NoZeroConf: true,
-				},
-			},
-		},
-		EnabledServices: []string{
-			"cloud-config",
-			"cloud-final",
-			"cloud-init-local",
-			"cloud-init",
-			"firewalld",
-			"NetworkManager",
-			"sshd",
-			"waagent",
-		},
-		SshdConfig: &osbuild.SshdConfigStageOptions{
-			Config: osbuild.SshdConfigConfig{
-				ClientAliveInterval: common.ToPtr(180),
-			},
-		},
-		Modprobe: []*osbuild.ModprobeStageOptions{
-			{
-				Filename: "blacklist-amdgpu.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
-				},
-			},
-			{
-				Filename: "blacklist-intel-cstate.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("intel_cstate"),
-				},
-			},
-			{
-				Filename: "blacklist-floppy.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("floppy"),
-				},
-			},
-			{
-				Filename: "blacklist-nouveau.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("nouveau"),
-					osbuild.NewModprobeConfigCmdBlacklist("lbm-nouveau"),
-				},
-			},
-			{
-				Filename: "blacklist-skylake-edac.conf",
-				Commands: osbuild.ModprobeConfigCmdList{
-					osbuild.NewModprobeConfigCmdBlacklist("skx_edac"),
-				},
-			},
-		},
-		CloudInit: []*osbuild.CloudInitStageOptions{
-			{
-				Filename: "06_logging_override.cfg",
-				Config: osbuild.CloudInitConfigFile{
-					Output: &osbuild.CloudInitConfigOutput{
-						All: common.ToPtr("| tee -a /var/log/cloud-init-output.log"),
-					},
-				},
-			},
-			{
-				Filename: "10-azure-kvp.cfg",
-				Config: osbuild.CloudInitConfigFile{
-					Reporting: &osbuild.CloudInitConfigReporting{
-						Logging: &osbuild.CloudInitConfigReportingHandlers{
-							Type: "log",
-						},
-						Telemetry: &osbuild.CloudInitConfigReportingHandlers{
-							Type: "hyperv",
-						},
-					},
-				},
-			},
-			{
-				Filename: "91-azure_datasource.cfg",
-				Config: osbuild.CloudInitConfigFile{
-					Datasource: &osbuild.CloudInitConfigDatasource{
-						Azure: &osbuild.CloudInitConfigDatasourceAzure{
-							ApplyNetworkConfig: false,
-						},
-					},
-					DatasourceList: []string{
-						"Azure",
-					},
-				},
-			},
-		},
-		PwQuality: &osbuild.PwqualityConfStageOptions{
-			Config: osbuild.PwqualityConfConfig{
-				Minlen:   common.ToPtr(6),
-				Minclass: common.ToPtr(3),
-				Dcredit:  common.ToPtr(0),
-				Ucredit:  common.ToPtr(0),
-				Lcredit:  common.ToPtr(0),
-				Ocredit:  common.ToPtr(0),
-			},
-		},
-		WAAgentConfig: &osbuild.WAAgentConfStageOptions{
-			Config: osbuild.WAAgentConfig{
-				RDFormat:     common.ToPtr(false),
-				RDEnableSwap: common.ToPtr(false),
-			},
-		},
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
-				YumPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-					SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-						Enabled: false,
-					},
-				},
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.ToPtr(false),
-					},
-				},
-			},
-			distro.RHSMConfigWithSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
-		Grub2Config: &osbuild.GRUB2Config{
-			TerminalInput:  []string{"serial", "console"},
-			TerminalOutput: []string{"serial", "console"},
-			Serial:         "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
-			Timeout:        10,
-		},
-		UdevRules: &osbuild.UdevRulesStageOptions{
-			Filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
-			Rules: osbuild.UdevRules{
-				osbuild.UdevRuleComment{
-					Comment: []string{
-						"Accelerated Networking on Azure exposes a new SRIOV interface to the VM.",
-						"This interface is transparently bonded to the synthetic interface,",
-						"so NetworkManager should just ignore any SRIOV interfaces.",
-					},
-				},
-				osbuild.NewUdevRule(
-					[]osbuild.UdevKV{
-						{K: "SUBSYSTEM", O: "==", V: "net"},
-						{K: "DRIVERS", O: "==", V: "hv_pci"},
-						{K: "ACTION", O: "==", V: "add"},
-						{K: "ENV", A: "NM_UNMANAGED", O: "=", V: "1"},
-					},
-				),
-			},
-		},
-		YumConfig: &osbuild.YumConfigStageOptions{
-			Config: &osbuild.YumConfigConfig{
-				HttpCaching: common.ToPtr("packages"),
-			},
-			Plugins: &osbuild.YumConfigPlugins{
-				Langpacks: &osbuild.YumConfigPluginsLangpacks{
-					Locales: []string{"en_US.UTF-8"},
-				},
-			},
-		},
-		DefaultTarget: common.ToPtr("multi-user.target"),
-	},
-	kernelOptions:       "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y",
-	bootable:            true,
-	defaultSize:         64 * common.GibiByte,
-	pipelines:           vhdPipelines(true),
-	buildPipelines:      []string{"build"},
-	payloadPipelines:    []string{"os", "image", "vpc", "archive"},
-	exports:             []string{"archive"},
-	basePartitionTables: azureRhuiBasePartitionTables,
 }
