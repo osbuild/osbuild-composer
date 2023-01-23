@@ -17,7 +17,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.114
 	github.com/containers/common v0.49.1
 	github.com/containers/image/v5 v5.22.0
-	github.com/coreos/go-semver v0.3.0
+	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/deepmap/oapi-codegen v1.8.2
 	github.com/getkin/kin-openapi v0.93.0
