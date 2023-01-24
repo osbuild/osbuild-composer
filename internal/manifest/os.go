@@ -71,6 +71,8 @@ type OSCustomizations struct {
 	// selected profile
 	SElinux string
 
+	SELinuxForceRelabel *bool
+
 	// Do not install documentation
 	ExcludeDocs bool
 
@@ -593,7 +595,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	if p.SElinux != "" {
 		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
-			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
+			FileContexts:     fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
+			ForceAutorelabel: p.SELinuxForceRelabel,
 		}))
 	}
 

@@ -26,7 +26,8 @@ var qcow2ImgType = imageType{
 }
 
 var qcow2DefaultImgConfig = &distro.ImageConfig{
-	DefaultTarget: common.ToPtr("multi-user.target"),
+	DefaultTarget:       common.ToPtr("multi-user.target"),
+	SELinuxForceRelabel: common.ToPtr(true),
 	Sysconfig: []*osbuild.SysconfigStageOptions{
 		{
 			Kernel: &osbuild.SysconfigKernelOptions{

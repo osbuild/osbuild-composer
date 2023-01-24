@@ -31,6 +31,10 @@ type ImageConfig struct {
 	// Disable SELinux labelling
 	NoSElinux *bool
 
+	// Do not use. Forces auto-relabelling on first boot.
+	// See https://github.com/osbuild/osbuild/commit/52cb27631b587c1df177cd17625c5b473e1e85d2
+	SELinuxForceRelabel *bool
+
 	// Disable documentation
 	ExcludeDocs *bool
 
