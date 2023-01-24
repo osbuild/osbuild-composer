@@ -26,6 +26,9 @@ if [ "$ON_JENKINS" = false ]; then
     # see https://bugzilla.redhat.com/show_bug.cgi?id=2143282
     # TODO: Remove me when the bug is fixed or we switch to 9.1
     sudo dnf remove -y python-unversioned-command
+    # TODO: Remove once authselect-compat-1.2.5-2.el9_1.x86_64 is in el9 RHUI repos
+    # https://issues.redhat.com/browse/RHUIOPS-84
+    sudo dnf upgrade -y --allowerasing authselect
     sudo dnf upgrade -y
 
     sudo dnf install -y podman jq
