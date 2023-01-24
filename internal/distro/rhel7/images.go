@@ -157,6 +157,7 @@ func osCustomizations(
 	osc.DNFConfig = imageConfig.DNFConfig
 	osc.DNFAutomaticConfig = imageConfig.DNFAutomaticConfig
 	osc.YUMRepos = imageConfig.YUMRepos
+	osc.YUMConfig = imageConfig.YumConfig
 	osc.SshdConfig = imageConfig.SshdConfig
 	osc.AuthConfig = imageConfig.Authconfig
 	osc.PwQuality = imageConfig.PwQuality
