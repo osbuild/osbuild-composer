@@ -189,6 +189,18 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 		packages = append(packages, "openscap-scanner", "scap-security-guide")
 	}
 
+	// Make sure the right packages are included for subscriptions
+	// rhc always uses insights, and depends on subscription-manager
+	// non-rhc uses subscription-manager and optionally includes Insights
+	if p.Subscription != nil {
+		packages = append(packages, "subscription-manager")
+		if p.Subscription.Rhc {
+			packages = append(packages, "rhc", "insights-client")
+		} else if p.Subscription.Insights {
+			packages = append(packages, "insights-client")
+		}
+	}
+
 	chain := []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraBasePackages...),
@@ -480,13 +492,27 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewPwqualityConfStage(p.PwQuality))
 	}
 
+	// If subscription settings are included there are 3 possible setups:
+	// - Register the system with rhc and enable Insights
+	// - Register with subscription-manager, no Insights or rhc
+	// - Register with subscription-manager and enable Insights, no rhc
 	if p.Subscription != nil {
-		commands := []string{
-			fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", p.Subscription.Organization, p.Subscription.ActivationKey, p.Subscription.ServerUrl, p.Subscription.BaseUrl),
-		}
-		if p.Subscription.Insights {
+		var commands []string
+		if p.Subscription.Rhc {
+			// Use rhc for registration instead of subscription manager
+			commands = []string{fmt.Sprintf("/usr/bin/rhc connect -o=%s -a=%s --server %s", p.Subscription.Organization, p.Subscription.ActivationKey, p.Subscription.ServerUrl)}
+
+			// Always enable Insights when using rhc
 			commands = append(commands, "/usr/bin/insights-client --register")
+		} else {
+			commands = []string{fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", p.Subscription.Organization, p.Subscription.ActivationKey, p.Subscription.ServerUrl, p.Subscription.BaseUrl)}
+
+			// Insights is optional when using subscription-manager
+			if p.Subscription.Insights {
+				commands = append(commands, "/usr/bin/insights-client --register")
+			}
 		}
+
 		pipeline.AddStage(osbuild.NewFirstBootStage(&osbuild.FirstBootStageOptions{
 			Commands:       commands,
 			WaitForNetwork: true,

@@ -278,12 +278,18 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		if request.Customizations != nil && request.Customizations.Subscription != nil {
+			// Rhc is optional, default to false if not included
+			var rhc bool
+			if request.Customizations.Subscription.Rhc != nil {
+				rhc = *request.Customizations.Subscription.Rhc
+			}
 			imageOptions.Subscription = &distro.SubscriptionImageOptions{
 				Organization:  request.Customizations.Subscription.Organization,
 				ActivationKey: request.Customizations.Subscription.ActivationKey,
 				ServerUrl:     request.Customizations.Subscription.ServerUrl,
 				BaseUrl:       request.Customizations.Subscription.BaseUrl,
 				Insights:      request.Customizations.Subscription.Insights,
+				Rhc:           rhc,
 			}
 		}
 
