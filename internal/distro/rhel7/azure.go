@@ -37,7 +37,8 @@ var azureDefaultImgConfig = &distro.ImageConfig{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
 	},
-	Authconfig: &osbuild.AuthconfigStageOptions{},
+	SELinuxForceRelabel: common.ToPtr(true),
+	Authconfig:          &osbuild.AuthconfigStageOptions{},
 	Sysconfig: []*osbuild.SysconfigStageOptions{
 		{
 			Kernel: &osbuild.SysconfigKernelOptions{
