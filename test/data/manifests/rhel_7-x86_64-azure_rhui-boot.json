@@ -137,12 +137,6 @@
                     "id": "sha256:23e53944df86ed0b04fd39c8b0dd754e251c68179e44e2aa91b9e440b168df89"
                   },
                   {
-                    "id": "sha256:d3a3a4872f45d3a37871fb374a1a0bb4b8c83190ac1711d13b74c363b50aabdf"
-                  },
-                  {
-                    "id": "sha256:740a1af1718166f8145bcbd75a12684abdb2351674c99ebbc849cbc08d4b38a0"
-                  },
-                  {
                     "id": "sha256:e8828c8e13cb65e1ee5e302411a8abd0c476517e87d102398a9b9b112d993edf"
                   },
                   {
@@ -341,9 +335,6 @@
                     "id": "sha256:a0047e1ed0eb51fc41a74096559cfe67f1c01fa01cf668709ae54524db7cf414"
                   },
                   {
-                    "id": "sha256:c094fe217ef92710bea79c4060c127e585a72bbf0cfba61697cbb488adcc8a7e"
-                  },
-                  {
                     "id": "sha256:4a9ac18573b971d88bd2acefbcc6cfad01c986d04b4b88ed705ae019b6a653a3"
                   },
                   {
@@ -438,9 +429,6 @@
                   },
                   {
                     "id": "sha256:b0039bb73308f9af0562d7bfeb17d72d1e07a21f786eeed31e6470fb27476630"
-                  },
-                  {
-                    "id": "sha256:222a97490d294758676db9ae9a0aca5684627a2750561aecf4d073f2849dd4bb"
                   },
                   {
                     "id": "sha256:61d51059a91e227d71ce1ed0a787797b740dbb80cc5d4aab9812cd3248178713"
@@ -2325,24 +2313,6 @@
             }
           },
           {
-            "type": "org.osbuild.rhsm",
-            "options": {
-              "yum-plugins": {
-                "subscription-manager": {
-                  "enabled": false
-                }
-              },
-              "subscription-manager": {
-                "rhsm": {
-                  "manage_repos": false
-                },
-                "rhsmcertd": {
-                  "auto_registration": true
-                }
-              }
-            }
-          },
-          {
             "type": "org.osbuild.cloud-init",
             "options": {
               "filename": "06_logging_override.cfg",
@@ -2450,6 +2420,21 @@
             }
           },
           {
+            "type": "org.osbuild.yum.config",
+            "options": {
+              "config": {
+                "http_caching": "packages"
+              },
+              "plugins": {
+                "langpacks": {
+                  "locales": [
+                    "en_US.UTF-8"
+                  ]
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.sshd.config",
             "options": {
               "config": {
@@ -2475,26 +2460,29 @@
             }
           },
           {
+            "type": "org.osbuild.rhsm",
+            "options": {
+              "yum-plugins": {
+                "subscription-manager": {
+                  "enabled": false
+                }
+              },
+              "subscription-manager": {
+                "rhsm": {
+                  "manage_repos": false
+                },
+                "rhsmcertd": {
+                  "auto_registration": true
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.waagent.conf",
             "options": {
               "config": {
                 "ResourceDisk.Format": false,
                 "ResourceDisk.EnableSwap": false
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.yum.config",
-            "options": {
-              "config": {
-                "http_caching": "packages"
-              },
-              "plugins": {
-                "langpacks": {
-                  "locales": [
-                    "en_US.UTF-8"
-                  ]
-                }
               }
             }
           },
@@ -2628,6 +2616,14 @@
                 "serial": "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
                 "cmdline": "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y",
                 "distributor": "$(sed 's, release .*$,,g' /etc/system-release)"
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.rhsm.facts",
+            "options": {
+              "facts": {
+                "image-builder.osbuild-composer.api-type": "test-manifest"
               }
             }
           },
@@ -3071,7 +3067,7 @@
               }
             },
             "options": {
-              "filename": "disk.vhd",
+              "filename": "image.vhd",
               "format": {
                 "type": "vpc",
                 "force_size": false
@@ -3081,7 +3077,7 @@
         ]
       },
       {
-        "name": "archive",
+        "name": "xz",
         "build": "name:build",
         "stages": [
           {
@@ -3092,7 +3088,7 @@
                 "origin": "org.osbuild.pipeline",
                 "references": {
                   "name:vpc": {
-                    "file": "disk.vhd"
+                    "file": "image.vhd"
                   }
                 }
               }
@@ -5112,24 +5108,6 @@
         "checksum": "sha256:23e53944df86ed0b04fd39c8b0dd754e251c68179e44e2aa91b9e440b168df89"
       },
       {
-        "name": "e2fsprogs",
-        "epoch": 0,
-        "version": "1.42.9",
-        "release": "19.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/e2fsprogs-1.42.9-19.el7.x86_64.rpm",
-        "checksum": "sha256:d3a3a4872f45d3a37871fb374a1a0bb4b8c83190ac1711d13b74c363b50aabdf"
-      },
-      {
-        "name": "e2fsprogs-libs",
-        "epoch": 0,
-        "version": "1.42.9",
-        "release": "19.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/e2fsprogs-libs-1.42.9-19.el7.x86_64.rpm",
-        "checksum": "sha256:740a1af1718166f8145bcbd75a12684abdb2351674c99ebbc849cbc08d4b38a0"
-      },
-      {
         "name": "elfutils-default-yama-scope",
         "epoch": 0,
         "version": "0.176",
@@ -5724,15 +5702,6 @@
         "checksum": "sha256:a0047e1ed0eb51fc41a74096559cfe67f1c01fa01cf668709ae54524db7cf414"
       },
       {
-        "name": "libss",
-        "epoch": 0,
-        "version": "1.42.9",
-        "release": "19.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libss-1.42.9-19.el7.x86_64.rpm",
-        "checksum": "sha256:c094fe217ef92710bea79c4060c127e585a72bbf0cfba61697cbb488adcc8a7e"
-      },
-      {
         "name": "libssh2",
         "epoch": 0,
         "version": "1.8.0",
@@ -6019,15 +5988,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/pam-1.1.8-23.el7.x86_64.rpm",
         "checksum": "sha256:b0039bb73308f9af0562d7bfeb17d72d1e07a21f786eeed31e6470fb27476630"
-      },
-      {
-        "name": "parted",
-        "epoch": 0,
-        "version": "3.1",
-        "release": "32.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/parted-3.1-32.el7.x86_64.rpm",
-        "checksum": "sha256:222a97490d294758676db9ae9a0aca5684627a2750561aecf4d073f2849dd4bb"
       },
       {
         "name": "pcre",
@@ -6390,7 +6350,7 @@
         "checksum": "sha256:cfee456a0f3a2208ec1925cf1e699dd9ac9c5efb9ef4f27c5928670b57aa2bf1"
       }
     ],
-    "packages": [
+    "os": [
       {
         "name": "GeoIP",
         "epoch": 0,
