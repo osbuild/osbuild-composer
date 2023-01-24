@@ -26,7 +26,7 @@ if [ "$ON_JENKINS" = false ]; then
     # see https://bugzilla.redhat.com/show_bug.cgi?id=2143282
     # TODO: Remove me when the bug is fixed or we switch to 9.1
     sudo dnf remove -y python-unversioned-command
-    sudo dnf upgrade -y
+    sudo dnf upgrade -y --allowerasing authselect
 
     sudo dnf install -y podman jq
 fi

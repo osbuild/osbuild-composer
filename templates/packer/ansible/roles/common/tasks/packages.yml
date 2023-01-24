@@ -24,6 +24,14 @@
   # if osbuild_commit is not defined, osbuild from distribution repositories is installed
   when: osbuild_commit is defined
 
+- name: Remove authselect
+  package:
+    name: "authselect"
+    state: absent
+  register: result
+  retries: 5
+  until: result is success
+
 - name: Upgrade all packages
   package:
     name: "*"
