@@ -127,16 +127,7 @@
                     "id": "sha256:f5edbf09fbd69fd4985682a6bb2fdb8732d11c90f6f75977e77c225f846f6bc5"
                   },
                   {
-                    "id": "sha256:bc12d9d6875e2120680179861221139e3a34833a918300a1def89ff75c18e4a5"
-                  },
-                  {
-                    "id": "sha256:ab40914102cb36464420c18710524a41f32df9e7762ead4879de09986c3f85ad"
-                  },
-                  {
                     "id": "sha256:ceda9d24ef213658d34af8c53f891be32959398f7aa85b9bd4557a9ae9f797b9"
-                  },
-                  {
-                    "id": "sha256:178e4b4ccf193c065e54056bb1c6b997ae9bdd7a72415e92006146f7614a6a81"
                   },
                   {
                     "id": "sha256:644bb4bb0d549837d1a5f9d65e02835290b538f123605070cbf93291b11d2812"
@@ -146,12 +137,6 @@
                   },
                   {
                     "id": "sha256:23e53944df86ed0b04fd39c8b0dd754e251c68179e44e2aa91b9e440b168df89"
-                  },
-                  {
-                    "id": "sha256:d3a3a4872f45d3a37871fb374a1a0bb4b8c83190ac1711d13b74c363b50aabdf"
-                  },
-                  {
-                    "id": "sha256:740a1af1718166f8145bcbd75a12684abdb2351674c99ebbc849cbc08d4b38a0"
                   },
                   {
                     "id": "sha256:e8828c8e13cb65e1ee5e302411a8abd0c476517e87d102398a9b9b112d993edf"
@@ -352,9 +337,6 @@
                     "id": "sha256:a0047e1ed0eb51fc41a74096559cfe67f1c01fa01cf668709ae54524db7cf414"
                   },
                   {
-                    "id": "sha256:c094fe217ef92710bea79c4060c127e585a72bbf0cfba61697cbb488adcc8a7e"
-                  },
-                  {
                     "id": "sha256:4a9ac18573b971d88bd2acefbcc6cfad01c986d04b4b88ed705ae019b6a653a3"
                   },
                   {
@@ -385,16 +367,7 @@
                     "id": "sha256:dac2ae10dbb0a09a7e6bd341044dfab1e63d8773c9b7582cbf2d40937180f7b0"
                   },
                   {
-                    "id": "sha256:c46ca66c5a9b51f2e06cf301934c564c4d8e67395a379965e913ce7c95531322"
-                  },
-                  {
                     "id": "sha256:f2ee3238762ee4b1917cb7ed5d5e064dbae4d1804bdb65bd4bf6c56b785f8836"
-                  },
-                  {
-                    "id": "sha256:8eab91b478d945b5992f5676754d1ca0f124bcee584de99e74bef3ed62a4a859"
-                  },
-                  {
-                    "id": "sha256:1a9ca0f47677eab3e6ce4e98823cc29d2968d058b365d8c65f724f2c067ed14d"
                   },
                   {
                     "id": "sha256:547b7bb1b7791f9972f82f88c9931b9c754ad64a8113b733d6515b6edd1b970c"
@@ -449,9 +422,6 @@
                   },
                   {
                     "id": "sha256:b0039bb73308f9af0562d7bfeb17d72d1e07a21f786eeed31e6470fb27476630"
-                  },
-                  {
-                    "id": "sha256:222a97490d294758676db9ae9a0aca5684627a2750561aecf4d073f2849dd4bb"
                   },
                   {
                     "id": "sha256:61d51059a91e227d71ce1ed0a787797b740dbb80cc5d4aab9812cd3248178713"
@@ -557,9 +527,6 @@
                   },
                   {
                     "id": "sha256:c6d7e3e6d22005f0e302e209188081522cae87e8db86fbefb38815fb647e8f42"
-                  },
-                  {
-                    "id": "sha256:7afc73e6beb4fbb8a7202348667fef0470d2be106d759cf47f58f8e7973db602"
                   },
                   {
                     "id": "sha256:4dc62c6a37d1014f3461a8f0dcaf139e900291441ef87623243722294ecb7364"
@@ -720,6 +687,9 @@
                   },
                   {
                     "id": "sha256:dde04dcb5cd8be2e931c4abd93b72efb024f540a9f21e939ddea6af0da4d0b47"
+                  },
+                  {
+                    "id": "sha256:dcb6f790fb97f15bd012fb20c1e5dde94921a5404299f9d45f49ee9d05d502e8"
                   },
                   {
                     "id": "sha256:23e53944df86ed0b04fd39c8b0dd754e251c68179e44e2aa91b9e440b168df89"
@@ -1751,6 +1721,14 @@
             }
           },
           {
+            "type": "org.osbuild.rhsm.facts",
+            "options": {
+              "facts": {
+                "image-builder.osbuild-composer.api-type": "test-manifest"
+              }
+            }
+          },
+          {
             "type": "org.osbuild.selinux",
             "options": {
               "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts",
@@ -2079,9 +2057,6 @@
           "sha256:164930af843a056c1ad18627fc4364d1f931d79145060aa47165d4e1edc6f2a4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/bash-4.2.46-34.el7.x86_64.rpm"
           },
-          "sha256:178e4b4ccf193c065e54056bb1c6b997ae9bdd7a72415e92006146f7614a6a81": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/device-mapper-persistent-data-0.8.5-3.el7.x86_64.rpm"
-          },
           "sha256:17a04e5cd7d2514904b203126a4273d63fe87a2871efa75ace5be72b992bd1e8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libattr-2.4.46-13.el7.x86_64.rpm"
           },
@@ -2099,9 +2074,6 @@
           },
           "sha256:1a21af8faab93b4e4d828f4be9710abfc478a6c0b189bac4fb48ac1b6d638939": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/rhnsd-5.0.13-10.el7.x86_64.rpm"
-          },
-          "sha256:1a9ca0f47677eab3e6ce4e98823cc29d2968d058b365d8c65f724f2c067ed14d": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/lvm2-libs-2.02.187-6.el7.x86_64.rpm"
           },
           "sha256:1c351bfcc354aa61764725882cfe6ff36da092e7f10c70d3830bd596206af461": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/grub2-tools-minimal-2.02-0.87.el7.x86_64.rpm"
@@ -2535,9 +2507,6 @@
           "sha256:7af4e177936381d8a3d26db6dc66d8be32f80b4eefe4f0a2f43e4b938c148ac0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/ipset-7.1-1.el7.x86_64.rpm"
           },
-          "sha256:7afc73e6beb4fbb8a7202348667fef0470d2be106d759cf47f58f8e7973db602": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530/toplink/vol/rhel-7/packages/PyYAML/3.12/12.el7eng/x86_64/python3-PyYAML-3.12-12.el7eng.x86_64.rpm"
-          },
           "sha256:7b2639a5b7d320e69d88f09428c9aa377ac091675928cfffa50710e02911aff8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/ethtool-4.8-10.el7.x86_64.rpm"
           },
@@ -2597,9 +2566,6 @@
           },
           "sha256:8da1f1e2007d98f395befb666f18f9e26ab3009f638a566b985615b22e14fe13": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/python-perf-3.10.0-1160.el7.x86_64.rpm"
-          },
-          "sha256:8eab91b478d945b5992f5676754d1ca0f124bcee584de99e74bef3ed62a4a859": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/lvm2-2.02.187-6.el7.x86_64.rpm"
           },
           "sha256:9048a971753ff997aeebc363a7d07e4c4d9dfbf32bfc7698bc9ea0aacfc7bfae": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libstdc++-4.8.5-44.el7.x86_64.rpm"
@@ -2742,9 +2708,6 @@
           "sha256:aaf24de9d4bb53663cfd848dbf458ffd4b0a5e55321d07251cce24cf386d1982": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/python-slip-dbus-0.4.0-4.el7.noarch.rpm"
           },
-          "sha256:ab40914102cb36464420c18710524a41f32df9e7762ead4879de09986c3f85ad": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/device-mapper-event-libs-1.02.170-6.el7.x86_64.rpm"
-          },
           "sha256:abab0980f49ec78b8a784bd20593f1d6aa6ec7f9a11575439542c47dc9524278": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libestr-0.1.9-2.el7.x86_64.rpm"
           },
@@ -2804,9 +2767,6 @@
           },
           "sha256:bb750fe8ff5ce9a7a6e56c681c63f000e8d973b3ab87740eb56cde9ce0721bb8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/python-ipaddr-2.1.11-2.el7.noarch.rpm"
-          },
-          "sha256:bc12d9d6875e2120680179861221139e3a34833a918300a1def89ff75c18e4a5": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/device-mapper-event-1.02.170-6.el7.x86_64.rpm"
           },
           "sha256:bd43d10fa68d2e908b7f628add47adcfc3185b1cec6785bc01301980321a053c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/nfs-utils-1.3.0-0.68.el7.x86_64.rpm"
@@ -3286,24 +3246,6 @@
         "checksum": "sha256:f5edbf09fbd69fd4985682a6bb2fdb8732d11c90f6f75977e77c225f846f6bc5"
       },
       {
-        "name": "device-mapper-event",
-        "epoch": 7,
-        "version": "1.02.170",
-        "release": "6.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/device-mapper-event-1.02.170-6.el7.x86_64.rpm",
-        "checksum": "sha256:bc12d9d6875e2120680179861221139e3a34833a918300a1def89ff75c18e4a5"
-      },
-      {
-        "name": "device-mapper-event-libs",
-        "epoch": 7,
-        "version": "1.02.170",
-        "release": "6.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/device-mapper-event-libs-1.02.170-6.el7.x86_64.rpm",
-        "checksum": "sha256:ab40914102cb36464420c18710524a41f32df9e7762ead4879de09986c3f85ad"
-      },
-      {
         "name": "device-mapper-libs",
         "epoch": 7,
         "version": "1.02.170",
@@ -3311,15 +3253,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/device-mapper-libs-1.02.170-6.el7.x86_64.rpm",
         "checksum": "sha256:ceda9d24ef213658d34af8c53f891be32959398f7aa85b9bd4557a9ae9f797b9"
-      },
-      {
-        "name": "device-mapper-persistent-data",
-        "epoch": 0,
-        "version": "0.8.5",
-        "release": "3.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/device-mapper-persistent-data-0.8.5-3.el7.x86_64.rpm",
-        "checksum": "sha256:178e4b4ccf193c065e54056bb1c6b997ae9bdd7a72415e92006146f7614a6a81"
       },
       {
         "name": "diffutils",
@@ -3347,24 +3280,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/dracut-033-572.el7.x86_64.rpm",
         "checksum": "sha256:23e53944df86ed0b04fd39c8b0dd754e251c68179e44e2aa91b9e440b168df89"
-      },
-      {
-        "name": "e2fsprogs",
-        "epoch": 0,
-        "version": "1.42.9",
-        "release": "19.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/e2fsprogs-1.42.9-19.el7.x86_64.rpm",
-        "checksum": "sha256:d3a3a4872f45d3a37871fb374a1a0bb4b8c83190ac1711d13b74c363b50aabdf"
-      },
-      {
-        "name": "e2fsprogs-libs",
-        "epoch": 0,
-        "version": "1.42.9",
-        "release": "19.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/e2fsprogs-libs-1.42.9-19.el7.x86_64.rpm",
-        "checksum": "sha256:740a1af1718166f8145bcbd75a12684abdb2351674c99ebbc849cbc08d4b38a0"
       },
       {
         "name": "elfutils-default-yama-scope",
@@ -3961,15 +3876,6 @@
         "checksum": "sha256:a0047e1ed0eb51fc41a74096559cfe67f1c01fa01cf668709ae54524db7cf414"
       },
       {
-        "name": "libss",
-        "epoch": 0,
-        "version": "1.42.9",
-        "release": "19.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libss-1.42.9-19.el7.x86_64.rpm",
-        "checksum": "sha256:c094fe217ef92710bea79c4060c127e585a72bbf0cfba61697cbb488adcc8a7e"
-      },
-      {
         "name": "libssh2",
         "epoch": 0,
         "version": "1.8.0",
@@ -4060,15 +3966,6 @@
         "checksum": "sha256:dac2ae10dbb0a09a7e6bd341044dfab1e63d8773c9b7582cbf2d40937180f7b0"
       },
       {
-        "name": "libyaml",
-        "epoch": 0,
-        "version": "0.1.4",
-        "release": "11.el7_0",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/libyaml-0.1.4-11.el7_0.x86_64.rpm",
-        "checksum": "sha256:c46ca66c5a9b51f2e06cf301934c564c4d8e67395a379965e913ce7c95531322"
-      },
-      {
         "name": "lua",
         "epoch": 0,
         "version": "5.1.4",
@@ -4076,24 +3973,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/lua-5.1.4-15.el7.x86_64.rpm",
         "checksum": "sha256:f2ee3238762ee4b1917cb7ed5d5e064dbae4d1804bdb65bd4bf6c56b785f8836"
-      },
-      {
-        "name": "lvm2",
-        "epoch": 7,
-        "version": "2.02.187",
-        "release": "6.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/lvm2-2.02.187-6.el7.x86_64.rpm",
-        "checksum": "sha256:8eab91b478d945b5992f5676754d1ca0f124bcee584de99e74bef3ed62a4a859"
-      },
-      {
-        "name": "lvm2-libs",
-        "epoch": 7,
-        "version": "2.02.187",
-        "release": "6.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/lvm2-libs-2.02.187-6.el7.x86_64.rpm",
-        "checksum": "sha256:1a9ca0f47677eab3e6ce4e98823cc29d2968d058b365d8c65f724f2c067ed14d"
       },
       {
         "name": "lz4",
@@ -4256,15 +4135,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/pam-1.1.8-23.el7.x86_64.rpm",
         "checksum": "sha256:b0039bb73308f9af0562d7bfeb17d72d1e07a21f786eeed31e6470fb27476630"
-      },
-      {
-        "name": "parted",
-        "epoch": 0,
-        "version": "3.1",
-        "release": "32.el7",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/parted-3.1-32.el7.x86_64.rpm",
-        "checksum": "sha256:222a97490d294758676db9ae9a0aca5684627a2750561aecf4d073f2849dd4bb"
       },
       {
         "name": "pcre",
@@ -4582,15 +4452,6 @@
         "checksum": "sha256:c6d7e3e6d22005f0e302e209188081522cae87e8db86fbefb38815fb647e8f42"
       },
       {
-        "name": "python3-PyYAML",
-        "epoch": 0,
-        "version": "3.12",
-        "release": "12.el7eng",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-eng-rel-20220530/toplink/vol/rhel-7/packages/PyYAML/3.12/12.el7eng/x86_64/python3-PyYAML-3.12-12.el7eng.x86_64.rpm",
-        "checksum": "sha256:7afc73e6beb4fbb8a7202348667fef0470d2be106d759cf47f58f8e7973db602"
-      },
-      {
         "name": "python3-iniparse",
         "epoch": 0,
         "version": "0.4",
@@ -4627,7 +4488,7 @@
         "checksum": "sha256:cfee456a0f3a2208ec1925cf1e699dd9ac9c5efb9ef4f27c5928670b57aa2bf1"
       }
     ],
-    "packages": [
+    "os": [
       {
         "name": "NetworkManager-config-server",
         "epoch": 1,
@@ -4987,6 +4848,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/dmidecode-3.2-5.el7.x86_64.rpm",
         "checksum": "sha256:dde04dcb5cd8be2e931c4abd93b72efb024f540a9f21e939ddea6af0da4d0b47"
+      },
+      {
+        "name": "dosfstools",
+        "epoch": 0,
+        "version": "3.0.20",
+        "release": "10.el7",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/dosfstools-3.0.20-10.el7.x86_64.rpm",
+        "checksum": "sha256:dcb6f790fb97f15bd012fb20c1e5dde94921a5404299f9d45f49ee9d05d502e8"
       },
       {
         "name": "dracut",
