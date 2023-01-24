@@ -102,6 +102,9 @@ var qcow2ImgType = imageType{
 		buildPkgsKey: distroBuildPackageSet,
 		osPkgsKey:    qcow2CommonPackageSet,
 	},
+	packageSetChains: map[string][]string{
+		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
+	},
 	defaultImageConfig: &distro.ImageConfig{
 		DefaultTarget: common.ToPtr("multi-user.target"),
 		Sysconfig: []*osbuild.SysconfigStageOptions{
