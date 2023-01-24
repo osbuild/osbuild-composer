@@ -10,6 +10,8 @@ type VPC struct {
 	Base
 	Filename string
 
+	ForceSize *bool
+
 	imgPipeline *RawImage
 }
 
@@ -35,8 +37,10 @@ func NewVPC(m *Manifest,
 func (p *VPC) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
+	formatOptions := osbuild.VPCOptions{ForceSize: p.ForceSize}
+
 	pipeline.AddStage(osbuild.NewQEMUStage(
-		osbuild.NewQEMUStageOptions(p.Filename, osbuild.QEMUFormatVPC, nil),
+		osbuild.NewQEMUStageOptions(p.Filename, osbuild.QEMUFormatVPC, formatOptions),
 		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
 	))
 

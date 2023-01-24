@@ -25,6 +25,7 @@ type LiveImage struct {
 	Workload         workload.Workload
 	Filename         string
 	Compression      string
+	ForceSize        *bool
 	PartTool         osbuild.PartTool
 
 	NoBLS     bool
@@ -82,6 +83,7 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 		if img.Compression == "" {
 			vpcPipeline.Filename = img.Filename
 		}
+		vpcPipeline.ForceSize = img.ForceSize
 		artifactPipeline = vpcPipeline
 		artifact = vpcPipeline.Export()
 	case platform.FORMAT_VMDK:
