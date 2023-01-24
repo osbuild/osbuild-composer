@@ -166,6 +166,7 @@ type SubscriptionImageOptions struct {
 	ServerUrl     string
 	BaseUrl       string
 	Insights      bool
+	Rhc           bool
 }
 
 // The FactsImageOptions specify things to be stored into the Insights facts

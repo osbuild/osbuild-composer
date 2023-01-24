@@ -1103,6 +1103,12 @@ components:
         insights:
           type: boolean
           example: true
+        rhc:
+          type: boolean
+          default: false
+          example: true
+          description: |
+            Optional flag to use rhc to register the system, which also always enables Insights.
     User:
       type: object
       required:
