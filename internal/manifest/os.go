@@ -95,6 +95,7 @@ type OSCustomizations struct {
 	Sysctld             []*osbuild.SysctldStageOptions
 	DNFConfig           []*osbuild.DNFConfigStageOptions
 	DNFAutomaticConfig  *osbuild.DNFAutomaticConfigStageOptions
+	YUMConfig           *osbuild.YumConfigStageOptions
 	YUMRepos            []*osbuild.YumReposStageOptions
 	SshdConfig          *osbuild.SshdConfigStageOptions
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
@@ -457,6 +458,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	for _, yumRepo := range p.YUMRepos {
 		pipeline.AddStage(osbuild.NewYumReposStage(yumRepo))
+	}
+
+	if p.YUMConfig != nil {
+		pipeline.AddStage(osbuild.NewYumConfigStage(p.YUMConfig))
 	}
 
 	if p.GCPGuestAgentConfig != nil {
