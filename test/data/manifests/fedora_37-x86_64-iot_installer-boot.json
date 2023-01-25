@@ -10748,6 +10748,8 @@
                 "org.fedoraproject.Anaconda.Modules.Network",
                 "org.fedoraproject.Anaconda.Modules.Payloads",
                 "org.fedoraproject.Anaconda.Modules.Storage",
+                "org.fedoraproject.Anaconda.Modules.Timezone",
+                "org.fedoraproject.Anaconda.Modules.Localization",
                 "org.fedoraproject.Anaconda.Modules.Users"
               ]
             }
