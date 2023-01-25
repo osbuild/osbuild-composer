@@ -325,7 +325,11 @@ func iotInstallerImage(workload workload.Workload,
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
-	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
+	img.AdditionalAnacondaModules = []string{
+		"org.fedoraproject.Anaconda.Modules.Timezone",
+		"org.fedoraproject.Anaconda.Modules.Localization",
+		"org.fedoraproject.Anaconda.Modules.Users",
+	}
 
 	img.SquashfsCompression = "lz4"
 
