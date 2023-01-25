@@ -242,6 +242,7 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 				"fdo-client",
 				"fdo-owner-cli",
 				"greenboot-default-health-checks",
+				"sos",
 			},
 		})
 	}
