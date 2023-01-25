@@ -783,6 +783,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			kojiAPI, err := koji.NewFromGSSAPI(targetOptions.Server, &kojiServer.creds, kojiTransport)
 			if err != nil {
+				logWithId.Warnf("[Koji] 🔑 login failed: %v", err) // DON'T EDIT: Used for Splunk dashboard
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to authenticate with Koji server %q: %v", kojiServerURL.Hostname(), err), nil)
 				break
 			}
@@ -804,6 +805,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			logWithId.Info("[Koji] ⬆ Uploading the image")
 			imageHash, imageSize, err := kojiAPI.Upload(file, targetOptions.UploadDirectory, jobTarget.ImageName)
 			if err != nil {
+				logWithId.Warnf("[Koji] ⬆ upload failed: %v", err) // DON'T EDIT: used for Splunk dashboard
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
