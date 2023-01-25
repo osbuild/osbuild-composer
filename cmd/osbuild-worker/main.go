@@ -184,7 +184,7 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 		defer setProtection(false)
 	}
 
-	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type())
+	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type()) // DO NOT EDIT/REMOVE: used for Splunk dashboard
 
 	ctx, cancelWatcher := context.WithCancel(context.Background())
 	go WatchJob(ctx, job)
@@ -192,12 +192,12 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 	err = impl.Run(job)
 	cancelWatcher()
 	if err != nil {
-		logrus.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err)
+		logrus.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err) // DO NOT EDIT/REMOVE: used for Splunk dashboard
 		// Don't return this error so the worker picks up the next job immediately
 		return nil
 	}
 
-	logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type())
+	logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type()) // DO NOT EDIT/REMOVE: used for Splunk dashboard
 	return nil
 }
 
