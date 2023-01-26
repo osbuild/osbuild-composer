@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -2158,6 +2162,14 @@
                   },
                   {
                     "id": "sha256:19555c17f00ea716a1f36dbcf9b9a4ac5027737976933eedb0e00f225c9b0e5a",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:65655b86f063c19b731fb5a9e543586556b717c116872b4aefd39ab3d8c06f18",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -7032,6 +7044,9 @@
           "sha256:63a02be83e7635a5ce164231c739085244084d71170ed2c0b2f10662a5640608": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.1-20221015/Packages/coreutils-common-8.32-32.el9.s390x.rpm"
           },
+          "sha256:65655b86f063c19b731fb5a9e543586556b717c116872b4aefd39ab3d8c06f18": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.1-20221015/Packages/bluez-5.64-2.el9.s390x.rpm"
+          },
           "sha256:65eacc7c9ec37e67564902c33c4181b98d0ea20f2c17e64e88f7c879eef594e0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.1-20221015/Packages/libnfsidmap-2.5.4-15.el9.s390x.rpm"
           },
@@ -10485,6 +10500,16 @@
         "arch": "s390x",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.1-20221015/Packages/bash-5.1.8-5.el9.s390x.rpm",
         "checksum": "sha256:19555c17f00ea716a1f36dbcf9b9a4ac5027737976933eedb0e00f225c9b0e5a",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.64",
+        "release": "2.el9",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-s390x-baseos-n9.1-20221015/Packages/bluez-5.64-2.el9.s390x.rpm",
+        "checksum": "sha256:65655b86f063c19b731fb5a9e543586556b717c116872b4aefd39ab3d8c06f18",
         "check_gpg": true
       },
       {

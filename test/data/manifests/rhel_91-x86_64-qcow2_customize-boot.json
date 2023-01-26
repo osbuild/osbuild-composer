@@ -25,6 +25,10 @@
         {
           "name": "bash",
           "version": "*"
+        },
+        {
+          "name": "bluez",
+          "version": "*"
         }
       ],
       "groups": [
@@ -1822,6 +1826,14 @@
                   },
                   {
                     "id": "sha256:ae2f785a5899abe5bd03cd293029d3b78a5841ad4bf1938ea64483ec77083108",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:7aa32658694d0195e02fc6c6984ebb8177f015c5187ed3c130d88ecf5bb72da4",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6713,6 +6725,9 @@
           "sha256:7a9f8a5107e8f7a6132dce9c6a23b5a0c8c4ca41fab4e130c466b632e19f862c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/libksba-1.5.1-4.el9.x86_64.rpm"
           },
+          "sha256:7aa32658694d0195e02fc6c6984ebb8177f015c5187ed3c130d88ecf5bb72da4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/bluez-5.64-2.el9.x86_64.rpm"
+          },
           "sha256:7ad3d7984e1c37cc17819e84e8b0e731836ca5a7a56108b0d8e8378028b581b3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/userspace-rcu-0.12.1-6.el9.x86_64.rpm"
           },
@@ -9527,6 +9542,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/bash-5.1.8-5.el9.x86_64.rpm",
         "checksum": "sha256:ae2f785a5899abe5bd03cd293029d3b78a5841ad4bf1938ea64483ec77083108",
+        "check_gpg": true
+      },
+      {
+        "name": "bluez",
+        "epoch": 0,
+        "version": "5.64",
+        "release": "2.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/bluez-5.64-2.el9.x86_64.rpm",
+        "checksum": "sha256:7aa32658694d0195e02fc6c6984ebb8177f015c5187ed3c130d88ecf5bb72da4",
         "check_gpg": true
       },
       {
