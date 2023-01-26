@@ -155,27 +155,17 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 	distro.Aarch64ArchName: disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
+		UUID: "0xc1748067",
+		Type: "dos",
 		Partitions: []disk.Partition{
 			{
-				Size: 501 * common.MebiByte, // 501 MiB
-				Type: disk.EFISystemPartitionGUID,
-				UUID: disk.EFISystemPartitionUUID,
-				Payload: &disk.Filesystem{
-					Type:         "vfat",
-					UUID:         disk.EFIFilesystemUUID,
-					Mountpoint:   "/boot/efi",
-					Label:        "EFI-SYSTEM",
-					FSTabOptions: "umask=0077,shortname=winnt",
-					FSTabFreq:    0,
-					FSTabPassNo:  2,
-				},
+				Size:     501 * common.MebiByte, // 501 MiB
+				Type:     "06",
+				Bootable: true,
 			},
 			{
 				Size: 1 * common.GibiByte, // 1 GiB
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.FilesystemDataUUID,
+				Type: "83",
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -187,8 +177,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 2569 * common.MebiByte, // 2.5 GiB
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.RootPartitionUUID,
+				Type: "83",
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Label:        "root",
