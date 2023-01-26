@@ -2,39 +2,10 @@ package osbuild
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-type fakeFilesInputRef struct{}
-
-func (f *fakeFilesInputRef) isFilesInputRef() {}
-
-func TestNewFilesInputs(t *testing.T) {
-	inputFilename := "image.raw"
-	pipeline := "os"
-
-	expectedInput := &FilesInputs{
-		File: &FilesInput{
-			inputCommon: inputCommon{
-				Type:   InputTypeFiles,
-				Origin: InputOriginPipeline,
-			},
-			References: &FilesInputPipelineObjectRef{
-				fmt.Sprintf("name:%s", pipeline): FilesInputPipelineOptions{File: inputFilename},
-			},
-		},
-	}
-
-	actualInput := NewFilesInputs(NewFilesInputPipelineObjectRef(pipeline, inputFilename, nil))
-	assert.Equal(t, expectedInput, actualInput)
-
-	assert.Panics(t, func() {
-		NewFilesInputs(&fakeFilesInputRef{})
-	})
-}
 
 func TestFilesInput_UnmarshalJSON(t *testing.T) {
 	testCases := []struct {

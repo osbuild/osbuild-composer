@@ -13,15 +13,23 @@ func NewXzStageOptions(filename string) *XzStageOptions {
 	}
 }
 
-type XzStageInputs interface {
-	isXzStageInputs()
+type XzStageInputs struct {
+	File *FilesInput `json:"file"`
+}
+
+func (*XzStageInputs) isStageInputs() {}
+
+func NewXzStageInputs(references FilesInputRef) *XzStageInputs {
+	return &XzStageInputs{
+		File: NewFilesInput(references),
+	}
 }
 
 // Compresses a file into a xz archive.
-func NewXzStage(options *XzStageOptions, inputs XzStageInputs) *Stage {
+func NewXzStage(options *XzStageOptions, inputs *XzStageInputs) *Stage {
 	var stageInputs Inputs
 	if inputs != nil {
-		stageInputs = inputs.(Inputs)
+		stageInputs = inputs
 	}
 
 	return &Stage{
