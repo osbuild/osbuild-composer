@@ -404,6 +404,13 @@ func newDistro(name string, minor int) *distribution {
 		},
 	}
 
+	azureAarch64Platform := &platform.Aarch64{
+		UEFIVendor: rd.vendor,
+		BasePlatform: platform.BasePlatform{
+			ImageFormat: platform.FORMAT_VHD,
+		},
+	}
+
 	rawUEFIx86Platform := &platform.X86{
 		BasePlatform: platform.BasePlatform{
 			ImageFormat: platform.FORMAT_RAW,
@@ -431,6 +438,9 @@ func newDistro(name string, minor int) *distribution {
 				edgeRawImgType(),
 				edgeSimplifiedInstallerImgType(rd),
 			)
+
+			// The Azure image types require hyperv-daemons which isn't available on older versions
+			aarch64.addImageTypes(azureAarch64Platform, azureRhuiImgType(), azureByosImgType())
 		}
 
 		// add azure to RHEL distro only
@@ -470,6 +480,8 @@ func newDistro(name string, minor int) *distribution {
 			edgeRawImgType(),
 			edgeSimplifiedInstallerImgType(rd),
 		)
+
+		aarch64.addImageTypes(azureAarch64Platform, azureImgType())
 	}
 	rd.addArches(x86_64, aarch64, ppc64le)
 	return &rd
