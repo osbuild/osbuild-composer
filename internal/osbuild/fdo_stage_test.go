@@ -23,9 +23,10 @@ func TestNewFDOStageForRootCerts(t *testing.T) {
 
 		inputs := stage.Inputs.(*FDOStageInputs)
 		certs := inputs.RootCerts
+		refs := certs.References.(*FilesInputSourcePlainRef)
 
-		assert.Len(certs.References, 1)
-		assert.Equal(certs.References[0], tt.hash)
+		assert.Len(*refs, 1)
+		assert.Equal((*refs)[0], tt.hash)
 
 	}
 }
