@@ -18,7 +18,7 @@ func TestGenDeviceCreationStages(t *testing.T) {
 
 	luks_lvm := testPartitionTables["luks+lvm"]
 
-	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, rng)
+	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, make(map[string]uint64), rng)
 	assert.NoError(err)
 
 	stages := GenDeviceCreationStages(pt, "image.raw")
@@ -81,7 +81,7 @@ func TestGenDeviceFinishStages(t *testing.T) {
 
 	luks_lvm := testPartitionTables["luks+lvm"]
 
-	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, rng)
+	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, make(map[string]uint64), rng)
 	assert.NoError(err)
 
 	stages := GenDeviceFinishStages(pt, "image.raw")
@@ -124,7 +124,7 @@ func TestGenDeviceFinishStagesOrderWithLVMClevisBind(t *testing.T) {
 
 	luks_lvm := testPartitionTables["luks+lvm+clevisBind"]
 
-	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, rng)
+	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, make(map[string]uint64), rng)
 	assert.NoError(err)
 
 	stages := GenDeviceFinishStages(pt, "image.raw")

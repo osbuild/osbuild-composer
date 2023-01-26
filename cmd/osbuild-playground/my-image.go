@@ -39,7 +39,7 @@ func (img *MyImage) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	// TODO: add helper
-	pt, err := disk.NewPartitionTable(&basePT, nil, 0, false, rng)
+	pt, err := disk.NewPartitionTable(&basePT, nil, 0, false, nil, rng)
 	if err != nil {
 		panic(err)
 	}

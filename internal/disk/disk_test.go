@@ -74,7 +74,7 @@ func TestDisk_DynamicallyResizePartitionTable(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(0))
-	newpt, err := NewPartitionTable(&pt, mountpoints, 1024, false, rng)
+	newpt, err := NewPartitionTable(&pt, mountpoints, 1024, false, nil, rng)
 	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, newpt.Size, expectedSize)
 }
@@ -449,7 +449,7 @@ func TestCreatePartitionTable(t *testing.T) {
 	for ptName := range testPartitionTables {
 		pt := testPartitionTables[ptName]
 		for bpName, bp := range testBlueprints {
-			mpt, err := NewPartitionTable(&pt, bp, uint64(13*MiB), false, rng)
+			mpt, err := NewPartitionTable(&pt, bp, uint64(13*MiB), false, nil, rng)
 			assert.NoError(err, "Partition table generation failed: PT %q BP %q (%s)", ptName, bpName, err)
 			assert.NotNil(mpt, "Partition table generation failed: PT %q BP %q (nil partition table)", ptName, bpName)
 			assert.Greater(mpt.GetSize(), sumSizes(bp))
@@ -475,12 +475,12 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 
 			if tbp != nil && (ptName == "btrfs" || ptName == "luks") {
 				assert.Panics(func() {
-					_, _ = NewPartitionTable(&pt, tbp, uint64(13*MiB), true, rng)
+					_, _ = NewPartitionTable(&pt, tbp, uint64(13*MiB), true, nil, rng)
 				}, fmt.Sprintf("PT %q BP %q: should panic", ptName, bpName))
 				continue
 			}
 
-			mpt, err := NewPartitionTable(&pt, tbp, uint64(13*MiB), true, rng)
+			mpt, err := NewPartitionTable(&pt, tbp, uint64(13*MiB), true, nil, rng)
 			assert.NoError(err, "PT %q BP %q: Partition table generation failed: (%s)", ptName, bpName, err)
 
 			rootPath := entityPath(mpt, "/")
@@ -588,7 +588,7 @@ func TestMinimumSizes(t *testing.T) {
 
 	for idx, tc := range testCases {
 		{ // without LVM
-			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), false, rng)
+			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), false, nil, rng)
 			assert.NoError(err)
 			for mnt, minSize := range tc.ExpectedMinSizes {
 				path := entityPath(mpt, mnt)
@@ -602,7 +602,7 @@ func TestMinimumSizes(t *testing.T) {
 		}
 
 		{ // with LVM
-			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, rng)
+			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, nil, rng)
 			assert.NoError(err)
 			for mnt, minSize := range tc.ExpectedMinSizes {
 				path := entityPath(mpt, mnt)
@@ -689,7 +689,7 @@ func TestLVMExtentAlignment(t *testing.T) {
 	}
 
 	for idx, tc := range testCases {
-		mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, rng)
+		mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, nil, rng)
 		assert.NoError(err)
 		for mnt, expSize := range tc.ExpectedSizes {
 			path := entityPath(mpt, mnt)
@@ -718,7 +718,7 @@ func TestNewBootWithSizeLVMify(t *testing.T) {
 		},
 	}
 
-	mpt, err := NewPartitionTable(&pt, custom, uint64(3*GiB), true, rng)
+	mpt, err := NewPartitionTable(&pt, custom, uint64(3*GiB), true, nil, rng)
 	assert.NoError(err)
 
 	for idx, c := range custom {
@@ -970,4 +970,119 @@ func TestEnsureDirectorySizes(t *testing.T) {
 		}
 	}
 
+}
+
+func TestMinimumSizesWithRequiredSizes(t *testing.T) {
+	assert := assert.New(t)
+
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(rand.NewSource(13))
+	pt := testPartitionTables["plain"]
+
+	type testCase struct {
+		Blueprint        []blueprint.FilesystemCustomization
+		ExpectedMinSizes map[string]uint64
+	}
+
+	testCases := []testCase{
+		{ // specify small /usr -> / and /usr get default size
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/usr",
+					MinSize:    1 * MiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/usr": 3 * GiB,
+				"/":    1 * GiB,
+			},
+		},
+		{ // specify small / and /usr -> / and /usr get default size
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/",
+					MinSize:    1 * MiB,
+				},
+				{
+					Mountpoint: "/usr",
+					MinSize:    1 * KiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/usr": 3 * GiB,
+				"/":    1 * GiB,
+			},
+		},
+		{ // big /usr -> / gets default size
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/usr",
+					MinSize:    10 * GiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/usr": 10 * GiB,
+				"/":    1 * GiB,
+			},
+		},
+		{
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/",
+					MinSize:    10 * GiB,
+				},
+				{
+					Mountpoint: "/home",
+					MinSize:    1 * MiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/":     10 * GiB,
+				"/home": 1 * GiB,
+			},
+		},
+		{ // no separate /usr and no size for / -> / gets sum of default sizes for / and /usr
+			Blueprint: []blueprint.FilesystemCustomization{
+				{
+					Mountpoint: "/opt",
+					MinSize:    10 * GiB,
+				},
+			},
+			ExpectedMinSizes: map[string]uint64{
+				"/opt": 10 * GiB,
+				"/":    1 * GiB,
+			},
+		},
+	}
+
+	for idx, tc := range testCases {
+		{ // without LVM
+			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), false, map[string]uint64{"/": 1 * GiB, "/usr": 3 * GiB}, rng)
+			assert.NoError(err)
+			for mnt, minSize := range tc.ExpectedMinSizes {
+				path := entityPath(mpt, mnt)
+				assert.NotNil(path, "[%d] mountpoint %q not found", idx, mnt)
+				parent := path[1]
+				part, ok := parent.(*Partition)
+				assert.True(ok, "%q parent (%v) is not a partition", mnt, parent)
+				assert.GreaterOrEqual(part.GetSize(), minSize,
+					"[%d] %q size %d should be greater or equal to %d", idx, mnt, part.GetSize(), minSize)
+			}
+		}
+
+		{ // with LVM
+			mpt, err := NewPartitionTable(&pt, tc.Blueprint, uint64(3*GiB), true, map[string]uint64{"/": 1 * GiB, "/usr": 3 * GiB}, rng)
+			assert.NoError(err)
+			for mnt, minSize := range tc.ExpectedMinSizes {
+				path := entityPath(mpt, mnt)
+				assert.NotNil(path, "[%d] mountpoint %q not found", idx, mnt)
+				parent := path[1]
+				part, ok := parent.(*LVMLogicalVolume)
+				assert.True(ok, "[%d] %q parent (%v) is not an LVM logical volume", idx, mnt, parent)
+				assert.GreaterOrEqual(part.GetSize(), minSize,
+					"[%d] %q size %d should be greater or equal to %d", idx, mnt, part.GetSize(), minSize)
+			}
+		}
+	}
 }

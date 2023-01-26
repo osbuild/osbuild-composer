@@ -18,7 +18,7 @@ func TestGenImageKernelOptions(t *testing.T) {
 
 	luks_lvm := testPartitionTables["luks+lvm"]
 
-	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, rng)
+	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, false, make(map[string]uint64), rng)
 	assert.NoError(err)
 
 	var uuid string
