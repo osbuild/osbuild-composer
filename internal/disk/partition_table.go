@@ -189,7 +189,7 @@ func (pt *PartitionTable) findDirectoryEntityPath(dir string) []Entity {
 
 // EnsureDirectorySizes takes a mapping of directory paths to sizes (in bytes)
 // and resizes the appropriate partitions such that they are at least the size
-// of the sum of their subdirectories.
+// of the sum of their subdirectories plus their own sizes.
 // The function will panic if any of the directory paths are invalid.
 func (pt *PartitionTable) EnsureDirectorySizes(dirSizeMap map[string]uint64) {
 
