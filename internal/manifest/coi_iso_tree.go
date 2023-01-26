@@ -64,7 +64,7 @@ func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 				},
 			},
 		},
-		osbuild.NewFilesInputs(osbuild.NewFilesInputPipelineObjectRef(p.payloadPipeline.Name(), p.payloadPipeline.Filename, nil)),
+		osbuild.NewXzStageInputs(osbuild.NewFilesInputPipelineObjectRef(p.payloadPipeline.Name(), p.payloadPipeline.Filename, nil)),
 	))
 
 	if p.coiPipeline.Ignition != nil {

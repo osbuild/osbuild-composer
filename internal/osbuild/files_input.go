@@ -5,25 +5,6 @@ import (
 	"fmt"
 )
 
-// Inputs for individual files
-
-type FilesInputs struct {
-	File *FilesInput `json:"file"`
-}
-
-func (FilesInputs) isStageInputs() {}
-
-func NewFilesInputs(references FilesInputRef) *FilesInputs {
-	return &FilesInputs{
-		File: NewFilesInput(references),
-	}
-}
-
-// IMPLEMENTED INTERFACES OF STAGES ACCEPTING THIS INPUTS TYPE
-
-// inputs accepted by the XZ stage
-func (FilesInputs) isXzStageInputs() {}
-
 // SPECIFIC INPUT STRUCTURE
 
 type FilesInput struct {
