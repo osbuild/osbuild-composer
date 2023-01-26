@@ -25,11 +25,11 @@ func TestNewXzStage(t *testing.T) {
 	expectedStage := &Stage{
 		Type:    "org.osbuild.xz",
 		Options: NewXzStageOptions(filename),
-		Inputs:  NewFilesInputs(NewFilesInputReferencesPipeline(pipeline, inputFilename)),
+		Inputs:  NewFilesInputs(NewFilesInputPipelineObjectRef(pipeline, inputFilename, nil)),
 	}
 
 	actualStage := NewXzStage(NewXzStageOptions(filename),
-		NewFilesInputs(NewFilesInputReferencesPipeline(pipeline, inputFilename)))
+		NewFilesInputs(NewFilesInputPipelineObjectRef(pipeline, inputFilename, nil)))
 	assert.Equal(t, expectedStage, actualStage)
 }
 
