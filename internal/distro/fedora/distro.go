@@ -653,7 +653,7 @@ func (t *imageType) getPartitionTable(
 
 	lvmify := !t.rpmOstree
 
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, lvmify, rng)
+	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, lvmify, options.RequiredSizes, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {

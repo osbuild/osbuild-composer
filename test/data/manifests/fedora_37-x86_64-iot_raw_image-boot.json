@@ -2307,7 +2307,7 @@
             "type": "org.osbuild.truncate",
             "options": {
               "filename": "disk.img",
-              "size": "4822401024"
+              "size": "4294967296"
             }
           },
           {
@@ -2329,7 +2329,7 @@
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 6293471,
+                  "size": 5263327,
                   "start": 3125248,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
@@ -2393,7 +2393,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 3125248,
-                  "size": 6293471,
+                  "size": 5263327,
                   "lock": true
                 }
               }
@@ -2440,7 +2440,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 3125248,
-                  "size": 6293471
+                  "size": 5263327
                 }
               }
             },

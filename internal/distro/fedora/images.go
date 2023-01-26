@@ -402,6 +402,10 @@ func iotRawImage(workload workload.Workload,
 	}
 	img.OSName = "fedora-iot"
 
+	// the iot raw image is laid out quite specifically, so we set no constraints; this means the
+	// default constraints don't apply either
+	options.RequiredSizes = map[string]uint64{}
+
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {

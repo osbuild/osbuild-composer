@@ -17,9 +17,11 @@ type PartitionTable struct {
 
 	SectorSize   uint64 // Sector size in bytes
 	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
+
+	RequiredSizes map[string]uint64
 }
 
-func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, lvmify bool, rng *rand.Rand) (*PartitionTable, error) {
+func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, lvmify bool, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
 	// first pass: enlarge existing mountpoints and collect new ones
@@ -40,11 +42,19 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 		return nil, err
 	}
 
-	// TODO: make these overrideable for each image type
-	newPT.EnsureDirectorySizes(map[string]uint64{
-		"/":    1073741824,
-		"/usr": 2147483648,
-	})
+	// If no separate requiredSizes are given then we use our defaults
+	if requiredSizes == nil {
+		newPT.RequiredSizes = map[string]uint64{
+			"/":    1073741824,
+			"/usr": 2147483648,
+		}
+	} else {
+		newPT.RequiredSizes = requiredSizes
+	}
+
+	if len(newPT.RequiredSizes) != 0 {
+		newPT.EnsureDirectorySizes(newPT.RequiredSizes)
+	}
 
 	// Calculate partition table offsets and sizes
 	newPT.relayout(imageSize)
@@ -65,12 +75,13 @@ func (pt *PartitionTable) Clone() Entity {
 	}
 
 	clone := &PartitionTable{
-		Size:         pt.Size,
-		UUID:         pt.UUID,
-		Type:         pt.Type,
-		Partitions:   make([]Partition, len(pt.Partitions)),
-		SectorSize:   pt.SectorSize,
-		ExtraPadding: pt.ExtraPadding,
+		Size:          pt.Size,
+		UUID:          pt.UUID,
+		Type:          pt.Type,
+		Partitions:    make([]Partition, len(pt.Partitions)),
+		SectorSize:    pt.SectorSize,
+		ExtraPadding:  pt.ExtraPadding,
+		RequiredSizes: pt.RequiredSizes,
 	}
 
 	for idx, partition := range pt.Partitions {
