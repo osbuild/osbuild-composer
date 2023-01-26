@@ -5,33 +5,18 @@ import (
 	"fmt"
 )
 
-type FDOStageReferences []string
-
-func (FDOStageReferences) isReferences() {}
-
-type FDOStageInput struct {
-	inputCommon
-	References FDOStageReferences `json:"references"`
-}
-
-func (FDOStageInput) isStageInput() {}
-
 type FDOStageInputs struct {
-	RootCerts *FDOStageInput `json:"rootcerts"`
+	RootCerts *FilesInput `json:"rootcerts"`
 }
 
 func (FDOStageInputs) isStageInputs() {}
 
 // NewFDOStageForCert creates FDOStage
 func NewFDOStageForRootCerts(rootCertsData string) *Stage {
-
 	dataBytes := []byte(rootCertsData)
-	rootCertsInputHash := fmt.Sprintf("sha256:%x", sha256.Sum256(dataBytes))
-
-	input := new(FDOStageInput)
-	input.Type = "org.osbuild.files"
-	input.Origin = "org.osbuild.source"
-	input.References = FDOStageReferences{rootCertsInputHash}
+	input := NewFilesInput(NewFilesInputSourcePlainRef([]string{
+		fmt.Sprintf("%x", sha256.Sum256(dataBytes)),
+	}))
 
 	return &Stage{
 		Type:   "org.osbuild.fdo",
