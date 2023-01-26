@@ -2632,8 +2632,13 @@ def append_partitions(report, image):
                 info = index.get_module_info("Mount", "org.osbuild.xfs")
             else:
                 raise RuntimeError("Unknown file system")
-            options = { "readonly":True }
-
+            options = {"readonly": True}
+            for option in part_options:
+                if "=" in option:
+                    parts = option.split("=")
+                    options[parts[0]] = parts[1]
+                else:
+                    options[option] = True
 
             # the first mount point should be root
             if n == 0:
