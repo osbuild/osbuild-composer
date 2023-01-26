@@ -144,11 +144,11 @@ func (b *HandlerBuilder) KeysInsecure(value bool) *HandlerBuilder {
 // ACLFile sets a file that contains items of the access control list. This should be a YAML file
 // with the following format:
 //
-// - claim: email
-//   pattern: ^.*@redhat\.com$
+//   - claim: email
+//     pattern: ^.*@redhat\.com$
 //
-// - claim: sub
-//   pattern: ^f:b3f7b485-7184-43c8-8169-37bd6d1fe4aa:myuser$
+//   - claim: sub
+//     pattern: ^f:b3f7b485-7184-43c8-8169-37bd6d1fe4aa:myuser$
 //
 // The claim field is the name of the claim of the JWT token that will be checked. The pattern field
 // is a regular expression. If the claim matches the regular expression then access will be allowed.
