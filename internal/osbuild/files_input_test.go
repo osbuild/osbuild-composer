@@ -1,14 +1,16 @@
 package osbuild
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+type fakeFilesInputRef struct{}
+
+func (f *fakeFilesInputRef) isFilesInputRef() {}
 
 func TestNewFilesInputs(t *testing.T) {
 	inputFilename := "image.raw"
@@ -20,82 +22,101 @@ func TestNewFilesInputs(t *testing.T) {
 				Type:   InputTypeFiles,
 				Origin: InputOriginPipeline,
 			},
-			References: &FilesInputReferencesPipeline{
-				fmt.Sprintf("name:%s", pipeline): FileReference{File: inputFilename},
+			References: &FilesInputPipelineObjectRef{
+				fmt.Sprintf("name:%s", pipeline): FilesInputPipelineOptions{File: inputFilename},
 			},
 		},
 	}
 
-	actualInput := NewFilesInputs(NewFilesInputReferencesPipeline(pipeline, inputFilename))
+	actualInput := NewFilesInputs(NewFilesInputPipelineObjectRef(pipeline, inputFilename, nil))
 	assert.Equal(t, expectedInput, actualInput)
+
+	assert.Panics(t, func() {
+		NewFilesInputs(&fakeFilesInputRef{})
+	})
 }
 
 func TestFilesInput_UnmarshalJSON(t *testing.T) {
-	type fields struct {
-		Type       string
-		Origin     string
-		References FilesInputReferences
-	}
-
-	type args struct {
-		data []byte
-	}
-
-	tests := []struct {
+	testCases := []struct {
 		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		ref     FilesInputRef
+		rawJson []byte
 	}{
 		{
-			name: "pipeline-origin",
-			fields: fields{
-				Type:       InputTypeFiles,
-				Origin:     InputOriginPipeline,
-				References: NewFilesInputReferencesPipeline("os", "image.raw"),
-			},
-			args: args{
-				data: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.pipeline","references":{"name:os":{"file":"image.raw"}}}`),
-			},
+			name:    "pipeline-object-ref",
+			ref:     NewFilesInputPipelineObjectRef("os", "image.raw", nil),
+			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.pipeline","references":{"name:os":{"file":"image.raw"}}}`),
 		},
 		{
-			name: "unknown-origin",
-			fields: fields{
-				Type:       InputTypeFiles,
-				Origin:     InputOriginSource,
-				References: nil,
-			},
-			wantErr: true,
+			name:    "pipeline-array-ref",
+			ref:     NewFilesInputPipelineArrayRef("os", "image.raw", nil),
+			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.pipeline","references":[{"id":"name:os","options":{"file":"image.raw"}}]}`),
+		},
+		{
+			name:    "source-plain-ref",
+			ref:     NewFilesInputSourcePlainRef([]string{"1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"}),
+			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.source","references":["sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"]}`),
+		},
+		{
+			name: "source-array-ref",
+			ref: NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
+				NewFilesInputSourceArrayRefEntry("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef", nil),
+			}),
+			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.source","references":[{"id":"sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"}]}`),
+		},
+		{
+			name: "source-object-ref",
+			ref: NewFilesInputSourceObjectRef(map[string]FilesInputRefMetadata{
+				"1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef": nil,
+			}),
+			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.source","references":{"sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef":{}}}`),
 		},
 	}
 
-	for idx, tt := range tests {
+	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			input := &FilesInput{
-				inputCommon: inputCommon{
-					Type:   tt.fields.Type,
-					Origin: tt.fields.Origin,
-				},
-				References: tt.fields.References,
-			}
 			var gotInput FilesInput
-			if err := json.Unmarshal(tt.args.data, &gotInput); (err != nil) != tt.wantErr {
-				println("data: ", string(tt.args.data))
-				t.Errorf("FilesInput.UnmarshalJSON() error = %v, wantErr %v [idx: %d]", err, tt.wantErr, idx)
-			}
-			if tt.wantErr {
-				return
-			}
+			err := json.Unmarshal(tt.rawJson, &gotInput)
+			assert.NoErrorf(t, err, "FilesInput.UnmarshalJSON() error = %v", err)
+
+			input := NewFilesInput(tt.ref)
 			gotBytes, err := json.Marshal(input)
-			if err != nil {
-				t.Errorf("Could not marshal FilesInput: %v", err)
-			}
-			if !bytes.Equal(gotBytes, tt.args.data) {
-				t.Errorf("Expected `%v`, got `%v` [idx: %d]", string(tt.args.data), string(gotBytes), idx)
-			}
-			if !reflect.DeepEqual(&gotInput, input) {
-				t.Errorf("got {%v, %v, %v}, expected {%v, %v, %v} [%d]", gotInput.Type, gotInput.Origin, gotInput.References, input.Type, input.Origin, input.References, idx)
-			}
+			assert.NoErrorf(t, err, "FilesInput.MarshalJSON() error = %v", err)
+
+			assert.EqualValuesf(t, tt.rawJson, gotBytes, "Expected JSON `%v`, got JSON `%v`", string(tt.rawJson), string(gotBytes))
+			assert.EqualValuesf(t, input, &gotInput, "Expected input `%v`, got input `%v` [test: %q]", input, &gotInput, tt.name)
 		})
 	}
+
+	// test invalid cases
+	invalidTestCases := []struct {
+		name    string
+		rawJson []byte
+	}{
+		{
+			name:    "invalid-pipeline-ref",
+			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.pipeline","references":1}`),
+		},
+		{
+			name:    "invalid-source-ref",
+			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.source","references":2}`),
+		},
+		{
+			name:    "invalid-origin",
+			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.invalid","references":{}}`),
+		},
+		{
+			name:    "invalid-input",
+			rawJson: []byte(`[]`),
+		},
+	}
+
+	for _, tt := range invalidTestCases {
+		t.Run(tt.name, func(t *testing.T) {
+			var gotInput FilesInput
+			err := json.Unmarshal(tt.rawJson, &gotInput)
+			assert.Error(t, err)
+		})
+	}
+
 }
