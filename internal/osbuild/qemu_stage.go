@@ -163,28 +163,10 @@ func (o VHDXOptions) formatType() QEMUFormat {
 }
 
 type QEMUStageInputs struct {
-	Image *QEMUStageInput `json:"image"`
+	Image *FilesInput `json:"image"`
 }
 
 func (QEMUStageInputs) isStageInputs() {}
-
-type QEMUStageInput struct {
-	inputCommon
-	References QEMUStageReferences `json:"references"`
-}
-
-func (QEMUStageInput) isStageInput() {}
-
-type QEMUStageReferences map[string]QEMUFile
-
-func (QEMUStageReferences) isReferences() {}
-
-type QEMUFile struct {
-	Metadata FileMetadata `json:"metadata,omitempty"`
-	File     string       `json:"file,omitempty"`
-}
-
-type FileMetadata map[string]interface{}
 
 // NewQEMUStage creates a new QEMU Stage object.
 func NewQEMUStage(options *QEMUStageOptions, inputs *QEMUStageInputs) *Stage {
@@ -271,16 +253,7 @@ func (options QEMUStageOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(qemuStageOptions(options))
 }
 
-func NewQemuStagePipelineFilesInputs(stage, file string) *QEMUStageInputs {
-	stageKey := "name:" + stage
-	ref := map[string]QEMUFile{
-		stageKey: {
-			File: file,
-		},
-	}
-	input := new(QEMUStageInput)
-	input.Type = "org.osbuild.files"
-	input.Origin = "org.osbuild.pipeline"
-	input.References = ref
+func NewQemuStagePipelineFilesInputs(pipeline, file string) *QEMUStageInputs {
+	input := NewFilesInput(NewFilesInputPipelineObjectRef(pipeline, file, nil))
 	return &QEMUStageInputs{Image: input}
 }

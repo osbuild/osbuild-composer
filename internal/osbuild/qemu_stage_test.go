@@ -30,14 +30,7 @@ func TestNewQemuStage(t *testing.T) {
 		},
 	}
 
-	input := new(QEMUStageInput)
-	input.Type = "org.osbuild.files"
-	input.Origin = "org.osbuild.pipeline"
-	input.References = map[string]QEMUFile{
-		"name:stage": {
-			File: "img.raw",
-		},
-	}
+	input := NewFilesInput(NewFilesInputPipelineObjectRef("stage", "img.raw", nil))
 	inputs := QEMUStageInputs{Image: input}
 
 	for _, format := range formatOptionsList {
