@@ -49,6 +49,7 @@ type ImageInstaller struct {
 	AdditionalKernelOpts      []string
 	AdditionalAnacondaModules []string
 	AdditionalDracutModules   []string
+	AdditionalDrivers         []string
 }
 
 func NewImageInstaller() *ImageInstaller {
@@ -80,6 +81,7 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
+	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
 	tarPath := "/liveimg.tar.gz"
 

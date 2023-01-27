@@ -48,8 +48,9 @@ type Anaconda struct {
 	// Additional anaconda modules to enable
 	AdditionalAnacondaModules []string
 
-	// Additional dracut modules to enable
+	// Additional dracut modules and drivers to enable
 	AdditionalDracutModules []string
+	AdditionalDrivers       []string
 }
 
 // NewAnaconda creates an anaconda pipeline object. repos and packages
@@ -216,7 +217,9 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 		"lunmask",
 		"nfs",
 	)
-	pipeline.AddStage(osbuild.NewDracutStage(dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)))
+	dracutOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
+	dracutOptions.AddDrivers = p.AdditionalDrivers
+	pipeline.AddStage(osbuild.NewDracutStage(dracutOptions))
 	pipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
 	if p.InteractiveDefaults != nil {

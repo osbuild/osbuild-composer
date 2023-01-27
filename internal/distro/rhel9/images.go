@@ -301,7 +301,12 @@ func edgeInstallerImage(workload workload.Workload,
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
 	img.SquashfsCompression = "xz"
-	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
+	img.AdditionalDracutModules = []string{
+		"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+		"prefixdevname",
+		"prefixdevname-tools",
+	}
+	img.AdditionalDrivers = []string{"cuse", "ipmi_devintf", "ipmi_msghandler"}
 
 	if len(img.Users)+len(img.Groups) > 0 {
 		// only enable the users module if needed
@@ -477,7 +482,12 @@ func imageInstallerImage(workload workload.Workload,
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	img.AdditionalDracutModules = []string{"prefixdevname", "prefixdevname-tools"}
+	img.AdditionalDracutModules = []string{
+		"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+		"prefixdevname",
+		"prefixdevname-tools",
+	}
+	img.AdditionalDrivers = []string{"cuse", "ipmi_devintf", "ipmi_msghandler"}
 	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 
 	img.SquashfsCompression = "xz"
