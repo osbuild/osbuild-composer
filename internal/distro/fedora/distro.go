@@ -79,7 +79,7 @@ var (
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey:        bareMetalPackageSet,
+			osPkgsKey:        minimalrpmPackageSet,
 			installerPkgsKey: imageInstallerPackageSet,
 		},
 		bootable:         true,
