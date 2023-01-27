@@ -1,6 +1,8 @@
 package osbuild
 
 import (
+	"strings"
+
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -42,23 +44,11 @@ func (RPMStageOptions) isStageOptions() {}
 // RPMStageInputs defines a collection of packages to be installed by the RPM
 // stage.
 type RPMStageInputs struct {
-
 	// Packages to install
-	Packages *RPMStageInput `json:"packages"`
+	Packages *FilesInput `json:"packages"`
 }
 
 func (RPMStageInputs) isStageInputs() {}
-
-// RPMStageInput defines a single input source.
-type RPMStageInput struct {
-	inputCommon
-
-	// Collection of references. Each reference defines a package to be
-	// installed, with optional metadata.
-	References RPMStageSourceArrayRefs `json:"references"`
-}
-
-func (RPMStageInput) isStageInput() {}
 
 // RPM package reference metadata
 type RPMStageReferenceMetadata struct {
@@ -67,56 +57,7 @@ type RPMStageReferenceMetadata struct {
 	CheckGPG bool `json:"rpm.check_gpg,omitempty"`
 }
 
-// RPMStageSourceOptions holds the metadata/options for a single RPM package to be
-// installed.
-type RPMStageSourceOptions struct {
-	Metadata *RPMStageReferenceMetadata `json:"metadata,omitempty"`
-}
-
-// RPMStageReferences: References to RPM packages defined in JSON as:
-//
-// "sha256:<...>": {
-//    "metadata": {
-//	    "rpm.check_gpg": <boolean>
-//    }
-// },
-// "sha256:<...>": {
-//    "metadata": {
-//	    "rpm.check_gpg": <boolean>
-//    }
-// }
-// ...
-type RPMStageReferences map[string]*RPMStageSourceOptions
-
-func (RPMStageReferences) isReferences() {}
-
-// RPMStageSourceArrayRefs: References to RPM packages defined in JSON as an
-// array of objects (preserves item order):
-// [
-//   {
-//     "id": "sha256:<...>": {
-//       "options": {
-//         "rpm.check_gpg": <boolean>
-//       }
-//     }
-//   },
-//   {
-//     "id": "sha256:<...>": {
-//       "options": {
-//         "rpm.check_gpg": <boolean>
-//       }
-//     }
-//   },
-//   ...
-// ]
-type RPMStageSourceArrayRefs []*RPMStageSourceArrayRef
-
-func (RPMStageSourceArrayRefs) isReferences() {}
-
-type RPMStageSourceArrayRef struct {
-	ID      string                 `json:"id"`
-	Options *RPMStageSourceOptions `json:"options,omitempty"`
-}
+func (*RPMStageReferenceMetadata) isFilesInputRefMetadata() {}
 
 // NewRPMStage creates a new RPM stage.
 func NewRPMStage(options *RPMStageOptions, inputs *RPMStageInputs) *Stage {
@@ -180,28 +121,23 @@ func RPMPackageMetadataToSignature(pkg RPMPackageMetadata) *string {
 }
 
 func NewRpmStageSourceFilesInputs(specs []rpmmd.PackageSpec) *RPMStageInputs {
-	stageInput := new(RPMStageInput)
-	stageInput.Type = "org.osbuild.files"
-	stageInput.Origin = "org.osbuild.source"
-	stageInput.References = pkgRefs(specs)
-	return &RPMStageInputs{Packages: stageInput}
+	input := NewFilesInput(pkgRefs(specs))
+	return &RPMStageInputs{Packages: input}
 }
 
-func pkgRefs(specs []rpmmd.PackageSpec) RPMStageSourceArrayRefs {
-	refs := make(RPMStageSourceArrayRefs, len(specs))
+func pkgRefs(specs []rpmmd.PackageSpec) FilesInputRef {
+	refs := make([]FilesInputSourceArrayRefEntry, len(specs))
 	for idx, pkg := range specs {
-		refs[idx] = &RPMStageSourceArrayRef{
-			ID: pkg.Checksum,
-		}
+		pkgSum := strings.TrimPrefix(pkg.Checksum, "sha256:")
+		var pkgMetadata FilesInputRefMetadata
 		if pkg.CheckGPG {
-			refs[idx].Options = &RPMStageSourceOptions{
-				Metadata: &RPMStageReferenceMetadata{
-					CheckGPG: pkg.CheckGPG,
-				},
+			pkgMetadata = &RPMStageReferenceMetadata{
+				CheckGPG: pkg.CheckGPG,
 			}
 		}
+		refs[idx] = NewFilesInputSourceArrayRefEntry(pkgSum, pkgMetadata)
 	}
-	return refs
+	return NewFilesInputSourceArrayRef(refs)
 }
 
 func NewRPMStageOptions(repos []rpmmd.RepoConfig) *RPMStageOptions {
