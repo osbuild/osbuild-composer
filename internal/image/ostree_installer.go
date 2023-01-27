@@ -37,6 +37,7 @@ type OSTreeInstaller struct {
 
 	AdditionalDracutModules   []string
 	AdditionalAnacondaModules []string
+	AdditionalDrivers         []string
 }
 
 func NewOSTreeInstaller(commit ostree.CommitSpec) *OSTreeInstaller {
@@ -69,6 +70,7 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Checkpoint()
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
+	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
 	rootfsPartitionTable := &disk.PartitionTable{
 		Size: 20 * common.MebiByte,
