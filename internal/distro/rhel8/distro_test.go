@@ -319,6 +319,8 @@ func TestImageType_Name(t *testing.T) {
 			imgNames: []string{
 				"qcow2",
 				"openstack",
+				"vhd",
+				"azure-rhui",
 				"ami",
 				"ec2",
 				"edge-commit",
@@ -512,6 +514,8 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 			imgNames: []string{
 				"qcow2",
 				"openstack",
+				"vhd",
+				"azure-rhui",
 				"ami",
 				"ec2",
 				"edge-commit",

@@ -1,6 +1,7 @@
 package rhel8
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -36,7 +37,7 @@ func TestDistro_UnsupportedArch(t *testing.T) {
 		name: "unsupported_arch",
 	}
 	_, err := testBasicImageType.getPartitionTable(mountpoints, distro.ImageOptions{}, rng)
-	require.EqualError(t, err, "unknown arch: "+testBasicImageType.arch.name)
+	require.EqualError(t, err, fmt.Sprintf("no partition table defined for architecture %q for image type %q", testBasicImageType.arch.name, testBasicImageType.name))
 }
 
 func TestDistro_DefaultPartitionTables(t *testing.T) {
@@ -66,7 +67,7 @@ func TestDistro_Ec2PartitionTables(t *testing.T) {
 				assert.True(t, pt.ContainsMountpoint(m.Mountpoint))
 			}
 		} else {
-			require.EqualError(t, err, "unknown arch: "+testEc2ImageType.arch.name)
+			require.EqualError(t, err, fmt.Sprintf("no partition table defined for architecture %q for image type %q", testEc2ImageType.arch.name, testEc2ImageType.name))
 		}
 	}
 }
