@@ -543,14 +543,6 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
-func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"@core",
-		},
-	}
-}
-
 func minimalrpmPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
