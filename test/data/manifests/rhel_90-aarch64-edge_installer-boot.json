@@ -3533,6 +3533,7 @@
                 "img-lib",
                 "shutdown",
                 "uefi-lib",
+                "nvdimm",
                 "prefixdevname",
                 "prefixdevname-tools",
                 "anaconda",
@@ -3544,6 +3545,11 @@
                 "iscsi",
                 "lunmask",
                 "nfs"
+              ],
+              "add_drivers": [
+                "cuse",
+                "ipmi_devintf",
+                "ipmi_msghandler"
               ],
               "install": [
                 "/.buildstamp"
