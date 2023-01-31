@@ -360,7 +360,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 			}
 
 			// ignition is optional, we might be using FDO
-			if customizations.Ignition.HasIgnition() {
+			if customizations.GetIgnition() != nil {
 				if customizations.GetIgnition().Embedded != nil && customizations.GetIgnition().FirstBoot != nil {
 					return fmt.Errorf("both ignition embedded and firstboot configurations found")
 				}

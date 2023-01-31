@@ -407,7 +407,3 @@ func (c *Customizations) GetIgnition() *IgnitionCustomization {
 	}
 	return c.Ignition
 }
-
-func (c *IgnitionCustomization) HasIgnition() bool {
-	return c != nil
-}
