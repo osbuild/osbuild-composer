@@ -21,6 +21,8 @@ type Customizations struct {
 	FDO                *FDOCustomization         `json:"fdo,omitempty" toml:"fdo,omitempty"`
 	OpenSCAP           *OpenSCAPCustomization    `json:"openscap,omitempty" toml:"openscap,omitempty"`
 	Ignition           *IgnitionCustomization    `json:"ignition,omitempty" toml:"ignition,omitempty"`
+	Directories        []DirectoryCustomization  `json:"directories,omitempty" toml:"directories,omitempty"`
+	Files              []FileCustomization       `json:"files,omitempty" toml:"files,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -340,4 +342,18 @@ func (c *Customizations) GetIgnition() *IgnitionCustomization {
 		return nil
 	}
 	return c.Ignition
+}
+
+func (c *Customizations) GetDirectories() []DirectoryCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.Directories
+}
+
+func (c *Customizations) GetFiles() []FileCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.Files
 }
