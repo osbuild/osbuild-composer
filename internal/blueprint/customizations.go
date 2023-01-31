@@ -401,10 +401,6 @@ func (c *Customizations) GetOpenSCAP() *OpenSCAPCustomization {
 	return c.OpenSCAP
 }
 
-func (f *FDOCustomization) HasFDO() bool {
-	return f != nil
-}
-
 func (c *Customizations) GetIgnition() *IgnitionCustomization {
 	if c == nil {
 		return nil
