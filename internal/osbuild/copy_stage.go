@@ -39,6 +39,10 @@ func NewCopyStageSimple(options *CopyStageOptions, inputs Inputs) *Stage {
 	}
 }
 
+type CopyStageFilesInputs map[string]*FilesInput
+
+func (*CopyStageFilesInputs) isStageInputs() {}
+
 // GenCopyFSTreeOptions creates the options, inputs, devices, and mounts properties
 // for an org.osbuild.copy stage for a given source tree using a partition
 // table description to define the mounts

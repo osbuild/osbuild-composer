@@ -1,6 +1,7 @@
 package osbuild
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,5 +42,30 @@ func TestNewCopyStage(t *testing.T) {
 	stageMounts := Mounts(mounts)
 	stageDevices := Devices(devices)
 	actualStage := NewCopyStage(&CopyStageOptions{paths}, NewPipelineTreeInputs("tree-input", "input-pipeline"), &stageDevices, &stageMounts)
+	assert.Equal(t, expectedStage, actualStage)
+}
+
+func TestNewCopyStageSimpleSourcesInputs(t *testing.T) {
+	fileSum := "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+
+	paths := []CopyStagePath{
+		{
+			From: fmt.Sprintf("input://inlinefile/sha256:%x", fileSum),
+			To:   "tree://etc/inlinefile",
+		},
+	}
+
+	filesInputs := CopyStageFilesInputs{
+		"inlinefile": NewFilesInput(NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
+			NewFilesInputSourceArrayRefEntry(fileSum, nil),
+		})),
+	}
+
+	expectedStage := &Stage{
+		Type:    "org.osbuild.copy",
+		Options: &CopyStageOptions{paths},
+		Inputs:  &filesInputs,
+	}
+	actualStage := NewCopyStageSimple(&CopyStageOptions{paths}, &filesInputs)
 	assert.Equal(t, expectedStage, actualStage)
 }
