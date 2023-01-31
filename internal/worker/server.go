@@ -382,7 +382,7 @@ func (s *Server) ContainerResolveJobInfo(id uuid.UUID, result *ContainerResolveJ
 	}
 
 	if jobInfo.JobType != JobTypeContainerResolve {
-		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeDepsolve, jobInfo.JobType)
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeContainerResolve, jobInfo.JobType)
 	}
 
 	return jobInfo, nil
