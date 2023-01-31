@@ -35,6 +35,7 @@ const (
 	JobTypeDepsolve         string = "depsolve"
 	JobTypeManifestIDOnly   string = "manifest-id-only"
 	JobTypeContainerResolve string = "container-resolve"
+	JobTypeFileResolve      string = "file-resolve"
 	JobTypeOSTreeResolve    string = "ostree-resolve"
 	JobTypeAWSEC2Copy       string = "aws-ec2-copy"
 	JobTypeAWSEC2Share      string = "aws-ec2-share"
@@ -167,6 +168,10 @@ func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel st
 	return s.enqueue(JobTypeContainerResolve, job, nil, channel)
 }
 
+func (s *Server) EnqueueFileResolveJob(job *FileResolveJob, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeFileResolve, job, nil, channel)
+}
+
 func (s *Server) EnqueueOSTreeResolveJob(job *OSTreeResolveJob, channel string) (uuid.UUID, error) {
 	return s.enqueue(JobTypeOSTreeResolve, job, nil, channel)
 }
@@ -242,6 +247,13 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &containerResolveJR.JobResult
+	case JobTypeFileResolve:
+		var fileResolveJR FileResolveJobResult
+		jobInfo, err = s.FileResolveJobInfo(id, &fileResolveJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &fileResolveJR.JobResult
 	case JobTypeOSTreeResolve:
 		var ostreeResolveJR OSTreeResolveJobResult
 		jobInfo, err = s.OSTreeResolveJobInfo(id, &ostreeResolveJR)
@@ -383,6 +395,20 @@ func (s *Server) ContainerResolveJobInfo(id uuid.UUID, result *ContainerResolveJ
 
 	if jobInfo.JobType != JobTypeContainerResolve {
 		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeContainerResolve, jobInfo.JobType)
+	}
+
+	return jobInfo, nil
+}
+
+func (s *Server) FileResolveJobInfo(id uuid.UUID, result *FileResolveJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if jobInfo.JobType != JobTypeFileResolve {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeFileResolve, jobInfo.JobType)
 	}
 
 	return jobInfo, nil
@@ -716,7 +742,6 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 			return err
 		}
 		jobResult = &awsEC2ShareJR.JobResult
-
 	case JobTypeContainerResolve:
 		var containerResolveJR ContainerResolveJobResult
 		jobInfo, err = s.ContainerResolveJobInfo(jobId, &containerResolveJR)
@@ -724,6 +749,13 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 			return err
 		}
 		jobResult = &containerResolveJR.JobResult
+	case JobTypeFileResolve:
+		var fileResolveJR FileResolveJobResult
+		jobInfo, err = s.FileResolveJobInfo(jobId, &fileResolveJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &fileResolveJR.JobResult
 	case JobTypeOSTreeResolve:
 		var ostreeResolveJR OSTreeResolveJobResult
 		jobInfo, err = s.OSTreeResolveJobInfo(jobId, &ostreeResolveJR)

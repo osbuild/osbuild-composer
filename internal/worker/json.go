@@ -89,6 +89,18 @@ func (j *OSBuildJobResult) TargetResultsByName(name target.TargetName) []*target
 	return targetResults
 }
 
+func (j *FileResolveJobResult) ResolutionErrors() []*clienterrors.Error {
+	resolutionErrors := []*clienterrors.Error{}
+
+	for _, result := range j.Results {
+		if result.ResolutionError != nil {
+			resolutionErrors = append(resolutionErrors, result.ResolutionError)
+		}
+	}
+
+	return resolutionErrors
+}
+
 type KojiInitJob struct {
 	Server  string `json:"server"`
 	Name    string `json:"name"`
@@ -253,6 +265,22 @@ type ContainerResolveJob struct {
 type ContainerResolveJobResult struct {
 	Specs []ContainerSpec `json:"specs"`
 
+	JobResult
+}
+
+type FileResolveJob struct {
+	URLs []string `json:"urls"`
+}
+
+type FileResolveJobResultItem struct {
+	URL             string              `json:"url"`
+	Content         []byte              `json:"content"`
+	ResolutionError *clienterrors.Error `json:"target_error,omitempty"`
+}
+
+type FileResolveJobResult struct {
+	Success bool                       `json:"success"`
+	Results []FileResolveJobResultItem `json:"results"`
 	JobResult
 }
 
