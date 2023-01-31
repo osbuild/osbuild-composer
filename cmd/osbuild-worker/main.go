@@ -466,6 +466,7 @@ func main() {
 			AuthFilePath: containersAuthFilePath,
 		},
 		worker.JobTypeOSTreeResolve: &OSTreeResolveJobImpl{},
+		worker.JobTypeFileResolve:   &FileResolveJobImpl{},
 		worker.JobTypeAWSEC2Copy: &AWSEC2CopyJobImpl{
 			AWSCreds: awsCredentials,
 		},
