@@ -42,6 +42,12 @@ func NewCopyStageSimple(options *CopyStageOptions, inputs Inputs) *Stage {
 // GenCopyFSTreeOptions creates the options, inputs, devices, and mounts properties
 // for an org.osbuild.copy stage for a given source tree using a partition
 // table description to define the mounts
+//
+// TODO: the `inputPipeline` parameter is not used. We should instead split out
+// the part that creates Devices and Mounts into a separate functions
+// such as `GenFSMounts()` and `GenFSMountsDevices()` and take their output
+// as parameters. Also we should be returning the final stage from this
+// function, not just the options, devices, and mounts.
 func GenCopyFSTreeOptions(inputName, inputPipeline, filename string, pt *disk.PartitionTable) (
 	*CopyStageOptions,
 	*Devices,
