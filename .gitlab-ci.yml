@@ -434,6 +434,17 @@ Rebase OSTree UEFI:
           - rhos-01/centos-stream-8-x86_64
           - rhos-01/centos-stream-9-x86_64
 
+Minimal raw:
+  stage: test
+  extends: OSTree
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/minimal-raw.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - rhos-01/fedora-37-x86_64
+
 .integration_base:
   stage: test
   extends: .terraform
