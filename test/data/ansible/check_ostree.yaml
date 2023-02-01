@@ -1091,6 +1091,30 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: test_custom_dirs_files == "true"
 
+    # case: check sos package
+    - name: Check SOS Package
+      block:
+        - name: Generate sos report
+          command: sos report --no-report --batch -o podman
+          become: "true"
+          register: result_sos_report
+
+        - assert:
+            that:
+              - result_sos_report is succeeded
+            fail_msg: "No usable sos package present"
+            success_msg: "sos package present and usable"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+      when: (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('8.4', '>')) or
+            (ansible_facts['distribution'] == 'CentOS')
+
     - name: Check if any test failed
       assert:
         that:
