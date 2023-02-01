@@ -4828,15 +4828,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "cloud-init.service"
-              ],
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.fstab",
             "options": {
               "filesystems": [
@@ -4876,6 +4867,15 @@
               "config": {
                 "default": "saved"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "cloud-init.service"
+              ],
+              "default_target": "multi-user.target"
             }
           },
           {

@@ -5049,17 +5049,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "cloud-init.service",
-                "cloud-config.service",
-                "cloud-final.service",
-                "cloud-init-local.service"
-              ]
-            }
-          },
-          {
             "type": "org.osbuild.fstab",
             "options": {
               "filesystems": [
@@ -5099,6 +5088,17 @@
               "config": {
                 "default": "saved"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "cloud-init.service",
+                "cloud-config.service",
+                "cloud-final.service",
+                "cloud-init-local.service"
+              ]
             }
           },
           {

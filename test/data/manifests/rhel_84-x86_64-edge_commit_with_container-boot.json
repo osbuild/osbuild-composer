@@ -1960,24 +1960,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "NetworkManager.service",
-                "firewalld.service",
-                "sshd.service",
-                "greenboot-grub2-set-counter",
-                "greenboot-grub2-set-success",
-                "greenboot-healthcheck",
-                "greenboot-rpm-ostree-grub2-check-fallback",
-                "greenboot-status",
-                "greenboot-task-runner",
-                "redboot-auto-reboot",
-                "redboot-task-runner"
-              ]
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -2007,6 +1989,24 @@
                   "Storage": "persistent"
                 }
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "NetworkManager.service",
+                "firewalld.service",
+                "sshd.service",
+                "greenboot-grub2-set-counter",
+                "greenboot-grub2-set-success",
+                "greenboot-healthcheck",
+                "greenboot-rpm-ostree-grub2-check-fallback",
+                "greenboot-status",
+                "greenboot-task-runner",
+                "redboot-auto-reboot",
+                "redboot-task-runner"
+              ]
             }
           },
           {

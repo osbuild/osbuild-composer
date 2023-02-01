@@ -2284,22 +2284,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "cloud-config",
-                "cloud-final",
-                "cloud-init-local",
-                "cloud-init",
-                "firewalld",
-                "NetworkManager",
-                "sshd",
-                "waagent"
-              ],
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -2625,6 +2609,22 @@
               "facts": {
                 "image-builder.osbuild-composer.api-type": "test-manifest"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "cloud-config",
+                "cloud-final",
+                "cloud-init-local",
+                "cloud-init",
+                "firewalld",
+                "NetworkManager",
+                "sshd",
+                "waagent"
+              ],
+              "default_target": "multi-user.target"
             }
           },
           {

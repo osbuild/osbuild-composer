@@ -3061,20 +3061,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "firewalld",
-                "nm-cloud-setup.service",
-                "nm-cloud-setup.timer",
-                "sshd",
-                "systemd-resolved",
-                "waagent"
-              ],
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -3482,6 +3468,20 @@
               "facts": {
                 "image-builder.osbuild-composer.api-type": "test-manifest"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "firewalld",
+                "nm-cloud-setup.service",
+                "nm-cloud-setup.timer",
+                "sshd",
+                "systemd-resolved",
+                "waagent"
+              ],
+              "default_target": "multi-user.target"
             }
           },
           {

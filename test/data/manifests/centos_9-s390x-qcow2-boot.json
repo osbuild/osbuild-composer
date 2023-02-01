@@ -5348,12 +5348,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -5388,6 +5382,12 @@
           {
             "type": "org.osbuild.zipl",
             "options": {}
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "default_target": "multi-user.target"
+            }
           },
           {
             "type": "org.osbuild.selinux",
