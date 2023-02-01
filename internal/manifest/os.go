@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/environment"
+	"github.com/osbuild/osbuild-composer/internal/fsnode"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
@@ -110,6 +111,10 @@ type OSCustomizations struct {
 
 	Subscription *distro.SubscriptionImageOptions
 	RHSMConfig   map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
+
+	// Custom directories and files to create in the image
+	Directories []*fsnode.Directory
+	Files       []*fsnode.File
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -604,6 +609,15 @@ func (p *OS) serialize() osbuild.Pipeline {
 			}))
 	}
 
+	// First create custom directories, because some of the custom files may depend on them
+	if len(p.Directories) > 0 {
+		pipeline.AddStages(osbuild.GenDirectoryNodesStages(p.Directories)...)
+	}
+
+	if len(p.Files) > 0 {
+		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
+	}
+
 	enabledServices := []string{}
 	disabledServices := []string{}
 	enabledServices = append(enabledServices, p.EnabledServices...)
@@ -691,4 +705,15 @@ func usersFirstBootOptions(users []users.User) *osbuild.FirstBootStageOptions {
 
 func (p *OS) GetPlatform() platform.Platform {
 	return p.platform
+}
+
+func (p *OS) getInline() []string {
+	inlineData := []string{}
+
+	// inline data for custom files
+	for _, file := range p.Files {
+		inlineData = append(inlineData, string(file.Data()))
+	}
+
+	return inlineData
 }
