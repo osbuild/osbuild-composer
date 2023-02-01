@@ -2044,26 +2044,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "sshd",
-                "rngd",
-                "dnf-automatic.timer",
-                "google-oslogin-cache.timer",
-                "google-guest-agent.service",
-                "google-shutdown-scripts.service",
-                "google-startup-scripts.service",
-                "google-osconfig-agent.service"
-              ],
-              "disabled_services": [
-                "sshd-keygen@",
-                "reboot.target"
-              ],
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.firewall",
             "options": {
               "default_zone": "trusted"
@@ -2205,6 +2185,26 @@
               "facts": {
                 "image-builder.osbuild-composer.api-type": "test-manifest"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "sshd",
+                "rngd",
+                "dnf-automatic.timer",
+                "google-oslogin-cache.timer",
+                "google-guest-agent.service",
+                "google-shutdown-scripts.service",
+                "google-startup-scripts.service",
+                "google-osconfig-agent.service"
+              ],
+              "disabled_services": [
+                "sshd-keygen@",
+                "reboot.target"
+              ],
+              "default_target": "multi-user.target"
             }
           },
           {

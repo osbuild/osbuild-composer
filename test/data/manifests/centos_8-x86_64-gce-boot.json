@@ -4884,21 +4884,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "sshd",
-                "rngd",
-                "dnf-automatic.timer"
-              ],
-              "disabled_services": [
-                "sshd-keygen@",
-                "reboot.target"
-              ],
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.firewall",
             "options": {
               "default_zone": "trusted"
@@ -5022,6 +5007,21 @@
               "config": {
                 "default": "saved"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "sshd",
+                "rngd",
+                "dnf-automatic.timer"
+              ],
+              "disabled_services": [
+                "sshd-keygen@",
+                "reboot.target"
+              ],
+              "default_target": "multi-user.target"
             }
           },
           {

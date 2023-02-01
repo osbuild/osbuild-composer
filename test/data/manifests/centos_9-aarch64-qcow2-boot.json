@@ -4467,12 +4467,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -4525,6 +4519,12 @@
               "config": {
                 "default": "saved"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "default_target": "multi-user.target"
             }
           },
           {

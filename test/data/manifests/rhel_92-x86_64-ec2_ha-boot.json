@@ -5865,24 +5865,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "sshd",
-                "NetworkManager",
-                "nm-cloud-setup.service",
-                "nm-cloud-setup.timer",
-                "cloud-init",
-                "cloud-init-local",
-                "cloud-config",
-                "cloud-final",
-                "reboot.target",
-                "tuned"
-              ],
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -6050,6 +6032,24 @@
               "facts": {
                 "image-builder.osbuild-composer.api-type": "test-manifest"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "sshd",
+                "NetworkManager",
+                "nm-cloud-setup.service",
+                "nm-cloud-setup.timer",
+                "cloud-init",
+                "cloud-init-local",
+                "cloud-config",
+                "cloud-final",
+                "reboot.target",
+                "tuned"
+              ],
+              "default_target": "multi-user.target"
             }
           },
           {

@@ -5122,19 +5122,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "NetworkManager.service",
-                "firewalld.service",
-                "sshd.service",
-                "fdo-client-linuxapp.service",
-                "ignition-firstboot-complete.service",
-                "coreos-ignition-write-issues.service"
-              ]
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -5164,6 +5151,19 @@
                   "Storage": "persistent"
                 }
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "NetworkManager.service",
+                "firewalld.service",
+                "sshd.service",
+                "fdo-client-linuxapp.service",
+                "ignition-firstboot-complete.service",
+                "coreos-ignition-write-issues.service"
+              ]
             }
           },
           {

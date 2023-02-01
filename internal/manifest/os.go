@@ -388,26 +388,6 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 	}
 
-	enabledServices := []string{}
-	disabledServices := []string{}
-	enabledServices = append(enabledServices, p.EnabledServices...)
-	disabledServices = append(disabledServices, p.DisabledServices...)
-	if p.Environment != nil {
-		enabledServices = append(enabledServices, p.Environment.GetServices()...)
-	}
-	if p.Workload != nil {
-		enabledServices = append(enabledServices, p.Workload.GetServices()...)
-		disabledServices = append(disabledServices, p.Workload.GetDisabledServices()...)
-	}
-	if len(enabledServices) != 0 ||
-		len(disabledServices) != 0 || p.DefaultTarget != "" {
-		pipeline.AddStage(osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
-			EnabledServices:  enabledServices,
-			DisabledServices: disabledServices,
-			DefaultTarget:    p.DefaultTarget,
-		}))
-	}
-
 	if p.Firewall != nil {
 		pipeline.AddStage(osbuild.NewFirewallStage(p.Firewall))
 	}
@@ -622,6 +602,26 @@ func (p *OS) serialize() osbuild.Pipeline {
 					},
 				},
 			}))
+	}
+
+	enabledServices := []string{}
+	disabledServices := []string{}
+	enabledServices = append(enabledServices, p.EnabledServices...)
+	disabledServices = append(disabledServices, p.DisabledServices...)
+	if p.Environment != nil {
+		enabledServices = append(enabledServices, p.Environment.GetServices()...)
+	}
+	if p.Workload != nil {
+		enabledServices = append(enabledServices, p.Workload.GetServices()...)
+		disabledServices = append(disabledServices, p.Workload.GetDisabledServices()...)
+	}
+	if len(enabledServices) != 0 ||
+		len(disabledServices) != 0 || p.DefaultTarget != "" {
+		pipeline.AddStage(osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
+			EnabledServices:  enabledServices,
+			DisabledServices: disabledServices,
+			DefaultTarget:    p.DefaultTarget,
+		}))
 	}
 
 	if p.SElinux != "" {

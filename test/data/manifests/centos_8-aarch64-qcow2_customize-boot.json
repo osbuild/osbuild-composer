@@ -5401,18 +5401,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "sshd.socket"
-              ],
-              "disabled_services": [
-                "bluetooth.service"
-              ],
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -5470,6 +5458,18 @@
               "config": {
                 "default": "saved"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "sshd.socket"
+              ],
+              "disabled_services": [
+                "bluetooth.service"
+              ],
+              "default_target": "multi-user.target"
             }
           },
           {

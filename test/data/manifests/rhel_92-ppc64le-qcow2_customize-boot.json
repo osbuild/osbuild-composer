@@ -5576,18 +5576,6 @@
             }
           },
           {
-            "type": "org.osbuild.systemd",
-            "options": {
-              "enabled_services": [
-                "sshd.socket"
-              ],
-              "disabled_services": [
-                "bluetooth.service"
-              ],
-              "default_target": "multi-user.target"
-            }
-          },
-          {
             "type": "org.osbuild.sysconfig",
             "options": {
               "kernel": {
@@ -5657,6 +5645,18 @@
               "facts": {
                 "image-builder.osbuild-composer.api-type": "test-manifest"
               }
+            }
+          },
+          {
+            "type": "org.osbuild.systemd",
+            "options": {
+              "enabled_services": [
+                "sshd.socket"
+              ],
+              "disabled_services": [
+                "bluetooth.service"
+              ],
+              "default_target": "multi-user.target"
             }
           },
           {
