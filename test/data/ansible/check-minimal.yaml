@@ -1,0 +1,180 @@
+---
+- hosts: ostree_guest
+  become: no
+  vars:
+    total_counter: "0"
+    failed_counter: "0"
+
+  tasks:
+    # current target host's IP address
+    - debug: var=ansible_all_ipv4_addresses
+    - debug: var=ansible_facts['distribution_version']
+    - debug: var=ansible_facts['distribution']
+    - debug: var=ansible_facts['architecture']
+
+    # check BIOS or UEFI
+    - name: check bios or uefi
+      stat:
+        path: /sys/firmware/efi
+
+    # check secure boot status if it's enabled
+    - name: check secure boot status
+      command: mokutil --sb-state
+      ignore_errors: yes
+
+    - name: check partition size
+      command: df -h
+      ignore_errors: yes
+      become: yes
+
+    - name: check disk partition table
+      command: fdisk -l
+      ignore_errors: yes
+      become: yes
+
+    # case: check rt kernel installed after upgrade
+    - name: check installed kernel
+      command: uname -r
+
+    # case: check wget installed after upgrade
+    - name: check installed package
+      shell: rpm -qa | sort
+      register: result_packages
+
+    # case: check package installed in blueprint
+    - name: check wget installed
+      block:
+        - assert:
+            that:
+              - "'wget' in result_packages.stdout"
+            fail_msg: "wget not installed, ostree upgrade might be failed"
+            success_msg: "wget installed in ostree upgrade"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - name: install podman
+      dnf:
+        name:
+          - podman
+        state: latest
+      become: yes
+
+    # case: check dmesg error and failed log
+    - name: check dmesg output
+      command: dmesg
+      register: result_dmesg
+
+    - name: check dmesg error and fail log
+      shell: dmesg --notime | grep -i "error\|fail" | grep -v "skipped" | grep -v "failover" || true
+      register: result_dmesg_error
+
+    # case: check running container with podman
+    - name: run ubi8 image with root
+      command: podman run ubi8-minimal:latest cat /etc/redhat-release
+      register: podman_result
+      become: yes
+      retries: 30  # due to https://github.com/osbuild/osbuild-composer/issues/2492
+      delay: 2
+      until: podman_result is success
+      ignore_errors: yes
+
+    - name: run container test
+      block:
+        - assert:
+            that:
+              - podman_result is succeeded
+              - "'Red Hat Enterprise Linux release' in podman_result.stdout"
+            fail_msg: "failed run container with podman (root)"
+            success_msg: "running container with podman (root) successed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check running container with podman (non-root)
+    - name: run ubi8 image with non-root
+      command: podman run ubi8:latest cat /etc/redhat-release
+      register: podman_result
+      retries: 30  # due to https://github.com/osbuild/osbuild-composer/issues/2492
+      delay: 2
+      until: podman_result is success
+      ignore_errors: yes
+
+    - name: run container test
+      block:
+        - assert:
+            that:
+              - podman_result is succeeded
+              - "'Red Hat Enterprise Linux release' in podman_result.stdout"
+            fail_msg: "failed run container with podman (non-root)"
+            success_msg: "running container with podman (non-root) successed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check rebooting
+    - name: check rebooting
+      block:
+        - name: reboot to deploy new ostree commit
+          reboot:
+          become: yes
+
+        - name: wait for connection to become reachable/usable
+          wait_for_connection:
+            delay: 30
+
+        - name: waits until instance is reachable
+          wait_for:
+            host: "{{ ansible_all_ipv4_addresses[0] }}"
+            port: 22
+            search_regex: OpenSSH
+            delay: 10
+          register: result_rollback
+          until: result_rollback is success
+          retries: 6
+          delay: 10
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check persistent log in Edge system
+    - name: check journald has persistent logging
+      block:
+        - name: list boots
+          shell: journalctl --list-boots
+          register: result_list_boots
+
+        - assert:
+            that:
+              - result_list_boots.stdout_lines | length > 1
+            fail_msg: "journald hasn't persistent logging"
+            success_msg: "journald has persistent logging"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - assert:
+        that:
+          - failed_counter == "0"
+        fail_msg: "Run {{ total_counter }} tests, but {{ failed_counter }} of them failed"
+        success_msg: "Totally {{ total_counter }} test passed"
