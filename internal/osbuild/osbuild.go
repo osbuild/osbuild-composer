@@ -36,3 +36,12 @@ func (p *Pipeline) AddStage(stage *Stage) {
 		p.Stages = append(p.Stages, stage)
 	}
 }
+
+// AddStages appends multiple stages to the list of stages of a pipeline. The
+// stages will be executed in the order they are appended.
+// If the argument is nil, it is not added.
+func (p *Pipeline) AddStages(stages ...*Stage) {
+	for _, stage := range stages {
+		p.AddStage(stage)
+	}
+}
