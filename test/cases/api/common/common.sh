@@ -38,6 +38,13 @@ function _instanceCheck() {
     set -eu
     [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]
 
+    FACTS=$($_ssh sudo subscription-manager facts)
+    if ! grep -q "image-builder.osbuild-composer.api-type: cloudapi-v2" <<< "$FACTS"; then
+        echo "System doesn't contain the expected osbuild facts"
+        echo "$FACTS" | grep image-builder
+        exit 1
+    fi
+
     # Unregister subscription
     $_ssh sudo subscription-manager unregister
   else
