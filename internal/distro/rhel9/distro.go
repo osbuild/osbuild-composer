@@ -207,8 +207,7 @@ func newDistro(name string, minor int) *distribution {
 	}
 
 	qcow2ImgType := mkQcow2ImgType(rd)
-	ociImgType := qcow2ImgType
-	ociImgType.name = "oci"
+	ociImgType := mkOciImgType(rd)
 
 	x86_64.addImageTypes(
 		&platform.X86{

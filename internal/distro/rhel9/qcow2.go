@@ -85,6 +85,18 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
+func ociCommonPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := qcow2CommonPackageSet(t)
+
+	return ps.Append(
+		rpmmd.PackageSet{
+			Include: []string{
+				"iscsi-initiator-utils",
+			},
+		},
+	)
+}
+
 func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
@@ -167,5 +179,13 @@ func mkQcow2ImgType(d distribution) imageType {
 		basePartitionTables: defaultBasePartitionTables,
 	}
 	it.defaultImageConfig = qcowImageConfig(d)
+	return it
+}
+
+func mkOciImgType(d distribution) imageType {
+	it := mkQcow2ImgType(d)
+	it.name = "oci"
+	it.kernelOptions += " ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1"
+	it.packageSets[osPkgsKey] = ociCommonPackageSet
 	return it
 }
