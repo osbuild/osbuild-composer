@@ -26,44 +26,38 @@ func TestCrossArchDepsolve(t *testing.T) {
 	repoDir := "/usr/share/tests/osbuild-composer"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	for _, distroStruct := range []distro.Distro{rhel.NewCentos()} {
-		t.Run(distroStruct.Name(), func(t *testing.T) {
+	cs9 := rhel.NewCentos()
 
-			// Run tests in parallel to speed up run times.
-			t.Parallel()
+	// Set up temporary directory for rpm/dnf cache
+	dir := t.TempDir()
+	baseSolver := dnfjson.NewBaseSolver(dir)
 
-			// Set up temporary directory for rpm/dnf cache
-			dir := t.TempDir()
-			baseSolver := dnfjson.NewBaseSolver(dir)
+	repos, err := rpmmd.LoadRepositories([]string{repoDir}, cs9.Name())
+	require.NoErrorf(t, err, "Failed to LoadRepositories %v", cs9.Name())
 
-			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
-			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
-
-			for _, archStr := range distroStruct.ListArches() {
-				t.Run(archStr, func(t *testing.T) {
-					arch, err := distroStruct.GetArch(archStr)
+	for _, archStr := range cs9.ListArches() {
+		t.Run(archStr, func(t *testing.T) {
+			arch, err := cs9.GetArch(archStr)
+			require.NoError(t, err)
+			solver := baseSolver.NewWithConfig(cs9.ModulePlatformID(), cs9.Releasever(), archStr)
+			for _, imgTypeStr := range arch.ListImageTypes() {
+				t.Run(imgTypeStr, func(t *testing.T) {
+					imgType, err := arch.GetImageType(imgTypeStr)
 					require.NoError(t, err)
-					solver := baseSolver.NewWithConfig(distroStruct.ModulePlatformID(), distroStruct.Releasever(), archStr)
-					for _, imgTypeStr := range arch.ListImageTypes() {
-						t.Run(imgTypeStr, func(t *testing.T) {
-							imgType, err := arch.GetImageType(imgTypeStr)
-							require.NoError(t, err)
 
-							packages := imgType.PackageSets(blueprint.Blueprint{},
-								distro.ImageOptions{
-									OSTree: distro.OSTreeImageOptions{
-										URL:           "foo",
-										ImageRef:      "bar",
-										FetchChecksum: "baz",
-									},
-								},
-								repos[archStr])
+					packages := imgType.PackageSets(blueprint.Blueprint{},
+						distro.ImageOptions{
+							OSTree: distro.OSTreeImageOptions{
+								URL:           "foo",
+								ImageRef:      "bar",
+								FetchChecksum: "baz",
+							},
+						},
+						repos[archStr])
 
-							for _, set := range packages {
-								_, err = solver.Depsolve(set)
-								assert.NoError(t, err)
-							}
-						})
+					for _, set := range packages {
+						_, err = solver.Depsolve(set)
+						assert.NoError(t, err)
 					}
 				})
 			}
@@ -78,44 +72,38 @@ func TestDepsolvePackageSets(t *testing.T) {
 	repoDir := "/usr/share/tests/osbuild-composer"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	for _, distroStruct := range []distro.Distro{rhel.NewCentos()} {
-		t.Run(distroStruct.Name(), func(t *testing.T) {
+	cs9 := rhel.NewCentos()
 
-			// Run tests in parallel to speed up run times.
-			t.Parallel()
+	// Set up temporary directory for rpm/dnf cache
+	dir := t.TempDir()
+	solver := dnfjson.NewSolver(cs9.ModulePlatformID(), cs9.Releasever(), distro.X86_64ArchName, dir)
 
-			// Set up temporary directory for rpm/dnf cache
-			dir := t.TempDir()
-			solver := dnfjson.NewSolver(distroStruct.ModulePlatformID(), distroStruct.Releasever(), distro.X86_64ArchName, dir)
+	repos, err := rpmmd.LoadRepositories([]string{repoDir}, cs9.Name())
+	require.NoErrorf(t, err, "Failed to LoadRepositories %v", cs9.Name())
+	x86Repos, ok := repos[distro.X86_64ArchName]
+	require.Truef(t, ok, "failed to get %q repos for %q", distro.X86_64ArchName, cs9.Name())
 
-			repos, err := rpmmd.LoadRepositories([]string{repoDir}, distroStruct.Name())
-			require.NoErrorf(t, err, "Failed to LoadRepositories %v", distroStruct.Name())
-			x86Repos, ok := repos[distro.X86_64ArchName]
-			require.Truef(t, ok, "failed to get %q repos for %q", distro.X86_64ArchName, distroStruct.Name())
+	x86Arch, err := cs9.GetArch(distro.X86_64ArchName)
+	require.Nilf(t, err, "failed to get %q arch of %q distro", distro.X86_64ArchName, cs9.Name())
 
-			x86Arch, err := distroStruct.GetArch(distro.X86_64ArchName)
-			require.Nilf(t, err, "failed to get %q arch of %q distro", distro.X86_64ArchName, distroStruct.Name())
+	qcow2ImageTypeName := "qcow2"
+	qcow2Image, err := x86Arch.GetImageType(qcow2ImageTypeName)
+	require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), distro.X86_64ArchName)
 
-			qcow2ImageTypeName := "qcow2"
-			qcow2Image, err := x86Arch.GetImageType(qcow2ImageTypeName)
-			require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, distroStruct.Name(), distro.X86_64ArchName)
+	imagePkgSets := qcow2Image.PackageSets(blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, distro.ImageOptions{}, x86Repos)
 
-			imagePkgSets := qcow2Image.PackageSets(blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, distro.ImageOptions{}, x86Repos)
-
-			gotPackageSpecsSets := make(map[string][]rpmmd.PackageSpec, len(imagePkgSets))
-			for name, pkgSet := range imagePkgSets {
-				res, err := solver.Depsolve(pkgSet)
-				if err != nil {
-					require.Nil(t, err)
-				}
-				gotPackageSpecsSets[name] = res
-			}
-			expectedPackageSpecsSetNames := []string{"build", "os"}
-			require.EqualValues(t, len(expectedPackageSpecsSetNames), len(gotPackageSpecsSets))
-			for _, name := range expectedPackageSpecsSetNames {
-				_, ok := gotPackageSpecsSets[name]
-				assert.True(t, ok)
-			}
-		})
+	gotPackageSpecsSets := make(map[string][]rpmmd.PackageSpec, len(imagePkgSets))
+	for name, pkgSet := range imagePkgSets {
+		res, err := solver.Depsolve(pkgSet)
+		if err != nil {
+			require.Nil(t, err)
+		}
+		gotPackageSpecsSets[name] = res
+	}
+	expectedPackageSpecsSetNames := []string{"build", "os"}
+	require.EqualValues(t, len(expectedPackageSpecsSetNames), len(gotPackageSpecsSets))
+	for _, name := range expectedPackageSpecsSetNames {
+		_, ok := gotPackageSpecsSets[name]
+		assert.True(t, ok)
 	}
 }
