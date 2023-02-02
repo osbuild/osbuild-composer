@@ -18,6 +18,7 @@ import time
 import tempfile
 import xml.etree.ElementTree
 import yaml
+import jsonschema
 
 from collections import OrderedDict
 from typing import Dict, Any
@@ -51,6 +52,10 @@ def loop_open(devmgr:devices.DeviceManager, name:str, image, size, offset=0):
         "start": offset // SECTOR_SIZE,
         "size": size // SECTOR_SIZE
     }
+    if not info:
+        raise RuntimeError("Can't load org.osbuild.loopback")
+
+    jsonschema.validate(options, info.get_schema())
     dev = devices.Device(name, info, None, options)
     reply = devmgr.open(dev)
     return {
@@ -2519,11 +2524,15 @@ def discover_lvm(dev:str, parent:devices.Device, devmgr:devices.DeviceManager):
         }
 
         # Create an OSBuild device object for the LVM partition
+        info = index.get_module_info("Device", "org.osbuild.lvm2.lv")
         device = devices.Device(
-                    name,
-                    index.get_module_info("Device", "org.osbuild.lvm2.lv"),
-                    parent,
-                    options)
+            name,
+            info,
+            parent,
+            options)
+        if not info:
+            raise RuntimeError("can't find org.osbuild.lvm2.lv")
+        jsonschema.validate(options, info.get_schema())
         reply = devmgr.open(device)
         voldev = reply["path"] # get the path where is mounted the device
         minor = reply["node"]["minor"]
@@ -2632,13 +2641,8 @@ def append_partitions(report, image):
                 info = index.get_module_info("Mount", "org.osbuild.xfs")
             else:
                 raise RuntimeError("Unknown file system")
-            options = {"readonly": True}
-            for option in part_options:
-                if "=" in option:
-                    parts = option.split("=")
-                    options[parts[0]] = parts[1]
-                else:
-                    options[option] = True
+            if not info:
+                raise RuntimeError(f"Can't find org.osbuild.{part_fstype}")
 
             # the first mount point should be root
             if n == 0:
@@ -2646,6 +2650,37 @@ def append_partitions(report, image):
                     raise RuntimeError("The first mountpoint in sorted fstab entries is not '/'")
                 root_tree = mountpoint
 
+            # prepare the options to mount the partition
+            options = {}
+            for option in part_options:
+                if option == "defaults":  # defaults is not a supported option
+                    continue
+
+                if "=" in option:
+                    parts = option.split("=")
+                    key = parts[0]
+                    val = parts[1]
+
+                    # uid and gid must be integers
+                    if key == "uid" or key == "gid":
+                        val = int(val)
+
+                    options[key] = val
+                else:
+                    options[option] = True
+
+            options["readonly"] = True
+
+            # Validate the options
+            #
+            # The mount manager is taking care of opening the file system for us
+            # so we don't have access to the json objects that'll be used to
+            # invoke the mounter. However we're only interested at validating the
+            # options. We can extract these from the schame to validate them
+            # only.
+            jsonschema.validate(options, info.get_schema()["properties"]["options"])
+
+            # Finally mount
             mmgr.mount(mounts.Mount(
                 part_device,
                 info,
