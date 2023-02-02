@@ -26,6 +26,7 @@ type repository struct {
 	GPGKey      string   `json:"gpgkey,omitempty"`
 	CheckGPG    bool     `json:"check_gpg,omitempty"`
 	PackageSets []string `json:"package_sets,omitempty"`
+	RHSM        bool     `json:"rhsm,omitempty"`
 }
 
 type ostreeOptions struct {
@@ -154,6 +155,7 @@ func main() {
 			GPGKeys:     keys,
 			CheckGPG:    repo.CheckGPG,
 			PackageSets: repo.PackageSets,
+			RHSM:        repo.RHSM,
 		}
 	}
 
