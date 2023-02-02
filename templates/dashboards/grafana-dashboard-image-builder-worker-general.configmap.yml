@@ -2160,6 +2160,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 11,
+      "version": 12,
       "weekStart": ""
     }
