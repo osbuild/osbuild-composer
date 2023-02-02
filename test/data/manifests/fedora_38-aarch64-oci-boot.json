@@ -1511,7 +1511,7 @@
             "type": "org.osbuild.kernel-cmdline",
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-              "kernel_opts": "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
+              "kernel_opts": "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0 ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1"
             }
           },
           {
@@ -2531,6 +2531,30 @@
                   },
                   {
                     "id": "sha256:d48d0bcb1de7ca243014616e40871ae85fd905923636d46917467f947deef1c7",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:5468dc21dfa36a942528b1e096d12f46df9a6f220cb08402bd127b9e242130dd",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:a4b61ea543ae488f352cb95f912701dbb50f04c21b85faa3f392c50c42ca20ab",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:74f1c67b424b1f8e32ca8e4ea228d128776f49c654cf6588849b43bef31b61d3",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5476,6 +5500,9 @@
           "sha256:53c7deb95ab9e9672f896a86ac4264d45a5ae6618f8aaa121d29acbca4aec9cd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/l/libfdisk-2.38.1-2.fc38.aarch64.rpm"
           },
+          "sha256:5468dc21dfa36a942528b1e096d12f46df9a6f220cb08402bd127b9e242130dd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/i/iscsi-initiator-utils-6.2.1.4-6.git2a8f9d8.fc37.aarch64.rpm"
+          },
           "sha256:54de148490fbed79bdbfc62b79459197c5e7730b8e7a1328ea9be34c5d0f94cf": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/p/python3-markupsafe-2.1.1-3.fc37.aarch64.rpm"
           },
@@ -5622,6 +5649,9 @@
           },
           "sha256:73e74e9775bebc30a03b4407bb2b20061c09ee6b354ccac53dfed96205fc092a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/n/ntfsprogs-2022.5.17-2.fc37.aarch64.rpm"
+          },
+          "sha256:74f1c67b424b1f8e32ca8e4ea228d128776f49c654cf6588849b43bef31b61d3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/i/isns-utils-libs-0.101-5.fc37.aarch64.rpm"
           },
           "sha256:74fc5e5601d6b7f798261c52490dd4283c06fd0a92ed91aefb145cae4dcbbfd8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/p/python3-rpm-4.18.0-3.fc38.aarch64.rpm"
@@ -5853,6 +5883,9 @@
           },
           "sha256:a4559944501c3707b5995c2ea4a7144ed4ab136914aa86f2a2f2bbfc74fc3faf": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/p/python3-pyyaml-6.0-5.fc37.aarch64.rpm"
+          },
+          "sha256:a4b61ea543ae488f352cb95f912701dbb50f04c21b85faa3f392c50c42ca20ab": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/i/iscsi-initiator-utils-iscsiuio-6.2.1.4-6.git2a8f9d8.fc37.aarch64.rpm"
           },
           "sha256:a65573803e026177bc42f9e17178056e831715f264008e145f281247f02555bc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/p/python3-pysocks-1.7.1-15.fc37.noarch.rpm"
@@ -9411,6 +9444,36 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/i/iputils-20211215-3.fc37.aarch64.rpm",
         "checksum": "sha256:d48d0bcb1de7ca243014616e40871ae85fd905923636d46917467f947deef1c7",
+        "check_gpg": true
+      },
+      {
+        "name": "iscsi-initiator-utils",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "6.git2a8f9d8.fc37",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/i/iscsi-initiator-utils-6.2.1.4-6.git2a8f9d8.fc37.aarch64.rpm",
+        "checksum": "sha256:5468dc21dfa36a942528b1e096d12f46df9a6f220cb08402bd127b9e242130dd",
+        "check_gpg": true
+      },
+      {
+        "name": "iscsi-initiator-utils-iscsiuio",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "6.git2a8f9d8.fc37",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/i/iscsi-initiator-utils-iscsiuio-6.2.1.4-6.git2a8f9d8.fc37.aarch64.rpm",
+        "checksum": "sha256:a4b61ea543ae488f352cb95f912701dbb50f04c21b85faa3f392c50c42ca20ab",
+        "check_gpg": true
+      },
+      {
+        "name": "isns-utils-libs",
+        "epoch": 0,
+        "version": "0.101",
+        "release": "5.fc37",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/i/isns-utils-libs-0.101-5.fc37.aarch64.rpm",
+        "checksum": "sha256:74f1c67b424b1f8e32ca8e4ea228d128776f49c654cf6588849b43bef31b61d3",
         "check_gpg": true
       },
       {

@@ -1351,7 +1351,7 @@
             "type": "org.osbuild.kernel-cmdline",
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0"
+              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1"
             }
           },
           {
@@ -2235,6 +2235,30 @@
                   },
                   {
                     "id": "sha256:d31541111c4bfe132e880786a61630a11fcfd3f589284006c5a0fe008ca09762",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b96832af2c3ffe00194d14dd42aca9eb62799ac8b252cf79692d556ce0f6d1b5",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:bb842f26bada1f1fdbe8b25c734a630b006b8e1dafc3d872b3742045a5a855cc",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:b97fdc6512ba9406c92d9eda661f06c30b9d929ec78e437d32490ee4f06738b5",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6127,6 +6151,12 @@
           "sha256:b8fc043d0cdd6729ce763a3bb042643054216d98713898beea6c64200d02ff83": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/libndp-1.8-4.el9.x86_64.rpm"
           },
+          "sha256:b96832af2c3ffe00194d14dd42aca9eb62799ac8b252cf79692d556ce0f6d1b5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/iscsi-initiator-utils-6.2.1.4-3.git2a8f9d8.el9.x86_64.rpm"
+          },
+          "sha256:b97fdc6512ba9406c92d9eda661f06c30b9d929ec78e437d32490ee4f06738b5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/isns-utils-libs-0.101-4.el9.x86_64.rpm"
+          },
           "sha256:b9a0f711d85e322fdd201f9fdf4839a737420f39b4968b2e91ac48f9f1ff0eb7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/kernel-modules-5.14.0-226.el9.x86_64.rpm"
           },
@@ -6141,6 +6171,9 @@
           },
           "sha256:bb638732b15bd57733b78716d2263753c8956e078f1edc069c9b2e040e336c93": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/python3-pexpect-4.8.0-7.el9.noarch.rpm"
+          },
+          "sha256:bb842f26bada1f1fdbe8b25c734a630b006b8e1dafc3d872b3742045a5a855cc": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/iscsi-initiator-utils-iscsiuio-6.2.1.4-3.git2a8f9d8.el9.x86_64.rpm"
           },
           "sha256:bc460ff9b1b2a921c65cb931ce81c526dd8587bf3e8480a9b1910096ab0d5311": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/glib2-2.68.4-6.el9.x86_64.rpm"
@@ -9212,6 +9245,36 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/irqbalance-1.9.0-3.el9.x86_64.rpm",
         "checksum": "sha256:d31541111c4bfe132e880786a61630a11fcfd3f589284006c5a0fe008ca09762",
+        "check_gpg": true
+      },
+      {
+        "name": "iscsi-initiator-utils",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "3.git2a8f9d8.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/iscsi-initiator-utils-6.2.1.4-3.git2a8f9d8.el9.x86_64.rpm",
+        "checksum": "sha256:b96832af2c3ffe00194d14dd42aca9eb62799ac8b252cf79692d556ce0f6d1b5",
+        "check_gpg": true
+      },
+      {
+        "name": "iscsi-initiator-utils-iscsiuio",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "3.git2a8f9d8.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/iscsi-initiator-utils-iscsiuio-6.2.1.4-3.git2a8f9d8.el9.x86_64.rpm",
+        "checksum": "sha256:bb842f26bada1f1fdbe8b25c734a630b006b8e1dafc3d872b3742045a5a855cc",
+        "check_gpg": true
+      },
+      {
+        "name": "isns-utils-libs",
+        "epoch": 0,
+        "version": "0.101",
+        "release": "4.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/isns-utils-libs-0.101-4.el9.x86_64.rpm",
+        "checksum": "sha256:b97fdc6512ba9406c92d9eda661f06c30b9d929ec78e437d32490ee4f06738b5",
         "check_gpg": true
       },
       {

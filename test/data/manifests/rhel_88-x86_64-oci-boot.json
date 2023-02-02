@@ -974,6 +974,15 @@
                     "id": "sha256:932e298cc7ff8e55ad2af5391f9874ea5b478a79f8c9c268e43c33b5b9703949"
                   },
                   {
+                    "id": "sha256:a87b5dfe48e9c1945c3ae3582eb3b568ac21ee62cb8027fd7a8607795fd026a9"
+                  },
+                  {
+                    "id": "sha256:572f75761a5d0e8b6389306f65f1f41475304ce97e0b777715f750c202cf27db"
+                  },
+                  {
+                    "id": "sha256:ac413ab895ebaa6153bc890b01107996df487e4f00a1f5b757757f6c94c22008"
+                  },
+                  {
                     "id": "sha256:07ce753de89c0f6cc82ee926100777bdd0c91cb3d3ee9315cd8d93320875e66c"
                   },
                   {
@@ -2042,7 +2051,7 @@
             "type": "org.osbuild.grub2",
             "options": {
               "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1",
               "legacy": "i386-pc",
               "uefi": {
                 "vendor": "redhat"
@@ -2727,6 +2736,9 @@
           "sha256:563f69a7dd790af6e91d271bd46ed4ce9dae8bad3bb21dbca5a595f487471dea": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/python3-subscription-manager-rhsm-1.28.32-1.el8.x86_64.rpm"
           },
+          "sha256:572f75761a5d0e8b6389306f65f1f41475304ce97e0b777715f750c202cf27db": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/iscsi-initiator-utils-iscsiuio-6.2.1.4-4.git095f59c.el8.x86_64.rpm"
+          },
           "sha256:57bb43a6440e82ec80b0950bef034972a024c4b4ce2ce8dbabd527274bcc1270": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/systemd-libs-239-68.el8.x86_64.rpm"
           },
@@ -3153,6 +3165,9 @@
           "sha256:a842bbdfe4e3f24ef55acd0ed6930639ccaa5980a2774235bc4c6c2a95ab421c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.8-20221025/Packages/PackageKit-1.1.12-6.el8.x86_64.rpm"
           },
+          "sha256:a87b5dfe48e9c1945c3ae3582eb3b568ac21ee62cb8027fd7a8607795fd026a9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/iscsi-initiator-utils-6.2.1.4-4.git095f59c.el8.x86_64.rpm"
+          },
           "sha256:a8808c053ffb7ccf826d80fdd458b6521f2cc63e55eb90d79a504fbb66c36cb0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/checkpolicy-2.9-1.el8.x86_64.rpm"
           },
@@ -3176,6 +3191,9 @@
           },
           "sha256:aa36865f982ecdda0f88077c4d8a22b5a29e01d7dad2991e23f114cb8fe37814": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/kernel-core-4.18.0-431.el8.x86_64.rpm"
+          },
+          "sha256:ac413ab895ebaa6153bc890b01107996df487e4f00a1f5b757757f6c94c22008": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/isns-utils-libs-0.99-1.el8.x86_64.rpm"
           },
           "sha256:ac5e4942921cee7c931186db79f14c54ddda3d98756e37bd6bb5b0a1024f0e82": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/bzip2-1.0.6-26.el8.x86_64.rpm"
@@ -6364,6 +6382,33 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/irqbalance-1.9.0-3.el8.x86_64.rpm",
         "checksum": "sha256:932e298cc7ff8e55ad2af5391f9874ea5b478a79f8c9c268e43c33b5b9703949"
+      },
+      {
+        "name": "iscsi-initiator-utils",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "4.git095f59c.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/iscsi-initiator-utils-6.2.1.4-4.git095f59c.el8.x86_64.rpm",
+        "checksum": "sha256:a87b5dfe48e9c1945c3ae3582eb3b568ac21ee62cb8027fd7a8607795fd026a9"
+      },
+      {
+        "name": "iscsi-initiator-utils-iscsiuio",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "4.git095f59c.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/iscsi-initiator-utils-iscsiuio-6.2.1.4-4.git095f59c.el8.x86_64.rpm",
+        "checksum": "sha256:572f75761a5d0e8b6389306f65f1f41475304ce97e0b777715f750c202cf27db"
+      },
+      {
+        "name": "isns-utils-libs",
+        "epoch": 0,
+        "version": "0.99",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/isns-utils-libs-0.99-1.el8.x86_64.rpm",
+        "checksum": "sha256:ac413ab895ebaa6153bc890b01107996df487e4f00a1f5b757757f6c94c22008"
       },
       {
         "name": "jansson",

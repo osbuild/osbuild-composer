@@ -2491,6 +2491,30 @@
                     }
                   },
                   {
+                    "id": "sha256:0a4c90baac48f116789645c8dc1351c6ede1dfa6c5664d09779f51858d2dde1c",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:7ac58a3b9990da620d568ff0b3cf7e3555f0bad5f2d9c86c771e84d5939e81e5",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:5830a9484eb786849dd73fce6f2b20d5d42e779d687842f60c8b588c962e5e40",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:f825b85b4506a740fb2f85b9a577c51264f3cfe792dd8b2bf8963059cc77c3c4",
                     "options": {
                       "metadata": {
@@ -4999,7 +5023,7 @@
             "type": "org.osbuild.grub2",
             "options": {
               "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto",
+              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1",
               "legacy": "i386-pc",
               "uefi": {
                 "vendor": "centos"
@@ -5267,6 +5291,9 @@
           },
           "sha256:09f91e371deb818112b4688896020b0dacf921a30087e9f26e2a17ae2f52e269": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libss-1.45.6-3.el8.x86_64.rpm"
+          },
+          "sha256:0a4c90baac48f116789645c8dc1351c6ede1dfa6c5664d09779f51858d2dde1c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/iscsi-initiator-utils-6.2.1.4-4.git095f59c.el8.x86_64.rpm"
           },
           "sha256:0aaaaa29cc1bb4d358142db6eb7d12df9252a8166bf61956203878eed210785c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libteam-1.31-2.el8.x86_64.rpm"
@@ -5634,6 +5661,9 @@
           "sha256:56db2bbc7028a0b031250b262a70d37de96edeb8832836e426d7a2b9d35bab12": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libssh-0.9.6-3.el8.x86_64.rpm"
           },
+          "sha256:5830a9484eb786849dd73fce6f2b20d5d42e779d687842f60c8b588c962e5e40": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/isns-utils-libs-0.99-1.el8.x86_64.rpm"
+          },
           "sha256:5846c73edfa2ff673989728e9621cce6a1369eb2f8a269ac5205c381a10d327a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libnsl2-1.2.0-2.20180605git4a062cf.el8.x86_64.rpm"
           },
@@ -5801,6 +5831,9 @@
           },
           "sha256:79e1c8b506bc6b41616c86e10cb8204a71000daf938a354b960b925f525cfe24": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libcom_err-1.45.6-3.el8.x86_64.rpm"
+          },
+          "sha256:7ac58a3b9990da620d568ff0b3cf7e3555f0bad5f2d9c86c771e84d5939e81e5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/iscsi-initiator-utils-iscsiuio-6.2.1.4-4.git095f59c.el8.x86_64.rpm"
           },
           "sha256:7bc2e2a25b04b52a4ec5de2858e75eb07f16495d4de5f7ce926777130302cfe3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/libestr-0.1.10-1.el8.x86_64.rpm"
@@ -9546,6 +9579,36 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/irqbalance-1.4.0-6.el8.x86_64.rpm",
         "checksum": "sha256:3acd2c8b6ea534811308b3138859b5fa150b89604bb60f16b0650747039d696a",
+        "check_gpg": true
+      },
+      {
+        "name": "iscsi-initiator-utils",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "4.git095f59c.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/iscsi-initiator-utils-6.2.1.4-4.git095f59c.el8.x86_64.rpm",
+        "checksum": "sha256:0a4c90baac48f116789645c8dc1351c6ede1dfa6c5664d09779f51858d2dde1c",
+        "check_gpg": true
+      },
+      {
+        "name": "iscsi-initiator-utils-iscsiuio",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "4.git095f59c.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/iscsi-initiator-utils-iscsiuio-6.2.1.4-4.git095f59c.el8.x86_64.rpm",
+        "checksum": "sha256:7ac58a3b9990da620d568ff0b3cf7e3555f0bad5f2d9c86c771e84d5939e81e5",
+        "check_gpg": true
+      },
+      {
+        "name": "isns-utils-libs",
+        "epoch": 0,
+        "version": "0.99",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/isns-utils-libs-0.99-1.el8.x86_64.rpm",
+        "checksum": "sha256:5830a9484eb786849dd73fce6f2b20d5d42e779d687842f60c8b588c962e5e40",
         "check_gpg": true
       },
       {

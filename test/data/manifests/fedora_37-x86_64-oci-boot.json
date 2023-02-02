@@ -1543,7 +1543,7 @@
             "type": "org.osbuild.kernel-cmdline",
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-              "kernel_opts": "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
+              "kernel_opts": "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0 ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1"
             }
           },
           {
@@ -2571,6 +2571,30 @@
                   },
                   {
                     "id": "sha256:9cf89d7e274a5ddf55fc4b97974c7aa33f50379c8ed50f6cb458b7286c89af7e",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:c64cc5f44a660062ced56dc143312f87e73bbd3680bb1e1bc2c6463b938cd6cd",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:49d75609083bc45ba147c7611bab6b90d4112f2b2cca6317623c94a1a8445306",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:e35732720639a673041e686f924e5298afeff67d2bcf0d9b5e7833acec563872",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5562,6 +5586,9 @@
           "sha256:49bdfe2732098f5eee53c78ce36dfcb56f12c182698cda3b0f624b4b2f5db7a3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/n/nss-util-3.83.0-1.fc37.x86_64.rpm"
           },
+          "sha256:49d75609083bc45ba147c7611bab6b90d4112f2b2cca6317623c94a1a8445306": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/i/iscsi-initiator-utils-iscsiuio-6.2.1.4-6.git2a8f9d8.fc37.x86_64.rpm"
+          },
           "sha256:4a50276d2a8bd7f2b16cbdf6592ea365c19fa9f9bd33b5cfa1ab4bbd5ca89c69": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/p/psmisc-23.4-4.fc37.x86_64.rpm"
           },
@@ -6192,6 +6219,9 @@
           "sha256:c5efb96c9ce79c98fae0297f5fc2d6740a5f2c167d64020d18876d9e842e8d32": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/l/libdnf-0.68.0-1.fc37.x86_64.rpm"
           },
+          "sha256:c64cc5f44a660062ced56dc143312f87e73bbd3680bb1e1bc2c6463b938cd6cd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/i/iscsi-initiator-utils-6.2.1.4-6.git2a8f9d8.fc37.x86_64.rpm"
+          },
           "sha256:c6679c7a9931ca457f6ad81e0aa00818f8b13558bed11ae6206d0cc05920260f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/l/libsss_certmap-2.7.4-1.fc37.x86_64.rpm"
           },
@@ -6338,6 +6368,9 @@
           },
           "sha256:e33050f1d6ff44a889213a947f6bc9f905336d4d89723ee6a50a51fd8ac10d9f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/s/sudo-1.9.11-4.p3.fc37.x86_64.rpm"
+          },
+          "sha256:e35732720639a673041e686f924e5298afeff67d2bcf0d9b5e7833acec563872": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/i/isns-utils-libs-0.101-5.fc37.x86_64.rpm"
           },
           "sha256:e3c9a6a1611d967fbff4321b5b1ae54377fed22454298859108138c1f64b0c63": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/p/popt-1.19-1.fc37.x86_64.rpm"
@@ -9619,6 +9652,36 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/i/iputils-20211215-3.fc37.x86_64.rpm",
         "checksum": "sha256:9cf89d7e274a5ddf55fc4b97974c7aa33f50379c8ed50f6cb458b7286c89af7e",
+        "check_gpg": true
+      },
+      {
+        "name": "iscsi-initiator-utils",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "6.git2a8f9d8.fc37",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/i/iscsi-initiator-utils-6.2.1.4-6.git2a8f9d8.fc37.x86_64.rpm",
+        "checksum": "sha256:c64cc5f44a660062ced56dc143312f87e73bbd3680bb1e1bc2c6463b938cd6cd",
+        "check_gpg": true
+      },
+      {
+        "name": "iscsi-initiator-utils-iscsiuio",
+        "epoch": 0,
+        "version": "6.2.1.4",
+        "release": "6.git2a8f9d8.fc37",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/i/iscsi-initiator-utils-iscsiuio-6.2.1.4-6.git2a8f9d8.fc37.x86_64.rpm",
+        "checksum": "sha256:49d75609083bc45ba147c7611bab6b90d4112f2b2cca6317623c94a1a8445306",
+        "check_gpg": true
+      },
+      {
+        "name": "isns-utils-libs",
+        "epoch": 0,
+        "version": "0.101",
+        "release": "5.fc37",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/i/isns-utils-libs-0.101-5.fc37.x86_64.rpm",
+        "checksum": "sha256:e35732720639a673041e686f924e5298afeff67d2bcf0d9b5e7833acec563872",
         "check_gpg": true
       },
       {
