@@ -34,7 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "iteration": 1671021259036,
+      "iteration": 1675330917345,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -83,8 +83,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -133,7 +132,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -194,8 +193,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   }
                 ]
               },
@@ -311,8 +309,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   }
                 ]
               },
@@ -394,8 +391,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -437,7 +433,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -504,8 +500,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -603,8 +598,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -653,7 +647,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -715,8 +709,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "dark-purple",
@@ -880,8 +873,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -966,8 +958,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -1009,7 +1000,7 @@ data:
             },
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -1076,8 +1067,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -1175,8 +1165,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -1225,7 +1214,7 @@ data:
             "text": {},
             "textMode": "auto"
           },
-          "pluginVersion": "9.0.2",
+          "pluginVersion": "9.0.3",
           "targets": [
             {
               "datasource": {
@@ -1286,8 +1275,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   }
                 ]
               },
@@ -1404,8 +1392,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   }
                 ]
               },
@@ -1488,8 +1475,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -1599,8 +1585,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -1698,8 +1683,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -1810,8 +1794,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "dark-purple",
@@ -1974,8 +1957,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2060,8 +2042,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -2171,8 +2152,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -2269,8 +2249,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -2376,8 +2355,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -2532,8 +2510,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2617,8 +2594,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   },
                   {
                     "color": "#EAB839",
@@ -2728,8 +2704,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   }
                 ]
               },
@@ -2845,8 +2820,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "red",
-                    "value": null
+                    "color": "red"
                   }
                 ]
               },
@@ -3089,6 +3063,79 @@ data:
             ],
             "query": "x86_64, aarch64, ppc64le, s390x",
             "queryValue": "",
+            "skipUrlSync": false,
+            "type": "custom"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": [
+                "All"
+              ],
+              "value": [
+                "$__all"
+              ]
+            },
+            "description": "The job type to display results for",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Job type",
+            "multi": true,
+            "name": "jobtype",
+            "options": [
+              {
+                "selected": true,
+                "text": "All",
+                "value": "$__all"
+              },
+              {
+                "selected": false,
+                "text": "osbuild",
+                "value": "osbuild"
+              },
+              {
+                "selected": false,
+                "text": "depsolve",
+                "value": "depsolve"
+              },
+              {
+                "selected": false,
+                "text": "manifest-id-only",
+                "value": "manifest-id-only"
+              },
+              {
+                "selected": false,
+                "text": "container-resolve",
+                "value": "container-resolve"
+              },
+              {
+                "selected": false,
+                "text": "ostree-resolve",
+                "value": "ostree-resolve"
+              },
+              {
+                "selected": false,
+                "text": "aws-ec2-copy",
+                "value": "aws-ec2-copy"
+              },
+              {
+                "selected": false,
+                "text": "aws-ec2-share",
+                "value": "aws-ec2-share"
+              },
+              {
+                "selected": false,
+                "text": "koji-init",
+                "value": "koji-init"
+              },
+              {
+                "selected": false,
+                "text": "koji-finalize",
+                "value": "koji-finalize"
+              }
+            ],
+            "query": "osbuild, depsolve, manifest-id-only, container-resolve, ostree-resolve, aws-ec2-copy, aws-ec2-share, koji-init, koji-finalize",
             "skipUrlSync": false,
             "type": "custom"
           }
