@@ -947,6 +947,42 @@ func TestComposeCustomizations(t *testing.T) {
 	}`, "id")
 }
 
+func TestComposeRhcSubscription(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"customizations": {
+			"subscription": {
+				"organization": "2040324",
+				"activation_key": "my-secret-key",
+				"server_url": "subscription.rhsm.redhat.com",
+				"base_url": "http://cdn.redhat.com/",
+				"insights": false,
+				"rhc": true
+			},
+			"packages": [ "pkg1", "pkg2" ]
+		},
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		 }
+	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+}
+
 func TestImageTypes(t *testing.T) {
 	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
