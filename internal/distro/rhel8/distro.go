@@ -214,9 +214,6 @@ func newDistro(name string, minor int) *distribution {
 		bootType: distro.LegacyBootType,
 	}
 
-	ociImgType := qcow2ImgType(rd)
-	ociImgType.name = "oci"
-
 	x86_64.addImageTypes(
 		&platform.X86{
 			BIOS:       true,
@@ -227,7 +224,7 @@ func newDistro(name string, minor int) *distribution {
 			},
 		},
 		qcow2ImgType(rd),
-		ociImgType,
+		ociImgType(rd),
 	)
 
 	x86_64.addImageTypes(
