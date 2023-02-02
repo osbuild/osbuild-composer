@@ -55,6 +55,18 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
+func ociCommonPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := qcow2CommonPackageSet(t)
+
+	return ps.Append(
+		rpmmd.PackageSet{
+			Include: []string{
+				"iscsi-initiator-utils",
+			},
+		},
+	)
+}
+
 func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{

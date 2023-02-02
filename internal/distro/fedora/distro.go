@@ -834,6 +834,10 @@ func newDistro(version int) distro.Distro {
 
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
+	ociImgType.kernelOptions += " ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1"
+	ociImgType.packageSets = map[string]packageSetFunc{
+		osPkgsKey: ociCommonPackageSet,
+	}
 
 	x86_64.addImageTypes(
 		&platform.X86{
