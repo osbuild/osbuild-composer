@@ -34,7 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "iteration": 1675330917459,
+      "iteration": 1675330917609,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -1493,7 +1493,7 @@ data:
           },
           "id": 244,
           "panels": [],
-          "title": "Request Stability",
+          "title": "API Request Stability",
           "type": "row"
         },
         {
@@ -1583,7 +1583,7 @@ data:
                 "uid": "${datasource}"
               },
               "exemplar": true,
-              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_request_count{code!~\"4.*\", subsystem=\"worker\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$__range]))\n    /\n    sum(increase(image_builder_worker_request_count{subsystem=\"worker\"}[$__range])) \n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1597,7 +1597,7 @@ data:
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "description": "The throughput rate of osbuild job errors and non-errors over time for the selected time range",
+          "description": "The throughput rate of request successes and errors over time for the selected time range.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1609,13 +1609,16 @@ data:
                 "barAlignment": 0,
                 "drawStyle": "line",
                 "fillOpacity": 11,
-                "gradientMode": "none",
+                "gradientMode": "opacity",
                 "hideFrom": {
                   "legend": false,
                   "tooltip": false,
                   "viz": false
                 },
                 "lineInterpolation": "linear",
+                "lineStyle": {
+                  "fill": "solid"
+                },
                 "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
@@ -1646,8 +1649,8 @@ data:
             "overrides": [
               {
                 "matcher": {
-                  "id": "byName",
-                  "options": "success/sec"
+                  "id": "byRegexp",
+                  "options": ".*success/sec"
                 },
                 "properties": [
                   {
@@ -1671,7 +1674,7 @@ data:
           "options": {
             "legend": {
               "calcs": [],
-              "displayMode": "list",
+              "displayMode": "table",
               "placement": "bottom"
             },
             "tooltip": {
@@ -1685,11 +1688,13 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
+              "editorMode": "code",
               "exemplar": true,
-              "expr": "(sum(rate(image_builder_worker_request_count{code!~\"4.*\", subsystem=\"worker\"}[$interval])) OR on() vector(0))\n- \n(sum(rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval])) OR on() vector(0))",
+              "expr": "sum by (path) (rate(image_builder_worker_request_count{subsystem=\"worker\"}[$interval]))\n- \nsum by (path) (rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval]))",
               "hide": false,
               "interval": "",
-              "legendFormat": "success/sec",
+              "legendFormat": "{{path}} success/sec",
+              "range": true,
               "refId": "A"
             },
             {
@@ -1697,11 +1702,13 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
+              "editorMode": "code",
               "exemplar": true,
-              "expr": "(sum(rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval])) OR on() vector(0))",
+              "expr": "(sum(rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval])) by(path) OR on() vector(0))",
               "hide": false,
               "interval": "",
-              "legendFormat": "errors/sec",
+              "legendFormat": "{{path}} errors/sec",
+              "range": true,
               "refId": "B"
             }
           ],
@@ -1713,7 +1720,7 @@ data:
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "description": "The number of osbuild job errors (as a percentage) over time for the selected time range",
+          "description": "The number of osbuild job errors (as a percentage) over time for the selected time range across all tenants.",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1723,9 +1730,9 @@ data:
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
-                "drawStyle": "bars",
+                "drawStyle": "line",
                 "fillOpacity": 0,
-                "gradientMode": "none",
+                "gradientMode": "opacity",
                 "hideFrom": {
                   "legend": false,
                   "tooltip": false,
@@ -1772,7 +1779,7 @@ data:
           "options": {
             "legend": {
               "calcs": [],
-              "displayMode": "hidden",
+              "displayMode": "table",
               "placement": "bottom"
             },
             "tooltip": {
@@ -1786,14 +1793,16 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
+              "editorMode": "code",
               "exemplar": true,
-              "expr": "(\n  sum(rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval]))\n  /\n  sum(rate(image_builder_worker_request_count{code!~\"4.*\", subsystem=\"worker\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
+              "expr": "(\n  sum by (path) (rate(image_builder_worker_request_count{code=~\"5.*\", subsystem=\"worker\"}[$interval]))\n  /\n  sum by (path) (rate(image_builder_worker_request_count{subsystem=\"worker\"}[$interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
               "interval": "",
-              "legendFormat": "",
+              "legendFormat": "{{path}}",
+              "range": true,
               "refId": "A"
             }
           ],
-          "title": "Build Job Error Rate",
+          "title": "Request Error Rate",
           "type": "timeseries"
         }
       ],
