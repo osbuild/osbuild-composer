@@ -800,6 +800,15 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 	}
 
+	// Check Directory/File Customizations are valid
+	dc := customizations.GetDirectories()
+	fc := customizations.GetFiles()
+
+	err = blueprint.ValidateDirFileCustomizations(dc, fc)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
