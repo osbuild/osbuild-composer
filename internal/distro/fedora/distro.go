@@ -809,6 +809,16 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return err
 	}
 
+	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, pathpolicy.CustomDirectoriesPolicies)
+	if err != nil {
+		return err
+	}
+
+	err = blueprint.CheckFileCustomizationsPolicy(fc, pathpolicy.CustomFilesPolicies)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
