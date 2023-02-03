@@ -142,6 +142,94 @@ func TestDirectoryCustomizationToFsNodeDirectory(t *testing.T) {
 	}
 }
 
+func TestDirectoryCustomizationsToFsNodeDirectories(t *testing.T) {
+	ensureDirCreation := func(dir *fsnode.Directory, err error) *fsnode.Directory {
+		t.Helper()
+		assert.NoError(t, err)
+		assert.NotNil(t, dir)
+		return dir
+	}
+
+	testCases := []struct {
+		Name     string
+		Dirs     []DirectoryCustomization
+		WantDirs []*fsnode.Directory
+		Error    bool
+	}{
+		{
+			Name:     "empty",
+			Dirs:     []DirectoryCustomization{},
+			WantDirs: nil,
+		},
+		{
+			Name: "single-directory",
+			Dirs: []DirectoryCustomization{
+				{
+					Path:          "/etc/dir",
+					User:          "root",
+					Group:         "root",
+					Mode:          "0700",
+					EnsureParents: true,
+				},
+			},
+			WantDirs: []*fsnode.Directory{
+				ensureDirCreation(fsnode.NewDirectory(
+					"/etc/dir",
+					common.ToPtr(os.FileMode(0700)),
+					"root",
+					"root",
+					true,
+				)),
+			},
+		},
+		{
+			Name: "multiple-directories",
+			Dirs: []DirectoryCustomization{
+				{
+					Path:  "/etc/dir",
+					User:  "root",
+					Group: "root",
+				},
+				{
+					Path:  "/etc/dir2",
+					User:  int64(0),
+					Group: int64(0),
+				},
+			},
+			WantDirs: []*fsnode.Directory{
+				ensureDirCreation(fsnode.NewDirectory("/etc/dir", nil, "root", "root", false)),
+				ensureDirCreation(fsnode.NewDirectory("/etc/dir2", nil, int64(0), int64(0), false)),
+			},
+		},
+		{
+			Name: "multiple-directories-with-errors",
+			Dirs: []DirectoryCustomization{
+				{
+					Path: "/etc/../dir",
+				},
+				{
+					Path: "/etc/dir2",
+					User: "r@@t",
+				},
+			},
+			Error: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			dirs, err := DirectoryCustomizationsToFsNodeDirectories(tc.Dirs)
+			if tc.Error {
+				assert.Error(t, err)
+				assert.Nil(t, dirs)
+			} else {
+				assert.NoError(t, err)
+				assert.EqualValues(t, tc.WantDirs, dirs)
+			}
+		})
+	}
+}
+
 func TestDirectoryCustomizationUnmarshalTOML(t *testing.T) {
 	testCases := []struct {
 		Name  string
@@ -538,6 +626,98 @@ func TestFileCustomizationToFsNodeFile(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.EqualValues(t, tc.Want, file)
+			}
+		})
+	}
+}
+
+func TestFileCustomizationsToFsNodeFiles(t *testing.T) {
+	ensureFileCreation := func(file *fsnode.File, err error) *fsnode.File {
+		t.Helper()
+		assert.NoError(t, err)
+		assert.NotNil(t, file)
+		return file
+	}
+
+	testCases := []struct {
+		Name  string
+		Files []FileCustomization
+		Want  []*fsnode.File
+		Error bool
+	}{
+		{
+			Name:  "empty",
+			Files: []FileCustomization{},
+			Want:  nil,
+		},
+		{
+			Name: "single-file",
+			Files: []FileCustomization{
+				{
+					Path:  "/etc/file",
+					User:  "root",
+					Group: "root",
+					Mode:  "0700",
+					Data:  "hello world",
+				},
+			},
+			Want: []*fsnode.File{
+				ensureFileCreation(fsnode.NewFile(
+					"/etc/file",
+					common.ToPtr(os.FileMode(0700)),
+					"root",
+					"root",
+					[]byte("hello world"),
+				)),
+			},
+		},
+		{
+			Name: "multiple-files",
+			Files: []FileCustomization{
+				{
+					Path:  "/etc/file",
+					Data:  "hello world",
+					User:  "root",
+					Group: "root",
+				},
+				{
+					Path:  "/etc/file2",
+					Data:  "hello world",
+					User:  int64(0),
+					Group: int64(0),
+				},
+			},
+			Want: []*fsnode.File{
+				ensureFileCreation(fsnode.NewFile("/etc/file", nil, "root", "root", []byte("hello world"))),
+				ensureFileCreation(fsnode.NewFile("/etc/file2", nil, int64(0), int64(0), []byte("hello world"))),
+			},
+		},
+		{
+			Name: "multiple-files-with-errors",
+			Files: []FileCustomization{
+				{
+					Path: "/etc/../file",
+					Data: "hello world",
+				},
+				{
+					Path: "/etc/file2",
+					Data: "hello world",
+					User: "r@@t",
+				},
+			},
+			Error: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			files, err := FileCustomizationsToFsNodeFiles(tc.Files)
+			if tc.Error {
+				assert.Error(t, err)
+				assert.Nil(t, files)
+			} else {
+				assert.NoError(t, err)
+				assert.EqualValues(t, tc.Want, files)
 			}
 		})
 	}

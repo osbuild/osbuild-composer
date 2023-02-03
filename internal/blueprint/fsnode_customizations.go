@@ -150,6 +150,30 @@ func (d DirectoryCustomization) ToFsNodeDirectory() (*fsnode.Directory, error) {
 	return fsnode.NewDirectory(d.Path, mode, d.User, d.Group, d.EnsureParents)
 }
 
+// DirectoryCustomizationsToFsNodeDirectories converts a slice of DirectoryCustomizations
+// to a slice of fsnode.Directories
+func DirectoryCustomizationsToFsNodeDirectories(dirs []DirectoryCustomization) ([]*fsnode.Directory, error) {
+	if len(dirs) == 0 {
+		return nil, nil
+	}
+
+	var fsDirs []*fsnode.Directory
+	var errors []error
+	for _, dir := range dirs {
+		fsDir, err := dir.ToFsNodeDirectory()
+		if err != nil {
+			errors = append(errors, err)
+		}
+		fsDirs = append(fsDirs, fsDir)
+	}
+
+	if len(errors) > 0 {
+		return nil, fmt.Errorf("invalid directory customizations: %v", errors)
+	}
+
+	return fsDirs, nil
+}
+
 // FileCustomization represents a file to be created in the image
 type FileCustomization struct {
 	// Absolute path to the file
@@ -282,4 +306,27 @@ func (f FileCustomization) ToFsNodeFile() (*fsnode.File, error) {
 	}
 
 	return fsnode.NewFile(f.Path, mode, f.User, f.Group, data)
+}
+
+// FileCustomizationsToFsNodeFiles converts a slice of FileCustomization to a slice of *fsnode.File
+func FileCustomizationsToFsNodeFiles(files []FileCustomization) ([]*fsnode.File, error) {
+	if len(files) == 0 {
+		return nil, nil
+	}
+
+	var fsFiles []*fsnode.File
+	var errors []error
+	for _, file := range files {
+		fsFile, err := file.ToFsNodeFile()
+		if err != nil {
+			errors = append(errors, err)
+		}
+		fsFiles = append(fsFiles, fsFile)
+	}
+
+	if len(errors) > 0 {
+		return nil, fmt.Errorf("invalid file customizations: %v", errors)
+	}
+
+	return fsFiles, nil
 }
