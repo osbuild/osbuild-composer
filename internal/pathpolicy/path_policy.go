@@ -1,4 +1,4 @@
-package disk
+package pathpolicy
 
 import (
 	"fmt"
@@ -24,20 +24,20 @@ func NewPathPolicies(entries map[string]PathPolicy) *PathPolicies {
 	return NewPathTrieFromMap(noType)
 }
 
-// Check a given path at dir against the PathPolicies
-func (pol *PathPolicies) Check(dir string) error {
+// Check a given path against the PathPolicies
+func (pol *PathPolicies) Check(fsPath string) error {
 
-	// Quickly check we have a mountpoint and it is absolute
-	if dir == "" || dir[0] != '/' {
-		return fmt.Errorf("mountpoint must be absolute path")
+	// Quickly check we have a path and it is absolute
+	if fsPath == "" || fsPath[0] != '/' {
+		return fmt.Errorf("path must be absolute")
 	}
 
-	// ensure that only clean mountpoints are valid
-	if dir != path.Clean(dir) {
-		return fmt.Errorf("mountpoint must be a canonical path")
+	// ensure that only clean paths are valid
+	if fsPath != path.Clean(fsPath) {
+		return fmt.Errorf("path must be canonical")
 	}
 
-	node, left := pol.Lookup(dir)
+	node, left := pol.Lookup(fsPath)
 	policy, ok := node.Payload.(PathPolicy)
 	if !ok {
 		panic("programming error: invalid path trie payload")
@@ -46,9 +46,9 @@ func (pol *PathPolicies) Check(dir string) error {
 	// 1) path is explicitly not allowed or
 	// 2) a subpath was match but an explicit match is required
 	if policy.Deny || (policy.Exact && len(left) > 0) {
-		return fmt.Errorf("path '%s ' is not allowed", dir)
+		return fmt.Errorf("path '%s ' is not allowed", fsPath)
 	}
 
-	// exact match or recursive mountpoints allowed
+	// exact match or recursive path allowed
 	return nil
 }

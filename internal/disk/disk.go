@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 )
 
 const (
@@ -52,7 +53,7 @@ const (
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 )
 
-var MountpointPolicies = NewPathPolicies(map[string]PathPolicy{
+var MountpointPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
 	"/":     {Exact: true},
 	"/boot": {Exact: true},
 	"/var":  {},
@@ -184,7 +185,7 @@ func NewVolIDFromRand(r *rand.Rand) string {
 	return hex.EncodeToString(volid)
 }
 
-func CheckMountpoints(mountpoints []blueprint.FilesystemCustomization, mountpointAllowList *PathPolicies) error {
+func CheckMountpoints(mountpoints []blueprint.FilesystemCustomization, mountpointAllowList *pathpolicy.PathPolicies) error {
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
 		err := mountpointAllowList.Check(m.Mountpoint)
