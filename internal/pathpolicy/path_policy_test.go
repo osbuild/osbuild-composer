@@ -1,4 +1,4 @@
-package disk
+package pathpolicy
 
 import (
 	"testing"
@@ -44,7 +44,6 @@ func TestPathPolicyCheck(t *testing.T) {
 			assert.NoError(err)
 		} else {
 			assert.Errorf(err, "unexpected error for path '%s'", k)
-
 		}
 	}
 }
