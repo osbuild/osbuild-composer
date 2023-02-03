@@ -502,6 +502,15 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.arch.distro.osVersion))
 	}
 
+	// Check Directory/File Customizations are valid
+	dc := customizations.GetDirectories()
+	fc := customizations.GetFiles()
+
+	err = blueprint.ValidateDirFileCustomizations(dc, fc)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
