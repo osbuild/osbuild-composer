@@ -3138,6 +3138,49 @@ data:
             "query": "osbuild, depsolve, manifest-id-only, container-resolve, ostree-resolve, aws-ec2-copy, aws-ec2-share, koji-init, koji-finalize",
             "skipUrlSync": false,
             "type": "custom"
+          },
+          {
+            "current": {
+              "selected": true,
+              "text": "1792",
+              "value": "1792"
+            },
+            "description": "The duration in seconds 95% of jobs should adhere to.",
+            "hide": 0,
+            "includeAll": false,
+            "label": "Target duration",
+            "multi": false,
+            "name": "target_duration",
+            "options": [
+              {
+                "selected": false,
+                "text": "32",
+                "value": "32"
+              },
+              {
+                "selected": false,
+                "text": "640",
+                "value": "640"
+              },
+              {
+                "selected": false,
+                "text": "1536",
+                "value": "1536"
+              },
+              {
+                "selected": true,
+                "text": "1792",
+                "value": "1792"
+              },
+              {
+                "selected": false,
+                "text": "2049",
+                "value": "2049"
+              }
+            ],
+            "query": "32, 640, 1536, 1792, 2049",
+            "skipUrlSync": false,
+            "type": "custom"
           }
         ]
       },
