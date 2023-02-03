@@ -129,6 +129,21 @@ func osCustomizations(
 		)
 	}
 
+	var err error
+	osc.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
+	if err != nil {
+		// In theory this should never happen, because the blueprint directory customizations
+		// should have been validated before this point.
+		panic(fmt.Sprintf("failed to convert directory customizations to fs node directories: %v", err))
+	}
+
+	osc.Files, err = blueprint.FileCustomizationsToFsNodeFiles(c.GetFiles())
+	if err != nil {
+		// In theory this should never happen, because the blueprint file customizations
+		// should have been validated before this point.
+		panic(fmt.Sprintf("failed to convert file customizations to fs node files: %v", err))
+	}
+
 	osc.Grub2Config = imageConfig.Grub2Config
 	osc.Sysconfig = imageConfig.Sysconfig
 	osc.SystemdLogind = imageConfig.SystemdLogind
