@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 )
 
 type FilesystemCustomization struct {
@@ -65,6 +66,23 @@ func (fsc *FilesystemCustomization) UnmarshalJSON(data []byte) error {
 		fsc.MinSize = size
 	default:
 		return fmt.Errorf("JSON unmarshal: minsize must be float64 number or string, got %v of type %T", d["minsize"], d["minsize"])
+	}
+
+	return nil
+}
+
+// CheckMountpointsPolicy checks if the mountpoints are allowed by the policy
+func CheckMountpointsPolicy(mountpoints []FilesystemCustomization, mountpointAllowList *pathpolicy.PathPolicies) error {
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		err := mountpointAllowList.Check(m.Mountpoint)
+		if err != nil {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
 	}
 
 	return nil

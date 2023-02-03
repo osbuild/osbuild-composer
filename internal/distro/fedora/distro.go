@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
+	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
@@ -778,7 +779,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
 	}
 
-	err := disk.CheckMountpoints(mountpoints, disk.MountpointPolicies)
+	err := blueprint.CheckMountpointsPolicy(mountpoints, pathpolicy.MountpointPolicies)
 	if err != nil {
 		return err
 	}

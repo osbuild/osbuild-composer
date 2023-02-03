@@ -18,13 +18,10 @@ package disk
 
 import (
 	"encoding/hex"
-	"fmt"
 	"io"
 	"math/rand"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 )
 
 const (
@@ -52,19 +49,6 @@ const (
 	// Extended Boot Loader Partition
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 )
-
-var MountpointPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
-	"/":     {Exact: true},
-	"/boot": {Exact: true},
-	"/var":  {},
-	"/opt":  {},
-	"/srv":  {},
-	"/usr":  {},
-	"/app":  {},
-	"/data": {},
-	"/home": {},
-	"/tmp":  {},
-})
 
 // Entity is the base interface for all disk-related entities.
 type Entity interface {
@@ -183,20 +167,4 @@ func NewVolIDFromRand(r *rand.Rand) string {
 		panic("expected four random bytes")
 	}
 	return hex.EncodeToString(volid)
-}
-
-func CheckMountpoints(mountpoints []blueprint.FilesystemCustomization, mountpointAllowList *pathpolicy.PathPolicies) error {
-	invalidMountpoints := []string{}
-	for _, m := range mountpoints {
-		err := mountpointAllowList.Check(m.Mountpoint)
-		if err != nil {
-			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
-		}
-	}
-
-	if len(invalidMountpoints) > 0 {
-		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
-	}
-
-	return nil
 }
