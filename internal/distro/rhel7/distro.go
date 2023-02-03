@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
@@ -492,7 +493,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	mountpoints := customizations.GetFilesystems()
 
-	err := disk.CheckMountpoints(mountpoints, disk.MountpointPolicies)
+	err := blueprint.CheckMountpointsPolicy(mountpoints, pathpolicy.MountpointPolicies)
 	if err != nil {
 		return err
 	}
