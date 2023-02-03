@@ -34,7 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "iteration": 1675349556888,
+      "iteration": 1675420979872,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -399,11 +399,11 @@ data:
                   },
                   {
                     "color": "#EAB839",
-                    "value": 40
+                    "value": 504
                   },
                   {
                     "color": "green",
-                    "value": 50
+                    "value": 672
                   }
                 ]
               },
@@ -584,7 +584,8 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "fixedColor": "blue",
+                "mode": "fixed"
               },
               "decimals": 0,
               "mappings": [
@@ -720,7 +721,11 @@ data:
                   },
                   {
                     "color": "dark-purple",
-                    "value": 1560
+                    "value": 32
+                  },
+                  {
+                    "color": "dark-purple",
+                    "value": 1792
                   }
                 ]
               },
@@ -945,7 +950,7 @@ data:
                     "match": "null",
                     "result": {
                       "index": 0,
-                      "text": "1.40 days"
+                      "text": "∞"
                     }
                   },
                   "type": "special"
@@ -971,11 +976,11 @@ data:
                   },
                   {
                     "color": "#EAB839",
-                    "value": 40
+                    "value": 504
                   },
                   {
                     "color": "green",
-                    "value": 50
+                    "value": 672
                   }
                 ]
               },
@@ -1156,7 +1161,8 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "fixedColor": "blue",
+                "mode": "fixed"
               },
               "decimals": 0,
               "mappings": [
@@ -1285,14 +1291,6 @@ data:
                   {
                     "color": "green",
                     "value": null
-                  },
-                  {
-                    "color": "#EAB839",
-                    "value": "175"
-                  },
-                  {
-                    "color": "red",
-                    "value": "200"
                   }
                 ]
               },
