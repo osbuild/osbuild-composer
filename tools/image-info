@@ -286,7 +286,7 @@ def read_partition_table(device):
     ptable = sfdisk["partitiontable"]
     assert ptable["unit"] == "sectors"
     is_dos = ptable["label"] == "dos"
-    ssize = ptable.get("sectorsize", 512)
+    ssize = ptable.get("sectorsize", SECTOR_SIZE)
 
     for i, p in enumerate(ptable["partitions"]):
 
@@ -324,7 +324,7 @@ def read_bootloader_type(device) -> str:
     - 'unknown'
     """
     with open(device, "rb") as f:
-        if b"GRUB" in f.read(512):
+        if b"GRUB" in f.read(SECTOR_SIZE):
             return "grub"
         else:
             return "unknown"
