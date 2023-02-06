@@ -187,6 +187,106 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	if request.Customizations != nil && request.Customizations.Directories != nil {
+		var dirCustomizations []blueprint.DirectoryCustomization
+		for _, d := range *request.Customizations.Directories {
+			dirCustomization := blueprint.DirectoryCustomization{
+				Path: d.Path,
+			}
+			if d.Mode != nil {
+				dirCustomization.Mode = *d.Mode
+			}
+			if d.User != nil {
+				dirCustomization.User = *d.User
+				if uid, ok := dirCustomization.User.(float64); ok {
+					// check if uid can be converted to int64
+					if uid != float64(int64(uid)) {
+						return fmt.Errorf("invalid user %f: must be an integer", uid)
+					}
+					dirCustomization.User = int64(uid)
+				}
+			}
+			if d.Group != nil {
+				dirCustomization.Group = *d.Group
+				if gid, ok := dirCustomization.Group.(float64); ok {
+					// check if gid can be converted to int64
+					if gid != float64(int64(gid)) {
+						return fmt.Errorf("invalid group %f: must be an integer", gid)
+					}
+					dirCustomization.Group = int64(gid)
+				}
+			}
+			if d.EnsureParents != nil {
+				dirCustomization.EnsureParents = *d.EnsureParents
+			}
+			dirCustomizations = append(dirCustomizations, dirCustomization)
+		}
+
+		// Validate the directory customizations, because the Cloud API does not use the custom unmarshaller
+		_, err := blueprint.DirectoryCustomizationsToFsNodeDirectories(dirCustomizations)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorInvalidCustomization, err)
+		}
+
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Directories: dirCustomizations,
+			}
+		} else {
+			bp.Customizations.Directories = dirCustomizations
+		}
+	}
+
+	if request.Customizations != nil && request.Customizations.Files != nil {
+		var fileCustomizations []blueprint.FileCustomization
+		for _, f := range *request.Customizations.Files {
+			fileCustomization := blueprint.FileCustomization{
+				Path: f.Path,
+			}
+			if f.Data != nil {
+				fileCustomization.Data = *f.Data
+			}
+			if f.Mode != nil {
+				fileCustomization.Mode = *f.Mode
+			}
+			if f.User != nil {
+				fileCustomization.User = *f.User
+				if uid, ok := fileCustomization.User.(float64); ok {
+					// check if uid can be converted to int64
+					if uid != float64(int64(uid)) {
+						return fmt.Errorf("invalid user %f: must be an integer", uid)
+					}
+					fileCustomization.User = int64(uid)
+				}
+			}
+			if f.Group != nil {
+				fileCustomization.Group = *f.Group
+				if gid, ok := fileCustomization.Group.(float64); ok {
+					// check if gid can be converted to int64
+					if gid != float64(int64(gid)) {
+						return fmt.Errorf("invalid group %f: must be an integer", gid)
+					}
+					fileCustomization.Group = int64(gid)
+				}
+			}
+			fileCustomizations = append(fileCustomizations, fileCustomization)
+		}
+
+		// Validate the file customizations, because the Cloud API does not use the custom unmarshaller
+		_, err := blueprint.FileCustomizationsToFsNodeFiles(fileCustomizations)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorInvalidCustomization, err)
+		}
+
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Files: fileCustomizations,
+			}
+		} else {
+			bp.Customizations.Files = fileCustomizations
+		}
+	}
+
 	if request.Customizations != nil && request.Customizations.Filesystem != nil {
 		var fsCustomizations []blueprint.FilesystemCustomization
 		for _, f := range *request.Customizations.Filesystem {

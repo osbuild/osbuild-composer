@@ -976,8 +976,18 @@ components:
         containers:
           type: array
           items:
-             $ref: '#/components/schemas/Container'
-             description: Container images to embed into the final artfact
+            $ref: '#/components/schemas/Container'
+            description: Container images to embed into the final artfact
+        directories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Directory'
+            description: Directories to create in the final artifact
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
+            description: Files to create in the final artifact
         subscription:
           $ref: '#/components/schemas/Subscription'
         packages:
@@ -1037,6 +1047,72 @@ components:
           type: boolean
           description: Control TLS verifification
           example: true
+    Directory:
+      type: object
+      description: |
+        A custom directory to create in the final artifact.
+      required:
+        - path
+      properties:
+        path:
+          type: string
+          description: Path to the directory
+          example: '/etc/mydir'
+        mode:
+          type: string
+          description: Permissions string for the directory in octal format
+          example: "0755"
+        user:
+          oneOf:
+            - type: string
+            - type: integer
+          description: Owner of the directory as a user name or a uid
+          example: 'root'
+        group:
+          oneOf:
+            - type: string
+            - type: integer
+          description: Group of the directory as a group name or a gid
+          example: 'root'
+        ensure_parents:
+          type: boolean
+          description: Ensure that the parent directories exist
+          default: false
+    File:
+      type: object
+      description: |
+        A custom file to create in the final artifact.
+      required:
+        - path
+      properties:
+        path:
+          type: string
+          description: Path to the file
+          example: '/etc/myfile'
+        mode:
+          type: string
+          description: Permissions string for the file in octal format
+          example: "0644"
+        user:
+          oneOf:
+            - type: string
+            - type: integer
+          description: Owner of the file as a uid or a user name
+          example: 'root'
+        group:
+          oneOf:
+            - type: string
+            - type: integer
+          description: Group of the file as a gid or a group name
+          example: 'root'
+        data:
+          type: string
+          description: Contents of the file as plain text
+        ensure_parents:
+          type: boolean
+          description: Ensure that the parent directories exist
+          example: true
+          default: false
     Filesystem:
       type: object
       required:
