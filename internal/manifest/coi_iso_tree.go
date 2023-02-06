@@ -75,9 +75,6 @@ func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 		if p.coiPipeline.Ignition.Config != "" {
 			filename = "ignition_config"
 			copyInput = p.coiPipeline.Ignition.Config
-		} else {
-			filename = "ignition_url"
-			copyInput = p.coiPipeline.Ignition.ProvisioningURL
 		}
 		pipeline.AddStage(osbuild.NewCopyStageSimple(
 			&osbuild.CopyStageOptions{

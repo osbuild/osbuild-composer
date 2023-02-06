@@ -364,12 +364,6 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 				if customizations.GetIgnition().Embedded != nil && customizations.GetIgnition().FirstBoot != nil {
 					return fmt.Errorf("both ignition embedded and firstboot configurations found")
 				}
-				if customizations.GetIgnition().Embedded != nil {
-					possibleErr := customizations.GetIgnition().Embedded.CheckEmbeddedIgnition()
-					if possibleErr != nil {
-						return possibleErr
-					}
-				}
 				if customizations.GetIgnition().FirstBoot != nil && customizations.GetIgnition().FirstBoot.ProvisioningURL == "" {
 					return fmt.Errorf("ignition.firstboot requires a provisioning url")
 				}
