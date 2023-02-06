@@ -3,7 +3,6 @@
 import argparse
 import configparser
 import contextlib
-import errno
 import functools
 import glob
 import mimetypes
@@ -21,9 +20,12 @@ import xml.etree.ElementTree
 import yaml
 
 from collections import OrderedDict
-from typing import Dict, Any, Generator
+from typing import Dict, Any
 
-from osbuild import loop
+from osbuild import devices, host, mounts, meta, monitor
+
+index = meta.Index("/usr/lib/osbuild/")
+SECTOR_SIZE = 512
 
 
 def run_ostree(*args, _input=None, _check=True, **kwargs):
@@ -37,37 +39,24 @@ def run_ostree(*args, _input=None, _check=True, **kwargs):
     return res
 
 
-@contextlib.contextmanager
-def loop_create_device(ctl, fd, offset=None, sizelimit=None):
-    while True:
-        lo = loop.Loop(ctl.get_unbound())
-        try:
-            lo.set_fd(fd)
-        except OSError as e:
-            lo.close()
-            if e.errno == errno.EBUSY:
-                continue
-            raise e
-        try:
-            lo.set_status(offset=offset, sizelimit=sizelimit, autoclear=True)
-        except BlockingIOError:
-            lo.clear_fd()
-            lo.close()
-            continue
-        break
-    try:
-        yield lo
-    finally:
-        lo.close()
-
-
-@contextlib.contextmanager
-def loop_open(ctl, image, *, offset=None, size=None):
-    with open(image, "rb") as f:
-        fd = f.fileno()
-        with loop_create_device(ctl, fd, offset=offset, sizelimit=size) as lo:
-            yield os.path.join("/dev", lo.devname)
-
+def loop_open(devmgr:devices.DeviceManager, name:str, image, size, offset=0):
+    """
+    Uses a DeviceManager to open the `name` at `offset`
+    Retuns a Device object and the path onto wich the image was loopback mounted
+    """
+    info = index.get_module_info("Device", "org.osbuild.loopback")
+    fname = os.path.basename(image)
+    options = {
+        "filename": fname,
+        "start": offset // SECTOR_SIZE,
+        "size": size // SECTOR_SIZE
+    }
+    dev = devices.Device(name, info, None, options)
+    reply = devmgr.open(dev)
+    return {
+        "Device": dev,
+        "path": os.path.join("/dev", reply["path"])
+    }
 
 @contextlib.contextmanager
 def convert_image(image, fmt):
@@ -2488,18 +2477,12 @@ def ensure_device_file(path: str, major: int, minor: int):
         os.mknod(path, 0o600 | stat.S_IFBLK, os.makedev(major, minor))
 
 
-@contextlib.contextmanager
-def discover_lvm(dev) -> Generator[Dict[str, Any], None, None]:
+def discover_lvm(dev:str, parent:devices.Device, devmgr:devices.DeviceManager):
     # find the volume group name for the device file
     vg_name = volume_group_for_device(dev)
 
-    # activate it
-    r = subprocess.run(["vgchange", "-ay", vg_name],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.PIPE,
-                       check=False)
-    if r.returncode != 0:
-        raise RuntimeError(r.stderr.strip())
+    # activating LVM is done OSBuild side.
+    # However we still have to get OSBuild the name of the VG to open
 
     try:
         # Find all logical volumes in the volume group
@@ -2523,10 +2506,30 @@ def discover_lvm(dev) -> Generator[Dict[str, Any], None, None]:
         parsed = list(map(lambda l: l.split(";"), data.split("\n")))
         volumes = OrderedDict()
 
+        # devices_map stores for each device path onto the system the corresponding
+        # OSBuild's Device object
+        devices_map = {}
+
         for vol in parsed:
             vol = list(map(lambda v: v.strip(), vol))
             assert len(vol) == 4
-            name, voldev, major, minor = vol
+            name, _, _, _ = vol
+
+            options = {
+                "volume": name,
+            }
+
+            # Create an OSBuild device object for the LVM partition
+            device = devices.Device(
+                        name,
+                        index.get_module_info("Device", "org.osbuild.lvm2.lv"),
+                        parent,
+                        options)
+            reply = devmgr.open(device)
+            voldev = reply["path"] # get the path where is mounted the device
+            minor = reply["node"]["minor"]
+            major = reply["node"]["major"]
+
             info = {
                 "device": voldev
             }
@@ -2536,37 +2539,51 @@ def discover_lvm(dev) -> Generator[Dict[str, Any], None, None]:
             volumes[name] = info
             if name.startswith("root"):
                 volumes.move_to_end(name, last=False)
-        yield {
+
+            # associate the device path with the Device object, we will need it to
+            # mount later on.
+            devices_map[voldev] = device
+        # get back both the device map and the result that'll go in the JSON report
+        return devices_map, {
             "lvm": True,
             "lvm.vg": vg_name,
             "lvm.volumes": volumes
         }
 
     finally:
-        r = subprocess.run(["vgchange", "-an", vg_name],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.PIPE,
-                            check=False)
-        if r.returncode != 0:
-            raise RuntimeError(r.stderr.strip())
+        pass
 
 
 def partition_is_lvm(part: Dict) -> bool:
     return part["type"].upper() in ["E6D6D379-F507-44C2-A23C-238F2A3DF928", "8E"]
 
 
-def append_partitions(report, image, loctl):
+def append_partitions(report, image):
     partitions = report["partitions"]
+    with (tempfile.TemporaryDirectory() as mountpoint,
+          host.ServiceManager(monitor=monitor.NullMonitor(1)) as mgr):
 
-    with contextlib.ExitStack() as cm:
-        # open each partition as a loop device
+        devmgr = devices.DeviceManager(mgr, "/dev", os.path.dirname(image))
+
+        # Device map associate a path onto where the device is mounted with its
+        # corresponding Device object. Mount will require both the path and the
+        # Device object in order to do its job.
+        devices_map = {}
         filesystems = {}
         for part in partitions:
             start, size = part["start"], part["size"]
-            dev = cm.enter_context(loop_open(loctl, image, offset=start, size=size))
+            ret = loop_open(
+                    devmgr,
+                    part["partuuid"],
+                    image,
+                    size,
+                    offset=start)
+            dev = ret["path"]
+            devices_map[dev] = ret["Device"]
             read_partition(dev, part)
             if partition_is_lvm(part):
-                lvm = cm.enter_context(discover_lvm(dev))
+                dmap, lvm = discover_lvm(dev, ret["Device"], devmgr)
+                devices_map.update(dmap)
                 for vol in lvm["lvm.volumes"].values():
                     if vol["fstype"]:
                         mntopts = []
@@ -2600,6 +2617,7 @@ def append_partitions(report, image, loctl):
 
         # mount all partitions to ther respective mount points
         root_tree = ""
+        mmgr = mounts.MountManager(devmgr, mountpoint)
         for n, fstab_entry in enumerate(fstab):
             part_uuid = fstab_entry[0].split("=")[1].upper()
             part_device = filesystems[part_uuid]["device"]
@@ -2608,14 +2626,31 @@ def append_partitions(report, image, loctl):
             part_options = fstab_entry[3].split(",")
             part_options += filesystems[part_uuid].get("mntops", [])
 
+            if "ext4" in part_fstype:
+                info = index.get_module_info("Mount", "org.osbuild.ext4")
+            elif "vfat" in part_fstype:
+                info = index.get_module_info("Mount", "org.osbuild.fat")
+            elif "btrfs" in part_fstype:
+                info = index.get_module_info("Mount", "org.osbuild.btrfs")
+            elif "xfs" in part_fstype:
+                info = index.get_module_info("Mount", "org.osbuild.xfs")
+            else:
+                raise RuntimeError("Unknown file system")
+            options = { "readonly":True }
+
+
             # the first mount point should be root
             if n == 0:
                 if part_mountpoint != "/":
                     raise RuntimeError("The first mountpoint in sorted fstab entries is not '/'")
-                root_tree = cm.enter_context(mount(part_device, part_options))
-                continue
+                root_tree = mountpoint
 
-            cm.enter_context(mount_at(part_device, f"{root_tree}{part_mountpoint}", options=part_options, extra=["-t", part_fstype]))
+            mmgr.mount(mounts.Mount(
+                part_device,
+                info,
+                devices_map[part_device], # retrieves the associated Device Object
+                part_mountpoint,
+                options))
 
         if not root_tree:
             raise RuntimeError("The root filesystem tree is not mounted")
@@ -2624,14 +2659,18 @@ def append_partitions(report, image, loctl):
 
 
 def analyse_image(image) -> Dict[str, Any]:
-    loctl = loop.LoopControl()
-
     imgfmt = read_image_format(image)
     report: Dict[str, Any] = {"image-format": imgfmt}
 
     with convert_image(image, imgfmt) as target:
         size = os.stat(target).st_size
-        with loop_open(loctl, target, offset=0, size=size) as device:
+        with host.ServiceManager(monitor=monitor.NullMonitor(1)) as mgr:
+            device = loop_open(
+                    devices.DeviceManager(mgr, "/dev", os.path.dirname(target)),
+                    os.path.basename(target),
+                    target,
+                    size,
+                    offset=0)["path"]
             report["bootloader"] = read_bootloader_type(device)
             report.update(read_partition_table(device))
             if not report["partition-table"]:
@@ -2641,7 +2680,7 @@ def analyse_image(image) -> Dict[str, Any]:
                 return report
 
         # close loop device and descend into partitions on image file
-        append_partitions(report, target, loctl)
+        append_partitions(report, target)
         return report
 
 
@@ -2784,4 +2823,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
