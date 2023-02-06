@@ -767,7 +767,8 @@
           },
           "services": {
             "enabled": [
-              "sshd.socket"
+              "sshd.socket",
+              "custom.service"
             ],
             "disabled": [
               "bluetooth.service"
@@ -777,6 +778,39 @@
             {
               "mountpoint": "/opt",
               "minsize": 1073741824
+            }
+          ],
+          "directories": [
+            {
+              "path": "/etc/systemd/system/custom.service.d"
+            },
+            {
+              "path": "/etc/custom_dir",
+              "mode": "0770",
+              "user": 1020,
+              "group": 1050
+            }
+          ],
+          "files": [
+            {
+              "path": "/etc/systemd/system/custom.service",
+              "data": "[Unit]\nDescription=Custom service\n\n[Service]\nExecStart=/usr/bin/false\n\n[Install]\nWantedBy=multi-user.target\n"
+            },
+            {
+              "path": "/etc/systemd/system/custom.service.d/override.conf",
+              "data": "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+            },
+            {
+              "path": "/etc/custom_file.txt",
+              "data": "image builder is the best",
+              "mode": "0644",
+              "user": "root",
+              "group": "root"
+            },
+            {
+              "path": "/etc/empty_file.txt",
+              "user": 0,
+              "group": 0
             }
           ]
         }
@@ -853,7 +887,8 @@
             },
             "services": {
               "enabled": [
-                "sshd.socket"
+                "sshd.socket",
+                "custom.service"
               ],
               "disabled": [
                 "bluetooth.service"
@@ -863,6 +898,39 @@
               {
                 "mountpoint": "/opt",
                 "minsize": 1073741824
+              }
+            ],
+            "directories": [
+              {
+                "path": "/etc/systemd/system/custom.service.d"
+              },
+              {
+                "path": "/etc/custom_dir",
+                "mode": "0770",
+                "user": 1020,
+                "group": 1050
+              }
+            ],
+            "files": [
+              {
+                "path": "/etc/systemd/system/custom.service",
+                "data": "[Unit]\nDescription=Custom service\n\n[Service]\nExecStart=/usr/bin/false\n\n[Install]\nWantedBy=multi-user.target\n"
+              },
+              {
+                "path": "/etc/systemd/system/custom.service.d/override.conf",
+                "data": "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+              },
+              {
+                "path": "/etc/custom_file.txt",
+                "data": "image builder is the best",
+                "mode": "0644",
+                "user": "root",
+                "group": "root"
+              },
+              {
+                "path": "/etc/empty_file.txt",
+                "user": 0,
+                "group": 0
               }
             ]
           },
@@ -943,12 +1011,46 @@
             },
             "services": {
               "enabled": [
-                "sshd.socket"
+                "sshd.socket",
+                "custom.service"
               ],
               "disabled": [
                 "bluetooth.service"
               ]
-            }
+            },
+            "directories": [
+              {
+                "path": "/etc/systemd/system/custom.service.d"
+              },
+              {
+                "path": "/etc/custom_dir",
+                "mode": "0770",
+                "user": 1020,
+                "group": 1050
+              }
+            ],
+            "files": [
+              {
+                "path": "/etc/systemd/system/custom.service",
+                "data": "[Unit]\nDescription=Custom service\n\n[Service]\nExecStart=/usr/bin/false\n\n[Install]\nWantedBy=multi-user.target\n"
+              },
+              {
+                "path": "/etc/systemd/system/custom.service.d/override.conf",
+                "data": "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+              },
+              {
+                "path": "/etc/custom_file.txt",
+                "data": "image builder is the best",
+                "mode": "0644",
+                "user": "root",
+                "group": "root"
+              },
+              {
+                "path": "/etc/empty_file.txt",
+                "user": 0,
+                "group": 0
+              }
+            ]
           }
         }
       },
@@ -1022,7 +1124,8 @@
             },
             "services": {
               "enabled": [
-                "sshd.socket"
+                "sshd.socket",
+                "custom.service"
               ],
               "disabled": [
                 "bluetooth.service"
@@ -1040,6 +1143,39 @@
               {
                 "mountpoint": "/",
                 "minsize": 2147483648
+              }
+            ],
+            "directories": [
+              {
+                "path": "/etc/systemd/system/custom.service.d"
+              },
+              {
+                "path": "/etc/custom_dir",
+                "mode": "0770",
+                "user": 1020,
+                "group": 1050
+              }
+            ],
+            "files": [
+              {
+                "path": "/etc/systemd/system/custom.service",
+                "data": "[Unit]\nDescription=Custom service\n\n[Service]\nExecStart=/usr/bin/false\n\n[Install]\nWantedBy=multi-user.target\n"
+              },
+              {
+                "path": "/etc/systemd/system/custom.service.d/override.conf",
+                "data": "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+              },
+              {
+                "path": "/etc/custom_file.txt",
+                "data": "image builder is the best",
+                "mode": "0644",
+                "user": "root",
+                "group": "root"
+              },
+              {
+                "path": "/etc/empty_file.txt",
+                "user": 0,
+                "group": 0
               }
             ]
           }
