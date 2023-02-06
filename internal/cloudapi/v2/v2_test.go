@@ -927,7 +927,48 @@ func TestComposeCustomizations(t *testing.T) {
 				"disabled": [
 					"firewalld"
 				]
-			}
+			},
+			"directories": [
+				{
+					"path": "/etc/my/dir",
+					"mode": "0700"
+				},
+				{
+					"path": "/etc/my/dir1",
+					"mode": "0700",
+					"user": "user1",
+					"group": "user1",
+					"ensure_parents": true
+				},
+				{
+					"path": "/etc/my/dir2",
+					"mode": "0700",
+					"user": 1000,
+					"group": 1000,
+					"ensure_parents": true
+				}
+			],
+			"files": [
+				{
+					"path": "/etc/my/dir/file",
+					"mode": "0600",
+					"data": "Hello world!"
+				},
+				{
+					"path": "/etc/my/dir/file2",
+					"mode": "0600",
+					"user": "user1",
+					"group": "user1",
+					"data": "Hello world!"
+				},
+				{
+					"path": "/etc/my/dir/file3",
+					"mode": "0600",
+					"user": 1000,
+					"group": 1000,
+					"data": "Hello world!"
+				}
+			]
 		},
 		"image_request":{
 			"architecture": "%s",
