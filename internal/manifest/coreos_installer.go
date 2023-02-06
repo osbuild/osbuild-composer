@@ -140,8 +140,6 @@ func (p *CoreOSInstaller) getInline() []string {
 	if p.Ignition != nil {
 		if p.Ignition.Config != "" {
 			inlineData = append(inlineData, p.Ignition.Config)
-		} else {
-			inlineData = append(inlineData, p.Ignition.ProvisioningURL)
 		}
 	}
 	return inlineData

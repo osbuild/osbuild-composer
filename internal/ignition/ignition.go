@@ -17,8 +17,7 @@ func FirstbootOptionsFromBP(bpIgnitionFirstboot blueprint.FirstBootIgnitionCusto
 }
 
 type EmbeddedOptions struct {
-	ProvisioningURL string
-	Config          string
+	Config string
 }
 
 func EmbeddedOptionsFromBP(bpIgnitionEmbedded blueprint.EmbeddedIgnitionCustomization) (*EmbeddedOptions, error) {
@@ -27,7 +26,6 @@ func EmbeddedOptionsFromBP(bpIgnitionEmbedded blueprint.EmbeddedIgnitionCustomiz
 		return nil, errors.New("can't decode Ignition config")
 	}
 	return &EmbeddedOptions{
-		ProvisioningURL: bpIgnitionEmbedded.ProvisioningURL,
-		Config:          string(decodedConfig),
+		Config: string(decodedConfig),
 	}, nil
 }
