@@ -340,6 +340,10 @@ func edgeRawImage(workload workload.Workload,
 		Checksum:   options.OSTree.FetchChecksum,
 	}
 	img := image.NewOSTreeRawImage(commit)
+	// TODO: add Fedora once it's ready
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
+		img.Ignition = true
+	}
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
@@ -396,7 +400,10 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 		Checksum:   options.OSTree.FetchChecksum,
 	}
 	rawImg := image.NewOSTreeRawImage(commit)
-	rawImg.Ignition = true
+	// TODO: add Fedora once it's ready
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
+		rawImg.Ignition = true
+	}
 
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())
