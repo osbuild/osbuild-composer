@@ -84,7 +84,8 @@
         },
         "services": {
           "enabled": [
-            "sshd.socket"
+            "sshd.socket",
+            "custom.service"
           ],
           "disabled": [
             "bluetooth.service"
@@ -94,6 +95,39 @@
           {
             "mountpoint": "/opt",
             "minsize": 1073741824
+          }
+        ],
+        "directories": [
+          {
+            "path": "/etc/systemd/system/custom.service.d"
+          },
+          {
+            "path": "/etc/custom_dir",
+            "user": 1020,
+            "group": 1050,
+            "mode": "0770"
+          }
+        ],
+        "files": [
+          {
+            "path": "/etc/systemd/system/custom.service",
+            "data": "[Unit]\nDescription=Custom service\n\n[Service]\nExecStart=/usr/bin/false\n\n[Install]\nWantedBy=multi-user.target\n"
+          },
+          {
+            "path": "/etc/systemd/system/custom.service.d/override.conf",
+            "data": "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+          },
+          {
+            "path": "/etc/custom_file.txt",
+            "user": "root",
+            "group": "root",
+            "mode": "0644",
+            "data": "image builder is the best"
+          },
+          {
+            "path": "/etc/empty_file.txt",
+            "user": 0,
+            "group": 0
           }
         ]
       }
@@ -2313,10 +2347,132 @@
             }
           },
           {
+            "type": "org.osbuild.mkdir",
+            "options": {
+              "paths": [
+                {
+                  "path": "/etc/systemd/system/custom.service.d",
+                  "exist_ok": true
+                },
+                {
+                  "path": "/etc/custom_dir"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.chmod",
+            "options": {
+              "items": {
+                "/etc/custom_dir": {
+                  "mode": "0770"
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.chown",
+            "options": {
+              "items": {
+                "/etc/custom_dir": {
+                  "user": 1020,
+                  "group": 1050
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.copy",
+            "inputs": {
+              "file-246c90eeaabd45d57f9c52ba19ec83577e1ece72cfb262b674dcd444f8f33a8e": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  {
+                    "id": "sha256:246c90eeaabd45d57f9c52ba19ec83577e1ece72cfb262b674dcd444f8f33a8e"
+                  }
+                ]
+              },
+              "file-3858d66c9da0509af1f75847bf49134bf8df01bd712b59ce251826744d3bafe2": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  {
+                    "id": "sha256:3858d66c9da0509af1f75847bf49134bf8df01bd712b59ce251826744d3bafe2"
+                  }
+                ]
+              },
+              "file-a08a06016ca077755a7948a9631271011f1a1c3ecaa0e701e10ec0bec1923258": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  {
+                    "id": "sha256:a08a06016ca077755a7948a9631271011f1a1c3ecaa0e701e10ec0bec1923258"
+                  }
+                ]
+              },
+              "file-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  {
+                    "id": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+                  }
+                ]
+              }
+            },
+            "options": {
+              "paths": [
+                {
+                  "from": "input://file-246c90eeaabd45d57f9c52ba19ec83577e1ece72cfb262b674dcd444f8f33a8e/sha256:246c90eeaabd45d57f9c52ba19ec83577e1ece72cfb262b674dcd444f8f33a8e",
+                  "to": "tree:///etc/systemd/system/custom.service"
+                },
+                {
+                  "from": "input://file-3858d66c9da0509af1f75847bf49134bf8df01bd712b59ce251826744d3bafe2/sha256:3858d66c9da0509af1f75847bf49134bf8df01bd712b59ce251826744d3bafe2",
+                  "to": "tree:///etc/systemd/system/custom.service.d/override.conf"
+                },
+                {
+                  "from": "input://file-a08a06016ca077755a7948a9631271011f1a1c3ecaa0e701e10ec0bec1923258/sha256:a08a06016ca077755a7948a9631271011f1a1c3ecaa0e701e10ec0bec1923258",
+                  "to": "tree:///etc/custom_file.txt"
+                },
+                {
+                  "from": "input://file-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "to": "tree:///etc/empty_file.txt"
+                }
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.chmod",
+            "options": {
+              "items": {
+                "/etc/custom_file.txt": {
+                  "mode": "0644"
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.chown",
+            "options": {
+              "items": {
+                "/etc/custom_file.txt": {
+                  "user": "root",
+                  "group": "root"
+                },
+                "/etc/empty_file.txt": {
+                  "user": 0,
+                  "group": 0
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.systemd",
             "options": {
               "enabled_services": [
-                "sshd.socket"
+                "sshd.socket",
+                "custom.service"
               ],
               "disabled_services": [
                 "bluetooth.service"
@@ -4099,6 +4255,26 @@
           },
           "sha256:ffc4464926a4e9a9129af0773bd9caab04fd2cd3e3ded760a891d0dc338265a4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.6-20220201/Packages/PackageKit-glib-1.1.12-6.el8.aarch64.rpm"
+          }
+        }
+      },
+      "org.osbuild.inline": {
+        "items": {
+          "sha256:246c90eeaabd45d57f9c52ba19ec83577e1ece72cfb262b674dcd444f8f33a8e": {
+            "encoding": "base64",
+            "data": "W1VuaXRdCkRlc2NyaXB0aW9uPUN1c3RvbSBzZXJ2aWNlCgpbU2VydmljZV0KRXhlY1N0YXJ0PS91c3IvYmluL2ZhbHNlCgpbSW5zdGFsbF0KV2FudGVkQnk9bXVsdGktdXNlci50YXJnZXQK"
+          },
+          "sha256:3858d66c9da0509af1f75847bf49134bf8df01bd712b59ce251826744d3bafe2": {
+            "encoding": "base64",
+            "data": "W1NlcnZpY2VdCkV4ZWNTdGFydD0KRXhlY1N0YXJ0PS91c3IvYmluL2NhdCAvZXRjL2N1c3RvbV9maWxlLnR4dAo="
+          },
+          "sha256:a08a06016ca077755a7948a9631271011f1a1c3ecaa0e701e10ec0bec1923258": {
+            "encoding": "base64",
+            "data": "aW1hZ2UgYnVpbGRlciBpcyB0aGUgYmVzdA=="
+          },
+          "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": {
+            "encoding": "base64",
+            "data": ""
           }
         }
       }
