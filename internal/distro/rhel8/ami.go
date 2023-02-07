@@ -338,7 +338,7 @@ func defaultAMIImageConfigX86_64(rd distribution) *distro.ImageConfig {
 
 func defaultEc2SapImageConfigX86_64(rd distribution) *distro.ImageConfig {
 	// default EC2-SAP image config (x86_64)
-	return SapImageConfig(rd).InheritFrom(defaultEc2ImageConfigX86_64(rd))
+	return sapImageConfig(rd).InheritFrom(defaultEc2ImageConfigX86_64(rd))
 }
 
 // common package set for RHEL (BYOS/RHUI) and CentOS Stream images
