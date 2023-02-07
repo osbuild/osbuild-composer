@@ -293,7 +293,7 @@ func (b *TransportWrapperBuilder) TransportWrappers(
 // the `le` label is `1` then the value will be the number of requests that were processed in less
 // than one second.
 //
-//      code - HTTP response code, for example 200 or 500.
+//	code - HTTP response code, for example 200 or 500.
 //
 // The value of the `code` label will be zero when sending the request failed without a response
 // code, for example if it wasn't possible to open the connection, or if there was a timeout waiting
