@@ -40,7 +40,7 @@ func azureSapRhuiImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: azureSapPackageSet,
 		},
-		defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(sapAzureImageConfig(rd)),
+		defaultImageConfig:  azureSapRhuiImageConfig(rd),
 		kernelOptions:       defaultAzureKernelOptions,
 		bootable:            true,
 		defaultSize:         64 * common.GibiByte,
@@ -653,4 +653,23 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 
 func sapAzureImageConfig(rd distribution) *distro.ImageConfig {
 	return sapImageConfig(rd).InheritFrom(defaultAzureImageConfig)
+}
+
+func azureSapRhuiImageConfig(rd distribution) *distro.ImageConfig {
+	baseConfig := defaultAzureRhuiImageConfig.InheritFrom(sapAzureImageConfig(rd))
+
+	// The rhui-azure-rhel8-sap-ha package is currently missing
+	// the /etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release key.
+	// This makes the image type unbuildable, which causes some of our tests
+	// to fail.
+	//
+	// Overlay the generic RHUI config, so the missing key isn't imported.
+	// See CLOUDX-336 for more information.
+	removeMissingMSFTKeyConfig := &distro.ImageConfig{
+		GPGKeyFiles: []string{
+			"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+		},
+	}
+
+	return removeMissingMSFTKeyConfig.InheritFrom(baseConfig)
 }
