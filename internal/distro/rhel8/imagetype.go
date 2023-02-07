@@ -48,6 +48,7 @@ type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
 	environment        environment.Environment
+	workload           workload.Workload
 	name               string
 	nameAliases        []string
 	filename           string
@@ -193,17 +194,19 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 		return nil, err
 	}
 
-	// TODO: let image types specify valid workloads, rather than
-	// always assume Custom.
-	w := &workload.Custom{
-		BaseWorkload: workload.BaseWorkload{
-			Repos: packageSets[blueprintPkgsKey].Repositories,
-		},
-		Packages: bp.GetPackagesEx(false),
-	}
-	if services := bp.Customizations.GetServices(); services != nil {
-		w.Services = services.Enabled
-		w.DisabledServices = services.Disabled
+	w := t.workload
+	if w == nil {
+		cw := &workload.Custom{
+			BaseWorkload: workload.BaseWorkload{
+				Repos: packageSets[blueprintPkgsKey].Repositories,
+			},
+			Packages: bp.GetPackagesEx(false),
+		}
+		if services := bp.Customizations.GetServices(); services != nil {
+			cw.Services = services.Enabled
+			cw.DisabledServices = services.Disabled
+		}
+		w = cw
 	}
 
 	source := rand.NewSource(seed)
@@ -367,6 +370,17 @@ func overridePackageNames(packages []string) []string {
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
+
+	if t.workload != nil {
+		// For now, if an image type defines its own workload, don't allow any
+		// user customizations.
+		// Soon we will have more workflows and each will define its allowed
+		// set of customizations.  The current set of customizations defined in
+		// the blueprint spec corresponds to the Custom workflow.
+		if customizations != nil {
+			return fmt.Errorf("image type %q does not support customizations", t.name)
+		}
+	}
 
 	// we do not support embedding containers on ostree-derived images, only on commits themselves
 	if len(containers) > 0 && t.rpmOstree && (t.name != "edge-commit" && t.name != "edge-container") {
