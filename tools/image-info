@@ -41,7 +41,7 @@ def run_ostree(*args, _input=None, _check=True, **kwargs):
     return res
 
 
-def loop_open(devmgr:devices.DeviceManager, name:str, image, size, offset=0):
+def loop_open(devmgr: devices.DeviceManager, name: str, image, size, offset=0):
     """
     Uses a DeviceManager to open the `name` at `offset`
     Retuns a Device object and the path onto wich the image was loopback mounted
@@ -63,6 +63,7 @@ def loop_open(devmgr:devices.DeviceManager, name:str, image, size, offset=0):
         "Device": dev,
         "path": os.path.join("/dev", reply["path"])
     }
+
 
 @contextlib.contextmanager
 def convert_image(image, fmt):
@@ -232,7 +233,7 @@ def read_partition(device, partition):
     else:
         blkid = {}
 
-    partition["label"] = blkid.get("LABEL") # doesn't exist for mbr
+    partition["label"] = blkid.get("LABEL")  # doesn't exist for mbr
     partition["uuid"] = blkid.get("UUID")
     partition["fstype"] = blkid.get("TYPE")
     return partition
@@ -409,7 +410,7 @@ def rpm_verify(tree):
     # verify user and group ownership:
     #   https://github.com/rpm-software-management/rpm/issues/882
     rpm = subprocess.Popen(["chroot", tree, "rpm", "--verify", "--all"],
-            stdout=subprocess.PIPE, encoding="utf-8")
+                           stdout=subprocess.PIPE, encoding="utf-8")
 
     changed = {}
     missing = []
@@ -528,7 +529,8 @@ def read_services(tree, state):
         "chrony-wait.service"
     ]
     """
-    services_state = subprocess_check_output(["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, state)))
+    services_state = subprocess_check_output(
+        ["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, state)))
 
     # Since systemd v246, some services previously reported as "enabled" /
     # "disabled" are now reported as "alias". There is no systemd command, that
@@ -538,7 +540,8 @@ def read_services(tree, state):
     # pre/post v246 systemd versions, check all "alias" units and append them
     # to the list, if their target is also listed in 'services_state'.
     if state != "alias":
-        services_alias = subprocess_check_output(["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, "alias")))
+        services_alias = subprocess_check_output(
+            ["systemctl", f"--root={tree}", "list-unit-files"], (lambda s: parse_unit_files(s, "alias")))
 
         for alias in services_alias:
             # The service may be in one of the following places (output of
@@ -2467,7 +2470,7 @@ def volume_group_for_device(device: str) -> str:
             continue
 
         if res.returncode != 0:
-             raise RuntimeError(res.stderr.strip())
+            raise RuntimeError(res.stderr.strip())
 
         vg_name = res.stdout.strip()
         if vg_name:
@@ -2483,7 +2486,7 @@ def ensure_device_file(path: str, major: int, minor: int):
         os.mknod(path, 0o600 | stat.S_IFBLK, os.makedev(major, minor))
 
 
-def discover_lvm(dev:str, parent:devices.Device, devmgr:devices.DeviceManager):
+def discover_lvm(dev: str, parent: devices.Device, devmgr: devices.DeviceManager):
     # find the volume group name for the device file
     vg_name = volume_group_for_device(dev)
 
@@ -2535,7 +2538,7 @@ def discover_lvm(dev:str, parent:devices.Device, devmgr:devices.DeviceManager):
             raise RuntimeError("can't find org.osbuild.lvm2.lv")
         jsonschema.validate(options, info.get_schema())
         reply = devmgr.open(device)
-        voldev = reply["path"] # get the path where is mounted the device
+        voldev = reply["path"]  # get the path where is mounted the device
         minor = reply["node"]["minor"]
         major = reply["node"]["major"]
 
@@ -2579,11 +2582,11 @@ def append_partitions(report, image):
         for part in partitions:
             start, size = part["start"], part["size"]
             ret = loop_open(
-                    devmgr,
-                    part["partuuid"],
-                    image,
-                    size,
-                    offset=start)
+                devmgr,
+                part["partuuid"],
+                image,
+                size,
+                offset=start)
             dev = ret["path"]
             devices_map[dev] = ret["Device"]
             read_partition(dev, part)
@@ -2685,7 +2688,7 @@ def append_partitions(report, image):
             mmgr.mount(mounts.Mount(
                 part_device,
                 info,
-                devices_map[part_device], # retrieves the associated Device Object
+                devices_map[part_device],  # retrieves the associated Device Object
                 part_mountpoint,
                 options))
 
@@ -2703,11 +2706,11 @@ def analyse_image(image) -> Dict[str, Any]:
         size = os.stat(target).st_size
         with host.ServiceManager(monitor=monitor.NullMonitor(1)) as mgr:
             device = loop_open(
-                    devices.DeviceManager(mgr, "/dev", os.path.dirname(target)),
-                    os.path.basename(target),
-                    target,
-                    size,
-                    offset=0)["path"]
+                devices.DeviceManager(mgr, "/dev", os.path.dirname(target)),
+                os.path.basename(target),
+                target,
+                size,
+                offset=0)["path"]
             report["bootloader"] = read_bootloader_type(device)
             report.update(read_partition_table(device))
             if not report["partition-table"]:
@@ -2835,6 +2838,7 @@ def analyse_compressed(path):
         assert len(files) == 1
         image = os.path.join(tmpdir, files[0])
         return analyse_image(image)
+
 
 def is_iso(path):
     return "iso" in pathlib.Path(path).suffix
