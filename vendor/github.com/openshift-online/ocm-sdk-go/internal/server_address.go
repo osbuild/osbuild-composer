@@ -90,11 +90,11 @@ type ServerAddress struct {
 //
 // Some examples of valid server addresses:
 //
-//	- http://my.server.com - HTTP on top of TCP.
-//	- https://my.server.com - HTTPS on top of TCP.
-//	- unix://my.server.com/sockets/my.socket - HTTP on top Unix socket.
-//	- unix+https://my.server.com/sockets/my.socket - HTTPS on top of Unix socket.
-//	- h2c+unix://my.server.com?socket=/sockets/my.socket - H2C on top of Unix.
+//   - http://my.server.com - HTTP on top of TCP.
+//   - https://my.server.com - HTTPS on top of TCP.
+//   - unix://my.server.com/sockets/my.socket - HTTP on top Unix socket.
+//   - unix+https://my.server.com/sockets/my.socket - HTTPS on top of Unix socket.
+//   - h2c+unix://my.server.com?socket=/sockets/my.socket - H2C on top of Unix.
 func ParseServerAddress(ctx context.Context, text string) (result *ServerAddress, err error) {
 	// Parse the URL:
 	parsed, err := neturl.Parse(text)
