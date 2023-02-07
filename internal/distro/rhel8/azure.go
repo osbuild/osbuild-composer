@@ -58,7 +58,6 @@ func azureByosImgType() imageType {
 		filename: "disk.vhd",
 		mimeType: "application/x-vhd",
 		packageSets: map[string]packageSetFunc{
-			// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
 			osPkgsKey: azurePackageSet,
 		},
 		defaultImageConfig:  defaultAzureByosImageConfig.InheritFrom(defaultAzureImageConfig),
@@ -80,7 +79,6 @@ func azureImgType() imageType {
 		filename: "disk.vhd",
 		mimeType: "application/x-vhd",
 		packageSets: map[string]packageSetFunc{
-			// the ec2 buildroot is required due to the cloud-init stage and dependency on YAML
 			osPkgsKey: azurePackageSet,
 		},
 		defaultImageConfig:  defaultAzureImageConfig,
