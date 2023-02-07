@@ -40,7 +40,7 @@ func azureSapRhuiImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: azureSapPackageSet,
 		},
-		defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(SapAzureImageConfig(rd)),
+		defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(sapAzureImageConfig(rd)),
 		kernelOptions:       defaultAzureKernelOptions,
 		bootable:            true,
 		defaultSize:         64 * common.GibiByte,
@@ -651,6 +651,6 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 	},
 }
 
-func SapAzureImageConfig(rd distribution) *distro.ImageConfig {
-	return SapImageConfig(rd).InheritFrom(defaultAzureImageConfig)
+func sapAzureImageConfig(rd distribution) *distro.ImageConfig {
+	return sapImageConfig(rd).InheritFrom(defaultAzureImageConfig)
 }

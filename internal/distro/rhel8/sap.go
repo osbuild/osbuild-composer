@@ -7,8 +7,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
-// SapImageConfig returns the SAP specific ImageConfig data
-func SapImageConfig(rd distribution) *distro.ImageConfig {
+// sapImageConfig returns the SAP specific ImageConfig data
+func sapImageConfig(rd distribution) *distro.ImageConfig {
 	return &distro.ImageConfig{
 		SELinuxConfig: &osbuild.SELinuxConfigStageOptions{
 			State: osbuild.SELinuxStatePermissive,
