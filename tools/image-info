@@ -2484,74 +2484,70 @@ def discover_lvm(dev:str, parent:devices.Device, devmgr:devices.DeviceManager):
     # activating LVM is done OSBuild side.
     # However we still have to get OSBuild the name of the VG to open
 
-    try:
-        # Find all logical volumes in the volume group
-        cmd = [
-            "lvdisplay", "-C", "--noheadings",
-            "-o", "lv_name,path,lv_kernel_major,lv_kernel_minor",
-            "--separator", ";",
-            vg_name
-        ]
+    # Find all logical volumes in the volume group
+    cmd = [
+        "lvdisplay", "-C", "--noheadings",
+        "-o", "lv_name,path,lv_kernel_major,lv_kernel_minor",
+        "--separator", ";",
+        vg_name
+    ]
 
-        res = subprocess.run(cmd,
-                             check=False,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             encoding="UTF-8")
+    res = subprocess.run(cmd,
+                         check=False,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         encoding="UTF-8")
 
-        if res.returncode != 0:
-            raise RuntimeError(res.stderr.strip())
+    if res.returncode != 0:
+        raise RuntimeError(res.stderr.strip())
 
-        data = res.stdout.strip()
-        parsed = list(map(lambda l: l.split(";"), data.split("\n")))
-        volumes = OrderedDict()
+    data = res.stdout.strip()
+    parsed = list(map(lambda l: l.split(";"), data.split("\n")))
+    volumes = OrderedDict()
 
-        # devices_map stores for each device path onto the system the corresponding
-        # OSBuild's Device object
-        devices_map = {}
+    # devices_map stores for each device path onto the system the corresponding
+    # OSBuild's Device object
+    devices_map = {}
 
-        for vol in parsed:
-            vol = list(map(lambda v: v.strip(), vol))
-            assert len(vol) == 4
-            name, _, _, _ = vol
+    for vol in parsed:
+        vol = list(map(lambda v: v.strip(), vol))
+        assert len(vol) == 4
+        name, _, _, _ = vol
 
-            options = {
-                "volume": name,
-            }
-
-            # Create an OSBuild device object for the LVM partition
-            device = devices.Device(
-                        name,
-                        index.get_module_info("Device", "org.osbuild.lvm2.lv"),
-                        parent,
-                        options)
-            reply = devmgr.open(device)
-            voldev = reply["path"] # get the path where is mounted the device
-            minor = reply["node"]["minor"]
-            major = reply["node"]["major"]
-
-            info = {
-                "device": voldev
-            }
-            ensure_device_file(voldev, int(major), int(minor))
-
-            read_partition(voldev, info)
-            volumes[name] = info
-            if name.startswith("root"):
-                volumes.move_to_end(name, last=False)
-
-            # associate the device path with the Device object, we will need it to
-            # mount later on.
-            devices_map[voldev] = device
-        # get back both the device map and the result that'll go in the JSON report
-        return devices_map, {
-            "lvm": True,
-            "lvm.vg": vg_name,
-            "lvm.volumes": volumes
+        options = {
+            "volume": name,
         }
 
-    finally:
-        pass
+        # Create an OSBuild device object for the LVM partition
+        device = devices.Device(
+                    name,
+                    index.get_module_info("Device", "org.osbuild.lvm2.lv"),
+                    parent,
+                    options)
+        reply = devmgr.open(device)
+        voldev = reply["path"] # get the path where is mounted the device
+        minor = reply["node"]["minor"]
+        major = reply["node"]["major"]
+
+        info = {
+            "device": voldev
+        }
+        ensure_device_file(voldev, int(major), int(minor))
+
+        read_partition(voldev, info)
+        volumes[name] = info
+        if name.startswith("root"):
+            volumes.move_to_end(name, last=False)
+
+        # associate the device path with the Device object, we will need it to
+        # mount later on.
+        devices_map[voldev] = device
+    # get back both the device map and the result that'll go in the JSON report
+    return devices_map, {
+        "lvm": True,
+        "lvm.vg": vg_name,
+        "lvm.volumes": volumes
+    }
 
 
 def partition_is_lvm(part: Dict) -> bool:
