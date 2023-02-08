@@ -1,5 +1,9 @@
 package clienterrors
 
+import (
+	"fmt"
+)
+
 const (
 	ErrorNoDynamicArgs        ClientErrorCode = 1
 	ErrorInvalidTargetConfig  ClientErrorCode = 2
@@ -44,6 +48,10 @@ type Error struct {
 	ID      ClientErrorCode `json:"id"`
 	Reason  string          `json:"reason"`
 	Details interface{}     `json:"details,omitempty"`
+}
+
+func (e *Error) String() string {
+	return fmt.Sprintf("Code: %d, Reason: %s, Details: %v", e.ID, e.Reason, e.Details)
 }
 
 const (
