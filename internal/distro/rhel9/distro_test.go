@@ -507,6 +507,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"image-installer",
 				"vhd",
 				"azure-rhui",
+				"oci",
 			},
 		},
 		{

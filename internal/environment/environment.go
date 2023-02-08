@@ -6,6 +6,7 @@ type Environment interface {
 	GetPackages() []string
 	GetRepos() []rpmmd.RepoConfig
 	GetServices() []string
+	GetKernelOptions() []string
 }
 
 type BaseEnvironment struct {
@@ -21,5 +22,9 @@ func (p BaseEnvironment) GetRepos() []rpmmd.RepoConfig {
 }
 
 func (p BaseEnvironment) GetServices() []string {
+	return []string{}
+}
+
+func (p BaseEnvironment) GetKernelOptions() []string {
 	return []string{}
 }

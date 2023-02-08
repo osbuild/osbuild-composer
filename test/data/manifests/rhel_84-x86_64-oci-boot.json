@@ -2075,7 +2075,7 @@
             "type": "org.osbuild.grub2",
             "options": {
               "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1",
+              "kernel_opts": "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto rd.iscsi.ibft=1 rd.iscsi.firmware=1",
               "legacy": "i386-pc",
               "uefi": {
                 "vendor": "redhat"

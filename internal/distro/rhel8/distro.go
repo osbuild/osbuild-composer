@@ -319,6 +319,7 @@ func newDistro(name string, minor int) *distribution {
 			},
 		},
 		qcow2ImgType(rd),
+		ociImgType(rd),
 	)
 
 	aarch64.addImageTypes(

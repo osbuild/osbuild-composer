@@ -3,6 +3,7 @@ package rhel9
 import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -83,18 +84,6 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	return ps
-}
-
-func ociCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := qcow2CommonPackageSet(t)
-
-	return ps.Append(
-		rpmmd.PackageSet{
-			Include: []string{
-				"iscsi-initiator-utils",
-			},
-		},
-	)
 }
 
 func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
@@ -185,7 +174,6 @@ func mkQcow2ImgType(d distribution) imageType {
 func mkOciImgType(d distribution) imageType {
 	it := mkQcow2ImgType(d)
 	it.name = "oci"
-	it.kernelOptions += " ip=single-dhcp rd.iscsi.ibft=1 rd.iscsi.firmware=1"
-	it.packageSets[osPkgsKey] = ociCommonPackageSet
+	it.environment = &environment.OCI{}
 	return it
 }

@@ -512,6 +512,9 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if pt := p.PartitionTable; pt != nil {
 		kernelOptions := osbuild.GenImageKernelOptions(p.PartitionTable)
 		kernelOptions = append(kernelOptions, p.KernelOptionsAppend...)
+		if p.Environment != nil {
+			kernelOptions = append(kernelOptions, p.Environment.GetKernelOptions()...)
+		}
 		if !p.KernelOptionsBootloader {
 			pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
 		}
