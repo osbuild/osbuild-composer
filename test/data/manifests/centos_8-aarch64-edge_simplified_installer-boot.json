@@ -2454,8 +2454,7 @@
               },
               "kernel_opts": [
                 "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
-                "modprobe.blacklist=vc4",
-                "rw"
+                "modprobe.blacklist=vc4"
               ]
             }
           },
@@ -2486,7 +2485,7 @@
               "repo": "/ostree/repo",
               "config": {
                 "sysroot": {
-                  "readonly": true,
+                  "readonly": false,
                   "bootloader": "none"
                 }
               }
@@ -2612,7 +2611,7 @@
             "options": {
               "root_fs_uuid": "fb180daf-48a7-4ee0-b10d-394651850fd4",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75,modprobe.blacklist=vc4,rw",
+              "kernel_opts": "luks.uuid=6e4ff95f-f662-45ee-a82a-bdf44a2d0b75,modprobe.blacklist=vc4",
               "uefi": {
                 "vendor": "centos",
                 "install": true,
