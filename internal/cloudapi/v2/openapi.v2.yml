@@ -1103,7 +1103,7 @@ components:
       properties:
         source:
           type: string
-          desription: Reference to the container to embed
+          description: Reference to the container to embed
           example: 'registry.example.com/image:tag'
         name:
           type: string
