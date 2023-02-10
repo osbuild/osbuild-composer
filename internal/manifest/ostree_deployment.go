@@ -6,6 +6,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
+	"github.com/osbuild/osbuild-composer/internal/fsnode"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
@@ -40,6 +41,9 @@ type OSTreeDeployment struct {
 
 	// Whether ignition is in use or not
 	ignition bool
+
+	Directories []*fsnode.Directory
+	Files       []*fsnode.File
 }
 
 // NewOSTreeDeployment creates a pipeline for an ostree deployment from a
@@ -254,6 +258,23 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	bootloader.MountOSTree(p.osName, p.commit.Ref, 0)
 	pipeline.AddStage(bootloader)
 
+	// First create custom directories, because some of the files may depend on them
+	if len(p.Directories) > 0 {
+		dirStages := osbuild.GenDirectoryNodesStages(p.Directories)
+		for _, stage := range dirStages {
+			stage.MountOSTree(p.osName, p.commit.Ref, 0)
+		}
+		pipeline.AddStages(dirStages...)
+	}
+
+	if len(p.Files) > 0 {
+		fileStages := osbuild.GenFileNodesStages(p.Files)
+		for _, stage := range fileStages {
+			stage.MountOSTree(p.osName, p.commit.Ref, 0)
+		}
+		pipeline.AddStages(fileStages...)
+	}
+
 	pipeline.AddStage(osbuild.NewOSTreeSelinuxStage(
 		&osbuild.OSTreeSelinuxStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
@@ -264,4 +285,15 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	))
 
 	return pipeline
+}
+
+func (p *OSTreeDeployment) getInline() []string {
+	inlineData := []string{}
+
+	// inline data for custom files
+	for _, file := range p.Files {
+		inlineData = append(inlineData, string(file.Data()))
+	}
+
+	return inlineData
 }
