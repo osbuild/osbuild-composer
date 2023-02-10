@@ -412,6 +412,16 @@ func iotRawImage(workload workload.Workload,
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
+	var err error
+	img.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(customizations.GetDirectories())
+	if err != nil {
+		return nil, err
+	}
+	img.Files, err = blueprint.FileCustomizationsToFsNodeFiles(customizations.GetFiles())
+	if err != nil {
+		return nil, err
+	}
+
 	// "rw" kernel option is required when /sysroot is mounted read-only to
 	// keep stateful parts of the filesystem writeable (/var/ and /etc)
 	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
