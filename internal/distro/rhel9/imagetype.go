@@ -2,6 +2,7 @@ package rhel9
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"strings"
 
@@ -379,6 +380,17 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 	// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
 	if t.name == "edge-raw-image" && options.OSTree.FetchChecksum == "" {
 		return fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
+	}
+
+	// warn that user & group customizations on edge-commit, edge-container are deprecated
+	// TODO(edge): directly error if these options are provided when rhel-9.5's time arrives
+	if t.name == "edge-commit" || t.name == "edge-container" {
+		if customizations.GetUsers() != nil {
+			log.Printf("Please note that user customizations on %q image type are deprecated and will be removed in the near future\n", t.name)
+		}
+		if customizations.GetGroups() != nil {
+			log.Printf("Please note that group customizations on %q image type are deprecated and will be removed in the near future\n", t.name)
+		}
 	}
 
 	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree && t.name != "edge-raw-image" && t.name != "edge-simplified-installer" {
