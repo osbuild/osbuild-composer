@@ -44,6 +44,9 @@ type OSTreeDeployment struct {
 
 	Directories []*fsnode.Directory
 	Files       []*fsnode.File
+
+	EnabledServices  []string
+	DisabledServices []string
 }
 
 // NewOSTreeDeployment creates a pipeline for an ostree deployment from a
@@ -273,6 +276,15 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			stage.MountOSTree(p.osName, p.commit.Ref, 0)
 		}
 		pipeline.AddStages(fileStages...)
+	}
+
+	if len(p.EnabledServices) != 0 || len(p.DisabledServices) != 0 {
+		systemdStage := osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
+			EnabledServices:  p.EnabledServices,
+			DisabledServices: p.DisabledServices,
+		})
+		systemdStage.MountOSTree(p.osName, p.commit.Ref, 0)
+		pipeline.AddStage(systemdStage)
 	}
 
 	pipeline.AddStage(osbuild.NewOSTreeSelinuxStage(
