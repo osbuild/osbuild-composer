@@ -64,6 +64,10 @@ func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, b
 	osPipeline.Directories = img.Directories
 	osPipeline.Files = img.Files
 
+	// other image types (e.g. live) pass the workload to the pipeline.
+	osPipeline.EnabledServices = img.Workload.GetServices()
+	osPipeline.DisabledServices = img.Workload.GetDisabledServices()
+
 	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
 
 	xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
