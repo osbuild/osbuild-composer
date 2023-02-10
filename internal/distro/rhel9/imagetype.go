@@ -413,9 +413,17 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 	}
 
-	// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
-	if t.name == "edge-raw-image" && options.OSTree.FetchChecksum == "" {
-		return warnings, fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
+	if t.name == "edge-raw-image" {
+		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
+		if options.OSTree.FetchChecksum == "" {
+			return warnings, fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
+		}
+
+		allowed := []string{"Ignition", "Kernel", "User", "Group"}
+		if err := customizations.CheckAllowed(allowed...); err != nil {
+			return warnings, fmt.Errorf("unsupported blueprint customizations found for image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+		}
+		// TODO: consider additional checks, such as those in "edge-simplified-installer"
 	}
 
 	// warn that user & group customizations on edge-commit, edge-container are deprecated
