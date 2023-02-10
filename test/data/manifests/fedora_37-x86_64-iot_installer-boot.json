@@ -9506,6 +9506,14 @@
                     }
                   },
                   {
+                    "id": "sha256:ee71685552cc0b0326efdb07720a1c6c4892d73746e21286211af3bb639363e0",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:c36581484d517e4535f07db15b24e839d06ca987ac9313c8c255df33b2686bd2",
                     "options": {
                       "metadata": {
@@ -14079,6 +14087,9 @@
           },
           "sha256:ee4f3195ad615bd8a1170bfb744b892c20dc21ef177dbc70cd2fc77a3745ac58": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/m/mesa-libxatracker-22.2.0-7.fc37.x86_64.rpm"
+          },
+          "sha256:ee71685552cc0b0326efdb07720a1c6c4892d73746e21286211af3bb639363e0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/r/rit-meera-new-fonts-1.3-2.fc37.noarch.rpm"
           },
           "sha256:eed91d8529a1eee7269fd28eccdb636a6fc6dcf30d607bdb7198329f3017a74a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/p/perl-Scalar-List-Utils-1.63-489.fc37.x86_64.rpm"
@@ -22907,6 +22918,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/r/redhat-rpm-config-228-1.fc37.noarch.rpm",
         "checksum": "sha256:e0a77db21768e0fe22efa8a31131b3ace7494d36033cf670f5725956cf0121b5",
+        "check_gpg": true
+      },
+      {
+        "name": "rit-meera-new-fonts",
+        "epoch": 0,
+        "version": "1.3",
+        "release": "2.fc37",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/r/rit-meera-new-fonts-1.3-2.fc37.noarch.rpm",
+        "checksum": "sha256:ee71685552cc0b0326efdb07720a1c6c4892d73746e21286211af3bb639363e0",
         "check_gpg": true
       },
       {

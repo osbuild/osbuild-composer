@@ -9054,6 +9054,14 @@
                     }
                   },
                   {
+                    "id": "sha256:141aafdc62dbb26a65769d5712795869d035afe5951eb422e2873ca5d5d34f6c",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:2d2032b93b6ea08001211263c26bf63038e4e6e13bbb4c96917e965c5f41c932",
                     "options": {
                       "metadata": {
@@ -10909,6 +10917,9 @@
           },
           "sha256:13b817376b576e9beff57a67010140d18f95f4887e02a1d088510720c98408a7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/w/webrtc-audio-processing-0.3.1-9.fc37.aarch64.rpm"
+          },
+          "sha256:141aafdc62dbb26a65769d5712795869d035afe5951eb422e2873ca5d5d34f6c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/r/rit-meera-new-fonts-1.3-2.fc37.noarch.rpm"
           },
           "sha256:144c4282d31e637b4393163824fdd9b676dfed918878323f7894f99068eeb378": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/x/xmlrpc-c-client-1.51.0-14.fc36.aarch64.rpm"
@@ -21931,6 +21942,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/r/redhat-rpm-config-232-1.fc38.noarch.rpm",
         "checksum": "sha256:2245fd2425b1f4c0860f7d3368d076330162e8eae8010168e8327755eef1c48c",
+        "check_gpg": true
+      },
+      {
+        "name": "rit-meera-new-fonts",
+        "epoch": 0,
+        "version": "1.3",
+        "release": "2.fc37",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/r/rit-meera-new-fonts-1.3-2.fc37.noarch.rpm",
+        "checksum": "sha256:141aafdc62dbb26a65769d5712795869d035afe5951eb422e2873ca5d5d34f6c",
         "check_gpg": true
       },
       {
