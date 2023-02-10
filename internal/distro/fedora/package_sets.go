@@ -423,42 +423,20 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	})
 
-	releasever := t.Arch().Distro().Releasever()
-	version, err := strconv.Atoi(releasever)
-	if err != nil {
-		panic("cannot convert releasever to int: " + err.Error())
-	}
-
-	if version <= 36 {
-		ps.Append(rpmmd.PackageSet{
+	if common.VersionLessThan(t.arch.distro.osVersion, "37") {
+		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"smc-meera-fonts",
 				"sil-scheherazade-fonts",
 			},
 		})
 	} else {
-		ps.Append(rpmmd.PackageSet{
+		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"rit-meera-new-fonts",
 				"sil-scheherazade-new-fonts",
 			},
 		})
-	}
-
-	if common.VersionLessThan(t.arch.distro.osVersion, "37") {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"sil-scheherazade-fonts",
-			},
-		},
-		)
-	} else {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"sil-scheherazade-new-fonts",
-			},
-		},
-		)
 	}
 
 	switch t.Arch().Name() {
