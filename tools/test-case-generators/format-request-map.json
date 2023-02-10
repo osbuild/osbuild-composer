@@ -322,6 +322,58 @@
       "x86_64"
     ]
   },
+  "iot-commit-customizations": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "iot-commit",
+      "repositories": [],
+      "filename": "commit.tar",
+      "blueprint": {
+        "customizations": {
+          "directories": [
+            {
+              "path": "/etc/systemd/system/custom.service.d"
+            },
+            {
+              "path": "/etc/custom_dir",
+              "mode": "0770",
+              "user": 1020,
+              "group": 1050
+            }
+          ],
+          "files": [
+            {
+              "path": "/etc/systemd/system/custom.service",
+              "data": "[Unit]\nDescription=Custom service\n\n[Service]\nExecStart=/usr/bin/false\n\n[Install]\nWantedBy=multi-user.target\n"
+            },
+            {
+              "path": "/etc/systemd/system/custom.service.d/override.conf",
+              "data": "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+            },
+            {
+              "path": "/etc/custom_file.txt",
+              "data": "image builder is the best",
+              "mode": "0644",
+              "user": "root",
+              "group": "root"
+            },
+            {
+              "path": "/etc/empty_file.txt",
+              "user": 0,
+              "group": 0
+            }
+          ],
+          "services": {
+            "enabled": [
+              "custom.service"
+            ]
+          }
+        }
+      }
+    },
+    "overrides": {}
+  },
   "iot-container": {
     "compose-request": {
       "distro": "",
