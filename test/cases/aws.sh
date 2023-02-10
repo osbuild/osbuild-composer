@@ -199,9 +199,14 @@ greenprint "Pulling cloud-image-val container"
 if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
   # If running on CIV, get dev container
   TAG=${CI_COMMIT_REF_SLUG}
+  if [ -z "${CIV_OPTIONS:-}" ]; then
+    echo "ERROR: Please provide the variable CIV_OPTIONS"
+    exit 1
+  fi
 else
   # If not, get prod container
   TAG="prod"
+  CIV_OPTIONS=( -r=/tmp/resource-file.json -d -o=/tmp/report.xml -m="not pub" )
 fi
 
 CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
@@ -236,7 +241,7 @@ sudo "${CONTAINER_RUNTIME}" run \
     -e AWS_REGION="${AWS_REGION}" \
     -v "${TEMPDIR}":/tmp:Z \
     "${CONTAINER_CLOUD_IMAGE_VAL}" \
-    python cloud-image-val.py -r /tmp/resource-file.json -d -o /tmp/report.xml -m 'not pub' && RESULTS=1 || RESULTS=0
+    python cloud-image-val.py "${CIV_OPTIONS[@]}" && RESULTS=1 || RESULTS=0
 
 mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
 
