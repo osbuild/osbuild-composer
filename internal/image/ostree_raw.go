@@ -5,6 +5,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/disk"
+	"github.com/osbuild/osbuild-composer/internal/fsnode"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
@@ -38,6 +39,9 @@ type OSTreeRawImage struct {
 	Filename string
 
 	Ignition bool
+
+	Directories []*fsnode.Directory
+	Files       []*fsnode.File
 }
 
 func NewOSTreeRawImage(commit ostree.CommitSpec) *OSTreeRawImage {
@@ -57,6 +61,8 @@ func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, b
 	osPipeline.Users = img.Users
 	osPipeline.Groups = img.Groups
 	osPipeline.SysrootReadOnly = img.SysrootReadOnly
+	osPipeline.Directories = img.Directories
+	osPipeline.Files = img.Files
 
 	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
 
