@@ -548,7 +548,13 @@ greenprint "fix stdio file non-blocking issue"
 sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e edge_type=edge-simplified-installer -e fdo_credential="true" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="true" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -710,7 +716,14 @@ if [[ "$ANSIBLE_USER" == "fdouser" ]]; then
 fi
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="true" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="true" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -849,7 +862,14 @@ greenprint "fix stdio file non-blocking issue"
 sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="true" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="true" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 greenprint "🧹 Clean up VM"
@@ -1079,7 +1099,15 @@ EOF
     sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
     # Test IoT/Edge OS
-    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+        -e image_type=redhat \
+        -e ostree_commit="${INSTALL_HASH}" \
+        -e skip_rollback_test="true" \
+        -e ignition="${HAS_IGNITION}" \
+        -e edge_type=edge-simplified-installer \
+        -e fdo_credential="false" \
+        -e sysroot_ro="$SYSROOT_RO" \
+        /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
   fi
 
@@ -1105,7 +1133,15 @@ EOF
   sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
   # Test IoT/Edge OS
-  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
+    -e ignition="${HAS_IGNITION}" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="false" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
   check_result
 
   greenprint "🧹 Clean up VM"
@@ -1254,7 +1290,15 @@ EOF
   sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
   # Test IoT/Edge OS
-  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
+    -e ignition="${HAS_IGNITION}" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="false" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
   check_result
 fi
 
@@ -1280,7 +1324,15 @@ greenprint "fix stdio file non-blocking issue"
 sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-simplified-installer -e fdo_credential="false" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
+    -e ignition="${HAS_IGNITION}" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="false" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 ########################
@@ -1421,7 +1473,14 @@ EOF
   sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
   # Test IoT/Edge OS
-  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${UPGRADE_HASH}" \
+    -e skip_rollback_test="true" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="false" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
   check_result
 fi
 
@@ -1447,7 +1506,14 @@ greenprint "fix stdio file non-blocking issue"
 sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${UPGRADE_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="false" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${UPGRADE_HASH}" \
+    -e skip_rollback_test="true" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="false" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
