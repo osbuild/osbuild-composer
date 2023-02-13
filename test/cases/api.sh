@@ -330,6 +330,43 @@ EndOfMessage
 fi
 export SUBSCRIPTION_BLOCK
 
+# Define the customizations for the images here to not have to repeat them
+# in every image-type specific file.
+case "${IMAGE_TYPE}" in
+  # The Directories and Files customization is not supported for this image type.
+  "$IMAGE_TYPE_EDGE_INSTALLER")
+    DIR_FILES_CUSTOMIZATION_BLOCK=
+    ;;
+  *)
+    DIR_FILES_CUSTOMIZATION_BLOCK=$(cat <<EOF
+,
+    "directories": [
+      {
+        "path": "/etc/custom_dir/dir1",
+        "user": "root",
+        "group": "root",
+        "mode": "0775",
+        "ensure_parents": true
+      },
+      {
+        "path": "/etc/custom_dir2"
+      }
+    ],
+    "files": [
+      {
+        "path": "/etc/custom_dir/custom_file.txt",
+        "data": "image builder is the best\n"
+      },
+      {
+        "path": "/etc/custom_dir2/empty_file.txt"
+      }
+    ]
+EOF
+)
+    ;;
+esac
+export DIR_FILES_CUSTOMIZATION_BLOCK
+
 # generate a temp key for user tests
 ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
 
