@@ -90,6 +90,7 @@ KERNEL_RT_PKG="kernel-rt"
 
 # Set up variables.
 SYSROOT_RO="false"
+CUSTOM_DIRS_FILES="false"
 
 case "${ID}-${VERSION_ID}" in
     "rhel-8.8")
@@ -119,6 +120,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="fedora-unknown"
         OSTREE_OSNAME="fedora-iot"
         SYSROOT_RO="true"
+        CUSTOM_DIRS_FILES="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -507,6 +509,36 @@ groups = ["wheel"]
 EOF
 fi
 
+# Add directory and files customization, and services customization for testing
+if [[ "$CUSTOM_DIRS_FILES" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.directories]]
+path = "/etc/custom_dir/dir1"
+user = 1020
+group = 1020
+mode = "0770"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service"
+data = "[Unit]\nDescription=Custom service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n"
+
+[[customizations.files]]
+path = "/etc/custom_file.txt"
+data = "image builder is the best\n"
+
+[[customizations.directories]]
+path = "/etc/systemd/system/custom.service.d"
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service.d/override.conf"
+data = "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+
+[customizations.services]
+enabled = ["custom.service"]
+EOF
+fi
+
 greenprint "📄 raw image blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -624,6 +656,7 @@ EOF
         -e edge_type=edge-raw-image \
         -e ostree_commit="${INSTALL_HASH}" \
         -e sysroot_ro="$SYSROOT_RO" \
+        -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
 
@@ -652,6 +685,7 @@ EOF
             -e edge_type=edge-raw-image \
             -e ostree_commit="${INSTALL_HASH}" \
             -e sysroot_ro="$SYSROOT_RO" \
+            -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
             /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
         check_result
     fi
@@ -753,6 +787,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-raw-image \
     -e ostree_commit="${INSTALL_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -783,6 +818,7 @@ EOF
         -e edge_type=edge-raw-image \
         -e ostree_commit="${INSTALL_HASH}" \
         -e sysroot_ro="$SYSROOT_RO" \
+        -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
 fi
@@ -833,6 +869,36 @@ description = "Administrator account"
 password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
 home = "/home/admin/"
 groups = ["wheel"]
+EOF
+fi
+
+# Add directory and files customization, and services customization for testing
+if [[ "$CUSTOM_DIRS_FILES" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.directories]]
+path = "/etc/custom_dir/dir1"
+user = 1020
+group = 1020
+mode = "0770"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service"
+data = "[Unit]\nDescription=Custom service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n"
+
+[[customizations.files]]
+path = "/etc/custom_file.txt"
+data = "image builder is the best\n"
+
+[[customizations.directories]]
+path = "/etc/systemd/system/custom.service.d"
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service.d/override.conf"
+data = "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+
+[customizations.services]
+enabled = ["custom.service"]
 EOF
 fi
 
@@ -945,6 +1011,7 @@ EOF
         -e edge_type=edge-raw-image \
         -e ostree_commit="${UPGRADE_HASH}" \
         -e sysroot_ro="$SYSROOT_RO" \
+        -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
 fi
@@ -974,6 +1041,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-raw-image \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
