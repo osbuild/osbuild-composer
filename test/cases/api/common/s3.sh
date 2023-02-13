@@ -37,7 +37,7 @@ function createReqFileEdge() {
         "name": "user2",
         "key": "$(cat "${WORKDIR}/usertest.pub")"
       }
-    ]
+    ]${DIR_FILES_CUSTOMIZATION_BLOCK}
   },
   "image_request": {
     "architecture": "$ARCH",
@@ -67,7 +67,7 @@ function createReqFileGuest() {
     "packages": [
       "postgresql",
       "dummy"
-    ]${SUBSCRIPTION_BLOCK},
+    ],
     "users":[
       {
         "name": "user1",
@@ -78,7 +78,7 @@ function createReqFileGuest() {
         "name": "user2",
         "key": "$(cat "${WORKDIR}/usertest.pub")"
       }
-    ]
+    ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}
   },
   "image_request": {
     "architecture": "$ARCH",
@@ -107,7 +107,7 @@ function createReqFileVSphere() {
     "packages": [
       "postgresql",
       "dummy"
-    ]${SUBSCRIPTION_BLOCK}
+    ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}
   },
   "image_request": {
     "architecture": "$ARCH",
@@ -156,6 +156,44 @@ function verifyEdgeCommit() {
         exit 1
     fi
 
+    verify_dirs_files_customization_edge_commit "${COMMIT_DIR}/repo" $OSTREE_REF
+}
+
+function verify_dirs_files_customization_edge_commit() {
+  echo "✔️ Checking custom directories and files is ostree commit"
+  local _repo_path=$1
+  local _ref=$2
+  local _error=0
+
+  # verify that `/usr/etc/custom_dir/dir1` exists and has mode `0775`
+  # the output from ostree is 'd00775 0 0      0 { [(b'security.selinux', b'system_u:object_r:etc_t:s0')] } /usr/etc/custom_dir/dir1'
+  local cust_dir1_mode
+  cust_dir1_mode=$(ostree --repo="${_repo_path}" ls -X "${_ref}" /usr/etc/custom_dir/dir1 | awk '{print $1}')
+  if [[ "$cust_dir1_mode" != "d00775" ]]; then
+    echo "Directory /usr/etc/custom_dir/dir1 has wrong mode: $cust_dir1_mode"
+    _error=1
+  fi
+
+  # verify that `/usr/etc/custom_dir/custom_file.txt` exists and contains `image builder is the best\n`
+  local cust_file_content
+  cust_file_content=$(ostree --repo="${_repo_path}" cat "${_ref}" /usr/etc/custom_dir/custom_file.txt)
+  if [[ "$cust_file_content" != "image builder is the best" ]]; then
+    echo "File /usr/etc/custom_dir/custom_file.txt has wrong content: $cust_file_content"
+    _error=1
+  fi
+
+  # verify that `/usr/etc/custom_dir2/empty_file.txt` exists and is empty
+  local cust_file2_content
+  cust_file2_content=$(ostree --repo="${_repo_path}" cat "${_ref}" /usr/etc/custom_dir2/empty_file.txt)
+  if [[ "$cust_file2_content" != "" ]]; then
+    echo "File /usr/etc/custom_dir2/empty_file.txt has wrong content: $cust_file2_content"
+    _error=1
+  fi
+
+  if [[ "$_error" == "1" ]]; then
+    echo "Testing of custom directories and files failed."
+    exit 1
+  fi
 }
 
 # Verify image blobs from s3

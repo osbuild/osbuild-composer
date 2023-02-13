@@ -43,6 +43,9 @@ function _instanceCheck() {
   else
     echo "Not RHEL OS. Skip subscription check."
   fi
+
+  # Verify that directories and files customization worked as expected
+  verify_dirs_files_customization "$_ssh"
 }
 
 WORKER_REFRESH_TOKEN_PATH="/etc/osbuild-worker/token"
@@ -89,4 +92,40 @@ function compose_status_with_org_id {
     --fail \
     --header "Authorization: Bearer $(access_token_with_org_id "$refresh_token")" \
     "http://localhost:443/api/image-builder-composer/v2/composes/$compose"
+}
+
+# Verify that directories and files customization worked as expected
+function verify_dirs_files_customization {
+  echo "✔️ Checking custom directories and files"
+  local _ssh="$1"
+  local _error=0
+
+  # verify that `/etc/custom_dir/dir1` exists and has mode `0775`
+  local cust_dir1_mode
+  cust_dir1_mode=$($_ssh stat -c '%a' /etc/custom_dir/dir1)
+  if [[ "$cust_dir1_mode" != "775" ]]; then
+    echo "Directory /etc/custom_dir/dir1 has wrong mode: $cust_dir1_mode"
+    _error=1
+  fi
+
+  # verify that `/etc/custom_dir/custom_file.txt` exists and contains `image builder is the best\n`
+  local cust_file_content
+  cust_file_content=$($_ssh cat /etc/custom_dir/custom_file.txt)
+  if [[ "$cust_file_content" != "image builder is the best" ]]; then
+    echo "File /etc/custom_dir/custom_file.txt has wrong content: $cust_file_content"
+    _error=1
+  fi
+
+  # verify that `/etc/custom_dir2/empty_file.txt` exists and is empty
+  local cust_file2_content
+  cust_file2_content=$($_ssh cat /etc/custom_dir2/empty_file.txt)
+  if [[ "$cust_file2_content" != "" ]]; then
+    echo "File /etc/custom_dir2/empty_file.txt has wrong content: $cust_file2_content"
+    _error=1
+  fi
+
+  if [[ "$_error" == "1" ]]; then
+    echo "Testing of custom directories and files failed."
+    exit 1
+  fi
 }
