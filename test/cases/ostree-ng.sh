@@ -549,7 +549,11 @@ EOF
 
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on BIOS VM"
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${INSTALL_HASH}" -e embeded_container="${EMBEDED_CONTAINER}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type="$OSTREE_OSNAME" \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e embeded_container="${EMBEDED_CONTAINER}" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Clean up BIOS VM
@@ -617,7 +621,11 @@ EOF
 
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on UEFI VM"
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${INSTALL_HASH}" -e embeded_container="${EMBEDED_CONTAINER}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type="$OSTREE_OSNAME" \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e embeded_container="${EMBEDED_CONTAINER}" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 # Check image installation result
 check_result
@@ -760,7 +768,11 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="$OSTREE_OSNAME" -e ostree_commit="${UPGRADE_HASH}" -e embeded_container="${EMBEDED_CONTAINER}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type="$OSTREE_OSNAME" \
+    -e ostree_commit="${UPGRADE_HASH}" \
+    -e embeded_container="${EMBEDED_CONTAINER}" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
