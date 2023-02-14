@@ -11,6 +11,7 @@
     failed_counter: "0"
     firewall_feature: "false"
     ignition: "false"
+    test_custom_dirs_files: "false"
 
   tasks:
     # current target host's IP address
@@ -927,7 +928,86 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: firewall_feature == "true"
 
-    - assert:
+    # case: checking files and directories customizations
+    - name: Check that custom files and directories are present
+      block:
+        # Test basic custom files and directories creation
+        - name: Check that /etc/custom_dir exists
+          stat:
+            path: /etc/custom_dir
+
+        - name: Check that /etc/custom_dir/dir1 exists
+          stat:
+            path: /etc/custom_dir/dir1
+          register: result_custom_dir
+
+        - name: Check that /etc/custom_dir/dir1 is owned by user ID `1020`
+          assert:
+            that:
+              - result_custom_dir.stat.uid == 1020
+            fail_msg: "Directory /etc/custom_dir/dir1 is not owned by user ID '1020'"
+            success_msg: "Directory /etc/custom_dir/dir1 is owned by user ID '1020'"
+
+        - name: Check that /etc/custom_dir/dir1 is owned by group ID `1020`
+          assert:
+            that:
+              - result_custom_dir.stat.gid == 1020
+            fail_msg: "Directory /etc/custom_dir/dir1 is not owned by group ID '1020'"
+            success_msg: "Directory /etc/custom_dir/dir1 is owned by group ID '1020'"
+
+        - name: Check that /etc/custom_dir/dir1 has 0770 permissions
+          assert:
+            that:
+              - result_custom_dir.stat.mode == '0770'
+            fail_msg: "Directory /etc/custom_dir/dir1 has wrong permissions"
+            success_msg: "Directory /etc/custom_dir/dir1 has correct permissions"
+
+        # Test the use of custom files for systemd units
+        - name: Check status of 'custom.service'
+          systemd:
+            name: custom.service
+          register: result_custom_service
+
+        - name: Check that 'custom.service' is started and enabled
+          assert:
+            that:
+              - result_custom_service.status['LoadState'] == 'loaded'
+              - result_custom_service.status['ActiveState'] == 'active'
+              - result_custom_service.status['SubState'] == 'exited'
+              - result_custom_service.status['UnitFileState'] == 'enabled'
+            fail_msg: "Service 'custom.service' is not started or enabled"
+            success_msg: "Service 'custom.service' is started and enabled"
+
+        - name: Check that 'custom.service' was overridden by drop-in
+          assert:
+            that:
+              - result_custom_service.status['DropInPaths'] == "/etc/systemd/system/custom.service.d/override.conf"
+            fail_msg: "Service 'custom.service' was not overridden by drop-in"
+            success_msg: "Service 'custom.service' was overridden by drop-in"
+
+        - name: Check output of 'custom.service' in the journal
+          command: journalctl -b -u custom.service
+          register: custom_service_journal
+          become: yes
+
+        - name: Check that 'image builder is the best' message is present in journal
+          assert:
+            that:
+              - "'image builder is the best' in custom_service_journal.stdout"
+            fail_msg: "Message 'image builder is the best' is not present in journal"
+            success_msg: "Message 'image builder is the best' is present in journal"
+
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: test_custom_dirs_files == "true"
+
+    - name: Check if any test failed
+      assert:
         that:
           - failed_counter == "0"
         fail_msg: "Run {{ total_counter }} tests, but {{ failed_counter }} of them failed"
