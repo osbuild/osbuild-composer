@@ -103,28 +103,33 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_OSNAME=fedora
         OS_VARIANT="fedora-unknown"
         EMBEDED_CONTAINER="false"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     "rhel-8.8")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         EMBEDED_CONTAINER="true"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     "rhel-9.2")
         OSTREE_REF="test/rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         EMBEDED_CONTAINER="true"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     "centos-8")
         OSTREE_REF="test/centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
         EMBEDED_CONTAINER="true"
         KERNEL_RT_PKG="kernel-rt-core"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     "centos-9")
         OSTREE_REF="test/centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
         EMBEDED_CONTAINER="true"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -389,6 +394,36 @@ source = "quay.io/fedora/fedora:latest"
 EOF
 fi
 
+# Add directory and files customization, and services customization for testing
+if [[ "${DIRS_FILES_CUSTOMIZATION}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.directories]]
+path = "/etc/custom_dir/dir1"
+user = 1020
+group = 1020
+mode = "0770"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service"
+data = "[Unit]\nDescription=Custom service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n"
+
+[[customizations.files]]
+path = "/etc/custom_file.txt"
+data = "image builder is the best\n"
+
+[[customizations.directories]]
+path = "/etc/systemd/system/custom.service.d"
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service.d/override.conf"
+data = "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+
+[customizations.services]
+enabled = ["custom.service"]
+EOF
+fi
+
 greenprint "📄 container blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -553,6 +588,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="$OSTREE_OSNAME" \
     -e ostree_commit="${INSTALL_HASH}" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
+    -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -625,6 +661,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="$OSTREE_OSNAME" \
     -e ostree_commit="${INSTALL_HASH}" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
+    -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 # Check image installation result
@@ -671,6 +708,36 @@ if [[ "${EMBEDED_CONTAINER}" == "true" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[containers]]
 source = "quay.io/fedora/fedora:latest"
+EOF
+fi
+
+# Add directory and files customization, and services customization for testing
+if [[ "${DIRS_FILES_CUSTOMIZATION}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.directories]]
+path = "/etc/custom_dir/dir1"
+user = 1020
+group = 1020
+mode = "0770"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service"
+data = "[Unit]\nDescription=Custom service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n"
+
+[[customizations.files]]
+path = "/etc/custom_file.txt"
+data = "image builder is the best\n"
+
+[[customizations.directories]]
+path = "/etc/systemd/system/custom.service.d"
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service.d/override.conf"
+data = "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+
+[customizations.services]
+enabled = ["custom.service"]
 EOF
 fi
 
@@ -772,6 +839,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="$OSTREE_OSNAME" \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
+    -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
