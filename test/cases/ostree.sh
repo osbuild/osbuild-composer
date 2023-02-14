@@ -26,6 +26,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="https://mirrors.rit.edu/fedora/fedora/linux/releases/36/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     "fedora-37")
         IMAGE_TYPE=iot-commit
@@ -35,6 +36,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="https://mirrors.kernel.org/fedora/releases/37/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     "rhel-8.4")
         IMAGE_TYPE=edge-commit
@@ -44,6 +46,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
+        DIRS_FILES_CUSTOMIZATION="false"
         ;;
     "rhel-8.7")
         IMAGE_TYPE=edge-commit
@@ -53,6 +56,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.7.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
+        DIRS_FILES_CUSTOMIZATION="false"
         ;;
     "rhel-8.8")
         IMAGE_TYPE=edge-commit
@@ -61,6 +65,8 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         EMBEDED_CONTAINER="true"
         FIREWALL_FEATURE="true"
+        DIRS_FILES_CUSTOMIZATION="true"
+
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
@@ -76,6 +82,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.1.0/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
+        DIRS_FILES_CUSTOMIZATION="false"
         ;;
     "rhel-9.2")
         IMAGE_TYPE=edge-commit
@@ -84,6 +91,7 @@ case "${ID}-${VERSION_ID}" in
         USER_IN_COMMIT="true"
         EMBEDED_CONTAINER="true"
         FIREWALL_FEATURE="true"
+        DIRS_FILES_CUSTOMIZATION="true"
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
@@ -99,6 +107,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="true"
         FIREWALL_FEATURE="false"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     "centos-9")
         IMAGE_TYPE=edge-commit
@@ -108,6 +117,7 @@ case "${ID}-${VERSION_ID}" in
         BOOT_LOCATION="https://odcs.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="true"
         FIREWALL_FEATURE="false"
+        DIRS_FILES_CUSTOMIZATION="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -351,6 +361,36 @@ source = "quay.io/fedora/fedora:latest"
 EOF
 fi
 
+# Add directory and files customization, and services customization for testing
+if [[ "${DIRS_FILES_CUSTOMIZATION}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.directories]]
+path = "/etc/custom_dir/dir1"
+user = 1020
+group = 1020
+mode = "0770"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service"
+data = "[Unit]\nDescription=Custom service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n"
+
+[[customizations.files]]
+path = "/etc/custom_file.txt"
+data = "image builder is the best\n"
+
+[[customizations.directories]]
+path = "/etc/systemd/system/custom.service.d"
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service.d/override.conf"
+data = "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+
+[customizations.services]
+enabled = ["custom.service"]
+EOF
+fi
+
 # Build installation image.
 build_image "$BLUEPRINT_FILE" ostree
 
@@ -551,6 +591,36 @@ sources = ["192.168.100.52"]
 EOF
 fi
 
+# Add directory and files customization, and services customization for testing
+if [[ "${DIRS_FILES_CUSTOMIZATION}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.directories]]
+path = "/etc/custom_dir/dir1"
+user = 1020
+group = 1020
+mode = "0770"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service"
+data = "[Unit]\nDescription=Custom service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n"
+
+[[customizations.files]]
+path = "/etc/custom_file.txt"
+data = "image builder is the best\n"
+
+[[customizations.directories]]
+path = "/etc/systemd/system/custom.service.d"
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service.d/override.conf"
+data = "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+
+[customizations.services]
+enabled = ["custom.service"]
+EOF
+fi
+
 # Build upgrade image.
 build_image "$BLUEPRINT_FILE" upgrade
 
@@ -622,6 +692,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e firewall_feature="${FIREWALL_FEATURE}" \
+    -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
