@@ -52,17 +52,17 @@ var (
 		Subsystem: WorkerSubsystem,
 		Help:      "Duration a job spends on the queue.",
 		Buckets:   []float64{.1, .2, .5, 1, 2, 4, 8, 16, 32, 40, 48, 64, 96, 128, 160, 192, 224, 256, 320, 382, 448, 512, 640, 768, 896, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 3328, 3584, 3840, 4096, 4608, 5120, 5632, 6144, 6656, 7168, 7680, 8192, 8704, 9216, 9728, 10240, 10752},
-	}, []string{"type", "tenant"})
+	}, []string{"type", "tenant", "arch"})
 )
 
 func EnqueueJobMetrics(jobType, tenant string) {
 	PendingJobs.WithLabelValues(jobType, tenant).Inc()
 }
 
-func DequeueJobMetrics(pending time.Time, started time.Time, jobType, tenant string) {
+func DequeueJobMetrics(pending time.Time, started time.Time, jobType, tenant, arch string) {
 	if !started.IsZero() && !pending.IsZero() {
 		diff := started.Sub(pending).Seconds()
-		JobWaitDuration.WithLabelValues(jobType, tenant).Observe(diff)
+		JobWaitDuration.WithLabelValues(jobType, tenant, arch).Observe(diff)
 		PendingJobs.WithLabelValues(jobType, tenant).Dec()
 		RunningJobs.WithLabelValues(jobType, tenant).Inc()
 	}
