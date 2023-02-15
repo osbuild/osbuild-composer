@@ -42,19 +42,22 @@ echo "List of installed packages:"
 rpm -qa | sort
 echo "------------------------------------------------------------------------------"
 
-if rpm --quiet -q python36; then
-    echo -e "\n FAIL: python36 is installed, see #794 ..."
-    exit 1
-else
-    echo -e "\n PASS: python36 not insalled"
-fi
+# gcp runners don't use cloud-init and some of the images have python36 installed
+if [[ "$RUNNER" != *"gcp"* ]];then 
+    if rpm --quiet -q python36; then
+        echo -e "\n FAIL: python36 is installed, see #794 ..."
+        exit 1
+    else
+        echo -e "\n PASS: python36 not insalled"
+    fi
 
-# Ensure cloud-init has completely finished on the instance. This ensures that
-# the instance is fully ready to go.
-while true; do
-  if [[ -f /var/lib/cloud/instance/boot-finished ]]; then
-    break
-  fi
-  echo -e "\n🤔 Waiting for cloud-init to finish running..."
-  sleep 5
-done
+    # Ensure cloud-init has completely finished on the instance. This ensures that
+    # the instance is fully ready to go.
+    while true; do
+      if [[ -f /var/lib/cloud/instance/boot-finished ]]; then
+        break
+      fi
+      echo -e "\n🤔 Waiting for cloud-init to finish running..."
+      sleep 5
+    done
+fi

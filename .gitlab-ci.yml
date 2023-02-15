@@ -35,6 +35,11 @@ stages:
   tags:
     - terraform/openstack
 
+.terraform/gcp:
+  extends: .base
+  tags:
+    - terraform/gcp
+
 
 init:
   stage: init
@@ -611,7 +616,7 @@ API:
 
 .libvirt_integration:
   stage: test
-  extends: .terraform/openstack
+  extends: .terraform/gcp
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
@@ -621,12 +626,13 @@ API:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-8.7-ga-x86_64
-          - rhos-01/rhel-9.1-ga-x86_64
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
+          - gcp/centos-stream-8-x86_64
+          - gcp/rhel-8.7-ga-x86_64
+          - gcp/rhel-9.1-ga-x86_64
+          - gcp/rhel-8.8-nightly-x86_64
+          - gcp/rhel-9.2-nightly-x86_64
+          - gcp/centos-stream-9-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 libvirt.sh:
   extends: .libvirt_integration
