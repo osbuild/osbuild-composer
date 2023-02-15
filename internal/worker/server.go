@@ -557,9 +557,14 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	// specify dequeuing restrictions. For now, we only have one
 	// restriction: arch for osbuild jobs.
 	jts := []string{}
+	// Only set the label used for prometheus metrics when it's an osbuild job. Otherwise the
+	// dequeue metrics would set the label for all job types, while the finish metrics only set
+	// it for osbuild jobs.
+	var archPromLabel string
 	for _, t := range jobTypes {
 		if t == JobTypeOSBuild {
 			t = t + ":" + arch
+			archPromLabel = arch
 		}
 		if t == JobTypeManifestIDOnly {
 			return uuid.Nil, uuid.Nil, "", nil, nil, ErrInvalidJobType
@@ -618,7 +623,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		}
 	}
 
-	prometheus.DequeueJobMetrics(pending, jobInfo.JobStatus.Started, jobInfo.JobType, jobInfo.Channel)
+	prometheus.DequeueJobMetrics(pending, jobInfo.JobStatus.Started, jobInfo.JobType, jobInfo.Channel, archPromLabel)
 
 	return
 }
