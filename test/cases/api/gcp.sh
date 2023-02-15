@@ -34,10 +34,10 @@ function installClient() {
       -v ${GCP_CMD_CREDS_DIR}:/root/.config/gcloud:Z \
       -v ${GOOGLE_APPLICATION_CREDENTIALS}:${GOOGLE_APPLICATION_CREDENTIALS}:Z \
       -v ${WORKDIR}:${WORKDIR}:Z \
-      ${CONTAINER_IMAGE_CLOUD_TOOLS} gcloud --format=json"
+      ${CONTAINER_IMAGE_CLOUD_TOOLS} gcloud --quiet"
   else
     echo "Using pre-installed 'gcloud' from the system"
-    GCP_CMD="gcloud --format=json --quiet"
+    GCP_CMD="gcloud --quiet"
   fi
   $GCP_CMD --version
 }
@@ -118,7 +118,7 @@ function verify() {
 
   # Verify that the image was shared
   SHARE_OK=1
-  $GCP_CMD compute images get-iam-policy "$GCP_IMAGE_NAME" > "$WORKDIR/image-iam-policy.json"
+  $GCP_CMD --format=json compute images get-iam-policy "$GCP_IMAGE_NAME" > "$WORKDIR/image-iam-policy.json"
   SHARED_ACCOUNT=$(jq -r '.bindings[0].members[0]' "$WORKDIR/image-iam-policy.json")
   SHARED_ROLE=$(jq -r '.bindings[0].role' "$WORKDIR/image-iam-policy.json")
   if [ "$SHARED_ACCOUNT" != "$GCP_API_TEST_SHARE_ACCOUNT" ] || [ "$SHARED_ROLE" != "roles/compute.imageUser" ]; then
@@ -143,14 +143,14 @@ function verify() {
   # We use the CI variable "GCP_REGION" as the base for expression to filter regions.
   # It works best if the "GCP_REGION" is set to a storage multi-region, such as "us"
   local GCP_COMPUTE_REGION
-  GCP_COMPUTE_REGION=$($GCP_CMD compute regions list --filter="name:$GCP_REGION* AND status=UP" | jq -r '.[] | select(.quotas[] as $quota | $quota.metric == "IN_USE_ADDRESSES" and $quota.limit > $quota.usage) | .name' | shuf -n1)
+  GCP_COMPUTE_REGION=$($GCP_CMD --format=json compute regions list --filter="name:$GCP_REGION* AND status=UP" | jq -r '.[] | select(.quotas[] as $quota | $quota.metric == "IN_USE_ADDRESSES" and $quota.limit > $quota.usage) | .name' | shuf -n1)
 
   # Randomize the used GCP zone to prevent hitting "exhausted resources" error on each test re-run
-  GCP_ZONE=$($GCP_CMD compute zones list --filter="region=$GCP_COMPUTE_REGION AND status=UP" | jq -r '.[].name' | shuf -n1)
+  GCP_ZONE=$($GCP_CMD --format=json compute zones list --filter="region=$GCP_COMPUTE_REGION AND status=UP" | jq -r '.[].name' | shuf -n1)
 
   # Pick the smallest '^n\d-standard-\d$' machine type from those available in the zone
   local GCP_MACHINE_TYPE
-  GCP_MACHINE_TYPE=$($GCP_CMD compute machine-types list --filter="zone=$GCP_ZONE AND name~^n\d-standard-\d$" | jq -r '.[].name' | sort | head -1)
+  GCP_MACHINE_TYPE=$($GCP_CMD --format=json compute machine-types list --filter="zone=$GCP_ZONE AND name~^n\d-standard-\d$" | jq -r '.[].name' | sort | head -1)
 
   $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
     --zone="$GCP_ZONE" \
@@ -159,12 +159,12 @@ function verify() {
     --machine-type="$GCP_MACHINE_TYPE" \
     --labels=gitlab-ci-test=true
 
-  HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+  HOST=$($GCP_CMD --format=json compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 
   echo "⏱ Waiting for GCP instance to respond to ssh"
   _instanceWaitSSH "$HOST"
 
   # Verify image
-  _ssh="$GCP_CMD compute ssh --strict-host-key-checking=no --ssh-key-file=$GCP_SSH_KEY --zone=$GCP_ZONE --quiet $SSH_USER@$GCP_INSTANCE_NAME --"
+  _ssh="$GCP_CMD compute ssh --strict-host-key-checking=no --ssh-key-file=$GCP_SSH_KEY --zone=$GCP_ZONE $SSH_USER@$GCP_INSTANCE_NAME --"
   _instanceCheck "$_ssh"
 }
