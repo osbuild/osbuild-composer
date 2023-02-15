@@ -34,7 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "iteration": 1675420979872,
+      "iteration": 1676467352621,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -1235,7 +1235,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\"}[$__range])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\", arch=~\"$arch\"}[$__range])) by (le))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -1365,7 +1365,7 @@ data:
           "targets": [
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
@@ -1374,7 +1374,7 @@ data:
             {
               "editorMode": "code",
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p95",
@@ -1383,7 +1383,7 @@ data:
             },
             {
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\", arch=~\"$arch\"}[$interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "refId": "A"
