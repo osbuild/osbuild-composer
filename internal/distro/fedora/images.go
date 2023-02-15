@@ -143,6 +143,7 @@ func osCustomizations(
 		// should have been validated before this point.
 		panic(fmt.Sprintf("failed to convert file customizations to fs node files: %v", err))
 	}
+	osc.ShellInit = imageConfig.ShellInit
 
 	osc.Grub2Config = imageConfig.Grub2Config
 	osc.Sysconfig = imageConfig.Sysconfig
