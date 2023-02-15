@@ -3,7 +3,6 @@ stages:
   - rpmbuild
   - prepare-rhel-internal
   - test
-  - cleanup
   - finish
 
 .base:
@@ -764,19 +763,6 @@ Manifest-diff:
   artifacts:
     paths:
       - manifests.diff
-
-SCHEDULED_CLOUD_CLEANER:
-  stage: cleanup
-  tags:
-    - terraform
-  variables:
-    RUNNER: aws/centos-stream-8-x86_64
-    INTERNAL_NETWORK: "true"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CLEANUP == "true"'
-  script:
-    - schutzbot/deploy.sh
-    - schutzbot/scheduled_cloud_cleaner.sh
 
 SonarQube:
   stage: test
