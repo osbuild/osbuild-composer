@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/shell"
 )
 
 type RHSMSubscriptionStatus string
@@ -37,6 +38,8 @@ type ImageConfig struct {
 
 	// Disable documentation
 	ExcludeDocs *bool
+
+	ShellInit []shell.InitFile
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
