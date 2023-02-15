@@ -260,13 +260,11 @@ the first line!
 
 ### Cloud cleaner
 
-Some tests deploy images to different clouds. After the tests run, these images
-get removed by cloud cleaner (`cmd/cloud-cleaner`). But if something fails during the tests, or the
-pipeline gets canceled, that image could get left behind in the cloud, wasting
-resources.
+[Cloud cleaner](https://github.com/osbuild/cloud-cleaner) is a tool designed to clean leftover cloud resources in order to reduce our costs.
 
-To deal with this problem, we have scheduled cloud cleaner (`schutzbot/scheduled_cloud_cleaner.sh`), that goes through all
-the clouds looking for testing resources that were not removed.
+Some tests deploy images to different clouds. After the tests run, these images get removed by the same tests. But if something fails during these, or a pipeline gets canceled, those images could get left behind in the cloud, wasting resources.
+
+Cloud cleaner is being executed every hour (on the CI of it's own repo), and it cleans resources that are not tagged with `persist=true`
 
 ## Integration testing
 
