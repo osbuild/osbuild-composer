@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/shell"
 )
 
 const defaultAzureKernelOptions = "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
@@ -98,6 +99,24 @@ func azureEap7RhuiImgType() imageType {
 	it.name = "azure-eap7-rhui"
 	it.nameAliases = nil // make sure we don't inherit aliases from the base image type
 	it.workload = eapWorkload()
+
+	// shell env vars for EAP
+	wildflyPath := "/opt/rh/eap7/root/usr/share/wildfly"
+	it.defaultImageConfig.ShellInit = []shell.InitFile{
+		{
+			Filename: "eap_env.sh",
+			Variables: []shell.EnvironmentVariable{
+				{
+					Key:   "EAP_HOME",
+					Value: wildflyPath,
+				},
+				{
+					Key:   "JBOSS_HOME",
+					Value: wildflyPath,
+				},
+			},
+		},
+	}
 	return it
 }
 
