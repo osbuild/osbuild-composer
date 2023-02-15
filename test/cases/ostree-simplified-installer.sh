@@ -415,6 +415,14 @@ groups = []
 [customizations]
 installation_device = "/dev/vda"
 
+[[customizations.user]]
+name = "simple"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/simple/"
+groups = ["wheel"]
+
 [customizations.fdo]
 manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_insecure="true"
@@ -509,6 +517,7 @@ check_result
 greenprint "🕹 Get ostree install commit value"
 INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
+# User simple in simplified-installer
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
@@ -516,7 +525,7 @@ ${HTTP_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
+ansible_user=simple
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ansible_become=yes 
