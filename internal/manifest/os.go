@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/shell"
 	"github.com/osbuild/osbuild-composer/internal/users"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
@@ -86,6 +87,9 @@ type OSCustomizations struct {
 
 	Groups []users.Group
 	Users  []users.User
+
+	ShellInit []shell.InitFile
+
 	// TODO: drop osbuild types from the API
 	Firewall            *osbuild.FirewallStageOptions
 	Grub2Config         *osbuild.GRUB2Config
@@ -644,6 +648,9 @@ func (p *OS) serialize() osbuild.Pipeline {
 			DisabledServices: disabledServices,
 			DefaultTarget:    p.DefaultTarget,
 		}))
+	}
+	if len(p.ShellInit) > 0 {
+		pipeline.AddStage(osbuild.GenShellInitStage(p.ShellInit))
 	}
 
 	if p.SElinux != "" {
