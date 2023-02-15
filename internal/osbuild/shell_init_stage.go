@@ -3,6 +3,8 @@ package osbuild
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/osbuild/osbuild-composer/internal/shell"
 )
 
 const filenameRegex = "^[a-zA-Z0-9\\.\\-_]{1,250}$"
@@ -54,4 +56,20 @@ func NewShellInitStage(options *ShellInitStageOptions) *Stage {
 		Type:    "org.osbuild.shell.init",
 		Options: options,
 	}
+}
+
+// GenShellInitStage generates an org.osbuild.shell.init stage from a basic map
+// of the form filename->key->value.
+func GenShellInitStage(initFiles []shell.InitFile) *Stage {
+	options := new(ShellInitStageOptions)
+	options.Files = make(map[string]ShellInitFile, len(initFiles))
+	for _, file := range initFiles {
+		vars := make([]EnvironmentVariable, len(file.Variables))
+		for idx, envVar := range file.Variables {
+			vars[idx] = EnvironmentVariable{Key: envVar.Key, Value: envVar.Value}
+		}
+		options.Files[file.Filename] = ShellInitFile{Env: vars}
+	}
+
+	return NewShellInitStage(options)
 }
