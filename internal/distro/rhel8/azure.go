@@ -117,6 +117,27 @@ func azureEap7RhuiImgType() imageType {
 			},
 		},
 	}
+	it.defaultImageConfig.Firewall = &osbuild.FirewallStageOptions{
+		Ports: []string{
+			"23364:tcp", // modcluster
+			"25:tcp",    // mail
+			"3528:tcp",  // IIOP
+			"3529:tcp",  // IIOP-SSL
+			"45700:tcp", // Clustering subsystem
+			"4712:tcp",  // recovery manager
+			"4713:tcp",  // recovery manager
+			"54200:tcp", // Clustering subsystem
+			"54688:tcp", // Clustering subsystem
+			"55200:tcp", // Clustering subsystem
+			"57600:tcp", // Clustering subsystem
+			"7600:tcp",  // Clustering subsystem
+			"8009:tcp",  // AJP
+			"8080:tcp",  // HTTP
+			"8443:tcp",  // HTTPS
+			"9990:tcp",  // Management interface over HTTP
+			"9993:tcp",  // Management interface over HTTPS
+		},
+	}
 	return it
 }
 
