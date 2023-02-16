@@ -46,8 +46,9 @@ func TestGenFileNodesStages(t *testing.T) {
 				NewCopyStageSimple(&CopyStageOptions{
 					Paths: []CopyStagePath{
 						{
-							From: fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData1)),
-							To:   "tree:///etc/file",
+							From:              fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData1)),
+							To:                "tree:///etc/file",
+							RemoveDestination: true,
 						},
 					},
 				}, &CopyStageFilesInputs{
@@ -67,12 +68,14 @@ func TestGenFileNodesStages(t *testing.T) {
 				NewCopyStageSimple(&CopyStageOptions{
 					Paths: []CopyStagePath{
 						{
-							From: fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData1)),
-							To:   "tree:///etc/file",
+							From:              fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData1)),
+							To:                "tree:///etc/file",
+							RemoveDestination: true,
 						},
 						{
-							From: fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData2)),
-							To:   "tree:///etc/file2",
+							From:              fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData2)),
+							To:                "tree:///etc/file2",
+							RemoveDestination: true,
 						},
 					},
 				}, &CopyStageFilesInputs{
@@ -95,12 +98,14 @@ func TestGenFileNodesStages(t *testing.T) {
 				NewCopyStageSimple(&CopyStageOptions{
 					Paths: []CopyStagePath{
 						{
-							From: fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData1)),
-							To:   "tree:///etc/file",
+							From:              fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData1)),
+							To:                "tree:///etc/file",
+							RemoveDestination: true,
 						},
 						{
-							From: fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData2)),
-							To:   "tree:///etc/file2",
+							From:              fmt.Sprintf("input://file-%[1]x/sha256:%[1]x", sha256.Sum256(fileData2)),
+							To:                "tree:///etc/file2",
+							RemoveDestination: true,
 						},
 					},
 				}, &CopyStageFilesInputs{

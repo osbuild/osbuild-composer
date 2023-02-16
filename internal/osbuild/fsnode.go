@@ -27,6 +27,8 @@ func GenFileNodesStages(files []*fsnode.File) []*Stage {
 		copyStagePaths = append(copyStagePaths, CopyStagePath{
 			From: fmt.Sprintf("input://%s/sha256:%s", copyStageInputKey, fileDataChecksum),
 			To:   fmt.Sprintf("tree://%s", file.Path()),
+			// Default to removing the destination if it exists to ensure that symlinks are not followed.
+			RemoveDestination: true,
 		})
 		copyStageInputs[copyStageInputKey] = NewFilesInput(NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
 			NewFilesInputSourceArrayRefEntry(fileDataChecksum, nil),
