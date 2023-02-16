@@ -1925,19 +1925,23 @@
               "paths": [
                 {
                   "from": "input://file-246c90eeaabd45d57f9c52ba19ec83577e1ece72cfb262b674dcd444f8f33a8e/sha256:246c90eeaabd45d57f9c52ba19ec83577e1ece72cfb262b674dcd444f8f33a8e",
-                  "to": "tree:///etc/systemd/system/custom.service"
+                  "to": "tree:///etc/systemd/system/custom.service",
+                  "remove_destination": true
                 },
                 {
                   "from": "input://file-3858d66c9da0509af1f75847bf49134bf8df01bd712b59ce251826744d3bafe2/sha256:3858d66c9da0509af1f75847bf49134bf8df01bd712b59ce251826744d3bafe2",
-                  "to": "tree:///etc/systemd/system/custom.service.d/override.conf"
+                  "to": "tree:///etc/systemd/system/custom.service.d/override.conf",
+                  "remove_destination": true
                 },
                 {
                   "from": "input://file-a08a06016ca077755a7948a9631271011f1a1c3ecaa0e701e10ec0bec1923258/sha256:a08a06016ca077755a7948a9631271011f1a1c3ecaa0e701e10ec0bec1923258",
-                  "to": "tree:///etc/custom_file.txt"
+                  "to": "tree:///etc/custom_file.txt",
+                  "remove_destination": true
                 },
                 {
                   "from": "input://file-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855/sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-                  "to": "tree:///etc/empty_file.txt"
+                  "to": "tree:///etc/empty_file.txt",
+                  "remove_destination": true
                 }
               ]
             }
