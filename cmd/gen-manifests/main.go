@@ -199,8 +199,12 @@ func convertRepo(r repository) rpmmd.RepoConfig {
 		MirrorList:     r.MirrorList,
 		GPGKeys:        keys,
 		CheckGPG:       r.CheckGPG,
+		CheckRepoGPG:   false,
+		IgnoreSSL:      false,
 		MetadataExpire: r.MetadataExpire,
+		RHSM:           r.RHSM,
 		ImageTypeTags:  r.ImageTypeTags,
+		PackageSets:    r.PackageSets,
 	}
 }
 
