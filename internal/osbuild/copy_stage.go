@@ -17,6 +17,10 @@ type CopyStageOptions struct {
 type CopyStagePath struct {
 	From string `json:"from"`
 	To   string `json:"to"`
+
+	// Remove the destination before copying. Works only for files, not directories.
+	// Default: false
+	RemoveDestination bool `json:"remove_destination,omitempty"`
 }
 
 func (CopyStageOptions) isStageOptions() {}
