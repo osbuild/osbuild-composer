@@ -409,7 +409,6 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	}
 
 	// amend with repository information
-	globalRepos := make([]rpmmd.RepoConfig, 0)
 	for _, repo := range repos {
 		if len(repo.PackageSets) > 0 {
 			// only apply the repo to the listed package sets
@@ -418,10 +417,6 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 				ps.Repositories = append(ps.Repositories, repo)
 				packageSets[psName] = ps
 			}
-		} else {
-			// no package sets were listed, so apply the repo
-			// to all package sets
-			globalRepos = append(globalRepos, repo)
 		}
 	}
 
@@ -442,13 +437,14 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	}
 
 	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, err := t.initializeManifest(&bp, options, globalRepos, packageSets, containers, 0)
+	manifest, err := t.initializeManifest(&bp, options, repos, packageSets, containers, 0)
 	if err != nil {
 		// TODO: handle manifest initialization errors more gracefully, we
 		// refuse to initialize manifests with invalid config.
 		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
 		return nil
 	}
+
 	return overridePackageNamesInSets(manifest.GetPackageSetChains())
 }
 
