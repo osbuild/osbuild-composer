@@ -189,6 +189,28 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 		ps = ps.Append(rpmmd.PackageSet{Include: []string{"greenboot-default-health-checks"}})
 	}
 
+	switch t.arch.Name() {
+	case platform.ARCH_X86_64.String():
+		ps = ps.Append(x8664IotCommitPackageSet(t))
+	case platform.ARCH_AARCH64.String():
+		ps = ps.Append(aarch64IotCommitPackageSet(t))
+	default:
+		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
+	}
+
+	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"fdo-client",
+				"fdo-owner-cli",
+				"ignition",
+				"ignition-edge",
+				"ssh-key-dir",
+			},
+		},
+		)
+	}
+
 	return ps
 
 }
@@ -437,6 +459,102 @@ func iotInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 				"fedora-release-iot",
 			},
 		})
+	}
+
+	return ps
+}
+
+func x8664IotCommitPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"biosdevname",
+			"grub2",
+			"grub2-efi-x64",
+			"efibootmgr",
+			"shim-x64",
+			"microcode_ctl",
+			"iwl1000-firmware",
+			"iwl100-firmware",
+			"iwl105-firmware",
+			"iwl135-firmware",
+			"iwl2000-firmware",
+			"iwl2030-firmware",
+			"iwl3160-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6050-firmware",
+			"iwl7260-firmware",
+		},
+	}
+}
+
+func aarch64IotCommitPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"grub2-efi-aa64",
+			"efibootmgr",
+			"shim-aa64",
+			"iwl7260-firmware",
+		},
+	}
+}
+
+func iotSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
+	// common installer packages
+	ps := installerPackageSet(t)
+
+	ps = ps.Append(rpmmd.PackageSet{
+		Include: []string{
+			"attr",
+			"basesystem",
+			"binutils",
+			"bsdtar",
+			"clevis-dracut",
+			"clevis-luks",
+			"cloud-utils-growpart",
+			"coreos-installer",
+			"coreos-installer-dracut",
+			"coreutils",
+			"device-mapper-multipath",
+			"dnsmasq",
+			"dosfstools",
+			"dracut-live",
+			"e2fsprogs",
+			"fcoe-utils",
+			"fdo-init",
+			"gdisk",
+			"gzip",
+			"ima-evm-utils",
+			"iproute",
+			"iptables",
+			"iputils",
+			"iscsi-initiator-utils",
+			"keyutils",
+			"lldpad",
+			"lvm2",
+			"mdadm",
+			"nss-softokn",
+			"passwd",
+			"policycoreutils",
+			"policycoreutils-python-utils",
+			"procps-ng",
+			"rootfiles",
+			"setools-console",
+			"sudo",
+			"traceroute",
+			"util-linux",
+		},
+	})
+
+	switch t.arch.Name() {
+
+	case platform.ARCH_X86_64.String():
+		ps = ps.Append(x8664IotCommitPackageSet(t))
+	case platform.ARCH_AARCH64.String():
+		ps = ps.Append(aarch64IotCommitPackageSet(t))
+
+	default:
+		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
 	}
 
 	return ps

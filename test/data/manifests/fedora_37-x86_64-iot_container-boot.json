@@ -1850,6 +1850,14 @@
                     }
                   },
                   {
+                    "id": "sha256:667a15745213f1c5f1f0bb10c70d3920913e210fed90549a81b6c42af5d39993",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:192808b88d6473b4bdb33ffe8aa37f2b01ca3e2b76d9b221db8a9eee1ab5d201",
                     "options": {
                       "metadata": {
@@ -7870,6 +7878,9 @@
           "sha256:65effbe999cc162331276a5c4968dcfff002333f3bc8653eb1de62894074d11e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230623/Packages/s/selinux-policy-targeted-37.21-2.fc37.noarch.rpm"
           },
+          "sha256:667a15745213f1c5f1f0bb10c70d3920913e210fed90549a81b6c42af5d39993": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/b/biosdevname-0.7.3-10.fc37.x86_64.rpm"
+          },
           "sha256:66bae5662d9287e769f5d8b7f723d45eb19f2902d912be40bf9e5dd8d5c68067": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230623/Packages/l/libffi-3.4.4-1.fc37.x86_64.rpm"
           },
@@ -12747,6 +12758,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/b/bash-completion-2.11-8.fc37.noarch.rpm",
         "checksum": "sha256:dc2ddc1c946a8f6b7f6d7261ab6662f953a48c160417d57591943602c1a14a70",
+        "check_gpg": true
+      },
+      {
+        "name": "biosdevname",
+        "epoch": 0,
+        "version": "0.7.3",
+        "release": "10.fc37",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/b/biosdevname-0.7.3-10.fc37.x86_64.rpm",
+        "checksum": "sha256:667a15745213f1c5f1f0bb10c70d3920913e210fed90549a81b6c42af5d39993",
         "check_gpg": true
       },
       {

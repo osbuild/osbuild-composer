@@ -2468,6 +2468,22 @@
                     }
                   },
                   {
+                    "id": "sha256:3538ef36d1dbb711fcbbe95af5bceae9e3eee6879a1475bb43ffefae41031d53",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:a435881ad00360edd3ca5b246b7a7aad97640897cfe6097cd29bc664f118884b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:04db736a77296edd4099a9165d68560d52dbf2484d959f668b3b676d68581f97",
                     "options": {
                       "metadata": {
@@ -2885,6 +2901,14 @@
                   },
                   {
                     "id": "sha256:9a8af3adbf29facf62bf706ed3792d1a42bfabfdb6a14559c90574beab4c3bbb",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:a6ab622eb4c3c964ee3ae216597b7553c829def4ebb4f7f7a2077c95d387633c",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5204,6 +5228,14 @@
                     }
                   },
                   {
+                    "id": "sha256:fbbe1f662f6021891e8dcd5f76a3ffd9e024a153180e97d744fd2ce1f26d009b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:03e69fdeb5461d6d1072aaa5bd568f577aa702caacf4b04a824c736817c00386",
                     "options": {
                       "metadata": {
@@ -7409,6 +7441,9 @@
           "sha256:3459cfcc3427cdc64560186549aec4d0d0c13048db4af3bee5b85fa17d497e48": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/k/kernel-tools-6.4.0-0.rc6.git0.1.fc39.aarch64.rpm"
           },
+          "sha256:3538ef36d1dbb711fcbbe95af5bceae9e3eee6879a1475bb43ffefae41031d53": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/f/fdo-client-0.4.9-5.fc39.aarch64.rpm"
+          },
           "sha256:372ab901820794addeb15fa188ffb438a0cf4af7d7ef1435452d24e7b896d697": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/p/pcsc-lite-libs-2.0.0-1.fc39.aarch64.rpm"
           },
@@ -8006,6 +8041,9 @@
           "sha256:a406d5e0419f1c3897d8d2ac11a1466bd3ef03d436f42b38694c7f193a9acd93": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/l/libuuid-2.39-4.fc39.aarch64.rpm"
           },
+          "sha256:a435881ad00360edd3ca5b246b7a7aad97640897cfe6097cd29bc664f118884b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/f/fdo-owner-cli-0.4.9-5.fc39.aarch64.rpm"
+          },
           "sha256:a4bf46820a9038f5205b833b321215130cc7d099eafee573de62a1973c4529d4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/a/aardvark-dns-1.6.0-1.fc39.aarch64.rpm"
           },
@@ -8023,6 +8061,9 @@
           },
           "sha256:a6810adc621e586b0cefd779767e2a962ed18f4f1267a05fab8a94a1593e12be": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/k/keyutils-libs-1.6.1-6.fc38.aarch64.rpm"
+          },
+          "sha256:a6ab622eb4c3c964ee3ae216597b7553c829def4ebb4f7f7a2077c95d387633c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/i/ignition-edge-2.15.0-4.fc39.aarch64.rpm"
           },
           "sha256:a6bad56a7c652a83fa4c70be731a628c36c34cc6cf3f8f41edac7d3486d4ae31": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/i/iwlax2xx-firmware-20230515-150.fc39.noarch.rpm"
@@ -8521,6 +8562,9 @@
           },
           "sha256:fb3b718e19ae1db8461edb5ece0ef56ff12e61733da8c76ed7d19a938ff27884": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/m/ModemManager-1.20.6-1.fc39.aarch64.rpm"
+          },
+          "sha256:fbbe1f662f6021891e8dcd5f76a3ffd9e024a153180e97d744fd2ce1f26d009b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/s/ssh-key-dir-0.1.4-3.fc38.aarch64.rpm"
           },
           "sha256:fbcd24027dbd9425a816c653b17689dff4a548627a7b66752a3c25d5f549e8c7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/i/iptables-libs-1.8.9-4.fc39.aarch64.rpm"
@@ -13273,6 +13317,26 @@
         "check_gpg": true
       },
       {
+        "name": "fdo-client",
+        "epoch": 0,
+        "version": "0.4.9",
+        "release": "5.fc39",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/f/fdo-client-0.4.9-5.fc39.aarch64.rpm",
+        "checksum": "sha256:3538ef36d1dbb711fcbbe95af5bceae9e3eee6879a1475bb43ffefae41031d53",
+        "check_gpg": true
+      },
+      {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.4.9",
+        "release": "5.fc39",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/f/fdo-owner-cli-0.4.9-5.fc39.aarch64.rpm",
+        "checksum": "sha256:a435881ad00360edd3ca5b246b7a7aad97640897cfe6097cd29bc664f118884b",
+        "check_gpg": true
+      },
+      {
         "name": "fedora-gpg-keys",
         "epoch": 0,
         "version": "39",
@@ -13800,6 +13864,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/i/ignition-2.15.0-4.fc39.aarch64.rpm",
         "checksum": "sha256:9a8af3adbf29facf62bf706ed3792d1a42bfabfdb6a14559c90574beab4c3bbb",
+        "check_gpg": true
+      },
+      {
+        "name": "ignition-edge",
+        "epoch": 0,
+        "version": "2.15.0",
+        "release": "4.fc39",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/i/ignition-edge-2.15.0-4.fc39.aarch64.rpm",
+        "checksum": "sha256:a6ab622eb4c3c964ee3ae216597b7553c829def4ebb4f7f7a2077c95d387633c",
         "check_gpg": true
       },
       {
@@ -16690,6 +16764,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/s/sqlite-libs-3.41.2-2.fc39.aarch64.rpm",
         "checksum": "sha256:ffa28f03275f88006907086f85035eefc0ff79af114ce4b31aa5ba29c9a64e47",
+        "check_gpg": true
+      },
+      {
+        "name": "ssh-key-dir",
+        "epoch": 0,
+        "version": "0.1.4",
+        "release": "3.fc38",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/s/ssh-key-dir-0.1.4-3.fc38.aarch64.rpm",
+        "checksum": "sha256:fbbe1f662f6021891e8dcd5f76a3ffd9e024a153180e97d744fd2ce1f26d009b",
         "check_gpg": true
       },
       {
