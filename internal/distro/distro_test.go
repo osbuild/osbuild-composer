@@ -3,6 +3,7 @@ package distro_test
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -234,4 +235,334 @@ func TestImageTypePipelineNames(t *testing.T) {
 			}
 		}
 	}
+}
+
+// Ensure repositories are assigned to package sets properly.
+//
+// Each package set should include all the global repositories as well as any
+// pipeline/package-set specific repositories.
+func TestPipelineRepositories(t *testing.T) {
+	require := require.New(t)
+
+	type testCase struct {
+		// Repo configs for pipeline generator
+		repos []rpmmd.RepoConfig
+
+		// Expected result: map of pipelines to repo names (we only check names for the test).
+		// Use the pipeline name * for global repos.
+		result map[string][]stringSet
+	}
+
+	testCases := map[string]testCase{
+		"globalonly": { // only global repos: most common scenario
+			repos: []rpmmd.RepoConfig{
+				{
+					Name:    "global-1",
+					BaseURL: "http://global-1.example.com",
+				},
+				{
+					Name:    "global-2",
+					BaseURL: "http://global-2.example.com",
+				},
+			},
+			result: map[string][]stringSet{
+				"*": {newStringSet([]string{"global-1", "global-2"})},
+			},
+		},
+		"global+build": { // global repos with build-specific repos: secondary common scenario
+			repos: []rpmmd.RepoConfig{
+				{
+					Name:    "global-11",
+					BaseURL: "http://global-11.example.com",
+				},
+				{
+					Name:    "global-12",
+					BaseURL: "http://global-12.example.com",
+				},
+				{
+					Name:        "build-1",
+					BaseURL:     "http://build-1.example.com",
+					PackageSets: []string{"build"},
+				},
+				{
+					Name:        "build-2",
+					BaseURL:     "http://build-2.example.com",
+					PackageSets: []string{"build"},
+				},
+			},
+			result: map[string][]stringSet{
+				"*":     {newStringSet([]string{"global-11", "global-12"})},
+				"build": {newStringSet([]string{"build-1", "build-2"})},
+			},
+		},
+		"global+os": { // global repos with os-specific repos
+			repos: []rpmmd.RepoConfig{
+				{
+					Name:    "global-21",
+					BaseURL: "http://global-11.example.com",
+				},
+				{
+					Name:    "global-22",
+					BaseURL: "http://global-12.example.com",
+				},
+				{
+					Name:        "os-1",
+					BaseURL:     "http://os-1.example.com",
+					PackageSets: []string{"os"},
+				},
+				{
+					Name:        "os-2",
+					BaseURL:     "http://os-2.example.com",
+					PackageSets: []string{"os"},
+				},
+			},
+			result: map[string][]stringSet{
+				"*":  {newStringSet([]string{"global-21", "global-22"})},
+				"os": {newStringSet([]string{"os-1", "os-2"}), newStringSet([]string{"os-1", "os-2"})},
+			},
+		},
+		"global+os+payload": { // global repos with os-specific repos and (user-defined) payload repositories
+			repos: []rpmmd.RepoConfig{
+				{
+					Name:    "global-21",
+					BaseURL: "http://global-11.example.com",
+				},
+				{
+					Name:    "global-22",
+					BaseURL: "http://global-12.example.com",
+				},
+				{
+					Name:        "os-1",
+					BaseURL:     "http://os-1.example.com",
+					PackageSets: []string{"os"},
+				},
+				{
+					Name:        "os-2",
+					BaseURL:     "http://os-2.example.com",
+					PackageSets: []string{"os"},
+				},
+				{
+					Name:    "payload",
+					BaseURL: "http://payload.example.com",
+					// User-defined payload repositories automatically get the "blueprint" key.
+					// This is handled by the APIs.
+					PackageSets: []string{"blueprint"},
+				},
+			},
+			result: map[string][]stringSet{
+				"*": {newStringSet([]string{"global-21", "global-22"})},
+				"os": {
+					// chain with payload repo only in the second set for the blueprint package depsolve
+					newStringSet([]string{"os-1", "os-2"}),
+					newStringSet([]string{"os-1", "os-2", "payload"})},
+			},
+		},
+		"noglobal": { // no global repositories; only pipeline restricted ones (unrealistic but technically valid)
+			repos: []rpmmd.RepoConfig{
+				{
+					Name:        "build-1",
+					BaseURL:     "http://build-1.example.com",
+					PackageSets: []string{"build"},
+				},
+				{
+					Name:        "build-2",
+					BaseURL:     "http://build-2.example.com",
+					PackageSets: []string{"build"},
+				},
+				{
+					Name:        "os-1",
+					BaseURL:     "http://os-1.example.com",
+					PackageSets: []string{"os"},
+				},
+				{
+					Name:        "os-2",
+					BaseURL:     "http://os-2.example.com",
+					PackageSets: []string{"os"},
+				},
+				{
+					Name:        "anaconda-1",
+					BaseURL:     "http://anaconda-1.example.com",
+					PackageSets: []string{"anaconda-tree"},
+				},
+				{
+					Name:        "container-1",
+					BaseURL:     "http://container-1.example.com",
+					PackageSets: []string{"container-tree"},
+				},
+				{
+					Name:        "coi-1",
+					BaseURL:     "http://coi-1.example.com",
+					PackageSets: []string{"coi-tree"},
+				},
+			},
+			result: map[string][]stringSet{
+				"*":              nil,
+				"build":          {newStringSet([]string{"build-1", "build-2"})},
+				"os":             {newStringSet([]string{"os-1", "os-2"}), newStringSet([]string{"os-1", "os-2"})},
+				"anaconda-tree":  {newStringSet([]string{"anaconda-1"})},
+				"container-tree": {newStringSet([]string{"container-1"})},
+				"coi-tree":       {newStringSet([]string{"coi-1"})},
+			},
+		},
+		"global+unknown": { // package set names that don't match a pipeline are ignored
+			repos: []rpmmd.RepoConfig{
+				{
+					Name:    "global-1",
+					BaseURL: "http://global-1.example.com",
+				},
+				{
+					Name:    "global-2",
+					BaseURL: "http://global-2.example.com",
+				},
+				{
+					Name:        "custom-1",
+					BaseURL:     "http://custom.example.com",
+					PackageSets: []string{"notapipeline"},
+				},
+			},
+			result: map[string][]stringSet{
+				"*": {newStringSet([]string{"global-1", "global-2"})},
+			},
+		},
+		"none": { // empty
+			repos:  []rpmmd.RepoConfig{},
+			result: map[string][]stringSet{},
+		},
+	}
+
+	distros := distroregistry.NewDefault()
+	for tName, tCase := range testCases {
+		t.Run(tName, func(t *testing.T) {
+			for _, distroName := range distros.List() {
+				d := distros.GetDistro(distroName)
+				for _, archName := range d.ListArches() {
+					arch, err := d.GetArch(archName)
+					require.Nil(err)
+					for _, imageTypeName := range arch.ListImageTypes() {
+						t.Run(fmt.Sprintf("%s/%s/%s", distroName, archName, imageTypeName), func(t *testing.T) {
+							imageType, err := arch.GetImageType(imageTypeName)
+							require.Nil(err)
+
+							// set up bare minimum args for image type
+							customizations := &blueprint.Customizations{}
+							if imageType.Name() == "edge-simplified-installer" {
+								customizations = &blueprint.Customizations{
+									InstallationDevice: "/dev/null",
+								}
+							}
+							bp := blueprint.Blueprint{
+								Customizations: customizations,
+								Packages: []blueprint.Package{
+									{Name: "filesystem"},
+								},
+							}
+							options := distro.ImageOptions{}
+
+							// Add ostree options for image types that require them
+							options.OSTree = distro.OSTreeImageOptions{
+								ImageRef:      imageType.OSTreeRef(),
+								URL:           "https://example.com/repo",
+								FetchChecksum: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+							}
+
+							repos := tCase.repos
+							packageSets := imageType.PackageSets(bp, options, repos)
+
+							var globals stringSet
+							if len(tCase.result["*"]) > 0 {
+								globals = tCase.result["*"][0]
+							}
+							for psName, psChain := range packageSets {
+
+								expChain := tCase.result[psName]
+								if len(expChain) > 0 {
+									// if we specified an expected chain it should match the returned.
+									if len(expChain) != len(psChain) {
+										t.Fatalf("expected %d package sets in the %q chain; got %d", len(expChain), psName, len(psChain))
+									}
+								} else {
+									// if we didn't, initialise to empty before merging globals
+									expChain = make([]stringSet, len(psChain))
+								}
+
+								for idx := range expChain {
+									// merge the globals into each expected set
+									expChain[idx] = expChain[idx].Merge(globals)
+								}
+
+								for setIdx, set := range psChain {
+									// collect repositories in the package set
+									repoNamesSet := newStringSet(nil)
+									for _, repo := range set.Repositories {
+										repoNamesSet.Add(repo.Name)
+									}
+
+									// expected set for current package set should be merged with globals
+									expected := expChain[setIdx]
+
+									if !repoNamesSet.Equals(expected) {
+										t.Errorf("repos for package set %q [idx: %d] %s (distro %q image type %q) do not match expected %s", psName, setIdx, repoNamesSet, d.Name(), imageType.Name(), expected)
+									}
+								}
+							}
+						})
+					}
+				}
+			}
+		})
+	}
+}
+
+// a very basic implementation of a Set of strings
+type stringSet struct {
+	elems map[string]bool
+}
+
+func newStringSet(init []string) stringSet {
+	s := stringSet{elems: make(map[string]bool)}
+	for _, elem := range init {
+		s.Add(elem)
+	}
+	return s
+}
+
+func (s stringSet) String() string {
+	elemSlice := make([]string, 0, len(s.elems))
+	for elem := range s.elems {
+		elemSlice = append(elemSlice, elem)
+	}
+	return "{" + strings.Join(elemSlice, ", ") + "}"
+}
+
+func (s stringSet) Add(elem string) {
+	s.elems[elem] = true
+}
+
+func (s stringSet) Contains(elem string) bool {
+	return s.elems[elem]
+}
+
+func (s stringSet) Equals(other stringSet) bool {
+	if len(s.elems) != len(other.elems) {
+		return false
+	}
+
+	for elem := range s.elems {
+		if !other.Contains(elem) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s stringSet) Merge(other stringSet) stringSet {
+	merged := newStringSet(nil)
+	for elem := range s.elems {
+		merged.Add(elem)
+	}
+	for elem := range other.elems {
+		merged.Add(elem)
+	}
+	return merged
 }
