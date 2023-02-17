@@ -50,10 +50,11 @@ func NewCoreOSInstaller(m *Manifest,
 	kernelName,
 	product,
 	version string) *CoreOSInstaller {
+	name := "coi-tree"
 	p := &CoreOSInstaller{
-		Base:       NewBase(m, "coi-tree", buildPipeline),
+		Base:       NewBase(m, name, buildPipeline),
 		platform:   platform,
-		repos:      repos,
+		repos:      filterRepos(repos, name),
 		kernelName: kernelName,
 		product:    product,
 		version:    version,

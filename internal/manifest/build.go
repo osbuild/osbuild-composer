@@ -25,11 +25,12 @@ type Build struct {
 // NewBuild creates a new build pipeline from the repositories in repos
 // and the specified packages.
 func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig) *Build {
+	name := "build"
 	pipeline := &Build{
-		Base:       NewBase(m, "build", nil),
+		Base:       NewBase(m, name, nil),
 		runner:     runner,
 		dependents: make([]Pipeline, 0),
-		repos:      repos,
+		repos:      filterRepos(repos, name),
 	}
 	m.addPipeline(pipeline)
 	return pipeline
