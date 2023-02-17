@@ -32,7 +32,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="fedora/37/${ARCH}/iot"
         OS_VARIANT="fedora-unknown"
         USER_IN_COMMIT="false"
-        BOOT_LOCATION="https://mirrors.kernel.org/fedora/development/37/Everything/x86_64/os/"
+        BOOT_LOCATION="https://mirrors.kernel.org/fedora/releases/37/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
         ;;
