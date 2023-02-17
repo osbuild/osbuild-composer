@@ -154,9 +154,10 @@ func NewOS(m *Manifest,
 	buildPipeline *Build,
 	platform platform.Platform,
 	repos []rpmmd.RepoConfig) *OS {
+	name := "os"
 	p := &OS{
-		Base:     NewBase(m, "os", buildPipeline),
-		repos:    repos,
+		Base:     NewBase(m, name, buildPipeline),
+		repos:    filterRepos(repos, name),
 		platform: platform,
 	}
 	buildPipeline.addDependent(p)

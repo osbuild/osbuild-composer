@@ -66,10 +66,11 @@ func NewAnaconda(m *Manifest,
 	kernelName,
 	product,
 	version string) *Anaconda {
+	name := "anaconda-tree"
 	p := &Anaconda{
-		Base:       NewBase(m, "anaconda-tree", buildPipeline),
+		Base:       NewBase(m, name, buildPipeline),
 		platform:   platform,
-		repos:      repos,
+		repos:      filterRepos(repos, name),
 		kernelName: kernelName,
 		product:    product,
 		version:    version,
