@@ -212,12 +212,6 @@ func TestImageTypePipelineNames(t *testing.T) {
 						packageSets[plName] = minimalPackageSet
 					}
 
-					if distroName == "rhel-7" {
-						// add one more under "packages" for rhel-7
-						// TODO: this will be removed with the RHEL 7 rewrite
-						packageSets["packages"] = minimalPackageSet
-					}
-
 					m, err := imageType.Manifest(bp.Customizations, options, repos, packageSets, containers, seed)
 					require.NoError(err)
 					pm := new(manifest)
