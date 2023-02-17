@@ -102,3 +102,23 @@ func (m Manifest) GetExports() []string {
 	}
 	return exports
 }
+
+// filterRepos returns a list of repositories that specify the given pipeline
+// name in their PackageSets list in addition to any global repositories
+// (global repositories are ones that do not specify any PackageSets).
+func filterRepos(repos []rpmmd.RepoConfig, plName string) []rpmmd.RepoConfig {
+	filtered := make([]rpmmd.RepoConfig, 0, len(repos))
+	for _, repo := range repos {
+		if len(repo.PackageSets) == 0 {
+			filtered = append(filtered, repo)
+			continue
+		}
+		for _, ps := range repo.PackageSets {
+			if ps == plName {
+				filtered = append(filtered, repo)
+				continue
+			}
+		}
+	}
+	return filtered
+}
