@@ -1993,7 +1993,10 @@
               },
               "kernel_opts": [
                 "modprobe.blacklist=vc4",
-                "rw"
+                "rw",
+                "coreos.no_persist_ip",
+                "ignition.platform.id=metal",
+                "$ignition_firstboot"
               ]
             }
           },
@@ -2156,6 +2159,15 @@
             ]
           },
           {
+            "type": "org.osbuild.ignition",
+            "options": {
+              "network": [
+                "systemd.firstboot=off",
+                "systemd.condition-first-boot=true"
+              ]
+            }
+          },
+          {
             "type": "org.osbuild.users",
             "options": {
               "users": {
@@ -2221,7 +2233,7 @@
             "options": {
               "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
               "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "kernel_opts": "modprobe.blacklist=vc4 rw",
+              "kernel_opts": "modprobe.blacklist=vc4 rw coreos.no_persist_ip ignition.platform.id=metal $ignition_firstboot",
               "uefi": {
                 "vendor": "fedora",
                 "install": true,
@@ -2235,7 +2247,8 @@
                   "console"
                 ],
                 "timeout": 1
-              }
+              },
+              "ignition": true
             },
             "mounts": [
               {

@@ -161,6 +161,22 @@ func TestFilenameFromType(t *testing.T) {
 			},
 		},
 		{
+			name: "iot-simplified-installer",
+			args: args{"iot-simplified-installer"},
+			want: wantResult{
+				filename: "simplified-installer.iso",
+				mimeType: "application/x-iso9660-image",
+			},
+		},
+		{ // Alias
+			name: "fedora-iot-simplified-installer",
+			args: args{"fedora-iot-simplified-installer"},
+			want: wantResult{
+				filename: "simplified-installer.iso",
+				mimeType: "application/x-iso9660-image",
+			},
+		},
+		{
 			name: "image-installer",
 			args: args{"image-installer"},
 			want: wantResult{
@@ -287,6 +303,7 @@ func TestImageType_Name(t *testing.T) {
 				"iot-commit",
 				"iot-container",
 				"iot-installer",
+				"iot-simplified-installer",
 				"iot-raw-image",
 				"oci",
 				"image-installer",
@@ -304,6 +321,7 @@ func TestImageType_Name(t *testing.T) {
 				"iot-commit",
 				"iot-container",
 				"iot-installer",
+				"iot-simplified-installer",
 				"iot-raw-image",
 				"image-installer",
 				"minimal-raw",
@@ -355,7 +373,6 @@ func TestImageTypeAliases(t *testing.T) {
 				imageTypeName: "iot-commit",
 			},
 		},
-
 		{
 			name: "iot-container aliases",
 			args: args{
@@ -365,7 +382,6 @@ func TestImageTypeAliases(t *testing.T) {
 				imageTypeName: "iot-container",
 			},
 		},
-
 		{
 			name: "iot-installer aliases",
 			args: args{
@@ -373,6 +389,15 @@ func TestImageTypeAliases(t *testing.T) {
 			},
 			want: wantResult{
 				imageTypeName: "iot-installer",
+			},
+		},
+		{
+			name: "iot-simplified-installer aliases",
+			args: args{
+				imageTypeAliases: []string{"fedora-iot-simplified-installer"},
+			},
+			want: wantResult{
+				imageTypeName: "iot-simplified-installer",
 			},
 		},
 	}
@@ -435,7 +460,7 @@ func TestDistro_ManifestError(t *testing.T) {
 			_, _, err := imgType.Manifest(&bp, imgOpts, nil, 0)
 			if imgTypeName == "iot-commit" || imgTypeName == "iot-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
-			} else if imgTypeName == "iot-installer" {
+			} else if imgTypeName == "iot-installer" || imgTypeName == "iot-simplified-installer" {
 				assert.EqualError(t, err, fmt.Sprintf("boot ISO image type \"%s\" requires specifying a URL from which to retrieve the OSTree commit", imgTypeName))
 			} else if imgTypeName == "image-installer" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for boot ISO image type \"%s\": (allowed: User, Group)", imgTypeName))
@@ -469,6 +494,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"iot-container",
 				"iot-installer",
 				"iot-raw-image",
+				"iot-simplified-installer",
 				"oci",
 				"container",
 				"image-installer",
@@ -486,6 +512,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"iot-container",
 				"iot-installer",
 				"iot-raw-image",
+				"iot-simplified-installer",
 				"oci",
 				"container",
 				"image-installer",
@@ -594,7 +621,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "iot-raw-image" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for image type %q: (allowed: User, Group, Directories, Files, Services)", imgTypeName))
-			} else if imgTypeName == "iot-installer" || imgTypeName == "image-installer" {
+			} else if imgTypeName == "iot-installer" || imgTypeName == "iot-simplified-installer" || imgTypeName == "image-installer" {
 				continue
 			} else if imgTypeName == "live-installer" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for boot ISO image type \"%s\": (allowed: None)", imgTypeName))
@@ -626,7 +653,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "iot-raw-image" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for image type %q: (allowed: User, Group, Directories, Files, Services)", imgTypeName))
-			} else if imgTypeName == "iot-installer" || imgTypeName == "image-installer" {
+			} else if imgTypeName == "iot-installer" || imgTypeName == "iot-simplified-installer" || imgTypeName == "image-installer" {
 				continue
 			} else if imgTypeName == "live-installer" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for boot ISO image type \"%s\": (allowed: None)", imgTypeName))
@@ -770,7 +797,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "iot-raw-image" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for image type %q: (allowed: User, Group, Directories, Files, Services)", imgTypeName))
-			} else if imgTypeName == "iot-installer" || imgTypeName == "image-installer" {
+			} else if imgTypeName == "iot-installer" || imgTypeName == "iot-simplified-installer" || imgTypeName == "image-installer" {
 				continue
 			} else if imgTypeName == "live-installer" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for boot ISO image type \"%s\": (allowed: None)", imgTypeName))
@@ -802,7 +829,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "iot-raw-image" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for image type %q: (allowed: User, Group, Directories, Files, Services)", imgTypeName))
-			} else if imgTypeName == "iot-installer" || imgTypeName == "image-installer" {
+			} else if imgTypeName == "iot-installer" || imgTypeName == "iot-simplified-installer" || imgTypeName == "image-installer" {
 				continue
 			} else if imgTypeName == "live-installer" {
 				assert.EqualError(t, err, fmt.Sprintf("unsupported blueprint customizations found for boot ISO image type \"%s\": (allowed: None)", imgTypeName))

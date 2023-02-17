@@ -246,6 +246,7 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 		// deploy.  The kernel is part of the payload so it doesn't appear in
 		// the image type's package lists.
 		"iot-installer":             true,
+		"iot-simplified-installer":  true,
 		"edge-installer":            true,
 		"edge-simplified-installer": true,
 		"iot-raw-image":             true,

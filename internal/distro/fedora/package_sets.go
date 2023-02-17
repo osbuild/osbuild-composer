@@ -82,100 +82,120 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
-			"fedora-release-iot",
-			"glibc",
-			"glibc-minimal-langpack",
-			"nss-altfiles",
-			"sssd-client",
-			"libsss_sudo",
-			"shadow-utils",
-			"dracut-network",
-			"polkit",
-			"lvm2",
-			"cryptsetup",
-			"pinentry",
-			"keyutils",
-			"cracklib-dicts",
-			"e2fsprogs",
-			"xfsprogs",
-			"dosfstools",
-			"gnupg2",
-			"basesystem",
-			"python3",
-			"bash",
-			"xz",
-			"gzip",
-			"coreutils",
-			"which",
-			"curl",
-			"firewalld",
-			"iptables",
-			"NetworkManager",
-			"NetworkManager-wifi",
-			"NetworkManager-wwan",
-			"wpa_supplicant",
-			"iwd",
-			"tpm2-pkcs11",
-			"dnsmasq",
-			"traceroute",
-			"hostname",
-			"iproute",
-			"iputils",
-			"openssh-clients",
-			"openssh-server",
-			"passwd",
-			"policycoreutils",
-			"procps-ng",
-			"rootfiles",
-			"rpm",
-			"smartmontools-selinux",
-			"setup",
-			"shadow-utils",
-			"sudo",
-			"systemd",
-			"util-linux",
-			"vim-minimal",
-			"less",
-			"tar",
-			"fwupd",
-			"usbguard",
-			"greenboot",
-			"ignition",
-			"zezere-ignition",
-			"rsync",
 			"attr",
-			"ima-evm-utils",
-			"bash-completion",
-			"tmux",
-			"screen",
-			"policycoreutils-python-utils",
-			"setools-console",
 			"audit",
-			"rng-tools",
-			"chrony",
+			"basesystem",
+			"bash",
+			"bash-completion",
 			"bluez",
 			"bluez-libs",
 			"bluez-mesh",
-			"kernel-tools",
-			"libgpiod-utils",
-			"podman",
-			"container-selinux",
-			"skopeo",
-			"criu",
-			"slirp4netns",
-			"fuse-overlayfs",
+			"chrony",
 			"clevis",
 			"clevis-dracut",
 			"clevis-luks",
 			"clevis-pin-tpm2",
-			"parsec",
+			"container-selinux",
+			"coreutils",
+			"cracklib-dicts",
+			"criu",
+			"cryptsetup",
+			"curl",
 			"dbus-parsec",
+			"dnsmasq",
+			"dosfstools",
+			"dracut-network",
+			"e2fsprogs",
+			"fedora-release-iot",
+			"firewalld",
+			"fuse-overlayfs",
+			"fwupd",
+			"glibc",
+			"glibc-minimal-langpack",
+			"gnupg2",
+			"greenboot",
+			"greenboot-default-health-checks",
+			"gzip",
+			"hostname",
+			"ignition",
+			"ima-evm-utils",
+			"iproute",
+			"iptables",
+			"iputils",
+			"iwd",
 			"iwl7260-firmware",
 			"iwlax2xx-firmware",
-			"greenboot-default-health-checks",
+			"kernel-tools",
+			"keyutils",
+			"less",
+			"libgpiod-utils",
+			"libsss_sudo",
+			"lvm2",
+			"NetworkManager",
+			"NetworkManager-wifi",
+			"NetworkManager-wwan",
+			"nss-altfiles",
+			"openssh-clients",
+			"openssh-server",
+			"parsec",
+			"passwd",
+			"pinentry",
+			"podman",
+			"policycoreutils",
+			"policycoreutils-python-utils",
+			"polkit",
+			"procps-ng",
+			"python3",
+			"rng-tools",
+			"rootfiles",
+			"rpm",
+			"rsync",
+			"screen",
+			"setools-console",
+			"setup",
+			"shadow-utils",
+			"shadow-utils",
+			"skopeo",
+			"slirp4netns",
+			"smartmontools-selinux",
+			"sssd-client",
+			"sudo",
+			"systemd",
+			"tar",
+			"tmux",
+			"tpm2-pkcs11",
+			"traceroute",
+			"usbguard",
+			"util-linux",
+			"vim-minimal",
+			"which",
+			"wpa_supplicant",
+			"xfsprogs",
+			"xz",
+			"zezere-ignition",
 		},
 	}
 
+	switch t.arch.Name() {
+	case platform.ARCH_X86_64.String():
+		ps = ps.Append(x8664IotCommitPackageSet(t))
+	case platform.ARCH_AARCH64.String():
+		ps = ps.Append(aarch64IotCommitPackageSet(t))
+	default:
+		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
+	}
+
+	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"fdo-client",
+				"fdo-owner-cli",
+				"ignition-edge",
+				"ssh-key-dir",
+			},
+		},
+		)
+	}
 	return ps
 
 }
@@ -452,6 +472,103 @@ func liveInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 				"anaconda-webui",
 			},
 		})
+	}
+
+	return ps
+}
+
+func x8664IotCommitPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"biosdevname",
+			"grub2",
+			"grub2-efi-x64",
+			"efibootmgr",
+			"shim-x64",
+			"microcode_ctl",
+			"iwl1000-firmware",
+			"iwl100-firmware",
+			"iwl105-firmware",
+			"iwl135-firmware",
+			"iwl2000-firmware",
+			"iwl2030-firmware",
+			"iwl3160-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6050-firmware",
+			"iwl7260-firmware",
+		},
+	}
+}
+
+func aarch64IotCommitPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"grub2-efi-aa64",
+			"efibootmgr",
+			"shim-aa64",
+			"iwl7260-firmware",
+		},
+	}
+}
+
+func iotSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
+	// common installer packages
+	ps := installerPackageSet(t)
+
+	ps = ps.Append(rpmmd.PackageSet{
+		Include: []string{
+			"attr",
+			"basesystem",
+			"binutils",
+			"bsdtar",
+			"clevis-dracut",
+			"clevis-luks",
+			"cloud-utils-growpart",
+			"coreos-installer",
+			"coreos-installer-dracut",
+			"coreutils",
+			"device-mapper-multipath",
+			"dnsmasq",
+			"dosfstools",
+			"dracut-live",
+			"e2fsprogs",
+			"fcoe-utils",
+			"fdo-init",
+			"fedora-logos",
+			"gdisk",
+			"gzip",
+			"ima-evm-utils",
+			"iproute",
+			"iptables",
+			"iputils",
+			"iscsi-initiator-utils",
+			"keyutils",
+			"lldpad",
+			"lvm2",
+			"mdadm",
+			"nss-softokn",
+			"passwd",
+			"policycoreutils",
+			"policycoreutils-python-utils",
+			"procps-ng",
+			"rootfiles",
+			"setools-console",
+			"sudo",
+			"traceroute",
+			"util-linux",
+		},
+	})
+
+	switch t.arch.Name() {
+
+	case platform.ARCH_X86_64.String():
+		ps = ps.Append(x8664IotCommitPackageSet(t))
+	case platform.ARCH_AARCH64.String():
+		ps = ps.Append(aarch64IotCommitPackageSet(t))
+
+	default:
+		panic(fmt.Sprintf("unsupported arch: %s", t.arch.Name()))
 	}
 
 	return ps

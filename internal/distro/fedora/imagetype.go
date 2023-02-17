@@ -269,10 +269,48 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		// TODO: consider additional checks, such as those in "edge-simplified-installer" in RHEL distros
 	}
 
-	// BootISO's have limited support for customizations.
+	// BootISOs have limited support for customizations.
 	// TODO: Support kernel name selection for image-installer
 	if t.bootISO {
-		if t.name == "iot-installer" || t.name == "image-installer" {
+		if t.name == "iot-simplified-installer" {
+			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel"}
+			if err := customizations.CheckAllowed(allowed...); err != nil {
+				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+			}
+			if customizations.GetInstallationDevice() == "" {
+				return nil, fmt.Errorf("boot ISO image type %q requires specifying an installation device to install to", t.name)
+			}
+
+			// FDO is optional, but when specified has some restrictions
+			if customizations.GetFDO() != nil {
+				if customizations.GetFDO().ManufacturingServerURL == "" {
+					return nil, fmt.Errorf("boot ISO image type %q requires specifying FDO.ManufacturingServerURL configuration to install to when using FDO", t.name)
+				}
+				var diunSet int
+				if customizations.GetFDO().DiunPubKeyHash != "" {
+					diunSet++
+				}
+				if customizations.GetFDO().DiunPubKeyInsecure != "" {
+					diunSet++
+				}
+				if customizations.GetFDO().DiunPubKeyRootCerts != "" {
+					diunSet++
+				}
+				if diunSet != 1 {
+					return nil, fmt.Errorf("boot ISO image type %q requires specifying one of [FDO.DiunPubKeyHash,FDO.DiunPubKeyInsecure,FDO.DiunPubKeyRootCerts] configuration to install to when using FDO", t.name)
+				}
+			}
+
+			// ignition is optional, we might be using FDO
+			if customizations.GetIgnition() != nil {
+				if customizations.GetIgnition().Embedded != nil && customizations.GetIgnition().FirstBoot != nil {
+					return nil, fmt.Errorf("both ignition embedded and firstboot configurations found")
+				}
+				if customizations.GetIgnition().FirstBoot != nil && customizations.GetIgnition().FirstBoot.ProvisioningURL == "" {
+					return nil, fmt.Errorf("ignition.firstboot requires a provisioning url")
+				}
+			}
+		} else if t.name == "iot-installer" || t.name == "image-installer" {
 			allowed := []string{"User", "Group"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
