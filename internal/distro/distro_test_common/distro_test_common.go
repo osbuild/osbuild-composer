@@ -30,11 +30,12 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 	require.Greaterf(t, len(fileNames), 0, "No pipelines found in %s for %s", pipelinePath, prefix)
 	for _, fileName := range fileNames {
 		type repository struct {
-			BaseURL    string `json:"baseurl,omitempty"`
-			Metalink   string `json:"metalink,omitempty"`
-			MirrorList string `json:"mirrorlist,omitempty"`
-			GPGKey     string `json:"gpgkey,omitempty"`
-			CheckGPG   bool   `json:"check_gpg,omitempty"`
+			BaseURL     string   `json:"baseurl,omitempty"`
+			Metalink    string   `json:"metalink,omitempty"`
+			MirrorList  string   `json:"mirrorlist,omitempty"`
+			GPGKey      string   `json:"gpgkey,omitempty"`
+			CheckGPG    bool     `json:"check_gpg,omitempty"`
+			PackageSets []string `json:"package-sets,omitempty"`
 		}
 		type composeRequest struct {
 			Distro       string                `json:"distro"`
@@ -67,12 +68,13 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			}
 
 			repos[i] = rpmmd.RepoConfig{
-				Name:       fmt.Sprintf("repo-%d", i),
-				BaseURL:    repo.BaseURL,
-				Metalink:   repo.Metalink,
-				MirrorList: repo.MirrorList,
-				GPGKeys:    keys,
-				CheckGPG:   repo.CheckGPG,
+				Name:        fmt.Sprintf("repo-%d", i),
+				BaseURL:     repo.BaseURL,
+				Metalink:    repo.Metalink,
+				MirrorList:  repo.MirrorList,
+				GPGKeys:     keys,
+				CheckGPG:    repo.CheckGPG,
+				PackageSets: repo.PackageSets,
 			}
 		}
 		t.Run(path.Base(fileName), func(t *testing.T) {
