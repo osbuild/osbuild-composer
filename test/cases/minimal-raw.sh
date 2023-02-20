@@ -133,7 +133,7 @@ build_image() {
     while true; do
         sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
 
-        COMPOSE_STATUS=$(jq -r '.[0].body.queue_status' "$COMPOSE_INFO")
+        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
         # Is the compose finished?
         if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then

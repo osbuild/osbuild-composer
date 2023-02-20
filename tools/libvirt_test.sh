@@ -10,6 +10,7 @@ OSBUILD_COMPOSER_TEST_DATA=/usr/share/tests/osbuild-composer/
 
 # Get OS data.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Take the image type passed to the script or use qcow2 by default if nothing
 # was passed.
@@ -166,21 +167,13 @@ EOF
     # Start the compose
     greenprint "🚀 Starting compose"
     sudo composer-cli --json compose start bp "$IMAGE_TYPE" | tee "$COMPOSE_START"
-    if rpm -q --quiet weldr-client; then
-        COMPOSE_ID=$(jq -r '.body.build_id' "$COMPOSE_START")
-    else
-        COMPOSE_ID=$(jq -r '.build_id' "$COMPOSE_START")
-    fi
+    COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
     # Wait for the compose to finish.
     greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
     while true; do
         sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-        if rpm -q --quiet weldr-client; then
-            COMPOSE_STATUS=$(jq -r '.body.queue_status' "$COMPOSE_INFO")
-        else
-            COMPOSE_STATUS=$(jq -r '.queue_status' "$COMPOSE_INFO")
-        fi
+        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
 
         # Is the compose finished?
         if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
