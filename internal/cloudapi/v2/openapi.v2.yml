@@ -822,6 +822,43 @@ components:
           description: |
             Naming package sets for a repository assigns it to a specific part
             (pipeline) of the build process.
+    CustomRepository:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        filename:
+          type: string
+        baseurl:
+          type: array
+          items:
+            type: string
+            format: uri
+            example: 'https://cdn.redhat.com/content/dist/rhel8/8/x86_64/baseos/os/'
+        mirrorlist:
+          type: string
+          format: uri
+          example: 'http://mirrorlist.centos.org/?release=8-stream&arch=aarch64&repo=BaseOS'
+        metalink:
+          type: string
+          format: uri
+          example: 'https://mirrors.fedoraproject.org/metalink?repo=fedora-32&arch=x86_64'
+        enabled:
+          type: boolean
+        gpgkey:
+          type: array
+          items:
+            type: string
+        check_gpg:
+          type: boolean
+        repo_check_gpg:
+          type: boolean
+        ssl_verify:
+          type: boolean
     UploadOptions:
       anyOf:
       - $ref: '#/components/schemas/AWSEC2UploadOptions'
@@ -1015,6 +1052,15 @@ components:
             for the OS itself (they will not be available for the build root or
             any other part of the build process). The package_sets field for these
             repositories is ignored.
+        custom_repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomRepository'
+          description: |
+            Extra repositories for packages specified in customizations. These
+            repositories will be used to depsolve and retrieve packages. Additionally,
+            these packages will be saved and imported to the `/etc/yum.repos.d/` directory
+            on the image
         filesystem:
           type: array
           items:
