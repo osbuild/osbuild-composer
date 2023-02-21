@@ -13,6 +13,13 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 # Start firewalld
 sudo systemctl enable --now firewalld
 sudo pip3 install yq
+# Install fdo packages (This cannot be done in the setup.sh because fdo-admin-cli is not available on fedora)
+sudo dnf install -y fdo-admin-cli
+# Start fdo-aio to have /etc/fdo/aio folder
+sudo systemctl enable --now fdo-aio
+# Prepare service api server config file
+sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
+sudo systemctl restart fdo-aio
 
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
@@ -76,9 +83,11 @@ ROOT_CERT_GUEST_ADDRESS=192.168.100.52
 IGNITION_GUEST_ADDRESS=192.168.100.53
 PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
+FDO_SERVER_ADDRESS=192.168.100.1
+DIUN_PUB_KEY_HASH=sha256:$(openssl x509 -fingerprint -sha256 -noout -in /etc/fdo/aio/keys/diun_cert.pem | cut -d"=" -f2 | sed 's/://g')
+DIUN_PUB_KEY_ROOT_CERTS=$(cat /etc/fdo/aio/keys/diun_cert.pem)
 STAGE_REPO_ADDRESS=192.168.200.1
 STAGE_REPO_URL="http://${STAGE_REPO_ADDRESS}:8080/repo/"
-FDO_SERVER_ADDRESS=192.168.200.2
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
@@ -104,6 +113,8 @@ KERNEL_RT_PKG="kernel-rt"
 
 # Set up variables.
 SYSROOT_RO="false"
+ANSIBLE_USER="admin"
+FDO_USER_ONBOARDING="false"
 
 case "${ID}-${VERSION_ID}" in
     "rhel-8.8")
@@ -114,6 +125,8 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         SYSROOT_RO="true"
+        ANSIBLE_USER=fdouser
+        FDO_USER_ONBOARDING="true"
         ;;
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
@@ -125,12 +138,28 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         SYSROOT_RO="true"
+        ANSIBLE_USER=fdouser
+        FDO_USER_ONBOARDING="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
 esac
 
+if [[ "$FDO_USER_ONBOARDING" == "true" ]]; then
+    # FDO user does not have password, use ssh key and no sudo password instead
+    sudo /usr/local/bin/yq -iy ".service_info.initial_user |= {username: \"fdouser\", sshkeys: [\"${SSH_KEY_PUB}\"]}" /etc/fdo/aio/configs/serviceinfo_api_server.yml
+    # No sudo password required by ansible
+    tee /tmp/fdouser > /dev/null << EOF
+fdouser ALL=(ALL) NOPASSWD: ALL
+EOF
+    sudo /usr/local/bin/yq -iy '.service_info.files |= [{path: "/etc/sudoers.d/fdouser", source_path: "/tmp/fdouser"}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
+    sudo systemctl restart fdo-aio
+fi
+# Wait for fdo server to be running
+until [ "$(curl -X POST http://${FDO_SERVER_ADDRESS}:8080/ping)" == "pong" ]; do
+    sleep 1;
+done;
 
 # Get the compose log.
 get_compose_log () {
@@ -291,48 +320,11 @@ sudo podman rmi -f -a
 greenprint "🔧 Prepare stage repo network"
 sudo podman network inspect edge >/dev/null 2>&1 || sudo podman network create --driver=bridge --subnet=192.168.200.0/24 --gateway=192.168.200.254 edge
 
-###########################################################
-##
-## Prepare fdo AIO server
-##
-###########################################################
-greenprint "🔧 Prepare fdo AIO server"
-
-greenprint "🔧 Prepare fdo AIO configuration"
-sudo mkdir aio
-sudo podman run -v "$PWD"/aio/:/aio:z \
-  "quay.io/fido-fdo/aio:nightly" \
-  aio --directory aio generate-configs-and-keys --contact-hostname "$FDO_SERVER_ADDRESS"
-
-# TODO: tweak config aio/configs/serviceinfo_api_server.yml to test basic FDO functionalities
-#       like adding user/key/pwd, re-encryption, files, commands etc etc
-# TODO: check tpm2 config
-sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' aio/configs/serviceinfo_api_server.yml
-
-greenprint "🔧 Prepare fdo AIO manufacturing DIUN"
-DIUN_PUB_KEY_ROOT_CERTS=$(sudo cat aio/keys/diun_cert.pem)
-# shellcheck disable=SC2116
-DIUN_PUB_KEY_HASH=$(echo "sha256:$(sudo openssl x509 -fingerprint -sha256 -noout -in aio/keys/diun_cert.pem | cut -d"=" -f2 | sed 's/://g')")
-
-greenprint "🔧 Starting fdo AIO server"
-sudo podman run -d \
-  --ip "$FDO_SERVER_ADDRESS" \
-  --name fdo-aio \
-  --network edge \
-  -v "$PWD"/aio/:/aio:z \
-  "quay.io/fido-fdo/aio:nightly" \
-  aio --directory aio
-
-# Wait for fdo server to be running
-until [ "$(curl -X POST http://${FDO_SERVER_ADDRESS}:8080/ping)" == "pong" ]; do
-    sleep 1;
-done;
-
-###############################
+##############################################################
 ##
 ## Build edge-container image
 ##
-###############################
+##############################################################
 
 # Write a blueprint for ostree image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
@@ -475,13 +467,13 @@ sudo sed -i 's/coreos.inst.image_file=\/run\/media\/iso\/image.raw.xz/coreos.ins
 greenprint "📋 Create libvirt image disk"
 LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
 sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
-
-greenprint "checking running containers"
-sudo podman ps -a
+LIBVIRT_FAKE_USB_PATH=/var/lib/libvirt/images/usb.qcow2
+sudo qemu-img create -f qcow2 "${LIBVIRT_FAKE_USB_PATH}" 16G
 
 greenprint "📋 Install edge vm via http boot"
 sudo virt-install --name="${IMAGE_KEY}-http"\
                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                  --disk path="${LIBVIRT_FAKE_USB_PATH}",format=qcow2 \
                   --ram "${MEMORY}" \
                   --vcpus 2 \
                   --network network=integration,mac=34:49:22:B0:83:30 \
@@ -684,7 +676,7 @@ ${PUB_KEY_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
+ansible_user=${ANSIBLE_USER}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ansible_become=yes 
@@ -695,6 +687,11 @@ EOF
 # Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
 greenprint "fix stdio file non-blocking issue"
 sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
+
+# FDO user does not have password, use ssh key and no sudo password instead
+if [[ "$ANSIBLE_USER" == "fdouser" ]]; then
+    sed -i '/^ansible_become_pass/d' "${TEMPDIR}"/inventory
+fi
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=redhat -e ostree_commit="${INSTALL_HASH}" -e skip_rollback_test="true" -e edge_type=edge-simplified-installer -e fdo_credential="true" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
