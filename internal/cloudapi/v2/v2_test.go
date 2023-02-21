@@ -920,6 +920,14 @@ func TestComposeCustomizations(t *testing.T) {
 				"ignore_ssl": false,
 				"gpg_key": "some-gpg-key"
 			}],
+            "custom_repositories": [{
+                "name": "hello", 
+                "id": "hello", 
+                "baseurl": [ "http://hello.com" ],
+                "gpgcheck": [ "somekey" ],
+                "check_gpg": true,
+                "enabled": true
+            }],
 			"services": {
 				"enabled": [
 					"nftables"

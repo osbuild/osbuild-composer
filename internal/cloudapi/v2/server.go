@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -142,6 +143,35 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		dependencies = append(dependencies, jobId)
 	}
 
+	var fileResolveJobID uuid.UUID
+	if len(ir.customRepositories) > 0 {
+		var urls []string
+		for _, repo := range ir.customRepositories {
+			for _, key := range repo.GPGKeys {
+				// only append key keys that are
+				// remote files
+				if strings.HasPrefix(key, "http") {
+					urls = append(urls, key)
+				}
+			}
+		}
+
+		if len(urls) > 0 {
+			job := worker.FileResolveJob{
+				URLs: urls,
+			}
+
+			jobId, err := s.workers.EnqueueFileResolveJob(&job, channel)
+
+			if err != nil {
+				return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+			}
+
+			fileResolveJobID = jobId
+			dependencies = append(dependencies, fileResolveJobID)
+		}
+	}
+
 	var ostreeResolveJobID uuid.UUID
 	if ir.ostree != nil {
 		jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{
@@ -180,7 +210,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, ostreeResolveJobID, fileResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.customRepositories, ir.imageOptions, manifestSeed, bp.Customizations)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -238,6 +268,36 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 
 			containerResolveJob = jobId
 			dependencies = append(dependencies, jobId)
+		}
+
+		var fileResolveJobID uuid.UUID
+		if len(ir.customRepositories) > 0 {
+			var urls []string
+			for _, repo := range ir.customRepositories {
+				for _, key := range repo.GPGKeys {
+					// only append key keys that are
+					// remote files
+					if strings.HasPrefix(key, "http") {
+						urls = append(urls, key)
+					}
+				}
+			}
+
+			// only run job if there are URLS to fetch
+			if len(urls) > 0 {
+				job := worker.FileResolveJob{
+					URLs: urls,
+				}
+
+				jobId, err := s.workers.EnqueueFileResolveJob(&job, channel)
+
+				if err != nil {
+					return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+				}
+
+				fileResolveJobID = jobId
+				dependencies = append(dependencies, fileResolveJobID)
+			}
 		}
 
 		var ostreeResolveJobID uuid.UUID
@@ -303,7 +363,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, bp.Customizations)
+			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, ostreeResolveJobID, fileResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.customRepositories, ir.imageOptions, manifestSeed, bp.Customizations)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
@@ -324,7 +384,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
-func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Customizations) {
+func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, fileResolveJobID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, customRepos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Customizations) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*5)
 	defer cancel()
 
@@ -436,6 +496,36 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 			containerSpecs[i].ImageID = s.ImageID
 			containerSpecs[i].ListDigest = s.ListDigest
 		}
+	}
+
+	if fileResolveJobID != uuid.Nil {
+		var result worker.FileResolveJobResult
+
+		_, err := workers.FileResolveJobInfo(containerResolveJobID, &result)
+
+		if err != nil {
+			reason := "Error reading file resolve job status"
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason, nil)
+			return
+		}
+
+		if jobErr := result.JobError; jobErr != nil {
+			// TODO: update error type
+			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorContainerDependency, "Error in container resolve job dependency", nil)
+			return
+		}
+
+		for repoIdx := range customRepos {
+			keys := customRepos[repoIdx].GPGKeys
+			for keyIdx := range keys {
+				for _, r := range result.Results {
+					if r.URL == keys[keyIdx] {
+						customRepos[repoIdx].GPGKeys[keyIdx] = string(r.Content)
+					}
+				}
+			}
+		}
+
 	}
 
 	if ostreeResolveJobID != uuid.Nil {

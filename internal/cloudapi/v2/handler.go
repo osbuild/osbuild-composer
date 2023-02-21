@@ -107,12 +107,13 @@ func splitExtension(filename string) string {
 }
 
 type imageRequest struct {
-	imageType    distro.ImageType
-	arch         distro.Arch
-	repositories []rpmmd.RepoConfig
-	imageOptions distro.ImageOptions
-	target       *target.Target
-	ostree       *ostree.RequestParams
+	imageType          distro.ImageType
+	arch               distro.Arch
+	repositories       []rpmmd.RepoConfig
+	customRepositories []rpmmd.RepoConfig
+	imageOptions       distro.ImageOptions
+	target             *target.Target
+	ostree             *ostree.RequestParams
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -326,6 +327,60 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	if request.Customizations != nil && request.Customizations.CustomRepositories != nil {
+		repoCustomizations := []blueprint.RepositoryCustomization{}
+		for _, repo := range *request.Customizations.CustomRepositories {
+			repoCustomization := blueprint.RepositoryCustomization{
+				Id: repo.Id,
+			}
+
+			if repo.Name != nil {
+				repoCustomization.Name = *repo.Name
+			}
+
+			if repo.Baseurl != nil && len(*repo.Baseurl) > 0 {
+				repoCustomization.BaseURLs = *repo.Baseurl
+			}
+
+			if repo.Gpgkey != nil && len(*repo.Gpgkey) > 0 {
+				repoCustomization.GPGKeys = *repo.Gpgkey
+			}
+
+			if repo.CheckGpg != nil {
+				repoCustomization.GPGCheck = repo.CheckGpg
+			}
+
+			if repo.RepoCheckGpg != nil {
+				repoCustomization.RepoGPGCheck = repo.RepoCheckGpg
+			}
+
+			if repo.Enabled != nil {
+				repoCustomization.Enabled = repo.Enabled
+			}
+
+			if repo.Metalink != nil {
+				repoCustomization.Metalink = *repo.Metalink
+			}
+
+			if repo.Mirrorlist != nil {
+				repoCustomization.Mirrorlist = *repo.Mirrorlist
+			}
+
+			if repo.SslVerify != nil {
+				repoCustomization.SSLVerify = *repo.SslVerify
+			}
+
+			repoCustomizations = append(repoCustomizations, repoCustomization)
+		}
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Repositories: repoCustomizations,
+			}
+		} else {
+			bp.Customizations.Repositories = repoCustomizations
+		}
+	}
+
 	// add the user-defined repositories only to the depsolve job for the
 	// payload (the packages for the final image)
 	var payloadRepositories []Repository
@@ -368,6 +423,13 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
+
+		// var customRepos []rpmmd.RepoConfig
+		// if bp.Customizations != nil && bp.Customizations.Repositories != nil {
+		// 	// add custom repos so the packages can be depsolved
+		// 	customRepos := rpmmd.RepoConfigFromBP(bp.Customizations.Repositories)
+		// 	repos = append(repos, customRepos...)
+		// }
 
 		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
 
@@ -625,12 +687,13 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		irs = append(irs, imageRequest{
-			imageType:    imageType,
-			arch:         arch,
-			repositories: repos,
-			imageOptions: imageOptions,
-			target:       irTarget,
-			ostree:       ostreeOptions,
+			imageType:          imageType,
+			arch:               arch,
+			repositories:       repos,
+			customRepositories: nil,
+			imageOptions:       imageOptions,
+			target:             irTarget,
+			ostree:             ostreeOptions,
 		})
 	}
 
@@ -1360,6 +1423,13 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 		repoConfig.Metalink = *repo.Metalink
 	} else {
 		return nil, HTTPError(ErrorInvalidRepository)
+	}
+
+	if repo.Gpgkey != nil && *repo.Gpgkey != "" {
+		repoConfig.GPGKeys = []string{*repo.Gpgkey}
+	}
+	if repo.IgnoreSsl != nil {
+		repoConfig.IgnoreSSL = *repo.IgnoreSsl
 	}
 
 	if repo.CheckGpg != nil {

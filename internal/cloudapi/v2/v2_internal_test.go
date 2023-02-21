@@ -77,10 +77,11 @@ func TestCollectRepos(t *testing.T) {
 	payloadPkgSets := []string{"blueprint"}
 
 	repos, err := convertRepos(irRepos, customRepos, payloadPkgSets)
+	assert.NoError(err)
 
 	// check lengths
 	assert.NoError(err)
-	assert.Equal(repos, expectedRepos)
+	assert.Equal(expectedRepos, repos)
 }
 
 func TestRepoConfigConversion(t *testing.T) {
