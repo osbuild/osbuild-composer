@@ -326,6 +326,64 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	if request.Customizations != nil && request.Customizations.CustomRepositories != nil {
+		repoCustomizations := []blueprint.RepositoryCustomization{}
+		for _, repo := range *request.Customizations.CustomRepositories {
+			repoCustomization := blueprint.RepositoryCustomization{
+				Id: repo.Id,
+			}
+
+			if repo.Name != nil {
+				repoCustomization.Name = *repo.Name
+			}
+
+			if repo.Filename != nil {
+				repoCustomization.Filename = *repo.Filename
+			}
+
+			if repo.Baseurl != nil && len(*repo.Baseurl) > 0 {
+				repoCustomization.BaseURLs = *repo.Baseurl
+			}
+
+			if repo.Gpgkey != nil && len(*repo.Gpgkey) > 0 {
+				repoCustomization.GPGKeys = *repo.Gpgkey
+			}
+
+			if repo.CheckGpg != nil {
+				repoCustomization.GPGCheck = repo.CheckGpg
+			}
+
+			if repo.RepoCheckGpg != nil {
+				repoCustomization.RepoGPGCheck = repo.RepoCheckGpg
+			}
+
+			if repo.Enabled != nil {
+				repoCustomization.Enabled = repo.Enabled
+			}
+
+			if repo.Metalink != nil {
+				repoCustomization.Metalink = *repo.Metalink
+			}
+
+			if repo.Mirrorlist != nil {
+				repoCustomization.Mirrorlist = *repo.Mirrorlist
+			}
+
+			if repo.SslVerify != nil {
+				repoCustomization.SSLVerify = *repo.SslVerify
+			}
+
+			repoCustomizations = append(repoCustomizations, repoCustomization)
+		}
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Repositories: repoCustomizations,
+			}
+		} else {
+			bp.Customizations.Repositories = repoCustomizations
+		}
+	}
+
 	// add the user-defined repositories only to the depsolve job for the
 	// payload (the packages for the final image)
 	var payloadRepositories []Repository
@@ -1360,6 +1418,13 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 		repoConfig.Metalink = *repo.Metalink
 	} else {
 		return nil, HTTPError(ErrorInvalidRepository)
+	}
+
+	if repo.Gpgkey != nil && *repo.Gpgkey != "" {
+		repoConfig.GPGKeys = []string{*repo.Gpgkey}
+	}
+	if repo.IgnoreSsl != nil {
+		repoConfig.IgnoreSSL = *repo.IgnoreSsl
 	}
 
 	if repo.CheckGpg != nil {
