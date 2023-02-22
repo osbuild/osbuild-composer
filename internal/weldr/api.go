@@ -3335,9 +3335,10 @@ func (api *API) payloadRepositories(distroName string) []rpmmd.RepoConfig {
 }
 
 // Returns all configured repositories as rpmmd.RepoConfig.
-// The first returned slice represents the Base repos (depending on the image
-// type), while the second value represents the payload repos (defined by user).
-// The difference from allRepositories() is that this method may return additional repositories,
+// Payload repositories (defined by the user) are assigned the payload package
+// set names from the image type.
+//
+// The difference from allRepositories() is that this method may return additional repositories
 // which are needed to build the specific image type. The allRepositories() can't do this, because
 // it is used in places where image types are not considered.
 func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
@@ -3349,7 +3350,7 @@ func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.
 	payloadRepos := api.payloadRepositories(imageType.Arch().Distro().Name())
 	// tag payload repositories with the payload package set names and add them to list of repos
 	for _, pr := range payloadRepos {
-		pr.ImageTypeTags = imageType.PayloadPackageSets()
+		pr.PackageSets = imageType.PayloadPackageSets()
 		repos = append(repos, pr)
 	}
 
