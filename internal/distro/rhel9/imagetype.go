@@ -29,7 +29,7 @@ const (
 	buildPkgsKey = "build"
 
 	// main/common os image package set name
-	osPkgsKey = "packages"
+	osPkgsKey = "os"
 
 	// container package set name
 	containerPkgsKey = "container"

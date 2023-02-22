@@ -28,7 +28,7 @@ const (
 	// package set names
 
 	// main/common os image package set name
-	osPkgsKey = "packages"
+	osPkgsKey = "os"
 
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
