@@ -85,6 +85,7 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"chrony",
 			"systemd-udev",
 			"langpacks-en",
+			"open-vm-tools",
 		},
 		Exclude: []string{
 			"dracut-config-rescue",
