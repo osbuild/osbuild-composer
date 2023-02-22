@@ -23,14 +23,7 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
-# RHEL 8.6+ and CentOS 9 require different handling for ansible
-ge86=$(echo "${VERSION_ID}" | awk '{print $1 >= 8.6}')  # do a numerical comparison for the version
-echo -n "${ID}=${VERSION_ID} "
-if [[ "${ID}" == "rhel" || "${ID}" == "centos" ]] && (( ge86 )); then
-    sudo dnf install -y ansible-core koji
-else
-    sudo dnf install -y ansible koji
-fi
+sudo dnf install -y ansible-core koji
 
 # workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2057769
 if [[ "$VERSION_ID" == "9.0" || "$VERSION_ID" == "9" ]]; then
