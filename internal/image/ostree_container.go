@@ -22,7 +22,7 @@ type OSTreeContainer struct {
 	OSTreeRef              string
 	OSTreeParent           *ostree.CommitSpec
 	OSVersion              string
-	ExtraContainerPackages rpmmd.PackageSet
+	ExtraContainerPackages rpmmd.PackageSet // FIXME: this is never read
 	ContainerLanguage      string
 	Filename               string
 }

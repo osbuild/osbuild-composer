@@ -60,6 +60,7 @@ func NewOSTreeCommitServer(m *Manifest,
 }
 
 func (p *OSTreeCommitServer) getPackageSetChain() []rpmmd.PackageSet {
+	// FIXME: container package is defined here
 	packages := []string{"nginx"}
 	return []rpmmd.PackageSet{
 		{
