@@ -433,6 +433,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				Cluster:    targetOptions.Cluster,
 				Datacenter: targetOptions.Datacenter,
 				Datastore:  targetOptions.Datastore,
+				Folder:     targetOptions.Folder,
 			}
 
 			tempDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-vmware-*")

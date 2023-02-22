@@ -15,6 +15,7 @@ type Credentials struct {
 	Datacenter string
 	Cluster    string
 	Datastore  string
+	Folder     string
 }
 
 // UploadImage is a function that uploads a stream optimized vmdk image to vSphere
@@ -27,8 +28,12 @@ func UploadImage(creds Credentials, imagePath string) error {
 		fmt.Sprintf("-pool=%s/Resources", creds.Cluster),
 		fmt.Sprintf("-dc=%s", creds.Datacenter),
 		fmt.Sprintf("-ds=%s", creds.Datastore),
-		imagePath,
 	}
+	if creds.Folder != "" {
+		args = append(args, fmt.Sprintf("-folder=%s", creds.Folder))
+	}
+	args = append(args, imagePath)
+
 	retcode := cli.Run(args)
 
 	if retcode != 0 {

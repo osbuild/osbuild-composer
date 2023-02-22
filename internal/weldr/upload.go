@@ -80,6 +80,7 @@ type vmwareUploadSettings struct {
 	Datacenter string `json:"datacenter"`
 	Cluster    string `json:"cluster"`
 	Datastore  string `json:"datastore"`
+	Folder     string `json:"folder,omitempty"`
 }
 
 func (vmwareUploadSettings) isUploadSettings() {}
@@ -221,6 +222,7 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 				Cluster:    options.Cluster,
 				Datacenter: options.Datacenter,
 				Datastore:  options.Datastore,
+				Folder:     options.Folder,
 				// Username and Password are intentionally not included.
 			}
 			uploads = append(uploads, upload)
@@ -327,6 +329,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Cluster:    options.Cluster,
 			Datacenter: options.Datacenter,
 			Datastore:  options.Datastore,
+			Folder:     options.Folder,
 		}
 	case *ociUploadSettings:
 		t.Name = target.TargetNameOCI

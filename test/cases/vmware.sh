@@ -101,6 +101,7 @@ password = "${GOVMOMI_PASSWORD}"
 cluster = "${GOVMOMI_CLUSTER}"
 dataStore = "${GOVMOMI_DATASTORE}"
 dataCenter = "${GOVMOMI_DATACENTER}"
+folder = "${GOVMOMI_FOLDER}"
 EOF
 
 # Write a basic blueprint for our image.
@@ -183,7 +184,7 @@ $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_UR
     -net="${GOVMOMI_NETWORK}" \
     -net.adapter=vmxnet3 \
     -m=4096 -c=2 -g=rhel8_64Guest -on=true -firmware=bios \
-    -disk="${IMAGE_KEY}"/"${IMAGE_KEY}".vmdk \
+    -disk="${GOVMOMI_FOLDER}"/"${IMAGE_KEY}".vmdk \
     --disk.controller=ide \
     "${IMAGE_KEY}"
 
