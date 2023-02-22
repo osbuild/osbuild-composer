@@ -152,9 +152,9 @@ function verifyInVSphere() {
         -folder="${GOVMOMI_FOLDER}" \
         -net="${GOVMOMI_NETWORK}" \
         -net.adapter=vmxnet3 \
-        -m=4096 -c=2 -g=rhel8_64Guest -on=true -firmware=bios \
+        -m=4096 -c=2 -g=rhel8_64Guest -on=true -firmware=efi \
         -disk="${VSPHERE_VM_NAME}/${VSPHERE_IMAGE_NAME}" \
-        -disk.controller=ide \
+        -disk.controller=scsi \
         -on=false \
         "${VSPHERE_VM_NAME}"
 

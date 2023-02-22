@@ -183,9 +183,9 @@ $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_UR
     -folder="${GOVMOMI_FOLDER}" \
     -net="${GOVMOMI_NETWORK}" \
     -net.adapter=vmxnet3 \
-    -m=4096 -c=2 -g=rhel8_64Guest -on=true -firmware=bios \
+    -m=4096 -c=2 -g=rhel8_64Guest -on=true -firmware=efi \
     -disk="${GOVMOMI_FOLDER}"/"${IMAGE_KEY}".vmdk \
-    --disk.controller=ide \
+    --disk.controller=scsi \
     "${IMAGE_KEY}"
 
 # tagging vm as testing object
