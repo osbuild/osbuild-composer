@@ -26,6 +26,10 @@ paths:
       responses:
         '200':
           description: openapi spec in json format
+          content:
+            application/json:
+              schema:
+                type: object
         '500':
           description: Unexpected error occurred
           content:
@@ -719,6 +723,7 @@ components:
           type: string
 
     ComposeRequest:
+      additionalProperties: false
       required:
         - distribution
       properties:
@@ -736,6 +741,7 @@ components:
         koji:
           $ref: '#/components/schemas/Koji'
     ImageRequest:
+      additionalProperties: false
       required:
         - architecture
         - image_type
@@ -885,6 +891,7 @@ components:
         possible to mix and match more schemas together.
     AWSEC2UploadOptions:
       type: object
+      additionalProperties: false
       required:
         - region
         - share_with_accounts
@@ -902,6 +909,7 @@ components:
             type: string
     AWSS3UploadOptions:
       type: object
+      additionalProperties: false
       required:
         - region
       properties:
@@ -915,11 +923,12 @@ components:
             If set to false (the default value), a long, obfuscated URL
             is returned. Its expiration might be sooner than for other upload
             targets.
-            
+
             If set to true, a shorter URL is returned and
             its expiration is the same as for the other upload targets.
     GCPUploadOptions:
       type: object
+      additionalProperties: false
       required:
         - region
       properties:
@@ -973,6 +982,7 @@ components:
             type: string
     AzureUploadOptions:
       type: object
+      additionalProperties: false
       required:
         - tenant_id
         - subscription_id
@@ -1026,6 +1036,7 @@ components:
             Tag for the created container image
     Customizations:
       type: object
+      additionalProperties: false
       properties:
         containers:
           type: array
@@ -1252,6 +1263,7 @@ components:
             Optional flag to use rhc to register the system, which also always enables Insights.
     User:
       type: object
+      additionalProperties: false
       required:
         - name
       properties:
@@ -1268,6 +1280,7 @@ components:
           example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
     Koji:
       type: object
+      additionalProperties: false
       required:
         - server
         - task_id
@@ -1309,6 +1322,7 @@ components:
 
     AWSEC2CloneCompose:
       type: object
+      additionalProperties: false
       required:
         - region
       properties:
