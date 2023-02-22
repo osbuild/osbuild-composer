@@ -38,7 +38,7 @@ var (
 			osPkgsKey: edgeCommitPackageSet,
 			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
 				return rpmmd.PackageSet{
-					Include: []string{"nginx"},
+					Include: []string{"nginx"}, // FIXME: this has no effect
 				}
 			},
 		},
