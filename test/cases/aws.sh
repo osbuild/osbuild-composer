@@ -199,14 +199,13 @@ greenprint "Pulling cloud-image-val container"
 if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
   # If running on CIV, get dev container
   TAG=${CI_COMMIT_REF_SLUG}
-  if [ -z "${CIV_OPTIONS:-}" ]; then
-    echo "ERROR: Please provide the variable CIV_OPTIONS"
-    exit 1
-  fi
 else
   # If not, get prod container
   TAG="prod"
-  CIV_OPTIONS=( -r=/tmp/resource-file.json -d -o=/tmp/report.xml -m="not pub" )
+  CIV_OPTION_R="-r=/tmp/resource-file.json"
+  CIV_OPTION_D="-d"
+  CIV_OPTION_O="-o=/tmp/report.xml"
+  CIV_OPTION_M="-m not pub"
 fi
 
 CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
@@ -234,6 +233,8 @@ if [ "$ARCH" == "aarch64" ]; then
     sed -i s/t3.medium/a1.large/ "${TEMPDIR}/resource-file.json"
 fi
 
+# The weird sintax with the CIV_OPTION variables is due to problems with bash quoting and
+# having options with whitespaces in them. Please do not spend more hours trying to fix it
 sudo "${CONTAINER_RUNTIME}" run \
     -a stdout -a stderr \
     -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
@@ -241,7 +242,14 @@ sudo "${CONTAINER_RUNTIME}" run \
     -e AWS_REGION="${AWS_REGION}" \
     -v "${TEMPDIR}":/tmp:Z \
     "${CONTAINER_CLOUD_IMAGE_VAL}" \
-    python cloud-image-val.py "${CIV_OPTIONS[@]}" && RESULTS=1 || RESULTS=0
+    python cloud-image-val.py \
+    ${CIV_OPTION_R:+"$CIV_OPTION_R"} \
+    ${CIV_OPTION_O:+"$CIV_OPTION_O"} \
+    ${CIV_OPTION_T:+"$CIV_OPTION_T"} \
+    ${CIV_OPTION_M:+"$CIV_OPTION_M"} \
+    ${CIV_OPTION_D:+"$CIV_OPTION_D"} \
+    ${CIV_OPTION_S:+"$CIV_OPTION_S"} \
+    && RESULTS=1 || RESULTS=0
 
 mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
 
