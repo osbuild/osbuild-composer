@@ -544,8 +544,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 					Nick:    p.OSNick,
 				}
 
-				rescueVer, _ := rpmmd.GetVerStrFromPackageSpecList(p.packageSpecs, "dracut-config-rescue")
-				hasRescue := rescueVer != ""
+				_, err := rpmmd.GetVerStrFromPackageSpecList(p.packageSpecs, "dracut-config-rescue")
+				hasRescue := err == nil
 				bootloader = osbuild.NewGrub2LegacyStage(
 					osbuild.NewGrub2LegacyStageOptions(
 						p.Grub2Config,
