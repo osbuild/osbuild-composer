@@ -71,6 +71,29 @@
       when: ignition == "true" and ((ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('9.2', '>=')) or
             (ansible_facts['distribution'] == 'CentOS' and (ansible_facts['distribution_version'] == '9')))
 
+    - name: check systemd service correctly started on firstboot
+      block:
+
+        - name: check hello.service logs
+          command: journalctl -b -0 -u hello.service
+          register: result_hello_service_log
+
+        - assert:
+            that:
+              - "'Hello, World!' in result_hello_service_log.stdout"
+            fail_msg: "hello.service doesn't have the correct log"
+            success_msg: "hello.service started and working"
+
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: ignition == "true" and ((ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('9.2', '>=')) or
+            (ansible_facts['distribution'] == 'CentOS' and (ansible_facts['distribution_version'] == '9')))
+
     - name: wait for FDO onboarding
       block:
         - wait_for:

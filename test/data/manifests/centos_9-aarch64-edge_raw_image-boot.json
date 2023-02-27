@@ -2263,7 +2263,12 @@
           },
           {
             "type": "org.osbuild.ignition",
-            "options": {}
+            "options": {
+              "network": [
+                "systemd.firstboot=off",
+                "systemd.condition-first-boot=true"
+              ]
+            }
           },
           {
             "type": "org.osbuild.users",

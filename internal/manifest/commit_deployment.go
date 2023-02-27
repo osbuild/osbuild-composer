@@ -184,7 +184,17 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}
 
 	if p.ignition {
-		pipeline.AddStage(osbuild.NewIgnitionStage(&osbuild.IgnitionStageOptions{}))
+		pipeline.AddStage(osbuild.NewIgnitionStage(&osbuild.IgnitionStageOptions{
+			// This is a workaround to make the systemd believe it's firstboot when ignition runs on real firstboot.
+			// Right now, since we ship /etc/machine-id, systemd thinks it's not firstboot and ignition depends on it
+			// to run on the real firstboot to enable services from presets.
+			// Since this only applies to artifacts with ignition and changing machineid-compat at commit creation time may
+			// have undesiderable effect, we're doing it here as a stopgap. We may revisit this in the future.
+			Network: []string{
+				"systemd.firstboot=off",
+				"systemd.condition-first-boot=true",
+			},
+		}))
 	}
 
 	// if no root password is set, lock the root account
