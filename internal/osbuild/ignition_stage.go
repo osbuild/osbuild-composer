@@ -6,6 +6,7 @@ import (
 )
 
 type IgnitionStageOptions struct {
+	Network []string `json:"network,omitempty"`
 }
 
 func (IgnitionStageOptions) isStageOptions() {}
