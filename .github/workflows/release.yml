@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Upstream release
-        uses: osbuild/release-action@main
+        uses: osbuild/release-action@create-tag
         with:
           token: "${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}"
           slack_webhook_url: "${{ secrets.SLACK_WEBHOOK_URL }}"
