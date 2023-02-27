@@ -2,6 +2,7 @@
 set -euo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 TEST_ID=${1}
 S3_PROVIDER_CONFIG_FILE=${2}
@@ -12,15 +13,6 @@ S3_CA_BUNDLE=${5:-""}
 # Colorful output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function get_build_info() {
-    key="$1"
-    fname="$2"
-    if rpm -q --quiet weldr-client; then
-        key=".body${key}"
-    fi
-    jq -r "${key}" "${fname}"
 }
 
 TEMPDIR=$(mktemp -d)
