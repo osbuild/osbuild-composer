@@ -32,6 +32,11 @@ else
     sudo dnf install -y ansible koji
 fi
 
+# workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2162815
+if [[ "${ID}" == "fedora" && "$VERSION_ID" == "37" ]]; then
+    sudo dnf install -y nghttp2
+fi
+
 # workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2057769
 if [[ "$VERSION_ID" == "9.0" || "$VERSION_ID" == "9" ]]; then
     if [[ -f "/usr/share/qemu/firmware/50-edk2-ovmf-amdsev.json" ]]; then

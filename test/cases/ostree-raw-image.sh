@@ -889,6 +889,10 @@ ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
+# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
+greenprint "fix stdio file non-blocking issue"
+sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
+
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e edge_type=edge-raw-image -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
