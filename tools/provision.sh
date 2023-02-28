@@ -28,8 +28,10 @@ ge86=$(echo "${VERSION_ID}" | awk '{print $1 >= 8.6}')  # do a numerical compari
 echo -n "${ID}=${VERSION_ID} "
 if [[ "${ID}" == "rhel" || "${ID}" == "centos" ]] && (( ge86 )); then
     sudo dnf install -y ansible-core koji
+    sudo ansible-galaxy install andrewrothstein.etcd-cluster | cat -
 else
     sudo dnf install -y ansible koji
+    sudo ansible-galaxy install andrewrothstein.etcd-cluster | cat -
 fi
 
 # workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2057769
