@@ -71,7 +71,7 @@ function createReqFile() {
     "packages": [
       "postgresql",
       "dummy"
-    ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}
+    ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}${REPOSITORY_CUSTOMIZATION_BLOCK}
   },
   "image_request": {
     "architecture": "$ARCH",

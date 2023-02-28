@@ -63,7 +63,7 @@ function createReqFile() {
         "name": "user2",
         "key": "$(cat "${WORKDIR}/usertest.pub")"
       }
-    ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}
+    ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}${REPOSITORY_CUSTOMIZATION_BLOCK}
   },
   "image_request": {
       "architecture": "$ARCH",

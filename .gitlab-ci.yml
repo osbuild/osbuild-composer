@@ -571,11 +571,6 @@ filesystem.sh:
   variables:
     SCRIPT: filesystem.sh
 
-custom-repos.sh:
-  extends: .integration
-  variables:
-    SCRIPT: custom-repos.sh
-
 cross-distro.sh:
   extends: .integration
   variables:

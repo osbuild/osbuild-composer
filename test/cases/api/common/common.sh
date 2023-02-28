@@ -46,6 +46,8 @@ function _instanceCheck() {
 
   # Verify that directories and files customization worked as expected
   verify_dirs_files_customization "$_ssh"
+
+  verify_repository_customization "$_ssh"
 }
 
 WORKER_REFRESH_TOKEN_PATH="/etc/osbuild-worker/token"
@@ -126,6 +128,41 @@ function verify_dirs_files_customization {
 
   if [[ "$_error" == "1" ]]; then
     echo "Testing of custom directories and files failed."
+    exit 1
+  fi
+}
+
+# Verify that repository customizations worked as expected
+function verify_repository_customization {
+  echo "✔️ Checking custom repositories"
+  local _ssh="$1"
+  local _error=0
+
+  local _custom_repo_file="/etc/yum.repos.d/example.repo"
+  local _key_file_path="/etc/pki/rpm-gpg/RPM-GPG-KEY-example-0"
+
+  # verify that `/etc/yum.repos.d/example.repo` exists
+  # and contains path to gpg key file
+  local cust_repo_contains_key_path
+  cust_repo_contains_key_path=$($_ssh cat "$_custom_repo_file" | grep -c "${_key_file_path}")
+  if [[ "$cust_repo_contains_key_path" -le 0 ]]; then
+    echo "File $_custom_repo_file does not contain ${_key_file_path}}"
+    _error=1
+  fi
+
+  # verify that gpg key file has been saved to image
+  # and the contents match the expected gpg key
+  local local_key remote_key key_diff
+  local_key=$(echo -e "$CUSTOM_GPG_KEY")
+  remote_key=$($_ssh cat "${_key_file_path}")
+  key_diff=$(diff <(echo "$local_key") <(echo "$remote_key") | wc -l)
+  if [[ "$key_diff" -gt 0 ]]; then
+    echo "File $_key_file_path has wrong content"
+    _error=1
+  fi
+
+  if [[ "$_error" == "1" ]]; then
+    echo "Testing of custom repositories failed."
     exit 1
   fi
 }
