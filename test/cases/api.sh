@@ -367,6 +367,33 @@ EOF
 esac
 export DIR_FILES_CUSTOMIZATION_BLOCK
 
+# Define the customizations for the images here to not have to repeat them
+# in every image-type specific file.
+case "${IMAGE_TYPE}" in
+  # The Directories and Files customization is not supported for this image type.
+  "$IMAGE_TYPE_EDGE_INSTALLER")
+    CUSTOM_GPG_KEY=
+    REPOSITORY_CUSTOMIZATION_BLOCK=
+    ;;
+  *)
+    CUSTOM_GPG_KEY="-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQGiBGRBSJURBACzCoe9UNfxOUiFLq9b60weSBFdr39mLViscecDWATNvXtgRoK/\nxl/4qpayzALRCQ2Ek/pMrbKPF/3ngECuBv7S+rI4n/rIia4FNcqzYeZAz4DE4NP/\neUGvz49tWhmH17hX/rmF9kz5kLq2bDZI4GDgZW/oMDdt2ivj092Ljm9jRwCgyQy3\nWEK6RJvIcSEh9vbdwVdMPOcD/iHqNejTMFwGyZfCWB0eIOoxUOUn/ZZpELTL2UpW\nGduCf3txb5SkK7M+WDbb0S5IvNXoi0tc13STiD6Oxg2O9PkSvvYb+8zxlhNoSTwy\n54j7Rf5FlnQ3TAFfjtQ5LCx56LKK73j4RjvKW//ktm5n54exsgo9Ry/e12T46dRg\n7tIlA/91rzLm57Qyc73A7zjgIzef9O6V5ZzowC+pp/jfb5pS9hXgROekLkMgX0vg\niA5rM5OpqK4bArVP1lRWnLyvghwO+TW763RVuXlS0scfzMy4g0NgrG6j7TIOKEqz\n4xQxOuwkudqiQr/kOqKuLxQBXa+5MJkyhfPmqYw5wpqyCwFa/7Q4b3NidWlsZCB0\nZXN0IChvc2J1aWxkIHRlc3QgZ3Bna2V5KSA8b3NidWlsZEBleGFtcGxlLmNvbT6I\newQTEQIAOxYhBGB8woiEPRKBO8Cr31lulpQgMejzBQJkQUiVAhsjBQsJCAcCAiIC\nBhUKCQgLAgQWAgMBAh4HAheAAAoJEFlulpQgMejzapMAoLmUg1mNDTRUaCrN/fzm\nHYLHL6jkAJ9pEKkJQiHB6SfD0fkiD2GkELYLubkBDQRkQUiVEAQAlAAXrQ572vuw\nxI3W8GSZmOQiAYOQmOKRloLEy6VZ3NSOb9y2TXj33QTkJBPOM17AzB7E+YjZrpUt\ngl6LlXmfjMcJAcXhFaUBCilAcMwMlLl7DtnSkLnLIXYmHiN0v83BH/H0EPutOc5l\n0QIyugutifp9SJz2+EWpC4bjA7GFkQ8AAwUD/1tLEGqCJ37O8gfzYt2PWkqBEoOY\n0Z3zwVS6PWW/IIkak9dAJ0iX5NMeFWpzFNfviDPHqhEdUR55zsxyUZIZlCX5jwmA\nt7qm3cbH4HNU1Ogq3Q9hykbTPWPZVkpvNm/TO8TA2brhkz3nuS8Hbmh+rjXFOSZj\nDQBUxItuuj2hhpQEiGAEGBECACAWIQRgfMKIhD0SgTvAq99ZbpaUIDHo8wUCZEFI\nlQIbDAAKCRBZbpaUIDHo83fQAKDHgFIaggaNsvDQkj7vMX0fecHRhACfS9Bvxn2W\nWSb6T+gChmYBseZwk/k=\n=DQ3i\n-----END PGP PUBLIC KEY BLOCK-----"
+    REPOSITORY_CUSTOMIZATION_BLOCK=$(cat <<EOF
+,
+    "custom_repositories": [{
+        "id": "example",
+        "name": "Example repo",
+        "baseurl": [ "http://example.com" ],
+        "gpgkey": [ "$CUSTOM_GPG_KEY" ],
+        "check_gpg": true,
+        "enabled": true
+    }]
+EOF
+)
+    ;;
+esac
+export CUSTOM_GPG_KEY
+export REPOSITORY_CUSTOMIZATION_BLOCK
+
 # generate a temp key for user tests
 ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
 
