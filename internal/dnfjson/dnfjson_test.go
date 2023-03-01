@@ -38,7 +38,7 @@ func TestDepsolver(t *testing.T) {
 	assert := assert.New(t)
 
 	tmpdir := t.TempDir()
-	solver := NewSolver("platform:el9", "9", "x86_64", tmpdir)
+	solver := NewSolver("platform:el9", "9", "x86_64", "rhel9.0", tmpdir)
 	solver.SetDNFJSONPath("../../dnf-json")
 
 	{ // single depsolve
@@ -346,7 +346,7 @@ func TestMakeDepsolveRequest(t *testing.T) {
 			err: true,
 		},
 	}
-	solver := NewSolver("", "", "", "")
+	solver := NewSolver("", "", "", "", "")
 	for idx, tt := range tests {
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
 			req, _, err := solver.makeDepsolveRequest(tt.packageSets)
@@ -532,7 +532,7 @@ func TestErrorRepoInfo(t *testing.T) {
 		},
 	}
 
-	solver := NewSolver("f36", "36", "x86_64", "/tmp/cache")
+	solver := NewSolver("f36", "36", "x86_64", "fedora-36", "/tmp/cache")
 	solver.SetDNFJSONPath("../../dnf-json")
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
@@ -565,7 +565,7 @@ func TestRepoConfigHash(t *testing.T) {
 }
 
 func TestRequestHash(t *testing.T) {
-	solver := NewSolver("f36", "36", "x86_64", "/tmp/cache")
+	solver := NewSolver("f36", "36", "x86_64", "fedora-36", "/tmp/cache")
 	repos := []rpmmd.RepoConfig{
 		rpmmd.RepoConfig{
 			Name:      "A test repository",

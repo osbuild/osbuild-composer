@@ -245,7 +245,7 @@ func resolveContainers(containers []blueprint.Container, archName string) ([]con
 }
 
 func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
-	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch, cacheDir)
+	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch, d.Name(), cacheDir)
 	solver.SetDNFJSONPath("./dnf-json")
 	packageSets := imageType.PackageSets(bp, options, repos)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)

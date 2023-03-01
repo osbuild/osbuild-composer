@@ -20,7 +20,7 @@ type DepsolveJobImpl struct {
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
 func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
-	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch)
+	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	for name, pkgSet := range packageSets {

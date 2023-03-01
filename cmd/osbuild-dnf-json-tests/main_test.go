@@ -38,7 +38,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 		t.Run(archStr, func(t *testing.T) {
 			arch, err := cs9.GetArch(archStr)
 			require.NoError(t, err)
-			solver := baseSolver.NewWithConfig(cs9.ModulePlatformID(), cs9.Releasever(), archStr)
+			solver := baseSolver.NewWithConfig(cs9.ModulePlatformID(), cs9.Releasever(), archStr, cs9.Name())
 			for _, imgTypeStr := range arch.ListImageTypes() {
 				t.Run(imgTypeStr, func(t *testing.T) {
 					imgType, err := arch.GetImageType(imgTypeStr)
@@ -75,7 +75,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 
 	// Set up temporary directory for rpm/dnf cache
 	dir := t.TempDir()
-	solver := dnfjson.NewSolver(cs9.ModulePlatformID(), cs9.Releasever(), distro.X86_64ArchName, dir)
+	solver := dnfjson.NewSolver(cs9.ModulePlatformID(), cs9.Releasever(), distro.X86_64ArchName, cs9.Name(), dir)
 
 	repos, err := rpmmd.LoadRepositories([]string{repoDir}, cs9.Name())
 	require.NoErrorf(t, err, "Failed to LoadRepositories %v", cs9.Name())
