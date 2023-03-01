@@ -20,11 +20,6 @@
       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
       disable_gpg_check: yes
 
-  - name: Subscribe
-    community.general.redhat_subscription:
-      activationkey: "{{ RH_ACTIVATION_KEY }}"
-      org_id: "{{ RH_ORG_ID }}"
-
   # Upgrading authselect without --allowerasing currently fails on RHEL 9.1 with RHUI repos
   # https://issues.redhat.com/browse/RHUIOPS-84
   # TODO: remove this once the issue is fixed
