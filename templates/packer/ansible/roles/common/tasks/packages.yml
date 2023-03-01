@@ -24,18 +24,6 @@
   # if osbuild_commit is not defined, osbuild from distribution repositories is installed
   when: osbuild_commit is defined
 
-# Upgrading authselect without --allowerasing currently fails on RHEL 9.1 with RHUI repos
-# https://issues.redhat.com/browse/RHUIOPS-84
-# TODO: remove this once the issue is fixed
-- name: Upgrade authselect package
-  dnf:
-    name: authselect
-    state: latest
-    allowerasing: yes
-  register: result
-  retries: 5
-  until: result is success
-
 - name: Upgrade all packages
   package:
     name: "*"
