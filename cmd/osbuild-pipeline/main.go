@@ -177,7 +177,7 @@ func main() {
 		panic("os.UserHomeDir(): " + err.Error())
 	}
 
-	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), path.Join(home, ".cache/osbuild-composer/rpmmd"))
+	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch.Name(), d.Name(), path.Join(home, ".cache/osbuild-composer/rpmmd"))
 	solver.SetDNFJSONPath(findDnfJsonBin())
 
 	// Set cache size to 3 GiB

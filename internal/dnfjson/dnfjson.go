@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -68,12 +69,13 @@ func (s *BaseSolver) SetDNFJSONPath(cmd string, args ...string) {
 // NewWithConfig initialises a Solver with the platform information and the
 // BaseSolver's subscription info, cache directory, and dnf-json path.
 // Also loads system subscription information.
-func (bs *BaseSolver) NewWithConfig(modulePlatformID string, releaseVer string, arch string) *Solver {
+func (bs *BaseSolver) NewWithConfig(modulePlatformID, releaseVer, arch, distro string) *Solver {
 	s := new(Solver)
 	s.BaseSolver = *bs
 	s.modulePlatformID = modulePlatformID
 	s.arch = arch
 	s.releaseVer = releaseVer
+	s.distro = distro
 	subs, _ := rhsm.LoadSystemSubscriptions()
 	s.subscriptions = subs
 	return s
@@ -102,13 +104,29 @@ type Solver struct {
 	// system and required for subscription support.
 	releaseVer string
 
+	// Full distribution string, eg. fedora-38, used to create separate dnf cache directories
+	// for each distribution.
+	distro string
+
 	subscriptions *rhsm.Subscriptions
 }
 
 // Create a new Solver with the given configuration. Initialising a Solver also loads system subscription information.
-func NewSolver(modulePlatformID string, releaseVer string, arch string, cacheDir string) *Solver {
+func NewSolver(modulePlatformID, releaseVer, arch, distro, cacheDir string) *Solver {
 	s := NewBaseSolver(cacheDir)
-	return s.NewWithConfig(modulePlatformID, releaseVer, arch)
+	return s.NewWithConfig(modulePlatformID, releaseVer, arch, distro)
+}
+
+// GetCacheDir returns a distro specific rpm cache directory
+// It ensures that the distro name is below the root cache directory, and if there is
+// a problem it returns the root cache intead of an error.
+func (s *Solver) GetCacheDir() string {
+	b := filepath.Base(s.distro)
+	if b == "." || b == "/" {
+		return s.cache.root
+	}
+
+	return filepath.Join(s.cache.root, s.distro)
 }
 
 // Depsolve the list of required package sets with explicit excludes using
@@ -376,7 +394,7 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[
 		Command:          "depsolve",
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
-		CacheDir:         s.cache.root,
+		CacheDir:         s.GetCacheDir(),
 		Arguments:        args,
 	}
 
@@ -393,7 +411,7 @@ func (s *Solver) makeDumpRequest(repos []rpmmd.RepoConfig) (*Request, error) {
 		Command:          "dump",
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
-		CacheDir:         s.cache.root,
+		CacheDir:         s.GetCacheDir(),
 		Arguments: arguments{
 			Repos: dnfRepos,
 		},
@@ -411,7 +429,7 @@ func (s *Solver) makeSearchRequest(repos []rpmmd.RepoConfig, packages []string) 
 		Command:          "search",
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
-		CacheDir:         s.cache.root,
+		CacheDir:         s.GetCacheDir(),
 		Arguments: arguments{
 			Repos: dnfRepos,
 			Search: searchArgs{

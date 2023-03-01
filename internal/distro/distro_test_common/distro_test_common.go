@@ -164,7 +164,11 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, cacheDir, dnfJsonPath string) map[string][]rpmmd.PackageSpec {
 	imgPackageSets := imageType.PackageSets(bp, options, repos)
 
-	solver := dnfjson.NewSolver(imageType.Arch().Distro().ModulePlatformID(), imageType.Arch().Distro().Releasever(), imageType.Arch().Name(), cacheDir)
+	solver := dnfjson.NewSolver(imageType.Arch().Distro().ModulePlatformID(),
+		imageType.Arch().Distro().Releasever(),
+		imageType.Arch().Name(),
+		imageType.Arch().Distro().Name(),
+		cacheDir)
 	solver.SetDNFJSONPath(dnfJsonPath)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	for name, packages := range imgPackageSets {
