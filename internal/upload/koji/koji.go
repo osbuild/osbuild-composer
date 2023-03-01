@@ -478,24 +478,17 @@ func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool
 		}
 	}
 
-	if !shouldRetry {
+	if !shouldRetry && !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
 		logrus.Info("Not retrying: ", resp.Status)
 	}
 
 	return shouldRetry, retErr
 }
 
-func logUnsuccessfulResponses(logger rh.Logger, resp *http.Response) {
-	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
-		logger.Printf("Unsuccessful request: ", resp)
-	}
-}
-
 func createCustomRetryableClient() *rh.Client {
 	client := rh.NewClient()
 	client.Logger = rh.LeveledLogger(&LeveledLogrus{logrus.StandardLogger()})
 	client.CheckRetry = customCheckRetry
-	client.ResponseLogHook = logUnsuccessfulResponses
 	return client
 }
 
