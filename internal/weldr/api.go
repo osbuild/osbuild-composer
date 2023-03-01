@@ -305,8 +305,10 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // This starts a background depsolve for all known distros in order to preload the
 // metadata.
 func (api *API) PreloadMetadata() {
+	log.Printf("Starting metadata preload goroutines")
 	for _, distro := range api.distros {
 		go func(distro string) {
+			startTime := time.Now()
 			d := api.getDistro(distro)
 			if d == nil {
 				log.Printf("GetDistro - unknown distribution: %s", distro)
@@ -324,6 +326,7 @@ func (api *API) PreloadMetadata() {
 			if err != nil {
 				log.Printf("Problem preloading distro metadata for %s: %s", distro, err)
 			}
+			log.Printf("Finished preload of %s in %v", distro, time.Since(startTime))
 		}(distro)
 	}
 }
