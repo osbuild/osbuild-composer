@@ -70,7 +70,15 @@ func newRPMCache(path string, maxSize uint64) *rpmCache {
 
 // updateInfo updates the repoPaths and repoRecency fields of the rpmCache.
 func (r *rpmCache) updateInfo() {
-	cacheEntries, _ := os.ReadDir(r.root)
+	// Top level of the cache is now used for separate distributions
+	dirs, _ := os.ReadDir(r.root)
+	for _, d := range dirs {
+		r.updateCacheDirInfo(filepath.Join(r.root, d.Name()))
+	}
+}
+
+func (r *rpmCache) updateCacheDirInfo(path string) {
+	cacheEntries, _ := os.ReadDir(path)
 
 	// each repository has multiple cache entries (3 on average), so using the
 	// number of cacheEntries to allocate the map and ID slice is a high upper
@@ -103,7 +111,7 @@ func (r *rpmCache) updateInfo() {
 			repoIDs = append(repoIDs, repoID)
 		}
 		mtime := eInfo.ModTime()
-		ePath := filepath.Join(r.root, entry.Name())
+		ePath := filepath.Join(path, entry.Name())
 
 		// calculate and add entry size
 		size, err := dirSize(ePath)
@@ -180,17 +188,23 @@ func (r *rpmCache) touchRepo(repoID string, t time.Time) error {
 		return err
 	}
 
-	// we only touch the top-level directories and files of the cache
-	cacheEntries, err := os.ReadDir(r.root)
+	distroDirs, err := os.ReadDir(r.root)
 	if err != nil {
 		return err
 	}
+	for _, d := range distroDirs {
+		// we only touch the top-level directories and files of the cache
+		cacheEntries, err := os.ReadDir(filepath.Join(r.root, d.Name()))
+		if err != nil {
+			return err
+		}
 
-	for _, cacheEntry := range cacheEntries {
-		if repoGlob.Match(cacheEntry.Name()) {
-			path := filepath.Join(r.root, cacheEntry.Name())
-			if err := os.Chtimes(path, t, t); err != nil {
-				return err
+		for _, cacheEntry := range cacheEntries {
+			if repoGlob.Match(cacheEntry.Name()) {
+				path := filepath.Join(r.root, d.Name(), cacheEntry.Name())
+				if err := os.Chtimes(path, t, t); err != nil {
+					return err
+				}
 			}
 		}
 	}

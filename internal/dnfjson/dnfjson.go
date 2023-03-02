@@ -48,7 +48,7 @@ type BaseSolver struct {
 // method.
 func NewBaseSolver(cacheDir string) *BaseSolver {
 	return &BaseSolver{
-		cache:       newRPMCache(cacheDir, 524288000), // 500 MiB
+		cache:       newRPMCache(cacheDir, 1024*1024*1024), // 1 GiB
 		dnfJsonCmd:  []string{"/usr/libexec/osbuild-composer/dnf-json"},
 		resultCache: NewDNFCache(60 * time.Second),
 	}

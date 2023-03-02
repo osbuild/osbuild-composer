@@ -157,8 +157,10 @@ func TestCacheRead(t *testing.T) {
 	for name, cfg := range testCfgs {
 		t.Run(name, func(t *testing.T) {
 			testCacheRoot := t.TempDir()
-			s := createTestCache(testCacheRoot, cfg)
+			// Cache is now per-distro, use the name of the config as a distro name
+			s := createTestCache(filepath.Join(testCacheRoot, name), cfg)
 
+			// Cache covers all distros, pass in top directory
 			cache := newRPMCache(testCacheRoot, 1048576) // 1 MiB, but doesn't matter for this test
 
 			nrepos := len(getRepoIDs(cfg))
@@ -259,8 +261,12 @@ func TestCacheCleanup(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 			testCacheRoot := t.TempDir()
-			createTestCache(testCacheRoot, cfg.cache)
+			// Cache is now per-distro, use the name of the config as a distro name
+			createTestCache(filepath.Join(testCacheRoot, name), cfg.cache)
+
+			// Cache covers all distros, pass in top directory
 			cache := newRPMCache(testCacheRoot, cfg.maxSize)
+
 			err := cache.shrink()
 			assert.NoError(err)
 
