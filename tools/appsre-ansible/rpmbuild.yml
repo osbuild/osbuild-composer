@@ -20,6 +20,19 @@
       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
       disable_gpg_check: yes
 
+  - name: Disable RHUI repos
+    become: yes
+    shell: >-
+      dnf config-manager \
+        --set-disabled rhel-9-baseos-rhui-rpms \
+        --set-disabled rhel-9-appstream-rhui-rpms
+
+  # RHEL mock templates don't work on RHUI, they use the CDN repos
+  - name: Subscribe
+    community.general.redhat_subscription:
+      activationkey: "{{ RH_ACTIVATION_KEY }}"
+      org_id: "{{ RH_ORG_ID }}"
+
   - name: Upgrade all packages
     package:
       name: "*"
