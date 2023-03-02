@@ -1,0 +1,7 @@
+---
+
+- name: Unsubscribe
+  tags:
+    - subscribe
+  community.general.redhat_subscription:
+    state: absent
