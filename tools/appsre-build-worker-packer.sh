@@ -57,7 +57,7 @@ function cleanup {
 trap cleanup EXIT
 
 # Use prebuilt rpms on CI
-SKIP_TAGS="rpmcopy"
+SKIP_TAGS="rpmcopy,subscribe"
 if [ "$ON_JENKINS" = true ]; then
     # Build RPMs when running on AppSRE's infra
     BUILD_RPMS=true
@@ -143,5 +143,7 @@ $CONTAINER_RUNTIME run --rm \
                    -e PKR_VAR_composer_commit="$COMMIT_SHA" \
                    -e PKR_VAR_ansible_skip_tags="$SKIP_TAGS" \
                    -e PKR_VAR_skip_create_ami="$SKIP_CREATE_AMI" \
+                   -e PKR_VAR_rh_activation_key="$RH_ACTIVATION_KEY" \
+                   -e PKR_VAR_rh_org_id="$RH_ORG_ID" \
                    -e PYTHONUNBUFFERED=1 \
                    "packer:$COMMIT_SHA" /osbuild-composer/tools/appsre-worker-packer-container.sh

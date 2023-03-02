@@ -1,0 +1,26 @@
+---
+# Subscribe the machine to avoid a mismatch between the RPMs (which are build using CDN content) and
+# the packer instances (RHUI, which might be older).
+- name: Subscribe
+  tags:
+    - subscribe
+  community.general.redhat_subscription:
+    activationkey: "{{ RH_ACTIVATION_KEY }}"
+    org_id: "{{ RH_ORG_ID }}"
+
+- name: Enable repo mgmt through subman
+  become: yes
+  tags:
+    - subscribe
+  shell: >-
+    subscription-manager config --rhsm.manage_repos 1
+
+- name: Enable cdn repos
+  become: yes
+  tags:
+    - subscribe
+  shell: >-
+    subscription-manager repos \
+      --enable rhel-9-for-x86_64-appstream-rpms \
+      --enable rhel-9-for-x86_64-baseos-rpms \
+      --enable codeready-builder-for-rhel-9-x86_64-rpms

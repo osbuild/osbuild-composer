@@ -1,5 +1,8 @@
 ---
 
+# Subscribe
+- include_tasks: subscribe.yml
+
 # Install various software packages.
 - include_tasks: packages.yml
 
@@ -8,6 +11,9 @@
 
 # Configure the worker.
 - include_tasks: worker-config.yml
+
+# Unsubscribe
+- include_tasks: unsubscribe.yml
 
 - name: Ensure SELinux contexts are updated
   command: restorecon -Rv /etc

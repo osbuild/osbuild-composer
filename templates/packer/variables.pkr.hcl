@@ -37,3 +37,15 @@ variable "ansible_skip_tags" {
   type = string
   default = ""
 }
+
+# Subscription variables
+
+variable "rh_org_id" {
+  type = string
+  default = ""
+}
+
+variable "rh_activation_key" {
+  type = string
+  default = ""
+}
