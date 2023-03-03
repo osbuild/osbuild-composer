@@ -43,6 +43,7 @@ credentials = "/etc/osbuild-worker/gcp-creds"
 
 [azure]
 credentials = "/etc/osbuild-worker/azure-creds"
+upload_threads = 8
 
 [aws]
 credentials = "/etc/osbuild-worker/aws-creds"
@@ -88,7 +89,8 @@ offline_token = "/etc/osbuild-worker/offline_token"
 					Credentials: "/etc/osbuild-worker/gcp-creds",
 				},
 				Azure: &azureConfig{
-					Credentials: "/etc/osbuild-worker/azure-creds",
+					Credentials:   "/etc/osbuild-worker/azure-creds",
+					UploadThreads: 8,
 				},
 				AWS: &awsConfig{
 					Credentials: "/etc/osbuild-worker/aws-creds",
@@ -141,6 +143,17 @@ offline_token = "/etc/osbuild-worker/offline_token"
 		_, err := parseConfig(configFile)
 		require.Error(t, err)
 	})
+
+	t.Run("wrong Azure config", func(t *testing.T) {
+		configFile := prepareConfig(t, `
+[azure]
+credentials = "/etc/osbuild-worker/azure-creds"
+upload_threads = -5
+`)
+		_, err := parseConfig(configFile)
+		require.Error(t, err)
+	})
+
 }
 
 func prepareConfig(t *testing.T, config string) string {
