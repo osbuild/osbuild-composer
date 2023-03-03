@@ -12,8 +12,8 @@
 # Configure the worker.
 - include_tasks: worker-config.yml
 
-# Unsubscribe
-- include_tasks: unsubscribe.yml
+# Unregister
+- include_tasks: unregister.yml
 
 - name: Ensure SELinux contexts are updated
   command: restorecon -Rv /etc
