@@ -14,6 +14,44 @@ import (
 	"github.com/gobwas/glob"
 )
 
+// CleanupOldCacheDirs will remove cache directories for unsupported distros
+// eg. Once support for a fedora release stops and it is removed, this will
+// delete its directory under root.
+//
+// A happy side effect of this is that it will delete old cache directories
+// and files from before the switch to per-distro cache directories.
+//
+// NOTE: This does not return any errors. This is because the most common one
+// will be a nonexistant directory which will be created later, during initial
+// cache creation. Any other errors like permission issues will be caught by
+// later use of the cache. eg. touchRepo
+func CleanupOldCacheDirs(root string, distros []string) {
+	dirs, _ := os.ReadDir(root)
+
+	for _, e := range dirs {
+		if strSliceContains(distros, e.Name()) {
+			// known distro
+			continue
+		}
+		if e.IsDir() {
+			// Remove the directory and everything under it
+			_ = os.RemoveAll(filepath.Join(root, e.Name()))
+		} else {
+			_ = os.Remove(filepath.Join(root, e.Name()))
+		}
+	}
+}
+
+// strSliceContains returns true if the elem string is in the slc array
+func strSliceContains(slc []string, elem string) bool {
+	for _, s := range slc {
+		if elem == s {
+			return true
+		}
+	}
+	return false
+}
+
 // global cache locker
 var cacheLocks sync.Map
 
@@ -69,8 +107,12 @@ func newRPMCache(path string, maxSize uint64) *rpmCache {
 }
 
 // updateInfo updates the repoPaths and repoRecency fields of the rpmCache.
+//
+// NOTE: This does not return any errors. This is because the most common one
+// will be a nonexistant directory which will be created later, during initial
+// cache creation. Any other errors like permission issues will be caught by
+// later use of the cache. eg. touchRepo
 func (r *rpmCache) updateInfo() {
-	// Top level of the cache is now used for separate distributions
 	dirs, _ := os.ReadDir(r.root)
 	for _, d := range dirs {
 		r.updateCacheDirInfo(filepath.Join(r.root, d.Name()))
@@ -78,6 +120,7 @@ func (r *rpmCache) updateInfo() {
 }
 
 func (r *rpmCache) updateCacheDirInfo(path string) {
+	// See updateInfo NOTE on error handling
 	cacheEntries, _ := os.ReadDir(path)
 
 	// each repository has multiple cache entries (3 on average), so using the

@@ -71,6 +71,9 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	c.distros = distroregistry.NewDefault()
 	logrus.Infof("Loaded %d distros", len(c.distros.List()))
 
+	// Clean up the cache, removes unknown distros and files
+	dnfjson.CleanupOldCacheDirs(path.Join(c.cacheDir, "rpmmd"), c.distros.List())
+
 	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
 	c.solver.SetDNFJSONPath(c.config.DNFJson)
 

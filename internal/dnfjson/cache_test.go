@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -171,15 +172,6 @@ func TestCacheRead(t *testing.T) {
 	}
 }
 
-func strSliceContains(slc []string, elem string) bool {
-	for _, s := range slc {
-		if elem == s {
-			return true
-		}
-	}
-	return false
-}
-
 func sizeSum(cfg testCache, repoIDFilter ...string) uint64 {
 	var sum uint64
 	for path, info := range cfg {
@@ -328,4 +320,65 @@ func TestDNFCacheCleanup(t *testing.T) {
 	assert.Equal(t, 0, len(cache.results))
 	_, ok := cache.Get("notreallyahash")
 	assert.False(t, ok)
+}
+
+func TestCleanupOldCacheDirs(t *testing.T) {
+	// Run the cleanup without the cache present and with dummy distro names
+	CleanupOldCacheDirs("/var/tmp/test-no-cache-rpmmd/", []string{"fedora-37", "fedora-38"})
+
+	testCacheRoot := t.TempDir()
+	// Make all the test caches under root, using their keys as a distro name.
+	var distros []string
+	for name, cfg := range testCfgs {
+		// Cache is now per-distro, use the name of the config as a distro name
+		createTestCache(filepath.Join(testCacheRoot, name), cfg)
+		distros = append(distros, name)
+	}
+	sort.Strings(distros)
+
+	// Add the content of the 'fake-real' cache to the top directory
+	// this will be used to simulate an old cache without distro subdirs
+	createTestCache(testCacheRoot, testCfgs["fake-real"])
+
+	CleanupOldCacheDirs(testCacheRoot, distros)
+
+	// The fake-real files under the root directory should all be gone.
+	for path := range testCfgs["fake-real"] {
+		_, err := os.Stat(filepath.Join(testCacheRoot, path))
+		assert.NotNil(t, err)
+	}
+
+	// The distro cache files should all still be present
+	for name, cfg := range testCfgs {
+		for path := range cfg {
+			_, err := os.Stat(filepath.Join(testCacheRoot, name, path))
+			assert.Nil(t, err)
+		}
+	}
+
+	// Remove the fake-real distro from the list
+	// This simulates retiring an older distribution and cleaning up its cache
+	distros = []string{}
+	for name := range testCfgs {
+		if name == "fake-real" {
+			continue
+		}
+		distros = append(distros, name)
+	}
+	// Cleanup should now remove the fake-real subdirectory and files
+	CleanupOldCacheDirs(testCacheRoot, distros)
+
+	// The remaining distro's cache files should all still be present
+	for _, name := range distros {
+		for path := range testCfgs[name] {
+			_, err := os.Stat(filepath.Join(testCacheRoot, name, path))
+			assert.Nil(t, err)
+		}
+	}
+
+	// But the fake-real ones should be gone
+	for path := range testCfgs["fake-real"] {
+		_, err := os.Stat(filepath.Join(testCacheRoot, "fake-real", path))
+		assert.NotNil(t, err)
+	}
 }
