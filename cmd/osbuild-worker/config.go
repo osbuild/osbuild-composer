@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,7 +29,8 @@ type gcpConfig struct {
 }
 
 type azureConfig struct {
-	Credentials string `toml:"credentials"`
+	Credentials   string `toml:"credentials"`
+	UploadThreads int    `toml:"upload_threads"`
 }
 
 type awsConfig struct {
@@ -88,6 +91,15 @@ func parseConfig(file string) (*workerConfig, error) {
 		}
 
 		logrus.Info("Configuration file not found, using defaults")
+	}
+
+	// set defaults for Azure only if the config section is present
+	if config.Azure != nil {
+		if config.Azure.UploadThreads == 0 {
+			config.Azure.UploadThreads = azure.DefaultUploadThreads
+		} else if config.Azure.UploadThreads < 0 {
+			return nil, fmt.Errorf("invalid number of Azure upload threads: %d", config.Azure.UploadThreads)
+		}
 	}
 
 	return &config, nil

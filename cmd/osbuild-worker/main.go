@@ -341,12 +341,13 @@ func main() {
 	// Load Azure credentials early. If the credentials file is malformed,
 	// we can report the issue early instead of waiting for the first osbuild
 	// job with the org.osbuild.azure.image target.
-	var azureCredentials *azure.Credentials
+	var azureConfig AzureConfiguration
 	if config.Azure != nil {
-		azureCredentials, err = azure.ParseAzureCredentialsFile(config.Azure.Credentials)
+		azureConfig.Creds, err = azure.ParseAzureCredentialsFile(config.Azure.Credentials)
 		if err != nil {
 			logrus.Fatalf("cannot load azure credentials: %v", err)
 		}
+		azureConfig.UploadThreads = config.Azure.UploadThreads
 	}
 
 	// If the credentials are not provided in the configuration, then the
@@ -437,7 +438,7 @@ func main() {
 			Output:      output,
 			KojiServers: kojiServers,
 			GCPConfig:   gcpConfig,
-			AzureCreds:  azureCredentials,
+			AzureConfig: azureConfig,
 			AWSCreds:    awsCredentials,
 			AWSBucket:   awsBucket,
 			S3Config: S3Configuration{

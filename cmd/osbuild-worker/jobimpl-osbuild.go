@@ -53,12 +53,17 @@ type ContainersConfiguration struct {
 	TLSVerify    *bool
 }
 
+type AzureConfiguration struct {
+	Creds         *azure.Credentials
+	UploadThreads int
+}
+
 type OSBuildJobImpl struct {
 	Store            string
 	Output           string
 	KojiServers      map[string]kojiServer
 	GCPConfig        GCPConfiguration
-	AzureCreds       *azure.Credentials
+	AzureConfig      AzureConfiguration
 	AWSCreds         string
 	AWSBucket        string
 	S3Config         S3Configuration
@@ -639,12 +644,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResult = target.NewAzureImageTargetResult(nil)
 			ctx := context.Background()
 
-			if impl.AzureCreds == nil {
+			if impl.AzureConfig.Creds == nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, "osbuild job has org.osbuild.azure.image target but this worker doesn't have azure credentials", nil)
 				break
 			}
 
-			c, err := azure.NewClient(*impl.AzureCreds, targetOptions.TenantID)
+			c, err := azure.NewClient(*impl.AzureConfig.Creds, targetOptions.TenantID)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, err.Error(), nil)
 				break
@@ -738,7 +743,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 					BlobName:       blobName,
 				},
 				imagePath,
-				azure.DefaultUploadThreads,
+				impl.AzureConfig.UploadThreads,
 			)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, fmt.Sprintf("uploading the image failed: %v", err), nil)
