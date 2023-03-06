@@ -1,4 +1,4 @@
-// +build tools
+//go:build tools
 
 // This file is here to just explicitly tell `go mod vendor` that we depend
 // on oapi-codegen. Without this file, `go generate ./...` in Go >= 1.14 gets

@@ -1,5 +1,4 @@
 //go:build !darwin
-// +build !darwin
 
 // Copied from https://github.com/amoghe/go-crypt/blob/b3e291286513a0c993f7c4dd7060d327d2d56143/crypt_r.go
 // Original sources are under MIT license:

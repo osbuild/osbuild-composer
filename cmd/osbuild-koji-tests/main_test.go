@@ -4,7 +4,6 @@
 // koji.sh test because it needs a working Koji instance to pass.
 
 //go:build integration
-// +build integration
 
 package main
 
