@@ -2,7 +2,6 @@
 // Copyright (C) 2020 by Red Hat, Inc.
 
 //go:build integration
-// +build integration
 
 package client
 

@@ -1,7 +1,6 @@
 // This package contains tests related to dnf-json and rpmmd package.
 
 //go:build integration
-// +build integration
 
 package main
 
