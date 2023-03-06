@@ -4,10 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"flag"
-	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -46,7 +46,7 @@ func main() {
 			E   string `json:"e"`
 		}
 
-		rsaPubBytes, err := ioutil.ReadFile(rsaPubPem)
+		rsaPubBytes, err := os.ReadFile(rsaPubPem)
 		if err != nil {
 			panic(err)
 		}
@@ -116,7 +116,7 @@ func main() {
 		token := jwt.NewWithClaims(jwt.SigningMethodRS256, cc)
 		token.Header["kid"] = "key-id"
 
-		rsaPrivBytes, err := ioutil.ReadFile(rsaPem)
+		rsaPrivBytes, err := os.ReadFile(rsaPem)
 		if err != nil {
 			panic(err)
 		}

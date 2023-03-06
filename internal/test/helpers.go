@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -107,7 +107,7 @@ func TestRouteWithReply(t *testing.T, api http.Handler, external bool, method, p
 	}
 
 	var err error
-	replyJSON, err = ioutil.ReadAll(resp.Body)
+	replyJSON, err = io.ReadAll(resp.Body)
 	require.NoErrorf(t, err, "%s: could not read response body", path)
 
 	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s: %v", path, string(replyJSON))
@@ -147,7 +147,7 @@ func TestTOMLRoute(t *testing.T, api http.Handler, external bool, method, path, 
 		t.Skip("This test is for internal testing only")
 	}
 
-	replyTOML, err := ioutil.ReadAll(resp.Body)
+	replyTOML, err := io.ReadAll(resp.Body)
 	require.NoErrorf(t, err, "%s: could not read response body", path)
 
 	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s: %v", path, string(replyTOML))
@@ -177,7 +177,7 @@ func TestNonJsonRoute(t *testing.T, api http.Handler, external bool, method, pat
 	response := SendHTTP(api, external, method, path, body)
 	assert.Equalf(t, expectedStatus, response.StatusCode, "%s: status mismatch", path)
 
-	responseBodyBytes, err := ioutil.ReadAll(response.Body)
+	responseBodyBytes, err := io.ReadAll(response.Body)
 	require.NoErrorf(t, err, "%s: could not read response body", path)
 
 	responseBody := string(responseBodyBytes)
@@ -209,7 +209,7 @@ func CompareImageTypes() cmp.Option {
 
 // Create a temporary repository
 func SetUpTemporaryRepository() (string, error) {
-	dir, err := ioutil.TempDir("/tmp", "osbuild-composer-test-")
+	dir, err := os.MkdirTemp("/tmp", "osbuild-composer-test-")
 	if err != nil {
 		return "", err
 	}

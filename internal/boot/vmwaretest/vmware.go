@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package vmwaretest
@@ -5,7 +6,7 @@ package vmwaretest
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -130,7 +131,7 @@ func runWithStdout(args []string) (string, int) {
 	retcode := cli.Run(args)
 
 	w.Close()
-	out, _ := ioutil.ReadAll(r)
+	out, _ := io.ReadAll(r)
 	os.Stdout = oldStdout
 
 	return strings.TrimSpace(string(out)), retcode

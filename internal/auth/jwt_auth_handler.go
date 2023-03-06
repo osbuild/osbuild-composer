@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"github.com/openshift-online/ocm-sdk-go/logging"
@@ -39,7 +39,7 @@ func BuildJWTAuthHandler(keysURLs []string, caFile, aclFile string, exclude []st
 	if caFile != "" {
 		logger.Warn(context.Background(),
 			"A custom CA is specified to verify jwt tokens, this shouldn't be enabled in a production setting.")
-		caPEM, err := ioutil.ReadFile(caFile)
+		caPEM, err := os.ReadFile(caFile)
 		if err != nil {
 			return nil, err
 		}

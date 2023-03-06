@@ -2,7 +2,6 @@ package jsondb
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -26,14 +25,16 @@ func TestWriteFileAtomically(t *testing.T) {
 		require.NoError(t, err)
 
 		// ensure that there are no stray temporary files
-		infos, err := ioutil.ReadDir(dir)
+		infos, err := os.ReadDir(dir)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(infos))
 		require.Equal(t, "octopus", infos[0].Name())
-		require.Equal(t, perm, infos[0].Mode())
+		i, err := infos[0].Info()
+		require.Nil(t, err)
+		require.Equal(t, perm, i.Mode())
 
 		filename := path.Join(dir, "octopus")
-		contents, err := ioutil.ReadFile(filename)
+		contents, err := os.ReadFile(filename)
 		require.NoError(t, err)
 		require.Equal(t, octopus, contents)
 
@@ -51,7 +52,7 @@ func TestWriteFileAtomically(t *testing.T) {
 		require.Error(t, err)
 
 		// ensure there are no stray temporary files
-		infos, err := ioutil.ReadDir(dir)
+		infos, err := os.ReadDir(dir)
 		require.NoError(t, err)
 		require.Equal(t, 0, len(infos))
 	})

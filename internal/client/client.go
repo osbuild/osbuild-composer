@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -91,7 +90,7 @@ func NewAPIResponse(body []byte) (*APIResponse, error) {
 func apiError(resp *http.Response) (*APIResponse, error) {
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +123,7 @@ func GetRaw(socket *http.Client, method, path string) ([]byte, *APIResponse, err
 	}
 	defer body.Close()
 
-	bodyBytes, err := ioutil.ReadAll(body)
+	bodyBytes, err := io.ReadAll(body)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -179,7 +178,7 @@ func PostRaw(socket *http.Client, path, body string, headers map[string]string) 
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -216,7 +215,7 @@ func DeleteRaw(socket *http.Client, path string) ([]byte, *APIResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, nil, err
 	}

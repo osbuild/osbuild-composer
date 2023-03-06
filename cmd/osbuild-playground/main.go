@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -63,7 +62,7 @@ func main() {
 				panic("Could not open path to image options: " + err.Error())
 			}
 		}
-		file, err := ioutil.ReadAll(reader)
+		file, err := io.ReadAll(reader)
 		if err != nil {
 			panic("Could not read image options: " + err.Error())
 		}

@@ -3,7 +3,7 @@ package gcp
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	cloudbuild "cloud.google.com/go/cloudbuild/apiv1"
 	compute "cloud.google.com/go/compute/apiv1"
@@ -58,7 +58,7 @@ func New(credentials []byte) (*GCP, error) {
 // NewFromFile loads the credentials from a file and returns an authenticated
 // *GCP object instance.
 func NewFromFile(path string) (*GCP, error) {
-	gcpCredentials, err := ioutil.ReadFile(path)
+	gcpCredentials, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load GCP credentials from file %q: %v", path, err)
 	}

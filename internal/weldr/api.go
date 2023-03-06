@@ -10,7 +10,6 @@ import (
 	errors_package "errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"math/big"
@@ -812,7 +811,7 @@ func DecodeSourceConfigV0(body io.Reader, contentType string) (source SourceConf
 	} else if contentType == "text/x-toml" {
 		// Read all of body in case it needs to be parsed twice
 		var data []byte
-		data, err = ioutil.ReadAll(body)
+		data, err = io.ReadAll(body)
 		if err != nil {
 			return source, err
 		}
@@ -845,7 +844,7 @@ func DecodeSourceConfigV1(body io.Reader, contentType string) (source SourceConf
 	} else if contentType == "text/x-toml" {
 		// Read all of body in case it needs to be parsed twice
 		var data []byte
-		data, err = ioutil.ReadAll(body)
+		data, err = io.ReadAll(body)
 		if err != nil {
 			return source, err
 		}

@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -256,7 +255,7 @@ func LoadAllRepositories(confPaths []string) (DistrosRepoConfigs, error) {
 	for _, confPath := range confPaths {
 		reposPath := filepath.Join(confPath, "repositories")
 
-		fileEntries, err := ioutil.ReadDir(reposPath)
+		fileEntries, err := os.ReadDir(reposPath)
 		if os.IsNotExist(err) {
 			continue
 		} else if err != nil {

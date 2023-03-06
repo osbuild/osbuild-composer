@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -389,7 +388,7 @@ func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 	var roots *x509.CertPool
 
 	if c.CACertFile != "" {
-		caCertPEM, err := ioutil.ReadFile(c.CACertFile)
+		caCertPEM, err := os.ReadFile(c.CACertFile)
 		if err != nil {
 			return nil, err
 		}

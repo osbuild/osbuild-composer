@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package azuretest
@@ -6,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -137,7 +137,7 @@ func DeleteImageFromAzure(c *azureCredentials, imageName string) error {
 
 // readPublicKey reads the public key from a file and returns it as a string
 func readPublicKey(publicKeyFile string) (string, error) {
-	publicKey, err := ioutil.ReadFile(publicKeyFile)
+	publicKey, err := os.ReadFile(publicKeyFile)
 	if err != nil {
 		return "", fmt.Errorf("cannot read the public key file: %v", err)
 	}

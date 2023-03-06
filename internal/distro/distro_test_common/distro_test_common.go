@@ -3,7 +3,7 @@ package distro_test_common
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"testing"
@@ -51,7 +51,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			Manifest        distro.Manifest                `json:"manifest,omitempty"`
 			Containers      []container.Spec               `json:"containers,omitempty"`
 		}
-		file, err := ioutil.ReadFile(fileName)
+		file, err := os.ReadFile(fileName)
 		assert.NoErrorf(err, "Could not read test-case '%s': %v", fileName, err)
 		err = json.Unmarshal([]byte(file), &tt)
 		assert.NoErrorf(err, "Could not parse test-case '%s': %v", fileName, err)

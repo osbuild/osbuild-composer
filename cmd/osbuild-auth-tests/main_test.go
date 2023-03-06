@@ -8,8 +8,8 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,7 +24,7 @@ type connectionConfig struct {
 }
 
 func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
-	caCertPEM, err := ioutil.ReadFile(config.CACertFile)
+	caCertPEM, err := os.ReadFile(config.CACertFile)
 	if err != nil {
 		return nil, err
 	}

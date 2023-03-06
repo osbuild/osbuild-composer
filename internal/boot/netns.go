@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package boot
@@ -5,7 +6,6 @@ package boot
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -45,7 +45,7 @@ func newNetworkNamespace() (NetNS, error) {
 		}
 	}
 
-	f, err := ioutil.TempFile(netnsDir, "osbuild-composer-namespace")
+	f, err := os.CreateTemp(netnsDir, "osbuild-composer-namespace")
 	if err != nil {
 		return "", fmt.Errorf("cannot create a tempfile: %v", err)
 	}
@@ -90,7 +90,7 @@ func newNetworkNamespace() (NetNS, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot set up a loopback device in the new namespace: %v", err)
 	}
-	
+
 	// There's no potential command injection vector here
 	/* #nosec G204 */
 	cmd = exec.Command("mount", "-o", "bind", "/proc/self/ns/net", f.Name())
@@ -134,7 +134,7 @@ func (n NetNS) Path() string {
 // Delete deletes the namespaces
 func (n NetNS) Delete() error {
 	// There's no potential command injection vector here
-        /* #nosec G204 */
+	/* #nosec G204 */
 	cmd := exec.Command("umount", n.Path())
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout

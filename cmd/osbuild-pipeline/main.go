@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -97,7 +96,7 @@ func main() {
 				panic("Could not open compose request: " + err.Error())
 			}
 		}
-		file, err := ioutil.ReadAll(reader)
+		file, err := io.ReadAll(reader)
 		if err != nil {
 			panic("Could not read compose request: " + err.Error())
 		}

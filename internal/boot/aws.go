@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package boot
@@ -6,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -60,7 +60,7 @@ func encodeBase64(input string) string {
 // CreateUserData creates cloud-init's user-data that contains user redhat with
 // the specified public key
 func CreateUserData(publicKeyFile string) (string, error) {
-	publicKey, err := ioutil.ReadFile(publicKeyFile)
+	publicKey, err := os.ReadFile(publicKeyFile)
 	if err != nil {
 		return "", fmt.Errorf("cannot read the public key: %v", err)
 	}

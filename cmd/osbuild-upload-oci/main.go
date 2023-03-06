@@ -3,12 +3,12 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/osbuild/osbuild-composer/internal/upload/oci"
-	"github.com/spf13/cobra"
-	"io/ioutil"
 	"math"
 	"math/big"
 	"os"
+
+	"github.com/osbuild/osbuild-composer/internal/upload/oci"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -77,7 +77,7 @@ func uploaderFromConfig() (oci.Uploader, error) {
 			return nil, fmt.Errorf("when suppling a private key the following args are mandatory as well:" +
 				" fingerprint, tenancy, region, and user-id")
 		}
-		pk, err := ioutil.ReadFile(privateKeyFile)
+		pk, err := os.ReadFile(privateKeyFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read private key file %w", err)
 		}
