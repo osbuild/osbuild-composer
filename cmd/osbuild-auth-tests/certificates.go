@@ -1,10 +1,10 @@
+//go:build integration
 // +build integration
 
 package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -37,7 +37,7 @@ func (ckp certificateKeyPair) key() string {
 }
 
 func newSelfSignedCertificateKeyPair(subj string) (*certificateKeyPair, error) {
-	dir, err := ioutil.TempDir("", "osbuild-auth-tests-")
+	dir, err := os.MkdirTemp("", "osbuild-auth-tests-")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a temporary directory for the certificate: %v", err)
 	}
@@ -79,7 +79,7 @@ func (c ca) key() string {
 }
 
 func newCA(subj string) (*ca, error) {
-	baseDir, err := ioutil.TempDir("", "osbuild-auth-tests-ca")
+	baseDir, err := os.MkdirTemp("", "osbuild-auth-tests-ca")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a temporary dir for a new CA: %v", err)
 	}
@@ -139,7 +139,7 @@ func newCA(subj string) (*ca, error) {
 }
 
 func (c ca) newCertificateKeyPair(subj, extensions, addext string) (*certificateKeyPair, error) {
-	dir, err := ioutil.TempDir("", "osbuild-auth-tests-")
+	dir, err := os.MkdirTemp("", "osbuild-auth-tests-")
 	if err != nil {
 		return nil, fmt.Errorf("cannot create a temporary directory for the certificate: %v", err)
 	}

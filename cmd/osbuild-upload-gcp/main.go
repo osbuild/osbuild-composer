@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/sirupsen/logrus"
@@ -62,7 +62,7 @@ func main() {
 	var credentials []byte
 	if credentialsPath != "" {
 		var err error
-		credentials, err = ioutil.ReadFile(credentialsPath)
+		credentials, err = os.ReadFile(credentialsPath)
 		if err != nil {
 			logrus.Fatalf("[GCP] Error while reading credentials: %v", err)
 		}

@@ -2,7 +2,6 @@ package container_test
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -76,7 +75,7 @@ func TestClientAuthFilePath(t *testing.T) {
 	assert.Equal(t, authFilePath, container.GetDefaultAuthFile())
 
 	// make sure the file is accessible
-	_, err = ioutil.ReadFile(authFilePath)
+	_, err = os.ReadFile(authFilePath)
 	assert.True(t, err == nil || os.IsNotExist(err))
 
 	t.Run("XDG_RUNTIME_DIR", func(t *testing.T) {
@@ -95,7 +94,7 @@ func TestClientAuthFilePath(t *testing.T) {
 
 		authFilePath := container.GetDefaultAuthFile()
 		assert.NotEmpty(t, authFilePath)
-		_, err = ioutil.ReadFile(authFilePath)
+		_, err = os.ReadFile(authFilePath)
 		assert.True(t, err == nil || os.IsNotExist(err))
 	})
 

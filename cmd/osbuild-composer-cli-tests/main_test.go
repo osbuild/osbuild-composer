@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -160,7 +160,7 @@ func TestStatusCommands(t *testing.T) {
 }
 
 func TestSourcesCommands(t *testing.T) {
-	sources_toml, err := ioutil.TempFile("", "SOURCES-*.TOML")
+	sources_toml, err := os.CreateTemp("", "SOURCES-*.TOML")
 	require.NoErrorf(t, err, "Could not create temporary file: %v", err)
 	defer os.Remove(sources_toml.Name())
 
@@ -317,7 +317,7 @@ func getLogs(t *testing.T, uuid uuid.UUID) string {
 }
 
 func pushBlueprint(t *testing.T, bp *blueprint.Blueprint) {
-	tmpfile, err := ioutil.TempFile("", "osbuild-test-")
+	tmpfile, err := os.CreateTemp("", "osbuild-test-")
 	require.Nilf(t, err, "Could not create temporary file: %v", err)
 	defer os.Remove(tmpfile.Name())
 
@@ -386,10 +386,10 @@ func runComposer(t *testing.T, command ...string) []byte {
 	err = cmd.Start()
 	require.Nilf(t, err, "Could not start command: %v", err)
 
-	contents, err := ioutil.ReadAll(stdout)
+	contents, err := io.ReadAll(stdout)
 	require.NoError(t, err, "Could not read stdout from command")
 
-	errcontents, err := ioutil.ReadAll(stderr)
+	errcontents, err := io.ReadAll(stderr)
 	require.NoError(t, err, "Could not read stderr from command")
 
 	err = cmd.Wait()
@@ -453,8 +453,8 @@ func NewTemporaryWorkDir(t *testing.T, pattern string) TemporaryWorkDir {
 	d.OldWorkDir, err = os.Getwd()
 	require.Nilf(t, err, "os.GetWd: %v", err)
 
-	d.Path, err = ioutil.TempDir("", pattern)
-	require.Nilf(t, err, "ioutil.TempDir: %v", err)
+	d.Path, err = os.MkdirTemp("", pattern)
+	require.Nilf(t, err, "os.MkdirTemp: %v", err)
 
 	err = os.Chdir(d.Path)
 	require.Nilf(t, err, "os.ChDir: %v", err)

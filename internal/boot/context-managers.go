@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package boot
@@ -5,7 +6,6 @@ package boot
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -38,9 +38,9 @@ func WithNetworkNamespace(f func(ns NetNS) error) error {
 }
 
 // withTempFile provides the function f with a new temporary file
-// dir and pattern parameters have the same semantics as in ioutil.TempFile
+// dir and pattern parameters have the same semantics as in os.CreateTemp
 func withTempFile(dir, pattern string, f func(file *os.File) error) error {
-	tempFile, err := ioutil.TempFile(dir, pattern)
+	tempFile, err := os.CreateTemp(dir, pattern)
 	if err != nil {
 		return fmt.Errorf("cannot create the temporary file: %v", err)
 	}
@@ -56,7 +56,7 @@ func withTempFile(dir, pattern string, f func(file *os.File) error) error {
 }
 
 func withTempDir(dir, pattern string, f func(dir string) error) error {
-	tempDir, err := ioutil.TempDir(dir, pattern)
+	tempDir, err := os.MkdirTemp(dir, pattern)
 	if err != nil {
 		return fmt.Errorf("cannot create the temporary directory %v", err)
 	}

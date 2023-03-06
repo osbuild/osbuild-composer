@@ -5,9 +5,10 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"regexp"
 	"strings"
@@ -80,7 +81,7 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 		}
 
 		if ca != nil {
-			caCertPEM, err := ioutil.ReadFile(*ca)
+			caCertPEM, err := os.ReadFile(*ca)
 			if err != nil {
 				return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
 			}
@@ -120,7 +121,7 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 	if resp.StatusCode != http.StatusOK {
 		return "", NewResolveRefError("ostree repository %q returned status: %s", u.String(), resp.Status)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", NewResolveRefError(fmt.Sprintf("error reading response from ostree repository %q: %v", u.String(), err))
 	}

@@ -24,7 +24,7 @@ package client
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -162,7 +162,7 @@ func TestUnknownComposeInfoV0(t *testing.T) {
 
 // Test compose image for unknown uuid
 func TestComposeInvalidImageV0(t *testing.T) {
-	resp, err := WriteComposeImageV0(testState.socket, ioutil.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
+	resp, err := WriteComposeImageV0(testState.socket, io.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.False(t, resp.Status)
@@ -173,7 +173,7 @@ func TestComposeInvalidImageV0(t *testing.T) {
 
 // Test compose logs for unknown uuid
 func TestComposeInvalidLogsV0(t *testing.T) {
-	resp, err := WriteComposeLogsV0(testState.socket, ioutil.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
+	resp, err := WriteComposeLogsV0(testState.socket, io.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.False(t, resp.Status)
@@ -184,7 +184,7 @@ func TestComposeInvalidLogsV0(t *testing.T) {
 
 // Test compose log for unknown uuid
 func TestComposeInvalidLogV0(t *testing.T) {
-	resp, err := WriteComposeLogV0(testState.socket, ioutil.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
+	resp, err := WriteComposeLogV0(testState.socket, io.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.False(t, resp.Status)
@@ -195,7 +195,7 @@ func TestComposeInvalidLogV0(t *testing.T) {
 
 // Test compose metadata for unknown uuid
 func TestComposeInvalidMetadataV0(t *testing.T) {
-	resp, err := WriteComposeMetadataV0(testState.socket, ioutil.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
+	resp, err := WriteComposeMetadataV0(testState.socket, io.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.False(t, resp.Status)
@@ -206,7 +206,7 @@ func TestComposeInvalidMetadataV0(t *testing.T) {
 
 // Test compose results for unknown uuid
 func TestComposeInvalidResultsV0(t *testing.T) {
-	resp, err := WriteComposeResultsV0(testState.socket, ioutil.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
+	resp, err := WriteComposeResultsV0(testState.socket, io.Discard, "c91818f9-8025-47af-89d2-f030d7000c2c")
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.False(t, resp.Status)
@@ -350,17 +350,17 @@ func TestFailedComposeV0(t *testing.T) {
 	require.Equal(t, buildID, info.ID)
 
 	// Test requesting the compose logs for the failed build
-	resp, err = WriteComposeLogsV0(testState.socket, ioutil.Discard, buildID.String())
+	resp, err = WriteComposeLogsV0(testState.socket, io.Discard, buildID.String())
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
 
 	// Test requesting the compose metadata for the failed build
-	resp, err = WriteComposeMetadataV0(testState.socket, ioutil.Discard, buildID.String())
+	resp, err = WriteComposeMetadataV0(testState.socket, io.Discard, buildID.String())
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
 
 	// Test requesting the compose results for the failed build
-	resp, err = WriteComposeResultsV0(testState.socket, ioutil.Discard, buildID.String())
+	resp, err = WriteComposeResultsV0(testState.socket, io.Discard, buildID.String())
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
 
@@ -455,17 +455,17 @@ func TestFinishedComposeV0(t *testing.T) {
 	require.Equal(t, buildID, info.ID)
 
 	// Test requesting the compose logs for the finished build
-	resp, err = WriteComposeLogsV0(testState.socket, ioutil.Discard, buildID.String())
+	resp, err = WriteComposeLogsV0(testState.socket, io.Discard, buildID.String())
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
 
 	// Test requesting the compose metadata for the finished build
-	resp, err = WriteComposeMetadataV0(testState.socket, ioutil.Discard, buildID.String())
+	resp, err = WriteComposeMetadataV0(testState.socket, io.Discard, buildID.String())
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
 
 	// Test requesting the compose results for the finished build
-	resp, err = WriteComposeResultsV0(testState.socket, ioutil.Discard, buildID.String())
+	resp, err = WriteComposeResultsV0(testState.socket, io.Discard, buildID.String())
 	require.NoError(t, err, "failed with a client error")
 	require.Nil(t, resp)
 

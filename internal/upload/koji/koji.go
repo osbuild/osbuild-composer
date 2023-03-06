@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"hash/adler32"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -325,7 +324,7 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 
 	defer respData.Body.Close()
 
-	body, err := ioutil.ReadAll(respData.Body)
+	body, err := io.ReadAll(respData.Body)
 	if err != nil {
 		return err
 	}

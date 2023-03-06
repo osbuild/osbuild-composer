@@ -10,7 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -574,7 +573,7 @@ func guessPipelineToExport(rawManifest json.RawMessage) string {
 // tests the result
 func runTestcase(t *testing.T, testcase testcaseStruct, store string) {
 	_ = os.Mkdir("/var/lib/osbuild-composer-tests", 0755)
-	outputDirectory, err := ioutil.TempDir("/var/lib/osbuild-composer-tests", "osbuild-image-tests-*")
+	outputDirectory, err := os.MkdirTemp("/var/lib/osbuild-composer-tests", "osbuild-image-tests-*")
 	require.NoError(t, err, "error creating temporary output directory")
 
 	defer func() {
@@ -594,7 +593,7 @@ func runTestcase(t *testing.T, testcase testcaseStruct, store string) {
 
 // getAllCases returns paths to all testcases in the testcase directory
 func getAllCases() ([]string, error) {
-	cases, err := ioutil.ReadDir(constants.TestPaths.TestCasesDirectory)
+	cases, err := os.ReadDir(constants.TestPaths.TestCasesDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list test cases: %v", err)
 	}
@@ -615,7 +614,7 @@ func getAllCases() ([]string, error) {
 // runTests opens, parses and runs all the specified testcases
 func runTests(t *testing.T, cases []string) {
 	_ = os.Mkdir("/var/lib/osbuild-composer-tests", 0755)
-	store, err := ioutil.TempDir("/var/lib/osbuild-composer-tests", "osbuild-image-tests-*")
+	store, err := os.MkdirTemp("/var/lib/osbuild-composer-tests", "osbuild-image-tests-*")
 	require.NoError(t, err, "error creating temporary store")
 
 	defer func() {

@@ -3,7 +3,7 @@ package store
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -304,7 +304,7 @@ func Test_upgrade(t *testing.T) {
 	require.Greaterf(t, len(fileNames), 0, "No test stores found in %s", testPath)
 	for _, fileName := range fileNames {
 		var storeStruct storeV0
-		file, err := ioutil.ReadFile(fileName)
+		file, err := os.ReadFile(fileName)
 		assert.NoErrorf(err, "Could not read test-store '%s': %v", fileName, err)
 		err = json.Unmarshal([]byte(file), &storeStruct)
 		assert.NoErrorf(err, "Could not parse test-store '%s': %v", fileName, err)

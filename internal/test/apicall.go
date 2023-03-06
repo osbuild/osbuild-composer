@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -72,7 +71,7 @@ func (a APICall) Do(t *testing.T) APICallResult {
 	a.Handler.ServeHTTP(respRecorder, req)
 	resp := respRecorder.Result()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.NoErrorf(t, err, "%s: could not read response body", a.Path)
 
 	if a.ExpectedStatus != 0 {

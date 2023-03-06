@@ -7,7 +7,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -48,7 +47,7 @@ type JobImplementation interface {
 }
 
 func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
-	caCertPEM, err := ioutil.ReadFile(config.CACertFile)
+	caCertPEM, err := os.ReadFile(config.CACertFile)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +273,7 @@ func main() {
 
 		token := ""
 		if config.Authentication.OfflineTokenPath != "" {
-			t, err := ioutil.ReadFile(config.Authentication.OfflineTokenPath)
+			t, err := os.ReadFile(config.Authentication.OfflineTokenPath)
 			if err != nil {
 				logrus.Fatalf("Could not read offline token: %v", err)
 			}
@@ -283,7 +282,7 @@ func main() {
 
 		clientSecret := ""
 		if config.Authentication.ClientSecretPath != "" {
-			cs, err := ioutil.ReadFile(config.Authentication.ClientSecretPath)
+			cs, err := os.ReadFile(config.Authentication.ClientSecretPath)
 			if err != nil {
 				logrus.Fatalf("Could not read client secret: %v", err)
 			}

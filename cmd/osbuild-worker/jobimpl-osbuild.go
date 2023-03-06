@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"math/big"
 	"net/url"
@@ -295,7 +294,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		}
 	}()
 
-	outputDirectory, err = ioutil.TempDir(impl.Output, job.Id().String()+"-*")
+	outputDirectory, err = os.MkdirTemp(impl.Output, job.Id().String()+"-*")
 	if err != nil {
 		return fmt.Errorf("error creating temporary output directory: %v", err)
 	}
@@ -440,7 +439,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				Datastore:  targetOptions.Datastore,
 			}
 
-			tempDirectory, err := ioutil.TempDir(impl.Output, job.Id().String()+"-vmware-*")
+			tempDirectory, err := os.MkdirTemp(impl.Output, job.Id().String()+"-vmware-*")
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break

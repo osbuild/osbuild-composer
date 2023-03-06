@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -511,7 +510,7 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
   }
 }`
 	resp := test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", testBlueprint)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.Nil(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
 
@@ -520,7 +519,7 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 	api.ServeHTTP(recorder, req)
 
 	resp = recorder.Result()
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	require.Nil(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
 
@@ -804,7 +803,7 @@ func TestBlueprintChange(t *testing.T) {
 	test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", `{"name":"`+id+`","description":"Test","packages":[{"name":"httpd","version":"2.4.*"}],"version":"0.0.2"}`)
 
 	resp := test.SendHTTP(api, true, "GET", "/api/v0/blueprints/changes/"+id, ``)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.Nil(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -818,7 +817,7 @@ func TestBlueprintChange(t *testing.T) {
 	// Get the blueprint's oldest commit
 	route := fmt.Sprintf("/api/v1/blueprints/change/%s/%s", id, commit)
 	resp = test.SendHTTP(api, true, "GET", route, ``)
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	require.Nil(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -861,7 +860,7 @@ func TestOldBlueprintsUndo(t *testing.T) {
 	test.TestRoute(t, api, true, "GET", "/api/v0/blueprints/changes/test-old-changes", ``, http.StatusOK, oldBlueprintsUndoResponse, ignoreFields...)
 
 	resp := test.SendHTTP(api, true, "GET", "/api/v0/blueprints/changes/test-old-changes", ``)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.Nil(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -899,7 +898,7 @@ func TestNewBlueprintsUndo(t *testing.T) {
 	test.TestRoute(t, api, true, "GET", "/api/v0/blueprints/changes/"+id, ``, http.StatusOK, `{"blueprints":[{"changes":[{"commit":"","message":"Recipe `+id+`, version 0.1.0 saved.","revision":null,"timestamp":""},{"commit":"","message":"Recipe `+id+`, version 0.0.1 saved.","revision":null,"timestamp":""}],"name":"`+id+`","total":2}],"errors":[],"limit":20,"offset":0}`, ignoreFields...)
 
 	resp := test.SendHTTP(api, true, "GET", "/api/v0/blueprints/changes/"+id, ``)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.Nil(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 

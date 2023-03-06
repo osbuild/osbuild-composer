@@ -5,9 +5,9 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 )
 
@@ -30,7 +30,7 @@ func NewMTLSServer(handler http.Handler) (*MTLSServer, error) {
 	clientKeyPath := filepath.Join(certsPath, "client.key")
 	clientCrtPath := filepath.Join(certsPath, "client.crt")
 
-	caCertPem, err := ioutil.ReadFile(caPath)
+	caCertPem, err := os.ReadFile(caPath)
 	if err != nil {
 		return nil, err
 	}

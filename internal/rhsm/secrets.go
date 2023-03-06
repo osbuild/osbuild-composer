@@ -2,7 +2,6 @@ package rhsm
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -65,7 +64,7 @@ func getListOfSubscriptions() ([]subscription, error) {
 	// documented in `man yum.conf`. The same parsing mechanism could
 	// be used for any other repo file in /etc/yum.repos.d/.
 	availableSubscriptionsFile := "/etc/yum.repos.d/redhat.repo"
-	content, err := ioutil.ReadFile(availableSubscriptionsFile)
+	content, err := os.ReadFile(availableSubscriptionsFile)
 	if err != nil {
 		if pErr, ok := err.(*os.PathError); ok {
 			if pErr.Err.Error() == "no such file or directory" {

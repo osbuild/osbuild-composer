@@ -18,7 +18,6 @@ package jsondb
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -93,7 +92,7 @@ func (db *JSONDatabase) Write(name string, document interface{}) error {
 // writing succeeded. `writer` gets passed the open file handle to write to and
 // does not need to take care of closing it.
 func writeFileAtomically(dir, filename string, mode os.FileMode, writer func(f *os.File) error) error {
-	tmpfile, err := ioutil.TempFile(dir, filename+"-*.tmp")
+	tmpfile, err := os.CreateTemp(dir, filename+"-*.tmp")
 	if err != nil {
 		return err
 	}
