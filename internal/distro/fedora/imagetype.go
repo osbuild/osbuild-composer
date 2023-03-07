@@ -273,7 +273,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	// TODO: Support kernel name selection for image-installer
 	if t.bootISO {
 		if t.name == "iot-simplified-installer" {
-			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel"}
+			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
 			}
