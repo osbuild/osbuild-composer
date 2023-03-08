@@ -12,6 +12,7 @@ fi
 
 # Set up variables.
 FIREWALL_FEATURE="false"
+SYSROOT_RO="false"
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
@@ -37,6 +38,7 @@ case "${ID}-${VERSION_ID}" in
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
         DIRS_FILES_CUSTOMIZATION="true"
+        SYSROOT_RO="true"
         ;;
     "rhel-8.4")
         IMAGE_TYPE=edge-commit
@@ -92,6 +94,7 @@ case "${ID}-${VERSION_ID}" in
         EMBEDED_CONTAINER="true"
         FIREWALL_FEATURE="true"
         DIRS_FILES_CUSTOMIZATION="true"
+        SYSROOT_RO="true"
 
         # Use a stable installer image unless it's the nightly pipeline
         BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
@@ -118,6 +121,7 @@ case "${ID}-${VERSION_ID}" in
         EMBEDED_CONTAINER="true"
         FIREWALL_FEATURE="false"
         DIRS_FILES_CUSTOMIZATION="true"
+        SYSROOT_RO="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -529,6 +533,22 @@ for LOOP_COUNTER in $(seq 0 30); do
     sleep 10
 done
 
+# With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+# Sleep 10 seconds here to make sure vm restarted already
+sleep 10
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
 # Check image installation result
 check_result
 
@@ -655,7 +675,6 @@ UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
 greenprint "Upgrade ostree image/commit"
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${GUEST_ADDRESS}" 'sudo rpm-ostree upgrade || { sudo rpm-ostree status; sudo journalctl -b -r -u rpm-ostreed; exit 1; }'
 sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
-
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 
@@ -697,6 +716,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e firewall_feature="${FIREWALL_FEATURE}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
+    -e sysroot_ro="$SYSROOT_RO" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 

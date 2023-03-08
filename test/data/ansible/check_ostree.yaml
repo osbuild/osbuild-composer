@@ -12,6 +12,7 @@
     firewall_feature: "false"
     ignition: "false"
     test_custom_dirs_files: "false"
+    sysroot_ro: "false"
 
   tasks:
     # current target host's IP address
@@ -279,12 +280,24 @@
       shell: findmnt -r -o OPTIONS -n /sysroot | awk -F "," '{print $1}'
       register: result_sysroot_mount_status
 
+    - name: /sysroot should be mount with rw permission
+      block:
+        - assert:
+            that:
+              - result_sysroot_mount_status.stdout == "rw"
+            fail_msg: "/sysroot is not mounted with rw permission"
+            success_msg: "/sysroot is mounted with rw permission"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: sysroot_ro == "false"
+
     # https://fedoraproject.org/wiki/Changes/Silverblue_Kinoite_readonly_sysroot
-    # There are three checks here for /sysroot permission based on pr https://github.com/osbuild/osbuild-composer/pull/3053
-    # 1. for edge-commit and edge-installer, check ro when fedora >= 37
-    # 2. for edge-commit and edge-installer, check rw for other os.
-    # 3. for edge-simplified-installer and edge-raw-image, check ro for 9.2+ and F37+.
-    - name: /sysroot should be mount with ro permission for edge-commit and edge-installer on Fedora >= 37
+    - name: /sysroot should be mount with ro permission on RHEL 9.2 , Centos9 and Fedora 37 above
       block:
         - assert:
             that:
@@ -298,59 +311,7 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: (edge_type == "none") and (ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '>='))
-
-    - name: /sysroot should be mount with rw permission for edge-commit and edge-installer on all OS except Fedora >= 37
-      block:
-        - assert:
-            that:
-              - result_sysroot_mount_status.stdout == "rw"
-            fail_msg: "/sysroot is not mounted with rw permission"
-            success_msg: "/sysroot is mounted with rw permission"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when: (edge_type == "none") and ((ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '<')) or
-            (ansible_facts['distribution'] == 'CentOS') or (ansible_facts['distribution'] == 'RedHat'))
-
-    - name: /sysroot should be mount with ro permission for edge-simplified-installer and edge-raw-image
-      block:
-        - assert:
-            that:
-              - result_sysroot_mount_status.stdout == "ro"
-            fail_msg: "/sysroot is not mounted with ro permission"
-            success_msg: "/sysroot is mounted with ro permission"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when: (edge_type == "edge-simplified-installer" or edge_type == "edge-raw-image") and ((ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '>=')) or
-            (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_version'] is version('9', '>=')) or (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('9.2', '>=')))
-
-    - name: /sysroot should be mount with rw permission for edge-simplified-installer and edge-raw-image for <9.2 and <F37
-      block:
-        - assert:
-            that:
-              - result_sysroot_mount_status.stdout == "rw"
-            fail_msg: "/sysroot is not mounted with rw permission"
-            success_msg: "/sysroot is mounted with rw permission"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when: (edge_type == "edge-simplified-installer" or edge_type == "edge-raw-image") and ((ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '<')) or
-            (ansible_facts['distribution'] == 'CentOS' and ansible_facts['distribution_version'] is version('9', '<')) or (ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_version'] is version('9.2', '<')))
-
+      when: sysroot_ro == "true"
 
     # case: check /var mount point
     - name: check /var mount point
