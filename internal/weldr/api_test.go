@@ -926,12 +926,12 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	require.NoError(t, err)
-	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
+	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
 	ostreeImgType, err := arch.GetImageType(test_distro.TestImageTypeOSTree)
 	require.NoError(t, err)
-	ostreeManifest, err := ostreeImgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
+	ostreeManifest, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{
@@ -1037,7 +1037,7 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 	imgType2, err := arch2.GetImageType(test_distro.TestImageTypeName)
 	require.NoError(t, err)
-	manifest2, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
+	manifest2, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
 	expectedComposeGoodDistro := &store.Compose{
@@ -1093,7 +1093,7 @@ func TestCompose(t *testing.T) {
 			http.StatusBadRequest,
 			`{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`,
 			nil,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			false,
@@ -1103,7 +1103,7 @@ func TestCompose(t *testing.T) {
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeLocal,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			false,
@@ -1113,7 +1113,7 @@ func TestCompose(t *testing.T) {
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeLocalAndAws,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			false,
@@ -1123,7 +1123,7 @@ func TestCompose(t *testing.T) {
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeGoodDistro,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			false,
@@ -1133,7 +1133,7 @@ func TestCompose(t *testing.T) {
 			http.StatusBadRequest,
 			`{"status": false,"errors":[{"id":"DistroError", "msg":"Unknown distribution: fedora-1"}]}`,
 			nil,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			false,
@@ -1143,7 +1143,7 @@ func TestCompose(t *testing.T) {
 			http.StatusBadRequest,
 			`{"status": false,"errors":[{"id":"ComposeError", "msg":"Failed to get compose type \"imaginary_type\": invalid image type: imaginary_type"}]}`,
 			nil,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 
 		// === OSTree params ===
@@ -1156,7 +1156,7 @@ func TestCompose(t *testing.T) {
 			http.StatusBadRequest,
 			`{"status": false, "errors":[{"id":"OSTreeOptionsError","msg":"ostree parent ref specified, but no URL to retrieve it"}]}`,
 			expectedComposeOSTree,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		// Valid Ref + URL = OK
 		{
@@ -1167,7 +1167,7 @@ func TestCompose(t *testing.T) {
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeOSTree,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		// Ref + invalid URL = error
 		{
@@ -1178,7 +1178,7 @@ func TestCompose(t *testing.T) {
 			http.StatusBadRequest,
 			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"error sending request to ostree repository \"invalid-url/refs/heads/whatever\": Get \"invalid-url/refs/heads/whatever\": unsupported protocol scheme \"\""}]}`,
 			nil,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		// Bad Ref + URL = error
 		{
@@ -1189,7 +1189,7 @@ func TestCompose(t *testing.T) {
 			http.StatusBadRequest,
 			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Invalid ostree ref \"/bad/ref\""}]}`,
 			expectedComposeOSTree,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		// Incorrect Ref + URL = the parameters are okay, but the ostree repo returns 404
 		{
@@ -1200,7 +1200,7 @@ func TestCompose(t *testing.T) {
 			http.StatusBadRequest,
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"ostree repository \"%s/refs/heads/the/wrong/ref\" returned status: 404 Not Found"}]}`, ostreeRepoDefault.Server.URL),
 			expectedComposeOSTree,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		// Ref + Parent + URL = OK
 		{
@@ -1211,7 +1211,7 @@ func TestCompose(t *testing.T) {
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		// Parent + URL = OK
 		{
@@ -1222,7 +1222,7 @@ func TestCompose(t *testing.T) {
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		// URL only = OK (uses default ref, so we need to specify URL for ostree repo with default ref)
 		{
@@ -1233,7 +1233,7 @@ func TestCompose(t *testing.T) {
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeOSTree,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 	}
 
@@ -2028,7 +2028,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	require.NoError(t, err)
 	imgType2, err := arch.GetImageType(test_distro.TestImageType2Name)
 	require.NoError(t, err)
-	manifest, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
+	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{
@@ -2103,7 +2103,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			http.StatusOK,
 			`{"status":true}`,
 			expectedComposeLocal,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2112,7 +2112,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeLocal2,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2122,7 +2122,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
 				test_distro.TestImageTypeName, test_distro.TestDistro2Name),
 			expectedComposeLocal,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2131,7 +2131,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			http.StatusOK,
 			`{"status": true}`,
 			expectedComposeLocal2,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2141,7 +2141,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
 				test_distro.TestImageTypeName, test_distro.TestDistro2Name),
 			expectedComposeLocal,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2151,7 +2151,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
 				test_distro.TestImageType2Name, test_distro.TestDistro2Name),
 			expectedComposeLocal2,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2161,7 +2161,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
 				test_distro.TestImageTypeName, test_distro.TestDistro2Name),
 			expectedComposeLocal,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2171,7 +2171,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
 				test_distro.TestImageTypeName, test_distro.TestDistro2Name),
 			expectedComposeLocal,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2181,7 +2181,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
 				test_distro.TestImageTypeName, test_distro.TestDistro2Name),
 			expectedComposeLocal,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 		{
 			"/api/v1/compose",
@@ -2191,7 +2191,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"ComposeError","msg":"Failed to get compose type \"%[1]s\": image type \"%[1]s\" for distro \"%[2]s\" is denied by configuration"}]}`,
 				test_distro.TestImageType2Name, test_distro.TestDistro2Name),
 			expectedComposeLocal,
-			[]string{"build_id"},
+			[]string{"build_id", "warnings"},
 		},
 	}
 

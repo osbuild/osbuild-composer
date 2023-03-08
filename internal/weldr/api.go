@@ -2328,8 +2328,9 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		Upload        *uploadRequest       `json:"upload"`
 	}
 	type ComposeReply struct {
-		BuildID uuid.UUID `json:"build_id"`
-		Status  bool      `json:"status"`
+		BuildID  uuid.UUID `json:"build_id"`
+		Status   bool      `json:"status"`
+		Warnings []string  `json:"warnings"`
 	}
 
 	contentType := request.Header["Content-Type"]
@@ -2499,7 +2500,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	manifest, err := imageType.Manifest(bp.Customizations,
+	manifest, warnings, err := imageType.Manifest(bp.Customizations,
 		options,
 		imageRepos,
 		packageSets,
@@ -2558,8 +2559,9 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	err = json.NewEncoder(writer).Encode(ComposeReply{
-		BuildID: composeID,
-		Status:  true,
+		BuildID:  composeID,
+		Status:   true,
+		Warnings: warnings,
 	})
 	common.PanicOnError(err)
 }
