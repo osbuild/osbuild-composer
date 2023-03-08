@@ -231,7 +231,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 						packageSets[plName] = minimalPackageSet
 					}
 
-					m, err := imageType.Manifest(bp.Customizations, options, repos, packageSets, containers, seed)
+					m, _, err := imageType.Manifest(bp.Customizations, options, repos, packageSets, containers, seed)
 					require.NoError(err)
 					pm := new(manifest)
 					err = json.Unmarshal(m, pm)
