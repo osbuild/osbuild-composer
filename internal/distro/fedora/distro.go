@@ -612,7 +612,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	}
 
 	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, err := t.initializeManifest(&bp, options, repos, packageSets, containers, 0)
+	manifest, _, err := t.initializeManifest(&bp, options, repos, packageSets, containers, 0)
 	if err != nil {
 		// TODO: handle manifest initialization errors more gracefully, we
 		// refuse to initialize manifests with invalid config.
@@ -687,10 +687,11 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	repos []rpmmd.RepoConfig,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.Spec,
-	seed int64) (*manifest.Manifest, error) {
+	seed int64) (*manifest.Manifest, []string, error) {
 
-	if err := t.checkOptions(bp.Customizations, options, containers); err != nil {
-		return nil, err
+	warnings, err := t.checkOptions(bp.Customizations, options, containers)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// TODO: let image types specify valid workloads, rather than
@@ -713,14 +714,14 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 
 	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	manifest := manifest.New()
 	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return &manifest, err
+	return &manifest, warnings, err
 }
 
 func (t *imageType) Manifest(customizations *blueprint.Customizations,
@@ -728,7 +729,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSets map[string][]rpmmd.PackageSpec,
 	containers []container.Spec,
-	seed int64) (distro.Manifest, error) {
+	seed int64) (distro.Manifest, []string, error) {
 
 	bp := &blueprint.Blueprint{Name: "empty blueprint"}
 	err := bp.Initialize()
@@ -755,26 +756,31 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		mergedRepos = append(mergedRepos, repo)
 	}
 
-	manifest, err := t.initializeManifest(bp, options, mergedRepos, nil, containers, seed)
+	manifest, warnings, err := t.initializeManifest(bp, options, mergedRepos, nil, containers, seed)
 	if err != nil {
-		return distro.Manifest{}, err
+		return distro.Manifest{}, nil, err
 	}
 
-	return manifest.Serialize(packageSets)
+	ret, err := manifest.Serialize(packageSets)
+	if err != nil {
+		return ret, nil, err
+	}
+	return ret, warnings, err
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
-func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) error {
+// Returns ([]string, error) where []string, if non-nil, will hold any generated warnings (e.g. deprecation notices).
+func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) ([]string, error) {
 
 	// we do not support embedding containers on ostree-derived images, only on commits themselves
 	if len(containers) > 0 && t.rpmOstree && (t.name != "iot-commit" && t.name != "iot-container") {
-		return fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
+		return nil, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
 	if t.bootISO && t.rpmOstree {
 		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
 		if options.OSTree.FetchChecksum == "" {
-			return fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
+			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 	}
 
@@ -784,39 +790,39 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		if t.name == "iot-installer" || t.name == "image-installer" {
 			allowed := []string{"User", "Group"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
 			}
 		}
 	}
 
 	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree {
-		return fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
+		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
 	mountpoints := customizations.GetFilesystems()
 
 	if mountpoints != nil && t.rpmOstree {
-		return fmt.Errorf("Custom mountpoints are not supported for ostree types")
+		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")
 	}
 
 	err := blueprint.CheckMountpointsPolicy(mountpoints, pathpolicy.MountpointPolicies)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		supported := oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList)
 		if !supported {
-			return fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
+			return nil, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
 		}
 		if t.rpmOstree {
-			return fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
+			return nil, fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
 		}
 		if osc.DataStream == "" {
-			return fmt.Errorf("OpenSCAP datastream cannot be empty")
+			return nil, fmt.Errorf("OpenSCAP datastream cannot be empty")
 		}
 		if osc.ProfileID == "" {
-			return fmt.Errorf("OpenSCAP profile cannot be empty")
+			return nil, fmt.Errorf("OpenSCAP profile cannot be empty")
 		}
 	}
 
@@ -826,20 +832,20 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 
 	err = blueprint.ValidateDirFileCustomizations(dc, fc)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, pathpolicy.CustomDirectoriesPolicies)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = blueprint.CheckFileCustomizationsPolicy(fc, pathpolicy.CustomFilesPolicies)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return nil, nil
 }
 
 // New creates a new distro object, defining the supported architectures and image types
