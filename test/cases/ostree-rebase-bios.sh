@@ -84,6 +84,9 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 # kernel-rt package name (differs in CS8)
 KERNEL_RT_PKG="kernel-rt"
 
+# Set up variables.
+SYSROOT_RO="false"
+
 case "${ID}-${VERSION_ID}" in
     "rhel-8.8")
         OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -104,6 +107,7 @@ case "${ID}-${VERSION_ID}" in
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
         PARENT_REF="rhel/9/${ARCH}/edge"
+        SYSROOT_RO="true"
         ;;
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
@@ -117,6 +121,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         BOOT_LOCATION="https://odcs.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/os/"
         PARENT_REF="centos/9/${ARCH}/edge"
+        SYSROOT_RO="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -392,6 +397,22 @@ for LOOP_COUNTER in $(seq 0 30); do
     sleep 10
 done
 
+# With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "nohup sudo -S systemctl reboot &>/dev/null & exit"
+# Sleep 10 seconds here to make sure vm restarted already
+sleep 10
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
 # Check image installation result
 check_result
 
@@ -522,7 +543,7 @@ greenprint "fix stdio file non-blocking issue"
 sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${UPGRADE_HASH}" -e ostree_ref="rhel-edge:${OSTREE_REF}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type=rhel-edge -e ostree_commit="${UPGRADE_HASH}" -e ostree_ref="rhel-edge:${OSTREE_REF}" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up

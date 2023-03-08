@@ -95,8 +95,11 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 # kernel-rt package name (differs in CS8)
 KERNEL_RT_PKG="kernel-rt"
 
+# Set up variables.
+SYSROOT_RO="false"
+
 case "${ID}-${VERSION_ID}" in
-    "fedora-"*)
+    "fedora-36")
         CONTAINER_TYPE=iot-container
         INSTALLER_TYPE=iot-installer
         OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
@@ -104,6 +107,16 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="fedora-unknown"
         EMBEDED_CONTAINER="false"
         DIRS_FILES_CUSTOMIZATION="true"
+        ;;
+    "fedora-37")
+        CONTAINER_TYPE=iot-container
+        INSTALLER_TYPE=iot-installer
+        OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
+        OSTREE_OSNAME=fedora
+        OS_VARIANT="fedora-unknown"
+        EMBEDED_CONTAINER="false"
+        DIRS_FILES_CUSTOMIZATION="true"
+        SYSROOT_RO="true"
         ;;
     "rhel-8.8")
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
@@ -116,6 +129,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel9-unknown"
         EMBEDED_CONTAINER="true"
         DIRS_FILES_CUSTOMIZATION="true"
+        SYSROOT_RO="true"
         ;;
     "centos-8")
         OSTREE_REF="test/centos/8/${ARCH}/edge"
@@ -130,6 +144,7 @@ case "${ID}-${VERSION_ID}" in
         EMBEDED_CONTAINER="true"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         DIRS_FILES_CUSTOMIZATION="true"
+        SYSROOT_RO="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -562,6 +577,21 @@ for LOOP_COUNTER in $(seq 0 30); do
     sleep 10
 done
 
+# With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${BIOS_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+# Sleep 10 seconds here to make sure vm restarted already
+sleep 10
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
 # Check image installation result
 check_result
 
@@ -582,6 +612,10 @@ ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF
 
+# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
+greenprint "fix stdio file non-blocking issue"
+sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
+
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on BIOS VM"
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
@@ -589,6 +623,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${INSTALL_HASH}" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
+    -e sysroot_ro="$SYSROOT_RO" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -637,6 +672,21 @@ for LOOP_COUNTER in $(seq 0 30); do
     sleep 10
 done
 
+# With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${UEFI_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+# Sleep 10 seconds here to make sure vm restarted already
+sleep 10
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
 # Get ostree commit value.
 greenprint "🕹 Get ostree install commit value"
 INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
@@ -655,6 +705,10 @@ ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF
 
+# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
+greenprint "fix stdio file non-blocking issue"
+sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
+
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on UEFI VM"
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
@@ -662,6 +716,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${INSTALL_HASH}" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
+    -e sysroot_ro="$SYSROOT_RO" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 # Check image installation result
@@ -844,6 +899,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
+    -e sysroot_ro="$SYSROOT_RO" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 

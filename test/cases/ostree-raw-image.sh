@@ -86,8 +86,10 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 # kernel-rt package name (differs in CS8)
-
 KERNEL_RT_PKG="kernel-rt"
+
+# Set up variables.
+SYSROOT_RO="false"
 
 case "${ID}-${VERSION_ID}" in
     "rhel-8.8")
@@ -97,6 +99,7 @@ case "${ID}-${VERSION_ID}" in
     "rhel-9.2")
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
+        SYSROOT_RO="true"
         ;;
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
@@ -107,6 +110,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
+        SYSROOT_RO="true"
         ;;
     "fedora-"*)
         CONTAINER_TYPE=iot-container
@@ -114,6 +118,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
         OS_VARIANT="fedora-unknown"
         OSTREE_OSNAME="fedora-iot"
+        SYSROOT_RO="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -573,6 +578,19 @@ if [[ "$ID" != "fedora" ]]; then
         sleep 10
     done
 
+    # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${BIOS_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+    # Sleep 10 seconds here to make sure vm restarted already
+    sleep 10
+    for _ in $(seq 0 30); do
+        RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
+        if [[ $RESULTS == 1 ]]; then
+            echo "SSH is ready now! 🥳"
+            break
+        fi
+        sleep 10
+    done
+
     # Check image installation result
     check_result
 
@@ -594,8 +612,12 @@ ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
+    # Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
+    greenprint "fix stdio file non-blocking issue"
+    sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
+
     # Test IoT/Edge OS
-    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
 
     if [[ ${IGNITION} -eq 0 ]]; then
@@ -615,7 +637,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
       # Test IoT/Edge OS
-      sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+      sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
       check_result
     fi
 
@@ -670,6 +692,19 @@ for LOOP_COUNTER in $(seq 0 30); do
     sleep 10
 done
 
+# With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${UEFI_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+# Sleep 10 seconds here to make sure vm restarted already
+sleep 10
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
 # Check image installation result
 check_result
 
@@ -691,8 +726,12 @@ ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
+# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
+greenprint "fix stdio file non-blocking issue"
+sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
+
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # test with ignition user
@@ -714,7 +753,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
   # Test IoT/Edge OS
-  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e ignition="${HAS_IGNITION}" -e edge_type=edge-raw-image -e ostree_commit="${INSTALL_HASH}" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
   check_result
 fi
 
@@ -870,7 +909,7 @@ if [[ ${IGNITION} -eq 0 ]]; then
 EOF
 
   # Test IoT/Edge OS
-  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e edge_type=edge-raw-image -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e skip_rollback_test="true" -e edge_type=edge-raw-image -e ostree_commit="${UPGRADE_HASH}" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
   check_result
 fi
 
@@ -894,7 +933,7 @@ greenprint "fix stdio file non-blocking issue"
 sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e edge_type=edge-raw-image -e ostree_commit="${UPGRADE_HASH}" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e image_type="${OSTREE_OSNAME}" -e edge_type=edge-raw-image -e ostree_commit="${UPGRADE_HASH}" -e sysroot_ro="$SYSROOT_RO" /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
 # Final success clean up
