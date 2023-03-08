@@ -458,7 +458,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		options.OSTree.URL = result.Specs[0].URL
 	}
 
-	manifest, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, containerSpecs, seed)
+	manifest, _, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, containerSpecs, seed)
 	if err != nil {
 		reason := "Error generating manifest"
 		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)

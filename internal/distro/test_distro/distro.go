@@ -239,7 +239,7 @@ func (t *TestImageType) Exports() []string {
 	return distro.ExportsFallback()
 }
 
-func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (distro.Manifest, error) {
+func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (distro.Manifest, []string, error) {
 	mountpoints := b.GetFilesystems()
 
 	invalidMountpoints := []string{}
@@ -250,15 +250,15 @@ func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.Ima
 	}
 
 	if len(invalidMountpoints) > 0 {
-		return nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+		return nil, nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
 	}
 
-	return json.Marshal(
+	ret, err := json.Marshal(
 		osbuild.Manifest{
 			Sources:   osbuild.Sources{},
 			Pipelines: []osbuild.Pipeline{},
-		},
-	)
+		})
+	return ret, nil, err
 }
 
 // newTestDistro returns a new instance of TestDistro with the
