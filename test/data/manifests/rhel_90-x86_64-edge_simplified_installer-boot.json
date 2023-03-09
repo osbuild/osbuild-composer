@@ -2629,6 +2629,9 @@
                     "id": "sha256:5c06d2a85bec668b8a9ba52b9d237770e37a2e4db014e7e8dc0cebaaf692af1e"
                   },
                   {
+                    "id": "sha256:49191fa272d3c16c219f1b27fd86bd085fa1ae3bac38946de40926b35773c4c4"
+                  },
+                  {
                     "id": "sha256:4361d66a963fe8c62bd1a4e887a06fbe937faa70a7ac704a127021937b2e1b69"
                   },
                   {
@@ -2875,6 +2878,37 @@
             }
           },
           {
+            "type": "org.osbuild.isolinux",
+            "inputs": {
+              "data": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:coi-tree"
+                ]
+              }
+            },
+            "options": {
+              "product": {
+                "name": "Red Hat Enterprise Linux",
+                "version": "9.0"
+              },
+              "kernel": {
+                "dir": "/images/pxeboot",
+                "opts": [
+                  "rd.neednet=1",
+                  "coreos.inst.crypt_root=1",
+                  "coreos.inst.isoroot=RHEL-9-0-0-BaseOS-x86_64",
+                  "coreos.inst.install_dev=/dev/vda",
+                  "coreos.inst.image_file=/run/media/iso/image.raw.xz",
+                  "coreos.inst.insecure",
+                  "fdo.manufacturing_server_url=https;//fdo.example.com",
+                  "fdo.diun_pub_key_insecure=true"
+                ]
+              }
+            }
+          },
+          {
             "type": "org.osbuild.copy",
             "inputs": {
               "tree": {
@@ -2915,7 +2949,12 @@
               "filename": "simplified-installer.iso",
               "volid": "RHEL-9-0-0-BaseOS-x86_64",
               "sysid": "LINUX",
+              "boot": {
+                "image": "isolinux/isolinux.bin",
+                "catalog": "isolinux/boot.cat"
+              },
               "efi": "images/efiboot.img",
+              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin",
               "isolevel": 3
             }
           },
@@ -3257,6 +3296,9 @@
           },
           "sha256:4900de5fe7cf57df87d84d84a35e2031bb0668494c12da6d26c617f0d23f060d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/iwl2030-firmware-18.168.6.1-124.el9.noarch.rpm"
+          },
+          "sha256:49191fa272d3c16c219f1b27fd86bd085fa1ae3bac38946de40926b35773c4c4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/redhat-logos-90.2-1.el9.x86_64.rpm"
           },
           "sha256:49f7baeb53e07a4b9b5739e36932f17f014abb765b3fa6c0c0f8af6a8ebf4d9b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/attr-2.5.1-3.el9.x86_64.rpm"
@@ -9991,6 +10033,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/python3-policycoreutils-3.3-2.el9.noarch.rpm",
         "checksum": "sha256:5c06d2a85bec668b8a9ba52b9d237770e37a2e4db014e7e8dc0cebaaf692af1e"
+      },
+      {
+        "name": "redhat-logos",
+        "epoch": 0,
+        "version": "90.2",
+        "release": "1.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/redhat-logos-90.2-1.el9.x86_64.rpm",
+        "checksum": "sha256:49191fa272d3c16c219f1b27fd86bd085fa1ae3bac38946de40926b35773c4c4"
       },
       {
         "name": "udisks2",

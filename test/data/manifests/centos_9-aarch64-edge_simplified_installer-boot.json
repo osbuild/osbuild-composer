@@ -3125,6 +3125,14 @@
                     }
                   },
                   {
+                    "id": "sha256:7c4228a8b0b081ba72ca2c54a89724a10aedda91898475bab0de2e5b392c12bc",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:badd8729863d81a782324f3d6d14fd3b7435763c2623fcc95919f78374c99426",
                     "options": {
                       "metadata": {
@@ -6809,6 +6817,9 @@
           "sha256:7b3c089462e362919b919e574cd71933e37e1781094a357cd352851608d65a6f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20230101/Packages/containers-common-1-46.el9.aarch64.rpm"
           },
+          "sha256:7c4228a8b0b081ba72ca2c54a89724a10aedda91898475bab0de2e5b392c12bc": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20230101/Packages/centos-logos-90.4-1.el9.aarch64.rpm"
+          },
           "sha256:7ccc9d433def3922b81c136a1e3c6bd5882f16b80915b2b92145c7cca4eb1b6b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20230101/Packages/libtirpc-1.3.3-1.el9.aarch64.rpm"
           },
@@ -10465,6 +10476,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20230101/Packages/bsdtar-3.5.3-4.el9.aarch64.rpm",
         "checksum": "sha256:287460070b8990140a3d2f3b5f7b66933452b2953a7db6b583d6b1b56c0ec962",
+        "check_gpg": true
+      },
+      {
+        "name": "centos-logos",
+        "epoch": 0,
+        "version": "90.4",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-appstream-20230101/Packages/centos-logos-90.4-1.el9.aarch64.rpm",
+        "checksum": "sha256:7c4228a8b0b081ba72ca2c54a89724a10aedda91898475bab0de2e5b392c12bc",
         "check_gpg": true
       },
       {

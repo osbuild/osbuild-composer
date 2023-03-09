@@ -3187,6 +3187,14 @@
                     }
                   },
                   {
+                    "id": "sha256:a5eacdd23a3ac1480fbb62021db5bb380469f38d8c2a95d2742eae3f00d44482",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:00030b411b38c1ed0babef38334c1ca7505d1548e616d8689eb2a724034d9b28",
                     "options": {
                       "metadata": {
@@ -6284,6 +6292,37 @@
             }
           },
           {
+            "type": "org.osbuild.isolinux",
+            "inputs": {
+              "data": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:coi-tree"
+                ]
+              }
+            },
+            "options": {
+              "product": {
+                "name": "CentOS Stream",
+                "version": "9-stream"
+              },
+              "kernel": {
+                "dir": "/images/pxeboot",
+                "opts": [
+                  "rd.neednet=1",
+                  "coreos.inst.crypt_root=1",
+                  "coreos.inst.isoroot=CentOS-Stream-9-BaseOS-x86_64",
+                  "coreos.inst.install_dev=/dev/vda",
+                  "coreos.inst.image_file=/run/media/iso/image.raw.xz",
+                  "coreos.inst.insecure",
+                  "fdo.manufacturing_server_url=https;//fdo.example.com",
+                  "fdo.diun_pub_key_insecure=true"
+                ]
+              }
+            }
+          },
+          {
             "type": "org.osbuild.copy",
             "inputs": {
               "tree": {
@@ -6324,7 +6363,12 @@
               "filename": "simplified-installer.iso",
               "volid": "CentOS-Stream-9-BaseOS-x86_64",
               "sysid": "LINUX",
+              "boot": {
+                "image": "isolinux/isolinux.bin",
+                "catalog": "isolinux/boot.cat"
+              },
               "efi": "images/efiboot.img",
+              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin",
               "isolevel": 3
             }
           },
@@ -7077,6 +7121,9 @@
           },
           "sha256:a42949a7f6c1750c6a07d55907ce7ac3b4b05d281eec0fd5926edc528fb61ab9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20230101/Packages/libgudev-237-1.el9.x86_64.rpm"
+          },
+          "sha256:a5eacdd23a3ac1480fbb62021db5bb380469f38d8c2a95d2742eae3f00d44482": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20230101/Packages/centos-logos-90.4-1.el9.x86_64.rpm"
           },
           "sha256:a70fdda85cd771ef5bf5b17c2996e4ff4d21c2e5b1eece1764a87f12e720ab68": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20230101/Packages/libmnl-1.0.4-15.el9.x86_64.rpm"
@@ -10677,6 +10724,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20230101/Packages/bsdtar-3.5.3-4.el9.x86_64.rpm",
         "checksum": "sha256:e454141f6b730c46833881ac3c83de618055629c18520574ad9fd1cf5fd18157",
+        "check_gpg": true
+      },
+      {
+        "name": "centos-logos",
+        "epoch": 0,
+        "version": "90.4",
+        "release": "1.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-appstream-20230101/Packages/centos-logos-90.4-1.el9.x86_64.rpm",
+        "checksum": "sha256:a5eacdd23a3ac1480fbb62021db5bb380469f38d8c2a95d2742eae3f00d44482",
         "check_gpg": true
       },
       {
