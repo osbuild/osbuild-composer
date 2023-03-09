@@ -2273,6 +2273,9 @@
                     "id": "sha256:c2f286f6b75caf1508829d748c35833ee5fba762e0175b1f5dbb23ab8ab2079e"
                   },
                   {
+                    "id": "sha256:eb3514a91e4964b6b237e0f6d808b4e6a0016eb030a2c2566f9c627a4c352fa8"
+                  },
+                  {
                     "id": "sha256:244a7fe034af09c4048e6c92e6da4b835cef218c2ad1d2bc4db1386eec8cb56f"
                   },
                   {
@@ -3908,6 +3911,9 @@
           },
           "sha256:e9993e3d2d37f62717465ae2dbf8b741cd9c4767004fc2a829d68bdc89a7679e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/libcom_err-1.45.6-2.el8.aarch64.rpm"
+          },
+          "sha256:eb3514a91e4964b6b237e0f6d808b4e6a0016eb030a2c2566f9c627a4c352fa8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/redhat-logos-84.5-1.el8.aarch64.rpm"
           },
           "sha256:ebacfc5607f6ed16d4b53d7e642320caa0df3b5edf7253ba1286cc3a230af440": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/dbus-common-1.12.8-18.el8.noarch.rpm"
@@ -9016,6 +9022,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/readline-7.0-10.el8.aarch64.rpm",
         "checksum": "sha256:c2f286f6b75caf1508829d748c35833ee5fba762e0175b1f5dbb23ab8ab2079e"
+      },
+      {
+        "name": "redhat-logos",
+        "epoch": 0,
+        "version": "84.5",
+        "release": "1.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.6-20220201/Packages/redhat-logos-84.5-1.el8.aarch64.rpm",
+        "checksum": "sha256:eb3514a91e4964b6b237e0f6d808b4e6a0016eb030a2c2566f9c627a4c352fa8"
       },
       {
         "name": "redhat-release",

@@ -5499,6 +5499,14 @@
                     }
                   },
                   {
+                    "id": "sha256:1bf9de8b1436ae1cb5624309a58c677e24dbdf70af96fd7de99cbe7c38655a85",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:270361d4856e4c3c0d3efa9b87655c3cb81a0193caf0e2bf8e10f311f0ba1ec6",
                     "options": {
                       "metadata": {
@@ -6099,6 +6107,37 @@
             }
           },
           {
+            "type": "org.osbuild.isolinux",
+            "inputs": {
+              "data": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:coi-tree"
+                ]
+              }
+            },
+            "options": {
+              "product": {
+                "name": "CentOS Stream",
+                "version": "8-stream"
+              },
+              "kernel": {
+                "dir": "/images/pxeboot",
+                "opts": [
+                  "rd.neednet=1",
+                  "coreos.inst.crypt_root=1",
+                  "coreos.inst.isoroot=CentOS-Stream-8-x86_64-dvd",
+                  "coreos.inst.install_dev=/dev/vda",
+                  "coreos.inst.image_file=/run/media/iso/image.raw.xz",
+                  "coreos.inst.insecure",
+                  "fdo.manufacturing_server_url=https;//fdo.example.com",
+                  "fdo.diun_pub_key_insecure=true"
+                ]
+              }
+            }
+          },
+          {
             "type": "org.osbuild.copy",
             "inputs": {
               "tree": {
@@ -6139,7 +6178,12 @@
               "filename": "simplified-installer.iso",
               "volid": "CentOS-Stream-8-x86_64-dvd",
               "sysid": "LINUX",
+              "boot": {
+                "image": "isolinux/isolinux.bin",
+                "catalog": "isolinux/boot.cat"
+              },
               "efi": "images/efiboot.img",
+              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin",
               "isolevel": 3
             }
           },
@@ -6295,6 +6339,9 @@
           },
           "sha256:1b18f8d64433a5e74f3c0c0a962737833826527dfa6b9a26942506f7990885af": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/python3-librepo-1.14.2-1.el8.x86_64.rpm"
+          },
+          "sha256:1bf9de8b1436ae1cb5624309a58c677e24dbdf70af96fd7de99cbe7c38655a85": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/centos-logos-85.8-2.el8.x86_64.rpm"
           },
           "sha256:1c4b186665558747023a60d0d662d3780a1bc49e578062f4b70100c71ab2220c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/mokutil-0.3.0-11.el8.x86_64.rpm"
@@ -13477,6 +13524,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/anaconda-dracut-33.16.6.5-1.el8.x86_64.rpm",
         "checksum": "sha256:c0d2015fe322085dc5cb92709e1a2c852ce783f8436f9eaf38974a580435f4a2",
+        "check_gpg": true
+      },
+      {
+        "name": "centos-logos",
+        "epoch": 0,
+        "version": "85.8",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/centos-logos-85.8-2.el8.x86_64.rpm",
+        "checksum": "sha256:1bf9de8b1436ae1cb5624309a58c677e24dbdf70af96fd7de99cbe7c38655a85",
         "check_gpg": true
       },
       {

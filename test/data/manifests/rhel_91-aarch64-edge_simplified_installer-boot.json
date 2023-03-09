@@ -5944,6 +5944,14 @@
                     }
                   },
                   {
+                    "id": "sha256:80113c2978bf7cce2bc94f3c887ca77621ffec0d0ab38df730bed8c2461849f7",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:7ccc4a5fa203fcbac963a392d29cd3bcbe82fb762833e8d406b1f11dc8451639",
                     "options": {
                       "metadata": {
@@ -6895,6 +6903,9 @@
           },
           "sha256:7e9179402556fa825fcfb16e873eb67b2b6c810149162e83ee771f997fd8f2ec": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221015/Packages/tar-1.34-5.el9.aarch64.rpm"
+          },
+          "sha256:80113c2978bf7cce2bc94f3c887ca77621ffec0d0ab38df730bed8c2461849f7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/redhat-logos-90.4-1.el9.aarch64.rpm"
           },
           "sha256:8021ebcd73fcdfb0fed4e9077d8483d1a2dfa95acc1bd823ecd77e49ac3ddb27": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.1-20221015/Packages/libbasicobjects-0.1.1-53.el9.aarch64.rpm"
@@ -14071,6 +14082,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/python3-policycoreutils-3.4-4.el9.noarch.rpm",
         "checksum": "sha256:686eca65f9fe16b47d9006aee1735b0f70c10e532e7e547c3be740e91ac4aaec",
+        "check_gpg": true
+      },
+      {
+        "name": "redhat-logos",
+        "epoch": 0,
+        "version": "90.4",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.1-20221015/Packages/redhat-logos-90.4-1.el9.aarch64.rpm",
+        "checksum": "sha256:80113c2978bf7cce2bc94f3c887ca77621ffec0d0ab38df730bed8c2461849f7",
         "check_gpg": true
       },
       {
