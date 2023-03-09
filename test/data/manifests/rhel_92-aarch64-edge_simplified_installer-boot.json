@@ -5893,6 +5893,14 @@
                     }
                   },
                   {
+                    "id": "sha256:80113c2978bf7cce2bc94f3c887ca77621ffec0d0ab38df730bed8c2461849f7",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:f78a2a07073e949a115b2d95a6119eb6547b992c00c7af9af6887709030e4af4",
                     "options": {
                       "metadata": {
@@ -6781,6 +6789,9 @@
           },
           "sha256:7f5398b37571d6eead55c4c1f793e5934c00847a709dbe844b21a633a59fb684": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.2-20230101/Packages/device-mapper-libs-1.02.187-3.el9.aarch64.rpm"
+          },
+          "sha256:80113c2978bf7cce2bc94f3c887ca77621ffec0d0ab38df730bed8c2461849f7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.2-20230101/Packages/redhat-logos-90.4-1.el9.aarch64.rpm"
           },
           "sha256:8021ebcd73fcdfb0fed4e9077d8483d1a2dfa95acc1bd823ecd77e49ac3ddb27": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.2-20230101/Packages/libbasicobjects-0.1.1-53.el9.aarch64.rpm"
@@ -13925,6 +13936,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.2-20230101/Packages/python3-policycoreutils-3.4-4.el9.noarch.rpm",
         "checksum": "sha256:686eca65f9fe16b47d9006aee1735b0f70c10e532e7e547c3be740e91ac4aaec",
+        "check_gpg": true
+      },
+      {
+        "name": "redhat-logos",
+        "epoch": 0,
+        "version": "90.4",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.2-20230101/Packages/redhat-logos-90.4-1.el9.aarch64.rpm",
+        "checksum": "sha256:80113c2978bf7cce2bc94f3c887ca77621ffec0d0ab38df730bed8c2461849f7",
         "check_gpg": true
       },
       {

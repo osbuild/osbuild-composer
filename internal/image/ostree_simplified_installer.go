@@ -144,19 +144,24 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 		},
 	}
 
+	// enable ISOLinux on x86_64 only
+	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
+
 	isoTreePipeline := manifest.NewCoreOSISOTree(m,
 		buildPipeline,
 		rawImage,
 		coiPipeline,
 		bootTreePipeline,
 		isoLabel)
+	isoTreePipeline.KernelOpts = kernelOpts
 	isoTreePipeline.PartitionTable = rootfsPartitionTable
 	isoTreePipeline.OSName = img.OSName
 	isoTreePipeline.PayloadPath = fmt.Sprintf("/%s", rawImageFilename)
+	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
 	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline, isoLabel)
 	isoPipeline.Filename = img.Filename
-	isoPipeline.ISOLinux = false
+	isoPipeline.ISOLinux = isoLinuxEnabled
 
 	artifact := isoPipeline.Export()
 	return artifact, nil

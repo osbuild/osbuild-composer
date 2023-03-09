@@ -2571,6 +2571,9 @@
                     "id": "sha256:5c06d2a85bec668b8a9ba52b9d237770e37a2e4db014e7e8dc0cebaaf692af1e"
                   },
                   {
+                    "id": "sha256:1dd2260e41946bf3914f77de2264555ccf20d0b49e17ff75c1b561319735520b"
+                  },
+                  {
                     "id": "sha256:339116c6415c611943a78d8d1aa15104cec30ad7c2e49014e97538cb946fc445"
                   },
                   {
@@ -3021,6 +3024,9 @@
           },
           "sha256:1d78714f790bbd6ba9ce602a40c27d94bcbdbf1a238d3f4f15de4a0503257640": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/selinux-policy-34.1.23-1.el9.noarch.rpm"
+          },
+          "sha256:1dd2260e41946bf3914f77de2264555ccf20d0b49e17ff75c1b561319735520b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/redhat-logos-90.2-1.el9.aarch64.rpm"
           },
           "sha256:1dd3f265935e073215dffb6931dfb872d7cd94a6c08503a36b3ff8c8a8a25e34": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-baseos-n9.0-20220208/Packages/grub2-tools-extra-2.06-16.el9.aarch64.rpm"
@@ -9755,6 +9761,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/python3-policycoreutils-3.3-2.el9.noarch.rpm",
         "checksum": "sha256:5c06d2a85bec668b8a9ba52b9d237770e37a2e4db014e7e8dc0cebaaf692af1e"
+      },
+      {
+        "name": "redhat-logos",
+        "epoch": 0,
+        "version": "90.2",
+        "release": "1.el9",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-aarch64-appstream-n9.0-20220208/Packages/redhat-logos-90.2-1.el9.aarch64.rpm",
+        "checksum": "sha256:1dd2260e41946bf3914f77de2264555ccf20d0b49e17ff75c1b561319735520b"
       },
       {
         "name": "tpm2-tools",
