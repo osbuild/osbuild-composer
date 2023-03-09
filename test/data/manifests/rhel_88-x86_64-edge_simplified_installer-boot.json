@@ -2313,6 +2313,9 @@
                     "id": "sha256:ef221ca565f17ed425997e97fdeb5fc27261910659fa61372b18d93e1a5613e9"
                   },
                   {
+                    "id": "sha256:8efd3d9307abb80a5dd244d76202c3a5591f462f0effbef51e12f0d31ec9d418"
+                  },
+                  {
                     "id": "sha256:26f7b39b6fc3f5ed6a650e616ec6816fd7c49a19290f9bba32e34fafd067a1ea"
                   },
                   {
@@ -2811,6 +2814,37 @@
             }
           },
           {
+            "type": "org.osbuild.isolinux",
+            "inputs": {
+              "data": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:coi-tree"
+                ]
+              }
+            },
+            "options": {
+              "product": {
+                "name": "Red Hat Enterprise Linux",
+                "version": "8.8"
+              },
+              "kernel": {
+                "dir": "/images/pxeboot",
+                "opts": [
+                  "rd.neednet=1",
+                  "coreos.inst.crypt_root=1",
+                  "coreos.inst.isoroot=RHEL-8-8-0-BaseOS-x86_64",
+                  "coreos.inst.install_dev=/dev/vda",
+                  "coreos.inst.image_file=/run/media/iso/image.raw.xz",
+                  "coreos.inst.insecure",
+                  "fdo.manufacturing_server_url=https;//fdo.example.com",
+                  "fdo.diun_pub_key_insecure=true"
+                ]
+              }
+            }
+          },
+          {
             "type": "org.osbuild.copy",
             "inputs": {
               "tree": {
@@ -2851,7 +2885,12 @@
               "filename": "simplified-installer.iso",
               "volid": "RHEL-8-8-0-BaseOS-x86_64",
               "sysid": "LINUX",
+              "boot": {
+                "image": "isolinux/isolinux.bin",
+                "catalog": "isolinux/boot.cat"
+              },
               "efi": "images/efiboot.img",
+              "isohybridmbr": "/usr/share/syslinux/isohdpfx.bin",
               "isolevel": 3
             }
           },
@@ -3535,6 +3574,9 @@
           },
           "sha256:8e31f6cca87a15d2d3216571b3d7c84755c2e79ff5f7c1bf02c75dbf696a47ca": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/elfutils-libelf-0.187-4.el8.x86_64.rpm"
+          },
+          "sha256:8efd3d9307abb80a5dd244d76202c3a5591f462f0effbef51e12f0d31ec9d418": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/redhat-logos-84.5-1.el8.x86_64.rpm"
           },
           "sha256:8fc053b5c801ecbdd880e6676c7a8f43afa6730dff130c145fff37d1f00231f8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/iwl2000-firmware-18.168.6.1-110.el8.1.noarch.rpm"
@@ -9192,6 +9234,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/readline-7.0-10.el8.x86_64.rpm",
         "checksum": "sha256:ef221ca565f17ed425997e97fdeb5fc27261910659fa61372b18d93e1a5613e9"
+      },
+      {
+        "name": "redhat-logos",
+        "epoch": 0,
+        "version": "84.5",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/redhat-logos-84.5-1.el8.x86_64.rpm",
+        "checksum": "sha256:8efd3d9307abb80a5dd244d76202c3a5591f462f0effbef51e12f0d31ec9d418"
       },
       {
         "name": "redhat-release",

@@ -28,6 +28,11 @@ type CoreOSISOTree struct {
 	PayloadPath string
 
 	isoLabel string
+
+	// Enable ISOLinux stage
+	ISOLinux bool
+
+	KernelOpts []string
 }
 
 func NewCoreOSISOTree(m *Manifest,
@@ -131,6 +136,22 @@ func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.coiPipeline.Name())
 	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
 	pipeline.AddStage(copyStage)
+
+	if p.ISOLinux {
+		isoLinuxOptions := &osbuild.ISOLinuxStageOptions{
+			Product: osbuild.ISOLinuxProduct{
+				Name:    p.coiPipeline.product,
+				Version: p.coiPipeline.version,
+			},
+			Kernel: osbuild.ISOLinuxKernel{
+				Dir:  "/images/pxeboot",
+				Opts: p.KernelOpts,
+			},
+		}
+
+		isoLinuxStage := osbuild.NewISOLinuxStage(isoLinuxOptions, p.coiPipeline.Name())
+		pipeline.AddStage(isoLinuxStage)
+	}
 
 	copyInputs = osbuild.NewPipelineTreeInputs(inputName, p.bootTreePipeline.Name())
 	pipeline.AddStage(osbuild.NewCopyStageSimple(

@@ -5372,6 +5372,14 @@
                     }
                   },
                   {
+                    "id": "sha256:b8dd6d9549148d4469333794b0495817157913de2aa5a6827bb1e20e8cf58d56",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:8f0c85b97a40d8b22bcc6cda29c078fe8e8d6deff7ede90d9e755826fea2ff8c",
                     "options": {
                       "metadata": {
@@ -6896,6 +6904,9 @@
           },
           "sha256:b81e9cc635b9ef9cba61cee83da1bab028869ebc70ba96999925fe3cd1ea52df": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/lorax-28.14.65-1.el8.aarch64.rpm"
+          },
+          "sha256:b8dd6d9549148d4469333794b0495817157913de2aa5a6827bb1e20e8cf58d56": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/centos-logos-85.8-2.el8.aarch64.rpm"
           },
           "sha256:b938a6facc8d8a3de12b369871738bb531c822b1ec5212501b06bcaaf6cd25fa": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20220208/Packages/ncurses-libs-6.1-9.20180224.el8.aarch64.rpm"
@@ -13172,6 +13183,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/anaconda-dracut-33.16.6.5-1.el8.aarch64.rpm",
         "checksum": "sha256:6e23374341e975a1d29e46d141204cc8e847125be6aea898eea1d0b809a8b1a4",
+        "check_gpg": true
+      },
+      {
+        "name": "centos-logos",
+        "epoch": 0,
+        "version": "85.8",
+        "release": "2.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20220208/Packages/centos-logos-85.8-2.el8.aarch64.rpm",
+        "checksum": "sha256:b8dd6d9549148d4469333794b0495817157913de2aa5a6827bb1e20e8cf58d56",
         "check_gpg": true
       },
       {

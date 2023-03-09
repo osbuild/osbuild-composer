@@ -328,6 +328,7 @@ func edgeSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 			"policycoreutils",
 			"policycoreutils-python-utils",
 			"procps-ng",
+			"redhat-logos",
 			"rootfiles",
 			"setools-console",
 			"sudo",

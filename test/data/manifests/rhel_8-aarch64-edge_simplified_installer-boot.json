@@ -2267,6 +2267,9 @@
                     "id": "sha256:c2f286f6b75caf1508829d748c35833ee5fba762e0175b1f5dbb23ab8ab2079e"
                   },
                   {
+                    "id": "sha256:eb3514a91e4964b6b237e0f6d808b4e6a0016eb030a2c2566f9c627a4c352fa8"
+                  },
+                  {
                     "id": "sha256:c2f9ce9ba473dcb0b6a2e20b3362bfcc18762e26bcb1a0a871c2cd5724910c71"
                   },
                   {
@@ -3905,6 +3908,9 @@
           },
           "sha256:eb29b9d93a6c65047676592e7d90e042ecc18c8e6cf33d8241b30744e8571983": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.7-20221015/Packages/binutils-2.30-117.el8.aarch64.rpm"
+          },
+          "sha256:eb3514a91e4964b6b237e0f6d808b4e6a0016eb030a2c2566f9c627a4c352fa8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.7-20221015/Packages/redhat-logos-84.5-1.el8.aarch64.rpm"
           },
           "sha256:ed28e1e31109e27ce1c676914364c9f1dd46b71d00cb4cf13931f0fec6cf6978": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.7-20221015/Packages/libtasn1-4.13-3.el8.aarch64.rpm"
@@ -8995,6 +9001,15 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.7-20221015/Packages/readline-7.0-10.el8.aarch64.rpm",
         "checksum": "sha256:c2f286f6b75caf1508829d748c35833ee5fba762e0175b1f5dbb23ab8ab2079e"
+      },
+      {
+        "name": "redhat-logos",
+        "epoch": 0,
+        "version": "84.5",
+        "release": "1.el8",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.7-20221015/Packages/redhat-logos-84.5-1.el8.aarch64.rpm",
+        "checksum": "sha256:eb3514a91e4964b6b237e0f6d808b4e6a0016eb030a2c2566f9c627a4c352fa8"
       },
       {
         "name": "redhat-release",
