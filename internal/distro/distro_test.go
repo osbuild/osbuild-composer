@@ -157,8 +157,16 @@ func TestImageType_PackageSetsChains(t *testing.T) {
 // results.
 func TestImageTypePipelineNames(t *testing.T) {
 	// types for parsing the opaque manifest with just the fields we care about
+	type rpmStageOptions struct {
+		GPGKeys []string `json:"gpgkeys"`
+	}
+	type stage struct {
+		Type    string          `json:"type"`
+		Options rpmStageOptions `json:"options"`
+	}
 	type pipeline struct {
-		Name string `json:"name"`
+		Name   string  `json:"name"`
+		Stages []stage `json:"stages"`
 	}
 	type manifest struct {
 		Pipelines []pipeline `json:"pipelines"`
@@ -187,7 +195,17 @@ func TestImageTypePipelineNames(t *testing.T) {
 						Customizations: customizations,
 					}
 					options := distro.ImageOptions{}
-					repos := make([]rpmmd.RepoConfig, 0)
+					// this repo's gpg keys should get included in the os
+					// pipeline's rpm stage
+					repos := []rpmmd.RepoConfig{
+						{
+							Name:        "payload",
+							BaseURL:     "http://payload.example.com",
+							PackageSets: imageType.PayloadPackageSets(),
+							GPGKeys:     []string{"payload-gpg-key"},
+							CheckGPG:    true,
+						},
+					}
 					containers := make([]container.Spec, 0)
 					seed := int64(0)
 
@@ -224,6 +242,18 @@ func TestImageTypePipelineNames(t *testing.T) {
 						// manifest pipeline names should be identical to the ones
 						// defined in the image type and in the same order
 						require.Equal(allPipelines[idx], pm.Pipelines[idx].Name)
+
+						if pm.Pipelines[idx].Name == "os" {
+							rpmStagePresent := false
+							for _, s := range pm.Pipelines[idx].Stages {
+								if s.Type == "org.osbuild.rpm" {
+									rpmStagePresent = true
+									require.Equal(repos[0].GPGKeys, s.Options.GPGKeys)
+								}
+							}
+							// make sure the gpg keys check was reached
+							require.True(rpmStagePresent)
+						}
 					}
 
 					// The last pipeline should match the export pipeline.
