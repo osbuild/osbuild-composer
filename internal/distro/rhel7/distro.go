@@ -7,6 +7,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
+
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
@@ -21,7 +24,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 	"github.com/osbuild/osbuild-composer/internal/workload"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -391,7 +393,25 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	}
 	bp.Customizations = customizations
 
-	manifest, err := t.initializeManifest(bp, options, repos, nil, containers, seed)
+	// the os pipeline filters repos based on the `osPkgsKey` package set, merge the repos which
+	// contain a payload package set into the `osPkgsKey`, so those repos are included when
+	// building the rpm stage in the os pipeline
+	// TODO: roll this into workloads
+	mergedRepos := make([]rpmmd.RepoConfig, 0, len(repos))
+	for _, repo := range repos {
+		for _, pkgsKey := range t.PayloadPackageSets() {
+			// If the repo already contains the osPkgsKey, skip
+			if slices.Contains(repo.PackageSets, osPkgsKey) {
+				break
+			}
+			if slices.Contains(repo.PackageSets, pkgsKey) {
+				repo.PackageSets = append(repo.PackageSets, osPkgsKey)
+			}
+		}
+		mergedRepos = append(mergedRepos, repo)
+	}
+
+	manifest, err := t.initializeManifest(bp, options, mergedRepos, nil, containers, seed)
 	if err != nil {
 		return distro.Manifest{}, err
 	}
