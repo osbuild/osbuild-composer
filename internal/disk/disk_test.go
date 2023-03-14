@@ -1051,7 +1051,7 @@ func TestMinimumSizesWithRequiredSizes(t *testing.T) {
 			},
 			ExpectedMinSizes: map[string]uint64{
 				"/opt": 10 * GiB,
-				"/":    1 * GiB,
+				"/":    4 * GiB,
 			},
 		},
 	}
