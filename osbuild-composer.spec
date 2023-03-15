@@ -128,7 +128,13 @@ go build -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-mock-openi
 install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/osbuild-composer
 install -m 0755 -vp _bin/osbuild-composer                          %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-worker                            %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0755 -vp dnf-json                                       %{buildroot}%{_libexecdir}/osbuild-composer/
+
+# Fedora 40 and later use dnf5-json, RHEL and Fedora < 40 use dnf-json
+%if 0%{?fedora} >= 40
+install -m 0755 -vp dnf5-json                                       %{buildroot}%{_libexecdir}/osbuild-composer/dnf-json
+%else
+install -m 0755 -vp dnf-json                                       %{buildroot}%{_libexecdir}/osbuild-composer/dnf-json
+%endif
 
 # Only include repositories for the distribution and release
 install -m 0755 -vd                                                %{buildroot}%{_datadir}/osbuild-composer/repositories
@@ -333,6 +339,13 @@ fi
 
 %package dnf-json
 Summary: The dnf-json binary used by osbuild-composer and the workers
+
+# Fedora 40 and later use libdnf5, RHEL and Fedora < 40 use libdnf
+%if 0%{?fedora} >= 40
+Requires: python3-libdnf5 >= 5.1.1
+%else
+Requires: python3-libdnf
+%endif
 
 # Conflicts with older versions of composer that provide the same files
 # this can be removed when RHEL 8 reaches EOL
