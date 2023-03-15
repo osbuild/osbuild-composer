@@ -160,14 +160,15 @@ var (
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.ToPtr("en_US.UTF-8"),
 		},
-		defaultSize:         4 * common.GibiByte,
-		rpmOstree:           true,
-		bootable:            true,
-		image:               iotRawImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"image-tree", "image", "xz"},
-		exports:             []string{"xz"},
-		basePartitionTables: iotBasePartitionTables,
+		defaultSize:            4 * common.GibiByte,
+		rpmOstree:              true,
+		bootable:               true,
+		image:                  iotRawImage,
+		buildPipelines:         []string{"build"},
+		payloadPipelines:       []string{"image-tree", "image", "xz"},
+		exports:                []string{"xz"},
+		basePartitionTables:    iotBasePartitionTables,
+		requiredPartitionSizes: map[string]uint64{},
 	}
 
 	qcow2ImgType = imageType{
@@ -511,7 +512,8 @@ type imageType struct {
 	// bootable image
 	bootable bool
 	// List of valid arches for the image type
-	basePartitionTables distro.BasePartitionTableMap
+	basePartitionTables    distro.BasePartitionTableMap
+	requiredPartitionSizes map[string]uint64
 }
 
 func (t *imageType) Name() string {
@@ -653,7 +655,7 @@ func (t *imageType) getPartitionTable(
 
 	lvmify := !t.rpmOstree
 
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, lvmify, options.RequiredSizes, rng)
+	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, lvmify, t.requiredPartitionSizes, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {

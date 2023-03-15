@@ -125,11 +125,10 @@ type ImageType interface {
 
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	Size          uint64
-	OSTree        OSTreeImageOptions
-	Subscription  *SubscriptionImageOptions
-	Facts         *FactsImageOptions
-	RequiredSizes map[string]uint64
+	Size         uint64
+	OSTree       OSTreeImageOptions
+	Subscription *SubscriptionImageOptions
+	Facts        *FactsImageOptions
 }
 
 // The OSTreeImageOptions specify an ostree ref, checksum, URL, ContentURL, and RHSM. The meaning of
