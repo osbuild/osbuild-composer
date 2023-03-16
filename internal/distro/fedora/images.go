@@ -386,11 +386,7 @@ func iotRawImage(workload workload.Workload,
 
 	img := image.NewOSTreeRawImage(commit)
 
-	// Set sysroot read-only only for Fedora 37+
 	distro := t.Arch().Distro()
-	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "37") {
-		img.SysrootReadOnly = true
-	}
 	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "38") {
 		img.Ignition = true
 	}
@@ -407,11 +403,15 @@ func iotRawImage(workload workload.Workload,
 		return nil, err
 	}
 
-	// "rw" kernel option is required when /sysroot is mounted read-only to
-	// keep stateful parts of the filesystem writeable (/var/ and /etc)
-	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
+	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	img.Keyboard = "us"
 	img.Locale = "C.UTF-8"
+
+	// Set sysroot read-only only for Fedora 37+
+	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "37") {
+		img.SysrootReadOnly = true
+		img.KernelOptionsAppend = append(img.KernelOptionsAppend, "rw")
+	}
 
 	img.Platform = t.platform
 	img.Workload = workload
@@ -423,6 +423,14 @@ func iotRawImage(workload workload.Workload,
 		GPGKeyPaths: []string{"/etc/pki/rpm-gpg/"},
 	}
 	img.OSName = "fedora-iot"
+
+	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+		img.KernelOptionsAppend = append(img.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
+	}
+
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		img.KernelOptionsAppend = append(img.KernelOptionsAppend, kopts.Append)
+	}
 
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
@@ -457,12 +465,13 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	// "rw" kernel option is required when /sysroot is mounted read-only to
-	// keep stateful parts of the filesystem writeable (/var/ and /etc)
-	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
+	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	rawImg.Keyboard = "us"
 	rawImg.Locale = "C.UTF-8"
-	rawImg.SysrootReadOnly = true
+	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
+		rawImg.SysrootReadOnly = true
+		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, "rw")
+	}
 
 	rawImg.Platform = t.platform
 	rawImg.Workload = workload
