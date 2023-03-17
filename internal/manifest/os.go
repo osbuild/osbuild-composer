@@ -352,7 +352,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			pipeline.AddStage(osbuild.NewContainersStorageConfStage(containerStoreOpts))
 		}
 
-		skopeo := osbuild.NewSkopeoStage(images, storagePath)
+		skopeo := osbuild.NewSkopeoStage(storagePath, images)
 		pipeline.AddStage(skopeo)
 	}
 
