@@ -391,8 +391,9 @@ type manifestList interface {
 }
 
 type resolvedIds struct {
-	Manifest digest.Digest
-	Config   digest.Digest
+	Manifest     digest.Digest
+	Config       digest.Digest
+	ListManifest digest.Digest
 }
 
 func (cl *Client) resolveManifestList(ctx context.Context, list manifestList) (resolvedIds, error) {
@@ -407,7 +408,12 @@ func (cl *Client) resolveManifestList(ctx context.Context, list manifestList) (r
 		return resolvedIds{}, fmt.Errorf("error getting manifest: %w", err)
 	}
 
-	return cl.resolveRawManifest(ctx, raw)
+	ids, err := cl.resolveRawManifest(ctx, raw)
+	if err != nil {
+		return resolvedIds{}, err
+	}
+
+	return ids, err
 }
 
 func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest) (resolvedIds, error) {
@@ -421,7 +427,14 @@ func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest) (resol
 			return resolvedIds{}, err
 		}
 
-		return cl.resolveManifestList(ctx, list)
+		// Save digest of the manifest list as well.
+		ids, err := cl.resolveManifestList(ctx, list)
+		if err != nil {
+			return resolvedIds{}, err
+		}
+		// NOTE: Comment in Digest() source says this should never fail. Ignore the error.
+		ids.ListManifest, _ = rm.Digest()
+		return ids, nil
 
 	case imgspecv1.MediaTypeImageIndex:
 		index, err := manifest.OCI1IndexFromManifest(rm.Data)
@@ -429,7 +442,14 @@ func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest) (resol
 			return resolvedIds{}, err
 		}
 
-		return cl.resolveManifestList(ctx, index)
+		// Save digest of the manifest list as well.
+		ids, err := cl.resolveManifestList(ctx, index)
+		if err != nil {
+			return resolvedIds{}, err
+		}
+		// NOTE: Comment in Digest() source says this should never fail. Ignore the error.
+		ids.ListManifest, _ = rm.Digest()
+		return ids, nil
 
 	case imgspecv1.MediaTypeImageManifest:
 		m, err := manifest.OCI1FromManifest(rm.Data)
@@ -480,7 +500,7 @@ func (cl *Client) Resolve(ctx context.Context, name string) (Spec, error) {
 		return Spec{}, err
 	}
 
-	spec := NewSpec(cl.Target, ids.Manifest, ids.Config, cl.GetTLSVerify(), "")
+	spec := NewSpec(cl.Target, ids.Manifest, ids.Config, cl.GetTLSVerify(), ids.ListManifest.String())
 
 	return spec, nil
 }
