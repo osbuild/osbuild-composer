@@ -257,14 +257,6 @@
                     }
                   },
                   {
-                    "id": "sha256:0c11e634fc2571a811eded10a912538838093706011e1785b9cc7b17a940b432",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:e7dfdcae92d385722866d220d79fed574af730eab1102fcfa5405f4dddcf6533",
                     "options": {
                       "metadata": {
@@ -1991,13 +1983,6 @@
                   "options": "defaults",
                   "freq": 1,
                   "passno": 2
-                },
-                {
-                  "uuid": "7B77-95E7",
-                  "vfs_type": "vfat",
-                  "path": "/boot/efi",
-                  "options": "umask=0077,shortname=winnt",
-                  "passno": 2
                 }
               ]
             },
@@ -2130,32 +2115,30 @@
             "type": "org.osbuild.truncate",
             "options": {
               "filename": "disk.img",
-              "size": "10737418240"
+              "size": "4294967296"
             }
           },
           {
             "type": "org.osbuild.sfdisk",
             "options": {
-              "label": "gpt",
-              "uuid": "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+              "label": "dos",
+              "uuid": "0xc1748067",
               "partitions": [
                 {
+                  "bootable": true,
                   "size": 1026048,
                   "start": 2048,
-                  "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
-                  "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+                  "type": "06"
                 },
                 {
                   "size": 2097152,
                   "start": 1028096,
-                  "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-                  "uuid": "CB07C243-BC44-4717-853E-28852021225B"
+                  "type": "83"
                 },
                 {
-                  "size": 17846239,
+                  "size": 5263360,
                   "start": 3125248,
-                  "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
-                  "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
+                  "type": "83"
                 }
               ]
             },
@@ -2164,23 +2147,6 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "lock": true
-                }
-              }
-            }
-          },
-          {
-            "type": "org.osbuild.mkfs.fat",
-            "options": {
-              "volid": "7B7795E7"
-            },
-            "devices": {
-              "device": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 2048,
-                  "size": 1026048,
                   "lock": true
                 }
               }
@@ -2216,7 +2182,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 3125248,
-                  "size": 17846239,
+                  "size": 5263360,
                   "lock": true
                 }
               }
@@ -2250,20 +2216,12 @@
                   "size": 2097152
                 }
               },
-              "boot.efi": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 2048,
-                  "size": 1026048
-                }
-              },
               "root": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
                   "start": 3125248,
-                  "size": 17846239
+                  "size": 5263360
                 }
               }
             },
@@ -2279,12 +2237,6 @@
                 "type": "org.osbuild.ext4",
                 "source": "boot",
                 "target": "/boot"
-              },
-              {
-                "name": "boot.efi",
-                "type": "org.osbuild.fat",
-                "source": "boot.efi",
-                "target": "/boot/efi"
               }
             ]
           }
@@ -2352,9 +2304,6 @@
           },
           "sha256:09dc9676b44df287dfa05d9bc7b14c83b8474fb44c48e10c1e244d23017b5656": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230310/Packages/l/libsemanage-3.5-1.fc39.aarch64.rpm"
-          },
-          "sha256:0c11e634fc2571a811eded10a912538838093706011e1785b9cc7b17a940b432": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230310/Packages/d/dosfstools-4.2-6.fc38.aarch64.rpm"
           },
           "sha256:0cbad3c0b6b1b8c73ac219d5ed3772c89331e46a5fd8e4be3dc065e2021ef904": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230310/Packages/c/container-selinux-2.203.0-1.fc39.noarch.rpm"
@@ -3275,16 +3224,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230310/Packages/d/diffutils-3.9-3.fc39.aarch64.rpm",
         "checksum": "sha256:f75e48a0bf1a3f957d356727daf0773868104d98faeca73aa86955e15dcfd01c",
-        "check_gpg": true
-      },
-      {
-        "name": "dosfstools",
-        "epoch": 0,
-        "version": "4.2",
-        "release": "6.fc38",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230310/Packages/d/dosfstools-4.2-6.fc38.aarch64.rpm",
-        "checksum": "sha256:0c11e634fc2571a811eded10a912538838093706011e1785b9cc7b17a940b432",
         "check_gpg": true
       },
       {
