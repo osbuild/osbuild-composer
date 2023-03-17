@@ -137,6 +137,9 @@
         "containers": [
           {
             "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+          },
+          {
+            "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
           }
         ]
       }
@@ -310,6 +313,9 @@
         "containers": [
           {
             "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+          },
+          {
+            "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
           }
         ]
       }
