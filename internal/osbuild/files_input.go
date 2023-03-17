@@ -3,6 +3,8 @@ package osbuild
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/osbuild/osbuild-composer/internal/container"
 )
 
 // SPECIFIC INPUT STRUCTURE
@@ -275,4 +277,20 @@ func NewFilesInputSourceObjectRef(entries map[string]FilesInputRefMetadata) File
 		refs[fmt.Sprintf("sha256:%s", sha256Sum)] = FilesInputSourceOptions{Metadata: metadata}
 	}
 	return &refs
+}
+
+// NewFilesInputForManifestLists creates a FilesInput for container manifest
+// lists. If there are no list digests in the container specs, it returns nil.
+func NewFilesInputForManifestLists(containers []container.Spec) *FilesInput {
+	refs := make([]string, 0, len(containers))
+	for _, c := range containers {
+		if c.ListDigest != "" {
+			refs = append(refs, c.ListDigest)
+		}
+	}
+	if len(refs) == 0 {
+		return nil
+	}
+	filesRef := FilesInputSourcePlainRef(refs)
+	return NewFilesInput(&filesRef)
 }
