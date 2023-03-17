@@ -20,6 +20,9 @@
       "containers": [
         {
           "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+        },
+        {
+          "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
         }
       ]
     }
@@ -1897,10 +1900,20 @@
                 "type": "org.osbuild.containers",
                 "origin": "org.osbuild.source",
                 "references": {
+                  "sha256:62d2a7b3bf9e0b4f3aba22553d6971227b5a39f7f408d46347b1ee74eb97cb20": {
+                    "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
+                  },
                   "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6": {
                     "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
                   }
                 }
+              },
+              "manifest-lists": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
+                ]
               }
             },
             "options": {
@@ -3182,10 +3195,25 @@
       },
       "org.osbuild.skopeo": {
         "items": {
+          "sha256:62d2a7b3bf9e0b4f3aba22553d6971227b5a39f7f408d46347b1ee74eb97cb20": {
+            "image": {
+              "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
+              "digest": "sha256:1a19a94647b1379fed8c23eb7553327cb604ba546eb93f9f6c1e6d11911c8beb"
+            }
+          },
           "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6": {
             "image": {
               "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal",
               "digest": "sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
+            }
+          }
+        }
+      },
+      "org.osbuild.skopeo-index": {
+        "items": {
+          "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc": {
+            "image": {
+              "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
             }
           }
         }
@@ -8568,7 +8596,16 @@
       "Digest": "sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b",
       "TLSVerify": null,
       "ImageID": "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6",
-      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal",
+      "ListDigest": ""
+    },
+    {
+      "Source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
+      "Digest": "sha256:1a19a94647b1379fed8c23eb7553327cb604ba546eb93f9f6c1e6d11911c8beb",
+      "TLSVerify": null,
+      "ImageID": "sha256:62d2a7b3bf9e0b4f3aba22553d6971227b5a39f7f408d46347b1ee74eb97cb20",
+      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
+      "ListDigest": "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
     }
   ],
   "no-image-info": true
