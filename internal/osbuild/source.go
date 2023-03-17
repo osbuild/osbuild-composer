@@ -102,12 +102,21 @@ func GenSources(packages []rpmmd.PackageSpec, ostreeCommits []ostree.CommitSpec,
 	}
 
 	skopeo := NewSkopeoSource()
+	skopeoIndex := NewSkopeoIndexSource()
 	for _, c := range containers {
 		skopeo.AddItem(c.Source, c.Digest, c.ImageID, c.TLSVerify)
+
+		// if we have a list digest, add a skopeo-index source as well
+		if c.ListDigest != "" {
+			skopeoIndex.AddItem(c.Source, c.ListDigest, c.TLSVerify)
+		}
 	}
 
 	if len(skopeo.Items) > 0 {
 		sources["org.osbuild.skopeo"] = skopeo
+	}
+	if len(skopeoIndex.Items) > 0 {
+		sources["org.osbuild.skopeo-index"] = skopeoIndex
 	}
 
 	return sources
