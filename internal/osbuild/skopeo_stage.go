@@ -12,10 +12,18 @@ type SkopeoStageOptions struct {
 
 func (o SkopeoStageOptions) isStageOptions() {}
 
-func NewSkopeoStage(path string, images ContainersInput) *Stage {
+type SkopeoStageInputs struct {
+	Images        ContainersInput `json:"images"`
+	ManifestLists *FilesInput     `json:"manifest-lists,omitempty"`
+}
 
-	inputs := ContainersInputs{
-		"images": images,
+func (SkopeoStageInputs) isStageInputs() {}
+
+func NewSkopeoStage(path string, images ContainersInput, manifests *FilesInput) *Stage {
+
+	inputs := SkopeoStageInputs{
+		Images:        images,
+		ManifestLists: manifests,
 	}
 
 	return &Stage{
