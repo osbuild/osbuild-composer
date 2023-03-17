@@ -17,8 +17,6 @@ type PartitionTable struct {
 
 	SectorSize   uint64 // Sector size in bytes
 	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
-
-	RequiredSizes map[string]uint64
 }
 
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, lvmify bool, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
@@ -44,16 +42,14 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 
 	// If no separate requiredSizes are given then we use our defaults
 	if requiredSizes == nil {
-		newPT.RequiredSizes = map[string]uint64{
+		requiredSizes = map[string]uint64{
 			"/":    1073741824,
 			"/usr": 2147483648,
 		}
-	} else {
-		newPT.RequiredSizes = requiredSizes
 	}
 
-	if len(newPT.RequiredSizes) != 0 {
-		newPT.EnsureDirectorySizes(newPT.RequiredSizes)
+	if len(requiredSizes) != 0 {
+		newPT.EnsureDirectorySizes(requiredSizes)
 	}
 
 	// Calculate partition table offsets and sizes
@@ -75,13 +71,12 @@ func (pt *PartitionTable) Clone() Entity {
 	}
 
 	clone := &PartitionTable{
-		Size:          pt.Size,
-		UUID:          pt.UUID,
-		Type:          pt.Type,
-		Partitions:    make([]Partition, len(pt.Partitions)),
-		SectorSize:    pt.SectorSize,
-		ExtraPadding:  pt.ExtraPadding,
-		RequiredSizes: pt.RequiredSizes,
+		Size:         pt.Size,
+		UUID:         pt.UUID,
+		Type:         pt.Type,
+		Partitions:   make([]Partition, len(pt.Partitions)),
+		SectorSize:   pt.SectorSize,
+		ExtraPadding: pt.ExtraPadding,
 	}
 
 	for idx, partition := range pt.Partitions {
