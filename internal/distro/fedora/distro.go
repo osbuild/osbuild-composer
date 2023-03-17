@@ -160,14 +160,18 @@ var (
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.ToPtr("en_US.UTF-8"),
 		},
-		defaultSize:            4 * common.GibiByte,
-		rpmOstree:              true,
-		bootable:               true,
-		image:                  iotRawImage,
-		buildPipelines:         []string{"build"},
-		payloadPipelines:       []string{"image-tree", "image", "xz"},
-		exports:                []string{"xz"},
-		basePartitionTables:    iotBasePartitionTables,
+		defaultSize:         4 * common.GibiByte,
+		rpmOstree:           true,
+		bootable:            true,
+		image:               iotRawImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"image-tree", "image", "xz"},
+		exports:             []string{"xz"},
+		basePartitionTables: iotBasePartitionTables,
+
+		// Passing an empty map into the required partition sizes disables the
+		// default partition sizes normally set so our `basePartitionTables` can
+		// override them (and make them smaller, in this case).
 		requiredPartitionSizes: map[string]uint64{},
 	}
 
