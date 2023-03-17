@@ -12,7 +12,7 @@ type SkopeoStageOptions struct {
 
 func (o SkopeoStageOptions) isStageOptions() {}
 
-func NewSkopeoStage(images ContainersInput, path string) *Stage {
+func NewSkopeoStage(path string, images ContainersInput) *Stage {
 
 	inputs := ContainersInputs{
 		"images": images,
