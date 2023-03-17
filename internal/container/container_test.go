@@ -348,6 +348,7 @@ func (reg *Registry) Resolve(target, arch string) (container.Spec, error) {
 	}
 
 	lst, ok := repo.images[checksum]
+	listDigest := checksum
 
 	if ok {
 		checksum = ""
@@ -370,11 +371,12 @@ func (reg *Registry) Resolve(target, arch string) (container.Spec, error) {
 	}
 
 	return container.Spec{
-		Source:    ref.String(),
-		Digest:    checksum,
-		ImageID:   mf.ConfigDescriptor.Digest.String(),
-		LocalName: ref.String(),
-		TLSVerify: common.ToPtr(false),
+		Source:     ref.String(),
+		Digest:     checksum,
+		ImageID:    mf.ConfigDescriptor.Digest.String(),
+		LocalName:  ref.String(),
+		TLSVerify:  common.ToPtr(false),
+		ListDigest: listDigest,
 	}, nil
 }
 
