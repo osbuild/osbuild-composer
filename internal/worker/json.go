@@ -253,8 +253,9 @@ type ContainerSpec struct {
 	Name      string `json:"name"`
 	TLSVerify *bool  `json:"tls-verify,omitempty"`
 
-	ImageID string `json:"image_id"`
-	Digest  string `json:"digest"`
+	ImageID    string `json:"image_id"`
+	Digest     string `json:"digest"`
+	ListDigest string `json:"list-digest,omitempty"`
 }
 
 type ContainerResolveJob struct {

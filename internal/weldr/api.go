@@ -2306,6 +2306,7 @@ func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType 
 		specs[i].LocalName = s.Name
 		specs[i].TLSVerify = s.TLSVerify
 		specs[i].ImageID = s.ImageID
+		specs[i].ListDigest = s.ListDigest
 	}
 
 	return specs, nil
