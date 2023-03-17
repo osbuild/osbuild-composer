@@ -42,11 +42,12 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	} else {
 		for i, spec := range specs {
 			result.Specs[i] = worker.ContainerSpec{
-				Source:    spec.Source,
-				Name:      spec.LocalName,
-				TLSVerify: spec.TLSVerify,
-				ImageID:   spec.ImageID,
-				Digest:    spec.Digest,
+				Source:     spec.Source,
+				Name:       spec.LocalName,
+				TLSVerify:  spec.TLSVerify,
+				ImageID:    spec.ImageID,
+				Digest:     spec.Digest,
+				ListDigest: spec.ListDigest,
 			}
 		}
 	}

@@ -434,6 +434,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 			containerSpecs[i].LocalName = s.Name
 			containerSpecs[i].TLSVerify = s.TLSVerify
 			containerSpecs[i].ImageID = s.ImageID
+			containerSpecs[i].ListDigest = s.ListDigest
 		}
 	}
 
