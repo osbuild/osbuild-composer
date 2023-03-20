@@ -208,7 +208,7 @@ else
   CIV_OPTION_M="-m not pub"
 fi
 
-CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val-test:$TAG"
+CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val:$TAG"
 
 sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
 
