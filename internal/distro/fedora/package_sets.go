@@ -203,7 +203,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			Include: []string{
 				"fdo-client",
 				"fdo-owner-cli",
-				"ignition",
 				"ignition-edge",
 				"ssh-key-dir",
 			},

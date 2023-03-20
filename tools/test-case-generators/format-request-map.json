@@ -520,6 +520,21 @@
     "no-image-info": true,
     "overrides": {}
   },
+  "iot-qcow2-image": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "iot-qcow2-image",
+      "repositories": [],
+      "filename": "image.qcow2",
+      "ostree": {
+        "ref": "test/fedora/iot",
+        "url": "http://fedora.example.com/repo"
+      },
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "iot-raw-image": {
     "compose-request": {
       "distro": "",

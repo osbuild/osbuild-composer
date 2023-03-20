@@ -16,7 +16,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
 
-type OSTreeRawImage struct {
+type OSTreeImage struct {
 	Base
 
 	Platform       platform.Platform
@@ -39,32 +39,23 @@ type OSTreeRawImage struct {
 
 	Filename string
 
-	Compression string
-
-	Ignition bool
+	Ignition         bool
+	IgnitionPlatform string
+	Compression      string
 
 	Directories []*fsnode.Directory
 	Files       []*fsnode.File
 }
 
-func NewOSTreeRawImage(commit ostree.SourceSpec) *OSTreeRawImage {
-	return &OSTreeRawImage{
+func NewOSTreeImage(commit ostree.SourceSpec) *OSTreeImage {
+	return &OSTreeImage{
 		Base:         NewBase("ostree-raw-image"),
 		CommitSource: commit,
 	}
 }
 
-func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.XZ {
-	imagePipeline := baseRawOstreeImage(img, m, buildPipeline)
-
-	xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
-	xzPipeline.Filename = img.Filename
-
-	return xzPipeline
-}
-
-func baseRawOstreeImage(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.RawOSTreeImage {
-	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.CommitSource, img.OSName, img.Ignition, img.Platform)
+func ostreeDeploymentPipeline(img *OSTreeImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.OSTreeDeployment {
+	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.CommitSource, img.OSName, img.Ignition, img.IgnitionPlatform, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.Remote = img.Remote
 	osPipeline.KernelOptionsAppend = img.KernelOptionsAppend
@@ -80,27 +71,46 @@ func baseRawOstreeImage(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline
 	osPipeline.EnabledServices = img.Workload.GetServices()
 	osPipeline.DisabledServices = img.Workload.GetDisabledServices()
 
-	return manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
+	return osPipeline
 }
 
-func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
+func (img *OSTreeImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos)
 	buildPipeline.Checkpoint()
 
+	osPipeline := ostreeDeploymentPipeline(img, m, buildPipeline)
+	rawImgPipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
+
 	var art *artifact.Artifact
-	switch img.Compression {
-	case "xz":
-		ostreeCompressed := ostreeCompressedImagePipelines(img, m, buildPipeline)
-		art = ostreeCompressed.Export()
-	case "":
-		ostreeBase := baseRawOstreeImage(img, m, buildPipeline)
-		ostreeBase.Filename = img.Filename
-		art = ostreeBase.Export()
+	switch img.Platform.GetImageFormat() {
+	case platform.FORMAT_RAW:
+		// check for compression
+		switch img.Compression {
+		case "xz":
+			// compress image with xz
+			xzPipeline := manifest.NewXZ(m, buildPipeline, rawImgPipeline)
+			// output of the final xz pipeline should be the filename specified for the image
+			xzPipeline.Filename = img.Filename
+			art = xzPipeline.Export()
+		case "":
+			// no compression: set the name of the raw pipeline to the filename specified for the image
+			rawImgPipeline.Filename = img.Filename
+			art = rawImgPipeline.Export()
+		default:
+			panic(fmt.Sprintf("unsupported compression type %q on %q", img.Compression, img.name))
+		}
+	case platform.FORMAT_QCOW2:
+		// convert raw image to qcow2 (no compression supported)
+		qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, rawImgPipeline.GetManifest(), rawImgPipeline.Name(), rawImgPipeline.Filename)
+		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+		// output of the final qcow2 pipeline should be the filename specified for the image
+		qcow2Pipeline.Filename = img.Filename
+		art = qcow2Pipeline.Export()
 	default:
-		panic(fmt.Sprintf("unsupported compression type %q on %q", img.Compression, img.name))
+		panic("invalid image format for image kind")
 	}
 
 	return art, nil

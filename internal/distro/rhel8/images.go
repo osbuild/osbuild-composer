@@ -405,8 +405,8 @@ func edgeRawImage(workload workload.Workload,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
-
-	img := image.NewOSTreeRawImage(commit)
+	img := image.NewOSTreeImage(commit)
+	img.Compression = "xz"
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
@@ -450,8 +450,8 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
-
-	rawImg := image.NewOSTreeRawImage(commit)
+	rawImg := image.NewOSTreeImage(commit)
+	rawImg.Compression = "xz"
 
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())

@@ -21,7 +21,7 @@ type OSTreeSimplifiedInstaller struct {
 	Base
 
 	// Raw image that will be created and embedded
-	rawImage *OSTreeRawImage
+	rawImage *OSTreeImage
 
 	Platform         platform.Platform
 	OSCustomizations manifest.OSCustomizations
@@ -60,7 +60,7 @@ type OSTreeSimplifiedInstaller struct {
 	AdditionalDracutModules []string
 }
 
-func NewOSTreeSimplifiedInstaller(rawImage *OSTreeRawImage, installDevice string) *OSTreeSimplifiedInstaller {
+func NewOSTreeSimplifiedInstaller(rawImage *OSTreeImage, installDevice string) *OSTreeSimplifiedInstaller {
 	return &OSTreeSimplifiedInstaller{
 		Base:          NewBase("ostree-simplified-installer"),
 		rawImage:      rawImage,
@@ -79,7 +79,10 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	// create the raw image
 	img.rawImage.Filename = rawImageFilename
-	rawImage := ostreeCompressedImagePipelines(img.rawImage, m, buildPipeline)
+	deploymentPipeline := ostreeDeploymentPipeline(img.rawImage, m, buildPipeline)
+	rawImgPipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, deploymentPipeline)
+	compressedImage := manifest.NewXZ(m, buildPipeline, rawImgPipeline)
+	compressedImage.Filename = rawImageFilename
 
 	coiPipeline := manifest.NewCoreOSInstaller(m,
 		buildPipeline,
@@ -149,7 +152,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline := manifest.NewCoreOSISOTree(m,
 		buildPipeline,
-		rawImage,
+		compressedImage,
 		coiPipeline,
 		bootTreePipeline,
 		isoLabel)

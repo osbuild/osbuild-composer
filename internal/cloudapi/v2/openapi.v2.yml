@@ -776,6 +776,7 @@ components:
         - iot-container
         - iot-installer
         - iot-raw-image
+        - iot-qcow2-image
         - vsphere
         - vsphere-ova
     Repository:

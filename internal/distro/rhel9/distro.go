@@ -296,6 +296,7 @@ func newDistro(name string, minor int) *distribution {
 	x86_64.addImageTypes(
 		&platform.X86{
 			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
 				FirmwarePackages: []string{
 					"microcode_ctl", // ??
 					"iwl1000-firmware",
@@ -354,8 +355,10 @@ func newDistro(name string, minor int) *distribution {
 
 	aarch64.addImageTypes(
 		&platform.Aarch64{
-			BasePlatform: platform.BasePlatform{},
-			UEFIVendor:   rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+			UEFIVendor: rd.vendor,
 		},
 		edgeCommitImgType,
 		edgeOCIImgType,
