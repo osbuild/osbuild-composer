@@ -107,7 +107,7 @@ case "${ID}-${VERSION_ID}" in
         OSTREE_REF="centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
         USER_IN_COMMIT="true"
-        BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
+        BOOT_LOCATION="https://composes.centos.org/latest-CentOS-Stream-8/compose/BaseOS/x86_64/os/"
         EMBEDED_CONTAINER="true"
         FIREWALL_FEATURE="false"
         DIRS_FILES_CUSTOMIZATION="true"
@@ -490,7 +490,7 @@ if [[ "${USER_IN_COMMIT}" == "true" ]]; then
 fi
 
 # Get the boot.iso from BOOT_LOCATION
-curl -O "$BOOT_LOCATION"/images/boot.iso
+curl -O "$BOOT_LOCATION"images/boot.iso
 sudo mv boot.iso /var/lib/libvirt/images
 LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
 
