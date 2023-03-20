@@ -25,18 +25,15 @@ jobs:
     - fedora-branched # rawhide updates are created automatically
 - job: koji_build
   trigger: commit
-  metadata:
-    dist_git_branches:
-      - fedora-all
+  dist_git_branches:
+    - fedora-all
 - job: propose_downstream
   trigger: release
-  metadata:
-    dist_git_branches:
-      - fedora-all
+  dist_git_branches:
+    - fedora-all
 - job: copr_build
   trigger: pull_request
-  metadata:
-    targets:
+  targets:
     - centos-stream-8-aarch64
     - centos-stream-8-x86_64
     - centos-stream-9-aarch64
@@ -49,11 +46,10 @@ jobs:
     - fedora-all
 - job: copr_build
   trigger: commit
-  metadata:
-    branch: main
-    owner: "@osbuild" # copr repo namespace
-    project: osbuild-composer  # copr repo name so you can consume the builds
-    targets:
+  branch: main
+  owner: "@osbuild" # copr repo namespace
+  project: osbuild-composer  # copr repo name so you can consume the builds
+  targets:
     - centos-stream-8-aarch64
     - centos-stream-8-x86_64
     - centos-stream-9-aarch64
