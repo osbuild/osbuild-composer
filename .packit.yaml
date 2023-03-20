@@ -6,9 +6,6 @@ synced_files:
     - osbuild-composer.spec
     - .packit.yaml
 
-upstream_package_name: osbuild-composer
-downstream_package_name: osbuild-composer
-
 copy_upstream_release_description: true
 
 upstream_tag_template: v{version}
