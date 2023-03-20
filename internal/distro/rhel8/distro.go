@@ -253,6 +253,7 @@ func newDistro(name string, minor int) *distribution {
 
 	bareMetalX86Platform := &platform.X86{
 		BasePlatform: platform.BasePlatform{
+			ImageFormat: platform.FORMAT_RAW,
 			FirmwarePackages: []string{
 				"microcode_ctl", // ??
 				"iwl1000-firmware",

@@ -11,21 +11,26 @@ type QCOW2 struct {
 	Filename string
 	Compat   string
 
-	imgPipeline *RawImage
+	Manifest     *Manifest
+	ImgFilename  string
+	PipelineName string
 }
 
-// NewQCOW2 createsa new QCOW2 pipeline. imgPipeline is the pipeline producing the
-// raw image. The pipeline name is the name of the new pipeline. Filename is the name
-// of the produced qcow2 image.
+// NewQCOW2 creates a new QCOW2 pipeline. imgPipelineName is the name of the
+// pipeline producing the raw image and imgFilename is the file name.
 func NewQCOW2(m *Manifest,
 	buildPipeline *Build,
-	imgPipeline *RawImage) *QCOW2 {
+	manifest *Manifest,
+	imgPipelineName string,
+	imgFilename string) *QCOW2 {
 	p := &QCOW2{
-		Base:        NewBase(m, "qcow2", buildPipeline),
-		imgPipeline: imgPipeline,
-		Filename:    "image.qcow2",
+		Base:         NewBase(m, "qcow2", buildPipeline),
+		Manifest:     manifest,
+		Filename:     "image.qcow2",
+		ImgFilename:  imgFilename,
+		PipelineName: imgPipelineName,
 	}
-	if imgPipeline.Base.manifest != m {
+	if manifest != m {
 		panic("live image pipeline from different manifest")
 	}
 	buildPipeline.addDependent(p)
@@ -42,7 +47,7 @@ func (p *QCOW2) serialize() osbuild.Pipeline {
 			osbuild.QCOW2Options{
 				Compat: p.Compat,
 			}),
-		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
+		osbuild.NewQemuStagePipelineFilesInputs(p.PipelineName, p.ImgFilename),
 	))
 
 	return pipeline

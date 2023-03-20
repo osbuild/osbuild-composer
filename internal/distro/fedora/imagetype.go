@@ -261,7 +261,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		}
 	}
 
-	if t.name == "iot-raw-image" {
+	if t.name == "iot-raw-image" || t.name == "iot-qcow2-image" {
 		allowed := []string{"User", "Group", "Directories", "Files", "Services"}
 		if err := customizations.CheckAllowed(allowed...); err != nil {
 			return nil, fmt.Errorf("unsupported blueprint customizations found for image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))

@@ -204,6 +204,25 @@ var (
 		requiredPartitionSizes: map[string]uint64{},
 	}
 
+	iotQcow2ImgType = imageType{
+		name:        "iot-qcow2-image",
+		nameAliases: []string{"fedora-iot-qcow2-image"},
+		filename:    "image.qcow2",
+		mimeType:    "application/x-qemu-disk",
+		packageSets: map[string]packageSetFunc{},
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: common.ToPtr("en_US.UTF-8"),
+		},
+		defaultSize:         10 * common.GibiByte,
+		rpmOstree:           true,
+		bootable:            true,
+		image:               iotQcow2Image,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"ostree-deployment", "image", "qcow2"},
+		exports:             []string{"qcow2"},
+		basePartitionTables: iotBasePartitionTables,
+	}
+
 	qcow2ImgType = imageType{
 		name:     "qcow2",
 		filename: "disk.qcow2",
@@ -632,6 +651,16 @@ func newDistro(version int) distro.Distro {
 	x86_64.addImageTypes(
 		&platform.X86{
 			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+			},
+			BIOS:       false,
+			UEFIVendor: "fedora",
+		},
+		iotQcow2ImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_RAW,
 			},
 			BIOS:       false,
@@ -657,6 +686,7 @@ func newDistro(version int) distro.Distro {
 			},
 		},
 		qcow2ImgType,
+		iotQcow2ImgType,
 		ociImgType,
 	)
 	aarch64.addImageTypes(

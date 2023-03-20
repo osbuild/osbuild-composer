@@ -71,7 +71,7 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 		artifactPipeline = imagePipeline
 		artifact = imagePipeline.Export()
 	case platform.FORMAT_QCOW2:
-		qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, imagePipeline)
+		qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, imagePipeline.GetManifest(), imagePipeline.Name(), imagePipeline.Filename)
 		if img.Compression == "" {
 			qcow2Pipeline.Filename = img.Filename
 		}

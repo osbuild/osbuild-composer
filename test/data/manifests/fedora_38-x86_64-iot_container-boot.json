@@ -5699,7 +5699,9 @@
                 "redboot-auto-reboot",
                 "redboot-task-runner",
                 "parsec",
-                "dbus-parsec"
+                "dbus-parsec",
+                "ignition-firstboot-complete.service",
+                "coreos-ignition-write-issues.service"
               ]
             }
           },
