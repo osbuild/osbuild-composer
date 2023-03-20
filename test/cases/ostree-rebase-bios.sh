@@ -108,7 +108,7 @@ case "${ID}-${VERSION_ID}" in
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
-        BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
+        BOOT_LOCATION="https://composes.centos.org/latest-CentOS-Stream-8/compose/BaseOS/x86_64/os/"
         PARENT_REF="centos/8/${ARCH}/edge"
         KERNEL_RT_PKG="kernel-rt-core"
         ;;
@@ -356,7 +356,7 @@ echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 STOPHERE
 
 # Get the boot.iso from BOOT_LOCATION
-curl -O "$BOOT_LOCATION"/images/boot.iso
+curl -O "$BOOT_LOCATION"images/boot.iso
 sudo mv boot.iso /var/lib/libvirt/images
 LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
 
