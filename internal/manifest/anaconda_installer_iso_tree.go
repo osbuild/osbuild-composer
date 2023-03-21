@@ -12,11 +12,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
-// An AnacondaISOTree represents a tree containing the anaconda installer,
+// An AnacondaInstallerISOTree represents a tree containing the anaconda installer,
 // configuration in terms of a kickstart file, as well as an embedded
 // payload to be installed, this payload can either be an ostree
 // CommitSpec or OSPipeline for an OS.
-type AnacondaISOTree struct {
+type AnacondaInstallerISOTree struct {
 	Base
 
 	// TODO: review optional and mandatory fields and their meaning
@@ -27,7 +27,7 @@ type AnacondaISOTree struct {
 
 	PartitionTable *disk.PartitionTable
 
-	anacondaPipeline *Anaconda
+	anacondaPipeline *AnacondaInstaller
 	rootfsPipeline   *ISORootfsImg
 	bootTreePipeline *EFIBootTree
 
@@ -55,14 +55,14 @@ type AnacondaISOTree struct {
 	ISOLinux bool
 }
 
-func NewAnacondaISOTree(m *Manifest,
+func NewAnacondaInstallerISOTree(m *Manifest,
 	buildPipeline *Build,
-	anacondaPipeline *Anaconda,
+	anacondaPipeline *AnacondaInstaller,
 	rootfsPipeline *ISORootfsImg,
 	bootTreePipeline *EFIBootTree,
-	isoLabel string) *AnacondaISOTree {
+	isoLabel string) *AnacondaInstallerISOTree {
 
-	p := &AnacondaISOTree{
+	p := &AnacondaInstallerISOTree{
 		Base:             NewBase(m, "bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
 		rootfsPipeline:   rootfsPipeline,
@@ -77,7 +77,7 @@ func NewAnacondaISOTree(m *Manifest,
 	return p
 }
 
-func (p *AnacondaISOTree) getOSTreeCommitSources() []ostree.SourceSpec {
+func (p *AnacondaInstallerISOTree) getOSTreeCommitSources() []ostree.SourceSpec {
 	if p.OSTreeCommitSource == nil {
 		return nil
 	}
@@ -87,14 +87,14 @@ func (p *AnacondaISOTree) getOSTreeCommitSources() []ostree.SourceSpec {
 	}
 }
 
-func (p *AnacondaISOTree) getOSTreeCommits() []ostree.CommitSpec {
+func (p *AnacondaInstallerISOTree) getOSTreeCommits() []ostree.CommitSpec {
 	if p.ostreeCommitSpec == nil {
 		return nil
 	}
 	return []ostree.CommitSpec{*p.ostreeCommitSpec}
 }
 
-func (p *AnacondaISOTree) getBuildPackages(Distro) []string {
+func (p *AnacondaInstallerISOTree) getBuildPackages(_ Distro) []string {
 	packages := []string{
 		"squashfs-tools",
 	}
@@ -110,7 +110,7 @@ func (p *AnacondaISOTree) getBuildPackages(Distro) []string {
 	return packages
 }
 
-func (p *AnacondaISOTree) serializeStart(_ []rpmmd.PackageSpec, _ []container.Spec, commits []ostree.CommitSpec) {
+func (p *AnacondaInstallerISOTree) serializeStart(_ []rpmmd.PackageSpec, _ []container.Spec, commits []ostree.CommitSpec) {
 	if len(commits) == 0 {
 		// nothing to do
 		return
@@ -123,28 +123,32 @@ func (p *AnacondaISOTree) serializeStart(_ []rpmmd.PackageSpec, _ []container.Sp
 	p.ostreeCommitSpec = &commits[0]
 }
 
-func (p *AnacondaISOTree) serializeEnd() {
+func (p *AnacondaInstallerISOTree) serializeEnd() {
 	p.ostreeCommitSpec = nil
 }
 
-func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
-	// We need one of two payloads
-	if p.ostreeCommitSpec == nil && p.OSPipeline == nil {
-		panic("missing ostree or ospipeline parameters in ISO tree pipeline")
-	}
+func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
+	// If the anaconda pipeline is a payload then we need one of two payload types
+	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
+		if p.ostreeCommitSpec == nil && p.OSPipeline == nil {
+			panic("missing ostree or ospipeline parameters in ISO tree pipeline")
+		}
 
-	// But not both payloads
-	if p.ostreeCommitSpec != nil && p.OSPipeline != nil {
-		panic("got both ostree and ospipeline parameters in ISO tree pipeline")
+		// But not both payloads
+		if p.ostreeCommitSpec != nil && p.OSPipeline != nil {
+			panic("got both ostree and ospipeline parameters in ISO tree pipeline")
+		}
 	}
 
 	pipeline := p.Base.serialize()
 
 	kernelOpts := []string{}
 
-	kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", p.isoLabel))
-	if p.KSPath != "" {
-		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.isoLabel, p.KSPath))
+	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", p.isoLabel))
+		if p.KSPath != "" {
+			kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.isoLabel, p.KSPath))
+		}
 	}
 
 	if len(p.KernelOpts) > 0 {
@@ -161,6 +165,16 @@ func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
 			},
 		},
 	}))
+
+	if p.anacondaPipeline.Type == AnacondaInstallerTypeLive {
+		pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+			Paths: []osbuild.MkdirStagePath{
+				{
+					Path: "LiveOS",
+				},
+			},
+		}))
+	}
 
 	inputName := "tree"
 	copyStageOptions := &osbuild.CopyStageOptions{
@@ -179,8 +193,16 @@ func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
 	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
 	pipeline.AddStage(copyStage)
 
-	squashfsOptions := osbuild.SquashfsStageOptions{
-		Filename: "images/install.img",
+	var squashfsOptions osbuild.SquashfsStageOptions
+
+	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
+		squashfsOptions = osbuild.SquashfsStageOptions{
+			Filename: "images/install.img",
+		}
+	} else if p.anacondaPipeline.Type == AnacondaInstallerTypeLive {
+		squashfsOptions = osbuild.SquashfsStageOptions{
+			Filename: "LiveOS/squashfs.img",
+		}
 	}
 
 	if p.SquashfsCompression != "" {

@@ -319,7 +319,7 @@ func edgeInstallerImage(workload workload.Workload,
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
 
-	img := image.NewOSTreeInstaller(commit)
+	img := image.NewAnacondaOSTreeInstaller(commit)
 
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
@@ -510,7 +510,7 @@ func imageInstallerImage(workload workload.Workload,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewImageInstaller()
+	img := image.NewAnacondaTarInstaller()
 
 	img.Platform = t.platform
 	img.Workload = workload

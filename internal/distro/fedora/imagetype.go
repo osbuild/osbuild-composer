@@ -277,6 +277,11 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
 			}
+		} else if t.name == "live-installer" {
+			allowed := []string{}
+			if err := customizations.CheckAllowed(allowed...); err != nil {
+				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: None)", t.name)
+			}
 		}
 	}
 

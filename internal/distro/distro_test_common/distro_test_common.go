@@ -263,6 +263,7 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 		// on RHEL we support kernel name
 		// TODO: Remove when we unify the allowed options
 		"image-installer": true,
+		"live-installer":  true,
 	}
 
 	{ // empty blueprint: all image types should just have the default kernel
@@ -299,6 +300,9 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 				assert.NoError(t, err)
 				for _, typeName := range arch.ListImageTypes() {
 					if typeName != "image-installer" {
+						continue
+					}
+					if typeName != "live-installer" {
 						continue
 					}
 					if skipList[typeName] {
