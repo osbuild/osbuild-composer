@@ -15,7 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
-type OSTreeInstaller struct {
+type AnacondaOSTreeInstaller struct {
 	Base
 	Platform          platform.Platform
 	ExtraBasePackages rpmmd.PackageSet
@@ -40,21 +40,22 @@ type OSTreeInstaller struct {
 	AdditionalDrivers         []string
 }
 
-func NewOSTreeInstaller(commit ostree.SourceSpec) *OSTreeInstaller {
-	return &OSTreeInstaller{
+func NewAnacondaOSTreeInstaller(commit ostree.SourceSpec) *AnacondaOSTreeInstaller {
+	return &AnacondaOSTreeInstaller{
 		Base:   NewBase("ostree-installer"),
 		Commit: commit,
 	}
 }
 
-func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
+func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos)
 	buildPipeline.Checkpoint()
 
-	anacondaPipeline := manifest.NewAnaconda(m,
+	anacondaPipeline := manifest.NewAnacondaInstaller(m,
+		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
 		img.Platform,
 		repos,
@@ -102,7 +103,7 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	// enable ISOLinux on x86_64 only
 	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
 
-	isoTreePipeline := manifest.NewAnacondaISOTree(m,
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
 		rootfsImagePipeline,

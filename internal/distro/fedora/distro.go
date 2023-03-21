@@ -80,6 +80,23 @@ var (
 		exports:          []string{"bootiso"},
 	}
 
+	liveInstallerImgType = imageType{
+		name:        "live-installer",
+		nameAliases: []string{},
+		filename:    "live-installer.iso",
+		mimeType:    "application/x-iso9660-image",
+		packageSets: map[string]packageSetFunc{
+			installerPkgsKey: liveInstallerPackageSet,
+		},
+		bootable:         true,
+		bootISO:          true,
+		rpmOstree:        false,
+		image:            liveInstallerImage,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
+		exports:          []string{"bootiso"},
+	}
+
 	iotCommitImgType = imageType{
 		name:        "iot-commit",
 		nameAliases: []string{"fedora-iot-commit"},
@@ -578,6 +595,7 @@ func newDistro(version int) distro.Distro {
 		iotCommitImgType,
 		iotInstallerImgType,
 		imageInstallerImgType,
+		liveInstallerImgType,
 	)
 	x86_64.addImageTypes(
 		&platform.X86{

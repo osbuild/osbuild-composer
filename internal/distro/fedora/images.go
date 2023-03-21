@@ -238,6 +238,44 @@ func containerImage(workload workload.Workload,
 	return img, nil
 }
 
+func liveInstallerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewAnacondaLiveInstaller()
+
+	distro := t.Arch().Distro()
+
+	// If the live installer is generated for Fedora 39 or higher then we enable the web ui
+	// kernel options. This is a temporary thing as the check for this should really lie with
+	// anaconda and their `liveinst` script to determine which frontend to start.
+	if common.VersionLessThan(distro.Releasever(), "39") {
+		img.AdditionalKernelOpts = []string{}
+	} else {
+		img.AdditionalKernelOpts = []string{"inst.webui"}
+	}
+
+	img.Platform = t.platform
+	img.Workload = workload
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+
+	d := t.arch.distro
+
+	img.ISOLabelTempl = d.isolabelTmpl
+	img.Product = d.product
+	img.OSName = "fedora"
+	img.OSVersion = d.osVersion
+	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
 func imageInstallerImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
@@ -246,7 +284,7 @@ func imageInstallerImage(workload workload.Workload,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewImageInstaller()
+	img := image.NewAnacondaTarInstaller()
 
 	// Enable anaconda-webui for Fedora > 38
 	distro := t.Arch().Distro()
@@ -343,7 +381,7 @@ func iotInstallerImage(workload workload.Workload,
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
 
-	img := image.NewOSTreeInstaller(commit)
+	img := image.NewAnacondaOSTreeInstaller(commit)
 
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[installerPkgsKey]

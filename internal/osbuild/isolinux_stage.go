@@ -15,7 +15,7 @@ type ISOLinuxProduct struct {
 type ISOLinuxKernel struct {
 	Dir string `json:"dir"`
 
-	Opts []string `json:"opts,omitempty"`
+	Opts []string `json:"opts"`
 }
 
 func NewISOLinuxStage(options *ISOLinuxStageOptions, inputPipeline string) *Stage {

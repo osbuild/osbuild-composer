@@ -19,7 +19,7 @@ import (
 
 const kspath = "/osbuild.ks"
 
-type ImageInstaller struct {
+type AnacondaTarInstaller struct {
 	Base
 	Platform         platform.Platform
 	OSCustomizations manifest.OSCustomizations
@@ -52,20 +52,21 @@ type ImageInstaller struct {
 	AdditionalDrivers         []string
 }
 
-func NewImageInstaller() *ImageInstaller {
-	return &ImageInstaller{
+func NewAnacondaTarInstaller() *AnacondaTarInstaller {
+	return &AnacondaTarInstaller{
 		Base: NewBase("image-installer"),
 	}
 }
 
-func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
+func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos)
 	buildPipeline.Checkpoint()
 
-	anacondaPipeline := manifest.NewAnaconda(m,
+	anacondaPipeline := manifest.NewAnacondaInstaller(m,
+		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
 		img.Platform,
 		repos,
@@ -133,7 +134,7 @@ func (img *ImageInstaller) InstantiateManifest(m *manifest.Manifest,
 	// enable ISOLinux on x86_64 only
 	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
 
-	isoTreePipeline := manifest.NewAnacondaISOTree(m,
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(m,
 		buildPipeline,
 		anacondaPipeline,
 		rootfsImagePipeline,

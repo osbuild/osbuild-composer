@@ -2,8 +2,10 @@ package manifest
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/osbuild/osbuild-composer/internal/container"
+	"github.com/osbuild/osbuild-composer/internal/fsnode"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
@@ -11,9 +13,22 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
-// An Anaconda represents the installer tree as found on an ISO.
-type Anaconda struct {
+type AnacondaInstallerType int
+
+const (
+	AnacondaInstallerTypeLive AnacondaInstallerType = iota + 1
+	AnacondaInstallerTypePayload
+)
+
+// An Anaconda represents the installer tree as found on an ISO this can be either
+// a payload installer or a live installer depending on `Type`.
+type AnacondaInstaller struct {
 	Base
+
+	// The type of the Anaconda installer tree to prepare, this can be either
+	// a 'live' or a 'payload' and it controls which stages are added to the
+	// manifest.
+	Type AnacondaInstallerType
 
 	// Packages to install in addition to the ones required by the
 	// pipeline.
@@ -53,24 +68,22 @@ type Anaconda struct {
 	// Additional dracut modules and drivers to enable
 	AdditionalDracutModules []string
 	AdditionalDrivers       []string
+
+	Files []*fsnode.File
 }
 
-// NewAnaconda creates an anaconda pipeline object. repos and packages
-// indicate the content to build the installer from, which is distinct from the
-// packages the installer will install on the target system. kernelName is the
-// name of the kernel package the intsaller will use. arch is the supported
-// architecture. Product and version refers to the product the installer is the
-// installer for.
-func NewAnaconda(m *Manifest,
+func NewAnacondaInstaller(m *Manifest,
+	installerType AnacondaInstallerType,
 	buildPipeline *Build,
 	platform platform.Platform,
 	repos []rpmmd.RepoConfig,
 	kernelName,
 	product,
-	version string) *Anaconda {
+	version string) *AnacondaInstaller {
 	name := "anaconda-tree"
-	p := &Anaconda{
+	p := &AnacondaInstaller{
 		Base:       NewBase(m, name, buildPipeline),
+		Type:       installerType,
 		platform:   platform,
 		repos:      filterRepos(repos, name),
 		kernelName: kernelName,
@@ -84,7 +97,7 @@ func NewAnaconda(m *Manifest,
 
 // TODO: refactor - what is required to boot and what to build, and
 // do they all belong in this pipeline?
-func (p *Anaconda) anacondaBootPackageSet() []string {
+func (p *AnacondaInstaller) anacondaBootPackageSet() []string {
 	packages := []string{
 		"grub2-tools",
 		"grub2-tools-extra",
@@ -116,7 +129,7 @@ func (p *Anaconda) anacondaBootPackageSet() []string {
 	return packages
 }
 
-func (p *Anaconda) getBuildPackages(Distro) []string {
+func (p *AnacondaInstaller) getBuildPackages(Distro) []string {
 	packages := p.anacondaBootPackageSet()
 	packages = append(packages,
 		"rpm",
@@ -125,7 +138,7 @@ func (p *Anaconda) getBuildPackages(Distro) []string {
 	return packages
 }
 
-func (p *Anaconda) getPackageSetChain(Distro) []rpmmd.PackageSet {
+func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := p.anacondaBootPackageSet()
 	if p.Biosdevname {
 		packages = append(packages, "biosdevname")
@@ -138,11 +151,11 @@ func (p *Anaconda) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	}
 }
 
-func (p *Anaconda) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *AnacondaInstaller) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *Anaconda) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
+func (p *AnacondaInstaller) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
@@ -152,7 +165,7 @@ func (p *Anaconda) serializeStart(packages []rpmmd.PackageSpec, _ []container.Sp
 	}
 }
 
-func (p *Anaconda) serializeEnd() {
+func (p *AnacondaInstaller) serializeEnd() {
 	if len(p.packageSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
@@ -160,10 +173,26 @@ func (p *Anaconda) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *Anaconda) serialize() osbuild.Pipeline {
+func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
+
+	// Let's do a bunch of sanity checks that are dependent on the installer type
+	// being serialized
+	if p.Type == AnacondaInstallerTypeLive {
+		if len(p.Users) != 0 || len(p.Groups) != 0 {
+			panic("anaconda installer type payload does not support users and groups customization")
+		}
+
+		if p.InteractiveDefaults != nil {
+			panic("anaconda installer type payload does not support interactive defaults")
+		}
+	} else if p.Type == AnacondaInstallerTypePayload {
+	} else {
+		panic("invalid anaconda installer type")
+	}
+
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
@@ -181,32 +210,67 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 		Password: &rootPassword,
 	}
 
-	installUID := 0
-	installGID := 0
-	installHome := "/root"
-	installShell := "/usr/libexec/anaconda/run-anaconda"
-	installPassword := ""
-	installUser := osbuild.UsersStageOptionsUser{
-		UID:      &installUID,
-		GID:      &installGID,
-		Home:     &installHome,
-		Shell:    &installShell,
-		Password: &installPassword,
-	}
-	usersStageOptions := &osbuild.UsersStageOptions{
-		Users: map[string]osbuild.UsersStageOptionsUser{
-			"root":    rootUser,
-			"install": installUser,
-		},
+	var usersStageOptions *osbuild.UsersStageOptions
+
+	if p.Type == AnacondaInstallerTypePayload {
+		installUID := 0
+		installGID := 0
+		installHome := "/root"
+		installShell := "/usr/libexec/anaconda/run-anaconda"
+		installPassword := ""
+		installUser := osbuild.UsersStageOptionsUser{
+			UID:      &installUID,
+			GID:      &installGID,
+			Home:     &installHome,
+			Shell:    &installShell,
+			Password: &installPassword,
+		}
+
+		usersStageOptions = &osbuild.UsersStageOptions{
+			Users: map[string]osbuild.UsersStageOptionsUser{
+				"root":    rootUser,
+				"install": installUser,
+			},
+		}
+	} else if p.Type == AnacondaInstallerTypeLive {
+		usersStageOptions = &osbuild.UsersStageOptions{
+			Users: map[string]osbuild.UsersStageOptionsUser{
+				"root": rootUser,
+			},
+		}
 	}
 
 	pipeline.AddStage(osbuild.NewUsersStage(usersStageOptions))
 
-	pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules)))
-	pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
-		Path:     "99-generic/runtime-postinstall.tmpl",
-		BaseArch: p.platform.GetArch().String(),
-	}))
+	if p.Type == AnacondaInstallerTypeLive {
+		systemdStageOptions := &osbuild.SystemdStageOptions{
+			EnabledServices: []string{
+				"livesys.service",
+				"livesys-late.service",
+			},
+		}
+
+		pipeline.AddStage(osbuild.NewSystemdStage(systemdStageOptions))
+
+		livesysMode := os.FileMode(int(0644))
+		livesysFile, err := fsnode.NewFile("/etc/sysconfig/livesys", &livesysMode, "root", "root", []byte("livesys_session=\"gnome\""))
+
+		if err != nil {
+			panic(err)
+		}
+
+		p.Files = []*fsnode.File{livesysFile}
+
+		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
+	}
+
+	if p.Type == AnacondaInstallerTypePayload {
+		pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules)))
+		pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
+			Path:     "99-generic/runtime-postinstall.tmpl",
+			BaseArch: p.platform.GetArch().String(),
+		}))
+	}
 
 	dracutModules := append(
 		p.AdditionalDracutModules,
@@ -225,22 +289,24 @@ func (p *Anaconda) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewDracutStage(dracutOptions))
 	pipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
-	if p.InteractiveDefaults != nil {
-		kickstartOptions, err := osbuild.NewKickstartStageOptions(
-			"/usr/share/anaconda/interactive-defaults.ks",
-			p.InteractiveDefaults.TarPath,
-			p.Users,
-			p.Groups,
-			"",
-			"",
-			"",
-		)
+	if p.Type == AnacondaInstallerTypePayload {
+		if p.InteractiveDefaults != nil {
+			kickstartOptions, err := osbuild.NewKickstartStageOptions(
+				"/usr/share/anaconda/interactive-defaults.ks",
+				p.InteractiveDefaults.TarPath,
+				p.Users,
+				p.Groups,
+				"",
+				"",
+				"",
+			)
 
-		if err != nil {
-			panic("failed to create kickstartstage options for interactive defaults")
+			if err != nil {
+				panic("failed to create kickstartstage options for interactive defaults")
+			}
+
+			pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
 		}
-
-		pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
 	}
 
 	return pipeline
@@ -300,7 +366,7 @@ func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []
 	}
 }
 
-func (p *Anaconda) GetPlatform() platform.Platform {
+func (p *AnacondaInstaller) GetPlatform() platform.Platform {
 	return p.platform
 }
 
@@ -314,4 +380,15 @@ func NewAnacondaInteractiveDefaults(tarPath string) *AnacondaInteractiveDefaults
 	}
 
 	return i
+}
+
+func (p *AnacondaInstaller) getInline() []string {
+	inlineData := []string{}
+
+	// inline data for custom files
+	for _, file := range p.Files {
+		inlineData = append(inlineData, string(file.Data()))
+	}
+
+	return inlineData
 }

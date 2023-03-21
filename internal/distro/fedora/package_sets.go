@@ -436,6 +436,47 @@ func iotInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
+func liveInstallerPackageSet(t *imageType) rpmmd.PackageSet {
+	ps := rpmmd.PackageSet{
+		Include: []string{
+			"@workstation-product-environment",
+			"@anaconda-tools",
+			"anaconda-install-env-deps",
+			"anaconda-live",
+			"anaconda-dracut",
+			"dracut-live",
+			"glibc-all-langpacks",
+			"kernel",
+			"kernel-modules",
+			"kernel-modules-extra",
+			"livesys-scripts",
+			"rng-tools",
+			"rdma-core",
+			"gnome-kiosk",
+		},
+		Exclude: []string{
+			"@dial-up",
+			"@input-methods",
+			"@standard",
+			"device-mapper-multipath",
+			"fcoe-utils",
+			"gfs2-utils",
+			"reiserfs-utils",
+		},
+	}
+
+	// We want to generate a preview image when rawhide is built
+	if !common.VersionLessThan(t.arch.distro.osVersion, "39") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"anaconda-webui",
+			},
+		})
+	}
+
+	return ps
+}
+
 func imageInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := anacondaPackageSet(t)
 
