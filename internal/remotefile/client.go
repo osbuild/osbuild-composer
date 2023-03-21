@@ -2,7 +2,7 @@ package remotefile
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 )
@@ -29,7 +29,7 @@ func (c *Client) makeRequest(u *url.URL) ([]byte, error) {
 	}
 
 	defer resp.Body.Close()
-	output, err := ioutil.ReadAll(resp.Body)
+	output, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
