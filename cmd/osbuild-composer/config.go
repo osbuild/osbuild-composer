@@ -99,6 +99,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 			map[string]WeldrDistroConfig{
 				"rhel-*": {
 					ImageTypeDenyList: []string{
+						"azure-eap7-rhui",
 						"azure-rhui",
 						"azure-sap-rhui",
 						"ec2",
