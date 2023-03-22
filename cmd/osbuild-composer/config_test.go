@@ -48,6 +48,7 @@ func TestDefaultConfig(t *testing.T) {
 		DistroConfigs: map[string]WeldrDistroConfig{
 			"rhel-*": {
 				[]string{
+					"azure-eap7-rhui",
 					"azure-rhui",
 					"azure-sap-rhui",
 					"ec2",
