@@ -202,10 +202,6 @@ if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
 else
   # If not, get prod container
   TAG="prod"
-  CIV_OPTION_R="-r=/tmp/resource-file.json"
-  CIV_OPTION_D="-d"
-  CIV_OPTION_O="-o=/tmp/report.xml"
-  CIV_OPTION_M="-m not pub"
 fi
 
 CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val:$TAG"
@@ -233,8 +229,13 @@ if [ "$ARCH" == "aarch64" ]; then
     sed -i s/t3.medium/a1.large/ "${TEMPDIR}/resource-file.json"
 fi
 
-# The weird sintax with the CIV_OPTION variables is due to problems with bash quoting and
-# having options with whitespaces in them. Please do not spend more hours trying to fix it
+if [ -z "$CIV_CONFIG_FILE" ]; then
+    echo "ERROR: please provide the variable CIV_CONFIG_FILE"
+    exit 1
+fi
+
+cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
+
 sudo "${CONTAINER_RUNTIME}" run \
     -a stdout -a stderr \
     -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
@@ -243,12 +244,7 @@ sudo "${CONTAINER_RUNTIME}" run \
     -v "${TEMPDIR}":/tmp:Z \
     "${CONTAINER_CLOUD_IMAGE_VAL}" \
     python cloud-image-val.py \
-    ${CIV_OPTION_R:+"$CIV_OPTION_R"} \
-    ${CIV_OPTION_O:+"$CIV_OPTION_O"} \
-    ${CIV_OPTION_T:+"$CIV_OPTION_T"} \
-    ${CIV_OPTION_M:+"$CIV_OPTION_M"} \
-    ${CIV_OPTION_D:+"$CIV_OPTION_D"} \
-    ${CIV_OPTION_S:+"$CIV_OPTION_S"} \
+    -c /tmp/civ_config.yml \
     && RESULTS=1 || RESULTS=0
 
 mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
