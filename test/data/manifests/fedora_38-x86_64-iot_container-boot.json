@@ -5699,9 +5699,22 @@
                 "redboot-auto-reboot",
                 "redboot-task-runner",
                 "parsec",
-                "dbus-parsec",
-                "ignition-firstboot-complete.service",
-                "coreos-ignition-write-issues.service"
+                "dbus-parsec"
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.systemd.preset",
+            "options": {
+              "presets": [
+                {
+                  "name": "ignition-firstboot-complete.service",
+                  "state": "enable"
+                },
+                {
+                  "name": "coreos-ignition-write-issues.service",
+                  "state": "enable"
+                }
               ]
             }
           },
