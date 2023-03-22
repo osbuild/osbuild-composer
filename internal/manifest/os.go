@@ -77,6 +77,7 @@ type OSCustomizations struct {
 	EnabledServices  []string
 	DisabledServices []string
 	DefaultTarget    string
+	Presets          []osbuild.Preset
 
 	// SELinux policy, when set it enables the labeling of the tree with the
 	// selected profile
@@ -703,6 +704,12 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 	if len(p.ShellInit) > 0 {
 		pipeline.AddStage(osbuild.GenShellInitStage(p.ShellInit))
+	}
+
+	if len(p.Presets) != 0 {
+		pipeline.AddStage(osbuild.NewSystemdPresetStage(&osbuild.SystemdPresetStageOptions{
+			Presets: p.Presets,
+		}))
 	}
 
 	if p.SElinux != "" {

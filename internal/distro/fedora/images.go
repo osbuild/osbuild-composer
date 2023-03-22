@@ -300,7 +300,17 @@ func iotCommitImage(workload workload.Workload,
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "38") {
-		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues.service")
+		// see https://github.com/ostreedev/ostree/issues/2840
+		img.OSCustomizations.Presets = []osbuild.Preset{
+			{
+				Name:  "ignition-firstboot-complete.service",
+				State: osbuild.StateEnable,
+			},
+			{
+				Name:  "coreos-ignition-write-issues.service",
+				State: osbuild.StateEnable,
+			},
+		}
 	}
 	img.Environment = t.environment
 	img.Workload = workload
@@ -327,7 +337,17 @@ func iotContainerImage(workload workload.Workload,
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "38") {
-		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues.service")
+		// see https://github.com/ostreedev/ostree/issues/2840
+		img.OSCustomizations.Presets = []osbuild.Preset{
+			{
+				Name:  "ignition-firstboot-complete.service",
+				State: osbuild.StateEnable,
+			},
+			{
+				Name:  "coreos-ignition-write-issues.service",
+				State: osbuild.StateEnable,
+			},
+		}
 	}
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
