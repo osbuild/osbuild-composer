@@ -101,6 +101,7 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 }
 
 func NewGrub2StageOptionsUnified(pt *disk.PartitionTable,
+	kernelOptions string,
 	kernelVer string,
 	uefi bool,
 	legacy string,
@@ -112,9 +113,16 @@ func NewGrub2StageOptionsUnified(pt *disk.PartitionTable,
 		panic("root filesystem must be defined for grub2 stage, this is a programming error")
 	}
 
+	// NB: We need to set the kernel options regardless of whether we are
+	// writing the command line to grubenv or not. This is because the kernel
+	// options are also written to /etc/default/grub under the GRUB_CMDLINE_LINUX
+	// variable. This is used by the 10_linux script executed by grub2-mkconfig
+	// to override the kernel options in /etc/kernel/cmdline if the file has
+	// older timestamp than /etc/default/grub.
 	stageOptions := GRUB2StageOptions{
 		RootFilesystemUUID: uuid.MustParse(rootFs.GetFSSpec().UUID),
 		Legacy:             legacy,
+		KernelOptions:      kernelOptions,
 		WriteCmdLine:       common.ToPtr(false),
 	}
 
