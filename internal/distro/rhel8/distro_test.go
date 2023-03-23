@@ -650,7 +650,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if unsupported[imgTypeName] {
-				continue
+				assert.Error(t, err)
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/etc\"]")
 			}
@@ -685,7 +685,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if unsupported[imgTypeName] {
-				continue
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -724,7 +724,7 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
 			if unsupported[imgTypeName] {
-				continue
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -771,7 +771,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
 			if unsupported[imgTypeName] {
-				continue
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -813,7 +813,7 @@ func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
 			if unsupported[imgTypeName] {
-				continue
+				assert.Error(t, err)
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"//\" \"/var//\" \"/var//log/audit/\"]")
 			}
@@ -851,7 +851,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if unsupported[imgTypeName] {
-				continue
+				assert.Error(t, err)
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/variable\" \"/variable/log/audit\"]")
 			}
@@ -886,7 +886,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if unsupported[imgTypeName] {
-				continue
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
