@@ -762,6 +762,7 @@ components:
         - aws-rhui
         - aws-sap-rhui
         - azure
+        - azure-eap7-rhui
         - azure-rhui
         - azure-sap-rhui
         - edge-commit
