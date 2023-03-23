@@ -2,7 +2,6 @@ package rhel8_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -472,6 +471,8 @@ func TestDistro_ManifestError(t *testing.T) {
 				assert.EqualError(t, err, "edge raw images require specifying a URL from which to retrieve the OSTree commit")
 			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" {
 				assert.EqualError(t, err, fmt.Sprintf("boot ISO image type \"%s\" requires specifying a URL from which to retrieve the OSTree commit", imgTypeName))
+			} else if imgTypeName == "azure-eap7-rhui" {
+				assert.EqualError(t, err, fmt.Sprintf("image type \"%s\" does not support customizations", imgTypeName))
 			} else {
 				assert.NoError(t, err)
 			}
@@ -635,6 +636,12 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			},
 		},
 	}
+	unsupported := map[string]bool{
+		"edge-installer":            true,
+		"edge-simplified-installer": true,
+		"edge-raw-image":            true,
+		"azure-eap7-rhui":           true,
+	}
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
@@ -642,7 +649,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if unsupported[imgTypeName] {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/etc\"]")
@@ -663,6 +670,12 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			},
 		},
 	}
+	unsupported := map[string]bool{
+		"edge-installer":            true,
+		"edge-simplified-installer": true,
+		"edge-raw-image":            true,
+		"azure-eap7-rhui":           true,
+	}
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
@@ -671,7 +684,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if unsupported[imgTypeName] {
 				continue
 			} else {
 				assert.NoError(t, err)
@@ -696,13 +709,21 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 			},
 		},
 	}
+	unsupported := map[string]bool{
+		"edge-commit":               true,
+		"edge-container":            true,
+		"edge-installer":            true,
+		"edge-simplified-installer": true,
+		"edge-raw-image":            true,
+		"azure-eap7-rhui":           true,
+	}
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
-			if strings.HasPrefix(imgTypeName, "edge-") {
+			if unsupported[imgTypeName] {
 				continue
 			} else {
 				assert.NoError(t, err)
@@ -735,13 +756,21 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 			},
 		},
 	}
+	unsupported := map[string]bool{
+		"edge-commit":               true,
+		"edge-container":            true,
+		"edge-installer":            true,
+		"edge-simplified-installer": true,
+		"edge-raw-image":            true,
+		"azure-eap7-rhui":           true,
+	}
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
-			if strings.HasPrefix(imgTypeName, "edge-") {
+			if unsupported[imgTypeName] {
 				continue
 			} else {
 				assert.NoError(t, err)
@@ -770,12 +799,20 @@ func TestDistro_DirtyMountpointsNotAllowed(t *testing.T) {
 			},
 		},
 	}
+	unsupported := map[string]bool{
+		"edge-commit":               true,
+		"edge-container":            true,
+		"edge-installer":            true,
+		"edge-simplified-installer": true,
+		"edge-raw-image":            true,
+		"azure-eap7-rhui":           true,
+	}
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
-			if strings.HasPrefix(imgTypeName, "edge-") {
+			if unsupported[imgTypeName] {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"//\" \"/var//\" \"/var//log/audit/\"]")
@@ -800,6 +837,12 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 			},
 		},
 	}
+	unsupported := map[string]bool{
+		"edge-installer":            true,
+		"edge-simplified-installer": true,
+		"edge-raw-image":            true,
+		"azure-eap7-rhui":           true,
+	}
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
@@ -807,7 +850,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if unsupported[imgTypeName] {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/variable\" \"/variable/log/audit\"]")
@@ -828,6 +871,12 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 			},
 		},
 	}
+	unsupported := map[string]bool{
+		"edge-installer":            true,
+		"edge-simplified-installer": true,
+		"edge-raw-image":            true,
+		"azure-eap7-rhui":           true,
+	}
 	for _, archName := range r8distro.ListArches() {
 		arch, _ := r8distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
@@ -836,7 +885,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 			_, err := imgType.Manifest(bp.Customizations, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if unsupported[imgTypeName] {
 				continue
 			} else {
 				assert.NoError(t, err)
