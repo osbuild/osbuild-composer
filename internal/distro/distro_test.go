@@ -185,7 +185,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 					require.Nil(err)
 
 					// set up bare minimum args for image type
-					customizations := &blueprint.Customizations{}
+					var customizations *blueprint.Customizations
 					if imageType.Name() == "edge-simplified-installer" {
 						customizations = &blueprint.Customizations{
 							InstallationDevice: "/dev/null",
