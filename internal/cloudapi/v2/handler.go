@@ -585,6 +585,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				fallthrough
 			case ImageTypesAzureRhui:
 				fallthrough
+			case ImageTypesAzureEap7Rhui:
+				fallthrough
 			case ImageTypesAzureSapRhui:
 				var azureUploadOptions AzureUploadOptions
 				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
@@ -675,6 +677,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "vhd"
 	case ImageTypesAzureRhui:
 		return "azure-rhui"
+	case ImageTypesAzureEap7Rhui:
+		return "azure-eap7-rhui"
 	case ImageTypesAzureSapRhui:
 		return "azure-sap-rhui"
 	case ImageTypesGuestImage:
