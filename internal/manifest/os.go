@@ -52,8 +52,15 @@ type OSCustomizations struct {
 	KernelOptionsAppend []string
 
 	// KernelOptionsBootloader controls whether kernel command line options
-	// should be specified in the bootloader configuration. Otherwise they are
-	// specified in /etc/kernel/cmdline (default).
+	// should be specified in the bootloader grubenv configuration. Otherwise
+	// they are specified in /etc/kernel/cmdline (default).
+	//
+	// NB: The kernel options need to be still specified in /etc/default/grub
+	// under the GRUB_CMDLINE_LINUX variable. The reason is that it is used by
+	// the 10_linux script executed by grub2-mkconfig to override the kernel
+	// options in /etc/kernel/cmdline if the file has older timestamp than
+	// /etc/default/grub.
+	//
 	// This should only be used for RHEL 8 and CentOS 8 images that use grub
 	// (non s390x).  Newer releases (9+) should keep this disabled.
 	KernelOptionsBootloader bool
@@ -558,6 +565,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 				)
 			} else {
 				options := osbuild.NewGrub2StageOptionsUnified(pt,
+					strings.Join(kernelOptions, " "),
 					p.kernelVer,
 					p.platform.GetUEFIVendor() != "",
 					p.platform.GetBIOSPlatform(),
@@ -577,7 +585,6 @@ func (p *OS) serialize() osbuild.Pipeline {
 					if options.UEFI != nil {
 						options.UEFI.Unified = false
 					}
-					options.KernelOptions = strings.Join(kernelOptions, " ")
 				}
 				bootloader = osbuild.NewGRUB2Stage(options)
 			}

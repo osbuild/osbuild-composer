@@ -238,6 +238,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}
 
 	grubOptions := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
+		strings.Join(kernelOpts, " "),
 		"",
 		p.platform.GetUEFIVendor() != "",
 		p.platform.GetBIOSPlatform(),
@@ -249,7 +250,6 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		Timeout:        1,
 		TerminalOutput: []string{"console"},
 	}
-	grubOptions.KernelOptions = strings.Join(kernelOpts, ",")
 	bootloader := osbuild.NewGRUB2Stage(grubOptions)
 	bootloader.MountOSTree(p.osName, p.commit.Ref, 0)
 	pipeline.AddStage(bootloader)
