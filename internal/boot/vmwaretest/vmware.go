@@ -148,9 +148,9 @@ func WithBootedImage(creds *AuthOptions, imagePath, imageName, publicKey string,
 		fmt.Sprintf("-ds=%s", creds.Datastore),
 		fmt.Sprintf("-folder=%s", creds.Folder),
 		fmt.Sprintf("-net=%s", creds.Network),
-		"-m=2048", "-g=rhel8_64Guest", "-on=true", "-firmware=bios",
+		"-m=2048", "-g=rhel8_64Guest", "-on=true", "-firmware=efi",
 		fmt.Sprintf("-disk=%s/%s", imageName, vmdkBaseName),
-		"--disk.controller=ide",
+		"--disk.controller=scsi",
 		imageName,
 	}
 	retcode := cli.Run(args)
