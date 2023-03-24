@@ -29,12 +29,14 @@ var supportedDistros = []func() distro.Distro{
 	rhel8.NewRHEL86,
 	rhel8.NewRHEL87,
 	rhel8.NewRHEL88,
+	rhel8.NewRHEL89,
 	rhel8.NewCentos,
 
 	rhel9.New,
 	rhel9.NewRHEL90,
 	rhel9.NewRHEL91,
 	rhel9.NewRHEL92,
+	rhel9.NewRHEL93,
 	rhel9.NewCentOS9,
 }
 
