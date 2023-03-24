@@ -147,6 +147,10 @@ func NewRHEL92() distro.Distro {
 	return newDistro("rhel", 2)
 }
 
+func NewRHEL93() distro.Distro {
+	return newDistro("rhel", 3)
+}
+
 func newDistro(name string, minor int) *distribution {
 	var rd distribution
 	switch name {
