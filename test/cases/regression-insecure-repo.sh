@@ -105,7 +105,7 @@ name = "test repository"
 type = "yum-baseurl"
 url = "${websrvurl}"
 rhsm = false
-chck_gpg = false
+check_gpg = false
 check_ssl = false
 EOF
 
