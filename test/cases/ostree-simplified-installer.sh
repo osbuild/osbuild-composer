@@ -112,6 +112,12 @@ ANSIBLE_USER="admin"
 FDO_USER_ONBOARDING="false"
 
 case "${ID}-${VERSION_ID}" in
+    "fedora-38")
+        CONTAINER_TYPE=iot-container
+        INSTALLER_TYPE=iot-simplified-installer
+        OSTREE_REF="fedora/38/${ARCH}/iot"
+        OS_VARIANT="fedora-unknown"
+        ;;
     "rhel-8"* )
         OSTREE_REF="rhel/8/${ARCH}/edge"
         PARENT_REF="rhel/8/${ARCH}/edge"
