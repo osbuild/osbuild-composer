@@ -37,9 +37,18 @@ openssl req -new -newkey rsa:4096 -days 1 -nodes -x509 \
     -subj "/C=DE/ST=Berlin/L=Berlin/O=Org/CN=osbuild.org" \
     -keyout "${keyfile}" -out "${certfile}"
 
+greenprint "Generate GPG key to sign custom RPMs are repo metadata"
+gpg --batch --passphrase '' --quick-gen-key testing@redhat.com default default
+gpg_pubkey=$(gpg --armor --export testing@redhat.com)
+
+cat <<EOF > ~/.rpmmacros
+%_gpg_name testing@redhat.com
+EOF
+
+
 greenprint "Creating dummy rpm and repo"
 # make a dummy rpm and repo to test payload_repositories
-sudo dnf install -y rpm-build createrepo
+sudo dnf install -y rpm-build rpm-sign createrepo
 dummyrpmdir=$(mktemp -d)
 dummyspecfile="$dummyrpmdir/dummy.spec"
 
@@ -62,6 +71,7 @@ EOF
 
 mkdir -p "DUMMYRPMDIR/rpmbuild"
 rpmbuild --quiet --define "_topdir $dummyrpmdir/rpmbuild" -bb "$dummyspecfile"
+rpmsign --addsign "${dummyrpmdir}"/rpmbuild/RPMS/noarch/*.rpm
 
 mkdir -p "${dummyrpmdir}/repo"
 cp "${dummyrpmdir}"/rpmbuild/RPMS/noarch/*rpm "$dummyrpmdir/repo"
@@ -105,7 +115,8 @@ name = "test repository"
 type = "yum-baseurl"
 url = "${websrvurl}"
 rhsm = false
-check_gpg = false
+check_gpg = true
+gpgkeys = ['''${gpg_pubkey}''']
 check_ssl = false
 EOF
 
