@@ -97,6 +97,8 @@ RPM:
           - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
+          - aws/fedora-38-x86_64
+          - aws/fedora-38-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.7-ga-x86_64
