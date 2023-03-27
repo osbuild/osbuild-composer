@@ -54,16 +54,20 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
-IMAGE_DIGEST="sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
+FEDORA_IMAGE_DIGEST="sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
+MANIFEST_LIST_DIGEST="sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
 
 # Write a basic blueprint for our container.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "image"
-description = "A qcwo2 with an container"
+description = "A qcow2 with an container"
 version = "0.0.1"
 
 [[containers]]
-source = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal@${IMAGE_DIGEST}"
+source = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal@${FEDORA_IMAGE_DIGEST}"
+
+[[containers]]
+source = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test@${MANIFEST_LIST_DIGEST}"
 EOF
 
 # Prepare the blueprint for the compose.
@@ -125,11 +129,21 @@ greenprint "💬 Checking that image exists"
 INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
 
 IMAGE_ID="d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6"
-EXISTS=$(jq -e --arg id "${IMAGE_ID}" 'any(."container-images" | select(. != null and .[].Id == $id); .)' <<< "${INFO}")
+FEDORA_CONTAINER_EXISTS=$(jq -e --arg id "${IMAGE_ID}" 'any(."container-images" | select(. != null and .[].Id == $id); .)' <<< "${INFO}")
 
-if $EXISTS; then
-  greenprint "💚 container image '${IMAGE_ID}' was found!"
+if $FEDORA_CONTAINER_EXISTS; then
+  greenprint "💚 fedora container image '${IMAGE_ID}' was found!"
 else
-  echo "😢 container image '${IMAGE_ID}' not in image."
+  echo "😢 fedora container image '${IMAGE_ID}' not in image."
+  exit 1
+fi
+
+# Check that the test image's manifest list was included
+MANIFEST_LIST_EXISTS=$(jq -e --arg id "${MANIFEST_LIST_DIGEST}" 'any(."container-images" | select(. != null and .[].Digest == $id); .)' <<< "${INFO}")
+
+if $MANIFEST_LIST_EXISTS; then
+  greenprint "💚 Manifest list digest '${MANIFEST_LIST_DIGEST}' was found!"
+else
+  echo "😢 Manifest list digest '${MANIFEST_LIST_DIGEST}' not in image."
   exit 1
 fi
