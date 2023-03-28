@@ -15,7 +15,7 @@ type KojiInitJobImpl struct {
 	KojiServers map[string]kojiServer
 }
 
-func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (string, uint64, error) {
+func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string, taskID uint64) (string, uint64, error) {
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -35,11 +35,11 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 	defer func() {
 		err := k.Logout()
 		if err != nil {
-			logrus.Warnf("koji logout failed: %v", err)
+			logrus.Warnf("koji logout failed: %v", err, taskID)
 		}
 	}()
 
-	buildInfo, err := k.CGInitBuild(name, version, release)
+	buildInfo, err := k.CGInitBuild(name, version, release, taskID)
 	if err != nil {
 		return "", 0, err
 	}
@@ -55,7 +55,7 @@ func (impl *KojiInitJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.KojiInitJobResult
-	result.Token, result.BuildID, err = impl.kojiInit(args.Server, args.Name, args.Version, args.Release)
+	result.Token, result.BuildID, err = impl.kojiInit(args.Server, args.Name, args.Version, args.Release, args.TaskID)
 	if err != nil {
 		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, err.Error(), nil)
 	}

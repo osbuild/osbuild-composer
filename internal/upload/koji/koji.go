@@ -3,10 +3,6 @@ package koji
 import (
 	"bytes"
 	"context"
-	"net"
-	"strings"
-	"time"
-
 	// koji uses MD5 hashes
 	/* #nosec G501 */
 	"crypto/md5"
@@ -17,15 +13,19 @@ import (
 	"fmt"
 	"hash/adler32"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/kolo/xmlrpc"
 	"github.com/sirupsen/logrus"
 	"github.com/ubccr/kerby/khttp"
 
 	rh "github.com/hashicorp/go-retryablehttp"
+
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -224,16 +224,18 @@ func (k *Koji) Logout() error {
 }
 
 // CGInitBuild reserves a build ID and initializes a build
-func (k *Koji) CGInitBuild(name, version, release string) (*CGInitBuildResult, error) {
+func (k *Koji) CGInitBuild(name, version, release string, taskID uint64) (*CGInitBuildResult, error) {
 	var buildInfo struct {
 		Name    string `xmlrpc:"name"`
 		Version string `xmlrpc:"version"`
 		Release string `xmlrpc:"release"`
+		TaskID  uint64 `xmlrpc:"task_id"`
 	}
 
 	buildInfo.Name = name
 	buildInfo.Version = version
 	buildInfo.Release = release
+	buildInfo.TaskID = taskID
 
 	var result CGInitBuildResult
 	err := k.xmlrpc.Call("CGInitBuild", []interface{}{"osbuild", buildInfo}, &result)
@@ -244,13 +246,17 @@ func (k *Koji) CGInitBuild(name, version, release string) (*CGInitBuildResult, e
 	return &result, nil
 }
 
-/* from `koji/__init__.py`
+/*
+	from `koji/__init__.py`
+
 BUILD_STATES = Enum((
-    'BUILDING',
-    'COMPLETE',
-    'DELETED',
-    'FAILED',
-    'CANCELED',
+
+	'BUILDING',
+	'COMPLETE',
+	'DELETED',
+	'FAILED',
+	'CANCELED',
+
 ))
 */
 const (

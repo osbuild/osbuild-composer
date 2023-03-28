@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -105,7 +106,7 @@ func main() {
 		},
 	}
 
-	initResult, err := k.CGInitBuild(build.Name, build.Version, build.Release)
+	initResult, err := k.CGInitBuild(build.Name, build.Version, build.Release, build.TaskID)
 	if err != nil {
 		println(err.Error())
 		return

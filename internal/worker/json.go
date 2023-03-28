@@ -106,6 +106,7 @@ type KojiInitJob struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 	Release string `json:"release"`
+	TaskID  uint64 `json:"task_id"`
 }
 
 type KojiInitJobResult struct {

@@ -196,6 +196,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		Name:    name,
 		Version: version,
 		Release: release,
+		TaskID:  taskID,
 	}, channel)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)

@@ -62,7 +62,7 @@ func TestKojiRefund(t *testing.T) {
 		}
 	}()
 
-	initResult, err := k.CGInitBuild("name", "verison", "release")
+	initResult, err := k.CGInitBuild("name", "verison", "release", 1)
 	require.NoError(t, err)
 
 	err = k.CGCancelBuild(initResult.BuildID, initResult.Token)
@@ -71,7 +71,7 @@ func TestKojiRefund(t *testing.T) {
 	err = k.CGCancelBuild(initResult.BuildID, initResult.Token)
 	require.Error(t, err)
 
-	initResult, err = k.CGInitBuild("name", "verison", "release")
+	initResult, err = k.CGInitBuild("name", "verison", "release", 1)
 	require.NoError(t, err)
 
 	err = k.CGFailBuild(initResult.BuildID, initResult.Token)
@@ -186,7 +186,7 @@ func TestKojiImport(t *testing.T) {
 		},
 	}
 
-	initResult, err := k.CGInitBuild(build.Name, build.Version, build.Release)
+	initResult, err := k.CGInitBuild(build.Name, build.Version, build.Release, 1)
 	require.NoError(t, err)
 
 	build.BuildID = uint64(initResult.BuildID)
@@ -216,4 +216,27 @@ func TestKojiImport(t *testing.T) {
 
 	// let's check for COMPLETE, koji will exit with non-zero status code if the build doesn't exist
 	assert.Contains(t, string(out), "COMPLETE")
+
+	// check if the build is really there:
+	// There's no potential command injection vector here
+	/* #nosec G204 */
+	cmd = exec.Command(
+		"koji",
+		"--server", server,
+		"-c", "/usr/share/tests/osbuild-composer/koji/koji.conf",
+		"--keytab", credentials.KeyTab,
+		"--principal", credentials.Principal,
+		"buildinfo",
+		buildName+"-1-1",
+	)
+
+	// sample output:
+	// Build                                                    Built by          State
+	// -------------------------------------------------------  ----------------  ----------------
+	// osbuild-image-92882b90-4bd9-4422-8b8a-40863f94535a-1-1   osbuild           COMPLETE
+	out, err = cmd.CombinedOutput()
+	assert.NoError(t, err)
+
+	// let's check for COMPLETE, koji will exit with non-zero status code if the build doesn't exist
+	assert.Contains(t, string(out), "Task: 1")
 }
