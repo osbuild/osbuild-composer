@@ -43,6 +43,8 @@ jobs:
     - centos-stream-9-x86_64
     - epel-8-aarch64
     - epel-8-x86_64
+    - epel-9-aarch64
+    - epel-9-x86_64
     - fedora-all-aarch64
     - fedora-all-s390x
     - fedora-all-ppc64le
@@ -60,6 +62,8 @@ jobs:
     - centos-stream-9-x86_64
     - epel-8-aarch64
     - epel-8-x86_64
+    - epel-9-aarch64
+    - epel-9-x86_64
     - fedora-all-aarch64
     - fedora-all-s390x
     - fedora-all-ppc64le
