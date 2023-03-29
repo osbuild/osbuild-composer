@@ -342,6 +342,10 @@ version = "*"
 [[packages]]
 name = "sssd"
 version = "*"
+
+[[packages]]
+name = "npm"
+version = "*"
 EOF
 
 # RHEL 8.5 and later support user configuration in blueprint for edge-commit image
