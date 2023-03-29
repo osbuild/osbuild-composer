@@ -234,6 +234,12 @@ if [ -z "$CIV_CONFIG_FILE" ]; then
     exit 1
 fi
 
+# Substitute placeholders for tag values and copy config file to tmpdir
+sed -i "s|{Job_name}|In_CI_Cloud_Test:${CI_JOB_NAME}|g; \
+    s|{Branch}|${CI_COMMIT_REF_SLUG}|g; \
+    s|{Pipeline_id}|${CI_PIPELINE_ID}|g; \
+    s|{Pipeline_source}|${CI_PIPELINE_SOURCE}|g" \
+    "${CIV_CONFIG_FILE}"
 cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
 
 sudo "${CONTAINER_RUNTIME}" run \
