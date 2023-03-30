@@ -259,6 +259,17 @@ func newDistro(name string, minor int) *distribution {
 		vmdkImgType,
 	)
 
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_OVA,
+			},
+		},
+		ovaImgType,
+	)
+
 	ec2X86Platform := &platform.X86{
 		BIOS:       true,
 		UEFIVendor: rd.vendor,
