@@ -18,6 +18,7 @@ const (
 	FORMAT_VMDK
 	FORMAT_VHD
 	FORMAT_GCE
+	FORMAT_OVA
 )
 
 func (a Arch) String() string {
@@ -49,6 +50,8 @@ func (f ImageFormat) String() string {
 		return "vhd"
 	case FORMAT_GCE:
 		return "gce"
+	case FORMAT_OVA:
+		return "ova"
 	default:
 		panic("invalid image format")
 	}
