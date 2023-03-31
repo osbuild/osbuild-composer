@@ -452,20 +452,32 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				}
 			}()
 
-			// create a symlink so that uploaded image has the name specified by user
-			imageName := jobTarget.ImageName + ".vmdk"
-			imagePath := path.Join(tempDirectory, imageName)
-
 			exportedImagePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
-			err = os.Symlink(exportedImagePath, imagePath)
-			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
-				break
-			}
 
-			err = vmware.UploadImage(credentials, imagePath)
-			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+			if strings.HasSuffix(exportedImagePath, ".vmdk") {
+				// create a symlink so that uploaded image has the name specified by user
+				imageName := jobTarget.ImageName + ".vmdk"
+				imagePath := path.Join(tempDirectory, imageName)
+
+				err = os.Symlink(exportedImagePath, imagePath)
+				if err != nil {
+					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+					break
+				}
+
+				err = vmware.ImportVmdk(credentials, imagePath)
+				if err != nil {
+					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+					break
+				}
+			} else if strings.HasSuffix(exportedImagePath, ".ova") {
+				err = vmware.ImportOva(credentials, exportedImagePath, jobTarget.ImageName)
+				if err != nil {
+					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+					break
+				}
+			} else {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "No vmdk or ova provided", nil)
 				break
 			}
 
