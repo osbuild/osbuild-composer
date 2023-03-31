@@ -62,6 +62,17 @@ const DefaultUploadThreads = 16
 // See https://learn.microsoft.com/en-us/rest/api/storageservices/put-page
 const PageBlobMaxUploadPagesBytes = 4 * 1024 * 1024
 
+// allZerosSlice returns true if all values in the slice are equal to 0
+func allZerosSlice(slice []byte) bool {
+	for i := 0; i < len(slice); i++ {
+		if slice[i] != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
 // UploadPageBlob takes the metadata and credentials required to upload the image specified by `fileName`
 // It can speed up the upload by using goroutines. The number of parallel goroutines is bounded by
 // the `threads` argument.
@@ -143,6 +154,15 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 		if n == 0 {
 			break
 		}
+
+		// Skip the uploading part if there are only zeros in the buffer.
+		// We already defined the size of the blob in the initial call and the blob is zero-initialized,
+		// so this pushing zeros would actually be a no-op.
+		if allZerosSlice(buffer) {
+			counter++
+			continue
+		}
+
 		wg.Add(1)
 		semaphore <- 1
 		go func(counter int64, buffer []byte, n int) {
