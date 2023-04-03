@@ -162,17 +162,6 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 		return err
 	default:
 	}
-	// Check properties, specifically MD5 sum of the blob
-	props, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{}, azblob.ClientProvidedKeyOptions{})
-	if err != nil {
-		return fmt.Errorf("getting the properties of the new blob failed: %v", err)
-	}
-	var blobChecksum []byte = props.ContentMD5()
-	var fileChecksum []byte = imageFileHash.Sum(nil)
-
-	if !bytes.Equal(blobChecksum, fileChecksum) {
-		return errors.New("error during image upload. the image seems to be corrupted")
-	}
 
 	return nil
 }
