@@ -558,14 +558,23 @@ gcp.sh:
   variables:
     SCRIPT: gcp.sh
 
-vmware.sh:
+vmware.sh_vmdk:
   extends: .integration_rhel
   rules:
     # Run only on x86_64
     - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
   variables:
-    SCRIPT: vmware.sh
+    SCRIPT: vmware.sh vmdk
+
+vmware.sh_ova:
+  extends: .integration_rhel
+  rules:
+    # Run only on x86_64
+    - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.nightly_rules_x86_64, rules]
+  variables:
+    SCRIPT: vmware.sh ova
 
 filesystem.sh:
   extends: .integration

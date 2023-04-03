@@ -13,6 +13,8 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 
+IMAGE_TYPE="$1"
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
@@ -53,6 +55,22 @@ COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "$SSH_KEY".pub)
+
+# destroy VMs
+function cleanup() {
+    set +eu
+    greenprint "🧼 Cleaning up"
+    $GOVC_CMD vm.destroy -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true "${IMAGE_KEY}"
+
+    if [[ $RESULT != 0 ]]; then
+        greenprint "❌ Failed"
+        exit 1
+    fi
+
+    set -eu
+}
+trap cleanups EXIT
+
 
 # Check that the system started and is running correctly
 running_test_check () {
@@ -101,6 +119,7 @@ password = "${GOVMOMI_PASSWORD}"
 cluster = "${GOVMOMI_CLUSTER}"
 dataStore = "${GOVMOMI_DATASTORE}"
 dataCenter = "${GOVMOMI_DATACENTER}"
+folder = "${GOVMOMI_FOLDER}"
 EOF
 
 # Write a basic blueprint for our image.
@@ -139,7 +158,7 @@ trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
 # Start the compose and upload to VMWare.
 greenprint "🚀 Starting compose"
-sudo composer-cli --json compose start bash vmdk "$IMAGE_KEY" "$VMWARE_CONFIG" | tee "$COMPOSE_START"
+sudo composer-cli --json compose start bash "$IMAGE_TYPE" "$IMAGE_KEY" "$VMWARE_CONFIG" | tee "$COMPOSE_START"
 COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
 # Wait for the compose to finish.
@@ -173,6 +192,7 @@ if [[ $COMPOSE_STATUS != FINISHED ]]; then
     exit 1
 fi
 
+if [ "$IMAGE_TYPE" = "vmdk" ]; then
 greenprint "👷🏻 Building VM in vSphere"
 $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
     -k=true \
@@ -186,6 +206,24 @@ $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_UR
     -disk="${IMAGE_KEY}"/"${IMAGE_KEY}".vmdk \
     --disk.controller=scsi \
     "${IMAGE_KEY}"
+elif [ "$IMAGE_TYPE" = "ova" ]; then
+greenprint "👷🏻 Modifying network of the VM in vSphere"
+$GOVC_CMD vm.network.add -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
+    -k=true \
+    -net="${GOVMOMI_NETWORK}" \
+    -net.adapter=vmxnet3 \
+    -vm="${IMAGE_KEY}" \
+    -net="${GOVMOMI_NETWORK}"
+
+# start the vm
+greenprint "👷🏻 Powering on the VM"
+$GOVC_CMD vm.power -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
+    -k=true \
+    -wait=true \
+    -on \
+    "${IMAGE_KEY}"
+
+fi
 
 # tagging vm as testing object
 $GOVC_CMD tags.attach -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
@@ -224,14 +262,6 @@ for LOOP_COUNTER in {0..10}; do
     sleep 5
 done
 
-# Clean up
-greenprint "🧼 Cleaning up"
-$GOVC_CMD vm.destroy -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true "${IMAGE_KEY}"
-
-if [[ $RESULT != 0 ]]; then
-    greenprint "❌ Failed"
-    exit 1
-fi
 
 greenprint "💚 Success"
 exit 0
