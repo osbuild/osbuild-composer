@@ -5,6 +5,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+const vmdkKernelOptions = "ro net.ifnames=0"
+
 func vmdkImgType() imageType {
 	return imageType{
 		name:     "vmdk",
@@ -13,13 +15,32 @@ func vmdkImgType() imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: vmdkCommonPackageSet,
 		},
-		kernelOptions:       "ro net.ifnames=0",
+		kernelOptions:       vmdkKernelOptions,
 		bootable:            true,
 		defaultSize:         4 * common.GibiByte,
 		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk"},
 		exports:             []string{"vmdk"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+}
+
+func ovaImgType() imageType {
+	return imageType{
+		name:     "ova",
+		filename: "image.ova",
+		mimeType: "application/ovf",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: vmdkCommonPackageSet,
+		},
+		kernelOptions:       vmdkKernelOptions,
+		bootable:            true,
+		defaultSize:         4 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vmdk", "ovf", "archive"},
+		exports:             []string{"archive"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 }

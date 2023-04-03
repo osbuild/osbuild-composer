@@ -303,6 +303,17 @@ func newDistro(name string, minor int) *distribution {
 	)
 
 	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_OVA,
+			},
+		},
+		ovaImgType(),
+	)
+
+	x86_64.addImageTypes(
 		&platform.X86{},
 		tarImgType(),
 	)
