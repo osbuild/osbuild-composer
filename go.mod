@@ -8,9 +8,8 @@ require (
 	cloud.google.com/go/cloudbuild v1.2.0
 	cloud.google.com/go/compute v1.10.0
 	cloud.google.com/go/storage v1.27.0
-	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
-	github.com/Azure/azure-storage-blob-go v0.13.0
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
 	github.com/Azure/go-autorest/autorest v0.11.28
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11
 	github.com/BurntSushi/toml v1.2.1
@@ -56,6 +55,8 @@ require (
 require (
 	cloud.google.com/go v0.104.0 // indirect
 	cloud.google.com/go/iam v0.3.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.3.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.1.1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.18 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.5 // indirect
@@ -115,7 +116,6 @@ require (
 	github.com/letsencrypt/boulder v0.0.0-20220331220046-b23ab962616e // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect

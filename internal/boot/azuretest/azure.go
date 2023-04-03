@@ -10,16 +10,17 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	// NOTE these are deprecated and will need replacement, see issue #2977
 	//nolint:staticcheck
 	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network"
 	//nolint:staticcheck
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
-
-	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 )
 
@@ -111,21 +112,17 @@ func DeleteImageFromAzure(c *azureCredentials, imageName string) error {
 		return err
 	}
 
-	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
+	// get blob URL endpoint.
+	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", c.StorageAccount, c.ContainerName, imageName))
 
-	// get storage account blob service URL endpoint.
-	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s", c.StorageAccount, c.ContainerName))
+	client, err := blob.NewClientWithSharedKeyCredential(URL.String(), credential, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create a new blob client: %w", err)
+	}
 
-	// Create a ContainerURL object that wraps the container URL and a request
-	// pipeline to make requests.
-	containerURL := azblob.NewContainerURL(*URL, p)
-
-	// Create the container, use a never-expiring context
-	ctx := context.Background()
-
-	blobURL := containerURL.NewPageBlobURL(imageName)
-
-	_, err = blobURL.Delete(ctx, azblob.DeleteSnapshotsOptionInclude, azblob.BlobAccessConditions{})
+	_, err = client.Delete(context.Background(), &blob.DeleteOptions{
+		DeleteSnapshots: common.ToPtr(blob.DeleteSnapshotsOptionTypeInclude),
+	})
 
 	if err != nil {
 		return fmt.Errorf("cannot delete the image: %v", err)

@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"io"
 	"regexp"
 	"runtime"
 	"sort"
@@ -88,3 +89,15 @@ func DataSizeToUint64(size string) (uint64, error) {
 	// unknown units.
 	return 0, fmt.Errorf("unknown data size units in string: %s", size)
 }
+
+// NopSeekCloser returns an io.ReadSeekCloser with a no-op Close method
+// wrapping the provided io.ReadSeeker r.
+func NopSeekCloser(r io.ReadSeeker) io.ReadSeekCloser {
+	return nopSeekCloser{r}
+}
+
+type nopSeekCloser struct {
+	io.ReadSeeker
+}
+
+func (nopSeekCloser) Close() error { return nil }
