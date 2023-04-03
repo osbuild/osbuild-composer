@@ -18,9 +18,10 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/sirupsen/logrus"
+
 	"github.com/osbuild/osbuild-composer/internal/common/slogger"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -336,6 +337,11 @@ func (q *DBJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []
 			return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
 		}
 	}
+
+	// The job has been dequeued, we are past the point of no return.
+	// Use a fresh context, the original might expire or be cancelled during the next calls,
+	// which is something we don't want.
+	ctx = context.Background()
 
 	conn, err := q.pool.Acquire(ctx)
 	if err != nil {
