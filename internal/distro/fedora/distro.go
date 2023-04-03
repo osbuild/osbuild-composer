@@ -231,6 +231,16 @@ var (
 		environment:         &environment.Azure{},
 	}
 
+	vmdkDefaultImageConfig = &distro.ImageConfig{
+		Locale: common.ToPtr("en_US.UTF-8"),
+		EnabledServices: []string{
+			"cloud-init.service",
+			"cloud-config.service",
+			"cloud-final.service",
+			"cloud-init-local.service",
+		},
+	}
+
 	vmdkImgType = imageType{
 		name:     "vmdk",
 		filename: "disk.vmdk",
@@ -238,15 +248,7 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: vmdkCommonPackageSet,
 		},
-		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.ToPtr("en_US.UTF-8"),
-			EnabledServices: []string{
-				"cloud-init.service",
-				"cloud-config.service",
-				"cloud-final.service",
-				"cloud-init-local.service",
-			},
-		},
+		defaultImageConfig:  vmdkDefaultImageConfig,
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * common.GibiByte,
@@ -254,6 +256,24 @@ var (
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk"},
 		exports:             []string{"vmdk"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+
+	ovaImgType = imageType{
+		name:     "ova",
+		filename: "image.ova",
+		mimeType: "application/ovf",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: vmdkCommonPackageSet,
+		},
+		defaultImageConfig:  vmdkDefaultImageConfig,
+		kernelOptions:       defaultKernelOptions,
+		bootable:            true,
+		defaultSize:         2 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vmdk", "ovf", "archive"},
+		exports:             []string{"archive"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
@@ -945,6 +965,16 @@ func newDistro(version int) distro.Distro {
 			},
 		},
 		vmdkImgType,
+	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_OVA,
+			},
+		},
+		ovaImgType,
 	)
 	x86_64.addImageTypes(
 		&platform.X86{

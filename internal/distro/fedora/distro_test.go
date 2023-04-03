@@ -93,6 +93,14 @@ func TestFilenameFromType(t *testing.T) {
 			},
 		},
 		{
+			name: "ova",
+			args: args{"ova"},
+			want: wantResult{
+				filename: "image.ova",
+				mimeType: "application/ovf",
+			},
+		},
+		{
 			name: "container",
 			args: args{"container"},
 			want: wantResult{
@@ -268,6 +276,7 @@ func TestImageType_Name(t *testing.T) {
 				"openstack",
 				"vhd",
 				"vmdk",
+				"ova",
 				"ami",
 				"iot-commit",
 				"iot-container",
@@ -446,6 +455,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"openstack",
 				"vhd",
 				"vmdk",
+				"ova",
 				"ami",
 				"iot-commit",
 				"iot-container",
