@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Verify that an older worker (v51) is still compatible with this composer
+# Verify that an older worker is still compatible with this composer
 # version.
 #
 # Any tweaks to the worker api need to be backwards compatible.
@@ -22,8 +22,14 @@ fi
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-WORKER_VERSION=67727d1e5cb3f1f86eafd890541381834d001743
-WORKER_RPM=osbuild-composer-worker-51-1.20220504git67727d1.el8.x86_64
+CURRENT_WORKER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer-worker)
+DESIRED_WORKER_RPM="osbuild-composer-worker-$((CURRENT_WORKER_VERSION - 3))"
+
+# Get the commit hash of the worker version we want to test by comparing the
+# tag for 2 versions back - since the current version might still be unreleased,
+# we subtract 3 from the current version.
+DESIRED_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_WORKER_VERSION-3))" | jq -r '.object.sha')
+DESIRED_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$DESIRED_TAG_SHA" | jq -r '.object.sha')
 
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
@@ -35,8 +41,8 @@ sudo cp -a /usr/share/tests/osbuild-composer/repositories "$REPOS/repositories"
 
 greenprint "Stop and disable all services and sockets"
 # ignore any errors here
-sudo systemctl stop osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service osbuild-dnf-json.service osbuild-dnf-json.socket || true
-sudo systemctl disable osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service osbuild-dnf-json.service osbuild-dnf-json.socket || true
+sudo systemctl stop osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service || true
+sudo systemctl disable osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service || true
 
 greenprint "Removing latest worker"
 sudo dnf remove -y osbuild-composer osbuild-composer-worker osbuild-composer-tests
@@ -56,13 +62,12 @@ priority=${priority}
 EOF
 }
 
-# Composer v51
-greenprint "Installing osbuild-composer-worker from commit ${WORKER_VERSION}"
-setup_repo osbuild-composer "$WORKER_VERSION" 20
+greenprint "Installing osbuild-composer-worker from commit ${DESIRED_COMMIT_SHA}"
+setup_repo osbuild-composer "$DESIRED_COMMIT_SHA" 20
 sudo dnf install -y osbuild-composer-worker osbuild-composer-dnf-json podman composer-cli
 
 # verify the right worker is installed just to be sure
-rpm -q "$WORKER_RPM"
+rpm -q "$DESIRED_WORKER_RPM"
 
 if which podman 2>/dev/null >&2; then
   CONTAINER_RUNTIME=podman
@@ -121,12 +126,6 @@ while ! sudo systemctl --quiet is-active osbuild-remote-worker@localhost:8700.se
     sudo systemctl status osbuild-remote-worker@localhost:8700.service
     sleep 1
     sudo systemctl enable --now osbuild-remote-worker@localhost:8700.service
-done
-sudo systemctl enable --now osbuild-dnf-json.socket
-while ! sudo systemctl --quiet is-active osbuild-dnf-json.socket; do
-    sudo systemctl status osbuild-dnf-json.socket
-    sleep 1
-    sudo systemctl enable --now osbuild-dnf-json.socket
 done
 set -e
 
