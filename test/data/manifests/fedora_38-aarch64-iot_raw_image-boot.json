@@ -249,6 +249,14 @@
                     }
                   },
                   {
+                    "id": "sha256:38e6676864f276c4364b6324b787b6e19ad4d160107e9867a57fbbf84530a7ef",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:b25ce7686cc5c1cf3d59e8a9ac89156e9f4bb846de8a6fb44ad33c1a19179067",
                     "options": {
                       "metadata": {
@@ -1967,6 +1975,13 @@
                   "options": "defaults",
                   "freq": 1,
                   "passno": 2
+                },
+                {
+                  "uuid": "7B77-95E7",
+                  "vfs_type": "vfat",
+                  "path": "/boot/efi",
+                  "options": "umask=0077,shortname=winnt",
+                  "passno": 2
                 }
               ]
             },
@@ -2137,6 +2152,23 @@
             }
           },
           {
+            "type": "org.osbuild.mkfs.fat",
+            "options": {
+              "volid": "7B7795E7"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 2048,
+                  "size": 1026048,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.mkfs.ext4",
             "options": {
               "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
@@ -2200,6 +2232,14 @@
                   "size": 2097152
                 }
               },
+              "boot.efi": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 2048,
+                  "size": 1026048
+                }
+              },
               "root": {
                 "type": "org.osbuild.loopback",
                 "options": {
@@ -2221,6 +2261,12 @@
                 "type": "org.osbuild.ext4",
                 "source": "boot",
                 "target": "/boot"
+              },
+              {
+                "name": "boot.efi",
+                "type": "org.osbuild.fat",
+                "source": "boot.efi",
+                "target": "/boot/efi"
               }
             ]
           }
@@ -2447,6 +2493,9 @@
           },
           "sha256:36e6835f02c897ea7d1929163cf0dba9317a9fe38637bfa349ecd291ba4b36ae": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/s/selinux-policy-targeted-37.13-1.fc38.noarch.rpm"
+          },
+          "sha256:38e6676864f276c4364b6324b787b6e19ad4d160107e9867a57fbbf84530a7ef": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/d/dosfstools-4.2-4.fc37.aarch64.rpm"
           },
           "sha256:3a4df46e9482e6dd68f6ff70603e36aaf846d4767ecb69b034900813566f705d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/f/file-libs-5.42-4.fc37.aarch64.rpm"
@@ -3192,6 +3241,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/d/diffutils-3.8-3.fc37.aarch64.rpm",
         "checksum": "sha256:786cec3721ba9907a4c69620cee6bc3952de8f27dec33f57d9939619b8514f87",
+        "check_gpg": true
+      },
+      {
+        "name": "dosfstools",
+        "epoch": 0,
+        "version": "4.2",
+        "release": "4.fc37",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-rawhide-20221025/Packages/d/dosfstools-4.2-4.fc37.aarch64.rpm",
+        "checksum": "sha256:38e6676864f276c4364b6324b787b6e19ad4d160107e9867a57fbbf84530a7ef",
         "check_gpg": true
       },
       {

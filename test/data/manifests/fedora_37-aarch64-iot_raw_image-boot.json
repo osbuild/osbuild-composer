@@ -281,6 +281,14 @@
                     }
                   },
                   {
+                    "id": "sha256:caf01590a095a0ded437ff9a6100de6b2a9d5c638c0d8df218685e9ca049a257",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:e4716da965a3141394efc6cfca127880bbab451c7cb285bfc48d1911d8402164",
                     "options": {
                       "metadata": {
@@ -2152,6 +2160,13 @@
                   "options": "defaults",
                   "freq": 1,
                   "passno": 2
+                },
+                {
+                  "uuid": "7B77-95E7",
+                  "vfs_type": "vfat",
+                  "path": "/boot/efi",
+                  "options": "umask=0077,shortname=winnt",
+                  "passno": 2
                 }
               ]
             },
@@ -2322,6 +2337,23 @@
             }
           },
           {
+            "type": "org.osbuild.mkfs.fat",
+            "options": {
+              "volid": "7B7795E7"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 2048,
+                  "size": 1026048,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
             "type": "org.osbuild.mkfs.ext4",
             "options": {
               "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
@@ -2385,6 +2417,14 @@
                   "size": 2097152
                 }
               },
+              "boot.efi": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 2048,
+                  "size": 1026048
+                }
+              },
               "root": {
                 "type": "org.osbuild.loopback",
                 "options": {
@@ -2406,6 +2446,12 @@
                 "type": "org.osbuild.ext4",
                 "source": "boot",
                 "target": "/boot"
+              },
+              {
+                "name": "boot.efi",
+                "type": "org.osbuild.fat",
+                "source": "boot.efi",
+                "target": "/boot/efi"
               }
             ]
           }
@@ -3008,6 +3054,9 @@
           "sha256:c9a351964d88b8f4162b8349c7ef8c5aae3e56b53f2f9f4acc081c1d998bbb39": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/a/aardvark-dns-1.1.0-1.fc37.aarch64.rpm"
           },
+          "sha256:caf01590a095a0ded437ff9a6100de6b2a9d5c638c0d8df218685e9ca049a257": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/d/dosfstools-4.2-4.fc37.aarch64.rpm"
+          },
           "sha256:ccf0d18c15586c0a7ad9e7e69551fa9b997c25970701b5e635a981878c8a9dfe": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/i/iptables-libs-1.8.8-3.fc37.aarch64.rpm"
           },
@@ -3486,6 +3535,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/d/diffutils-3.8-3.fc37.aarch64.rpm",
         "checksum": "sha256:2b34436e8003d7d1ab95f9a16db3ee455f571c56bf06a4833771046810dd5368",
+        "check_gpg": true
+      },
+      {
+        "name": "dosfstools",
+        "epoch": 0,
+        "version": "4.2",
+        "release": "4.fc37",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/d/dosfstools-4.2-4.fc37.aarch64.rpm",
+        "checksum": "sha256:caf01590a095a0ded437ff9a6100de6b2a9d5c638c0d8df218685e9ca049a257",
         "check_gpg": true
       },
       {
