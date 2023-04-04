@@ -162,6 +162,15 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 				Size:     501 * common.MebiByte, // 501 MiB
 				Type:     "06",
 				Bootable: true,
+				Payload: &disk.Filesystem{
+					Type:         "vfat",
+					UUID:         disk.EFIFilesystemUUID,
+					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
+					FSTabOptions: "umask=0077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
 			},
 			{
 				Size: 1 * common.GibiByte, // 1 GiB
