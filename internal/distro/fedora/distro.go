@@ -329,8 +329,8 @@ var (
 
 	minimalrawImgType = imageType{
 		name:     "minimal-raw",
-		filename: "raw.img",
-		mimeType: "application/disk",
+		filename: "raw.img.zstd",
+		mimeType: "application/zstd",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: minimalrpmPackageSet,
 		},
@@ -338,10 +338,10 @@ var (
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * common.GibiByte,
-		image:               liveImage,
+		image:               minimalRawImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image"},
-		exports:             []string{"image"},
+		payloadPipelines:    []string{"os", "image", "zstd"},
+		exports:             []string{"zstd"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 )

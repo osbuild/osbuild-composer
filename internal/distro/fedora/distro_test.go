@@ -173,8 +173,8 @@ func TestFilenameFromType(t *testing.T) {
 			name: "minimal-raw",
 			args: args{"minimal-raw"},
 			want: wantResult{
-				filename: "raw.img",
-				mimeType: "application/disk",
+				filename: "raw.img.zstd",
+				mimeType: "application/zstd",
 			},
 		},
 	}

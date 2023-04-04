@@ -168,6 +168,32 @@ func osCustomizations(
 
 // IMAGES
 
+func minimalRawImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.Spec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewLiveImage()
+	img.Compression = "zstd"
+	img.Platform = t.platform
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
+	img.Environment = t.environment
+	img.Workload = workload
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+	img.PartitionTable = pt
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
 func liveImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,

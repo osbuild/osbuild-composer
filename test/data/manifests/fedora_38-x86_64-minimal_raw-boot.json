@@ -1441,6 +1441,14 @@
                         "rpm.check_gpg": true
                       }
                     }
+                  },
+                  {
+                    "id": "sha256:167ba501b5837843a0691e683ad6bac11824ac15bfbfd47b4c4cb1045d2f311d",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
                   }
                 ]
               }
@@ -4645,7 +4653,7 @@
           {
             "type": "org.osbuild.truncate",
             "options": {
-              "filename": "raw.img",
+              "filename": "disk.img",
               "size": "3958374400"
             }
           },
@@ -4686,7 +4694,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "lock": true
                 }
               }
@@ -4701,7 +4709,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 4096,
                   "size": 409600,
                   "lock": true
@@ -4719,7 +4727,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 413696,
                   "size": 1024000,
                   "lock": true
@@ -4737,7 +4745,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 1437696,
                   "size": 6293471,
                   "lock": true
@@ -4768,7 +4776,7 @@
               "boot": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 413696,
                   "size": 1024000
                 }
@@ -4776,7 +4784,7 @@
               "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 4096,
                   "size": 409600
                 }
@@ -4784,7 +4792,7 @@
               "root": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 1437696,
                   "size": 6293471
                 }
@@ -4810,6 +4818,29 @@
                 "target": "/boot/efi"
               }
             ]
+          }
+        ]
+      },
+      {
+        "name": "zstd",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.zstd",
+            "inputs": {
+              "file": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.pipeline",
+                "references": {
+                  "name:image": {
+                    "file": "disk.img"
+                  }
+                }
+              }
+            },
+            "options": {
+              "filename": "raw.img.zstd"
+            }
           }
         ]
       }
@@ -4897,6 +4928,9 @@
           },
           "sha256:166e842798813a72e4d075dcd9b6e814d7ad3fc8d1b5860281cffe7a68784b25": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/g/gzip-1.12-3.fc38.x86_64.rpm"
+          },
+          "sha256:167ba501b5837843a0691e683ad6bac11824ac15bfbfd47b4c4cb1045d2f311d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/z/zstd-1.5.4-1.fc38.x86_64.rpm"
           },
           "sha256:1812689be8bbc4ef39718dbb8ef862105225348310052ddaf0b1cb0f0a1bf296": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/d/dbus-1.14.6-1.fc38.x86_64.rpm"
@@ -7733,6 +7767,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/z/zlib-1.2.13-3.fc38.x86_64.rpm",
         "checksum": "sha256:c26d4d161f8eddd7cb794075e383d0f4d3a77aa88e453a2db51e53346981f04c",
+        "check_gpg": true
+      },
+      {
+        "name": "zstd",
+        "epoch": 0,
+        "version": "1.5.4",
+        "release": "1.fc38",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/z/zstd-1.5.4-1.fc38.x86_64.rpm",
+        "checksum": "sha256:167ba501b5837843a0691e683ad6bac11824ac15bfbfd47b4c4cb1045d2f311d",
         "check_gpg": true
       }
     ],

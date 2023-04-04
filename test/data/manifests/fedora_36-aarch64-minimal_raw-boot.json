@@ -1423,6 +1423,14 @@
                         "rpm.check_gpg": true
                       }
                     }
+                  },
+                  {
+                    "id": "sha256:cf25a2821d434c3d094f9e5d1b9e3fa9f609ed4f59daca188749a3e762b22f73",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
                   }
                 ]
               }
@@ -4527,7 +4535,7 @@
           {
             "type": "org.osbuild.truncate",
             "options": {
-              "filename": "raw.img",
+              "filename": "disk.img",
               "size": "3957325824"
             }
           },
@@ -4561,7 +4569,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "lock": true
                 }
               }
@@ -4576,7 +4584,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 2048,
                   "size": 409600,
                   "lock": true
@@ -4594,7 +4602,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 411648,
                   "size": 1024000,
                   "lock": true
@@ -4612,7 +4620,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 1435648,
                   "size": 6293471,
                   "lock": true
@@ -4643,7 +4651,7 @@
               "boot": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 411648,
                   "size": 1024000
                 }
@@ -4651,7 +4659,7 @@
               "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 2048,
                   "size": 409600
                 }
@@ -4659,7 +4667,7 @@
               "root": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 1435648,
                   "size": 6293471
                 }
@@ -4685,6 +4693,29 @@
                 "target": "/boot/efi"
               }
             ]
+          }
+        ]
+      },
+      {
+        "name": "zstd",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.zstd",
+            "inputs": {
+              "file": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.pipeline",
+                "references": {
+                  "name:image": {
+                    "file": "disk.img"
+                  }
+                }
+              }
+            },
+            "options": {
+              "filename": "raw.img.zstd"
+            }
           }
         ]
       }
@@ -5579,6 +5610,9 @@
           },
           "sha256:ce799cfef53276047634cf1418c6463c2bd06ffce8d3b41272cd9f3e16d2d242": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-fedora-20220617/Packages/p/polkit-0.120-5.fc36.aarch64.rpm"
+          },
+          "sha256:cf25a2821d434c3d094f9e5d1b9e3fa9f609ed4f59daca188749a3e762b22f73": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/z/zstd-1.5.2-2.fc36.aarch64.rpm"
           },
           "sha256:cf7fd9b6579cafbaf0a8eb7f2b920b811a9eb140100e1c3757ed8e3d8981fcf0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/l/libdnf-0.67.0-2.fc36.aarch64.rpm"
@@ -7529,6 +7563,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/w/whois-nls-5.5.13-1.fc36.noarch.rpm",
         "checksum": "sha256:5c05e31efa75b41ae4e2383fdf0cee624d4b67dcade39426797f3a4debaabedf",
+        "check_gpg": true
+      },
+      {
+        "name": "zstd",
+        "epoch": 0,
+        "version": "1.5.2",
+        "release": "2.fc36",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f36/f36-aarch64-updates-released-20220705/Packages/z/zstd-1.5.2-2.fc36.aarch64.rpm",
+        "checksum": "sha256:cf25a2821d434c3d094f9e5d1b9e3fa9f609ed4f59daca188749a3e762b22f73",
         "check_gpg": true
       }
     ],

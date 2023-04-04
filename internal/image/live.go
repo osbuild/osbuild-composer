@@ -114,6 +114,10 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 		xzPipeline := manifest.NewXZ(m, buildPipeline, artifactPipeline)
 		xzPipeline.Filename = img.Filename
 		artifact = xzPipeline.Export()
+	case "zstd":
+		zstdPipeline := manifest.NewZstd(m, buildPipeline, artifactPipeline)
+		zstdPipeline.Filename = img.Filename
+		artifact = zstdPipeline.Export()
 	case "":
 		// do nothing
 	default:

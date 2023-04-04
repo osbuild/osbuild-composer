@@ -57,6 +57,7 @@ TEST_UUID=$(uuidgen)
 IMAGE_KEY="minimal-raw-${TEST_UUID}"
 UEFI_GUEST_ADDRESS=192.168.100.51
 MINIMAL_RAW_TYPE=minimal-raw
+MINIMAL_RAW_FILENAME_COMPRESSED=raw.img.zstd
 MINIMAL_RAW_FILENAME=raw.img
 BOOT_ARGS="uefi"
 
@@ -243,10 +244,12 @@ build_image minimal-raw "${MINIMAL_RAW_TYPE}"
 # Download the image
 greenprint "📥 Downloading the minimal-raw image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+MINIMAL_RAW_FILENAME_COMPRESSED="${COMPOSE_ID}-${MINIMAL_RAW_FILENAME_COMPRESSED}"
 MINIMAL_RAW_FILENAME="${COMPOSE_ID}-${MINIMAL_RAW_FILENAME}"
 
 greenprint "Extracting and converting the raw image to a qcow2 file"
 LIBVIRT_IMAGE_PATH_UEFI=/var/lib/libvirt/images/"${IMAGE_KEY}-uefi.qcow2"
+sudo unzstd "$MINIMAL_RAW_FILENAME_COMPRESSED"
 sudo qemu-img convert -f raw "$MINIMAL_RAW_FILENAME" -O qcow2 "$LIBVIRT_IMAGE_PATH_UEFI"
 # Remove raw file
 sudo rm -f "$MINIMAL_RAW_FILENAME"

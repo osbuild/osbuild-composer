@@ -1425,6 +1425,14 @@
                         "rpm.check_gpg": true
                       }
                     }
+                  },
+                  {
+                    "id": "sha256:caee7bc8aca2754aaf592c37b6e77757575a6b2d47d4ffe6c39755c6b728d900",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
                   }
                 ]
               }
@@ -4573,7 +4581,7 @@
           {
             "type": "org.osbuild.truncate",
             "options": {
-              "filename": "raw.img",
+              "filename": "disk.img",
               "size": "3957325824"
             }
           },
@@ -4607,7 +4615,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "lock": true
                 }
               }
@@ -4622,7 +4630,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 2048,
                   "size": 409600,
                   "lock": true
@@ -4640,7 +4648,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 411648,
                   "size": 1024000,
                   "lock": true
@@ -4658,7 +4666,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 1435648,
                   "size": 6293471,
                   "lock": true
@@ -4689,7 +4697,7 @@
               "boot": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 411648,
                   "size": 1024000
                 }
@@ -4697,7 +4705,7 @@
               "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 2048,
                   "size": 409600
                 }
@@ -4705,7 +4713,7 @@
               "root": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 1435648,
                   "size": 6293471
                 }
@@ -4731,6 +4739,29 @@
                 "target": "/boot/efi"
               }
             ]
+          }
+        ]
+      },
+      {
+        "name": "zstd",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.zstd",
+            "inputs": {
+              "file": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.pipeline",
+                "references": {
+                  "name:image": {
+                    "file": "disk.img"
+                  }
+                }
+              }
+            },
+            "options": {
+              "filename": "raw.img.zstd"
+            }
           }
         ]
       }
@@ -5619,6 +5650,9 @@
           },
           "sha256:c8650dafee9357adb6e6f878e5c3eb32aeb72ccce5bf68056920e77c7abc8da9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/t/tpm2-tools-5.3-1.fc37.aarch64.rpm"
+          },
+          "sha256:caee7bc8aca2754aaf592c37b6e77757575a6b2d47d4ffe6c39755c6b728d900": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/z/zstd-1.5.2-3.fc37.aarch64.rpm"
           },
           "sha256:caf01590a095a0ded437ff9a6100de6b2a9d5c638c0d8df218685e9ca049a257": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/d/dosfstools-4.2-4.fc37.aarch64.rpm"
@@ -7613,6 +7647,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/z/zlib-1.2.12-5.fc37.aarch64.rpm",
         "checksum": "sha256:b36a3a887d8c0ba3c92f10d19cdea086b9ade294032a7b7524a655da3a343875",
+        "check_gpg": true
+      },
+      {
+        "name": "zstd",
+        "epoch": 0,
+        "version": "1.5.2",
+        "release": "3.fc37",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-development-20221025/Packages/z/zstd-1.5.2-3.fc37.aarch64.rpm",
+        "checksum": "sha256:caee7bc8aca2754aaf592c37b6e77757575a6b2d47d4ffe6c39755c6b728d900",
         "check_gpg": true
       }
     ],
