@@ -306,12 +306,11 @@ regression-old-worker-new-composer:
     SCRIPT: regression-old-worker-new-composer.sh
 
 regression-insecure-repo:
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-9.1-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
   extends: .regression
+  rules:
+    # WHITELIST
+    - if: $RUNNER =~ "/^.*(rhel-*).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-insecure-repo.sh
 
