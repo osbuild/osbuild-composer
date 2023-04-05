@@ -107,6 +107,7 @@ blueprint="${composedir}/blueprint.toml"
 dummysource="${composedir}/dummy.toml"
 composestart="${composedir}/compose-start.json"
 composeinfo="${composedir}/compose-info.json"
+modulesinfo="${composedir}/modules-info.json"
 
 # Write a source (repo) config to add to composer
 cat <<EOF > "${dummysource}"
@@ -137,7 +138,8 @@ sudo composer-cli blueprints push "${blueprint}"
 sudo composer-cli blueprints depsolve dummy
 
 # confirm dummy is fetched from the custom repo
-dummysourceurl="$(sudo composer-cli modules info --json dummy | jq -r '.body.modules[0].dependencies[0].remote_location')"
+sudo composer-cli modules info --json dummy | tee "${modulesinfo}"
+dummysourceurl=$(get_build_info '.modules[0].dependencies[0].remote_location' "${modulesinfo}")
 expectedurl="${websrvurl}/dummy-1.0.0-0.noarch.rpm"
 if [[ "${dummysourceurl}" != "${expectedurl}" ]]; then
     echo "Unexpected package URL: ${dummysourceurl}"
