@@ -183,12 +183,38 @@ func (t *imageType) PartitionType() string {
 	return basePartitionTable.Type
 }
 
-func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
+func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSets map[string]rpmmd.PackageSet,
+	packageSpecs map[string][]rpmmd.PackageSpec,
 	containers []container.Spec,
-	seed int64) (*manifest.Manifest, []string, error) {
+	seed int64) (distro.Manifest, []string, error) {
+
+	bp := &blueprint.Blueprint{Name: "empty blueprint"}
+	err := bp.Initialize()
+	if err != nil {
+		panic("could not initialize empty blueprint: " + err.Error())
+	}
+	bp.Customizations = customizations
+
+	// the os pipeline filters repos based on the `osPkgsKey` package set, merge the repos which
+	// contain a payload package set into the `osPkgsKey`, so those repos are included when
+	// building the rpm stage in the os pipeline
+	// TODO: roll this into workloads
+	mergedRepos := make([]rpmmd.RepoConfig, 0, len(repos))
+	for _, repo := range repos {
+		for _, pkgsKey := range t.PayloadPackageSets() {
+			// If the repo already contains the osPkgsKey, skip
+			if slices.Contains(repo.PackageSets, osPkgsKey) {
+				break
+			}
+			if slices.Contains(repo.PackageSets, pkgsKey) {
+				repo.PackageSets = append(repo.PackageSets, osPkgsKey)
+			}
+		}
+		mergedRepos = append(mergedRepos, repo)
+	}
+	repos = mergedRepos
 
 	warnings, err := t.checkOptions(bp.Customizations, options, containers)
 	if err != nil {
@@ -196,6 +222,7 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	}
 
 	w := t.workload
+	var packageSets map[string]rpmmd.PackageSet
 	if w == nil {
 		cw := &workload.Custom{
 			BaseWorkload: workload.BaseWorkload{
@@ -227,47 +254,8 @@ func (t *imageType) initializeManifest(bp *blueprint.Blueprint,
 	if err != nil {
 		return nil, nil, err
 	}
-	return &manifest, warnings, err
-}
 
-func (t *imageType) Manifest(customizations *blueprint.Customizations,
-	options distro.ImageOptions,
-	repos []rpmmd.RepoConfig,
-	packageSets map[string][]rpmmd.PackageSpec,
-	containers []container.Spec,
-	seed int64) (distro.Manifest, []string, error) {
-
-	bp := &blueprint.Blueprint{Name: "empty blueprint"}
-	err := bp.Initialize()
-	if err != nil {
-		panic("could not initialize empty blueprint: " + err.Error())
-	}
-	bp.Customizations = customizations
-
-	// the os pipeline filters repos based on the `osPkgsKey` package set, merge the repos which
-	// contain a payload package set into the `osPkgsKey`, so those repos are included when
-	// building the rpm stage in the os pipeline
-	// TODO: roll this into workloads
-	mergedRepos := make([]rpmmd.RepoConfig, 0, len(repos))
-	for _, repo := range repos {
-		for _, pkgsKey := range t.PayloadPackageSets() {
-			// If the repo already contains the osPkgsKey, skip
-			if slices.Contains(repo.PackageSets, osPkgsKey) {
-				break
-			}
-			if slices.Contains(repo.PackageSets, pkgsKey) {
-				repo.PackageSets = append(repo.PackageSets, osPkgsKey)
-			}
-		}
-		mergedRepos = append(mergedRepos, repo)
-	}
-
-	manifest, warnings, err := t.initializeManifest(bp, options, mergedRepos, nil, containers, seed)
-	if err != nil {
-		return distro.Manifest{}, nil, err
-	}
-
-	ret, err := manifest.Serialize(packageSets)
+	ret, err := manifest.Serialize(packageSpecs)
 	if err != nil {
 		return ret, nil, err
 	}
@@ -329,11 +317,40 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		}
 	}
 
-	// create a manifest object and instantiate it with the computed packageSetChains
-	manifest, _, err := t.initializeManifest(&bp, options, repos, packageSets, containers, 0)
+	_, err := t.checkOptions(bp.Customizations, options, containers)
 	if err != nil {
-		// TODO: handle manifest initialization errors more gracefully, we
-		// refuse to initialize manifests with invalid config.
+		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
+		return nil
+	}
+
+	w := t.workload
+	if w == nil {
+		cw := &workload.Custom{
+			BaseWorkload: workload.BaseWorkload{
+				Repos: packageSets[blueprintPkgsKey].Repositories,
+			},
+			Packages: bp.GetPackagesEx(false),
+		}
+		if services := bp.Customizations.GetServices(); services != nil {
+			cw.Services = services.Enabled
+			cw.DisabledServices = services.Disabled
+		}
+		w = cw
+	}
+
+	source := rand.NewSource(0)
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(source)
+
+	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
+	if err != nil {
+		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
+		return nil
+	}
+	manifest := manifest.New()
+	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
+	if err != nil {
 		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
 		return nil
 	}
