@@ -12,7 +12,7 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Start firewalld
 sudo systemctl enable --now firewalld
-sudo pip3 install yq
+sudo pip3 install yq==v3.2.1
 # Install fdo packages (This cannot be done in the setup.sh because fdo-admin-cli is not available on fedora)
 sudo dnf install -y fdo-admin-cli
 # Start fdo-aio to have /etc/fdo/aio folder
