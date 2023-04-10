@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,13 +25,13 @@ import (
 	"net/http"
 	"net/url"
 
+	computepb "cloud.google.com/go/compute/apiv1/computepb"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
 	httptransport "google.golang.org/api/transport/http"
-	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -108,7 +108,7 @@ func (c *RoutesClient) Delete(ctx context.Context, req *computepb.DeleteRouteReq
 	return c.internalClient.Delete(ctx, req, opts...)
 }
 
-// Get returns the specified Route resource. Gets a list of available routes by making a list() request.
+// Get returns the specified Route resource.
 func (c *RoutesClient) Get(ctx context.Context, req *computepb.GetRouteRequest, opts ...gax.CallOption) (*computepb.Route, error) {
 	return c.internalClient.Get(ctx, req, opts...)
 }
@@ -275,7 +275,7 @@ func (c *routesRESTClient) Delete(ctx context.Context, req *computepb.DeleteRout
 	return op, nil
 }
 
-// Get returns the specified Route resource. Gets a list of available routes by making a list() request.
+// Get returns the specified Route resource.
 func (c *routesRESTClient) Get(ctx context.Context, req *computepb.GetRouteRequest, opts ...gax.CallOption) (*computepb.Route, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {

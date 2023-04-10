@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import (
 	"net/url"
 	"sort"
 
+	computepb "cloud.google.com/go/compute/apiv1/computepb"
 	gax "github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
 	httptransport "google.golang.org/api/transport/http"
-	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -112,7 +112,7 @@ func (c *RegionCommitmentsClient) AggregatedList(ctx context.Context, req *compu
 	return c.internalClient.AggregatedList(ctx, req, opts...)
 }
 
-// Get returns the specified commitment resource. Gets a list of available commitments by making a list() request.
+// Get returns the specified commitment resource.
 func (c *RegionCommitmentsClient) Get(ctx context.Context, req *computepb.GetRegionCommitmentRequest, opts ...gax.CallOption) (*computepb.Commitment, error) {
 	return c.internalClient.Get(ctx, req, opts...)
 }
@@ -323,7 +323,7 @@ func (c *regionCommitmentsRESTClient) AggregatedList(ctx context.Context, req *c
 	return it
 }
 
-// Get returns the specified commitment resource. Gets a list of available commitments by making a list() request.
+// Get returns the specified commitment resource.
 func (c *regionCommitmentsRESTClient) Get(ctx context.Context, req *computepb.GetRegionCommitmentRequest, opts ...gax.CallOption) (*computepb.Commitment, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
