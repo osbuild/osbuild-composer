@@ -182,7 +182,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	}
 	repos = mergedRepos
 
-	warnings, err := t.checkOptions(bp.Customizations, options, containers)
+	warnings, err := t.checkOptions(bp, options)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -265,7 +265,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		}
 	}
 
-	_, err := t.checkOptions(bp.Customizations, options, containers)
+	_, err := t.checkOptions(&bp, options)
 	if err != nil {
 		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
 		return nil
@@ -343,7 +343,8 @@ func overridePackageNames(packages []string) []string {
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 // Returns ([]string, error) where []string, if non-nil, will hold any generated warnings (e.g. deprecation notices).
-func (t *imageType) checkOptions(customizations *blueprint.Customizations, options distro.ImageOptions, containers []container.Spec) ([]string, error) {
+func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
+	customizations := bp.Customizations
 	// holds warnings (e.g. deprecation notices)
 	var warnings []string
 	if t.workload != nil {
@@ -357,7 +358,7 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		}
 	}
 
-	if len(containers) > 0 {
+	if len(bp.Containers) > 0 {
 		return warnings, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
