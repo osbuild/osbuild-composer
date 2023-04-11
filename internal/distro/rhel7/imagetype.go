@@ -149,19 +149,13 @@ func (t *imageType) PartitionType() string {
 	return basePartitionTable.Type
 }
 
-func (t *imageType) Manifest(customizations *blueprint.Customizations,
+func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSpecs map[string][]rpmmd.PackageSpec,
-	containers []container.Spec,
-	seed int64) (distro.Manifest, []string, error) {
-
-	bp := &blueprint.Blueprint{Name: "empty blueprint"}
-	err := bp.Initialize()
-	if err != nil {
-		panic("could not initialize empty blueprint: " + err.Error())
-	}
-	bp.Customizations = customizations
+	seed int64,
+	depsolver distro.PackageResolver,
+	containerResolver distro.ContainerResolver,
+) (distro.Manifest, []string, error) {
 
 	// the os pipeline filters repos based on the `osPkgsKey` package set, merge the repos which
 	// contain a payload package set into the `osPkgsKey`, so those repos are included when
@@ -211,7 +205,8 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	if t.image == nil {
 		return nil, nil, nil
 	}
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
+
+	img, err := t.image(w, t, bp.Customizations, options, packageSets, nil, rng)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -221,7 +216,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		return nil, nil, err
 	}
 
-	ret, err := manifest.Serialize(packageSpecs)
+	ret, err := manifest.Serialize(nil)
 	if err != nil {
 		return ret, nil, err
 	}

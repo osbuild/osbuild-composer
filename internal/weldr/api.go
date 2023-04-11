@@ -2490,7 +2490,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	containerSpecs, err := api.resolveContainersForImageType(*bp, imageType)
+	_, err = api.resolveContainersForImageType(*bp, imageType)
 	if err != nil {
 		errors := responseError{
 			ID:  "ContainerResolveError",
@@ -2500,12 +2500,42 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	manifest, warnings, err := imageType.Manifest(bp.Customizations,
+	depSolver := func(sets map[string][]rpmmd.PackageSet) (map[string][]rpmmd.PackageSpec, error) {
+		d := api.getDistro(distroName)
+		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName, d.Name())
+		depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(sets))
+
+		for name, pkgSet := range sets {
+			res, err := solver.Depsolve(pkgSet)
+			if err != nil {
+				return nil, err
+			}
+			depsolvedSets[name] = res
+		}
+		if err := solver.CleanCache(); err != nil {
+			// log and ignore
+			log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
+		}
+		return depsolvedSets, nil
+	}
+
+	contSolver := func(source, name string, tlsVerify *bool) (container.Spec, error) {
+		r := container.NewResolver(api.archName)
+		r.Add(source, name, tlsVerify)
+		res, err := r.Finish()
+		if err != nil {
+			return container.Spec{}, err
+		}
+		return res[0], nil
+	}
+
+	manifest, warnings, err := imageType.Manifest(bp,
 		options,
 		imageRepos,
-		packageSets,
-		containerSpecs,
-		seed)
+		seed,
+		depSolver,
+		contSolver,
+	)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",

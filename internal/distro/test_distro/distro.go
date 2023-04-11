@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -239,8 +238,8 @@ func (t *TestImageType) Exports() []string {
 	return distro.ExportsFallback()
 }
 
-func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (distro.Manifest, []string, error) {
-	mountpoints := b.GetFilesystems()
+func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seed int64, ds distro.PackageResolver, cs distro.ContainerResolver) (distro.Manifest, []string, error) {
+	mountpoints := b.Customizations.GetFilesystems()
 
 	invalidMountpoints := []string{}
 	for _, m := range mountpoints {
