@@ -158,6 +158,25 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	depsolver distro.PackageResolver,
 	containerResolver distro.ContainerResolver,
 ) (distro.Manifest, []string, error) {
+	// merge package sets that appear in the image type with the package sets
+	// of the same name from the distro and arch
+	staticPackageSets := make(map[string]rpmmd.PackageSet)
+
+	for name, getter := range t.packageSets {
+		staticPackageSets[name] = getter(t)
+	}
+
+	// amend with repository information
+	for _, repo := range repos {
+		if len(repo.PackageSets) > 0 {
+			// only apply the repo to the listed package sets
+			for _, psName := range repo.PackageSets {
+				ps := staticPackageSets[psName]
+				ps.Repositories = append(ps.Repositories, repo)
+				staticPackageSets[psName] = ps
+			}
+		}
+	}
 
 	// the os pipeline filters repos based on the `osPkgsKey` package set, merge the repos which
 	// contain a payload package set into the `osPkgsKey`, so those repos are included when
@@ -178,7 +197,6 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	}
 	repos = mergedRepos
 
-	var packageSets map[string]rpmmd.PackageSet
 	warnings, err := t.checkOptions(bp, options)
 	if err != nil {
 		return nil, nil, err
@@ -188,7 +206,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	// always assume Custom.
 	w := &workload.Custom{
 		BaseWorkload: workload.BaseWorkload{
-			Repos: packageSets[blueprintPkgsKey].Repositories,
+			Repos: staticPackageSets[blueprintPkgsKey].Repositories,
 		},
 		Packages: bp.GetPackagesEx(false),
 	}
@@ -202,7 +220,15 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, nil, rng)
+	containers := make([]container.Spec, len(bp.Containers))
+	for idx, bpContainer := range bp.Containers {
+		containers[idx], err = containerResolver(bpContainer.Name, bpContainer.Source, bpContainer.TLSVerify)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containers, rng)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -212,7 +238,13 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		return nil, nil, err
 	}
 
-	ret, err := manifest.Serialize(nil)
+	imagePackageSetChains := manifest.GetPackageSetChains()
+	packages, err := depsolver(imagePackageSetChains)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ret, err := manifest.Serialize(packages)
 	if err != nil {
 		return ret, nil, err
 	}
