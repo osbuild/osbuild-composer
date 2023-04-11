@@ -15,7 +15,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
 
@@ -230,84 +229,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 }
 
 func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
-	// merge package sets that appear in the image type with the package sets
-	// of the same name from the distro and arch
-	packageSets := make(map[string]rpmmd.PackageSet)
-
-	for name, getter := range t.packageSets {
-		packageSets[name] = getter(t)
-	}
-
-	// amend with repository information
-	for _, repo := range repos {
-		if len(repo.PackageSets) > 0 {
-			// only apply the repo to the listed package sets
-			for _, psName := range repo.PackageSets {
-				ps := packageSets[psName]
-				ps.Repositories = append(ps.Repositories, repo)
-				packageSets[psName] = ps
-			}
-		}
-	}
-
-	// Similar to above, for edge-commit and edge-container, we need to set an
-	// ImageRef in order to properly initialize the manifest and package
-	// selection.
-	options.OSTree.ImageRef = t.OSTreeRef()
-
-	// create a temporary container spec array with the info from the blueprint
-	// to initialize the manifest
-	containers := make([]container.Spec, len(bp.Containers))
-	for idx := range bp.Containers {
-		containers[idx] = container.Spec{
-			Source:    bp.Containers[idx].Source,
-			TLSVerify: bp.Containers[idx].TLSVerify,
-			LocalName: bp.Containers[idx].Name,
-		}
-	}
-
-	_, err := t.checkOptions(&bp, options)
-	if err != nil {
-		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
-		return nil
-	}
-
-	w := t.workload
-	if w == nil {
-		cw := &workload.Custom{
-			BaseWorkload: workload.BaseWorkload{
-				Repos: packageSets[blueprintPkgsKey].Repositories,
-			},
-			Packages: bp.GetPackagesEx(false),
-		}
-		if services := bp.Customizations.GetServices(); services != nil {
-			cw.Services = services.Enabled
-			cw.DisabledServices = services.Disabled
-		}
-		w = cw
-	}
-
-	source := rand.NewSource(0)
-	// math/rand is good enough in this case
-	/* #nosec G404 */
-	rng := rand.New(source)
-
-	if t.image == nil {
-		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
-		return nil
-	}
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
-	if err != nil {
-		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
-		return nil
-	}
-	manifest := manifest.New()
-	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
-	if err != nil {
-		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
-		return nil
-	}
-	return overridePackageNamesInSets(manifest.GetPackageSetChains())
+	return nil
 }
 
 // Runs overridePackageNames() on each package set's Include and Exclude list
