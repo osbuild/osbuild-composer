@@ -241,19 +241,31 @@ func (t *imageType) PartitionType() string {
 	return basePartitionTable.Type
 }
 
-func (t *imageType) Manifest(customizations *blueprint.Customizations,
+func (t *imageType) Manifest(bp blueprint.Blueprint,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSpecs map[string][]rpmmd.PackageSpec,
 	containers []container.Spec,
-	seed int64) (distro.Manifest, []string, error) {
+	seed int64) (*manifest.Manifest, map[string][]rpmmd.PackageSet, []string, error) {
 
-	bp := &blueprint.Blueprint{Name: "empty blueprint"}
-	err := bp.Initialize()
-	if err != nil {
-		panic("could not initialize empty blueprint: " + err.Error())
+	// merge package sets that appear in the image type with the package sets
+	// of the same name from the distro and arch
+	staticPackageSets := make(map[string]rpmmd.PackageSet)
+
+	for name, getter := range t.packageSets {
+		staticPackageSets[name] = getter(t)
 	}
-	bp.Customizations = customizations
+
+	// amend with repository information
+	for _, repo := range repos {
+		if len(repo.PackageSets) > 0 {
+			// only apply the repo to the listed package sets
+			for _, psName := range repo.PackageSets {
+				ps := staticPackageSets[psName]
+				ps.Repositories = append(ps.Repositories, repo)
+				staticPackageSets[psName] = ps
+			}
+		}
+	}
 
 	// the os pipeline filters repos based on the `osPkgsKey` package set, merge the repos which
 	// contain a payload package set into the `osPkgsKey`, so those repos are included when
@@ -274,17 +286,16 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	}
 	repos = mergedRepos
 
-	var packageSets map[string]rpmmd.PackageSet
-	warnings, err := t.checkOptions(bp, options)
+	warnings, err := t.checkOptions(&bp, options)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// TODO: let image types specify valid workloads, rather than
 	// always assume Custom.
 	w := &workload.Custom{
 		BaseWorkload: workload.BaseWorkload{
-			Repos: packageSets[blueprintPkgsKey].Repositories,
+			Repos: staticPackageSets[blueprintPkgsKey].Repositories,
 		},
 		Packages: bp.GetPackagesEx(false),
 	}
@@ -298,21 +309,18 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
+	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containers, rng)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	manifest := manifest.New()
 	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	ret, err := manifest.Serialize(packageSpecs)
-	if err != nil {
-		return ret, nil, err
-	}
-	return ret, warnings, err
+	imagePackageSetChains := manifest.GetPackageSetChains()
+	return &manifest, imagePackageSetChains, warnings, err
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.

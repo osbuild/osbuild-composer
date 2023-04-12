@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -54,7 +53,7 @@ func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
 	return chains
 }
 
-func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (distro.Manifest, error) {
+func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (OSBuildManifest, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	packages := make([]rpmmd.PackageSpec, 0)
 	commits := make([]ostree.CommitSpec, 0)

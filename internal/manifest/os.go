@@ -8,7 +8,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/fsnode"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
@@ -16,6 +15,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/shell"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 	"github.com/osbuild/osbuild-composer/internal/users"
 	"github.com/osbuild/osbuild-composer/internal/workload"
 )
@@ -120,8 +120,8 @@ type OSCustomizations struct {
 	LeapSecTZ           *string
 	FactAPIType         string
 
-	Subscription *distro.SubscriptionImageOptions
-	RHSMConfig   map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
+	Subscription *subscription.SubscriptionImageOptions
+	RHSMConfig   map[subscription.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
 
 	// Custom directories and files to create in the image
 	Directories []*fsnode.Directory
@@ -515,11 +515,11 @@ func (p *OS) serialize() osbuild.Pipeline {
 			WaitForNetwork: true,
 		}))
 
-		if rhsmConfig, exists := p.RHSMConfig[distro.RHSMConfigWithSubscription]; exists {
+		if rhsmConfig, exists := p.RHSMConfig[subscription.RHSMConfigWithSubscription]; exists {
 			pipeline.AddStage(osbuild.NewRHSMStage(rhsmConfig))
 		}
 	} else {
-		if rhsmConfig, exists := p.RHSMConfig[distro.RHSMConfigNoSubscription]; exists {
+		if rhsmConfig, exists := p.RHSMConfig[subscription.RHSMConfigNoSubscription]; exists {
 			pipeline.AddStage(osbuild.NewRHSMStage(rhsmConfig))
 		}
 	}

@@ -11,6 +11,15 @@ const (
 )
 
 const (
+	// architecture names
+
+	X86_64ArchName  = "x86_64"
+	Aarch64ArchName = "aarch64"
+	Ppc64leArchName = "ppc64le"
+	S390xArchName   = "s390x"
+)
+
+const (
 	FORMAT_UNSET ImageFormat = iota
 	FORMAT_RAW
 	FORMAT_ISO

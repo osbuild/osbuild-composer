@@ -6,13 +6,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/shell"
-)
-
-type RHSMSubscriptionStatus string
-
-const (
-	RHSMConfigWithSubscription RHSMSubscriptionStatus = "with-subscription"
-	RHSMConfigNoSubscription   RHSMSubscriptionStatus = "no-subscription"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 // ImageConfig represents a (default) configuration applied to the image
@@ -43,7 +37,7 @@ type ImageConfig struct {
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
-	RHSMConfig          map[RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
+	RHSMConfig          map[subscription.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
 	SystemdLogind       []*osbuild.SystemdLogindStageOptions
 	CloudInit           []*osbuild.CloudInitStageOptions
 	Modprobe            []*osbuild.ModprobeStageOptions
