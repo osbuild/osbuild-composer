@@ -37,7 +37,7 @@ type ImageConfig struct {
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
-	RHSMConfig          map[subscription.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
+	RHSMConfig          map[subscription.RHSMStatus]*osbuild.RHSMStageOptions
 	SystemdLogind       []*osbuild.SystemdLogindStageOptions
 	CloudInit           []*osbuild.CloudInitStageOptions
 	Modprobe            []*osbuild.ModprobeStageOptions

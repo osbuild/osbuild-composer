@@ -1,9 +1,9 @@
 package subscription
 
-// The SubscriptionImageOptions specify subscription-specific image options
+// The ImageOptions specify subscription-specific image options
 // ServerUrl denotes the host to register the system with
 // BaseUrl specifies the repository URL for DNF
-type SubscriptionImageOptions struct {
+type ImageOptions struct {
 	Organization  string
 	ActivationKey string
 	ServerUrl     string
@@ -12,9 +12,9 @@ type SubscriptionImageOptions struct {
 	Rhc           bool
 }
 
-type RHSMSubscriptionStatus string
+type RHSMStatus string
 
 const (
-	RHSMConfigWithSubscription RHSMSubscriptionStatus = "with-subscription"
-	RHSMConfigNoSubscription   RHSMSubscriptionStatus = "no-subscription"
+	RHSMConfigWithSubscription RHSMStatus = "with-subscription"
+	RHSMConfigNoSubscription   RHSMStatus = "no-subscription"
 )

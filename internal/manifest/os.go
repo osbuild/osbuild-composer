@@ -120,8 +120,8 @@ type OSCustomizations struct {
 	LeapSecTZ           *string
 	FactAPIType         string
 
-	Subscription *subscription.SubscriptionImageOptions
-	RHSMConfig   map[subscription.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions
+	Subscription *subscription.ImageOptions
+	RHSMConfig   map[subscription.RHSMStatus]*osbuild.RHSMStageOptions
 
 	// Custom directories and files to create in the image
 	Directories []*fsnode.Directory

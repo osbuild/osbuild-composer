@@ -130,7 +130,7 @@ type ImageType interface {
 type ImageOptions struct {
 	Size         uint64
 	OSTree       OSTreeImageOptions
-	Subscription *subscription.SubscriptionImageOptions
+	Subscription *subscription.ImageOptions
 	Facts        *FactsImageOptions
 }
 
