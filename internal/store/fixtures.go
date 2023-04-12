@@ -56,6 +56,11 @@ func FixtureBase() *Store {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
+	mf, err := manifest.Serialize(nil)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create a manifest: %v", err))
+	}
+
 	s := New(nil, dr, nil)
 
 	pkgs := []rpmmd.PackageSpec{
@@ -80,7 +85,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBWaiting,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{awsTarget},
 				JobCreated:  date,
 			},
@@ -91,7 +96,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBRunning,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -103,7 +108,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -116,7 +121,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -129,7 +134,7 @@ func FixtureBase() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -193,6 +198,11 @@ func FixtureFinished() *Store {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
+	mf, err := manifest.Serialize(nil)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create a manifest: %v", err))
+	}
+
 	s := New(nil, dr, nil)
 
 	pkgs := []rpmmd.PackageSpec{
@@ -217,7 +227,7 @@ func FixtureFinished() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{gcpTarget, awsTarget},
 				JobCreated:  date,
 			},
@@ -228,7 +238,7 @@ func FixtureFinished() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{gcpTarget},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -240,7 +250,7 @@ func FixtureFinished() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{gcpTarget, awsTarget},
 				JobCreated:  date,
 				JobStarted:  date,
@@ -253,7 +263,7 @@ func FixtureFinished() *Store {
 			ImageBuild: ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
-				Manifest:    manifest,
+				Manifest:    mf,
 				Targets:     []*target.Target{gcpTarget},
 				JobCreated:  date,
 				JobStarted:  date,

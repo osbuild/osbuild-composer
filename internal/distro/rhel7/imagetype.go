@@ -154,7 +154,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 	repos []rpmmd.RepoConfig,
 	packageSpecs map[string][]rpmmd.PackageSpec,
 	containers []container.Spec,
-	seed int64) (manifest.OSBuildManifest, []string, error) {
+	seed int64) (*manifest.Manifest, []string, error) {
 
 	bp := &blueprint.Blueprint{Name: "empty blueprint"}
 	err := bp.Initialize()
@@ -221,11 +221,7 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 		return nil, nil, err
 	}
 
-	ret, err := manifest.Serialize(packageSpecs)
-	if err != nil {
-		return ret, nil, err
-	}
-	return ret, warnings, err
+	return &manifest, warnings, err
 }
 
 func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {

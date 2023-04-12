@@ -36,8 +36,12 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
+	mf, err := manifest.Serialize(nil)
+	if err != nil {
+		t.Fatalf("error serializing osbuild manifest: %v", err)
+	}
 
-	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
 
 	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
@@ -85,8 +89,12 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
+	mf, err := manifest.Serialize(nil)
+	if err != nil {
+		t.Fatalf("error serializing osbuild manifest: %v", err)
+	}
 
-	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: manifest}, "")
+	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
 
 	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})

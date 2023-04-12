@@ -170,11 +170,13 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			err = fmt.Errorf("[%s] nil package specs", filename)
 			return
 		}
-		mf, _, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
+		manifest, _, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
 		if err != nil {
 			err = fmt.Errorf("[%s] failed: %s", filename, err)
 			return
 		}
+		mf, err := manifest.Serialize(packageSpecs)
+
 		request := composeRequest{
 			Distro:       distribution.Name(),
 			Arch:         archName,
@@ -271,7 +273,7 @@ func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprin
 	return depsolvedSets, nil
 }
 
-func save(mf manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers []container.Spec, cr composeRequest, path, filename string) error {
+func save(ms manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers []container.Spec, cr composeRequest, path, filename string) error {
 	data := struct {
 		ComposeRequest composeRequest                 `json:"compose-request"`
 		Manifest       manifest.OSBuildManifest       `json:"manifest"`
@@ -279,7 +281,7 @@ func save(mf manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, cont
 		Containers     []container.Spec               `json:"containers,omitempty"`
 		NoImageInfo    bool                           `json:"no-image-info"`
 	}{
-		cr, mf, pkgs, containers, true,
+		cr, ms, pkgs, containers, true,
 	}
 	b, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {

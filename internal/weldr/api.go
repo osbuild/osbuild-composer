@@ -2542,7 +2542,16 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
-			Msg: fmt.Sprintf("failed to create osbuild manifest: %v", err),
+			Msg: fmt.Sprintf("failed to initialize osbuild manifest: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+	mf, err := manifest.Serialize(packageSets)
+	if err != nil {
+		errors := responseError{
+			ID:  "ManifestCreationFailed",
+			Msg: fmt.Sprintf("failed to serialize osbuild manifest: %v", err),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
@@ -2559,15 +2568,15 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	if testMode == "1" {
 		// Create a failed compose
-		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, false, packages)
+		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, packages)
 	} else if testMode == "2" {
 		// Create a successful compose
-		err = api.store.PushTestCompose(composeID, manifest, imageType, bp, size, targets, true, packages)
+		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, true, packages)
 	} else {
 		var jobId uuid.UUID
 
 		jobId, err = api.workers.EnqueueOSBuild(api.archName, &worker.OSBuildJob{
-			Manifest: manifest,
+			Manifest: mf,
 			Targets:  targets,
 			PipelineNames: &worker.PipelineNames{
 				Build:   imageType.BuildPipelines(),
@@ -2575,7 +2584,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			},
 		}, "")
 		if err == nil {
-			err = api.store.PushCompose(composeID, manifest, imageType, bp, size, targets, jobId, packages)
+			err = api.store.PushCompose(composeID, mf, imageType, bp, size, targets, jobId, packages)
 		}
 	}
 
