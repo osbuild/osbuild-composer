@@ -62,8 +62,9 @@ func depsolve(chains map[string][]rpmmd.PackageSet) (map[string][]rpmmd.PackageS
 }
 
 func build(it distro.ImageType) {
-	bp := new(blueprint.Blueprint)
-	bp.Name = "playground"
+	bp := blueprint.Blueprint{
+		Name: "playground",
+	}
 
 	check(bp.Initialize())
 
@@ -73,11 +74,12 @@ func build(it distro.ImageType) {
 
 	repos := getRepos(it.Arch().Distro().Name(), it.Arch().Name())
 
-	pkgSets := it.PackageSets(*bp, options, repos)
+	ms, pkgSets, _, err := it.Manifest(bp, options, repos, nil, 0)
+	check(err)
 	pkgs, err := depsolve(pkgSets)
 	check(err)
 
-	m, _, err := it.Manifest(bp.Customizations, options, repos, pkgs, nil, 0)
+	m, err := ms.Serialize(pkgs)
 	check(err)
 
 	write_manifest(m)
