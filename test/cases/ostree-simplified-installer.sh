@@ -663,6 +663,22 @@ for _ in $(seq 0 30); do
     sleep 10
 done
 
+# Workaround to fix edge-simplified-installer test failure (ansible runs before fdouser is created)
+# Bug link: https://github.com/osbuild/osbuild-composer/pull/3378#issuecomment-1502633131
+if [[ "${ANSIBLE_USER}" == "fdouser" ]]; then
+    greenprint "🕹 Check if user 'fdouser' exist in edge vm"
+    for _ in $(seq 0 30); do
+        FDOUSER_EXIST=$(ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@$PUB_KEY_GUEST_ADDRESS "grep fdouser /etc/passwd")
+        if [[ ${FDOUSER_EXIST} =~ "fdouser" ]]; then
+            echo "fdouser has been created"
+            break
+        else
+            echo "fdouser has not been created yet"
+            sleep 10
+        fi
+    done
+fi
+
 # Check image installation result
 check_result
 
