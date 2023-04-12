@@ -5,6 +5,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 var qcow2ImgType = imageType{
@@ -53,8 +54,8 @@ var qcow2DefaultImgConfig = &distro.ImageConfig{
 			},
 		},
 	},
-	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-		distro.RHSMConfigNoSubscription: {
+	RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+		subscription.RHSMConfigNoSubscription: {
 			YumPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
 				ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
 					Enabled: false,

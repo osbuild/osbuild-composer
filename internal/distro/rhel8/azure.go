@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/shell"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 const defaultAzureKernelOptions = "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
@@ -623,8 +624,8 @@ var defaultAzureByosImageConfig = &distro.ImageConfig{
 	GPGKeyFiles: []string{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
 	},
-	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-		distro.RHSMConfigNoSubscription: {
+	RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+		subscription.RHSMConfigNoSubscription: {
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 					AutoRegistration: common.ToPtr(true),
@@ -638,7 +639,7 @@ var defaultAzureByosImageConfig = &distro.ImageConfig{
 				// confusing.
 			},
 		},
-		distro.RHSMConfigWithSubscription: {
+		subscription.RHSMConfigWithSubscription: {
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 					AutoRegistration: common.ToPtr(true),
@@ -656,8 +657,8 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
 	},
-	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-		distro.RHSMConfigNoSubscription: {
+	RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+		subscription.RHSMConfigNoSubscription: {
 			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
 				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
 					Enabled: false,
@@ -672,7 +673,7 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 				},
 			},
 		},
-		distro.RHSMConfigWithSubscription: {
+		subscription.RHSMConfigWithSubscription: {
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 					AutoRegistration: common.ToPtr(true),

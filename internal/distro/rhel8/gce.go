@@ -5,6 +5,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 const gceKernelOptions = "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d"
@@ -156,8 +157,8 @@ func defaultGceByosImageConfig(rd distribution) *distro.ImageConfig {
 	}
 
 	if rd.isRHEL() {
-		ic.RHSMConfig = map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
+		ic.RHSMConfig = map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+			subscription.RHSMConfigNoSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 						AutoRegistration: common.ToPtr(true),
@@ -171,7 +172,7 @@ func defaultGceByosImageConfig(rd distribution) *distro.ImageConfig {
 					// confusing.
 				},
 			},
-			distro.RHSMConfigWithSubscription: {
+			subscription.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 						AutoRegistration: common.ToPtr(true),
@@ -187,8 +188,8 @@ func defaultGceByosImageConfig(rd distribution) *distro.ImageConfig {
 
 func defaultGceRhuiImageConfig(rd distribution) *distro.ImageConfig {
 	ic := &distro.ImageConfig{
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
+		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+			subscription.RHSMConfigNoSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 						AutoRegistration: common.ToPtr(true),
@@ -198,7 +199,7 @@ func defaultGceRhuiImageConfig(rd distribution) *distro.ImageConfig {
 					},
 				},
 			},
-			distro.RHSMConfigWithSubscription: {
+			subscription.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 						AutoRegistration: common.ToPtr(true),

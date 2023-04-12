@@ -5,6 +5,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 func amiImgTypeX86_64(rd distribution) imageType {
@@ -222,8 +223,8 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 				},
 			},
 		},
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
+		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+			subscription.RHSMConfigNoSubscription: {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
@@ -234,7 +235,7 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 					},
 				},
 			},
-			distro.RHSMConfigWithSubscription: {
+			subscription.RHSMConfigWithSubscription: {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
@@ -319,14 +320,14 @@ func defaultEc2ImageConfig(rd distribution) *distro.ImageConfig {
 	if rd.isRHEL() && common.VersionLessThan(rd.osVersion, "9.1") {
 		ic = appendRHSM(ic)
 		// Disable RHSM redhat.repo management
-		rhsmConf := ic.RHSMConfig[distro.RHSMConfigNoSubscription]
+		rhsmConf := ic.RHSMConfig[subscription.RHSMConfigNoSubscription]
 		rhsmConf.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{ManageRepos: common.ToPtr(false)}
-		ic.RHSMConfig[distro.RHSMConfigNoSubscription] = rhsmConf
+		ic.RHSMConfig[subscription.RHSMConfigNoSubscription] = rhsmConf
 	}
 	// The RHSM configuration should not be applied since 8.7, but it is instead done by installing the redhat-cloud-client-configuration package.
 	// See COMPOSER-1804 for more information.
 	rhel87PlusEc2ImageConfigOverride := &distro.ImageConfig{
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{},
+		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{},
 	}
 	if !common.VersionLessThan(rd.osVersion, "8.7") {
 		ic = rhel87PlusEc2ImageConfigOverride.InheritFrom(ic)
@@ -464,8 +465,8 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 // Used for RHEL distros.
 func appendRHSM(ic *distro.ImageConfig) *distro.ImageConfig {
 	rhsm := &distro.ImageConfig{
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
+		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+			subscription.RHSMConfigNoSubscription: {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
@@ -480,7 +481,7 @@ func appendRHSM(ic *distro.ImageConfig) *distro.ImageConfig {
 					// confusing.
 				},
 			},
-			distro.RHSMConfigWithSubscription: {
+			subscription.RHSMConfigWithSubscription: {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
