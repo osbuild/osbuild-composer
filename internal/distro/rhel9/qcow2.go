@@ -5,6 +5,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 var (
@@ -132,8 +133,8 @@ func qcowImageConfig(d distribution) *distro.ImageConfig {
 		DefaultTarget: common.ToPtr("multi-user.target"),
 	}
 	if d.isRHEL() {
-		ic.RHSMConfig = map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
+		ic.RHSMConfig = map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+			subscription.RHSMConfigNoSubscription: {
 				DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
 					ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
 						Enabled: false,

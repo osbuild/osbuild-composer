@@ -5,6 +5,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 const amiKernelOptions = "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295"
@@ -257,9 +258,9 @@ func defaultEc2ImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
 	if rhsm && common.VersionLessThan(osVersion, "9.1") {
 		ic = appendRHSM(ic)
 		// Disable RHSM redhat.repo management
-		rhsmConf := ic.RHSMConfig[distro.RHSMConfigNoSubscription]
+		rhsmConf := ic.RHSMConfig[subscription.RHSMConfigNoSubscription]
 		rhsmConf.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{ManageRepos: common.ToPtr(false)}
-		ic.RHSMConfig[distro.RHSMConfigNoSubscription] = rhsmConf
+		ic.RHSMConfig[subscription.RHSMConfigNoSubscription] = rhsmConf
 	}
 	return ic
 }
@@ -428,8 +429,8 @@ func mkEC2ImgTypeAarch64(osVersion string, rhsm bool) imageType {
 // Used for RHEL distros.
 func appendRHSM(ic *distro.ImageConfig) *distro.ImageConfig {
 	rhsm := &distro.ImageConfig{
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
+		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+			subscription.RHSMConfigNoSubscription: {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
@@ -444,7 +445,7 @@ func appendRHSM(ic *distro.ImageConfig) *distro.ImageConfig {
 					// confusing.
 				},
 			},
-			distro.RHSMConfigWithSubscription: {
+			subscription.RHSMConfigWithSubscription: {
 				// RHBZ#1932802
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{

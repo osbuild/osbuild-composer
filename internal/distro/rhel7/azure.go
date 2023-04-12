@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 var azureRhuiImgType = imageType{
@@ -151,8 +152,8 @@ var azureDefaultImgConfig = &distro.ImageConfig{
 			RDEnableSwap: common.ToPtr(false),
 		},
 	},
-	RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-		distro.RHSMConfigNoSubscription: {
+	RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+		subscription.RHSMConfigNoSubscription: {
 			YumPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
 				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
 					Enabled: false,
@@ -167,7 +168,7 @@ var azureDefaultImgConfig = &distro.ImageConfig{
 				},
 			},
 		},
-		distro.RHSMConfigWithSubscription: {
+		subscription.RHSMConfigWithSubscription: {
 			SubMan: &osbuild.RHSMStageOptionsSubMan{
 				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 					AutoRegistration: common.ToPtr(true),

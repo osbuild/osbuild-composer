@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -446,7 +447,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			if request.Customizations.Subscription.Rhc != nil {
 				rhc = *request.Customizations.Subscription.Rhc
 			}
-			imageOptions.Subscription = &distro.SubscriptionImageOptions{
+			imageOptions.Subscription = &subscription.ImageOptions{
 				Organization:  request.Customizations.Subscription.Organization,
 				ActivationKey: request.Customizations.Subscription.ActivationKey,
 				ServerUrl:     request.Customizations.Subscription.ServerUrl,

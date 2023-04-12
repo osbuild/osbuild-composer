@@ -5,6 +5,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
 const gceKernelOptions = "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d"
@@ -154,8 +155,8 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 	}
 
 	if rhsm {
-		ic.RHSMConfig = map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
+		ic.RHSMConfig = map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+			subscription.RHSMConfigNoSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 						AutoRegistration: common.ToPtr(true),
@@ -169,7 +170,7 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 					// confusing.
 				},
 			},
-			distro.RHSMConfigWithSubscription: {
+			subscription.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 						AutoRegistration: common.ToPtr(true),
@@ -185,8 +186,8 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 
 func defaultGceRhuiImageConfig(rhsm bool) *distro.ImageConfig {
 	ic := &distro.ImageConfig{
-		RHSMConfig: map[distro.RHSMSubscriptionStatus]*osbuild.RHSMStageOptions{
-			distro.RHSMConfigNoSubscription: {
+		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+			subscription.RHSMConfigNoSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 						AutoRegistration: common.ToPtr(true),
@@ -196,7 +197,7 @@ func defaultGceRhuiImageConfig(rhsm bool) *distro.ImageConfig {
 					},
 				},
 			},
-			distro.RHSMConfigWithSubscription: {
+			subscription.RHSMConfigWithSubscription: {
 				SubMan: &osbuild.RHSMStageOptionsSubMan{
 					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
 						AutoRegistration: common.ToPtr(true),

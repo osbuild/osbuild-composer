@@ -3,11 +3,11 @@ package manifest
 import (
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
+	"github.com/osbuild/osbuild-composer/internal/subscription"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,7 +69,7 @@ func CheckPkgSetInclude(t *testing.T, pkgSetChain []rpmmd.PackageSet, pkgs []str
 
 func TestSubscriptionManagerCommands(t *testing.T) {
 	os := NewTestOS()
-	os.Subscription = &distro.SubscriptionImageOptions{
+	os.Subscription = &subscription.ImageOptions{
 		Organization:  "2040324",
 		ActivationKey: "my-secret-key",
 		ServerUrl:     "subscription.rhsm.redhat.com",
@@ -83,7 +83,7 @@ func TestSubscriptionManagerCommands(t *testing.T) {
 
 func TestSubscriptionManagerInsightsCommands(t *testing.T) {
 	os := NewTestOS()
-	os.Subscription = &distro.SubscriptionImageOptions{
+	os.Subscription = &subscription.ImageOptions{
 		Organization:  "2040324",
 		ActivationKey: "my-secret-key",
 		ServerUrl:     "subscription.rhsm.redhat.com",
@@ -100,7 +100,7 @@ func TestSubscriptionManagerInsightsCommands(t *testing.T) {
 
 func TestRhcInsightsCommands(t *testing.T) {
 	os := NewTestOS()
-	os.Subscription = &distro.SubscriptionImageOptions{
+	os.Subscription = &subscription.ImageOptions{
 		Organization:  "2040324",
 		ActivationKey: "my-secret-key",
 		ServerUrl:     "subscription.rhsm.redhat.com",
@@ -118,7 +118,7 @@ func TestRhcInsightsCommands(t *testing.T) {
 
 func TestSubscriptionManagerPackages(t *testing.T) {
 	os := NewTestOS()
-	os.Subscription = &distro.SubscriptionImageOptions{
+	os.Subscription = &subscription.ImageOptions{
 		Organization:  "2040324",
 		ActivationKey: "my-secret-key",
 		ServerUrl:     "subscription.rhsm.redhat.com",
@@ -130,7 +130,7 @@ func TestSubscriptionManagerPackages(t *testing.T) {
 
 func TestSubscriptionManagerInsightsPackages(t *testing.T) {
 	os := NewTestOS()
-	os.Subscription = &distro.SubscriptionImageOptions{
+	os.Subscription = &subscription.ImageOptions{
 		Organization:  "2040324",
 		ActivationKey: "my-secret-key",
 		ServerUrl:     "subscription.rhsm.redhat.com",
@@ -142,7 +142,7 @@ func TestSubscriptionManagerInsightsPackages(t *testing.T) {
 
 func TestRhcInsightsPackages(t *testing.T) {
 	os := NewTestOS()
-	os.Subscription = &distro.SubscriptionImageOptions{
+	os.Subscription = &subscription.ImageOptions{
 		Organization:  "2040324",
 		ActivationKey: "my-secret-key",
 		ServerUrl:     "subscription.rhsm.redhat.com",
