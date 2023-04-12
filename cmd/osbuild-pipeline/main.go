@@ -238,8 +238,12 @@ func main() {
 		if err != nil {
 			panic(err.Error())
 		}
+		ms, err := manifest.Serialize(depsolvedSets)
+		if err != nil {
+			panic(err.Error())
+		}
 
-		bytes, err = json.Marshal(manifest)
+		bytes, err = json.Marshal(ms)
 		if err != nil {
 			panic(err)
 		}

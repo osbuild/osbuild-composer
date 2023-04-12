@@ -157,8 +157,10 @@ func TestImageTypePipelineNames(t *testing.T) {
 
 					m, _, err := imageType.Manifest(bp.Customizations, options, repos, packageSets, containers, seed)
 					require.NoError(err)
+					mf, err := m.Serialize(packageSets)
+					require.NoError(err)
 					pm := new(manifest)
-					err = json.Unmarshal(m, pm)
+					err = json.Unmarshal(mf, pm)
 					require.NoError(err)
 
 					require.Equal(len(allPipelines), len(pm.Pipelines))

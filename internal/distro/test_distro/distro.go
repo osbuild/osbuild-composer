@@ -1,7 +1,6 @@
 package test_distro
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -11,7 +10,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -244,7 +242,7 @@ func (t *TestImageType) Exports() []string {
 	return distro.ExportsFallback()
 }
 
-func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (manifest.OSBuildManifest, []string, error) {
+func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (*manifest.Manifest, []string, error) {
 	mountpoints := b.GetFilesystems()
 
 	invalidMountpoints := []string{}
@@ -258,12 +256,8 @@ func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.Ima
 		return nil, nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
 	}
 
-	ret, err := json.Marshal(
-		osbuild.Manifest{
-			Sources:   osbuild.Sources{},
-			Pipelines: []osbuild.Pipeline{},
-		})
-	return ret, nil, err
+	ret := manifest.Manifest{}
+	return &ret, nil, nil
 }
 
 // newTestDistro returns a new instance of TestDistro with the

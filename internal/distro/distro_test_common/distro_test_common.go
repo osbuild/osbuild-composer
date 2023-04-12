@@ -144,12 +144,17 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				imgPackageSpecSets = tt.PackageSpecSets
 			}
 
-			got, _, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
+			manifest, _, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
 				options,
 				repos,
 				imgPackageSpecSets,
 				tt.Containers,
 				RandomTestSeed)
+			if err != nil {
+				t.Errorf("distro.Manifest() error = %v", err)
+				return
+			}
+			got, err := manifest.Serialize(imgPackageSpecSets)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
 				t.Errorf("distro.Manifest() error = %v", err)
