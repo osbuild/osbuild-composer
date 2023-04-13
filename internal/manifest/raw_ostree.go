@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"fmt"
+
 	"github.com/osbuild/osbuild-composer/internal/artifact"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
@@ -61,7 +63,24 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 
 	inputName := "root-tree"
 	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename, pt)
-	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
+
+	commitChecksum := p.treePipeline.commit.Checksum
+
+	treeInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
+	copyInputs := *treeInputs
+
+	bootFiles := p.platform.GetBootFiles()
+	if len(bootFiles) > 0 {
+		for _, paths := range bootFiles {
+			copyOptions.Paths = append(copyOptions.Paths, osbuild.CopyStagePath{
+				From: fmt.Sprintf("input://ostree-tree/%s/%s", commitChecksum, paths[0]),
+				To:   fmt.Sprintf("mount://root/%s", paths[1]),
+			})
+		}
+
+		copyInputs["ostree-tree"] = osbuild.NewOSTreeCheckoutInput("org.osbuild.source", commitChecksum)
+	}
+
 	pipeline.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
 
 	for _, stage := range osbuild.GenImageFinishStages(pt, p.Filename) {

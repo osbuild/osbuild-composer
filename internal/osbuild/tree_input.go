@@ -19,7 +19,7 @@ func NewTreeInput(reference string) *TreeInput {
 	return input
 }
 
-type PipelineTreeInputs map[string]TreeInput
+type PipelineTreeInputs map[string]Input
 
 func NewPipelineTreeInputs(name, pipeline string) *PipelineTreeInputs {
 	return &PipelineTreeInputs{
