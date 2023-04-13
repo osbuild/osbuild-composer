@@ -115,7 +115,14 @@ if [ "$ALL_EXPECTED_DISTROS" != "$INSTALLED_DISTROS" ];then
     echo "Some distros are missing!"
     echo "Missing distros:"
     diff <(echo "${ALL_EXPECTED_DISTROS}") <(echo "${INSTALLED_DISTROS}") | grep "<" | sed 's/^<\ //g'
-    exit 1
+
+    # the check above compares repositories/*.json files from git checkout
+    # vs the files installed from an RPM package in order to find files which are
+    # not included in the RPM. Don't fail when running on nightly CI pipeline b/c
+    # very often the repository will be newer than the downstream RPM.
+    if [[ "${CI_PIPELINE_SOURCE:-}" != "schedule" ]]; then
+        exit 1
+    fi
 fi
 
 # Push a blueprint with unsupported distro to see if composer fails gracefuly
