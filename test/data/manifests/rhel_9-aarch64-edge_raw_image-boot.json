@@ -2175,7 +2175,7 @@
         ]
       },
       {
-        "name": "image-tree",
+        "name": "ostree-deployment",
         "build": "name:build",
         "stages": [
           {
@@ -2625,7 +2625,7 @@
                 "type": "org.osbuild.tree",
                 "origin": "org.osbuild.pipeline",
                 "references": [
-                  "name:image-tree"
+                  "name:ostree-deployment"
                 ]
               }
             },
