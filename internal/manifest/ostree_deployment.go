@@ -52,7 +52,7 @@ func NewOSTreeDeployment(m *Manifest,
 	platform platform.Platform) *OSTreeDeployment {
 
 	p := &OSTreeDeployment{
-		Base:     NewBase(m, "image-tree", buildPipeline),
+		Base:     NewBase(m, "ostree-deployment", buildPipeline),
 		commit:   commit,
 		osName:   osName,
 		platform: platform,

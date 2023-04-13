@@ -68,7 +68,7 @@ var (
 		bootISO:             false,
 		image:               edgeRawImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"image-tree", "image", "xz"},
+		payloadPipelines:    []string{"ostree-deployment", "image", "xz"},
 		exports:             []string{"xz"},
 		basePartitionTables: edgeBasePartitionTables,
 	}
@@ -124,7 +124,7 @@ var (
 		bootISO:             true,
 		image:               edgeSimplifiedInstallerImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"image-tree", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines:    []string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:             []string{"bootiso"},
 		basePartitionTables: edgeBasePartitionTables,
 	}

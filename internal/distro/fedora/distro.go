@@ -166,7 +166,7 @@ var (
 		bootable:            true,
 		image:               iotRawImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"image-tree", "image", "xz"},
+		payloadPipelines:    []string{"ostree-deployment", "image", "xz"},
 		exports:             []string{"xz"},
 		basePartitionTables: iotBasePartitionTables,
 
