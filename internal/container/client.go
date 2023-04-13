@@ -480,8 +480,7 @@ func (cl *Client) Resolve(ctx context.Context, name string) (Spec, error) {
 		return Spec{}, err
 	}
 
-	spec := NewSpec(cl.Target, ids.Manifest, ids.Config)
-	spec.TLSVerify = cl.GetTLSVerify()
+	spec := NewSpec(cl.Target, ids.Manifest, ids.Config, cl.GetTLSVerify(), "")
 
 	return spec, nil
 }
