@@ -807,6 +807,11 @@ components:
           description: 'GPG key used to sign packages in this repository.'
         check_gpg:
           type: boolean
+        check_repo_gpg:
+          type: boolean
+          default: false
+          description: |
+            Enables gpg verification of the repository metadata
         ignore_ssl:
           type: boolean
         package_sets:
