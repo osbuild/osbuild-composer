@@ -20,7 +20,7 @@ type OSTreeCheckoutInput struct {
 	References OSTreeCheckoutReferences `json:"references"`
 }
 
-func (OSTreeCheckoutInput) isStageInput() {}
+func (OSTreeCheckoutInput) isInput() {}
 
 type OSTreeCheckoutReferences []string
 

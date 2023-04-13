@@ -2376,6 +2376,13 @@
           {
             "type": "org.osbuild.copy",
             "inputs": {
+              "ostree-tree": {
+                "type": "org.osbuild.ostree.checkout",
+                "origin": "org.osbuild.source",
+                "references": [
+                  ""
+                ]
+              },
               "root-tree": {
                 "type": "org.osbuild.tree",
                 "origin": "org.osbuild.pipeline",
@@ -2389,6 +2396,126 @@
                 {
                   "from": "input://root-tree/",
                   "to": "mount://root/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2710-rpi-2-b.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2710-rpi-3-b-plus.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2710-rpi-3-b.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2710-rpi-cm3.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2-w.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2711-rpi-4-b.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2711-rpi-400.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2711-rpi-cm4.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bcm2711-rpi-cm4s.dtb",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/bootcode.bin",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/config.txt",
+                  "to": "mount://root//boot/efi/config.txt"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/fixup.dat",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/fixup4.dat",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/fixup4cd.dat",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/fixup4db.dat",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/fixup4x.dat",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/fixup_cd.dat",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/fixup_db.dat",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/fixup_x.dat",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/overlays",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/share/uboot/rpi_arm64/u-boot.bin",
+                  "to": "mount://root//boot/efi/rpi-u-boot.bin"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/start.elf",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/start4.elf",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/start4cd.elf",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/start4db.elf",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/start4x.elf",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/start_cd.elf",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/start_db.elf",
+                  "to": "mount://root//boot/efi/"
+                },
+                {
+                  "from": "input://ostree-tree///usr/lib/ostree-boot/efi/start_x.elf",
+                  "to": "mount://root//boot/efi/"
                 }
               ]
             },
