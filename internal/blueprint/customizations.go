@@ -232,31 +232,7 @@ func (c *Customizations) GetGroups() []GroupCustomization {
 		return nil
 	}
 
-	// This is for parity with lorax, which assumes that for each
-	// user, a group with that name already exists. Thus, filter groups
-	// named like an existing user.
-
-	groups := []GroupCustomization{}
-	for _, group := range c.Group {
-		exists := false
-		for _, user := range c.User {
-			if user.Name == group.Name {
-				exists = true
-				break
-			}
-		}
-		for _, key := range c.SSHKey {
-			if key.User == group.Name {
-				exists = true
-				break
-			}
-		}
-		if !exists {
-			groups = append(groups, group)
-		}
-	}
-
-	return groups
+	return c.Group
 }
 
 func (c *Customizations) GetKernel() *KernelCustomization {

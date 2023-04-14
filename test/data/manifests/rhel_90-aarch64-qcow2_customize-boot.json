@@ -58,6 +58,11 @@
             ],
             "uid": 1020,
             "gid": 1050
+          },
+          {
+            "name": "user3",
+            "uid": 1060,
+            "gid": 1060
           }
         ],
         "group": [
@@ -68,6 +73,10 @@
           {
             "name": "group2",
             "gid": 1050
+          },
+          {
+            "name": "user3",
+            "gid": 1060
           }
         ],
         "timezone": {
@@ -1997,6 +2006,9 @@
                 },
                 "group2": {
                   "gid": 1050
+                },
+                "user3": {
+                  "gid": 1060
                 }
               }
             }
@@ -2019,6 +2031,10 @@
                   "shell": "/bin/sh",
                   "password": "$6$BhyxFBgrEFh0VrPJ$MllG8auiU26x2pmzL4.1maHzPHrA.4gTdCvlATFp8HJU9UPee4zCS9BVl2HOzKaUYD/zEm8r/OF05F2icWB0K/",
                   "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC61wMCjOSHwbVb4VfVyl5sn497qW4PsdQ7Ty7aD6wDNZ/QjjULkDV/yW5WjDlDQ7UqFH0Sr7vywjqDizUAqK7zM5FsUKsUXWHWwg/ehKg8j9xKcMv11AkFoUoujtfAujnKODkk58XSA9whPr7qcw3vPrmog680pnMSzf9LC7J6kXfs6lkoKfBh9VnlxusCrw2yg0qI1fHAZBLPx7mW6+me71QZsS6sVz8v8KXyrXsKTdnF50FjzHcK9HXDBtSJS5wA3fkcRYymJe0o6WMWNdgSRVpoSiWaHHmFgdMUJaYoCfhXzyl7LtNb3Q+Sveg+tJK7JaRXBLMUllOlJ6ll5Hod root@localhost"
+                },
+                "user3": {
+                  "uid": 1060,
+                  "gid": 1060
                 }
               }
             }
