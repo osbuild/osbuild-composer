@@ -386,12 +386,24 @@ func (q *DBJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, 
 	}
 	defer conn.Release()
 
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return uuid.Nil, nil, "", nil, fmt.Errorf("error starting a new transaction: %w", err)
+	}
+
+	defer func() {
+		err = tx.Rollback(context.Background())
+		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			q.logger.Error(err, "Error rolling back dequeuing by id transaction", "job_id", id.String())
+		}
+	}()
+
 	var jobType string
 	var args json.RawMessage
 	var started, queued *time.Time
 	token := uuid.New()
 
-	err = conn.QueryRow(ctx, sqlDequeueByID, token, id).Scan(&token, &jobType, &args, &queued, &started)
+	err = tx.QueryRow(ctx, sqlDequeueByID, token, id).Scan(&token, &jobType, &args, &queued, &started)
 	if err == pgx.ErrNoRows {
 		return uuid.Nil, nil, "", nil, jobqueue.ErrNotPending
 	} else if err != nil {
@@ -399,14 +411,19 @@ func (q *DBJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, 
 	}
 
 	// insert heartbeat
-	_, err = conn.Exec(ctx, sqlInsertHeartbeat, token, id)
+	_, err = tx.Exec(ctx, sqlInsertHeartbeat, token, id)
 	if err != nil {
 		return uuid.Nil, nil, "", nil, fmt.Errorf("error inserting the job's heartbeat: %v", err)
 	}
 
-	dependencies, err := q.jobDependencies(ctx, conn, id)
+	dependencies, err := q.jobDependencies(ctx, tx, id)
 	if err != nil {
 		return uuid.Nil, nil, "", nil, fmt.Errorf("error querying the job's dependencies: %v", err)
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return uuid.Nil, nil, "", nil, fmt.Errorf("error committing a transaction: %w", err)
 	}
 
 	q.logger.Info("Dequeued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
