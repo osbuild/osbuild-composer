@@ -845,6 +845,12 @@ func (t *imageType) checkOptions(customizations *blueprint.Customizations, optio
 		return nil, err
 	}
 
+	// check if repository customizations are valid
+	_, err = customizations.GetRepositories()
+	if err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }
 
