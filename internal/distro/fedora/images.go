@@ -143,6 +143,32 @@ func osCustomizations(
 		// should have been validated before this point.
 		panic(fmt.Sprintf("failed to convert file customizations to fs node files: %v", err))
 	}
+
+	customRepos, err := c.GetRepositories()
+	if err != nil {
+		// This shouldn't happen and since the repos
+		// should have already been validated
+		panic(fmt.Sprintf("failed to get custom repos: %v", err))
+	}
+
+	// This function returns a map of filename and corresponding yum repos
+	// and a list of fs node files for the inline gpg keys so we can save
+	// them to disk. This step also swaps the inline gpg key with the path
+	// to the file in the os file tree
+	yumRepos, gpgKeyFiles, err := blueprint.RepoCustomizationsToRepoConfigAndGPGKeyFiles(customRepos)
+	if err != nil {
+		panic(fmt.Sprintf("failed to convert inline gpgkeys to fs node files: %v", err))
+	}
+
+	// add the gpg key files to the list of files to be added to the tree
+	if len(gpgKeyFiles) > 0 {
+		osc.Files = append(osc.Files, gpgKeyFiles...)
+	}
+
+	for filename, repos := range yumRepos {
+		osc.YUMRepos = append(osc.YUMRepos, osbuild.NewYumReposStageOptions(filename, repos))
+	}
+
 	osc.ShellInit = imageConfig.ShellInit
 
 	osc.Grub2Config = imageConfig.Grub2Config
