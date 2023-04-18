@@ -5,7 +5,7 @@ type OSTreeInput struct {
 	inputCommon
 }
 
-func (OSTreeInput) isInput() {}
+func (OSTreeInput) isStageInputs() {}
 
 func NewOSTreeInput() *OSTreeInput {
 	input := new(OSTreeInput)
@@ -19,8 +19,6 @@ type OSTreeCheckoutInput struct {
 	inputCommon
 	References OSTreeCheckoutReferences `json:"references"`
 }
-
-func (OSTreeCheckoutInput) isInput() {}
 
 type OSTreeCheckoutReferences []string
 
@@ -40,3 +38,7 @@ func NewOSTreeCheckoutInput(origin, name string) *OSTreeCheckoutInput {
 	input.References = inputRefs
 	return input
 }
+
+type OSTreeCheckoutInputs map[string]OSTreeCheckoutInput
+
+func (c OSTreeCheckoutInputs) isStageInputs() {}
