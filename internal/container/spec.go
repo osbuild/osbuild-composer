@@ -22,14 +22,16 @@ type Spec struct {
 // NewSpec creates a new Spec from the essential information.
 // It also converts is the transition point from container
 // specific types (digest.Digest) to generic types (string).
-func NewSpec(source reference.Named, digest, imageID digest.Digest, tlsVerify *bool, listDigest string) Spec {
-	name := source.Name()
+func NewSpec(source reference.Named, digest, imageID digest.Digest, tlsVerify *bool, listDigest string, localName string) Spec {
+	if localName == "" {
+		localName = source.String()
+	}
 	return Spec{
-		Source:     name,
+		Source:     source.Name(),
 		Digest:     digest.String(),
 		TLSVerify:  tlsVerify,
 		ImageID:    imageID.String(),
-		LocalName:  name,
+		LocalName:  localName,
 		ListDigest: listDigest,
 	}
 }
