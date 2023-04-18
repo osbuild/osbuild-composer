@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/stretchr/testify/assert"
@@ -218,8 +219,8 @@ func TestOldWorkerRepositoryCompatUnmarshal(t *testing.T) {
 				Metalink:       "http://example.com/metalink",
 				MirrorList:     "http://example.com/mirrorlist",
 				GPGKeys:        []string{"key1", "key2"},
-				CheckGPG:       true,
-				CheckRepoGPG:   true,
+				CheckGPG:       common.ToPtr(true),
+				CheckRepoGPG:   common.ToPtr(true),
 				IgnoreSSL:      true,
 				MetadataExpire: "test",
 				RHSM:           true,
@@ -266,8 +267,8 @@ func TestOldWorkerRepositoryCompatMarshal(t *testing.T) {
 				Metalink:       "http://example.com/metalink",
 				MirrorList:     "http://example.com/mirrorlist",
 				GPGKeys:        []string{"key1", "key2"},
-				CheckGPG:       true,
-				CheckRepoGPG:   true,
+				CheckGPG:       common.ToPtr(true),
+				CheckRepoGPG:   common.ToPtr(true),
 				IgnoreSSL:      true,
 				MetadataExpire: "test",
 				RHSM:           true,

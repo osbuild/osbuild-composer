@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
@@ -76,7 +77,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				Metalink:    repo.Metalink,
 				MirrorList:  repo.MirrorList,
 				GPGKeys:     keys,
-				CheckGPG:    repo.CheckGPG,
+				CheckGPG:    common.ToPtr(repo.CheckGPG),
 				PackageSets: repo.PackageSets,
 			}
 		}

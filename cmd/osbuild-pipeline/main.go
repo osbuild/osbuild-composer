@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
@@ -149,14 +150,16 @@ func main() {
 			keys = []string{repo.GPGKey}
 		}
 		repos[i] = rpmmd.RepoConfig{
-			Name:        repoName,
-			BaseURLs:    urls,
-			Metalink:    repo.Metalink,
-			MirrorList:  repo.MirrorList,
-			GPGKeys:     keys,
-			CheckGPG:    repo.CheckGPG,
-			PackageSets: repo.PackageSets,
-			RHSM:        repo.RHSM,
+			Name:         repoName,
+			BaseURLs:     urls,
+			Metalink:     repo.Metalink,
+			MirrorList:   repo.MirrorList,
+			GPGKeys:      keys,
+			CheckGPG:     &repo.CheckGPG,
+			CheckRepoGPG: common.ToPtr(false),
+			IgnoreSSL:    false,
+			PackageSets:  repo.PackageSets,
+			RHSM:         repo.RHSM,
 		}
 	}
 

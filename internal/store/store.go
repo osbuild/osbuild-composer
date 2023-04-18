@@ -582,13 +582,19 @@ func (s *Store) GetAllDistroSources(distro string) map[string]SourceConfig {
 
 func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 	sc := SourceConfig{
-		Name:         repo.Name,
-		CheckGPG:     repo.CheckGPG,
-		CheckSSL:     !repo.IgnoreSSL,
-		System:       system,
-		RHSM:         repo.RHSM,
-		CheckRepoGPG: repo.CheckRepoGPG,
-		GPGKeys:      repo.GPGKeys,
+		Name:     repo.Name,
+		System:   system,
+		RHSM:     repo.RHSM,
+		GPGKeys:  repo.GPGKeys,
+		CheckSSL: !repo.IgnoreSSL,
+	}
+
+	if repo.CheckGPG != nil {
+		sc.CheckGPG = *repo.CheckGPG
+	}
+
+	if repo.CheckRepoGPG != nil {
+		sc.CheckRepoGPG = *repo.CheckRepoGPG
 	}
 
 	if len(repo.BaseURLs) != 0 {
@@ -610,9 +616,9 @@ func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 
 	repo.Name = name
 	repo.IgnoreSSL = !s.CheckSSL
-	repo.CheckGPG = s.CheckGPG
+	repo.CheckGPG = &s.CheckGPG
 	repo.RHSM = s.RHSM
-	repo.CheckRepoGPG = s.CheckRepoGPG
+	repo.CheckRepoGPG = &s.CheckRepoGPG
 	repo.GPGKeys = s.GPGKeys
 
 	var urls []string

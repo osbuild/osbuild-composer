@@ -63,12 +63,12 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
 		test_distro.TestDistroName: {
 			test_distro.TestArchName: {
-				{Name: "test-id", BaseURLs: []string{"http://example.com/test/os/x86_64"}, CheckGPG: true},
+				{Name: "test-id", BaseURLs: []string{"http://example.com/test/os/x86_64"}, CheckGPG: common.ToPtr(true)},
 			},
 		},
 		test_distro.TestDistro2Name: {
 			test_distro.TestArchName: {
-				{Name: "test-id-2", BaseURLs: []string{"http://example.com/test-2/os/x86_64"}, CheckGPG: true},
+				{Name: "test-id-2", BaseURLs: []string{"http://example.com/test-2/os/x86_64"}, CheckGPG: common.ToPtr(true)},
 			},
 		},
 	})
@@ -112,12 +112,12 @@ func createWeldrAPI2(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerato
 	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
 		test_distro.TestDistroName: {
 			test_distro.TestArch2Name: {
-				{Name: "test-id", BaseURLs: []string{"http://example.com/test/os/x86_64"}, CheckGPG: true},
+				{Name: "test-id", BaseURLs: []string{"http://example.com/test/os/x86_64"}, CheckGPG: common.ToPtr(true)},
 			},
 		},
 		test_distro.TestDistro2Name: {
 			test_distro.TestArch2Name: {
-				{Name: "test-id-2", BaseURLs: []string{"http://example.com/test-2/os/x86_64"}, CheckGPG: true},
+				{Name: "test-id-2", BaseURLs: []string{"http://example.com/test-2/os/x86_64"}, CheckGPG: common.ToPtr(true)},
 			},
 		},
 	})
