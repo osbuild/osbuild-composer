@@ -332,8 +332,8 @@ func (reg *Registry) Resolve(target, arch string) (container.Spec, error) {
 		return container.Spec{}, fmt.Errorf("unknown domain")
 	}
 
-	ref = reference.TrimNamed(ref)
-	path := reference.Path(ref)
+	tref := reference.TrimNamed(ref)
+	path := reference.Path(tref)
 
 	repo, ok := reg.repos[path]
 	if !ok {
@@ -371,7 +371,7 @@ func (reg *Registry) Resolve(target, arch string) (container.Spec, error) {
 	}
 
 	return container.Spec{
-		Source:     ref.String(),
+		Source:     tref.String(),
 		Digest:     checksum,
 		ImageID:    mf.ConfigDescriptor.Digest.String(),
 		LocalName:  ref.String(),
