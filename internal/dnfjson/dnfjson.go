@@ -266,11 +266,18 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			Metalink:       rr.Metalink,
 			MirrorList:     rr.MirrorList,
 			GPGKeys:        rr.GPGKeys,
-			CheckGPG:       rr.CheckGPG,
-			CheckRepoGPG:   rr.CheckRepoGPG,
 			IgnoreSSL:      rr.IgnoreSSL,
 			MetadataExpire: rr.MetadataExpire,
 		}
+
+		if rr.CheckGPG != nil {
+			dr.CheckGPG = *rr.CheckGPG
+		}
+
+		if rr.CheckRepoGPG != nil {
+			dr.CheckRepoGPG = *rr.CheckRepoGPG
+		}
+
 		if rr.RHSM {
 			if s.subscriptions == nil {
 				return nil, fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources.")
@@ -457,7 +464,9 @@ func (pkgs packageSpecs) toRPMMD(repos map[string]rpmmd.RepoConfig) []rpmmd.Pack
 		rpmDependencies[i].Arch = dep.Arch
 		rpmDependencies[i].RemoteLocation = dep.RemoteLocation
 		rpmDependencies[i].Checksum = dep.Checksum
-		rpmDependencies[i].CheckGPG = repo.CheckGPG
+		if repo.CheckGPG != nil {
+			rpmDependencies[i].CheckGPG = *repo.CheckGPG
+		}
 		rpmDependencies[i].IgnoreSSL = repo.IgnoreSSL
 		if repo.RHSM {
 			rpmDependencies[i].Secrets = "org.osbuild.rhsm"

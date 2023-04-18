@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
@@ -203,8 +204,8 @@ func convertRepo(r repository) rpmmd.RepoConfig {
 		Metalink:       r.Metalink,
 		MirrorList:     r.MirrorList,
 		GPGKeys:        keys,
-		CheckGPG:       r.CheckGPG,
-		CheckRepoGPG:   false,
+		CheckGPG:       &r.CheckGPG,
+		CheckRepoGPG:   common.ToPtr(false),
 		IgnoreSSL:      false,
 		MetadataExpire: r.MetadataExpire,
 		RHSM:           r.RHSM,

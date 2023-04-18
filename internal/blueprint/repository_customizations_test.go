@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 

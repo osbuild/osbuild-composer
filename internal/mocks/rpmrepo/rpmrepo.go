@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -19,7 +20,7 @@ func NewTestServer() *testRepoServer {
 	testrepo := rpmmd.RepoConfig{
 		Name:      "cs9-baseos",
 		BaseURLs:  []string{server.URL},
-		CheckGPG:  false,
+		CheckGPG:  common.ToPtr(false),
 		IgnoreSSL: true,
 		RHSM:      false,
 	}

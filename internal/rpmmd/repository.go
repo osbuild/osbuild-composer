@@ -33,8 +33,8 @@ type RepoConfig struct {
 	Metalink       string   `json:"metalink,omitempty"`
 	MirrorList     string   `json:"mirrorlist,omitempty"`
 	GPGKeys        []string `json:"gpgkeys,omitempty"`
-	CheckGPG       bool     `json:"check_gpg,omitempty"`
-	CheckRepoGPG   bool     `json:"check_repo_gpg,omitempty"`
+	CheckGPG       *bool    `json:"check_gpg,omitempty"`
+	CheckRepoGPG   *bool    `json:"check_repo_gpg,omitempty"`
 	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
@@ -47,7 +47,10 @@ type RepoConfig struct {
 // calculation.
 func (r *RepoConfig) Hash() string {
 	bts := func(b bool) string {
-		return fmt.Sprintf("%T", b)
+		return fmt.Sprintf("%v", b)
+	}
+	bpts := func(b *bool) string {
+		return fmt.Sprintf("%v", b)
 	}
 	ats := func(s []string) string {
 		return strings.Join(s, "")
@@ -56,8 +59,8 @@ func (r *RepoConfig) Hash() string {
 		r.Metalink+
 		r.MirrorList+
 		ats(r.GPGKeys)+
-		bts(r.CheckGPG)+
-		bts(r.CheckRepoGPG)+
+		bpts(r.CheckGPG)+
+		bpts(r.CheckRepoGPG)+
 		bts(r.IgnoreSSL)+
 		r.MetadataExpire+
 		bts(r.RHSM))))
@@ -237,7 +240,7 @@ func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 				Metalink:       repo.Metalink,
 				MirrorList:     repo.MirrorList,
 				GPGKeys:        keys,
-				CheckGPG:       repo.CheckGPG,
+				CheckGPG:       &repo.CheckGPG,
 				RHSM:           repo.RHSM,
 				MetadataExpire: repo.MetadataExpire,
 				ImageTypeTags:  repo.ImageTypeTags,

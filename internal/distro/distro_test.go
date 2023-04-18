@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
@@ -203,7 +204,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 							BaseURLs:    []string{"http://payload.example.com"},
 							PackageSets: imageType.PayloadPackageSets(),
 							GPGKeys:     []string{"payload-gpg-key"},
-							CheckGPG:    true,
+							CheckGPG:    common.ToPtr(true),
 						},
 					}
 					containers := make([]container.Spec, 0)
