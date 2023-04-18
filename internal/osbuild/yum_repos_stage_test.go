@@ -6,10 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 func TestNewYumReposStage(t *testing.T) {
-	stageOptions := NewYumReposStageOptions("testing.repo", []YumRepository{
+	stageOptions := NewYumReposStageOptions("testing.repo", []rpmmd.RepoConfig{
 		{
 			Id:       "cool-id",
 			BaseURLs: []string{"http://example.org/repo"},
