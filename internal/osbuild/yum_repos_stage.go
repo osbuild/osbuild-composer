@@ -3,6 +3,8 @@ package osbuild
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 const repoFilenameRegex = "^[\\w.-]{1,250}\\.repo$"
@@ -14,6 +16,7 @@ type YumRepository struct {
 	BaseURLs       []string `json:"baseurl,omitempty"`
 	Cost           *int     `json:"cost,omitempty"`
 	Enabled        *bool    `json:"enabled,omitempty"`
+	Priority       *int     `json:"priority,omitempty"`
 	GPGKey         []string `json:"gpgkey,omitempty"`
 	Metalink       string   `json:"metalink,omitempty"`
 	Mirrorlist     string   `json:"mirrorlist,omitempty"`
@@ -68,11 +71,39 @@ type YumReposStageOptions struct {
 func (YumReposStageOptions) isStageOptions() {}
 
 // NewYumReposStageOptions creates a new YumRepos Stage options object.
-func NewYumReposStageOptions(filename string, repos []YumRepository) *YumReposStageOptions {
+func NewYumReposStageOptions(filename string, repos []rpmmd.RepoConfig) *YumReposStageOptions {
+	var yumRepos []YumRepository
+	for _, repo := range repos {
+		yumRepos = append(yumRepos, repoConfigToYumRepository(repo))
+	}
+
 	return &YumReposStageOptions{
 		Filename: filename,
-		Repos:    repos,
+		Repos:    yumRepos,
 	}
+}
+
+func repoConfigToYumRepository(repo rpmmd.RepoConfig) YumRepository {
+	urls := make([]string, len(repo.BaseURLs))
+	copy(urls, repo.BaseURLs)
+
+	keys := make([]string, len(repo.GPGKeys))
+	copy(keys, repo.GPGKeys)
+
+	yumRepo := YumRepository{
+		Id:           repo.Id,
+		Name:         repo.Name,
+		Mirrorlist:   repo.MirrorList,
+		Metalink:     repo.Metalink,
+		BaseURLs:     urls,
+		GPGKey:       keys,
+		GPGCheck:     repo.CheckGPG,
+		RepoGPGCheck: repo.CheckRepoGPG,
+		Enabled:      repo.Enabled,
+		Priority:     repo.Priority,
+	}
+
+	return yumRepo
 }
 
 func (o YumReposStageOptions) validate() error {
