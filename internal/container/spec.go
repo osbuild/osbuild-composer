@@ -29,7 +29,7 @@ func NewSpec(source reference.Named, digest, imageID digest.Digest, tlsVerify *b
 		Digest:     digest.String(),
 		TLSVerify:  tlsVerify,
 		ImageID:    imageID.String(),
-		LocalName:  name,
+		LocalName:  source.String(),
 		ListDigest: listDigest,
 	}
 }
