@@ -55,7 +55,9 @@ COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 FEDORA_IMAGE_DIGEST="sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
+FEDORA_LOCAL_NAME="localhost/fedora-minimal:v1"
 MANIFEST_LIST_DIGEST="sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
+MANIFEST_LIST_SOURCE="registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test@${MANIFEST_LIST_DIGEST}"
 
 # Write a basic blueprint for our container.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
@@ -65,9 +67,10 @@ version = "0.0.1"
 
 [[containers]]
 source = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal@${FEDORA_IMAGE_DIGEST}"
+name = "${FEDORA_LOCAL_NAME}"
 
 [[containers]]
-source = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test@${MANIFEST_LIST_DIGEST}"
+source = "${MANIFEST_LIST_SOURCE}"
 EOF
 
 # Prepare the blueprint for the compose.
@@ -138,6 +141,16 @@ else
   exit 1
 fi
 
+# Check that the local name was set in the names array
+FEDORA_NAME_EXISTS=$(jq -e --arg name "${FEDORA_LOCAL_NAME}" 'any(."container-images"[].Names[] | select(. != null and . == $name); .)' <<< "${INFO}")
+
+if $FEDORA_NAME_EXISTS; then
+  greenprint "💚 fedora container image's name ${FEDORA_LOCAL_NAME}' was found!"
+else
+  echo "😢 fedora container image's name '${FEDORA_LOCAL_NAME}' not in image."
+  exit 1
+fi
+
 # Check that the test image's manifest list was included
 MANIFEST_LIST_EXISTS=$(jq -e --arg id "${MANIFEST_LIST_DIGEST}" 'any(."container-images" | select(. != null and .[].Digest == $id); .)' <<< "${INFO}")
 
@@ -145,5 +158,15 @@ if $MANIFEST_LIST_EXISTS; then
   greenprint "💚 Manifest list digest '${MANIFEST_LIST_DIGEST}' was found!"
 else
   echo "😢 Manifest list digest '${MANIFEST_LIST_DIGEST}' not in image."
+  exit 1
+fi
+
+# Check that the source was set in the names array as a fallback for the name
+MANIFEST_NAME_EXISTS=$(jq -e --arg name "${MANIFEST_LIST_SOURCE}" 'any(."container-images"[].Names[] | select(. != null and . == $name); .)' <<< "${INFO}")
+
+if $MANIFEST_NAME_EXISTS; then
+  greenprint "💚 Manifest list's name '${MANIFEST_LIST_SOURCE}' was found!"
+else
+  echo "😢 Manifest list digest's name '${MANIFEST_LIST_SOURCE}' not in image."
   exit 1
 fi
