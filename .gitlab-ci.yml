@@ -800,6 +800,7 @@ ContainerEmbedding:
   extends: .terraform
   rules:
     - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-embedding.sh
@@ -809,6 +810,10 @@ ContainerEmbedding:
         RUNNER:
         - aws/centos-stream-8-x86_64
         - aws/centos-stream-9-x86_64
+        - aws/rhel-8.8-nightly-x86_64
+        - aws/rhel-8.8-nightly-aarch64
+        - aws/rhel-9.2-nightly-x86_64
+        - aws/rhel-9.2-nightly-aarch64
 
 finish:
   stage: finish
