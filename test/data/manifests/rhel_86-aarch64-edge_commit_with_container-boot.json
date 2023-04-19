@@ -22,7 +22,8 @@
           "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
         },
         {
-          "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
+          "source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
+          "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test:v1"
         }
       ]
     }
@@ -1901,10 +1902,10 @@
                 "origin": "org.osbuild.source",
                 "references": {
                   "sha256:62d2a7b3bf9e0b4f3aba22553d6971227b5a39f7f408d46347b1ee74eb97cb20": {
-                    "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test"
+                    "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test:v1"
                   },
                   "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6": {
-                    "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+                    "name": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal:latest"
                   }
                 }
               },
@@ -8596,7 +8597,7 @@
       "Digest": "sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b",
       "TLSVerify": null,
       "ImageID": "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6",
-      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal",
+      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal:latest",
       "ListDigest": ""
     },
     {
@@ -8604,7 +8605,7 @@
       "Digest": "sha256:1a19a94647b1379fed8c23eb7553327cb604ba546eb93f9f6c1e6d11911c8beb",
       "TLSVerify": null,
       "ImageID": "sha256:62d2a7b3bf9e0b4f3aba22553d6971227b5a39f7f408d46347b1ee74eb97cb20",
-      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
+      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test:v1",
       "ListDigest": "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
     }
   ],
