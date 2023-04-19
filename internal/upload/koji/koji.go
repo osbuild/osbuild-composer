@@ -326,6 +326,7 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	q.Add("filename", filename)
 	q.Add("offset", fmt.Sprintf("%v", offset))
 	q.Add("fileverify", "adler32")
+	q.Add("overwrite", "true")
 	u.RawQuery = q.Encode()
 
 	client := createCustomRetryableClient()
