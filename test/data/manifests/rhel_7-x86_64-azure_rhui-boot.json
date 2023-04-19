@@ -29,7 +29,7 @@
       },
       {
         "name": "azure-rhui-7",
-        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20220530"
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20230418"
       }
     ],
     "filename": "disk.vhd.xz",
@@ -2223,7 +2223,7 @@
                     "id": "sha256:7a994d8e50f9e5ced5d2082a58ecfb8f79ab1656cec77c65ec67453fbd6839fb"
                   },
                   {
-                    "id": "sha256:000bd49aea30ee3534e6cde11188afa4b567711b13acbcf531e5542fc7b2aefe"
+                    "id": "sha256:06ee060f586171d585bb8b40b7f383c456c762c53d512e5073301c7d46a3785d"
                   }
                 ]
               }
@@ -3067,9 +3067,6 @@
     "sources": {
       "org.osbuild.curl": {
         "items": {
-          "sha256:000bd49aea30ee3534e6cde11188afa4b567711b13acbcf531e5542fc7b2aefe": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20220530/rhui-azure-rhel7-2.2-222.noarch.rpm"
-          },
           "sha256:005d3c65516a8021aac3e640d498a5fafe7f86eb7848009aed399a42730aa79f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/alsa-tools-firmware-1.1.0-1.el7.x86_64.rpm"
           },
@@ -3114,6 +3111,9 @@
           },
           "sha256:06b51b9c622b2a097ae8ca07b443dcc956da5a9ea9f6785ea4c6893fdba7dd7b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/vim-enhanced-7.4.629-7.el7.x86_64.rpm"
+          },
+          "sha256:06ee060f586171d585bb8b40b7f383c456c762c53d512e5073301c7d46a3785d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20230418/Packages/r/rhui-azure-rhel7-2.2-484.noarch.rpm"
           },
           "sha256:06f674513dc3838eb76593777aa0a514eef44c85886ceb8b87779e69a9d00939": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-server-r7.9-20220530/Packages/which-2.20-7.el7.x86_64.rpm"
@@ -11227,10 +11227,10 @@
         "name": "rhui-azure-rhel7",
         "epoch": 0,
         "version": "2.2",
-        "release": "222",
+        "release": "484",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20220530/rhui-azure-rhel7-2.2-222.noarch.rpm",
-        "checksum": "sha256:000bd49aea30ee3534e6cde11188afa4b567711b13acbcf531e5542fc7b2aefe"
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el7/el7-x86_64-rhui-azure-20230418/Packages/r/rhui-azure-rhel7-2.2-484.noarch.rpm",
+        "checksum": "sha256:06ee060f586171d585bb8b40b7f383c456c762c53d512e5073301c7d46a3785d"
       }
     ]
   },
