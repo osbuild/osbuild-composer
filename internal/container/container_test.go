@@ -374,7 +374,7 @@ func (reg *Registry) Resolve(target, arch string) (container.Spec, error) {
 		Source:     ref.String(),
 		Digest:     checksum,
 		ImageID:    mf.ConfigDescriptor.Digest.String(),
-		LocalName:  ref.String(),
+		LocalName:  target,
 		TLSVerify:  common.ToPtr(false),
 		ListDigest: listDigest,
 	}, nil
