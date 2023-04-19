@@ -141,6 +141,11 @@ else
   exit 1
 fi
 
+if ! nvrGreaterOrEqual "osbuild" "83"; then
+    echo "INFO: osbuild version is older. Exiting test here"
+    exit 0
+fi
+
 # Check that the local name was set in the names array
 FEDORA_NAME_EXISTS=$(jq -e --arg name "${FEDORA_LOCAL_NAME}" 'any(."container-images"[].Names[] | select(. != null and . == $name); .)' <<< "${INFO}")
 

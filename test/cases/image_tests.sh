@@ -3,6 +3,7 @@ set -euo pipefail
 
 # Get OS and architecture details.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 if [[ -n "$CI_BUILD_ID" ]]; then
     BUILD_ID="${BUILD_ID:-${CI_BUILD_ID}}"
@@ -57,6 +58,18 @@ get_test_cases () {
         else
             SKIP_CASES=("${SKIP_OSTREE[@]}")
         fi
+
+        # skip container test if running on old osbuild version
+        # b/c manifests have been modified to include the
+        # "manifest-lists" and "skopeo-index" options which are
+        # not yet supported on 8.8 and 9.2 downstream
+        if nvrGreaterOrEqual "osbuild" "83"; then
+            echo
+        else
+            SKIP_ME=$(grep edge_commit_with_container-boot <<< "$ALL_CASES")
+            SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_ME")
+        fi
+
         mapfile -t TEST_CASES < <(grep -vxFf <(printf '%s\n' "${SKIP_CASES[@]}") <(printf '%s\n' "${ALL_CASES[@]}"))
         echo "${TEST_CASES[@]}"
     popd > /dev/null
