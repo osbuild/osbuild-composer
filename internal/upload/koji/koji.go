@@ -3,10 +3,6 @@ package koji
 import (
 	"bytes"
 	"context"
-	"net"
-	"strings"
-	"time"
-
 	// koji uses MD5 hashes
 	/* #nosec G501 */
 	"crypto/md5"
@@ -17,15 +13,18 @@ import (
 	"fmt"
 	"hash/adler32"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
+	"time"
 
+	rh "github.com/hashicorp/go-retryablehttp"
 	"github.com/kolo/xmlrpc"
 	"github.com/sirupsen/logrus"
 	"github.com/ubccr/kerby/khttp"
 
-	rh "github.com/hashicorp/go-retryablehttp"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -284,13 +283,32 @@ func (k *Koji) CGImport(build ImageBuild, buildRoots []BuildRoot, images []Image
 		return nil, err
 	}
 
-	var result CGImportResult
-	err = k.xmlrpc.Call("CGImport", []interface{}{string(metadata), directory, token}, &result)
-	if err != nil {
-		return nil, err
+	const retryCount = 10
+	const retryDelay = time.Second
+
+	for attempt := 0; attempt < retryCount; attempt += 1 {
+		var result CGImportResult
+		err = k.xmlrpc.Call("CGImport", []interface{}{string(metadata), directory, token}, &result)
+
+		if err != nil {
+			// Retry when the error mentions a corrupted upload. It's usually
+			// just because of NFS inconsistency when the kojihub has multiple
+			// replicas.
+			if strings.Contains(err.Error(), "Corrupted upload") {
+				time.Sleep(retryDelay)
+				continue
+			}
+
+			// Fail immediately on other errors, they are probably legitimate
+			return nil, err
+		}
+
+		logrus.Infof("CGImport succeeded after %d attempts", attempt+1)
+
+		return &result, nil
 	}
 
-	return &result, nil
+	return nil, fmt.Errorf("failed to import a build after %d attempts: %w", retryCount, err)
 }
 
 // uploadChunk uploads a byte slice to a given filepath/filname at a given offset
