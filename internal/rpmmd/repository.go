@@ -53,10 +53,10 @@ type RepoConfig struct {
 // calculation.
 func (r *RepoConfig) Hash() string {
 	bts := func(b bool) string {
-		return fmt.Sprintf("%v", b)
+		return fmt.Sprintf("%T", b)
 	}
 	bpts := func(b *bool) string {
-		return fmt.Sprintf("%v", b)
+		return fmt.Sprintf("%T", b)
 	}
 	ats := func(s []string) string {
 		return strings.Join(s, "")
