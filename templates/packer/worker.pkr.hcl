@@ -18,7 +18,6 @@ source "amazon-ebs" "image_builder" {
   ami_users = "${var.image_users}"
 
   # Network configuration for the instance building our image.
-  associate_public_ip_address = true
   ssh_interface = "public_ip"
 
   skip_create_ami=var.skip_create_ami
