@@ -3,6 +3,7 @@ package blueprint
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/fsnode"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -35,6 +36,23 @@ func validateCustomRepository(repo *RepositoryCustomization) error {
 	if repo.GPGCheck != nil && *repo.GPGCheck && len(repo.GPGKeys) == 0 {
 		return fmt.Errorf("Repository gpg check is set to true but no gpg keys are provided")
 	}
+
+	for _, key := range repo.GPGKeys {
+		// check for a valid GPG key prefix & contains GPG suffix
+		keyIsGPGKey := strings.HasPrefix(key, "-----BEGIN PGP PUBLIC KEY BLOCK-----") && strings.Contains(key, "-----END PGP PUBLIC KEY BLOCK-----")
+
+		// check for a valid URL
+		keyIsURL := false
+		_, err := url.ParseRequestURI(key)
+		if err == nil {
+			keyIsURL = true
+		}
+
+		if !keyIsGPGKey && !keyIsURL {
+			return fmt.Errorf("Repository gpg key is not a valid URL or a valid gpg key")
+		}
+	}
+
 	return nil
 }
 
