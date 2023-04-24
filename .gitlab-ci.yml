@@ -252,15 +252,16 @@ Manifests:
 
 regression-bigiso:
   extends: .regression
-  rules: 
+  rules:
     # WHITELIST: Run only on x86_64 and rhel like systems
     - if: $RUNNER =~ "/^.*(rhel-8.*x86_64|rhel-9.*x86_64|centos-stream-8.*x86_64|centos-stream-9.*x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.nightly_rules_x86_64, rules]
   variables:
     SCRIPT: regression-bigiso.sh
 
 regression-composer-works-behind-satellite-fallback:
   extends: .regression
-  rules: 
+  rules:
     # BLACKLIST: Skipped on subscribed RHEL machines
     - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
     - !reference [.nightly_rules_all, rules]
