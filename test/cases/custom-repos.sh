@@ -13,6 +13,11 @@ source /etc/os-release
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
+if ! nvrGreaterOrEqual "osbuild-composer" "81"; then
+    echo "SKIP: test not supported on osbuild-composer < 81"
+    exit 0
+fi
+
 # Set up variables.
 case "${ID}-${VERSION_ID}" in
     fedora*)
