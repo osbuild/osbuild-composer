@@ -268,6 +268,7 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			GPGKeys:        rr.GPGKeys,
 			IgnoreSSL:      rr.IgnoreSSL,
 			MetadataExpire: rr.MetadataExpire,
+			repoHash:       rr.Hash(),
 		}
 
 		if rr.CheckGPG != nil {
@@ -311,25 +312,15 @@ type repoConfig struct {
 	SSLClientKey   string   `json:"sslclientkey,omitempty"`
 	SSLClientCert  string   `json:"sslclientcert,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
+	// set the repo hass from `rpmmd.RepoConfig.Hash()` function
+	// rather than re-calculating it
+	repoHash string
 }
 
-// Hash calculates an ID string that uniquely represents a repository
-// configuration.  The Name and ImageTypeTags fields are not considered in the
-// calculation.
-// Copied from rpmmd/repository.go
+// use the hash calculated by the `rpmmd.RepoConfig.Hash()`
+// function rather than re-implementing the same code
 func (r *repoConfig) Hash() string {
-	bts := func(b bool) string {
-		return fmt.Sprintf("%T", b)
-	}
-	ats := func(s []string) string {
-		return strings.Join(s, "")
-	}
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(ats(r.BaseURLs)+
-		r.Metalink+
-		r.MirrorList+
-		ats(r.GPGKeys)+
-		bts(r.IgnoreSSL)+
-		r.MetadataExpire)))
+	return r.repoHash
 }
 
 // Helper function for creating a depsolve request payload.
