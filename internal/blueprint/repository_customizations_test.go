@@ -65,6 +65,20 @@ func TestGetCustomRepositories(t *testing.T) {
 			},
 			wantErr: fmt.Errorf("Repository gpg check is set to true but no gpg keys are provided"),
 		},
+		{
+			name: "Test invalid GPG keys error",
+			expectedCustomizations: Customizations{
+				Repositories: []RepositoryCustomization{
+					{
+						Id:       "example-1",
+						BaseURLs: []string{"http://example-1.com"},
+						GPGKeys:  []string{"invalid"},
+						GPGCheck: common.ToPtr(true),
+					},
+				},
+			},
+			wantErr: fmt.Errorf("Repository gpg key is not a valid URL or a valid gpg key"),
+		},
 	}
 
 	for _, tt := range testCases {
@@ -245,14 +259,14 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 				{
 					Id:        "example-1",
 					BaseURLs:  []string{"http://example-1.com"},
-					GPGKeys:   []string{"fake-gpg-key-1"},
+					GPGKeys:   []string{"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n"},
 					GPGCheck:  common.ToPtr(true),
 					SSLVerify: true,
 				},
 				{
 					Id:        "example-2",
 					BaseURLs:  []string{"http://example-2.com"},
-					GPGKeys:   []string{"fake-gpg-key-2"},
+					GPGKeys:   []string{"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n"},
 					GPGCheck:  common.ToPtr(true),
 					SSLVerify: true,
 				},
@@ -276,24 +290,30 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 				},
 			},
 			WantGPGKeys: []*fsnode.File{
-				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-1-0", nil, nil, nil, []byte("fake-gpg-key-1"))),
-				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-2-0", nil, nil, nil, []byte("fake-gpg-key-1"))),
+				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-1-0", nil, nil, nil, []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n"))),
+				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-2-0", nil, nil, nil, []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n"))),
 			},
 		},
 		{
 			Name: "Test multiple inline gpgkeys",
 			Repos: []RepositoryCustomization{
 				{
-					Id:        "example-1",
-					BaseURLs:  []string{"http://example-1.com"},
-					GPGKeys:   []string{"fake-gpg-key-1", "fake-gpg-key-2"},
+					Id:       "example-1",
+					BaseURLs: []string{"http://example-1.com"},
+					GPGKeys: []string{
+						"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n",
+						"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n",
+					},
 					GPGCheck:  common.ToPtr(true),
 					SSLVerify: true,
 				},
 				{
-					Id:        "example-2",
-					BaseURLs:  []string{"http://example-2.com"},
-					GPGKeys:   []string{"fake-gpg-key-1", "fake-gpg-key-2"},
+					Id:       "example-2",
+					BaseURLs: []string{"http://example-2.com"},
+					GPGKeys: []string{
+						"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n",
+						"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n",
+					},
 					GPGCheck:  common.ToPtr(true),
 					SSLVerify: true,
 				},
@@ -317,10 +337,10 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 				},
 			},
 			WantGPGKeys: []*fsnode.File{
-				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-1-0", nil, nil, nil, []byte("fake-gpg-key-1"))),
-				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-1-1", nil, nil, nil, []byte("fake-gpg-key-2"))),
-				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-2-0", nil, nil, nil, []byte("fake-gpg-key-1"))),
-				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-2-1", nil, nil, nil, []byte("fake-gpg-key-2"))),
+				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-1-0", nil, nil, nil, []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n"))),
+				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-1-1", nil, nil, nil, []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n"))),
+				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-2-0", nil, nil, nil, []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n"))),
+				ensureFileCreation(fsnode.NewFile("/etc/pki/rpm-gpg/RPM-GPG-KEY-example-2-1", nil, nil, nil, []byte("-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n"))),
 			},
 		},
 	}
