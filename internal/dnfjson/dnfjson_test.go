@@ -115,11 +115,13 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
+					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
+					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
 				},
 			},
 		},
@@ -152,16 +154,19 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
+					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
+					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
+					repoHash: "127d1ae749d1b673dd8701871483ae93e82bff052ef2b9bf0b668ed1aca89f76",
 				},
 			},
 		},
@@ -194,11 +199,13 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
+					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
+					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
 				},
 			},
 		},
@@ -239,16 +246,19 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
+					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
+					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
+					repoHash: "127d1ae749d1b673dd8701871483ae93e82bff052ef2b9bf0b668ed1aca89f76",
 				},
 			},
 		},
@@ -290,21 +300,25 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
+					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
+					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
+					repoHash: "127d1ae749d1b673dd8701871483ae93e82bff052ef2b9bf0b668ed1aca89f76",
 				},
 				{
 					ID:       userRepo2.Hash(),
 					Name:     "user-repo-2",
 					BaseURLs: []string{"https://example.org/user-repo-2"},
+					repoHash: "ca314d924e273218585cd60d7a5ffd91574df7ddf5b0574b31cf558971466170",
 				},
 			},
 		},
@@ -551,18 +565,28 @@ func TestErrorRepoInfo(t *testing.T) {
 }
 
 func TestRepoConfigHash(t *testing.T) {
-	rc := repoConfig{
-		ID:        "repoid-1",
-		Name:      "A test repository",
-		BaseURLs:  []string{"https://arepourl/"},
-		IgnoreSSL: false,
+	repos := []rpmmd.RepoConfig{
+		{
+			Id:        "repoid-1",
+			Name:      "A test repository",
+			BaseURLs:  []string{"https://arepourl/"},
+			IgnoreSSL: false,
+		},
+		{
+			BaseURLs: []string{"https://adifferenturl/"},
+		},
 	}
 
-	hash := rc.Hash()
+	solver := NewSolver("f36", "36", "x86_64", "fedora-36", "/tmp/cache")
+	solver.SetDNFJSONPath("../../dnf-json")
+
+	rcs, err := solver.reposFromRPMMD(repos)
+	assert.Nil(t, err)
+
+	hash := rcs[0].Hash()
 	assert.Equal(t, 64, len(hash))
 
-	rc.BaseURLs = []string{"https://adifferenturl/"}
-	assert.NotEqual(t, hash, rc.Hash())
+	assert.NotEqual(t, hash, rcs[1].Hash())
 }
 
 func TestRequestHash(t *testing.T) {
