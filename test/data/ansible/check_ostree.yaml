@@ -485,6 +485,22 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: embeded_container == "true"
 
+    - name: embedded fedora-minimal container image should be listed by podman images
+      block:
+        - assert:
+            that:
+              - "'localhost/fedora-minimal' in result_podman_images.stdout"
+            fail_msg: "fedora-minimal image is not built in image"
+            success_msg: "fedora-minimal image is built in image"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: embeded_container == "true"
+
     # case: check running container with podman
     - name: run ubi8 image
       command: podman run registry.access.redhat.com/ubi8/ubi-minimal:latest cat /etc/redhat-release
@@ -535,6 +551,35 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+
+    # case: check fedora-minimal container with podman
+    - name: run fedora-minimal image
+      command: podman run localhost/fedora-minimal@sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b cat /etc/os-release
+      register: fminimal_container_result
+      become: yes
+      retries: 30  # due to https://github.com/osbuild/osbuild-composer/issues/2492
+      delay: 2
+      until: fminimal_container_result is success
+      ignore_errors: yes  # due to https://bugzilla.redhat.com/show_bug.cgi?id=1903983
+      when: embeded_container == "true"
+
+    - name: run fedora-minimal container test
+      block:
+        - assert:
+            that:
+              - fminimal_container_result is succeeded
+              - "'Fedora Linux 36 (Container Image)' in fminimal_container_result.stdout"
+              - "'Trying to pull' not in fminimal_container_result.stdout"
+            fail_msg: "failed run fedora-minimal container with podman"
+            success_msg: "running fedora-minimal container with podman successed"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: embeded_container == "true"
 
     # case: check dnf package and it should not be installed
     # https://github.com/osbuild/osbuild-composer/blob/master/internal/distro/rhel8/distro.go#L642
