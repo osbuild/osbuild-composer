@@ -248,7 +248,7 @@ func resolveContainers(containers []blueprint.Container, archName string) ([]con
 	resolver := container.NewResolver(archName)
 
 	for _, c := range containers {
-		resolver.Add(c.Source, c.Name, c.TLSVerify)
+		resolver.Add(container.SourceSpec(c))
 	}
 
 	return resolver.Finish()
