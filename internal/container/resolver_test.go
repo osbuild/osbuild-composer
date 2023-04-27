@@ -44,7 +44,7 @@ func TestResolver(t *testing.T) {
 	resolver := container.NewResolver("amd64")
 
 	for _, r := range refs {
-		resolver.Add(r, "", common.ToPtr(false))
+		resolver.Add(container.SourceSpec{r, "", common.ToPtr(false)})
 	}
 
 	have, err := resolver.Finish()
@@ -69,7 +69,7 @@ func TestResolver(t *testing.T) {
 func TestResolverFail(t *testing.T) {
 	resolver := container.NewResolver("amd64")
 
-	resolver.Add("invalid-reference@${IMAGE_DIGEST}", "", common.ToPtr(false))
+	resolver.Add(container.SourceSpec{"invalid-reference@${IMAGE_DIGEST}", "", common.ToPtr(false)})
 
 	specs, err := resolver.Finish()
 	assert.Error(t, err)
@@ -78,7 +78,7 @@ func TestResolverFail(t *testing.T) {
 	registry := NewTestRegistry()
 	defer registry.Close()
 
-	resolver.Add(registry.GetRef("repo"), "", common.ToPtr(false))
+	resolver.Add(container.SourceSpec{registry.GetRef("repo"), "", common.ToPtr(false)})
 	specs, err = resolver.Finish()
 	assert.Error(t, err)
 	assert.Len(t, specs, 0)

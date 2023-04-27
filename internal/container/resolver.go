@@ -21,6 +21,12 @@ type Resolver struct {
 	AuthFilePath string
 }
 
+type SourceSpec struct {
+	Source    string
+	Name      string
+	TLSVerify *bool
+}
+
 func NewResolver(arch string) Resolver {
 	return Resolver{
 		ctx:   context.Background(),
@@ -29,8 +35,8 @@ func NewResolver(arch string) Resolver {
 	}
 }
 
-func (r *Resolver) Add(source, name string, TLSVerify *bool) {
-	client, err := NewClient(source)
+func (r *Resolver) Add(spec SourceSpec) {
+	client, err := NewClient(spec.Source)
 	r.jobs += 1
 
 	if err != nil {
@@ -38,16 +44,16 @@ func (r *Resolver) Add(source, name string, TLSVerify *bool) {
 		return
 	}
 
-	client.SetTLSVerify(TLSVerify)
+	client.SetTLSVerify(spec.TLSVerify)
 	client.SetArchitectureChoice(r.Arch)
 	if r.AuthFilePath != "" {
 		client.SetAuthFilePath(r.AuthFilePath)
 	}
 
 	go func() {
-		spec, err := client.Resolve(r.ctx, name)
+		spec, err := client.Resolve(r.ctx, spec.Name)
 		if err != nil {
-			err = fmt.Errorf("'%s': %w", source, err)
+			err = fmt.Errorf("'%s': %w", spec.Source, err)
 		}
 		r.queue <- resolveResult{spec: spec, err: err}
 	}()

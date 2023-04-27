@@ -72,7 +72,7 @@ func resolveContainers(bp blueprint.Blueprint, archName string) ([]container.Spe
 	resolver := container.NewResolver(archName)
 
 	for _, c := range bp.Containers {
-		resolver.Add(c.Source, c.Name, c.TLSVerify)
+		resolver.Add(container.SourceSpec(c))
 	}
 
 	return resolver.Finish()
