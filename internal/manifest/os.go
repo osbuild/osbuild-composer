@@ -499,9 +499,6 @@ func (p *OS) serialize() osbuild.Pipeline {
 		if p.Subscription.Rhc {
 			// Use rhc for registration instead of subscription manager
 			commands = []string{fmt.Sprintf("/usr/bin/rhc connect -o=%s -a=%s --server %s", p.Subscription.Organization, p.Subscription.ActivationKey, p.Subscription.ServerUrl)}
-
-			// Always enable Insights when using rhc
-			commands = append(commands, "/usr/bin/insights-client --register")
 		} else {
 			commands = []string{fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", p.Subscription.Organization, p.Subscription.ActivationKey, p.Subscription.ServerUrl, p.Subscription.BaseUrl)}
 
