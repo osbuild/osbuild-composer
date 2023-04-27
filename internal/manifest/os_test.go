@@ -110,7 +110,6 @@ func TestRhcInsightsCommands(t *testing.T) {
 	pipeline := os.serialize()
 	CheckFirstBootStageOptions(t, pipeline.Stages, []string{
 		"/usr/bin/rhc connect -o=2040324 -a=my-secret-key --server subscription.rhsm.redhat.com",
-		"/usr/bin/insights-client --register",
 	})
 }
 
