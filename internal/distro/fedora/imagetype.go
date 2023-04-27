@@ -321,9 +321,9 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 
 	ret, err := manifest.Serialize(packageSpecs)
 	if err != nil {
-		return ret, nil, err
+		return distro.Manifest(ret), nil, err
 	}
-	return ret, warnings, err
+	return distro.Manifest(ret), warnings, err
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.

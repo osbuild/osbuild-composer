@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -20,8 +19,21 @@ const (
 )
 
 // An OSBuildManifest is an opaque JSON object, which is a valid input to osbuild
-// TODO: use this instead of distro.Manifest below
 type OSBuildManifest []byte
+
+func (m OSBuildManifest) MarshalJSON() ([]byte, error) {
+	return json.RawMessage(m).MarshalJSON()
+}
+
+func (m *OSBuildManifest) UnmarshalJSON(payload []byte) error {
+	var raw json.RawMessage
+	err := (&raw).UnmarshalJSON(payload)
+	if err != nil {
+		return err
+	}
+	*m = OSBuildManifest(raw)
+	return nil
+}
 
 type Manifest struct {
 	pipelines []Pipeline
@@ -54,7 +66,7 @@ func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
 	return chains
 }
 
-func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (distro.Manifest, error) {
+func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (OSBuildManifest, error) {
 	pipelines := make([]osbuild.Pipeline, 0)
 	packages := make([]rpmmd.PackageSpec, 0)
 	commits := make([]ostree.CommitSpec, 0)
