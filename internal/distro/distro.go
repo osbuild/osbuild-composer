@@ -11,15 +11,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
 
-const (
-	// architecture names
-
-	X86_64ArchName  = "x86_64"
-	Aarch64ArchName = "aarch64"
-	Ppc64leArchName = "ppc64le"
-	S390xArchName   = "s390x"
-)
-
 type BootMode uint64
 
 const (

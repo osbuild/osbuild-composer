@@ -200,7 +200,7 @@ func newDistro(distroName string) distro.Distro {
 
 	// Architecture definitions
 	x86_64 := architecture{
-		name:   distro.X86_64ArchName,
+		name:   platform.ARCH_X86_64.String(),
 		distro: &rd,
 	}
 

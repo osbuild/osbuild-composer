@@ -194,22 +194,22 @@ func newDistro(name string, minor int) *distribution {
 
 	// Architecture definitions
 	x86_64 := architecture{
-		name:   distro.X86_64ArchName,
+		name:   platform.ARCH_X86_64.String(),
 		distro: &rd,
 	}
 
 	aarch64 := architecture{
-		name:   distro.Aarch64ArchName,
+		name:   platform.ARCH_AARCH64.String(),
 		distro: &rd,
 	}
 
 	ppc64le := architecture{
 		distro: &rd,
-		name:   distro.Ppc64leArchName,
+		name:   platform.ARCH_PPC64LE.String(),
 	}
 	s390x := architecture{
 		distro: &rd,
-		name:   distro.S390xArchName,
+		name:   platform.ARCH_S390X.String(),
 	}
 
 	ociImgType := qcow2ImgType(rd)

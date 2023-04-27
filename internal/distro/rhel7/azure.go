@@ -5,6 +5,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
@@ -272,7 +273,7 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
-	distro.X86_64ArchName: disk.PartitionTable{
+	platform.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Size: 64 * common.GibiByte,

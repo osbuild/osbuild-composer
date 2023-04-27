@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distro/rhel8"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
 type rhelFamilyDistro struct {
@@ -356,7 +357,7 @@ func TestImageType_Name(t *testing.T) {
 	for _, dist := range rhelFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
-				if mapping.arch == distro.S390xArchName && dist.name == "centos" {
+				if mapping.arch == platform.ARCH_S390X.String() && dist.name == "centos" {
 					continue
 				}
 				arch, err := dist.distro.GetArch(mapping.arch)

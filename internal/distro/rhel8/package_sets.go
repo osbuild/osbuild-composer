@@ -5,7 +5,7 @@ package rhel8
 import (
 	"fmt"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -30,7 +30,7 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	switch t.arch.Name() {
-	case distro.X86_64ArchName:
+	case platform.ARCH_X86_64.String():
 		ps = ps.Append(grubCommon)
 		ps = ps.Append(efiCommon)
 		ps = ps.Append(rpmmd.PackageSet{
@@ -46,7 +46,7 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 				"syslinux-nonlinux",
 			},
 		})
-	case distro.Aarch64ArchName:
+	case platform.ARCH_AARCH64.String():
 		ps = ps.Append(grubCommon)
 		ps = ps.Append(efiCommon)
 		ps = ps.Append(rpmmd.PackageSet{

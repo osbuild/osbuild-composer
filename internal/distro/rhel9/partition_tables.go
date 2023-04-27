@@ -4,10 +4,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
 var defaultBasePartitionTables = distro.BasePartitionTableMap{
-	distro.X86_64ArchName: disk.PartitionTable{
+	platform.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -59,7 +60,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	distro.Aarch64ArchName: disk.PartitionTable{
+	platform.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -105,7 +106,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	distro.Ppc64leArchName: disk.PartitionTable{
+	platform.ARCH_PPC64LE.String(): disk.PartitionTable{
 		UUID: "0x14fc63d2",
 		Type: "dos",
 		Partitions: []disk.Partition{
@@ -137,7 +138,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	distro.S390xArchName: disk.PartitionTable{
+	platform.ARCH_S390X.String(): disk.PartitionTable{
 		UUID: "0x14fc63d2",
 		Type: "dos",
 		Partitions: []disk.Partition{

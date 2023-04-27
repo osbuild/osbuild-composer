@@ -4,10 +4,11 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
 var defaultBasePartitionTables = distro.BasePartitionTableMap{
-	distro.X86_64ArchName: disk.PartitionTable{
+	platform.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -59,7 +60,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	distro.Aarch64ArchName: disk.PartitionTable{
+	platform.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -108,7 +109,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 }
 
 var iotBasePartitionTables = distro.BasePartitionTableMap{
-	distro.X86_64ArchName: disk.PartitionTable{
+	platform.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -154,7 +155,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	distro.Aarch64ArchName: disk.PartitionTable{
+	platform.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "0xc1748067",
 		Type: "dos",
 		Partitions: []disk.Partition{

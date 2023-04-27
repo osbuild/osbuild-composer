@@ -15,7 +15,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
 // WithNetworkNamespace provides the function f with a new network namespace
@@ -138,7 +138,7 @@ func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 				"-nographic",
 				image,
 			)
-		} else if common.CurrentArch() == distro.Aarch64ArchName {
+		} else if common.CurrentArch() == platform.ARCH_AARCH64.String() {
 			// This command does not use KVM as I was unable to make it work in Beaker,
 			// once we have machines that can use KVM, enable it to make it faster
 			qemuCmd = ns.NamespacedCommand(
