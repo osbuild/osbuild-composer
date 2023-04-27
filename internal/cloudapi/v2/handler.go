@@ -18,6 +18,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -1325,7 +1326,7 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
 
-			var manifest distro.Manifest
+			var mf manifest.OSBuildManifest
 
 			switch buildJobType {
 			case worker.JobTypeOSBuild:
@@ -1336,7 +1337,7 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 				}
 
 				if len(buildJob.Manifest) != 0 {
-					manifest = buildJob.Manifest
+					mf = buildJob.Manifest
 				} else {
 					buildInfo, err := h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &worker.OSBuildJobResult{})
 					if err != nil {
@@ -1346,14 +1347,14 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 					if err != nil {
 						return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
 					}
-					manifest = manifestResult.Manifest
+					mf = manifestResult.Manifest
 				}
 
 			default:
 				return HTTPErrorWithInternal(ErrorInvalidJobType,
 					fmt.Errorf("unexpected job type in koji compose dependencies: %q", buildJobType))
 			}
-			manifestBlobs = append(manifestBlobs, manifest)
+			manifestBlobs = append(manifestBlobs, mf)
 		}
 
 	case worker.JobTypeOSBuild:
@@ -1363,9 +1364,9 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 		}
 
-		var manifest distro.Manifest
+		var mf manifest.OSBuildManifest
 		if len(buildJob.Manifest) != 0 {
-			manifest = buildJob.Manifest
+			mf = buildJob.Manifest
 		} else {
 			buildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &worker.OSBuildJobResult{})
 			if err != nil {
@@ -1375,9 +1376,9 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
 			}
-			manifest = manifestResult.Manifest
+			mf = manifestResult.Manifest
 		}
-		manifestBlobs = append(manifestBlobs, manifest)
+		manifestBlobs = append(manifestBlobs, mf)
 
 	default:
 		return HTTPError(ErrorInvalidJobType)

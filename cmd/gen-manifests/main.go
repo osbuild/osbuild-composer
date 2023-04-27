@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -167,7 +168,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			err = fmt.Errorf("[%s] nil package specs", filename)
 			return
 		}
-		manifest, _, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
+		mf, _, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
 		if err != nil {
 			err = fmt.Errorf("[%s] failed: %s", filename, err)
 			return
@@ -181,7 +182,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			Blueprint:    cr.Blueprint,
 			OSTree:       cr.OSTree,
 		}
-		err = save(manifest, packageSpecs, containerSpecs, request, path, filename)
+		err = save(mf, packageSpecs, containerSpecs, request, path, filename)
 		return
 	}
 	return job
@@ -268,15 +269,15 @@ func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprin
 	return depsolvedSets, nil
 }
 
-func save(manifest distro.Manifest, pkgs map[string][]rpmmd.PackageSpec, containers []container.Spec, cr composeRequest, path, filename string) error {
+func save(mf manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers []container.Spec, cr composeRequest, path, filename string) error {
 	data := struct {
 		ComposeRequest composeRequest                 `json:"compose-request"`
-		Manifest       distro.Manifest                `json:"manifest"`
+		Manifest       manifest.OSBuildManifest       `json:"manifest"`
 		RPMMD          map[string][]rpmmd.PackageSpec `json:"rpmmd"`
 		Containers     []container.Spec               `json:"containers,omitempty"`
 		NoImageInfo    bool                           `json:"no-image-info"`
 	}{
-		cr, manifest, pkgs, containers, true,
+		cr, mf, pkgs, containers, true,
 	}
 	b, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {

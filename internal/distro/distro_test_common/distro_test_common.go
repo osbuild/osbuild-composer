@@ -18,6 +18,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -49,7 +50,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 		var tt struct {
 			ComposeRequest  *composeRequest                `json:"compose-request"`
 			PackageSpecSets map[string][]rpmmd.PackageSpec `json:"rpmmd"`
-			Manifest        distro.Manifest                `json:"manifest,omitempty"`
+			Manifest        manifest.OSBuildManifest       `json:"manifest,omitempty"`
 			Containers      []container.Spec               `json:"containers,omitempty"`
 		}
 		file, err := os.ReadFile(fileName)
