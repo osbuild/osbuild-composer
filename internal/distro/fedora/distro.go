@@ -516,12 +516,12 @@ func newDistro(version int) distro.Distro {
 
 	// Architecture definitions
 	x86_64 := architecture{
-		name:   distro.X86_64ArchName,
+		name:   platform.ARCH_X86_64.String(),
 		distro: &rd,
 	}
 
 	aarch64 := architecture{
-		name:   distro.Aarch64ArchName,
+		name:   platform.ARCH_AARCH64.String(),
 		distro: &rd,
 	}
 

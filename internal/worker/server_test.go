@@ -20,6 +20,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -737,7 +738,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 		switch dep.main.(type) {
 		case *worker.OSBuildJob:
 			job := dep.main.(*worker.OSBuildJob)
-			id, err = s.EnqueueOSBuildAsDependency(distro.X86_64ArchName, job, depUUIDs, "")
+			id, err = s.EnqueueOSBuildAsDependency(platform.ARCH_X86_64.String(), job, depUUIDs, "")
 			if err != nil {
 				return nil, err
 			}
@@ -807,7 +808,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 		}
 
 		// request the previously added Job
-		_, token, _, _, _, err := s.RequestJobById(context.Background(), distro.X86_64ArchName, id)
+		_, token, _, _, _, err := s.RequestJobById(context.Background(), platform.ARCH_X86_64.String(), id)
 		if err != nil {
 			return nil, err
 		}

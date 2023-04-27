@@ -1,7 +1,6 @@
 package manifest
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 )
@@ -36,9 +35,9 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 
 	arch := p.Platform.GetArch().String()
 	var architectures []string
-	if arch == distro.X86_64ArchName {
+	if arch == platform.ARCH_X86_64.String() {
 		architectures = []string{"X64"}
-	} else if arch == distro.Aarch64ArchName {
+	} else if arch == platform.ARCH_AARCH64.String() {
 		architectures = []string{"AA64"}
 	} else {
 		panic("unsupported architecture")

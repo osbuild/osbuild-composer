@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -120,7 +121,7 @@ func main() {
 	awsTarget.OsbuildArtifact.ExportFilename = "image.ami"
 
 	d := fedora.NewF37()
-	a, err := d.GetArch(distro.X86_64ArchName)
+	a, err := d.GetArch(platform.ARCH_X86_64.String())
 	if err != nil {
 		panic(err)
 	}
@@ -136,7 +137,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	repos := allRepos[distro.X86_64ArchName]
+	repos := allRepos[platform.ARCH_X86_64.String()]
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic("os.UserHomeDir(): " + err.Error())

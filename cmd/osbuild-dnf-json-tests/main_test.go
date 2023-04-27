@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -75,19 +76,19 @@ func TestDepsolvePackageSets(t *testing.T) {
 
 	// Set up temporary directory for rpm/dnf cache
 	dir := t.TempDir()
-	solver := dnfjson.NewSolver(cs9.ModulePlatformID(), cs9.Releasever(), distro.X86_64ArchName, cs9.Name(), dir)
+	solver := dnfjson.NewSolver(cs9.ModulePlatformID(), cs9.Releasever(), platform.ARCH_X86_64.String(), cs9.Name(), dir)
 
 	repos, err := rpmmd.LoadRepositories([]string{repoDir}, cs9.Name())
 	require.NoErrorf(t, err, "Failed to LoadRepositories %v", cs9.Name())
-	x86Repos, ok := repos[distro.X86_64ArchName]
-	require.Truef(t, ok, "failed to get %q repos for %q", distro.X86_64ArchName, cs9.Name())
+	x86Repos, ok := repos[platform.ARCH_X86_64.String()]
+	require.Truef(t, ok, "failed to get %q repos for %q", platform.ARCH_X86_64.String(), cs9.Name())
 
-	x86Arch, err := cs9.GetArch(distro.X86_64ArchName)
-	require.Nilf(t, err, "failed to get %q arch of %q distro", distro.X86_64ArchName, cs9.Name())
+	x86Arch, err := cs9.GetArch(platform.ARCH_X86_64.String())
+	require.Nilf(t, err, "failed to get %q arch of %q distro", platform.ARCH_X86_64.String(), cs9.Name())
 
 	qcow2ImageTypeName := "qcow2"
 	qcow2Image, err := x86Arch.GetImageType(qcow2ImageTypeName)
-	require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), distro.X86_64ArchName)
+	require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), platform.ARCH_X86_64.String())
 
 	imagePkgSets := qcow2Image.PackageSets(blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, distro.ImageOptions{}, x86Repos)
 

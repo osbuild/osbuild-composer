@@ -4,6 +4,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/subscription"
 )
@@ -103,7 +104,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}.Append(coreOsCommonPackageSet(t))
 
-	if t.arch.Name() == distro.X86_64ArchName {
+	if t.arch.Name() == platform.ARCH_X86_64.String() {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				// packages below used to come from @core group and were not excluded
