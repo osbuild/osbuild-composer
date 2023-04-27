@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -34,7 +35,7 @@ type storeTest struct {
 	myDistro         *test_distro.TestDistro
 	myArch           distro.Arch
 	myImageType      distro.ImageType
-	myManifest       distro.Manifest
+	myManifest       manifest.OSBuildManifest
 	myRepoConfig     []rpmmd.RepoConfig
 	myPackageSpec    []rpmmd.PackageSpec
 	myImageOptions   distro.ImageOptions

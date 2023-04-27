@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -409,7 +410,7 @@ func TestRequestJobById(t *testing.T) {
 func TestMixedOSBuildJob(t *testing.T) {
 	require := require.New(t)
 
-	emptyManifestV2 := distro.Manifest(`{"version":"2","pipelines":{}}`)
+	emptyManifestV2 := manifest.OSBuildManifest(`{"version":"2","pipelines":{}}`)
 	server := newTestServer(t, t.TempDir(), time.Millisecond*10, "/", false)
 	fbPipelines := &worker.PipelineNames{Build: distro.BuildPipelinesFallback(), Payload: distro.PayloadPipelinesFallback()}
 

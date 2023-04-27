@@ -19,6 +19,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -365,7 +366,7 @@ func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
 }
 
 func (s *Store) PushCompose(composeID uuid.UUID,
-	manifest distro.Manifest,
+	manifest manifest.OSBuildManifest,
 	imageType distro.ImageType,
 	bp *blueprint.Blueprint,
 	size uint64,
@@ -404,7 +405,7 @@ func (s *Store) PushCompose(composeID uuid.UUID,
 // Set testSuccess to create a fake successful compose, otherwise it will create a failed compose
 // It does not actually run a compose job
 func (s *Store) PushTestCompose(composeID uuid.UUID,
-	manifest distro.Manifest,
+	manifest manifest.OSBuildManifest,
 	imageType distro.ImageType,
 	bp *blueprint.Blueprint,
 	size uint64,

@@ -14,13 +14,14 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro/fedora"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, cacheDir string, repos []rpmmd.RepoConfig) (distro.Manifest, []rpmmd.PackageSpec) {
+func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, cacheDir string, repos []rpmmd.RepoConfig) (manifest.OSBuildManifest, []rpmmd.PackageSpec) {
 	packageSets := t.PackageSets(bp, distro.ImageOptions{}, repos)
 	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), d.Name(), cacheDir)
