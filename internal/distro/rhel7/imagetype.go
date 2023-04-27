@@ -223,9 +223,9 @@ func (t *imageType) Manifest(customizations *blueprint.Customizations,
 
 	ret, err := manifest.Serialize(packageSpecs)
 	if err != nil {
-		return ret, nil, err
+		return distro.Manifest(ret), nil, err
 	}
-	return ret, warnings, err
+	return distro.Manifest(ret), warnings, err
 }
 
 func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
