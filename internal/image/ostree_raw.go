@@ -1,6 +1,7 @@
 package image
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/osbuild/osbuild-composer/internal/artifact"
@@ -38,6 +39,8 @@ type OSTreeRawImage struct {
 
 	Filename string
 
+	Compression string
+
 	Ignition bool
 
 	Directories []*fsnode.Directory
@@ -52,6 +55,15 @@ func NewOSTreeRawImage(commit ostree.CommitSpec) *OSTreeRawImage {
 }
 
 func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.XZ {
+	imagePipeline := baseRawOstreeImage(img, m, buildPipeline)
+
+	xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
+	xzPipeline.Filename = img.Filename
+
+	return xzPipeline
+}
+
+func baseRawOstreeImage(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.RawOSTreeImage {
 	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.Commit, img.OSName, img.Ignition, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.Remote = img.Remote
@@ -68,12 +80,7 @@ func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, b
 	osPipeline.EnabledServices = img.Workload.GetServices()
 	osPipeline.DisabledServices = img.Workload.GetDisabledServices()
 
-	imagePipeline := manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
-
-	xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
-	xzPipeline.Filename = img.Filename
-
-	return xzPipeline
+	return manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
 }
 
 func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
@@ -83,8 +90,18 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuild(m, runner, repos)
 	buildPipeline.Checkpoint()
 
-	xzPipeline := ostreeCompressedImagePipelines(img, m, buildPipeline)
+	var art *artifact.Artifact
+	switch img.Compression {
+	case "xz":
+		ostreeCompressed := ostreeCompressedImagePipelines(img, m, buildPipeline)
+		art = ostreeCompressed.Export()
+	case "":
+		ostreeBase := baseRawOstreeImage(img, m, buildPipeline)
+		ostreeBase.Filename = img.Filename
+		art = ostreeBase.Export()
+	default:
+		panic(fmt.Sprintf("unsupported compression type %q on %q", img.Compression, img.name))
+	}
 
-	art := xzPipeline.Export()
 	return art, nil
 }

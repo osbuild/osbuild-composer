@@ -33,6 +33,7 @@ type imageType struct {
 	name               string
 	nameAliases        []string
 	filename           string
+	compression        string
 	mimeType           string
 	packageSets        map[string]packageSetFunc
 	defaultImageConfig *distro.ImageConfig

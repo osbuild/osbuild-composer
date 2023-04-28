@@ -318,6 +318,7 @@ func newDistro(name string, minor int) *distribution {
 		edgeInstallerImgType,
 		edgeRawImgType,
 		imageInstaller,
+		edgeAMIImgType,
 	)
 
 	x86_64.addImageTypes(
@@ -361,6 +362,7 @@ func newDistro(name string, minor int) *distribution {
 		edgeInstallerImgType,
 		edgeSimplifiedInstallerImgType,
 		imageInstaller,
+		edgeAMIImgType,
 	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{

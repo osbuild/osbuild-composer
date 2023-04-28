@@ -461,6 +461,7 @@ func edgeRawImage(workload workload.Workload,
 	img.PartitionTable = pt
 
 	img.Filename = t.Filename()
+	img.Compression = t.compression
 
 	return img, nil
 }
