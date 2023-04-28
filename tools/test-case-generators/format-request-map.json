@@ -867,6 +867,22 @@
     },
     "overrides": {}
   },
+    "edge-ami": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "edge-ami",
+      "repositories": [],
+      "filename": "image.raw",
+      "ostree": {
+        "ref": "test/edge",
+        "url": "http://edge.example.com/repo",
+        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "oci": {
     "compose-request": {
       "distro": "",

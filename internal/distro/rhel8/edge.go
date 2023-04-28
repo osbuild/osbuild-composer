@@ -62,6 +62,7 @@ func edgeRawImgType() imageType {
 		name:                "edge-raw-image",
 		nameAliases:         []string{"rhel-edge-raw-image"},
 		filename:            "image.raw.xz",
+		compression:         "xz",
 		mimeType:            "application/xz",
 		packageSets:         nil,
 		defaultSize:         10 * common.GibiByte,

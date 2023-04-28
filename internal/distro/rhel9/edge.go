@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/distro"
+	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -58,6 +59,7 @@ var (
 		name:        "edge-raw-image",
 		nameAliases: []string{"rhel-edge-raw-image"},
 		filename:    "image.raw.xz",
+		compression: "xz",
 		mimeType:    "application/xz",
 		packageSets: nil,
 		defaultImageConfig: &distro.ImageConfig{
@@ -128,6 +130,27 @@ var (
 		payloadPipelines:    []string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:             []string{"bootiso"},
 		basePartitionTables: edgeBasePartitionTables,
+	}
+
+	edgeAMIImgType = imageType{
+		name:        "edge-ami",
+		filename:    "image.raw",
+		mimeType:    "application/octet-stream",
+		packageSets: nil,
+
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: common.ToPtr("en_US.UTF-8"),
+		},
+		defaultSize:         10 * common.GibiByte,
+		rpmOstree:           true,
+		bootable:            true,
+		bootISO:             false,
+		image:               edgeRawImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"ostree-deployment", "image"},
+		exports:             []string{"image"},
+		basePartitionTables: edgeBasePartitionTables,
+		environment:         &environment.EC2{},
 	}
 
 	// Shared Services

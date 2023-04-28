@@ -197,6 +197,14 @@ func TestFilenameFromType(t *testing.T) {
 			},
 		},
 		{
+			name: "edge-ami",
+			args: args{"edge-ami"},
+			want: wantResult{
+				filename: "image.raw",
+				mimeType: "application/octet-stream",
+			},
+		},
+		{
 			name: "invalid-output-type",
 			args: args{"foobar"},
 			want: wantResult{wantErr: true},
@@ -461,8 +469,8 @@ func TestDistro_ManifestError(t *testing.T) {
 			_, _, err := imgType.Manifest(&bp, imgOpts, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
-			} else if imgTypeName == "edge-raw-image" {
-				assert.EqualError(t, err, "edge raw images require specifying a URL from which to retrieve the OSTree commit")
+			} else if imgTypeName == "edge-raw-image" || imgTypeName == "edge-ami" {
+				assert.EqualError(t, err, fmt.Sprintf("\"%s\" images require specifying a URL from which to retrieve the OSTree commit", imgTypeName))
 			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" {
 				assert.EqualError(t, err, fmt.Sprintf("boot ISO image type \"%s\" requires specifying a URL from which to retrieve the OSTree commit", imgTypeName))
 			} else {
@@ -496,6 +504,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-installer",
 				"edge-raw-image",
 				"edge-simplified-installer",
+				"edge-ami",
 				"gce",
 				"gce-rhui",
 				"tar",
@@ -515,6 +524,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"edge-installer",
 				"edge-simplified-installer",
 				"edge-raw-image",
+				"edge-ami",
 				"tar",
 				"image-installer",
 				"vhd",
@@ -634,7 +644,7 @@ func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" || imgTypeName == "edge-ami" {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/etc\"]")
@@ -662,7 +672,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" || imgTypeName == "edge-ami" {
 				continue
 			} else {
 				assert.NoError(t, err)
@@ -796,7 +806,7 @@ func TestDistro_CustomFileSystemPatternMatching(t *testing.T) {
 			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" || imgTypeName == "edge-ami" {
 				continue
 			} else {
 				assert.EqualError(t, err, "The following custom mountpoints are not supported [\"/variable\" \"/variable/log/audit\"]")
@@ -824,7 +834,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
-			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
+			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" || imgTypeName == "edge-ami" {
 				continue
 			} else {
 				assert.NoError(t, err)

@@ -144,6 +144,7 @@ var (
 		name:        "iot-raw-image",
 		nameAliases: []string{"fedora-iot-raw-image"},
 		filename:    "image.raw.xz",
+		compression: "xz",
 		mimeType:    "application/xz",
 		packageSets: map[string]packageSetFunc{},
 		defaultImageConfig: &distro.ImageConfig{

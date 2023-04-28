@@ -341,10 +341,10 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		}
 	}
 
-	if t.name == "edge-raw-image" {
+	if t.name == "edge-raw-image" || t.name == "edge-ami" {
 		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
 		if ostreeChecksum == "" {
-			return warnings, fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
+			return warnings, fmt.Errorf("%q images require specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 
 		allowed := []string{"Ignition", "Kernel", "User", "Group"}
