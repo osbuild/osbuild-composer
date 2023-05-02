@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -24,6 +25,7 @@ type YumRepository struct {
 	Name           string   `json:"name,omitempty"`
 	GPGCheck       *bool    `json:"gpgcheck,omitempty"`
 	RepoGPGCheck   *bool    `json:"repo_gpgcheck,omitempty"`
+	SSLVerify      *bool    `json:"sslverify,omitempty"`
 }
 
 func (r YumRepository) validate() error {
@@ -90,6 +92,12 @@ func repoConfigToYumRepository(repo rpmmd.RepoConfig) YumRepository {
 	keys := make([]string, len(repo.GPGKeys))
 	copy(keys, repo.GPGKeys)
 
+	var sslVerify *bool
+	if repo.IgnoreSSL != nil {
+		ignoreSSL := *repo.IgnoreSSL
+		sslVerify = common.ToPtr(!ignoreSSL)
+	}
+
 	yumRepo := YumRepository{
 		Id:           repo.Id,
 		Name:         repo.Name,
@@ -101,6 +109,7 @@ func repoConfigToYumRepository(repo rpmmd.RepoConfig) YumRepository {
 		RepoGPGCheck: repo.CheckRepoGPG,
 		Enabled:      repo.Enabled,
 		Priority:     repo.Priority,
+		SSLVerify:    sslVerify,
 	}
 
 	return yumRepo
