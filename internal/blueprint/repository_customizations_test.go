@@ -79,6 +79,19 @@ func TestGetCustomRepositories(t *testing.T) {
 			},
 			wantErr: fmt.Errorf("Repository gpg key is not a valid URL or a valid gpg key"),
 		},
+		{
+			name: "Test invalid repository filename error",
+			expectedCustomizations: Customizations{
+				Repositories: []RepositoryCustomization{
+					{
+						Id:       "example-1",
+						BaseURLs: []string{"http://example-1.com"},
+						Filename: "!nval!d",
+					},
+				},
+			},
+			wantErr: fmt.Errorf("Repository filename %q is invalid", "!nval!d.repo"),
+		},
 	}
 
 	for _, tt := range testCases {
@@ -123,6 +136,15 @@ func TestCustomRepoFilename(t *testing.T) {
 				Id:       "example-1",
 				BaseURLs: []string{"http://example-1.com"},
 				Filename: "test.repo",
+			},
+			WantFilename: "test.repo",
+		},
+		{
+			Name: "Test custom filename without extension",
+			Repo: RepositoryCustomization{
+				Id:       "example-1",
+				BaseURLs: []string{"http://example-1.com"},
+				Filename: "test",
 			},
 			WantFilename: "test.repo",
 		},
