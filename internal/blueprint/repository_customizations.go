@@ -3,6 +3,7 @@ package blueprint
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/fsnode"
@@ -24,9 +25,16 @@ type RepositoryCustomization struct {
 	Filename     string   `json:"filename,omitempty" toml:"filename,omitempty"`
 }
 
+const repoFilenameRegex = "^[\\w.-]{1,250}\\.repo$"
+
 func validateCustomRepository(repo *RepositoryCustomization) error {
 	if repo.Id == "" {
 		return fmt.Errorf("Repository ID is required")
+	}
+
+	filenameRegex := regexp.MustCompile(repoFilenameRegex)
+	if !filenameRegex.MatchString(repo.getFilename()) {
+		return fmt.Errorf("Repository filename %q is invalid", repo.getFilename())
 	}
 
 	if len(repo.BaseURLs) == 0 && repo.Mirrorlist == "" && repo.Metalink == "" {
@@ -59,6 +67,9 @@ func validateCustomRepository(repo *RepositoryCustomization) error {
 func (rc *RepositoryCustomization) getFilename() string {
 	if rc.Filename == "" {
 		return fmt.Sprintf("%s.repo", rc.Id)
+	}
+	if !strings.HasSuffix(rc.Filename, ".repo") {
+		return fmt.Sprintf("%s.repo", rc.Filename)
 	}
 	return rc.Filename
 }
