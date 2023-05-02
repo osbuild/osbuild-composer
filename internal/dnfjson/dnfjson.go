@@ -266,7 +266,6 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			Metalink:       rr.Metalink,
 			MirrorList:     rr.MirrorList,
 			GPGKeys:        rr.GPGKeys,
-			IgnoreSSL:      rr.IgnoreSSL,
 			MetadataExpire: rr.MetadataExpire,
 			repoHash:       rr.Hash(),
 		}
@@ -277,6 +276,10 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 
 		if rr.CheckRepoGPG != nil {
 			dr.CheckRepoGPG = *rr.CheckRepoGPG
+		}
+
+		if rr.IgnoreSSL != nil {
+			dr.IgnoreSSL = *rr.IgnoreSSL
 		}
 
 		if rr.RHSM {
@@ -458,7 +461,9 @@ func (pkgs packageSpecs) toRPMMD(repos map[string]rpmmd.RepoConfig) []rpmmd.Pack
 		if repo.CheckGPG != nil {
 			rpmDependencies[i].CheckGPG = *repo.CheckGPG
 		}
-		rpmDependencies[i].IgnoreSSL = repo.IgnoreSSL
+		if repo.IgnoreSSL != nil {
+			rpmDependencies[i].IgnoreSSL = *repo.IgnoreSSL
+		}
 		if repo.RHSM {
 			rpmDependencies[i].Secrets = "org.osbuild.rhsm"
 		}
