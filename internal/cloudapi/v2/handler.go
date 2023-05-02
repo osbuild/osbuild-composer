@@ -371,7 +371,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 
 			if repo.SslVerify != nil {
-				repoCustomization.SSLVerify = *repo.SslVerify
+				repoCustomization.SSLVerify = repo.SslVerify
 			}
 
 			if repo.Priority != nil {
@@ -1441,7 +1441,7 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 		repoConfig.GPGKeys = []string{*repo.Gpgkey}
 	}
 	if repo.IgnoreSsl != nil {
-		repoConfig.IgnoreSSL = *repo.IgnoreSsl
+		repoConfig.IgnoreSSL = repo.IgnoreSsl
 	}
 
 	if repo.CheckGpg != nil {
@@ -1451,7 +1451,7 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 		repoConfig.GPGKeys = []string{*repo.Gpgkey}
 	}
 	if repo.IgnoreSsl != nil {
-		repoConfig.IgnoreSSL = *repo.IgnoreSsl
+		repoConfig.IgnoreSSL = repo.IgnoreSsl
 	}
 	if repo.CheckRepoGpg != nil {
 		repoConfig.CheckRepoGPG = repo.CheckRepoGpg

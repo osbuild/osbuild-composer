@@ -40,7 +40,7 @@ type RepoConfig struct {
 	CheckGPG       *bool    `json:"check_gpg,omitempty"`
 	CheckRepoGPG   *bool    `json:"check_repo_gpg,omitempty"`
 	Priority       *int     `json:"priority,omitempty"`
-	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
+	IgnoreSSL      *bool    `json:"ignore_ssl,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
 	Enabled        *bool    `json:"enabled,omitempty"`
@@ -67,7 +67,7 @@ func (r *RepoConfig) Hash() string {
 		ats(r.GPGKeys)+
 		bpts(r.CheckGPG)+
 		bpts(r.CheckRepoGPG)+
-		bts(r.IgnoreSSL)+
+		bpts(r.IgnoreSSL)+
 		r.MetadataExpire+
 		bts(r.RHSM))))
 }

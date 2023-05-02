@@ -166,7 +166,7 @@ func main() {
 			GPGKeys:      keys,
 			CheckGPG:     &repo.CheckGPG,
 			CheckRepoGPG: common.ToPtr(false),
-			IgnoreSSL:    false,
+			IgnoreSSL:    common.ToPtr(false),
 			PackageSets:  repo.PackageSets,
 			RHSM:         repo.RHSM,
 		}

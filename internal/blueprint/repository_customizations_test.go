@@ -175,14 +175,12 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 			Name: "Test no gpg keys, no filenames",
 			Repos: []RepositoryCustomization{
 				{
-					Id:        "example-1",
-					BaseURLs:  []string{"http://example-1.com"},
-					SSLVerify: true,
+					Id:       "example-1",
+					BaseURLs: []string{"http://example-1.com"},
 				},
 				{
-					Id:        "example-2",
-					BaseURLs:  []string{"http://example-2.com"},
-					SSLVerify: true,
+					Id:       "example-2",
+					BaseURLs: []string{"http://example-2.com"},
 				},
 			},
 			WantRepoConfig: map[string][]rpmmd.RepoConfig{
@@ -207,16 +205,14 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 			Name: "Test no gpg keys, filenames",
 			Repos: []RepositoryCustomization{
 				{
-					Id:        "example-1",
-					BaseURLs:  []string{"http://example-1.com"},
-					SSLVerify: true,
-					Filename:  "test-1.repo",
+					Id:       "example-1",
+					BaseURLs: []string{"http://example-1.com"},
+					Filename: "test-1.repo",
 				},
 				{
-					Id:        "example-2",
-					BaseURLs:  []string{"http://example-2.com"},
-					SSLVerify: true,
-					Filename:  "test-2.repo",
+					Id:       "example-2",
+					BaseURLs: []string{"http://example-2.com"},
+					Filename: "test-2.repo",
 				},
 			},
 			WantRepoConfig: map[string][]rpmmd.RepoConfig{
@@ -241,18 +237,16 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 			Name: "Test remote gpgkeys",
 			Repos: []RepositoryCustomization{
 				{
-					Id:        "example-1",
-					BaseURLs:  []string{"http://example-1.com"},
-					GPGKeys:   []string{"http://example-1.com/gpgkey"},
-					GPGCheck:  common.ToPtr(true),
-					SSLVerify: true,
+					Id:       "example-1",
+					BaseURLs: []string{"http://example-1.com"},
+					GPGKeys:  []string{"http://example-1.com/gpgkey"},
+					GPGCheck: common.ToPtr(true),
 				},
 				{
-					Id:        "example-2",
-					BaseURLs:  []string{"http://example-2.com"},
-					GPGKeys:   []string{"http://example-2.com/gpgkey"},
-					GPGCheck:  common.ToPtr(true),
-					SSLVerify: true,
+					Id:       "example-2",
+					BaseURLs: []string{"http://example-2.com"},
+					GPGKeys:  []string{"http://example-2.com/gpgkey"},
+					GPGCheck: common.ToPtr(true),
 				},
 			},
 			WantRepoConfig: map[string][]rpmmd.RepoConfig{
@@ -279,18 +273,16 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 			Name: "Test inline gpgkeys",
 			Repos: []RepositoryCustomization{
 				{
-					Id:        "example-1",
-					BaseURLs:  []string{"http://example-1.com"},
-					GPGKeys:   []string{"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n"},
-					GPGCheck:  common.ToPtr(true),
-					SSLVerify: true,
+					Id:       "example-1",
+					BaseURLs: []string{"http://example-1.com"},
+					GPGKeys:  []string{"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n"},
+					GPGCheck: common.ToPtr(true),
 				},
 				{
-					Id:        "example-2",
-					BaseURLs:  []string{"http://example-2.com"},
-					GPGKeys:   []string{"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n"},
-					GPGCheck:  common.ToPtr(true),
-					SSLVerify: true,
+					Id:       "example-2",
+					BaseURLs: []string{"http://example-2.com"},
+					GPGKeys:  []string{"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n"},
+					GPGCheck: common.ToPtr(true),
 				},
 			},
 			WantRepoConfig: map[string][]rpmmd.RepoConfig{
@@ -326,8 +318,7 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 						"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n",
 						"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n",
 					},
-					GPGCheck:  common.ToPtr(true),
-					SSLVerify: true,
+					GPGCheck: common.ToPtr(true),
 				},
 				{
 					Id:       "example-2",
@@ -336,8 +327,7 @@ func TestCustomRepoToRepoConfigAndGPGKeys(t *testing.T) {
 						"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-1-----END PGP PUBLIC KEY BLOCK-----\n",
 						"-----BEGIN PGP PUBLIC KEY BLOCK-----fake-gpg-key-2-----END PGP PUBLIC KEY BLOCK-----\n",
 					},
-					GPGCheck:  common.ToPtr(true),
-					SSLVerify: true,
+					GPGCheck: common.ToPtr(true),
 				},
 			},
 			WantRepoConfig: map[string][]rpmmd.RepoConfig{

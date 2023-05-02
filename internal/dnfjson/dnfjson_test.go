@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/mocks/rpmrepo"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/stretchr/testify/assert"
@@ -115,13 +116,13 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
+					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
+					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
 				},
 			},
 		},
@@ -154,19 +155,19 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
+					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
+					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
-					repoHash: "127d1ae749d1b673dd8701871483ae93e82bff052ef2b9bf0b668ed1aca89f76",
+					repoHash: "ffbdcbe6fefded88354e22cc292a62f1dac41b23f83c5eb95c1cdae84257a713",
 				},
 			},
 		},
@@ -199,13 +200,13 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
+					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
+					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
 				},
 			},
 		},
@@ -246,19 +247,19 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
+					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
+					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
-					repoHash: "127d1ae749d1b673dd8701871483ae93e82bff052ef2b9bf0b668ed1aca89f76",
+					repoHash: "ffbdcbe6fefded88354e22cc292a62f1dac41b23f83c5eb95c1cdae84257a713",
 				},
 			},
 		},
@@ -300,25 +301,25 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "b6b5cb4aae14a9ccc5f925876857b5cbfd757713a7c60e4c287502db80d8ecae",
+					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "de4ae5f6f8288c8e6c745cac22bf3d923d3c738cc68c4b6046acac9a5eb3b8da",
+					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
-					repoHash: "127d1ae749d1b673dd8701871483ae93e82bff052ef2b9bf0b668ed1aca89f76",
+					repoHash: "ffbdcbe6fefded88354e22cc292a62f1dac41b23f83c5eb95c1cdae84257a713",
 				},
 				{
 					ID:       userRepo2.Hash(),
 					Name:     "user-repo-2",
 					BaseURLs: []string{"https://example.org/user-repo-2"},
-					repoHash: "ca314d924e273218585cd60d7a5ffd91574df7ddf5b0574b31cf558971466170",
+					repoHash: "67d1ea4f70638dbcd397c70c9a78a477f3f4ae0ac819a1f479bebfde700160c4",
 				},
 			},
 		},
@@ -570,7 +571,7 @@ func TestRepoConfigHash(t *testing.T) {
 			Id:        "repoid-1",
 			Name:      "A test repository",
 			BaseURLs:  []string{"https://arepourl/"},
-			IgnoreSSL: false,
+			IgnoreSSL: common.ToPtr(false),
 		},
 		{
 			BaseURLs: []string{"https://adifferenturl/"},
@@ -595,7 +596,7 @@ func TestRequestHash(t *testing.T) {
 		rpmmd.RepoConfig{
 			Name:      "A test repository",
 			BaseURLs:  []string{"https://arepourl/"},
-			IgnoreSSL: false,
+			IgnoreSSL: common.ToPtr(false),
 		},
 	}
 

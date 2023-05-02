@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/fsnode"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -21,7 +22,7 @@ type RepositoryCustomization struct {
 	Enabled      *bool    `json:"enabled,omitempty" toml:"enabled,omitempty"`
 	GPGCheck     *bool    `json:"gpgcheck,omitempty" toml:"gpgcheck,omitempty"`
 	RepoGPGCheck *bool    `json:"repo_gpgcheck,omitempty" toml:"repo_gpgcheck,omitempty"`
-	SSLVerify    bool     `json:"sslverify,omitempty" toml:"sslverify,omitempty"`
+	SSLVerify    *bool    `json:"sslverify,omitempty" toml:"sslverify,omitempty"`
 	Filename     string   `json:"filename,omitempty" toml:"filename,omitempty"`
 }
 
@@ -126,7 +127,10 @@ func (repo RepositoryCustomization) customRepoToRepoConfig() rpmmd.RepoConfig {
 		CheckRepoGPG: repo.RepoGPGCheck,
 		Priority:     repo.Priority,
 		Enabled:      repo.Enabled,
-		IgnoreSSL:    !repo.SSLVerify,
+	}
+
+	if repo.SSLVerify != nil {
+		repoConfig.IgnoreSSL = common.ToPtr(!*repo.SSLVerify)
 	}
 
 	return repoConfig

@@ -21,7 +21,7 @@ func NewTestServer() *testRepoServer {
 		Name:      "cs9-baseos",
 		BaseURLs:  []string{server.URL},
 		CheckGPG:  common.ToPtr(false),
-		IgnoreSSL: true,
+		IgnoreSSL: common.ToPtr(true),
 		RHSM:      false,
 	}
 	return &testRepoServer{Server: server, RepoConfig: testrepo}
