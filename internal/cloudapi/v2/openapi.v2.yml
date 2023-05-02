@@ -855,10 +855,12 @@ components:
             type: string
         check_gpg:
           type: boolean
-        repo_check_gpg:
+        check_repo_gpg:
           type: boolean
         ssl_verify:
           type: boolean
+        priority:
+          type: integer
     UploadOptions:
       anyOf:
       - $ref: '#/components/schemas/AWSEC2UploadOptions'

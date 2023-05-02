@@ -353,8 +353,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				repoCustomization.GPGCheck = repo.CheckGpg
 			}
 
-			if repo.RepoCheckGpg != nil {
-				repoCustomization.RepoGPGCheck = repo.RepoCheckGpg
+			if repo.CheckRepoGpg != nil {
+				repoCustomization.RepoGPGCheck = repo.CheckRepoGpg
 			}
 
 			if repo.Enabled != nil {
@@ -371,6 +371,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 			if repo.SslVerify != nil {
 				repoCustomization.SSLVerify = *repo.SslVerify
+			}
+
+			if repo.Priority != nil {
+				repoCustomization.Priority = repo.Priority
 			}
 
 			repoCustomizations = append(repoCustomizations, repoCustomization)
