@@ -2848,12 +2848,12 @@
             "type": "org.osbuild.systemd",
             "options": {
               "enabled_services": [
-                "firewalld",
                 "nm-cloud-setup.service",
                 "nm-cloud-setup.timer",
                 "sshd",
                 "systemd-resolved",
-                "waagent"
+                "waagent",
+                "firewalld"
               ],
               "default_target": "multi-user.target"
             }
