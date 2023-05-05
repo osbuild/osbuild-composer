@@ -117,11 +117,11 @@ ANSIBLE_USER="admin"
 FDO_USER_ONBOARDING="false"
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.8")
+    "rhel-8"* )
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         ;;
-    "rhel-9.2")
+    "rhel-9"* )
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         SYSROOT_RO="true"

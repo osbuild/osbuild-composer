@@ -126,13 +126,13 @@ case "${ID}-${VERSION_ID}" in
         DIRS_FILES_CUSTOMIZATION="true"
         SYSROOT_RO="true"
         ;;
-    "rhel-8.8")
+    "rhel-8"* )
         OSTREE_REF="test/rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         EMBEDED_CONTAINER="true"
         DIRS_FILES_CUSTOMIZATION="true"
         ;;
-    "rhel-9.2")
+    "rhel-9"* )
         OSTREE_REF="test/rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         EMBEDED_CONTAINER="true"
