@@ -1,3 +1,15 @@
+// Package manifest is used to define an osbuild manifest as a series of
+// pipelines with content. Typically, a Manifest is created using
+// manifest.New() and pipelines are defined and added to it using the pipeline
+// constructors (e.g., NewBuild()) with the manifest as the first argument. The
+// pipelines are added in the order they are called.
+//
+// The package implements a standard set of osbuild pipelines. A pipeline
+// conceptually represents a named filesystem tree, optionally generated
+// in a provided build root (represented by another pipeline). All inputs
+// to a pipeline must be explicitly specified, either in terms of another
+// pipeline, in terms of content addressable inputs or in terms of static
+// parameters to the inherited Pipeline structs.
 package manifest
 
 import (
