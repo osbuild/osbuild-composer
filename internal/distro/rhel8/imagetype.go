@@ -18,6 +18,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -282,6 +283,15 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		}
 	}
 
+	// For edge-commit and edge-container, we need to set an ImageRef if one
+	// isn't defined already in order to properly initialize the manifest and
+	// package selection.
+	if options.OSTree == nil {
+		options.OSTree = &ostree.ImageOptions{
+			ImageRef: t.OSTreeRef(),
+		}
+	}
+
 	// In case of Cloud API, this method is called before the ostree commit
 	// is resolved. Unfortunately, initializeManifest when called for
 	// an ostree installer returns an error.
@@ -299,11 +309,6 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 		options.OSTree.FetchChecksum = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 		logrus.Warn("FIXME: Requesting package sets for iot-installer without a resolved ostree ref. Faking one.")
 	}
-
-	// Similar to above, for edge-commit and edge-container, we need to set an
-	// ImageRef in order to properly initialize the manifest and package
-	// selection.
-	options.OSTree.ImageRef = t.OSTreeRef()
 
 	// create a temporary container spec array with the info from the blueprint
 	// to initialize the manifest
@@ -410,9 +415,14 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return warnings, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
+	ostreeChecksum := ""
+	if options.OSTree != nil {
+		ostreeChecksum = options.OSTree.FetchChecksum
+	}
+
 	if t.bootISO && t.rpmOstree {
 		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
-		if options.OSTree.FetchChecksum == "" {
+		if ostreeChecksum == "" {
 			return warnings, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 
@@ -453,7 +463,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 
 	if t.name == "edge-raw-image" {
 		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
-		if options.OSTree.FetchChecksum == "" {
+		if ostreeChecksum == "" {
 			return warnings, fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
 		}
 

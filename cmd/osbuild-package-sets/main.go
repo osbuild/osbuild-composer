@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 )
 
 func main() {
@@ -48,7 +49,7 @@ func main() {
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
 	pkgset := image.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
-		OSTree: distro.OSTreeImageOptions{
+		OSTree: &ostree.ImageOptions{
 			URL:           "foo",
 			ImageRef:      "bar",
 			FetchChecksum: "baz",

@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rhsm/facts"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -122,11 +123,16 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 
 	options := distro.ImageOptions{Size: 0}
 	if cr.OSTree != nil {
-		options.OSTree = distro.OSTreeImageOptions{
+		options.OSTree = &ostree.ImageOptions{
 			URL:           cr.OSTree.URL,
 			ImageRef:      cr.OSTree.Ref,
 			FetchChecksum: cr.OSTree.Parent,
 			RHSM:          cr.OSTree.RHSM,
+		}
+	} else {
+		// use default OSTreeRef for image type
+		options.OSTree = &ostree.ImageOptions{
+			ImageRef: imgType.OSTreeRef(),
 		}
 	}
 
@@ -153,11 +159,6 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		containerSpecs, err := resolveContainers(bp.Containers, archName)
 		if err != nil {
 			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
-		}
-
-		if options.OSTree.ImageRef == "" {
-			// use default OSTreeRef for image type
-			options.OSTree.ImageRef = imgType.OSTreeRef()
 		}
 
 		packageSpecs, err := depsolve(cacheDir, imgType, bp, options, repos, distribution, archName)

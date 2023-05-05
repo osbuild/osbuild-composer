@@ -23,6 +23,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -454,9 +455,11 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 			return
 		}
 
-		options.OSTree.ImageRef = result.Specs[0].Ref
-		options.OSTree.FetchChecksum = result.Specs[0].Checksum
-		options.OSTree.URL = result.Specs[0].URL
+		options.OSTree = &ostree.ImageOptions{
+			ImageRef:      result.Specs[0].Ref,
+			FetchChecksum: result.Specs[0].Checksum,
+			URL:           result.Specs[0].URL,
+		}
 	}
 
 	manifest, _, err := imageType.Manifest(b, options, repos, depsolveResults.PackageSpecs, containerSpecs, seed)

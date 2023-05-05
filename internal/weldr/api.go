@@ -2452,7 +2452,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	testMode := q.Get("test")
 
-	ostreeOptions := distro.OSTreeImageOptions{
+	ostreeOptions := &ostree.ImageOptions{
 		URL: cr.OSTree.URL,
 	}
 	if testMode == "1" || testMode == "2" {
