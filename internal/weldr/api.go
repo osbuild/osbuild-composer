@@ -2463,7 +2463,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		if reqParams.Ref == "" {
 			reqParams.Ref = imageType.OSTreeRef()
 		}
-		ref, checksum, err := ostree.ResolveParams(reqParams)
+		ref, checksum, err := ostree.Resolve(reqParams)
 		if err != nil {
 			errors := responseError{
 				ID:  "OSTreeOptionsError",

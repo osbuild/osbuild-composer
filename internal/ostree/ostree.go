@@ -134,45 +134,45 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 	return parent, nil
 }
 
-// ResolveParams resolves the ostree request parameters into the necessary ref
-// for the image build pipeline and a commit (checksum) to be fetched.
+// Resolve the ostree source specification into the necessary ref for the image
+// build pipeline and a commit (checksum) to be fetched.
 //
-// If a URL is defined in the RequestParams, the checksum of the Parent ref is
-// resolved, otherwise the checksum is an empty string. Specifying Parent
-// without URL results in a ParameterComboError. Failure to resolve the
+// If a URL is defined in the source specification, the checksum of the Parent
+// ref is resolved, otherwise the checksum is an empty string. Specifying
+// Parent without URL results in a ParameterComboError. Failure to resolve the
 // checksum results in a ResolveRefError.
 //
 // If Parent is not specified in the RequestParams, the value of Ref is used.
 //
 // If any ref (Ref or Parent) is malformed, the function returns with a RefError.
-func ResolveParams(params SourceSpec) (ref, checksum string, err error) {
-	ref = params.Ref
+func Resolve(source SourceSpec) (ref, checksum string, err error) {
+	ref = source.Ref
 
 	// Determine value of ref
-	if !VerifyRef(params.Ref) {
-		return "", "", NewRefError("Invalid ostree ref %q", params.Ref)
+	if !VerifyRef(source.Ref) {
+		return "", "", NewRefError("Invalid ostree ref %q", source.Ref)
 	}
 
 	// Determine value of parentRef
-	parentRef := params.Parent
+	parentRef := source.Parent
 	if parentRef != "" {
 		// verify format of parent ref
-		if !VerifyRef(params.Parent) {
-			return "", "", NewRefError("Invalid ostree parent ref %q", params.Parent)
+		if !VerifyRef(source.Parent) {
+			return "", "", NewRefError("Invalid ostree parent ref %q", source.Parent)
 		}
-		if params.URL == "" {
+		if source.URL == "" {
 			// specifying parent ref also requires URL
 			return "", "", NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
 		}
 	} else {
 		// if parent is not provided, use ref
-		parentRef = params.Ref
+		parentRef = source.Ref
 	}
 
 	// Resolve parent checksum
-	if params.URL != "" {
+	if source.URL != "" {
 		// If a URL is specified, we need to fetch the commit at the URL.
-		parent, err := ResolveRef(params.URL, parentRef, params.RHSM, nil, nil)
+		parent, err := ResolveRef(source.URL, parentRef, source.RHSM, nil, nil)
 		if err != nil {
 			return "", "", err // ResolveRefError
 		}
