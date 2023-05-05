@@ -101,10 +101,10 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				return
 			}
 
-			var ostreeOptions distro.OSTreeImageOptions
+			var ostreeOptions *ostree.ImageOptions
 			if ref := imageType.OSTreeRef(); ref != "" {
 				if tt.ComposeRequest.OSTree != nil {
-					ostreeOptions = distro.OSTreeImageOptions{
+					ostreeOptions = &ostree.ImageOptions{
 						ImageRef:      tt.ComposeRequest.OSTree.Ref,
 						FetchChecksum: tt.ComposeRequest.OSTree.Parent,
 						URL:           tt.ComposeRequest.OSTree.URL,
@@ -112,8 +112,10 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 					}
 				}
 			}
-			if ostreeOptions.ImageRef == "" { // set image type default if not specified in request
-				ostreeOptions.ImageRef = imageType.OSTreeRef()
+			if ostreeOptions == nil { // set image type default if not specified in request
+				ostreeOptions = &ostree.ImageOptions{
+					ImageRef: imageType.OSTreeRef(),
+				}
 			}
 
 			options := distro.ImageOptions{
@@ -344,14 +346,14 @@ func GetTestingPackageSpecSets(packageName, arch string, pkgSetNames []string) m
 func GetTestingImagePackageSpecSets(packageName string, i distro.ImageType) map[string][]rpmmd.PackageSpec {
 	arch := i.Arch().Name()
 	imagePackageSets := make([]string, 0, len(i.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
-		OSTree: distro.OSTreeImageOptions{
+		OSTree: &ostree.ImageOptions{
 			URL:           "foo",
 			ImageRef:      "bar",
 			FetchChecksum: "baz",
 		},
 	}, nil)))
 	for pkgSetName := range i.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
-		OSTree: distro.OSTreeImageOptions{
+		OSTree: &ostree.ImageOptions{
 			URL:           "foo",
 			ImageRef:      "bar",
 			FetchChecksum: "baz",

@@ -462,6 +462,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		var ostreeOptions *ostree.SourceSpec
 		// assume it's an ostree image if the type has a default ostree ref
 		if imageType.OSTreeRef() != "" {
+			imageOptions.OSTree = &ostree.ImageOptions{}
+
 			ostreeOptions = &ostree.SourceSpec{}
 			if ir.Ostree != nil {
 				if ir.Ostree.Ref != nil {

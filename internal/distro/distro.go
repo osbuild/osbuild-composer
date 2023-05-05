@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rhsm/facts"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/subscription"
@@ -138,35 +139,9 @@ type ImageType interface {
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
 	Size         uint64
-	OSTree       OSTreeImageOptions
+	OSTree       *ostree.ImageOptions
 	Subscription *subscription.ImageOptions
 	Facts        *facts.ImageOptions
-}
-
-// The OSTreeImageOptions specify an ostree ref, checksum, URL, ContentURL, and RHSM. The meaning of
-// each parameter depends on the image type being built.
-type OSTreeImageOptions struct {
-	// For ostree commit and container types: The ref of the new commit to be
-	// built.
-	// For ostree installers and raw images: The ref of the commit being
-	// embedded in the installer or deployed in the image.
-	ImageRef string
-
-	// For ostree commit and container types: The FetchChecksum specifies the parent
-	// ostree commit that the new commit will be based on.
-	// For ostree installers and raw images: The FetchChecksum specifies the commit
-	// ID that will be embedded in the installer or deployed in the image.
-	FetchChecksum string
-
-	// The URL from which to fetch the commit specified by the checksum.
-	URL string
-
-	// If specified, the URL will be used only for metadata.
-	ContentURL string
-
-	// Indicate if the 'org.osbuild.rhsm.consumer' secret should be added when pulling from the
-	// remote.
-	RHSM bool
 }
 
 type BasePartitionTableMap map[string]disk.PartitionTable

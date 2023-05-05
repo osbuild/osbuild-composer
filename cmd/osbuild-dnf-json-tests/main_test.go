@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel8"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -47,7 +48,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 
 					packages := imgType.PackageSets(blueprint.Blueprint{},
 						distro.ImageOptions{
-							OSTree: distro.OSTreeImageOptions{
+							OSTree: &ostree.ImageOptions{
 								URL:           "foo",
 								ImageRef:      "bar",
 								FetchChecksum: "baz",

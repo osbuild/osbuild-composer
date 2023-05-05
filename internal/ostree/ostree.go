@@ -45,6 +45,34 @@ type CommitSpec struct {
 	Checksum string
 }
 
+// ImageOptions specify an ostree ref, checksum, URL, ContentURL, and RHSM. The
+// meaning of each parameter depends on the image type being built. The type
+// is used to specify ostree-related image options when initializing a
+// Manifest.
+type ImageOptions struct {
+	// For ostree commit and container types: The ref of the new commit to be
+	// built.
+	// For ostree installers and raw images: The ref of the commit being
+	// embedded in the installer or deployed in the image.
+	ImageRef string
+
+	// For ostree commit and container types: The FetchChecksum specifies the parent
+	// ostree commit that the new commit will be based on.
+	// For ostree installers and raw images: The FetchChecksum specifies the commit
+	// ID that will be embedded in the installer or deployed in the image.
+	FetchChecksum string
+
+	// The URL from which to fetch the commit specified by the checksum.
+	URL string
+
+	// If specified, the URL will be used only for metadata.
+	ContentURL string
+
+	// Indicate if the 'org.osbuild.rhsm.consumer' secret should be added when pulling from the
+	// remote.
+	RHSM bool
+}
+
 // Remote defines the options that can be set for an OSTree Remote configuration.
 type Remote struct {
 	Name        string

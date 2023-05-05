@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distro/distro_test_common"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,7 +45,7 @@ func TestImageType_PackageSetsChains(t *testing.T) {
 					require.Nil(t, err)
 
 					imagePkgSets := imageType.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
-						OSTree: distro.OSTreeImageOptions{
+						OSTree: &ostree.ImageOptions{
 							URL:           "foo",
 							ImageRef:      "bar",
 							FetchChecksum: "baz",
@@ -133,7 +134,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 					seed := int64(0)
 
 					// Add ostree options for image types that require them
-					options.OSTree = distro.OSTreeImageOptions{
+					options.OSTree = &ostree.ImageOptions{
 						ImageRef:      imageType.OSTreeRef(),
 						URL:           "https://example.com/repo",
 						FetchChecksum: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
@@ -412,7 +413,7 @@ func TestPipelineRepositories(t *testing.T) {
 							options := distro.ImageOptions{}
 
 							// Add ostree options for image types that require them
-							options.OSTree = distro.OSTreeImageOptions{
+							options.OSTree = &ostree.ImageOptions{
 								ImageRef:      imageType.OSTreeRef(),
 								URL:           "https://example.com/repo",
 								FetchChecksum: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
