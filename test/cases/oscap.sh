@@ -77,12 +77,12 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.8")
+    "rhel-8"* )
         OS_VARIANT="rhel8-unknown"
         PROFILE="xccdf_org.ssgproject.content_profile_cis"
         DATASTREAM="/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
         ;;
-    "rhel-9.2")
+    "rhel-9"* )
         OS_VARIANT="rhel9-unknown"
         PROFILE="xccdf_org.ssgproject.content_profile_cis"
         DATASTREAM="/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"

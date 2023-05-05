@@ -272,7 +272,8 @@ elif [[ $ARCH == 's390x' ]]; then
 else
     case "${ID}-${VERSION_ID}" in
         "rhel-8"* | "centos-8")
-             MIN_RAM="1024"
+             # was 1024 before 8.9
+             MIN_RAM="1536"
              ;;
         "rhel-9"* | "centos-9")
              MIN_RAM="1536"
