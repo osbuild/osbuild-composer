@@ -15,14 +15,39 @@ type Pipeline interface {
 	Export() *artifact.Artifact
 	getCheckpoint() bool
 	getExport() bool
+
+	// getBuildPackages returns the list of packages required for the pipeline
+	// at build time.
 	getBuildPackages() []string
+	// getPackageSetChain returns the list of package names to be required by
+	// the pipeline. Each set should be depsolved sequentially to resolve
+	// dependencies and full package specs. See the dnfjson package for more
+	// details.
 	getPackageSetChain() []rpmmd.PackageSet
+	// getContainerSources returns the list of containers sources to be resolved and
+	// embedded by the pipeline. Each source should be resolved to its full
+	// Spec. See the container package for more details.
+	getContainerSources() []container.SourceSpec
+	// getOSTreeCommitSources returns the list of ostree commit sources to be
+	// resolved and added to the pipeline. Each source should be resolved to
+	// its full Spec. See the ostree package for more details.
+	getOSTreeCommitSources() []ostree.SourceSpec
+
 	serializeStart([]rpmmd.PackageSpec)
 	serializeEnd()
 	serialize() osbuild.Pipeline
+
+	// getPackageSpecs returns the list of specifications for packages that
+	// will be installed to the pipeline tree.
 	getPackageSpecs() []rpmmd.PackageSpec
-	getOSTreeCommits() []ostree.CommitSpec
+	// getContainerSpecs returns the list of specifications for the containers
+	// that will be installed to the pipeline tree.
 	getContainerSpecs() []container.Spec
+	// getOSTreeCommits returns the list of specifications for the commits
+	// required by the pipeline.
+	getOSTreeCommits() []ostree.CommitSpec
+	// getInline returns the list of inlined data content that will be used to
+	// embed files in the pipeline tree.
 	getInline() []string
 }
 
@@ -68,6 +93,14 @@ func (p Base) getBuildPackages() []string {
 }
 
 func (p Base) getPackageSetChain() []rpmmd.PackageSet {
+	return nil
+}
+
+func (p Base) getContainerSources() []container.SourceSpec {
+	return nil
+}
+
+func (p Base) getOSTreeCommitSources() []ostree.SourceSpec {
 	return nil
 }
 
