@@ -1,9 +1,3 @@
-// Package manifest implements a standard set of osbuild pipelines. A pipeline
-// conceptually represents a named filesystem tree, optionally generated
-// in a provided build root (represented by another pipeline). All inputs
-// to a pipeline must be explicitly specified, either in terms of other
-// pipeline, in terms of content addressable inputs or in terms of static
-// parameters to the inherited Pipeline structs.
 package manifest
 
 import (
