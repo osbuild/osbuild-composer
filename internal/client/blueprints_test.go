@@ -966,6 +966,43 @@ func TestMultilibBlueprintDepsolveV0(t *testing.T) {
 	}
 }
 
+// depsolve a blueprint with package name glob
+func TestBlueprintDepsolveGlobsV0(t *testing.T) {
+	// Depends on real packages, only run as an integration test
+	if testState.unitTest {
+		t.Skip()
+	}
+	bp := `{
+		"name": "test-deps-blueprint-globs-v0",
+		"description": "CheckBlueprintDepsolveGlobsV0",
+		"version": "0.0.1",
+		"packages": [{"name": "tmux", "version": "*"},
+		{"name": "openssh-*", "version": "*"}]
+	}`
+
+	// Push a blueprint
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "POST blueprint failed with a client error")
+	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
+
+	// Depsolve the blueprint
+	deps, api, err := DepsolveBlueprintV0(testState.socket, "test-deps-blueprint-globs-v0")
+	require.NoError(t, err, "Depsolve blueprint failed with a client error")
+	require.Nil(t, api, "DepsolveBlueprint failed: %#v", api)
+	require.Greater(t, len(deps.Blueprints), 0, "No blueprint dependencies returned")
+	require.Greater(t, len(deps.Blueprints[0].Dependencies), 2, "Not enough dependencies returned")
+
+	// Did it include tmux? Did it include openssh-clients and openssh-server?
+	var names []string
+	for _, d := range deps.Blueprints[0].Dependencies {
+		names = append(names, d.Name)
+	}
+	sort.Strings(names)
+	assert.True(t, common.IsStringInSortedSlice(names, "openssh-clients"))
+	assert.True(t, common.IsStringInSortedSlice(names, "openssh-server"))
+	assert.True(t, common.IsStringInSortedSlice(names, "tmux"))
+}
+
 // depsolve a non-existent blueprint
 func TestNonBlueprintDepsolveV0(t *testing.T) {
 	resp, api, err := DepsolveBlueprintV0(testState.socket, "test-deps-non-blueprint-v0")
