@@ -19,9 +19,9 @@ import (
 
 var ostreeRefRE = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
-// RequestParams serves as input for ResolveParams, and contains all necessary variables to resolve
+// SourceSpec serves as input for ResolveParams, and contains all necessary variables to resolve
 // a ref, which can then be turned into a CommitSpec.
-type RequestParams struct {
+type SourceSpec struct {
 	URL    string `json:"url"`
 	Ref    string `json:"ref"`
 	Parent string `json:"parent"`
@@ -145,7 +145,7 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 // If Parent is not specified in the RequestParams, the value of Ref is used.
 //
 // If any ref (Ref or Parent) is malformed, the function returns with a RefError.
-func ResolveParams(params RequestParams) (ref, checksum string, err error) {
+func ResolveParams(params SourceSpec) (ref, checksum string, err error) {
 	ref = params.Ref
 
 	// Determine value of ref

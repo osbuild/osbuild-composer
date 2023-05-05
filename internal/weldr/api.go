@@ -2352,12 +2352,12 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	// https://weldr.io/lorax/pylorax.api.html#pylorax.api.v0.v0_compose_start
 	type ComposeRequest struct {
-		BlueprintName string               `json:"blueprint_name"`
-		ComposeType   string               `json:"compose_type"`
-		Size          uint64               `json:"size"`
-		OSTree        ostree.RequestParams `json:"ostree"`
-		Branch        string               `json:"branch"`
-		Upload        *uploadRequest       `json:"upload"`
+		BlueprintName string            `json:"blueprint_name"`
+		ComposeType   string            `json:"compose_type"`
+		Size          uint64            `json:"size"`
+		OSTree        ostree.SourceSpec `json:"ostree"`
+		Branch        string            `json:"branch"`
+		Upload        *uploadRequest    `json:"upload"`
 	}
 	type ComposeReply struct {
 		BuildID  uuid.UUID `json:"build_id"`

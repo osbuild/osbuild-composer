@@ -40,12 +40,12 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			PackageSets []string `json:"package-sets,omitempty"`
 		}
 		type composeRequest struct {
-			Distro       string                `json:"distro"`
-			Arch         string                `json:"arch"`
-			ImageType    string                `json:"image-type"`
-			Repositories []repository          `json:"repositories"`
-			Blueprint    *blueprint.Blueprint  `json:"blueprint"`
-			OSTree       *ostree.RequestParams `json:"ostree"`
+			Distro       string               `json:"distro"`
+			Arch         string               `json:"arch"`
+			ImageType    string               `json:"image-type"`
+			Repositories []repository         `json:"repositories"`
+			Blueprint    *blueprint.Blueprint `json:"blueprint"`
+			OSTree       *ostree.SourceSpec   `json:"ostree"`
 		}
 		var tt struct {
 			ComposeRequest  *composeRequest                `json:"compose-request"`

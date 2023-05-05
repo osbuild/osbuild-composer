@@ -51,7 +51,7 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 	logWithId.Infof("Resolving (%d) ostree commits", len(args.Specs))
 
 	for i, s := range args.Specs {
-		reqParams := ostree.RequestParams{
+		reqParams := ostree.SourceSpec{
 			URL:    s.URL,
 			Ref:    s.Ref,
 			Parent: s.Parent,

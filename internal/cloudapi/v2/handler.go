@@ -115,7 +115,7 @@ type imageRequest struct {
 	repositories []rpmmd.RepoConfig
 	imageOptions distro.ImageOptions
 	target       *target.Target
-	ostree       *ostree.RequestParams
+	ostree       *ostree.SourceSpec
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -458,10 +458,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 		}
 
-		var ostreeOptions *ostree.RequestParams
+		var ostreeOptions *ostree.SourceSpec
 		// assume it's an ostree image if the type has a default ostree ref
 		if imageType.OSTreeRef() != "" {
-			ostreeOptions = &ostree.RequestParams{}
+			ostreeOptions = &ostree.SourceSpec{}
 			if ir.Ostree != nil {
 				if ir.Ostree.Ref != nil {
 					ostreeOptions.Ref = *ir.Ostree.Ref
