@@ -20,6 +20,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
+	"github.com/osbuild/osbuild-composer/internal/rhsm/facts"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -118,8 +119,8 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			options := distro.ImageOptions{
 				Size:   imageType.Size(0),
 				OSTree: ostreeOptions,
-				Facts: &distro.FactsImageOptions{
-					ApiType: "test-manifest",
+				Facts: &facts.ImageOptions{
+					APIType: facts.TEST_APITYPE,
 				},
 			}
 

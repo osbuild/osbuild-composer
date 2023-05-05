@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
+	"github.com/osbuild/osbuild-composer/internal/rhsm/facts"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/shell"
 	"github.com/osbuild/osbuild-composer/internal/subscription"
@@ -118,7 +119,7 @@ type OSCustomizations struct {
 	WAAgentConfig       *osbuild.WAAgentConfStageOptions
 	UdevRules           *osbuild.UdevRulesStageOptions
 	LeapSecTZ           *string
-	FactAPIType         string
+	FactAPIType         *facts.APIType
 
 	Subscription *subscription.ImageOptions
 	RHSMConfig   map[subscription.RHSMStatus]*osbuild.RHSMStageOptions
@@ -605,10 +606,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewOscapRemediationStage(p.OpenSCAPConfig))
 	}
 
-	if p.FactAPIType != "" {
+	if p.FactAPIType != nil {
 		pipeline.AddStage(osbuild.NewRHSMFactsStage(&osbuild.RHSMFactsStageOptions{
 			Facts: osbuild.RHSMFacts{
-				ApiType: p.FactAPIType,
+				ApiType: p.FactAPIType.String(),
 			},
 		}))
 	}

@@ -22,6 +22,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/rhsm/facts"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -130,8 +131,8 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 	}
 
 	// add RHSM fact to detect changes
-	options.Facts = &distro.FactsImageOptions{
-		ApiType: "test-manifest",
+	options.Facts = &facts.ImageOptions{
+		APIType: facts.TEST_APITYPE,
 	}
 
 	job := func(msgq chan string) (err error) {

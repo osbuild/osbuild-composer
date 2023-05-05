@@ -142,7 +142,7 @@ func osCustomizations(
 	}
 
 	if t.arch.distro.isRHEL() && options.Facts != nil {
-		osc.FactAPIType = options.Facts.ApiType
+		osc.FactAPIType = &options.Facts.APIType
 	}
 
 	var err error
