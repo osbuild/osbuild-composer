@@ -271,6 +271,9 @@ elif [[ $ARCH == 's390x' ]]; then
         --network network=integration,mac=34:49:22:B0:83:30
 else
     case "${ID}-${VERSION_ID}" in
+        "rhel-8.9")
+             MIN_RAM="1536"
+             ;;
         "rhel-8"* | "centos-8")
              MIN_RAM="1024"
              ;;

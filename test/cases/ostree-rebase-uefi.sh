@@ -93,7 +93,7 @@ KERNEL_RT_PKG="kernel-rt"
 SYSROOT_RO="false"
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.8")
+    "rhel-8.8" | "rhel-8.9")
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         # Use a stable installer image unless it's the nightly pipeline
@@ -103,7 +103,7 @@ case "${ID}-${VERSION_ID}" in
         fi
         PARENT_REF="rhel/8/${ARCH}/edge"
         ;;
-    "rhel-9.2")
+    "rhel-9.2" | "rhel-9.3")
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         # Use a stable installer image unless it's the nightly pipeline
