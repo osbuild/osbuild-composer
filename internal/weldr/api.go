@@ -39,6 +39,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/reporegistry"
+	"github.com/osbuild/osbuild-composer/internal/rhsm/facts"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -2497,8 +2498,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		Size:   size,
 		OSTree: ostreeOptions,
 	}
-	options.Facts = &distro.FactsImageOptions{
-		ApiType: "weldr",
+	options.Facts = &facts.ImageOptions{
+		APIType: facts.WELDR_APITYPE,
 	}
 
 	packageSets, err := api.depsolveBlueprintForImageType(*bp, options, imageType)
