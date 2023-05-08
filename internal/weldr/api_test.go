@@ -33,6 +33,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -614,51 +615,6 @@ func TestNonExistentBlueprintsInfoToml(t *testing.T) {
 
 	resp := recorder.Result()
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-}
-
-func TestSetPkgEVRA(t *testing.T) {
-
-	// Sorted list of dependencies
-	deps := []rpmmd.PackageSpec{
-		{
-			Name:    "dep-package1",
-			Epoch:   0,
-			Version: "1.33",
-			Release: "2.fc30",
-			Arch:    "x86_64",
-		},
-		{
-			Name:    "dep-package2",
-			Epoch:   0,
-			Version: "2.9",
-			Release: "1.fc30",
-			Arch:    "x86_64",
-		},
-		{
-			Name:    "dep-package3",
-			Epoch:   7,
-			Version: "3.0.3",
-			Release: "1.fc30",
-			Arch:    "x86_64",
-		},
-	}
-	pkgs := []blueprint.Package{
-		{Name: "dep-package1", Version: "*"},
-		{Name: "dep-package2", Version: "*"},
-	}
-	// Replace globs with dependencies
-	err := setPkgEVRA(deps, pkgs)
-	require.NoErrorf(t, err, "setPkgEVRA failed")
-	require.Equalf(t, "1.33-2.fc30.x86_64", pkgs[0].Version, "setPkgEVRA Unexpected pkg version")
-	require.Equalf(t, "2.9-1.fc30.x86_64", pkgs[1].Version, "setPkgEVRA Unexpected pkg version")
-
-	// Test that a missing package in deps returns an error
-	pkgs = []blueprint.Package{
-		{Name: "dep-package1", Version: "*"},
-		{Name: "dep-package0", Version: "*"},
-	}
-	err = setPkgEVRA(deps, pkgs)
-	require.EqualErrorf(t, err, "dep-package0 missing from depsolve results", "setPkgEVRA missing package failed to return error")
 }
 
 func TestBlueprintsFreeze(t *testing.T) {
@@ -2220,6 +2176,140 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
 		}
 	}
+}
+func TestExpandBlueprintNoGlob(t *testing.T) {
+	packages := []blueprint.Package{
+		{Name: "tmux", Version: "3.3a"},
+		{Name: "openssh-server", Version: "*"},
+		{Name: "grub2", Version: "*"},
+	}
+	// Sorted list of dependencies
+	dependencies := []rpmmd.PackageSpec{
+		{
+			Name:    "grub2",
+			Epoch:   1,
+			Version: "2.06",
+			Release: "94.fc38",
+			Arch:    "noarch",
+		},
+		{
+			Name:    "openssh-server",
+			Epoch:   0,
+			Version: "9.0p1",
+			Release: "15.fc38",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "tmux",
+			Epoch:   0,
+			Version: "3.3a",
+			Release: "3.fc38",
+			Arch:    "x86_64",
+		},
+	}
+
+	newPackages, err := expandBlueprintGlobs(dependencies, packages)
+	require.NoError(t, err, "Error expanding globs")
+	expected := []blueprint.Package{
+		{Name: "grub2", Version: "1:2.06-94.fc38.noarch"},
+		{Name: "openssh-server", Version: "9.0p1-15.fc38.x86_64"},
+		{Name: "tmux", Version: "3.3a-3.fc38.x86_64"},
+	}
+	assert.Equal(t, expected, newPackages)
+}
+
+func TestExpandBlueprintError(t *testing.T) {
+	// Test that a missing package in deps returns an error
+	packages := []blueprint.Package{
+		{Name: "tmux", Version: "*"},
+		{Name: "dep-package0", Version: "*"},
+	}
+	// Sorted list of dependencies
+	dependencies := []rpmmd.PackageSpec{
+		{
+			Name:    "openssh-server",
+			Epoch:   0,
+			Version: "9.0p1",
+			Release: "15.fc38",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "tmux",
+			Epoch:   0,
+			Version: "3.3a",
+			Release: "3.fc38",
+			Arch:    "x86_64",
+		},
+	}
+	_, err := expandBlueprintGlobs(dependencies, packages)
+	require.EqualError(t, err, "dep-package0 missing from depsolve results")
+}
+
+func TestExpandBlueprintGlobs(t *testing.T) {
+	packages := []blueprint.Package{
+		{Name: "tmux", Version: "*"},
+		{Name: "openssh-*", Version: "*"},
+		{Name: "test-?-*", Version: "*"},
+		{Name: "test-three-*", Version: "11.1"},
+		{Name: "test-*", Version: "*"},
+	}
+	// Sorted list of dependencies
+	dependencies := []rpmmd.PackageSpec{
+		{
+			Name:    "openssh-clients",
+			Epoch:   0,
+			Version: "9.0p1",
+			Release: "15.fc38",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "openssh-server",
+			Epoch:   0,
+			Version: "9.0p1",
+			Release: "15.fc38",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "test-1-one",
+			Epoch:   0,
+			Version: "1.0.0",
+			Release: "1.fc38",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "test-2-two",
+			Epoch:   2,
+			Version: "1.0.0",
+			Release: "1.fc38",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "test-three-3",
+			Epoch:   0,
+			Version: "11.1",
+			Release: "1.fc38",
+			Arch:    "x86_64",
+		},
+		{
+			Name:    "tmux",
+			Epoch:   0,
+			Version: "3.3a",
+			Release: "3.fc38",
+			Arch:    "x86_64",
+		},
+	}
+
+	newPackages, err := expandBlueprintGlobs(dependencies, packages)
+	require.NoError(t, err, "Error expanding globs")
+	expected := []blueprint.Package{
+		{Name: "openssh-clients", Version: "9.0p1-15.fc38.x86_64"},
+		{Name: "openssh-server", Version: "9.0p1-15.fc38.x86_64"},
+		{Name: "test-1-one", Version: "1.0.0-1.fc38.x86_64"},
+		{Name: "test-2-two", Version: "2:1.0.0-1.fc38.x86_64"},
+		{Name: "test-three-3", Version: "11.1-1.fc38.x86_64"},
+		{Name: "tmux", Version: "3.3a-3.fc38.x86_64"},
+	}
+	assert.Equal(t, expected, newPackages)
 }
 
 func TestMain(m *testing.M) {

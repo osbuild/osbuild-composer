@@ -1567,27 +1567,54 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	common.PanicOnError(err)
 }
 
-// setPkgEVRA replaces the version globs in the blueprint with their EVRA values from the dependencies
-//
-// The dependencies must be pre-sorted for this function to work properly
-// It will return an error if it cannot find a package in the dependencies
-func setPkgEVRA(dependencies []rpmmd.PackageSpec, packages []blueprint.Package) error {
-	for pkgIndex, pkg := range packages {
-		i := sort.Search(len(dependencies), func(i int) bool {
-			return dependencies[i].Name >= pkg.Name
-		})
-		if i < len(dependencies) && dependencies[i].Name == pkg.Name {
-			if dependencies[i].Epoch == 0 {
-				packages[pkgIndex].Version = fmt.Sprintf("%s-%s.%s", dependencies[i].Version, dependencies[i].Release, dependencies[i].Arch)
-			} else {
-				packages[pkgIndex].Version = fmt.Sprintf("%d:%s-%s.%s", dependencies[i].Epoch, dependencies[i].Version, dependencies[i].Release, dependencies[i].Arch)
+// expandBlueprintGlobs will expand package name globs and versions using the depsolve results
+// The result is a sorted list of Package structs with the full package name and version
+// It will return an error if it cannot find a non-glob package name in the dependency list
+func expandBlueprintGlobs(dependencies []rpmmd.PackageSpec, packages []blueprint.Package) ([]blueprint.Package, error) {
+	newPackages := make(map[string]blueprint.Package)
+
+	for _, pkg := range packages {
+		if !strings.ContainsAny(pkg.Name, "*?") {
+			// No glob characters, find an exact match in dependencies
+			i := sort.Search(len(dependencies), func(i int) bool {
+				return dependencies[i].Name >= pkg.Name
+			})
+			if i >= len(dependencies) || dependencies[i].Name != pkg.Name {
+				// Packages should not be missing from the depsolve results
+				return nil, fmt.Errorf("%s missing from depsolve results", pkg.Name)
+			}
+			newPackages[dependencies[i].GetNEVRA()] = blueprint.Package{
+				Name:    dependencies[i].Name,
+				Version: dependencies[i].GetEVRA(),
 			}
 		} else {
-			// Packages should not be missing from the depsolve results
-			return fmt.Errorf("%s missing from depsolve results", pkg.Name)
+			// Add all the packages matching the glob
+			g, err := glob.Compile(pkg.Name)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, d := range dependencies {
+				if g.Match(d.Name) {
+					newPackages[d.GetNEVRA()] = blueprint.Package{
+						Name:    d.Name,
+						Version: d.GetEVRA(),
+					}
+				}
+			}
 		}
 	}
-	return nil
+
+	// Return a sorted slice of the Packages
+	np := make([]blueprint.Package, 0, len(newPackages))
+	for _, pkg := range newPackages {
+		np = append(np, pkg)
+	}
+	sort.Slice(np, func(i, j int) bool {
+		return np[i].Name < np[j].Name
+	})
+
+	return np, nil
 }
 
 func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -1650,7 +1677,8 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			return dependencies[i].Name < dependencies[j].Name
 		})
 
-		err = setPkgEVRA(dependencies, blueprint.Packages)
+		// Expand any package name globs and set the package version
+		newPackages, err := expandBlueprintGlobs(dependencies, blueprint.Packages)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1659,8 +1687,10 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			errors = append(errors, rerr)
 			break
 		}
+		blueprint.Packages = newPackages
 
-		err = setPkgEVRA(dependencies, blueprint.Modules)
+		// Expand any module name globs and set the module version
+		newModules, err := expandBlueprintGlobs(dependencies, blueprint.Modules)
 		if err != nil {
 			rerr := responseError{
 				ID:  "BlueprintsError",
@@ -1669,6 +1699,7 @@ func (api *API) blueprintsFreezeHandler(writer http.ResponseWriter, request *htt
 			errors = append(errors, rerr)
 			break
 		}
+		blueprint.Modules = newModules
 		blueprints = append(blueprints, blueprintFrozen{blueprint})
 	}
 
