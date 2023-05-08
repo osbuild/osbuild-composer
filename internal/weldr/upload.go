@@ -81,6 +81,7 @@ type vmwareUploadSettings struct {
 	Datacenter string `json:"datacenter"`
 	Cluster    string `json:"cluster"`
 	Datastore  string `json:"datastore"`
+	Folder     string `json:"folder"`
 }
 
 func (vmwareUploadSettings) isUploadSettings() {}
@@ -340,6 +341,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			Cluster:    options.Cluster,
 			Datacenter: options.Datacenter,
 			Datastore:  options.Datastore,
+			Folder:     options.Folder,
 		}
 	case *ociUploadSettings:
 		t.Name = target.TargetNameOCI

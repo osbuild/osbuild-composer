@@ -9,6 +9,7 @@ type VMWareTargetOptions struct {
 	Datacenter string `json:"datacenter"`
 	Cluster    string `json:"cluster"`
 	Datastore  string `json:"datastore"`
+	Folder     string `json:"folder"`
 }
 
 func (VMWareTargetOptions) isTargetOptions() {}

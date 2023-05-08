@@ -14,6 +14,22 @@ type Credentials struct {
 	Datacenter string
 	Cluster    string
 	Datastore  string
+	Folder     string
+}
+
+func commonOptions(creds Credentials) []string {
+	args := []string{
+		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
+		"-k=true",
+		fmt.Sprintf("-pool=%s/Resources", creds.Cluster),
+		fmt.Sprintf("-dc=%s", creds.Datacenter),
+		fmt.Sprintf("-ds=%s", creds.Datastore),
+	}
+	if creds.Folder != "" {
+		args = append(args, fmt.Sprintf("-folder=%s", creds.Folder))
+	}
+
+	return args
 }
 
 // ImportVmdk is a function that uploads a stream optimized vmdk image to vSphere
@@ -21,13 +37,9 @@ type Credentials struct {
 func ImportVmdk(creds Credentials, imagePath string) error {
 	args := []string{
 		"import.vmdk",
-		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
-		"-k=true",
-		fmt.Sprintf("-pool=%s/Resources", creds.Cluster),
-		fmt.Sprintf("-dc=%s", creds.Datacenter),
-		fmt.Sprintf("-ds=%s", creds.Datastore),
-		imagePath,
 	}
+	args = append(args, commonOptions(creds)...)
+	args = append(args, imagePath)
 	retcode := cli.Run(args)
 
 	if retcode != 0 {
@@ -39,14 +51,10 @@ func ImportVmdk(creds Credentials, imagePath string) error {
 func ImportOva(creds Credentials, imagePath, targetName string) error {
 	args := []string{
 		"import.ova",
-		fmt.Sprintf("-u=%s:%s@%s", creds.Username, creds.Password, creds.Host),
-		"-k=true",
-		fmt.Sprintf("-pool=%s/Resources", creds.Cluster),
-		fmt.Sprintf("-dc=%s", creds.Datacenter),
-		fmt.Sprintf("-ds=%s", creds.Datastore),
 		fmt.Sprintf("-name=%s", targetName),
-		imagePath,
 	}
+	args = append(args, commonOptions(creds)...)
+	args = append(args, imagePath)
 	retcode := cli.Run(args)
 
 	if retcode != 0 {
