@@ -200,10 +200,23 @@ func main() {
 	// let the cache grow to fit much more repository metadata than we usually allow
 	solver.SetMaxCacheSize(3 * 1024 * 1024 * 1024)
 
-	packageSets := imageType.PackageSets(composeRequest.Blueprint, options, repos)
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+	containerSpecs, err := resolveContainers(composeRequest.Blueprint, arch.Name())
+	if err != nil {
+		panic("Could not resolve containers: " + err.Error())
+	}
 
-	for name, pkgSet := range packageSets {
+	manifest, _, err := imageType.Manifest(&composeRequest.Blueprint,
+		options,
+		repos,
+		nil,
+		containerSpecs,
+		seedArg)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+	for name, pkgSet := range manifest.Content.PackageSets {
 		res, err := solver.Depsolve(pkgSet)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
@@ -218,26 +231,11 @@ func main() {
 			panic(err)
 		}
 	} else {
-
-		containerSpecs, err := resolveContainers(composeRequest.Blueprint, arch.Name())
-		if err != nil {
-			panic("Could not resolve containers: " + err.Error())
-		}
-
 		if composeRequest.OSTree.Ref == "" {
 			// use default OSTreeRef for image type
 			composeRequest.OSTree.Ref = imageType.OSTreeRef()
 		}
 
-		manifest, _, err := imageType.Manifest(&composeRequest.Blueprint,
-			options,
-			repos,
-			depsolvedSets,
-			containerSpecs,
-			seedArg)
-		if err != nil {
-			panic(err.Error())
-		}
 		ms, err := manifest.Serialize(depsolvedSets)
 		if err != nil {
 			panic(err.Error())

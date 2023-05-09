@@ -161,7 +161,13 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
 		}
 
-		packageSpecs, err := depsolve(cacheDir, imgType, bp, options, repos, distribution, archName)
+		manifest, _, err := imgType.Manifest(&bp, options, repos, nil, containerSpecs, seedArg)
+		if err != nil {
+			err = fmt.Errorf("[%s] failed: %s", filename, err)
+			return
+		}
+
+		packageSpecs, err := depsolve(cacheDir, manifest.Content.PackageSets, distribution, archName)
 		if err != nil {
 			err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
 			return
@@ -173,11 +179,6 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 
 		if cr.Blueprint != nil {
 			bp = blueprint.Blueprint(*cr.Blueprint)
-		}
-		manifest, _, err := imgType.Manifest(&bp, options, repos, packageSpecs, containerSpecs, seedArg)
-		if err != nil {
-			err = fmt.Errorf("[%s] failed: %s", filename, err)
-			return
 		}
 		mf, err := manifest.Serialize(packageSpecs)
 
@@ -262,10 +263,9 @@ func resolveContainers(containers []blueprint.Container, archName string) ([]con
 	return resolver.Finish()
 }
 
-func depsolve(cacheDir string, imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
+func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch, d.Name(), cacheDir)
 	solver.SetDNFJSONPath("./dnf-json")
-	packageSets := imageType.PackageSets(bp, options, repos)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	for name, pkgSet := range packageSets {
 		res, err := solver.Depsolve(pkgSet)

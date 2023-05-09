@@ -45,8 +45,17 @@ func TestCrossArchDepsolve(t *testing.T) {
 				t.Run(imgTypeStr, func(t *testing.T) {
 					imgType, err := arch.GetImageType(imgTypeStr)
 					require.NoError(t, err)
-
-					packages := imgType.PackageSets(blueprint.Blueprint{},
+					// set up bare minimum args for image type
+					var customizations *blueprint.Customizations
+					if imgTypeStr == "edge-simplified-installer" {
+						customizations = &blueprint.Customizations{
+							InstallationDevice: "/dev/null",
+						}
+					}
+					manifest, _, err := imgType.Manifest(
+						&blueprint.Blueprint{
+							Customizations: customizations,
+						},
 						distro.ImageOptions{
 							OSTree: &ostree.ImageOptions{
 								URL:           "foo",
@@ -54,9 +63,10 @@ func TestCrossArchDepsolve(t *testing.T) {
 								FetchChecksum: "baz",
 							},
 						},
-						repos[archStr])
+						repos[archStr], nil, nil, 0)
+					assert.NoError(t, err)
 
-					for _, set := range packages {
+					for _, set := range manifest.Content.PackageSets {
 						_, err = solver.Depsolve(set)
 						assert.NoError(t, err)
 					}
@@ -91,7 +101,9 @@ func TestDepsolvePackageSets(t *testing.T) {
 	qcow2Image, err := x86Arch.GetImageType(qcow2ImageTypeName)
 	require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), platform.ARCH_X86_64.String())
 
-	imagePkgSets := qcow2Image.PackageSets(blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, distro.ImageOptions{}, x86Repos)
+	manifestSource, _, err := qcow2Image.Manifest(&blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, distro.ImageOptions{}, x86Repos, nil, nil, 0)
+	require.Nilf(t, err, "failed to initialise manifest for %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), platform.ARCH_X86_64.String())
+	imagePkgSets := manifestSource.Content.PackageSets
 
 	gotPackageSpecsSets := make(map[string][]rpmmd.PackageSpec, len(imagePkgSets))
 	for name, pkgSet := range imagePkgSets {
