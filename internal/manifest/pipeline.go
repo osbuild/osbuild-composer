@@ -9,11 +9,22 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
+// Pipeline serializes to a series of stages that modify a file system tree
+// when used as input to osbuild. Different Pipelines serialize to different
+// sequences of stages depending on their type and configuration.
 type Pipeline interface {
+
+	// Name of the pipeline.
 	Name() string
+
+	// Checkpoint this pipeline when osbuild is called.
 	Checkpoint()
+
+	// Export this tree of this pipeline as an artifact when osbuild is called.
 	Export() *artifact.Artifact
+
 	getCheckpoint() bool
+
 	getExport() bool
 
 	// getBuildPackages returns the list of packages required for the pipeline
