@@ -144,7 +144,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				imgPackageSpecSets = tt.PackageSpecSets
 			}
 
-			manifest, _, err := imageType.Manifest(tt.ComposeRequest.Blueprint.Customizations,
+			manifest, _, err := imageType.Manifest(tt.ComposeRequest.Blueprint,
 				options,
 				repos,
 				imgPackageSpecSets,

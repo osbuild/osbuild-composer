@@ -229,7 +229,7 @@ func main() {
 			composeRequest.OSTree.Ref = imageType.OSTreeRef()
 		}
 
-		manifest, _, err := imageType.Manifest(composeRequest.Blueprint.Customizations,
+		manifest, _, err := imageType.Manifest(&composeRequest.Blueprint,
 			options,
 			repos,
 			depsolvedSets,

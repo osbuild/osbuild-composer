@@ -242,18 +242,20 @@ func (t *TestImageType) Exports() []string {
 	return distro.ExportsFallback()
 }
 
-func (t *TestImageType) Manifest(b *blueprint.Customizations, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (*manifest.Manifest, []string, error) {
-	mountpoints := b.GetFilesystems()
+func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (*manifest.Manifest, []string, error) {
+	if b != nil {
+		mountpoints := b.Customizations.GetFilesystems()
 
-	invalidMountpoints := []string{}
-	for _, m := range mountpoints {
-		if m.Mountpoint != "/" {
-			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		invalidMountpoints := []string{}
+		for _, m := range mountpoints {
+			if m.Mountpoint != "/" {
+				invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+			}
 		}
-	}
 
-	if len(invalidMountpoints) > 0 {
-		return nil, nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+		if len(invalidMountpoints) > 0 {
+			return nil, nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+		}
 	}
 
 	ret := manifest.Manifest{}
