@@ -51,6 +51,8 @@ func (m *OSBuildManifest) UnmarshalJSON(payload []byte) error {
 // to generate the pipelines but no content. The content included in the
 // Content field must be resolved before serializing.
 type Manifest struct {
+
+	// pipelines describe the build process for an image.
 	pipelines []Pipeline
 
 	// Content for the image that will be built by the Manifest. Each content
