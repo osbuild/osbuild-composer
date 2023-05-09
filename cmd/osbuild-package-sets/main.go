@@ -48,12 +48,15 @@ func main() {
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	pkgset := image.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
+	manifest, _, err := image.Manifest(&blueprint.Blueprint{}, distro.ImageOptions{
 		OSTree: &ostree.ImageOptions{
 			URL:           "foo",
 			ImageRef:      "bar",
 			FetchChecksum: "baz",
 		},
-	}, nil)
-	_ = encoder.Encode(pkgset)
+	}, nil, nil, nil, 0)
+	if err != nil {
+		panic(err)
+	}
+	_ = encoder.Encode(manifest.Content.PackageSets)
 }

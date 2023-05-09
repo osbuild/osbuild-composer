@@ -22,27 +22,26 @@ import (
 )
 
 func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, cacheDir string, repos []rpmmd.RepoConfig) (manifest.OSBuildManifest, []rpmmd.PackageSpec) {
-	packageSets := t.PackageSets(bp, distro.ImageOptions{}, repos)
+	manifest, _, err := t.Manifest(&bp, distro.ImageOptions{}, repos, nil, nil, 0)
+	if err != nil {
+		panic(err)
+	}
 	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), d.Name(), cacheDir)
-	for name, packages := range packageSets {
+	for name, packages := range manifest.Content.PackageSets {
 		res, err := solver.Depsolve(packages)
 		if err != nil {
 			panic(err)
 		}
 		pkgSpecSets[name] = res
 	}
-	mf, _, err := t.Manifest(&bp, distro.ImageOptions{}, repos, pkgSpecSets, nil, 0)
+
+	mf, err := manifest.Serialize(pkgSpecSets)
 	if err != nil {
 		panic(err)
 	}
 
-	manifest, err := mf.Serialize(pkgSpecSets)
-	if err != nil {
-		panic(err)
-	}
-
-	return manifest, pkgSpecSets["packages"]
+	return mf, pkgSpecSets["packages"]
 }
 
 func main() {
