@@ -2241,29 +2241,14 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 	statusResponseOK(writer)
 }
 
-// depsolveBlueprintForImageType handles depsolving the blueprint package list and
-// the packages required for the image type.
-// NOTE: The imageType *must* be from the same distribution as the blueprint.
-func (api *API) depsolveBlueprintForImageType(bp blueprint.Blueprint, options distro.ImageOptions, imageType distro.ImageType) (map[string][]rpmmd.PackageSpec, error) {
-	// Depsolve using the host distro if none has been specified
-	if bp.Distro == "" {
-		bp.Distro = api.hostDistroName
-	}
+// depsolve handles depsolving package sets required for serializing a manifest for a given distribution.
+func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distro distro.Distro) (map[string][]rpmmd.PackageSpec, error) {
 
-	if bp.Distro != imageType.Arch().Distro().Name() {
-		return nil, fmt.Errorf("Blueprint distro %s does not match imageType distro %s", bp.Distro, imageType.Arch().Distro().Name())
-	}
-
-	imageTypeRepos, err := api.allRepositoriesByImageType(imageType)
-	if err != nil {
-		return nil, err
-	}
-	platformID := imageType.Arch().Distro().ModulePlatformID()
-	releasever := imageType.Arch().Distro().Releasever()
-	distroName := imageType.Arch().Distro().Name()
+	platformID := distro.ModulePlatformID()
+	releasever := distro.Releasever()
+	distroName := distro.Name()
 	solver := api.solver.NewWithConfig(platformID, releasever, api.archName, distroName)
 
-	packageSets := imageType.PackageSets(bp, options, imageTypeRepos)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
 
 	for name, pkgSet := range packageSets {
@@ -2502,18 +2487,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		APIType: facts.WELDR_APITYPE,
 	}
 
-	packageSets, err := api.depsolveBlueprintForImageType(*bp, options, imageType)
-	if err != nil {
-		errors := responseError{
-			ID:  "DepsolveError",
-			Msg: err.Error(),
-		}
-		statusResponseError(writer, http.StatusInternalServerError, errors)
-		return
-	}
-
 	imageRepos, err := api.allRepositoriesByImageType(imageType)
-	// this should not happen if the api.depsolveBlueprintForImageType() call above worked
 	if err != nil {
 		errors := responseError{
 			ID:  "InternalError",
@@ -2536,7 +2510,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	manifest, warnings, err := imageType.Manifest(bp,
 		options,
 		imageRepos,
-		packageSets,
+		nil,
 		containerSpecs,
 		seed)
 	if err != nil {
@@ -2547,6 +2521,17 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
+
+	packageSets, err := api.depsolve(manifest.Content.PackageSets, imageType.Arch().Distro())
+	if err != nil {
+		errors := responseError{
+			ID:  "DepsolveError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
 	mf, err := manifest.Serialize(packageSets)
 	if err != nil {
 		errors := responseError{
