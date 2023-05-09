@@ -117,7 +117,9 @@ func TestImageType_BuildPackages(t *testing.T) {
 					if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
 						continue
 					}
-					buildPkgs := itStruct.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{}, nil)["build"]
+					manifest, _, err := itStruct.Manifest(&blueprint.Blueprint{}, distro.ImageOptions{}, nil, nil, nil, 0)
+					assert.NoError(t, err)
+					buildPkgs := manifest.Content.PackageSets["build"]
 					assert.NotNil(t, buildPkgs)
 					assert.Len(t, buildPkgs, 1)
 					assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs[0].Include)
@@ -177,8 +179,7 @@ func TestDistro_ManifestError(t *testing.T) {
 			imgOpts := distro.ImageOptions{
 				Size: imgType.Size(0),
 			}
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, imgOpts, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, imgOpts, nil, nil, nil, 0)
 			assert.NoError(t, err)
 		}
 	}
@@ -306,8 +307,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 		arch, _ := r7distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil, nil, 0)
 			assert.NoError(t, err)
 		}
 	}
@@ -333,8 +333,7 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 		arch, _ := r7distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil, nil, 0)
 			assert.NoError(t, err)
 		}
 	}
@@ -368,8 +367,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 		arch, _ := r7distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil, nil, 0)
 			assert.NoError(t, err)
 		}
 	}
@@ -447,8 +445,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 		arch, _ := r7distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil, nil, 0)
 			assert.NoError(t, err)
 		}
 	}

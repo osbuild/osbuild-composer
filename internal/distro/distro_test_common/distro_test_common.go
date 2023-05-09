@@ -175,7 +175,11 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 }
 
 func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, cacheDir, dnfJsonPath string) map[string][]rpmmd.PackageSpec {
-	imgPackageSets := imageType.PackageSets(bp, options, repos)
+	manifest, _, err := imageType.Manifest(&bp, options, repos, nil, nil, 0)
+	if err != nil {
+		panic("Could not generate manifest for package sets: " + err.Error())
+	}
+	imgPackageSets := manifest.Content.PackageSets
 
 	solver := dnfjson.NewSolver(imageType.Arch().Distro().ModulePlatformID(),
 		imageType.Arch().Distro().Releasever(),
@@ -203,7 +207,16 @@ var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
 
 // Returns the number of known kernels in the package list
 func kernelCount(imgType distro.ImageType, bp blueprint.Blueprint) int {
-	sets := imgType.PackageSets(bp, distro.ImageOptions{}, nil)
+	ostreeOptions := &ostree.ImageOptions{
+		URL:           "foo",
+		ImageRef:      "bar",
+		FetchChecksum: "baz",
+	}
+	manifest, _, err := imgType.Manifest(&bp, distro.ImageOptions{OSTree: ostreeOptions}, nil, nil, nil, 0)
+	if err != nil {
+		panic(err)
+	}
+	sets := manifest.Content.PackageSets
 
 	// Use a map to count unique kernels in a package set. If the same kernel
 	// name appears twice, it will only be installed once, so we only count it
@@ -315,56 +328,4 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 			}
 		}
 	}
-}
-
-// GetTestingPackageSpecSets returns PackageSpecSets useful for unit testing.
-//
-// A dummy PackageSpec for the provided packageName is added
-// to all PackageSpecSets provided in pkgSetNames.
-//
-// E.g. `kernel` package is a hard requirement of some payload pipelines
-// and they panic if it is not found in the packageSpecSets passed to
-// Manifest().
-func GetTestingPackageSpecSets(packageName, arch string, pkgSetNames []string) map[string][]rpmmd.PackageSpec {
-	pkgTestingSpec := []rpmmd.PackageSpec{
-		{
-			Name:           packageName,
-			Epoch:          0,
-			Version:        "1.2.3",
-			Release:        "2.el123",
-			Arch:           arch,
-			RemoteLocation: "http://example.org",
-			Checksum:       "lorenipsum",
-			Secrets:        "lorenipsum",
-			CheckGPG:       false,
-		},
-	}
-	testPackageSpecSets := map[string][]rpmmd.PackageSpec{}
-	for _, pkgSetName := range pkgSetNames {
-		testPackageSpecSets[pkgSetName] = pkgTestingSpec
-	}
-	return testPackageSpecSets
-}
-
-// GetTestingImagePackageSpecSets returns PackageSpecSets for all package sets
-// defined by the provided ImageType, which is useful for unit testing.
-func GetTestingImagePackageSpecSets(packageName string, i distro.ImageType) map[string][]rpmmd.PackageSpec {
-	arch := i.Arch().Name()
-	imagePackageSets := make([]string, 0, len(i.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
-		OSTree: &ostree.ImageOptions{
-			URL:           "foo",
-			ImageRef:      "bar",
-			FetchChecksum: "baz",
-		},
-	}, nil)))
-	for pkgSetName := range i.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{
-		OSTree: &ostree.ImageOptions{
-			URL:           "foo",
-			ImageRef:      "bar",
-			FetchChecksum: "baz",
-		},
-	}, nil) {
-		imagePackageSets = append(imagePackageSets, pkgSetName)
-	}
-	return GetTestingPackageSpecSets(packageName, arch, imagePackageSets)
 }
