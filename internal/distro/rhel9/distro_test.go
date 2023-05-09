@@ -270,7 +270,9 @@ func TestImageType_BuildPackages(t *testing.T) {
 					if assert.NoErrorf(t, err, "d.GetArch(%v) returned err = %v; expected nil", archLabel, err) {
 						continue
 					}
-					buildPkgs := itStruct.PackageSets(blueprint.Blueprint{}, distro.ImageOptions{}, nil)["build"]
+					manifest, _, err := itStruct.Manifest(&blueprint.Blueprint{}, distro.ImageOptions{}, nil, nil, nil, 0)
+					assert.NoError(t, err)
+					buildPkgs := manifest.Content.PackageSets["build"]
 					assert.NotNil(t, buildPkgs)
 					assert.Len(t, buildPkgs, 1)
 					assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs[0].Include)
@@ -456,8 +458,7 @@ func TestDistro_ManifestError(t *testing.T) {
 			imgOpts := distro.ImageOptions{
 				Size: imgType.Size(0),
 			}
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, imgOpts, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, imgOpts, nil, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "kernel boot parameter customizations are not supported for ostree types")
 			} else if imgTypeName == "edge-raw-image" {
@@ -658,8 +659,7 @@ func TestDistro_TestRootMountPoint(t *testing.T) {
 		arch, _ := r9distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
@@ -691,8 +691,7 @@ func TestDistro_CustomFileSystemSubDirectories(t *testing.T) {
 		arch, _ := r9distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil, nil, 0)
 			if strings.HasPrefix(imgTypeName, "edge-") {
 				continue
 			} else {
@@ -730,8 +729,7 @@ func TestDistro_MountpointsWithArbitraryDepthAllowed(t *testing.T) {
 		arch, _ := r9distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil, nil, 0)
 			if strings.HasPrefix(imgTypeName, "edge-") {
 				continue
 			} else {
@@ -823,8 +821,7 @@ func TestDistro_CustomUsrPartitionNotLargeEnough(t *testing.T) {
 		arch, _ := r9distro.GetArch(archName)
 		for _, imgTypeName := range arch.ListImageTypes() {
 			imgType, _ := arch.GetImageType(imgTypeName)
-			testPackageSpecSets := distro_test_common.GetTestingImagePackageSpecSets("kernel", imgType)
-			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, testPackageSpecSets, nil, 0)
+			_, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil, nil, 0)
 			if imgTypeName == "edge-commit" || imgTypeName == "edge-container" {
 				assert.EqualError(t, err, "Custom mountpoints are not supported for ostree types")
 			} else if imgTypeName == "edge-installer" || imgTypeName == "edge-simplified-installer" || imgTypeName == "edge-raw-image" {
