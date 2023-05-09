@@ -2533,7 +2533,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	manifest, warnings, err := imageType.Manifest(bp.Customizations,
+	manifest, warnings, err := imageType.Manifest(bp,
 		options,
 		imageRepos,
 		packageSets,

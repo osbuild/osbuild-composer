@@ -155,7 +155,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 						packageSets[plName] = minimalPackageSet
 					}
 
-					m, _, err := imageType.Manifest(bp.Customizations, options, repos, packageSets, containers, seed)
+					m, _, err := imageType.Manifest(&bp, options, repos, packageSets, containers, seed)
 					require.NoError(err)
 					mf, err := m.Serialize(packageSets)
 					require.NoError(err)

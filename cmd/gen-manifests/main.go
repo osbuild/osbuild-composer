@@ -170,7 +170,11 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			err = fmt.Errorf("[%s] nil package specs", filename)
 			return
 		}
-		manifest, _, err := imgType.Manifest(cr.Blueprint.Customizations, options, repos, packageSpecs, containerSpecs, seedArg)
+
+		if cr.Blueprint != nil {
+			bp = blueprint.Blueprint(*cr.Blueprint)
+		}
+		manifest, _, err := imgType.Manifest(&bp, options, repos, packageSpecs, containerSpecs, seedArg)
 		if err != nil {
 			err = fmt.Errorf("[%s] failed: %s", filename, err)
 			return
