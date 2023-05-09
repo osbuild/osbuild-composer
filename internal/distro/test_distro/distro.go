@@ -243,6 +243,7 @@ func (t *TestImageType) Exports() []string {
 }
 
 func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (*manifest.Manifest, []string, error) {
+	var bpPkgs []string
 	if b != nil {
 		mountpoints := b.Customizations.GetFilesystems()
 
@@ -256,9 +257,36 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 		if len(invalidMountpoints) > 0 {
 			return nil, nil, fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
 		}
+
+		bpPkgs = b.GetPackages()
 	}
 
-	ret := manifest.Manifest{}
+	ret := manifest.Manifest{
+		Content: manifest.Content{
+			PackageSets: map[string][]rpmmd.PackageSet{
+				buildPkgsKey: {{
+					Include: []string{
+						"dep-package1",
+						"dep-package2",
+						"dep-package3",
+					},
+					Repositories: repos,
+				}},
+				blueprintPkgsKey: {{
+					Include:      bpPkgs,
+					Repositories: repos,
+				}},
+				osPkgsKey: {{
+					Include: []string{
+						"dep-package1",
+						"dep-package2",
+						"dep-package3",
+					},
+					Repositories: repos,
+				}},
+			},
+		},
+	}
 	return &ret, nil, nil
 }
 
