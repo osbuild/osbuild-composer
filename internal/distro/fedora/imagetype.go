@@ -264,6 +264,26 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	containers []container.Spec,
 	seed int64) (*manifest.Manifest, []string, error) {
 
+	// merge package sets that appear in the image type with the package sets
+	// of the same name from the distro and arch
+	staticPackageSets := make(map[string]rpmmd.PackageSet)
+
+	for name, getter := range t.packageSets {
+		staticPackageSets[name] = getter(t)
+	}
+
+	// amend with repository information
+	for _, repo := range repos {
+		if len(repo.PackageSets) > 0 {
+			// only apply the repo to the listed package sets
+			for _, psName := range repo.PackageSets {
+				ps := staticPackageSets[psName]
+				ps.Repositories = append(ps.Repositories, repo)
+				staticPackageSets[psName] = ps
+			}
+		}
+	}
+
 	// the os pipeline filters repos based on the `osPkgsKey` package set, merge the repos which
 	// contain a payload package set into the `osPkgsKey`, so those repos are included when
 	// building the rpm stage in the os pipeline
@@ -283,7 +303,6 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	}
 	repos = mergedRepos
 
-	var packageSets map[string]rpmmd.PackageSet
 	warnings, err := t.checkOptions(bp, options)
 	if err != nil {
 		return nil, nil, err
@@ -293,7 +312,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	// always assume Custom.
 	w := &workload.Custom{
 		BaseWorkload: workload.BaseWorkload{
-			Repos: packageSets[blueprintPkgsKey].Repositories,
+			Repos: staticPackageSets[blueprintPkgsKey].Repositories,
 		},
 		Packages: bp.GetPackagesEx(false),
 	}
@@ -307,7 +326,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
+	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containers, rng)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -316,6 +335,8 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	if err != nil {
 		return nil, nil, err
 	}
+
+	manifest.Content.PackageSets = manifest.GetPackageSetChains()
 
 	return &manifest, warnings, err
 }
