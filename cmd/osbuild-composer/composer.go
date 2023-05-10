@@ -44,7 +44,7 @@ type Composer struct {
 	weldr   *weldr.API
 	api     *cloudapi.Server
 
-	weldrListener, localWorkerListener, workerListener, apiListener net.Listener
+	weldrListener, localWorkerListener, workerListener, apiListener, promListener net.Listener
 }
 
 func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Composer, error) {
@@ -128,6 +128,10 @@ func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
 	// Preload the Metadata for all the supported distros
 	c.weldr.PreloadMetadata()
 	return nil
+}
+
+func (c *Composer) InitMetricsAPI(prometheus net.Listener) {
+	c.promListener = prometheus
 }
 
 func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, enableJWT bool, l net.Listener) error {
@@ -218,7 +222,7 @@ func (c *Composer) Start() error {
 		logrus.Fatal("neither the weldr API socket nor the composer API socket is enabled, osbuild-composer is useless without one of these APIs enabled")
 	}
 
-	var localWorkerAPI, remoteWorkerAPI, composerAPI *http.Server
+	var localWorkerAPI, remoteWorkerAPI, composerAPI, prometheusAPI *http.Server
 
 	if c.localWorkerListener != nil {
 		localWorkerAPI = &http.Server{
@@ -313,6 +317,25 @@ func (c *Composer) Start() error {
 		}()
 	}
 
+	if c.promListener != nil {
+		// metrics listener on another port
+		metricsMux := http.NewServeMux()
+		metricsMux.Handle("/metrics", promhttp.Handler().(http.HandlerFunc))
+
+		prometheusAPI = &http.Server{
+			ErrorLog:          c.logger,
+			Handler:           metricsMux,
+			ReadHeaderTimeout: 5 * time.Second,
+		}
+
+		go func() {
+			err := prometheusAPI.Serve(c.promListener)
+			if err != nil && err != http.ErrServerClosed {
+				panic(err)
+			}
+		}()
+	}
+
 	if c.weldrListener != nil {
 		go func() {
 			err := c.weldr.Serve(c.weldrListener)
@@ -336,6 +359,13 @@ func (c *Composer) Start() error {
 		// First, close all listeners and then wait for all goroutines to finish.
 		err := composerAPI.Shutdown(context.Background())
 		c.api.Shutdown()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if c.promListener != nil {
+		err := prometheusAPI.Shutdown(context.Background())
 		if err != nil {
 			panic(err)
 		}

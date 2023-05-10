@@ -108,6 +108,14 @@ func main() {
 		composer.InitLocalWorker(l[0])
 	}
 
+	if l, exists := listeners["osbuild-composer-prometheus.socket"]; exists {
+		if len(l) != 1 {
+			logrus.Warn("The osbuild-composer-prometheus.socket unit is misconfigured. It should contain only one socket.")
+		}
+
+		composer.InitMetricsAPI(l[0])
+	}
+
 	if l, exists := listeners["osbuild-composer-api.socket"]; exists {
 		if len(l) != 1 {
 			logrus.Fatal("The osbuild-composer-api.socket unit is misconfigured. It should contain only one socket.")

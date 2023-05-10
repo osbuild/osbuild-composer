@@ -262,13 +262,13 @@ cd $PWD/_build/src/%{goipath}
 %endif
 
 %post
-%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
+%systemd_post osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-composer-prometheus.socket osbuild-remote-worker.socket
 
 %preun
-%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
+%systemd_preun osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-composer-prometheus.socket osbuild-remote-worker.socket
 
 %postun
-%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-remote-worker.socket
+%systemd_postun_with_restart osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-composer-prometheus.socket osbuild-remote-worker.socket
 
 %files
 %license LICENSE
@@ -277,6 +277,7 @@ cd $PWD/_build/src/%{goipath}
 %{_unitdir}/osbuild-composer.service
 %{_unitdir}/osbuild-composer.socket
 %{_unitdir}/osbuild-composer-api.socket
+%{_unitdir}/osbuild-composer-prometheus.socket
 %{_unitdir}/osbuild-local-worker.socket
 %{_unitdir}/osbuild-remote-worker.socket
 %{_sysusersdir}/osbuild-composer.conf
