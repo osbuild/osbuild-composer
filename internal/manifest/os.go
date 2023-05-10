@@ -212,7 +212,7 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 	if p.Subscription != nil {
 		packages = append(packages, "subscription-manager")
 		if p.Subscription.Rhc {
-			packages = append(packages, "rhc", "insights-client")
+			packages = append(packages, "rhc", "insights-client", "rhc-worker-playbook")
 		} else if p.Subscription.Insights {
 			packages = append(packages, "insights-client")
 		}
