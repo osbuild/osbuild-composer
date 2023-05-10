@@ -416,6 +416,20 @@ function collectMetrics(){
     echo "$METRICS_OUTPUT" | grep "^image_builder_composer_total_compose_requests" | cut -f2 -d' '
 }
 
+function testNewMetricsPort(){
+    METRICS_OUTPUT1=$(curl \
+                          --cacert /etc/osbuild-composer/ca-crt.pem \
+                          --key /etc/osbuild-composer/client-key.pem \
+                          --cert /etc/osbuild-composer/client-crt.pem \
+                          https://localhost/metrics)
+    METRICS_OUTPUT2=$(curl http://localhost:8008/metrics)
+
+    COMPOSES1=$(echo "$METRICS_OUTPUT1" | grep "^image_builder_composer_total_compose_requests" | cut -f2 -d' ')
+    COMPOSES2=$(echo "$METRICS_OUTPUT2" | grep "^image_builder_composer_total_compose_requests" | cut -f2 -d' ')
+
+    test "$COMPOSES1" = "$COMPOSES2"
+}
+
 function sendCompose() {
     OUTPUT=$(mktemp)
     HTTPSTATUS=$(curl \
@@ -569,6 +583,8 @@ fi
 sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c \
      "DELETE FROM jobs WHERE id = '$COMPOSE_ID'"
 sudo systemctl start "osbuild-remote-worker@localhost:8700.service"
+
+testNewMetricsPort
 
 # full integration case
 INIT_COMPOSES="$(collectMetrics)"

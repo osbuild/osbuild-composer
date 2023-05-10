@@ -1,5 +1,6 @@
 [Unit]
 Description=OSBuild Composer API socket
+Requires=osbuild-composer-prometheus.socket
 
 [Socket]
 Service=osbuild-composer.service

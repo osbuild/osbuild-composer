@@ -109,6 +109,9 @@ objects:
           - name: composer-api
             protocol: TCP
             containerPort: ${{COMPOSER_API_PORT}}
+          - name: prometheus
+            protocol: TCP
+            containerPort: ${{PROMETHEUS_PORT}}
           - name: worker-api
             protocol: TCP
             containerPort: ${{WORKER_API_PORT}}
@@ -217,6 +220,10 @@ objects:
         protocol: TCP
         port: 80
         targetPort: ${{COMPOSER_API_PORT}}
+      - name: prometheus
+        protocol: TCP
+        port: 8008
+        targetPort: ${{PROMETHEUS_PORT}}
     selector:
       app: composer
 
@@ -455,6 +462,9 @@ parameters:
     name: COMPOSER_API_PORT
     required: true
     value: "8080"
+  - description: prometheus port
+    name: PROMETHEUS_PORT
+    value: "8008"
   - description: worker-api port
     name: WORKER_API_PORT
     required: true
