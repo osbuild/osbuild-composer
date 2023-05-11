@@ -238,6 +238,7 @@ sudo "${CONTAINER_RUNTIME}" run \
     -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
     -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
     -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
+    -e JIRA_PAT="${JIRA_PAT}" \
     -v "${TEMPDIR}":/tmp:Z \
     "${CONTAINER_CLOUD_IMAGE_VAL}" \
     python cloud-image-val.py \
