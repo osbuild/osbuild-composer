@@ -45,7 +45,7 @@ get_compose_metadata () {
 }
 
 BRANCH_NAME="${CI_COMMIT_BRANCH:-local}"
-BUILD_ID="${CI_BUILD_ID:-$(uuidgen)}"
+BUILD_ID="${CI_JOB_ID:-$(uuidgen)}"
 TEST_ID="$DISTRO_CODE-$ARCH-$BRANCH_NAME-$BUILD_ID"
 IMAGE_KEY=container-${TEST_ID}
 
