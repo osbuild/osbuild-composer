@@ -31,6 +31,7 @@ type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
 	environment        environment.Environment
+	workload           workload.Workload
 	name               string
 	nameAliases        []string
 	filename           string
@@ -272,11 +273,15 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		staticPackageSets[name] = getter(t)
 	}
 
-	// amend with repository information
+	// amend with repository information and collect payload repos
+	payloadRepos := make([]rpmmd.RepoConfig, 0)
 	for _, repo := range repos {
 		if len(repo.PackageSets) > 0 {
 			// only apply the repo to the listed package sets
 			for _, psName := range repo.PackageSets {
+				if slices.Contains(t.PayloadPackageSets(), psName) {
+					payloadRepos = append(payloadRepos, repo)
+				}
 				ps := staticPackageSets[psName]
 				ps.Repositories = append(ps.Repositories, repo)
 				staticPackageSets[psName] = ps
@@ -284,41 +289,24 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		}
 	}
 
-	// the os pipeline filters repos based on the `osPkgsKey` package set, merge the repos which
-	// contain a payload package set into the `osPkgsKey`, so those repos are included when
-	// building the rpm stage in the os pipeline
-	// TODO: roll this into workloads
-	mergedRepos := make([]rpmmd.RepoConfig, 0, len(repos))
-	for _, repo := range repos {
-		for _, pkgsKey := range t.PayloadPackageSets() {
-			// If the repo already contains the osPkgsKey, skip
-			if slices.Contains(repo.PackageSets, osPkgsKey) {
-				break
-			}
-			if slices.Contains(repo.PackageSets, pkgsKey) {
-				repo.PackageSets = append(repo.PackageSets, osPkgsKey)
-			}
-		}
-		mergedRepos = append(mergedRepos, repo)
-	}
-	repos = mergedRepos
-
 	warnings, err := t.checkOptions(bp, options)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// TODO: let image types specify valid workloads, rather than
-	// always assume Custom.
-	w := &workload.Custom{
-		BaseWorkload: workload.BaseWorkload{
-			Repos: staticPackageSets[blueprintPkgsKey].Repositories,
-		},
-		Packages: bp.GetPackagesEx(false),
-	}
-	if services := bp.Customizations.GetServices(); services != nil {
-		w.Services = services.Enabled
-		w.DisabledServices = services.Disabled
+	w := t.workload
+	if w == nil {
+		cw := &workload.Custom{
+			BaseWorkload: workload.BaseWorkload{
+				Repos: payloadRepos,
+			},
+			Packages: bp.GetPackagesEx(false),
+		}
+		if services := bp.Customizations.GetServices(); services != nil {
+			cw.Services = services.Enabled
+			cw.DisabledServices = services.Disabled
+		}
+		w = cw
 	}
 
 	source := rand.NewSource(seed)
