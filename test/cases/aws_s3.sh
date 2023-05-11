@@ -33,7 +33,7 @@ trap cleanup EXIT
 CI="${CI:-false}"
 if [[ "$CI" == true ]]; then
   # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
-  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
+  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_JOB_ID"
 else
   # if not running in Jenkins, generate ID not relying on specific env variables
   TEST_ID=$(uuidgen);

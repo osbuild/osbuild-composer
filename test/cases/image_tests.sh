@@ -5,8 +5,8 @@ set -euo pipefail
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
-if [[ -n "$CI_BUILD_ID" ]]; then
-    BUILD_ID="${BUILD_ID:-${CI_BUILD_ID}}"
+if [[ -n "$CI_JOB_ID" ]]; then
+    BUILD_ID="${BUILD_ID:-${CI_JOB_ID}}"
 else
     BUILD_ID="${BUILD_ID:-$(uuidgen)}"
 fi

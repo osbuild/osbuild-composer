@@ -14,7 +14,7 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 BRANCH_NAME="${CI_COMMIT_BRANCH:-local}"
-BUILD_ID="${CI_BUILD_ID:-$(uuidgen)}"
+BUILD_ID="${CI_JOB_ID:-$(uuidgen)}"
 HYPER_V_GEN="${HYPER_V_GEN:-V1}"
 
 # Container image used for cloud provider CLI tools

@@ -291,7 +291,7 @@ TEST_ID="$(uuidgen)"
 CI="${CI:-false}"
 if [[ "$CI" == true ]]; then
   # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
-  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
+  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_JOB_ID"
 fi
 export TEST_ID
 
