@@ -219,11 +219,12 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 		}
 	}
 
+	osRepos := append(p.repos, p.ExtraBaseRepos...)
 	chain := []rpmmd.PackageSet{
 		{
 			Include:      append(packages, p.ExtraBasePackages...),
 			Exclude:      p.ExcludeBasePackages,
-			Repositories: append(p.repos, p.ExtraBaseRepos...),
+			Repositories: osRepos,
 		},
 	}
 
@@ -232,7 +233,7 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 		if len(workloadPackages) > 0 {
 			chain = append(chain, rpmmd.PackageSet{
 				Include:      workloadPackages,
-				Repositories: append(p.repos, p.Workload.GetRepos()...),
+				Repositories: append(osRepos, p.Workload.GetRepos()...),
 			})
 		}
 	}
@@ -313,7 +314,12 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", p.OSTreeParent.Checksum))
 	}
 
-	rpmOptions := osbuild.NewRPMStageOptions(p.repos)
+	// collect all repos for this pipeline to create the repository options
+	allRepos := append(p.repos, p.ExtraBaseRepos...)
+	if p.Workload != nil {
+		allRepos = append(allRepos, p.Workload.GetRepos()...)
+	}
+	rpmOptions := osbuild.NewRPMStageOptions(allRepos)
 	if p.ExcludeDocs {
 		if rpmOptions.Exclude == nil {
 			rpmOptions.Exclude = &osbuild.Exclude{}
