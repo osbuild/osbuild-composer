@@ -193,6 +193,11 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	containers []container.Spec,
 	seed int64) (*manifest.Manifest, []string, error) {
 
+	warnings, err := t.checkOptions(bp, options)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	// merge package sets that appear in the image type with the package sets
 	// of the same name from the distro and arch
 	staticPackageSets := make(map[string]rpmmd.PackageSet)
@@ -215,11 +220,6 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 				staticPackageSets[psName] = ps
 			}
 		}
-	}
-
-	warnings, err := t.checkOptions(bp, options)
-	if err != nil {
-		return nil, nil, err
 	}
 
 	w := t.workload
