@@ -94,6 +94,7 @@ func TestSubscriptionManagerInsightsCommands(t *testing.T) {
 	CheckFirstBootStageOptions(t, pipeline.Stages, []string{
 		"/usr/sbin/subscription-manager register --org=2040324 --activationkey=my-secret-key --serverurl subscription.rhsm.redhat.com --baseurl http://cdn.redhat.com/",
 		"/usr/bin/insights-client --register",
+		"restorecon -R /root/.gnupg",
 	})
 }
 
@@ -110,6 +111,7 @@ func TestRhcInsightsCommands(t *testing.T) {
 	pipeline := os.serialize()
 	CheckFirstBootStageOptions(t, pipeline.Stages, []string{
 		"/usr/bin/rhc connect -o=2040324 -a=my-secret-key --server subscription.rhsm.redhat.com",
+		"restorecon -R /root/.gnupg",
 	})
 }
 
