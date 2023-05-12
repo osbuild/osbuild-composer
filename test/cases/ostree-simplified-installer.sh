@@ -17,7 +17,7 @@ sudo pip3 install yq==v3.2.1
 sudo dnf install -y fdo-admin-cli
 # Start fdo-aio to have /etc/fdo/aio folder
 sudo systemctl enable --now fdo-aio
-# Prepare service api server config file
+# Prepare service api server config filef
 sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
 sudo systemctl restart fdo-aio
 
@@ -668,7 +668,7 @@ done
 if [[ "${ANSIBLE_USER}" == "fdouser" ]]; then
     greenprint "🕹 Check if user 'fdouser' exist in edge vm"
     for _ in $(seq 0 30); do
-        FDOUSER_EXIST=$(ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@$PUB_KEY_GUEST_ADDRESS "grep fdouser /etc/passwd")
+        FDOUSER_EXIST=$(ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@$PUB_KEY_GUEST_ADDRESS "grep fdouser /etc/passwd || true")
         if [[ ${FDOUSER_EXIST} =~ "fdouser" ]]; then
             echo "fdouser has been created"
             break
