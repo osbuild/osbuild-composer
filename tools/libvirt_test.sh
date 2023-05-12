@@ -283,14 +283,14 @@ else
     esac
 
     case "${ID}-${VERSION_ID}" in
-        "rhel-8"* | "rhel-9.0" | "rhel-9.1" | "centos-8")
+        "rhel-8"* | "centos-8")
              NVRAM_TEMPLATE="nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd"
              ;;
         "centos-9" )
             # Disable secure boot for CS9 due to bug bz#2108646
             NVRAM_TEMPLATE="firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
             ;;
-        "rhel-9.2")
+        "rhel-9"*)
              NVRAM_TEMPLATE=""
              ;;
         *)
