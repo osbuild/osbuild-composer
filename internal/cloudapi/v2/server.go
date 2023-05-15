@@ -147,7 +147,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	if ir.ostree != nil {
 		jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{
 			Specs: []worker.OSTreeResolveSpec{
-				worker.OSTreeResolveSpec{
+				{
 					URL:    ir.ostree.URL,
 					Ref:    ir.ostree.Ref,
 					Parent: ir.ostree.Parent,
@@ -245,7 +245,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		if ir.ostree != nil {
 			jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{
 				Specs: []worker.OSTreeResolveSpec{
-					worker.OSTreeResolveSpec{
+					{
 						URL:    ir.ostree.URL,
 						Ref:    ir.ostree.Ref,
 						Parent: ir.ostree.Parent,
