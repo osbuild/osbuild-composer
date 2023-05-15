@@ -180,7 +180,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		if cr.Blueprint != nil {
 			bp = blueprint.Blueprint(*cr.Blueprint)
 		}
-		mf, err := manifest.Serialize(packageSpecs)
+		mf, err := manifest.Serialize(packageSpecs, nil)
 
 		request := composeRequest{
 			Distro:       distribution.Name(),

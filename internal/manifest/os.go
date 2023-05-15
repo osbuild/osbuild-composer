@@ -291,11 +291,14 @@ func (p *OS) getContainerSpecs() []container.Spec {
 	return p.containerSpecs
 }
 
-func (p *OS) serializeStart(packages []rpmmd.PackageSpec) {
+func (p *OS) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
+
 	p.packageSpecs = packages
+	p.containerSpecs = containers
+
 	if p.KernelName != "" {
 		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.KernelName)
 	}

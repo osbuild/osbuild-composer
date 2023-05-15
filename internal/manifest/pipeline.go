@@ -44,7 +44,7 @@ type Pipeline interface {
 	// its full Spec. See the ostree package for more details.
 	getOSTreeCommitSources() []ostree.SourceSpec
 
-	serializeStart([]rpmmd.PackageSpec)
+	serializeStart([]rpmmd.PackageSpec, []container.Spec)
 	serializeEnd()
 	serialize() osbuild.Pipeline
 
@@ -155,7 +155,7 @@ func NewBase(m *Manifest, name string, build *Build) Base {
 
 // serializeStart must be called exactly once before each call
 // to serialize().
-func (p Base) serializeStart([]rpmmd.PackageSpec) {
+func (p Base) serializeStart([]rpmmd.PackageSpec, []container.Spec) {
 }
 
 // serializeEnd must be called exactly once after each call to

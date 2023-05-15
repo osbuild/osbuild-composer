@@ -236,7 +236,7 @@ func main() {
 			composeRequest.OSTree.Ref = imageType.OSTreeRef()
 		}
 
-		ms, err := manifest.Serialize(depsolvedSets)
+		ms, err := manifest.Serialize(depsolvedSets, nil)
 		if err != nil {
 			panic(err.Error())
 		}

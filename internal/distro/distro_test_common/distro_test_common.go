@@ -154,7 +154,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				t.Errorf("distro.Manifest() error = %v", err)
 				return
 			}
-			got, err := manifest.Serialize(imgPackageSpecSets)
+			got, err := manifest.Serialize(imgPackageSpecSets, nil)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
 				t.Errorf("distro.Manifest() error = %v", err)

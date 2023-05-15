@@ -169,7 +169,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 
 					m, _, err := imageType.Manifest(&bp, options, repos, nil, containers, seed)
 					assert.NoError(err)
-					mf, err := m.Serialize(packageSets)
+					mf, err := m.Serialize(packageSets, nil)
 					assert.NoError(err)
 					pm := new(manifest)
 					err = json.Unmarshal(mf, pm)

@@ -468,7 +468,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)
 		return
 	}
-	ms, err := manifest.Serialize(depsolveResults.PackageSpecs)
+	ms, err := manifest.Serialize(depsolveResults.PackageSpecs, nil)
 
 	jobResult.Manifest = ms
 }

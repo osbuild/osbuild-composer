@@ -56,7 +56,7 @@ func FixtureBase() *Store {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
-	mf, err := manifest.Serialize(nil)
+	mf, err := manifest.Serialize(nil, nil)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
@@ -198,7 +198,7 @@ func FixtureFinished() *Store {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
-	mf, err := manifest.Serialize(nil)
+	mf, err := manifest.Serialize(nil, nil)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
