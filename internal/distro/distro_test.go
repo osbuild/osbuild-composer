@@ -142,7 +142,6 @@ func TestImageTypePipelineNames(t *testing.T) {
 							CheckGPG:    common.ToPtr(true),
 						},
 					}
-					containers := make([]container.Spec, 0)
 					seed := int64(0)
 
 					// Add ostree options for image types that require them
@@ -167,9 +166,11 @@ func TestImageTypePipelineNames(t *testing.T) {
 						packageSets[plName] = minimalPackageSet
 					}
 
-					m, _, err := imageType.Manifest(&bp, options, repos, nil, containers, seed)
+					m, _, err := imageType.Manifest(&bp, options, repos, nil, nil, seed)
 					assert.NoError(err)
-					mf, err := m.Serialize(packageSets, nil)
+
+					containers := make(map[string][]container.Spec, 0)
+					mf, err := m.Serialize(packageSets, containers)
 					assert.NoError(err)
 					pm := new(manifest)
 					err = json.Unmarshal(mf, pm)
