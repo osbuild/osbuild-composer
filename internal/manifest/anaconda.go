@@ -3,6 +3,7 @@ package manifest
 import (
 	"fmt"
 
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -140,7 +141,7 @@ func (p *Anaconda) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *Anaconda) serializeStart(packages []rpmmd.PackageSpec) {
+func (p *Anaconda) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}

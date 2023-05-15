@@ -2532,7 +2532,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	mf, err := manifest.Serialize(packageSets)
+	mf, err := manifest.Serialize(packageSets, nil)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
