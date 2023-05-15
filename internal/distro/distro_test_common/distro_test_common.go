@@ -52,7 +52,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			ComposeRequest  *composeRequest                `json:"compose-request"`
 			PackageSpecSets map[string][]rpmmd.PackageSpec `json:"rpmmd"`
 			Manifest        manifest.OSBuildManifest       `json:"manifest,omitempty"`
-			Containers      []container.Spec               `json:"containers,omitempty"`
+			Containers      map[string][]container.Spec    `json:"containers,omitempty"`
 		}
 		file, err := os.ReadFile(fileName)
 		assert.NoErrorf(err, "Could not read test-case '%s': %v", fileName, err)
@@ -147,14 +147,14 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			manifest, _, err := imageType.Manifest(tt.ComposeRequest.Blueprint,
 				options,
 				repos,
-				imgPackageSpecSets,
-				tt.Containers,
+				nil,
+				nil,
 				RandomTestSeed)
 			if err != nil {
 				t.Errorf("distro.Manifest() error = %v", err)
 				return
 			}
-			got, err := manifest.Serialize(imgPackageSpecSets, nil)
+			got, err := manifest.Serialize(imgPackageSpecSets, tt.Containers)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
 				t.Errorf("distro.Manifest() error = %v", err)
