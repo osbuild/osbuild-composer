@@ -2265,65 +2265,71 @@ func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distro distr
 	return depsolvedSets, nil
 }
 
-func (api *API) resolveContainersForImageType(bp blueprint.Blueprint, imageType distro.ImageType) ([]container.Spec, error) {
+func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec) (map[string][]container.Spec, error) {
 
-	specs := make([]container.Spec, len(bp.Containers))
+	specs := make(map[string][]container.Spec, len(sourceSpecs))
 
 	// shortcut
-	if len(bp.Containers) == 0 {
+	if len(sourceSpecs) == 0 {
 		return specs, nil
 	}
 
-	job := worker.ContainerResolveJob{
-		Arch:  api.archName,
-		Specs: make([]worker.ContainerSpec, len(bp.Containers)),
-	}
-
-	for i, c := range bp.Containers {
-		job.Specs[i] = worker.ContainerSpec{
-			Source:    c.Source,
-			Name:      c.Name,
-			TLSVerify: c.TLSVerify,
+	// Run one job for each value in the sourceSpecs in order.
+	// Currently this should still only be one job, but if containers are added
+	// to multiple pipelines at any point, this should work.
+	for name, sources := range sourceSpecs {
+		job := worker.ContainerResolveJob{
+			Arch:  api.archName,
+			Specs: make([]worker.ContainerSpec, len(sources)),
 		}
-	}
 
-	jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
+		for i, c := range sources {
+			job.Specs[i] = worker.ContainerSpec{
+				Source:    c.Source,
+				Name:      c.Name,
+				TLSVerify: c.TLSVerify,
+			}
+		}
 
-	if err != nil {
-		return specs, err
-	}
-
-	var result worker.ContainerResolveJobResult
-
-	for {
-		jobInfo, err := api.workers.ContainerResolveJobInfo(jobId, &result)
+		jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
 
 		if err != nil {
 			return specs, err
 		}
 
-		if result.JobError != nil {
-			return specs, errors.New(result.JobError.Reason)
-		} else if jobInfo.JobStatus.Canceled {
-			return specs, fmt.Errorf("Failed to resolve containers: job cancelled")
-		} else if !jobInfo.JobStatus.Finished.IsZero() {
-			break
+		var result worker.ContainerResolveJobResult
+
+		for {
+			jobInfo, err := api.workers.ContainerResolveJobInfo(jobId, &result)
+
+			if err != nil {
+				return specs, err
+			}
+
+			if result.JobError != nil {
+				return specs, errors.New(result.JobError.Reason)
+			} else if jobInfo.JobStatus.Canceled {
+				return specs, fmt.Errorf("Failed to resolve containers: job cancelled")
+			} else if !jobInfo.JobStatus.Finished.IsZero() {
+				break
+			}
+
+			time.Sleep(time.Millisecond * 250)
 		}
 
-		time.Sleep(time.Millisecond * 250)
-	}
+		if len(result.Specs) != len(sources) {
+			panic("programming error: input / output length don't match")
+		}
 
-	if len(result.Specs) != len(specs) {
-		panic("programming error: input / output length don't match")
-	}
-
-	for i, s := range result.Specs {
-		specs[i].Source = s.Source
-		specs[i].Digest = s.Digest
-		specs[i].LocalName = s.Name
-		specs[i].TLSVerify = s.TLSVerify
-		specs[i].ImageID = s.ImageID
-		specs[i].ListDigest = s.ListDigest
+		specs[name] = make([]container.Spec, len(sources))
+		for i, s := range result.Specs {
+			specs[name][i].Source = s.Source
+			specs[name][i].Digest = s.Digest
+			specs[name][i].LocalName = s.Name
+			specs[name][i].TLSVerify = s.TLSVerify
+			specs[name][i].ImageID = s.ImageID
+			specs[name][i].ListDigest = s.ListDigest
+		}
 	}
 
 	return specs, nil
@@ -2497,21 +2503,11 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	containerSpecs, err := api.resolveContainersForImageType(*bp, imageType)
-	if err != nil {
-		errors := responseError{
-			ID:  "ContainerResolveError",
-			Msg: err.Error(),
-		}
-		statusResponseError(writer, http.StatusInternalServerError, errors)
-		return
-	}
-
 	manifest, warnings, err := imageType.Manifest(bp,
 		options,
 		imageRepos,
 		nil,
-		containerSpecs,
+		nil,
 		seed)
 	if err != nil {
 		errors := responseError{
@@ -2532,7 +2528,17 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	mf, err := manifest.Serialize(packageSets, nil)
+	containerSpecs, err := api.resolveContainers(manifest.Content.Containers)
+	if err != nil {
+		errors := responseError{
+			ID:  "ContainerResolveError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
+	mf, err := manifest.Serialize(packageSets, containerSpecs)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
