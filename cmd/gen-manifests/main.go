@@ -156,12 +156,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			bp = blueprint.Blueprint(*cr.Blueprint)
 		}
 
-		containerSpecs, err := resolveContainers(bp.Containers, archName)
-		if err != nil {
-			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
-		}
-
-		manifest, _, err := imgType.Manifest(&bp, options, repos, nil, containerSpecs, seedArg)
+		manifest, _, err := imgType.Manifest(&bp, options, repos, nil, nil, seedArg)
 		if err != nil {
 			err = fmt.Errorf("[%s] failed: %s", filename, err)
 			return
@@ -180,7 +175,16 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		if cr.Blueprint != nil {
 			bp = blueprint.Blueprint(*cr.Blueprint)
 		}
-		mf, err := manifest.Serialize(packageSpecs, nil)
+
+		containerSpecs, err := resolvePipelineContainers(manifest.Content.Containers, archName)
+		if err != nil {
+			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
+		}
+
+		mf, err := manifest.Serialize(packageSpecs, containerSpecs)
+		if err != nil {
+			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
+		}
 
 		request := composeRequest{
 			Distro:       distribution.Name(),
@@ -253,14 +257,26 @@ func readRepos() DistroArchRepoMap {
 	return darm
 }
 
-func resolveContainers(containers []blueprint.Container, archName string) ([]container.Spec, error) {
+func resolveContainers(containers []container.SourceSpec, archName string) ([]container.Spec, error) {
 	resolver := container.NewResolver(archName)
 
 	for _, c := range containers {
-		resolver.Add(container.SourceSpec(c))
+		resolver.Add(c)
 	}
 
 	return resolver.Finish()
+}
+
+func resolvePipelineContainers(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
+	containerSpecs := make(map[string][]container.Spec, len(containerSources))
+	for plName, sourceSpecs := range containerSources {
+		specs, err := resolveContainers(sourceSpecs, archName)
+		if err != nil {
+			return nil, err
+		}
+		containerSpecs[plName] = specs
+	}
+	return containerSpecs, nil
 }
 
 func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
@@ -277,12 +293,12 @@ func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d dist
 	return depsolvedSets, nil
 }
 
-func save(ms manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers []container.Spec, cr composeRequest, path, filename string) error {
+func save(ms manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers map[string][]container.Spec, cr composeRequest, path, filename string) error {
 	data := struct {
 		ComposeRequest composeRequest                 `json:"compose-request"`
 		Manifest       manifest.OSBuildManifest       `json:"manifest"`
 		RPMMD          map[string][]rpmmd.PackageSpec `json:"rpmmd"`
-		Containers     []container.Spec               `json:"containers,omitempty"`
+		Containers     map[string][]container.Spec    `json:"containers,omitempty"`
 		NoImageInfo    bool                           `json:"no-image-info"`
 	}{
 		cr, ms, pkgs, containers, true,

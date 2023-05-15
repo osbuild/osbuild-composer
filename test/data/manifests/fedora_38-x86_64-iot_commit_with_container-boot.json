@@ -14017,23 +14017,25 @@
       }
     ]
   },
-  "containers": [
-    {
-      "Source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal",
-      "Digest": "sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b",
-      "TLSVerify": null,
-      "ImageID": "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6",
-      "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal:latest",
-      "ListDigest": ""
-    },
-    {
-      "Source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
-      "Digest": "sha256:601c98c8148720ec5c29b8e854a1d5d88faddbc443eca12920d76cf993d7290e",
-      "TLSVerify": null,
-      "ImageID": "sha256:dbb63178dc9157068107961f11397df3fb62c02fa64f697d571bf84aad71cb99",
-      "LocalName": "manifest-list-test:v1",
-      "ListDigest": "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
-    }
-  ],
+  "containers": {
+    "os": [
+      {
+        "Source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal",
+        "Digest": "sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b",
+        "TLSVerify": null,
+        "ImageID": "sha256:d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6",
+        "LocalName": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal:latest",
+        "ListDigest": ""
+      },
+      {
+        "Source": "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test",
+        "Digest": "sha256:601c98c8148720ec5c29b8e854a1d5d88faddbc443eca12920d76cf993d7290e",
+        "TLSVerify": null,
+        "ImageID": "sha256:dbb63178dc9157068107961f11397df3fb62c02fa64f697d571bf84aad71cb99",
+        "LocalName": "manifest-list-test:v1",
+        "ListDigest": "sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
+      }
+    ]
+  },
   "no-image-info": true
 }
