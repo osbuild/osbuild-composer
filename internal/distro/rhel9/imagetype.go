@@ -44,7 +44,7 @@ const (
 	blueprintPkgsKey = "blueprint"
 )
 
-type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.Spec, rng *rand.Rand) (image.ImageKind, error)
+type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -237,12 +237,17 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		w = cw
 	}
 
+	containerSources := make([]container.SourceSpec, len(bp.Containers))
+	for idx := range bp.Containers {
+		containerSources[idx] = container.SourceSpec(bp.Containers[idx])
+	}
+
 	source := rand.NewSource(seed)
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containers, rng)
+	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containerSources, rng)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -344,7 +349,7 @@ func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOpti
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, containers, rng)
+	img, err := t.image(w, t, bp.Customizations, options, packageSets, nil, rng)
 	if err != nil {
 		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
 		return nil
