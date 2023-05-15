@@ -22,7 +22,7 @@ import (
 )
 
 func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, cacheDir string, repos []rpmmd.RepoConfig) (manifest.OSBuildManifest, []rpmmd.PackageSpec) {
-	manifest, _, err := t.Manifest(&bp, distro.ImageOptions{}, repos, nil, nil, 0)
+	manifest, _, err := t.Manifest(&bp, distro.ImageOptions{}, repos, 0)
 	if err != nil {
 		panic(err)
 	}

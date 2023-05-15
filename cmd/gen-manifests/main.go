@@ -156,7 +156,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			bp = blueprint.Blueprint(*cr.Blueprint)
 		}
 
-		manifest, _, err := imgType.Manifest(&bp, options, repos, nil, nil, seedArg)
+		manifest, _, err := imgType.Manifest(&bp, options, repos, seedArg)
 		if err != nil {
 			err = fmt.Errorf("[%s] failed: %s", filename, err)
 			return

@@ -32,7 +32,7 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, _, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	manifest, _, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error getting image type from arch: %v", err)
 	}
-	manifest, _, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil, nil, 0)
+	manifest, _, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, 0)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}

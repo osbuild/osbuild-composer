@@ -54,13 +54,14 @@ func TestImageType_PackageSetsChains(t *testing.T) {
 					bp := blueprint.Blueprint{
 						Customizations: customizations,
 					}
-					manifest, _, err := imageType.Manifest(&bp, distro.ImageOptions{
+					options := distro.ImageOptions{
 						OSTree: &ostree.ImageOptions{
 							URL:           "foo",
 							ImageRef:      "bar",
 							FetchChecksum: "baz",
 						},
-					}, nil, nil, nil, 0)
+					}
+					manifest, _, err := imageType.Manifest(&bp, options, nil, 0)
 					require.NoError(t, err)
 					imagePkgSets := manifest.Content.PackageSets
 					for packageSetName := range imageType.PackageSetsChains() {
@@ -166,7 +167,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 						packageSets[plName] = minimalPackageSet
 					}
 
-					m, _, err := imageType.Manifest(&bp, options, repos, nil, nil, seed)
+					m, _, err := imageType.Manifest(&bp, options, repos, seed)
 					assert.NoError(err)
 
 					containers := make(map[string][]container.Spec, 0)
@@ -453,7 +454,7 @@ func TestPipelineRepositories(t *testing.T) {
 							}
 
 							repos := tCase.repos
-							manifest, _, err := imageType.Manifest(&bp, options, repos, nil, nil, 0)
+							manifest, _, err := imageType.Manifest(&bp, options, repos, 0)
 							require.NoError(err)
 							packageSets := manifest.Content.PackageSets
 

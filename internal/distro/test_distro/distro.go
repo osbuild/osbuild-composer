@@ -6,7 +6,6 @@ import (
 	"sort"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
@@ -242,7 +241,7 @@ func (t *TestImageType) Exports() []string {
 	return distro.ExportsFallback()
 }
 
-func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, packageSpecSets map[string][]rpmmd.PackageSpec, containers []container.Spec, seed int64) (*manifest.Manifest, []string, error) {
+func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seed int64) (*manifest.Manifest, []string, error) {
 	var bpPkgs []string
 	if b != nil {
 		mountpoints := b.Customizations.GetFilesystems()
