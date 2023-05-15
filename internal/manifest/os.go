@@ -43,8 +43,9 @@ type OSCustomizations struct {
 	// Additional repos to install the base packages from.
 	ExtraBaseRepos []rpmmd.RepoConfig
 
-	// Containers to embed in the image
-	Containers []container.Spec
+	// Containers to embed in the image (source specification)
+	// TODO: move to workload
+	Containers []container.SourceSpec
 
 	// KernelName indicates that a kernel is installed, and names the kernel
 	// package.
@@ -146,10 +147,11 @@ type OS struct {
 	// Partition table, if nil the tree cannot be put on a partitioned disk
 	PartitionTable *disk.PartitionTable
 
-	repos        []rpmmd.RepoConfig
-	packageSpecs []rpmmd.PackageSpec
-	platform     platform.Platform
-	kernelVer    string
+	repos          []rpmmd.RepoConfig
+	packageSpecs   []rpmmd.PackageSpec
+	containerSpecs []container.Spec
+	platform       platform.Platform
+	kernelVer      string
 
 	// NoBLS configures the image bootloader with traditional menu entries
 	// instead of BLS. Required for legacy systems like RHEL 7.
@@ -286,7 +288,7 @@ func (p *OS) getPackageSpecs() []rpmmd.PackageSpec {
 }
 
 func (p *OS) getContainerSpecs() []container.Spec {
-	return p.Containers
+	return p.containerSpecs
 }
 
 func (p *OS) serializeStart(packages []rpmmd.PackageSpec) {
@@ -347,8 +349,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 	}
 
-	if len(p.Containers) > 0 {
-		images := osbuild.NewContainersInputForSources(p.Containers)
+	if len(p.containerSpecs) > 0 {
+		images := osbuild.NewContainersInputForSources(p.containerSpecs)
 
 		var storagePath string
 
@@ -364,7 +366,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			pipeline.AddStage(osbuild.NewContainersStorageConfStage(containerStoreOpts))
 		}
 
-		manifests := osbuild.NewFilesInputForManifestLists(p.Containers)
+		manifests := osbuild.NewFilesInputForManifestLists(p.containerSpecs)
 		skopeo := osbuild.NewSkopeoStage(storagePath, images, manifests)
 		pipeline.AddStage(skopeo)
 	}

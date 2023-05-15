@@ -23,7 +23,7 @@ import (
 func osCustomizations(
 	t *imageType,
 	osPackageSet rpmmd.PackageSet,
-	containers []container.Spec,
+	containers []container.SourceSpec,
 	c *blueprint.Customizations) manifest.OSCustomizations {
 
 	imageConfig := t.getDefaultImageConfig()
@@ -199,7 +199,7 @@ func liveImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.Spec,
+	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewLiveImage()
@@ -224,7 +224,7 @@ func containerImage(workload workload.Workload,
 	c *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.Spec,
+	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 	img := image.NewBaseContainer()
 
@@ -243,7 +243,7 @@ func imageInstallerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.Spec,
+	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewImageInstaller()
@@ -287,7 +287,7 @@ func iotCommitImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.Spec,
+	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
@@ -317,7 +317,7 @@ func iotContainerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.Spec,
+	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
@@ -350,7 +350,7 @@ func iotInstallerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.Spec,
+	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	d := t.arch.distro
@@ -392,7 +392,7 @@ func iotRawImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.Spec,
+	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	commit := ostree.CommitSpec{
