@@ -65,15 +65,15 @@ func findDnfJsonBin() string {
 	panic(fmt.Sprintf("could not find 'dnf-json' in any of the known paths: %+v", locations))
 }
 
-func resolveContainers(bp blueprint.Blueprint, archName string) ([]container.Spec, error) {
-	if len(bp.Containers) == 0 {
+func resolveContainers(sourceSpecs []container.SourceSpec, archName string) ([]container.Spec, error) {
+	if len(sourceSpecs) == 0 {
 		return nil, nil
 	}
 
 	resolver := container.NewResolver(archName)
 
-	for _, c := range bp.Containers {
-		resolver.Add(container.SourceSpec(c))
+	for _, c := range sourceSpecs {
+		resolver.Add(c)
 	}
 
 	return resolver.Finish()
@@ -200,16 +200,11 @@ func main() {
 	// let the cache grow to fit much more repository metadata than we usually allow
 	solver.SetMaxCacheSize(3 * 1024 * 1024 * 1024)
 
-	containerSpecs, err := resolveContainers(composeRequest.Blueprint, arch.Name())
-	if err != nil {
-		panic("Could not resolve containers: " + err.Error())
-	}
-
 	manifest, _, err := imageType.Manifest(&composeRequest.Blueprint,
 		options,
 		repos,
 		nil,
-		containerSpecs,
+		nil,
 		seedArg)
 	if err != nil {
 		panic(err.Error())
@@ -224,6 +219,15 @@ func main() {
 		depsolvedSets[name] = res
 	}
 
+	containers := make(map[string][]container.Spec, len(manifest.Content.Containers))
+	for name, sourceSpecs := range manifest.Content.Containers {
+		containerSpecs, err := resolveContainers(sourceSpecs, arch.Name())
+		if err != nil {
+			panic("Could not resolve containers: " + err.Error())
+		}
+		containers[name] = containerSpecs
+	}
+
 	var bytes []byte
 	if rpmmdArg {
 		bytes, err = json.Marshal(depsolvedSets)
@@ -236,7 +240,7 @@ func main() {
 			composeRequest.OSTree.Ref = imageType.OSTreeRef()
 		}
 
-		ms, err := manifest.Serialize(depsolvedSets, nil)
+		ms, err := manifest.Serialize(depsolvedSets, containers)
 		if err != nil {
 			panic(err.Error())
 		}
