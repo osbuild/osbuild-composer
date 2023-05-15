@@ -2503,12 +2503,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	manifest, warnings, err := imageType.Manifest(bp,
-		options,
-		imageRepos,
-		nil,
-		nil,
-		seed)
+	manifest, warnings, err := imageType.Manifest(bp, options, imageRepos, seed)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",

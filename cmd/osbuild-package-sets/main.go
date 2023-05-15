@@ -48,13 +48,14 @@ func main() {
 
 	encoder := json.NewEncoder(os.Stdout)
 	encoder.SetIndent("", "  ")
-	manifest, _, err := image.Manifest(&blueprint.Blueprint{}, distro.ImageOptions{
+	options := distro.ImageOptions{
 		OSTree: &ostree.ImageOptions{
 			URL:           "foo",
 			ImageRef:      "bar",
 			FetchChecksum: "baz",
 		},
-	}, nil, nil, nil, 0)
+	}
+	manifest, _, err := image.Manifest(&blueprint.Blueprint{}, options, nil, 0)
 	if err != nil {
 		panic(err)
 	}

@@ -144,12 +144,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				imgPackageSpecSets = tt.PackageSpecSets
 			}
 
-			manifest, _, err := imageType.Manifest(tt.ComposeRequest.Blueprint,
-				options,
-				repos,
-				nil,
-				nil,
-				RandomTestSeed)
+			manifest, _, err := imageType.Manifest(tt.ComposeRequest.Blueprint, options, repos, RandomTestSeed)
 			if err != nil {
 				t.Errorf("distro.Manifest() error = %v", err)
 				return
@@ -175,7 +170,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 }
 
 func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, cacheDir, dnfJsonPath string) map[string][]rpmmd.PackageSpec {
-	manifest, _, err := imageType.Manifest(&bp, options, repos, nil, nil, 0)
+	manifest, _, err := imageType.Manifest(&bp, options, repos, 0)
 	if err != nil {
 		panic("Could not generate manifest for package sets: " + err.Error())
 	}
@@ -212,7 +207,7 @@ func kernelCount(imgType distro.ImageType, bp blueprint.Blueprint) int {
 		ImageRef:      "bar",
 		FetchChecksum: "baz",
 	}
-	manifest, _, err := imgType.Manifest(&bp, distro.ImageOptions{OSTree: ostreeOptions}, nil, nil, nil, 0)
+	manifest, _, err := imgType.Manifest(&bp, distro.ImageOptions{OSTree: ostreeOptions}, nil, 0)
 	if err != nil {
 		panic(err)
 	}

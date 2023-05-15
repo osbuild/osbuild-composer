@@ -200,12 +200,7 @@ func main() {
 	// let the cache grow to fit much more repository metadata than we usually allow
 	solver.SetMaxCacheSize(3 * 1024 * 1024 * 1024)
 
-	manifest, _, err := imageType.Manifest(&composeRequest.Blueprint,
-		options,
-		repos,
-		nil,
-		nil,
-		seedArg)
+	manifest, _, err := imageType.Manifest(&composeRequest.Blueprint, options, repos, seedArg)
 	if err != nil {
 		panic(err.Error())
 	}

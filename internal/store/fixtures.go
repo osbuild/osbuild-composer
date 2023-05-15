@@ -51,7 +51,7 @@ func FixtureBase() *Store {
 	if err != nil {
 		panic(fmt.Sprintf("failed to get image type %s for a test distro architecture: %v", test_distro.TestImageTypeName, err))
 	}
-	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
+	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
@@ -193,7 +193,7 @@ func FixtureFinished() *Store {
 	if err != nil {
 		panic(fmt.Sprintf("failed to get image type %s for a test distro architecture: %v", test_distro.TestImageTypeName, err))
 	}
-	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil, nil, 0)
+	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}

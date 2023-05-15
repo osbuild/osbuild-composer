@@ -152,8 +152,6 @@ func (t *imageType) PartitionType() string {
 func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	packageSpecs map[string][]rpmmd.PackageSpec,
-	containers []container.Spec,
 	seed int64) (*manifest.Manifest, []string, error) {
 
 	warnings, err := t.checkOptions(bp, options)
