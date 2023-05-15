@@ -241,6 +241,10 @@ func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
 	return chain
 }
 
+func (p *OS) getContainerSources() []container.SourceSpec {
+	return p.OSCustomizations.Containers
+}
+
 func (p *OS) getBuildPackages() []string {
 	packages := p.platform.GetBuildPackages()
 	if p.PartitionTable != nil {
@@ -301,6 +305,7 @@ func (p *OS) serializeEnd() {
 	}
 	p.kernelVer = ""
 	p.packageSpecs = nil
+	p.containerSpecs = nil
 }
 
 func (p *OS) serialize() osbuild.Pipeline {

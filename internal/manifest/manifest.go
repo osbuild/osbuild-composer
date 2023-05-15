@@ -71,11 +71,11 @@ type Content struct {
 	PackageSets map[string][]rpmmd.PackageSet
 
 	// Containers are source specifications for containers to embed in the image.
-	Containers []container.SourceSpec
+	Containers map[string][]container.SourceSpec
 
 	// OSTreeCommits are source specifications for ostree commits to embed in
 	// the image or use as parent commits when building a new one.
-	OSTreeCommits []ostree.SourceSpec
+	OSTreeCommits map[string][]ostree.SourceSpec
 }
 
 func New() Manifest {
@@ -103,6 +103,32 @@ func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
 	}
 
 	return chains
+}
+
+func (m Manifest) GetContainerSourceSpecs() map[string][]container.SourceSpec {
+	// Containers should only appear in the payload pipeline.
+	// Let's iterate over all pipelines to avoid assuming pipeline names, but
+	// return all the specs as a single slice.
+	containerSpecs := make(map[string][]container.SourceSpec)
+	for _, pipeline := range m.pipelines {
+		if containers := pipeline.getContainerSources(); len(containers) > 0 {
+			containerSpecs[pipeline.Name()] = containers
+		}
+	}
+	return containerSpecs
+}
+
+func (m Manifest) GetOSTreeSourceSpecs() map[string][]ostree.SourceSpec {
+	// OSTree commits should only appear in one pipeline.
+	// Let's iterate over all pipelines to avoid assuming pipeline names, but
+	// return all the specs as a single slice if there are multiple.
+	ostreeSpecs := make(map[string][]ostree.SourceSpec)
+	for _, pipeline := range m.pipelines {
+		if commits := pipeline.getOSTreeCommitSources(); len(commits) > 0 {
+			ostreeSpecs[pipeline.Name()] = commits
+		}
+	}
+	return ostreeSpecs
 }
 
 func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec) (OSBuildManifest, error) {
