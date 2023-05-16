@@ -198,6 +198,19 @@ type PackageInfo struct {
 	Dependencies []PackageSpec  `json:"dependencies,omitempty"`
 }
 
+// GetEVRA returns the package's Epoch:Version-Release.Arch string
+func (ps *PackageSpec) GetEVRA() string {
+	if ps.Epoch == 0 {
+		return fmt.Sprintf("%s-%s.%s", ps.Version, ps.Release, ps.Arch)
+	}
+	return fmt.Sprintf("%d:%s-%s.%s", ps.Epoch, ps.Version, ps.Release, ps.Arch)
+}
+
+// GetNEVRA returns the package's Name-Epoch:Version-Release.Arch string
+func (ps *PackageSpec) GetNEVRA() string {
+	return fmt.Sprintf("%s-%s", ps.Name, ps.GetEVRA())
+}
+
 func GetVerStrFromPackageSpecList(pkgs []PackageSpec, packageName string) (string, error) {
 	for _, pkg := range pkgs {
 		if pkg.Name == packageName {
