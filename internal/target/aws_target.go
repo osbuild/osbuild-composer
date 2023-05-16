@@ -13,6 +13,15 @@ type AWSTargetOptions struct {
 	Bucket            string   `json:"bucket"`
 	Key               string   `json:"key"`
 	ShareWithAccounts []string `json:"shareWithAccounts"`
+
+	// Boot mode of the AMI (optional)
+	// Supported values:
+	//  - ec2.BootModeValuesLegacyBios
+	//  - ec2.BootModeValuesUefi
+	//  - ec2.BootModeValuesUefiPreferred
+	// If not provided, then the Boot mode will be determined by the default
+	// boot mode of the instance provisioned from the AMI.
+	BootMode *string `json:"bootMode,omitempty"`
 }
 
 func (AWSTargetOptions) isTargetOptions() {}
