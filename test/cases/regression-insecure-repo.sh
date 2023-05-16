@@ -100,6 +100,13 @@ EOF
 go run "${websrvfile}" &
 kill_pids+=("$!")
 
+COUNTER=0
+# make sure the repository is already accessible
+while [[ "$(curl -k -s -o /dev/null -w '%{http_code}' https://localhost:${websrvport}/repodata/repomd.xml)" != "200" && $COUNTER -lt 10 ]]; do
+    greenprint "$COUNTER - Not ready yet ....."
+    (( COUNTER=COUNTER+1 ))
+    sleep 60
+done
 
 greenprint "Creating source file and blueprint"
 composedir=$(mktemp -d)
