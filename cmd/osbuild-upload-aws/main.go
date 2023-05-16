@@ -50,7 +50,7 @@ func main() {
 	if shareWith != "" {
 		share = append(share, shareWith)
 	}
-	ami, err := a.Register(imageName, bucketName, keyName, share, arch)
+	ami, err := a.Register(imageName, bucketName, keyName, share, arch, nil)
 	if err != nil {
 		println(err.Error())
 		return
