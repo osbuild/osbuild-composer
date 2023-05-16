@@ -20,6 +20,7 @@ func main() {
 	var imageName string
 	var shareWith string
 	var arch string
+	var bootMode string
 	flag.StringVar(&accessKeyID, "access-key-id", "", "access key ID")
 	flag.StringVar(&secretAccessKey, "secret-access-key", "", "secret access key")
 	flag.StringVar(&sessionToken, "session-token", "", "session token")
@@ -30,6 +31,7 @@ func main() {
 	flag.StringVar(&imageName, "name", "", "AMI name")
 	flag.StringVar(&shareWith, "account-id", "", "account id to share image with")
 	flag.StringVar(&arch, "arch", "", "arch (x86_64 or aarch64)")
+	flag.StringVar(&bootMode, "boot-mode", "", "boot mode (legacy-bios, uefi, uefi-preferred)")
 	flag.Parse()
 
 	a, err := awscloud.New(region, accessKeyID, secretAccessKey, sessionToken)
@@ -50,7 +52,13 @@ func main() {
 	if shareWith != "" {
 		share = append(share, shareWith)
 	}
-	ami, err := a.Register(imageName, bucketName, keyName, share, arch, nil)
+
+	var bootModePtr *string
+	if bootMode != "" {
+		bootModePtr = &bootMode
+	}
+
+	ami, err := a.Register(imageName, bucketName, keyName, share, arch, bootModePtr)
 	if err != nil {
 		println(err.Error())
 		return
