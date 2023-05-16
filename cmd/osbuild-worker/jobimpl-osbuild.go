@@ -511,7 +511,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, common.CurrentArch())
+			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, common.CurrentArch(), nil)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, err.Error(), nil)
 				break

@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 )
 
 type AWS struct {
@@ -208,7 +209,10 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 // Register is a function that imports a snapshot, waits for the snapshot to
 // fully import, tags the snapshot, cleans up the image in S3, and registers
 // an AMI in AWS.
-func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch string) (*string, error) {
+// The caller can optionally specify the boot mode of the AMI. If the boot
+// mode is not specified, then the instances launched from this AMI use the
+// default boot mode value of the instance type.
+func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch string, bootMode *string) (*string, error) {
 	rpmArchToEC2Arch := map[string]string{
 		"x86_64":  "x86_64",
 		"aarch64": "arm64",
@@ -217,6 +221,12 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 	ec2Arch, validArch := rpmArchToEC2Arch[rpmArch]
 	if !validArch {
 		return nil, fmt.Errorf("ec2 doesn't support the following arch: %s", rpmArch)
+	}
+
+	if bootMode != nil {
+		if !slices.Contains(ec2.BootModeValues_Values(), *bootMode) {
+			return nil, fmt.Errorf("ec2 doesn't support the following boot mode: %s", *bootMode)
+		}
 	}
 
 	logrus.Infof("[AWS] 📥 Importing snapshot from image: %s/%s", bucket, key)
@@ -294,6 +304,7 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 	registerOutput, err := a.ec2.RegisterImage(
 		&ec2.RegisterImageInput{
 			Architecture:       aws.String(ec2Arch),
+			BootMode:           bootMode,
 			VirtualizationType: aws.String("hvm"),
 			Name:               aws.String(name),
 			RootDeviceName:     aws.String("/dev/sda1"),
