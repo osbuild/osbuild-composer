@@ -188,7 +188,6 @@ func newDistro(name string, minor int) *distribution {
 	x86_64 := architecture{
 		name:   distro.X86_64ArchName,
 		distro: &rd,
-		legacy: "i386-pc",
 	}
 
 	aarch64 := architecture{
@@ -199,8 +198,8 @@ func newDistro(name string, minor int) *distribution {
 	ppc64le := architecture{
 		distro: &rd,
 		name:   distro.Ppc64leArchName,
-		legacy: "powerpc-ieee1275",
 	}
+
 	s390x := architecture{
 		distro: &rd,
 		name:   distro.S390xArchName,
