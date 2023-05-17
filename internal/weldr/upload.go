@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/sirupsen/logrus"
@@ -256,6 +257,17 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			key = fmt.Sprintf("composer-api-%s", uuid.New().String())
 		}
 		t.Name = target.TargetNameAWS
+
+		var amiBootMode *string
+		switch imageType.BootMode() {
+		case distro.BOOT_HYBRID:
+			amiBootMode = common.ToPtr(ec2.BootModeValuesUefiPreferred)
+		case distro.BOOT_UEFI:
+			amiBootMode = common.ToPtr(ec2.BootModeValuesUefi)
+		case distro.BOOT_LEGACY:
+			amiBootMode = common.ToPtr(ec2.BootModeValuesLegacyBios)
+		}
+
 		t.Options = &target.AWSTargetOptions{
 			Region:          options.Region,
 			AccessKeyID:     options.AccessKeyID,
@@ -263,6 +275,7 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			SessionToken:    options.SessionToken,
 			Bucket:          options.Bucket,
 			Key:             key,
+			BootMode:        amiBootMode,
 		}
 	case *awsS3UploadSettings:
 		key := options.Key
