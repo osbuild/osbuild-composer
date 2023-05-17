@@ -194,28 +194,24 @@ func newDistro(name string, minor int) *distribution {
 
 	// Architecture definitions
 	x86_64 := architecture{
-		name:     distro.X86_64ArchName,
-		distro:   &rd,
-		legacy:   "i386-pc",
-		bootType: distro.HybridBootType,
+		name:   distro.X86_64ArchName,
+		distro: &rd,
+		legacy: "i386-pc",
 	}
 
 	aarch64 := architecture{
-		name:     distro.Aarch64ArchName,
-		distro:   &rd,
-		bootType: distro.UEFIBootType,
+		name:   distro.Aarch64ArchName,
+		distro: &rd,
 	}
 
 	ppc64le := architecture{
-		distro:   &rd,
-		name:     distro.Ppc64leArchName,
-		legacy:   "powerpc-ieee1275",
-		bootType: distro.LegacyBootType,
+		distro: &rd,
+		legacy: "powerpc-ieee1275",
+		name:   distro.Ppc64leArchName,
 	}
 	s390x := architecture{
-		distro:   &rd,
-		name:     distro.S390xArchName,
-		bootType: distro.LegacyBootType,
+		distro: &rd,
+		name:   distro.S390xArchName,
 	}
 
 	ociImgType := qcow2ImgType(rd)
@@ -288,6 +284,7 @@ func newDistro(name string, minor int) *distribution {
 	// TODO: review requirement for platform with overridden packages for GCE
 	gceX86Platform := &gceX86{
 		X86: platform.X86{
+			// TODO: BIOS should not be set to true for GCE, since it is meant to be UEFI only.
 			BIOS:       true,
 			UEFIVendor: rd.vendor,
 			BasePlatform: platform.BasePlatform{
