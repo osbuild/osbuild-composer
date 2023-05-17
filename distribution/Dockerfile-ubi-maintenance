@@ -1,9 +1,9 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
 COPY . .
 ENV GOFLAGS=-mod=vendor
 RUN go install ./cmd/osbuild-service-maintenance/
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 RUN mkdir -p "/usr/libexec/osbuild-composer"
 RUN mkdir -p "/etc/osbuild-composer/"
 COPY --from=builder /opt/app-root/src/go/bin/osbuild-service-maintenance /usr/libexec/osbuild-composer/osbuild-service-maintenance

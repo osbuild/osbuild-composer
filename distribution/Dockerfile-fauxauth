@@ -1,10 +1,10 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:latest AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
 COPY . .
 ENV GOFLAGS=-mod=vendor
 RUN go install ./cmd/osbuild-mock-openid-provider/
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
-RUN microdnf install python3
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+RUN microdnf install -y python3
 RUN mkdir -p "/usr/libexec/osbuild-composer"
 RUN mkdir -p "/etc/osbuild-composer/"
 
