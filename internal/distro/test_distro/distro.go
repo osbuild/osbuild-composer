@@ -191,6 +191,10 @@ func (t *TestImageType) PartitionType() string {
 	return ""
 }
 
+func (t *TestImageType) BootMode() distro.BootMode {
+	return distro.BOOT_HYBRID
+}
+
 func (t *TestImageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
 	return map[string][]rpmmd.PackageSet{
 		buildPkgsKey: {{

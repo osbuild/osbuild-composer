@@ -284,16 +284,15 @@ func (t *imageType) Exports() []string {
 	return t.exports
 }
 
-// getBootType returns the BootType which should be used for this particular image type
-func (t *imageType) getBootType() distro.BootType {
+func (t *imageType) BootMode() distro.BootMode {
 	if t.platform.GetUEFIVendor() != "" && t.platform.GetBIOSPlatform() != "" {
-		return distro.HybridBootType
+		return distro.BOOT_HYBRID
 	} else if t.platform.GetUEFIVendor() != "" {
-		return distro.UEFIBootType
+		return distro.BOOT_UEFI
 	} else if t.platform.GetBIOSPlatform() != "" || t.platform.GetZiplSupport() {
-		return distro.LegacyBootType
+		return distro.BOOT_LEGACY
 	}
-	return distro.UnsetBootType
+	return distro.BOOT_NONE
 }
 
 func (t *imageType) getPartitionTable(
