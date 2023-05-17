@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"os"
 
+	"cloud.google.com/go/compute/apiv1/computepb"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/sirupsen/logrus"
-	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
 )
 
 type strArrayFlag []string
