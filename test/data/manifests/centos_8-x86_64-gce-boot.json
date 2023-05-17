@@ -373,14 +373,6 @@
                     }
                   },
                   {
-                    "id": "sha256:a28da27fab205e0755e07d2099d1965384f6760ec630edb12d56bc7c4a01f823",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:bc0d36db80589a9797b8c343cd80f5ad5f42b9afc88f8a46666dc1d8f5317cfe",
                     "options": {
                       "metadata": {
@@ -485,31 +477,7 @@
                     }
                   },
                   {
-                    "id": "sha256:edd1ebdbe8fb3ab9cc3d3b4e9cff75e0f93a6772ebc74f5a05968835ab6c5d80",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:a0c36067187bb1133550f8ae24c92206f58eb85401540f79fa76c860b48c65d1",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:afaf03d88b0bf42a169d9fa06f9a7dd289a221d75bcb46447381eebb40507d16",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:b67fe24855c156e9e0695a5b2f948f946264c95d8e7190077d268e0ec5fffcf6",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -806,14 +774,6 @@
                   },
                   {
                     "id": "sha256:5846c73edfa2ff673989728e9621cce6a1369eb2f8a269ac5205c381a10d327a",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:cc2f054cf7ef006faf0b179701838ff8632c3ac5f45a0199a13f9c237f632b82",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -4999,7 +4959,6 @@
             "options": {
               "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
               "kernel_opts": "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y crashkernel=auto console=ttyS0,38400n8d",
-              "legacy": "i386-pc",
               "uefi": {
                 "vendor": "centos"
               },
@@ -5166,25 +5125,6 @@
                 "target": "/boot/efi"
               }
             ]
-          },
-          {
-            "type": "org.osbuild.grub2.inst",
-            "options": {
-              "filename": "disk.raw",
-              "platform": "i386-pc",
-              "location": 2048,
-              "core": {
-                "type": "mkimage",
-                "partlabel": "gpt",
-                "filesystem": "xfs"
-              },
-              "prefix": {
-                "type": "partition",
-                "partlabel": "gpt",
-                "number": 2,
-                "path": "/boot/grub2"
-              }
-            }
           }
         ]
       },
@@ -5977,9 +5917,6 @@
           "sha256:a04cb3117395b962edc32bf45d8411f240632476b0706b2df7f4a1a87b2ce34b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/python3-six-1.11.0-8.el8.noarch.rpm"
           },
-          "sha256:a0c36067187bb1133550f8ae24c92206f58eb85401540f79fa76c860b48c65d1": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-pc-modules-2.02-106.el8.noarch.rpm"
-          },
           "sha256:a0d41dc906fb0eaf36247da3dbd3b881d9fb18f1e2d2c90e77634671913f1810": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/iwl2000-firmware-18.168.6.1-105.el8.1.noarch.rpm"
           },
@@ -6366,9 +6303,6 @@
           },
           "sha256:ed1f7ab0225df75734034cb2aea426c48c089f2bd476ec66b66af879437c5393": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/tar-1.30-5.el8.x86_64.rpm"
-          },
-          "sha256:edd1ebdbe8fb3ab9cc3d3b4e9cff75e0f93a6772ebc74f5a05968835ab6c5d80": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-pc-2.02-106.el8.x86_64.rpm"
           },
           "sha256:ee713f3cc4e4b14956b58b0bc4fbe54dfe6920f770ff3e5e4bb63c72c2fb8955": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/tuned-2.18.0-0.1.rc1.el8.noarch.rpm"
@@ -6882,16 +6816,6 @@
         "check_gpg": true
       },
       {
-        "name": "freetype",
-        "epoch": 0,
-        "version": "2.9.1",
-        "release": "4.el8_3.1",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/freetype-2.9.1-4.el8_3.1.x86_64.rpm",
-        "checksum": "sha256:a28da27fab205e0755e07d2099d1965384f6760ec630edb12d56bc7c4a01f823",
-        "check_gpg": true
-      },
-      {
         "name": "gawk",
         "epoch": 0,
         "version": "4.2.1",
@@ -7022,26 +6946,6 @@
         "check_gpg": true
       },
       {
-        "name": "grub2-pc",
-        "epoch": 1,
-        "version": "2.02",
-        "release": "106.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-pc-2.02-106.el8.x86_64.rpm",
-        "checksum": "sha256:edd1ebdbe8fb3ab9cc3d3b4e9cff75e0f93a6772ebc74f5a05968835ab6c5d80",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc-modules",
-        "epoch": 1,
-        "version": "2.02",
-        "release": "106.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-pc-modules-2.02-106.el8.noarch.rpm",
-        "checksum": "sha256:a0c36067187bb1133550f8ae24c92206f58eb85401540f79fa76c860b48c65d1",
-        "check_gpg": true
-      },
-      {
         "name": "grub2-tools",
         "epoch": 1,
         "version": "2.02",
@@ -7049,16 +6953,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-tools-2.02-106.el8.x86_64.rpm",
         "checksum": "sha256:afaf03d88b0bf42a169d9fa06f9a7dd289a221d75bcb46447381eebb40507d16",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-tools-extra",
-        "epoch": 1,
-        "version": "2.02",
-        "release": "106.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-tools-extra-2.02-106.el8.x86_64.rpm",
-        "checksum": "sha256:b67fe24855c156e9e0695a5b2f948f946264c95d8e7190077d268e0ec5fffcf6",
         "check_gpg": true
       },
       {
@@ -7429,16 +7323,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libnsl2-1.2.0-2.20180605git4a062cf.el8.x86_64.rpm",
         "checksum": "sha256:5846c73edfa2ff673989728e9621cce6a1369eb2f8a269ac5205c381a10d327a",
-        "check_gpg": true
-      },
-      {
-        "name": "libpng",
-        "epoch": 2,
-        "version": "1.6.34",
-        "release": "5.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/libpng-1.6.34-5.el8.x86_64.rpm",
-        "checksum": "sha256:cc2f054cf7ef006faf0b179701838ff8632c3ac5f45a0199a13f9c237f632b82",
         "check_gpg": true
       },
       {

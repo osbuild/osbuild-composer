@@ -17,13 +17,14 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: gcePackageSet,
 		},
-		kernelOptions:       gceKernelOptions,
-		bootable:            true,
-		defaultSize:         20 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		kernelOptions:    gceKernelOptions,
+		bootable:         true,
+		defaultSize:      20 * common.GibiByte,
+		image:            liveImage,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "image", "archive"},
+		exports:          []string{"archive"},
+		// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
@@ -34,13 +35,14 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: gceRhuiPackageSet,
 		},
-		kernelOptions:       gceKernelOptions,
-		bootable:            true,
-		defaultSize:         20 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		kernelOptions:    gceKernelOptions,
+		bootable:         true,
+		defaultSize:      20 * common.GibiByte,
+		image:            liveImage,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "image", "archive"},
+		exports:          []string{"archive"},
+		// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only
 		basePartitionTables: defaultBasePartitionTables,
 	}
 )

@@ -4,7 +4,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
-	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -18,14 +17,15 @@ func gceImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: gcePackageSet,
 		},
-		defaultImageConfig:  defaultGceByosImageConfig(rd),
-		kernelOptions:       gceKernelOptions,
-		bootable:            true,
-		defaultSize:         20 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		defaultImageConfig: defaultGceByosImageConfig(rd),
+		kernelOptions:      gceKernelOptions,
+		bootable:           true,
+		defaultSize:        20 * common.GibiByte,
+		image:              liveImage,
+		buildPipelines:     []string{"build"},
+		payloadPipelines:   []string{"os", "image", "archive"},
+		exports:            []string{"archive"},
+		// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only
 		basePartitionTables: defaultBasePartitionTables,
 	}
 }
@@ -38,14 +38,15 @@ func gceRhuiImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: gceRhuiPackageSet,
 		},
-		defaultImageConfig:  defaultGceRhuiImageConfig(rd),
-		kernelOptions:       gceKernelOptions,
-		bootable:            true,
-		defaultSize:         20 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "archive"},
-		exports:             []string{"archive"},
+		defaultImageConfig: defaultGceRhuiImageConfig(rd),
+		kernelOptions:      gceKernelOptions,
+		bootable:           true,
+		defaultSize:        20 * common.GibiByte,
+		image:              liveImage,
+		buildPipelines:     []string{"build"},
+		payloadPipelines:   []string{"os", "image", "archive"},
+		exports:            []string{"archive"},
+		// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only
 		basePartitionTables: defaultBasePartitionTables,
 	}
 }
@@ -294,26 +295,4 @@ func gceRhuiPackageSet(t *imageType) rpmmd.PackageSet {
 			"google-rhui-client-rhel8",
 		},
 	}.Append(gceCommonPackageSet(t))
-}
-
-// gceX86 embeds the X86 platform and overrides the GetPackages() method to
-// exclude the grub2-pc package.
-// See the image type documentation for more information:
-// https://github.com/osbuild/osbuild-composer/blob/d12d9674d6293f2c374a66ba2c4fac102633d360/image-types/rhel8/google-gce.md#rhel-8-byosrhui--rhel-9-byos-image-differences-compared-to-googles-image
-type gceX86 struct {
-	platform.X86
-}
-
-func (p *gceX86) GetPackages() []string {
-	packages := p.BasePlatform.FirmwarePackages
-
-	packages = append(packages,
-		"dracut-config-generic",
-		"dracut-config-generic",
-		"efibootmgr",
-		"grub2-efi-x64",
-		"shim-x64")
-
-	return packages
-
 }

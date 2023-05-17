@@ -271,8 +271,6 @@ func newDistro(name string, minor int) *distribution {
 	)
 
 	gceX86Platform := &platform.X86{
-		// TODO: BIOS should not be set to true for GCE, since it is meant to be UEFI only.
-		BIOS:       true,
 		UEFIVendor: rd.vendor,
 		BasePlatform: platform.BasePlatform{
 			ImageFormat: platform.FORMAT_GCE,
