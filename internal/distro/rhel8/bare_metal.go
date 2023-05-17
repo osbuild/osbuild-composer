@@ -94,7 +94,7 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"yum",
 		},
 		Exclude: nil,
-	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(distroSpecificPackageSet(t))
 
 	// Ensure to not pull in subscription-manager on non-RHEL distro
 	if t.arch.distro.isRHEL() {

@@ -328,7 +328,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			// RHBZ#2075815
 			"qemu-guest-agent",
 		},
-	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 }
 
 // common rhel ec2 RHUI image package set

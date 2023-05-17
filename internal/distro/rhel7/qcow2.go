@@ -119,7 +119,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"libertas-sd8787-firmware",
 			"libertas-usb8388-firmware",
 		},
-	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(distroSpecificPackageSet(t))
 
 	return ps
 }

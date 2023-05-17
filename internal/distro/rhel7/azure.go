@@ -257,7 +257,7 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"NetworkManager-config-server",
 			"postfix",
 		},
-	}.Append(bootPackageSet(t))
+	}
 
 	if t.arch.distro.isRHEL() {
 		ps = ps.Append(rpmmd.PackageSet{
