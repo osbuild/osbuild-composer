@@ -83,7 +83,7 @@ func bareMetalPackageSet(t *imageType) rpmmd.PackageSet {
 			"tar",
 			"tcpdump",
 		},
-	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroBuildPackageSet(t))
+	}.Append(coreOsCommonPackageSet(t)).Append(distroBuildPackageSet(t))
 
 	// Ensure to not pull in subscription-manager on non-RHEL distro
 	if t.arch.distro.isRHEL() {

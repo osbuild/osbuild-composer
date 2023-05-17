@@ -194,7 +194,7 @@ func azureCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"rhnsd",
 			"usb_modeswitch",
 		},
-	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(distroSpecificPackageSet(t))
 
 	if t.arch.distro.isRHEL() {
 		ps.Append(rpmmd.PackageSet{

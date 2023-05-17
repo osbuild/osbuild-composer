@@ -136,7 +136,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"rng-tools",
 			"udisks2",
 		},
-	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(distroSpecificPackageSet(t))
 
 	// Ensure to not pull in subscription-manager on non-RHEL distro
 	if t.arch.distro.isRHEL() {
@@ -163,6 +163,5 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		Exclude: []string{
 			"dracut-config-rescue", "rng-tools",
 		},
-	}.Append(bootPackageSet(t))
-
+	}
 }

@@ -279,7 +279,7 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			// RHBZ#2075815
 			"qemu-guest-agent",
 		},
-	}.Append(bootPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(distroSpecificPackageSet(t))
 }
 
 // GCE BYOS image

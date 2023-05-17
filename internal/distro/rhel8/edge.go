@@ -216,8 +216,6 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 		Exclude: []string{"rng-tools"},
 	}
 
-	ps = ps.Append(bootPackageSet(t))
-
 	switch t.arch.Name() {
 	case distro.X86_64ArchName:
 		ps = ps.Append(x8664EdgeCommitPackageSet(t))

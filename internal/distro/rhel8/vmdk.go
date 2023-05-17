@@ -39,6 +39,5 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"dracut-config-rescue",
 			"rng-tools",
 		},
-	}.Append(bootPackageSet(t))
-
+	}
 }

@@ -71,7 +71,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"rng-tools",
 			"udisks2",
 		},
-	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 
 	// Ensure to not pull in subscription-manager on non-RHEL distro
 	if t.arch.distro.isRHEL() {
@@ -100,7 +100,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		Exclude: []string{
 			"rng-tools",
 		},
-	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
+	}.Append(coreOsCommonPackageSet(t))
 
 	if t.arch.Name() == distro.X86_64ArchName {
 		ps = ps.Append(rpmmd.PackageSet{

@@ -274,7 +274,7 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			// RHBZ#2075815
 			"qemu-guest-agent",
 		},
-	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
 
 	// Some excluded packages are part of the @core group package set returned
 	// by coreOsCommonPackageSet(). Ensure that the conflicting packages are

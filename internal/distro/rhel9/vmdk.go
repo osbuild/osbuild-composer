@@ -38,7 +38,7 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		Exclude: []string{
 			"rng-tools",
 		},
-	}.Append(bootPackageSet(t)).Append(coreOsCommonPackageSet(t))
+	}.Append(coreOsCommonPackageSet(t))
 
 	if t.arch.Name() == distro.X86_64ArchName {
 		ps = ps.Append(rpmmd.PackageSet{

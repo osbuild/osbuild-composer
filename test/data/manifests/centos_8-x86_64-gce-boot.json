@@ -2312,22 +2312,6 @@
                     }
                   },
                   {
-                    "id": "sha256:edd1ebdbe8fb3ab9cc3d3b4e9cff75e0f93a6772ebc74f5a05968835ab6c5d80",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:a0c36067187bb1133550f8ae24c92206f58eb85401540f79fa76c860b48c65d1",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:afaf03d88b0bf42a169d9fa06f9a7dd289a221d75bcb46447381eebb40507d16",
                     "options": {
                       "metadata": {
@@ -9277,26 +9261,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-efi-x64-2.02-106.el8.x86_64.rpm",
         "checksum": "sha256:2c5427115265f27f104b0444a741336f5f1a86e4d8755d2ca1b675929a9775d2",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc",
-        "epoch": 1,
-        "version": "2.02",
-        "release": "106.el8",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-pc-2.02-106.el8.x86_64.rpm",
-        "checksum": "sha256:edd1ebdbe8fb3ab9cc3d3b4e9cff75e0f93a6772ebc74f5a05968835ab6c5d80",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-pc-modules",
-        "epoch": 1,
-        "version": "2.02",
-        "release": "106.el8",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/grub2-pc-modules-2.02-106.el8.noarch.rpm",
-        "checksum": "sha256:a0c36067187bb1133550f8ae24c92206f58eb85401540f79fa76c860b48c65d1",
         "check_gpg": true
       },
       {
