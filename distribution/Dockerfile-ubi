@@ -5,7 +5,10 @@ USER 0
 # uses `libgpgme` so we need to install it and its build dependencies
 RUN dnf install -y gpgme-devel libassuan-devel
 USER 1001
-COPY . .
+# ubi9/go-toolset defaults to uid 1001. Let's copy the files with this UID as well.
+# Otherwise, VCS stamping will fail because git >= 2.35.2 refuses to work in
+# a repository owned by a different user.
+COPY --chown=1001 . .
 ENV GOFLAGS=-mod=vendor
 RUN go install ./cmd/osbuild-composer/
 
