@@ -19,14 +19,29 @@ const (
 	S390xArchName   = "s390x"
 )
 
-type BootType string
+type BootMode uint64
 
 const (
-	UnsetBootType  BootType = ""
-	LegacyBootType BootType = "legacy"
-	UEFIBootType   BootType = "uefi"
-	HybridBootType BootType = "hybrid"
+	BOOT_NONE BootMode = iota
+	BOOT_LEGACY
+	BOOT_UEFI
+	BOOT_HYBRID
 )
+
+func (m BootMode) String() string {
+	switch m {
+	case BOOT_NONE:
+		return "none"
+	case BOOT_LEGACY:
+		return "legacy"
+	case BOOT_UEFI:
+		return "uefi"
+	case BOOT_HYBRID:
+		return "hybrid"
+	default:
+		panic("invalid boot mode")
+	}
+}
 
 // A Distro represents composer's notion of what a given distribution is.
 type Distro interface {
@@ -95,6 +110,9 @@ type ImageType interface {
 	// Returns the corresponding partion type ("gpt", "dos") or "" the image type
 	// has no partition table. Only support for RHEL 8.5+
 	PartitionType() string
+
+	// Returns the corresponding boot mode ("legacy", "uefi", "hybrid") or "none"
+	BootMode() BootMode
 
 	// Returns the sets of packages to include and exclude when building the image.
 	// Indexed by a string label. How each set is labeled and used depends on the
