@@ -93,8 +93,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
           - aws/fedora-38-x86_64
@@ -181,8 +179,6 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
           - aws/rhel-8.4-ga-x86_64
@@ -229,8 +225,6 @@ Manifests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
           - aws/centos-stream-8-x86_64
@@ -355,7 +349,6 @@ OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-36-x86_64
           - rhos-01/fedora-37-x86_64
           - rhos-01/rhel-8.4-ga-x86_64
           - rhos-01/rhel-8.7-ga-x86_64
@@ -374,7 +367,6 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-36-x86_64
           - rhos-01/fedora-37-x86_64
           - rhos-01/rhel-8.8-nightly-x86_64
           - rhos-01/rhel-9.2-nightly-x86_64
@@ -482,7 +474,6 @@ Minimal raw:
 
 .fedora_runners: &fedora_runners
     RUNNER:
-      - aws/fedora-36-x86_64
       - aws/fedora-37-x86_64
 
 .integration_fedora:
@@ -617,7 +608,6 @@ API:
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
-          - aws/fedora-36-x86_64
           - aws/fedora-37-x86_64
       - IMAGE_TYPE: ["aws"]
         RUNNER:

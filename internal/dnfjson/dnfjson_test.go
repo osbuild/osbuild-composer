@@ -548,7 +548,7 @@ func TestErrorRepoInfo(t *testing.T) {
 		},
 	}
 
-	solver := NewSolver("f36", "36", "x86_64", "fedora-36", "/tmp/cache")
+	solver := NewSolver("f38", "38", "x86_64", "fedora-38", "/tmp/cache")
 	solver.SetDNFJSONPath("../../dnf-json")
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("%d", idx), func(t *testing.T) {
@@ -578,7 +578,7 @@ func TestRepoConfigHash(t *testing.T) {
 		},
 	}
 
-	solver := NewSolver("f36", "36", "x86_64", "fedora-36", "/tmp/cache")
+	solver := NewSolver("f38", "38", "x86_64", "fedora-38", "/tmp/cache")
 	solver.SetDNFJSONPath("../../dnf-json")
 
 	rcs, err := solver.reposFromRPMMD(repos)
@@ -591,7 +591,7 @@ func TestRepoConfigHash(t *testing.T) {
 }
 
 func TestRequestHash(t *testing.T) {
-	solver := NewSolver("f36", "36", "x86_64", "fedora-36", "/tmp/cache")
+	solver := NewSolver("f38", "38", "x86_64", "fedora-38", "/tmp/cache")
 	repos := []rpmmd.RepoConfig{
 		rpmmd.RepoConfig{
 			Name:      "A test repository",
