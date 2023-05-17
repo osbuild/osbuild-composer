@@ -193,32 +193,6 @@ func (t *TestImageType) BootMode() distro.BootMode {
 	return distro.BOOT_HYBRID
 }
 
-func (t *TestImageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
-	return map[string][]rpmmd.PackageSet{
-		buildPkgsKey: {{
-			Include: []string{
-				"dep-package1",
-				"dep-package2",
-				"dep-package3",
-			},
-			Repositories: repos,
-		},
-		},
-		blueprintPkgsKey: {{
-			Include:      bp.GetPackages(),
-			Repositories: repos,
-		}},
-		osPkgsKey: {{
-			Include: []string{
-				"dep-package1",
-				"dep-package2",
-				"dep-package3",
-			},
-			Repositories: repos,
-		}},
-	}
-}
-
 func (t *TestImageType) BuildPipelines() []string {
 	return distro.BuildPipelinesFallback()
 }

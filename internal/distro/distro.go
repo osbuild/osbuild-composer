@@ -107,11 +107,6 @@ type ImageType interface {
 	// Returns the corresponding boot mode ("legacy", "uefi", "hybrid") or "none"
 	BootMode() BootMode
 
-	// Returns the sets of packages to include and exclude when building the image.
-	// Indexed by a string label. How each set is labeled and used depends on the
-	// image type.
-	PackageSets(bp blueprint.Blueprint, options ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet
-
 	// Returns the names of the pipelines that set up the build environment (buildroot).
 	BuildPipelines() []string
 

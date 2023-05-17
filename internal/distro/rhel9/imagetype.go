@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -18,7 +17,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -260,105 +258,6 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	manifest.Content.OSTreeCommits = manifest.GetOSTreeSourceSpecs()
 
 	return &manifest, warnings, err
-}
-
-func (t *imageType) PackageSets(bp blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
-	// merge package sets that appear in the image type with the package sets
-	// of the same name from the distro and arch
-	packageSets := make(map[string]rpmmd.PackageSet)
-
-	for name, getter := range t.packageSets {
-		packageSets[name] = getter(t)
-	}
-
-	// amend with repository information
-	for _, repo := range repos {
-		if len(repo.PackageSets) > 0 {
-			// only apply the repo to the listed package sets
-			for _, psName := range repo.PackageSets {
-				ps := packageSets[psName]
-				ps.Repositories = append(ps.Repositories, repo)
-				packageSets[psName] = ps
-			}
-		}
-	}
-
-	// For edge-commit and edge-container, we need to set an ImageRef if one
-	// isn't defined already in order to properly initialize the manifest and
-	// package selection.
-	if options.OSTree == nil {
-		options.OSTree = &ostree.ImageOptions{
-			ImageRef: t.OSTreeRef(),
-		}
-	}
-
-	// In case of Cloud API, this method is called before the ostree commit
-	// is resolved. Unfortunately, initializeManifest when called for
-	// an ostree installer returns an error.
-	//
-	// Work around this by providing a dummy FetchChecksum to convince the
-	// method that it's fine to initialize the manifest. Note that the ostree
-	// content has no effect on the package sets, so this is fine.
-	//
-	// See: https://github.com/osbuild/osbuild-composer/issues/3125
-	//
-	// TODO: Remove me when it's possible the get the package set chain without
-	//       resolving the ostree reference before. Also remove the test for
-	//       this workaround
-	if t.rpmOstree && t.bootISO && options.OSTree.FetchChecksum == "" {
-		options.OSTree.FetchChecksum = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-		logrus.Warn("FIXME: Requesting package sets for iot-installer without a resolved ostree ref. Faking one.")
-	}
-
-	// create a temporary container spec array with the info from the blueprint
-	// to initialize the manifest
-	containers := make([]container.Spec, len(bp.Containers))
-	for idx := range bp.Containers {
-		containers[idx] = container.Spec{
-			Source:    bp.Containers[idx].Source,
-			TLSVerify: bp.Containers[idx].TLSVerify,
-			LocalName: bp.Containers[idx].Name,
-		}
-	}
-
-	_, err := t.checkOptions(&bp, options)
-	if err != nil {
-		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
-		return nil
-	}
-
-	w := t.workload
-	if w == nil {
-		cw := &workload.Custom{
-			BaseWorkload: workload.BaseWorkload{
-				Repos: packageSets[blueprintPkgsKey].Repositories,
-			},
-			Packages: bp.GetPackagesEx(false),
-		}
-		if services := bp.Customizations.GetServices(); services != nil {
-			cw.Services = services.Enabled
-			cw.DisabledServices = services.Disabled
-		}
-		w = cw
-	}
-
-	source := rand.NewSource(0)
-	// math/rand is good enough in this case
-	/* #nosec G404 */
-	rng := rand.New(source)
-
-	img, err := t.image(w, t, bp.Customizations, options, packageSets, nil, rng)
-	if err != nil {
-		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
-		return nil
-	}
-	manifest := manifest.New()
-	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
-	if err != nil {
-		logrus.Errorf("Initializing the manifest failed for %s (%s/%s): %v", t.Name(), t.arch.distro.Name(), t.arch.Name(), err)
-		return nil
-	}
-	return manifest.GetPackageSetChains()
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
