@@ -3694,14 +3694,6 @@
                     }
                   },
                   {
-                    "id": "sha256:f828322655ab1b93de1972d8af71689ef239a160f13931e447b0ebcbb764cef9",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:5e088cea3244085f9d19d2f1bcb171b9f0c3a4ffc2ff0c81932081fbb225e564",
                     "options": {
                       "metadata": {
@@ -3710,7 +3702,15 @@
                     }
                   },
                   {
-                    "id": "sha256:a5b52d9e252e7b653d54a2aee5ae1b9d45034ccd3d8f30e6af9b86952029c535",
+                    "id": "sha256:3dc194d2ff41c46b05fdafd98d13dd31abc8ad3c1cb09ee901b26beb442e9bd2",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:28ffccda4db02cccb3148ccf6cac8aa4288311de4c6a596c1c1e4559b372e235",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -11458,6 +11458,9 @@
           "sha256:2871bb34038a71a4b766bddafd82135a2dc42ac0ee7b158b2378c1cd445f9d03": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/s/skopeo-1.11.1-1.fc38.x86_64.rpm"
           },
+          "sha256:28ffccda4db02cccb3148ccf6cac8aa4288311de4c6a596c1c1e4559b372e235": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/f/fedora-release-iot-38-0.26.noarch.rpm"
+          },
           "sha256:292791eb37bc312e845e777b2e0e3173e2d951c2bfbbda125bc619dced7f40bc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/l/libverto-0.3.2-5.fc38.x86_64.rpm"
           },
@@ -11664,6 +11667,9 @@
           },
           "sha256:3d80716eea29c2b3a50021355977a462872cfff0620f77655f3ad1484aafc2c7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/m/mobile-broadband-provider-info-20221107-2.fc38.noarch.rpm"
+          },
+          "sha256:3dc194d2ff41c46b05fdafd98d13dd31abc8ad3c1cb09ee901b26beb442e9bd2": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/f/fedora-release-identity-iot-38-0.26.noarch.rpm"
           },
           "sha256:3dffeb49f059f02f6dee914742b595e5335889d2e6a29a235cbf08771746a2aa": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/l/libjxl-0.7.0-6.fc38.x86_64.rpm"
@@ -15390,16 +15396,6 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release",
-        "epoch": 0,
-        "version": "38",
-        "release": "0.26",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/f/fedora-release-38-0.26.noarch.rpm",
-        "checksum": "sha256:f828322655ab1b93de1972d8af71689ef239a160f13931e447b0ebcbb764cef9",
-        "check_gpg": true
-      },
-      {
         "name": "fedora-release-common",
         "epoch": 0,
         "version": "38",
@@ -15410,13 +15406,23 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release-identity-basic",
+        "name": "fedora-release-identity-iot",
         "epoch": 0,
         "version": "38",
         "release": "0.26",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/f/fedora-release-identity-basic-38-0.26.noarch.rpm",
-        "checksum": "sha256:a5b52d9e252e7b653d54a2aee5ae1b9d45034ccd3d8f30e6af9b86952029c535",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/f/fedora-release-identity-iot-38-0.26.noarch.rpm",
+        "checksum": "sha256:3dc194d2ff41c46b05fdafd98d13dd31abc8ad3c1cb09ee901b26beb442e9bd2",
+        "check_gpg": true
+      },
+      {
+        "name": "fedora-release-iot",
+        "epoch": 0,
+        "version": "38",
+        "release": "0.26",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-branched-20230310/Packages/f/fedora-release-iot-38-0.26.noarch.rpm",
+        "checksum": "sha256:28ffccda4db02cccb3148ccf6cac8aa4288311de4c6a596c1c1e4559b372e235",
         "check_gpg": true
       },
       {

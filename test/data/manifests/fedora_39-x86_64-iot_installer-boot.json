@@ -3689,14 +3689,6 @@
                     }
                   },
                   {
-                    "id": "sha256:3a68f83cda5ee690d8d2a8cf49390ab7d66daadedc47d6d2d5c9756486b36ed8",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:69c9711600ede5bd00494ae8dafa400121de28f70cb4784f4546b8810c4b4cd3",
                     "options": {
                       "metadata": {
@@ -3705,7 +3697,15 @@
                     }
                   },
                   {
-                    "id": "sha256:f97838c40ba35b8b7e35dd9adbdaa3085826e46dc65a60aa5a4245108da8c9d9",
+                    "id": "sha256:bcc701240d25fdb17b5c708c72649c39478e4cb0115b372fb35099649f6fd534",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:5aef6e4dae9d577d738581220b795bbafab736af9acb5a56671e4c70b44929ae",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -12040,6 +12040,9 @@
           "sha256:5ae3dc691d01fcd7c60e347245b56d3f9514084b15fea7488e148f45c089788c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/a/adwaita-icon-theme-44~beta-1.fc39.noarch.rpm"
           },
+          "sha256:5aef6e4dae9d577d738581220b795bbafab736af9acb5a56671e4c70b44929ae": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/f/fedora-release-iot-39-0.5.noarch.rpm"
+          },
           "sha256:5b42ede89748ca8c068a8b42db59fcbd141465dbff59a21e89cc18bcf779b631": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/x/xdg-desktop-portal-1.16.0-2.fc38.x86_64.rpm"
           },
@@ -13233,6 +13236,9 @@
           },
           "sha256:bcb4bfe9248bb1846904094b02ec3018c71dea9fe734fb0ee4412c9691e61cc0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/s/sratom-0.6.10-3.fc38.x86_64.rpm"
+          },
+          "sha256:bcc701240d25fdb17b5c708c72649c39478e4cb0115b372fb35099649f6fd534": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/f/fedora-release-identity-iot-39-0.5.noarch.rpm"
           },
           "sha256:bd3bf7ee718955ae8f8408f46be6ea3294cc02254f53843f19ef7071b5c796a5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/i/iwl105-firmware-18.168.6.1-147.fc39.noarch.rpm"
@@ -15488,16 +15494,6 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release",
-        "epoch": 0,
-        "version": "39",
-        "release": "0.5",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/f/fedora-release-39-0.5.noarch.rpm",
-        "checksum": "sha256:3a68f83cda5ee690d8d2a8cf49390ab7d66daadedc47d6d2d5c9756486b36ed8",
-        "check_gpg": true
-      },
-      {
         "name": "fedora-release-common",
         "epoch": 0,
         "version": "39",
@@ -15508,13 +15504,23 @@
         "check_gpg": true
       },
       {
-        "name": "fedora-release-identity-basic",
+        "name": "fedora-release-identity-iot",
         "epoch": 0,
         "version": "39",
         "release": "0.5",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/f/fedora-release-identity-basic-39-0.5.noarch.rpm",
-        "checksum": "sha256:f97838c40ba35b8b7e35dd9adbdaa3085826e46dc65a60aa5a4245108da8c9d9",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/f/fedora-release-identity-iot-39-0.5.noarch.rpm",
+        "checksum": "sha256:bcc701240d25fdb17b5c708c72649c39478e4cb0115b372fb35099649f6fd534",
+        "check_gpg": true
+      },
+      {
+        "name": "fedora-release-iot",
+        "epoch": 0,
+        "version": "39",
+        "release": "0.5",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230310/Packages/f/fedora-release-iot-39-0.5.noarch.rpm",
+        "checksum": "sha256:5aef6e4dae9d577d738581220b795bbafab736af9acb5a56671e4c70b44929ae",
         "check_gpg": true
       },
       {

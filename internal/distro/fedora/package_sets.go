@@ -465,7 +465,24 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func iotInstallerPackageSet(t *imageType) rpmmd.PackageSet {
-	return anacondaPackageSet(t)
+	// include anaconda packages
+	ps := anacondaPackageSet(t)
+
+	releasever := t.Arch().Distro().Releasever()
+	version, err := strconv.Atoi(releasever)
+	if err != nil {
+		panic("cannot convert releasever to int: " + err.Error())
+	}
+
+	if version >= 38 {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"fedora-release-iot",
+			},
+		})
+	}
+
+	return ps
 }
 
 func imageInstallerPackageSet(t *imageType) rpmmd.PackageSet {
