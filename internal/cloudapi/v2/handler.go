@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -523,10 +524,22 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				// guaranteed to be unique as well. If users are ever allowed to name their images,
 				// an extra tag should be added.
 				key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+
+				var amiBootMode *string
+				switch imageType.BootMode() {
+				case distro.BOOT_HYBRID:
+					amiBootMode = common.ToPtr(ec2.BootModeValuesUefiPreferred)
+				case distro.BOOT_UEFI:
+					amiBootMode = common.ToPtr(ec2.BootModeValuesUefi)
+				case distro.BOOT_LEGACY:
+					amiBootMode = common.ToPtr(ec2.BootModeValuesLegacyBios)
+				}
+
 				t := target.NewAWSTarget(&target.AWSTargetOptions{
 					Region:            awsUploadOptions.Region,
 					Key:               key,
 					ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
+					BootMode:          amiBootMode,
 				})
 				if awsUploadOptions.SnapshotName != nil {
 					t.ImageName = *awsUploadOptions.SnapshotName
