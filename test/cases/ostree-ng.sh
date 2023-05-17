@@ -101,7 +101,7 @@ KERNEL_RT_PKG="kernel-rt"
 SYSROOT_RO="false"
 
 case "${ID}-${VERSION_ID}" in
-    "fedora-36")
+    "fedora-37")
         CONTAINER_TYPE=iot-container
         INSTALLER_TYPE=iot-installer
         OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
@@ -109,8 +109,9 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="fedora-unknown"
         EMBEDED_CONTAINER="false"
         DIRS_FILES_CUSTOMIZATION="true"
+        SYSROOT_RO="true"
         ;;
-    "fedora-37")
+    "fedora-38")
         CONTAINER_TYPE=iot-container
         INSTALLER_TYPE=iot-installer
         OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"

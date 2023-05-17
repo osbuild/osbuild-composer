@@ -16,7 +16,6 @@ import (
 // When adding support for a new distribution, add it here.
 // Note that this is a constant, do not write to this array.
 var supportedDistros = []func() distro.Distro{
-	fedora.NewF36,
 	fedora.NewF37,
 	fedora.NewF38,
 	fedora.NewF39,
