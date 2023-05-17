@@ -14,7 +14,6 @@ type architecture struct {
 	name             string
 	imageTypes       map[string]distro.ImageType
 	imageTypeAliases map[string]string
-	legacy           string
 }
 
 func (a *architecture) Name() string {

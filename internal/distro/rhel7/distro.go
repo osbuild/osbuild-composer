@@ -147,7 +147,6 @@ type architecture struct {
 	name             string
 	imageTypes       map[string]distro.ImageType
 	imageTypeAliases map[string]string
-	legacy           string
 }
 
 func (a *architecture) Name() string {
@@ -579,7 +578,6 @@ func newDistro(distroName string) distro.Distro {
 	x86_64 := architecture{
 		name:   distro.X86_64ArchName,
 		distro: &rd,
-		legacy: "i386-pc",
 	}
 
 	x86_64.addImageTypes(
