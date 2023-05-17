@@ -940,6 +940,12 @@
                     "id": "sha256:cf0fc74feaf99f8c57a9ebdc8cb4371e6bcca905fab6f44ba408443a7cfe3651"
                   },
                   {
+                    "id": "sha256:ac2bd89f2af4378018de5193b7f0f58c1f93e627fac256c7d5ac21950fe4df17"
+                  },
+                  {
+                    "id": "sha256:e5815c2cc496b8529dac4e16781752a6f09405ef803213401016e4170a565e6d"
+                  },
+                  {
                     "id": "sha256:30f3eca78f87fb66d9797a252df9217ec755e7a9034edf44deec5943dde4ba54"
                   },
                   {
@@ -6302,6 +6308,24 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.4-20210921/Packages/grub2-efi-x64-2.02-99.el8.x86_64.rpm",
         "checksum": "sha256:cf0fc74feaf99f8c57a9ebdc8cb4371e6bcca905fab6f44ba408443a7cfe3651"
+      },
+      {
+        "name": "grub2-pc",
+        "epoch": 1,
+        "version": "2.02",
+        "release": "99.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.4-20210921/Packages/grub2-pc-2.02-99.el8.x86_64.rpm",
+        "checksum": "sha256:ac2bd89f2af4378018de5193b7f0f58c1f93e627fac256c7d5ac21950fe4df17"
+      },
+      {
+        "name": "grub2-pc-modules",
+        "epoch": 1,
+        "version": "2.02",
+        "release": "99.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.4-20210921/Packages/grub2-pc-modules-2.02-99.el8.noarch.rpm",
+        "checksum": "sha256:e5815c2cc496b8529dac4e16781752a6f09405ef803213401016e4170a565e6d"
       },
       {
         "name": "grub2-tools",

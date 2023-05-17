@@ -69,8 +69,6 @@ type imageType struct {
 	rpmOstree bool
 	// bootable image
 	bootable bool
-	// If set to a value, it is preferred over the architecture value
-	bootType distro.BootType
 	// List of valid arches for the image type
 	basePartitionTables distro.BasePartitionTableMap
 }
@@ -133,14 +131,16 @@ func (t *imageType) Exports() []string {
 	return []string{"assembler"}
 }
 
-// getBootType returns the BootType which should be used for this particular
-// combination of architecture and image type.
+// getBootType returns the BootType which should be used for this particular image type
 func (t *imageType) getBootType() distro.BootType {
-	bootType := t.arch.bootType
-	if t.bootType != distro.UnsetBootType {
-		bootType = t.bootType
+	if t.platform.GetUEFIVendor() != "" && t.platform.GetBIOSPlatform() != "" {
+		return distro.HybridBootType
+	} else if t.platform.GetUEFIVendor() != "" {
+		return distro.UEFIBootType
+	} else if t.platform.GetBIOSPlatform() != "" || t.platform.GetZiplSupport() {
+		return distro.LegacyBootType
 	}
-	return bootType
+	return distro.UnsetBootType
 }
 
 func (t *imageType) getPartitionTable(
