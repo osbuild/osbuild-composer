@@ -386,7 +386,7 @@ func newDistro(name string, minor int) *distribution {
 
 	s390x.addImageTypes(
 		&platform.S390X{
-			BIOS: true,
+			Zipl: true,
 			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_QCOW2,
 				QCOW2Compat: "0.10",
