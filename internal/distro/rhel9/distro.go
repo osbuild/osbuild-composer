@@ -259,14 +259,15 @@ func newDistro(name string, minor int) *distribution {
 		vmdkImgType,
 	)
 
-	rawX86Platform := &platform.X86{
-		BIOS: true,
+	ec2X86Platform := &platform.X86{
+		BIOS:       true,
+		UEFIVendor: rd.vendor,
 		BasePlatform: platform.BasePlatform{
 			ImageFormat: platform.FORMAT_RAW,
 		},
 	}
 	x86_64.addImageTypes(
-		rawX86Platform,
+		ec2X86Platform,
 		mkAMIImgTypeX86_64(rd.osVersion, rd.isRHEL()),
 	)
 
@@ -416,7 +417,7 @@ func newDistro(name string, minor int) *distribution {
 		aarch64.addImageTypes(azureAarch64Platform, azureRhuiImgType, azureByosImgType)
 
 		// add ec2 image types to RHEL distro only
-		x86_64.addImageTypes(rawX86Platform, mkEc2ImgTypeX86_64(rd.osVersion, rd.isRHEL()), mkEc2HaImgTypeX86_64(rd.osVersion, rd.isRHEL()), mkEC2SapImgTypeX86_64(rd.osVersion, rd.isRHEL()))
+		x86_64.addImageTypes(ec2X86Platform, mkEc2ImgTypeX86_64(rd.osVersion, rd.isRHEL()), mkEc2HaImgTypeX86_64(rd.osVersion, rd.isRHEL()), mkEC2SapImgTypeX86_64(rd.osVersion, rd.isRHEL()))
 
 		aarch64.addImageTypes(
 			&platform.Aarch64{
