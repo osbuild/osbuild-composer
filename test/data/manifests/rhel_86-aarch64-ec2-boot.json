@@ -2138,14 +2138,14 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 1048576,
+                  "size": 1024000,
                   "start": 411648,
-                  "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
+                  "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 19511263,
-                  "start": 1460224,
+                  "size": 19535839,
+                  "start": 1435648,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -2181,7 +2181,8 @@
           {
             "type": "org.osbuild.mkfs.xfs",
             "options": {
-              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8"
+              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "label": "boot"
             },
             "devices": {
               "device": {
@@ -2189,7 +2190,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 411648,
-                  "size": 1048576,
+                  "size": 1024000,
                   "lock": true
                 }
               }
@@ -2206,8 +2207,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1460224,
-                  "size": 19511263,
+                  "start": 1435648,
+                  "size": 19535839,
                   "lock": true
                 }
               }
@@ -2238,7 +2239,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 411648,
-                  "size": 1048576
+                  "size": 1024000
                 }
               },
               "boot.efi": {
@@ -2253,8 +2254,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1460224,
-                  "size": 19511263
+                  "start": 1435648,
+                  "size": 19535839
                 }
               }
             },

@@ -156,6 +156,9 @@
                     "id": "sha256:f7fc94ac5b5df2051aa2811c0cebecd7e04353ac871f1a792bc6c68f2c2aa6ce"
                   },
                   {
+                    "id": "sha256:fc6f294d87c32dd80d09ad1e31005a6c379c476539fec9cd52b51f0bbc3384e3"
+                  },
+                  {
                     "id": "sha256:f72118d72067987ac1eeded4b04e95e709b263c27877f3eb1112859db33cb403"
                   },
                   {
@@ -724,6 +727,9 @@
                     "id": "sha256:267858a95e543459a0cd683e641955d7c04c13bcda830c5f7db5a0529077428a"
                   },
                   {
+                    "id": "sha256:302bbd7fb5f0a8472eb5ddd24452d67d866c28d7467c58b577f2229e5be4a2b5"
+                  },
+                  {
                     "id": "sha256:ac5e4942921cee7c931186db79f14c54ddda3d98756e37bd6bb5b0a1024f0e82"
                   },
                   {
@@ -910,6 +916,15 @@
                     "id": "sha256:d5689e2894c59a375f985b5228b32e78d10b4ceeec9fd7c79f2000480494d368"
                   },
                   {
+                    "id": "sha256:8c9c059292e68dfbdec942133c22ef69fb4113166def6ad66903a1973bc9bccb"
+                  },
+                  {
+                    "id": "sha256:d5130266a054d7cc7cbfe68f84a7dd8d1668518d87361235d12a993bc0750a5d"
+                  },
+                  {
+                    "id": "sha256:47b0a16a1305e23104da6f2f29ee2e7cbede921528e5a35a9df080c085a04d78"
+                  },
+                  {
                     "id": "sha256:d51fac44d322890f636097d85a8fd0bec3af5cc22d83440a13308b7b7ea5723b"
                   },
                   {
@@ -965,6 +980,9 @@
                   },
                   {
                     "id": "sha256:37582049ed88df6e03737825880fee090de4be0e13859b8f055973b6e1828d86"
+                  },
+                  {
+                    "id": "sha256:26e654b600b832d80eb184c0e17846f67e24c220ee5c850176d8ac91f7b08b6d"
                   },
                   {
                     "id": "sha256:affab770e241d6c70cb271cbe5f84d02a946ad1b4d17d36f74dab74e9ca8fd7f"
@@ -1028,6 +1046,9 @@
                   },
                   {
                     "id": "sha256:1136323a37c5940055c3891a260b26782b75ea986fb5fe02ad80364f60527450"
+                  },
+                  {
+                    "id": "sha256:b9d57c8cf9df7601855f5e6fbb3f9d7de96721edc8270bedcd32768e4e774aa7"
                   },
                   {
                     "id": "sha256:06f6a82e268aa006507fb1f82f01893f996fd47ad1cfa5f839c7861e8fd317cf"
@@ -1267,6 +1288,9 @@
                     "id": "sha256:403980be89cb21247a5a1750e8fbee915f111ac53ff9089f72d303211df23a23"
                   },
                   {
+                    "id": "sha256:30a2e433b8dace2788780dd1924f2928a3111e7934733a9d3fdd0ff4a16e7e32"
+                  },
+                  {
                     "id": "sha256:1f8f65210aeb7df3b8ebeaebab89ce4c9a6d01c8566d7c482ac833f9a5ffc3e2"
                   },
                   {
@@ -1423,6 +1447,9 @@
                     "id": "sha256:0fecd6b03e12a176d1d3508d3cf2ceb5a2c25185bec31d69b294363807478045"
                   },
                   {
+                    "id": "sha256:8a2de5f0e170c44199145a6fa047c888eb6fcc00f67da35e452ab493b30c3f2e"
+                  },
+                  {
                     "id": "sha256:9f9feb77c731a460cba4720ca92e8cbc266c4c2c7ffa22a53b90c2d1ad23dc6c"
                   },
                   {
@@ -1516,6 +1543,9 @@
                     "id": "sha256:aeb381f969689e8b9a07fdf6133cefe69cb46e28a58849682bccd2961da7f90e"
                   },
                   {
+                    "id": "sha256:aecd902d4dd2636c381d15ed39eb556d828c16dd3ce7d53e5a8ff92c499ba080"
+                  },
+                  {
                     "id": "sha256:c5de92eae3182b972bf0d6d59d33c0d50fc1cae852252b47a4babd0020821d15"
                   },
                   {
@@ -1586,6 +1616,9 @@
                   },
                   {
                     "id": "sha256:48e1edacae05696360d0dd0706b2d3debb617ae15e9f7ce47e528839231a6c25"
+                  },
+                  {
+                    "id": "sha256:9b0634c2c2cedbd9072b0bc3a05f57b22bf3c7fe25fb414c0d140996ab3a2f59"
                   },
                   {
                     "id": "sha256:fd9e5c379cd3482d32686fb13881827a39037e7a7afa92c62d58c1f05fcb797f"
@@ -2075,6 +2108,9 @@
                   },
                   {
                     "id": "sha256:4e468750831505a71d52553acee82dd9091d30f6c39f6dcf717fed544714c3c3"
+                  },
+                  {
+                    "id": "sha256:c5fb6e950b077770f207e29bb31e408739272058892ba8bf0066a9483575d306"
                   },
                   {
                     "id": "sha256:efa20ae5eca5860656d0131086470cb8d5c3a1ae2819301e7d015f06bbb68a26"
@@ -3074,7 +3110,9 @@
           },
           {
             "type": "org.osbuild.fix-bls",
-            "options": {}
+            "options": {
+              "prefix": ""
+            }
           },
           {
             "type": "org.osbuild.locale",
@@ -3372,10 +3410,23 @@
             "options": {
               "filesystems": [
                 {
-                  "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+                  "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
                   "vfs_type": "xfs",
                   "path": "/",
                   "options": "defaults"
+                },
+                {
+                  "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+                  "vfs_type": "xfs",
+                  "path": "/boot",
+                  "options": "defaults"
+                },
+                {
+                  "uuid": "7B77-95E7",
+                  "vfs_type": "vfat",
+                  "path": "/boot/efi",
+                  "options": "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+                  "passno": 2
                 }
               ]
             }
@@ -3383,9 +3434,13 @@
           {
             "type": "org.osbuild.grub2",
             "options": {
-              "root_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "root_fs_uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+              "boot_fs_uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
               "kernel_opts": "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto processor.max_cstate=1 intel_idle.max_cstate=1",
               "legacy": "i386-pc",
+              "uefi": {
+                "vendor": "redhat"
+              },
               "saved_entry": "ffffffffffffffffffffffffffffffff-4.18.0-361.el8.x86_64",
               "config": {
                 "default": "saved"
@@ -3450,8 +3505,20 @@
                   "uuid": "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
                 },
                 {
-                  "size": 20967391,
+                  "size": 409600,
                   "start": 4096,
+                  "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
+                  "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+                },
+                {
+                  "size": 1024000,
+                  "start": 413696,
+                  "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
+                  "uuid": "CB07C243-BC44-4717-853E-28852021225B"
+                },
+                {
+                  "size": 19533791,
+                  "start": 1437696,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -3468,10 +3535,9 @@
             }
           },
           {
-            "type": "org.osbuild.mkfs.xfs",
+            "type": "org.osbuild.mkfs.fat",
             "options": {
-              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-              "label": "root"
+              "volid": "7B7795E7"
             },
             "devices": {
               "device": {
@@ -3479,7 +3545,43 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 4096,
-                  "size": 20967391,
+                  "size": 409600,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.mkfs.xfs",
+            "options": {
+              "uuid": "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
+              "label": "boot"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 413696,
+                  "size": 1024000,
+                  "lock": true
+                }
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.mkfs.xfs",
+            "options": {
+              "uuid": "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
+              "label": "root"
+            },
+            "devices": {
+              "device": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 1437696,
+                  "size": 19533791,
                   "lock": true
                 }
               }
@@ -3505,12 +3607,28 @@
               ]
             },
             "devices": {
-              "root": {
+              "boot": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 413696,
+                  "size": 1024000
+                }
+              },
+              "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
                   "start": 4096,
-                  "size": 20967391
+                  "size": 409600
+                }
+              },
+              "root": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 1437696,
+                  "size": 19533791
                 }
               }
             },
@@ -3520,6 +3638,18 @@
                 "type": "org.osbuild.xfs",
                 "source": "root",
                 "target": "/"
+              },
+              {
+                "name": "boot",
+                "type": "org.osbuild.xfs",
+                "source": "boot",
+                "target": "/boot"
+              },
+              {
+                "name": "boot.efi",
+                "type": "org.osbuild.fat",
+                "source": "boot.efi",
+                "target": "/boot/efi"
               }
             ]
           },
@@ -3537,8 +3667,8 @@
               "prefix": {
                 "type": "partition",
                 "partlabel": "gpt",
-                "number": 1,
-                "path": "/boot/grub2"
+                "number": 2,
+                "path": "/grub2"
               }
             }
           }
@@ -3946,6 +4076,9 @@
           "sha256:267858a95e543459a0cd683e641955d7c04c13bcda830c5f7db5a0529077428a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/brotli-1.0.6-3.el8.x86_64.rpm"
           },
+          "sha256:26e654b600b832d80eb184c0e17846f67e24c220ee5c850176d8ac91f7b08b6d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/fwupd-1.7.1-1.el8.x86_64.rpm"
+          },
           "sha256:27067f9c284cd9da72436cc6598e405796e28ace5ed99d22e6b0641c9e711050": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/systemd-239-56.el8.x86_64.rpm"
           },
@@ -4051,8 +4184,14 @@
           "sha256:2f465049e10abac1680ed833f15b565ecdb5f3775a4e3c41510ccfbf4324d44a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/grub2-tools-2.02-106.el8.x86_64.rpm"
           },
+          "sha256:302bbd7fb5f0a8472eb5ddd24452d67d866c28d7467c58b577f2229e5be4a2b5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/bubblewrap-0.4.0-1.el8.x86_64.rpm"
+          },
           "sha256:305ec4b5026b8ecffdfdf253e24c96aba795e9d07d17d3cad2d9e5573b641728": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libgusb-0.3.0-1.el8.x86_64.rpm"
+          },
+          "sha256:30a2e433b8dace2788780dd1924f2928a3111e7934733a9d3fdd0ff4a16e7e32": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libgcab1-1.1-1.el8.x86_64.rpm"
           },
           "sha256:3245158fd6bdfeba1ef9f402b5ea509e99e909bddb79e9a283fefa59d6392c67": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/iptables-1.8.4-22.el8.x86_64.rpm"
@@ -4254,6 +4393,9 @@
           },
           "sha256:468b540f98263d7b274c722a7b8f18ac1ab9d88783cfca6561c85e56b36afeee": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/PackageKit-glib-1.1.12-6.el8.x86_64.rpm"
+          },
+          "sha256:47b0a16a1305e23104da6f2f29ee2e7cbede921528e5a35a9df080c085a04d78": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/efivar-libs-37-4.el8.x86_64.rpm"
           },
           "sha256:47d5786c78a2a50f5ce67af5a6fd73665c446ca6c66c75e80d0ad79188753d18": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libibverbs-37.2-1.el8.x86_64.rpm"
@@ -4837,6 +4979,9 @@
           "sha256:89bac8488569b012c198f87a3589b0147bd220ec5e37b7e22b27ef8dbafe1b2a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/setroubleshoot-server-3.3.26-1.el8.x86_64.rpm"
           },
+          "sha256:8a2de5f0e170c44199145a6fa047c888eb6fcc00f67da35e452ab493b30c3f2e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libsmbios-2.4.1-2.el8.x86_64.rpm"
+          },
           "sha256:8a994138b4d4bbcc5663ba464b85c9a9a0112bf9bad7e1ac3302559b69e7fa55": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/gtk2-2.24.32-5.el8.x86_64.rpm"
           },
@@ -4851,6 +4996,9 @@
           },
           "sha256:8c81bb15456e441250d2ed53b223bf85c21a9b25b6a36ab09953cc831f9e7109": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/tcsh-6.20.00-15.el8.x86_64.rpm"
+          },
+          "sha256:8c9c059292e68dfbdec942133c22ef69fb4113166def6ad66903a1973bc9bccb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/efi-filesystem-3-3.el8.noarch.rpm"
           },
           "sha256:8ca5dd4feea941aba58c6d6e981883bca79704dba06583f880c0bf5e0cf4efcf": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/desktop-file-utils-0.23-8.el8.x86_64.rpm"
@@ -5007,6 +5155,9 @@
           },
           "sha256:9a9ca6857f517f1249d2eb496fe904590d6203e4a9547a28e0b23f21c4cae24a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/polkit-pkla-compat-0.1-12.el8.x86_64.rpm"
+          },
+          "sha256:9b0634c2c2cedbd9072b0bc3a05f57b22bf3c7fe25fb414c0d140996ab3a2f59": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/mokutil-0.3.0-11.el8.x86_64.rpm"
           },
           "sha256:9b079ce20a6524d8e85d139b2ec2a7dd3f4f79fa283f68208b72b8091e6bde3b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/libXft-2.3.3-1.el8.x86_64.rpm"
@@ -5185,6 +5336,9 @@
           "sha256:aeb7478365d6c1bba4f23c8899a9988c3a8b366d573c590cd7fa49f906c4cb8c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/volume_key-libs-0.3.11-5.el8.x86_64.rpm"
           },
+          "sha256:aecd902d4dd2636c381d15ed39eb556d828c16dd3ce7d53e5a8ff92c499ba080": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libxmlb-0.1.15-1.el8.x86_64.rpm"
+          },
           "sha256:af2aab47c6624608df3d8eb9721c78573377a8bfc5843f93a8ff4d9952a41b3c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/ledmon-0.95-1.el8.x86_64.rpm"
           },
@@ -5305,6 +5459,9 @@
           "sha256:b9d0a4c0e16db4c05b2d0690216d8c5da2db7d67bc765a00ce2a32c5f810c245": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/pkgconf-1.4.2-1.el8.x86_64.rpm"
           },
+          "sha256:b9d57c8cf9df7601855f5e6fbb3f9d7de96721edc8270bedcd32768e4e774aa7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/grub2-efi-x64-2.02-106.el8.x86_64.rpm"
+          },
           "sha256:ba59500c8304ec75121cc2c5f9d5917748ff8b293aca3b49c9d1d971feb606f4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/file-5.33-20.el8.x86_64.rpm"
           },
@@ -5415,6 +5572,9 @@
           },
           "sha256:c5de92eae3182b972bf0d6d59d33c0d50fc1cae852252b47a4babd0020821d15": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libxslt-1.1.32-6.el8.x86_64.rpm"
+          },
+          "sha256:c5fb6e950b077770f207e29bb31e408739272058892ba8bf0066a9483575d306": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/shim-x64-15.4-2.el8_1.x86_64.rpm"
           },
           "sha256:c60aede8488f68a001f3495bd6e6d894fc3a44bb488f4550b5970ab5904d0a1e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.6-20220201/Packages/geolite2-country-20180605-1.el8.noarch.rpm"
@@ -5574,6 +5734,9 @@
           },
           "sha256:d4dc248be7aacad57e6684036d48d7fc1697bb0f1aa880c2a77dbd3ed714c642": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/timedatex-0.5-3.el8.x86_64.rpm"
+          },
+          "sha256:d5130266a054d7cc7cbfe68f84a7dd8d1668518d87361235d12a993bc0750a5d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/efibootmgr-16-1.el8.x86_64.rpm"
           },
           "sha256:d51fac44d322890f636097d85a8fd0bec3af5cc22d83440a13308b7b7ea5723b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/elfutils-debuginfod-client-0.186-1.el8.x86_64.rpm"
@@ -6228,6 +6391,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/diffutils-3.6-6.el8.x86_64.rpm",
         "checksum": "sha256:f7fc94ac5b5df2051aa2811c0cebecd7e04353ac871f1a792bc6c68f2c2aa6ce"
+      },
+      {
+        "name": "dosfstools",
+        "epoch": 0,
+        "version": "4.1",
+        "release": "6.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/dosfstools-4.1-6.el8.x86_64.rpm",
+        "checksum": "sha256:fc6f294d87c32dd80d09ad1e31005a6c379c476539fec9cd52b51f0bbc3384e3"
       },
       {
         "name": "dracut",
@@ -7825,6 +7997,15 @@
         "checksum": "sha256:267858a95e543459a0cd683e641955d7c04c13bcda830c5f7db5a0529077428a"
       },
       {
+        "name": "bubblewrap",
+        "epoch": 0,
+        "version": "0.4.0",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/bubblewrap-0.4.0-1.el8.x86_64.rpm",
+        "checksum": "sha256:302bbd7fb5f0a8472eb5ddd24452d67d866c28d7467c58b577f2229e5be4a2b5"
+      },
+      {
         "name": "bzip2",
         "epoch": 0,
         "version": "1.0.6",
@@ -8383,6 +8564,33 @@
         "checksum": "sha256:d5689e2894c59a375f985b5228b32e78d10b4ceeec9fd7c79f2000480494d368"
       },
       {
+        "name": "efi-filesystem",
+        "epoch": 0,
+        "version": "3",
+        "release": "3.el8",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/efi-filesystem-3-3.el8.noarch.rpm",
+        "checksum": "sha256:8c9c059292e68dfbdec942133c22ef69fb4113166def6ad66903a1973bc9bccb"
+      },
+      {
+        "name": "efibootmgr",
+        "epoch": 0,
+        "version": "16",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/efibootmgr-16-1.el8.x86_64.rpm",
+        "checksum": "sha256:d5130266a054d7cc7cbfe68f84a7dd8d1668518d87361235d12a993bc0750a5d"
+      },
+      {
+        "name": "efivar-libs",
+        "epoch": 0,
+        "version": "37",
+        "release": "4.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/efivar-libs-37-4.el8.x86_64.rpm",
+        "checksum": "sha256:47b0a16a1305e23104da6f2f29ee2e7cbede921528e5a35a9df080c085a04d78"
+      },
+      {
         "name": "elfutils-debuginfod-client",
         "epoch": 0,
         "version": "0.186",
@@ -8552,6 +8760,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/fuse3-libs-3.2.1-12.el8.x86_64.rpm",
         "checksum": "sha256:37582049ed88df6e03737825880fee090de4be0e13859b8f055973b6e1828d86"
+      },
+      {
+        "name": "fwupd",
+        "epoch": 0,
+        "version": "1.7.1",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/fwupd-1.7.1-1.el8.x86_64.rpm",
+        "checksum": "sha256:26e654b600b832d80eb184c0e17846f67e24c220ee5c850176d8ac91f7b08b6d"
       },
       {
         "name": "gawk",
@@ -8741,6 +8958,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/grub2-common-2.02-106.el8.noarch.rpm",
         "checksum": "sha256:1136323a37c5940055c3891a260b26782b75ea986fb5fe02ad80364f60527450"
+      },
+      {
+        "name": "grub2-efi-x64",
+        "epoch": 1,
+        "version": "2.02",
+        "release": "106.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/grub2-efi-x64-2.02-106.el8.x86_64.rpm",
+        "checksum": "sha256:b9d57c8cf9df7601855f5e6fbb3f9d7de96721edc8270bedcd32768e4e774aa7"
       },
       {
         "name": "grub2-pc",
@@ -9454,6 +9680,15 @@
         "checksum": "sha256:403980be89cb21247a5a1750e8fbee915f111ac53ff9089f72d303211df23a23"
       },
       {
+        "name": "libgcab1",
+        "epoch": 0,
+        "version": "1.1",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libgcab1-1.1-1.el8.x86_64.rpm",
+        "checksum": "sha256:30a2e433b8dace2788780dd1924f2928a3111e7934733a9d3fdd0ff4a16e7e32"
+      },
+      {
         "name": "libgcc",
         "epoch": 0,
         "version": "8.5.0",
@@ -9922,6 +10157,15 @@
         "checksum": "sha256:0fecd6b03e12a176d1d3508d3cf2ceb5a2c25185bec31d69b294363807478045"
       },
       {
+        "name": "libsmbios",
+        "epoch": 0,
+        "version": "2.4.1",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libsmbios-2.4.1-2.el8.x86_64.rpm",
+        "checksum": "sha256:8a2de5f0e170c44199145a6fa047c888eb6fcc00f67da35e452ab493b30c3f2e"
+      },
+      {
         "name": "libsolv",
         "epoch": 0,
         "version": "0.7.20",
@@ -10201,6 +10445,15 @@
         "checksum": "sha256:aeb381f969689e8b9a07fdf6133cefe69cb46e28a58849682bccd2961da7f90e"
       },
       {
+        "name": "libxmlb",
+        "epoch": 0,
+        "version": "0.1.15",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/libxmlb-0.1.15-1.el8.x86_64.rpm",
+        "checksum": "sha256:aecd902d4dd2636c381d15ed39eb556d828c16dd3ce7d53e5a8ff92c499ba080"
+      },
+      {
         "name": "libxslt",
         "epoch": 0,
         "version": "1.1.32",
@@ -10415,6 +10668,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/mlocate-0.26-20.el8.x86_64.rpm",
         "checksum": "sha256:48e1edacae05696360d0dd0706b2d3debb617ae15e9f7ce47e528839231a6c25"
+      },
+      {
+        "name": "mokutil",
+        "epoch": 1,
+        "version": "0.3.0",
+        "release": "11.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/mokutil-0.3.0-11.el8.x86_64.rpm",
+        "checksum": "sha256:9b0634c2c2cedbd9072b0bc3a05f57b22bf3c7fe25fb414c0d140996ab3a2f59"
       },
       {
         "name": "mozjs60",
@@ -11882,6 +12144,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/shared-mime-info-1.9-3.el8.x86_64.rpm",
         "checksum": "sha256:4e468750831505a71d52553acee82dd9091d30f6c39f6dcf717fed544714c3c3"
+      },
+      {
+        "name": "shim-x64",
+        "epoch": 0,
+        "version": "15.4",
+        "release": "2.el8_1",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.6-20220201/Packages/shim-x64-15.4-2.el8_1.x86_64.rpm",
+        "checksum": "sha256:c5fb6e950b077770f207e29bb31e408739272058892ba8bf0066a9483575d306"
       },
       {
         "name": "slang",
