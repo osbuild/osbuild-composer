@@ -213,6 +213,10 @@ var (
 			Locale: common.ToPtr("en_US.UTF-8"),
 			EnabledServices: []string{
 				"sshd",
+				"cloud-init.service",
+				"cloud-config.service",
+				"cloud-final.service",
+				"cloud-init-local.service",
 			},
 			DefaultTarget: common.ToPtr("multi-user.target"),
 			DisabledServices: []string{
@@ -227,7 +231,7 @@ var (
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vpc"},
 		exports:             []string{"vpc"},
-		basePartitionTables: defaultBasePartitionTables,
+		basePartitionTables: btrfsBasePartitionTables,
 		environment:         &environment.Azure{},
 	}
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/internal/disk"
 )
 
@@ -102,6 +103,11 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool Pa
 	s = GenMkfsStages(pt, loopback)
 	stages = append(stages, s...)
 
+	subvolStage := GenBtrfsSubVolStage(filename, pt)
+	if subvolStage != nil {
+		stages = append(stages, subvolStage)
+	}
+
 	return stages
 }
 
@@ -117,7 +123,13 @@ func GenImageKernelOptions(pt *disk.PartitionTable) []string {
 		case *disk.LUKSContainer:
 			karg := "luks.uuid=" + ent.UUID
 			cmdline = append(cmdline, karg)
+		case *disk.BtrfsSubvolume:
+			if ent.Mountpoint == "/" {
+				karg := "rootflags=subvol=" + ent.Name
+				cmdline = append(cmdline, karg)
+			}
 		}
+
 		return nil
 	}
 

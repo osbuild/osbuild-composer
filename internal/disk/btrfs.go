@@ -75,6 +75,10 @@ func (b *Btrfs) GenUUID(rng *rand.Rand) {
 	if b.UUID == "" {
 		b.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}
+
+	for i := range b.Subvolumes {
+		b.Subvolumes[i].UUID = b.UUID
+	}
 }
 
 type BtrfsSubvolume struct {

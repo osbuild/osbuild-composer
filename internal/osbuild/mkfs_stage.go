@@ -42,18 +42,14 @@ func GenMkfsStages(pt *disk.PartitionTable, device *Device) []*Stage {
 				VolID: strings.Replace(fsSpec.UUID, "-", "", -1),
 			}
 			stage = NewMkfsFATStage(options, stageDevices)
-		case "btrfs":
-			options := &MkfsBtrfsStageOptions{
-				UUID:  fsSpec.UUID,
-				Label: fsSpec.Label,
-			}
-			stage = NewMkfsBtrfsStage(options, stageDevices)
 		case "ext4":
 			options := &MkfsExt4StageOptions{
 				UUID:  fsSpec.UUID,
 				Label: fsSpec.Label,
 			}
 			stage = NewMkfsExt4Stage(options, stageDevices)
+		case "btrfs":
+			// do nothing, see below
 		default:
 			panic("unknown fs type " + t)
 		}
@@ -63,5 +59,31 @@ func GenMkfsStages(pt *disk.PartitionTable, device *Device) []*Stage {
 	}
 
 	_ = pt.ForEachMountable(genStage) // genStage always returns nil
+
+	genBtrfsStage := func(e disk.Entity, path []disk.Entity) error {
+		if _, isBtrfs := e.(*disk.Btrfs); !isBtrfs {
+			return nil
+		}
+
+		btrfs := e.(*disk.Btrfs)
+
+		stageDevices, lastName := getDevices(path, devOptions.Filename, true)
+
+		// the last device on the PartitionTable must be named "device"
+		lastDevice := stageDevices[lastName]
+		delete(stageDevices, lastName)
+		stageDevices["device"] = lastDevice
+
+		options := &MkfsBtrfsStageOptions{
+			UUID:  btrfs.UUID,
+			Label: btrfs.Label,
+		}
+		stage := NewMkfsBtrfsStage(options, stageDevices)
+		stages = append(stages, stage)
+
+		return nil
+	}
+
+	_ = pt.ForEachEntity(genBtrfsStage)
 	return stages
 }

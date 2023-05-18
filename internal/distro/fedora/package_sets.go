@@ -66,6 +66,7 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"libxcrypt-compat",
 			"initscripts",
 			"glibc-all-langpacks",
+			"cloud-init",
 		},
 		Exclude: []string{
 			"dracut-config-rescue",

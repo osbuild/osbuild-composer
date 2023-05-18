@@ -78,7 +78,7 @@ func GenCopyFSTreeOptions(inputName, inputPipeline, filename string, pt *disk.Pa
 		case "ext4":
 			mount = NewExt4Mount(name, name, mountpoint)
 		case "btrfs":
-			mount = NewBtrfsMount(name, name, mountpoint)
+			mount = NewBtrfsMount(mnt.(*disk.BtrfsSubvolume).Name, name, mountpoint, mnt.(*disk.BtrfsSubvolume).Name, "")
 		default:
 			panic("unknown fs type " + t)
 		}
