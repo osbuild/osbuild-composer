@@ -239,15 +239,15 @@ func newDistro(name string, minor int) *distribution {
 		openstackImgType(),
 	)
 
-	rawX86Platform := &platform.X86{
-		BIOS: true,
+	ec2X86Platform := &platform.X86{
+		BIOS:       true,
+		UEFIVendor: rd.vendor,
 		BasePlatform: platform.BasePlatform{
 			ImageFormat: platform.FORMAT_RAW,
 		},
 	}
-
 	x86_64.addImageTypes(
-		rawX86Platform,
+		ec2X86Platform,
 		amiImgTypeX86_64(rd),
 	)
 
@@ -444,14 +444,14 @@ func newDistro(name string, minor int) *distribution {
 		x86_64.addImageTypes(azureX64Platform, azureRhuiImgType(), azureByosImgType(), azureSapRhuiImgType(rd))
 
 		// add ec2 image types to RHEL distro only
-		x86_64.addImageTypes(rawX86Platform, ec2ImgTypeX86_64(rd), ec2HaImgTypeX86_64(rd))
+		x86_64.addImageTypes(ec2X86Platform, ec2ImgTypeX86_64(rd), ec2HaImgTypeX86_64(rd))
 		aarch64.addImageTypes(rawAarch64Platform, ec2ImgTypeAarch64(rd))
 
 		if rd.osVersion != "8.5" {
 			// NOTE: RHEL 8.5 is going away and these image types require some
 			// work to get working, so we just disable them here until the
 			// whole distro gets deleted
-			x86_64.addImageTypes(rawX86Platform, ec2SapImgTypeX86_64(rd))
+			x86_64.addImageTypes(ec2X86Platform, ec2SapImgTypeX86_64(rd))
 		}
 
 		// add GCE RHUI image to RHEL only
