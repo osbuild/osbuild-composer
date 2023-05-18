@@ -940,7 +940,8 @@ func newDistro(version int) distro.Distro {
 	)
 	x86_64.addImageTypes(
 		&platform.X86{
-			BIOS: true,
+			BIOS:       true,
+			UEFIVendor: "fedora",
 			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_RAW,
 			},
