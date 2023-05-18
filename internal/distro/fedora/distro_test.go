@@ -494,7 +494,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 
 func TestFedora_ListArches(t *testing.T) {
 	arches := fedora.NewF37().ListArches()
-	assert.Equal(t, []string{"aarch64", "s390x", "x86_64"}, arches)
+	assert.Equal(t, []string{"aarch64", "x86_64"}, arches)
 }
 
 func TestFedora37_GetArch(t *testing.T) {
@@ -510,7 +510,12 @@ func TestFedora37_GetArch(t *testing.T) {
 			name: "aarch64",
 		},
 		{
-			name: "s390x",
+			name:          "s390x",
+			errorExpected: true,
+		},
+		{
+			name:          "ppc64le",
+			errorExpected: true,
 		},
 		{
 			name:          "foo-arch",

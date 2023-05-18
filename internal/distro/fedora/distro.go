@@ -893,11 +893,6 @@ func newDistro(version int) distro.Distro {
 		distro: &rd,
 	}
 
-	s390x := architecture{
-		distro: &rd,
-		name:   distro.S390xArchName,
-	}
-
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
@@ -1101,8 +1096,6 @@ func newDistro(version int) distro.Distro {
 		minimalrawImgType,
 	)
 
-	s390x.addImageTypes(nil)
-
-	rd.addArches(x86_64, aarch64, s390x)
+	rd.addArches(x86_64, aarch64)
 	return &rd
 }
