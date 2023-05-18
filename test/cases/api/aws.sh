@@ -113,6 +113,28 @@ function verify() {
     --resources "${AWS_SNAPSHOT_ID}" "${AMI_IMAGE_ID}" \
     --tags Key=gitlab-ci-test,Value=true
 
+  # Verify that the image has the correct boot mode set
+  AMI_BOOT_MODE=$(jq -r '.Images[].BootMode // empty' "$WORKDIR/ami.json")
+  case "$ARCH" in
+    aarch64)
+      # aarch64 image supports only uefi boot mode
+      if [[ "$AMI_BOOT_MODE" != "uefi" ]]; then
+        echo "AMI boot mode is not \"uefi\", but \"$AMI_BOOT_MODE\""
+        exit 1
+      fi
+      ;;
+    x86_64)
+      # x86_64 image supports hybrid boot mode with preference for uefi
+      if [[ "$AMI_BOOT_MODE" != "uefi-preferred" ]]; then
+        echo "AMI boot mode is not \"uefi-preferred\", but \"$AMI_BOOT_MODE\""
+        exit 1
+      fi
+      ;;
+    *)
+      echo "❌ Unsupported architecture: $ARCH"
+      exit 1
+      ;;
+  esac
 
   SHARE_OK=1
 
@@ -201,6 +223,12 @@ function verify() {
 
   echo "⏱ Waiting for AWS instance to respond to ssh"
   _instanceWaitSSH "$HOST"
+
+  # log the boot mode of the instance
+  INSTANCE_AMI_BOOT_MODE=$($AWS_CMD ec2 describe-instances --instance-ids "$AWS_INSTANCE_ID" | jq -r '.Reservations[].Instances[].BootMode // empty')
+  INSTANCE_CURRENT_BOOT_MODE=$($AWS_CMD ec2 describe-instances --instance-ids "$AWS_INSTANCE_ID" | jq -r '.Reservations[].Instances[].CurrentInstanceBootMode')
+  echo "Instance AMI boot mode: $INSTANCE_AMI_BOOT_MODE"
+  echo "Instance actual boot mode: $INSTANCE_CURRENT_BOOT_MODE"
 
   # Verify image
   _ssh="ssh -oStrictHostKeyChecking=no -i ./keypair.pem $SSH_USER@$HOST"
