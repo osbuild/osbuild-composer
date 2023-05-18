@@ -186,6 +186,29 @@ $AWS_CMD ec2 create-tags \
     --resources "${SNAPSHOT_ID}" "${AMI_IMAGE_ID}" \
     --tags Key=gitlab-ci-test,Value=true
 
+# Verify that the image has the correct boot mode set
+AMI_BOOT_MODE=$(jq -r '.Images[].BootMode // empty' "$AMI_DATA")
+case "$ARCH" in
+    aarch64)
+        # aarch64 image supports only uefi boot mode
+        if [[ "$AMI_BOOT_MODE" != "uefi" ]]; then
+            echo "AMI boot mode is not \"uefi\", but \"$AMI_BOOT_MODE\""
+            exit 1
+        fi
+        ;;
+    x86_64)
+        # x86_64 image supports hybrid boot mode with preference for uefi
+        if [[ "$AMI_BOOT_MODE" != "uefi-preferred" ]]; then
+            echo "AMI boot mode is not \"uefi-preferred\", but \"$AMI_BOOT_MODE\""
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Unsupported architecture: $ARCH"
+        exit 1
+        ;;
+esac
+
 if [[ "$ID" == "fedora" ]]; then
   # fedora uses fedora
   SSH_USER="fedora"
