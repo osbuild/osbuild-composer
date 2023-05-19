@@ -501,6 +501,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 			commands = []string{fmt.Sprintf("/usr/bin/rhc connect -o=%s -a=%s --server %s", p.Subscription.Organization, p.Subscription.ActivationKey, p.Subscription.ServerUrl)}
 			// insights-client creates the .gnupg directory during boot process, and is labeled incorrectly
 			commands = append(commands, "restorecon -R /root/.gnupg")
+			// execute the rhc post install script as the selinuxenabled check doesn't work in the buildroot container
+			commands = append(commands, "/usr/sbin/semanage permissive --add rhcd_t")
 		} else {
 			commands = []string{fmt.Sprintf("/usr/sbin/subscription-manager register --org=%s --activationkey=%s --serverurl %s --baseurl %s", p.Subscription.Organization, p.Subscription.ActivationKey, p.Subscription.ServerUrl, p.Subscription.BaseUrl)}
 
