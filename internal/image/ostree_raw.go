@@ -91,16 +91,27 @@ func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline.Checkpoint()
 
 	var art *artifact.Artifact
-	switch img.Compression {
-	case "xz":
-		ostreeCompressed := ostreeCompressedImagePipelines(img, m, buildPipeline)
-		art = ostreeCompressed.Export()
-	case "":
+	switch img.Platform.GetImageFormat() {
+	case platform.FORMAT_VMDK:
+		if img.Compression != "" {
+			panic(fmt.Sprintf("no compression is allowed with VMDK format for %q", img.name))
+		}
 		ostreeBase := baseRawOstreeImage(img, m, buildPipeline)
-		ostreeBase.Filename = img.Filename
-		art = ostreeBase.Export()
+		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, nil, ostreeBase)
+		vmdkPipeline.Filename = img.Filename
+		art = vmdkPipeline.Export()
 	default:
-		panic(fmt.Sprintf("unsupported compression type %q on %q", img.Compression, img.name))
+		switch img.Compression {
+		case "xz":
+			ostreeCompressed := ostreeCompressedImagePipelines(img, m, buildPipeline)
+			art = ostreeCompressed.Export()
+		case "":
+			ostreeBase := baseRawOstreeImage(img, m, buildPipeline)
+			ostreeBase.Filename = img.Filename
+			art = ostreeBase.Export()
+		default:
+			panic(fmt.Sprintf("unsupported compression type %q on %q", img.Compression, img.name))
+		}
 	}
 
 	return art, nil

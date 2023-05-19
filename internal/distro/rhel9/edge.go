@@ -153,6 +153,25 @@ var (
 		environment:         &environment.EC2{},
 	}
 
+	edgeVsphereImgType = imageType{
+		name:        "edge-vsphere",
+		filename:    "image.vmdk",
+		mimeType:    "application/x-vmdk",
+		packageSets: nil,
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: common.ToPtr("en_US.UTF-8"),
+		},
+		defaultSize:         10 * common.GibiByte,
+		rpmOstree:           true,
+		bootable:            true,
+		bootISO:             false,
+		image:               edgeRawImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"ostree-deployment", "image", "vmdk"},
+		exports:             []string{"vmdk"},
+		basePartitionTables: edgeBasePartitionTables,
+	}
+
 	// Shared Services
 	edgeServices = []string{
 		// TODO(runcom): move fdo-client-linuxapp.service to presets?

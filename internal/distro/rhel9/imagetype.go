@@ -343,7 +343,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		}
 	}
 
-	if t.name == "edge-raw-image" || t.name == "edge-ami" {
+	if t.name == "edge-raw-image" || t.name == "edge-ami" || t.name == "edge-vsphere" {
 		// ostree-based bootable images require a URL from which to pull a payload commit
 		if ostreeURL == "" {
 			return warnings, fmt.Errorf("%q images require specifying a URL from which to retrieve the OSTree commit", t.name)
