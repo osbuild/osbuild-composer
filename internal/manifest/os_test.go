@@ -112,6 +112,7 @@ func TestRhcInsightsCommands(t *testing.T) {
 	CheckFirstBootStageOptions(t, pipeline.Stages, []string{
 		"/usr/bin/rhc connect -o=2040324 -a=my-secret-key --server subscription.rhsm.redhat.com",
 		"restorecon -R /root/.gnupg",
+		"/usr/sbin/semanage permissive --add rhcd_t",
 	})
 }
 
