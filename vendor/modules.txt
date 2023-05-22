@@ -5,7 +5,7 @@ cloud.google.com/go/internal
 cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
-# cloud.google.com/go/cloudbuild v1.9.0
+# cloud.google.com/go/cloudbuild v1.9.1
 ## explicit; go 1.19
 cloud.google.com/go/cloudbuild/apiv1
 cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb

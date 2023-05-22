@@ -5,7 +5,7 @@ go 1.18
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 require (
-	cloud.google.com/go/cloudbuild v1.9.0
+	cloud.google.com/go/cloudbuild v1.9.1
 	cloud.google.com/go/compute v1.19.3
 	cloud.google.com/go/storage v1.28.1
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
