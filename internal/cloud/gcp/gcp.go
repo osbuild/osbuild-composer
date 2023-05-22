@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	cloudbuild "cloud.google.com/go/cloudbuild/apiv1"
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/storage"
 	"golang.org/x/oauth2/google"
@@ -25,9 +24,8 @@ type GCP struct {
 
 // New returns an authenticated GCP instance, allowing to interact with GCP API.
 func New(credentials []byte) (*GCP, error) {
-	scopes := []string{storage.ScopeReadWrite}                 // file upload
-	scopes = append(scopes, compute.DefaultAuthScopes()...)    // permissions to image
-	scopes = append(scopes, cloudbuild.DefaultAuthScopes()...) // image import
+	scopes := []string{storage.ScopeReadWrite}              // file upload
+	scopes = append(scopes, compute.DefaultAuthScopes()...) // permissions to image
 
 	var getCredsFunc func() (*google.Credentials, error)
 	if credentials != nil {

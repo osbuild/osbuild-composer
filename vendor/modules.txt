@@ -1,15 +1,9 @@
 # cloud.google.com/go v0.110.0
 ## explicit; go 1.19
-cloud.google.com/go
 cloud.google.com/go/internal
 cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
-# cloud.google.com/go/cloudbuild v1.9.0
-## explicit; go 1.19
-cloud.google.com/go/cloudbuild/apiv1
-cloud.google.com/go/cloudbuild/apiv1/v2/cloudbuildpb
-cloud.google.com/go/cloudbuild/internal
 # cloud.google.com/go/compute v1.19.3
 ## explicit; go 1.19
 cloud.google.com/go/compute/apiv1
@@ -22,11 +16,6 @@ cloud.google.com/go/compute/metadata
 ## explicit; go 1.19
 cloud.google.com/go/iam
 cloud.google.com/go/iam/apiv1/iampb
-# cloud.google.com/go/longrunning v0.4.1
-## explicit; go 1.19
-cloud.google.com/go/longrunning
-cloud.google.com/go/longrunning/autogen
-cloud.google.com/go/longrunning/autogen/longrunningpb
 # cloud.google.com/go/storage v1.30.1
 ## explicit; go 1.19
 cloud.google.com/go/storage
@@ -927,7 +916,6 @@ google.golang.org/appengine/urlfetch
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
-google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/cloud/extendedops
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails
