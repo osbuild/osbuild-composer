@@ -530,7 +530,7 @@ github.com/kolo/xmlrpc
 # github.com/kr/text v0.2.0
 ## explicit
 github.com/kr/text
-# github.com/labstack/echo/v4 v4.10.0
+# github.com/labstack/echo/v4 v4.10.2
 ## explicit; go 1.17
 github.com/labstack/echo/v4
 github.com/labstack/echo/v4/middleware
@@ -559,7 +559,7 @@ github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-colorable v0.1.13
 ## explicit; go 1.15
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.16
+# github.com/mattn/go-isatty v0.0.17
 ## explicit; go 1.15
 github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.13
@@ -871,7 +871,7 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/time v0.2.0
+# golang.org/x/time v0.3.0
 ## explicit
 golang.org/x/time/rate
 # golang.org/x/tools v0.6.0
