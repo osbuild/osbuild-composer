@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -396,6 +397,24 @@ func (q *fsJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, re
 	return
 }
 
+func (q *fsJobQueue) JobStatusWoResult(id uuid.UUID) (jobType string, channel string, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, dependents []uuid.UUID, err error) {
+	j, err := q.readJob(id)
+	if err != nil {
+		return
+	}
+
+	jobType = j.Type
+	channel = j.Channel
+	queued = j.QueuedAt
+	started = j.StartedAt
+	finished = j.FinishedAt
+	canceled = j.Canceled
+	deps = j.Dependencies
+	dependents = j.Dependents
+
+	return
+}
+
 func (q *fsJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, channel string, err error) {
 	j, err := q.readJob(id)
 	if err != nil {
@@ -580,4 +599,109 @@ func jobMatchesCriteria(j *job, acceptedJobTypes []string, acceptedChannels []st
 	}
 
 	return contains(acceptedJobTypes, j.Type) && contains(acceptedChannels, j.Channel)
+}
+
+func (q *fsJobQueue) getJsonField(data *json.RawMessage, field string, result *json.RawMessage) error {
+	m := make(map[string]json.RawMessage)
+	if len(*data) > 0 {
+		err := json.Unmarshal(*data, &m)
+		if err != nil {
+			return err
+		}
+		*result = m[field]
+	}
+	return nil
+}
+
+func (q *fsJobQueue) QueryResultFields(id uuid.UUID, paths []string, response any) error {
+	for _, path := range paths {
+		err := jobqueue.FieldSanitazation(path)
+		if err != nil {
+			return err
+		}
+		hasField, err := q.TestResultFieldExists(id, path)
+		if err != nil {
+			return err
+		}
+		if hasField {
+			// if recipient is a pointer to something, the something in question will get allocated by the
+			// FindRecipientByTagPath function. So only call this when there is an actual result to unpack, otherwise
+			// the content will be set to non nil (and that is a problem).
+			recipient, err := jobqueue.FindRecipientByTagPath(response, path)
+			if err != nil {
+				return err
+			}
+			err = q.queryResultField(id, path, recipient)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (q *fsJobQueue) queryResultField(id uuid.UUID, path string, response any) error {
+	err := jobqueue.FieldSanitazation(path)
+	if err != nil {
+		return err
+	}
+	var raw_job json.RawMessage
+	err = q.db.ReadRaw(id.String(), &raw_job)
+	if err != nil {
+		return err
+	}
+	var response_data json.RawMessage
+	err = q.getJsonField(&raw_job, "result", &response_data)
+	if err != nil {
+		return err
+	}
+	var path_split []string = strings.Split(path, ".")
+	for _, child_field := range path_split {
+		var child_data json.RawMessage
+		err = q.getJsonField(&response_data, child_field, &child_data)
+		if err != nil {
+			return err
+		}
+		response_data = child_data
+	}
+	if len(response_data) > 0 {
+		err = json.Unmarshal(response_data, response)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (q *fsJobQueue) TestResultFieldExists(id uuid.UUID, path string) (bool, error) {
+	err := jobqueue.FieldSanitazation(path)
+	if err != nil {
+		return false, err
+	}
+	var raw_job json.RawMessage
+	err = q.db.ReadRaw(id.String(), &raw_job)
+	if err != nil {
+		return false, err
+	}
+	var response_data json.RawMessage
+	err = q.getJsonField(&raw_job, "result", &response_data)
+	if err != nil {
+		return false, err
+	}
+	var path_split []string = strings.Split(path, ".")
+	for _, child_field := range path_split {
+		var child_data json.RawMessage
+		err = q.getJsonField(&response_data, child_field, &child_data)
+		if err != nil {
+			return false, err
+		}
+		if len(child_data) == 0 {
+			return false, err
+		}
+		response_data = child_data
+	}
+	if len(response_data) == 4 {
+		return string(response_data) != "null", nil
+	}
+	return len(response_data) > 0, nil
 }

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -79,6 +80,10 @@ const (
 		SELECT type, channel, result, queued_at, started_at, finished_at, canceled
 		FROM jobs
 		WHERE id = $1`
+	sqlQueryJobStatusWoResult = `
+	    SELECT type, channel, queued_at, started_at, finished_at, canceled
+	    FROM jobs
+	    WHERE id = $1`
 	sqlQueryRunningId = `
                 SELECT id
                 FROM jobs
@@ -108,6 +113,11 @@ const (
 	sqlDeleteHeartbeat = `
                 DELETE FROM heartbeats
                 WHERE id = $1`
+	pathQuery = `result -> '%s'`
+	// Jackc doesn't support argument formatting when `->` is involved
+	sqlQueryMultipleJsonContent = `select %s from jobs where id='%s'`
+	// Jackc doesn't support argument formatting when `@?` is involved
+	sqlQueryExistsInJson = `select result @? '$.%s' and result -> '%s' != 'null' from jobs where id='%s'`
 )
 
 type DBJobQueue struct {
@@ -591,6 +601,38 @@ func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, re
 	return
 }
 
+func (q *DBJobQueue) JobStatusWoResult(id uuid.UUID) (jobType string, channel string, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, dependents []uuid.UUID, err error) {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return
+	}
+	defer conn.Release()
+
+	// Use double pointers for timestamps because they might be NULL, which would result in *time.Time == nil
+	var sp, fp *time.Time
+	err = conn.QueryRow(context.Background(), sqlQueryJobStatusWoResult, id).Scan(&jobType, &channel, &queued, &sp, &fp, &canceled)
+	if err != nil {
+		return
+	}
+	if sp != nil {
+		started = *sp
+	}
+	if fp != nil {
+		finished = *fp
+	}
+
+	deps, err = q.jobDependencies(context.Background(), conn, id)
+	if err != nil {
+		return
+	}
+
+	dependents, err = q.jobDependents(context.Background(), conn, id)
+	if err != nil {
+		return
+	}
+	return
+}
+
 // Job returns all the parameters that define a job (everything provided during Enqueue).
 func (q *DBJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, channel string, err error) {
 	conn, err := q.pool.Acquire(context.Background())
@@ -730,4 +772,74 @@ func (q *DBJobQueue) jobDependents(ctx context.Context, conn connection, id uuid
 	}
 
 	return dependents, nil
+}
+
+func (q *DBJobQueue) QueryResultFields(id uuid.UUID, paths []string, response any) error {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+	querySelect := ""
+	var answers []interface{}
+	// build the query and prepare as much as answer containers as there is different paths to query
+	for _, path := range paths {
+		err := jobqueue.FieldSanitazation(path)
+		if err != nil {
+			return err
+		}
+		subselect := fmt.Sprintf(pathQuery, strings.ReplaceAll(path, ".", "' -> '"))
+		if querySelect == "" {
+			querySelect = subselect
+		} else {
+			querySelect = fmt.Sprintf("%s, %s", querySelect, subselect)
+		}
+		answers = append(answers, &json.RawMessage{})
+	}
+	formated_request := fmt.Sprintf(sqlQueryMultipleJsonContent, querySelect, id.String())
+	err = conn.QueryRow(context.Background(), formated_request).Scan(answers...)
+	if err != nil {
+		return err
+	}
+	// Unpack each answer into their corresponding recipient, only if there is an answer to unpack.
+	for i, ianswer := range answers {
+		var answer *json.RawMessage = ianswer.(*json.RawMessage)
+		if len(*answer) > 0 {
+			logrus.Infof("unpack %s for path %s", *answer, paths[i])
+			// if recipient is a pointer to something, the something in question will get allocated by the
+			// FindRecipientByTagPath function. So only call this when there is an actual result to unpack, otherwise
+			// the content will be set to non nil (and that is a problem).
+			recipient, err := jobqueue.FindRecipientByTagPath(response, paths[i])
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(*answer, recipient)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (q *DBJobQueue) TestResultFieldExists(id uuid.UUID, path string) (bool, error) {
+	err := jobqueue.FieldSanitazation(path)
+	if err != nil {
+		return false, err
+	}
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return false, err
+	}
+	defer conn.Release()
+	var response bool = false
+	formated_request := fmt.Sprintf(sqlQueryExistsInJson,
+		path,
+		strings.ReplaceAll(path, ".", "' -> '"),
+		id)
+	err = conn.QueryRow(context.Background(), formated_request).Scan(&response)
+	if err != nil {
+		return false, err
+	}
+	return response, nil
 }

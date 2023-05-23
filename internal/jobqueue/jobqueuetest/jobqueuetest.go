@@ -44,6 +44,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("dequeue-by-id", wrap(testDequeueByID))
 	t.Run("multiple-channels", wrap(testMultipleChannels))
 	t.Run("100-dequeuers", wrap(test100dequeuers))
+	t.Run("testQueryJSonField", wrap(testQueryJSonField))
 }
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID, channel string) uuid.UUID {
@@ -699,4 +700,139 @@ func test100dequeuers(t *testing.T, q jobqueue.JobQueue) {
 
 	wg.Wait()
 
+}
+
+type ExpandType struct {
+	Expansion string `json:"expansion"`
+}
+
+type NameSubTypePtr struct {
+	NamedSubTypePtr *SubType
+}
+
+type SubType struct {
+	Something string    `json:"something"`
+	EmptyList []SubType `json:"empty_list"`
+}
+type TestStructure struct {
+	Name          string    `json:"name"`
+	SubType       SubType   `json:"sub_type"`
+	SubTypePtr    *SubType  `json:"sub_type_ptr"`
+	SubTypePtrPtr **SubType `json:"sub_type_ptr_ptr"`
+	EmptySubType  *SubType  `json:"empty_sub_type,omitempty"`
+	EmptyList     []SubType `json:"empty_list"`
+	ExpandType
+}
+
+func testQueryJSonField(t *testing.T, q jobqueue.JobQueue) {
+	id := pushTestJob(t, q, "octopus", nil, nil, "")
+	subTypePtr := &SubType{
+		Something: "nothing_ptr",
+	}
+	var emptyList []SubType
+	require.Equal(t, id, finishNextTestJob(t,
+		q,
+		"octopus",
+		TestStructure{
+			Name: "toto",
+			SubType: SubType{
+				Something: "nothing",
+			},
+			SubTypePtr:    subTypePtr,
+			SubTypePtrPtr: &subTypePtr,
+			EmptyList:     emptyList,
+			ExpandType:    ExpandType{Expansion: "expansion"},
+		},
+		nil))
+
+	// Test accessing one field is working
+	var res TestStructure
+	err := q.QueryResultFields(id, []string{"name", "expansion"}, &res)
+	require.Nil(t, err)
+	require.Equal(t, "toto", res.Name)
+	require.Equal(t, "expansion", res.Expansion)
+
+	// Test that a subsequent call to access another field does not erase a previously set value
+	ptr := &SubType{Something: "other thing"}
+	res.SubTypePtr = ptr
+	err = q.QueryResultFields(id, []string{"sub_type.something"}, &res)
+	require.Nil(t, err)
+	require.Equal(t, "toto", res.Name)
+	require.Equal(t, "nothing", res.SubType.Something)
+	require.Equal(t, ptr, res.SubTypePtr)
+
+	// test requesting empty subtype returns nil
+	require.Nil(t, res.EmptySubType)
+	err = q.QueryResultFields(id, []string{"empty_sub_type"}, &res)
+	require.Nil(t, err)
+	require.Nil(t, res.EmptySubType)
+
+	// Test accessing multiple fields is working
+	var res2 TestStructure
+	err = q.QueryResultFields(id, []string{"name", "sub_type", "sub_type_ptr"}, &res2)
+	require.Nil(t, err)
+	require.Equal(t, "toto", res2.Name)
+	require.Equal(t, "nothing", res2.SubType.Something)
+	require.Equal(t, "nothing_ptr", res2.SubTypePtr.Something)
+
+	// Test accessing directly a field under one level when is not a pointer is working
+	var res3 TestStructure
+	err = q.QueryResultFields(id, []string{"sub_type.something"}, &res3)
+	require.Nil(t, err)
+	require.Equal(t, "nothing", res3.SubType.Something)
+
+	// Test that accessing a field under one level when recipient is a pointer already initialized is working
+	var res4 TestStructure
+	res4.SubTypePtr = &SubType{}
+	err = q.QueryResultFields(id, []string{"sub_type_ptr.something"}, &res4)
+	require.Nil(t, err)
+	require.Equal(t, "nothing_ptr", res4.SubTypePtr.Something)
+
+	// Test that accessing a field under one level when recipient is a non initialized pointer is working
+	var res5 TestStructure
+	err = q.QueryResultFields(id, []string{"sub_type_ptr.something"}, &res5)
+	require.Nil(t, err)
+	require.Equal(t, "nothing_ptr", res5.SubTypePtr.Something)
+
+	// Test that accessing a field under one level when recipient is a non initialized two level pointer is not working,
+	// user needs to pre_instanciate it.
+	var res6 TestStructure
+	err = q.QueryResultFields(id, []string{"sub_type_ptr_ptr.something"}, &res6)
+	require.NotNil(t, err)
+	sbt := &SubType{}
+	res6.SubTypePtrPtr = &sbt
+	err = q.QueryResultFields(id, []string{"sub_type_ptr_ptr.something"}, &res6)
+	require.Nil(t, err)
+	require.Equal(t, "nothing_ptr", (*res6.SubTypePtrPtr).Something)
+
+	// Check JSON queries errors out on sanitization
+	val, err := q.TestResultFieldExists(id, "'name")
+	require.NotNil(t, err)
+	require.False(t, val)
+
+	// Check TestJsonFieldExists says that existing field exists
+	val, err = q.TestResultFieldExists(id, "name")
+	require.Nil(t, err)
+	require.True(t, val)
+	// Check TestJsonFieldExists says that sub field exists
+	val, err = q.TestResultFieldExists(id, "sub_type.something")
+	require.Nil(t, err)
+	require.True(t, val)
+	// Check TestJsonFieldExists says that missing field is missing
+	val, err = q.TestResultFieldExists(id, "empty_sub_type")
+	require.Nil(t, err)
+	require.False(t, val)
+	// Check TestJsonFieldExists says that missing sub field is missing
+	val, err = q.TestResultFieldExists(id, "empty_sub_type.something")
+	require.Nil(t, err)
+	require.False(t, val)
+
+	// Check TestJsonFieldExists says that empty list is empty
+	val, err = q.TestResultFieldExists(id, "empty_list")
+	require.Nil(t, err)
+	require.False(t, val)
+	// Check TestJsonFieldExists says that nested empty list is empty
+	val, err = q.TestResultFieldExists(id, "sub_type.empty_list")
+	require.Nil(t, err)
+	require.False(t, val)
 }

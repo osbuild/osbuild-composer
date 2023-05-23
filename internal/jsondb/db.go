@@ -18,6 +18,7 @@ package jsondb
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -33,6 +34,25 @@ type JSONDatabase struct {
 // have a file mode of `perm`.
 func New(dir string, perm os.FileMode) *JSONDatabase {
 	return &JSONDatabase{dir, perm}
+}
+
+// Reads the value at `name`. `document` must be a type that is deserializable
+// from the JSON document `name`, or nil to not deserialize at all. Returns
+// false if a document with `name` does not exist.
+func (db *JSONDatabase) ReadRaw(name string, raw *json.RawMessage) error {
+	f, err := os.Open(path.Join(db.dir, name+".json"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("error accessing db file %s: %v", name, err)
+	}
+	defer f.Close()
+	*raw, err = ioutil.ReadAll(f)
+	if err != nil {
+		return fmt.Errorf("error accessing db file %s: %v", name, err)
+	}
+	return nil
 }
 
 // Reads the value at `name`. `document` must be a type that is deserializable
