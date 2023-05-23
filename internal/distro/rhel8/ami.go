@@ -30,6 +30,12 @@ func amiImgTypeX86_64(rd distribution) imageType {
 }
 
 func ec2ImgTypeX86_64(rd distribution) imageType {
+	basePartitionTables := ec2BasePartitionTables
+	// use legacy partition tables for RHEL 8.8 and older
+	if common.VersionLessThan(rd.osVersion, "8.9") {
+		basePartitionTables = ec2LegacyBasePartitionTables
+	}
+
 	it := imageType{
 		name:        "ec2",
 		filename:    "image.raw.xz",
@@ -46,12 +52,18 @@ func ec2ImgTypeX86_64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: basePartitionTables,
 	}
 	return it
 }
 
 func ec2HaImgTypeX86_64(rd distribution) imageType {
+	basePartitionTables := ec2BasePartitionTables
+	// use legacy partition tables for RHEL 8.8 and older
+	if common.VersionLessThan(rd.osVersion, "8.9") {
+		basePartitionTables = ec2LegacyBasePartitionTables
+	}
+
 	it := imageType{
 		name:        "ec2-ha",
 		filename:    "image.raw.xz",
@@ -68,7 +80,7 @@ func ec2HaImgTypeX86_64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: basePartitionTables,
 	}
 	return it
 }
@@ -95,6 +107,12 @@ func amiImgTypeAarch64(rd distribution) imageType {
 }
 
 func ec2ImgTypeAarch64(rd distribution) imageType {
+	basePartitionTables := ec2BasePartitionTables
+	// use legacy partition tables for RHEL 8.8 and older
+	if common.VersionLessThan(rd.osVersion, "8.9") {
+		basePartitionTables = ec2LegacyBasePartitionTables
+	}
+
 	it := imageType{
 		name:        "ec2",
 		filename:    "image.raw.xz",
@@ -111,12 +129,18 @@ func ec2ImgTypeAarch64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: basePartitionTables,
 	}
 	return it
 }
 
 func ec2SapImgTypeX86_64(rd distribution) imageType {
+	basePartitionTables := ec2BasePartitionTables
+	// use legacy partition tables for RHEL 8.8 and older
+	if common.VersionLessThan(rd.osVersion, "8.9") {
+		basePartitionTables = ec2LegacyBasePartitionTables
+	}
+
 	it := imageType{
 		name:        "ec2-sap",
 		filename:    "image.raw.xz",
@@ -133,7 +157,7 @@ func ec2SapImgTypeX86_64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: basePartitionTables,
 	}
 	return it
 }
