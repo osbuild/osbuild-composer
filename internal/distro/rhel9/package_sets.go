@@ -131,6 +131,7 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"crypto-policies-scripts",
 			"curl",
 			"dnf",
+			"emacs",
 			"yum",
 			"e2fsprogs",
 			"filesystem",
