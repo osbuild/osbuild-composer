@@ -590,8 +590,8 @@ github.com/modern-go/reflect2
 # github.com/opencontainers/go-digest v1.0.0
 ## explicit; go 1.13
 github.com/opencontainers/go-digest
-# github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198
-## explicit; go 1.11
+# github.com/opencontainers/image-spec v1.1.0-rc.3
+## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runc v1.1.5
@@ -648,6 +648,8 @@ github.com/prometheus/procfs/internal/util
 # github.com/rivo/uniseg v0.2.0
 ## explicit; go 1.12
 github.com/rivo/uniseg
+# github.com/rogpeppe/go-internal v1.10.0
+## explicit; go 1.19
 # github.com/segmentio/ksuid v1.0.4
 ## explicit; go 1.12
 github.com/segmentio/ksuid
