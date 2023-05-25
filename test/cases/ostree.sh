@@ -72,7 +72,7 @@ case "${ID}-${VERSION_ID}" in
 
 
         # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.6.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.8.0/BaseOS/x86_64/os/"
         if [ "${NIGHTLY:=false}" == "true" ]; then
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
@@ -98,7 +98,7 @@ case "${ID}-${VERSION_ID}" in
         SYSROOT_RO="true"
 
         # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.0.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.2.0/BaseOS/x86_64/os/"
         if [ "${NIGHTLY:=false}" == "true" ]; then
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
@@ -135,6 +135,11 @@ greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
 sudo virsh list --all > /dev/null
 
+# Install and start firewalld
+greenprint "🔧 Install and start firewalld"
+sudo dnf install -y firewalld
+sudo systemctl enable --now firewalld
+
 # Set a customized dnsmasq configuration for libvirt so we always get the
 # same address on bootup.
 sudo tee /tmp/integration.xml > /dev/null << EOF
@@ -146,7 +151,7 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
       <port start='1024' end='65535'/>
     </nat>
   </forward>
-  <bridge name='integration' stp='on' delay='0'/>
+  <bridge name='integration' zone='trusted' stp='on' delay='0'/>
   <mac address='52:54:00:36:46:ef'/>
   <ip address='192.168.100.1' netmask='255.255.255.0'>
     <dhcp>
@@ -514,7 +519,7 @@ sudo virt-install  --initrd-inject="${KS_FILE}" \
                    --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
                    --name="${IMAGE_KEY}"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 2048 \
+                   --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \

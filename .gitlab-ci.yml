@@ -338,110 +338,13 @@ Image Tests:
           - aws/rhel-9.2-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
-OSTree:
+Trigger-rhel-edge-ci:
   stage: test
-  extends: .terraform/openstack
-  rules:
-    - !reference [.upstream_rules_all, rules]
+  interruptible: true
+  tags:
+    - shell
   script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/fedora-37-x86_64
-          - rhos-01/rhel-8.4-ga-x86_64
-          - rhos-01/rhel-8.7-ga-x86_64
-          - rhos-01/rhel-9.1-ga-x86_64
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
-New OSTree:
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-ng.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/fedora-37-x86_64
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
-OSTree simplified installer:
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-simplified-installer.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
-OSTree raw image:
-  stage: test
-  extends: OSTree
-  rules:
-    - !reference [.upstream_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
-          - rhos-01/fedora-37-x86_64
-
-Rebase OSTree BIOS:
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-rebase-bios.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
-Rebase OSTree UEFI:
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ostree-rebase-uefi.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
-Minimal raw:
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/minimal-raw.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/fedora-37-x86_64
+    - 'curl -u "${SCHUTZBOT_LOGIN}" -X POST -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/osbuild/rhel-edge-ci/dispatches -d "{\"event_type\":\"osbuild-composer-ci\",\"client_payload\":{\"pr_number\":\"${CI_COMMIT_BRANCH}\"}}"'
 
 .integration_base:
   stage: test
