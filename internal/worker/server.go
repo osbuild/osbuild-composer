@@ -299,7 +299,41 @@ func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInf
 	if jobInfo.JobType != JobTypeOSBuild {
 		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeOSBuild, jobInfo.JobType)
 	}
+	return s.prepareOSBuildJobREsult(jobInfo, result)
+}
 
+// Returns a JobInfo and fills up the result with this information:
+//
+//    - JobError
+//    - Success
+//    - OSBuildOutput.Success (if it has an OSBuildOutput)
+//    - OSBuildOutput.Error (if it has an OSBuildOutput)
+//    - TargetResults
+//
+//Additionally, OSBuildOutput stays nil if no data associated to it is in the DB
+func (s *Server) AsyncOSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfoWoResult(id)
+	if err != nil {
+		return nil, err
+	}
+	if jobInfo.JobType != JobTypeOSBuild {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeOSBuild, jobInfo.JobType)
+	}
+	err = s.jobs.QueryResultFields(id,
+		[]string{
+			"success",
+			"job_error",
+			"osbuild_output.success",
+			"osbuild_output.error",
+			"target_results",
+		}, result)
+	if err != nil {
+		return nil, err
+	}
+	return s.prepareOSBuildJobREsult(jobInfo, result)
+}
+
+func (s *Server) prepareOSBuildJobREsult(jobInfo *JobInfo, result *OSBuildJobResult) (*JobInfo, error) {
 	if result.JobError == nil && !jobInfo.JobStatus.Finished.IsZero() {
 		if result.OSBuildOutput == nil {
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", nil)
@@ -316,6 +350,28 @@ func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInf
 	}
 
 	return jobInfo, nil
+}
+
+// Query multiple fields under the result column at once and stores them in to the response object.
+// paths: a list of dot separated fields composing a searchable path in the result column
+//        each names in the path must correspond to a subsequent json key.
+// response: an object that has for characteristic to contains public fields associated with json tags matching the paths
+//
+// for example:
+// var result OSBuildJobResult
+// err = QueryResultFields(id, []string{"job_error", "obj.name", "obj2.name"), &ersult)
+//
+// After calling the QueryResultFields, the result will contain the JobError field initialized with the content of the
+// job_error field in the DB or stay nil if there was no data in the DB about this field.
+//
+// Pointer instantiation only works for one level of indirection, for pointers on pointers the user needs to provide
+// a valid chain to dereference.
+func (s *Server) QueryResultFields(id uuid.UUID, paths []string, result any) error {
+	return s.jobs.QueryResultFields(id, paths, result)
+}
+
+func (s *Server) TestResultFieldExists(id uuid.UUID, path string) (bool, error) {
+	return s.jobs.TestResultFieldExists(id, path)
 }
 
 func (s *Server) KojiInitJobInfo(id uuid.UUID, result *KojiInitJobResult) (*JobInfo, error) {
@@ -451,6 +507,26 @@ func (s *Server) AWSEC2ShareJobInfo(id uuid.UUID, result *AWSEC2ShareJobResult) 
 	}
 
 	return jobInfo, nil
+}
+
+func (s *Server) jobInfoWoResult(id uuid.UUID) (*JobInfo, error) {
+	jobType, channel, queued, started, finished, canceled, deps, dependents, err := s.jobs.JobStatusWoResult(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &JobInfo{
+		JobType: strings.Split(jobType, ":")[0],
+		Channel: channel,
+		JobStatus: &JobStatus{
+			Queued:   queued,
+			Started:  started,
+			Finished: finished,
+			Canceled: canceled,
+		},
+		Deps:       deps,
+		Dependents: dependents,
+	}, nil
 }
 
 func (s *Server) jobInfo(id uuid.UUID, result interface{}) (*JobInfo, error) {
