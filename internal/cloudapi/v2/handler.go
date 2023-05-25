@@ -852,7 +852,9 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 
 	if jobType == worker.JobTypeOSBuild {
 		var result worker.OSBuildJobResult
-		jobInfo, err := h.server.workers.OSBuildJobInfo(jobId, &result)
+		// The AsyncOSBuildJobInfo function already filled up everything needed to perform the task. No need to make
+		// extra queries here.
+		jobInfo, err := h.server.workers.AsyncOSBuildJobInfo(jobId, &result)
 		if err != nil {
 			return HTTPError(ErrorMalformedOSBuildJobResult)
 		}
@@ -907,7 +909,9 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 		var buildJobStatuses []ImageStatus
 		for i := 1; i < len(finalizeInfo.Deps); i++ {
 			var buildJobResult worker.OSBuildJobResult
-			buildInfo, err := h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &buildJobResult)
+			// The AsyncOSBuildJobInfo function already filled up everything needed to perform the task. No need to make
+			// extra queries here.
+			buildInfo, err := h.server.workers.AsyncOSBuildJobInfo(finalizeInfo.Deps[i], &buildJobResult)
 			if err != nil {
 				return HTTPError(ErrorMalformedOSBuildJobResult)
 			}
@@ -1093,7 +1097,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 	}
 
 	var result worker.OSBuildJobResult
-	buildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &result)
+	buildInfo, err := h.server.workers.AsyncOSBuildJobInfo(jobId, &result)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
@@ -1125,11 +1129,25 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 		})
 	}
 
-	if result.OSBuildOutput == nil || len(result.OSBuildOutput.Log) == 0 {
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+	}
+
+	hasOSBuildLogs, err := h.server.workers.TestResultFieldExists(jobId, "osbuild_output.log")
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+	}
+
+	if result.OSBuildOutput == nil || !hasOSBuildLogs {
 		// no osbuild output recorded for job, error
 		return HTTPError(ErrorMalformedOSBuildJobResult)
 	}
 
+	// Get the metadata field into the result as it wasn't fetched during initialization.
+	err = h.server.workers.QueryResultFields(jobId, []string{"osbuild_output.metadata"}, &result)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+	}
 	var ostreeCommitMetadata *osbuild.OSTreeCommitStageMetadata
 	var rpmStagesMd []osbuild.RPMStageMetadata // collect rpm stage metadata from payload pipelines
 	for _, plName := range job.PipelineNames.Payload {
@@ -1337,7 +1355,8 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 				if len(buildJob.Manifest) != 0 {
 					manifest = buildJob.Manifest
 				} else {
-					buildInfo, err := h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &worker.OSBuildJobResult{})
+					// TODO only query the buildInfo, the OSBuild part is not needed there
+					buildInfo, err := h.server.workers.AsyncOSBuildJobInfo(finalizeInfo.Deps[i], &worker.OSBuildJobResult{})
 					if err != nil {
 						return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 					}
@@ -1366,7 +1385,8 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 		if len(buildJob.Manifest) != 0 {
 			manifest = buildJob.Manifest
 		} else {
-			buildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &worker.OSBuildJobResult{})
+			// TODO only query the buildInfo, the OSBuild part is not needed there
+			buildInfo, err := h.server.workers.AsyncOSBuildJobInfo(jobId, &worker.OSBuildJobResult{})
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
@@ -1493,7 +1513,9 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
 	}
 
 	var osbuildResult worker.OSBuildJobResult
-	osbuildInfo, err := h.server.workers.OSBuildJobInfo(jobId, &osbuildResult)
+	// The AsyncOSBuildJobInfo function already filled up everything needed to perform the task. No need to make
+	// extra queries here.
+	osbuildInfo, err := h.server.workers.AsyncOSBuildJobInfo(jobId, &osbuildResult)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorGettingOSBuildJobStatus, err)
 	}

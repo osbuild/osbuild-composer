@@ -202,7 +202,7 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 	switch jobType {
 	case JobTypeOSBuild:
 		var osbuildJR OSBuildJobResult
-		jobInfo, err = s.OSBuildJobInfo(id, &osbuildJR)
+		jobInfo, err = s.AsyncOSBuildJobInfo(id, &osbuildJR)
 		if err != nil {
 			return nil, err
 		}
@@ -769,7 +769,7 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 	switch jobType {
 	case JobTypeOSBuild:
 		var osbuildJR OSBuildJobResult
-		jobInfo, err = s.OSBuildJobInfo(jobId, &osbuildJR)
+		jobInfo, err = s.AsyncOSBuildJobInfo(jobId, &osbuildJR)
 		if err != nil {
 			return err
 		}
