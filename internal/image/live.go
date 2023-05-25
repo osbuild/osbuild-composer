@@ -87,14 +87,14 @@ func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
 		artifactPipeline = vpcPipeline
 		artifact = vpcPipeline.Export()
 	case platform.FORMAT_VMDK:
-		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, imagePipeline)
+		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, imagePipeline, nil)
 		if img.Compression == "" {
 			vmdkPipeline.Filename = img.Filename
 		}
 		artifactPipeline = vmdkPipeline
 		artifact = vmdkPipeline.Export()
 	case platform.FORMAT_OVA:
-		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, imagePipeline)
+		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, imagePipeline, nil)
 		ovfPipeline := manifest.NewOVF(m, buildPipeline, vmdkPipeline)
 		artifactPipeline := manifest.NewTar(m, buildPipeline, ovfPipeline, "archive")
 		artifactPipeline.Format = osbuild.TarArchiveFormatOldgnu
