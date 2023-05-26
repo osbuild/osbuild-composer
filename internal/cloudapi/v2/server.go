@@ -478,7 +478,20 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)
 		return
 	}
-	ms, err := manifest.Serialize(depsolveResults.PackageSpecs, nil)
+
+	// NOTE: This assumes that containers are only embedded in the first
+	// payload pipeline, which is currently true for all image types but might
+	// not necessarily be in the future. This is a workaround required for this
+	// temporary state where the cloud API is not using the new manifest
+	// generation procedure. Once it's updated, the container specs will be
+	// mapped to pipeline names properly by the image type itself.
+	var payloadPipelineName string
+	if pipelineNames := imageType.PayloadPipelines(); len(pipelineNames) > 0 {
+		payloadPipelineName = pipelineNames[0]
+	} else {
+		panic(fmt.Sprintf("ImageType %q does not define payload pipelines - this is a programming error", imageType.Name()))
+	}
+	ms, err := manifest.Serialize(depsolveResults.PackageSpecs, map[string][]container.Spec{payloadPipelineName: containerSpecs})
 
 	jobResult.Manifest = ms
 }
