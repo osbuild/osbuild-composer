@@ -701,7 +701,7 @@ github.com/vbauerster/mpb/v7
 github.com/vbauerster/mpb/v7/cwriter
 github.com/vbauerster/mpb/v7/decor
 github.com/vbauerster/mpb/v7/internal
-# github.com/vmware/govmomi v0.29.0
+# github.com/vmware/govmomi v0.30.4
 ## explicit; go 1.17
 github.com/vmware/govmomi/cns
 github.com/vmware/govmomi/cns/methods
