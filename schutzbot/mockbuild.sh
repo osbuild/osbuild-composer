@@ -32,6 +32,17 @@ function template_override {
     echo '"""' | sudo tee -a /etc/mock/templates/"$TEMPLATE"
 }
 
+upload_logs() {
+    ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
+    greenprint "Uploading logs from mock build"
+    for path in "${REPO_DIR}"/*.log; do
+        file=$(basename -- "$path")
+        mv "$path" "${ARTIFACTS}/rpmbuild_${file}"
+    done
+
+    ls "${ARTIFACTS}"
+}
+
 # Get OS and architecture details.
 source tools/set-env-variables.sh
 
@@ -106,10 +117,15 @@ sudo usermod -a -G mock "$(whoami)"
 
 greenprint "🔧 Building source RPM"
 git archive --prefix "osbuild-composer-${COMMIT}/" --output "osbuild-composer-${COMMIT}.tar.gz" HEAD
+
+trap 'upload_logs' ERR
+
 ./tools/rpm_spec_add_provides_bundle.sh
 mock -r "$MOCK_CONFIG" --buildsrpm \
   --define "commit ${COMMIT}" \
   --spec ./osbuild-composer.spec \
+  --config-opts=cleanup_on_failure=False \
+  --config-opts=cleanup_on_success=True \
   --sources "./osbuild-composer-${COMMIT}.tar.gz" \
   --resultdir ./srpm
 
@@ -120,6 +136,8 @@ fi
 greenprint "🎁 Building RPMs"
 mock -r "$MOCK_CONFIG" \
     --define "commit ${COMMIT}" \
+    --config-opts=cleanup_on_failure=False \
+    --config-opts=cleanup_on_success=True \
     --with=tests \
     ${RELAX_REQUIRES:+"$RELAX_REQUIRES"} \
     --resultdir "$REPO_DIR" \
@@ -127,9 +145,6 @@ mock -r "$MOCK_CONFIG" \
 
 # Change the ownership of all of our repo files from root to our CI user.
 sudo chown -R "$USER" "${REPO_DIR%%/*}"
-
-greenprint "🧹 Remove logs from mock build"
-rm "${REPO_DIR}"/*.log
 
 # leave only -tests RPM to minimize interference when installing
 # osbuild-composer.rpm from distro repositories
