@@ -115,7 +115,7 @@ type JobQueue interface {
 	// Check for presence of a specific path and is content in a JSON field.
 	// path -> a dot separated path within the result, for example osbuild_output.error
 	// Returns a boolean set to True if the requested path contains data
-	TestResultFieldExists(id uuid.UUID, path string) (bool, error)
+	TestResultFieldNotEmpty(id uuid.UUID, path string) (bool, error)
 
 	// Job returns all the parameters that define a job (everything provided during Enqueue).
 	Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, channel string, err error)

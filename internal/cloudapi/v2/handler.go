@@ -1143,7 +1143,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 		// no osbuild output recorded for job, error
 		return HTTPError(ErrorMalformedOSBuildJobResult)
 	}
-	hasOSBuildLogs, err := h.server.workers.TestResultFieldExists(jobId, "osbuild_output.log")
+	hasOSBuildLogs, err := h.server.workers.TestResultFieldNotEmpty(jobId, "osbuild_output.log")
 	if err != nil {
 		logrus.Error(err)
 		return HTTPErrorWithInternal(ErrorGettingExecutingAsyncDBCall, err)

@@ -117,7 +117,14 @@ const (
 	// Jackc doesn't support argument formatting when `->` is involved
 	sqlQueryMultipleJsonContent = `select %s from jobs where id='%s'`
 	// Jackc doesn't support argument formatting when `@?` is involved
-	sqlQueryExistsInJson = `select result @? '$.%s' and result -> '%s' != 'null' from jobs where id='%s'`
+	sqlQueryExistsInJson = `
+    select
+    result @? '$.%s' and
+    result -> '%s' != 'null' and
+    result -> '%s' != '[]' and
+    result -> '%s' != '{}'
+    from
+    jobs where id='%s'`
 )
 
 type DBJobQueue struct {
@@ -824,7 +831,7 @@ func (q *DBJobQueue) QueryResultFields(id uuid.UUID, paths []string, response an
 	return nil
 }
 
-func (q *DBJobQueue) TestResultFieldExists(id uuid.UUID, path string) (bool, error) {
+func (q *DBJobQueue) TestResultFieldNotEmpty(id uuid.UUID, path string) (bool, error) {
 	err := jobqueue.FieldSanitazation(path)
 	if err != nil {
 		return false, err
@@ -835,10 +842,8 @@ func (q *DBJobQueue) TestResultFieldExists(id uuid.UUID, path string) (bool, err
 	}
 	defer conn.Release()
 	var response bool = false
-	formated_request := fmt.Sprintf(sqlQueryExistsInJson,
-		path,
-		strings.ReplaceAll(path, ".", "' -> '"),
-		id)
+	unrolled_paths := strings.ReplaceAll(path, ".", "' -> '")
+	formated_request := fmt.Sprintf(sqlQueryExistsInJson, path, unrolled_paths, unrolled_paths, unrolled_paths, id)
 	err = conn.QueryRow(context.Background(), formated_request).Scan(&response)
 	if err != nil {
 		return false, err

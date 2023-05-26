@@ -619,7 +619,7 @@ func (q *fsJobQueue) QueryResultFields(id uuid.UUID, paths []string, response an
 		if err != nil {
 			return err
 		}
-		hasField, err := q.TestResultFieldExists(id, path)
+		hasField, err := q.testResultFieldNotNil(id, path)
 		if err != nil {
 			return err
 		}
@@ -673,7 +673,7 @@ func (q *fsJobQueue) queryResultField(id uuid.UUID, path string, response any) e
 	return nil
 }
 
-func (q *fsJobQueue) TestResultFieldExists(id uuid.UUID, path string) (bool, error) {
+func (q *fsJobQueue) testResultFieldNotNil(id uuid.UUID, path string) (bool, error) {
 	err := jobqueue.FieldSanitazation(path)
 	if err != nil {
 		return false, err
@@ -702,6 +702,42 @@ func (q *fsJobQueue) TestResultFieldExists(id uuid.UUID, path string) (bool, err
 	}
 	if len(response_data) == 4 {
 		return string(response_data) != "null", nil
+	}
+	return len(response_data) > 0, nil
+}
+
+func (q *fsJobQueue) TestResultFieldNotEmpty(id uuid.UUID, path string) (bool, error) {
+	err := jobqueue.FieldSanitazation(path)
+	if err != nil {
+		return false, err
+	}
+	var raw_job json.RawMessage
+	err = q.db.ReadRaw(id.String(), &raw_job)
+	if err != nil {
+		return false, err
+	}
+	var response_data json.RawMessage
+	err = q.getJsonField(&raw_job, "result", &response_data)
+	if err != nil {
+		return false, err
+	}
+	var path_split []string = strings.Split(path, ".")
+	for _, child_field := range path_split {
+		var child_data json.RawMessage
+		err = q.getJsonField(&response_data, child_field, &child_data)
+		if err != nil {
+			return false, err
+		}
+		if len(child_data) == 0 {
+			return false, err
+		}
+		response_data = child_data
+	}
+	if len(response_data) == 4 {
+		return string(response_data) != "null", nil
+	}
+	if len(response_data) == 2 {
+		return string(response_data) != "[]" && string(response_data) != "{}", nil
 	}
 	return len(response_data) > 0, nil
 }

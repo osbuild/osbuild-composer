@@ -370,8 +370,8 @@ func (s *Server) QueryResultFields(id uuid.UUID, paths []string, result any) err
 	return s.jobs.QueryResultFields(id, paths, result)
 }
 
-func (s *Server) TestResultFieldExists(id uuid.UUID, path string) (bool, error) {
-	return s.jobs.TestResultFieldExists(id, path)
+func (s *Server) TestResultFieldNotEmpty(id uuid.UUID, path string) (bool, error) {
+	return s.jobs.TestResultFieldNotEmpty(id, path)
 }
 
 func (s *Server) KojiInitJobInfo(id uuid.UUID, result *KojiInitJobResult) (*JobInfo, error) {

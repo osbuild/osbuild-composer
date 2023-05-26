@@ -721,6 +721,8 @@ type TestStructure struct {
 	SubTypePtrPtr **SubType `json:"sub_type_ptr_ptr"`
 	EmptySubType  *SubType  `json:"empty_sub_type,omitempty"`
 	EmptyList     []SubType `json:"empty_list"`
+	EmptyList2    []SubType `json:"empty_list2"`
+	EmptyString   string    `json:"empty_string"`
 	ExpandType
 }
 
@@ -740,7 +742,9 @@ func testQueryJSonField(t *testing.T, q jobqueue.JobQueue) {
 			},
 			SubTypePtr:    subTypePtr,
 			SubTypePtrPtr: &subTypePtr,
-			EmptyList:     emptyList,
+			EmptyList:     []SubType{},
+			EmptyList2:    emptyList,
+			EmptyString:   "",
 			ExpandType:    ExpandType{Expansion: "expansion"},
 		},
 		nil))
@@ -757,7 +761,7 @@ func testQueryJSonField(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, "expansion", res.Expansion)
 
 	// Test that a subsequent call to access another field does not erase a previously set value
-	ptr := &SubType{Something: "other thing"}
+	ptr := &SubType{Something: "other thing"} // check that the subtype is also overriden
 	res.SubTypePtr = ptr
 	err = q.QueryResultFields(id, []string{"sub_type.something"}, &res)
 	require.Nil(t, err)
@@ -815,38 +819,67 @@ func testQueryJSonField(t *testing.T, q jobqueue.JobQueue) {
 	require.Nil(t, err)
 	require.Equal(t, "nothing_ptr", (*res6.SubTypePtrPtr).Something)
 
+	// Test that accessing the empty list returns an empty list
+	var res7 TestStructure
+	err = q.QueryResultFields(id, []string{"empty_list"}, &res7)
+	require.Nil(t, err)
+	require.NotNil(t, res7.EmptyList)
+	require.Equal(t, 0, len(res7.EmptyList))
+
+	// Test that accessing the empty list containing null returns nil
+	var res8 TestStructure
+	err = q.QueryResultFields(id, []string{"empty_list2"}, &res8)
+	require.Nil(t, err)
+	require.Nil(t, res8.EmptyList2)
+
 	//
 	// Tests related to testing existence of a field
 	//
 
 	// Check JSON queries errors out on sanitization
-	val, err := q.TestResultFieldExists(id, "'name")
+	val, err := q.TestResultFieldNotEmpty(id, "'name")
 	require.NotNil(t, err)
 	require.False(t, val)
 
-	// Check TestJsonFieldExists says that existing field exists
-	val, err = q.TestResultFieldExists(id, "name")
+	// Check TestResultFieldNotEmpty says that existing field exists
+	val, err = q.TestResultFieldNotEmpty(id, "name")
 	require.Nil(t, err)
 	require.True(t, val)
-	// Check TestJsonFieldExists says that sub field exists
-	val, err = q.TestResultFieldExists(id, "sub_type.something")
+	// Check TestResultFieldNotEmpty says that sub field exists
+	val, err = q.TestResultFieldNotEmpty(id, "sub_type.something")
 	require.Nil(t, err)
 	require.True(t, val)
-	// Check TestJsonFieldExists says that missing field is missing
-	val, err = q.TestResultFieldExists(id, "empty_sub_type")
+	// Check TestResultFieldNotEmpty says that missing field is missing
+	val, err = q.TestResultFieldNotEmpty(id, "empty_sub_type")
 	require.Nil(t, err)
 	require.False(t, val)
-	// Check TestJsonFieldExists says that missing sub field is missing
-	val, err = q.TestResultFieldExists(id, "empty_sub_type.something")
+	// Check TestResultFieldNotEmpty says that missing sub field is missing
+	val, err = q.TestResultFieldNotEmpty(id, "empty_sub_type.something")
 	require.Nil(t, err)
 	require.False(t, val)
 
-	// Check TestJsonFieldExists says that empty list is empty
-	val, err = q.TestResultFieldExists(id, "empty_list")
+	// Check TestResultFieldNotEmpty says that empty list containing [] is empty
+	val, err = q.TestResultFieldNotEmpty(id, "empty_list")
 	require.Nil(t, err)
 	require.False(t, val)
-	// Check TestJsonFieldExists says that nested empty list is empty
-	val, err = q.TestResultFieldExists(id, "sub_type.empty_list")
+
+	// Check TestResultFieldNotEmpty says that empty list containing null is empty
+	val, err = q.TestResultFieldNotEmpty(id, "empty_list2")
 	require.Nil(t, err)
 	require.False(t, val)
+
+	// Check TestResultFieldNotEmpty says that nested empty list is empty
+	val, err = q.TestResultFieldNotEmpty(id, "sub_type.empty_list")
+	require.Nil(t, err)
+	require.False(t, val)
+
+	// Check TestResultFieldNotEmpty says that nested empty list is empty
+	val, err = q.TestResultFieldNotEmpty(id, "sub_type.empty_list")
+	require.Nil(t, err)
+	require.False(t, val)
+
+	// Check TestResultFieldNotEmpty says empty string is not empty
+	val, err = q.TestResultFieldNotEmpty(id, "empty_string")
+	require.Nil(t, err)
+	require.True(t, val)
 }
