@@ -388,7 +388,7 @@ github.com/google/go-cmp/cmp/internal/value
 # github.com/google/go-containerregistry v0.10.0
 ## explicit; go 1.17
 github.com/google/go-containerregistry/pkg/name
-# github.com/google/s2a-go v0.1.3
+# github.com/google/s2a-go v0.1.4
 ## explicit; go 1.16
 github.com/google/s2a-go
 github.com/google/s2a-go/fallback
@@ -409,6 +409,7 @@ github.com/google/s2a-go/internal/v2
 github.com/google/s2a-go/internal/v2/certverifier
 github.com/google/s2a-go/internal/v2/remotesigner
 github.com/google/s2a-go/internal/v2/tlsconfigstore
+github.com/google/s2a-go/stream
 # github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid
@@ -880,7 +881,7 @@ golang.org/x/tools/internal/typeparams
 ## explicit; go 1.17
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/api v0.123.0
+# google.golang.org/api v0.124.0
 ## explicit; go 1.19
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
