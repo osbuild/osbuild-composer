@@ -804,8 +804,10 @@ func (q *DBJobQueue) QueryResultFields(id uuid.UUID, paths []string, response an
 	// Unpack each answer into their corresponding recipient, only if there is an answer to unpack.
 	for i, ianswer := range answers {
 		var answer *json.RawMessage = ianswer.(*json.RawMessage)
-		if len(*answer) > 0 {
-			logrus.Infof("unpack %s for path %s", *answer, paths[i])
+		// literal string "null" is a valid result for a json Field, however, we shall treat it as a nil answer. See the
+		// following comment on instantiation to understand the details.
+		isNullAnswer := len(*answer) == 4 && string(*answer) == "null"
+		if len(*answer) > 0 && !isNullAnswer {
 			// if recipient is a pointer to something, the something in question will get allocated by the
 			// FindRecipientByTagPath function. So only call this when there is an actual result to unpack, otherwise
 			// the content will be set to non nil (and that is a problem).

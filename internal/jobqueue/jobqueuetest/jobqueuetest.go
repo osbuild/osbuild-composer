@@ -745,6 +745,10 @@ func testQueryJSonField(t *testing.T, q jobqueue.JobQueue) {
 		},
 		nil))
 
+	//
+	// Tests related to querying fields
+	//
+
 	// Test accessing one field is working
 	var res TestStructure
 	err := q.QueryResultFields(id, []string{"name", "expansion"}, &res)
@@ -764,6 +768,12 @@ func testQueryJSonField(t *testing.T, q jobqueue.JobQueue) {
 	// test requesting empty subtype returns nil
 	require.Nil(t, res.EmptySubType)
 	err = q.QueryResultFields(id, []string{"empty_sub_type"}, &res)
+	require.Nil(t, err)
+	require.Nil(t, res.EmptySubType)
+
+	// test that accessing a sub field to an empty subtype does not instantiate the subtype
+	require.Nil(t, res.EmptySubType)
+	err = q.QueryResultFields(id, []string{"empty_sub_type.something"}, &res)
 	require.Nil(t, err)
 	require.Nil(t, res.EmptySubType)
 
@@ -804,6 +814,10 @@ func testQueryJSonField(t *testing.T, q jobqueue.JobQueue) {
 	err = q.QueryResultFields(id, []string{"sub_type_ptr_ptr.something"}, &res6)
 	require.Nil(t, err)
 	require.Equal(t, "nothing_ptr", (*res6.SubTypePtrPtr).Something)
+
+	//
+	// Tests related to testing existence of a field
+	//
 
 	// Check JSON queries errors out on sanitization
 	val, err := q.TestResultFieldExists(id, "'name")
