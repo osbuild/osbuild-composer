@@ -68,6 +68,7 @@ const (
 	ErrorGettingOSBuildJobStatus                  ServiceErrorCode = 1017
 	ErrorGettingAWSEC2JobStatus                   ServiceErrorCode = 1018
 	ErrorGettingJobType                           ServiceErrorCode = 1019
+	ErrorGettingExecutingAsyncDBCall              ServiceErrorCode = 1020
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
