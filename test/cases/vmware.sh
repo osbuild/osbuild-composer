@@ -232,7 +232,7 @@ $GOVC_CMD tags.attach -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_
     "/${GOVMOMI_DATACENTER}/vm/${GOVMOMI_FOLDER}/${IMAGE_KEY}"
 
 greenprint "Getting IP of created VM"
-VM_IP=$($GOVC_CMD vm.ip -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true "${IMAGE_KEY}")
+VM_IP=$($GOVC_CMD vm.ip -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true -v4=true "${IMAGE_KEY}")
 
 # Wait for the node to come online.
 greenprint "⏱ Waiting for VM to respond to ssh"
