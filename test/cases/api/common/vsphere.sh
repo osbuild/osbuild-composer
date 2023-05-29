@@ -205,6 +205,7 @@ function verifyInVSphere() {
     HOST=$($GOVC_CMD vm.ip \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
+        -v4=true \
         -dc="${GOVC_DATACENTER}" \
         "${VSPHERE_VM_NAME}")
     greenprint "⏱ Waiting for the VSphere VM to respond to ssh"
