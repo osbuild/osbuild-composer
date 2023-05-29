@@ -69,7 +69,7 @@ function cleanup() {
 
     set -eu
 }
-trap cleanups EXIT
+trap cleanup EXIT
 
 
 # Check that the system started and is running correctly
