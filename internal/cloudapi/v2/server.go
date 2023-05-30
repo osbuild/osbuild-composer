@@ -107,6 +107,14 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	}
 	ir := irs[0]
 
+	// NOTE(akoutsou): Image options don't have resolved ostree ref yet, but it
+	// will affect package sets if we don't add it and it's required.  This
+	// used to be done in the old PackageSets() function (which no longer
+	// exists), but now we only need it in the cloud API where things aren't
+	// done in the (new) correct order yet.
+	ir.imageOptions.OSTree = &ostree.ImageOptions{
+		ImageRef: ir.imageType.OSTreeRef(),
+	}
 	manifestSource, _, err := ir.imageType.Manifest(&bp, ir.imageOptions, ir.repositories, manifestSeed)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -210,6 +218,14 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	var kojiFilenames []string
 	var buildIDs []uuid.UUID
 	for _, ir := range irs {
+		// NOTE(akoutsou): Image options don't have resolved ostree ref yet, but it
+		// will affect package sets if we don't add it and it's required.  This
+		// used to be done in the old PackageSets() function (which no longer
+		// exists), but now we only need it in the cloud API where things aren't
+		// done in the (new) correct order yet.
+		ir.imageOptions.OSTree = &ostree.ImageOptions{
+			ImageRef: ir.imageType.OSTreeRef(),
+		}
 		manifestSource, _, err := ir.imageType.Manifest(&bp, ir.imageOptions, ir.repositories, manifestSeed)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
