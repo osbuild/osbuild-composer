@@ -40,8 +40,16 @@ if ! hash govc; then
     popd
 fi
 
-TEST_UUID=$(uuidgen)
-IMAGE_KEY=osbuild-composer-vmware-test-${TEST_UUID}
+# Generate a string, which can be used as a predictable resource name,
+# which helps identify issues and link lefotever resources to PRs
+CI="${CI:-false}"
+if [[ "$CI" == true ]]; then
+  TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_JOB_ID"
+else
+  TEST_ID=$(uuidgen);
+fi
+
+IMAGE_KEY=osbuild-composer-vmware-test-${TEST_ID}
 
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
@@ -61,12 +69,6 @@ function cleanup() {
     set +eu
     greenprint "🧼 Cleaning up"
     $GOVC_CMD vm.destroy -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true "${IMAGE_KEY}"
-
-    if [[ $RESULT != 0 ]]; then
-        greenprint "❌ Failed"
-        exit 1
-    fi
-
     set -eu
 }
 trap cleanup EXIT
@@ -183,8 +185,10 @@ get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
 # Kill the journal monitor immediately and remove the trap
+# while adding just the cleanup trap
 sudo pkill -P ${WORKER_JOURNAL_PID}
 trap - EXIT
+trap cleanup EXIT
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
@@ -257,11 +261,11 @@ for LOOP_COUNTER in {0..10}; do
     RESULT="$(running_test_check "$VM_IP")"
     if [[ $RESULT == 0 ]]; then
         echo "System is running! 🥳"
-        break
+        greenprint "💚 Success"
+        exit 0
     fi
     sleep 5
 done
 
-
-greenprint "💚 Success"
-exit 0
+greenprint "❌ Failure"
+exit 1
