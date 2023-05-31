@@ -44,8 +44,10 @@ type AnacondaISOTree struct {
 
 	SquashfsCompression string
 
-	OSPipeline *OS
-	OSTree     *ostree.CommitSpec
+	OSPipeline         *OS
+	OSTreeCommitSource *ostree.SourceSpec
+
+	ostreeCommitSpec *ostree.CommitSpec
 
 	KernelOpts []string
 
@@ -75,14 +77,21 @@ func NewAnacondaISOTree(m *Manifest,
 	return p
 }
 
-func (p *AnacondaISOTree) getOSTreeCommits() []ostree.CommitSpec {
-	if p.OSTree == nil {
+func (p *AnacondaISOTree) getOSTreeCommitSources() []ostree.SourceSpec {
+	if p.OSTreeCommitSource == nil {
 		return nil
 	}
 
-	return []ostree.CommitSpec{
-		*p.OSTree,
+	return []ostree.SourceSpec{
+		*p.OSTreeCommitSource,
 	}
+}
+
+func (p *AnacondaISOTree) getOSTreeCommits() []ostree.CommitSpec {
+	if p.ostreeCommitSpec == nil {
+		return nil
+	}
+	return []ostree.CommitSpec{*p.ostreeCommitSpec}
 }
 
 func (p *AnacondaISOTree) getBuildPackages() []string {
@@ -90,7 +99,7 @@ func (p *AnacondaISOTree) getBuildPackages() []string {
 		"squashfs-tools",
 	}
 
-	if p.OSTree != nil {
+	if p.OSTreeCommitSource != nil {
 		packages = append(packages, "rpm-ostree")
 	}
 
@@ -111,21 +120,21 @@ func (p *AnacondaISOTree) serializeStart(_ []rpmmd.PackageSpec, _ []container.Sp
 		panic("pipeline supports at most one ostree commit")
 	}
 
-	p.OSTree = &commits[0]
+	p.ostreeCommitSpec = &commits[0]
 }
 
 func (p *AnacondaISOTree) serializeEnd() {
-	p.OSTree = nil
+	p.ostreeCommitSpec = nil
 }
 
 func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
 	// We need one of two payloads
-	if p.OSTree == nil && p.OSPipeline == nil {
+	if p.ostreeCommitSpec == nil && p.OSPipeline == nil {
 		panic("missing ostree or ospipeline parameters in ISO tree pipeline")
 	}
 
 	// But not both payloads
-	if p.OSTree != nil && p.OSPipeline != nil {
+	if p.ostreeCommitSpec != nil && p.OSPipeline != nil {
 		panic("got both ostree and ospipeline parameters in ISO tree pipeline")
 	}
 
@@ -235,16 +244,16 @@ func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
 		copyInputs,
 	))
 
-	if p.OSTree != nil {
+	if p.ostreeCommitSpec != nil {
 		// Set up the payload ostree repo
 		pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: p.PayloadPath}))
 		pipeline.AddStage(osbuild.NewOSTreePullStage(
 			&osbuild.OSTreePullStageOptions{Repo: p.PayloadPath},
-			osbuild.NewOstreePullStageInputs("org.osbuild.source", p.OSTree.Checksum, p.OSTree.Ref),
+			osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
 		))
 
 		// Configure the kickstart file with the payload and any user options
-		kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(p.PayloadPath), p.OSTree.Ref, p.OSName)
+		kickstartOptions, err := osbuild.NewKickstartStageOptions(p.KSPath, "", p.Users, p.Groups, makeISORootPath(p.PayloadPath), p.ostreeCommitSpec.Ref, p.OSName)
 
 		if err != nil {
 			panic("failed to create kickstartstage options")
