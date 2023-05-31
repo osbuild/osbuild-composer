@@ -24,7 +24,8 @@ type OSTreeDeployment struct {
 
 	OSVersion string
 
-	commit ostree.CommitSpec
+	commitSource ostree.SourceSpec
+	ostreeSpecs  []ostree.CommitSpec
 
 	SysrootReadOnly bool
 
@@ -55,17 +56,17 @@ type OSTreeDeployment struct {
 // commit.
 func NewOSTreeDeployment(m *Manifest,
 	buildPipeline *Build,
-	commit ostree.CommitSpec,
+	commit ostree.SourceSpec,
 	osName string,
 	ignition bool,
 	platform platform.Platform) *OSTreeDeployment {
 
 	p := &OSTreeDeployment{
-		Base:     NewBase(m, "ostree-deployment", buildPipeline),
-		commit:   commit,
-		osName:   osName,
-		platform: platform,
-		ignition: ignition,
+		Base:         NewBase(m, "ostree-deployment", buildPipeline),
+		commitSource: commit,
+		osName:       osName,
+		platform:     platform,
+		ignition:     ignition,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -80,11 +81,17 @@ func (p *OSTreeDeployment) getBuildPackages() []string {
 }
 
 func (p *OSTreeDeployment) getOSTreeCommits() []ostree.CommitSpec {
-	return []ostree.CommitSpec{p.commit}
+	return p.ostreeSpecs
+}
+
+func (p *OSTreeDeployment) getOSTreeCommitSources() []ostree.SourceSpec {
+	return []ostree.SourceSpec{
+		p.commitSource,
+	}
 }
 
 func (p *OSTreeDeployment) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec) {
-	if p.commit.Ref != "" {
+	if len(p.ostreeSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
 
@@ -92,21 +99,25 @@ func (p *OSTreeDeployment) serializeStart(packages []rpmmd.PackageSpec, containe
 		panic("pipeline requires exactly one ostree commit")
 	}
 
-	p.commit = commits[0]
+	p.ostreeSpecs = commits
 }
 
 func (p *OSTreeDeployment) serializeEnd() {
-	if p.commit.Ref == "" {
+	if len(p.ostreeSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 
-	p.commit = ostree.CommitSpec{}
+	p.ostreeSpecs = nil
 }
 
 func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
-	if p.commit.Ref == "" {
+	if len(p.ostreeSpecs) == 0 {
 		panic("serialization not started")
 	}
+	if len(p.ostreeSpecs) > 1 {
+		panic("multiple ostree commit specs found; this is a programming error")
+	}
+	commit := p.ostreeSpecs[0]
 
 	const repoPath = "/ostree/repo"
 
@@ -115,7 +126,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.OSTreeInitFsStage())
 	pipeline.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: p.Remote.Name},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.commit.Checksum, p.commit.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", commit.Checksum, commit.Ref),
 	))
 	pipeline.AddStage(osbuild.NewOSTreeOsInitStage(
 		&osbuild.OSTreeOsInitStageOptions{
@@ -144,7 +155,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: p.osName,
-			Ref:    p.commit.Ref,
+			Ref:    commit.Ref,
 			Remote: p.Remote.Name,
 			Mounts: []string{"/boot", "/boot/efi"},
 			Rootfs: osbuild.Rootfs{
@@ -157,7 +168,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	remoteURL := p.Remote.URL
 	if remoteURL == "" {
 		// if the remote URL for the image is not specified, use the source commit URL
-		remoteURL = p.commit.URL
+		remoteURL = commit.URL
 	}
 	pipeline.AddStage(osbuild.NewOSTreeRemotesStage(
 		&osbuild.OSTreeRemotesStageOptions{
@@ -177,7 +188,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		&osbuild.OSTreeFillvarStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: p.osName,
-				Ref:    p.commit.Ref,
+				Ref:    commit.Ref,
 			},
 		},
 	))
@@ -193,12 +204,12 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		},
 	)
-	configStage.MountOSTree(p.osName, p.commit.Ref, 0)
+	configStage.MountOSTree(p.osName, commit.Ref, 0)
 	pipeline.AddStage(configStage)
 
 	fstabOptions := osbuild.NewFSTabStageOptions(p.PartitionTable)
 	fstabStage := osbuild.NewFSTabStage(fstabOptions)
-	fstabStage.MountOSTree(p.osName, p.commit.Ref, 0)
+	fstabStage.MountOSTree(p.osName, commit.Ref, 0)
 	pipeline.AddStage(fstabStage)
 
 	if len(p.Users) > 0 {
@@ -206,13 +217,13 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		if err != nil {
 			panic("password encryption failed")
 		}
-		usersStage.MountOSTree(p.osName, p.commit.Ref, 0)
+		usersStage.MountOSTree(p.osName, commit.Ref, 0)
 		pipeline.AddStage(usersStage)
 	}
 
 	if len(p.Groups) > 0 {
 		grpStage := osbuild.GenGroupsStage(p.Groups)
-		grpStage.MountOSTree(p.osName, p.commit.Ref, 0)
+		grpStage.MountOSTree(p.osName, commit.Ref, 0)
 		pipeline.AddStage(grpStage)
 	}
 
@@ -248,7 +259,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		}
 		rootLockStage := osbuild.NewUsersStage(userOptions)
-		rootLockStage.MountOSTree(p.osName, p.commit.Ref, 0)
+		rootLockStage.MountOSTree(p.osName, commit.Ref, 0)
 		pipeline.AddStage(rootLockStage)
 	}
 
@@ -257,7 +268,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			Keymap: p.Keyboard,
 		}
 		keymapStage := osbuild.NewKeymapStage(options)
-		keymapStage.MountOSTree(p.osName, p.commit.Ref, 0)
+		keymapStage.MountOSTree(p.osName, commit.Ref, 0)
 		pipeline.AddStage(keymapStage)
 	}
 
@@ -266,7 +277,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			Language: p.Locale,
 		}
 		localeStage := osbuild.NewLocaleStage(options)
-		localeStage.MountOSTree(p.osName, p.commit.Ref, 0)
+		localeStage.MountOSTree(p.osName, commit.Ref, 0)
 		pipeline.AddStage(localeStage)
 	}
 
@@ -284,14 +295,14 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		TerminalOutput: []string{"console"},
 	}
 	bootloader := osbuild.NewGRUB2Stage(grubOptions)
-	bootloader.MountOSTree(p.osName, p.commit.Ref, 0)
+	bootloader.MountOSTree(p.osName, commit.Ref, 0)
 	pipeline.AddStage(bootloader)
 
 	// First create custom directories, because some of the files may depend on them
 	if len(p.Directories) > 0 {
 		dirStages := osbuild.GenDirectoryNodesStages(p.Directories)
 		for _, stage := range dirStages {
-			stage.MountOSTree(p.osName, p.commit.Ref, 0)
+			stage.MountOSTree(p.osName, commit.Ref, 0)
 		}
 		pipeline.AddStages(dirStages...)
 	}
@@ -299,7 +310,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	if len(p.Files) > 0 {
 		fileStages := osbuild.GenFileNodesStages(p.Files)
 		for _, stage := range fileStages {
-			stage.MountOSTree(p.osName, p.commit.Ref, 0)
+			stage.MountOSTree(p.osName, commit.Ref, 0)
 		}
 		pipeline.AddStages(fileStages...)
 	}
@@ -309,7 +320,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			EnabledServices:  p.EnabledServices,
 			DisabledServices: p.DisabledServices,
 		})
-		systemdStage.MountOSTree(p.osName, p.commit.Ref, 0)
+		systemdStage.MountOSTree(p.osName, commit.Ref, 0)
 		pipeline.AddStage(systemdStage)
 	}
 
@@ -317,7 +328,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		&osbuild.OSTreeSelinuxStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: p.osName,
-				Ref:    p.commit.Ref,
+				Ref:    commit.Ref,
 			},
 		},
 	))
