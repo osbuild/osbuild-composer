@@ -2450,6 +2450,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		// Fake a parent commit for test requests
 		cr.OSTree.Parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
 	} else if imageType.OSTreeRef() != "" {
+		// TODO: don't read image ref from image type directly; instead get it from the manifest after initialising.
 		// If the image type has a default ostree ref, assume this is an OSTree image
 		reqParams := cr.OSTree
 		if reqParams.Ref == "" {
@@ -2533,7 +2534,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	mf, err := manifest.Serialize(packageSets, containerSpecs)
+	// TODO: resolve ostree source spec from manifest content and pass here.
+	mf, err := manifest.Serialize(packageSets, containerSpecs, nil)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
