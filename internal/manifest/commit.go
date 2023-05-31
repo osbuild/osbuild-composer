@@ -49,15 +49,21 @@ func (p *OSTreeCommit) serialize() osbuild.Pipeline {
 
 	pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: "/repo"}))
 
-	var parent string
-	if p.treePipeline.OSTreeParent != nil {
-		parent = p.treePipeline.OSTreeParent.Checksum
+	var parentID string
+	treeCommits := p.treePipeline.getOSTreeCommits()
+	if len(treeCommits) > 0 {
+		if len(treeCommits) > 1 {
+			panic("multiple ostree commit specs found; this is a programming error")
+		}
+		parentCommit := &treeCommits[0]
+		parentID = parentCommit.Checksum
 	}
+
 	pipeline.AddStage(osbuild.NewOSTreeCommitStage(
 		&osbuild.OSTreeCommitStageOptions{
 			Ref:       p.ref,
 			OSVersion: p.OSVersion,
-			Parent:    parent,
+			Parent:    parentID,
 		},
 		p.treePipeline.Name()),
 	)
