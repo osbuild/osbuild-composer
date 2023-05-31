@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/users"
@@ -222,6 +223,7 @@ func liveImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewLiveImage()

@@ -227,6 +227,7 @@ func liveImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewLiveImage()
@@ -253,6 +254,7 @@ func imageInstallerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewImageInstaller()
@@ -291,6 +293,7 @@ func tarImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewArchive()
@@ -311,6 +314,7 @@ func edgeCommitImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
@@ -344,6 +348,7 @@ func edgeContainerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
@@ -379,7 +384,8 @@ func edgeInstallerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.SourceSpec,
+	_ []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	d := t.arch.distro
@@ -424,8 +430,9 @@ func edgeRawImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
-	packageSets map[string]rpmmd.PackageSet,
-	containers []container.SourceSpec,
+	_ map[string]rpmmd.PackageSet,
+	_ []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	commit := ostree.CommitSpec{
@@ -470,7 +477,8 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.SourceSpec,
+	_ []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	commit := ostree.CommitSpec{

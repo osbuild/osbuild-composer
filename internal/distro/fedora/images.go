@@ -200,6 +200,7 @@ func liveImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewLiveImage()
@@ -225,6 +226,7 @@ func containerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 	img := image.NewBaseContainer()
 
@@ -244,6 +246,7 @@ func imageInstallerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewImageInstaller()
@@ -288,6 +291,7 @@ func iotCommitImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
@@ -318,6 +322,7 @@ func iotContainerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
@@ -350,7 +355,8 @@ func iotInstallerImage(workload workload.Workload,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
-	containers []container.SourceSpec,
+	_ []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	d := t.arch.distro
@@ -391,8 +397,9 @@ func iotRawImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
-	packageSets map[string]rpmmd.PackageSet,
-	containers []container.SourceSpec,
+	_ map[string]rpmmd.PackageSet,
+	_ []container.SourceSpec,
+	_ *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	commit := ostree.CommitSpec{

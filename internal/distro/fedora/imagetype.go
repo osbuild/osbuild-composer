@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -21,7 +22,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
+type imageFunc func(workload workload.Workload, t *imageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, ostreeCommit *ostree.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
@@ -172,7 +173,6 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	// merge package sets that appear in the image type with the package sets
 	// of the same name from the distro and arch
 	staticPackageSets := make(map[string]rpmmd.PackageSet)
-
 	for name, getter := range t.packageSets {
 		staticPackageSets[name] = getter(t)
 	}
@@ -213,12 +213,15 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		containerSources[idx] = container.SourceSpec(bp.Containers[idx])
 	}
 
+	// TODO: set commit ref when needed
+	var ostreeCommit *ostree.SourceSpec
+
 	source := rand.NewSource(seed)
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containerSources, rng)
+	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containerSources, ostreeCommit, rng)
 	if err != nil {
 		return nil, nil, err
 	}
