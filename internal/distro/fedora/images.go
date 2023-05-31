@@ -291,7 +291,7 @@ func iotCommitImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	parent *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
@@ -300,17 +300,8 @@ func iotCommitImage(workload workload.Workload,
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
-
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
-		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.FetchChecksum,
-			URL:        options.OSTree.URL,
-			ContentURL: options.OSTree.ContentURL,
-		}
-	}
-
+	img.OSTreeParent = parent
 	img.OSVersion = t.arch.distro.osVersion
-
 	img.Filename = t.Filename()
 
 	return img, nil
@@ -322,7 +313,7 @@ func iotContainerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	parent *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
@@ -332,19 +323,9 @@ func iotContainerImage(workload workload.Workload,
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
 	img.Workload = workload
-
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
-		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.FetchChecksum,
-			URL:        options.OSTree.URL,
-			ContentURL: options.OSTree.ContentURL,
-		}
-	}
-
+	img.OSTreeParent = parent
 	img.OSVersion = t.arch.distro.osVersion
-
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
-
 	img.Filename = t.Filename()
 
 	return img, nil
@@ -356,18 +337,20 @@ func iotInstallerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	_ []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	commit *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
+
+	if commit == nil {
+		return nil, fmt.Errorf("iot-installer: ostree commit required")
+	}
+	if commit.Ref == "" {
+		// Not set by user. Use default.
+		commit.Ref = t.OSTreeRef()
+	}
 
 	d := t.arch.distro
 
-	commit := ostree.CommitSpec{
-		Ref:        options.OSTree.ImageRef,
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
-	}
-	img := image.NewOSTreeInstaller(commit)
+	img := image.NewOSTreeInstaller(*commit)
 
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
@@ -399,16 +382,18 @@ func iotRawImage(workload workload.Workload,
 	options distro.ImageOptions,
 	_ map[string]rpmmd.PackageSet,
 	_ []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	commit *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	commit := ostree.CommitSpec{
-		Ref:        options.OSTree.ImageRef,
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
+	if commit == nil {
+		return nil, fmt.Errorf("iot-raw-image: ostree commit required")
 	}
-	img := image.NewOSTreeRawImage(commit)
+	if commit.Ref == "" {
+		// Not set by user. Use default.
+		commit.Ref = t.OSTreeRef()
+	}
+
+	img := image.NewOSTreeRawImage(*commit)
 
 	// Set sysroot read-only only for Fedora 37+
 	distro := t.Arch().Distro()

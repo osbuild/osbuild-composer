@@ -314,7 +314,7 @@ func edgeCommitImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	parent *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
@@ -323,20 +323,8 @@ func edgeCommitImage(workload workload.Workload,
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
-
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
-		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.FetchChecksum,
-			URL:        options.OSTree.URL,
-			ContentURL: options.OSTree.ContentURL,
-		}
-		if options.OSTree.RHSM {
-			img.OSTreeParent.Secrets = "org.osbuild.rhsm.consumer"
-		}
-	}
-
+	img.OSTreeParent = parent
 	img.OSVersion = t.arch.distro.osVersion
-
 	img.Filename = t.Filename()
 
 	return img, nil
@@ -348,7 +336,7 @@ func edgeContainerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	containers []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	parent *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
@@ -358,22 +346,9 @@ func edgeContainerImage(workload workload.Workload,
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
 	img.Workload = workload
-
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
-		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.FetchChecksum,
-			URL:        options.OSTree.URL,
-			ContentURL: options.OSTree.ContentURL,
-		}
-		if options.OSTree.RHSM {
-			img.OSTreeParent.Secrets = "org.osbuild.rhsm.consumer"
-		}
-	}
-
+	img.OSTreeParent = parent
 	img.OSVersion = t.arch.distro.osVersion
-
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
-
 	img.Filename = t.Filename()
 
 	return img, nil
@@ -385,21 +360,20 @@ func edgeInstallerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	_ []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	commit *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
+
+	if commit == nil {
+		return nil, fmt.Errorf("edge-installer-image: ostree commit required")
+	}
+	if commit.Ref == "" {
+		// Not set by user. Use default.
+		commit.Ref = t.OSTreeRef()
+	}
 
 	d := t.arch.distro
 
-	commit := ostree.CommitSpec{
-		Ref:        options.OSTree.ImageRef,
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
-	}
-	if options.OSTree.RHSM {
-		commit.Secrets = "org.osbuild.rhsm.consumer"
-	}
-	img := image.NewOSTreeInstaller(commit)
+	img := image.NewOSTreeInstaller(*commit)
 
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
@@ -432,16 +406,18 @@ func edgeRawImage(workload workload.Workload,
 	options distro.ImageOptions,
 	_ map[string]rpmmd.PackageSet,
 	_ []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	commit *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	commit := ostree.CommitSpec{
-		Ref:        options.OSTree.ImageRef,
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
+	if commit == nil {
+		return nil, fmt.Errorf("edge-raw-image: ostree commit required")
 	}
-	img := image.NewOSTreeRawImage(commit)
+	if commit.Ref == "" {
+		// Not set by user. Use default.
+		commit.Ref = t.OSTreeRef()
+	}
+
+	img := image.NewOSTreeRawImage(*commit)
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
@@ -478,16 +454,18 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
 	_ []container.SourceSpec,
-	_ *ostree.SourceSpec,
+	commit *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	commit := ostree.CommitSpec{
-		Ref:        options.OSTree.ImageRef,
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
+	if commit == nil {
+		return nil, fmt.Errorf("edge-simplified-installer: ostree commit required")
 	}
-	rawImg := image.NewOSTreeRawImage(commit)
+	if commit.Ref == "" {
+		// Not set by user. Use default.
+		commit.Ref = t.OSTreeRef()
+	}
+
+	rawImg := image.NewOSTreeRawImage(*commit)
 
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())

@@ -31,7 +31,7 @@ type OSTreeInstaller struct {
 	OSVersion     string
 	Release       string
 
-	Commit ostree.CommitSpec
+	Commit ostree.SourceSpec
 
 	Filename string
 
@@ -40,7 +40,7 @@ type OSTreeInstaller struct {
 	AdditionalDrivers         []string
 }
 
-func NewOSTreeInstaller(commit ostree.CommitSpec) *OSTreeInstaller {
+func NewOSTreeInstaller(commit ostree.SourceSpec) *OSTreeInstaller {
 	return &OSTreeInstaller{
 		Base:   NewBase("ostree-installer"),
 		Commit: commit,
@@ -120,7 +120,7 @@ func (img *OSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.KSPath = kspath
 	isoTreePipeline.PayloadPath = "/ostree/repo"
 
-	isoTreePipeline.OSTree = &img.Commit
+	isoTreePipeline.OSTreeCommitSource = &img.Commit
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
 	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline, isoLabel)
