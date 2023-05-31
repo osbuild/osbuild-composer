@@ -5,11 +5,13 @@ import (
 	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/fsnode"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
@@ -81,7 +83,31 @@ func (p *OSTreeDeployment) getOSTreeCommits() []ostree.CommitSpec {
 	return []ostree.CommitSpec{p.commit}
 }
 
+func (p *OSTreeDeployment) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec) {
+	if p.commit.Ref != "" {
+		panic("double call to serializeStart()")
+	}
+
+	if len(commits) != 1 {
+		panic("pipeline requires exactly one ostree commit")
+	}
+
+	p.commit = commits[0]
+}
+
+func (p *OSTreeDeployment) serializeEnd() {
+	if p.commit.Ref == "" {
+		panic("serializeEnd() call when serialization not in progress")
+	}
+
+	p.commit = ostree.CommitSpec{}
+}
+
 func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
+	if p.commit.Ref == "" {
+		panic("serialization not started")
+	}
+
 	const repoPath = "/ostree/repo"
 
 	pipeline := p.Base.serialize()
