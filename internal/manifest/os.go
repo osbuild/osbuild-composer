@@ -147,11 +147,14 @@ type OS struct {
 	// Partition table, if nil the tree cannot be put on a partitioned disk
 	PartitionTable *disk.PartitionTable
 
+	// content-related fields
 	repos          []rpmmd.RepoConfig
 	packageSpecs   []rpmmd.PackageSpec
 	containerSpecs []container.Spec
-	platform       platform.Platform
-	kernelVer      string
+	ostreeSpecs    []ostree.CommitSpec
+
+	platform  platform.Platform
+	kernelVer string
 
 	// NoBLS configures the image bootloader with traditional menu entries
 	// instead of BLS. Required for legacy systems like RHEL 7.
@@ -298,6 +301,7 @@ func (p *OS) serializeStart(packages []rpmmd.PackageSpec, containers []container
 
 	p.packageSpecs = packages
 	p.containerSpecs = containers
+	p.ostreeSpecs = commits
 
 	if p.KernelName != "" {
 		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.KernelName)
@@ -311,6 +315,7 @@ func (p *OS) serializeEnd() {
 	p.kernelVer = ""
 	p.packageSpecs = nil
 	p.containerSpecs = nil
+	p.ostreeSpecs = nil
 }
 
 func (p *OS) serialize() osbuild.Pipeline {
