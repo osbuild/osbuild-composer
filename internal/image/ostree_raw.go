@@ -26,7 +26,7 @@ type OSTreeRawImage struct {
 	Users  []users.User
 	Groups []users.Group
 
-	Commit ostree.CommitSpec
+	CommitSource ostree.SourceSpec
 
 	SysrootReadOnly bool
 
@@ -47,10 +47,10 @@ type OSTreeRawImage struct {
 	Files       []*fsnode.File
 }
 
-func NewOSTreeRawImage(commit ostree.CommitSpec) *OSTreeRawImage {
+func NewOSTreeRawImage(commit ostree.SourceSpec) *OSTreeRawImage {
 	return &OSTreeRawImage{
-		Base:   NewBase("ostree-raw-image"),
-		Commit: commit,
+		Base:         NewBase("ostree-raw-image"),
+		CommitSource: commit,
 	}
 }
 
@@ -64,7 +64,7 @@ func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, b
 }
 
 func baseRawOstreeImage(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.RawOSTreeImage {
-	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.Commit, img.OSName, img.Ignition, img.Platform)
+	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.CommitSource, img.OSName, img.Ignition, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.Remote = img.Remote
 	osPipeline.KernelOptionsAppend = img.KernelOptionsAppend

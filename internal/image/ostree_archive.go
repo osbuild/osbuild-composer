@@ -20,9 +20,9 @@ type OSTreeArchive struct {
 	Environment      environment.Environment
 	Workload         workload.Workload
 
-	// OSTreeParent specifies an optional parent commit for the new commit
-	// being built.
-	OSTreeParent *ostree.CommitSpec
+	// OSTreeParent specifies the source for an optional parent commit for the
+	// new commit being built.
+	OSTreeParent *ostree.SourceSpec
 
 	// OSTreeRef is the ref of the commit that will be built.
 	OSTreeRef string

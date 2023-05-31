@@ -173,6 +173,7 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 //
 // If any ref (Ref or Parent) is malformed, the function returns with a RefError.
 func Resolve(source SourceSpec) (ref, checksum string, err error) {
+	// TODO: return CommitSpec instead and add RHSM option
 	ref = source.Ref
 
 	// Determine value of ref
