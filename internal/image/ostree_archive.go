@@ -19,10 +19,16 @@ type OSTreeArchive struct {
 	OSCustomizations manifest.OSCustomizations
 	Environment      environment.Environment
 	Workload         workload.Workload
-	OSTreeParent     *ostree.CommitSpec
-	OSTreeRef        string
-	OSVersion        string
-	Filename         string
+
+	// OSTreeParent specifies an optional parent commit for the new commit
+	// being built.
+	OSTreeParent *ostree.CommitSpec
+
+	// OSTreeRef is the ref of the commit that will be built.
+	OSTreeRef string
+
+	OSVersion string
+	Filename  string
 }
 
 func NewOSTreeArchive(ref string) *OSTreeArchive {
