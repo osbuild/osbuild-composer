@@ -290,23 +290,15 @@ func iotCommitImage(workload workload.Workload,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
+	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
+	img := image.NewOSTreeArchive(commitRef)
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	img.Environment = t.environment
 	img.Workload = workload
-
-	if options.OSTree.ParentRef != "" && options.OSTree.URL != "" {
-		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.ParentRef,
-			URL:        options.OSTree.URL,
-			ContentURL: options.OSTree.ContentURL,
-		}
-	}
-
+	img.OSTreeParent = parentCommit
 	img.OSVersion = t.arch.distro.osVersion
-
 	img.Filename = t.Filename()
 
 	return img, nil
@@ -320,26 +312,17 @@ func iotContainerImage(workload workload.Workload,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
+	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
+	img := image.NewOSTreeContainer(commitRef)
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
 	img.Workload = workload
-
-	if options.OSTree.ParentRef != "" && options.OSTree.URL != "" {
-		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.ParentRef,
-			URL:        options.OSTree.URL,
-			ContentURL: options.OSTree.ContentURL,
-		}
-	}
-
+	img.OSTreeParent = parentCommit
 	img.OSVersion = t.arch.distro.osVersion
-
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
-
 	img.Filename = t.Filename()
 
 	return img, nil
@@ -355,12 +338,11 @@ func iotInstallerImage(workload workload.Workload,
 
 	d := t.arch.distro
 
-	commit := ostree.CommitSpec{
-		Ref:        options.OSTree.ImageRef,
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.ParentRef,
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeRef())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
+
 	img := image.NewOSTreeInstaller(commit)
 
 	img.Platform = t.platform
@@ -395,12 +377,11 @@ func iotRawImage(workload workload.Workload,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	commit := ostree.CommitSpec{
-		Ref:        options.OSTree.ImageRef,
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.ParentRef,
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeRef())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
+
 	img := image.NewOSTreeRawImage(commit)
 
 	// Set sysroot read-only only for Fedora 37+
@@ -412,7 +393,6 @@ func iotRawImage(workload workload.Workload,
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	var err error
 	img.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(customizations.GetDirectories())
 	if err != nil {
 		return nil, err
@@ -450,4 +430,60 @@ func iotRawImage(workload workload.Workload,
 	img.Compression = t.compression
 
 	return img, nil
+}
+
+// Create an ostree SourceSpec to define an ostree parent commit using the user
+// options and the default ref for the image type.  Additionally returns the
+// ref to be used for the new commit to be created.
+func makeOSTreeParentCommit(options *ostree.ImageOptions, defaultRef string) (*ostree.SourceSpec, string) {
+	commitRef := defaultRef
+	if options == nil {
+		// nothing to do
+		return nil, commitRef
+	}
+	if options.ImageRef != "" {
+		// user option overrides default commit ref
+		commitRef = options.ImageRef
+	}
+
+	var parentCommit *ostree.SourceSpec
+	if options.URL == "" {
+		// no parent
+		return nil, commitRef
+	}
+
+	// ostree URL specified: set source spec for parent commit
+	parentRef := options.ParentRef
+	if parentRef == "" {
+		// parent ref not set: use image ref
+		parentRef = commitRef
+
+	}
+	parentCommit = &ostree.SourceSpec{
+		URL:  options.URL,
+		Ref:  parentRef,
+		RHSM: options.RHSM,
+	}
+	return parentCommit, commitRef
+}
+
+// Create an ostree SourceSpec to define an ostree payload using the user options and the default ref for the image type.
+func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultRef string) (ostree.SourceSpec, error) {
+	if options == nil || options.URL == "" {
+		// this should be caught by checkOptions() in distro, but it's good
+		// to guard against it here as well
+		return ostree.SourceSpec{}, fmt.Errorf("ostree commit URL required")
+	}
+
+	commitRef := defaultRef
+	if options.ImageRef != "" {
+		// user option overrides default commit ref
+		commitRef = options.ImageRef
+	}
+
+	return ostree.SourceSpec{
+		URL:  options.URL,
+		Ref:  commitRef,
+		RHSM: options.RHSM,
+	}, nil
 }

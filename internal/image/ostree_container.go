@@ -15,12 +15,18 @@ import (
 
 type OSTreeContainer struct {
 	Base
-	Platform               platform.Platform
-	OSCustomizations       manifest.OSCustomizations
-	Environment            environment.Environment
-	Workload               workload.Workload
-	OSTreeRef              string
-	OSTreeParent           *ostree.CommitSpec
+	Platform         platform.Platform
+	OSCustomizations manifest.OSCustomizations
+	Environment      environment.Environment
+	Workload         workload.Workload
+
+	// OSTreeParent specifies the source for an optional parent commit for the
+	// new commit being built.
+	OSTreeParent *ostree.SourceSpec
+
+	// OSTreeRef is the ref of the commit that will be built.
+	OSTreeRef string
+
 	OSVersion              string
 	ExtraContainerPackages rpmmd.PackageSet // FIXME: this is never read
 	ContainerLanguage      string
