@@ -886,7 +886,7 @@ func TestCompose(t *testing.T) {
 	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	require.NoError(t, err)
 
-	mf, err := manifest.Serialize(nil, nil)
+	mf, err := manifest.Serialize(nil, nil, nil)
 	require.NoError(t, err)
 
 	ostreeImgType, err := arch.GetImageType(test_distro.TestImageTypeOSTree)
@@ -894,7 +894,7 @@ func TestCompose(t *testing.T) {
 	ostreeManifest, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	require.NoError(t, err)
 
-	omf, err := ostreeManifest.Serialize(nil, nil)
+	omf, err := ostreeManifest.Serialize(nil, nil, nil)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{
@@ -1004,7 +1004,7 @@ func TestCompose(t *testing.T) {
 	manifest2, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	require.NoError(t, err)
 
-	mf2, err := manifest2.Serialize(nil, nil)
+	mf2, err := manifest2.Serialize(nil, nil, nil)
 	require.NoError(t, err)
 
 	expectedComposeGoodDistro := &store.Compose{
@@ -1998,7 +1998,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	require.NoError(t, err)
 
-	mf, err := manifest.Serialize(nil, nil)
+	mf, err := manifest.Serialize(nil, nil, nil)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{

@@ -223,6 +223,20 @@ func main() {
 		containers[name] = containerSpecs
 	}
 
+	// "resolve" ostree commits by copying the source specs into commit specs
+	commits := make(map[string][]ostree.CommitSpec, len(manifest.Content.OSTreeCommits))
+	for name, commitSources := range manifest.Content.OSTreeCommits {
+		commitSpecs := make([]ostree.CommitSpec, len(commitSources))
+		for idx, commitSource := range commitSources {
+			commitSpecs[idx] = ostree.CommitSpec{
+				Ref:      commitSource.Ref,
+				URL:      commitSource.URL,
+				Checksum: commitSource.Parent,
+			}
+		}
+		commits[name] = commitSpecs
+	}
+
 	var bytes []byte
 	if rpmmdArg {
 		bytes, err = json.Marshal(depsolvedSets)
@@ -230,12 +244,7 @@ func main() {
 			panic(err)
 		}
 	} else {
-		if composeRequest.OSTree.Ref == "" {
-			// use default OSTreeRef for image type
-			composeRequest.OSTree.Ref = imageType.OSTreeRef()
-		}
-
-		ms, err := manifest.Serialize(depsolvedSets, containers)
+		ms, err := manifest.Serialize(depsolvedSets, containers, commits)
 		if err != nil {
 			panic(err.Error())
 		}

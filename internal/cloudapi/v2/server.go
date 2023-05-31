@@ -507,7 +507,8 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 	} else {
 		panic(fmt.Sprintf("ImageType %q does not define payload pipelines - this is a programming error", imageType.Name()))
 	}
-	ms, err := manifest.Serialize(depsolveResults.PackageSpecs, map[string][]container.Spec{payloadPipelineName: containerSpecs})
+	// TODO: resolve ostree source spec from manifest content and pass here.
+	ms, err := manifest.Serialize(depsolveResults.PackageSpecs, map[string][]container.Spec{payloadPipelineName: containerSpecs}, nil)
 
 	jobResult.Manifest = ms
 }

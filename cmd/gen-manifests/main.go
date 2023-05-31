@@ -181,7 +181,9 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
 		}
 
-		mf, err := manifest.Serialize(packageSpecs, containerSpecs)
+		commitSpecs := resolvePipelineCommits(manifest.Content.OSTreeCommits)
+
+		mf, err := manifest.Serialize(packageSpecs, containerSpecs, commitSpecs)
 		if err != nil {
 			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
 		}
@@ -277,6 +279,23 @@ func resolvePipelineContainers(containerSources map[string][]container.SourceSpe
 		containerSpecs[plName] = specs
 	}
 	return containerSpecs, nil
+}
+
+func resolvePipelineCommits(commitSources map[string][]ostree.SourceSpec) map[string][]ostree.CommitSpec {
+	// "resolve" ostree commits by copying the source specs into commit specs
+	commits := make(map[string][]ostree.CommitSpec, len(commitSources))
+	for name, commitSources := range commitSources {
+		commitSpecs := make([]ostree.CommitSpec, len(commitSources))
+		for idx, commitSource := range commitSources {
+			commitSpecs[idx] = ostree.CommitSpec{
+				Ref:      commitSource.Ref,
+				URL:      commitSource.URL,
+				Checksum: commitSource.Parent,
+			}
+		}
+		commits[name] = commitSpecs
+	}
+	return commits
 }
 
 func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
