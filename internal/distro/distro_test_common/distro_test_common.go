@@ -149,7 +149,21 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				t.Errorf("distro.Manifest() error = %v", err)
 				return
 			}
-			got, err := manifest.Serialize(imgPackageSpecSets, tt.Containers)
+
+			// "resolve" ostree commits by copying the source specs into commit specs
+			commits := make(map[string][]ostree.CommitSpec, len(manifest.Content.OSTreeCommits))
+			for name, commitSources := range manifest.Content.OSTreeCommits {
+				commitSpecs := make([]ostree.CommitSpec, len(commitSources))
+				for idx, commitSource := range commitSources {
+					commitSpecs[idx] = ostree.CommitSpec{
+						Ref:      commitSource.Ref,
+						URL:      commitSource.URL,
+						Checksum: commitSource.Parent,
+					}
+				}
+				commits[name] = commitSpecs
+			}
+			got, err := manifest.Serialize(imgPackageSpecSets, tt.Containers, commits)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
 				t.Errorf("distro.Manifest() error = %v", err)

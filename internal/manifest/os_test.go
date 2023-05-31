@@ -30,7 +30,7 @@ func NewTestOS() *OS {
 	packages := []rpmmd.PackageSpec{
 		rpmmd.PackageSpec{Name: "pkg1"},
 	}
-	os.serializeStart(packages, nil)
+	os.serializeStart(packages, nil, nil)
 
 	return os
 }

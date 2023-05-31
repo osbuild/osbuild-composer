@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/fdo"
 	"github.com/osbuild/osbuild-composer/internal/ignition"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
@@ -122,7 +123,7 @@ func (p *CoreOSInstaller) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *CoreOSInstaller) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec) {
+func (p *CoreOSInstaller) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}

@@ -36,7 +36,7 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	mf, err := manifest.Serialize(nil, nil)
+	mf, err := manifest.Serialize(nil, nil, nil)
 	if err != nil {
 		t.Fatalf("error serializing osbuild manifest: %v", err)
 	}
@@ -89,7 +89,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	mf, err := manifest.Serialize(nil, nil)
+	mf, err := manifest.Serialize(nil, nil, nil)
 	if err != nil {
 		t.Fatalf("error serializing osbuild manifest: %v", err)
 	}

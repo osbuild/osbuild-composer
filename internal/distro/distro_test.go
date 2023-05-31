@@ -171,7 +171,20 @@ func TestImageTypePipelineNames(t *testing.T) {
 					assert.NoError(err)
 
 					containers := make(map[string][]container.Spec, 0)
-					mf, err := m.Serialize(packageSets, containers)
+					// "resolve" ostree commits by copying the source specs into commit specs
+					commits := make(map[string][]ostree.CommitSpec, len(m.Content.OSTreeCommits))
+					for name, commitSources := range m.Content.OSTreeCommits {
+						commitSpecs := make([]ostree.CommitSpec, len(commitSources))
+						for idx, commitSource := range commitSources {
+							commitSpecs[idx] = ostree.CommitSpec{
+								Ref:      commitSource.Ref,
+								URL:      commitSource.URL,
+								Checksum: commitSource.Parent,
+							}
+						}
+						commits[name] = commitSpecs
+					}
+					mf, err := m.Serialize(packageSets, containers, commits)
 					assert.NoError(err)
 					pm := new(manifest)
 					err = json.Unmarshal(mf, pm)

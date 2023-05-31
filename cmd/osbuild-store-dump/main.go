@@ -36,7 +36,7 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 		pkgSpecSets[name] = res
 	}
 
-	mf, err := manifest.Serialize(pkgSpecSets, nil)
+	mf, err := manifest.Serialize(pkgSpecSets, nil, nil)
 	if err != nil {
 		panic(err)
 	}
