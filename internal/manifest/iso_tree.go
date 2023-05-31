@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
+	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/users"
 )
 
@@ -73,7 +75,6 @@ func NewAnacondaISOTree(m *Manifest,
 	return p
 }
 
-// Return the ostree commit URL and checksum that will be included in this
 func (p *AnacondaISOTree) getOSTreeCommits() []ostree.CommitSpec {
 	if p.OSTree == nil {
 		return nil
@@ -98,6 +99,23 @@ func (p *AnacondaISOTree) getBuildPackages() []string {
 	}
 
 	return packages
+}
+
+func (p *AnacondaISOTree) serializeStart(_ []rpmmd.PackageSpec, _ []container.Spec, commits []ostree.CommitSpec) {
+	if len(commits) == 0 {
+		// nothing to do
+		return
+	}
+
+	if len(commits) > 1 {
+		panic("pipeline supports at most one ostree commit")
+	}
+
+	p.OSTree = &commits[0]
+}
+
+func (p *AnacondaISOTree) serializeEnd() {
+	p.OSTree = nil
 }
 
 func (p *AnacondaISOTree) serialize() osbuild.Pipeline {
