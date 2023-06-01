@@ -1956,7 +1956,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "": {
+                  "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6": {
                     "ref": "test/fedora/iot"
                   }
                 }
@@ -3383,7 +3383,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "": {
+          "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6": {
             "remote": {
               "url": "http://fedora.example.com/repo"
             }
@@ -5633,6 +5633,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-updates-released-20230601/Packages/z/zchunk-libs-1.3.1-1.fc38.x86_64.rpm",
         "checksum": "sha256:dca922285b9f680f084fef9c5b48096574313a0f7ae41ef8251e018c5df8dbda",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "ostree-deployment": [
+      {
+        "Ref": "test/fedora/iot",
+        "URL": "http://fedora.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6"
       }
     ]
   },

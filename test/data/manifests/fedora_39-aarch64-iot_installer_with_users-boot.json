@@ -21,7 +21,7 @@
     "ostree": {
       "ref": "test/iot",
       "url": "http://iot.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "parent": "",
       "rhsm": false
     },
     "blueprint": {
@@ -10689,7 +10689,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+                  "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f": {
                     "ref": "test/iot"
                   }
                 }
@@ -13766,7 +13766,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+          "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f": {
             "remote": {
               "url": "http://iot.example.com/repo"
             }
@@ -26528,6 +26528,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230601/Packages/z/zlib-1.2.13-3.fc38.aarch64.rpm",
         "checksum": "sha256:b1f3751a9fdaf0c918bad3ca42a0984bea6d94d382995c3162bf6b391e53e21d",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "bootiso-tree": [
+      {
+        "Ref": "test/iot",
+        "URL": "http://iot.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f"
       }
     ]
   },

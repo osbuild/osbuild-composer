@@ -21,7 +21,7 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "parent": "",
       "rhsm": false
     },
     "blueprint": {}
@@ -2171,7 +2171,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+                  "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
                     "ref": "test/edge"
                   }
                 }
@@ -3501,7 +3501,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+          "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
             "remote": {
               "url": "http://edge.example.com/repo"
             }
@@ -6131,6 +6131,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20220208/Packages/xkeyboard-config-2.28-1.el8.noarch.rpm",
         "checksum": "sha256:a2aeabb3962859069a78acc288bc3bffb35485428e162caafec8134f5ce6ca67",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "ostree-deployment": [
+      {
+        "Ref": "test/edge",
+        "URL": "http://edge.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad"
       }
     ]
   },

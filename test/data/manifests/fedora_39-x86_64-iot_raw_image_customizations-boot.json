@@ -1950,7 +1950,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "": {
+                  "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6": {
                     "ref": "test/fedora/iot"
                   }
                 }
@@ -3380,7 +3380,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "": {
+          "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6": {
             "remote": {
               "url": "http://fedora.example.com/repo"
             }
@@ -5640,6 +5640,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230601/Packages/z/zlib-1.2.13-3.fc38.x86_64.rpm",
         "checksum": "sha256:6fc47cd2f53b150153a3865c2fbd6b1c57fcc265fb3602b6f4f3883cf6ec64e2",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "ostree-deployment": [
+      {
+        "Ref": "test/fedora/iot",
+        "URL": "http://fedora.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6"
       }
     ]
   },

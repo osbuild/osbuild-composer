@@ -2123,7 +2123,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+                  "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
                     "ref": "test/edge"
                   }
                 }
@@ -3466,7 +3466,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+          "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
             "remote": {
               "url": "http://edge.example.com/repo"
             }
@@ -6036,6 +6036,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-baseos-20230101/Packages/zlib-1.2.11-35.el9.aarch64.rpm",
         "checksum": "sha256:d3ab7a72a9b19e0240df96502d6ddc4b3f5817da89cd884c8783bf09f89f1873",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "ostree-deployment": [
+      {
+        "Ref": "test/edge",
+        "URL": "http://edge.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad"
       }
     ]
   },

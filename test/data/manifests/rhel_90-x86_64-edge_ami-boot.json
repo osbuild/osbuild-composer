@@ -841,7 +841,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+                  "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
                     "ref": "test/edge"
                   }
                 }
@@ -2197,7 +2197,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+          "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
             "remote": {
               "url": "http://edge.example.com/repo"
             }
@@ -4511,6 +4511,17 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.0-20220208/Packages/volume_key-libs-0.3.12-15.el9.x86_64.rpm",
         "checksum": "sha256:d98118f8ea3c179d56198d0189d916d5604d3643d51007b364479905cb8e652c"
+      }
+    ]
+  },
+  "ostree-commits": {
+    "ostree-deployment": [
+      {
+        "Ref": "test/edge",
+        "URL": "http://edge.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad"
       }
     ]
   },
