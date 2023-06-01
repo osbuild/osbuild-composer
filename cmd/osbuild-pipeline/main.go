@@ -173,11 +173,6 @@ func main() {
 		}
 	}
 
-	if composeRequest.OSTree.Ref == "" {
-		// use default OSTreeRef for image type
-		composeRequest.OSTree.Ref = imageType.OSTreeRef()
-	}
-
 	options := distro.ImageOptions{
 		Size: imageType.Size(0),
 		OSTree: &ostree.ImageOptions{
