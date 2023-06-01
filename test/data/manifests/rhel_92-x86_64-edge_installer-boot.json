@@ -21,7 +21,7 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "parent": "",
       "rhsm": true
     },
     "blueprint": {}
@@ -9910,7 +9910,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+                  "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
                     "ref": "test/edge"
                   }
                 }
@@ -12679,7 +12679,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+          "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
             "remote": {
               "url": "http://edge.example.com/repo",
               "secrets": {
@@ -24464,6 +24464,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-appstream-n9.2-20230101/Packages/yajl-2.1.0-21.el9.x86_64.rpm",
         "checksum": "sha256:69d721b451dc548595d838c60e06c771942ed05bd96ad0661f221c3403d304c5",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "bootiso-tree": [
+      {
+        "Ref": "test/edge",
+        "URL": "http://edge.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "org.osbuild.rhsm.consumer",
+        "Checksum": "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad"
       }
     ]
   },

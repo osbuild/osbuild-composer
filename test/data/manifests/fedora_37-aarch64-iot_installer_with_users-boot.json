@@ -33,7 +33,7 @@
     "ostree": {
       "ref": "test/iot",
       "url": "http://iot.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "parent": "",
       "rhsm": false
     },
     "blueprint": {
@@ -10737,7 +10737,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+                  "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f": {
                     "ref": "test/iot"
                   }
                 }
@@ -13862,7 +13862,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+          "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f": {
             "remote": {
               "url": "http://iot.example.com/repo"
             }
@@ -26664,6 +26664,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230601/Packages/z/zchunk-libs-1.3.1-1.fc37.aarch64.rpm",
         "checksum": "sha256:63df934e3fc969330fa1be978cbc34098c96afbde3dd6c2c86cc5e3ccb482817",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "bootiso-tree": [
+      {
+        "Ref": "test/iot",
+        "URL": "http://iot.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f"
       }
     ]
   },

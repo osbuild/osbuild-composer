@@ -1964,7 +1964,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "": {
+                  "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6": {
                     "ref": "test/fedora/iot"
                   }
                 }
@@ -2671,130 +2671,130 @@
                 "type": "org.osbuild.ostree.checkout",
                 "origin": "org.osbuild.source",
                 "references": [
-                  ""
+                  "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6"
                 ]
               }
             },
             "options": {
               "paths": [
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2710-rpi-2-b.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-2-b.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2710-rpi-3-b-plus.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b-plus.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2710-rpi-3-b.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2710-rpi-cm3.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-cm3.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2-w.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2-w.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2711-rpi-4-b.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2711-rpi-4-b.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2711-rpi-400.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2711-rpi-400.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2711-rpi-cm4.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bcm2711-rpi-cm4s.dtb",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4s.dtb",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/bootcode.bin",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bootcode.bin",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/config.txt",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/config.txt",
                   "to": "mount://root/boot/efi/config.txt"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/fixup.dat",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup.dat",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/fixup4.dat",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup4.dat",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/fixup4cd.dat",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup4cd.dat",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/fixup4db.dat",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup4db.dat",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/fixup4x.dat",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup4x.dat",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/fixup_cd.dat",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup_cd.dat",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/fixup_db.dat",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup_db.dat",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/fixup_x.dat",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup_x.dat",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/overlays",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/overlays",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/share/uboot/rpi_arm64/u-boot.bin",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/share/uboot/rpi_arm64/u-boot.bin",
                   "to": "mount://root/boot/efi/rpi-u-boot.bin"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/start.elf",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start.elf",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/start4.elf",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start4.elf",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/start4cd.elf",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start4cd.elf",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/start4db.elf",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start4db.elf",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/start4x.elf",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start4x.elf",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/start_cd.elf",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start_cd.elf",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/start_db.elf",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start_db.elf",
                   "to": "mount://root/boot/efi/"
                 },
                 {
-                  "from": "input://ostree-tree//usr/lib/ostree-boot/efi/start_x.elf",
+                  "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start_x.elf",
                   "to": "mount://root/boot/efi/"
                 }
               ]
@@ -3574,7 +3574,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "": {
+          "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6": {
             "remote": {
               "url": "http://fedora.example.com/repo"
             }
@@ -5834,6 +5834,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230601/Packages/z/zchunk-libs-1.3.1-1.fc37.aarch64.rpm",
         "checksum": "sha256:63df934e3fc969330fa1be978cbc34098c96afbde3dd6c2c86cc5e3ccb482817",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "ostree-deployment": [
+      {
+        "Ref": "test/fedora/iot",
+        "URL": "http://fedora.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6"
       }
     ]
   },

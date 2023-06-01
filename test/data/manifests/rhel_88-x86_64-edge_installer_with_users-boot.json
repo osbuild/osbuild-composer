@@ -19,7 +19,7 @@
     "ostree": {
       "ref": "test/edge",
       "url": "http://edge.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "parent": "",
       "rhsm": false
     },
     "blueprint": {
@@ -3909,7 +3909,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+                  "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
                     "ref": "test/edge"
                   }
                 }
@@ -6589,7 +6589,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+          "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad": {
             "remote": {
               "url": "http://edge.example.com/repo"
             }
@@ -16780,6 +16780,17 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.8-20221025/Packages/xorriso-1.4.8-4.el8.x86_64.rpm",
         "checksum": "sha256:43942232558005b02597efeab0d80e0acae4d6513bb8ecf5e686cd42bb672117"
+      }
+    ]
+  },
+  "ostree-commits": {
+    "bootiso-tree": [
+      {
+        "Ref": "test/edge",
+        "URL": "http://edge.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "8119013dc0bbd4a0140d7392c3a07395399d5a12112f911bd3fc37ba6b7df6ad"
       }
     ]
   },
