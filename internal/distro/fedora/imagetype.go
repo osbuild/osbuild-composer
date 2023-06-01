@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/oscap"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -247,14 +248,18 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return nil, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
-	ostreeChecksum := ""
+	ostreeURL := ""
 	if options.OSTree != nil {
-		ostreeChecksum = options.OSTree.ParentRef
+		if options.OSTree.ParentRef != "" && options.OSTree.URL == "" {
+			// specifying parent ref also requires URL
+			return nil, ostree.NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
+		}
+		ostreeURL = options.OSTree.URL
 	}
 
 	if t.bootISO && t.rpmOstree {
-		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
-		if ostreeChecksum == "" {
+		// ostree-based ISOs require a URL from which to pull a payload commit
+		if ostreeURL == "" {
 			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 	}
