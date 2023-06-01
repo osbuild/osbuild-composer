@@ -124,10 +124,10 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 	options := distro.ImageOptions{Size: 0}
 	if cr.OSTree != nil {
 		options.OSTree = &ostree.ImageOptions{
-			URL:           cr.OSTree.URL,
-			ImageRef:      cr.OSTree.Ref,
-			FetchChecksum: cr.OSTree.Parent,
-			RHSM:          cr.OSTree.RHSM,
+			URL:       cr.OSTree.URL,
+			ImageRef:  cr.OSTree.Ref,
+			ParentRef: cr.OSTree.Parent,
+			RHSM:      cr.OSTree.RHSM,
 		}
 	} else {
 		// use default OSTreeRef for image type

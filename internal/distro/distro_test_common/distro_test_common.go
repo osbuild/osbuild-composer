@@ -105,10 +105,10 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			if ref := imageType.OSTreeRef(); ref != "" {
 				if tt.ComposeRequest.OSTree != nil {
 					ostreeOptions = &ostree.ImageOptions{
-						ImageRef:      tt.ComposeRequest.OSTree.Ref,
-						FetchChecksum: tt.ComposeRequest.OSTree.Parent,
-						URL:           tt.ComposeRequest.OSTree.URL,
-						RHSM:          tt.ComposeRequest.OSTree.RHSM,
+						ImageRef:  tt.ComposeRequest.OSTree.Ref,
+						ParentRef: tt.ComposeRequest.OSTree.Parent,
+						URL:       tt.ComposeRequest.OSTree.URL,
+						RHSM:      tt.ComposeRequest.OSTree.RHSM,
 					}
 				}
 			}
@@ -217,9 +217,9 @@ var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
 // Returns the number of known kernels in the package list
 func kernelCount(imgType distro.ImageType, bp blueprint.Blueprint) int {
 	ostreeOptions := &ostree.ImageOptions{
-		URL:           "foo",
-		ImageRef:      "bar",
-		FetchChecksum: "baz",
+		URL:       "foo",
+		ImageRef:  "bar",
+		ParentRef: "baz",
 	}
 	manifest, _, err := imgType.Manifest(&bp, distro.ImageOptions{OSTree: ostreeOptions}, nil, 0)
 	if err != nil {

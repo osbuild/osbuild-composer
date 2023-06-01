@@ -56,11 +56,10 @@ type ImageOptions struct {
 	// embedded in the installer or deployed in the image.
 	ImageRef string
 
-	// For ostree commit and container types: The FetchChecksum specifies the parent
+	// For ostree commit and container types: The ParentRef specifies the parent
 	// ostree commit that the new commit will be based on.
-	// For ostree installers and raw images: The FetchChecksum specifies the commit
-	// ID that will be embedded in the installer or deployed in the image.
-	FetchChecksum string
+	// For ostree installers and raw images: The ParentRef does not apply.
+	ParentRef string
 
 	// The URL from which to fetch the commit specified by the checksum.
 	URL string

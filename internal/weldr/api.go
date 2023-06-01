@@ -2466,7 +2466,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			return
 		}
 		ostreeOptions.ImageRef = ref
-		ostreeOptions.FetchChecksum = checksum
+		ostreeOptions.ParentRef = checksum
 	}
 
 	var size uint64

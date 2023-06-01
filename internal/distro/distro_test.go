@@ -56,9 +56,9 @@ func TestImageType_PackageSetsChains(t *testing.T) {
 					}
 					options := distro.ImageOptions{
 						OSTree: &ostree.ImageOptions{
-							URL:           "foo",
-							ImageRef:      "bar",
-							FetchChecksum: "baz",
+							URL:       "foo",
+							ImageRef:  "bar",
+							ParentRef: "baz",
 						},
 					}
 					manifest, _, err := imageType.Manifest(&bp, options, nil, 0)
@@ -147,9 +147,9 @@ func TestImageTypePipelineNames(t *testing.T) {
 
 					// Add ostree options for image types that require them
 					options.OSTree = &ostree.ImageOptions{
-						ImageRef:      imageType.OSTreeRef(),
-						URL:           "https://example.com/repo",
-						FetchChecksum: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+						ImageRef:  imageType.OSTreeRef(),
+						URL:       "https://example.com/repo",
+						ParentRef: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 					}
 
 					// Pipelines that require package sets will fail if none
@@ -461,9 +461,9 @@ func TestPipelineRepositories(t *testing.T) {
 
 							// Add ostree options for image types that require them
 							options.OSTree = &ostree.ImageOptions{
-								ImageRef:      imageType.OSTreeRef(),
-								URL:           "https://example.com/repo",
-								FetchChecksum: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+								ImageRef:  imageType.OSTreeRef(),
+								URL:       "https://example.com/repo",
+								ParentRef: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 							}
 
 							repos := tCase.repos
