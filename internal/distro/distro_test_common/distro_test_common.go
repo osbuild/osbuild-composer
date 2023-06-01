@@ -40,19 +40,26 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 			CheckGPG    bool     `json:"check_gpg,omitempty"`
 			PackageSets []string `json:"package-sets,omitempty"`
 		}
+		type ostreeOptions struct {
+			Ref    string `json:"ref"`
+			URL    string `json:"url"`
+			Parent string `json:"parent"`
+			RHSM   bool   `json:"rhsm"`
+		}
 		type composeRequest struct {
 			Distro       string               `json:"distro"`
 			Arch         string               `json:"arch"`
 			ImageType    string               `json:"image-type"`
 			Repositories []repository         `json:"repositories"`
 			Blueprint    *blueprint.Blueprint `json:"blueprint"`
-			OSTree       *ostree.SourceSpec   `json:"ostree"`
+			OSTree       ostreeOptions        `json:"ostree"`
 		}
 		var tt struct {
 			ComposeRequest  *composeRequest                `json:"compose-request"`
 			PackageSpecSets map[string][]rpmmd.PackageSpec `json:"rpmmd"`
 			Manifest        manifest.OSBuildManifest       `json:"manifest,omitempty"`
 			Containers      map[string][]container.Spec    `json:"containers,omitempty"`
+			OSTreeCommits   map[string][]ostree.CommitSpec `json:"ostree-commits,omitempty"`
 		}
 		file, err := os.ReadFile(fileName)
 		assert.NoErrorf(err, "Could not read test-case '%s': %v", fileName, err)
@@ -101,16 +108,11 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				return
 			}
 
-			var ostreeOptions *ostree.ImageOptions
-			if ref := imageType.OSTreeRef(); ref != "" {
-				if tt.ComposeRequest.OSTree != nil {
-					ostreeOptions = &ostree.ImageOptions{
-						ImageRef:  tt.ComposeRequest.OSTree.Ref,
-						ParentRef: tt.ComposeRequest.OSTree.Parent,
-						URL:       tt.ComposeRequest.OSTree.URL,
-						RHSM:      tt.ComposeRequest.OSTree.RHSM,
-					}
-				}
+			ostreeOptions := &ostree.ImageOptions{
+				ImageRef:  tt.ComposeRequest.OSTree.Ref,
+				ParentRef: tt.ComposeRequest.OSTree.Parent,
+				URL:       tt.ComposeRequest.OSTree.URL,
+				RHSM:      tt.ComposeRequest.OSTree.RHSM,
 			}
 
 			options := distro.ImageOptions{
@@ -145,20 +147,7 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 				return
 			}
 
-			// "resolve" ostree commits by copying the source specs into commit specs
-			commits := make(map[string][]ostree.CommitSpec, len(manifest.Content.OSTreeCommits))
-			for name, commitSources := range manifest.Content.OSTreeCommits {
-				commitSpecs := make([]ostree.CommitSpec, len(commitSources))
-				for idx, commitSource := range commitSources {
-					commitSpecs[idx] = ostree.CommitSpec{
-						Ref:      commitSource.Ref,
-						URL:      commitSource.URL,
-						Checksum: commitSource.Parent,
-					}
-				}
-				commits[name] = commitSpecs
-			}
-			got, err := manifest.Serialize(imgPackageSpecSets, tt.Containers, commits)
+			got, err := manifest.Serialize(imgPackageSpecSets, tt.Containers, tt.OSTreeCommits)
 
 			if (err == nil && tt.Manifest == nil) || (err != nil && tt.Manifest != nil) {
 				t.Errorf("distro.Manifest() error = %v", err)
