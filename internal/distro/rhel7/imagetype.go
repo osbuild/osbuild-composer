@@ -202,9 +202,6 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		containerSources[idx] = container.SourceSpec(bp.Containers[idx])
 	}
 
-	// TODO: set commit ref when needed
-	var ostreeCommit *ostree.SourceSpec
-
 	source := rand.NewSource(seed)
 	// math/rand is good enough in this case
 	/* #nosec G404 */
@@ -213,7 +210,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	if t.image == nil {
 		return nil, nil, nil
 	}
-	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containerSources, ostreeCommit, rng)
+	img, err := t.image(w, t, bp.Customizations, options, staticPackageSets, containerSources, nil, rng)
 	if err != nil {
 		return nil, nil, err
 	}

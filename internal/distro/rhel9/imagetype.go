@@ -238,8 +238,14 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		containerSources[idx] = container.SourceSpec(bp.Containers[idx])
 	}
 
-	// TODO: set commit ref when needed
 	var ostreeCommit *ostree.SourceSpec
+	if options.OSTree != nil {
+		ostreeCommit = &ostree.SourceSpec{
+			URL:    options.OSTree.URL,
+			Ref:    options.OSTree.ImageRef,
+			Parent: options.OSTree.ParentRef,
+		}
+	}
 
 	source := rand.NewSource(seed)
 	// math/rand is good enough in this case
