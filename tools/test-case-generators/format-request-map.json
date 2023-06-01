@@ -468,8 +468,7 @@
       "filename": "installer.iso",
       "ostree": {
         "ref": "test/iot",
-        "url": "http://iot.example.com/repo",
-        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        "url": "http://iot.example.com/repo"
       },
       "blueprint": {}
     },
@@ -485,8 +484,7 @@
       "filename": "installer.iso",
       "ostree": {
         "ref": "test/iot",
-        "url": "http://iot.example.com/repo",
-        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        "url": "http://iot.example.com/repo"
       },
       "blueprint": {
         "name": "iot-installer-users",
@@ -757,7 +755,6 @@
       "ostree": {
         "ref": "test/edge",
         "url": "http://edge.example.com/repo",
-        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "rhsm": true
       },
       "blueprint": {}
@@ -774,8 +771,7 @@
       "filename": "installer.iso",
       "ostree": {
         "ref": "test/edge",
-        "url": "http://edge.example.com/repo",
-        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        "url": "http://edge.example.com/repo"
       },
       "blueprint": {
         "name": "edge-installer-users",
@@ -827,8 +823,7 @@
       "filename": "installer.iso",
       "ostree": {
         "ref": "test/edge",
-        "url": "http://edge.example.com/repo",
-        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        "url": "http://edge.example.com/repo"
       },
       "blueprint": {
         "customizations": {
@@ -860,8 +855,7 @@
       "filename": "image.raw.xz",
       "ostree": {
         "ref": "test/edge",
-        "url": "http://edge.example.com/repo",
-        "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        "url": "http://edge.example.com/repo"
       },
       "blueprint": {}
     },
