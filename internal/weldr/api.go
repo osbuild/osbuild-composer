@@ -2335,6 +2335,33 @@ func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec)
 	return specs, nil
 }
 
+func (api *API) resolveOSTreeCommits(sourceSpecs map[string][]ostree.SourceSpec, test bool) (map[string][]ostree.CommitSpec, error) {
+	commitSpecs := make(map[string][]ostree.CommitSpec, len(sourceSpecs))
+	for name, sources := range sourceSpecs {
+		commits := make([]ostree.CommitSpec, len(sources))
+		for idx, source := range sources {
+			var ref, checksum string
+			if test {
+				checksum = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
+				ref = source.Ref
+			} else {
+				var err error
+				ref, checksum, err = ostree.Resolve(source)
+				if err != nil {
+					return nil, err
+				}
+			}
+			commits[idx] = ostree.CommitSpec{
+				Ref:      ref,
+				URL:      source.URL,
+				Checksum: checksum,
+			}
+		}
+		commitSpecs[name] = commits
+	}
+	return commitSpecs, nil
+}
+
 // Schedule new compose by first translating the appropriate blueprint into a pipeline and then
 // pushing it into the channel for waiting builds.
 func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -2441,32 +2468,11 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	testMode := q.Get("test")
-
 	ostreeOptions := &ostree.ImageOptions{
-		URL: cr.OSTree.URL,
-	}
-	if testMode == "1" || testMode == "2" {
-		// Fake a parent commit for test requests
-		cr.OSTree.Parent = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
-	} else if imageType.OSTreeRef() != "" {
-		// TODO: don't read image ref from image type directly; instead get it from the manifest after initialising.
-		// If the image type has a default ostree ref, assume this is an OSTree image
-		reqParams := cr.OSTree
-		if reqParams.Ref == "" {
-			reqParams.Ref = imageType.OSTreeRef()
-		}
-		ref, checksum, err := ostree.Resolve(reqParams)
-		if err != nil {
-			errors := responseError{
-				ID:  "OSTreeOptionsError",
-				Msg: err.Error(),
-			}
-			statusResponseError(writer, http.StatusBadRequest, errors)
-			return
-		}
-		ostreeOptions.ImageRef = ref
-		ostreeOptions.ParentRef = checksum
+		ImageRef:  cr.OSTree.Ref,
+		ParentRef: cr.OSTree.Parent,
+		URL:       cr.OSTree.URL,
+		RHSM:      cr.OSTree.RHSM,
 	}
 
 	var size uint64
@@ -2534,8 +2540,19 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	// TODO: resolve ostree source spec from manifest content and pass here.
-	mf, err := manifest.Serialize(packageSets, containerSpecs, nil)
+	testMode := q.Get("test")
+
+	ostreeCommitSpecs, err := api.resolveOSTreeCommits(manifest.Content.OSTreeCommits, testMode == "1" || testMode == "2")
+	if err != nil {
+		errors := responseError{
+			ID:  "OSTreeOptionsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
+	mf, err := manifest.Serialize(packageSets, containerSpecs, ostreeCommitSpecs)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
