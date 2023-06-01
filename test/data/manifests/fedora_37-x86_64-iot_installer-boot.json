@@ -21,7 +21,7 @@
     "ostree": {
       "ref": "test/iot",
       "url": "http://iot.example.com/repo",
-      "parent": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "parent": "",
       "rhsm": false
     },
     "blueprint": {}
@@ -11119,7 +11119,7 @@
                 "type": "org.osbuild.ostree",
                 "origin": "org.osbuild.source",
                 "references": {
-                  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+                  "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f": {
                     "ref": "test/iot"
                   }
                 }
@@ -14299,7 +14299,7 @@
       },
       "org.osbuild.ostree": {
         "items": {
-          "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff": {
+          "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f": {
             "remote": {
               "url": "http://iot.example.com/repo"
             }
@@ -27601,6 +27601,17 @@
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-development-20221025/Packages/z/zlib-1.2.12-5.fc37.x86_64.rpm",
         "checksum": "sha256:7b0eda1ad9e9a06e61d9fe41e5e4e0fbdc8427bc252f06a7d29cd7ba81a71a70",
         "check_gpg": true
+      }
+    ]
+  },
+  "ostree-commits": {
+    "bootiso-tree": [
+      {
+        "Ref": "test/iot",
+        "URL": "http://iot.example.com/repo",
+        "ContentURL": "",
+        "Secrets": "",
+        "Checksum": "466e747c4d158f3443d3f92407e9f93a6ec8a2cbf0565ab716850f027b90a76f"
       }
     ]
   },
