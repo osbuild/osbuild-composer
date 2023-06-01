@@ -8,6 +8,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -192,7 +193,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			Blueprint:    cr.Blueprint,
 			OSTree:       cr.OSTree,
 		}
-		err = save(mf, packageSpecs, containerSpecs, request, path, filename)
+		err = save(mf, packageSpecs, containerSpecs, commitSpecs, request, path, filename)
 		return
 	}
 	return job
@@ -276,17 +277,23 @@ func resolvePipelineContainers(containerSources map[string][]container.SourceSpe
 	return containerSpecs, nil
 }
 
+func resolveCommit(commitSource ostree.SourceSpec) ostree.CommitSpec {
+	// "resolve" ostree commits by hashing the URL + ref to create a
+	// realistic-looking commit ID in a deterministic way
+	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(commitSource.URL+commitSource.Ref)))
+	return ostree.CommitSpec{
+		Ref:      commitSource.Ref,
+		URL:      commitSource.URL,
+		Checksum: checksum,
+	}
+}
+
 func resolvePipelineCommits(commitSources map[string][]ostree.SourceSpec) map[string][]ostree.CommitSpec {
-	// "resolve" ostree commits by copying the source specs into commit specs
 	commits := make(map[string][]ostree.CommitSpec, len(commitSources))
 	for name, commitSources := range commitSources {
 		commitSpecs := make([]ostree.CommitSpec, len(commitSources))
 		for idx, commitSource := range commitSources {
-			commitSpecs[idx] = ostree.CommitSpec{
-				Ref:      commitSource.Ref,
-				URL:      commitSource.URL,
-				Checksum: commitSource.Parent,
-			}
+			commitSpecs[idx] = resolveCommit(commitSource)
 		}
 		commits[name] = commitSpecs
 	}
@@ -307,15 +314,16 @@ func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d dist
 	return depsolvedSets, nil
 }
 
-func save(ms manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers map[string][]container.Spec, cr composeRequest, path, filename string) error {
+func save(ms manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, cr composeRequest, path, filename string) error {
 	data := struct {
 		ComposeRequest composeRequest                 `json:"compose-request"`
 		Manifest       manifest.OSBuildManifest       `json:"manifest"`
 		RPMMD          map[string][]rpmmd.PackageSpec `json:"rpmmd"`
 		Containers     map[string][]container.Spec    `json:"containers,omitempty"`
+		OSTreeCommits  map[string][]ostree.CommitSpec `json:"ostree-commits,omitempty"`
 		NoImageInfo    bool                           `json:"no-image-info"`
 	}{
-		cr, ms, pkgs, containers, true,
+		cr, ms, pkgs, containers, commits, true,
 	}
 	b, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
