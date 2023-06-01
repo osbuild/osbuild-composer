@@ -249,7 +249,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 
 	ostreeChecksum := ""
 	if options.OSTree != nil {
-		ostreeChecksum = options.OSTree.FetchChecksum
+		ostreeChecksum = options.OSTree.ParentRef
 	}
 
 	if t.bootISO && t.rpmOstree {

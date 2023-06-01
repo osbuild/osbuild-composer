@@ -60,7 +60,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 							OSTree: &ostree.ImageOptions{
 								URL:           "foo",
 								ImageRef:      "bar",
-								FetchChecksum: "baz",
+								ParentRef: "baz",
 							},
 						},
 						repos[archStr], 0)

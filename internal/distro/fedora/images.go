@@ -297,9 +297,9 @@ func iotCommitImage(workload workload.Workload,
 	img.Environment = t.environment
 	img.Workload = workload
 
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+	if options.OSTree.ParentRef != "" && options.OSTree.URL != "" {
 		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.FetchChecksum,
+			Checksum:   options.OSTree.ParentRef,
 			URL:        options.OSTree.URL,
 			ContentURL: options.OSTree.ContentURL,
 		}
@@ -328,9 +328,9 @@ func iotContainerImage(workload workload.Workload,
 	img.Environment = t.environment
 	img.Workload = workload
 
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+	if options.OSTree.ParentRef != "" && options.OSTree.URL != "" {
 		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.FetchChecksum,
+			Checksum:   options.OSTree.ParentRef,
 			URL:        options.OSTree.URL,
 			ContentURL: options.OSTree.ContentURL,
 		}
@@ -359,7 +359,7 @@ func iotInstallerImage(workload workload.Workload,
 		Ref:        options.OSTree.ImageRef,
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
+		Checksum:   options.OSTree.ParentRef,
 	}
 	img := image.NewOSTreeInstaller(commit)
 
@@ -399,7 +399,7 @@ func iotRawImage(workload workload.Workload,
 		Ref:        options.OSTree.ImageRef,
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
+		Checksum:   options.OSTree.ParentRef,
 	}
 	img := image.NewOSTreeRawImage(commit)
 
