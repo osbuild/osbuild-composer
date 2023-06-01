@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -234,8 +235,29 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 		bpPkgs = b.GetPackages()
 	}
 
+	var ostreeSources map[string][]ostree.SourceSpec
+	if defaultRef := t.OSTreeRef(); defaultRef != "" {
+		// ostree image type
+		ostreeSource := ostree.SourceSpec{ // init with default
+			Ref: defaultRef,
+		}
+		if ostreeOptions := options.OSTree; ostreeOptions != nil {
+			if ostreeOptions.ImageRef != "" { // override with ref from image options
+				ostreeSource.Ref = ostreeOptions.ImageRef
+			}
+			// copy any other options that might be specified
+			ostreeSource.URL = options.OSTree.URL
+			ostreeSource.Parent = options.OSTree.ParentRef
+			ostreeSource.RHSM = options.OSTree.RHSM
+		}
+		ostreeSources = map[string][]ostree.SourceSpec{
+			osPkgsKey: {ostreeSource},
+		}
+	}
+
 	ret := manifest.Manifest{
 		Content: manifest.Content{
+			OSTreeCommits: ostreeSources,
 			PackageSets: map[string][]rpmmd.PackageSet{
 				buildPkgsKey: {{
 					Include: []string{
