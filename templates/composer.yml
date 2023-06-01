@@ -163,8 +163,8 @@ objects:
           command: [ "/opt/migrate/tern", "migrate", "-m", "/opt/migrate/schemas" ]
           resources:
             requests:
-              cpu: "${CPU_REQUEST}"
-              memory: "${MEMORY_REQUEST}"
+              cpu: "${FLUENTD_CPU_REQUEST}"
+              memory: "${FLUENTD_MEMORY_REQUEST}"
             limits:
               cpu: "${CPU_LIMIT}"
               memory: "${MEMORY_LIMIT}"
@@ -464,10 +464,16 @@ parameters:
     value: "/api/image-builder-composer/v2/openapi"
   - name: CPU_REQUEST
     description: CPU request per container
-    value: "200m"
+    value: "500m"
   - name: CPU_LIMIT
     description: CPU limit per container
-    value: "1"
+    value: "950m"
+  - name: FLUENTD_CPU_REQUEST
+    description: CPU request per container
+    value: "50m"
+  - name: FLUENTD_CPU_LIMIT
+    description: CPU limit per container
+    value: "50m"
   - name: MEMORY_REQUEST
     description: Memory request per container
     value: "256Mi"
