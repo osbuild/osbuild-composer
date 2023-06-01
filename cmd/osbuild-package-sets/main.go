@@ -50,9 +50,9 @@ func main() {
 	encoder.SetIndent("", "  ")
 	options := distro.ImageOptions{
 		OSTree: &ostree.ImageOptions{
-			URL:           "foo",
-			ImageRef:      "bar",
-			FetchChecksum: "baz",
+			URL:       "foo",
+			ImageRef:  "bar",
+			ParentRef: "baz",
 		},
 	}
 	manifest, _, err := image.Manifest(&blueprint.Blueprint{}, options, nil, 0)

@@ -262,9 +262,9 @@ func edgeCommitImage(workload workload.Workload,
 	img.Environment = t.environment
 	img.Workload = workload
 
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+	if options.OSTree.ParentRef != "" && options.OSTree.URL != "" {
 		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.FetchChecksum,
+			Checksum:   options.OSTree.ParentRef,
 			URL:        options.OSTree.URL,
 			ContentURL: options.OSTree.ContentURL,
 		}
@@ -299,9 +299,9 @@ func edgeContainerImage(workload workload.Workload,
 	img.Environment = t.environment
 	img.Workload = workload
 
-	if options.OSTree.FetchChecksum != "" && options.OSTree.URL != "" {
+	if options.OSTree.ParentRef != "" && options.OSTree.URL != "" {
 		img.OSTreeParent = &ostree.CommitSpec{
-			Checksum:   options.OSTree.FetchChecksum,
+			Checksum:   options.OSTree.ParentRef,
 			URL:        options.OSTree.URL,
 			ContentURL: options.OSTree.ContentURL,
 		}
@@ -333,7 +333,7 @@ func edgeInstallerImage(workload workload.Workload,
 		Ref:        options.OSTree.ImageRef,
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
+		Checksum:   options.OSTree.ParentRef,
 	}
 	if options.OSTree.RHSM {
 		commit.Secrets = "org.osbuild.rhsm.consumer"
@@ -382,7 +382,7 @@ func edgeRawImage(workload workload.Workload,
 		Ref:        options.OSTree.ImageRef,
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
+		Checksum:   options.OSTree.ParentRef,
 	}
 	img := image.NewOSTreeRawImage(commit)
 	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
@@ -445,7 +445,7 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 		Ref:        options.OSTree.ImageRef,
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
-		Checksum:   options.OSTree.FetchChecksum,
+		Checksum:   options.OSTree.ParentRef,
 	}
 	rawImg := image.NewOSTreeRawImage(commit)
 	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {

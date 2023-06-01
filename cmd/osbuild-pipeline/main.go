@@ -181,9 +181,9 @@ func main() {
 	options := distro.ImageOptions{
 		Size: imageType.Size(0),
 		OSTree: &ostree.ImageOptions{
-			ImageRef:      composeRequest.OSTree.Ref,
-			FetchChecksum: composeRequest.OSTree.Parent,
-			URL:           composeRequest.OSTree.URL,
+			ImageRef:  composeRequest.OSTree.Ref,
+			ParentRef: composeRequest.OSTree.Parent,
+			URL:       composeRequest.OSTree.URL,
 		},
 	}
 

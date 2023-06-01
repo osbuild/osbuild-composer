@@ -482,9 +482,9 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		}
 
 		options.OSTree = &ostree.ImageOptions{
-			ImageRef:      result.Specs[0].Ref,
-			FetchChecksum: result.Specs[0].Checksum,
-			URL:           result.Specs[0].URL,
+			ImageRef:  result.Specs[0].Ref,
+			ParentRef: result.Specs[0].Checksum,
+			URL:       result.Specs[0].URL,
 		}
 	}
 
