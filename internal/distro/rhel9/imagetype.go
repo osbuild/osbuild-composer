@@ -287,14 +287,14 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return warnings, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
-	ostreeChecksum := ""
+	ostreeURL := ""
 	if options.OSTree != nil {
-		ostreeChecksum = options.OSTree.ParentRef
+		ostreeURL = options.OSTree.URL
 	}
 
 	if t.bootISO && t.rpmOstree {
-		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
-		if ostreeChecksum == "" {
+		// ostree-based ISOs require a URL from which to pull a payload commit
+		if ostreeURL == "" {
 			return warnings, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 
@@ -345,8 +345,8 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 
 	if t.name == "edge-raw-image" {
-		// check the checksum instead of the URL, because the URL should have been used to resolve the checksum and we need both
-		if ostreeChecksum == "" {
+		// ostree-based bootable images require a URL from which to pull a payload commit
+		if ostreeURL == "" {
 			return warnings, fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
 		}
 
