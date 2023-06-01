@@ -558,6 +558,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				fallthrough
 			case ImageTypesVsphere:
 				fallthrough
+			case ImageTypesVsphereOva:
+				fallthrough
 			case ImageTypesImageInstaller:
 				fallthrough
 			case ImageTypesEdgeInstaller:
@@ -765,6 +767,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "qcow2"
 	case ImageTypesVsphere:
 		return "vmdk"
+	case ImageTypesVsphereOva:
+		return "ova"
 	case ImageTypesImageInstaller:
 		return "image-installer"
 	case ImageTypesEdgeCommit:
