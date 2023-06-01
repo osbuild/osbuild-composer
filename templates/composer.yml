@@ -18,7 +18,7 @@ objects:
       service: image-builder
     name: composer
   spec:
-    replicas: 3
+    replicas: ${{REPLICAS}}
     selector:
       matchLabels:
         app: composer
@@ -429,6 +429,10 @@ parameters:
   - description: postgres maximum connections per pod
     name: PGMAXCONNS
     value: "20"
+  - description: number of pods to spin up
+    name: REPLICAS
+    value: "3"
+    required: true
   - description: base sso url
     name: RH_SSO_BASE_URL
     required: true
