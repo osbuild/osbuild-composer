@@ -112,11 +112,6 @@ func TestDistro_Manifest(t *testing.T, pipelinePath string, prefix string, regis
 					}
 				}
 			}
-			if ostreeOptions == nil { // set image type default if not specified in request
-				ostreeOptions = &ostree.ImageOptions{
-					ImageRef: imageType.OSTreeRef(),
-				}
-			}
 
 			options := distro.ImageOptions{
 				Size:   imageType.Size(0),
@@ -217,9 +212,7 @@ var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
 // Returns the number of known kernels in the package list
 func kernelCount(imgType distro.ImageType, bp blueprint.Blueprint) int {
 	ostreeOptions := &ostree.ImageOptions{
-		URL:       "foo",
-		ImageRef:  "bar",
-		ParentRef: "baz",
+		URL: "https://example.com", // required by some image types
 	}
 	manifest, _, err := imgType.Manifest(&bp, distro.ImageOptions{OSTree: ostreeOptions}, nil, 0)
 	if err != nil {

@@ -58,9 +58,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 						},
 						distro.ImageOptions{
 							OSTree: &ostree.ImageOptions{
-								URL:           "foo",
-								ImageRef:      "bar",
-								FetchChecksum: "baz",
+								URL: "https://example.com", // required by some image types
 							},
 						},
 						repos[archStr], 0)
