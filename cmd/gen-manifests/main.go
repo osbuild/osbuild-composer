@@ -129,11 +129,6 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			ParentRef: cr.OSTree.Parent,
 			RHSM:      cr.OSTree.RHSM,
 		}
-	} else {
-		// use default OSTreeRef for image type
-		options.OSTree = &ostree.ImageOptions{
-			ImageRef: imgType.OSTreeRef(),
-		}
 	}
 
 	// add RHSM fact to detect changes
