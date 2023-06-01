@@ -317,7 +317,12 @@ func edgeCommitImage(workload workload.Workload,
 	parent *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewOSTreeArchive(options.OSTree.ImageRef)
+	commitRef := t.OSTreeRef()
+	if options.OSTree != nil && options.OSTree.ImageRef != "" {
+		// overridden by user options
+		commitRef = options.OSTree.ImageRef
+	}
+	img := image.NewOSTreeArchive(commitRef)
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
@@ -339,7 +344,12 @@ func edgeContainerImage(workload workload.Workload,
 	parent *ostree.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewOSTreeContainer(options.OSTree.ImageRef)
+	commitRef := t.OSTreeRef()
+	if options.OSTree != nil && options.OSTree.ImageRef != "" {
+		// overridden by user options
+		commitRef = options.OSTree.ImageRef
+	}
+	img := image.NewOSTreeContainer(commitRef)
 
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
