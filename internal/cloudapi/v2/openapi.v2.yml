@@ -777,6 +777,7 @@ components:
         - iot-installer
         - iot-raw-image
         - vsphere
+        - vsphere-ova
     Repository:
       type: object
       description: |
