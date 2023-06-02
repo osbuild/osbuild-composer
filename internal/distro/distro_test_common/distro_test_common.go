@@ -172,7 +172,7 @@ func getImageTypePkgSpecSets(imageType distro.ImageType, bp blueprint.Blueprint,
 	if err != nil {
 		panic("Could not generate manifest for package sets: " + err.Error())
 	}
-	imgPackageSets := manifest.Content.PackageSets
+	imgPackageSets := manifest.GetPackageSetChains()
 
 	solver := dnfjson.NewSolver(imageType.Arch().Distro().ModulePlatformID(),
 		imageType.Arch().Distro().Releasever(),
@@ -207,7 +207,7 @@ func kernelCount(imgType distro.ImageType, bp blueprint.Blueprint) int {
 	if err != nil {
 		panic(err)
 	}
-	sets := manifest.Content.PackageSets
+	sets := manifest.GetPackageSetChains()
 
 	// Use a map to count unique kernels in a package set. If the same kernel
 	// name appears twice, it will only be installed once, so we only count it

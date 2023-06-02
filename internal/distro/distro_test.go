@@ -61,7 +61,7 @@ func TestImageType_PackageSetsChains(t *testing.T) {
 					}
 					manifest, _, err := imageType.Manifest(&bp, options, nil, 0)
 					require.NoError(t, err)
-					imagePkgSets := manifest.Content.PackageSets
+					imagePkgSets := manifest.GetPackageSetChains()
 					for packageSetName := range imageType.PackageSetsChains() {
 						_, ok := imagePkgSets[packageSetName]
 						if !ok {
@@ -168,8 +168,9 @@ func TestImageTypePipelineNames(t *testing.T) {
 
 					containers := make(map[string][]container.Spec, 0)
 					// "resolve" ostree commits by copying the source specs into commit specs
-					commits := make(map[string][]ostree.CommitSpec, len(m.Content.OSTreeCommits))
-					for name, commitSources := range m.Content.OSTreeCommits {
+					ostreeSources := m.GetOSTreeSourceSpecs()
+					commits := make(map[string][]ostree.CommitSpec, len(ostreeSources))
+					for name, commitSources := range ostreeSources {
 						commitSpecs := make([]ostree.CommitSpec, len(commitSources))
 						for idx, commitSource := range commitSources {
 							commitSpecs[idx] = ostree.CommitSpec{
@@ -463,7 +464,7 @@ func TestPipelineRepositories(t *testing.T) {
 							repos := tCase.repos
 							manifest, _, err := imageType.Manifest(&bp, options, repos, 0)
 							require.NoError(err)
-							packageSets := manifest.Content.PackageSets
+							packageSets := manifest.GetPackageSetChains()
 
 							var globals stringSet
 							if len(tCase.result["*"]) > 0 {

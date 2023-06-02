@@ -2521,7 +2521,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	packageSets, err := api.depsolve(manifest.Content.PackageSets, imageType.Arch().Distro())
+	packageSets, err := api.depsolve(manifest.GetPackageSetChains(), imageType.Arch().Distro())
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -2531,7 +2531,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	containerSpecs, err := api.resolveContainers(manifest.Content.Containers)
+	containerSpecs, err := api.resolveContainers(manifest.GetContainerSourceSpecs())
 	if err != nil {
 		errors := responseError{
 			ID:  "ContainerResolveError",
@@ -2543,7 +2543,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	testMode := q.Get("test")
 
-	ostreeCommitSpecs, err := api.resolveOSTreeCommits(manifest.Content.OSTreeCommits, testMode == "1" || testMode == "2")
+	ostreeCommitSpecs, err := api.resolveOSTreeCommits(manifest.GetOSTreeSourceSpecs(), testMode == "1" || testMode == "2")
 	if err != nil {
 		errors := responseError{
 			ID:  "OSTreeOptionsError",

@@ -57,5 +57,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	_ = encoder.Encode(manifest.Content.PackageSets)
+	_ = encoder.Encode(manifest.GetPackageSetChains())
 }

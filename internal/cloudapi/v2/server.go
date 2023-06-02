@@ -114,7 +114,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	}
 
 	depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
-		PackageSets:      manifestSource.Content.PackageSets,
+		PackageSets:      manifestSource.GetPackageSetChains(),
 		ModulePlatformID: distribution.ModulePlatformID(),
 		Arch:             ir.arch.Name(),
 		Releasever:       distribution.Releasever(),
@@ -125,7 +125,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	dependencies := []uuid.UUID{depsolveJobID}
 
 	var containerResolveJobID uuid.UUID
-	containerSources := manifestSource.Content.Containers
+	containerSources := manifestSource.GetContainerSourceSpecs()
 	if len(containerSources) > 1 {
 		// only one pipeline can embed containers
 		pipelines := make([]string, 0, len(containerSources))
@@ -161,7 +161,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	}
 
 	var ostreeResolveJobID uuid.UUID
-	commitSources := manifestSource.Content.OSTreeCommits
+	commitSources := manifestSource.GetOSTreeSourceSpecs()
 	if len(commitSources) > 1 {
 		// only one pipeline can specify an ostree commit for content
 		pipelines := make([]string, 0, len(commitSources))
@@ -234,7 +234,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		}
 
 		depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
-			PackageSets:      manifestSource.Content.PackageSets,
+			PackageSets:      manifestSource.GetPackageSetChains(),
 			ModulePlatformID: distribution.ModulePlatformID(),
 			Arch:             ir.arch.Name(),
 			Releasever:       distribution.Releasever(),
@@ -245,7 +245,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		dependencies := []uuid.UUID{depsolveJobID}
 
 		var containerResolveJobID uuid.UUID
-		containerSources := manifestSource.Content.Containers
+		containerSources := manifestSource.GetContainerSourceSpecs()
 		if len(containerSources) > 1 {
 			// only one pipeline can embed containers
 			pipelines := make([]string, 0, len(containerSources))
@@ -281,7 +281,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		}
 
 		var ostreeResolveJobID uuid.UUID
-		commitSources := manifestSource.Content.OSTreeCommits
+		commitSources := manifestSource.GetOSTreeSourceSpecs()
 		if len(commitSources) > 1 {
 			// only one pipeline can specify an ostree commit for content
 			pipelines := make([]string, 0, len(commitSources))
@@ -476,7 +476,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		// the container embedding, so we need to get it from the manifest
 		// content field. There should be only one.
 		var containerEmbedPipeline string
-		for name := range manifestSource.Content.Containers {
+		for name := range manifestSource.GetContainerSourceSpecs() {
 			containerEmbedPipeline = name
 			break
 		}
@@ -519,7 +519,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		// ostree commits, so we need to get it from the manifest content
 		// field. There should be only one.
 		var ostreeCommitPipeline string
-		for name := range manifestSource.Content.OSTreeCommits {
+		for name := range manifestSource.GetOSTreeSourceSpecs() {
 			ostreeCommitPipeline = name
 			break
 		}
