@@ -25,6 +25,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	dnfjson_mock "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/ostree/mock_ostree_repo"
 	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
@@ -879,6 +880,13 @@ func TestNewBlueprintsUndo(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
+	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
+	ostreeRepoDefault := mock_ostree_repo.Setup(test_distro.New().OSTreeRef())
+	defer ostreeRepoDefault.TearDown()
+	otherRef := "some/other/ref"
+	ostreeRepoOther := mock_ostree_repo.Setup(otherRef)
+	defer ostreeRepoOther.TearDown()
+
 	arch, err := test_distro.New().GetArch(test_distro.TestArchName)
 	require.NoError(t, err)
 	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
@@ -886,15 +894,20 @@ func TestCompose(t *testing.T) {
 	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	require.NoError(t, err)
 
-	mf, err := manifest.Serialize(nil, nil, nil)
+	rPkgs, rContainers, rCommits := test_distro.ResolveContent(manifest.Content.PackageSets, manifest.Content.Containers, manifest.Content.OSTreeCommits)
+
+	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits)
 	require.NoError(t, err)
 
 	ostreeImgType, err := arch.GetImageType(test_distro.TestImageTypeOSTree)
 	require.NoError(t, err)
-	ostreeManifest, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
+	ostreeOptions := ostree.ImageOptions{URL: ostreeRepoDefault.Server.URL}
+	ostreeManifest, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{OSTree: &ostreeOptions}, nil, 0)
 	require.NoError(t, err)
 
-	omf, err := ostreeManifest.Serialize(nil, nil, nil)
+	rPkgs, rContainers, rCommits = test_distro.ResolveContent(ostreeManifest.Content.PackageSets, ostreeManifest.Content.Containers, ostreeManifest.Content.OSTreeCommits)
+
+	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{
@@ -996,6 +1009,42 @@ func TestCompose(t *testing.T) {
 		Packages: dnfjson_mock.BaseDeps(),
 	}
 
+	ostreeOptionsOther := ostree.ImageOptions{ImageRef: otherRef, URL: ostreeRepoOther.Server.URL}
+	ostreeManifestOther, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{OSTree: &ostreeOptionsOther}, nil, 0)
+	require.NoError(t, err)
+
+	rPkgs, rContainers, rCommits = test_distro.ResolveContent(ostreeManifestOther.Content.PackageSets, ostreeManifestOther.Content.Containers, ostreeManifestOther.Content.OSTreeCommits)
+
+	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits)
+	require.NoError(t, err)
+	expectedComposeOSTreeOther := &store.Compose{
+		Blueprint: &blueprint.Blueprint{
+			Name:           "test",
+			Version:        "0.0.0",
+			Packages:       []blueprint.Package{},
+			Modules:        []blueprint.Package{},
+			Groups:         []blueprint.Group{},
+			Customizations: nil,
+		},
+		ImageBuild: store.ImageBuild{
+			QueueStatus: common.IBWaiting,
+			ImageType:   ostreeImgType,
+			Manifest:    omfo,
+			Targets: []*target.Target{
+				{
+					ImageName: ostreeImgType.Filename(),
+					OsbuildArtifact: target.OsbuildArtifact{
+						ExportFilename: ostreeImgType.Filename(),
+						ExportName:     ostreeImgType.Exports()[0],
+					},
+					Name:    target.TargetNameWorkerServer,
+					Options: &target.WorkerServerTargetOptions{},
+				},
+			},
+		},
+		Packages: dnfjson_mock.BaseDeps(),
+	}
+
 	// For 2nd distribution
 	arch2, err := test_distro.New2().GetArch(test_distro.TestArchName)
 	require.NoError(t, err)
@@ -1004,7 +1053,8 @@ func TestCompose(t *testing.T) {
 	manifest2, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	require.NoError(t, err)
 
-	mf2, err := manifest2.Serialize(nil, nil, nil)
+	rPkgs, rContainers, rCommits = test_distro.ResolveContent(manifest2.Content.PackageSets, manifest2.Content.Containers, manifest2.Content.OSTreeCommits)
+	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits)
 	require.NoError(t, err)
 
 	expectedComposeGoodDistro := &store.Compose{
@@ -1036,13 +1086,7 @@ func TestCompose(t *testing.T) {
 		Packages: dnfjson_mock.BaseDeps(),
 	}
 
-	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
-	ostreeRepoDefault := mock_ostree_repo.Setup(test_distro.New().OSTreeRef())
-	defer ostreeRepoDefault.TearDown()
-	ostreeRepoOther := mock_ostree_repo.Setup("some/other/ref")
-	defer ostreeRepoOther.TearDown()
-
-	var cases = []struct {
+	var cases = map[string]struct {
 		External        bool
 		Method          string
 		Path            string
@@ -1052,7 +1096,7 @@ func TestCompose(t *testing.T) {
 		ExpectedCompose *store.Compose
 		IgnoreFields    []string
 	}{
-		{
+		"bad-request": {
 			true,
 			"POST",
 			"/api/v0/compose",
@@ -1062,7 +1106,7 @@ func TestCompose(t *testing.T) {
 			nil,
 			[]string{"build_id", "warnings"},
 		},
-		{
+		"local": {
 			false,
 			"POST",
 			"/api/v0/compose",
@@ -1072,7 +1116,7 @@ func TestCompose(t *testing.T) {
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
 		},
-		{
+		"aws": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1082,7 +1126,7 @@ func TestCompose(t *testing.T) {
 			expectedComposeLocalAndAws,
 			[]string{"build_id", "warnings"},
 		},
-		{
+		"good-distro": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1092,7 +1136,7 @@ func TestCompose(t *testing.T) {
 			expectedComposeGoodDistro,
 			[]string{"build_id", "warnings"},
 		},
-		{
+		"unknown-distro": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1102,7 +1146,7 @@ func TestCompose(t *testing.T) {
 			nil,
 			[]string{"build_id", "warnings"},
 		},
-		{
+		"imaginary": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1115,7 +1159,7 @@ func TestCompose(t *testing.T) {
 
 		// === OSTree params ===
 		// Ref + Parent = error (parent without URL)
-		{
+		"ostree-no-url": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1126,18 +1170,18 @@ func TestCompose(t *testing.T) {
 			[]string{"build_id", "warnings"},
 		},
 		// Valid Ref + URL = OK
-		{
+		"ostree-valid": {
 			false,
 			"POST",
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"","url":"%s"}}`, test_distro.TestImageTypeOSTree, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL),
 			http.StatusOK,
 			`{"status": true}`,
-			expectedComposeOSTree,
+			expectedComposeOSTreeOther,
 			[]string{"build_id", "warnings"},
 		},
 		// Ref + invalid URL = error
-		{
+		"ostree-invalid-url": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1148,7 +1192,7 @@ func TestCompose(t *testing.T) {
 			[]string{"build_id", "warnings"},
 		},
 		// Bad Ref + URL = error
-		{
+		"ostree-bad-ref": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1159,7 +1203,7 @@ func TestCompose(t *testing.T) {
 			[]string{"build_id", "warnings"},
 		},
 		// Incorrect Ref + URL = the parameters are okay, but the ostree repo returns 404
-		{
+		"ostree-404": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1170,18 +1214,18 @@ func TestCompose(t *testing.T) {
 			[]string{"build_id", "warnings"},
 		},
 		// Ref + Parent + URL = OK
-		{
+		"ostree-all-params": {
 			false,
 			"POST",
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"%s","parent":"%s","url":"%s"}}`, test_distro.TestImageTypeOSTree, "the/new/ref", ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL),
 			http.StatusOK,
 			`{"status":true}`,
-			expectedComposeOSTree,
+			expectedComposeOSTreeOther,
 			[]string{"build_id", "warnings"},
 		},
 		// Parent + URL = OK
-		{
+		"ostree-parent-url": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1192,7 +1236,7 @@ func TestCompose(t *testing.T) {
 			[]string{"build_id", "warnings"},
 		},
 		// URL only = OK (uses default ref, so we need to specify URL for ostree repo with default ref)
-		{
+		"ostree-url-only": {
 			false,
 			"POST",
 			"/api/v1/compose",
@@ -1205,7 +1249,7 @@ func TestCompose(t *testing.T) {
 	}
 
 	tempdir := t.TempDir()
-	for _, c := range cases {
+	for name, c := range cases {
 		api, s := createWeldrAPI(tempdir, rpmmd_mock.NoComposesFixture)
 		test.TestRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 
@@ -1215,7 +1259,7 @@ func TestCompose(t *testing.T) {
 
 		composes := s.GetAllComposes()
 
-		require.Equalf(t, 1, len(composes), "%s: bad compose count in store", c.Path)
+		require.Equalf(t, 1, len(composes), "%s: %s: bad compose count in store", name, c.Path)
 
 		// I have no idea how to get the compose in better way
 		var composeStruct store.Compose
@@ -1224,10 +1268,10 @@ func TestCompose(t *testing.T) {
 			break
 		}
 
-		require.NotNilf(t, composeStruct.ImageBuild.Manifest, "%s: the compose in the store did not contain a blueprint", c.Path)
+		require.NotNilf(t, composeStruct.ImageBuild.Manifest, "%s: %s: the compose in the store did not contain a blueprint", name, c.Path)
 
 		if diff := cmp.Diff(composeStruct, *c.ExpectedCompose, test.IgnoreDates(), test.IgnoreUuids(), test.Ignore("Targets.Options.Location"), test.CompareImageTypes()); diff != "" {
-			t.Errorf("%s: compose in store isn't the same as expected, diff:\n%s", c.Path, diff)
+			t.Errorf("%s: %s: compose in store isn't the same as expected, diff:\n%s", name, c.Path, diff)
 		}
 	}
 }
@@ -1326,6 +1370,7 @@ func TestComposeLogs(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{}}`
 	var successCases = []struct {
 		Path                       string
 		ExpectedContentDisposition string
@@ -1335,10 +1380,10 @@ func TestComposeLogs(t *testing.T) {
 	}{
 		{"/api/v0/compose/logs/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002-logs.tar", "application/x-tar", "logs/osbuild.log", "The compose result is empty.\n"},
 		{"/api/v1/compose/logs/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002-logs.tar", "application/x-tar", "logs/osbuild.log", "The compose result is empty.\n"},
-		{"/api/v0/compose/metadata/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002-metadata.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", `{"version":"2","pipelines":[],"sources":{}}`},
-		{"/api/v1/compose/metadata/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002-metadata.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", `{"version":"2","pipelines":[],"sources":{}}`},
-		{"/api/v0/compose/results/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", `{"version":"2","pipelines":[],"sources":{}}`},
-		{"/api/v1/compose/results/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", `{"version":"2","pipelines":[],"sources":{}}`},
+		{"/api/v0/compose/metadata/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002-metadata.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", emptyManifest},
+		{"/api/v1/compose/metadata/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002-metadata.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", emptyManifest},
+		{"/api/v0/compose/results/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", emptyManifest},
+		{"/api/v1/compose/results/30000000-0000-0000-0000-000000000002", "attachment; filename=30000000-0000-0000-0000-000000000002.tar", "application/x-tar", "30000000-0000-0000-0000-000000000002.json", emptyManifest},
 	}
 
 	tempdir := t.TempDir()
@@ -1998,7 +2043,8 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
 	require.NoError(t, err)
 
-	mf, err := manifest.Serialize(nil, nil, nil)
+	rPkgs, rContainers, rCommits := test_distro.ResolveContent(manifest.Content.PackageSets, manifest.Content.Containers, manifest.Content.OSTreeCommits)
+	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{

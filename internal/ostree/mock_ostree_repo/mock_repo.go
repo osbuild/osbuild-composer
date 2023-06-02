@@ -1,6 +1,7 @@
 package mock_ostree_repo
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -23,15 +24,17 @@ func Setup(ref string) *OSTreeTestRepo {
 	repo.OSTreeRef = ref
 
 	mux := http.NewServeMux()
+	repo.Server = httptest.NewServer(mux)
+
+	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(repo.Server.URL+ref)))
+	fmt.Printf("Creating repo with %s %s %s\n", ref, repo.Server.URL, checksum)
 	mux.HandleFunc("/refs/heads/"+ref, func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "02604b2da6e954bd34b8b82a835e5a77d2b60ffa")
+		fmt.Fprint(w, checksum)
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// catch-all handler, return 404
 		http.NotFound(w, r)
 	})
-
-	repo.Server = httptest.NewServer(mux)
 
 	return repo
 }

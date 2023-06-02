@@ -323,6 +323,8 @@ func TestKojiCompose(t *testing.T) {
 		},
 	}
 
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"":{"url":""}}}}}`
+	expectedManifests := `{"manifests":[` + emptyManifest + `,` + emptyManifest + `],"kind":"ComposeManifests"}`
 	for idx, c := range cases {
 		name, version, release := "foo", "1", "2"
 		t.Run(fmt.Sprintf("Test case #%d", idx), func(t *testing.T) {
@@ -459,7 +461,7 @@ func TestKojiCompose(t *testing.T) {
 			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", finalizeID), ``, http.StatusOK, c.composeStatus, `href`, `id`)
 
 			// get the manifests
-			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", finalizeID), ``, http.StatusOK, `{"manifests":[{"version":"2","pipelines":[],"sources":{}},{"version":"2","pipelines":[],"sources":{}}],"kind":"ComposeManifests"}`, `href`, `id`)
+			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", finalizeID), ``, http.StatusOK, expectedManifests, `href`, `id`)
 
 			// get the logs
 			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", finalizeID), ``, http.StatusOK, `{"kind":"ComposeLogs"}`, `koji`, `image_builds`, `href`, `id`)
