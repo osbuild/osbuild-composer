@@ -158,7 +158,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			return
 		}
 
-		packageSpecs, err := depsolve(cacheDir, manifest.Content.PackageSets, distribution, archName)
+		packageSpecs, err := depsolve(cacheDir, manifest.GetPackageSetChains(), distribution, archName)
 		if err != nil {
 			err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
 			return
@@ -172,12 +172,12 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			bp = blueprint.Blueprint(*cr.Blueprint)
 		}
 
-		containerSpecs, err := resolvePipelineContainers(manifest.Content.Containers, archName)
+		containerSpecs, err := resolvePipelineContainers(manifest.GetContainerSourceSpecs(), archName)
 		if err != nil {
 			return fmt.Errorf("[%s] container resolution failed: %s", filename, err.Error())
 		}
 
-		commitSpecs := resolvePipelineCommits(manifest.Content.OSTreeCommits)
+		commitSpecs := resolvePipelineCommits(manifest.GetOSTreeSourceSpecs())
 
 		mf, err := manifest.Serialize(packageSpecs, containerSpecs, commitSpecs)
 		if err != nil {

@@ -48,34 +48,14 @@ func (m *OSBuildManifest) UnmarshalJSON(payload []byte) error {
 }
 
 // Manifest represents a manifest initialised with all the information required
-// to generate the pipelines but no content. The content included in the
-// Content field must be resolved before serializing.
+// to generate the pipelines but no content. The content type sources
+// (PackageSetChains, ContainerSourceSpecs, OSTreeSourceSpecs) must be
+// retrieved through their corresponding Getters and resolved before
+// serializing.
 type Manifest struct {
 
 	// pipelines describe the build process for an image.
 	pipelines []Pipeline
-
-	// Content for the image that will be built by the Manifest. Each content
-	// type should be resolved before passing to the Serialize method.
-	Content Content
-}
-
-// Content for the image that will be built by the Manifest. Each content type
-// should be resolved before passing to the Serialize method.
-type Content struct {
-	// PackageSets are sequences of package sets, each set consisting of a list
-	// of package names to include and exclude and a set of repositories to use
-	// for resolving. Package set sequences (chains) should be depsolved in
-	// separately and the result combined. Package set sequences (chains) are
-	// keyed by the name of the Pipeline that will install them.
-	PackageSets map[string][]rpmmd.PackageSet
-
-	// Containers are source specifications for containers to embed in the image.
-	Containers map[string][]container.SourceSpec
-
-	// OSTreeCommits are source specifications for ostree commits to embed in
-	// the image or use as parent commits when building a new one.
-	OSTreeCommits map[string][]ostree.SourceSpec
 }
 
 func New() Manifest {
