@@ -201,7 +201,7 @@ func main() {
 	}
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-	for name, pkgSet := range manifest.Content.PackageSets {
+	for name, pkgSet := range manifest.GetPackageSetChains() {
 		res, err := solver.Depsolve(pkgSet)
 		if err != nil {
 			panic("Could not depsolve: " + err.Error())
@@ -209,8 +209,9 @@ func main() {
 		depsolvedSets[name] = res
 	}
 
-	containers := make(map[string][]container.Spec, len(manifest.Content.Containers))
-	for name, sourceSpecs := range manifest.Content.Containers {
+	containerSources := manifest.GetContainerSourceSpecs()
+	containers := make(map[string][]container.Spec, len(containerSources))
+	for name, sourceSpecs := range containerSources {
 		containerSpecs, err := resolveContainers(sourceSpecs, arch.Name())
 		if err != nil {
 			panic("Could not resolve containers: " + err.Error())
@@ -219,8 +220,9 @@ func main() {
 	}
 
 	// "resolve" ostree commits by copying the source specs into commit specs
-	commits := make(map[string][]ostree.CommitSpec, len(manifest.Content.OSTreeCommits))
-	for name, commitSources := range manifest.Content.OSTreeCommits {
+	commitSources := manifest.GetOSTreeSourceSpecs()
+	commits := make(map[string][]ostree.CommitSpec, len(commitSources))
+	for name, commitSources := range commitSources {
 		commitSpecs := make([]ostree.CommitSpec, len(commitSources))
 		for idx, commitSource := range commitSources {
 			commitSpecs[idx] = ostree.CommitSpec{

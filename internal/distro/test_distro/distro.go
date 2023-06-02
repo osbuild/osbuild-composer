@@ -284,10 +284,6 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 	manifest.NewContentTest(m, buildPkgsKey, buildPackages, nil, nil)
 	manifest.NewContentTest(m, osPkgsKey, osPackages, nil, ostreeSources)
 
-	m.Content.PackageSets = m.GetPackageSetChains()
-	m.Content.Containers = m.GetContainerSourceSpecs()
-	m.Content.OSTreeCommits = m.GetOSTreeSourceSpecs()
-
 	return m, nil, nil
 }
 

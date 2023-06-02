@@ -254,10 +254,6 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		return nil, nil, err
 	}
 
-	manifest.Content.PackageSets = manifest.GetPackageSetChains()
-	manifest.Content.Containers = manifest.GetContainerSourceSpecs()
-	manifest.Content.OSTreeCommits = manifest.GetOSTreeSourceSpecs()
-
 	return &manifest, warnings, err
 }
 
