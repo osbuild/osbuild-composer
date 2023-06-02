@@ -585,19 +585,16 @@ func TestComposeStatusSuccess(t *testing.T) {
 		]
 	}`, jobId, jobId))
 
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"":{"url":""}}}}}`
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
 		"href": "/api/image-builder-composer/v2/composes/%v/manifests",
 		"id": "%v",
 		"kind": "ComposeManifests",
 		"manifests": [
-			{
-				"version": "2",
-				"pipelines": [],
-				"sources": {}
-			}
+			%s
 		]
-	}`, jobId, jobId), "details")
+	}`, jobId, jobId, emptyManifest), "details")
 }
 
 func TestComposeStatusFailure(t *testing.T) {

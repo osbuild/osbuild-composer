@@ -145,9 +145,10 @@ func TestCreate(t *testing.T) {
 	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
 
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{}}`
 	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs",
 		fmt.Sprintf(`{"types":["%s"],"arch":"%s"}`, worker.JobTypeOSBuild, test_distro.TestArchName), http.StatusCreated,
-		fmt.Sprintf(`{"kind":"RequestJob","href":"/api/worker/v1/jobs","type":"%s","args":{"manifest":{"version":"2","pipelines":[],"sources":{}}}}`, worker.JobTypeOSBuild), "id", "location", "artifact_location")
+		fmt.Sprintf(`{"kind":"RequestJob","href":"/api/worker/v1/jobs","type":"%s","args":{"manifest":`+emptyManifest+`}}`, worker.JobTypeOSBuild), "id", "location", "artifact_location")
 }
 
 func TestCancel(t *testing.T) {
