@@ -122,31 +122,42 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
-
 	dependencies := []uuid.UUID{depsolveJobID}
-	var containerResolveJob uuid.UUID
-	if len(bp.Containers) > 0 {
+
+	var containerResolveJobID uuid.UUID
+	containerSources := manifestSource.Content.Containers
+	if len(containerSources) > 1 {
+		// only one pipeline can embed containers
+		pipelines := make([]string, 0, len(containerSources))
+		for name := range containerSources {
+			pipelines = append(pipelines, name)
+		}
+		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with containers (at most 1 is supported): %s", len(containerSources), strings.Join(pipelines, ", ")))
+	}
+
+	for _, sources := range containerSources {
+		workerResolveSpecs := make([]worker.ContainerSpec, len(sources))
+		for idx, source := range sources {
+			workerResolveSpecs[idx] = worker.ContainerSpec{
+				Source:    source.Source,
+				Name:      source.Name,
+				TLSVerify: source.TLSVerify,
+			}
+		}
+
 		job := worker.ContainerResolveJob{
 			Arch:  ir.arch.Name(),
 			Specs: make([]worker.ContainerSpec, len(bp.Containers)),
 		}
 
-		for i, c := range bp.Containers {
-			job.Specs[i] = worker.ContainerSpec{
-				Source:    c.Source,
-				Name:      c.Name,
-				TLSVerify: c.TLSVerify,
-			}
-		}
-
 		jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
-
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
 
-		containerResolveJob = jobId
-		dependencies = append(dependencies, jobId)
+		containerResolveJobID = jobId
+		dependencies = append(dependencies, containerResolveJobID)
+		break // there can be only one
 	}
 
 	var ostreeResolveJobID uuid.UUID
@@ -193,7 +204,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, &bp)
+		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, &bp)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -231,31 +242,42 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
-
-		var containerResolveJob uuid.UUID
 		dependencies := []uuid.UUID{depsolveJobID}
-		if len(bp.Containers) > 0 {
+
+		var containerResolveJobID uuid.UUID
+		containerSources := manifestSource.Content.Containers
+		if len(containerSources) > 1 {
+			// only one pipeline can embed containers
+			pipelines := make([]string, 0, len(containerSources))
+			for name := range containerSources {
+				pipelines = append(pipelines, name)
+			}
+			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with containers (at most 1 is supported): %s", len(containerSources), strings.Join(pipelines, ", ")))
+		}
+
+		for _, sources := range containerSources {
+			workerResolveSpecs := make([]worker.ContainerSpec, len(sources))
+			for idx, source := range sources {
+				workerResolveSpecs[idx] = worker.ContainerSpec{
+					Source:    source.Source,
+					Name:      source.Name,
+					TLSVerify: source.TLSVerify,
+				}
+			}
+
 			job := worker.ContainerResolveJob{
 				Arch:  ir.arch.Name(),
 				Specs: make([]worker.ContainerSpec, len(bp.Containers)),
 			}
 
-			for i, c := range bp.Containers {
-				job.Specs[i] = worker.ContainerSpec{
-					Source:    c.Source,
-					Name:      c.Name,
-					TLSVerify: c.TLSVerify,
-				}
-			}
-
 			jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
-
 			if err != nil {
 				return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 			}
 
-			containerResolveJob = jobId
-			dependencies = append(dependencies, jobId)
+			containerResolveJobID = jobId
+			dependencies = append(dependencies, containerResolveJobID)
+			break // there can be only one
 		}
 
 		var ostreeResolveJobID uuid.UUID
@@ -328,7 +350,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJob, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, &bp)
+			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, &bp)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
@@ -433,11 +455,17 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		return
 	}
 
-	var containerSpecs []container.Spec
+	manifest, _, err := imageType.Manifest(b, options, repos, seed)
+	if err != nil {
+		reason := "Error generating manifest"
+		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)
+		return
+	}
+
+	var containerSpecs map[string][]container.Spec
 	if containerResolveJobID != uuid.Nil {
 		// Container resolve job
 		var result worker.ContainerResolveJobResult
-
 		_, err := workers.ContainerResolveJobInfo(containerResolveJobID, &result)
 
 		if err != nil {
@@ -451,23 +479,30 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 			return
 		}
 
-		containerSpecs = make([]container.Spec, len(result.Specs))
-
-		for i, s := range result.Specs {
-			containerSpecs[i].Source = s.Source
-			containerSpecs[i].Digest = s.Digest
-			containerSpecs[i].LocalName = s.Name
-			containerSpecs[i].TLSVerify = s.TLSVerify
-			containerSpecs[i].ImageID = s.ImageID
-			containerSpecs[i].ListDigest = s.ListDigest
+		// NOTE: The container resolve job doesn't hold the pipeline name for
+		// the container embedding, so we need to get it from the manifest
+		// content field. There should be only one.
+		var containerEmbedPipeline string
+		for name := range manifest.Content.Containers {
+			containerEmbedPipeline = name
+			break
 		}
-	}
 
-	manifest, _, err := imageType.Manifest(b, options, repos, seed)
-	if err != nil {
-		reason := "Error generating manifest"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)
-		return
+		pipelineSpecs := make([]container.Spec, len(result.Specs))
+		for idx, resultSpec := range result.Specs {
+			pipelineSpecs[idx] = container.Spec{
+				Source:     resultSpec.Source,
+				Digest:     resultSpec.Digest,
+				LocalName:  resultSpec.Name,
+				TLSVerify:  resultSpec.TLSVerify,
+				ImageID:    resultSpec.ImageID,
+				ListDigest: resultSpec.ListDigest,
+			}
+
+		}
+		containerSpecs = map[string][]container.Spec{
+			containerEmbedPipeline: pipelineSpecs,
+		}
 	}
 
 	var ostreeCommitSpecs map[string][]ostree.CommitSpec
@@ -509,20 +544,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		}
 	}
 
-	// NOTE: This assumes that containers are only embedded in the first
-	// payload pipeline, which is currently true for all image types but might
-	// not necessarily be in the future. This is a workaround required for this
-	// temporary state where the cloud API is not using the new manifest
-	// generation procedure. Once it's updated, the container specs will be
-	// mapped to pipeline names properly by the image type itself.
-	var payloadPipelineName string
-	if pipelineNames := imageType.PayloadPipelines(); len(pipelineNames) > 0 {
-		payloadPipelineName = pipelineNames[0]
-	} else {
-		panic(fmt.Sprintf("ImageType %q does not define payload pipelines - this is a programming error", imageType.Name()))
-	}
-	// TODO: resolve ostree source spec from manifest content and pass here.
-	ms, err := manifest.Serialize(depsolveResults.PackageSpecs, map[string][]container.Spec{payloadPipelineName: containerSpecs}, ostreeCommitSpecs)
+	ms, err := manifest.Serialize(depsolveResults.PackageSpecs, containerSpecs, ostreeCommitSpecs)
 
 	jobResult.Manifest = ms
 }
