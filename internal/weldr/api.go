@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	errors_package "errors"
@@ -2342,7 +2343,7 @@ func (api *API) resolveOSTreeCommits(sourceSpecs map[string][]ostree.SourceSpec,
 		for idx, source := range sources {
 			var ref, checksum string
 			if test {
-				checksum = "02604b2da6e954bd34b8b82a835e5a77d2b60ffa"
+				checksum = fmt.Sprintf("%x", sha256.Sum256([]byte(source.URL+source.Ref)))
 				ref = source.Ref
 			} else {
 				var err error
