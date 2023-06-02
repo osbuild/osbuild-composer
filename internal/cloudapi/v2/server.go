@@ -24,9 +24,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/container"
 	"github.com/osbuild/osbuild-composer/internal/distro"
 	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -204,7 +204,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, &bp)
+		serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, manifestSeed)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -350,7 +350,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			generateManifest(s.goroutinesCtx, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.imageType, ir.repositories, ir.imageOptions, manifestSeed, &bp)
+			serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, manifestSeed)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
@@ -371,7 +371,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
-func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, imageType distro.ImageType, repos []rpmmd.RepoConfig, options distro.ImageOptions, seed int64, b *blueprint.Blueprint) {
+func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, seed int64) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*5)
 	defer cancel()
 
@@ -455,13 +455,6 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		return
 	}
 
-	manifest, _, err := imageType.Manifest(b, options, repos, seed)
-	if err != nil {
-		reason := "Error generating manifest"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)
-		return
-	}
-
 	var containerSpecs map[string][]container.Spec
 	if containerResolveJobID != uuid.Nil {
 		// Container resolve job
@@ -483,7 +476,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		// the container embedding, so we need to get it from the manifest
 		// content field. There should be only one.
 		var containerEmbedPipeline string
-		for name := range manifest.Content.Containers {
+		for name := range manifestSource.Content.Containers {
 			containerEmbedPipeline = name
 			break
 		}
@@ -526,7 +519,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		// ostree commits, so we need to get it from the manifest content
 		// field. There should be only one.
 		var ostreeCommitPipeline string
-		for name := range manifest.Content.OSTreeCommits {
+		for name := range manifestSource.Content.OSTreeCommits {
 			ostreeCommitPipeline = name
 			break
 		}
@@ -544,7 +537,7 @@ func generateManifest(ctx context.Context, workers *worker.Server, depsolveJobID
 		}
 	}
 
-	ms, err := manifest.Serialize(depsolveResults.PackageSpecs, containerSpecs, ostreeCommitSpecs)
+	ms, err := manifestSource.Serialize(depsolveResults.PackageSpecs, containerSpecs, ostreeCommitSpecs)
 
 	jobResult.Manifest = ms
 }
