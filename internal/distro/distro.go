@@ -1,8 +1,6 @@
 package distro
 
 import (
-	"fmt"
-
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/disk"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
@@ -160,60 +158,4 @@ func ExportsFallback() []string {
 
 func PayloadPackageSets() []string {
 	return []string{}
-}
-
-func MakePackageSetChains(t ImageType, packageSets map[string]rpmmd.PackageSet, repos []rpmmd.RepoConfig) map[string][]rpmmd.PackageSet {
-	allSetNames := make([]string, len(packageSets))
-	idx := 0
-	for setName := range packageSets {
-		allSetNames[idx] = setName
-		idx++
-	}
-
-	// map repository PackageSets to the list of repo configs
-	packageSetsRepos := make(map[string][]rpmmd.RepoConfig)
-	for idx := range repos {
-		repo := repos[idx]
-		if len(repo.PackageSets) == 0 {
-			// repos that don't specify package sets get used everywhere
-			repo.PackageSets = allSetNames
-		}
-		for _, name := range repo.PackageSets {
-			psRepos := packageSetsRepos[name]
-			psRepos = append(psRepos, repo)
-			packageSetsRepos[name] = psRepos
-		}
-	}
-
-	chainedSets := make(map[string][]rpmmd.PackageSet)
-	addedSets := make(map[string]bool)
-	// first collect package sets that are part of a chain
-	for specName, setNames := range t.PackageSetsChains() {
-		pkgSets := make([]rpmmd.PackageSet, len(setNames))
-
-		// add package-set-specific repositories to each set if one is defined
-		for idx, pkgSetName := range setNames {
-			pkgSet, ok := packageSets[pkgSetName]
-			if !ok {
-				panic(fmt.Sprintf("image type %q specifies chained package set %q but no package set with that name exists", t.Name(), pkgSetName))
-			}
-			pkgSet.Repositories = packageSetsRepos[pkgSetName]
-			pkgSets[idx] = pkgSet
-			addedSets[pkgSetName] = true
-		}
-		chainedSets[specName] = pkgSets
-	}
-
-	// add the rest of the package sets
-	for name, pkgSet := range packageSets {
-		if addedSets[name] {
-			// already added
-			continue
-		}
-		pkgSet.Repositories = packageSetsRepos[name]
-		chainedSets[name] = []rpmmd.PackageSet{pkgSet}
-		addedSets[name] = true // NOTE: not really necessary but good book-keeping in case this function gets expanded
-	}
-
-	return chainedSets
 }
