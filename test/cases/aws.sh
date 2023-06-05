@@ -114,14 +114,8 @@ EOF
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "bash"
-description = "A base system with bash"
+description = "A base system"
 version = "0.0.1"
-
-[[packages]]
-name = "bash"
-
-[customizations.services]
-enabled = ["sshd", "cloud-init", "cloud-init-local", "cloud-config", "cloud-final"]
 EOF
 
 # Prepare the blueprint for the compose.
