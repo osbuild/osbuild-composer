@@ -100,7 +100,7 @@ func (p *CoreOSInstaller) getBootPackages() []string {
 	return packages
 }
 
-func (p *CoreOSInstaller) getBuildPackages() []string {
+func (p *CoreOSInstaller) getBuildPackages(Distro) []string {
 	packages := p.getBootPackages()
 	packages = append(packages,
 		"rpm",
@@ -109,7 +109,7 @@ func (p *CoreOSInstaller) getBuildPackages() []string {
 	return packages
 }
 
-func (p *CoreOSInstaller) getPackageSetChain() []rpmmd.PackageSet {
+func (p *CoreOSInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := p.getBootPackages()
 	return []rpmmd.PackageSet{
 		{

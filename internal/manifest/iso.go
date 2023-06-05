@@ -31,7 +31,7 @@ func NewISO(m *Manifest,
 	return p
 }
 
-func (p *ISO) getBuildPackages() []string {
+func (p *ISO) getBuildPackages(Distro) []string {
 	return []string{
 		"isomd5sum",
 		"xorriso",

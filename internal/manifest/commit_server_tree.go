@@ -61,7 +61,7 @@ func NewOSTreeCommitServer(m *Manifest,
 	return p
 }
 
-func (p *OSTreeCommitServer) getPackageSetChain() []rpmmd.PackageSet {
+func (p *OSTreeCommitServer) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	// FIXME: container package is defined here
 	packages := []string{"nginx"}
 	return []rpmmd.PackageSet{
@@ -72,7 +72,7 @@ func (p *OSTreeCommitServer) getPackageSetChain() []rpmmd.PackageSet {
 	}
 }
 
-func (p *OSTreeCommitServer) getBuildPackages() []string {
+func (p *OSTreeCommitServer) getBuildPackages(Distro) []string {
 	packages := []string{
 		"rpm",
 		"rpm-ostree",

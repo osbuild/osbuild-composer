@@ -50,7 +50,7 @@ func (p *OCIContainer) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func (p *OCIContainer) getBuildPackages() []string {
+func (p *OCIContainer) getBuildPackages(Distro) []string {
 	return []string{"tar"}
 }
 

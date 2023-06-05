@@ -53,7 +53,7 @@ func (p *Tar) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func (p *Tar) getBuildPackages() []string {
+func (p *Tar) getBuildPackages(Distro) []string {
 	return []string{"tar"}
 }
 

@@ -125,7 +125,7 @@ func TestSubscriptionManagerPackages(t *testing.T) {
 		BaseUrl:       "http://cdn.redhat.com/",
 	}
 
-	CheckPkgSetInclude(t, os.getPackageSetChain(), []string{"subscription-manager"})
+	CheckPkgSetInclude(t, os.getPackageSetChain(DISTRO_NULL), []string{"subscription-manager"})
 }
 
 func TestSubscriptionManagerInsightsPackages(t *testing.T) {
@@ -137,7 +137,7 @@ func TestSubscriptionManagerInsightsPackages(t *testing.T) {
 		BaseUrl:       "http://cdn.redhat.com/",
 		Insights:      true,
 	}
-	CheckPkgSetInclude(t, os.getPackageSetChain(), []string{"subscription-manager", "insights-client"})
+	CheckPkgSetInclude(t, os.getPackageSetChain(DISTRO_NULL), []string{"subscription-manager", "insights-client"})
 }
 
 func TestRhcInsightsPackages(t *testing.T) {
@@ -150,5 +150,5 @@ func TestRhcInsightsPackages(t *testing.T) {
 		Insights:      false,
 		Rhc:           true,
 	}
-	CheckPkgSetInclude(t, os.getPackageSetChain(), []string{"rhc", "subscription-manager", "insights-client"})
+	CheckPkgSetInclude(t, os.getPackageSetChain(DISTRO_NULL), []string{"rhc", "subscription-manager", "insights-client"})
 }

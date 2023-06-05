@@ -73,7 +73,7 @@ func NewOSTreeDeployment(m *Manifest,
 	return p
 }
 
-func (p *OSTreeDeployment) getBuildPackages() []string {
+func (p *OSTreeDeployment) getBuildPackages(Distro) []string {
 	packages := []string{
 		"rpm-ostree",
 	}

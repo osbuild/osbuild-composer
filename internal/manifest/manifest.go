@@ -30,6 +30,16 @@ const (
 	ARCH_PPC64LE
 )
 
+type Distro uint64
+
+const (
+	DISTRO_NULL = iota
+	DISTRO_EL9
+	DISTRO_EL8
+	DISTRO_EL7
+	DISTRO_FEDORA
+)
+
 // An OSBuildManifest is an opaque JSON object, which is a valid input to osbuild
 type OSBuildManifest []byte
 
@@ -56,11 +66,17 @@ type Manifest struct {
 
 	// pipelines describe the build process for an image.
 	pipelines []Pipeline
+
+	// Distro defines the distribution of the image that this manifest will
+	// generate. It is used for determining package names that differ between
+	// different distributions and version.
+	Distro Distro
 }
 
 func New() Manifest {
 	return Manifest{
 		pipelines: make([]Pipeline, 0),
+		Distro:    DISTRO_NULL,
 	}
 }
 
@@ -73,11 +89,13 @@ func (m *Manifest) addPipeline(p Pipeline) {
 	m.pipelines = append(m.pipelines, p)
 }
 
+type PackageSelector func([]rpmmd.PackageSet) []rpmmd.PackageSet
+
 func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
 	chains := make(map[string][]rpmmd.PackageSet)
 
 	for _, pipeline := range m.pipelines {
-		if chain := pipeline.getPackageSetChain(); chain != nil {
+		if chain := pipeline.getPackageSetChain(m.Distro); chain != nil {
 			chains[pipeline.Name()] = chain
 		}
 	}

@@ -48,7 +48,7 @@ func (p *QCOW2) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func (p *QCOW2) getBuildPackages() []string {
+func (p *QCOW2) getBuildPackages(Distro) []string {
 	return []string{"qemu-img"}
 }
 

@@ -32,8 +32,8 @@ func NewRawImage(m *Manifest,
 	return p
 }
 
-func (p *RawImage) getBuildPackages() []string {
-	pkgs := p.treePipeline.getBuildPackages()
+func (p *RawImage) getBuildPackages(d Distro) []string {
+	pkgs := p.treePipeline.getBuildPackages(d)
 	if p.PartTool == osbuild.PTSgdisk {
 		pkgs = append(pkgs, "gdisk")
 	}
