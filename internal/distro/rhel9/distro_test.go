@@ -625,6 +625,10 @@ func TestRhel9_KernelOption(t *testing.T) {
 	distro_test_common.TestDistro_KernelOption(t, rhel9.New())
 }
 
+func TestRhel9_OSTreeOptions(t *testing.T) {
+	distro_test_common.TestDistro_OSTreeOptions(t, rhel9.New())
+}
+
 func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 	r9distro := rhel9.New()
 	bp := blueprint.Blueprint{
