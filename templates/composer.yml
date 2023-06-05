@@ -164,9 +164,9 @@ objects:
           resources:
             requests:
               cpu: "${FLUENTD_CPU_REQUEST}"
-              memory: "${FLUENTD_MEMORY_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
             limits:
-              cpu: "${CPU_LIMIT}"
+              cpu: "${FLUENTD_CPU_LIMIT}"
               memory: "${MEMORY_LIMIT}"
           env:
           - name: PGHOST
