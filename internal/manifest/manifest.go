@@ -56,6 +56,12 @@ type Manifest struct {
 
 	// pipelines describe the build process for an image.
 	pipelines []Pipeline
+
+	// PackageSelector replaces package names in a package set with their
+	// counterparts for a specific distribution version.
+	// TODO: The function should instead select packages based on the image
+	// configuration.
+	PackageSelector PackageSelector
 }
 
 func New() Manifest {
@@ -73,11 +79,16 @@ func (m *Manifest) addPipeline(p Pipeline) {
 	m.pipelines = append(m.pipelines, p)
 }
 
+type PackageSelector func([]rpmmd.PackageSet) []rpmmd.PackageSet
+
 func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
 	chains := make(map[string][]rpmmd.PackageSet)
 
 	for _, pipeline := range m.pipelines {
 		if chain := pipeline.getPackageSetChain(); chain != nil {
+			if m.PackageSelector != nil {
+				chain = m.PackageSelector(chain)
+			}
 			chains[pipeline.Name()] = chain
 		}
 	}
