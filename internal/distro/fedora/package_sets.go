@@ -104,29 +104,6 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
-func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"@core",
-			"chrony",
-			"spice-vdagent",
-			"qemu-guest-agent",
-			"xen-libs",
-			"langpacks-en",
-			"cloud-init",
-			"libdrm",
-		},
-		Exclude: []string{
-			"dracut-config-rescue",
-			"geolite2-city",
-			"geolite2-country",
-			"zram-generator-defaults",
-		},
-	}
-
-	return ps
-}
-
 // fedora iot commit OS package set
 func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{

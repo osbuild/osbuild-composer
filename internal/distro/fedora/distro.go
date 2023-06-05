@@ -265,32 +265,6 @@ var (
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
-	openstackImgType = imageType{
-		name:     "openstack",
-		filename: "disk.qcow2",
-		mimeType: "application/x-qemu-disk",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: openstackCommonPackageSet,
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.ToPtr("en_US.UTF-8"),
-			EnabledServices: []string{
-				"cloud-init.service",
-				"cloud-config.service",
-				"cloud-final.service",
-				"cloud-init-local.service",
-			},
-		},
-		kernelOptions:       defaultKernelOptions,
-		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "qcow2"},
-		exports:             []string{"qcow2"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
 	containerImgType = imageType{
 		name:     "container",
 		filename: "container.tar",
@@ -508,6 +482,9 @@ func newDistro(version int) distro.Distro {
 	amiImgType.payloadPipelines = []string{"os", "image"}
 	amiImgType.exports = []string{"image"}
 	amiImgType.environment = &environment.EC2{}
+
+	openstackImgType := qcow2ImgType
+	openstackImgType.name = "openstack"
 
 	x86_64.addImageTypes(
 		&platform.X86{
