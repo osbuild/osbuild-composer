@@ -269,9 +269,6 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 			arch, err := d.GetArch(archName)
 			assert.NoError(t, err)
 			for _, typeName := range arch.ListImageTypes() {
-				if true {
-					break
-				}
 				if skipList[typeName] {
 					continue
 				}
