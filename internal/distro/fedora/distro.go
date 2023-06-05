@@ -291,30 +291,6 @@ var (
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
-	// default EC2 images config (common for all architectures)
-	defaultEc2ImageConfig = &distro.ImageConfig{
-		DefaultTarget: common.ToPtr("multi-user.target"),
-	}
-
-	amiImgType = imageType{
-		name:     "ami",
-		filename: "image.raw",
-		mimeType: "application/octet-stream",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: ec2CommonPackageSet,
-		},
-		defaultImageConfig:  defaultEc2ImageConfig,
-		kernelOptions:       defaultKernelOptions,
-		bootable:            true,
-		defaultSize:         6 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image"},
-		exports:             []string{"image"},
-		basePartitionTables: defaultBasePartitionTables,
-		environment:         &environment.EC2{},
-	}
-
 	containerImgType = imageType{
 		name:     "container",
 		filename: "container.tar",
@@ -524,6 +500,14 @@ func newDistro(version int) distro.Distro {
 
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
+
+	amiImgType := qcow2ImgType
+	amiImgType.name = "ami"
+	amiImgType.filename = "image.raw"
+	amiImgType.mimeType = "application/octet-stream"
+	amiImgType.payloadPipelines = []string{"os", "image"}
+	amiImgType.exports = []string{"image"}
+	amiImgType.environment = &environment.EC2{}
 
 	x86_64.addImageTypes(
 		&platform.X86{
