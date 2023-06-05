@@ -182,7 +182,7 @@ var (
 		},
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
+		defaultSize:         5 * common.GibiByte,
 		image:               liveImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
