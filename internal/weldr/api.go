@@ -2372,12 +2372,12 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	// https://weldr.io/lorax/pylorax.api.html#pylorax.api.v0.v0_compose_start
 	type ComposeRequest struct {
-		BlueprintName string            `json:"blueprint_name"`
-		ComposeType   string            `json:"compose_type"`
-		Size          uint64            `json:"size"`
-		OSTree        ostree.SourceSpec `json:"ostree"`
-		Branch        string            `json:"branch"`
-		Upload        *uploadRequest    `json:"upload"`
+		BlueprintName string              `json:"blueprint_name"`
+		ComposeType   string              `json:"compose_type"`
+		Size          uint64              `json:"size"`
+		OSTree        ostree.ImageOptions `json:"ostree"`
+		Branch        string              `json:"branch"`
+		Upload        *uploadRequest      `json:"upload"`
 	}
 	type ComposeReply struct {
 		BuildID  uuid.UUID `json:"build_id"`
@@ -2469,12 +2469,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	ostreeOptions := &ostree.ImageOptions{
-		ImageRef:  cr.OSTree.Ref,
-		ParentRef: cr.OSTree.Parent,
-		URL:       cr.OSTree.URL,
-		RHSM:      cr.OSTree.RHSM,
-	}
 
 	var size uint64
 
@@ -2495,7 +2489,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	options := distro.ImageOptions{
 		Size:   size,
-		OSTree: ostreeOptions,
+		OSTree: &cr.OSTree,
 	}
 	options.Facts = &facts.ImageOptions{
 		APIType: facts.WELDR_APITYPE,

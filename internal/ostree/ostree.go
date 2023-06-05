@@ -19,13 +19,13 @@ import (
 
 var ostreeRefRE = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`)
 
-// SourceSpec serves as input for ResolveParams, and contains all necessary variables to resolve
-// a ref, which can then be turned into a CommitSpec.
+// SourceSpec serves as input for ResolveParams, and contains all necessary
+// variables to resolve a ref, which can then be turned into a CommitSpec.
 type SourceSpec struct {
-	URL    string `json:"url"`
-	Ref    string `json:"ref"`
-	Parent string `json:"parent"`
-	RHSM   bool   `json:"rhsm"`
+	URL    string
+	Ref    string
+	Parent string
+	RHSM   bool
 }
 
 // CommitSpec specifies an ostree commit using any combination of Ref (branch), URL (source), and Checksum (commit ID).
@@ -54,22 +54,22 @@ type ImageOptions struct {
 	// built.
 	// For ostree installers and raw images: The ref of the commit being
 	// embedded in the installer or deployed in the image.
-	ImageRef string
+	ImageRef string `json:"ref"`
 
 	// For ostree commit and container types: The ParentRef specifies the parent
 	// ostree commit that the new commit will be based on.
 	// For ostree installers and raw images: The ParentRef does not apply.
-	ParentRef string
+	ParentRef string `json:"parent"`
 
 	// The URL from which to fetch the commit specified by the checksum.
-	URL string
+	URL string `json:"url"`
 
 	// If specified, the URL will be used only for metadata.
-	ContentURL string
+	ContentURL string `json:"contenturl"`
 
 	// Indicate if the 'org.osbuild.rhsm.consumer' secret should be added when pulling from the
 	// remote.
-	RHSM bool
+	RHSM bool `json:"rhsm"`
 }
 
 // Remote defines the options that can be set for an OSTree Remote configuration.
