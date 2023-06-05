@@ -33,7 +33,7 @@ func NewOSTreeCommit(m *Manifest,
 	return p
 }
 
-func (p *OSTreeCommit) getBuildPackages() []string {
+func (p *OSTreeCommit) getBuildPackages(Distro) []string {
 	packages := []string{
 		"rpm-ostree",
 	}

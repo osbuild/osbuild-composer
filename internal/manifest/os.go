@@ -183,7 +183,7 @@ func NewOS(m *Manifest,
 	return p
 }
 
-func (p *OS) getPackageSetChain() []rpmmd.PackageSet {
+func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := p.platform.GetPackages()
 
 	if p.KernelName != "" {
@@ -251,7 +251,7 @@ func (p *OS) getContainerSources() []container.SourceSpec {
 	return p.OSCustomizations.Containers
 }
 
-func (p *OS) getBuildPackages() []string {
+func (p *OS) getBuildPackages(distro Distro) []string {
 	packages := p.platform.GetBuildPackages()
 	if p.PartitionTable != nil {
 		packages = append(packages, p.PartitionTable.GetBuildPackages()...)
@@ -264,7 +264,12 @@ func (p *OS) getBuildPackages() []string {
 		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.SElinux))
 	}
 	if len(p.CloudInit) > 0 {
-		packages = append(packages, "python3-pyyaml")
+		switch distro {
+		case DISTRO_EL7:
+			packages = append(packages, "python3-PyYAML")
+		default:
+			packages = append(packages, "python3-pyyaml")
+		}
 	}
 	if len(p.DNFConfig) > 0 || len(p.RHSMConfig) > 0 {
 		packages = append(packages, "python3-iniparse")
@@ -272,7 +277,12 @@ func (p *OS) getBuildPackages() []string {
 
 	if len(p.OSCustomizations.Containers) > 0 {
 		if p.OSTreeRef != "" {
-			packages = append(packages, "python3-toml")
+			switch distro {
+			case DISTRO_EL8:
+				packages = append(packages, "python3-pytoml")
+			default:
+				packages = append(packages, "python3-toml")
+			}
 		}
 		packages = append(packages, "skopeo")
 	}

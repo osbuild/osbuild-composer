@@ -214,45 +214,14 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	if err != nil {
 		return nil, nil, err
 	}
-	manifest := manifest.New()
-	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
+	mf := manifest.New()
+	mf.Distro = manifest.DISTRO_EL7
+	_, err = img.InstantiateManifest(&mf, repos, t.arch.distro.runner, rng)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return &manifest, warnings, err
-}
-
-// Runs overridePackageNames() on each package set's Include and Exclude list
-// and replaces package names.
-func overridePackageNamesInSets(chains map[string][]rpmmd.PackageSet) map[string][]rpmmd.PackageSet {
-	pkgSetChains := make(map[string][]rpmmd.PackageSet)
-	for name, chain := range chains {
-		cc := make([]rpmmd.PackageSet, len(chain))
-		for idx := range chain {
-			cc[idx] = rpmmd.PackageSet{
-				Include:      overridePackageNames(chain[idx].Include),
-				Exclude:      overridePackageNames(chain[idx].Exclude),
-				Repositories: chain[idx].Repositories,
-			}
-		}
-		pkgSetChains[name] = cc
-	}
-	return pkgSetChains
-}
-
-// Resolve packages to their distro-specific name. This function is a temporary
-// workaround to the issue of having packages specified outside of distros (in
-// internal/manifest/os.go), which should be distro agnostic. In the future,
-// this should be handled more generally.
-func overridePackageNames(packages []string) []string {
-	for idx := range packages {
-		switch packages[idx] {
-		case "python3-pyyaml":
-			packages[idx] = "python3-PyYAML"
-		}
-	}
-	return packages
+	return &mf, warnings, err
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.

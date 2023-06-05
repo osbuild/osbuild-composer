@@ -47,7 +47,7 @@ func (p *VPC) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func (p *VPC) getBuildPackages() []string {
+func (p *VPC) getBuildPackages(Distro) []string {
 	return []string{"qemu-img"}
 }
 

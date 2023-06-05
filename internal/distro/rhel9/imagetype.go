@@ -248,13 +248,14 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	if err != nil {
 		return nil, nil, err
 	}
-	manifest := manifest.New()
-	_, err = img.InstantiateManifest(&manifest, repos, t.arch.distro.runner, rng)
+	mf := manifest.New()
+	mf.Distro = manifest.DISTRO_EL9
+	_, err = img.InstantiateManifest(&mf, repos, t.arch.distro.runner, rng)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return &manifest, warnings, err
+	return &mf, warnings, err
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.

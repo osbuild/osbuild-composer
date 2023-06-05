@@ -116,7 +116,7 @@ func (p *Anaconda) anacondaBootPackageSet() []string {
 	return packages
 }
 
-func (p *Anaconda) getBuildPackages() []string {
+func (p *Anaconda) getBuildPackages(Distro) []string {
 	packages := p.anacondaBootPackageSet()
 	packages = append(packages,
 		"rpm",
@@ -125,7 +125,7 @@ func (p *Anaconda) getBuildPackages() []string {
 	return packages
 }
 
-func (p *Anaconda) getPackageSetChain() []rpmmd.PackageSet {
+func (p *Anaconda) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := p.anacondaBootPackageSet()
 	if p.Biosdevname {
 		packages = append(packages, "biosdevname")

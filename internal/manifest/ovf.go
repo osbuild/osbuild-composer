@@ -52,6 +52,6 @@ func (p *OVF) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func (p *OVF) getBuildPackages() []string {
+func (p *OVF) getBuildPackages(Distro) []string {
 	return []string{"qemu-img"}
 }

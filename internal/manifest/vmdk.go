@@ -44,7 +44,7 @@ func (p *VMDK) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func (p *VMDK) getBuildPackages() []string {
+func (p *VMDK) getBuildPackages(Distro) []string {
 	return []string{"qemu-img"}
 }
 

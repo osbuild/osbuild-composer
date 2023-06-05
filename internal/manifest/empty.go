@@ -39,7 +39,7 @@ func NewContentTest(m *Manifest, name string, packageSets []rpmmd.PackageSet, co
 	return pipeline
 }
 
-func (p *ContentTest) getPackageSetChain() []rpmmd.PackageSet {
+func (p *ContentTest) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	return p.packageSets
 }
 

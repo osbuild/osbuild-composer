@@ -42,7 +42,7 @@ func (p *Build) addDependent(dep Pipeline) {
 	p.dependents = append(p.dependents, dep)
 }
 
-func (p *Build) getPackageSetChain() []rpmmd.PackageSet {
+func (p *Build) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 	// TODO: make the /usr/bin/cp dependency conditional
 	// TODO: make the /usr/bin/xz dependency conditional
 	packages := []string{
@@ -54,7 +54,7 @@ func (p *Build) getPackageSetChain() []rpmmd.PackageSet {
 	packages = append(packages, p.runner.GetBuildPackages()...)
 
 	for _, pipeline := range p.dependents {
-		packages = append(packages, pipeline.getBuildPackages()...)
+		packages = append(packages, pipeline.getBuildPackages(distro)...)
 	}
 
 	return []rpmmd.PackageSet{

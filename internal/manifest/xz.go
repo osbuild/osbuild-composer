@@ -39,7 +39,7 @@ func (p *XZ) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func (p *XZ) getBuildPackages() []string {
+func (p *XZ) getBuildPackages(Distro) []string {
 	return []string{"xz"}
 }
 

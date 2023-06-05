@@ -94,7 +94,7 @@ func (p *AnacondaISOTree) getOSTreeCommits() []ostree.CommitSpec {
 	return []ostree.CommitSpec{*p.ostreeCommitSpec}
 }
 
-func (p *AnacondaISOTree) getBuildPackages() []string {
+func (p *AnacondaISOTree) getBuildPackages(Distro) []string {
 	packages := []string{
 		"squashfs-tools",
 	}

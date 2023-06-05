@@ -35,7 +35,7 @@ func NewRawOStreeImage(m *Manifest,
 	return p
 }
 
-func (p *RawOSTreeImage) getBuildPackages() []string {
+func (p *RawOSTreeImage) getBuildPackages(Distro) []string {
 	packages := p.platform.GetBuildPackages()
 	packages = append(packages, p.platform.GetPackages()...)
 	packages = append(packages, p.treePipeline.PartitionTable.GetBuildPackages()...)
