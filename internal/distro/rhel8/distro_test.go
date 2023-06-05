@@ -636,6 +636,10 @@ func TestRhel86_KernelOption(t *testing.T) {
 	distro_test_common.TestDistro_KernelOption(t, rhel8.New())
 }
 
+func TestRhel8_OSTreeOptions(t *testing.T) {
+	distro_test_common.TestDistro_OSTreeOptions(t, rhel8.New())
+}
+
 func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 	r8distro := rhel8.New()
 	bp := blueprint.Blueprint{

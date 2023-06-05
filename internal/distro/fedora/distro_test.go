@@ -557,6 +557,10 @@ func TestFedora37_KernelOption(t *testing.T) {
 	distro_test_common.TestDistro_KernelOption(t, fedora.NewF37())
 }
 
+func TestFedora_OSTreeOptions(t *testing.T) {
+	distro_test_common.TestDistro_OSTreeOptions(t, fedora.NewF37())
+}
+
 func TestDistro_CustomFileSystemManifestError(t *testing.T) {
 	fedoraDistro := fedora.NewF37()
 	bp := blueprint.Blueprint{
