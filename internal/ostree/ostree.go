@@ -152,13 +152,13 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 	if err != nil {
 		return "", NewResolveRefError(fmt.Sprintf("error reading response from ostree repository %q: %v", u.String(), err))
 	}
-	parent := strings.TrimSpace(string(body))
+	checksum := strings.TrimSpace(string(body))
 	// Check that this is at least a hex string.
-	_, err = hex.DecodeString(parent)
+	_, err = hex.DecodeString(checksum)
 	if err != nil {
 		return "", NewResolveRefError("ostree repository %q returned invalid reference", u.String())
 	}
-	return parent, nil
+	return checksum, nil
 }
 
 // Resolve the ostree source specification into the necessary ref for the image
