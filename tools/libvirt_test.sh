@@ -292,6 +292,11 @@ else
             NVRAM_TEMPLATE="firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
             OS_VARIANT="centos-stream9"
             ;;
+        "fedora"*)
+            MIN_RAM="1536"
+            NVRAM_TEMPLATE=""
+            OS_VARIANT="fedora-unknown"
+            ;;
         *)
             echo "unsupported distro: ${ID}-${VERSION_ID}"
             exit 1;;
