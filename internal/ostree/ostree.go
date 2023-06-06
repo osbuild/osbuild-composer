@@ -22,10 +22,9 @@ var ostreeRefRE = regexp.MustCompile(`^(?:[\w\d][-._\w\d]*\/)*[\w\d][-._\w\d]*$`
 // SourceSpec serves as input for ResolveParams, and contains all necessary
 // variables to resolve a ref, which can then be turned into a CommitSpec.
 type SourceSpec struct {
-	URL    string
-	Ref    string
-	Parent string
-	RHSM   bool
+	URL  string
+	Ref  string
+	RHSM bool
 }
 
 // CommitSpec specifies an ostree commit using any combination of Ref (branch), URL (source), and Checksum (commit ID).
@@ -161,50 +160,34 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 	return checksum, nil
 }
 
-// Resolve the ostree source specification into the necessary ref for the image
-// build pipeline and a commit (checksum) to be fetched.
+// Resolve the ostree source specification into a  commit specification.
 //
-// If a URL is defined in the source specification, the checksum of the Parent
-// ref is resolved, otherwise the checksum is an empty string. Specifying
-// Parent without URL results in a ParameterComboError. Failure to resolve the
+// If a URL is defined in the source specification, the checksum of the ref is
+// resolved, otherwise the checksum is an empty string. Failure to resolve the
 // checksum results in a ResolveRefError.
 //
-// If Parent is not specified in the RequestParams, the value of Ref is used.
-//
-// If any ref (Ref or Parent) is malformed, the function returns with a RefError.
-func Resolve(source SourceSpec) (ref, checksum string, err error) {
-	// TODO: return CommitSpec instead and add RHSM option
-	ref = source.Ref
-
-	// Determine value of ref
+// If the ref is malformed, the function returns with a RefError.
+func Resolve(source SourceSpec) (CommitSpec, error) {
 	if !VerifyRef(source.Ref) {
-		return "", "", NewRefError("Invalid ostree ref %q", source.Ref)
+		return CommitSpec{}, NewRefError("Invalid ostree ref %q", source.Ref)
 	}
 
-	// Determine value of parentRef
-	parentRef := source.Parent
-	if parentRef != "" {
-		// verify format of parent ref
-		if !VerifyRef(source.Parent) {
-			return "", "", NewRefError("Invalid ostree parent ref %q", source.Parent)
-		}
-		if source.URL == "" {
-			// specifying parent ref also requires URL
-			return "", "", NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
-		}
-	} else {
-		// if parent is not provided, use ref
-		parentRef = source.Ref
+	commit := CommitSpec{
+		Ref: source.Ref,
+		URL: source.URL,
+	}
+	if source.RHSM {
+		commit.Secrets = "org.osbuild.rhsm.consumer"
 	}
 
-	// Resolve parent checksum
+	// URL set: Resolve checksum
 	if source.URL != "" {
 		// If a URL is specified, we need to fetch the commit at the URL.
-		parent, err := ResolveRef(source.URL, parentRef, source.RHSM, nil, nil)
+		checksum, err := ResolveRef(source.URL, source.Ref, source.RHSM, nil, nil)
 		if err != nil {
-			return "", "", err // ResolveRefError
+			return CommitSpec{}, err // ResolveRefError
 		}
-		checksum = parent
+		commit.Checksum = checksum
 	}
-	return
+	return commit, nil
 }

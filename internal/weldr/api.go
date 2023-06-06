@@ -2341,21 +2341,19 @@ func (api *API) resolveOSTreeCommits(sourceSpecs map[string][]ostree.SourceSpec,
 	for name, sources := range sourceSpecs {
 		commits := make([]ostree.CommitSpec, len(sources))
 		for idx, source := range sources {
-			var ref, checksum string
 			if test {
-				checksum = fmt.Sprintf("%x", sha256.Sum256([]byte(source.URL+source.Ref)))
-				ref = source.Ref
+				checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(source.URL+source.Ref)))
+				commits[idx] = ostree.CommitSpec{
+					Ref:      source.Ref,
+					URL:      source.URL,
+					Checksum: checksum,
+				}
 			} else {
-				var err error
-				ref, checksum, err = ostree.Resolve(source)
+				commit, err := ostree.Resolve(source)
 				if err != nil {
 					return nil, err
 				}
-			}
-			commits[idx] = ostree.CommitSpec{
-				Ref:      ref,
-				URL:      source.URL,
-				Checksum: checksum,
+				commits[idx] = commit
 			}
 		}
 		commitSpecs[name] = commits
