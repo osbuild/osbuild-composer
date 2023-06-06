@@ -52,13 +52,12 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 
 	for i, s := range args.Specs {
 		reqParams := ostree.SourceSpec{
-			URL:    s.URL,
-			Ref:    s.Ref,
-			Parent: s.Parent,
-			RHSM:   s.RHSM,
+			URL:  s.URL,
+			Ref:  s.Ref,
+			RHSM: s.RHSM,
 		}
 
-		ref, checksum, err := ostree.Resolve(reqParams)
+		commitSpec, err := ostree.Resolve(reqParams)
 		if err != nil {
 			logWithId.Infof("Resolving ostree params failed: %v", err)
 			setError(err, &result)
@@ -66,9 +65,9 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 		}
 
 		result.Specs[i] = worker.OSTreeResolveResultSpec{
-			URL:      s.URL,
-			Ref:      ref,
-			Checksum: checksum,
+			URL:      commitSpec.URL,
+			Ref:      commitSpec.Ref,
+			Checksum: commitSpec.Checksum,
 			RHSM:     s.RHSM,
 		}
 	}

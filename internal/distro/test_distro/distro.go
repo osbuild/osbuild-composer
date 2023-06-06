@@ -250,7 +250,6 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 			}
 			// copy any other options that might be specified
 			ostreeSource.URL = options.OSTree.URL
-			ostreeSource.Parent = options.OSTree.ParentRef
 			ostreeSource.RHSM = options.OSTree.RHSM
 		}
 		ostreeSources = []ostree.SourceSpec{ostreeSource}
