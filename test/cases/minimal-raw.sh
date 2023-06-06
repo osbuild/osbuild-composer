@@ -73,16 +73,12 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 EDGE_USER_PASSWORD=foobar
 
-case "${ID}-${VERSION_ID}" in
-    "fedora-37")
-        # CI runner does not support fedora37 os name in this case
-        # ERROR    Unknown OS name 'fedora37'. See `--osinfo list` for valid values.
-        OS_VARIANT="fedora-unknown"
-        ;;
-    *)
-        echo "unsupported distro: ${ID}-${VERSION_ID}"
-        exit 1;;
-esac
+if [[ $ID != fedora ]]; then
+    echo "unsupported distro: ${ID}-${VERSION_ID}"
+    exit 1
+fi
+
+OS_VARIANT="fedora-unknown"
 
 # Get the compose log.
 get_compose_log () {

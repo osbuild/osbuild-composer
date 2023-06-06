@@ -19,23 +19,12 @@ SYSROOT_RO="false"
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    "fedora-37")
+    fedora-*)
         IMAGE_TYPE=iot-commit
-        OSTREE_REF="fedora/37/${ARCH}/iot"
+        OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
         OS_VARIANT="fedora-unknown"
         USER_IN_COMMIT="false"
-        BOOT_LOCATION="https://mirrors.kernel.org/fedora/releases/37/Everything/x86_64/os/"
-        EMBEDED_CONTAINER="false"
-        FIREWALL_FEATURE="false"
-        DIRS_FILES_CUSTOMIZATION="true"
-        SYSROOT_RO="true"
-        ;;
-    "fedora-38")
-        IMAGE_TYPE=iot-commit
-        OSTREE_REF="fedora/38/${ARCH}/iot"
-        OS_VARIANT="fedora-unknown"
-        USER_IN_COMMIT="false"
-        BOOT_LOCATION="https://mirrors.kernel.org/fedora/releases/38/Everything/x86_64/os/"
+        BOOT_LOCATION="https://mirrors.kernel.org/fedora/releases/${VERSION_ID}/Everything/x86_64/os/"
         EMBEDED_CONTAINER="false"
         FIREWALL_FEATURE="false"
         DIRS_FILES_CUSTOMIZATION="true"
