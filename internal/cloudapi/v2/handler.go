@@ -116,7 +116,6 @@ type imageRequest struct {
 	repositories []rpmmd.RepoConfig
 	imageOptions distro.ImageOptions
 	target       *target.Target
-	ostree       *ostree.SourceSpec
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -459,43 +458,30 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 		}
 
-		var ostreeOptions *ostree.SourceSpec
-		// assume it's an ostree image if the type has a default ostree ref
-		if imageType.OSTreeRef() != "" {
-			imageOptions.OSTree = &ostree.ImageOptions{}
-
-			ostreeOptions = &ostree.SourceSpec{}
-			if ir.Ostree != nil {
-				if ir.Ostree.Ref != nil {
-					ostreeOptions.Ref = *ir.Ostree.Ref
-				}
-				if ir.Ostree.Url != nil {
-					ostreeOptions.URL = *ir.Ostree.Url
-				}
-				if ir.Ostree.Contenturl != nil {
-					// URL must be set if content url is specified
-					if ir.Ostree.Url == nil {
-						return HTTPError(ErrorInvalidOSTreeParams)
-					}
-
-					// Contenturl is set on imageoptions directly, as it's not
-					// needed in the resolve job
-					imageOptions.OSTree.ContentURL = *ir.Ostree.Contenturl
-				}
-				if ir.Ostree.Parent != nil {
-					ostreeOptions.Parent = *ir.Ostree.Parent
-				}
-				if ir.Ostree.Rhsm != nil {
-					ostreeOptions.RHSM = *ir.Ostree.Rhsm
-
-					// RHSM needs to be set on imageoptions directly in addition
-					// to the resolve job input
-					imageOptions.OSTree.RHSM = *ir.Ostree.Rhsm
-				}
+		// Add ostree options to image options if they were included in the
+		// request
+		if ir.Ostree != nil {
+			ostreeOptions := &ostree.ImageOptions{}
+			if ir.Ostree.Ref != nil {
+				ostreeOptions.ImageRef = *ir.Ostree.Ref
 			}
-			if ostreeOptions.Ref == "" {
-				ostreeOptions.Ref = imageType.OSTreeRef()
+			if ir.Ostree.Url != nil {
+				ostreeOptions.URL = *ir.Ostree.Url
 			}
+			if ir.Ostree.Contenturl != nil {
+				// URL must be set if content url is specified
+				if ir.Ostree.Url == nil {
+					return HTTPError(ErrorInvalidOSTreeParams)
+				}
+				ostreeOptions.ContentURL = *ir.Ostree.Contenturl
+			}
+			if ir.Ostree.Parent != nil {
+				ostreeOptions.ParentRef = *ir.Ostree.Parent
+			}
+			if ir.Ostree.Rhsm != nil {
+				ostreeOptions.RHSM = *ir.Ostree.Rhsm
+			}
+			imageOptions.OSTree = ostreeOptions
 		}
 
 		var irTarget *target.Target
@@ -712,7 +698,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			repositories: repos,
 			imageOptions: imageOptions,
 			target:       irTarget,
-			ostree:       ostreeOptions,
 		})
 	}
 
