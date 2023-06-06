@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 )
 
 type Result struct {
@@ -13,6 +14,13 @@ type Result struct {
 	Error    json.RawMessage             `json:"error,omitempty"`
 	Log      map[string]PipelineResult   `json:"log"`
 	Metadata map[string]PipelineMetadata `json:"metadata"`
+	Errors   []ValidationError           `json:"errors,omitempty"`
+	Title    string                      `json:"title,omitempty"`
+}
+
+type ValidationError struct {
+	Message string   `json:"message"`
+	Path    []string `json:"path"`
 }
 
 type PipelineResult []StageResult
@@ -116,6 +124,14 @@ func (res *Result) UnmarshalJSON(data []byte) error {
 }
 
 func (res *Result) Write(writer io.Writer) error {
+	// Error may be included, print them first
+	if res != nil && len(res.Errors) > 0 {
+		fmt.Fprintf(writer, "Error %s\n", res.Title)
+		for _, e := range res.Errors {
+			fmt.Fprintf(writer, "%s: %s\n", strings.Join(e.Path, "."), e.Message)
+		}
+	}
+
 	if res == nil || res.Log == nil {
 		fmt.Fprintf(writer, "The compose result is empty.\n")
 		return nil
@@ -152,6 +168,37 @@ func (res *Result) Write(writer io.Writer) error {
 			}
 		}
 	}
+
+	return nil
+}
+
+// The ValidationError path from osbuild can contain strings or numbers
+// json represents all numbers as float64 but since we know they are really
+// ints any fractional part is truncated when converting to a string.
+func (ve *ValidationError) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Message string
+		Path    []interface{}
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	ve.Message = raw.Message
+
+	// Convert the path elements to strings
+	var path []string
+	for _, p := range raw.Path {
+		switch v := p.(type) {
+		// json converts numbers, even 0, to float64 not int
+		case float64:
+			path = append(path, fmt.Sprintf("[%0.0f]", v))
+		case string:
+			path = append(path, v)
+		default:
+			return fmt.Errorf("Unexpected type in ValidationError Path: %#v", v)
+		}
+	}
+	ve.Path = path
 
 	return nil
 }
