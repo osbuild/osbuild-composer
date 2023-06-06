@@ -538,6 +538,9 @@ API:
   parallel:
     matrix:
       - RUNNER:
+          - rhos-01/fedora-37-x86_64
+          - rhos-01/fedora-38-x86_64
+      - RUNNER:
           - gcp/centos-stream-8-x86_64
           - gcp/rhel-8.7-ga-x86_64
           - gcp/rhel-9.1-ga-x86_64
