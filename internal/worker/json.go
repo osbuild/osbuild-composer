@@ -287,10 +287,9 @@ type FileResolveJobResult struct {
 }
 
 type OSTreeResolveSpec struct {
-	URL    string `json:"url"`
-	Ref    string `json:"ref"`
-	Parent string `json:"parent"`
-	RHSM   bool   `json:"rhsm"`
+	URL  string `json:"url"`
+	Ref  string `json:"ref"`
+	RHSM bool   `json:"rhsm"`
 }
 
 type OSTreeResolveJob struct {
@@ -301,7 +300,8 @@ type OSTreeResolveResultSpec struct {
 	URL      string `json:"url"`
 	Ref      string `json:"ref"`
 	Checksum string `json:"checksum"`
-	RHSM     bool   `json:"bool"`
+	RHSM     bool   `json:"bool"` // NOTE: kept for backwards compatibility; remove after a few releases
+	Secrets  string `json:"secrets"`
 }
 
 type OSTreeResolveJobResult struct {
