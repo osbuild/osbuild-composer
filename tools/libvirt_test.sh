@@ -272,22 +272,22 @@ else
     case "${ID}-${VERSION_ID}" in
         "rhel-8"*)
              # was 1024 before 8.9
-             MIN_RAM="1536"
-             NVRAM_TEMPLATE="nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd"
-             ;;
+            MIN_RAM="1536"
+            NVRAM_TEMPLATE="nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd"
+            ;;
         "centos-8")
-             MIN_RAM="1536"
-             NVRAM_TEMPLATE="nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd"
-             ;;
+            MIN_RAM="1536"
+            NVRAM_TEMPLATE="nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd"
+            ;;
         "rhel-9"*)
-             MIN_RAM="1536"
-             NVRAM_TEMPLATE=""
-             ;;
+            MIN_RAM="1536"
+            NVRAM_TEMPLATE=""
+            ;;
         "centos-9")
-             MIN_RAM="1536"
-             # Disable secure boot for CS9 due to bug bz#2108646
-             NVRAM_TEMPLATE="firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
-             ;;
+            MIN_RAM="1536"
+            # Disable secure boot for CS9 due to bug bz#2108646
+            NVRAM_TEMPLATE="firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
+            ;;
         *)
             echo "unsupported distro: ${ID}-${VERSION_ID}"
             exit 1;;
