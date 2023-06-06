@@ -181,6 +181,8 @@ Base:
       - RUNNER:
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
+          - aws/fedora-38-x86_64
+          - aws/fedora-38-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.7-ga-x86_64
@@ -227,6 +229,8 @@ Manifests:
       - RUNNER:
           - aws/fedora-37-x86_64
           - aws/fedora-37-aarch64
+          - aws/fedora-38-x86_64
+          - aws/fedora-38-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -380,6 +384,7 @@ Trigger-rhel-edge-ci:
 .fedora_runners: &fedora_runners
     RUNNER:
       - aws/fedora-37-x86_64
+      - aws/fedora-38-x86_64
 
 .integration_fedora:
   extends: .integration_base
@@ -514,6 +519,7 @@ API:
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
           - aws/fedora-37-x86_64
+          - aws/fedora-38-x86_64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.7-ga-aarch64
@@ -696,9 +702,11 @@ ContainerUpload:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-upload.sh
-  variables:
-    RUNNER: aws/fedora-37-x86_64
-    INTERNAL_NETWORK: "false"
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/fedora-37-x86_64
+          - aws/fedora-38-x86_64
 
 ContainerEmbedding:
   stage: test
