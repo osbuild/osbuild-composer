@@ -219,17 +219,16 @@ func main() {
 		containers[name] = containerSpecs
 	}
 
-	// "resolve" ostree commits by copying the source specs into commit specs
 	commitSources := manifest.GetOSTreeSourceSpecs()
 	commits := make(map[string][]ostree.CommitSpec, len(commitSources))
 	for name, commitSources := range commitSources {
 		commitSpecs := make([]ostree.CommitSpec, len(commitSources))
 		for idx, commitSource := range commitSources {
-			commitSpecs[idx] = ostree.CommitSpec{
-				Ref:      commitSource.Ref,
-				URL:      commitSource.URL,
-				Checksum: commitSource.Parent,
+			commitSpec, err := ostree.Resolve(commitSource)
+			if err != nil {
+				panic("Could not resolve ostree commit: " + err.Error())
 			}
+			commitSpecs[idx] = commitSpec
 		}
 		commits[name] = commitSpecs
 	}
