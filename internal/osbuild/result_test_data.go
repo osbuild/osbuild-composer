@@ -7872,3 +7872,18 @@ const fullResultRaw = `
   }
 }
 `
+
+const validationResultFailure = `
+{
+	"type": "https://osbuild.org/validation-error",
+	"success": false,
+	"title": "JSON Schema validation failed",
+	"errors": [{
+		"message": "Additional properties are not allowed ('homer' was unexpected)",
+		"path": ["sources", "org.osbuild.curl"]
+	},{
+		"message": "Additional properties are not allowed ('file_contextso' was unexpected)",
+		"path": ["pipelines", 0, "stages", 1, "options"]
+	}]
+}
+`

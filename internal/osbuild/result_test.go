@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
@@ -203,6 +204,20 @@ func TestUnmarshalV2Failure(t *testing.T) {
 	}
 }
 
+func TestUnmarshalValidationFailure(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	var result Result
+	err := json.Unmarshal([]byte(validationResultFailure), &result)
+	assert.NoError(err)
+
+	assert.False(result.Success)
+	assert.Equal(result.Title, "JSON Schema validation failed")
+	require.Len(result.Errors, 2)
+	assert.Len(result.Errors[0].Path, 2)
+	assert.Len(result.Errors[1].Path, 5)
+}
+
 func TestWrite(t *testing.T) {
 	assert := assert.New(t)
 	result := Result{
@@ -334,4 +349,30 @@ func TestWriteEmpty(t *testing.T) {
 	result := Result{}
 	assert.NoError(result.Write(&b))
 	assert.Equal("The compose result is empty.\n", b.String())
+}
+
+func TestValidationFailWrite(t *testing.T) {
+	assert := assert.New(t)
+	result := Result{
+		Type:    "https://osbuild.org/validation-error",
+		Success: false,
+		Title:   "JSON Schema validation failed",
+		Errors: []ValidationError{{
+			Message: "Additional properties are not allowed ('homer' was unexpected)",
+			Path:    []string{"sources", "org.osbuild.curl"},
+		}, {
+			Message: "Additional properties are not allowed ('file_contextso' was unexpected)",
+			Path:    []string{"pipelines", "[0]", "stages", "[1]", "options"},
+		}},
+	}
+
+	var b bytes.Buffer
+	assert.NoError(result.Write(&b))
+	expectedOutput := `Error JSON Schema validation failed
+sources.org.osbuild.curl: Additional properties are not allowed ('homer' was unexpected)
+pipelines.[0].stages.[1].options: Additional properties are not allowed ('file_contextso' was unexpected)
+The compose result is empty.
+`
+
+	assert.Equal(expectedOutput, b.String())
 }
