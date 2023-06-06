@@ -1,6 +1,7 @@
 package distro_test
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -167,7 +168,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 					assert.NoError(err)
 
 					containers := make(map[string][]container.Spec, 0)
-					// "resolve" ostree commits by copying the source specs into commit specs
+
 					ostreeSources := m.GetOSTreeSourceSpecs()
 					commits := make(map[string][]ostree.CommitSpec, len(ostreeSources))
 					for name, commitSources := range ostreeSources {
@@ -176,7 +177,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 							commitSpecs[idx] = ostree.CommitSpec{
 								Ref:      commitSource.Ref,
 								URL:      commitSource.URL,
-								Checksum: commitSource.Parent,
+								Checksum: fmt.Sprintf("%x", sha256.Sum256([]byte(commitSource.URL+commitSource.Ref))),
 							}
 						}
 						commits[name] = commitSpecs

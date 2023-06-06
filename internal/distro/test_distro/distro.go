@@ -245,8 +245,16 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 			Ref: defaultRef,
 		}
 		if ostreeOptions := options.OSTree; ostreeOptions != nil {
+			// handle the parameter combo error like we do in distros
+			if ostreeOptions.ParentRef != "" && ostreeOptions.URL == "" {
+				// specifying parent ref also requires URL
+				return nil, nil, ostree.NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
+			}
 			if ostreeOptions.ImageRef != "" { // override with ref from image options
 				ostreeSource.Ref = ostreeOptions.ImageRef
+			}
+			if ostreeOptions.ParentRef != "" { // override with parent ref
+				ostreeSource.Ref = ostreeOptions.ParentRef
 			}
 			// copy any other options that might be specified
 			ostreeSource.URL = options.OSTree.URL
