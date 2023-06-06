@@ -1165,7 +1165,7 @@ func TestCompose(t *testing.T) {
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"refid","parent":"parentid","url":""}}`, test_distro.TestImageTypeOSTree),
 			http.StatusBadRequest,
-			`{"status": false, "errors":[{"id":"OSTreeOptionsError","msg":"ostree parent ref specified, but no URL to retrieve it"}]}`,
+			`{"status": false, "errors":[{"id":"ManifestCreationFailed","msg":"failed to initialize osbuild manifest: ostree parent ref specified, but no URL to retrieve it"}]}`,
 			expectedComposeOSTree,
 			[]string{"build_id", "warnings"},
 		},
