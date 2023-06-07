@@ -59,7 +59,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 				continue
 			}
 			dJR := &worker.DepsolveJobResult{
-				PackageSpecs: map[string][]rpmmd.PackageSpec{"build": []rpmmd.PackageSpec{rpmmd.PackageSpec{Name: "pkg1"}}},
+				PackageSpecs: map[string][]rpmmd.PackageSpec{"build": {{Name: "pkg1"}}},
 				Error:        "",
 				ErrorType:    worker.ErrorType(""),
 			}
@@ -95,7 +95,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 			}
 			oJR := &worker.OSTreeResolveJobResult{
 				Specs: []worker.OSTreeResolveResultSpec{
-					worker.OSTreeResolveResultSpec{
+					{
 						URL:      "",
 						Ref:      "",
 						Checksum: "",
@@ -177,7 +177,7 @@ func TestGetErrorList(t *testing.T) {
 			"kind": "Error",
 			"code": "IMAGE-BUILDER-COMPOSER-4",
 			"reason": "Unsupported distribution"
-		 }]
+		}]
 	}`, "operation_id", "total", "details")
 }
 
@@ -206,7 +206,7 @@ func TestCompose(t *testing.T) {
 				"region": "eu-central-1",
 				"share_with_accounts": ["123456789012"]
 			}
-		 }
+		}
 	}`, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/30",
@@ -230,7 +230,7 @@ func TestCompose(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName), http.StatusBadRequest, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/5",
@@ -254,7 +254,7 @@ func TestCompose(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/30",
@@ -301,7 +301,7 @@ func TestCompose(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -324,7 +324,7 @@ func TestCompose(t *testing.T) {
 				"baseurl": "somerepo.org",
 				"rhsm": false
 			}]
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -350,7 +350,7 @@ func TestCompose(t *testing.T) {
 			"ostree": {
 				"ref": "rhel/10/x86_64/edge"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -374,7 +374,7 @@ func TestCompose(t *testing.T) {
 			"ostree": {
 				"url": "%s"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoDefault.Server.URL), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -399,7 +399,7 @@ func TestCompose(t *testing.T) {
 				"ref": "%s",
 				"url": "%s"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -424,7 +424,7 @@ func TestCompose(t *testing.T) {
 				"parent": "%s",
 				"url": "%s"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -450,7 +450,7 @@ func TestCompose(t *testing.T) {
 				"url": "%s",
 				"ref": "a/new/ref"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -475,10 +475,10 @@ func TestCompose(t *testing.T) {
 				"parent": "%s",
 				"url": "%s",
 				"ref": "a/new/ref",
-                                "contenturl": "%s",
-                                "rhsm": true
+				"contenturl": "%s",
+				"rhsm": true
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL, fmt.Sprintf("%s/content", ostreeRepoOther.Server.URL)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -503,7 +503,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -614,7 +614,7 @@ func TestComposeStatusFailure(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -685,7 +685,7 @@ func TestComposeJobError(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -750,7 +750,7 @@ func TestComposeDependencyError(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -823,7 +823,7 @@ func TestComposeTargetErrors(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -845,7 +845,7 @@ func TestComposeTargetErrors(t *testing.T) {
 
 	oJR := worker.OSBuildJobResult{
 		TargetResults: []*target.TargetResult{
-			&target.TargetResult{
+			{
 				Name:        "org.osbuild.aws",
 				Options:     target.AWSTargetResultOptions{Ami: "", Region: ""},
 				TargetError: clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, "error importing image", nil),
@@ -918,8 +918,8 @@ func TestComposeCustomizations(t *testing.T) {
 				"gpg_key": "some-gpg-key"
 			}],
 			"custom_repositories": [{
-				"name": "hello", 
-				"id": "hello", 
+				"name": "hello",
+				"id": "hello",
 				"baseurl": [ "http://hello.com" ],
 				"gpg_key": [ "somekey" ],
 				"check_gpg": true,
@@ -985,7 +985,7 @@ func TestComposeCustomizations(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1021,7 +1021,7 @@ func TestComposeRhcSubscription(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1048,7 +1048,7 @@ func TestImageTypes(t *testing.T) {
 				"snapshot_name": "name",
 				"share_with_accounts": ["123456789012","234567890123"]
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1069,7 +1069,7 @@ func TestImageTypes(t *testing.T) {
 				"snapshot_name": "name",
 				"share_with_accounts": ["123456789012","234567890123"]
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1088,7 +1088,7 @@ func TestImageTypes(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesEdgeCommit)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1107,7 +1107,7 @@ func TestImageTypes(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesEdgeInstaller)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1129,7 +1129,7 @@ func TestImageTypes(t *testing.T) {
 				"resource_group": "ToucanResourceGroup",
 				"location": "westeurope"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesAzure)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1150,7 +1150,7 @@ func TestImageTypes(t *testing.T) {
 				"bucket": "some-eu-bucket",
 				"share_with_accounts": ["user:alice@example.com"]
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGcp)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1169,7 +1169,7 @@ func TestImageTypes(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesImageInstaller)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1188,7 +1188,7 @@ func TestImageTypes(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1207,7 +1207,7 @@ func TestImageTypes(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesVsphere)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
@@ -1232,7 +1232,7 @@ func TestImageFromCompose(t *testing.T) {
 			"upload_options": {
 				"region": "eu-central-1"
 			}
-		 }
+		}
 	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
