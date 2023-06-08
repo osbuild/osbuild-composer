@@ -14,6 +14,9 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 # Test the images
 /usr/libexec/osbuild-composer-test/libvirt_test.sh qcow2
 
-/usr/libexec/osbuild-composer-test/libvirt_test.sh openstack
+# Fedora's openstack image is an alias of qcow2, we don't need to test it separately
+if [[ "$ID" != "fedora" ]] ; then
+    /usr/libexec/osbuild-composer-test/libvirt_test.sh openstack
+fi
 
 /usr/libexec/osbuild-composer-test/libvirt_test.sh qcow2 uefi
