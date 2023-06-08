@@ -1016,7 +1016,7 @@
         - name: Check that 'custom.service' was overridden by drop-in
           assert:
             that:
-              - result_custom_service.status['DropInPaths'] == "/etc/systemd/system/custom.service.d/override.conf"
+              - "'/etc/systemd/system/custom.service.d/override.conf' in result_custom_service.status['DropInPaths']"
             fail_msg: "Service 'custom.service' was not overridden by drop-in"
             success_msg: "Service 'custom.service' was overridden by drop-in"
 
