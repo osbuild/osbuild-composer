@@ -627,6 +627,21 @@
     },
     "overrides": {}
   },
+  "iot-ami": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "iot-ami",
+      "repositories": [],
+      "filename": "image.raw",
+      "ostree": {
+        "ref": "test/fedora/iot",
+        "url": "http://fedora.example.com/repo"
+      },
+      "blueprint": {}
+    },
+    "overrides": {}
+  },
   "openstack": {
     "boot": {
       "type": "openstack"
@@ -867,7 +882,7 @@
     },
     "overrides": {}
   },
-    "edge-ami": {
+  "edge-ami": {
     "compose-request": {
       "distro": "",
       "arch": "",

@@ -254,6 +254,7 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 		"iot-raw-image":             true,
 		"edge-raw-image":            true,
 		"edge-ami":                  true,
+		"iot-ami":                   true,
 
 		// the tar image type is a minimal image type which is not expected to
 		// be usable without a blueprint (see commit 83a63aaf172f556f6176e6099ffaa2b5357b58f5).

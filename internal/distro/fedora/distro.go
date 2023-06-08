@@ -165,6 +165,31 @@ var (
 		requiredPartitionSizes: map[string]uint64{},
 	}
 
+	iotAMIImgType = imageType{
+		name:        "iot-ami",
+		nameAliases: []string{"fedora-iot-ami"},
+		filename:    "image.raw",
+		mimeType:    "application/octet-stream",
+		packageSets: nil,
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: common.ToPtr("en_US.UTF-8"),
+		},
+		defaultSize:         10 * common.GibiByte,
+		rpmOstree:           true,
+		bootable:            true,
+		bootISO:             false,
+		image:               iotRawImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"ostree-deployment", "image"},
+		exports:             []string{"image"},
+		basePartitionTables: iotBasePartitionTables,
+		// Passing an empty map into the required partition sizes disables the
+		// default partition sizes normally set so our `basePartitionTables` can
+		// override them (and make them smaller, in this case).
+		requiredPartitionSizes: map[string]uint64{},
+		environment:            &environment.EC2{},
+	}
+
 	qcow2ImgType = imageType{
 		name:     "qcow2",
 		filename: "disk.qcow2",
@@ -588,6 +613,7 @@ func newDistro(version int) distro.Distro {
 			UEFIVendor: "fedora",
 		},
 		iotRawImgType,
+		iotAMIImgType,
 	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{
@@ -678,6 +704,7 @@ func newDistro(version int) distro.Distro {
 			},
 		},
 		iotRawImgType,
+		iotAMIImgType,
 	)
 	x86_64.addImageTypes(
 		&platform.X86{
