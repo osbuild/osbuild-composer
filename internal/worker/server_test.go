@@ -994,6 +994,44 @@ func TestJobDependencyChainErrors(t *testing.T) {
 				Reason: "empty manifest received",
 			},
 		},
+		// osbuild + manifest + depsolve
+		// failed osbuild: rpm stage failing
+		{
+			job: testJob{
+				main: &worker.OSBuildJob{},
+				deps: []testJob{
+					{
+						main: &worker.ManifestJobByID{},
+						deps: []testJob{
+							{
+								main:   &worker.DepsolveJob{},
+								result: &worker.DepsolveJobResult{},
+							},
+						},
+						result: &worker.ManifestJobByIDResult{
+							JobResult: worker.JobResult{},
+						},
+					},
+				},
+				result: &worker.OSBuildJobResult{
+					JobResult: worker.JobResult{
+						JobError: &clienterrors.Error{
+							ID:     clienterrors.ErrorBuildJob,
+							Reason: "error building",
+						},
+					},
+					OSBuildOutput: &osbuild.Result{
+						Error:   []byte(` { "type": "org.osbuild.error.stage", "details": { "stage": { "id": "someID", "type": "org.osbuild.rpm", "output": "RPM ERROR" } } }`),
+						Success: false,
+					},
+				},
+			},
+			expectedError: &clienterrors.Error{
+				ID:      clienterrors.ErrorBuildJob,
+				Reason:  "rpm stage failed",
+				Details: "RPM ERROR",
+			},
+		},
 		// osbuild + manifest + depsolve + container resolve
 		// failed container resolve
 		{

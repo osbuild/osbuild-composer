@@ -76,6 +76,39 @@ func (j *OSBuildJobResult) TargetErrors() []*clienterrors.Error {
 	return targetErrors
 }
 
+// RpmErrors a *clienterrors.Error gathered
+// from the failed rpm stage within the job's error.
+// If there was no RPM error then nil is returned.
+func (j *OSBuildJobResult) RpmError() *clienterrors.Error {
+	type StageError struct {
+		Type   string `json:"type"`
+		Output string `json:"output"`
+	}
+	type OSBuildErrorDetails struct {
+		Stage *StageError `json:"stage,omitempty"`
+	}
+	type OSBuildError struct {
+		Details *OSBuildErrorDetails `json:"details,omitempty"`
+	}
+
+	if j.OSBuildOutput == nil || j.OSBuildOutput.Error == nil {
+		return nil
+	}
+
+	var stageError OSBuildError
+	err := json.Unmarshal(j.OSBuildOutput.Error, &stageError)
+	if err != nil {
+		return nil
+	}
+	if stageError.Details != nil && stageError.Details.Stage != nil && stageError.Details.Stage.Type == "org.osbuild.rpm" {
+		return clienterrors.WorkerClientError(
+			clienterrors.ErrorBuildJob,
+			"rpm stage failed",
+			stageError.Details.Stage.Output)
+	}
+	return nil
+}
+
 // TargetResultsByName iterates over TargetResults attached to the Job result and
 // returns a slice of Target results of the provided name (type). If there were no
 // TargetResults of the desired type attached to the Job results, the returned

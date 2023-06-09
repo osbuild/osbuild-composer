@@ -309,6 +309,12 @@ func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInf
 			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "at least one target failed", result.TargetErrors())
 		}
 	}
+	if result.JobError != nil && result.JobError.ID == clienterrors.ErrorBuildJob {
+		rpmError := result.RpmError()
+		if rpmError != nil {
+			result.JobError = rpmError
+		}
+	}
 	// For backwards compatibility: OSBuildJobResult didn't use to have a
 	// top-level `Success` flag. Override it here by looking into the job.
 	if !result.Success && result.OSBuildOutput != nil {
