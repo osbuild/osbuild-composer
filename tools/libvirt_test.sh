@@ -227,7 +227,6 @@ fi
 CLOUD_INIT_DIR=$(mktemp -d)
 cp "${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/meta-data "${CLOUD_INIT_DIR}"/
 cp "${SSH_DATA_DIR}"/user-data "${CLOUD_INIT_DIR}"/
-cp "${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/network-config "${CLOUD_INIT_DIR}"/
 
 # Set up a cloud-init ISO.
 greenprint "💿 Creating a cloud-init ISO"
@@ -235,7 +234,7 @@ CLOUD_INIT_PATH=/var/lib/libvirt/images/seed.iso
 rm -f $CLOUD_INIT_PATH
 pushd "$CLOUD_INIT_DIR"
     sudo mkisofs -o $CLOUD_INIT_PATH -V cidata \
-        -r -J user-data meta-data network-config > /dev/null 2>&1
+        -r -J user-data meta-data > /dev/null 2>&1
 popd
 
 # Ensure SELinux is happy with our new images.

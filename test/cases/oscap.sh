@@ -106,7 +106,6 @@ EOF
 CLOUD_INIT_DIR=$(mktemp -d)
 cp "${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/meta-data "${CLOUD_INIT_DIR}"/
 cp "${USER_DATA_FILE}" "${CLOUD_INIT_DIR}"/
-# cp "${OSBUILD_COMPOSER_TEST_DATA}"/cloud-init/network-config "${CLOUD_INIT_DIR}"/
 
 # Set up a cloud-init ISO.
 gen_iso () {
