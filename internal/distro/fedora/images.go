@@ -442,7 +442,7 @@ func iotQcow2Image(workload workload.Workload,
 	img.Platform = t.platform
 	img.Workload = workload
 
-	img.Remote = ostree.Remote{
+	img.Remote = &ostree.Remote{
 		Name:        "fedora-iot",
 		URL:         "https://ostree.fedoraproject.org/iot",
 		ContentURL:  "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",

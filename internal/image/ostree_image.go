@@ -30,7 +30,7 @@ type OSTreeImage struct {
 
 	SysrootReadOnly bool
 
-	Remote ostree.Remote
+	Remote *ostree.Remote
 	OSName string
 
 	KernelOptionsAppend []string
