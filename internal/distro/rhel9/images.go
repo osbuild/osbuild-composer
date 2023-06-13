@@ -387,7 +387,9 @@ func edgeRawImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.Workload = workload
-	img.Remote = ostree.Remote{
+
+	// set the payload URL as the default ostree remote
+	img.Remote = &ostree.Remote{
 		Name:       "rhel-edge",
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
@@ -439,7 +441,9 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 
 	rawImg.Platform = t.platform
 	rawImg.Workload = workload
-	rawImg.Remote = ostree.Remote{
+
+	// set the payload URL as the default ostree remote
+	rawImg.Remote = &ostree.Remote{
 		Name:       "rhel-edge",
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,

@@ -20,7 +20,7 @@ import (
 type OSTreeDeployment struct {
 	Base
 
-	Remote ostree.Remote
+	Remote *ostree.Remote
 
 	OSVersion string
 
@@ -128,8 +128,14 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.OSTreeInitFsStage())
+
+	remoteName := ""
+	if p.Remote != nil {
+		// if a remote is defined, set it for the pull stage
+		remoteName = p.Remote.Name
+	}
 	pipeline.AddStage(osbuild.NewOSTreePullStage(
-		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: p.Remote.Name},
+		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: remoteName},
 		osbuild.NewOstreePullStageInputs("org.osbuild.source", commit.Checksum, commit.Ref),
 	))
 	pipeline.AddStage(osbuild.NewOSTreeOsInitStage(
@@ -160,7 +166,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: p.osName,
 			Ref:    commit.Ref,
-			Remote: p.Remote.Name,
+			Remote: remoteName,
 			Mounts: []string{"/boot", "/boot/efi"},
 			Rootfs: osbuild.Rootfs{
 				Label: "root",
@@ -169,24 +175,21 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		},
 	))
 
-	remoteURL := p.Remote.URL
-	if remoteURL == "" {
-		// if the remote URL for the image is not specified, use the source commit URL
-		remoteURL = commit.URL
-	}
-	pipeline.AddStage(osbuild.NewOSTreeRemotesStage(
-		&osbuild.OSTreeRemotesStageOptions{
-			Repo: "/ostree/repo",
-			Remotes: []osbuild.OSTreeRemote{
-				{
-					Name:        p.Remote.Name,
-					URL:         remoteURL,
-					ContentURL:  p.Remote.ContentURL,
-					GPGKeyPaths: p.Remote.GPGKeyPaths,
+	if p.Remote != nil {
+		pipeline.AddStage(osbuild.NewOSTreeRemotesStage(
+			&osbuild.OSTreeRemotesStageOptions{
+				Repo: "/ostree/repo",
+				Remotes: []osbuild.OSTreeRemote{
+					{
+						Name:        p.Remote.Name,
+						URL:         p.Remote.URL,
+						ContentURL:  p.Remote.ContentURL,
+						GPGKeyPaths: p.Remote.GPGKeyPaths,
+					},
 				},
 			},
-		},
-	))
+		))
+	}
 
 	pipeline.AddStage(osbuild.NewOSTreeFillvarStage(
 		&osbuild.OSTreeFillvarStageOptions{
