@@ -4410,6 +4410,14 @@
                     }
                   },
                   {
+                    "id": "sha256:098b3adae493ea650fc548db7e1a6dcf5d3099f9bc2c38af5253ee9b85d212eb",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:ac9ede79357b33f0d0c9087333b0dd3e3fd1cf5ccab5c36310b0ec446390e0c7",
                     "options": {
                       "metadata": {
@@ -7293,6 +7301,9 @@
           },
           "sha256:09683da071b68009a96142bc2d3042c394e2a0e7bf24c14cc21ec7b6c8659e19": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-updates-released-20230623/Packages/i/iwl6000-firmware-20230515-150.fc38.noarch.rpm"
+          },
+          "sha256:098b3adae493ea650fc548db7e1a6dcf5d3099f9bc2c38af5253ee9b85d212eb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-updates-released-20230623/Packages/f/fedora-iot-config-0.0-2.fc38.noarch.rpm"
           },
           "sha256:098e8ba05482205c70c3510907da71819faf5d40b588f865ad2a77d6eaf4af09": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/l/libffi-3.4.4-2.fc38.x86_64.rpm"
@@ -15853,6 +15864,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-updates-released-20230623/Packages/f/fdo-owner-cli-0.4.9-5.fc38.x86_64.rpm",
         "checksum": "sha256:f02b4c0d02fe972b10459cf4a61f323e87d52468287609e3b5a0872dc42762ce",
+        "check_gpg": true
+      },
+      {
+        "name": "fedora-iot-config",
+        "epoch": 0,
+        "version": "0.0",
+        "release": "2.fc38",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-updates-released-20230623/Packages/f/fedora-iot-config-0.0-2.fc38.noarch.rpm",
+        "checksum": "sha256:098b3adae493ea650fc548db7e1a6dcf5d3099f9bc2c38af5253ee9b85d212eb",
         "check_gpg": true
       },
       {

@@ -3914,6 +3914,14 @@
                     }
                   },
                   {
+                    "id": "sha256:71afba5d8a6dbbae74efc0e2bf21ee5dbce69d9b81ea412f3af3f348d9b3534a",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:5887ea74e3b3525a31fc0a685e10b8ef0be80afe223a9d327c53a5a3168e36d7",
                     "options": {
                       "metadata": {
@@ -6220,6 +6228,9 @@
           },
           "sha256:711a56199cce7375572bc7ffa9654e4f0fa91063f93d04bebe9476472a5b3140": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230623/Packages/c/conmon-2.1.7-2.fc37.aarch64.rpm"
+          },
+          "sha256:71afba5d8a6dbbae74efc0e2bf21ee5dbce69d9b81ea412f3af3f348d9b3534a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230623/Packages/f/fedora-iot-config-0.0-2.fc37.noarch.rpm"
           },
           "sha256:71b7c5252151365f6b008fa0a7e5ccee7f95c51caa118a54e77925f4b4a88105": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230623/Packages/l/libbsd-0.11.7-2.fc37.aarch64.rpm"
@@ -11836,6 +11847,16 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230623/Packages/f/fedora-gpg-keys-37-2.noarch.rpm",
         "checksum": "sha256:47a0fdf0c8d0aecd3d4b2eee160affec5ba0d12b7ac6647b3f12fdef275e9738",
+        "check_gpg": true
+      },
+      {
+        "name": "fedora-iot-config",
+        "epoch": 0,
+        "version": "0.0",
+        "release": "2.fc37",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230623/Packages/f/fedora-iot-config-0.0-2.fc37.noarch.rpm",
+        "checksum": "sha256:71afba5d8a6dbbae74efc0e2bf21ee5dbce69d9b81ea412f3af3f348d9b3534a",
         "check_gpg": true
       },
       {

@@ -2754,8 +2754,7 @@
               }
             },
             "options": {
-              "repo": "/ostree/repo",
-              "remote": "fedora-iot"
+              "repo": "/ostree/repo"
             }
           },
           {
@@ -2780,7 +2779,6 @@
             "options": {
               "osname": "fedora",
               "ref": "test/fedora/iot",
-              "remote": "fedora-iot",
               "mounts": [
                 "/boot",
                 "/boot/efi"
@@ -2795,18 +2793,6 @@
                 "coreos.no_persist_ip",
                 "ignition.platform.id=metal",
                 "$ignition_firstboot"
-              ]
-            }
-          },
-          {
-            "type": "org.osbuild.ostree.remotes",
-            "options": {
-              "repo": "/ostree/repo",
-              "remotes": [
-                {
-                  "name": "fedora-iot",
-                  "url": "http://iot.example.com/repo"
-                }
               ]
             }
           },

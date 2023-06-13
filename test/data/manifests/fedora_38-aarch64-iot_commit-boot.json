@@ -4434,6 +4434,14 @@
                     }
                   },
                   {
+                    "id": "sha256:098b3adae493ea650fc548db7e1a6dcf5d3099f9bc2c38af5253ee9b85d212eb",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:ac9ede79357b33f0d0c9087333b0dd3e3fd1cf5ccab5c36310b0ec446390e0c7",
                     "options": {
                       "metadata": {
@@ -5741,6 +5749,9 @@
           },
           "sha256:08d0a1411840b3ca222095c9d2dd39b9cbad643e997defafa9b05211f365e24c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-fedora-20230413/Packages/l/libunistring-1.1-3.fc38.aarch64.rpm"
+          },
+          "sha256:098b3adae493ea650fc548db7e1a6dcf5d3099f9bc2c38af5253ee9b85d212eb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230623/Packages/f/fedora-iot-config-0.0-2.fc38.noarch.rpm"
           },
           "sha256:09f1937630234f9c42b969a9f81791a7e6f0f2972c4ec392c8e383054acaa69b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230623/Packages/c/coreutils-common-9.1-12.fc38.aarch64.rpm"
@@ -12559,6 +12570,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230623/Packages/f/fdo-owner-cli-0.4.9-5.fc38.aarch64.rpm",
         "checksum": "sha256:545109cfc36ee325a3caf27777e943b163e3a6f8a9e04f5a06010df1624e307e",
+        "check_gpg": true
+      },
+      {
+        "name": "fedora-iot-config",
+        "epoch": 0,
+        "version": "0.0",
+        "release": "2.fc38",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230623/Packages/f/fedora-iot-config-0.0-2.fc38.noarch.rpm",
+        "checksum": "sha256:098b3adae493ea650fc548db7e1a6dcf5d3099f9bc2c38af5253ee9b85d212eb",
         "check_gpg": true
       },
       {

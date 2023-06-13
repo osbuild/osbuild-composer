@@ -1920,8 +1920,7 @@
               }
             },
             "options": {
-              "repo": "/ostree/repo",
-              "remote": "fedora-iot"
+              "repo": "/ostree/repo"
             }
           },
           {
@@ -1946,7 +1945,6 @@
             "options": {
               "osname": "fedora-iot",
               "ref": "test/fedora/iot",
-              "remote": "fedora-iot",
               "mounts": [
                 "/boot",
                 "/boot/efi"
@@ -1957,22 +1955,6 @@
               "kernel_opts": [
                 "modprobe.blacklist=vc4",
                 "rw"
-              ]
-            }
-          },
-          {
-            "type": "org.osbuild.ostree.remotes",
-            "options": {
-              "repo": "/ostree/repo",
-              "remotes": [
-                {
-                  "name": "fedora-iot",
-                  "url": "https://ostree.fedoraproject.org/iot",
-                  "contenturl": "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",
-                  "gpgkeypaths": [
-                    "/etc/pki/rpm-gpg/"
-                  ]
-                }
               ]
             }
           },
