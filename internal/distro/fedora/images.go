@@ -480,12 +480,6 @@ func iotQcow2Image(workload workload.Workload,
 	img.Platform = t.platform
 	img.Workload = workload
 
-	img.Remote = &ostree.Remote{
-		Name:        "fedora-iot",
-		URL:         "https://ostree.fedoraproject.org/iot",
-		ContentURL:  "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",
-		GPGKeyPaths: []string{"/etc/pki/rpm-gpg/"},
-	}
 	img.OSName = "fedora-iot"
 
 	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "38") {
@@ -550,13 +544,6 @@ func iotRawImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.Workload = workload
-
-	img.Remote = &ostree.Remote{
-		Name:        "fedora-iot",
-		URL:         "https://ostree.fedoraproject.org/iot",
-		ContentURL:  "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",
-		GPGKeyPaths: []string{"/etc/pki/rpm-gpg/"},
-	}
 	img.OSName = "fedora-iot"
 
 	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "38") {
@@ -612,11 +599,6 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 
 	rawImg.Platform = t.platform
 	rawImg.Workload = workload
-	rawImg.Remote = &ostree.Remote{
-		Name:       "fedora-iot",
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
-	}
 	rawImg.OSName = "fedora"
 
 	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
