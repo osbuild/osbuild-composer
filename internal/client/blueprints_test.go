@@ -12,7 +12,10 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
+	"os/exec"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -1104,6 +1107,22 @@ func TestBlueprintFreezeV0(t *testing.T) {
 func TestBlueprintFreezeGlobsV0(t *testing.T) {
 	// Test needs real packages, skip it for unit testing
 	if testState.unitTest {
+		t.Skip()
+	}
+
+	// works with osbuild-composer v83 and later
+	rpm_q := exec.Command("rpm", "-q", "--qf", "%{version}", "osbuild-composer")
+	out, err := rpm_q.CombinedOutput()
+	if err != nil {
+		assert.Fail(t, fmt.Sprintf("Error during rpm -q: %s", err))
+	}
+
+	rpm_version, err := strconv.Atoi(string(out))
+	if err != nil {
+		assert.Fail(t, "Error during str-int conversion", err)
+	}
+
+	if rpm_version < 83 {
 		t.Skip()
 	}
 
