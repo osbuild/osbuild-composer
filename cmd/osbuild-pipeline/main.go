@@ -8,15 +8,15 @@ import (
 	"os"
 	"path"
 
+	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 type repository struct {
@@ -195,7 +195,8 @@ func main() {
 	// let the cache grow to fit much more repository metadata than we usually allow
 	solver.SetMaxCacheSize(3 * 1024 * 1024 * 1024)
 
-	manifest, _, err := imageType.Manifest(&composeRequest.Blueprint, options, repos, seedArg)
+	ibp := blueprint.Convert(composeRequest.Blueprint)
+	manifest, _, err := imageType.Manifest(&ibp, options, repos, seedArg)
 	if err != nil {
 		panic(err.Error())
 	}

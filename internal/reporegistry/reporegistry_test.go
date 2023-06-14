@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/stretchr/testify/assert"
 )
 

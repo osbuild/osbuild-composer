@@ -8,7 +8,7 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/osbuild/osbuild-composer/internal/container"
+	"github.com/osbuild/images/pkg/container"
 )
 
 func main() {

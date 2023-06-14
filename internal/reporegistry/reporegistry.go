@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // RepoRegistry represents a database of distro and architecture

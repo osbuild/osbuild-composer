@@ -12,8 +12,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 
 	"github.com/google/uuid"

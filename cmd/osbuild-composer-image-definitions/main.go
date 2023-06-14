@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/images/pkg/distroregistry"
 )
 
 func main() {

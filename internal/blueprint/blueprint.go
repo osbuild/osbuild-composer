@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/osbuild/osbuild-composer/internal/crypt"
+	"github.com/osbuild/images/pkg/crypt"
 
 	"github.com/coreos/go-semver/semver"
+	iblueprint "github.com/osbuild/images/pkg/blueprint"
 )
 
 // A Blueprint is a high-level description of an image.
@@ -181,4 +182,151 @@ func (b *Blueprint) CryptPasswords() error {
 	}
 
 	return nil
+}
+
+func Convert(bp Blueprint) iblueprint.Blueprint {
+	pkgs := make([]iblueprint.Package, len(bp.Packages))
+	for idx := range bp.Packages {
+		pkgs[idx] = iblueprint.Package(bp.Packages[idx])
+	}
+
+	modules := make([]iblueprint.Package, len(bp.Modules))
+	for idx := range bp.Modules {
+		modules[idx] = iblueprint.Package(bp.Modules[idx])
+	}
+
+	groups := make([]iblueprint.Group, len(bp.Groups))
+	for idx := range bp.Groups {
+		groups[idx] = iblueprint.Group(bp.Groups[idx])
+	}
+
+	containers := make([]iblueprint.Container, len(bp.Containers))
+	for idx := range bp.Containers {
+		containers[idx] = iblueprint.Container(bp.Containers[idx])
+	}
+
+	customizations := iblueprint.Customizations{}
+	if c := bp.Customizations; c != nil {
+		customizations = iblueprint.Customizations{
+			Hostname:           c.Hostname,
+			InstallationDevice: c.InstallationDevice,
+		}
+
+		if fdo := c.FDO; fdo != nil {
+			ifdo := iblueprint.FDOCustomization(*fdo)
+			customizations.FDO = &ifdo
+		}
+		if oscap := c.OpenSCAP; oscap != nil {
+			ioscap := iblueprint.OpenSCAPCustomization(*oscap)
+			customizations.OpenSCAP = &ioscap
+		}
+		if ign := c.Ignition; ign != nil {
+			iign := iblueprint.IgnitionCustomization{}
+			if embed := ign.Embedded; embed != nil {
+				iembed := iblueprint.EmbeddedIgnitionCustomization(*embed)
+				iign.Embedded = &iembed
+			}
+			if fb := ign.FirstBoot; fb != nil {
+				ifb := iblueprint.FirstBootIgnitionCustomization(*fb)
+				iign.FirstBoot = &ifb
+			}
+			customizations.Ignition = &iign
+		}
+		if dirs := c.Directories; dirs != nil {
+			idirs := make([]iblueprint.DirectoryCustomization, len(dirs))
+			for idx := range dirs {
+				idirs[idx] = iblueprint.DirectoryCustomization(dirs[idx])
+			}
+			customizations.Directories = idirs
+		}
+		if files := c.Files; files != nil {
+			ifiles := make([]iblueprint.FileCustomization, len(files))
+			for idx := range files {
+				ifiles[idx] = iblueprint.FileCustomization(files[idx])
+			}
+			customizations.Files = ifiles
+		}
+		if repos := c.Repositories; repos != nil {
+			irepos := make([]iblueprint.RepositoryCustomization, len(repos))
+			for idx := range repos {
+				irepos[idx] = iblueprint.RepositoryCustomization(repos[idx])
+			}
+			customizations.Repositories = irepos
+		}
+		if kernel := c.Kernel; kernel != nil {
+			ikernel := iblueprint.KernelCustomization(*kernel)
+			customizations.Kernel = &ikernel
+		}
+		if sshkeys := c.SSHKey; sshkeys != nil {
+			isshkeys := make([]iblueprint.SSHKeyCustomization, len(sshkeys))
+			for idx := range sshkeys {
+				isshkeys[idx] = iblueprint.SSHKeyCustomization(sshkeys[idx])
+			}
+			customizations.SSHKey = isshkeys
+		}
+		if users := c.User; users != nil {
+			iusers := make([]iblueprint.UserCustomization, len(users))
+			for idx := range users {
+				iusers[idx] = iblueprint.UserCustomization(users[idx])
+			}
+			customizations.User = iusers
+		}
+		if groups := c.Group; groups != nil {
+			igroups := make([]iblueprint.GroupCustomization, len(groups))
+			for idx := range groups {
+				igroups[idx] = iblueprint.GroupCustomization(groups[idx])
+			}
+			customizations.Group = igroups
+		}
+		if fs := c.Filesystem; fs != nil {
+			ifs := make([]iblueprint.FilesystemCustomization, len(fs))
+			for idx := range fs {
+				ifs[idx] = iblueprint.FilesystemCustomization(fs[idx])
+			}
+			customizations.Filesystem = ifs
+		}
+		if tz := c.Timezone; tz != nil {
+			itz := iblueprint.TimezoneCustomization(*tz)
+			customizations.Timezone = &itz
+		}
+		if locale := c.Locale; locale != nil {
+			ilocale := iblueprint.LocaleCustomization(*locale)
+			customizations.Locale = &ilocale
+		}
+		if fw := c.Firewall; fw != nil {
+			ifw := iblueprint.FirewallCustomization{
+				Ports: fw.Ports,
+			}
+			if services := fw.Services; services != nil {
+				iservices := iblueprint.FirewallServicesCustomization(*services)
+				ifw.Services = &iservices
+			}
+			if zones := fw.Zones; zones != nil {
+				izones := make([]iblueprint.FirewallZoneCustomization, len(zones))
+				for idx := range zones {
+					izones[idx] = iblueprint.FirewallZoneCustomization(zones[idx])
+				}
+				ifw.Zones = izones
+			}
+			customizations.Firewall = &ifw
+		}
+		if services := c.Services; services != nil {
+			iservices := iblueprint.ServicesCustomization(*services)
+			customizations.Services = &iservices
+		}
+	}
+
+	ibp := iblueprint.Blueprint{
+		Name:           bp.Name,
+		Description:    bp.Description,
+		Version:        bp.Version,
+		Packages:       pkgs,
+		Modules:        modules,
+		Groups:         groups,
+		Containers:     containers,
+		Customizations: &customizations,
+		Distro:         bp.Distro,
+	}
+
+	return ibp
 }

@@ -1,8 +1,8 @@
 package distro_mock
 
 import (
-	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
-	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/distroregistry"
 )
 
 func NewDefaultRegistry() (*distroregistry.Registry, error) {

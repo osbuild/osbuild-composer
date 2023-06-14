@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
+	"github.com/osbuild/images/pkg/rpmmd"
 
 	"github.com/stretchr/testify/assert"
 )

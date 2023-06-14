@@ -12,13 +12,13 @@ import (
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
+	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/ostree/mock_ostree_repo"
+	"github.com/osbuild/images/pkg/rpmmd"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
-	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
-	"github.com/osbuild/osbuild-composer/internal/ostree/mock_ostree_repo"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"

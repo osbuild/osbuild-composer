@@ -7,13 +7,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
-	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -52,7 +52,8 @@ func (suite *storeTest) SetupSuite() {
 	suite.myDistro = test_distro.New()
 	suite.myArch, _ = suite.myDistro.GetArch(test_distro.TestArchName)
 	suite.myImageType, _ = suite.myArch.GetImageType(test_distro.TestImageTypeName)
-	manifest, _, _ := suite.myImageType.Manifest(&suite.myBP, suite.myImageOptions, suite.myRepoConfig, 0)
+	ibp := blueprint.Convert(suite.myBP)
+	manifest, _, _ := suite.myImageType.Manifest(&ibp, suite.myImageOptions, suite.myRepoConfig, 0)
 	suite.myManifest, _ = manifest.Serialize(nil, nil, nil)
 	suite.mySourceConfig = SourceConfig{
 		Name: "testSourceConfig",
