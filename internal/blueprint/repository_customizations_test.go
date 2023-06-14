@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/fsnode"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/stretchr/testify/assert"
 )
 

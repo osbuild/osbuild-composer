@@ -1090,6 +1090,8 @@ github.com/openshift-online/ocm-sdk-go v0.1.315/go.mod h1:KYOw8kAKAHyPrJcQoVR82C
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
+github.com/osbuild/images v0.0.0-20230710155525-7045e8251769 h1:+Q98coEA32epRH7CqbU/1OlP4UeI40o/lqj7ivZd8us=
+github.com/osbuild/images v0.0.0-20230710155525-7045e8251769/go.mod h1:HT4eobIaYIL7CXyyg3Ol8m0Ao7yw5CVNh3BG7q0xLtk=
 github.com/otiai10/copy v1.2.0/go.mod h1:rrF5dJ5F0t/EWSYODDu4j9/vEeYHMkc8jt0zJChqQWw=
 github.com/otiai10/curr v0.0.0-20150429015615-9b4961190c95/go.mod h1:9qAhocn7zKJG+0mI8eUu6xqkFDYS2kb2saOteoSB3cE=
 github.com/otiai10/curr v1.0.0/go.mod h1:LskTG5wDwr8Rs+nNQ+1LlxRjAtTZZjtJW4rMXl6j4vs=

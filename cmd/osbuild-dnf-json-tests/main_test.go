@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	rhel "github.com/osbuild/osbuild-composer/internal/distro/rhel8"
+	"github.com/osbuild/images/pkg/blueprint"
+	"github.com/osbuild/images/pkg/distro"
+	rhel "github.com/osbuild/images/pkg/distro/rhel8"
+	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/platform"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 // This test loads all the repositories available in /repositories directory

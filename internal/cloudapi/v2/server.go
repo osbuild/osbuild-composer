@@ -19,14 +19,14 @@ import (
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
+	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distroregistry"
-	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -117,7 +117,8 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	}
 	ir := irs[0]
 
-	manifestSource, _, err := ir.imageType.Manifest(&bp, ir.imageOptions, ir.repositories, manifestSeed)
+	ibp := blueprint.Convert(bp)
+	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -237,7 +238,8 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	var kojiFilenames []string
 	var buildIDs []uuid.UUID
 	for _, ir := range irs {
-		manifestSource, _, err := ir.imageType.Manifest(&bp, ir.imageOptions, ir.repositories, manifestSeed)
+		ibp := blueprint.Convert(bp)
+		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}

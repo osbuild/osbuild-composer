@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distro/test_distro"
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/test_distro"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"

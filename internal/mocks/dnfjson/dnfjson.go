@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 func generatePackageList() rpmmd.PackageList {

@@ -3,11 +3,11 @@ package main
 import (
 	"math/rand"
 
-	"github.com/osbuild/osbuild-composer/internal/artifact"
-	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/platform"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/runner"
+	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/runner"
 )
 
 // MyContainer contains the arguments passed in as a JSON blob.

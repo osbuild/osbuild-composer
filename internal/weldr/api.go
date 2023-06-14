@@ -31,17 +31,17 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
+	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/rhsm/facts"
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distroregistry"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/osbuild"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/reporegistry"
-	"github.com/osbuild/osbuild-composer/internal/rhsm/facts"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -2503,7 +2503,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	manifest, warnings, err := imageType.Manifest(bp, options, imageRepos, seed)
+	ibp := blueprint.Convert(*bp)
+	manifest, warnings, err := imageType.Manifest(&ibp, options, imageRepos, seed)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",

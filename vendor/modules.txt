@@ -607,6 +607,44 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
+# github.com/osbuild/images v0.0.0-20230710155525-7045e8251769
+## explicit; go 1.18
+github.com/osbuild/images/internal/common
+github.com/osbuild/images/internal/dnfjson
+github.com/osbuild/images/internal/environment
+github.com/osbuild/images/internal/fdo
+github.com/osbuild/images/internal/fsnode
+github.com/osbuild/images/internal/ignition
+github.com/osbuild/images/internal/mocks/dnfjson
+github.com/osbuild/images/internal/oscap
+github.com/osbuild/images/internal/pathpolicy
+github.com/osbuild/images/internal/shell
+github.com/osbuild/images/internal/users
+github.com/osbuild/images/internal/workload
+github.com/osbuild/images/pkg/artifact
+github.com/osbuild/images/pkg/blueprint
+github.com/osbuild/images/pkg/container
+github.com/osbuild/images/pkg/crypt
+github.com/osbuild/images/pkg/disk
+github.com/osbuild/images/pkg/distro
+github.com/osbuild/images/pkg/distro/distro_test_common
+github.com/osbuild/images/pkg/distro/fedora
+github.com/osbuild/images/pkg/distro/rhel7
+github.com/osbuild/images/pkg/distro/rhel8
+github.com/osbuild/images/pkg/distro/rhel9
+github.com/osbuild/images/pkg/distro/test_distro
+github.com/osbuild/images/pkg/distroregistry
+github.com/osbuild/images/pkg/image
+github.com/osbuild/images/pkg/manifest
+github.com/osbuild/images/pkg/osbuild
+github.com/osbuild/images/pkg/ostree
+github.com/osbuild/images/pkg/ostree/mock_ostree_repo
+github.com/osbuild/images/pkg/platform
+github.com/osbuild/images/pkg/rhsm
+github.com/osbuild/images/pkg/rhsm/facts
+github.com/osbuild/images/pkg/rpmmd
+github.com/osbuild/images/pkg/runner
+github.com/osbuild/images/pkg/subscription
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors

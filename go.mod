@@ -13,8 +13,6 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 	github.com/BurntSushi/toml v1.2.1
 	github.com/aws/aws-sdk-go v1.44.230
-	github.com/containers/common v0.49.1
-	github.com/containers/image/v5 v5.22.0
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/deepmap/oapi-codegen v1.8.2
@@ -31,10 +29,9 @@ require (
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/labstack/gommon v0.4.0
-	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198
 	github.com/openshift-online/ocm-sdk-go v0.1.315
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
+	github.com/osbuild/images v0.0.0-20230710155525-7045e8251769
 	github.com/prometheus/client_golang v1.13.0
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sirupsen/logrus v1.9.0
@@ -47,7 +44,6 @@ require (
 	golang.org/x/sync v0.2.0
 	golang.org/x/sys v0.8.0
 	google.golang.org/api v0.126.0
-	gopkg.in/ini.v1 v1.67.0
 )
 
 require (
@@ -71,6 +67,8 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/containers/common v0.49.1 // indirect
+	github.com/containers/image/v5 v5.22.0 // indirect
 	github.com/containers/libtrust v0.0.0-20200511145503-9c3a6c22cd9a // indirect
 	github.com/containers/ocicrypt v1.1.5 // indirect
 	github.com/containers/storage v1.42.0 // indirect
@@ -125,6 +123,8 @@ require (
 	github.com/moby/sys/mountinfo v0.6.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.0.3-0.20220114050600-8b9d41f48198 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -163,6 +163,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/grpc v1.55.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
+	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

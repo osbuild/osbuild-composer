@@ -17,15 +17,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
-	"github.com/osbuild/osbuild-composer/internal/container"
-	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/distroregistry"
+	"github.com/osbuild/images/pkg/blueprint"
+	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/rhsm/facts"
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
-	"github.com/osbuild/osbuild-composer/internal/rhsm/facts"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
 type multiValue []string
