@@ -339,6 +339,8 @@ Image Tests:
         INTERNAL_NETWORK: ["true"]
 
 Trigger-rhel-edge-ci:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
   stage: test
   interruptible: true
   tags:
