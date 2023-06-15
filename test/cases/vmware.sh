@@ -15,7 +15,7 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 IMAGE_TYPE="$1"
 
-if ! nvrGreaterOrEqual "osbuild" "85" && [ "$IMAGE_TYPE" == "ova" ]; then
+if ! nvrGreaterOrEqual "osbuild-composer" "84" && [ "$IMAGE_TYPE" == "ova" ]; then
     greenprint "Skipping ova test on older osbuild-composer"
     exit 0
 fi
