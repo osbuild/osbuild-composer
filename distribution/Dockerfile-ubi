@@ -31,5 +31,5 @@ COPY ./dnf-json /usr/libexec/osbuild-composer/
 COPY ./pkg/jobqueue/dbjobqueue/schemas /opt/migrate/schemas
 COPY --from=builder2 /opt/app-root/src/go/bin/tern /opt/migrate/
 
-EXPOSE 8080 8700
-ENTRYPOINT ["python3", "/opt/entrypoint.py", "--remote-worker-api", "--composer-api", "--shutdown-wait-period", "15"]
+EXPOSE 8008 8080 8700
+ENTRYPOINT ["python3", "/opt/entrypoint.py", "--remote-worker-api", "--composer-api", "--prometheus", "--shutdown-wait-period", "15"]
