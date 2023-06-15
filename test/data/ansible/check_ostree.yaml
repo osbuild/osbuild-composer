@@ -762,8 +762,13 @@
           delay: 2
           until: install_result is success
 
+        - name: delay 10 seconds before reboot to make system stable
+          pause:
+            seconds: 10
+
         - name: reboot to deploy new ostree commit
           reboot:
+            post_reboot_delay: 10
           become: yes
 
         - name: wait for connection to become reachable/usable
