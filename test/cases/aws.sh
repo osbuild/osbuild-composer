@@ -182,26 +182,28 @@ $AWS_CMD ec2 create-tags \
 
 # Verify that the image has the correct boot mode set
 AMI_BOOT_MODE=$(jq -r '.Images[].BootMode // empty' "$AMI_DATA")
-case "$ARCH" in
-    aarch64)
-        # aarch64 image supports only uefi boot mode
-        if [[ "$AMI_BOOT_MODE" != "uefi" ]]; then
-            echo "AMI boot mode is not \"uefi\", but \"$AMI_BOOT_MODE\""
+if nvrGreaterOrEqual "osbuild-composer" "83"; then
+    case "$ARCH" in
+        aarch64)
+            # aarch64 image supports only uefi boot mode
+            if [[ "$AMI_BOOT_MODE" != "uefi" ]]; then
+                echo "AMI boot mode is not \"uefi\", but \"$AMI_BOOT_MODE\""
+                exit 1
+            fi
+            ;;
+        x86_64)
+            # x86_64 image supports hybrid boot mode with preference for uefi
+            if [[ "$AMI_BOOT_MODE" != "uefi-preferred" ]]; then
+                echo "AMI boot mode is not \"uefi-preferred\", but \"$AMI_BOOT_MODE\""
+                exit 1
+            fi
+            ;;
+        *)
+            echo "Unsupported architecture: $ARCH"
             exit 1
-        fi
-        ;;
-    x86_64)
-        # x86_64 image supports hybrid boot mode with preference for uefi
-        if [[ "$AMI_BOOT_MODE" != "uefi-preferred" ]]; then
-            echo "AMI boot mode is not \"uefi-preferred\", but \"$AMI_BOOT_MODE\""
-            exit 1
-        fi
-        ;;
-    *)
-        echo "Unsupported architecture: $ARCH"
-        exit 1
-        ;;
-esac
+            ;;
+    esac
+fi
 
 if [[ "$ID" == "fedora" ]]; then
   # fedora uses fedora
