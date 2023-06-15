@@ -134,7 +134,7 @@ Container:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
 
 Packer:
   stage: test
