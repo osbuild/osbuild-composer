@@ -60,6 +60,18 @@ class Cli(contextlib.AbstractContextManager):
             help="Disable the composer-API",
         )
         self._parser.add_argument(
+            "--prometheus",
+            action="store_true",
+            dest="prometheus",
+            help="Enable prometheus listener",
+        )
+        self._parser.add_argument(
+            "--no-prometheus",
+            action="store_false",
+            dest="prometheus",
+            help="Disable prometheus listener",
+        )
+        self._parser.add_argument(
             "--composer-api-port",
             type=int,
             default=8080,
@@ -67,11 +79,25 @@ class Cli(contextlib.AbstractContextManager):
             help="Port which the composer-API listens on",
         )
         self._parser.add_argument(
+            "--prometheus-port",
+            type=int,
+            default=8008,
+            dest="prometheus_port",
+            help="Port which prometheus listens on",
+        )
+        self._parser.add_argument(
             "--composer-api-bind-address",
             type=str,
             default="::",
             dest="composer_api_bind_address",
             help="Bind the composer API to the specified address",
+        )
+        self._parser.add_argument(
+            "--prometheus-bind-address",
+            type=str,
+            default="::",
+            dest="prometheus_bind_address",
+            help="Bind the prometheus listener to the specified address",
         )
 
         # --[no-]local-worker-api
@@ -133,6 +159,7 @@ class Cli(contextlib.AbstractContextManager):
         self._parser.set_defaults(
             builtin_worker=False,
             composer_api=False,
+            prometheus=False,
             local_worker_api=False,
             remote_worker_api=False,
             weldr_api=False,
@@ -186,6 +213,21 @@ class Cli(contextlib.AbstractContextManager):
             sock.listen()
             sockets.append(sock)
             names.append("osbuild-composer-api.socket")
+
+            assert(sock.fileno() == index)
+            index += 1
+
+        # osbuild-composer-prometheus.socket
+        if self.args.prometheus:
+            print("Create prometheus socket on port {}".format(self.args.prometheus_port), file=sys.stderr)
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            self._exitstack.enter_context(contextlib.closing(sock))
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+            sock.bind((self.args.prometheus_bind_address, self.args.prometheus_port))
+            sock.listen()
+            sockets.append(sock)
+            names.append("osbuild-composer-prometheus.socket")
 
             assert(sock.fileno() == index)
             index += 1
