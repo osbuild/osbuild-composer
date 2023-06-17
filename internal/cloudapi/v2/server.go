@@ -19,6 +19,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
+	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/container"
@@ -90,8 +91,14 @@ func (s *Server) Handler(path string) http.Handler {
 		server: s,
 	}
 
-	statusMW := prometheus.StatusMiddleware(prometheus.ComposerSubsystem)
-	RegisterHandlers(e.Group(path, prometheus.MetricsMiddleware, s.ValidateRequest, statusMW), &handler)
+	mws := []echo.MiddlewareFunc{
+		prometheus.StatusMiddleware(prometheus.ComposerSubsystem),
+	}
+	if s.config.JWTEnabled {
+		mws = append(mws, auth.TenantChannelMiddleware(s.config.TenantProviderFields, HTTPError(ErrorTenantNotFound)))
+	}
+	mws = append(mws, prometheus.MetricsMiddleware, s.ValidateRequest)
+	RegisterHandlers(e.Group(path, mws...), &handler)
 
 	return e
 }

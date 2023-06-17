@@ -6,22 +6,23 @@ import (
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/osbuild/osbuild-composer/internal/auth"
 )
 
+const TenantCtxKey string = "tenant"
+
 // getTenantChannel returns the tenant channel for the provided request context
 func (s *Server) getTenantChannel(ctx echo.Context) (string, error) {
-	// channel is empty if JWT is not enabled
-	var channel string
 	if s.config.JWTEnabled {
-		tenant, err := auth.GetFromClaims(ctx.Request().Context(), s.config.TenantProviderFields)
-		if err != nil {
-			return "", err
+		tenant, ok := ctx.Get(auth.TenantCtxKey).(string)
+		if !ok {
+			return "", HTTPError(ErrorTenantNotInContext)
 		}
-		// prefix the tenant to prevent collisions if support for specifying channels in a request is ever added
-		channel = "org-" + tenant
+		return tenant, nil
 	}
-	return channel, nil
+	// channel is empty if JWT is not enabled
+	return "", nil
 }
 
 type ComposeHandlerFunc func(ctx echo.Context, id string) error
@@ -36,7 +37,7 @@ func (s *Server) EnsureJobChannel(next ComposeHandlerFunc) ComposeHandlerFunc {
 
 		ctxChannel, err := s.getTenantChannel(c)
 		if err != nil {
-			return HTTPErrorWithInternal(ErrorTenantNotFound, err)
+			return err
 		}
 
 		jobChannel, err := s.workers.JobChannel(jobId)

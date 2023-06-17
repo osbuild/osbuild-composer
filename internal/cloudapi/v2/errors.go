@@ -68,6 +68,7 @@ const (
 	ErrorGettingOSBuildJobStatus                  ServiceErrorCode = 1017
 	ErrorGettingAWSEC2JobStatus                   ServiceErrorCode = 1018
 	ErrorGettingJobType                           ServiceErrorCode = 1019
+	ErrorTenantNotInContext                       ServiceErrorCode = 1020
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -143,6 +144,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorGettingOSBuildJobStatus, http.StatusInternalServerError, "Unable to get osbuild job status"},
 		serviceError{ErrorGettingAWSEC2JobStatus, http.StatusInternalServerError, "Unable to get ec2 job status"},
 		serviceError{ErrorGettingJobType, http.StatusInternalServerError, "Unable to get job type of existing job"},
+		serviceError{ErrorTenantNotInContext, http.StatusInternalServerError, "Unable to retrieve tenant from request context"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},
