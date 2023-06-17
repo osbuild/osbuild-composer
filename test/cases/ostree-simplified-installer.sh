@@ -42,10 +42,7 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
   <ip address='192.168.100.1' netmask='255.255.255.0'>
     <dhcp>
       <range start='192.168.100.2' end='192.168.100.254'/>
-      <host mac='34:49:22:B0:83:30' name='vm-httpboot' ip='192.168.100.50'/>
-      <host mac='34:49:22:B0:83:31' name='vm-uefi-01' ip='192.168.100.51'/>
-      <host mac='34:49:22:B0:83:32' name='vm-uefi-02' ip='192.168.100.52'/>
-      <host mac='34:49:22:B0:83:33' name='vm-ignition' ip='192.168.100.53'/>
+      <host mac='34:49:22:B0:83:30' name='vm' ip='192.168.100.50'/>
     </dhcp>
   </ip>
   <dnsmasq:options>
@@ -77,10 +74,7 @@ EOF
 # Set up variables.
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="edge-${TEST_UUID}"
-HTTP_GUEST_ADDRESS=192.168.100.50
-PUB_KEY_GUEST_ADDRESS=192.168.100.51
-ROOT_CERT_GUEST_ADDRESS=192.168.100.52
-IGNITION_GUEST_ADDRESS=192.168.100.53
+EDGE_GUEST_ADDRESS=192.168.100.50
 PROD_REPO_URL=http://192.168.100.1/repo
 PROD_REPO=/var/www/html/repo
 FDO_SERVER_ADDRESS=192.168.100.1
@@ -107,7 +101,7 @@ SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o Conn
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
-#
+
 # kernel-rt package name (differs in CS8)
 KERNEL_RT_PKG="kernel-rt"
 
@@ -264,14 +258,6 @@ wait_for_fdo () {
 clean_up () {
     greenprint "🧼 Cleaning up"
 
-    # Clean up BIOS VM
-    greenprint "🧹 Clean up BIOS VM"
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_without_fdo") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-simplified_iso_without_fdo"
-    fi
-    sudo virsh undefine "${IMAGE_KEY}-simplified_iso_without_fdo" --nvram
-    sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
-
     # Remove any status containers if exist
     sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
     # Remove all images
@@ -406,6 +392,143 @@ greenprint "🧽 Clean up container blueprint and compose"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete container > /dev/null
 
+##################################################################
+##
+## Build edge-simplified-installer without FDO and Ignition
+##
+##################################################################
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "simplified_iso_without_fdo"
+description = "A rhel-edge simplified-installer image without FDO"
+version = "0.0.1"
+modules = []
+groups = []
+
+[[customizations.user]]
+name = "simple"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/simple/"
+groups = ["wheel"]
+
+[customizations]
+installation_device = "/dev/vda"
+EOF
+
+greenprint "📄 simplified_iso_without_fdo blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing installer blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve simplified_iso_without_fdo
+
+# Build simplified installer iso image.
+build_image simplified_iso_without_fdo "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+
+# Download the image
+greenprint "📥 Downloading the simplified_iso_without_fdo image"
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
+sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
+
+# Clean compose and blueprints.
+greenprint "🧹 Clean up simplified_iso_without_fdo blueprint and compose"
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli blueprints delete simplified_iso_without_fdo > /dev/null
+
+# Ensure SELinux is happy with our new images.
+greenprint "👿 Running restorecon on image directory"
+sudo restorecon -Rv /var/lib/libvirt/images/
+
+# Create qcow2 file for virt install.
+LIBVIRT_IMAGE_PATH=/var/lib/libvirt/images/${IMAGE_KEY}.qcow2
+greenprint "🖥 Create qcow2 file for virt install"
+sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
+
+greenprint "💿 Install no FDO and ignition simplified ISO on UEFI VM"
+sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_without_fdo"\
+                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
+                   --ram "${MEMORY}" \
+                   --vcpus 2 \
+                   --network network=integration,mac=34:49:22:B0:83:30 \
+                   --os-type linux \
+                   --os-variant ${OS_VARIANT} \
+                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
+                   --boot "$BOOT_ARGS" \
+                   --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
+                   --nographics \
+                   --noautoconsole \
+                   --wait=15 \
+                   --noreboot
+
+# Start VM.
+greenprint "💻 Start UEFI VM"
+sudo virsh start "${IMAGE_KEY}-simplified_iso_without_fdo"
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "simple@${EDGE_GUEST_ADDRESS}" "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+# Sleep 10 seconds here to make sure vm restarted already
+sleep 10
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check image installation result
+check_result
+
+greenprint "🕹 Get ostree install commit value"
+INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${EDGE_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=simple
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="false" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
+greenprint "🧹 Clean up VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_without_fdo") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-simplified_iso_without_fdo"
+fi
+sudo virsh undefine "${IMAGE_KEY}-simplified_iso_without_fdo" --nvram
+sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
+
 ########################################################################
 ##
 ## Build edge-simplified-installer with diun_pub_key_insecure enabled
@@ -509,8 +632,8 @@ sudo virsh start "${IMAGE_KEY}-http"
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $HTTP_GUEST_ADDRESS)"
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -519,11 +642,11 @@ for LOOP_COUNTER in $(seq 0 30); do
 done
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${HTTP_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $HTTP_GUEST_ADDRESS)"
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -541,7 +664,7 @@ INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
-${HTTP_GUEST_ADDRESS}
+${EDGE_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
@@ -552,10 +675,6 @@ ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
-
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
@@ -634,7 +753,7 @@ sudo virt-install  --name="${IMAGE_KEY}-fdosshkey"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram "${MEMORY}" \
                    --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:31 \
+                   --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
@@ -657,8 +776,8 @@ sudo virsh start "${IMAGE_KEY}-fdosshkey"
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $PUB_KEY_GUEST_ADDRESS)"
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -671,7 +790,7 @@ done
 if [[ "${ANSIBLE_USER}" == "fdouser" ]]; then
     greenprint "Waiting for FDO user onboarding finished"
     for _ in $(seq 0 30); do
-        RESULTS=$(wait_for_fdo "$PUB_KEY_GUEST_ADDRESS")
+        RESULTS=$(wait_for_fdo "$EDGE_GUEST_ADDRESS")
         if [[ $RESULTS == 1 ]]; then
             echo "FDO user is ready to use! 🥳"
             break
@@ -681,11 +800,11 @@ if [[ "${ANSIBLE_USER}" == "fdouser" ]]; then
 fi
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${PUB_KEY_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $PUB_KEY_GUEST_ADDRESS)"
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -702,7 +821,7 @@ INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
-${PUB_KEY_GUEST_ADDRESS}
+${EDGE_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
@@ -713,10 +832,6 @@ ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
-
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # FDO user does not have password, use ssh key and no sudo password instead
 if [[ "$ANSIBLE_USER" == "fdouser" ]]; then
@@ -799,7 +914,7 @@ sudo virt-install  --name="${IMAGE_KEY}-fdorootcert"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                    --ram "${MEMORY}" \
                    --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:32 \
+                   --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
@@ -822,8 +937,8 @@ sudo virsh start "${IMAGE_KEY}-fdorootcert"
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $ROOT_CERT_GUEST_ADDRESS)"
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -832,11 +947,11 @@ for LOOP_COUNTER in $(seq 0 30); do
 done
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${ROOT_CERT_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $ROOT_CERT_GUEST_ADDRESS)"
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -853,7 +968,7 @@ INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
-${ROOT_CERT_GUEST_ADDRESS}
+${EDGE_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
@@ -865,10 +980,6 @@ ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type=redhat \
@@ -876,469 +987,6 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
-    -e sysroot_ro="$SYSROOT_RO" \
-    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-check_result
-
-greenprint "🧹 Clean up VM"
-if [[ $(sudo virsh domstate "${IMAGE_KEY}-fdorootcert") == "running" ]]; then
-    sudo virsh destroy "${IMAGE_KEY}-fdorootcert"
-fi
-sudo virsh undefine "${IMAGE_KEY}-fdorootcert" --nvram
-sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
-
-IGNITION=1
-HAS_IGNITION="false"
-if [[ "${ID}-${VERSION_ID}" = "rhel-9.2" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
-  IGNITION=0
-  HAS_IGNITION="true"
-fi
-
-##################################################################
-##
-## Build edge-simplified-installer without FDO & with Ignition
-##
-##################################################################
-
-BU_PATH="${HTTPD_PATH}"/butane
-sudo mkdir -p ${BU_PATH}
-BU_CONFIG_PATH="${BU_PATH}/bu_config.bu"
-sudo tee "$BU_CONFIG_PATH" > /dev/null << EOF
-variant: r4e
-version: 1.0.0
-ignition:
-  config:
-    merge:
-      - source: "http://192.168.100.1/ignition/sample.ign"
-  timeouts:
-    http_total: 30
-passwd:
-  users:
-    - name: core
-      password_hash: "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-      ssh_authorized_keys:
-        - "${SSH_KEY_PUB}"
-      groups:
-        - wheel
-EOF
-
-IGN_PATH="${HTTPD_PATH}/ignition"
-sudo mkdir -p ${IGN_PATH}
-IGN_CONFIG_PATH="${IGN_PATH}/config.ign"
-
-# Run butane using standard in and standard out
-greenprint "Running butane using butane's configuration file"
-podman run -i --rm quay.io/coreos/butane:release --pretty --strict < "${BU_CONFIG_PATH}" > config.ign
-sudo cp config.ign "${IGN_CONFIG_PATH}"
-sudo rm -rf ./config.ign
-# Output Ignition configuration
-greenprint "Generated Ignition configuration"
-cat "${IGN_CONFIG_PATH}"
-
-BASE64_IGN_CONFIG=$(cat "$IGN_CONFIG_PATH" | base64)
-
-IGN_CONFIG_SAMPLE_PATH="${IGN_PATH}/sample.ign"
-sudo tee "$IGN_CONFIG_SAMPLE_PATH" > /dev/null << EOF
-{
-  "ignition": {
-    "version": "3.3.0"
-  },
-  "storage": {
-    "files": [
-      {
-        "path": "/usr/local/bin/startup.sh",
-        "contents": {
-          "compression": "",
-          "source": "data:;base64,IyEvYmluL2Jhc2gKZWNobyAiSGVsbG8sIFdvcmxkISIK"
-        },
-        "mode": 493
-      }
-    ]
-  },
-  "systemd": {
-    "units": [
-      {
-        "contents": "[Unit]\nDescription=A hello world unit!\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/local/bin/startup.sh\n[Install]\nWantedBy=multi-user.target\n",
-        "enabled": true,
-        "name": "hello.service"
-      },
-      {
-        "dropins": [
-          {
-            "contents": "[Service]\nEnvironment=LOG_LEVEL=trace\n",
-            "name": "log_trace.conf"
-          }
-        ],
-        "name": "fdo-client-linuxapp.service"
-      }
-    ]
-  }
-}
-EOF
-sudo chmod -R +r ${HTTPD_PATH}/ignition/*
-
-########################################################################
-##
-## Build edge-simplified-installer with ignition embedded 
-## (only on rhel92+)
-##
-########################################################################
-
-if [[ "${ID}-${VERSION_ID}" = "rhel-9.2" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
-  # embedded base64 ign config
-
-  tee "$BLUEPRINT_FILE" > /dev/null <<EOF
-name = "simplified_iso_with_ignition_embedded_config"
-description = "A rhel-edge simplified-installer image with an embedded ignition config"
-version = "0.0.1"
-
-[customizations]
-installation_device = "/dev/vda"
-
-[customizations.ignition.embedded]
-config = """
-${BASE64_IGN_CONFIG}"""
-EOF
-
-  greenprint "📄 simplified_iso_with_ignition_embedded_config blueprint "
-  cat "$BLUEPRINT_FILE"
-
-  # Prepare the blueprint for the compose.
-  greenprint "📋 Preparing installer blueprint"
-  sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-  sudo composer-cli blueprints depsolve simplified_iso_with_ignition_embedded_config
-
-  # Build simplified installer iso image.
-  build_image simplified_iso_with_ignition_embedded_config "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
-
-  # Download the image
-  greenprint "📥 Downloading the simplified_iso_with_ignition_embedded_config image"
-  sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-  ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
-  sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
-
-  # Clean compose and blueprints.
-  greenprint "🧹 Clean up simplified_iso_with_ignition_embedded_config blueprint and compose"
-  sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-  sudo composer-cli blueprints delete simplified_iso_with_ignition_embedded_config > /dev/null
-
-  # Ensure SELinux is happy with our new images.
-  greenprint "👿 Running restorecon on image directory"
-  sudo restorecon -Rv /var/lib/libvirt/images/
-
-  # Create qcow2 file for virt install.
-  greenprint "🖥 Create qcow2 file for virt install"
-  sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
-
-  greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
-  sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config"\
-                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                    --ram "${MEMORY}" \
-                    --vcpus 2 \
-                    --network network=integration,mac=34:49:22:B0:83:33 \
-                    --os-type linux \
-                    --os-variant ${OS_VARIANT} \
-                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                    --boot "$BOOT_ARGS" \
-                    --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
-                    --nographics \
-                    --noautoconsole \
-                    --wait=15 \
-                    --noreboot
-
-  # Installation can get stuck, destroying VM helps
-  # See https://github.com/osbuild/osbuild-composer/issues/2413
-  if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config") == "running" ]]; then
-      sudo virsh destroy "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config"
-  fi
-
-  # Start VM.
-  greenprint "💻 Start UEFI VM"
-  sudo virsh start "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config"
-
-  # Check for ssh ready to go.
-  greenprint "🛃 Checking for SSH is ready to go"
-  for LOOP_COUNTER in $(seq 0 30); do
-      RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
-      if [[ $RESULTS == 1 ]]; then
-          echo "SSH is ready now! 🥳"
-          break
-      fi
-      sleep 10
-  done
-
-  # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-  sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${IGNITION_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
-  # Sleep 10 seconds here to make sure vm restarted already
-  sleep 10
-  for _ in $(seq 0 30); do
-      RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
-      if [[ $RESULTS == 1 ]]; then
-          echo "SSH is ready now! 🥳"
-          break
-      fi
-      sleep 10
-  done
-
-  # Check image installation result
-  check_result
-
-  greenprint "🕹 Get ostree install commit value"
-  INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
-
-  if [[ ${IGNITION} -eq 0 ]]; then
-    # Add instance IP address into /etc/ansible/hosts
-    sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${IGNITION_GUEST_ADDRESS}
-
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=core
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes
-ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
-EOF
-
-    # Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-    greenprint "fix stdio file non-blocking issue"
-    sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
-    # Test IoT/Edge OS
-    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-        -e image_type=redhat \
-        -e ostree_commit="${INSTALL_HASH}" \
-        -e skip_rollback_test="true" \
-        -e ignition="${HAS_IGNITION}" \
-        -e edge_type=edge-simplified-installer \
-        -e fdo_credential="false" \
-        -e sysroot_ro="$SYSROOT_RO" \
-        /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-    check_result
-  fi
-
-  # now try with blueprint user
-
-  # Add instance IP address into /etc/ansible/hosts
-  sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${IGNITION_GUEST_ADDRESS}
-
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes
-ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
-EOF
-
-  # Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-  greenprint "fix stdio file non-blocking issue"
-  sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
-  # Test IoT/Edge OS
-  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
-    -e ostree_commit="${INSTALL_HASH}" \
-    -e skip_rollback_test="true" \
-    -e ignition="${HAS_IGNITION}" \
-    -e edge_type=edge-simplified-installer \
-    -e fdo_credential="false" \
-    -e sysroot_ro="$SYSROOT_RO" \
-    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-  check_result
-
-  greenprint "🧹 Clean up VM"
-  if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config") == "running" ]]; then
-      sudo virsh destroy "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config"
-  fi
-  sudo virsh undefine "${IMAGE_KEY}-simplified_iso_with_ignition_embedded_config" --nvram
-  sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
-else
-    greenprint "Skipping ignition embedded url test, it's only for RHEL9"
-fi
-
-# TODO(runcom): 
-
-if [[ ${IGNITION} -eq 0 ]]; then
-  tee "$BLUEPRINT_FILE" > /dev/null << EOF
-  name = "simplified_iso_without_fdo"
-  description = "A rhel-edge simplified-installer image without FDO with Ignition"
-  version = "0.0.1"
-  modules = []
-  groups = []
-
-  [customizations]
-  installation_device = "/dev/vda"
-
-  [customizations.ignition.firstboot]
-  url = "http://192.168.100.1/ignition/config.ign"
-EOF
-else
-  tee "$BLUEPRINT_FILE" > /dev/null << EOF
-  name = "simplified_iso_without_fdo"
-  description = "A rhel-edge simplified-installer image without FDO"
-  version = "0.0.1"
-  modules = []
-  groups = []
-
-  [customizations]
-  installation_device = "/dev/vda"
-EOF
-fi
-
-greenprint "📄 simplified_iso_without_fdo blueprint"
-cat "$BLUEPRINT_FILE"
-
-# Prepare the blueprint for the compose.
-greenprint "📋 Preparing installer blueprint"
-sudo composer-cli blueprints push "$BLUEPRINT_FILE"
-sudo composer-cli blueprints depsolve simplified_iso_without_fdo
-
-# Build simplified installer iso image.
-build_image simplified_iso_without_fdo "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
-
-# Download the image
-greenprint "📥 Downloading the simplified_iso_without_fdo image"
-sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-ISO_FILENAME="${COMPOSE_ID}-${INSTALLER_FILENAME}"
-sudo cp "${ISO_FILENAME}" /var/lib/libvirt/images
-
-# Clean compose and blueprints.
-greenprint "🧹 Clean up simplified_iso_without_fdo blueprint and compose"
-sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete simplified_iso_without_fdo > /dev/null
-
-# Ensure SELinux is happy with our new images.
-greenprint "👿 Running restorecon on image directory"
-sudo restorecon -Rv /var/lib/libvirt/images/
-
-# Create qcow2 file for virt install.
-greenprint "🖥 Create qcow2 file for virt install"
-sudo qemu-img create -f qcow2 "${LIBVIRT_IMAGE_PATH}" 20G
-
-greenprint "💿 Install ostree image via installer(ISO) on UEFI VM"
-sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_without_fdo"\
-                   --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram "${MEMORY}" \
-                   --vcpus 2 \
-                   --network network=integration,mac=34:49:22:B0:83:33 \
-                   --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
-                   --boot "$BOOT_ARGS" \
-                   --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
-                   --nographics \
-                   --noautoconsole \
-                   --wait=15 \
-                   --noreboot
-
-# Installation can get stuck, destroying VM helps
-# See https://github.com/osbuild/osbuild-composer/issues/2413
-if [[ $(sudo virsh domstate "${IMAGE_KEY}-simplified_iso_without_fdo") == "running" ]]; then
-    sudo virsh destroy "${IMAGE_KEY}-simplified_iso_without_fdo"
-fi
-
-# Start VM.
-greenprint "💻 Start UEFI VM"
-sudo virsh start "${IMAGE_KEY}-simplified_iso_without_fdo"
-
-# Check for ssh ready to go.
-greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
-
-# With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${IGNITION_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
-# Sleep 10 seconds here to make sure vm restarted already
-sleep 10
-for _ in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
-    if [[ $RESULTS == 1 ]]; then
-        echo "SSH is ready now! 🥳"
-        break
-    fi
-    sleep 10
-done
-
-# Check image installation result
-check_result
-
-greenprint "🕹 Get ostree install commit value"
-INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
-
-if [[ ${IGNITION} -eq 0 ]]; then
-  # Add instance IP address into /etc/ansible/hosts
-  sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-  [ostree_guest]
-  ${IGNITION_GUEST_ADDRESS}
-
-  [ostree_guest:vars]
-  ansible_python_interpreter=/usr/bin/python3
-  ansible_user=core
-  ansible_private_key_file=${SSH_KEY}
-  ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-  ansible_become=yes
-  ansible_become_method=sudo
-  ansible_become_pass=${EDGE_USER_PASSWORD}
-EOF
-
-  # Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-  greenprint "fix stdio file non-blocking issue"
-  sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
-  # Test IoT/Edge OS
-  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
-    -e ostree_commit="${INSTALL_HASH}" \
-    -e skip_rollback_test="true" \
-    -e ignition="${HAS_IGNITION}" \
-    -e edge_type=edge-simplified-installer \
-    -e fdo_credential="false" \
-    -e sysroot_ro="$SYSROOT_RO" \
-    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-  check_result
-fi
-
-# now try with blueprint user
-
-# Add instance IP address into /etc/ansible/hosts
-sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${IGNITION_GUEST_ADDRESS}
-
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes
-ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
-EOF
-
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
-# Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
-    -e ostree_commit="${INSTALL_HASH}" \
-    -e skip_rollback_test="true" \
-    -e ignition="${HAS_IGNITION}" \
-    -e edge_type=edge-simplified-installer \
-    -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
@@ -1437,8 +1085,8 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
 
 greenprint "🗳 Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${IGNITION_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${IGNITION_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -1446,8 +1094,8 @@ sleep 10
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
 # shellcheck disable=SC2034  # Unused variables left for readability
-for LOOP_COUNTER in $(seq 0 30); do
-    RESULTS="$(wait_for_ssh_up $IGNITION_GUEST_ADDRESS)"
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
         break
@@ -1458,60 +1106,20 @@ done
 # Check ostree upgrade result
 check_result
 
-# try with core user
-
-if [[ ${IGNITION} -eq 0 ]]; then
-  # Add instance IP address into /etc/ansible/hosts
-  sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-  [ostree_guest]
-  ${IGNITION_GUEST_ADDRESS}
-
-  [ostree_guest:vars]
-  ansible_python_interpreter=/usr/bin/python3
-  ansible_user=core
-  ansible_private_key_file=${SSH_KEY}
-  ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-  ansible_become=yes
-  ansible_become_method=sudo
-  ansible_become_pass=${EDGE_USER_PASSWORD}
-EOF
-
-  # Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-  greenprint "fix stdio file non-blocking issue"
-  sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
-  # Test IoT/Edge OS
-  sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
-    -e ostree_commit="${UPGRADE_HASH}" \
-    -e skip_rollback_test="true" \
-    -e edge_type=edge-simplified-installer \
-    -e fdo_credential="false" \
-    -e sysroot_ro="$SYSROOT_RO" \
-    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-  check_result
-fi
-
-# now try with blueprint user
-
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
 [ostree_guest]
-${IGNITION_GUEST_ADDRESS}
+${EDGE_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
+ansible_user=${ANSIBLE_USER}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
-
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
@@ -1522,7 +1130,15 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+
 check_result
+
+greenprint "🧹 Clean up VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}-fdorootcert") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}-fdorootcert"
+fi
+sudo virsh undefine "${IMAGE_KEY}-fdorootcert" --nvram
+sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
 
 # Final success clean up
 clean_up
