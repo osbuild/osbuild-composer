@@ -390,89 +390,6 @@ sudo composer-cli blueprints delete container > /dev/null
 
 ############################################################
 ##
-## Setup Ignition
-##
-############################################################
-
-# TODO(runcom): change this to butane to check that too
-HTTPD_PATH="/var/www/html"
-IGN_PATH="${HTTPD_PATH}/ignition"
-sudo mkdir -p ${IGN_PATH}
-IGN_CONFIG_PATH="${IGN_PATH}/config.ign"
-sudo tee "$IGN_CONFIG_PATH" > /dev/null << EOF
-{
-  "ignition": {
-    "config": {
-      "merge": [
-        {
-          "source": "http://192.168.100.1/ignition/sample.ign"
-        }
-      ]
-    },
-    "timeouts": {
-      "httpTotal": 30
-    },
-    "version": "3.3.0"
-  },
-  "passwd": {
-    "users": [
-      {
-        "groups": [
-          "wheel"
-        ],
-        "name": "core",
-        "passwordHash": "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl.",
-        "sshAuthorizedKeys": [
-          "${SSH_KEY_PUB}"
-        ]
-      }
-    ]
-  }
-}
-EOF
-
-IGN_CONFIG_SAMPLE_PATH="${IGN_PATH}/sample.ign"
-sudo tee "$IGN_CONFIG_SAMPLE_PATH" > /dev/null << EOF
-{
-  "ignition": {
-    "version": "3.3.0"
-  },
-  "storage": {
-    "files": [
-      {
-        "path": "/usr/local/bin/startup.sh",
-        "contents": {
-          "compression": "",
-          "source": "data:;base64,IyEvYmluL2Jhc2gKZWNobyAiSGVsbG8sIFdvcmxkISIK"
-        },
-        "mode": 493
-      }
-    ]
-  },
-  "systemd": {
-    "units": [
-      {
-        "contents": "[Unit]\nDescription=A hello world unit!\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/local/bin/startup.sh\n[Install]\nWantedBy=multi-user.target\n",
-        "enabled": true,
-        "name": "hello.service"
-      },
-      {
-        "dropins": [
-          {
-            "contents": "[Service]\nEnvironment=LOG_LEVEL=trace\n",
-            "name": "log_trace.conf"
-          }
-        ],
-        "name": "fdo-client-linuxapp.service"
-      }
-    ]
-  }
-}
-EOF
-sudo chmod -R +r ${HTTPD_PATH}/ignition/*
-
-############################################################
-##
 ## Build edge-raw-image
 ##
 ############################################################
@@ -485,20 +402,6 @@ version = "0.0.1"
 modules = []
 groups = []
 EOF
-
-IGNITION=1
-HAS_IGNITION="false"
-if [[ "${ID}-${VERSION_ID}" = "rhel-9.2" || "${ID}-${VERSION_ID}" = "centos-9" ]]; then
-  IGNITION=0
-  HAS_IGNITION="true"
-fi
-
-if [[ ${IGNITION} -eq 0 ]]; then
-    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
-[customizations.ignition.firstboot]
-url = "http://192.168.100.1/ignition/config.ign"
-EOF
-fi
 
 # User in raw image blueprint is not for RHEL 9.1 and 8.7
 # Workaround for RHEL 9.1 and 8.7 nightly test
@@ -657,43 +560,12 @@ EOF
     sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
         -e image_type="${OSTREE_OSNAME}" \
         -e skip_rollback_test="true" \
-        -e ignition="${HAS_IGNITION}" \
         -e edge_type=edge-raw-image \
         -e ostree_commit="${INSTALL_HASH}" \
         -e sysroot_ro="$SYSROOT_RO" \
         -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
-
-    # Test the same playbook with the user created by Ignition
-    if [[ ${IGNITION} -eq 0 ]]; then
-        # Add instance IP address into /etc/ansible/hosts
-        sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${BIOS_GUEST_ADDRESS}
-
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=core
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes
-ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
-EOF
-
-        # Test IoT/Edge OS
-        sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-            -e image_type="${OSTREE_OSNAME}" \
-            -e skip_rollback_test="true" \
-            -e ignition="${HAS_IGNITION}" \
-            -e edge_type=edge-raw-image \
-            -e ostree_commit="${INSTALL_HASH}" \
-            -e sysroot_ro="$SYSROOT_RO" \
-            -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
-            /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-        check_result
-    fi
 
     # Clean up BIOS VM
     greenprint "🧹 Clean up BIOS VM"
@@ -788,45 +660,12 @@ sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="${OSTREE_OSNAME}" \
     -e skip_rollback_test="true" \
-    -e ignition="${HAS_IGNITION}" \
     -e edge_type=edge-raw-image \
     -e ostree_commit="${INSTALL_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
-
-# test with ignition user
-
-# Test the same playbook with the user created by Ignition
-if [[ ${IGNITION} -eq 0 ]]; then
-    # Add instance IP address into /etc/ansible/hosts
-    sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${UEFI_GUEST_ADDRESS}
-
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=core
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes
-ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
-EOF
-
-    # Test IoT/Edge OS
-    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-        -e image_type="${OSTREE_OSNAME}" \
-        -e skip_rollback_test="true" \
-        -e ignition="${HAS_IGNITION}" \
-        -e edge_type=edge-raw-image \
-        -e ostree_commit="${INSTALL_HASH}" \
-        -e sysroot_ro="$SYSROOT_RO" \
-        -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
-        /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-    check_result
-fi
 
 ##################################################################
 ##
@@ -992,34 +831,6 @@ done
 
 # Check ostree upgrade result
 check_result
-
-if [[ ${IGNITION} -eq 0 ]]; then
-    # Add instance IP address into /etc/ansible/hosts
-    sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
-[ostree_guest]
-${UEFI_GUEST_ADDRESS}
-
-[ostree_guest:vars]
-ansible_python_interpreter=/usr/bin/python3
-ansible_user=core
-ansible_private_key_file=${SSH_KEY}
-ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes
-ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
-EOF
-
-    # Test IoT/Edge OS
-    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-        -e image_type="${OSTREE_OSNAME}" \
-        -e skip_rollback_test="true" \
-        -e edge_type=edge-raw-image \
-        -e ostree_commit="${UPGRADE_HASH}" \
-        -e sysroot_ro="$SYSROOT_RO" \
-        -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
-        /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
-    check_result
-fi
 
 # Add instance IP address into /etc/ansible/hosts
 sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
