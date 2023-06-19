@@ -2542,6 +2542,9 @@
                     "id": "sha256:c457303288fd423f9f320f3a05bc5a592455a75f14ea76db3a482633e59137ae"
                   },
                   {
+                    "id": "sha256:334ac6137a78b2d57afb209804d1ae2374d7b877aa12ef85d02aa6487e496140"
+                  },
+                  {
                     "id": "sha256:ca3e0ec3842accbc0b801561a716708261f7fac32fcccaa6bf70bd862739aa67",
                     "options": {
                       "metadata": {
@@ -6971,6 +6974,9 @@
           },
           "sha256:331b405a0b2b4bf93534af445da72d35eb1acd9ce66bd2d84f8ae5b169097d24": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-jbeap7-20230202/Packages/eap7-hibernate-search-engine-5.10.7-1.Final_redhat_00001.1.el8eap.noarch.rpm"
+          },
+          "sha256:334ac6137a78b2d57afb209804d1ae2374d7b877aa12ef85d02aa6487e496140": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rhui-azure-20230418/Packages/r/rhui-azure-rhel8-2.2-484.noarch.rpm"
           },
           "sha256:3384bccab530807195eb9d72547aa588bdea55567ca86d1719f32402bf1cd0c9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.9-20230615/Packages/libpsl-0.20.2-6.el8.x86_64.rpm"
@@ -16816,6 +16822,15 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.9-20230615/Packages/xorg-x11-fonts-Type1-7.5-19.el8.noarch.rpm",
         "checksum": "sha256:c457303288fd423f9f320f3a05bc5a592455a75f14ea76db3a482633e59137ae"
+      },
+      {
+        "name": "rhui-azure-rhel8",
+        "epoch": 0,
+        "version": "2.2",
+        "release": "484",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-rhui-azure-20230418/Packages/r/rhui-azure-rhel8-2.2-484.noarch.rpm",
+        "checksum": "sha256:334ac6137a78b2d57afb209804d1ae2374d7b877aa12ef85d02aa6487e496140"
       },
       {
         "name": "eap7-FastInfoset",
