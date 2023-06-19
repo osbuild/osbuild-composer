@@ -66,14 +66,14 @@ func (db *JSONDatabase) List() ([]string, error) {
 	}
 	defer f.Close()
 
-	infos, err := f.Readdir(-1)
+	dirNames, err := f.Readdirnames(-1)
 	if err != nil {
 		return nil, err
 	}
 
-	names := make([]string, len(infos))
-	for i, info := range infos {
-		names[i] = strings.TrimSuffix(info.Name(), ".json")
+	names := make([]string, len(dirNames))
+	for i, name := range dirNames {
+		names[i] = strings.TrimSuffix(name, ".json")
 	}
 
 	return names, nil
