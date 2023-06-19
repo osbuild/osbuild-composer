@@ -59,14 +59,10 @@ get_test_cases () {
             SKIP_CASES=("${SKIP_OSTREE[@]}")
         fi
 
-        # skip container test if running on old osbuild version
-        # b/c manifests have been modified to include the
-        # "manifest-lists" and "skopeo-index" options which are
-        # not yet supported on 8.8 and 9.2 downstream
-        if nvrGreaterOrEqual "osbuild" "83"; then
+        if nvrGreaterOrEqual "osbuild-composer" "84"; then
             echo
         else
-            SKIP_ME=$(grep edge_commit_with_container-boot <<< "$ALL_CASES")
+            SKIP_ME=$(grep ova-boot <<< "$ALL_CASES" || echo -n)
             SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_ME")
         fi
 
