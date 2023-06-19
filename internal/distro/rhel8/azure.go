@@ -249,6 +249,9 @@ func azureSapPackageSet(t *imageType) rpmmd.PackageSet {
 
 func azureEapPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
+		Include: []string{
+			"rhui-azure-rhel8",
+		},
 		Exclude: []string{
 			"firewalld",
 		},
