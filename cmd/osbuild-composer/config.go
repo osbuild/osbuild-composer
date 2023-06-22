@@ -18,6 +18,7 @@ type ComposerConfigFile struct {
 	LogLevel     string          `toml:"log_level"`
 	LogFormat    string          `toml:"log_format"`
 	DNFJson      string          `toml:"dnf-json"`
+	ProfilePort  int             `toml:"profile_port"`
 }
 
 type KojiAPIConfig struct {
@@ -110,9 +111,10 @@ func GetDefaultConfig() *ComposerConfigFile {
 				},
 			},
 		},
-		LogLevel:  "info",
-		LogFormat: "text",
-		DNFJson:   "/usr/libexec/osbuild-composer/dnf-json",
+		LogLevel:    "info",
+		LogFormat:   "text",
+		DNFJson:     "/usr/libexec/osbuild-composer/dnf-json",
+		ProfilePort: -1,
 	}
 }
 

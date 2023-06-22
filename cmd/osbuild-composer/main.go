@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"net/http"
+	"net/http/pprof"
 	"os"
 
 	"github.com/coreos/go-systemd/activation"
@@ -34,6 +37,7 @@ func main() {
 		logrus.Fatalf("Error loading configuration: %v", err)
 	}
 
+
 	logrus.SetOutput(os.Stdout)
 	logLevel, err := logrus.ParseLevel(config.LogLevel)
 
@@ -52,6 +56,18 @@ func main() {
 		logrus.SetFormatter(&logrus.JSONFormatter{})
 	default:
 		logrus.Infof("Failed to set logging format from config, '%s' is not a valid option", config.LogFormat)
+	}
+
+	if config.ProfilePort != -1 {
+		go func() {
+			http.ListenAndServe(fmt.Sprintf("localhost:%d", config.ProfilePort), nil)
+			http.HandleFunc("/debug/pprof/", pprof.Index)
+			http.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+			http.HandleFunc("/debug/pprof/profile", pprof.Profile)
+			http.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+			http.HandleFunc("/debug/pprof/trace", pprof.Trace)
+            logrus.Infof("Start profile server")
+		}()
 	}
 
 	logrus.Info("Loaded configuration:")
