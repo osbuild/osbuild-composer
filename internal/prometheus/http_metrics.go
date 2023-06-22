@@ -30,5 +30,5 @@ var (
 		Subsystem: ComposerSubsystem,
 		Help:      "Duration of HTTP requests.",
 		Buckets:   []float64{.025, .05, .075, .1, .2, .5, .75, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 20},
-	}, []string{"path"})
+	}, []string{"path", "tenant"})
 )
