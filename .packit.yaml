@@ -30,7 +30,7 @@ jobs:
     - fedora-all
 - job: copr_build
   trigger: pull_request
-  targets:
+  targets: &build_targets
     - centos-stream-8-aarch64
     - centos-stream-8-x86_64
     - centos-stream-9-aarch64
@@ -51,19 +51,4 @@ jobs:
   branch: main
   owner: "@osbuild" # copr repo namespace
   project: osbuild-composer  # copr repo name so you can consume the builds
-  targets:
-    - centos-stream-8-aarch64
-    - centos-stream-8-x86_64
-    - centos-stream-9-aarch64
-    - centos-stream-9-x86_64
-    - epel-8-aarch64
-    - epel-8-x86_64
-    - epel-9-aarch64
-    - epel-9-x86_64
-    - rhel-8-x86_64
-    - rhel-9-aarch64
-    - rhel-9-x86_64
-    - fedora-all-aarch64
-    - fedora-all-s390x
-    - fedora-all-ppc64le
-    - fedora-all
+  targets: *build_targets
