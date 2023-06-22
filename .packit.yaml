@@ -39,13 +39,13 @@ jobs:
     - epel-8-x86_64
     - epel-9-aarch64
     - epel-9-x86_64
-    - rhel-8-x86_64
-    - rhel-9-aarch64
-    - rhel-9-x86_64
     - fedora-all-aarch64
     - fedora-all-s390x
     - fedora-all-ppc64le
     - fedora-all
+    - rhel-8-x86_64
+    - rhel-9-aarch64
+    - rhel-9-x86_64
 - job: copr_build
   trigger: commit
   branch: main
