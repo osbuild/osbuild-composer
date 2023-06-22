@@ -46,7 +46,7 @@ rpm -qi osbuild-composer
 
 # Prepare repository override
 mkdir -p /etc/osbuild-composer/repositories
-tee /etc/osbuild-composer/repositories/rhel-92.json > /dev/null << EOF
+tee /etc/osbuild-composer/repositories/rhel-93.json > /dev/null << EOF
 {
     "x86_64": [
         {
