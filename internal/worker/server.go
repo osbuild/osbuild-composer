@@ -100,8 +100,13 @@ func (s *Server) Handler() http.Handler {
 		server: s,
 	}
 
-	statusMW := prometheus.StatusMiddleware(prometheus.WorkerSubsystem)
-	api.RegisterHandlers(e.Group(api.BasePath, statusMW), &handler)
+	mws := []echo.MiddlewareFunc{
+		prometheus.StatusMiddleware(prometheus.WorkerSubsystem),
+	}
+	if s.config.JWTEnabled {
+		mws = append(mws, auth.TenantChannelMiddleware(s.config.TenantProviderFields, api.HTTPError(api.ErrorTenantNotFound)))
+	}
+	api.RegisterHandlers(e.Group(api.BasePath, mws...), &handler)
 
 	return e
 }

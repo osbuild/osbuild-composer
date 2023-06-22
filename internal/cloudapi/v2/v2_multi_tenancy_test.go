@@ -176,6 +176,7 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerHandler http.Handler, orgI
 		Method:         http.MethodPatch,
 		Path:           job.Location,
 		RequestBody:    test.JSONRequestBody(`{"result": {"job_result":{}}}`),
+		Context:        reqContext(orgID),
 		ExpectedStatus: http.StatusOK,
 	}.Do(t)
 }
