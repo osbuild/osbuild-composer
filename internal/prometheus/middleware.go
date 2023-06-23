@@ -17,12 +17,20 @@ func MetricsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if strings.HasSuffix(ctx.Path(), "/compose") {
 			ComposeRequests.Inc()
 		}
-
-		// leave tenant empty in case it's not in the context
-		tenant, _ := ctx.Get(auth.TenantCtxKey).(string)
-		timer := prometheus.NewTimer(httpDuration.WithLabelValues(ctx.Path(), tenant))
-		defer timer.ObserveDuration()
 		return next(ctx)
+	}
+}
+
+func HTTPDurationMiddleware(subsystem string) func(next echo.HandlerFunc) echo.HandlerFunc {
+	histogram := HTTPDurationHisto(subsystem)
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			// leave tenant empty in case it's not in the context
+			tenant, _ := ctx.Get(auth.TenantCtxKey).(string)
+			timer := prometheus.NewTimer(histogram.WithLabelValues(ctx.Path(), tenant))
+			defer timer.ObserveDuration()
+			return next(ctx)
+		}
 	}
 }
 
