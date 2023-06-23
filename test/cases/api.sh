@@ -413,7 +413,7 @@ function collectMetrics(){
                           --cert /etc/osbuild-composer/client-crt.pem \
                           https://localhost/metrics)
 
-    echo "$METRICS_OUTPUT" | grep "^image_builder_composer_total_compose_requests" | cut -f2 -d' '
+    echo "$METRICS_OUTPUT" | grep "^image_builder_composer_request_count.*path=\"/api/image-builder-composer/v2/compose\"" | cut -f2 -d' '
 }
 
 function testNewMetricsPort(){
@@ -424,8 +424,8 @@ function testNewMetricsPort(){
                           https://localhost/metrics)
     METRICS_OUTPUT2=$(curl http://localhost:8008/metrics)
 
-    COMPOSES1=$(echo "$METRICS_OUTPUT1" | grep "^image_builder_composer_total_compose_requests" | cut -f2 -d' ')
-    COMPOSES2=$(echo "$METRICS_OUTPUT2" | grep "^image_builder_composer_total_compose_requests" | cut -f2 -d' ')
+    COMPOSES1=$(echo "$METRICS_OUTPUT1" | grep  "^image_builder_composer_request_count.*path=\"/api/image-builder-composer/v2/compose\"" | cut -f2 -d' ')
+    COMPOSES2=$(echo "$METRICS_OUTPUT2" | grep  "^image_builder_composer_request_count.*path=\"/api/image-builder-composer/v2/compose\"" | cut -f2 -d' ')
 
     test "$COMPOSES1" = "$COMPOSES2"
 }
