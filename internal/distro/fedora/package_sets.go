@@ -309,7 +309,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"libreport-plugin-reportuploader",
 			"librsvg2",
 			"linux-firmware",
-			"lklug-fonts",
 			"lldpad",
 			"lohit-assamese-fonts",
 			"lohit-bengali-fonts",
@@ -374,6 +373,13 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	})
 
+	if common.VersionLessThan(t.arch.distro.osVersion, "39") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"lklug-fonts", // orphaned, unavailable in F39
+			},
+		})
+	}
 	if common.VersionLessThan(t.arch.distro.osVersion, "37") {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
