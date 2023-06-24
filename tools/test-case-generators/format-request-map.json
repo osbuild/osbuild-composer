@@ -829,6 +829,28 @@
       }
     }
   },
+  "iot-simplified-installer": {
+    "compose-request": {
+      "distro": "",
+      "arch": "",
+      "image-type": "iot-simplified-installer",
+      "repositories": [],
+      "filename": "installer.iso",
+      "ostree": {
+        "ref": "test/fedora/iot",
+        "url": "http://iot.example.com/repo"
+      },
+      "blueprint": {
+        "customizations": {
+          "installation_device": "/dev/vda",
+          "fdo": {
+            "manufacturing_server_url": "https;//fdo.example.com",
+            "diun_pub_key_insecure": "true"
+          }
+        }
+      }
+    }
+  },
   "edge-simplified-installer": {
     "compose-request": {
       "distro": "",
@@ -876,7 +898,7 @@
     },
     "overrides": {}
   },
-    "edge-ami": {
+  "edge-ami": {
     "compose-request": {
       "distro": "",
       "arch": "",
