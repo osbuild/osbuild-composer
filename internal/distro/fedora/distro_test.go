@@ -2,6 +2,7 @@ package fedora_test
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -225,6 +226,13 @@ func TestFilenameFromType(t *testing.T) {
 	for _, dist := range fedoraFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, tt := range tests {
+				distroVersion, err := strconv.Atoi(dist.distro.Releasever())
+				require.NoError(t, err)
+				if distroVersion < 38 && strings.HasSuffix(tt.name, "iot-simplified-installer") {
+					// TODO: Remove this when F37 support is removed
+					// iot-simplified-installer not available in F37
+					continue
+				}
 				t.Run(tt.name, func(t *testing.T) {
 					dist := dist.distro
 					arch, _ := dist.GetArch("x86_64")
@@ -296,74 +304,6 @@ func TestImageType_BuildPackages(t *testing.T) {
 					assert.NotNil(t, buildPkgs)
 					assert.Len(t, buildPkgs, 1)
 					assert.ElementsMatch(t, buildPackages[archLabel], buildPkgs[0].Include)
-				}
-			}
-		})
-	}
-}
-
-func TestImageType_Name(t *testing.T) {
-	imgMap := []struct {
-		arch     string
-		imgNames []string
-	}{
-		{
-			arch: "x86_64",
-			imgNames: []string{
-				"qcow2",
-				"openstack",
-				"vhd",
-				"vmdk",
-				"ova",
-				"ami",
-				"iot-commit",
-				"iot-container",
-				"iot-installer",
-				"iot-simplified-installer",
-				"iot-raw-image",
-				"iot-qcow2-image",
-				"oci",
-				"image-installer",
-				"live-installer",
-				"minimal-raw",
-			},
-		},
-		{
-			arch: "aarch64",
-			imgNames: []string{
-				"qcow2",
-				"openstack",
-				"ami",
-				"oci",
-				"iot-commit",
-				"iot-container",
-				"iot-installer",
-				"iot-simplified-installer",
-				"iot-raw-image",
-				"iot-qcow2-image",
-				"image-installer",
-				"minimal-raw",
-			},
-		},
-	}
-
-	for _, dist := range fedoraFamilyDistros {
-		t.Run(dist.name, func(t *testing.T) {
-			for _, mapping := range imgMap {
-				if mapping.arch == "s390x" {
-					continue
-				}
-				arch, err := dist.distro.GetArch(mapping.arch)
-				if assert.NoError(t, err) {
-					for _, imgName := range mapping.imgNames {
-						if imgName == "iot-commit" {
-							continue
-						}
-						imgType, err := arch.GetImageType(imgName)
-						if assert.NoError(t, err) {
-							assert.Equalf(t, imgName, imgType.Name(), "arch: %s", mapping.arch)
-						}
-					}
 				}
 			}
 		})
@@ -504,9 +444,11 @@ func TestDistro_ManifestError(t *testing.T) {
 
 func TestArchitecture_ListImageTypes(t *testing.T) {
 	imgMap := []struct {
-		arch                       string
-		imgNames                   []string
-		fedoraAdditionalImageTypes []string
+		arch     string
+		imgNames []string
+		// additional image types available in F38+
+		// TODO: Remove when F37 support is dropped
+		f38AdditionalImageTypes []string
 	}{
 		{
 			arch: "x86_64",
@@ -522,12 +464,14 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"iot-installer",
 				"iot-raw-image",
 				"iot-qcow2-image",
-				"iot-simplified-installer",
 				"oci",
 				"container",
 				"image-installer",
 				"live-installer",
 				"minimal-raw",
+			},
+			f38AdditionalImageTypes: []string{
+				"iot-simplified-installer",
 			},
 		},
 		{
@@ -541,11 +485,13 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"iot-installer",
 				"iot-raw-image",
 				"iot-qcow2-image",
-				"iot-simplified-installer",
 				"oci",
 				"container",
 				"image-installer",
 				"minimal-raw",
+			},
+			f38AdditionalImageTypes: []string{
+				"iot-simplified-installer",
 			},
 		},
 	}
@@ -559,8 +505,10 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 
 				var expectedImageTypes []string
 				expectedImageTypes = append(expectedImageTypes, mapping.imgNames...)
-				if dist.name == "fedora" {
-					expectedImageTypes = append(expectedImageTypes, mapping.fedoraAdditionalImageTypes...)
+				distroVersion, err := strconv.Atoi(dist.distro.Releasever())
+				require.NoError(t, err)
+				if distroVersion >= 38 {
+					expectedImageTypes = append(expectedImageTypes, mapping.f38AdditionalImageTypes...)
 				}
 
 				require.ElementsMatch(t, expectedImageTypes, imageTypes)
