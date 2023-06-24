@@ -641,16 +641,6 @@ func newDistro(version int) distro.Distro {
 		},
 		iotQcow2ImgType,
 	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_RAW,
-			},
-			BIOS:       false,
-			UEFIVendor: "fedora",
-		},
-		iotSimplifiedInstallerImgType,
-	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{
 			UEFIVendor: "fedora",
@@ -685,21 +675,22 @@ func newDistro(version int) distro.Distro {
 		&platform.Aarch64{},
 		containerImgType,
 	)
-	aarch64.addImageTypes(
-		&platform.Aarch64{
-			BasePlatform: platform.BasePlatform{
-				FirmwarePackages: []string{
-					"uboot-images-armv8", // ??
-					"bcm283x-firmware",
-					"arm-image-installer", // ??
-				},
+
+	bareAarch64Platform := &platform.Aarch64{
+		BasePlatform: platform.BasePlatform{
+			FirmwarePackages: []string{
+				"uboot-images-armv8", // ??
+				"bcm283x-firmware",
+				"arm-image-installer", // ??
 			},
-			UEFIVendor: "fedora",
 		},
+		UEFIVendor: "fedora",
+	}
+	aarch64.addImageTypes(
+		bareAarch64Platform,
 		iotCommitImgType,
 		iotOCIImgType,
 		iotInstallerImgType,
-		iotSimplifiedInstallerImgType,
 		imageInstallerImgType,
 	)
 	aarch64.addImageTypes(
@@ -761,6 +752,24 @@ func newDistro(version int) distro.Distro {
 		},
 		minimalrawImgType,
 	)
+
+	// F38+ image types
+	if version >= 38 {
+		x86_64.addImageTypes(
+			&platform.X86{
+				BasePlatform: platform.BasePlatform{
+					ImageFormat: platform.FORMAT_RAW,
+				},
+				BIOS:       false,
+				UEFIVendor: "fedora",
+			},
+			iotSimplifiedInstallerImgType,
+		)
+		aarch64.addImageTypes(
+			bareAarch64Platform,
+			iotSimplifiedInstallerImgType,
+		)
+	}
 
 	rd.addArches(x86_64, aarch64)
 	return &rd
