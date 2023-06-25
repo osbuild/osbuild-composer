@@ -77,6 +77,7 @@ RAW_IMAGE_TYPE=edge-raw-image
 RAW_IMAGE_FILENAME=image.raw.xz
 OSTREE_OSNAME=redhat
 BOOT_ARGS="uefi"
+REF_PREFIX="rhel-edge"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -100,20 +101,24 @@ CUSTOM_DIRS_FILES="false"
 case "${ID}-${VERSION_ID}" in
     "rhel-8"* )
         OSTREE_REF="rhel/8/${ARCH}/edge"
+        PARENT_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         ;;
     "rhel-9"* )
         OSTREE_REF="rhel/9/${ARCH}/edge"
+        PARENT_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         SYSROOT_RO="true"
         ;;
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
+        PARENT_REF="centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
         KERNEL_RT_PKG="kernel-rt-core"
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
+        PARENT_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         SYSROOT_RO="true"
@@ -176,6 +181,10 @@ build_image() {
     if [ $# -eq 3 ]; then
         repo_url=$3
         sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
+    elif [ $# -eq 4 ]; then
+        repo_url=$3
+        parent_ref=$4
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$parent_ref" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     else
         sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     fi
@@ -509,7 +518,7 @@ if [[ "$ID" != "fedora" ]]; then
 
     # Check for ssh ready to go.
     greenprint "🛃 Checking for SSH is ready to go"
-    for LOOP_COUNTER in $(seq 0 30); do
+    for _ in $(seq 0 30); do
         RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
         if [[ $RESULTS == 1 ]]; then
             echo "SSH is ready now! 🥳"
@@ -567,6 +576,174 @@ EOF
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
 
+    ##################################################################
+    ##
+    ## Build rebase image
+    ##
+    ##################################################################
+    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "rebase"
+description = "An rebase rhel-edge container image"
+version = "0.0.2"
+modules = []
+groups = []
+
+[[packages]]
+name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
+version = "*"
+
+[[packages]]
+name = "wget"
+version = "*"
+
+[customizations.kernel]
+name = "${KERNEL_RT_PKG}"
+
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+home = "/home/admin/"
+groups = ["wheel"]
+EOF
+
+    # Add directory and files customization, and services customization for testing
+    if [[ "$CUSTOM_DIRS_FILES" == "true" ]]; then
+        tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.directories]]
+path = "/etc/custom_dir/dir1"
+user = 1020
+group = 1020
+mode = "0770"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service"
+data = "[Unit]\nDescription=Custom service\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/false\n[Install]\nWantedBy=multi-user.target\n"
+
+[[customizations.files]]
+path = "/etc/custom_file.txt"
+data = "image builder is the best\n"
+
+[[customizations.directories]]
+path = "/etc/systemd/system/custom.service.d"
+
+[[customizations.files]]
+path = "/etc/systemd/system/custom.service.d/override.conf"
+data = "[Service]\nExecStart=\nExecStart=/usr/bin/cat /etc/custom_file.txt\n"
+
+[customizations.services]
+enabled = ["custom.service"]
+EOF
+    fi
+
+    greenprint "📄 rebase blueprint"
+    cat "$BLUEPRINT_FILE"
+
+    # Prepare the blueprint for the compose.
+    greenprint "📋 Preparing rebase blueprint"
+    sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+    sudo composer-cli blueprints depsolve rebase
+
+    # Build rebase image.
+    OSTREE_REF="test/redhat/x/${ARCH}/edge"
+    build_image rebase  "$CONTAINER_TYPE" "$PROD_REPO_URL" "$PARENT_REF"
+
+    # Download the image
+    greenprint "📥 Downloading the rebase image"
+    sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+
+    # Clear stage repo running env
+    greenprint "🧹 Clearing stage repo running env"
+    # Remove any status containers if exist
+    sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
+    # Remove all images
+    sudo podman rmi -f -a
+
+    # Deal with stage repo container
+    greenprint "🗜 Extracting image"
+    IMAGE_FILENAME="${COMPOSE_ID}-${CONTAINER_FILENAME}"
+    sudo podman pull "oci-archive:${IMAGE_FILENAME}"
+    sudo podman images
+    # Clear image file
+    sudo rm -f "$IMAGE_FILENAME"
+
+    # Run edge stage repo
+    greenprint "🛰 Running edge stage repo"
+    # Get image id to run image
+    EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
+    sudo podman run -d --name rhel-edge --network edge --ip "$STAGE_REPO_ADDRESS" "$EDGE_IMAGE_ID"
+    # Wait for container to be running
+    until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
+        sleep 1;
+    done;
+
+    # Pull rebase repo to prod mirror
+    greenprint "⛓ Pull upgrade to prod mirror"
+    sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage "$OSTREE_REF"
+
+    # Get ostree rebase commit value.
+    greenprint "🕹 Get ostree rebase commit value"
+    REBASE_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+    # Clean compose and blueprints.
+    greenprint "🧽 Clean up rebase blueprint and compose"
+    sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+    sudo composer-cli blueprints delete rebase > /dev/null
+
+    # Rebase image/commit.
+    greenprint "🗳 Rebase ostree image/commit"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree rebase ${REF_PREFIX}:${OSTREE_REF}"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+
+    # Sleep 10 seconds here to make sure vm restarted already
+    sleep 10
+
+    # Check for ssh ready to go.
+    greenprint "🛃 Checking for SSH is ready to go"
+    # shellcheck disable=SC2034  # Unused variables left for readability
+    for _ in $(seq 0 30); do
+        RESULTS="$(wait_for_ssh_up $BIOS_GUEST_ADDRESS)"
+        if [[ $RESULTS == 1 ]]; then
+            echo "SSH is ready now! 🥳"
+            break
+        fi
+        sleep 10
+    done
+
+    check_result
+
+    # Add instance IP address into /etc/ansible/hosts
+    sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${BIOS_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=admin
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+    # Test IoT/Edge OS
+    sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+        -e image_type="${OSTREE_OSNAME}" \
+        -e skip_rollback_test="false" \
+        -e edge_type=edge-raw-image \
+        -e ostree_commit="${REBASE_HASH}" \
+        -e sysroot_ro="$SYSROOT_RO" \
+        -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
+        /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+
+    check_result
+
     # Clean up BIOS VM
     greenprint "🧹 Clean up BIOS VM"
     if [[ $(sudo virsh domstate "${IMAGE_KEY}-bios") == "running" ]]; then
@@ -576,6 +753,15 @@ EOF
     sudo rm -fr LIBVIRT_IMAGE_PATH
 else
     greenprint "Skipping BIOS boot for Fedora IoT (not supported)"
+fi
+
+# Re configure OSTREE_REF because it's change to "test/redhat/x/${ARCH}/edge" by above rebase test
+if [[ "$ID" == fedora ]]; then
+    OSTREE_REF="${ID}/${VERSION_ID}/${ARCH}/iot"
+elif [[ "$VERSION_ID" == 8* ]]; then
+    OSTREE_REF="${ID}/8/${ARCH}/edge"
+else
+    OSTREE_REF="${ID}/9/${ARCH}/edge"
 fi
 
 ##################################################################
@@ -609,7 +795,7 @@ sudo virsh start "${IMAGE_KEY}-uefi"
 
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
-for LOOP_COUNTER in $(seq 0 30); do
+for _ in $(seq 0 30); do
     RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
@@ -652,14 +838,9 @@ ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="${OSTREE_OSNAME}" \
-    -e skip_rollback_test="true" \
     -e edge_type=edge-raw-image \
     -e ostree_commit="${INSTALL_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
@@ -820,7 +1001,7 @@ sleep 10
 # Check for ssh ready to go.
 greenprint "🛃 Checking for SSH is ready to go"
 # shellcheck disable=SC2034  # Unused variables left for readability
-for LOOP_COUNTER in $(seq 0 30); do
+for _ in $(seq 0 30); do
     RESULTS="$(wait_for_ssh_up $UEFI_GUEST_ADDRESS)"
     if [[ $RESULTS == 1 ]]; then
         echo "SSH is ready now! 🥳"
@@ -846,10 +1027,6 @@ ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
-
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
