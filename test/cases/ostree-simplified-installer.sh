@@ -89,6 +89,7 @@ INSTALLER_TYPE=edge-simplified-installer
 INSTALLER_FILENAME=simplified-installer.iso
 MEMORY=2048
 BOOT_ARGS="uefi"
+REF_PREFIX="rhel-edge"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -113,10 +114,12 @@ FDO_USER_ONBOARDING="false"
 case "${ID}-${VERSION_ID}" in
     "rhel-8"* )
         OSTREE_REF="rhel/8/${ARCH}/edge"
+        PARENT_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         ;;
     "rhel-9"* )
         OSTREE_REF="rhel/9/${ARCH}/edge"
+        PARENT_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         SYSROOT_RO="true"
         ANSIBLE_USER=fdouser
@@ -124,11 +127,13 @@ case "${ID}-${VERSION_ID}" in
         ;;
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
+        PARENT_REF="centos/8/${ARCH}/edge"
         OS_VARIANT="centos8"
         KERNEL_RT_PKG="kernel-rt-core"
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
+        PARENT_REF="centos/9/${ARCH}/edge"
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         SYSROOT_RO="true"
@@ -198,6 +203,10 @@ build_image() {
     if [ $# -eq 3 ]; then
         repo_url=$3
         sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
+    elif [ $# -eq 4 ]; then
+        repo_url=$3
+        parent_ref=$4
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$parent_ref" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     else
         sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     fi
@@ -849,13 +858,159 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
-# Clean up BIOS VM
+##################################################################
+##
+## Build rebased ostree repo
+##
+##################################################################
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "rebase"
+description = "An rebase rhel-edge container image"
+version = "0.0.2"
+modules = []
+groups = []
+
+[[packages]]
+name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
+version = "*"
+
+[[packages]]
+name = "wget"
+version = "*"
+
+[customizations.kernel]
+name = "${KERNEL_RT_PKG}"
+
+[[customizations.user]]
+name = "admin"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+home = "/home/admin/"
+groups = ["wheel"]
+EOF
+
+greenprint "📄 rebase blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing rebase blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve rebase
+
+# Build upgrade image.
+OSTREE_REF="test/redhat/x/${ARCH}/edge"
+build_image rebase "$CONTAINER_TYPE" "$PROD_REPO_URL" "$PARENT_REF"
+
+# Download the image
+greenprint "📥 Downloading the rebase image"
+sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
+
+# Delete installation rhel-edge container and its image
+greenprint "🧹 Delete installation rhel-edge container and its image"
+# Remove rhel-edge container if exists
+sudo podman ps -q --filter name=rhel-edge --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
+# Remove container image if exists
+sudo podman images --filter "dangling=true" --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rmi -f
+
+# Deal with stage repo container
+greenprint "🗜 Extracting image"
+IMAGE_FILENAME="${COMPOSE_ID}-${CONTAINER_FILENAME}"
+sudo podman pull "oci-archive:${IMAGE_FILENAME}"
+sudo podman images
+# Clear image file
+sudo rm -f "$IMAGE_FILENAME"
+
+# Run edge stage repo
+greenprint "🛰 Running edge stage repo"
+# Get image id to run image
+EDGE_IMAGE_ID=$(sudo podman images --filter "dangling=true" --format "{{.ID}}")
+sudo podman run -d --name rhel-edge --network edge --ip "$STAGE_REPO_ADDRESS" "$EDGE_IMAGE_ID"
+# Wait for container to be running
+until [ "$(sudo podman inspect -f '{{.State.Running}}' rhel-edge)" == "true" ]; do
+    sleep 1;
+done;
+
+# Pull rebase commit to prod mirror
+greenprint "⛓ Pull rebase commit to prod mirror"
+sudo ostree --repo="$PROD_REPO" pull --mirror edge-stage "$OSTREE_REF"
+
+# Get ostree commit value.
+greenprint "🕹 Get ostree rebase commit value"
+REBASE_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Clean compose and blueprints.
+greenprint "🧽 Clean up rebase blueprint and compose"
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli blueprints delete rebase > /dev/null
+
+greenprint "🗳 Rebase ostree image/commit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree rebase ${REF_PREFIX}:${OSTREE_REF}"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+
+# Sleep 10 seconds here to make sure vm restarted already
+sleep 10
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+# shellcheck disable=SC2034  # Unused variables left for readability
+for _ in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $EDGE_GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check ostree rebase result
+check_result
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${EDGE_GUEST_ADDRESS}
+
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=${ANSIBLE_USER}
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+ansible_become=yes
+ansible_become_method=sudo
+ansible_become_pass=${EDGE_USER_PASSWORD}
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=redhat \
+    -e ostree_commit="${REBASE_HASH}" \
+    -e edge_type=edge-simplified-installer \
+    -e fdo_credential="true" \
+    -e sysroot_ro="$SYSROOT_RO" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+
+check_result
+
+# Clean up VM
 greenprint "🧹 Clean up VM"
 if [[ $(sudo virsh domstate "${IMAGE_KEY}-fdosshkey") == "running" ]]; then
     sudo virsh destroy "${IMAGE_KEY}-fdosshkey"
 fi
 sudo virsh undefine "${IMAGE_KEY}-fdosshkey" --nvram
 sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
+
+# Re configure OSTREE_REF because it's change to "test/redhat/x/${ARCH}/edge" by above rebase test
+if [[ "$ID" == fedora ]]; then
+    OSTREE_REF="${ID}/${VERSION_ID}/${ARCH}/iot"
+elif [[ "$VERSION_ID" == 8* ]]; then
+    OSTREE_REF="${ID}/8/${ARCH}/edge"
+else
+    OSTREE_REF="${ID}/9/${ARCH}/edge"
+fi
 
 ##################################################################
 ##
