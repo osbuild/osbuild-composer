@@ -329,6 +329,19 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	}
 
+	if request.Customizations != nil && request.Customizations.Openscap != nil {
+		openSCAPCustomization := &blueprint.OpenSCAPCustomization{
+			ProfileID: request.Customizations.Openscap.ProfileId,
+		}
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				OpenSCAP: openSCAPCustomization,
+			}
+		} else {
+			bp.Customizations.OpenSCAP = openSCAPCustomization
+		}
+	}
+
 	if request.Customizations != nil && request.Customizations.CustomRepositories != nil {
 		repoCustomizations := []blueprint.RepositoryCustomization{}
 		for _, repo := range *request.Customizations.CustomRepositories {
