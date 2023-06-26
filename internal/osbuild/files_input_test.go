@@ -25,20 +25,20 @@ func TestFilesInput_UnmarshalJSON(t *testing.T) {
 		},
 		{
 			name:    "source-plain-ref",
-			ref:     NewFilesInputSourcePlainRef([]string{"1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"}),
+			ref:     NewFilesInputSourcePlainRef([]string{"sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"}),
 			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.source","references":["sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"]}`),
 		},
 		{
 			name: "source-array-ref",
 			ref: NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
-				NewFilesInputSourceArrayRefEntry("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef", nil),
+				NewFilesInputSourceArrayRefEntry("sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef", nil),
 			}),
 			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.source","references":[{"id":"sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"}]}`),
 		},
 		{
 			name: "source-object-ref",
 			ref: NewFilesInputSourceObjectRef(map[string]FilesInputRefMetadata{
-				"1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef": nil,
+				"sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef": nil,
 			}),
 			rawJson: []byte(`{"type":"org.osbuild.files","origin":"org.osbuild.source","references":{"sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef":{}}}`),
 		},

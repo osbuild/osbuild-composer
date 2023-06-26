@@ -31,7 +31,7 @@ func GenFileNodesStages(files []*fsnode.File) []*Stage {
 			RemoveDestination: true,
 		})
 		copyStageInputs[copyStageInputKey] = NewFilesInput(NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
-			NewFilesInputSourceArrayRefEntry(fileDataChecksum, nil),
+			NewFilesInputSourceArrayRefEntry(fmt.Sprintf("sha256:%s", fileDataChecksum), nil),
 		}))
 
 		if file.Mode() != nil {

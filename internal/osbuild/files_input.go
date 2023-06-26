@@ -195,13 +195,11 @@ type FilesInputSourcePlainRef []string
 
 func (*FilesInputSourcePlainRef) isFilesInputRef() {}
 
-// NewFilesInputSourcePlainRef creates a FilesInputSourcePlainRef from a list of sha256sums.
-// The slice items are the SHA256 checksums of files as a hexadecimal string without any prefix (e.g. "sha256:").
-func NewFilesInputSourcePlainRef(sha256Sums []string) FilesInputRef {
-	refs := FilesInputSourcePlainRef{}
-	for _, sha256Sum := range sha256Sums {
-		refs = append(refs, fmt.Sprintf("sha256:%s", sha256Sum))
-	}
+// NewFilesInputSourcePlainRef creates a FilesInputSourcePlainRef from a list
+// of checksums. The checksums must be prefixed by the name of the corresponding
+// hashing algorithm followed by a colon (e.g. sha256:, sha1:, etc).
+func NewFilesInputSourcePlainRef(checksums []string) FilesInputRef {
+	refs := FilesInputSourcePlainRef(checksums)
 	return &refs
 }
 
@@ -235,11 +233,13 @@ type FilesInputSourceArrayRefEntry struct {
 	Options *FilesInputSourceOptions `json:"options,omitempty"`
 }
 
-// NewFilesInputSourceArrayRefEntry creates a FilesInputSourceArrayRefEntry from a sha256sum and metadata.
-// The sha256sum is the SHA256 checksum of the file as a hexadecimal string without any prefix (e.g. "sha256:").
-func NewFilesInputSourceArrayRefEntry(sha256Sum string, metadata FilesInputRefMetadata) FilesInputSourceArrayRefEntry {
+// NewFilesInputSourceArrayRefEntry creates a FilesInputSourceArrayRefEntry
+// from a checksum and metadata. The checksum must be prefixed by the name of
+// the corresponding hashing algorithm followed by a colon (e.g. sha256:,
+// sha1:, etc).
+func NewFilesInputSourceArrayRefEntry(checksum string, metadata FilesInputRefMetadata) FilesInputSourceArrayRefEntry {
 	ref := FilesInputSourceArrayRefEntry{
-		ID: fmt.Sprintf("sha256:%s", sha256Sum),
+		ID: checksum,
 	}
 	if metadata != nil {
 		ref.Options = &FilesInputSourceOptions{Metadata: metadata}
@@ -269,12 +269,15 @@ type FilesInputSourceObjectRef map[string]FilesInputSourceOptions
 
 func (*FilesInputSourceObjectRef) isFilesInputRef() {}
 
-// NewFilesInputSourceObjectRef creates a FilesInputSourceObjectRef from a map of sha256sums to metadata
-// The key is the SHA256 checksum of the file as a hexadecimal string without any prefix (e.g. "sha256:").
+// NewFilesInputSourceObjectRef creates a FilesInputSourceObjectRef from a map
+// of checksums to metadata. The checksums must be prefixed by the name of the
+// corresponding hashing algorithm followed by a colon (e.g. sha256:, sha1:,
+// etc).
 func NewFilesInputSourceObjectRef(entries map[string]FilesInputRefMetadata) FilesInputRef {
 	refs := FilesInputSourceObjectRef{}
-	for sha256Sum, metadata := range entries {
-		refs[fmt.Sprintf("sha256:%s", sha256Sum)] = FilesInputSourceOptions{Metadata: metadata}
+	for checksum, metadata := range entries {
+		refs[checksum] = FilesInputSourceOptions{Metadata: metadata}
+
 	}
 	return &refs
 }

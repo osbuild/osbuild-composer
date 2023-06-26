@@ -15,7 +15,7 @@ func (FDOStageInputs) isStageInputs() {}
 func NewFDOStageForRootCerts(rootCertsData string) *Stage {
 	dataBytes := []byte(rootCertsData)
 	input := NewFilesInput(NewFilesInputSourcePlainRef([]string{
-		fmt.Sprintf("%x", sha256.Sum256(dataBytes)),
+		fmt.Sprintf("sha256:%x", sha256.Sum256(dataBytes)),
 	}))
 
 	return &Stage{
