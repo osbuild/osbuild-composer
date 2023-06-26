@@ -155,8 +155,8 @@ func TestImageTypePipelineNames(t *testing.T) {
 					// manifest creation doesn't fail.
 					allPipelines := append(imageType.BuildPipelines(), imageType.PayloadPipelines()...)
 					minimalPackageSet := []rpmmd.PackageSpec{
-						{Name: "kernel"},
-						{Name: "filesystem"},
+						{Name: "kernel", Checksum: "sha256:a0c936696eb7d5ee3192bf53b9d281cecbb40ca9db520de72cb95817ad92ac72"},
+						{Name: "filesystem", Checksum: "sha256:6b4bf18ba28ccbdd49f2716c9f33c9211155ff703fa6c195c78a07bd160da0eb"},
 					}
 
 					packageSets := make(map[string][]rpmmd.PackageSpec, len(allPipelines))
