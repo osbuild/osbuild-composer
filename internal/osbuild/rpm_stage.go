@@ -1,8 +1,6 @@
 package osbuild
 
 import (
-	"strings"
-
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 )
 
@@ -128,14 +126,13 @@ func NewRpmStageSourceFilesInputs(specs []rpmmd.PackageSpec) *RPMStageInputs {
 func pkgRefs(specs []rpmmd.PackageSpec) FilesInputRef {
 	refs := make([]FilesInputSourceArrayRefEntry, len(specs))
 	for idx, pkg := range specs {
-		pkgSum := strings.TrimPrefix(pkg.Checksum, "sha256:")
 		var pkgMetadata FilesInputRefMetadata
 		if pkg.CheckGPG {
 			pkgMetadata = &RPMStageReferenceMetadata{
 				CheckGPG: pkg.CheckGPG,
 			}
 		}
-		refs[idx] = NewFilesInputSourceArrayRefEntry(pkgSum, pkgMetadata)
+		refs[idx] = NewFilesInputSourceArrayRefEntry(pkg.Checksum, pkgMetadata)
 	}
 	return NewFilesInputSourceArrayRef(refs)
 }

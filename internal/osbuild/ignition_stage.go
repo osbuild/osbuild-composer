@@ -26,7 +26,7 @@ func (IgnitionStageInputInline) isStageInputs() {}
 
 func NewIgnitionInlineInput(embeddedData string) Inputs {
 	input := NewFilesInput(NewFilesInputSourcePlainRef([]string{
-		fmt.Sprintf("%x", sha256.Sum256([]byte(embeddedData))),
+		fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(embeddedData))),
 	}))
 	return &IgnitionStageInputInline{InlineFile: input}
 }
