@@ -863,6 +863,13 @@ components:
           type: boolean
         priority:
           type: integer
+    OpenSCAP:
+      type: object
+      required:
+        - profile_id
+      properties:
+        profile_id:
+          type: string
     UploadOptions:
       anyOf:
       - $ref: '#/components/schemas/AWSEC2UploadOptions'
@@ -1065,6 +1072,8 @@ components:
             repositories will be used to depsolve and retrieve packages. Additionally,
             these packages will be saved and imported to the `/etc/yum.repos.d/` directory
             on the image
+        openscap:
+          $ref: '#/components/schemas/OpenSCAP'
         filesystem:
           type: array
           items:

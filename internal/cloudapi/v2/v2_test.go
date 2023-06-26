@@ -973,7 +973,10 @@ func TestComposeCustomizations(t *testing.T) {
 					"group": 1000,
 					"data": "Hello world!"
 				}
-			]
+			],
+			"openscap": {
+				"profile_id": "test_profile"
+			}
 		},
 		"image_request":{
 			"architecture": "%s",
