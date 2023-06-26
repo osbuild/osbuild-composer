@@ -53,7 +53,7 @@ func TestGenFileNodesStages(t *testing.T) {
 					},
 				}, &CopyStageFilesInputs{
 					fmt.Sprintf("file-%x", sha256.Sum256(fileData1)): NewFilesInput(NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
-						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("%x", sha256.Sum256(fileData1)), nil),
+						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("sha256:%x", sha256.Sum256(fileData1)), nil),
 					})),
 				}),
 			},
@@ -80,10 +80,10 @@ func TestGenFileNodesStages(t *testing.T) {
 					},
 				}, &CopyStageFilesInputs{
 					fmt.Sprintf("file-%x", sha256.Sum256(fileData1)): NewFilesInput(NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
-						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("%x", sha256.Sum256(fileData1)), nil),
+						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("sha256:%x", sha256.Sum256(fileData1)), nil),
 					})),
 					fmt.Sprintf("file-%x", sha256.Sum256(fileData2)): NewFilesInput(NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
-						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("%x", sha256.Sum256(fileData2)), nil),
+						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("sha256:%x", sha256.Sum256(fileData2)), nil),
 					})),
 				}),
 			},
@@ -110,10 +110,10 @@ func TestGenFileNodesStages(t *testing.T) {
 					},
 				}, &CopyStageFilesInputs{
 					fmt.Sprintf("file-%x", sha256.Sum256(fileData1)): NewFilesInput(NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
-						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("%x", sha256.Sum256(fileData1)), nil),
+						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("sha256:%x", sha256.Sum256(fileData1)), nil),
 					})),
 					fmt.Sprintf("file-%x", sha256.Sum256(fileData2)): NewFilesInput(NewFilesInputSourceArrayRef([]FilesInputSourceArrayRefEntry{
-						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("%x", sha256.Sum256(fileData2)), nil),
+						NewFilesInputSourceArrayRefEntry(fmt.Sprintf("sha256:%x", sha256.Sum256(fileData2)), nil),
 					})),
 				}),
 				NewChmodStage(&ChmodStageOptions{

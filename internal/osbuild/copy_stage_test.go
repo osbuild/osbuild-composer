@@ -46,11 +46,11 @@ func TestNewCopyStage(t *testing.T) {
 }
 
 func TestNewCopyStageSimpleSourcesInputs(t *testing.T) {
-	fileSum := "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+	fileSum := "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
 
 	paths := []CopyStagePath{
 		{
-			From: fmt.Sprintf("input://inlinefile/sha256:%x", fileSum),
+			From: fmt.Sprintf("input://inlinefile/%x", fileSum),
 			To:   "tree://etc/inlinefile",
 		},
 	}
