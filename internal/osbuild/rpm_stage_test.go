@@ -87,3 +87,96 @@ func Test_OSBuildMetadataToRPMs(t *testing.T) {
 	// if neither GPG nor PGP is set, the signature is nil
 	require.Nil(t, rpms[2].Signature)
 }
+
+func TestNewRpmStageSourceFilesInputs(t *testing.T) {
+
+	assert := assert.New(t)
+	require := require.New(t)
+
+	pkgSpecs := []rpmmd.PackageSpec{
+		{
+			Name:           "openssl-libs",
+			Epoch:          1,
+			Version:        "3.0.1",
+			Release:        "5.el9",
+			Arch:           "x86_64",
+			RemoteLocation: "https://example.com/repo/Packages/openssl-libs-3.0.1-5.el9.x86_64.rpm",
+			Checksum:       "sha256:fcf2515ec9115551c99d552da721803ecbca23b7ae5a974309975000e8bef666",
+			Secrets:        "",
+			CheckGPG:       false,
+			IgnoreSSL:      true,
+		},
+		{
+			Name:           "openssl-pkcs11",
+			Epoch:          0,
+			Version:        "0.4.11",
+			Release:        "7.el9",
+			Arch:           "x86_64",
+			RemoteLocation: "https://example.com/repo/Packages/openssl-pkcs11-0.4.11-7.el9.x86_64.rpm",
+			Checksum:       "sha256:4be41142a5fb2b4cd6d812e126838cffa57b7c84e5a79d65f66bb9cf1d2830a3",
+			Secrets:        "",
+			CheckGPG:       false,
+			IgnoreSSL:      true,
+		},
+		{
+			Name:           "p11-kit",
+			Epoch:          0,
+			Version:        "0.24.1",
+			Release:        "2.el9",
+			Arch:           "x86_64",
+			RemoteLocation: "https://example.com/repo/Packages/p11-kit-0.24.1-2.el9.x86_64.rpm",
+			Checksum:       "sha256:da167e41efd19cf25fd1c708b6f123d0203824324b14dd32401d49f2aa0ef0a6",
+			Secrets:        "",
+			CheckGPG:       false,
+			IgnoreSSL:      true,
+		},
+		{
+			Name:           "package-with-sha1-checksum",
+			Epoch:          1,
+			Version:        "3.4.2.",
+			Release:        "10.el9",
+			Arch:           "x86_64",
+			RemoteLocation: "https://example.com/repo/Packages/package-with-sha1-checksum-4.3.2-10.el9.x86_64.rpm",
+			Checksum:       "sha1:6e01b8076a2ab729d564048bf2e3a97c7ac83c13",
+			Secrets:        "",
+			CheckGPG:       true,
+			IgnoreSSL:      true,
+		},
+		{
+			Name:           "package-with-md5-checksum",
+			Epoch:          1,
+			Version:        "3.4.2.",
+			Release:        "5.el9",
+			Arch:           "x86_64",
+			RemoteLocation: "https://example.com/repo/Packages/package-with-md5-checksum-4.3.2-5.el9.x86_64.rpm",
+			Checksum:       "md5:8133f479f38118c5f9facfe2a2d9a071",
+			Secrets:        "",
+			CheckGPG:       true,
+			IgnoreSSL:      true,
+		},
+	}
+	inputs := NewRpmStageSourceFilesInputs(pkgSpecs)
+
+	refsArrayPtr, convOk := inputs.Packages.References.(*FilesInputSourceArrayRef)
+	require.True(convOk)
+	require.NotNil(refsArrayPtr)
+
+	refsArray := *refsArrayPtr
+
+	for idx := range refsArray {
+		refItem := refsArray[idx]
+		pkg := pkgSpecs[idx]
+		assert.Equal(pkg.Checksum, refItem.ID)
+
+		if pkg.CheckGPG {
+			// GPG check enabled: metadata expected
+			require.NotNil(refItem.Options)
+			require.NotNil(refItem.Options.Metadata)
+
+			md, convOk := refItem.Options.Metadata.(*RPMStageReferenceMetadata)
+			require.True(convOk)
+			require.NotNil(md)
+			assert.Equal(md.CheckGPG, pkg.CheckGPG)
+		}
+	}
+}
