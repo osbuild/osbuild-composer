@@ -3,6 +3,7 @@ package osbuild
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/container"
 )
@@ -199,6 +200,9 @@ func (*FilesInputSourcePlainRef) isFilesInputRef() {}
 // of checksums. The checksums must be prefixed by the name of the corresponding
 // hashing algorithm followed by a colon (e.g. sha256:, sha1:, etc).
 func NewFilesInputSourcePlainRef(checksums []string) FilesInputRef {
+	for _, cs := range checksums {
+		validateChecksum(cs)
+	}
 	refs := FilesInputSourcePlainRef(checksums)
 	return &refs
 }
@@ -238,6 +242,7 @@ type FilesInputSourceArrayRefEntry struct {
 // the corresponding hashing algorithm followed by a colon (e.g. sha256:,
 // sha1:, etc).
 func NewFilesInputSourceArrayRefEntry(checksum string, metadata FilesInputRefMetadata) FilesInputSourceArrayRefEntry {
+	validateChecksum(checksum)
 	ref := FilesInputSourceArrayRefEntry{
 		ID: checksum,
 	}
@@ -276,8 +281,8 @@ func (*FilesInputSourceObjectRef) isFilesInputRef() {}
 func NewFilesInputSourceObjectRef(entries map[string]FilesInputRefMetadata) FilesInputRef {
 	refs := FilesInputSourceObjectRef{}
 	for checksum, metadata := range entries {
+		validateChecksum(checksum)
 		refs[checksum] = FilesInputSourceOptions{Metadata: metadata}
-
 	}
 	return &refs
 }
@@ -296,4 +301,13 @@ func NewFilesInputForManifestLists(containers []container.Spec) *FilesInput {
 	}
 	filesRef := FilesInputSourcePlainRef(refs)
 	return NewFilesInput(&filesRef)
+}
+
+// validateChecksum panics if the given string does not contain an algorithm
+// prefix. It checks this by making sure that the : delimiter exists and is not
+// at the start of the string.
+func validateChecksum(checksum string) {
+	if strings.IndexRune(checksum, ':') == 0 || strings.Count(checksum, ":") != 1 {
+		panic(fmt.Sprintf("invalid checksum format; must contain algorithm prefix: %s", checksum))
+	}
 }
