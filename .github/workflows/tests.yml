@@ -228,3 +228,19 @@ jobs:
         directory: processed-templates
         config: templates/.kube-linter-config.yml
         version: 0.3.0
+
+  cloud-cleaner-is-enabled:
+    name: "🧹 cloud-cleaner-is-enabled"
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check if workflow is enabled
+      run: |
+        curl https://github.com/osbuild/cloud-cleaner/actions/workflows/run_ib.yml 2>/dev/null | grep -vz "This scheduled workflow is disabled" >/dev/null
+
+    - name: How to enable cloud-cleaner
+      if: failure()
+      run: |
+        echo "Cloud-cleaner is disabled"
+        echo "Go to https://github.com/osbuild/cloud-cleaner/actions/workflows/run_ib.yml and"
+        echo "https://github.com/osbuild/cloud-cleaner/actions/workflows/run_cloudx.yml and"
+        echo "manually enable it!"
