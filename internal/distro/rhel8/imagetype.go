@@ -373,8 +373,8 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
-		// only add support for RHEL 8.7 and above. centos not supported.
-		if !t.arch.distro.isRHEL() || common.VersionLessThan(t.arch.distro.osVersion, "8.7") {
+		// only add support for RHEL 8.7 and above.
+		if common.VersionLessThan(t.arch.distro.osVersion, "8.7") {
 			return warnings, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.arch.distro.osVersion))
 		}
 		supported := oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList)
