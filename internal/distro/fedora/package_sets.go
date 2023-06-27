@@ -172,21 +172,8 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"dbus-parsec",
 			"iwl7260-firmware",
 			"iwlax2xx-firmware",
+			"greenboot-default-health-checks",
 		},
-	}
-
-	if common.VersionLessThan(t.arch.distro.osVersion, "36") {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"greenboot-grub2",
-				"greenboot-reboot",
-				"greenboot-rpm-ostree-grub2",
-				"greenboot-status",
-			},
-		},
-		)
-	} else {
-		ps = ps.Append(rpmmd.PackageSet{Include: []string{"greenboot-default-health-checks"}})
 	}
 
 	return ps
@@ -338,6 +325,7 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"plymouth",
 			"python3-pyatspi",
 			"rdma-core",
+			"rit-meera-new-fonts",
 			"rng-tools",
 			"rpcbind",
 			"rpm-ostree",
@@ -347,6 +335,7 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"sg3_utils",
 			"sil-abyssinica-fonts",
 			"sil-padauk-fonts",
+			"sil-scheherazade-new-fonts",
 			"smartmontools",
 			"spice-vdagent",
 			"strace",
@@ -377,21 +366,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"lklug-fonts", // orphaned, unavailable in F39
-			},
-		})
-	}
-	if common.VersionLessThan(t.arch.distro.osVersion, "37") {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"smc-meera-fonts",
-				"sil-scheherazade-fonts",
-			},
-		})
-	} else {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"rit-meera-new-fonts",
-				"sil-scheherazade-new-fonts",
 			},
 		})
 	}
