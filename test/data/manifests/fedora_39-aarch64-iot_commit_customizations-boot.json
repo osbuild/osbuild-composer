@@ -2533,14 +2533,6 @@
                     }
                   },
                   {
-                    "id": "sha256:b9d7f0091fa134435e291cd119fd099101ce354de4cd0e746fe8dc1d02f4cb5b",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:6a6b4fd70ae10b80de13adf540d53eb0c9ef0c2c5a69627f278d4511c4bc4ab2",
                     "options": {
                       "metadata": {
@@ -6865,9 +6857,6 @@
           "sha256:b9c9a205f9485ac2d48a9ac7e7031b9d748df571298c0f97a728ef966666cb75": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/b/bash-completion-2.11-11.fc39.noarch.rpm"
           },
-          "sha256:b9d7f0091fa134435e291cd119fd099101ce354de4cd0e746fe8dc1d02f4cb5b": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/f/fedora-iot-config-0.0-2.fc39.noarch.rpm"
-          },
           "sha256:ba9f5eeb8b85d79e215f70369aaca0c441073ef0a4bc94833842395c0ea8c8f5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/m/mpfr-4.1.1-3.fc38.aarch64.rpm"
           },
@@ -10350,16 +10339,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/f/fedora-gpg-keys-39-0.1.noarch.rpm",
         "checksum": "sha256:04db736a77296edd4099a9165d68560d52dbf2484d959f668b3b676d68581f97",
-        "check_gpg": true
-      },
-      {
-        "name": "fedora-iot-config",
-        "epoch": 0,
-        "version": "0.0",
-        "release": "2.fc39",
-        "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-aarch64-rawhide-20230623/Packages/f/fedora-iot-config-0.0-2.fc39.noarch.rpm",
-        "checksum": "sha256:b9d7f0091fa134435e291cd119fd099101ce354de4cd0e746fe8dc1d02f4cb5b",
         "check_gpg": true
       },
       {
