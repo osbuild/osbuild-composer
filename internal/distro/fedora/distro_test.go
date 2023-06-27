@@ -489,6 +489,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"oci",
 				"container",
 				"image-installer",
+				"live-installer",
 				"minimal-raw",
 			},
 		},

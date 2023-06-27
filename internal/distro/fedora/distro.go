@@ -655,6 +655,7 @@ func newDistro(version int) distro.Distro {
 		iotOCIImgType,
 		iotInstallerImgType,
 		imageInstallerImgType,
+		liveInstallerImgType,
 	)
 	aarch64.addImageTypes(
 		&platform.Aarch64_IoT{
