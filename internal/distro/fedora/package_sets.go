@@ -106,7 +106,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"dosfstools",
 			"dracut-network",
 			"e2fsprogs",
-			"fedora-iot-config",
 			"fedora-release-iot",
 			"firewalld",
 			"fuse-overlayfs",
