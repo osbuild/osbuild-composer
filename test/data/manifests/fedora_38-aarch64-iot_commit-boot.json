@@ -5626,6 +5626,10 @@
                 {
                   "name": "coreos-ignition-write-issues.service",
                   "state": "enable"
+                },
+                {
+                  "name": "fdo-client-linuxapp.service",
+                  "state": "enable"
                 }
               ]
             }
