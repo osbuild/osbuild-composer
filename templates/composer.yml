@@ -260,7 +260,7 @@ objects:
       enable_tls = false
       enable_mtls = false
       enable_jwt = true
-      jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs", "${MAS_SSO_BASE_URL}/protocol/openid-connect/certs"]
+      jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
       [worker]
@@ -270,7 +270,7 @@ objects:
       enable_tls = false
       enable_mtls = false
       enable_jwt = true
-      jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs", "${MAS_SSO_BASE_URL}/protocol/openid-connect/certs"]
+      jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
 - apiVersion: v1
@@ -444,10 +444,6 @@ parameters:
     name: RH_SSO_BASE_URL
     required: true
     value: "https://sso.redhat.com/auth/realms/redhat-external"
-  - description: base sso url
-    name: MAS_SSO_BASE_URL
-    required: true
-    value: "https://identity.api.openshift.com/auth/realms/rhoas"
   - description: base sso url
     name: COMPOSER_CONFIG_DIR
     required: true
