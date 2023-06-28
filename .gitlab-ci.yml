@@ -539,6 +539,19 @@ libvirt.sh:
   variables:
     SCRIPT: libvirt.sh
 
+ubi-wsl.sh:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/ubi-wsl.sh
+  variables:
+      RUNNER: aws/rhel-8.7-ga-x86_64
+      INTERNAL_NETWORK: "true"
+
 .generic_s3:
   extends: .libvirt_integration
   rules:
