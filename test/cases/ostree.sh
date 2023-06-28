@@ -528,7 +528,7 @@ sudo mv boot.iso /var/lib/libvirt/images
 LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
 
 # Workaround to fix issue https://github.com/osbuild/osbuild-composer/issues/3216
-if [[ "${ID}-${VERSION_ID}" == "fedora-37" ]]; then
+if [[ "${ID}" == "fedora" ]]; then
     location_arg="${LOCAL_BOOT_LOCATION}",initrd=images/pxeboot/initrd.img,kernel=images/pxeboot/vmlinuz
 else
     location_arg="${LOCAL_BOOT_LOCATION}"
@@ -741,10 +741,6 @@ ansible_user=${SSH_USER}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF
-
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \

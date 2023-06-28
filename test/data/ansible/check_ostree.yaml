@@ -755,21 +755,15 @@
     - name: install sanely failing health check unit to test red boot status behavior
       block:
         - name: install sanely failing health check unit to test red boot status behavior
-          command: rpm-ostree install --cache-only https://s3.amazonaws.com/org.osbuild.test-dependencies/greenboot-failing-unit-1.0-1.el8.noarch.rpm
+          command: rpm-ostree install --cache-only https://s3.amazonaws.com/org.osbuild.test-dependencies/greenboot-failing-unit-1.0-1.el8.noarch.rpm --reboot
           become: yes
-          register: install_result
-          retries: 30  # due to https://github.com/osbuild/osbuild-composer/issues/2492
-          delay: 2
-          until: install_result is success
+          ignore_errors: yes
+          ignore_unreachable: yes
 
-        - name: delay 10 seconds before reboot to make system stable
+        - name: delay 30 seconds before reboot to make system stable
           pause:
-            seconds: 10
-
-        - name: reboot to deploy new ostree commit
-          reboot:
-            post_reboot_delay: 10
-          become: yes
+            seconds: 30
+          delegate_to: 127.0.0.1
 
         - name: wait for connection to become reachable/usable
           wait_for_connection:
