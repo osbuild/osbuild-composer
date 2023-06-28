@@ -614,10 +614,6 @@ ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF
 
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on BIOS VM"
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
@@ -706,10 +702,6 @@ ansible_user=${ANSIBLE_USER_FOR_BIOS}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF
-
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
 greenprint "📼 Run Edge tests on UEFI VM"
@@ -894,10 +886,6 @@ ansible_user=${ANSIBLE_USER_FOR_BIOS}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 EOF
-
-# Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-greenprint "fix stdio file non-blocking issue"
-sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \

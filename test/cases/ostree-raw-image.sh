@@ -561,10 +561,6 @@ ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
-    # Fix ansible error https://github.com/osbuild/osbuild-composer/issues/3309
-    greenprint "fix stdio file non-blocking issue"
-    sudo /usr/libexec/osbuild-composer-test/ansible-blocking-io.py
-
     # Test IoT/Edge OS
     sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
         -e image_type="${OSTREE_OSNAME}" \
@@ -987,7 +983,7 @@ if [[ "$ID" == "fedora" ]]; then
     # Replacing with our own local repo
     greenprint "Replacing default remote"
     sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote delete ${OSTREE_OSNAME}"
-    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote add --no-gpg-verify ${OSTREE_OSNAME} ${STAGE_REPO_URL}"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote add --no-gpg-verify ${OSTREE_OSNAME} ${PROD_REPO_URL}"
 fi
 
 # Upgrade image/commit.
