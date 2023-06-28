@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
 	"github.com/osbuild/osbuild-composer/internal/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/ostree"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/users"
@@ -121,9 +122,13 @@ func osCustomizations(
 		if t.rpmOstree {
 			panic("unexpected oscap options for ostree image type")
 		}
+		var datastream = oscapConfig.DataStream
+		if datastream == "" {
+			datastream = oscap.DefaultFedoraDatastream()
+		}
 		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(
 			osbuild.OscapConfig{
-				Datastream: oscapConfig.DataStream,
+				Datastream: datastream,
 				ProfileID:  oscapConfig.ProfileID,
 			},
 		)

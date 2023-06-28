@@ -1,6 +1,8 @@
 package oscap
 
-import "strings"
+import (
+	"strings"
+)
 
 type Profile string
 
@@ -26,7 +28,32 @@ const (
 	Standard              Profile = "xccdf_org.ssgproject.content_profile_standard"
 	Stig                  Profile = "xccdf_org.ssgproject.content_profile_stig"
 	StigGui               Profile = "xccdf_org.ssgproject.content_profile_stig_gui"
+
+	// datastream fallbacks
+	defaultFedoraDatastream  string = "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
+	defaultCentos8Datastream string = "/usr/share/xml/scap/ssg/content/ssg-centos8-ds.xml"
+	defaultCentos9Datastream string = "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
+	defaultRHEL8Datastream   string = "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
+	defaultRHEL9Datastream   string = "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
 )
+
+func DefaultFedoraDatastream() string {
+	return defaultFedoraDatastream
+}
+
+func DefaultRHEL8Datastream(isRHEL bool) string {
+	if isRHEL {
+		return defaultRHEL8Datastream
+	}
+	return defaultCentos8Datastream
+}
+
+func DefaultRHEL9Datastream(isRHEL bool) string {
+	if isRHEL {
+		return defaultRHEL9Datastream
+	}
+	return defaultCentos9Datastream
+}
 
 func IsProfileAllowed(profile string, allowlist []Profile) bool {
 	for _, a := range allowlist {

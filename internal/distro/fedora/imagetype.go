@@ -308,9 +308,6 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		if t.rpmOstree {
 			return nil, fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
 		}
-		if osc.DataStream == "" {
-			return nil, fmt.Errorf("OpenSCAP datastream cannot be empty")
-		}
 		if osc.ProfileID == "" {
 			return nil, fmt.Errorf("OpenSCAP profile cannot be empty")
 		}
