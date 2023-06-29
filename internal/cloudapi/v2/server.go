@@ -93,12 +93,13 @@ func (s *Server) Handler(path string) http.Handler {
 
 	mws := []echo.MiddlewareFunc{
 		prometheus.StatusMiddleware(prometheus.ComposerSubsystem),
-		prometheus.HTTPDurationMiddleware(prometheus.ComposerSubsystem),
 	}
 	if s.config.JWTEnabled {
 		mws = append(mws, auth.TenantChannelMiddleware(s.config.TenantProviderFields, HTTPError(ErrorTenantNotFound)))
 	}
-	mws = append(mws, prometheus.MetricsMiddleware, s.ValidateRequest)
+	mws = append(mws,
+		prometheus.HTTPDurationMiddleware(prometheus.ComposerSubsystem),
+		prometheus.MetricsMiddleware, s.ValidateRequest)
 	RegisterHandlers(e.Group(path, mws...), &handler)
 
 	return e
