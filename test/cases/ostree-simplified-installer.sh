@@ -26,6 +26,11 @@ do
 done
 # Prepare service api server config filef
 sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
+# Fedora iot-simplified-installer uses /dev/vda3, https://github.com/osbuild/osbuild-composer/issues/3527
+if [[ "${ID}" == "fedora" ]]; then
+    echo "Change vda4 to vda3 for fedora in serviceinfo config file"
+    sudo sed -i 's/vda4/vda3/' /etc/fdo/aio/configs/serviceinfo_api_server.yml
+fi
 sudo systemctl restart fdo-aio
 
 # workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2213660
@@ -124,6 +129,7 @@ KERNEL_RT_PKG="kernel-rt"
 SYSROOT_RO="false"
 ANSIBLE_USER="admin"
 FDO_USER_ONBOARDING="false"
+IMAGE_TYPE=redhat
 
 case "${ID}-${VERSION_ID}" in
     "rhel-8"* )
@@ -160,6 +166,18 @@ case "${ID}-${VERSION_ID}" in
         sudo setenforce 0
         getenforce
         ;;
+    "fedora-"*)
+        OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
+        PARENT_REF="fedora/${VERSION_ID}/${ARCH}/iot"
+        OS_VARIANT="fedora-unknown"
+        CONTAINER_TYPE="iot-container"
+        INSTALLER_TYPE="iot-simplified-installer"
+        REF_PREFIX="fedora-iot"
+        SYSROOT_RO="true"
+        IMAGE_TYPE="fedora"
+        ANSIBLE_USER=fdouser
+        FDO_USER_ONBOARDING="true"
+        ;;
     *)
         redprint "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
@@ -169,13 +187,14 @@ if [[ "$FDO_USER_ONBOARDING" == "true" ]]; then
     # FDO user does not have password, use ssh key and no sudo password instead
     sudo /usr/local/bin/yq -iy ".service_info.initial_user |= {username: \"fdouser\", sshkeys: [\"${SSH_KEY_PUB}\"]}" /etc/fdo/aio/configs/serviceinfo_api_server.yml
     # No sudo password required by ansible
-    tee /tmp/fdouser > /dev/null << EOF
+    sudo tee /var/lib/fdo/fdouser > /dev/null << EOF
 fdouser ALL=(ALL) NOPASSWD: ALL
 EOF
-    sudo /usr/local/bin/yq -iy '.service_info.files |= [{path: "/etc/sudoers.d/fdouser", source_path: "/tmp/fdouser"}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
+    sudo /usr/local/bin/yq -iy '.service_info.files |= [{path: "/etc/sudoers.d/fdouser", source_path: "/var/lib/fdo/fdouser"}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
     sudo systemctl restart fdo-aio
 fi
-# Wait for fdo server to be running
+
+# Wait for fdo server to be up and running
 until [ "$(curl -X POST http://${FDO_SERVER_ADDRESS}:8080/ping)" == "pong" ]; do
     sleep 1;
 done;
@@ -367,9 +386,6 @@ version = "*"
 name = "sssd"
 version = "*"
 
-[customizations.kernel]
-name = "${KERNEL_RT_PKG}"
-
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -378,6 +394,14 @@ key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
+
+# Fedora does not have kernel-rt
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+[customizations.kernel]
+name = "${KERNEL_RT_PKG}"
+EOF
+fi
 
 greenprint "📄 container blueprint"
 cat "$BLUEPRINT_FILE"
@@ -541,7 +565,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -713,7 +737,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -883,7 +907,7 @@ fi
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -916,9 +940,6 @@ version = "*"
 name = "wget"
 version = "*"
 
-[customizations.kernel]
-name = "${KERNEL_RT_PKG}"
-
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -926,6 +947,14 @@ password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHB
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
+
+# Fedora does not have kernel-rt
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+[customizations.kernel]
+name = "${KERNEL_RT_PKG}"
+EOF
+fi
 
 greenprint "📄 rebase blueprint"
 cat "$BLUEPRINT_FILE"
@@ -1020,7 +1049,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${REBASE_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -1179,7 +1208,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -1215,9 +1244,6 @@ version = "*"
 name = "wget"
 version = "*"
 
-[customizations.kernel]
-name = "${KERNEL_RT_PKG}"
-
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -1225,6 +1251,14 @@ password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHB
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
+
+# Fedora does not have kernel-rt
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+[customizations.kernel]
+name = "${KERNEL_RT_PKG}"
+EOF
+fi
 
 greenprint "📄 upgrade blueprint"
 cat "$BLUEPRINT_FILE"
@@ -1320,7 +1354,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
