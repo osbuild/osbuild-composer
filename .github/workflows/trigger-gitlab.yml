@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGEBUILDER_BOT_GITLAB_SSH_KEY: ${{ secrets.IMAGEBUILDER_BOT_GITLAB_SSH_KEY }}
+      GITLAB_TOKEN: ${{ secrets.IMAGEBUILDER_BOT_GITLAB_PIPELINE_TRIGGER_TOKEN }}
     steps:
       - name: Report status
         uses: haya14busa/action-workflow_run-status@v1
@@ -36,6 +37,7 @@ jobs:
           per_page: 100
 
       - name: Checkout branch
+        id: pr_data
         run: |
           PR_DATA=$(mktemp)
           # use uuid as a file terminator to avoid conflicts with data content
@@ -45,6 +47,7 @@ jobs:
 
           PR=$(jq -rc '.[] | select(.head.sha | contains("${{ github.event.workflow_run.head_sha }}")) | select(.state | contains("open"))' "$PR_DATA" | jq -r .number)
           if [ ! -z "$PR" ]; then
+            echo "pr_branch=PR-$PR" >> "$GITHUB_OUTPUT"
             git checkout -b PR-$PR
           else
             git checkout ${{ github.event.workflow_run.head_branch }}
@@ -88,3 +91,17 @@ jobs:
           else
             git push -f ci 
           fi
+
+      - name: Trigger GitLab nightly pipeline against this PR
+        if: ${{ env.GITLAB_TOKEN }} && ${{ steps.pr_date.outputs.pr_branch }}
+        run: |
+            # osbuild-composer
+            PROJECT_ID=34771166
+
+            # Simulate a nightly CI pipeline against this PR
+            curl --request POST --fail --form "token=$GITLAB_TOKEN" \
+                --form ref=${{ steps.pr_date.outputs.pr_branch }} \
+                --form "variables[CI_PIPELINE_SOURCE]=schedule" \
+                --form "variables[NIGHTLY]=true" \
+                --form "variables[RHEL_MAJOR]=9" \
+                "https://gitlab.com/api/v4/projects/$PROJECT_ID/trigger/pipeline"
