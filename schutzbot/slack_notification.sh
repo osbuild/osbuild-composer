@@ -2,7 +2,7 @@
 
 set -eux
 
-if [ -z "$SLACK_WEBHOOK_URL" ]; then
+if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
     echo "INFO: Variable SLACK_WEBHOOK_URL is undefined"
     exit 0
 fi
