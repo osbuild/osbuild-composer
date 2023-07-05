@@ -3,7 +3,6 @@ package fedora
 import (
 	"fmt"
 	"math/rand"
-	"strings"
 
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -13,9 +12,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/environment"
 	"github.com/osbuild/osbuild-composer/internal/image"
 	"github.com/osbuild/osbuild-composer/internal/manifest"
-	"github.com/osbuild/osbuild-composer/internal/oscap"
-	"github.com/osbuild/osbuild-composer/internal/ostree"
-	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 	"github.com/osbuild/osbuild-composer/internal/platform"
 	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/workload"
@@ -34,7 +30,6 @@ type imageType struct {
 	name               string
 	nameAliases        []string
 	filename           string
-	compression        string
 	mimeType           string
 	packageSets        map[string]packageSetFunc
 	defaultImageConfig *distro.ImageConfig
@@ -149,7 +144,6 @@ func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
 		imageConfig = &distro.ImageConfig{}
 	}
 	return imageConfig.InheritFrom(t.arch.distro.getDefaultImageConfig())
-
 }
 
 func (t *imageType) PartitionType() string {
@@ -237,106 +231,5 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 // Returns ([]string, error) where []string, if non-nil, will hold any generated warnings (e.g. deprecation notices).
 func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
-
-	customizations := bp.Customizations
-
-	// we do not support embedding containers on ostree-derived images, only on commits themselves
-	if len(bp.Containers) > 0 && t.rpmOstree && (t.name != "iot-commit" && t.name != "iot-container") {
-		return nil, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
-	}
-
-	ostreeURL := ""
-	if options.OSTree != nil {
-		if options.OSTree.ParentRef != "" && options.OSTree.URL == "" {
-			// specifying parent ref also requires URL
-			return nil, ostree.NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
-		}
-		ostreeURL = options.OSTree.URL
-	}
-
-	if t.bootISO && t.rpmOstree {
-		// ostree-based ISOs require a URL from which to pull a payload commit
-		if ostreeURL == "" {
-			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
-		}
-	}
-
-	if t.name == "iot-raw-image" {
-		allowed := []string{"User", "Group", "Directories", "Files", "Services"}
-		if err := customizations.CheckAllowed(allowed...); err != nil {
-			return nil, fmt.Errorf("unsupported blueprint customizations found for image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
-		}
-		// TODO: consider additional checks, such as those in "edge-simplified-installer" in RHEL distros
-	}
-
-	// BootISO's have limited support for customizations.
-	// TODO: Support kernel name selection for image-installer
-	if t.bootISO {
-		if t.name == "iot-installer" || t.name == "image-installer" {
-			allowed := []string{"User", "Group"}
-			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
-			}
-		} else if t.name == "live-installer" {
-			allowed := []string{}
-			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: None)", t.name)
-			}
-		}
-	}
-
-	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree {
-		return nil, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
-	}
-
-	mountpoints := customizations.GetFilesystems()
-
-	if mountpoints != nil && t.rpmOstree {
-		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")
-	}
-
-	err := blueprint.CheckMountpointsPolicy(mountpoints, pathpolicy.MountpointPolicies)
-	if err != nil {
-		return nil, err
-	}
-
-	if osc := customizations.GetOpenSCAP(); osc != nil {
-		supported := oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList)
-		if !supported {
-			return nil, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
-		}
-		if t.rpmOstree {
-			return nil, fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
-		}
-		if osc.ProfileID == "" {
-			return nil, fmt.Errorf("OpenSCAP profile cannot be empty")
-		}
-	}
-
-	// Check Directory/File Customizations are valid
-	dc := customizations.GetDirectories()
-	fc := customizations.GetFiles()
-
-	err = blueprint.ValidateDirFileCustomizations(dc, fc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, pathpolicy.CustomDirectoriesPolicies)
-	if err != nil {
-		return nil, err
-	}
-
-	err = blueprint.CheckFileCustomizationsPolicy(fc, pathpolicy.CustomFilesPolicies)
-	if err != nil {
-		return nil, err
-	}
-
-	// check if repository customizations are valid
-	_, err = customizations.GetRepositories()
-	if err != nil {
-		return nil, err
-	}
-
 	return nil, nil
 }

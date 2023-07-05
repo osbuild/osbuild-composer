@@ -8,10 +8,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/distro"
-	"github.com/osbuild/osbuild-composer/internal/environment"
-	"github.com/osbuild/osbuild-composer/internal/oscap"
 	"github.com/osbuild/osbuild-composer/internal/platform"
-	"github.com/osbuild/osbuild-composer/internal/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/runner"
 )
 
@@ -21,12 +18,6 @@ const (
 	// main/common os image package set name
 	osPkgsKey = "os"
 
-	// container package set name
-	containerPkgsKey = "container"
-
-	// installer package set name
-	installerPkgsKey = "installer"
-
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
 
@@ -35,286 +26,18 @@ const (
 )
 
 var (
-	oscapProfileAllowList = []oscap.Profile{
-		oscap.Ospp,
-		oscap.PciDss,
-		oscap.Standard,
-	}
-
-	// Services
-	iotServices = []string{
-		"NetworkManager.service",
-		"firewalld.service",
-		"rngd.service",
-		"sshd.service",
-		"zezere_ignition.timer",
-		"zezere_ignition_banner.service",
-		"greenboot-grub2-set-counter",
-		"greenboot-grub2-set-success",
-		"greenboot-healthcheck",
-		"greenboot-rpm-ostree-grub2-check-fallback",
-		"greenboot-status",
-		"greenboot-task-runner",
-		"redboot-auto-reboot",
-		"redboot-task-runner",
-		"parsec",
-		"dbus-parsec",
-	}
-
-	// Image Definitions
-	imageInstallerImgType = imageType{
-		name:        "image-installer",
-		nameAliases: []string{"fedora-image-installer"},
-		filename:    "installer.iso",
-		mimeType:    "application/x-iso9660-image",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey:        minimalrpmPackageSet,
-			installerPkgsKey: imageInstallerPackageSet,
-		},
-		bootable:         true,
-		bootISO:          true,
-		rpmOstree:        false,
-		image:            imageInstallerImage,
-		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
-		exports:          []string{"bootiso"},
-	}
-
-	liveInstallerImgType = imageType{
-		name:        "live-installer",
-		nameAliases: []string{},
-		filename:    "live-installer.iso",
-		mimeType:    "application/x-iso9660-image",
-		packageSets: map[string]packageSetFunc{
-			installerPkgsKey: liveInstallerPackageSet,
-		},
-		bootable:         true,
-		bootISO:          true,
-		rpmOstree:        false,
-		image:            liveInstallerImage,
-		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
-		exports:          []string{"bootiso"},
-	}
-
-	iotCommitImgType = imageType{
-		name:        "iot-commit",
-		nameAliases: []string{"fedora-iot-commit"},
-		filename:    "commit.tar",
-		mimeType:    "application/x-tar",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: iotCommitPackageSet,
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			EnabledServices: iotServices,
-		},
-		rpmOstree:        true,
-		image:            iotCommitImage,
-		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "ostree-commit", "commit-archive"},
-		exports:          []string{"commit-archive"},
-	}
-
-	iotOCIImgType = imageType{
-		name:        "iot-container",
-		nameAliases: []string{"fedora-iot-container"},
-		filename:    "container.tar",
-		mimeType:    "application/x-tar",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: iotCommitPackageSet,
-			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
-				return rpmmd.PackageSet{}
-			},
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			EnabledServices: iotServices,
-		},
-		rpmOstree:        true,
-		bootISO:          false,
-		image:            iotContainerImage,
-		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "ostree-commit", "container-tree", "container"},
-		exports:          []string{"container"},
-	}
-
-	iotInstallerImgType = imageType{
-		name:        "iot-installer",
-		nameAliases: []string{"fedora-iot-installer"},
-		filename:    "installer.iso",
-		mimeType:    "application/x-iso9660-image",
-		packageSets: map[string]packageSetFunc{
-			installerPkgsKey: iotInstallerPackageSet,
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			Locale:          common.ToPtr("en_US.UTF-8"),
-			EnabledServices: iotServices,
-		},
-		rpmOstree:        true,
-		bootISO:          true,
-		image:            iotInstallerImage,
-		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
-		exports:          []string{"bootiso"},
-	}
-
-	iotRawImgType = imageType{
-		name:        "iot-raw-image",
-		nameAliases: []string{"fedora-iot-raw-image"},
-		filename:    "image.raw.xz",
-		compression: "xz",
-		mimeType:    "application/xz",
-		packageSets: map[string]packageSetFunc{},
-		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.ToPtr("en_US.UTF-8"),
-		},
-		defaultSize:         4 * common.GibiByte,
-		rpmOstree:           true,
-		bootable:            true,
-		image:               iotRawImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"ostree-deployment", "image", "xz"},
-		exports:             []string{"xz"},
-		basePartitionTables: iotBasePartitionTables,
-
-		// Passing an empty map into the required partition sizes disables the
-		// default partition sizes normally set so our `basePartitionTables` can
-		// override them (and make them smaller, in this case).
-		requiredPartitionSizes: map[string]uint64{},
-	}
-
-	qcow2ImgType = imageType{
-		name:     "qcow2",
-		filename: "disk.qcow2",
-		mimeType: "application/x-qemu-disk",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: qcow2CommonPackageSet,
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			DefaultTarget: common.ToPtr("multi-user.target"),
-			EnabledServices: []string{
-				"cloud-init.service",
-				"cloud-config.service",
-				"cloud-final.service",
-				"cloud-init-local.service",
-			},
-		},
-		kernelOptions:       defaultKernelOptions,
-		bootable:            true,
-		defaultSize:         5 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "qcow2"},
-		exports:             []string{"qcow2"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
-	vhdImgType = imageType{
-		name:     "vhd",
-		filename: "disk.vhd",
-		mimeType: "application/x-vhd",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: vhdCommonPackageSet,
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.ToPtr("en_US.UTF-8"),
-			EnabledServices: []string{
-				"sshd",
-			},
-			DefaultTarget: common.ToPtr("multi-user.target"),
-			DisabledServices: []string{
-				"proc-sys-fs-binfmt_misc.mount",
-				"loadmodules.service",
-			},
-		},
-		kernelOptions:       defaultKernelOptions,
-		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "vpc"},
-		exports:             []string{"vpc"},
-		basePartitionTables: defaultBasePartitionTables,
-		environment:         &environment.Azure{},
-	}
-
-	vmdkDefaultImageConfig = &distro.ImageConfig{
-		Locale: common.ToPtr("en_US.UTF-8"),
-		EnabledServices: []string{
-			"cloud-init.service",
-			"cloud-config.service",
-			"cloud-final.service",
-			"cloud-init-local.service",
-		},
-	}
-
-	vmdkImgType = imageType{
-		name:     "vmdk",
-		filename: "disk.vmdk",
-		mimeType: "application/x-vmdk",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: vmdkCommonPackageSet,
-		},
-		defaultImageConfig:  vmdkDefaultImageConfig,
-		kernelOptions:       defaultKernelOptions,
-		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "vmdk"},
-		exports:             []string{"vmdk"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
-	ovaImgType = imageType{
-		name:     "ova",
-		filename: "image.ova",
-		mimeType: "application/ovf",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: vmdkCommonPackageSet,
-		},
-		defaultImageConfig:  vmdkDefaultImageConfig,
-		kernelOptions:       defaultKernelOptions,
-		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
-		image:               liveImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "vmdk", "ovf", "archive"},
-		exports:             []string{"archive"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
-	containerImgType = imageType{
-		name:     "container",
-		filename: "container.tar",
-		mimeType: "application/x-tar",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: containerPackageSet,
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			NoSElinux:   common.ToPtr(true),
-			ExcludeDocs: common.ToPtr(true),
-			Locale:      common.ToPtr("C.UTF-8"),
-			Timezone:    common.ToPtr("Etc/UTC"),
-		},
-		image:            containerImage,
-		bootable:         false,
-		buildPipelines:   []string{"build"},
-		payloadPipelines: []string{"os", "container"},
-		exports:          []string{"container"},
-	}
-
-	minimalrawImgType = imageType{
-		name:     "minimal-raw",
+	rawImgType = imageType{
+		name:     "raw",
 		filename: "raw.img",
 		mimeType: "application/disk",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: minimalrpmPackageSet,
+			osPkgsKey: emptyPackageSet,
 		},
 		rpmOstree:           false,
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * common.GibiByte,
-		image:               liveImage,
+		image:               diskImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
@@ -490,123 +213,16 @@ func newDistro(version int) distro.Distro {
 		distro: &rd,
 	}
 
-	ociImgType := qcow2ImgType
-	ociImgType.name = "oci"
+	x86_64.addImageTypes(
+		&platform.X86{
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+		},
+		rawImgType,
+	)
 
-	amiImgType := qcow2ImgType
-	amiImgType.name = "ami"
-	amiImgType.filename = "image.raw"
-	amiImgType.mimeType = "application/octet-stream"
-	amiImgType.payloadPipelines = []string{"os", "image"}
-	amiImgType.exports = []string{"image"}
-	amiImgType.environment = &environment.EC2{}
-
-	openstackImgType := qcow2ImgType
-	openstackImgType.name = "openstack"
-
-	x86_64.addImageTypes(
-		&platform.X86{
-			BIOS:       true,
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_QCOW2,
-				QCOW2Compat: "1.1",
-			},
-		},
-		qcow2ImgType,
-		ociImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			BIOS:       true,
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_QCOW2,
-			},
-		},
-		openstackImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			BIOS:       true,
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_VHD,
-			},
-		},
-		vhdImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			BIOS:       true,
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_VMDK,
-			},
-		},
-		vmdkImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			BIOS:       true,
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_OVA,
-			},
-		},
-		ovaImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			BIOS:       true,
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_RAW,
-			},
-		},
-		amiImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{},
-		containerImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			BasePlatform: platform.BasePlatform{
-				FirmwarePackages: []string{
-					"microcode_ctl", // ??
-					"iwl1000-firmware",
-					"iwl100-firmware",
-					"iwl105-firmware",
-					"iwl135-firmware",
-					"iwl2000-firmware",
-					"iwl2030-firmware",
-					"iwl3160-firmware",
-					"iwl5000-firmware",
-					"iwl5150-firmware",
-					"iwl6000-firmware",
-					"iwl6050-firmware",
-				},
-			},
-			BIOS:       true,
-			UEFIVendor: "fedora",
-		},
-		iotOCIImgType,
-		iotCommitImgType,
-		iotInstallerImgType,
-		imageInstallerImgType,
-		liveInstallerImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_RAW,
-			},
-			BIOS:       false,
-			UEFIVendor: "fedora",
-		},
-		iotRawImgType,
-	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{
 			UEFIVendor: "fedora",
@@ -614,109 +230,10 @@ func newDistro(version int) distro.Distro {
 				ImageFormat: platform.FORMAT_RAW,
 			},
 		},
-		amiImgType,
-	)
-	aarch64.addImageTypes(
-		&platform.Aarch64{
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_QCOW2,
-				QCOW2Compat: "1.1",
-			},
-		},
-		qcow2ImgType,
-		ociImgType,
-	)
-	aarch64.addImageTypes(
-		&platform.Aarch64{
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_QCOW2,
-			},
-		},
-		openstackImgType,
-	)
-	aarch64.addImageTypes(
-		&platform.Aarch64{},
-		containerImgType,
-	)
-	aarch64.addImageTypes(
-		&platform.Aarch64{
-			BasePlatform: platform.BasePlatform{
-				FirmwarePackages: []string{
-					"uboot-images-armv8", // ??
-					"bcm283x-firmware",
-					"arm-image-installer", // ??
-				},
-			},
-			UEFIVendor: "fedora",
-		},
-		iotCommitImgType,
-		iotOCIImgType,
-		iotInstallerImgType,
-		imageInstallerImgType,
-		liveInstallerImgType,
-	)
-	aarch64.addImageTypes(
-		&platform.Aarch64_IoT{
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_RAW,
-			},
-			UEFIVendor: "fedora",
-			BootFiles: [][2]string{
-				{"/usr/lib/ostree-boot/efi/bcm2710-rpi-2-b.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b-plus.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2710-rpi-cm3.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2-w.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2711-rpi-4-b.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2711-rpi-400.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4s.dtb", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/bootcode.bin", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/config.txt", "/boot/efi/config.txt"},
-				{"/usr/lib/ostree-boot/efi/fixup.dat", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/fixup4.dat", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/fixup4cd.dat", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/fixup4db.dat", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/fixup4x.dat", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/fixup_cd.dat", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/fixup_db.dat", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/fixup_x.dat", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/overlays", "/boot/efi/"},
-				{"/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"},
-				{"/usr/lib/ostree-boot/efi/start.elf", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/start4.elf", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/start4cd.elf", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/start4db.elf", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/start4x.elf", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/start_cd.elf", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/start_db.elf", "/boot/efi/"},
-				{"/usr/lib/ostree-boot/efi/start_x.elf", "/boot/efi/"},
-			},
-		},
-		iotRawImgType,
-	)
-	x86_64.addImageTypes(
-		&platform.X86{
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_RAW,
-			},
-		},
-		minimalrawImgType,
-	)
-	aarch64.addImageTypes(
-		&platform.Aarch64{
-			UEFIVendor: "fedora",
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_RAW,
-			},
-		},
-		minimalrawImgType,
+		rawImgType,
 	)
 
 	rd.addArches(x86_64, aarch64)
+
 	return &rd
 }
