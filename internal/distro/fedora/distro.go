@@ -304,9 +304,10 @@ var (
 	}
 
 	minimalrawImgType = imageType{
-		name:     "minimal-raw",
-		filename: "raw.img",
-		mimeType: "application/disk",
+		name:        "minimal-raw",
+		filename:    "raw.img.xz",
+		compression: "xz",
+		mimeType:    "application/xz",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: minimalrpmPackageSet,
 		},
@@ -316,8 +317,8 @@ var (
 		defaultSize:         2 * common.GibiByte,
 		image:               liveImage,
 		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image"},
-		exports:             []string{"image"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
 		basePartitionTables: defaultBasePartitionTables,
 	}
 )

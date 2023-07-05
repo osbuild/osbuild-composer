@@ -4725,7 +4725,7 @@
           {
             "type": "org.osbuild.truncate",
             "options": {
-              "filename": "raw.img",
+              "filename": "disk.img",
               "size": "3957325824"
             }
           },
@@ -4759,7 +4759,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "lock": true
                 }
               }
@@ -4774,7 +4774,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 2048,
                   "size": 409600,
                   "lock": true
@@ -4792,7 +4792,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 411648,
                   "size": 1024000,
                   "lock": true
@@ -4810,7 +4810,7 @@
               "device": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 1435648,
                   "size": 6293471,
                   "lock": true
@@ -4841,7 +4841,7 @@
               "boot": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 411648,
                   "size": 1024000
                 }
@@ -4849,7 +4849,7 @@
               "boot.efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 2048,
                   "size": 409600
                 }
@@ -4857,7 +4857,7 @@
               "root": {
                 "type": "org.osbuild.loopback",
                 "options": {
-                  "filename": "raw.img",
+                  "filename": "disk.img",
                   "start": 1435648,
                   "size": 6293471
                 }
@@ -4883,6 +4883,29 @@
                 "target": "/boot/efi"
               }
             ]
+          }
+        ]
+      },
+      {
+        "name": "xz",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.xz",
+            "inputs": {
+              "file": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.pipeline",
+                "references": {
+                  "name:image": {
+                    "file": "disk.img"
+                  }
+                }
+              }
+            },
+            "options": {
+              "filename": "raw.img.xz"
+            }
           }
         ]
       }

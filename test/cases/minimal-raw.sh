@@ -57,7 +57,8 @@ TEST_UUID=$(uuidgen)
 IMAGE_KEY="minimal-raw-${TEST_UUID}"
 UEFI_GUEST_ADDRESS=192.168.100.51
 MINIMAL_RAW_TYPE=minimal-raw
-MINIMAL_RAW_FILENAME=raw.img
+MINIMAL_RAW_DECOMPRESSED=raw.img
+MINIMAL_RAW_FILENAME=raw.img.xz
 BOOT_ARGS="uefi"
 
 # Set up temporary files.
@@ -239,13 +240,14 @@ build_image minimal-raw "${MINIMAL_RAW_TYPE}"
 # Download the image
 greenprint "📥 Downloading the minimal-raw image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
-MINIMAL_RAW_FILENAME="${COMPOSE_ID}-${MINIMAL_RAW_FILENAME}"
 
 greenprint "Extracting and converting the raw image to a qcow2 file"
+MINIMAL_RAW_FILENAME="${COMPOSE_ID}-${MINIMAL_RAW_FILENAME}"
+sudo xz -d "${MINIMAL_RAW_FILENAME}"
 LIBVIRT_IMAGE_PATH_UEFI=/var/lib/libvirt/images/"${IMAGE_KEY}-uefi.qcow2"
-sudo qemu-img convert -f raw "$MINIMAL_RAW_FILENAME" -O qcow2 "$LIBVIRT_IMAGE_PATH_UEFI"
+sudo qemu-img convert -f raw "${COMPOSE_ID}-${MINIMAL_RAW_DECOMPRESSED}" -O qcow2 "$LIBVIRT_IMAGE_PATH_UEFI"
 # Remove raw file
-sudo rm -f "$MINIMAL_RAW_FILENAME"
+sudo rm -f "${COMPOSE_ID}-${MINIMAL_RAW_DECOMPRESSED}"
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up minimal-raw blueprint and compose"
