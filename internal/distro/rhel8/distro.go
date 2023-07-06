@@ -367,6 +367,7 @@ func newDistro(name string, minor int) *distribution {
 	aarch64.addImageTypes(
 		rawAarch64Platform,
 		amiImgTypeAarch64(rd),
+		minimalRawImgType(rd),
 	)
 
 	ppc64le.addImageTypes(
@@ -423,6 +424,11 @@ func newDistro(name string, minor int) *distribution {
 		BIOS:       false,
 		UEFIVendor: rd.vendor,
 	}
+
+	x86_64.addImageTypes(
+		rawUEFIx86Platform,
+		minimalRawImgType(rd),
+	)
 
 	if rd.isRHEL() {
 		if !common.VersionLessThan(rd.osVersion, "8.6") {

@@ -209,6 +209,14 @@ func TestFilenameFromType(t *testing.T) {
 			args: args{"foobar"},
 			want: wantResult{wantErr: true},
 		},
+		{
+			name: "minimal-raw",
+			args: args{"minimal-raw"},
+			want: wantResult{
+				filename: "raw.img.xz",
+				mimeType: "application/xz",
+			},
+		},
 	}
 	for _, dist := range rhelFamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
@@ -314,6 +322,7 @@ func TestImageType_Name(t *testing.T) {
 				"gce",
 				"tar",
 				"image-installer",
+				"minimal-raw",
 			},
 		},
 		{
@@ -329,6 +338,7 @@ func TestImageType_Name(t *testing.T) {
 				"image-installer",
 				"vhd",
 				"azure-rhui",
+				"minimal-raw",
 			},
 		},
 		{
@@ -510,6 +520,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"tar",
 				"image-installer",
 				"oci",
+				"minimal-raw",
 			},
 		},
 		{
@@ -529,6 +540,7 @@ func TestArchitecture_ListImageTypes(t *testing.T) {
 				"image-installer",
 				"vhd",
 				"azure-rhui",
+				"minimal-raw",
 			},
 		},
 		{

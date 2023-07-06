@@ -73,3 +73,11 @@ func distroSpecificPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 	return rpmmd.PackageSet{}
 }
+
+func minimalrpmPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"@core",
+		},
+	}
+}
