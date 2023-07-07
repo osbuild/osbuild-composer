@@ -4,6 +4,7 @@
   vars:
     total_counter: "0"
     failed_counter: "0"
+    download_node: ""
 
   tasks:
     # current target host's IP address
@@ -56,6 +57,46 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - name: add RHEL 9.3 BaseOS repository
+      yum_repository:
+        name: baseos
+        description: RHEL repository
+        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.3.0/compose/BaseOS/{{ ansible_facts['architecture'] }}/os/"
+        gpgcheck: no
+        file: rhel_repo
+      become: yes
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.3', '==')
+
+    - name: add RHEL 9.3 AppStream repository
+      yum_repository:
+        name: appstream
+        description: RHEL repository
+        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.3.0/compose/AppStream/{{ ansible_facts['architecture'] }}/os/"
+        gpgcheck: no
+        file: rhel_repo
+      become: yes
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.3', '==')
+
+    - name: add RHEL 8.9 BaseOS repository
+      yum_repository:
+        name: baseos
+        description: RHEL repository
+        baseurl: "http://{{ download_node }}/rhel-8/nightly/RHEL-8/latest-RHEL-8.9.0/compose/BaseOS/{{ ansible_facts['architecture'] }}/os/"
+        gpgcheck: no
+        file: rhel_repo
+      become: yes
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('8.9', '==')
+
+    - name: add RHEL 8.9 AppStream repository
+      yum_repository:
+        name: appstream
+        description: RHEL repository
+        baseurl: "http://{{ download_node }}/rhel-8/nightly/RHEL-8/latest-RHEL-8.9.0/compose/AppStream/{{ ansible_facts['architecture'] }}/os/"
+        gpgcheck: no
+        file: rhel_repo
+      become: yes
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('8.9', '==')
 
     - name: install podman
       dnf:

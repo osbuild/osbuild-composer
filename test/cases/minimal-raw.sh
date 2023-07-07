@@ -8,6 +8,10 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
+# Start firewalld
+greenprint "Start firewalld"
+sudo systemctl enable --now firewalld
+
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
@@ -24,7 +28,7 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
       <port start='1024' end='65535'/>
     </nat>
   </forward>
-  <bridge name='integration' stp='on' delay='0'/>
+  <bridge name='integration' zone='trusted' stp='on' delay='0'/>
   <mac address='52:54:00:36:46:ef'/>
   <ip address='192.168.100.1' netmask='255.255.255.0'>
     <dhcp>
@@ -40,17 +44,6 @@ fi
 if [[ $(sudo virsh net-info integration | grep 'Active' | awk '{print $2}') == 'no' ]]; then
     sudo virsh net-start integration
 fi
-
-# Allow anyone in the wheel group to talk to libvirt.
-greenprint "🚪 Allowing users in wheel group to talk to libvirt"
-sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
-polkit.addRule(function(action, subject) {
-    if (action.id == "org.libvirt.unix.manage" &&
-        subject.isInGroup("whell")) {
-            return polkit.Result.YES;
-    }
-});
-EOF
 
 # Set up variables.
 TEST_UUID=$(uuidgen)
@@ -74,12 +67,33 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 EDGE_USER_PASSWORD=foobar
 
-if [[ $ID != fedora ]]; then
-    echo "unsupported distro: ${ID}-${VERSION_ID}"
-    exit 1
-fi
-
-OS_VARIANT="fedora-unknown"
+case "${ID}-${VERSION_ID}" in
+    "rhel-8.9")
+        OS_VARIANT="rhel8-unknown"
+        ;;
+    "rhel-9.3")
+        OS_VARIANT="rhel9-unknown"
+        ;;
+    "centos-8")
+        OS_VARIANT="centos-stream8"
+        ;;
+    "centos-9")
+        OS_VARIANT="centos-stream9"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
+        ;;
+    "fedora-37")
+        OS_VARIANT="fedora37"
+        ;;
+    "fedora-38")
+        OS_VARIANT="fedora-unknown"
+        ;;
+    "fedora-39")
+        OS_VARIANT="fedora-rawhide"
+        ;;
+    *)
+        echo "unsupported distro: ${ID}-${VERSION_ID}"
+        exit 1;;
+esac
 
 # Get the compose log.
 get_compose_log () {
@@ -311,7 +325,7 @@ ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
-sudo ansible-playbook -v -i "${TEMPDIR}"/inventory /usr/share/tests/osbuild-composer/ansible/check-minimal.yaml || RESULTS=0
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory -e download_node="$DOWNLOAD_NODE" /usr/share/tests/osbuild-composer/ansible/check-minimal.yaml || RESULTS=0
 check_result
 
 # Final success clean up
