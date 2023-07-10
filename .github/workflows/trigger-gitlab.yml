@@ -100,7 +100,7 @@ jobs:
 
             # Simulate a nightly CI pipeline against this PR
             curl --request POST --fail --form "token=$GITLAB_TOKEN" \
-                --form ref=${{ steps.pr_date.outputs.pr_branch }} \
+                --form ref=${{ steps.pr_data.outputs.pr_branch }} \
                 --form "variables[CI_PIPELINE_SOURCE]=schedule" \
                 --form "variables[NIGHTLY]=true" \
                 --form "variables[RHEL_MAJOR]=9" \
