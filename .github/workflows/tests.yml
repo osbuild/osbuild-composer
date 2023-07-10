@@ -195,20 +195,6 @@ jobs:
       - name: Run rpmlint
         run: rpmlint rpmbuild/SRPMS/*
 
-  gitlab-ci-helper:
-    name: "Gitlab CI trigger helper"
-    runs-on: ubuntu-latest
-    env:
-      SKIP_CI: ${{ (github.event.pull_request.draft == true || contains(github.event.pull_request.labels.*.name, 'WIP')) && !contains(github.event.pull_request.labels.*.name, 'WIP+test') }}
-    steps:
-      - name: Write PR status
-        run: echo "$SKIP_CI" > SKIP_CI.txt
-      - name: Upload status
-        uses: actions/upload-artifact@v3
-        with:
-          name: PR_STATUS
-          path: SKIP_CI.txt
-
   kube-linter:
     name: "🎀 kube-linter"
     runs-on: ubuntu-latest
