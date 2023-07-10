@@ -414,8 +414,6 @@ is is missing lots of details!
 - [@jrusz](https://github.com/jrusz) - testing across the board; backup for @atodorov;
   osbuild, osbuild-composer, weldr-client, composer-cli, image-builder, image-builder-frontend,
   bug testing & verification, anything else
-- [@jabia99](https://github.com/jabia99) - focus on image-builder and image-builder-frontend;
-  anything else; backup for @jrusz
 - [@henrywang](https://github.com/henrywang) - everything related to testing RHEL for Edge images
 - [@yih-redhat](https://github.com/yih-redhat) - everything related to testing RHEL for Edge images;
   backup for @henrywang
