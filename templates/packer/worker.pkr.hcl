@@ -93,23 +93,23 @@ build {
   }
 
   source "amazon-ebs.image_builder"  {
-    name = "fedora-36-x86_64"
+    name = "fedora-38-x86_64"
 
-    # Use a static Fedora 36 Cloud Base Image.
-    source_ami = "ami-08b7bda26f4071b80"
+    # Use a static Fedora 38 Cloud Base Image.
+    source_ami = "ami-01752495da7056fa9"
     ssh_username = "fedora"
     instance_type = "c6a.large"
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-fedora-36-x86_64"
+    ami_name = "${var.image_name}-fedora-38-x86_64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}-fedora-36-x86_64"
+      Name = "${var.image_name}-fedora-38-x86_64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
-      os_version = "36"
+      os_version = "38"
       arch = "x86_64"
     }
 
@@ -130,23 +130,23 @@ EOF
   }
 
   source "amazon-ebs.image_builder"  {
-    name = "fedora-36-aarch64"
+    name = "fedora-38-aarch64"
 
-    # Use a static Fedora 36 Cloud Base Image.
-    source_ami = "ami-01925eb0821988986"
+    # Use a static Fedora 38 Cloud Base Image.
+    source_ami = "ami-0da456bb338ee122b"
     ssh_username = "fedora"
     instance_type = "c6g.large"
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-fedora-36-aarch64"
+    ami_name = "${var.image_name}-fedora-38-aarch64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}-fedora-36-aarch64"
+      Name = "${var.image_name}-fedora-38-aarch64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
-      os_version = "36"
+      os_version = "38"
       arch = "aarch64"
     }
 
