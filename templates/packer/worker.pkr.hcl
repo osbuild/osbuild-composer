@@ -54,7 +54,7 @@ build {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
       volume_size           = 10
-      volume_type           = "gp2"
+      volume_type           = "gp3"
     }
   }
 
@@ -88,7 +88,7 @@ build {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
       volume_size           = 10
-      volume_type           = "gp2"
+      volume_type           = "gp3"
     }
   }
 
@@ -118,7 +118,7 @@ build {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
       volume_size           = 5
-      volume_type           = "gp2"
+      volume_type           = "gp3"
     }
 
     # go doesn't like modern Fedora crypto policies
@@ -155,7 +155,7 @@ EOF
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
       volume_size           = 5
-      volume_type           = "gp2"
+      volume_type           = "gp3"
     }
 
     # go doesn't like modern Fedora crypto policies
