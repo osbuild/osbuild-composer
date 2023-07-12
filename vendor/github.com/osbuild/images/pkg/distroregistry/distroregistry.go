@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/fedora"
+	"github.com/osbuild/images/pkg/distro/fedora_ng"
 	"github.com/osbuild/images/pkg/distro/rhel7"
 	"github.com/osbuild/images/pkg/distro/rhel8"
 	"github.com/osbuild/images/pkg/distro/rhel9"
@@ -19,6 +20,8 @@ var supportedDistros = []func() distro.Distro{
 	fedora.NewF37,
 	fedora.NewF38,
 	fedora.NewF39,
+
+	fedora_ng.NewF39,
 
 	rhel7.New,
 

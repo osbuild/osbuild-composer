@@ -19,7 +19,7 @@ var qcow2ImgType = imageType{
 	defaultImageConfig:  qcow2DefaultImgConfig,
 	bootable:            true,
 	defaultSize:         10 * common.GibiByte,
-	image:               liveImage,
+	image:               diskImage,
 	buildPipelines:      []string{"build"},
 	payloadPipelines:    []string{"os", "image", "qcow2"},
 	exports:             []string{"qcow2"},

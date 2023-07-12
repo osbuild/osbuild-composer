@@ -145,8 +145,9 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	}
 	return []rpmmd.PackageSet{
 		{
-			Include:      append(packages, p.ExtraPackages...),
-			Repositories: append(p.repos, p.ExtraRepos...),
+			Include:         append(packages, p.ExtraPackages...),
+			Repositories:    append(p.repos, p.ExtraRepos...),
+			InstallWeakDeps: true,
 		},
 	}
 }
@@ -312,6 +313,7 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
+// XXX
 func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []string) *osbuild.DracutStageOptions {
 	kernel := []string{kernelVer}
 	modules := []string{
@@ -319,27 +321,27 @@ func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []
 		"systemd",
 		"fips",
 		"systemd-initrd",
-		"modsign",
-		"nss-softokn",
+		//"modsign",
+		//"nss-softokn",
 		"i18n",
 		"convertfs",
-		"network-manager",
-		"network",
-		"ifcfg",
-		"url-lib",
+		//"network-manager",
+		//"network",
+		//"ifcfg",
+		//"url-lib",
 		"drm",
-		"plymouth",
+		//"plymouth",
 		"crypt",
 		"dm",
 		"dmsquash-live",
 		"kernel-modules",
 		"kernel-modules-extra",
-		"kernel-network-modules",
-		"livenet",
-		"lvm",
-		"mdraid",
+		//"kernel-network-modules",
+		//"livenet",
+		//"lvm",
+		//"mdraid",
 		"qemu",
-		"qemu-net",
+		//"qemu-net",
 		"resume",
 		"rootfs-block",
 		"terminfo",
@@ -349,9 +351,9 @@ func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []
 		"usrmount",
 		"base",
 		"fs-lib",
-		"img-lib",
+		//"img-lib",
 		"shutdown",
-		"uefi-lib",
+		//"uefi-lib",
 	}
 
 	if biosdevname {
@@ -391,4 +393,8 @@ func (p *AnacondaInstaller) getInline() []string {
 	}
 
 	return inlineData
+}
+
+func (p *AnacondaInstaller) GetKernelVersion() string {
+	return p.kernelVer
 }

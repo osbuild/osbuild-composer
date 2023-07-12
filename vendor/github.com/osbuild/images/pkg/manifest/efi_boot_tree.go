@@ -60,3 +60,14 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 	pipeline.AddStage(grub2Stage)
 	return pipeline
 }
+
+func (p *EFIBootTree) getBuildPackages(Distro) []string {
+	arch := p.Platform.GetArch().String()
+
+	if arch == platform.ARCH_X86_64.String() {
+
+		return []string{"shim-x64", "grub2-efi-x64-cdboot"}
+	}
+
+	return []string{}
+}

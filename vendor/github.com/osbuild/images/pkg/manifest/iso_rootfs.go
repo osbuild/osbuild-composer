@@ -69,3 +69,7 @@ func (p *ISORootfsImg) serialize() osbuild.Pipeline {
 	pipeline.AddStage(copyStage)
 	return pipeline
 }
+
+func (p *ISORootfsImg) getBuildPackages(Distro) []string {
+	return []string{"e2fsprogs"}
+}

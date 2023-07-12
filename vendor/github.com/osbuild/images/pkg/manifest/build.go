@@ -59,8 +59,9 @@ func (p *Build) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 
 	return []rpmmd.PackageSet{
 		{
-			Include:      packages,
-			Repositories: p.repos,
+			Include:         packages,
+			Repositories:    p.repos,
+			InstallWeakDeps: true,
 		},
 	}
 }

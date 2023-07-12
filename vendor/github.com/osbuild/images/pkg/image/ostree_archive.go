@@ -29,12 +29,15 @@ type OSTreeArchive struct {
 
 	OSVersion string
 	Filename  string
+
+	InstallWeakDeps bool
 }
 
 func NewOSTreeArchive(ref string) *OSTreeArchive {
 	return &OSTreeArchive{
-		Base:      NewBase("ostree-archive"),
-		OSTreeRef: ref,
+		Base:            NewBase("ostree-archive"),
+		OSTreeRef:       ref,
+		InstallWeakDeps: true,
 	}
 }
 
@@ -51,6 +54,7 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Workload = img.Workload
 	osPipeline.OSTreeParent = img.OSTreeParent
 	osPipeline.OSTreeRef = img.OSTreeRef
+	osPipeline.InstallWeakDeps = img.InstallWeakDeps
 
 	ostreeCommitPipeline := manifest.NewOSTreeCommit(m, buildPipeline, osPipeline, img.OSTreeRef)
 	ostreeCommitPipeline.OSVersion = img.OSVersion

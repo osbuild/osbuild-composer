@@ -200,7 +200,7 @@ func osCustomizations(
 
 // IMAGES
 
-func liveImage(workload workload.Workload,
+func diskImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -208,7 +208,7 @@ func liveImage(workload workload.Workload,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewLiveImage()
+	img := image.NewDiskImage()
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
 	img.Environment = t.environment
@@ -254,17 +254,6 @@ func liveInstallerImage(workload workload.Workload,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewAnacondaLiveInstaller()
-
-	distro := t.Arch().Distro()
-
-	// If the live installer is generated for Fedora 39 or higher then we enable the web ui
-	// kernel options. This is a temporary thing as the check for this should really lie with
-	// anaconda and their `liveinst` script to determine which frontend to start.
-	if common.VersionLessThan(distro.Releasever(), "39") {
-		img.AdditionalKernelOpts = []string{}
-	} else {
-		img.AdditionalKernelOpts = []string{"inst.webui"}
-	}
 
 	img.Platform = t.platform
 	img.Workload = workload
@@ -345,6 +334,7 @@ func iotCommitImage(workload workload.Workload,
 	img.OSTreeParent = parentCommit
 	img.OSVersion = t.arch.distro.osVersion
 	img.Filename = t.Filename()
+	img.InstallWeakDeps = false
 
 	return img, nil
 }

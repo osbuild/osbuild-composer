@@ -164,6 +164,8 @@ type OS struct {
 	OSProduct string
 	OSVersion string
 	OSNick    string
+
+	InstallWeakDeps bool
 }
 
 // NewOS creates a new OS pipeline. build is the build pipeline to use for
@@ -175,9 +177,10 @@ func NewOS(m *Manifest,
 	repos []rpmmd.RepoConfig) *OS {
 	name := "os"
 	p := &OS{
-		Base:     NewBase(m, name, buildPipeline),
-		repos:    filterRepos(repos, name),
-		platform: platform,
+		Base:            NewBase(m, name, buildPipeline),
+		repos:           filterRepos(repos, name),
+		platform:        platform,
+		InstallWeakDeps: true,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -227,11 +230,13 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	}
 
 	osRepos := append(p.repos, p.ExtraBaseRepos...)
+
 	chain := []rpmmd.PackageSet{
 		{
-			Include:      append(packages, p.ExtraBasePackages...),
-			Exclude:      p.ExcludeBasePackages,
-			Repositories: osRepos,
+			Include:         append(packages, p.ExtraBasePackages...),
+			Exclude:         p.ExcludeBasePackages,
+			Repositories:    osRepos,
+			InstallWeakDeps: p.InstallWeakDeps,
 		},
 	}
 
@@ -710,6 +715,31 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewWSLConfStage(wslConf))
 	}
 
+	/// XXX XXX XXX
+	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
+		Arch:    p.platform.GetArch().String(),
+		Product: "Fedora",
+		Variant: "",
+		Version: "39",
+		Final:   true,
+	}))
+
+	// XXX XXX XXX
+	dracutModules := []string{
+		//"anaconda",
+		//"rdma",
+		//"rngd",
+		//"multipath",
+		//"fcoe",
+		//"fcoe-uefi",
+		//"iscsi",
+		"lunmask",
+		//"nfs",
+	}
+
+	dracutOptions := dracutStageOptions(p.kernelVer, false, dracutModules)
+	pipeline.AddStage(osbuild.NewDracutStage(dracutOptions))
+
 	if p.SElinux != "" {
 		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 			FileContexts:     fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
@@ -788,4 +818,8 @@ func (p *OS) getInline() []string {
 	}
 
 	return inlineData
+}
+
+func (p *OS) GetKernelVersion() string {
+	return p.kernelVer
 }

@@ -180,4 +180,5 @@ type Tree interface {
 	Name() string
 	GetManifest() *Manifest
 	GetPlatform() platform.Platform
+	GetKernelVersion() string
 }

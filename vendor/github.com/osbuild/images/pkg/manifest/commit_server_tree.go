@@ -66,8 +66,9 @@ func (p *OSTreeCommitServer) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := []string{"nginx"}
 	return []rpmmd.PackageSet{
 		{
-			Include:      append(packages, p.ExtraPackages...),
-			Repositories: append(p.repos, p.ExtraRepos...),
+			Include:         append(packages, p.ExtraPackages...),
+			Repositories:    append(p.repos, p.ExtraRepos...),
+			InstallWeakDeps: true,
 		},
 	}
 }
@@ -150,4 +151,8 @@ func chmodStageOptions(path, mode string, recursive bool) *osbuild.ChmodStageOpt
 
 func (p *OSTreeCommitServer) GetPlatform() platform.Platform {
 	return p.platform
+}
+
+func (p *OSTreeCommitServer) GetKernelVersion() string {
+	return ""
 }
