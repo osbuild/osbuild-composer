@@ -785,6 +785,8 @@ components:
         - vsphere
         - vsphere-ova
         - live-installer
+        - iso-live
+        - disk-raw
     Repository:
       type: object
       description: |
