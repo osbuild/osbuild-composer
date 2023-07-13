@@ -91,13 +91,19 @@ func main() {
 	}
 
 	if l, exists := listeners["osbuild-composer.socket"]; exists {
-		if len(l) != 1 {
-			logrus.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain only one socket.")
+		if len(l) != 2 {
+			logrus.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain two sockets.")
 		}
 
 		err = composer.InitWeldr(repositoryConfigs, l[0], config.weldrDistrosImageTypeDenyList())
 		if err != nil {
 			logrus.Fatalf("Error initializing weldr API: %v", err)
+		}
+
+		// Start cloudapi using the 2nd socket and no certs
+		err = composer.InitAPI(ServerCertFile, ServerKeyFile, false, false, false, l[1])
+		if err != nil {
+			logrus.Fatalf("Error initializing Cloud API using local socket: %v", err)
 		}
 	}
 
