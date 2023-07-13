@@ -3,6 +3,7 @@ Description=OSBuild Composer Weldr API socket
 
 [Socket]
 ListenStream=/run/weldr/api.socket
+ListenStream=/run/cloudapi/api.socket
 SocketGroup=weldr
 SocketMode=660
 
