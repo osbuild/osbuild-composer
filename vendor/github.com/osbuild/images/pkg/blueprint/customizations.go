@@ -24,6 +24,7 @@ type Customizations struct {
 	Directories        []DirectoryCustomization  `json:"directories,omitempty" toml:"directories,omitempty"`
 	Files              []FileCustomization       `json:"files,omitempty" toml:"files,omitempty"`
 	Repositories       []RepositoryCustomization `json:"repositories,omitempty" toml:"repositories,omitempty"`
+	Sysconfig          *SysconfigCustomization   `json:"sysconfig,omitempty" toml:"sysconfig,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -109,6 +110,20 @@ type ServicesCustomization struct {
 type OpenSCAPCustomization struct {
 	DataStream string `json:"datastream,omitempty" toml:"datastream,omitempty"`
 	ProfileID  string `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
+}
+
+type SysconfigCustomization struct {
+	Desktop *SysconfigDesktopCustomization `json:"desktop,omitempty" toml:"desktop,omitempty"`
+	Livesys *SysconfigLivesysCustomization `json:"livesys,omitempty" toml:"livesys,omitempty"`
+}
+
+type SysconfigLivesysCustomization struct {
+	Session string `json:"session" toml:"session"`
+}
+
+type SysconfigDesktopCustomization struct {
+	Preferred      string `json:"preferred,omitempty" toml:"preferred,omitempty"`
+	DisplayManager string `json:"displaymanager,omitempty" toml:"displaymanager,omitempty"`
 }
 
 type CustomizationError struct {
@@ -348,4 +363,11 @@ func (c *Customizations) GetRepositories() ([]RepositoryCustomization, error) {
 	}
 
 	return c.Repositories, nil
+}
+
+func (c *Customizations) GetSysconfig() *SysconfigCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.Sysconfig
 }

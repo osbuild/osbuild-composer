@@ -119,6 +119,7 @@ type OSCustomizations struct {
 	NTPServers          []osbuild.ChronyConfigServer
 	WAAgentConfig       *osbuild.WAAgentConfStageOptions
 	UdevRules           *osbuild.UdevRulesStageOptions
+	WSLConfig           *osbuild.WSLConfStageOptions
 	LeapSecTZ           *string
 	FactAPIType         *facts.APIType
 
@@ -271,7 +272,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 			packages = append(packages, "python3-pyyaml")
 		}
 	}
-	if len(p.DNFConfig) > 0 || len(p.RHSMConfig) > 0 {
+	if len(p.DNFConfig) > 0 || len(p.RHSMConfig) > 0 || p.WSLConfig != nil {
 		packages = append(packages, "python3-iniparse")
 	}
 
@@ -703,6 +704,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 	if len(p.ShellInit) > 0 {
 		pipeline.AddStage(osbuild.GenShellInitStage(p.ShellInit))
+	}
+
+	if wslConf := p.WSLConfig; wslConf != nil {
+		pipeline.AddStage(osbuild.NewWSLConfStage(wslConf))
 	}
 
 	if p.SElinux != "" {

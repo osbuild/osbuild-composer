@@ -197,6 +197,10 @@ func isOSTree(imgType distro.ImageType) bool {
 	return imgType.OSTreeRef() != ""
 }
 
+func isUbi(imgType distro.ImageType) bool {
+	return imgType.Name() == "wsl"
+}
+
 var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt"}
 
 // Returns the number of known kernels in the package list
@@ -278,7 +282,12 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 				assert.NoError(t, err)
 				nk := kernelCount(imgType, blueprint.Blueprint{})
 
-				if nk != 1 {
+				if isUbi(imgType) {
+					if nk != 0 {
+						assert.Fail(t, fmt.Sprintf("%s Kernel count", d.Name()),
+							"Image type %s (arch %s) specifies %d Kernel packages", typeName, archName, nk)
+					}
+				} else if nk != 1 {
 					assert.Fail(t, fmt.Sprintf("%s Kernel count", d.Name()),
 						"Image type %s (arch %s) specifies %d Kernel packages", typeName, archName, nk)
 				}
@@ -313,8 +322,9 @@ func TestDistro_KernelOption(t *testing.T, d distro.Distro) {
 					nk := kernelCount(imgType, bp)
 
 					// ostree image types should have only one kernel
+					// ubi image types should have no kernels
 					// other image types should have at least 1
-					if nk < 1 || (nk != 1 && isOSTree(imgType)) {
+					if nk < 1 || (nk != 1 && isOSTree(imgType)) || nk == 0 && isUbi(imgType) {
 						assert.Fail(t, fmt.Sprintf("%s Kernel count", d.Name()),
 							"Image type %s (arch %s) specifies %d Kernel packages", typeName, archName, nk)
 					}
