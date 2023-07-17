@@ -281,10 +281,6 @@ func (c *Composer) Start() error {
 		// handler functions don't.
 		mux.Handle(apiRouteV2+"/", c.api.V2(apiRouteV2))
 
-		// Metrics handler attached to api mux to avoid a
-		// separate listener/socket
-		mux.Handle("/metrics", promhttp.Handler().(http.HandlerFunc))
-
 		handler := http.Handler(mux)
 		var err error
 		if c.config.Koji.EnableJWT {
@@ -296,7 +292,6 @@ func (c *Composer) Start() error {
 				[]string{
 					"/api/image-builder-composer/v2/openapi/?$",
 					"/api/image-builder-composer/v2/errors/?$",
-					"/metrics/?$",
 				}, mux)
 			if err != nil {
 				panic(err)
