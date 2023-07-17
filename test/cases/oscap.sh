@@ -59,7 +59,8 @@ EOF
 TEST_UUID=$(uuidgen)
 IMAGE_KEY="oscap-${TEST_UUID}"
 HTTP_GUEST_ADDRESS=192.168.100.50
-ARTIFACTS="ci-artifacts"
+# create artifacts folder
+ARTIFACTS="${ARTIFACTS:=/tmp/artifacts}"
 mkdir -p "${ARTIFACTS}"
 
 # Set up temporary files.
@@ -303,6 +304,10 @@ sudo restorecon -Rv /var/lib/libvirt/images/
 greenprint "💿 Creating a cloud-init ISO"
 gen_iso
 
+VIRT_LOG="$ARTIFACTS/oscap-sh-virt-install-console.log"
+touch "$VIRT_LOG"
+sudo chown qemu:qemu "$VIRT_LOG"
+
 greenprint "📋 Install baseline image"
 VIRSH_DOMAIN="${IMAGE_KEY}-baseline"
 sudo virt-install --name="${VIRSH_DOMAIN}"\
@@ -317,7 +322,8 @@ sudo virt-install --name="${VIRSH_DOMAIN}"\
                   --noautoconsole \
                   --nographics \
                   --wait=15 \
-                  --noreboot
+                  --noreboot \
+                   --console pipe,source.path="$VIRT_LOG"
 
 # Installation can get stuck, destroying VM helps
 # See https://github.com/osbuild/osbuild-composer/issues/2413
