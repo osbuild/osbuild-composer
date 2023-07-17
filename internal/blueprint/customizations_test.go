@@ -387,3 +387,27 @@ func TestGetOpenSCAPConfig(t *testing.T) {
 
 	assert.EqualValues(t, expectedOscap, *retOpenSCAPCustomiztions)
 }
+
+func TestGetSysconfig(t *testing.T) {
+
+	expectedDesktop := SysconfigDesktopCustomization{
+		Preferred:      "/usr/bin/sway",
+		DisplayManager: "/bin/sddm",
+	}
+	expectedLivesys := SysconfigLivesysCustomization{
+		Session: "gnome",
+	}
+
+	expectedSysconfig := SysconfigCustomization{
+		Desktop: &expectedDesktop,
+		Livesys: &expectedLivesys,
+	}
+
+	TestCustomizations := Customizations{
+		Sysconfig: &expectedSysconfig,
+	}
+
+	retSysconfig := TestCustomizations.GetSysconfig()
+
+	assert.Equal(t, &expectedSysconfig, retSysconfig)
+}

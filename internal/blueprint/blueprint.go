@@ -220,6 +220,21 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 			ioscap := iblueprint.OpenSCAPCustomization(*oscap)
 			customizations.OpenSCAP = &ioscap
 		}
+		if sysconfig := c.Sysconfig; sysconfig != nil {
+			isysconfig := iblueprint.SysconfigCustomization{}
+
+			if desktop := isysconfig.Desktop; desktop != nil {
+				idesktop := iblueprint.SysconfigDesktopCustomization(*desktop)
+				isysconfig.Desktop = &idesktop
+			}
+
+			if livesys := isysconfig.Livesys; livesys != nil {
+				ilivesys := iblueprint.SysconfigLivesysCustomization(*livesys)
+				isysconfig.Livesys = &ilivesys
+			}
+
+			customizations.Sysconfig = &isysconfig
+		}
 		if ign := c.Ignition; ign != nil {
 			iign := iblueprint.IgnitionCustomization{}
 			if embed := ign.Embedded; embed != nil {
