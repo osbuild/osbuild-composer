@@ -256,6 +256,14 @@ sudo composer-cli blueprints delete minimal-raw > /dev/null
 greenprint "👿 Running restorecon on image directory"
 sudo restorecon -Rv /var/lib/libvirt/images/
 
+# create artifacts folder
+ARTIFACTS="${ARTIFACTS:=/tmp/artifacts}"
+mkdir -p "${ARTIFACTS}"
+
+VIRT_LOG="$ARTIFACTS/minimal-raw-virt-install-console.log"
+touch "$VIRT_LOG"
+sudo chown qemu:qemu "$VIRT_LOG"
+
 ##################################################################
 ##
 ## Install and test minimal-raw image (UEFI)
@@ -273,7 +281,9 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --noautoconsole \
                    --wait=-1 \
                    --import \
-                   --noreboot
+                   --noreboot \
+                   --console pipe,source.path="$VIRT_LOG"
+
 
 # Start VM.
 greenprint "💻 Start UEFI VM"

@@ -95,6 +95,12 @@ ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 
+VIRT_LOG="$ARTIFACTS/libvirt_tests-virt-install-console.log"
+if [ ! -f "$VIRT_LOG" ]; then
+    touch "$VIRT_LOG"
+fi
+sudo chown qemu:qemu "$VIRT_LOG"
+
 # Check for the smoke test file on the AWS instance that we start.
 smoke_test_check () {
     # Ensure the ssh key has restricted permissions.
@@ -255,7 +261,8 @@ if [[ $ARCH == 'ppc64le' ]]; then
         --os-variant rhel8-unknown \
         --noautoconsole \
         --network network=integration,mac=34:49:22:B0:83:30 \
-        --qemu-commandline="-machine pseries,cap-cfpc=broken,cap-sbbc=broken,cap-ibs=broken,cap-ccf-assist=off,cap-large-decr=off"
+        --qemu-commandline="-machine pseries,cap-cfpc=broken,cap-sbbc=broken,cap-ibs=broken,cap-ccf-assist=off,cap-large-decr=off" \
+        --console pipe,source.path="$VIRT_LOG"
 elif [[ $ARCH == 's390x' ]]; then
     # Our s390x machines are highly constrained on resources.
     sudo virt-install \
@@ -267,7 +274,8 @@ elif [[ $ARCH == 's390x' ]]; then
         --import \
         --os-variant rhel8-unknown \
         --noautoconsole \
-        --network network=integration,mac=34:49:22:B0:83:30
+        --network network=integration,mac=34:49:22:B0:83:30 \
+        --console pipe,source.path="$VIRT_LOG"
 else
     case "${ID}-${VERSION_ID}" in
         "rhel-8"*)
@@ -314,7 +322,8 @@ else
             --os-variant "${OS_VARIANT}" \
             --noautoconsole \
             --boot uefi,"${NVRAM_TEMPLATE}" \
-            --network network=integration,mac=34:49:22:B0:83:30
+            --network network=integration,mac=34:49:22:B0:83:30 \
+            --console pipe,source.path="$VIRT_LOG"
     else
         sudo virt-install \
             --name "$IMAGE_KEY" \
@@ -325,7 +334,8 @@ else
             --import \
             --os-variant "${OS_VARIANT}" \
             --noautoconsole \
-            --network network=integration,mac=34:49:22:B0:83:30
+            --network network=integration,mac=34:49:22:B0:83:30 \
+            --console pipe,source.path="$VIRT_LOG"
     fi
 fi
 
