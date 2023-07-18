@@ -10,6 +10,7 @@ import (
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/osbuild"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -113,4 +114,38 @@ func TestComposeStatusFromJobError(t *testing.T) {
 
 	state := composeStateFromJobStatus(jobInfo.JobStatus, &jobResult)
 	require.Equal(t, "FAILED", state.ToString())
+}
+
+func TestNewStuff(t *testing.T) {
+	stage := &osbuild.SysconfigStageOptions{
+		Kernel: &osbuild.SysconfigKernelOptions{
+			UpdateDefault: false,
+			DefaultKernel: "",
+		},
+		Network: &osbuild.SysconfigNetworkOptions{
+			Networking: false,
+			NoZeroConf: false,
+		},
+		NetworkScripts: &osbuild.NetworkScriptsOptions{
+			IfcfgFiles: map[string]osbuild.IfcfgFile{
+				"": {
+					Bootproto: "",
+					Device:    "",
+					IPv6Init:  nil,
+					OnBoot:    nil,
+					PeerDNS:   nil,
+					Type:      "",
+					UserCtl:   nil,
+				},
+			},
+		},
+		Desktop: &osbuild.SysconfigDesktopOptions{ // this is new
+			Preferred:      "",
+			DisplayManager: "",
+		},
+		LiveSys: &osbuild.SysconfigLivesysOptions{ // this is new
+			Session: "",
+		},
+	}
+	require.NotNil(t, stage)
 }
