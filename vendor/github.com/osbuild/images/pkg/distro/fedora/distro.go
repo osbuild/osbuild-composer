@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/oscap"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
@@ -303,6 +304,31 @@ var (
 		exports:          []string{"container"},
 	}
 
+	wslImgType = imageType{
+		name:     "wsl",
+		filename: "wsl.tar",
+		mimeType: "application/x-tar",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: containerPackageSet,
+		},
+		defaultImageConfig: &distro.ImageConfig{
+			NoSElinux:   common.ToPtr(true),
+			ExcludeDocs: common.ToPtr(true),
+			Locale:      common.ToPtr("C.UTF-8"),
+			Timezone:    common.ToPtr("Etc/UTC"),
+			WSLConfig: &osbuild.WSLConfStageOptions{
+				Boot: osbuild.WSLConfBootOptions{
+					Systemd: true,
+				},
+			},
+		},
+		image:            containerImage,
+		bootable:         false,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "container"},
+		exports:          []string{"container"},
+	}
+
 	minimalrawImgType = imageType{
 		name:     "minimal-raw",
 		filename: "raw.img",
@@ -569,6 +595,7 @@ func newDistro(version int) distro.Distro {
 	x86_64.addImageTypes(
 		&platform.X86{},
 		containerImgType,
+		wslImgType,
 	)
 	x86_64.addImageTypes(
 		&platform.X86{

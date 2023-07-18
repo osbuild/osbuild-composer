@@ -4,6 +4,8 @@ type SysconfigStageOptions struct {
 	Kernel         *SysconfigKernelOptions  `json:"kernel,omitempty"`
 	Network        *SysconfigNetworkOptions `json:"network,omitempty"`
 	NetworkScripts *NetworkScriptsOptions   `json:"network-scripts,omitempty"`
+	Desktop        *SysconfigDesktopOptions `json:"desktop,omitempty"`
+	LiveSys        *SysconfigLivesysOptions `json:"livesys,omitempty"`
 }
 
 func (SysconfigStageOptions) isStageOptions() {}
@@ -23,6 +25,15 @@ type SysconfigNetworkOptions struct {
 type SysconfigKernelOptions struct {
 	UpdateDefault bool   `json:"update_default,omitempty"`
 	DefaultKernel string `json:"default_kernel,omitempty"`
+}
+
+type SysconfigDesktopOptions struct {
+	Preferred      string `json:"preferred,omitempty"`
+	DisplayManager string `json:"displaymanager,omitempty"`
+}
+
+type SysconfigLivesysOptions struct {
+	Session string `json:"session"`
 }
 
 type NetworkScriptsOptions struct {

@@ -335,6 +335,7 @@ func newDistro(name string, minor int) *distribution {
 	x86_64.addImageTypes(
 		&platform.X86{},
 		tarImgType,
+		wslImgType,
 	)
 
 	aarch64.addImageTypes(
@@ -350,6 +351,7 @@ func newDistro(name string, minor int) *distribution {
 	aarch64.addImageTypes(
 		&platform.Aarch64{},
 		tarImgType,
+		wslImgType,
 	)
 
 	aarch64.addImageTypes(

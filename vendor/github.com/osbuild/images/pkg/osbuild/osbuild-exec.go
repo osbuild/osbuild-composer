@@ -76,8 +76,8 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 	}
 
 	if err != nil {
-		// ignore ExitError if output could be decoded correctly
-		if _, isExitError := err.(*exec.ExitError); !isExitError {
+		// ignore ExitError if output could be decoded correctly (only if running with --json)
+		if _, isExitError := err.(*exec.ExitError); !isExitError || !result {
 			return nil, fmt.Errorf("running osbuild failed: %v", err)
 		}
 	}
