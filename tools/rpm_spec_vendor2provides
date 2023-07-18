@@ -26,9 +26,9 @@ def process(path: str):
     dependencies = list(filter(lambda line: line.startswith("# "), lines))
 
     # parse vendored dependencies into (import path, version) pairs
-    vendored = list()
+    vendored = []
     # Handle => style replace directives
-    replace_regex = re.compile("^.+( v[0-9-\.]+)? => ")
+    replace_regex = re.compile(r"^.+( v[0-9-\.]+)? => ")
     for dep in dependencies:
         fields = replace_regex.sub("", dep[2:]).split(" ")
         if len(fields) == 2:
