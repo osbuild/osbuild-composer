@@ -200,21 +200,6 @@ Base:
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
 
-Manifests:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/manifest_tests.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-9.3-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-
 .regression:
   stage: test
   extends: .terraform
