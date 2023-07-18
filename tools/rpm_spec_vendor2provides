@@ -30,7 +30,14 @@ def process(path: str):
     # Handle => style replace directives
     replace_regex = re.compile("^.+( v[0-9-\.]+)? => ")
     for dep in dependencies:
-        ipath, version = replace_regex.sub("", dep[2:]).split(" ")[:2]
+        fields = replace_regex.sub("", dep[2:]).split(" ")
+        if len(fields) == 2:
+            ipath, version = fields
+        elif len(fields) == 1:
+            ipath = fields[0]
+            version = "HEAD"
+        else:
+            raise RuntimeError(f"Failed to parse dependency: {dep}")
 
         # check for git snapshots
         if len(version) > 27:
