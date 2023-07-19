@@ -3,10 +3,14 @@ linters-settings:
     disable:
       - shadow # default value recommended by golangci
       - composites
-  
+
+  gomoddirectives:
+    replace-local: false
+
 linters:
   enable:
     - gosec
+    - gomoddirectives
 
 run:
   build-tags:
