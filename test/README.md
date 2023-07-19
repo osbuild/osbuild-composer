@@ -60,6 +60,24 @@ tests, see `.github/workflows/tests.yml`.
 
 ## Image tests
 
+The distributions and images are defined in a separate repository at
+https://github.com/osbuild/images. When making changes in that repository, you
+may want to test them against osbuild-composer. You can update the vendored
+code for osbuild/images as follows:
+```
+go mod edit -replace github.com/osbuild/images=<path to your local checkout of osbuild/images>
+./tools/prepare-source.sh
+```
+
+Alternatively, you can also use a remote fork/branch of the code:
+```
+go mod edit -replace github.com/osbuild/images=github.com/<username>/images@<commit>
+./tools/prepare-source.sh
+```
+
+This will allow you to open a test PR and run the osbuild-composer integration
+tests against your updated code.
+
 In the `test/data/manifests` directory, sample image builds and their tests are
 collected for the various distros, architectures, configuration we support.
 
