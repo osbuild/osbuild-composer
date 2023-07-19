@@ -565,6 +565,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				fallthrough
 			case ImageTypesIotInstaller:
 				fallthrough
+			case ImageTypesLiveInstaller:
+				fallthrough
 			case ImageTypesEdgeCommit:
 				fallthrough
 			case ImageTypesIotCommit:
@@ -783,6 +785,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "iot-installer"
 	case ImageTypesIotRawImage:
 		return "iot-raw-image"
+	case ImageTypesLiveInstaller:
+		return "live-installer"
 	}
 	return ""
 }
