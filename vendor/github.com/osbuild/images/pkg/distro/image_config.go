@@ -61,6 +61,7 @@ type ImageConfig struct {
 	Firewall            *osbuild.FirewallStageOptions
 	UdevRules           *osbuild.UdevRulesStageOptions
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
+	WSLConfig           *osbuild.WSLConfStageOptions
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and

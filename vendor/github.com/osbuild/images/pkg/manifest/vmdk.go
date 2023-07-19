@@ -5,26 +5,43 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
-// A VMDK turns a raw image file into vmdk image.
+// A VMDK turns a raw image file or a raw ostree image file into vmdk image.
 type VMDK struct {
 	Base
 	Filename string
 
-	imgPipeline *RawImage
+	imgPipeline Pipeline
 }
 
 // NewVMDK creates a new VMDK pipeline. imgPipeline is the pipeline producing the
-// raw image. Filename is the name of the produced image.
+// raw image. imgOstreePipeline is the pipeline producing the raw ostree image.
+// Either imgPipeline or imgOStreePipeline are required, but not both at the same time.
+// Filename is the name of the produced image.
 func NewVMDK(m *Manifest,
 	buildPipeline *Build,
-	imgPipeline *RawImage) *VMDK {
-	p := &VMDK{
-		Base:        NewBase(m, "vmdk", buildPipeline),
-		imgPipeline: imgPipeline,
-		Filename:    "image.vmdk",
+	imgPipeline *RawImage, imgOstreePipeline *RawOSTreeImage) *VMDK {
+	if imgPipeline != nil && imgOstreePipeline != nil {
+		panic("NewVMDK requires either RawImage or RawOSTreeImage")
 	}
-	if imgPipeline.Base.manifest != m {
-		panic("live image pipeline from different manifest")
+	var p *VMDK
+	if imgPipeline != nil {
+		p = &VMDK{
+			Base:        NewBase(m, "vmdk", buildPipeline),
+			imgPipeline: imgPipeline,
+			Filename:    "image.vmdk",
+		}
+		if imgPipeline.Base.manifest != m {
+			panic("live image pipeline from different manifest")
+		}
+	} else {
+		p = &VMDK{
+			Base:        NewBase(m, "vmdk", buildPipeline),
+			imgPipeline: imgOstreePipeline,
+			Filename:    "image.vmdk",
+		}
+		if imgOstreePipeline.Base.manifest != m {
+			panic("live image pipeline from different manifest")
+		}
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -38,7 +55,7 @@ func (p *VMDK) serialize() osbuild.Pipeline {
 		osbuild.NewQEMUStageOptions(p.Filename, osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{
 			Subformat: osbuild.VMDKSubformatStreamOptimized,
 		}),
-		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename),
+		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Export().Filename()),
 	))
 
 	return pipeline

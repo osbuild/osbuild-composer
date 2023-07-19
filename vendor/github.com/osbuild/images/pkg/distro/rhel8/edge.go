@@ -139,6 +139,28 @@ func edgeSimplifiedInstallerImgType(rd distribution) imageType {
 	return it
 }
 
+func minimalRawImgType(rd distribution) imageType {
+	it := imageType{
+		name:        "minimal-raw",
+		filename:    "raw.img.xz",
+		compression: "xz",
+		mimeType:    "application/xz",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: minimalrpmPackageSet,
+		},
+		rpmOstree:           false,
+		kernelOptions:       "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0",
+		bootable:            true,
+		defaultSize:         2 * common.GibiByte,
+		image:               liveImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "xz"},
+		exports:             []string{"xz"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+	return it
+}
+
 // edge commit OS package set
 func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{

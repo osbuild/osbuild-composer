@@ -219,6 +219,7 @@ func osCustomizations(
 	osc.WAAgentConfig = imageConfig.WAAgentConfig
 	osc.UdevRules = imageConfig.UdevRules
 	osc.GCPGuestAgentConfig = imageConfig.GCPGuestAgentConfig
+	osc.WSLConfig = imageConfig.WSLConfig
 
 	return osc
 }

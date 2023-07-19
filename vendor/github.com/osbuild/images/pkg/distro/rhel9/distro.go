@@ -324,17 +324,30 @@ func newDistro(name string, minor int) *distribution {
 	x86_64.addImageTypes(
 		&platform.X86{
 			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_VMDK,
+			},
+			BIOS:       true,
+			UEFIVendor: rd.vendor,
+		},
+		edgeVsphereImgType,
+	)
+
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_RAW,
 			},
 			BIOS:       false,
 			UEFIVendor: rd.vendor,
 		},
 		edgeSimplifiedInstallerImgType,
+		minimalrawImgType,
 	)
 
 	x86_64.addImageTypes(
 		&platform.X86{},
 		tarImgType,
+		wslImgType,
 	)
 
 	aarch64.addImageTypes(
@@ -350,6 +363,7 @@ func newDistro(name string, minor int) *distribution {
 	aarch64.addImageTypes(
 		&platform.Aarch64{},
 		tarImgType,
+		wslImgType,
 	)
 
 	aarch64.addImageTypes(
@@ -364,6 +378,17 @@ func newDistro(name string, minor int) *distribution {
 		imageInstaller,
 		edgeAMIImgType,
 	)
+
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_VMDK,
+			},
+			UEFIVendor: rd.vendor,
+		},
+		edgeVsphereImgType,
+	)
+
 	aarch64.addImageTypes(
 		&platform.Aarch64{
 			BasePlatform: platform.BasePlatform{
@@ -372,6 +397,7 @@ func newDistro(name string, minor int) *distribution {
 			UEFIVendor: rd.vendor,
 		},
 		edgeRawImgType,
+		minimalrawImgType,
 	)
 
 	aarch64.addImageTypes(
