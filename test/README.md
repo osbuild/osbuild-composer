@@ -78,106 +78,30 @@ go mod edit -replace github.com/osbuild/images=github.com/<username>/images@<com
 This will allow you to open a test PR and run the osbuild-composer integration
 tests against your updated code.
 
-In the `test/data/manifests` directory, sample image builds and their tests are
-collected for the various distros, architectures, configuration we support.
+The changes to the `go.mod`, `go.sum`, and `vendor/` directory should be added
+in a separate commit from any other changes. The PR should not be merged with
+the `replace` command in place.
 
-Each test case describes how the image is built, the expected osbuild
-manifest used internally, the expected image-info output and how to
-boot-test the image.
+In the `test/data/manifests` directory, sample image manifests are collected
+for the various distros, architectures, configuration we support.
 
-To (re)generate these test cases use the tool
-`tools/test-case-generators/generate-test-cases`.
-Note that the `generate-test-cases` tool must be run on a host with
-the same architecture, as the one intended for the generated test
-cases. In other words, you need to generate e.g test cases for `aarch64`
-images on an `aarch64` host.
+Each file contains a sample manifest for an image configuration and some
+metadata describing the request that created the manifest and all the content
+(packages, containers, ostree commits).
 
-These tests are executed from the `osbuild` repository in GitHub CI.
+To (re)generate these test cases use the tool `cmd/gen-manifests`.
 
-**Important Note:** `image-info` by default won't be able to read SELinux
-labels used in the image, which are unknown to the host's policy. If you are
-generating the image test case using
-`tools/test-case-generators/generate-test-cases`, you'll have to relabel the
-`image-info` tool with `osbuild_exec_t` in order to get correct report.
-
-You can do this by running:
-```bash
-OSBUILD_LABEL=$(matchpathcon -n $(which osbuild))
-chcon $OSBUILD_LABEL tools/image-info
 ```
-
-### Generating all test cases
-
-To (re)generate test cases for all architectures, or just
-the ones different from your host's architecture, you can use the
-`tools/test-case-generators/generate-all-test-cases` script.
-
-The script generates image test cases in so-called Runner, which is a system
-of a specific architecture. The used Runner type is specific to the used
-command, but in general it is a system accessible via SSH connection.
-
-In simplified example, the script does the following:
-
-1. Provisions Runners if needed.
-2. Waits for the Runner to be ready for use by running a specific command n it.
-3. Installs RPMs necessary for the test case generation on the Runner.
-    - In case you need to install packages from a specific external repository, you can specify each such repository using `--repofrompath` option. For example if you want to use the latest `osbuild` upstream build, use `--repofrompath 'osbuild,https://download.copr.fedorainfracloud.org/results/@osbuild/osbuild/fedora-$releasever-$basearch/'`.
-    - In case you need to install osbuild-composer RPMs, which were built from the sources copied over to the runner, use the `--build-rpms` option. The script will build osbuild-composer RPMs on the remote runner and install them.
-4. Copies the 'sources' using rsync to the Runner.
-5. Executes the 'tools/test-case-generators/generate-test-cases' on the runner for each requested distro and image type.
-6. After each image test case is generated successfully, the result is copied using rsync from the Runner to 'output' directory.
-
-The script by default generates all image test cases defined in
-`tools/test-case-generators/distro-arch-imagetype-map.json`. Unless you want to
-reduce the matrix of generated test cases, you don't need to specify any of
-`--arch`, `--distro` or `--image-type` options. These only filter the default
-matrix. So to e.g. generate all image test cases for RHEL-8.5, simply run:
-
-```bash
-$ ./tools/test-case-generators/generate-all-test-cases \
-        --output test/data/manifests \
-        --distro rhel-85 \
-        <COMMAND> \
-        ...
+go run ./cmd/gen-manifests
 ```
+will generate all manifests using the default options.
 
-The script supports the following commands:
+Manifest generation can be restricted to only some distributions,
+architectures, or image types using command line flags.
 
-- `qemu` - generates image test cases locally using QEMU VMs.
-- `remote` - generates image test cases on existing remote hosts. This command does not use QEMU on the remote host. It executes commands directly on the remote system.
-
-**Generating test cases in QEMU example:**
-
-```bash
-$ ./tools/test-case-generators/generate-all-test-cases \
-        --output test/data/manifests \
-        --arch aarch64 \
-        --arch s390x \
-        --arch ppc64le \
-        --distro rhel-8 \
-        --image-type qcow2 \
-        qemu \
-        --image-x86_64 ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.x86_64.qcow2 \
-        --image-ppc64le ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.ppc64le.qcow2 \
-        --image-aarch64 ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.aarch64.qcow2 \
-        --image-s390x ~/Downloads/Images/Fedora-Cloud-Base-33-1.2.s390x.qcow2
-```
-
-**Generating test cases using existing remote hosts example:**
-
-```bash
-$ ./tools/test-case-generators/generate-all-test-cases \
-        --output test/data/manifests \
-        --arch aarch64 \
-        --arch s390x \
-        --arch ppc64le \
-        --distro rhel-8 \
-        --image-type qcow2 \
-        remote \
-        --host-ppc64le 192.168.1.10 \
-        --host-aarch64 192.168.1.20 \
-        --host-s390x 192.168.1.30
-```
+The command uses the configurations in
+`tools/test-case-generators/format-request-map.json` and repositories defined
+in `tools/test-case-generators/repos.json`.
 
 ### Setting up Azure upload tests
 
