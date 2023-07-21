@@ -93,7 +93,7 @@ jobs:
           fi
 
       - name: Trigger GitLab nightly pipeline against this PR
-        if: ${{ env.GITLAB_TOKEN }} && ${{ steps.pr_date.outputs.pr_branch }}
+        if: env.GITLAB_TOKEN && steps.pr_data.outputs.pr_branch
         run: |
             # osbuild-composer
             PROJECT_ID=34771166
