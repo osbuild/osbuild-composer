@@ -8,18 +8,19 @@
 // not from other functions.
 //
 // NOTE: The compose fail/finish tests use fake composes so the following are not
-//       fully tested here:
 //
-//       * image download
-//       * log download
-//       * logs archive download
-//       * cancel waiting compose
-//       * cancel running compose
+//	fully tested here:
 //
-//       In addition osbuild-composer has not implemented:
+//	* image download
+//	* log download
+//	* logs archive download
+//	* cancel waiting compose
+//	* cancel running compose
 //
-//       * compose/results
-//       * compose/metadata
+//	In addition osbuild-composer has not implemented:
+//
+//	* compose/results
+//	* compose/metadata
 package client
 
 import (

@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
@@ -566,8 +567,8 @@ func (q *fsJobQueue) removePendingJob(id uuid.UUID) {
 // jobMatchesCriteria returns true if it matches criteria defined in parameters
 //
 // Criteria:
-//  - the job's type is one of the acceptedJobTypes
-//  - the job's channel is one of the acceptedChannels
+//   - the job's type is one of the acceptedJobTypes
+//   - the job's channel is one of the acceptedChannels
 func jobMatchesCriteria(j *job, acceptedJobTypes []string, acceptedChannels []string) bool {
 	contains := func(slice []string, str string) bool {
 		for _, item := range slice {

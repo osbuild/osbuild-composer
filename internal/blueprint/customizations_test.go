@@ -250,7 +250,7 @@ func TestError(t *testing.T) {
 
 }
 
-//This tests calling all the functions on a Blueprint with no Customizations
+// This tests calling all the functions on a Blueprint with no Customizations
 func TestNoCustomizationsInBlueprint(t *testing.T) {
 
 	TestBP := Blueprint{}
@@ -271,7 +271,7 @@ func TestNoCustomizationsInBlueprint(t *testing.T) {
 	assert.Nil(t, nilNTPServers)
 }
 
-//This tests additional scenarios where GetPrimaryLocale() returns nil values
+// This tests additional scenarios where GetPrimaryLocale() returns nil values
 func TestNilGetPrimaryLocale(t *testing.T) {
 
 	//Case empty Customization
@@ -299,7 +299,7 @@ func TestNilGetPrimaryLocale(t *testing.T) {
 
 }
 
-//This tests additional scenario where GetTimezoneSEtting() returns nil values
+// This tests additional scenario where GetTimezoneSEtting() returns nil values
 func TestNilGetTimezoneSettings(t *testing.T) {
 
 	TestCustomizationsEmpty := Customizations{}

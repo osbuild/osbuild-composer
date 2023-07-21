@@ -14,6 +14,7 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
+
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 
 	"github.com/google/uuid"
@@ -150,21 +151,21 @@ func (impl *OSBuildJobImpl) getAWSForS3Target(options *target.AWSS3TargetOptions
 // getGCP returns an *gcp.GCP object using credentials based on the following
 // predefined preference:
 //
-// 1. If the provided `credentials` parameter is not `nil`, it is used to
-//    authenticate with GCP.
+//  1. If the provided `credentials` parameter is not `nil`, it is used to
+//     authenticate with GCP.
 //
-// 2. If a path to GCP credentials file was provided in the worker's
-//    configuration, it is used to authenticate with GCP.
+//  2. If a path to GCP credentials file was provided in the worker's
+//     configuration, it is used to authenticate with GCP.
 //
-// 3. Use Application Default Credentials from the Google library, which tries
-//    to automatically find a way to authenticate using the following options:
+//  3. Use Application Default Credentials from the Google library, which tries
+//     to automatically find a way to authenticate using the following options:
 //
-//    3a. If `GOOGLE_APPLICATION_CREDENTIALS` environment variable is set, it
-//        tries to load and use credentials form the file pointed to by the
-//        variable.
+//     3a. If `GOOGLE_APPLICATION_CREDENTIALS` environment variable is set, it
+//     tries to load and use credentials form the file pointed to by the
+//     variable.
 //
-//    3b. It tries to authenticate using the service account attached to the
-//        resource which is running the code (e.g. Google Compute Engine VM).
+//     3b. It tries to authenticate using the service account attached to the
+//     resource which is running the code (e.g. Google Compute Engine VM).
 func (impl *OSBuildJobImpl) getGCP(credentials []byte) (*gcp.GCP, error) {
 	if credentials != nil {
 		logrus.Info("[GCP] 🔑 using credentials provided with the job request")
