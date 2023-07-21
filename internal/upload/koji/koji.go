@@ -243,13 +243,17 @@ func (k *Koji) CGInitBuild(name, version, release string) (*CGInitBuildResult, e
 	return &result, nil
 }
 
-/* from `koji/__init__.py`
+/*
+	from `koji/__init__.py`
+
 BUILD_STATES = Enum((
-    'BUILDING',
-    'COMPLETE',
-    'DELETED',
-    'FAILED',
-    'CANCELED',
+
+	'BUILDING',
+	'COMPLETE',
+	'DELETED',
+	'FAILED',
+	'CANCELED',
+
 ))
 */
 const (

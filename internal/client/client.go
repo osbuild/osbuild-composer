@@ -86,7 +86,8 @@ func NewAPIResponse(body []byte) (*APIResponse, error) {
 // apiError converts an API error 400 JSON to a status response
 //
 // The response body should alway be of the form:
-//     {"status": false, "errors": [{"id": ERROR_ID, "msg": ERROR_MESSAGE}, ...]}
+//
+//	{"status": false, "errors": [{"id": ERROR_ID, "msg": ERROR_MESSAGE}, ...]}
 func apiError(resp *http.Response) (*APIResponse, error) {
 	defer resp.Body.Close()
 

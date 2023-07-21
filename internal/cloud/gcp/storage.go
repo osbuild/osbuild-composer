@@ -28,7 +28,7 @@ const (
 // The ObjectAttrs is returned if the object has been created.
 //
 // Uses:
-//	- Storage API
+//   - Storage API
 func (g *GCP) StorageObjectUpload(ctx context.Context, filename, bucket, object string, metadata map[string]string) (*storage.ObjectAttrs, error) {
 	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {
@@ -82,7 +82,7 @@ func (g *GCP) StorageObjectUpload(ctx context.Context, filename, bucket, object 
 // StorageObjectDelete deletes the given object from a bucket.
 //
 // Uses:
-//	- Storage API
+//   - Storage API
 func (g *GCP) StorageObjectDelete(ctx context.Context, bucket, object string) error {
 	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
 	if err != nil {

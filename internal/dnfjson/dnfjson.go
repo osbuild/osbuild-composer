@@ -490,6 +490,7 @@ type Request struct {
 }
 
 // Hash returns a hash of the unique aspects of the Request
+//
 //nolint:errcheck
 func (r *Request) Hash() string {
 	h := sha256.New()

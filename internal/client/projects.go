@@ -55,7 +55,7 @@ func GetProjectsInfoV0(socket *http.Client, projNames string) ([]rpmmd.PackageIn
 	return list.Projects, nil, nil
 }
 
-//DepsolveProjectsV0 returns the dependencies of the names projects
+// DepsolveProjectsV0 returns the dependencies of the names projects
 func DepsolveProjectsV0(socket *http.Client, projNames string) ([]rpmmd.PackageSpec, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/projects/depsolve/"+projNames)
 	if resp != nil || err != nil {
