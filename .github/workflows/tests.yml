@@ -159,6 +159,17 @@ jobs:
             exit "0"
           fi
 
+  snapshots:
+    name: "🔍 Check for valid snapshot urls"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Check for valid snapshot urls
+        run: ./tools/check-snapshots --errors-only .
+
   shellcheck:
     name: "🐚 Shellcheck"
     runs-on: ubuntu-20.04
