@@ -890,12 +890,26 @@ components:
       - $ref: '#/components/schemas/GCPUploadOptions'
       - $ref: '#/components/schemas/AzureUploadOptions'
       - $ref: '#/components/schemas/ContainerUploadOptions'
+      - $ref: '#/components/schemas/LocalUploadOptions'
       description: |
         This should really be oneOf but AWSS3UploadOptions is a subset of
         AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
         are also valid AWSS3UploadOptionas objects which violates the oneOf
         rules. Therefore, we have to use anyOf here but be aware that it isn't
         possible to mix and match more schemas together.
+    LocalUploadOptions:
+      type: object
+      additionalProperties: false
+      required:
+        - local_save
+      properties:
+        local_save:
+          type: boolean
+          default: false
+          description: |
+            This is used in combination with the OSBUILD_LOCALSAVE environmental
+            variable on the server to enable saving the compose locally. This
+            is for development use only, and is not available to users.
     AWSEC2UploadOptions:
       type: object
       additionalProperties: false

@@ -46,6 +46,7 @@ const (
 	ErrorInvalidImageFromComposeId    ServiceErrorCode = 33
 	ErrorImageNotFound                ServiceErrorCode = 34
 	ErrorInvalidCustomization         ServiceErrorCode = 35
+	ErrorLocalSaveNotEnabled          ServiceErrorCode = 36
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -123,6 +124,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidImageFromComposeId, http.StatusBadRequest, "Invalid format for image id"},
 		serviceError{ErrorImageNotFound, http.StatusBadRequest, "Image with given id not found"},
 		serviceError{ErrorInvalidCustomization, http.StatusBadRequest, "Invalid image customization"},
+		serviceError{ErrorLocalSaveNotEnabled, http.StatusBadRequest, "local_save is not enabled"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
