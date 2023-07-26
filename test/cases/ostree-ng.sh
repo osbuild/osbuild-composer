@@ -8,6 +8,12 @@ set -euo pipefail
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
+# workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2213660
+if [[ "$VERSION_ID" == "9.3"  || "$VERSION_ID" == "9" ]]; then
+    sudo tee /etc/sysconfig/libvirtd << EOF > /dev/null
+LIBVIRTD_ARGS=
+EOF
+fi
 
 # Install openshift client
 greenprint "🔧 Installing oenshift client(oc)"

@@ -8,6 +8,13 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
+# workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2213660
+if [[ "$VERSION_ID" == "9.3"  || "$VERSION_ID" == "9" ]]; then
+    sudo tee /etc/sysconfig/libvirtd << EOF > /dev/null
+LIBVIRTD_ARGS=
+EOF
+fi
+
 # Start firewalld
 greenprint "Start firewalld"
 sudo systemctl enable --now firewalld
