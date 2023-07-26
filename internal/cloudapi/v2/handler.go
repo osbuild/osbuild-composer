@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/big"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -108,6 +109,32 @@ func splitExtension(filename string) string {
 	}
 
 	return "." + strings.Join(filenameParts[1:], ".")
+}
+
+// isLocalSave checks the environment to see if a local save has been enabled
+// and tests the UploadOptions to see if it has been selected
+func isLocalSave(options *UploadOptions) bool {
+	if options == nil {
+		return false
+	}
+
+	_, enabled := os.LookupEnv("CLOUD_LOCALSAVE")
+	if !enabled {
+		return false
+	}
+
+	var local LocalUploadOptions
+	// This is a terrible way to do this, but it is imposed by the OpenAPI code generator so...
+	j, err := json.Marshal(*options)
+	if err != nil {
+		return false
+	}
+	err = json.Unmarshal(j, &local)
+	if err != nil {
+		return false
+	}
+
+	return local.LocalSave
 }
 
 type imageRequest struct {
@@ -503,6 +530,13 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			if request.Koji == nil {
 				return HTTPError(ErrorJSONUnMarshallingError)
 			}
+		} else if isLocalSave(ir.UploadOptions) {
+			// Override the image type upload selection and save it locally
+			// Final image is in /var/lib/osbuild-composer/artifacts/UUID/
+			irTarget = target.NewWorkerServerTarget()
+			irTarget.ImageName = imageType.Filename()
+			irTarget.OsbuildArtifact.ExportFilename = imageType.Filename()
+			irTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
 		} else {
 			/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
 			switch ir.ImageType {
