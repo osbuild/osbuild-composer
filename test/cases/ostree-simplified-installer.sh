@@ -154,7 +154,7 @@ case "${ID}-${VERSION_ID}" in
         FDO_USER_ONBOARDING="true"
         ;;
     *)
-        echo "unsupported distro: ${ID}-${VERSION_ID}"
+        redprint "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
 esac
 
@@ -251,7 +251,7 @@ build_image() {
 
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
-        echo "Something went wrong with the compose. 😢"
+        redprint "Something went wrong with the compose. 😢"
         exit 1
     fi
 }
@@ -301,7 +301,7 @@ check_result () {
     if [[ $RESULTS == 1 ]]; then
         greenprint "💚 Success"
     else
-        greenprint "❌ Failed"
+        redprint "❌ Failed"
         clean_up
         exit 1
     fi

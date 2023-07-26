@@ -51,7 +51,7 @@ build_image() {
     STATUS=$(get_build_info ".status" "$COMPOSE_START")
 
     if [[ $want_fail == "$STATUS" ]]; then
-        echo "Something went wrong with the compose. 😢"
+        redprint "Something went wrong with the compose. 😢"
         sudo pkill -P ${WORKER_JOURNAL_PID}
         trap - EXIT
         exit 1
@@ -87,7 +87,7 @@ build_image() {
 
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
-        echo "Something went wrong with the compose. 😢"
+        redprint "Something went wrong with the compose. 😢"
         exit 1
     fi
 }
@@ -102,9 +102,9 @@ clean_up () {
 }
 check_result () {
     if [ ${#FAILED_MOUNTPOINTS[@]} -eq 0 ]; then
-        echo "🎉 $1 scenario went as expected"
+        greenprint "🎉 $1 scenario went as expected"
     else
-        echo "🔥 $1 scenario didn't go as expected. The following mountpoints were not present:"
+        redprint "🔥 $1 scenario didn't go as expected. The following mountpoints were not present:"
         printf '%s\n' "${FAILED_MOUNTPOINTS[@]}"
         exit 1
     fi
@@ -251,5 +251,5 @@ sudo composer-cli blueprints delete rhel85-custom-filesystem-fail > /dev/null
 
 clean_up
 
-echo "🎉 All tests passed."
+greenprint "🎉 All tests passed."
 exit 0

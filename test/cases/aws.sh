@@ -161,7 +161,7 @@ trap - EXIT
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
-    echo "Something went wrong with the compose. 😢"
+    redprint "Something went wrong with the compose. 😢"
     exit 1
 fi
 
@@ -187,19 +187,19 @@ if nvrGreaterOrEqual "osbuild-composer" "83"; then
         aarch64)
             # aarch64 image supports only uefi boot mode
             if [[ "$AMI_BOOT_MODE" != "uefi" ]]; then
-                echo "AMI boot mode is not \"uefi\", but \"$AMI_BOOT_MODE\""
+                redprint "AMI boot mode is not \"uefi\", but \"$AMI_BOOT_MODE\""
                 exit 1
             fi
             ;;
         x86_64)
             # x86_64 image supports hybrid boot mode with preference for uefi
             if [[ "$AMI_BOOT_MODE" != "uefi-preferred" ]]; then
-                echo "AMI boot mode is not \"uefi-preferred\", but \"$AMI_BOOT_MODE\""
+                redprint "AMI boot mode is not \"uefi-preferred\", but \"$AMI_BOOT_MODE\""
                 exit 1
             fi
             ;;
         *)
-            echo "Unsupported architecture: $ARCH"
+            redprint "Unsupported architecture: $ARCH"
             exit 1
             ;;
     esac
@@ -249,7 +249,7 @@ if [ "$ARCH" == "aarch64" ]; then
 fi
 
 if [ -z "$CIV_CONFIG_FILE" ]; then
-    echo "ERROR: please provide the variable CIV_CONFIG_FILE"
+    redprint "ERROR: please provide the variable CIV_CONFIG_FILE"
     exit 1
 fi
 
@@ -289,7 +289,7 @@ if [[ $RESULTS == 1 ]]; then
     greenprint "💚 Success"
     exit 0
 elif [[ $RESULTS != 1 ]]; then
-    greenprint "❌ Failed"
+    redprint "❌ Failed"
     exit 1
 fi
 

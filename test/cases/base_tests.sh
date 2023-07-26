@@ -4,6 +4,7 @@ set -euo pipefail
 #
 # Script that executes different high level sanity tests writen in GO. 
 #
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 TESTS_PATH=/usr/libexec/osbuild-composer-test
@@ -67,15 +68,15 @@ done
 
 # Print a report of the test results.
 test_divider
-echo "😃 Passed tests:" "${PASSED_TESTS[@]}"
-echo "☹ Failed tests:" "${FAILED_TESTS[@]}"
+greenprint "😃 Passed tests:" "${PASSED_TESTS[@]}"
+redprint "☹ Failed tests:" "${FAILED_TESTS[@]}"
 test_divider
 
 # Exit with a failure if tests were executed and any of them failed.
 if [ ${#PASSED_TESTS[@]} -gt 0 ] && [ ${#FAILED_TESTS[@]} -eq 0 ]; then
-    echo "🎉 All tests passed."
+    greenprint "🎉 All tests passed."
     exit 0
 else
-    echo "🔥 One or more tests failed."
+    redprint "🔥 One or more tests failed."
     exit 1
 fi
