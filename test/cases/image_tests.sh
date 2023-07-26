@@ -79,7 +79,7 @@ run_test_case () {
 
     echo
     test_divider
-    echo "🏃🏻 Running test: ${TEST_NAME}"
+    greenprint "🏃🏻 Running test: ${TEST_NAME}"
     test_divider
 
     TEST_CMD="env BRANCH_NAME=${BRANCH_NAME-main} BUILD_ID=$BUILD_ID DISTRO_CODE=$DISTRO_CODE $TEST_RUNNER -test.v ${IMAGE_TEST_CASES_PATH}/${TEST_CASE_FILENAME}"
@@ -114,15 +114,15 @@ done
 
 # Print a report of the test results.
 test_divider
-echo "😃 Passed tests: " "${PASSED_TESTS[@]}"
-echo "☹ Failed tests: " "${FAILED_TESTS[@]}"
+greenprint "😃 Passed tests: " "${PASSED_TESTS[@]}"
+redprint "☹ Failed tests: " "${FAILED_TESTS[@]}"
 test_divider
 
 # Exit with a failure if tests were executed and any of them failed.
 if [ ${#PASSED_TESTS[@]} -gt 0 ] && [ ${#FAILED_TESTS[@]} -eq 0 ]; then
-    echo "🎉 All tests passed."
+    greenprint "🎉 All tests passed."
     exit 0
 else
-    echo "🔥 One or more tests failed."
+    redprint "🔥 One or more tests failed."
     exit 1
 fi

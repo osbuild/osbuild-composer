@@ -90,7 +90,7 @@ case "${ID}-${VERSION_ID}" in
         SYSROOT_RO="true"
         ;;
     *)
-        echo "unsupported distro: ${ID}-${VERSION_ID}"
+        redprint "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
 esac
 
@@ -169,7 +169,7 @@ build_image() {
 
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
-        echo "Something went wrong with the compose. 😢"
+        redprint "Something went wrong with the compose. 😢"
         exit 1
     fi
 }
@@ -246,7 +246,7 @@ check_result () {
     if [[ $RESULTS == 1 ]]; then
         greenprint "💚 Success"
     else
-        greenprint "❌ Failed"
+        redprint "❌ Failed"
         clean_up
         exit 1
     fi
@@ -573,7 +573,7 @@ while true; do
 done
 
 if [[ $IMPORT_STATUS != completed ]]; then
-  echo "Something went wrong with the snapshot. 😢"
+  redprint "Something went wrong with the snapshot. 😢"
   exit 1
 else
   greenprint "Snapshot imported successfully."

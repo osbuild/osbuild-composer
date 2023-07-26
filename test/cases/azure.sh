@@ -188,7 +188,7 @@ trap - EXIT
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
-    echo "Something went wrong with the compose. 😢"
+    redprint "Something went wrong with the compose. 😢"
     exit 1
 fi
 
@@ -226,7 +226,7 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
 EOF
 
 if [ -z "$CIV_CONFIG_FILE" ]; then
-    echo "ERROR: please provide the variable CIV_CONFIG_FILE"
+    redprint "ERROR: please provide the variable CIV_CONFIG_FILE"
     exit 1
 fi
 
@@ -261,7 +261,7 @@ if [[ $RESULTS == 1 ]]; then
     greenprint "💚 Success with HyperV ${HYPER_V_GEN}"
     exit 0
 elif [[ $RESULTS != 1 ]]; then
-    greenprint "❌ Failed ${HYPER_V_GEN}"
+    redprint "❌ Failed ${HYPER_V_GEN}"
     exit 1
 fi
 

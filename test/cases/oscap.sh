@@ -96,7 +96,7 @@ case "${ID}-${VERSION_ID}" in
         DATASTREAM="/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
         ;;
     *)
-        echo "$0 should be skipped on ${ID}-${VERSION_ID} check gitlab-ci.yml"
+        redprint "$0 should be skipped on ${ID}-${VERSION_ID} check gitlab-ci.yml"
         exit 1
         ;;
 esac
@@ -198,7 +198,7 @@ build_image() {
 
     # Did the compose finish with success?
     if [[ ${COMPOSE_STATUS} != FINISHED ]]; then
-        echo "Something went wrong with the compose. 😢"
+        redprint "Something went wrong with the compose. 😢"
         exit 1
     fi
 }
@@ -224,7 +224,7 @@ wait_for_ssh_up () {
   done
   if [[ ${RESULTS} == 0 ]]; then
       clean_up "${1}"
-      echo "SSH failed to become ready 😢"
+      redprint "SSH failed to become ready 😢"
       exit 1
   fi
 }
@@ -473,7 +473,7 @@ echo "Hardened score: ${HARDENED_SCORE}%"
 
 # compare floating point numbers
 if python3 -c "exit(${HARDENED_SCORE} > ${BASELINE_SCORE})"; then
-  greenprint "❌ Failed"
+  redprint "❌ Failed"
   echo "Hardened image did not improve baseline score"
   exit 1
 fi
@@ -481,7 +481,7 @@ fi
 # one grub rule fails (expected)
 # check if any other rules have failed
 if [[ ${SEVERITY} -gt 1 ]]; then
-  greenprint "❌ Failed"
+  redprint "❌ Failed"
   echo "More than one oscap rule with high severity failed"
   exit 1
 fi

@@ -148,7 +148,7 @@ sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" root@"$INSTANCE_ADDRESS":logs/* 
 if [[ "$RESULT" == 0 ]]; then
   greenprint "💚 Success"
 else
-  greenprint "❌ Failed"
+  redprint "❌ Failed"
   exit 1
 fi
 
