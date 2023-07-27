@@ -1,0 +1,64 @@
+---
+- hosts: localhost
+  gather_facts: False
+  become: no
+  vars:
+    vsphere_host: ""
+    vsphere_username: ""
+    vsphere_password: ""
+    vsphere_esxi_host: ""
+    vsphere_datacenter: ""
+    vsphere_datastore: ""
+    vsphere_vm_name: ""
+    boot_firmware: "efi"
+    guest_id: "rhel9_64Guest"
+    num_cpu: 2
+    memory_mb: 4096
+
+  tasks:
+  - name: Create vm {{ vsphere_vm_name }} on {{ vsphere_esxi_host }} with {{ boot_firmware }}
+    vmware_guest:
+      hostname: "{{ vsphere_host }}"
+      username: "{{ vsphere_username }}"
+      password: "{{ vsphere_password }}"
+      datacenter: "{{ vsphere_datacenter }}"
+      esxi_hostname: "{{ vsphere_esxi_host }}"
+      datastore: "{{ vsphere_datastore }}"
+      validate_certs: no
+      folder: ""
+      name: "{{ vsphere_vm_name }}"
+      guest_id: "{{ guest_id }}"
+      state: poweredon
+      disk:
+      - filename: "[{{ vsphere_datastore }}] edge-vsphere/edge-vsphere.vmdk"
+        size_gb: 20
+        type: thin
+      hardware:
+        num_cpus: "{{ num_cpu }}"
+        memory_mb: "{{ memory_mb }}"
+        boot_firmware: "{{ boot_firmware }}"
+        scsi: paravirtual
+      networks:
+      - name: VM Network
+        device_type: vmxnet3
+        start_connected: true
+        type: dhcp
+      cdrom:
+      - controller_type: sata
+        controller_number: 0
+        unit_number: 1
+      wait_for_ip_address: yes
+      wait_for_ip_address_timeout: 1800
+    register: guest_info
+
+  - name: Create a local file to save IP address
+    ansible.builtin.file:
+      path: vmdk_ip.txt
+      state: touch
+    delegate_to: localhost
+
+  - name: Save IP address into a local file
+    ansible.builtin.copy:
+      content: "{{ guest_info.instance.ipv4 }}"
+      dest: vmdk_ip.txt
+    delegate_to: localhost

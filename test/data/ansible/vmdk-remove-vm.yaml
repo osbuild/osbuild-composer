@@ -1,0 +1,46 @@
+---
+- hosts: localhost
+  gather_facts: False
+  become: no
+  vars:
+    vsphere_host: ""
+    vsphere_username: ""
+    vsphere_password: ""
+    vsphere_esxi_host: ""
+    vsphere_datacenter: ""
+    vsphere_datastore: ""
+    vsphere_vm_name: ""
+    guest_id: "rhel9_64Guest"
+
+  tasks:
+  - name: Poweroff vm {{ vsphere_vm_name }} on {{ vsphere_esxi_host }}
+    vmware_guest:
+      hostname: "{{ vsphere_host }}"
+      username: "{{ vsphere_username }}"
+      password: "{{ vsphere_password }}"
+      datacenter: "{{ vsphere_datacenter }}"
+      esxi_hostname: "{{ vsphere_esxi_host }}"
+      datastore: "{{ vsphere_datastore }}"
+      validate_certs: no
+      folder: ""
+      name: "{{ vsphere_vm_name }}"
+      guest_id: "{{ guest_id }}"
+      state: poweredoff
+    register: guest_info
+    ignore_errors: yes
+
+  - name: Remove vm {{ vsphere_vm_name }} on {{ vsphere_esxi_host }}
+    vmware_guest:
+      hostname: "{{ vsphere_host }}"
+      username: "{{ vsphere_username }}"
+      password: "{{ vsphere_password }}"
+      datacenter: "{{ vsphere_datacenter }}"
+      esxi_hostname: "{{ vsphere_esxi_host }}"
+      datastore: "{{ vsphere_datastore }}"
+      validate_certs: no
+      folder: ""
+      name: "{{ vsphere_vm_name }}"
+      guest_id: "{{ guest_id }}"
+      state: absent
+    register: guest_info
+    ignore_errors: yes
