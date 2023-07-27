@@ -27,6 +27,7 @@ var GuestOsFeaturesRHEL9 []*computepb.GuestOsFeature = []*computepb.GuestOsFeatu
 	{Type: common.ToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
 	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
 	{Type: common.ToPtr(computepb.GuestOsFeature_GVNIC.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_SNP_CAPABLE.String())},
 }
 
 // GuestOsFeaturesByDistro returns the the list of Guest OS Features, which
