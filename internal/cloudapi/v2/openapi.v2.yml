@@ -760,6 +760,13 @@ components:
           $ref: '#/components/schemas/OSTree'
         upload_options:
           $ref: '#/components/schemas/UploadOptions'
+        size:
+          x-go-type: uint64
+          default: 0
+          example: 4294967296
+          description: |
+            Size of image, in bytes. When set to 0 the image size is a minimum
+            defined by the image type.
     ImageTypes:
       type: string
       enum:
@@ -1200,7 +1207,8 @@ components:
           example: '/var'
         min_size:
           x-go-type: uint64
-          example: 1024
+          example: 2147483648
+          description: 'size of the filesystem in bytes'
     OSTree:
       type: object
       properties:
