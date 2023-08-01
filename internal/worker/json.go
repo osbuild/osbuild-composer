@@ -22,6 +22,10 @@ type OSBuildJob struct {
 	ManifestDynArgsIdx *int             `json:"manifest_dyn_args_idx,omitempty"`
 	Targets            []*target.Target `json:"targets,omitempty"`
 	PipelineNames      *PipelineNames   `json:"pipeline_names,omitempty"`
+	// The ImageBootMode is just copied to the result by the worker, so that
+	// the value can be accessed job which depend on it.
+	// (string representation of distro.BootMode values)
+	ImageBootMode string `json:"image_boot_mode,omitempty"`
 }
 
 // OsbuildExports returns a slice of osbuild pipeline names, which should be
@@ -54,6 +58,9 @@ type OSBuildJobResult struct {
 	HostOS string `json:"host_os"`
 	// Architecture of the worker which handled the job
 	Arch string `json:"arch"`
+	// Boot mode supported by the image
+	// (string representation of distro.BootMode values)
+	ImageBootMode string `json:"image_boot_mode,omitempty"`
 	JobResult
 }
 
