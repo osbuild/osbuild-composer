@@ -60,7 +60,7 @@ func main() {
 		return
 	}
 
-	build := koji.ImageBuild{
+	build := koji.Build{
 		TaskID:    uint64(taskID),
 		Name:      name,
 		Version:   version,
@@ -87,18 +87,18 @@ func main() {
 			RPMs:  []rpmmd.RPM{},
 		},
 	}
-	output := []koji.Image{
+	output := []koji.BuildOutput{
 		{
 			BuildRootID:  1,
 			Filename:     path.Base(filename),
 			FileSize:     length,
 			Arch:         arch,
-			ChecksumType: "md5",
-			MD5:          hash,
-			Type:         "image",
+			ChecksumType: koji.ChecksumTypeMD5,
+			Checksum:     hash,
+			Type:         koji.BuildOutputTypeImage,
 			RPMs:         []rpmmd.RPM{},
-			Extra: koji.ImageExtra{
-				Info: koji.ImageExtraInfo{
+			Extra: koji.BuildOutputExtra{
+				Image: koji.ImageExtraInfo{
 					Arch: arch,
 				},
 			},

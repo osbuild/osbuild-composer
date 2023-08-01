@@ -21,9 +21,9 @@ type KojiFinalizeJobImpl struct {
 
 func (impl *KojiFinalizeJobImpl) kojiImport(
 	server string,
-	build koji.ImageBuild,
+	build koji.Build,
 	buildRoots []koji.BuildRoot,
-	images []koji.Image,
+	outputs []koji.BuildOutput,
 	directory, token string) error {
 
 	serverURL, err := url.Parse(server)
@@ -48,7 +48,7 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 		}
 	}()
 
-	_, err = k.CGImport(build, buildRoots, images, directory, token)
+	_, err = k.CGImport(build, buildRoots, outputs, directory, token)
 	if err != nil {
 		return fmt.Errorf("Could not import build into koji: %v", err)
 	}
@@ -115,7 +115,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	build := koji.ImageBuild{
+	build := koji.Build{
 		TaskID:    args.TaskID,
 		Name:      args.Name,
 		Version:   args.Version,
@@ -125,7 +125,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	}
 
 	var buildRoots []koji.BuildRoot
-	var images []koji.Image
+	var outputs []koji.BuildOutput
 
 	var osbuildResults []worker.OSBuildJobResult
 	initArgs, osbuildResults, err = extractDynamicArgs(job)
@@ -191,24 +191,24 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// deduplicate
 		imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
 
-		images = append(images, koji.Image{
+		outputs = append(outputs, koji.BuildOutput{
 			BuildRootID:  uint64(i),
 			Filename:     args.KojiFilenames[i],
 			FileSize:     kojiTargetOptions.ImageSize,
 			Arch:         buildArgs.Arch,
-			ChecksumType: "md5",
-			MD5:          kojiTargetOptions.ImageMD5,
-			Type:         "image",
+			ChecksumType: koji.ChecksumTypeMD5,
+			Checksum:     kojiTargetOptions.ImageMD5,
+			Type:         koji.BuildOutputTypeImage,
 			RPMs:         imageRPMs,
-			Extra: koji.ImageExtra{
-				Info: koji.ImageExtraInfo{
+			Extra: koji.BuildOutputExtra{
+				Image: koji.ImageExtraInfo{
 					Arch: buildArgs.Arch,
 				},
 			},
 		})
 	}
 
-	err = impl.kojiImport(args.Server, build, buildRoots, images, args.KojiDirectory, initArgs.Token)
+	err = impl.kojiImport(args.Server, build, buildRoots, outputs, args.KojiDirectory, initArgs.Token)
 	if err != nil {
 		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error(), nil)
 		return err
