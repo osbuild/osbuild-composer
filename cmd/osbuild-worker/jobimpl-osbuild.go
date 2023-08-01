@@ -360,6 +360,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// copy pipeline info to the result
 	osbuildJobResult.PipelineNames = jobArgs.PipelineNames
 
+	// copy the image boot mode to the result
+	osbuildJobResult.ImageBootMode = jobArgs.ImageBootMode
+
 	// get exports for all job's targets
 	exports := jobArgs.OsbuildExports()
 	if len(exports) == 0 {
