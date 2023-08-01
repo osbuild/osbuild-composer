@@ -164,6 +164,8 @@ type OS struct {
 	OSProduct string
 	OSVersion string
 	OSNick    string
+
+	InstallWeakDeps bool
 }
 
 // NewOS creates a new OS pipeline. build is the build pipeline to use for
@@ -175,9 +177,10 @@ func NewOS(m *Manifest,
 	repos []rpmmd.RepoConfig) *OS {
 	name := "os"
 	p := &OS{
-		Base:     NewBase(m, name, buildPipeline),
-		repos:    filterRepos(repos, name),
-		platform: platform,
+		Base:            NewBase(m, name, buildPipeline),
+		repos:           filterRepos(repos, name),
+		platform:        platform,
+		InstallWeakDeps: true,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -227,11 +230,13 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	}
 
 	osRepos := append(p.repos, p.ExtraBaseRepos...)
+
 	chain := []rpmmd.PackageSet{
 		{
-			Include:      append(packages, p.ExtraBasePackages...),
-			Exclude:      p.ExcludeBasePackages,
-			Repositories: osRepos,
+			Include:         append(packages, p.ExtraBasePackages...),
+			Exclude:         p.ExcludeBasePackages,
+			Repositories:    osRepos,
+			InstallWeakDeps: p.InstallWeakDeps,
 		},
 	}
 

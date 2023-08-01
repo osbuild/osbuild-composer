@@ -24,6 +24,7 @@ var CustomDirectoriesPolicies = NewPathPolicies(map[string]PathPolicy{
 var CustomFilesPolicies = NewPathPolicies(map[string]PathPolicy{
 	"/":           {Deny: true},
 	"/etc":        {},
+	"/root":       {},
 	"/etc/fstab":  {Deny: true},
 	"/etc/shadow": {Deny: true},
 	"/etc/passwd": {Deny: true},

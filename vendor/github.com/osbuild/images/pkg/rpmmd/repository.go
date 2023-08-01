@@ -123,9 +123,10 @@ func (pkg Package) ToPackageInfo() PackageInfo {
 // to exclude. The Repositories are used when depsolving this package set in
 // addition to the base repositories.
 type PackageSet struct {
-	Include      []string
-	Exclude      []string
-	Repositories []RepoConfig
+	Include         []string
+	Exclude         []string
+	Repositories    []RepoConfig
+	InstallWeakDeps bool
 }
 
 // Append the Include and Exclude package list from another PackageSet and

@@ -30,7 +30,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
+	return rpmmd.PackageSet{
 		Include: []string{
 			"@core",
 			"chrony",
@@ -48,12 +48,10 @@ func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"zram-generator-defaults",
 		},
 	}
-
-	return ps
 }
 
 func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
+	return rpmmd.PackageSet{
 		Include: []string{
 			"@Fedora Cloud Server",
 			"chrony",
@@ -74,139 +72,144 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"extlinux-bootloader",
 		},
 	}
-
-	return ps
 }
 
 // fedora iot commit OS package set
 func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
-			"fedora-release-iot",
-			"glibc",
-			"glibc-minimal-langpack",
-			"nss-altfiles",
-			"sssd-client",
-			"libsss_sudo",
-			"shadow-utils",
-			"dracut-network",
-			"polkit",
-			"lvm2",
-			"cryptsetup",
-			"pinentry",
-			"keyutils",
-			"cracklib-dicts",
-			"e2fsprogs",
-			"xfsprogs",
-			"dosfstools",
-			"gnupg2",
-			"basesystem",
-			"python3",
-			"bash",
-			"xz",
-			"gzip",
-			"coreutils",
-			"which",
-			"curl",
-			"firewalld",
-			"iptables",
-			"NetworkManager",
-			"NetworkManager-wifi",
-			"NetworkManager-wwan",
-			"wpa_supplicant",
-			"iwd",
-			"tpm2-pkcs11",
-			"dnsmasq",
-			"traceroute",
-			"hostname",
-			"iproute",
-			"iputils",
-			"openssh-clients",
-			"openssh-server",
-			"passwd",
-			"policycoreutils",
-			"procps-ng",
-			"rootfiles",
-			"rpm",
-			"smartmontools-selinux",
-			"setup",
-			"shadow-utils",
-			"sudo",
-			"systemd",
-			"util-linux",
-			"vim-minimal",
-			"less",
-			"tar",
-			"fwupd",
-			"usbguard",
-			"greenboot",
-			"ignition",
-			"zezere-ignition",
-			"rsync",
+			"aardvark-dns",
+			"atheros-firmware",
 			"attr",
-			"ima-evm-utils",
+			"authselect",
+			"basesystem",
+			"bash",
 			"bash-completion",
-			"tmux",
-			"screen",
-			"policycoreutils-python-utils",
-			"setools-console",
-			"audit",
-			"rng-tools",
+			"brcmfmac-firmware",
 			"chrony",
-			"bluez",
-			"bluez-libs",
-			"bluez-mesh",
-			"kernel-tools",
-			"libgpiod-utils",
-			"podman",
-			"container-selinux",
-			"skopeo",
-			"criu",
-			"slirp4netns",
-			"fuse-overlayfs",
 			"clevis",
 			"clevis-dracut",
 			"clevis-luks",
 			"clevis-pin-tpm2",
-			"parsec",
+			"container-selinux",
+			"containernetworking-plugins",
+			"coreutils",
+			"cracklib-dicts",
+			"criu",
+			"cryptsetup",
+			"curl",
 			"dbus-parsec",
-			"iwl7260-firmware",
-			"iwlax2xx-firmware",
+			"dnsmasq",
+			"dosfstools",
+			"dracut-config-generic",
+			"dracut-network",
+			"e2fsprogs",
+			"efibootmgr",
+			"fedora-release-iot",
+			"firewalld",
+			"fwupd",
+			"fwupd-efi",
+			"fwupd-plugin-modem-manager",
+			"fwupd-plugin-uefi-capsule-data",
+			"glibc",
+			"glibc-minimal-langpack",
+			"gnupg2",
+			"greenboot",
 			"greenboot-default-health-checks",
+			"gzip",
+			"hostname",
+			"ignition",
+			"ima-evm-utils",
+			"iproute",
+			"iputils",
+			"iwd",
+			"iwlwifi-mvm-firmware",
+			"kernel-tools",
+			"keyutils",
+			"less",
+			"libsss_sudo",
+			"linux-firmware",
+			"lvm2",
+			"netavark",
+			"NetworkManager",
+			"NetworkManager-wifi",
+			"NetworkManager-wwan",
+			"nss-altfiles",
+			"openssl",
+			"openssh-clients",
+			"openssh-server",
+			"parsec",
+			"passwd",
+			"pinentry",
+			"podman",
+			"podman-plugins",
+			"policycoreutils",
+			"policycoreutils-python-utils",
+			"polkit",
+			"procps-ng",
+			"realtek-firmware",
+			"rootfiles",
+			"rpm",
+			"screen",
+			"selinux-policy-targeted",
+			"setools-console",
+			"setup",
+			"shadow-utils",
+			"skopeo",
+			"slirp4netns",
+			"sssd-client",
+			"sudo",
+			"systemd",
+			"systemd-resolved",
+			"tar",
+			"tmux",
+			"tpm2-pkcs11",
+			"traceroute",
+			"usbguard",
+			"util-linux",
+			"vim-minimal",
+			"wpa_supplicant",
+			"wireless-regdb",
+			"xfsprogs",
+			"xz",
+			"zezere-ignition",
+			"zram-generator",
 		},
 	}
 
-	return ps
+	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"fdo-client", // added in F38
+			},
+		})
+	}
 
+	return ps
 }
 
 // INSTALLER PACKAGE SET
 
 func installerPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
+	return rpmmd.PackageSet{
 		Include: []string{
 			"anaconda-dracut",
+			"atheros-firmware",
+			"brcmfmac-firmware",
 			"curl",
 			"dracut-config-generic",
 			"dracut-network",
 			"hostname",
-			"iwl100-firmware",
-			"iwl1000-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
+			"iwlwifi-dvm-firmware",
+			"iwlwifi-mvm-firmware",
 			"kernel",
+			"linux-firmware",
 			"less",
 			"nfs-utils",
 			"openssh-clients",
 			"ostree",
 			"plymouth",
+			"realtek-firmware",
 			"rng-tools",
 			"rpcbind",
 			"selinux-policy-targeted",
@@ -216,8 +219,6 @@ func installerPackageSet(t *imageType) rpmmd.PackageSet {
 			"xz",
 		},
 	}
-
-	return ps
 }
 
 func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
@@ -235,9 +236,11 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"anaconda-dracut",
 			"anaconda-install-env-deps",
 			"anaconda-widgets",
+			"atheros-firmware",
 			"audit",
 			"bind-utils",
 			"bitmap-fangsongti-fonts",
+			"brcmfmac-firmware",
 			"bzip2",
 			"cryptsetup",
 			"curl",
@@ -268,19 +271,8 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"hostname",
 			"initscripts",
 			"ipmitool",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
+			"iwlwifi-dvm-firmware",
+			"iwlwifi-mvm-firmware",
 			"jomolhari-fonts",
 			"kacst-farsi-fonts",
 			"kacst-qurn-fonts",
@@ -325,6 +317,7 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"plymouth",
 			"python3-pyatspi",
 			"rdma-core",
+			"realtek-firmware",
 			"rit-meera-new-fonts",
 			"rng-tools",
 			"rpcbind",
@@ -486,7 +479,6 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 			"dnf-yum",
 			"dnf",
 			"fedora-release-container",
-			"fedora-repos-modular",
 			"glibc-minimal-langpack",
 			"rootfiles",
 			"rpm",
@@ -527,6 +519,14 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 			"whois-nls",
 			"xkeyboard-config",
 		},
+	}
+
+	if common.VersionLessThan(t.arch.distro.osVersion, "39") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"fedora-repos-modular",
+			},
+		})
 	}
 
 	return ps

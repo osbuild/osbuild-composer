@@ -113,8 +113,9 @@ func (p *CoreOSInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := p.getBootPackages()
 	return []rpmmd.PackageSet{
 		{
-			Include:      append(packages, p.ExtraPackages...),
-			Repositories: append(p.repos, p.ExtraRepos...),
+			Include:         append(packages, p.ExtraPackages...),
+			Repositories:    append(p.repos, p.ExtraRepos...),
+			InstallWeakDeps: true,
 		},
 	}
 }

@@ -125,7 +125,7 @@ func (d *distribution) getDefaultImageConfig() *distro.ImageConfig {
 // New creates a new distro object, defining the supported architectures and image types
 func New() distro.Distro {
 	// default minor: create default minor version (current GA) and rename it
-	d := newDistro("rhel", 7)
+	d := newDistro("rhel", 8)
 	d.name = "rhel-8"
 	return d
 
