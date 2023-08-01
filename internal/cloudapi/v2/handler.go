@@ -11,18 +11,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/subscription"
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -136,280 +132,15 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPError(ErrorUnsupportedDistribution)
 	}
 
-	var bp = blueprint.Blueprint{Name: "empty blueprint"}
-	err = bp.Initialize()
+	// Create a blueprint from the customizations included in the request
+	bp, err := request.GetBlueprintWithCustomizations()
 	if err != nil {
-		return HTTPErrorWithInternal(ErrorFailedToInitializeBlueprint, err)
-	}
-
-	// Set the blueprint customisation to take care of the user
-	if request.Customizations != nil && request.Customizations.Users != nil {
-		var userCustomizations []blueprint.UserCustomization
-		for _, user := range *request.Customizations.Users {
-			var groups []string
-			if user.Groups != nil {
-				groups = *user.Groups
-			} else {
-				groups = nil
-			}
-			userCustomizations = append(userCustomizations,
-				blueprint.UserCustomization{
-					Name:   user.Name,
-					Key:    user.Key,
-					Groups: groups,
-				},
-			)
-		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				User: userCustomizations,
-			}
-		} else {
-			bp.Customizations.User = userCustomizations
-		}
-	}
-
-	if request.Customizations != nil && request.Customizations.Packages != nil {
-		for _, p := range *request.Customizations.Packages {
-			bp.Packages = append(bp.Packages, blueprint.Package{
-				Name: p,
-			})
-		}
-	}
-
-	if request.Customizations != nil && request.Customizations.Containers != nil {
-		for _, c := range *request.Customizations.Containers {
-			bc := blueprint.Container{
-				Source:    c.Source,
-				TLSVerify: c.TlsVerify,
-			}
-			if c.Name != nil {
-				bc.Name = *c.Name
-			}
-			bp.Containers = append(bp.Containers, bc)
-		}
-	}
-
-	if request.Customizations != nil && request.Customizations.Directories != nil {
-		var dirCustomizations []blueprint.DirectoryCustomization
-		for _, d := range *request.Customizations.Directories {
-			dirCustomization := blueprint.DirectoryCustomization{
-				Path: d.Path,
-			}
-			if d.Mode != nil {
-				dirCustomization.Mode = *d.Mode
-			}
-			if d.User != nil {
-				dirCustomization.User = *d.User
-				if uid, ok := dirCustomization.User.(float64); ok {
-					// check if uid can be converted to int64
-					if uid != float64(int64(uid)) {
-						return fmt.Errorf("invalid user %f: must be an integer", uid)
-					}
-					dirCustomization.User = int64(uid)
-				}
-			}
-			if d.Group != nil {
-				dirCustomization.Group = *d.Group
-				if gid, ok := dirCustomization.Group.(float64); ok {
-					// check if gid can be converted to int64
-					if gid != float64(int64(gid)) {
-						return fmt.Errorf("invalid group %f: must be an integer", gid)
-					}
-					dirCustomization.Group = int64(gid)
-				}
-			}
-			if d.EnsureParents != nil {
-				dirCustomization.EnsureParents = *d.EnsureParents
-			}
-			dirCustomizations = append(dirCustomizations, dirCustomization)
-		}
-
-		// Validate the directory customizations, because the Cloud API does not use the custom unmarshaller
-		_, err := blueprint.DirectoryCustomizationsToFsNodeDirectories(dirCustomizations)
-		if err != nil {
-			return HTTPErrorWithInternal(ErrorInvalidCustomization, err)
-		}
-
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Directories: dirCustomizations,
-			}
-		} else {
-			bp.Customizations.Directories = dirCustomizations
-		}
-	}
-
-	if request.Customizations != nil && request.Customizations.Files != nil {
-		var fileCustomizations []blueprint.FileCustomization
-		for _, f := range *request.Customizations.Files {
-			fileCustomization := blueprint.FileCustomization{
-				Path: f.Path,
-			}
-			if f.Data != nil {
-				fileCustomization.Data = *f.Data
-			}
-			if f.Mode != nil {
-				fileCustomization.Mode = *f.Mode
-			}
-			if f.User != nil {
-				fileCustomization.User = *f.User
-				if uid, ok := fileCustomization.User.(float64); ok {
-					// check if uid can be converted to int64
-					if uid != float64(int64(uid)) {
-						return fmt.Errorf("invalid user %f: must be an integer", uid)
-					}
-					fileCustomization.User = int64(uid)
-				}
-			}
-			if f.Group != nil {
-				fileCustomization.Group = *f.Group
-				if gid, ok := fileCustomization.Group.(float64); ok {
-					// check if gid can be converted to int64
-					if gid != float64(int64(gid)) {
-						return fmt.Errorf("invalid group %f: must be an integer", gid)
-					}
-					fileCustomization.Group = int64(gid)
-				}
-			}
-			fileCustomizations = append(fileCustomizations, fileCustomization)
-		}
-
-		// Validate the file customizations, because the Cloud API does not use the custom unmarshaller
-		_, err := blueprint.FileCustomizationsToFsNodeFiles(fileCustomizations)
-		if err != nil {
-			return HTTPErrorWithInternal(ErrorInvalidCustomization, err)
-		}
-
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Files: fileCustomizations,
-			}
-		} else {
-			bp.Customizations.Files = fileCustomizations
-		}
-	}
-
-	if request.Customizations != nil && request.Customizations.Filesystem != nil {
-		var fsCustomizations []blueprint.FilesystemCustomization
-		for _, f := range *request.Customizations.Filesystem {
-
-			fsCustomizations = append(fsCustomizations,
-				blueprint.FilesystemCustomization{
-					Mountpoint: f.Mountpoint,
-					MinSize:    f.MinSize,
-				},
-			)
-		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Filesystem: fsCustomizations,
-			}
-		} else {
-			bp.Customizations.Filesystem = fsCustomizations
-		}
-	}
-
-	if request.Customizations != nil && request.Customizations.Services != nil {
-		servicesCustomization := &blueprint.ServicesCustomization{}
-		if request.Customizations.Services.Enabled != nil {
-			servicesCustomization.Enabled = make([]string, len(*request.Customizations.Services.Enabled))
-			copy(servicesCustomization.Enabled, *request.Customizations.Services.Enabled)
-		}
-		if request.Customizations.Services.Disabled != nil {
-			servicesCustomization.Disabled = make([]string, len(*request.Customizations.Services.Disabled))
-			copy(servicesCustomization.Disabled, *request.Customizations.Services.Disabled)
-		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Services: servicesCustomization,
-			}
-		} else {
-			bp.Customizations.Services = servicesCustomization
-		}
-	}
-
-	if request.Customizations != nil && request.Customizations.Openscap != nil {
-		openSCAPCustomization := &blueprint.OpenSCAPCustomization{
-			ProfileID: request.Customizations.Openscap.ProfileId,
-		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				OpenSCAP: openSCAPCustomization,
-			}
-		} else {
-			bp.Customizations.OpenSCAP = openSCAPCustomization
-		}
-	}
-
-	if request.Customizations != nil && request.Customizations.CustomRepositories != nil {
-		repoCustomizations := []blueprint.RepositoryCustomization{}
-		for _, repo := range *request.Customizations.CustomRepositories {
-			repoCustomization := blueprint.RepositoryCustomization{
-				Id: repo.Id,
-			}
-
-			if repo.Name != nil {
-				repoCustomization.Name = *repo.Name
-			}
-
-			if repo.Filename != nil {
-				repoCustomization.Filename = *repo.Filename
-			}
-
-			if repo.Baseurl != nil && len(*repo.Baseurl) > 0 {
-				repoCustomization.BaseURLs = *repo.Baseurl
-			}
-
-			if repo.Gpgkey != nil && len(*repo.Gpgkey) > 0 {
-				repoCustomization.GPGKeys = *repo.Gpgkey
-			}
-
-			if repo.CheckGpg != nil {
-				repoCustomization.GPGCheck = repo.CheckGpg
-			}
-
-			if repo.CheckRepoGpg != nil {
-				repoCustomization.RepoGPGCheck = repo.CheckRepoGpg
-			}
-
-			if repo.Enabled != nil {
-				repoCustomization.Enabled = repo.Enabled
-			}
-
-			if repo.Metalink != nil {
-				repoCustomization.Metalink = *repo.Metalink
-			}
-
-			if repo.Mirrorlist != nil {
-				repoCustomization.Mirrorlist = *repo.Mirrorlist
-			}
-
-			if repo.SslVerify != nil {
-				repoCustomization.SSLVerify = repo.SslVerify
-			}
-
-			if repo.Priority != nil {
-				repoCustomization.Priority = repo.Priority
-			}
-
-			repoCustomizations = append(repoCustomizations, repoCustomization)
-		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Repositories: repoCustomizations,
-			}
-		} else {
-			bp.Customizations.Repositories = repoCustomizations
-		}
+		return err
 	}
 
 	// add the user-defined repositories only to the depsolve job for the
 	// payload (the packages for the final image)
-	var payloadRepositories []Repository
-	if request.Customizations != nil && request.Customizations.PayloadRepositories != nil {
-		payloadRepositories = *request.Customizations.PayloadRepositories
-	}
+	payloadRepositories := request.GetPayloadRepositories()
 
 	// use the same seed for all images so we get the same IDs
 	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
@@ -447,20 +178,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			return err
 		}
 
-		// check if filesytem customizations have been set.
-		// if compose size parameter is set, take the larger of
-		// the two values.
-		// NOTE: The size is in bytes
-		var size uint64
-		minSize := bp.Customizations.GetFilesystemsMinSize()
-		if ir.Size == nil {
-			size = imageType.Size(minSize)
-		} else if bp.Customizations != nil && minSize > 0 && minSize > *ir.Size {
-			size = imageType.Size(minSize)
-		} else {
-			size = imageType.Size(*ir.Size)
-		}
-		imageOptions := distro.ImageOptions{Size: size}
+		// Get the initial ImageOptions with image size set
+		imageOptions := ir.GetImageOptions(imageType, bp)
 
 		if request.Koji == nil {
 			imageOptions.Facts = &facts.ImageOptions{
@@ -468,46 +187,13 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			}
 		}
 
-		if request.Customizations != nil && request.Customizations.Subscription != nil {
-			// Rhc is optional, default to false if not included
-			var rhc bool
-			if request.Customizations.Subscription.Rhc != nil {
-				rhc = *request.Customizations.Subscription.Rhc
-			}
-			imageOptions.Subscription = &subscription.ImageOptions{
-				Organization:  request.Customizations.Subscription.Organization,
-				ActivationKey: request.Customizations.Subscription.ActivationKey,
-				ServerUrl:     request.Customizations.Subscription.ServerUrl,
-				BaseUrl:       request.Customizations.Subscription.BaseUrl,
-				Insights:      request.Customizations.Subscription.Insights,
-				Rhc:           rhc,
-			}
-		}
+		// Set Subscription from the compose request
+		imageOptions.Subscription = request.GetSubscription()
 
-		// Add ostree options to image options if they were included in the
-		// request
-		if ir.Ostree != nil {
-			ostreeOptions := &ostree.ImageOptions{}
-			if ir.Ostree.Ref != nil {
-				ostreeOptions.ImageRef = *ir.Ostree.Ref
-			}
-			if ir.Ostree.Url != nil {
-				ostreeOptions.URL = *ir.Ostree.Url
-			}
-			if ir.Ostree.Contenturl != nil {
-				// URL must be set if content url is specified
-				if ir.Ostree.Url == nil {
-					return HTTPError(ErrorInvalidOSTreeParams)
-				}
-				ostreeOptions.ContentURL = *ir.Ostree.Contenturl
-			}
-			if ir.Ostree.Parent != nil {
-				ostreeOptions.ParentRef = *ir.Ostree.Parent
-			}
-			if ir.Ostree.Rhsm != nil {
-				ostreeOptions.RHSM = *ir.Ostree.Rhsm
-			}
-			imageOptions.OSTree = ostreeOptions
+		// Set OSTree options from the image request
+		imageOptions.OSTree, err = ir.GetOSTreeOptions()
+		if err != nil {
+			return err
 		}
 
 		var irTarget *target.Target
@@ -517,207 +203,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 				return HTTPError(ErrorJSONUnMarshallingError)
 			}
 		} else {
-			/* oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type */
-			switch ir.ImageType {
-			case ImageTypesAws:
-				fallthrough
-			case ImageTypesAwsRhui:
-				fallthrough
-			case ImageTypesAwsHaRhui:
-				fallthrough
-			case ImageTypesAwsSapRhui:
-				var awsUploadOptions AWSEC2UploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &awsUploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONUnMarshallingError)
-				}
-
-				// For service maintenance, images are discovered by the "Name:composer-api-*"
-				// tag filter. Currently all image names in the service are generated, so they're
-				// guaranteed to be unique as well. If users are ever allowed to name their images,
-				// an extra tag should be added.
-				key := fmt.Sprintf("composer-api-%s", uuid.New().String())
-
-				var amiBootMode *string
-				switch imageType.BootMode() {
-				case distro.BOOT_HYBRID:
-					amiBootMode = common.ToPtr(ec2.BootModeValuesUefiPreferred)
-				case distro.BOOT_UEFI:
-					amiBootMode = common.ToPtr(ec2.BootModeValuesUefi)
-				case distro.BOOT_LEGACY:
-					amiBootMode = common.ToPtr(ec2.BootModeValuesLegacyBios)
-				}
-
-				t := target.NewAWSTarget(&target.AWSTargetOptions{
-					Region:            awsUploadOptions.Region,
-					Key:               key,
-					ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
-					BootMode:          amiBootMode,
-				})
-				if awsUploadOptions.SnapshotName != nil {
-					t.ImageName = *awsUploadOptions.SnapshotName
-				} else {
-					t.ImageName = key
-				}
-				t.OsbuildArtifact.ExportFilename = imageType.Filename()
-
-				irTarget = t
-			case ImageTypesGuestImage:
-				fallthrough
-			case ImageTypesVsphere:
-				fallthrough
-			case ImageTypesVsphereOva:
-				fallthrough
-			case ImageTypesImageInstaller:
-				fallthrough
-			case ImageTypesEdgeInstaller:
-				fallthrough
-			case ImageTypesIotInstaller:
-				fallthrough
-			case ImageTypesLiveInstaller:
-				fallthrough
-			case ImageTypesEdgeCommit:
-				fallthrough
-			case ImageTypesIotCommit:
-				fallthrough
-			case ImageTypesIotRawImage:
-				var awsS3UploadOptions AWSS3UploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &awsS3UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONUnMarshallingError)
-				}
-
-				public := false
-				if awsS3UploadOptions.Public != nil && *awsS3UploadOptions.Public {
-					public = true
-				}
-
-				key := fmt.Sprintf("composer-api-%s", uuid.New().String())
-				t := target.NewAWSS3Target(&target.AWSS3TargetOptions{
-					Region: awsS3UploadOptions.Region,
-					Key:    key,
-					Public: public,
-				})
-				t.ImageName = key
-				t.OsbuildArtifact.ExportFilename = imageType.Filename()
-
-				irTarget = t
-			case ImageTypesEdgeContainer:
-				fallthrough
-			case ImageTypesIotContainer:
-				var containerUploadOptions ContainerUploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &containerUploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONUnMarshallingError)
-				}
-
-				var name = request.Distribution
-				var tag = uuid.New().String()
-				if containerUploadOptions.Name != nil {
-					name = *containerUploadOptions.Name
-					if containerUploadOptions.Tag != nil {
-						tag = *containerUploadOptions.Tag
-					}
-				}
-
-				t := target.NewContainerTarget(&target.ContainerTargetOptions{})
-				t.ImageName = fmt.Sprintf("%s:%s", name, tag)
-				t.OsbuildArtifact.ExportFilename = imageType.Filename()
-
-				irTarget = t
-			case ImageTypesGcp:
-				fallthrough
-			case ImageTypesGcpRhui:
-				var gcpUploadOptions GCPUploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &gcpUploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONUnMarshallingError)
-				}
-
-				var share []string
-				if gcpUploadOptions.ShareWithAccounts != nil {
-					share = *gcpUploadOptions.ShareWithAccounts
-				}
-
-				imageName := fmt.Sprintf("composer-api-%s", uuid.New().String())
-				var bucket string
-				if gcpUploadOptions.Bucket != nil {
-					bucket = *gcpUploadOptions.Bucket
-				}
-				t := target.NewGCPTarget(&target.GCPTargetOptions{
-					Region: gcpUploadOptions.Region,
-					Os:     imageType.Arch().Distro().Name(), // not exposed in cloudapi
-					Bucket: bucket,
-					// the uploaded object must have a valid extension
-					Object:            fmt.Sprintf("%s.tar.gz", imageName),
-					ShareWithAccounts: share,
-				})
-				// Import will fail if an image with this name already exists
-				if gcpUploadOptions.ImageName != nil {
-					t.ImageName = *gcpUploadOptions.ImageName
-				} else {
-					t.ImageName = imageName
-				}
-				t.OsbuildArtifact.ExportFilename = imageType.Filename()
-
-				irTarget = t
-			case ImageTypesAzure:
-				fallthrough
-			case ImageTypesAzureRhui:
-				fallthrough
-			case ImageTypesAzureEap7Rhui:
-				fallthrough
-			case ImageTypesAzureSapRhui:
-				var azureUploadOptions AzureUploadOptions
-				jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONMarshallingError)
-				}
-				err = json.Unmarshal(jsonUploadOptions, &azureUploadOptions)
-				if err != nil {
-					return HTTPError(ErrorJSONUnMarshallingError)
-				}
-				rgLocation := ""
-				if azureUploadOptions.Location != nil {
-					rgLocation = *azureUploadOptions.Location
-				}
-				t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
-					TenantID:       azureUploadOptions.TenantId,
-					Location:       rgLocation,
-					SubscriptionID: azureUploadOptions.SubscriptionId,
-					ResourceGroup:  azureUploadOptions.ResourceGroup,
-				})
-
-				if azureUploadOptions.ImageName != nil {
-					t.ImageName = *azureUploadOptions.ImageName
-				} else {
-					// if ImageName wasn't given, generate a random one
-					t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
-				}
-				t.OsbuildArtifact.ExportFilename = imageType.Filename()
-
-				irTarget = t
-			default:
-				return HTTPError(ErrorUnsupportedImageType)
+			// Get the target for the selected image type
+			irTarget, err = ir.GetTarget(&request, imageType)
+			if err != nil {
+				return err
 			}
-
-			irTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
 		}
 
 		irs = append(irs, imageRequest{
