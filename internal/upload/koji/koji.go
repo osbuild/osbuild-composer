@@ -3,6 +3,7 @@ package koji
 import (
 	"bytes"
 	"context"
+
 	// koji uses MD5 hashes
 	/* #nosec G501 */
 	"crypto/md5"
@@ -34,46 +35,63 @@ type Koji struct {
 	transport http.RoundTripper
 }
 
+// BUILD METADATA
+
+// TypeInfo is a map whose entries are the names of the build types
+// used for the build, and the values are free-form maps containing
+// type-specific information for the build.
 type TypeInfo struct {
 	Image struct{} `json:"image"`
 }
 
-type ImageBuildExtra struct {
+// BuildExtra holds extra metadata associated with the build.
+// It is a free-form map, but must contain at least the 'typeinfo' key.
+type BuildExtra struct {
 	TypeInfo TypeInfo `json:"typeinfo"`
 }
 
-type ImageBuild struct {
-	BuildID   uint64          `json:"build_id"`
-	TaskID    uint64          `json:"task_id"`
-	Name      string          `json:"name"`
-	Version   string          `json:"version"`
-	Release   string          `json:"release"`
-	Source    string          `json:"source"`
-	StartTime int64           `json:"start_time"`
-	EndTime   int64           `json:"end_time"`
-	Extra     ImageBuildExtra `json:"extra"`
+// Build represents a Koji build and holds metadata about it.
+type Build struct {
+	BuildID   uint64 `json:"build_id"`
+	TaskID    uint64 `json:"task_id"`
+	Name      string `json:"name"`
+	Version   string `json:"version"`
+	Release   string `json:"release"`
+	Source    string `json:"source"`
+	StartTime int64  `json:"start_time"`
+	EndTime   int64  `json:"end_time"`
+	// NOTE: This is the struct that ends up shown in the buildinfo and webui in Koji.
+	Extra BuildExtra `json:"extra"`
 }
 
+// BUIDROOT METADATA
+
+// Host holds information about the host where the build was run.
 type Host struct {
 	Os   string `json:"os"`
 	Arch string `json:"arch"`
 }
 
+// ContentGenerator holds information about the content generator which run the build.
 type ContentGenerator struct {
 	Name    string `json:"name"` // Must be 'osbuild'.
 	Version string `json:"version"`
 }
 
+// Container holds information about the container in which the build was run.
 type Container struct {
+	// Type of the container that was used, e.g. 'none', 'chroot', 'kvm', 'docker', etc.
 	Type string `json:"type"`
 	Arch string `json:"arch"`
 }
 
+// Tool holds information about a tool used to run build.
 type Tool struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
 
+// BuildRoot represents a buildroot used for the build.
 type BuildRoot struct {
 	ID               uint64           `json:"id"`
 	Host             Host             `json:"host"`
@@ -83,33 +101,64 @@ type BuildRoot struct {
 	RPMs             []rpmmd.RPM      `json:"components"`
 }
 
+// OUTPUT METADATA
+
+// ImageExtraInfo holds extra metadata about the image.
+// This structure is shared for the Extra metadata of the output and the build.
 type ImageExtraInfo struct {
 	// TODO: Ideally this is where the pipeline would be passed.
 	Arch string `json:"arch"` // TODO: why?
 }
 
-type ImageExtra struct {
-	Info ImageExtraInfo `json:"image"`
+// BuildOutputExtra holds extra metadata associated with the build output.
+type BuildOutputExtra struct {
+	Image ImageExtraInfo `json:"image"`
 }
 
-type Image struct {
-	BuildRootID  uint64      `json:"buildroot_id"`
-	Filename     string      `json:"filename"`
-	FileSize     uint64      `json:"filesize"`
-	Arch         string      `json:"arch"`
-	ChecksumType string      `json:"checksum_type"` // must be 'md5'
-	MD5          string      `json:"checksum"`
-	Type         string      `json:"type"`
-	RPMs         []rpmmd.RPM `json:"components"`
-	Extra        ImageExtra  `json:"extra"`
+// BuildOutputType represents the type of a BuildOutput.
+type BuildOutputType string
+
+const (
+	BuildOutputTypeImage BuildOutputType = "image"
+)
+
+// ChecksumType represents the type of a checksum used for a BuildOutput.
+type ChecksumType string
+
+const (
+	ChecksumTypeMD5     ChecksumType = "md5"
+	ChecksumTypeAdler32 ChecksumType = "adler32"
+	ChecksumTypeSHA256  ChecksumType = "sha256"
+)
+
+// BuildOutput represents an output from the OSBuild content generator.
+// The output can be a file of various types, which is imported to Koji.
+// Examples of types are "image", "log" or other.
+type BuildOutput struct {
+	BuildRootID  uint64           `json:"buildroot_id"`
+	Filename     string           `json:"filename"`
+	FileSize     uint64           `json:"filesize"`
+	Arch         string           `json:"arch"` // can be 'noarch' or a specific arch
+	ChecksumType ChecksumType     `json:"checksum_type"`
+	Checksum     string           `json:"checksum"`
+	Type         BuildOutputType  `json:"type"`
+	RPMs         []rpmmd.RPM      `json:"components"` // TODO: should be omitempty
+	Extra        BuildOutputExtra `json:"extra"`      // TODO: should be omitempty
 }
 
+// CONTENT GENERATOR METADATA
+
+// Metadata holds Koji Content Generator metadata.
+// This is passed to the CGImport call.
+// For more information, see https://docs.pagure.org/koji/content_generator_metadata/
 type Metadata struct {
-	MetadataVersion int         `json:"metadata_version"` // must be '0'
-	ImageBuild      ImageBuild  `json:"build"`
-	BuildRoots      []BuildRoot `json:"buildroots"`
-	Images          []Image     `json:"output"`
+	MetadataVersion int           `json:"metadata_version"` // must be '0'
+	Build           Build         `json:"build"`
+	BuildRoots      []BuildRoot   `json:"buildroots"`
+	Outputs         []BuildOutput `json:"output"`
 }
+
+// KOJI API STRUCTURES
 
 type CGInitBuildResult struct {
 	BuildID int    `xmlrpc:"build_id"`
@@ -276,11 +325,11 @@ func (k *Koji) CGCancelBuild(buildID int, token string) error {
 
 // CGImport imports previously uploaded content, by specifying its metadata, and the temporary
 // directory where it is located.
-func (k *Koji) CGImport(build ImageBuild, buildRoots []BuildRoot, images []Image, directory, token string) (*CGImportResult, error) {
+func (k *Koji) CGImport(build Build, buildRoots []BuildRoot, outputs []BuildOutput, directory, token string) (*CGImportResult, error) {
 	m := &Metadata{
-		ImageBuild: build,
+		Build:      build,
 		BuildRoots: buildRoots,
-		Images:     images,
+		Outputs:    outputs,
 	}
 	metadata, err := json.Marshal(m)
 	if err != nil {
