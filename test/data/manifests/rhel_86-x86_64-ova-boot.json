@@ -2328,7 +2328,7 @@
             },
             "options": {
               "filename": "image.ova",
-              "format": "oldgnu",
+              "format": "ustar",
               "root-node": "omit"
             }
           }
