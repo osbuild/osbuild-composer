@@ -351,6 +351,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			},
 			Targets:            targets,
 			ManifestDynArgsIdx: common.ToPtr(1),
+			ImageBootMode:      ir.imageType.BootMode().String(),
 		}, []uuid.UUID{initID, manifestJobID}, channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
