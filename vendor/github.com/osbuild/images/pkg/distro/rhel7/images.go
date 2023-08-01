@@ -216,7 +216,7 @@ func osCustomizations(
 	return osc
 }
 
-func liveImage(workload workload.Workload,
+func diskImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -224,7 +224,7 @@ func liveImage(workload workload.Workload,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewLiveImage()
+	img := image.NewDiskImage()
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
 	img.Environment = t.environment

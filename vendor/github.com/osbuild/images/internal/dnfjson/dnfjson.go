@@ -358,8 +358,9 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[
 	transactions := make([]transactionArgs, len(pkgSets))
 	for dsIdx, pkgSet := range pkgSets {
 		transactions[dsIdx] = transactionArgs{
-			PackageSpecs: pkgSet.Include,
-			ExcludeSpecs: pkgSet.Exclude,
+			PackageSpecs:    pkgSet.Include,
+			ExcludeSpecs:    pkgSet.Exclude,
+			InstallWeakDeps: pkgSet.InstallWeakDeps,
 		}
 
 		for _, jobRepo := range pkgSet.Repositories {
@@ -538,6 +539,9 @@ type transactionArgs struct {
 
 	// IDs of repositories to use for this depsolve
 	RepoIDs []string `json:"repo-ids"`
+
+	// If we want weak deps for this depsolve
+	InstallWeakDeps bool `json:"install_weak_deps"`
 }
 
 type packageSpecs []PackageSpec

@@ -16,7 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/runner"
 )
 
-type LiveImage struct {
+type DiskImage struct {
 	Base
 	Platform         platform.Platform
 	PartitionTable   *disk.PartitionTable
@@ -34,14 +34,14 @@ type LiveImage struct {
 	OSNick    string
 }
 
-func NewLiveImage() *LiveImage {
-	return &LiveImage{
-		Base:     NewBase("live-image"),
+func NewDiskImage() *DiskImage {
+	return &DiskImage{
+		Base:     NewBase("disk"),
 		PartTool: osbuild.PTSfdisk,
 	}
 }
 
-func (img *LiveImage) InstantiateManifest(m *manifest.Manifest,
+func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {

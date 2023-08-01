@@ -184,7 +184,7 @@ var (
 		kernelOptions:       "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0",
 		bootable:            true,
 		defaultSize:         2 * common.GibiByte,
-		image:               liveImage,
+		image:               diskImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},

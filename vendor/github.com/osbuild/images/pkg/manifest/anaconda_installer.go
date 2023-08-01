@@ -145,8 +145,9 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	}
 	return []rpmmd.PackageSet{
 		{
-			Include:      append(packages, p.ExtraPackages...),
-			Repositories: append(p.repos, p.ExtraRepos...),
+			Include:         append(packages, p.ExtraPackages...),
+			Repositories:    append(p.repos, p.ExtraRepos...),
+			InstallWeakDeps: true,
 		},
 	}
 }

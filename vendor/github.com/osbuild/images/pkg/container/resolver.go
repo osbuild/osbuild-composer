@@ -3,6 +3,7 @@ package container
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -78,6 +79,9 @@ func (r *Resolver) Finish() ([]Spec, error) {
 		detail := strings.Join(errs, "; ")
 		return specs, fmt.Errorf("failed to resolve container: %s", detail)
 	}
+
+	// Return a stable result, sorted by Digest
+	sort.Slice(specs, func(i, j int) bool { return specs[i].Digest < specs[j].Digest })
 
 	return specs, nil
 }
