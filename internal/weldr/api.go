@@ -2581,6 +2581,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 				Build:   imageType.BuildPipelines(),
 				Payload: imageType.PayloadPipelines(),
 			},
+			ImageBootMode: imageType.BootMode().String(),
 		}, "")
 		if err == nil {
 			err = api.store.PushCompose(composeID, mf, imageType, bp, size, targets, jobId, packages)
