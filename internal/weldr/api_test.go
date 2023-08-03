@@ -922,6 +922,7 @@ func TestCompose(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
+			Size:        imgType.Size(0),
 			Manifest:    mf,
 			Targets: []*target.Target{
 				{
@@ -949,6 +950,7 @@ func TestCompose(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
+			Size:        imgType.Size(0),
 			Manifest:    mf,
 			Targets: []*target.Target{
 				{
@@ -993,6 +995,7 @@ func TestCompose(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   ostreeImgType,
+			Size:        ostreeImgType.Size(0),
 			Manifest:    omf,
 			Targets: []*target.Target{
 				{
@@ -1029,6 +1032,7 @@ func TestCompose(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   ostreeImgType,
+			Size:        ostreeImgType.Size(0),
 			Manifest:    omfo,
 			Targets: []*target.Target{
 				{
@@ -1070,6 +1074,7 @@ func TestCompose(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType2,
+			Size:        imgType2.Size(0),
 			Manifest:    mf2,
 			Targets: []*target.Target{
 				{
@@ -2059,6 +2064,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
+			Size:        imgType.Size(0),
 			Manifest:    mf,
 			Targets: []*target.Target{
 				{
@@ -2087,6 +2093,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		ImageBuild: store.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType2,
+			Size:        imgType2.Size(0),
 			Manifest:    mf,
 			Targets: []*target.Target{
 				{
