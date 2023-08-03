@@ -110,10 +110,11 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 			}),
 		},
 		Fdo: &FDO{
-			DiunPubKeyHash:         common.ToPtr("pubkeyhash"),
-			DiunPubKeyInsecure:     common.ToPtr("pubkeyinsecure"),
-			DiunPubKeyRootCerts:    common.ToPtr("pubkeyrootcerts"),
-			ManufacturingServerUrl: common.ToPtr("serverurl"),
+			DiunPubKeyHash:          common.ToPtr("pubkeyhash"),
+			DiunPubKeyInsecure:      common.ToPtr("pubkeyinsecure"),
+			DiunPubKeyRootCerts:     common.ToPtr("pubkeyrootcerts"),
+			ManufacturingServerUrl:  common.ToPtr("serverurl"),
+			DiMfgStringTypeMacIface: common.ToPtr("iface"),
 		},
 		Ignition: &Ignition{
 			Firstboot: &IgnitionFirstboot{
@@ -211,10 +212,11 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 			},
 		},
 		FDO: &blueprint.FDOCustomization{
-			DiunPubKeyHash:         "pubkeyhash",
-			DiunPubKeyInsecure:     "pubkeyinsecure",
-			DiunPubKeyRootCerts:    "pubkeyrootcerts",
-			ManufacturingServerURL: "serverurl",
+			DiunPubKeyHash:          "pubkeyhash",
+			DiunPubKeyInsecure:      "pubkeyinsecure",
+			DiunPubKeyRootCerts:     "pubkeyrootcerts",
+			ManufacturingServerURL:  "serverurl",
+			DiMfgStringTypeMacIface: "iface",
 		},
 		Ignition: &blueprint.IgnitionCustomization{
 			FirstBoot: &blueprint.FirstBootIgnitionCustomization{
