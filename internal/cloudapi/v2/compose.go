@@ -356,6 +356,9 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 		if request.Customizations.Fdo.ManufacturingServerUrl != nil {
 			fdo.ManufacturingServerURL = *request.Customizations.Fdo.ManufacturingServerUrl
 		}
+		if request.Customizations.Fdo.DiMfgStringTypeMacIface != nil {
+			fdo.DiMfgStringTypeMacIface = *request.Customizations.Fdo.DiMfgStringTypeMacIface
+		}
 
 		bp.Customizations.FDO = fdo
 	}

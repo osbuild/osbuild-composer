@@ -1509,6 +1509,8 @@ components:
           type: string
         diun_pub_key_root_certs:
           type: string
+        di_mfg_string_type_mac_iface:
+          type: string
     FIPS:
       type: object
       additionalProperties: false
