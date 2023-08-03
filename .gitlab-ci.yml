@@ -99,10 +99,10 @@ RPM:
           - aws/fedora-38-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-9.1-ga-x86_64
-          - aws/rhel-9.1-ga-aarch64
+          - aws/rhel-8.8-ga-x86_64
+          - aws/rhel-8.8-ga-aarch64
+          - aws/rhel-9.2-ga-x86_64
+          - aws/rhel-9.2-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
           - aws/centos-stream-9-x86_64
@@ -134,7 +134,7 @@ Container:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
 
 Packer:
   stage: test
@@ -144,7 +144,7 @@ Packer:
   script:
     - tools/appsre-build-worker-packer.sh
   variables:
-    RUNNER: aws/rhel-9.1-ga-x86_64
+    RUNNER: aws/rhel-9.2-ga-x86_64
 
 Prepare-rhel-internal:
   stage: prepare-rhel-internal
@@ -185,10 +185,10 @@ Base:
           - aws/fedora-38-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-9.1-ga-x86_64
-          - aws/rhel-9.1-ga-aarch64
+          - aws/rhel-8.8-ga-x86_64
+          - aws/rhel-8.8-ga-aarch64
+          - aws/rhel-9.2-ga-x86_64
+          - aws/rhel-9.2-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -221,10 +221,10 @@ Base:
       - RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-9.1-ga-x86_64
-          - aws/rhel-9.1-ga-aarch64
+          - aws/rhel-8.8-ga-x86_64
+          - aws/rhel-8.8-ga-aarch64
+          - aws/rhel-9.2-ga-x86_64
+          - aws/rhel-9.2-ga-aarch64
           - aws/rhel-8.9-nightly-x86_64
           - aws/rhel-8.9-nightly-aarch64
           - aws/rhel-9.3-nightly-x86_64
@@ -282,8 +282,8 @@ regression-old-worker-new-composer:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
+          - aws/rhel-9.2-ga-x86_64
         INTERNAL_NETWORK: ["true"]
   extends: .regression
   variables:
@@ -351,8 +351,8 @@ Trigger-rhel-edge-ci:
     RUNNER:
       - aws/centos-stream-8-x86_64
       - aws/rhel-8.4-ga-x86_64
-      - aws/rhel-8.7-ga-x86_64
-      - aws/rhel-9.1-ga-x86_64
+      - aws/rhel-8.8-ga-x86_64
+      - aws/rhel-9.2-ga-x86_64
       - aws/rhel-8.9-nightly-x86_64
       - aws/rhel-8.9-nightly-aarch64
       - aws/rhel-9.3-nightly-x86_64
@@ -396,19 +396,19 @@ koji.sh (cloud upload):
     matrix:
       - RUNNER:
           # Brew workers use RHEL-8.7
-          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: aws
         IMAGE_TYPE: aws-rhui
       - RUNNER:
           # Brew workers use RHEL-8.6
-          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: azure
         IMAGE_TYPE: azure-rhui
       - RUNNER:
           # Brew workers use RHEL-8.6
-          - aws/rhel-8.7-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: gcp
         IMAGE_TYPE: gcp-rhui
@@ -496,8 +496,8 @@ API:
     matrix:
       - <<: *API_TESTS
         RUNNER:
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-9.1-ga-x86_64
+          - aws/rhel-8.8-ga-x86_64
+          - aws/rhel-9.2-ga-x86_64
           - aws/rhel-8.9-nightly-x86_64
           - aws/rhel-9.3-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -507,8 +507,8 @@ API:
           - aws/fedora-38-x86_64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
-          - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-9.1-ga-aarch64
+          - aws/rhel-8.8-ga-aarch64
+          - aws/rhel-9.2-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
 .libvirt_integration:
@@ -527,8 +527,8 @@ API:
           - rhos-01/fedora-38-x86_64
       - RUNNER:
           - gcp/centos-stream-8-x86_64
-          - gcp/rhel-8.7-ga-x86_64
-          - gcp/rhel-9.1-ga-x86_64
+          - gcp/rhel-8.8-ga-x86_64
+          - gcp/rhel-9.2-ga-x86_64
           - gcp/rhel-8.9-nightly-x86_64
           - gcp/rhel-9.3-nightly-x86_64
           - gcp/centos-stream-9-x86_64
@@ -549,7 +549,7 @@ ubi-wsl.sh:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ubi-wsl.sh
   variables:
-      RUNNER: aws/rhel-8.7-ga-x86_64
+      RUNNER: aws/rhel-8.8-ga-x86_64
       INTERNAL_NETWORK: "true"
 
 .generic_s3:
@@ -588,7 +588,7 @@ RHEL 9 on 8:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
-    RUNNER: aws/rhel-8.7-ga-x86_64
+    RUNNER: aws/rhel-8.8-ga-x86_64
     INTERNAL_NETWORK: "true"
     DISTRO_CODE: rhel-91
 
@@ -602,7 +602,7 @@ Multi-tenancy:
     - /usr/libexec/tests/osbuild-composer/multi-tenancy.sh
   variables:
     # only 8.7 GA b/c the Image Builder service runs on RHEL 8
-    RUNNER: aws/rhel-8.7-ga-x86_64
+    RUNNER: aws/rhel-8.8-ga-x86_64
     INTERNAL_NETWORK: "true"
 
 OpenSCAP:
@@ -674,7 +674,7 @@ Manifest-diff:
   script:
     - ./test/cases/diff-manifests.sh
   variables:
-    RUNNER: aws/rhel-9.1-ga-x86_64
+    RUNNER: aws/rhel-9.2-ga-x86_64
     INTERNAL_NETWORK: "true"
     GIT_STRATEGY: "clone"
     GIT_CHECKOUT: "true"
