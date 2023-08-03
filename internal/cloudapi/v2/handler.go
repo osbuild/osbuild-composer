@@ -447,7 +447,20 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			return err
 		}
 
-		imageOptions := distro.ImageOptions{Size: imageType.Size(0)}
+		// check if filesytem customizations have been set.
+		// if compose size parameter is set, take the larger of
+		// the two values.
+		// NOTE: The size is in bytes
+		var size uint64
+		minSize := bp.Customizations.GetFilesystemsMinSize()
+		if ir.Size == nil {
+			size = imageType.Size(minSize)
+		} else if bp.Customizations != nil && minSize > 0 && minSize > *ir.Size {
+			size = imageType.Size(minSize)
+		} else {
+			size = imageType.Size(*ir.Size)
+		}
+		imageOptions := distro.ImageOptions{Size: size}
 
 		if request.Koji == nil {
 			imageOptions.Facts = &facts.ImageOptions{
