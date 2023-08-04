@@ -115,17 +115,10 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	build := koji.Build{
-		TaskID:    args.TaskID,
-		Name:      args.Name,
-		Version:   args.Version,
-		Release:   args.Release,
-		StartTime: int64(args.StartTime),
-		EndTime:   time.Now().Unix(),
-	}
-
 	var buildRoots []koji.BuildRoot
 	var outputs []koji.BuildOutput
+	// Extra info for each image output is stored using the image filename as the key
+	imgOutputsExtraInfo := map[string]koji.ImageExtraInfo{}
 
 	var osbuildResults []worker.OSBuildJobResult
 	initArgs, osbuildResults, err = extractDynamicArgs(job)
@@ -133,7 +126,6 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", err.Error())
 		return err
 	}
-	build.BuildID = initArgs.BuildID
 
 	// Check the dependencies early.
 	if hasFailedDependency(*initArgs, osbuildResults) {
@@ -191,6 +183,11 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// deduplicate
 		imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
 
+		imgOutputExtraInfo := koji.ImageExtraInfo{
+			Arch: buildArgs.Arch,
+		}
+		imgOutputsExtraInfo[args.KojiFilenames[i]] = imgOutputExtraInfo
+
 		outputs = append(outputs, koji.BuildOutput{
 			BuildRootID:  uint64(i),
 			Filename:     args.KojiFilenames[i],
@@ -201,11 +198,24 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			Type:         koji.BuildOutputTypeImage,
 			RPMs:         imageRPMs,
 			Extra: koji.BuildOutputExtra{
-				Image: koji.ImageExtraInfo{
-					Arch: buildArgs.Arch,
-				},
+				Image: imgOutputExtraInfo,
 			},
 		})
+	}
+
+	build := koji.Build{
+		BuildID:   initArgs.BuildID,
+		TaskID:    args.TaskID,
+		Name:      args.Name,
+		Version:   args.Version,
+		Release:   args.Release,
+		StartTime: int64(args.StartTime),
+		EndTime:   time.Now().Unix(),
+		Extra: koji.BuildExtra{
+			TypeInfo: koji.TypeInfo{
+				Image: imgOutputsExtraInfo,
+			},
+		},
 	}
 
 	err = impl.kojiImport(args.Server, build, buildRoots, outputs, args.KojiDirectory, initArgs.Token)
