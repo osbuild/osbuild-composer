@@ -186,7 +186,10 @@ func (t *TestImageType) OSTreeRef() string {
 }
 
 func (t *TestImageType) Size(size uint64) uint64 {
-	return 0
+	if size == 0 {
+		size = 1073741824
+	}
+	return size
 }
 
 func (t *TestImageType) PartitionType() string {
