@@ -163,6 +163,19 @@ function verify_buildinfo() {
             echo "Unexpected arch for '${image}'. Expected '${ARCH}', but got '${image_arch}'"
             exit 1
         fi
+
+        local image_boot_mode
+        image_boot_mode="$(echo "${image_metadata}" | jq -r '.boot_mode')"
+        # for now, check just that the boot mode is a valid value
+        case "${image_boot_mode}" in
+            "uefi"|"legacy"|"hybrid")
+                ;;
+            "none"|*)
+                # for now, we don't upload any images that have 'none' as boot mode, although it is a valid value
+                echo "Unexpected boot mode for '${image}'. Expected 'uefi', 'legacy' or 'hybrid', but got '${image_boot_mode}'"
+                exit 1
+                ;;
+        esac
     done
 }
 

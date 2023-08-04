@@ -110,8 +110,12 @@ type BuildRoot struct {
 // ImageExtraInfo holds extra metadata about the image.
 // This structure is shared for the Extra metadata of the output and the build.
 type ImageExtraInfo struct {
-	// TODO: Ideally this is where the pipeline would be passed.
-	Arch string `json:"arch"` // TODO: why?
+	// Koji docs say: "should contain IDs that allow tracking the output back to the system in which it was generated"
+	// TODO: we should probably add some ID here, probably the OSBuildJob UUID?
+
+	Arch string `json:"arch"`
+	// Boot mode of the image
+	BootMode string `json:"boot_mode,omitempty"`
 }
 
 // BuildOutputExtra holds extra metadata associated with the build output.

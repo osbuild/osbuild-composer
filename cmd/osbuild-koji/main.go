@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/sirupsen/logrus"
@@ -99,7 +100,8 @@ func main() {
 			RPMs:         []rpmmd.RPM{},
 			Extra: koji.BuildOutputExtra{
 				Image: koji.ImageExtraInfo{
-					Arch: arch,
+					Arch:     arch,
+					BootMode: distro.BOOT_NONE.String(), // TODO: put the correct boot mode here
 				},
 			},
 		},
