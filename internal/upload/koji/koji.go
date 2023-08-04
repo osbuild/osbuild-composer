@@ -41,7 +41,11 @@ type Koji struct {
 // used for the build, and the values are free-form maps containing
 // type-specific information for the build.
 type TypeInfo struct {
-	Image struct{} `json:"image"`
+	// Image holds extra metadata about all images built by the build.
+	// It is a map whose keys are the filenames of the images, and
+	// the values are the extra metadata for the image.
+	// There can't be more than one image with the same filename.
+	Image map[string]ImageExtraInfo `json:"image"`
 }
 
 // BuildExtra holds extra metadata associated with the build.
