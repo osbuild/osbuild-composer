@@ -118,22 +118,6 @@ func osCustomizations(
 		osc.SElinux = "targeted"
 	}
 
-	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
-		if t.rpmOstree {
-			panic("unexpected oscap options for ostree image type")
-		}
-		var datastream = oscapConfig.DataStream
-		if datastream == "" {
-			datastream = oscap.DefaultFedoraDatastream()
-		}
-		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(
-			osbuild.OscapConfig{
-				Datastream: datastream,
-				ProfileID:  oscapConfig.ProfileID,
-			},
-		)
-	}
-
 	var err error
 	osc.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
 	if err != nil {
@@ -172,6 +156,49 @@ func osCustomizations(
 
 	for filename, repos := range yumRepos {
 		osc.YUMRepos = append(osc.YUMRepos, osbuild.NewYumReposStageOptions(filename, repos))
+	}
+
+	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
+		if t.rpmOstree {
+			panic("unexpected oscap options for ostree image type")
+		}
+		var datastream = oscapConfig.DataStream
+		if datastream == "" {
+			datastream = oscap.DefaultFedoraDatastream()
+		}
+
+		oscapStageOptions := osbuild.OscapConfig{
+			Datastream: datastream,
+			ProfileID:  oscapConfig.ProfileID,
+		}
+
+		if oscapConfig.Tailoring != nil {
+			newProfile, tailoringFilepath, tailoringDir, err := oscap.GetTailoringFile(oscapConfig.ProfileID)
+			if err != nil {
+				panic(fmt.Sprintf("unexpected error creating tailoring file options: %v", err))
+			}
+
+			tailoringOptions := osbuild.OscapAutotailorConfig{
+				Selected:   oscapConfig.Tailoring.Selected,
+				Unselected: oscapConfig.Tailoring.Unselected,
+				NewProfile: newProfile,
+			}
+
+			osc.OpenSCAPTailorConfig = osbuild.NewOscapAutotailorStageOptions(
+				tailoringFilepath,
+				oscapStageOptions,
+				tailoringOptions,
+			)
+
+			// overwrite the profile id with the new tailoring id
+			oscapStageOptions.ProfileID = newProfile
+			oscapStageOptions.Tailoring = tailoringFilepath
+
+			// add the parent directory for the tailoring file
+			osc.Directories = append(osc.Directories, tailoringDir)
+		}
+
+		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(oscapStageOptions)
 	}
 
 	osc.ShellInit = imageConfig.ShellInit

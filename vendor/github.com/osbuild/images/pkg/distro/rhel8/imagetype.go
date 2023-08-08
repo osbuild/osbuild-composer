@@ -19,7 +19,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -279,19 +278,16 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return warnings, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
-	ostreeURL := ""
 	if options.OSTree != nil {
-		if options.OSTree.ParentRef != "" && options.OSTree.URL == "" {
-			// specifying parent ref also requires URL
-			return nil, ostree.NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
+		if err := options.OSTree.Validate(); err != nil {
+			return nil, err
 		}
-		ostreeURL = options.OSTree.URL
 	}
 
 	if t.bootISO && t.rpmOstree {
 		// ostree-based ISOs require a URL from which to pull a payload commit
-		if ostreeURL == "" {
-			return warnings, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
+		if options.OSTree == nil || options.OSTree.URL == "" {
+			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 
 		if t.name == "edge-simplified-installer" {
@@ -331,8 +327,8 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 
 	if t.name == "edge-raw-image" {
 		// ostree-based bootable images require a URL from which to pull a payload commit
-		if ostreeURL == "" {
-			return warnings, fmt.Errorf("edge raw images require specifying a URL from which to retrieve the OSTree commit")
+		if options.OSTree == nil || options.OSTree.URL == "" {
+			return warnings, fmt.Errorf("%q images require specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 
 		allowed := []string{"User", "Group"}
@@ -357,7 +353,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		}
 	}
 
-	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree && (!t.bootable || t.bootISO) {
+	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.rpmOstree && t.name != "edge-raw-image" && t.name != "edge-simplified-installer" {
 		return warnings, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}
 
@@ -373,12 +369,10 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
-		// only add support for RHEL 8.7 and above.
-		if common.VersionLessThan(t.arch.distro.osVersion, "8.7") {
+		if t.arch.distro.osVersion == "9.0" {
 			return warnings, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.arch.distro.osVersion))
 		}
-		supported := oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList)
-		if !supported {
+		if !oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList) {
 			return warnings, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
 		}
 		if t.rpmOstree {
@@ -397,7 +391,6 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	if err != nil {
 		return warnings, err
 	}
-
 	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, pathpolicy.CustomDirectoriesPolicies)
 	if err != nil {
 		return warnings, err

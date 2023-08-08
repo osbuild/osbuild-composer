@@ -76,6 +76,7 @@ func NewOscapRemediationStageOptions(options OscapConfig) *OscapRemediationStage
 			ProfileID:    options.ProfileID,
 			Datastream:   options.Datastream,
 			DatastreamID: options.DatastreamID,
+			Tailoring:    options.Tailoring,
 			XCCDFID:      options.XCCDFID,
 			BenchmarkID:  options.BenchmarkID,
 			ArfResult:    options.ArfResult,
