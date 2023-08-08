@@ -1203,7 +1203,7 @@ func TestCompose(t *testing.T) {
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test","compose_type":"%s","branch":"master","ostree":{"ref":"/bad/ref","parent":"","url":"http://ostree/"}}`, test_distro.TestImageTypeOSTree),
 			http.StatusBadRequest,
-			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Invalid ostree ref \"/bad/ref\""}]}`,
+			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Invalid ostree ref or commit \"/bad/ref\""}]}`,
 			expectedComposeOSTree,
 			[]string{"build_id", "warnings"},
 		},
