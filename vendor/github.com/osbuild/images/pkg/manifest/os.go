@@ -93,35 +93,36 @@ type OSCustomizations struct {
 	ShellInit []shell.InitFile
 
 	// TODO: drop osbuild types from the API
-	Firewall            *osbuild.FirewallStageOptions
-	Grub2Config         *osbuild.GRUB2Config
-	Sysconfig           []*osbuild.SysconfigStageOptions
-	SystemdLogind       []*osbuild.SystemdLogindStageOptions
-	CloudInit           []*osbuild.CloudInitStageOptions
-	Modprobe            []*osbuild.ModprobeStageOptions
-	DracutConf          []*osbuild.DracutConfStageOptions
-	SystemdUnit         []*osbuild.SystemdUnitStageOptions
-	Authselect          *osbuild.AuthselectStageOptions
-	SELinuxConfig       *osbuild.SELinuxConfigStageOptions
-	Tuned               *osbuild.TunedStageOptions
-	Tmpfilesd           []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf       []*osbuild.PamLimitsConfStageOptions
-	Sysctld             []*osbuild.SysctldStageOptions
-	DNFConfig           []*osbuild.DNFConfigStageOptions
-	DNFAutomaticConfig  *osbuild.DNFAutomaticConfigStageOptions
-	YUMConfig           *osbuild.YumConfigStageOptions
-	YUMRepos            []*osbuild.YumReposStageOptions
-	SshdConfig          *osbuild.SshdConfigStageOptions
-	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
-	AuthConfig          *osbuild.AuthconfigStageOptions
-	PwQuality           *osbuild.PwqualityConfStageOptions
-	OpenSCAPConfig      *osbuild.OscapRemediationStageOptions
-	NTPServers          []osbuild.ChronyConfigServer
-	WAAgentConfig       *osbuild.WAAgentConfStageOptions
-	UdevRules           *osbuild.UdevRulesStageOptions
-	WSLConfig           *osbuild.WSLConfStageOptions
-	LeapSecTZ           *string
-	FactAPIType         *facts.APIType
+	Firewall             *osbuild.FirewallStageOptions
+	Grub2Config          *osbuild.GRUB2Config
+	Sysconfig            []*osbuild.SysconfigStageOptions
+	SystemdLogind        []*osbuild.SystemdLogindStageOptions
+	CloudInit            []*osbuild.CloudInitStageOptions
+	Modprobe             []*osbuild.ModprobeStageOptions
+	DracutConf           []*osbuild.DracutConfStageOptions
+	SystemdUnit          []*osbuild.SystemdUnitStageOptions
+	Authselect           *osbuild.AuthselectStageOptions
+	SELinuxConfig        *osbuild.SELinuxConfigStageOptions
+	Tuned                *osbuild.TunedStageOptions
+	Tmpfilesd            []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf        []*osbuild.PamLimitsConfStageOptions
+	Sysctld              []*osbuild.SysctldStageOptions
+	DNFConfig            []*osbuild.DNFConfigStageOptions
+	DNFAutomaticConfig   *osbuild.DNFAutomaticConfigStageOptions
+	YUMConfig            *osbuild.YumConfigStageOptions
+	YUMRepos             []*osbuild.YumReposStageOptions
+	SshdConfig           *osbuild.SshdConfigStageOptions
+	GCPGuestAgentConfig  *osbuild.GcpGuestAgentConfigOptions
+	AuthConfig           *osbuild.AuthconfigStageOptions
+	PwQuality            *osbuild.PwqualityConfStageOptions
+	OpenSCAPTailorConfig *osbuild.OscapAutotailorStageOptions
+	OpenSCAPConfig       *osbuild.OscapRemediationStageOptions
+	NTPServers           []osbuild.ChronyConfigServer
+	WAAgentConfig        *osbuild.WAAgentConfStageOptions
+	UdevRules            *osbuild.UdevRulesStageOptions
+	WSLConfig            *osbuild.WSLConfStageOptions
+	LeapSecTZ            *string
+	FactAPIType          *facts.APIType
 
 	Subscription *subscription.ImageOptions
 	RHSMConfig   map[subscription.RHSMStatus]*osbuild.RHSMStageOptions
@@ -291,6 +292,10 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 			}
 		}
 		packages = append(packages, "skopeo")
+	}
+
+	if p.OpenSCAPTailorConfig != nil {
+		packages = append(packages, "openscap-utils")
 	}
 
 	return packages
@@ -655,10 +660,6 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(bootloader)
 	}
 
-	if p.OpenSCAPConfig != nil {
-		pipeline.AddStage(osbuild.NewOscapRemediationStage(p.OpenSCAPConfig))
-	}
-
 	if p.FactAPIType != nil {
 		pipeline.AddStage(osbuild.NewRHSMFactsStage(&osbuild.RHSMFactsStageOptions{
 			Facts: osbuild.RHSMFacts{
@@ -713,6 +714,22 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	if wslConf := p.WSLConfig; wslConf != nil {
 		pipeline.AddStage(osbuild.NewWSLConfStage(wslConf))
+	}
+
+	if p.OpenSCAPTailorConfig != nil {
+		if p.OpenSCAPConfig == nil {
+			// This is a programming error, since it doesn't make sense
+			// to have tailoring configs without openscap config.
+			panic(fmt.Errorf("OpenSCAP autotailoring cannot be set if no OpenSCAP config has been provided"))
+		}
+		pipeline.AddStage(osbuild.NewOscapAutotailorStage(p.OpenSCAPTailorConfig))
+	}
+
+	// NOTE: We need to run the OpenSCAP stages as the last stage before SELinux
+	// since the remediation may change file permissions and other aspects of the
+	// hardened image
+	if p.OpenSCAPConfig != nil {
+		pipeline.AddStage(osbuild.NewOscapRemediationStage(p.OpenSCAPConfig))
 	}
 
 	if p.SElinux != "" {

@@ -18,7 +18,7 @@ func NewResolveRefError(msg string, args ...interface{}) ResolveRefError {
 	return ResolveRefError{msg: fmt.Sprintf(msg, args...)}
 }
 
-// InvalidParamsError is returned when a parameter is invalid (e.g., malformed
+// RefError is returned when a parameter is invalid (e.g., malformed
 // or contains illegal characters).
 type RefError struct {
 	msg string

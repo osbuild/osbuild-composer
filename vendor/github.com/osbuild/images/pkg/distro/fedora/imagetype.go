@@ -16,7 +16,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"golang.org/x/exp/slices"
@@ -245,18 +244,15 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return nil, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
-	ostreeURL := ""
 	if options.OSTree != nil {
-		if options.OSTree.ParentRef != "" && options.OSTree.URL == "" {
-			// specifying parent ref also requires URL
-			return nil, ostree.NewParameterComboError("ostree parent ref specified, but no URL to retrieve it")
+		if err := options.OSTree.Validate(); err != nil {
+			return nil, err
 		}
-		ostreeURL = options.OSTree.URL
 	}
 
 	if t.bootISO && t.rpmOstree {
 		// ostree-based ISOs require a URL from which to pull a payload commit
-		if ostreeURL == "" {
+		if options.OSTree == nil || options.OSTree.URL == "" {
 			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 	}
