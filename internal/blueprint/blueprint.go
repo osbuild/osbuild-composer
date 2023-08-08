@@ -217,7 +217,14 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 			customizations.FDO = &ifdo
 		}
 		if oscap := c.OpenSCAP; oscap != nil {
-			ioscap := iblueprint.OpenSCAPCustomization(*oscap)
+			ioscap := iblueprint.OpenSCAPCustomization{
+				DataStream: oscap.DataStream,
+				ProfileID:  oscap.ProfileID,
+			}
+			if tailoring := oscap.Tailoring; tailoring != nil {
+				itailoring := iblueprint.OpenSCAPTailoringCustomizations(*tailoring)
+				ioscap.Tailoring = &itailoring
+			}
 			customizations.OpenSCAP = &ioscap
 		}
 		if ign := c.Ignition; ign != nil {

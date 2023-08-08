@@ -107,8 +107,14 @@ type ServicesCustomization struct {
 }
 
 type OpenSCAPCustomization struct {
-	DataStream string `json:"datastream,omitempty" toml:"datastream,omitempty"`
-	ProfileID  string `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
+	DataStream string                           `json:"datastream,omitempty" toml:"datastream,omitempty"`
+	ProfileID  string                           `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
+	Tailoring  *OpenSCAPTailoringCustomizations `json:"tailoring,omitempty" toml:"tailoring,omitempty"`
+}
+
+type OpenSCAPTailoringCustomizations struct {
+	Selected   []string `json:"selected,omitempty" toml:"selected,omitempty"`
+	Unselected []string `json:"unselected,omitempty" toml:"unselected,omitempty"`
 }
 
 type CustomizationError struct {
