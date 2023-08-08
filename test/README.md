@@ -1,3 +1,5 @@
+DEBUG ME
+
 # osbuild-composer testing information
 
 With the exception of unit tests, all the osbuild-composer tests are shipped
