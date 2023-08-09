@@ -223,6 +223,7 @@ COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 FEDORA_IMAGE_DIGEST="sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
 FEDORA_LOCAL_NAME="localhost/fedora-minimal:v1"
+PROD_REPO_URL=http://192.168.100.1/repo
 
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
@@ -258,13 +259,8 @@ get_compose_metadata () {
 
 # Build ostree image.
 build_image() {
-    blueprint_file=$1
-    blueprint_name=$2
-
-    # Prepare the blueprint for the compose.
-    greenprint "📋 Preparing blueprint"
-    sudo composer-cli blueprints push "$blueprint_file"
-    sudo composer-cli blueprints depsolve "$blueprint_name"
+    blueprint_name=$1
+    image_type=$2
 
     # Get worker unit file so we can watch the journal.
     WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
@@ -275,10 +271,12 @@ build_image() {
 
     # Start the compose.
     greenprint "🚀 Starting compose"
-    if [[ $blueprint_name == upgrade ]]; then
-        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
+    if [ $# -eq 4 ]; then
+        repo_url=$3
+        parent_ref=$4
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --parent "$parent_ref" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     else
-        sudo composer-cli --json compose start "$blueprint_name" $IMAGE_TYPE | tee "$COMPOSE_START"
+        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     fi
     COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
@@ -434,8 +432,16 @@ enabled = ["custom.service"]
 EOF
 fi
 
+greenprint "📄 rebase blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve ostree
+
 # Build installation image.
-build_image "$BLUEPRINT_FILE" ostree
+build_image ostree "$IMAGE_TYPE"
 
 # Start httpd to serve ostree repo.
 greenprint "🚀 Starting httpd daemon"
@@ -488,7 +494,7 @@ network --bootproto=dhcp --device=link --activate --onboot=on
 zerombr
 clearpart --all --initlabel --disklabel=msdos
 autopart --nohome --noswap --type=plain
-ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=http://192.168.100.1/repo/ --ref=${OSTREE_REF}
+ostreesetup --nogpg --osname=${IMAGE_TYPE} --remote=${IMAGE_TYPE} --url=${PROD_REPO_URL} --ref=${OSTREE_REF}
 poweroff
 
 %post --log=/var/log/anaconda/post-install.log --erroronfail
@@ -684,8 +690,16 @@ enabled = ["custom.service"]
 EOF
 fi
 
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve upgrade
+
+greenprint "🕹 Get ostree installed commit value"
+PARENT_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
 # Build upgrade image.
-build_image "$BLUEPRINT_FILE" upgrade
+build_image upgrade "$IMAGE_TYPE" "$PROD_REPO_URL" "$PARENT_HASH"
 
 # Download the image and extract tar into web server root folder.
 greenprint "📥 Downloading and extracting the image"
@@ -704,6 +718,7 @@ sudo composer-cli blueprints delete upgrade > /dev/null
 # Introduce new ostree commit into repo.
 greenprint "Introduce new ostree commit into repo"
 sudo ostree pull-local --repo "${HTTPD_PATH}/repo" "${UPGRADE_PATH}/repo" "$OSTREE_REF"
+sudo ostree --repo="${HTTPD_PATH}/repo" static-delta generate "$OSTREE_REF"
 sudo ostree summary --update --repo "${HTTPD_PATH}/repo"
 
 # Ensure SELinux is happy with all objects files.
@@ -711,8 +726,8 @@ greenprint "👿 Running restorecon on web server root folder"
 sudo restorecon -Rv "${HTTPD_PATH}/repo" > /dev/null
 
 # Get ostree commit value.
-greenprint "Get ostree image commit value"
-UPGRADE_HASH=$(jq -r '."ostree-commit"' < "${UPGRADE_PATH}"/compose.json)
+greenprint "🕹 Get ostree upgrade commit value"
+UPGRADE_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Upgrade image/commit.
 greenprint "Upgrade ostree image/commit"
