@@ -99,7 +99,7 @@
     - name: wait for FDO onboarding
       block:
         - wait_for:
-            path:  "/etc/device-credentials"
+            path: "/etc/device-credentials"
             delay: 10
             timeout: 600
             state: present
@@ -747,8 +747,9 @@
     - name: check fdo-client-linuxapp logs
       command: journalctl -u fdo-client-linuxapp
       register: result_fdo_client_linuxapp_journalctl
+      when: fdo_credential == "true"
 
-    - debug: 
+    - debug:
         var: result_fdo_client_linuxapp_journalctl
 
     # case: check rollback function if boot error found
@@ -843,8 +844,9 @@
     - name: check fdo-client-linuxapp logs
       command: journalctl -u fdo-client-linuxapp
       register: result_fdo_client_linuxapp_journalctl
+      when: fdo_credential == "true"
 
-    - debug: 
+    - debug:
         var: result_fdo_client_linuxapp_journalctl
 
     - name: wait for FDO re-encryption
@@ -866,8 +868,9 @@
     - name: check fdo-client-linuxapp logs
       command: journalctl -u fdo-client-linuxapp
       register: result_fdo_client_linuxapp_journalctl
+      when: fdo_credential == "true"
 
-    - debug: 
+    - debug:
         var: result_fdo_client_linuxapp_journalctl
 
     # case: check greenboot* services log again
