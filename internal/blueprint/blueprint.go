@@ -185,29 +185,42 @@ func (b *Blueprint) CryptPasswords() error {
 }
 
 func Convert(bp Blueprint) iblueprint.Blueprint {
-	pkgs := make([]iblueprint.Package, len(bp.Packages))
-	for idx := range bp.Packages {
-		pkgs[idx] = iblueprint.Package(bp.Packages[idx])
+	var pkgs []iblueprint.Package
+	if len(bp.Packages) > 0 {
+		pkgs = make([]iblueprint.Package, len(bp.Packages))
+		for idx := range bp.Packages {
+			pkgs[idx] = iblueprint.Package(bp.Packages[idx])
+		}
 	}
 
-	modules := make([]iblueprint.Package, len(bp.Modules))
-	for idx := range bp.Modules {
-		modules[idx] = iblueprint.Package(bp.Modules[idx])
+	var modules []iblueprint.Package
+	if len(bp.Modules) > 0 {
+		modules = make([]iblueprint.Package, len(bp.Modules))
+		for idx := range bp.Modules {
+			modules[idx] = iblueprint.Package(bp.Modules[idx])
+		}
 	}
 
-	groups := make([]iblueprint.Group, len(bp.Groups))
-	for idx := range bp.Groups {
-		groups[idx] = iblueprint.Group(bp.Groups[idx])
+	var groups []iblueprint.Group
+	if len(bp.Groups) > 0 {
+		groups = make([]iblueprint.Group, len(bp.Groups))
+		for idx := range bp.Groups {
+			groups[idx] = iblueprint.Group(bp.Groups[idx])
+		}
 	}
 
-	containers := make([]iblueprint.Container, len(bp.Containers))
-	for idx := range bp.Containers {
-		containers[idx] = iblueprint.Container(bp.Containers[idx])
+	var containers []iblueprint.Container
+
+	if len(bp.Containers) > 0 {
+		containers = make([]iblueprint.Container, len(bp.Containers))
+		for idx := range bp.Containers {
+			containers[idx] = iblueprint.Container(bp.Containers[idx])
+		}
 	}
 
-	customizations := iblueprint.Customizations{}
+	var customizations *iblueprint.Customizations
 	if c := bp.Customizations; c != nil {
-		customizations = iblueprint.Customizations{
+		customizations = &iblueprint.Customizations{
 			Hostname:           c.Hostname,
 			InstallationDevice: c.InstallationDevice,
 		}
@@ -331,7 +344,7 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 		Modules:        modules,
 		Groups:         groups,
 		Containers:     containers,
-		Customizations: &customizations,
+		Customizations: customizations,
 		Distro:         bp.Distro,
 	}
 
