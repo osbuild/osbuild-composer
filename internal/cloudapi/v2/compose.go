@@ -212,6 +212,16 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 		openSCAPCustomization := &blueprint.OpenSCAPCustomization{
 			ProfileID: request.Customizations.Openscap.ProfileId,
 		}
+		if tailoring := request.Customizations.Openscap.Tailoring; tailoring != nil {
+			tailoringCustomizations := blueprint.OpenSCAPTailoringCustomizations{}
+			if tailoring.Selected != nil && len(*tailoring.Selected) > 0 {
+				tailoringCustomizations.Selected = *tailoring.Selected
+			}
+			if tailoring.Unselected != nil && len(*tailoring.Unselected) > 0 {
+				tailoringCustomizations.Unselected = *tailoring.Unselected
+			}
+			openSCAPCustomization.Tailoring = &tailoringCustomizations
+		}
 		if bp.Customizations == nil {
 			bp.Customizations = &blueprint.Customizations{
 				OpenSCAP: openSCAPCustomization,
