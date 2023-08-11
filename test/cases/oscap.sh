@@ -121,7 +121,7 @@ gen_iso () {
     sudo rm -f "${CLOUD_INIT_PATH}"
     pushd "${CLOUD_INIT_DIR}"
       sudo mkisofs -o "${CLOUD_INIT_PATH}" -V cidata \
-        -r -J user-data meta-data > /dev/null 2>&1  
+        -r -J user-data meta-data > /dev/null 2>&1
     popd
 }
 
@@ -227,17 +227,6 @@ wait_for_ssh_up () {
       redprint "SSH failed to become ready 😢"
       exit 1
   fi
-}
-
-scan_vm() {
-  # oscap package has been installed on vm as
-  # oscap customization has been specified
-  # (the test has to be run as root)
-  sudo ssh -q "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${1}" \
-    sudo oscap xccdf eval \
-    --results results.xml \
-    --profile "${PROFILE}" \
-    "${DATASTREAM}" || true # oscap returns exit code 2 for any failed rules
 }
 
 # Clean up our mess.
@@ -346,13 +335,21 @@ greenprint "🛃 Checking for SSH is ready to go"
 wait_for_ssh_up "${HTTP_GUEST_ADDRESS}"
 
 greenprint "🔒 Running oscap scanner"
-scan_vm "${HTTP_GUEST_ADDRESS}"
+# oscap package has been installed on vm as
+# oscap customization has been specified
+# (the test has to be run as root)
+sudo ssh -q "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${HTTP_GUEST_ADDRESS}" \
+  sudo oscap xccdf eval \
+  --results results.xml \
+  --profile "${PROFILE}" \
+  "${DATASTREAM}" || true # oscap returns exit code 2 for any failed rules
 
 greenprint "📗 Checking oscap score"
 BASELINE_SCORE=$(sudo ssh -q "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${HTTP_GUEST_ADDRESS}" \
   sudo cat results.xml \
   | xmlstarlet sel -N x="http://checklists.nist.gov/xccdf/1.2" -t -v "//x:score"
 )
+echo "Baseline score: ${BASELINE_SCORE}%"
 
 # Clean up BASELINE VM
 greenprint "🧹 Clean up VM"
@@ -375,6 +372,8 @@ groups = []
 [customizations.openscap]
 profile_id = "${PROFILE}"
 datastream = "${DATASTREAM}"
+[customizations.openscap.tailoring]
+unselected = ["grub2_password"]
 
 [[customizations.user]]
 name = "${SSH_USER}"
@@ -443,20 +442,30 @@ greenprint "🛃 Checking for SSH is ready to go"
 wait_for_ssh_up "${HTTP_GUEST_ADDRESS}"
 
 greenprint "🔒 Running oscap scanner"
-scan_vm "${HTTP_GUEST_ADDRESS}"
+# oscap package has been installed on vm as
+# oscap customization has been specified
+# (the test has to be run as root)
+sudo ssh -q "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${HTTP_GUEST_ADDRESS}" \
+  sudo oscap xccdf eval \
+  --results results.xml \
+  --profile "${PROFILE}_osbuild_tailoring" \
+  --tailoring-file "/usr/share/xml/osbuild-openscap-data/tailoring.xml" \
+  "${DATASTREAM}" || true # oscap returns exit code 2 for any failed rules
+
+greenprint "📄 Saving results"
+RESULTS=$(mktemp)
+ssh -q "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${HTTP_GUEST_ADDRESS}" sudo cat results.xml > "$RESULTS"
 
 greenprint "📗 Checking oscap score"
-HARDENED_SCORE=$(ssh -q "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${HTTP_GUEST_ADDRESS}" \
-  sudo cat results.xml \
-  | xmlstarlet sel -N x="http://checklists.nist.gov/xccdf/1.2" -t -v "//x:score"
-)
+HARDENED_SCORE=$(cat "$RESULTS" | xmlstarlet sel -N x="http://checklists.nist.gov/xccdf/1.2" -t -v "//x:score")
+echo "Hardened score: ${HARDENED_SCORE}%"
 
 greenprint "📗 Checking for failed rules"
-SEVERITY=$(ssh -q "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${HTTP_GUEST_ADDRESS}" \
-  sudo cat results.xml \
+SEVERITY=$(cat "$RESULTS" \
   | xmlstarlet sel -N x="http://checklists.nist.gov/xccdf/1.2" -t -v "//x:rule-result[@severity='high']" \
-  | grep -c fail
+  | grep -c "fail" || true # empty grep returns non-zero exit code
 )
+echo "Severity count: ${SEVERITY}"
 
 # Clean up HARDENED VM
 greenprint "🧹 Clean up VM"
@@ -476,11 +485,9 @@ if python3 -c "exit(${HARDENED_SCORE} > ${BASELINE_SCORE})"; then
   exit 1
 fi
 
-# one grub rule fails (expected)
-# check if any other rules have failed
-if [[ ${SEVERITY} -gt 1 ]]; then
+if [[ ${SEVERITY} -gt 0 ]]; then
   redprint "❌ Failed"
-  echo "More than one oscap rule with high severity failed"
+  echo "One or more oscap rules with high severity failed"
   exit 1
 fi
 
