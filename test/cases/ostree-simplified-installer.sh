@@ -14,7 +14,8 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 sudo systemctl enable --now firewalld
 sudo pip3 install yq==v3.2.1
 # Install fdo packages (This cannot be done in the setup.sh because fdo-admin-cli is not available on fedora)
-sudo dnf install -y fdo-admin-cli
+# Install fdo-client and fdo-init to workaround bug https://bugzilla.redhat.com/show_bug.cgi?id=2230537
+sudo dnf install -y fdo-admin-cli fdo-client fdo-init
 # Start fdo-aio to have /etc/fdo/aio folder
 sudo systemctl enable --now fdo-aio
 # Wait until config file serviceinfo_api_server.yml exists
@@ -137,6 +138,9 @@ case "${ID}-${VERSION_ID}" in
         SYSROOT_RO="true"
         ANSIBLE_USER=fdouser
         FDO_USER_ONBOARDING="true"
+        # workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
+        sudo setenforce 0
+        getenforce
         ;;
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
@@ -152,6 +156,9 @@ case "${ID}-${VERSION_ID}" in
         SYSROOT_RO="true"
         ANSIBLE_USER=fdouser
         FDO_USER_ONBOARDING="true"
+        # workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
+        sudo setenforce 0
+        getenforce
         ;;
     *)
         redprint "unsupported distro: ${ID}-${VERSION_ID}"
@@ -580,6 +587,14 @@ manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_insecure="true"
 EOF
 
+# workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
+if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[customizations.kernel]
+append = "enforcing=0"
+EOF
+fi
+
 greenprint "📄 installer blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -702,6 +717,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type=redhat \
     -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
@@ -739,6 +755,14 @@ installation_device = "/dev/vda"
 manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_hash="${DIUN_PUB_KEY_HASH}"
 EOF
+
+# workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
+if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[customizations.kernel]
+append = "enforcing=0"
+EOF
+fi
 
 greenprint "📄 fdosshkey blueprint"
 cat "$BLUEPRINT_FILE"
@@ -1001,6 +1025,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type=redhat \
     -e ostree_commit="${REBASE_HASH}" \
+    -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
@@ -1046,6 +1071,14 @@ manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_root_certs="""
 ${DIUN_PUB_KEY_ROOT_CERTS}"""
 EOF
+
+# workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
+if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[customizations.kernel]
+append = "enforcing=0"
+EOF
+fi
 
 greenprint "📄 fdosshkey blueprint"
 cat "$BLUEPRINT_FILE"
@@ -1295,7 +1328,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
-    -e fdo_credential="false" \
+    -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
