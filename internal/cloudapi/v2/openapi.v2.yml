@@ -884,6 +884,19 @@ components:
       properties:
         profile_id:
           type: string
+        tailoring:
+          $ref: '#/components/schemas/OpenSCAPTailoring'
+    OpenSCAPTailoring:
+      type: object
+      properties:
+        selected:
+          type: array
+          items: 
+            type: string
+        unselected:
+          type: array
+          items: 
+            type: string
     UploadOptions:
       anyOf:
       - $ref: '#/components/schemas/AWSEC2UploadOptions'
