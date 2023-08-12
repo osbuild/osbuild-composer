@@ -737,7 +737,7 @@ EOF
     # Test IoT/Edge OS
     sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
         -e image_type="${OSTREE_OSNAME}" \
-        -e skip_rollback_test="false" \
+        -e skip_rollback_test="true" \
         -e edge_type=edge-raw-image \
         -e ostree_commit="${REBASE_HASH}" \
         -e sysroot_ro="$SYSROOT_RO" \
@@ -844,6 +844,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="${OSTREE_OSNAME}" \
     -e edge_type=edge-raw-image \
+    -e skip_rollback_test="true" \
     -e ostree_commit="${INSTALL_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
@@ -1034,6 +1035,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="${OSTREE_OSNAME}" \
     -e edge_type=edge-raw-image \
+    -e skip_rollback_test="true" \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \

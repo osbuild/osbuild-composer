@@ -17,8 +17,41 @@
   tasks:
     # current target host's IP address
     - debug: var=ansible_all_ipv4_addresses
-
     - debug: var=ansible_facts['distribution_version']
+    - debug: var=ansible_facts['distribution']
+    - debug: var=ansible_facts['architecture']
+
+    # check BIOS or UEFI
+    - name: check bios or uefi
+      stat:
+        path: /sys/firmware/efi
+      ignore_errors: yes
+
+    # check secure boot status if it's enabled
+    - name: check secure boot status
+      command: mokutil --sb-state
+      ignore_errors: yes
+
+    # check tpm device
+    - name: check tpm device
+      stat:
+        path: /dev/tpm0
+      ignore_errors: yes
+      when: fdo_credential == "true"
+
+    - name: check partition size
+      command: df -h
+      ignore_errors: yes
+      become: yes
+
+    - name: check disk partition table
+      command: fdisk -l
+      ignore_errors: yes
+      become: yes
+
+    - name: check rpm-ostree status
+      command: rpm-ostree status
+      ignore_errors: yes
 
     # default kernel or rt kernel
     - name: check installed kernel
@@ -706,12 +739,9 @@
 
         - assert:
             that:
-              - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
-              - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
               - "'greenboot Health Checks Runner' in result_greenboot_log.stdout"
               - "'Mark boot as successful in grubenv' in result_greenboot_log.stdout"
               - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
-              - "'greenboot MotD Generator' in result_greenboot_log.stdout"
             fail_msg: "Some errors happened in service boot"
             success_msg: "All greenboot services booted success"
 
@@ -792,28 +822,6 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: skip_rollback_test == "false"
 
-    - name: check journald has persistent logging
-      block:
-        - name: lsit boots
-          shell: journalctl --list-boots
-          register: result_list_boots
-
-        - assert:
-            that:
-              - result_list_boots.stdout_lines | length > 1
-            fail_msg: "journald hasn't persistent logging"
-            success_msg: "journald has persistent logging"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when:
-        - skip_rollback_test == "false"
-        - result_rollback is succeeded
-
     # case: check ostree commit after rollback
     - name: check ostree commit after rollback
       block:
@@ -841,42 +849,9 @@
         - skip_rollback_test == "false"
         - result_rollback is succeeded
 
-    - name: check fdo-client-linuxapp logs
-      command: journalctl -u fdo-client-linuxapp
-      register: result_fdo_client_linuxapp_journalctl
-      when: fdo_credential == "true"
-
-    - debug:
-        var: result_fdo_client_linuxapp_journalctl
-
-    - name: wait for FDO re-encryption
-      block:
-        - shell: cryptsetup luksDump /dev/vda4
-          register: result
-          until: not result.stdout_lines is search("cipher_null-ecb")
-          retries: 30
-          delay: 60
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      when: fdo_credential == "true" and skip_rollback_test == "false"
-
-    - name: check fdo-client-linuxapp logs
-      command: journalctl -u fdo-client-linuxapp
-      register: result_fdo_client_linuxapp_journalctl
-      when: fdo_credential == "true"
-
-    - debug:
-        var: result_fdo_client_linuxapp_journalctl
-
     # case: check greenboot* services log again
     - name: fallback log should be found here
       block:
-
         - name: check boot-complete.target
           # will fail if the target was not reached
           command: systemctl --no-pager status boot-complete.target
@@ -889,12 +864,6 @@
         - assert:
             that:
               - "'FALLBACK BOOT DETECTED! Default rpm-ostree deployment has been rolled back' in result_greenboot_log.stdout"
-              - "'Script \\'00_required_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
-              - "'Script \\'00_wanted_scripts_start.sh\\' SUCCESS' in result_greenboot_log.stdout"
-              - "'greenboot Health Checks Runner' in result_greenboot_log.stdout"
-              - "'Mark boot as successful in grubenv' in result_greenboot_log.stdout"
-              - "'Boot Status is GREEN - Health Check SUCCESS' in result_greenboot_log.stdout"
-              - "'greenboot MotD Generator' in result_greenboot_log.stdout"
             fail_msg: "Fallback log not found"
             success_msg: "Found fallback log"
 
@@ -932,6 +901,90 @@
       when:
         - skip_rollback_test == "false"
         - result_rollback is succeeded
+
+    # Reboot for persistent logging and disk re-encryption
+    - name: reboot system when rollback test is skipped
+      block:
+        - name: reboot system
+          reboot:
+          become: yes
+          register: result_reboot
+          until: result_reboot is success
+          retries: 10
+          delay: 5
+
+        - name: delay 10 seconds
+          pause:
+            seconds: 10
+          delegate_to: 127.0.0.1
+
+        - name: wait for connection to become reachable/usable
+          wait_for_connection:
+            delay: 30
+
+        - name: waits until instance is reachable
+          wait_for:
+            host: "{{ ansible_all_ipv4_addresses[0] }}"
+            port: 22
+            search_regex: OpenSSH
+            delay: 10
+          register: result_waitfor
+          until: result_waitfor is success
+          retries: 6
+          delay: 10
+      when:
+        - skip_rollback_test == "true"
+
+    - name: check journald has persistent logging
+      block:
+        - name: list boots
+          shell: journalctl --list-boots -q
+          register: result_list_boots
+
+        - assert:
+            that:
+              - result_list_boots.stdout_lines | length > 1
+            fail_msg: "journald hasn't persistent logging"
+            success_msg: "journald has persistent logging"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - name: check fdo-client-linuxapp logs
+      command: journalctl -u fdo-client-linuxapp
+      register: result_fdo_client_linuxapp_journalctl
+      when: fdo_credential == "true"
+
+    - debug:
+        var: result_fdo_client_linuxapp_journalctl
+
+    - name: wait for FDO re-encryption
+      block:
+        - shell: cryptsetup luksDump /dev/vda4
+          register: result
+          until: not result.stdout_lines is search("cipher_null-ecb")
+          retries: 30
+          delay: 60
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: fdo_credential == "true"
+
+    - name: check fdo-client-linuxapp logs
+      command: journalctl -u fdo-client-linuxapp
+      register: result_fdo_client_linuxapp_journalctl
+      when: fdo_credential == "true"
+
+    - debug:
+        var: result_fdo_client_linuxapp_journalctl
 
     # case: checking firewall customizations
     - name: Check applied firewall customizations

@@ -527,7 +527,6 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ignition="true" \
     -e image_type=redhat \
     -e ostree_commit="${INSTALL_HASH}" \
-    -e skip_rollback_test="false" \
     -e edge_type=edge-vsphere \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
@@ -588,7 +587,6 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ignition="true" \
     -e image_type=redhat \
     -e ostree_commit="${INSTALL_HASH}" \
-    -e skip_rollback_test="false" \
     -e edge_type=edge-vsphere \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
@@ -722,7 +720,6 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ignition="true" \
     -e image_type=redhat \
     -e ostree_commit="${UPGRADE_HASH}" \
-    -e skip_rollback_test="false" \
     -e edge_type=edge-vsphere \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
@@ -777,7 +774,6 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ignition="true" \
     -e image_type=redhat \
     -e ostree_commit="${UPGRADE_HASH}" \
-    -e skip_rollback_test="false" \
     -e edge_type=edge-vsphere \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
