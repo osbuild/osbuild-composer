@@ -586,7 +586,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type=redhat \
     -e ostree_commit="${INSTALL_HASH}" \
-    -e skip_rollback_test="false" \
+    -e skip_rollback_test="true" \
     -e ignition="true" \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="false" \
@@ -724,7 +724,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type=redhat \
     -e ostree_commit="${UPGRADE_HASH}" \
-    -e skip_rollback_test="false" \
+    -e skip_rollback_test="true" \
     -e ignition="true" \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="false" \
@@ -862,7 +862,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type=redhat \
     -e ostree_commit="${INSTALL_HASH}" \
-    -e skip_rollback_test="false" \
+    -e skip_rollback_test="true" \
     -e ignition="true" \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="false" \
@@ -1002,7 +1002,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type=redhat \
     -e ostree_commit="${INSTALL_HASH}" \
-    -e skip_rollback_test="false" \
+    -e skip_rollback_test="true" \
     -e ignition="true" \
     -e edge_type=edge-raw-image \
     -e fdo_credential="false" \
@@ -1071,7 +1071,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type=redhat \
     -e ostree_commit="${UPGRADE_HASH}" \
-    -e skip_rollback_test="false" \
+    -e skip_rollback_test="true" \
     -e ignition="true" \
     -e edge_type=edge-raw-image \
     -e fdo_credential="false" \

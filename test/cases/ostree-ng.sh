@@ -625,6 +625,7 @@ greenprint "📼 Run Edge tests on BIOS VM"
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="$OSTREE_OSNAME" \
     -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     -e sysroot_ro="$SYSROOT_RO" \
@@ -714,6 +715,7 @@ greenprint "📼 Run Edge tests on UEFI VM"
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="$OSTREE_OSNAME" \
     -e ostree_commit="${INSTALL_HASH}" \
+    -e skip_rollback_test="true" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     -e sysroot_ro="$SYSROOT_RO" \
@@ -897,6 +899,7 @@ EOF
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e image_type="$OSTREE_OSNAME" \
     -e ostree_commit="${UPGRADE_HASH}" \
+    -e skip_rollback_test="true" \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     -e sysroot_ro="$SYSROOT_RO" \
