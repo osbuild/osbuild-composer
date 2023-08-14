@@ -394,6 +394,28 @@ esac
 export CUSTOM_GPG_KEY
 export REPOSITORY_CUSTOMIZATION_BLOCK
 
+# Define the customizations for the images here to not have to repeat them
+# in every image-type specific file.
+case "${IMAGE_TYPE}" in
+  # The Directories and Files customization is not supported for this image type.
+  "$IMAGE_TYPE_EDGE_INSTALLER")
+    OPENSCAP_CUSTOMIZATION_BLOCK=
+    ;;
+  *)
+    OPENSCAP_CUSTOMIZATION_BLOCK=$(cat <<EOF
+,
+    "openscap": {
+        "profile_id": "pci-dss",
+        "tailoring": {
+          "unselected": [ "rpm_verify_permissions" ]
+        }
+    }
+EOF
+)
+  ;;
+esac
+export OPENSCAP_CUSTOMIZATION_BLOCK
+
 # generate a temp key for user tests
 ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
 
