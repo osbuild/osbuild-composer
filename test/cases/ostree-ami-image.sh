@@ -224,6 +224,8 @@ clean_up () {
     if [[ -v INSTANCE_ID ]]; then
         aws ec2 terminate-instances \
             --instance-ids "${INSTANCE_ID}"
+        aws ec2 wait instance-terminated \
+            --instance-ids "${INSTANCE_ID}"
     fi
 
     # Remove bucket content and bucket itself quietly
@@ -703,6 +705,10 @@ AMI_ID=$(
         jq -r '.ImageId'
 )
 
+# Wait for image available to use to avoid image not available error
+aws ec2 wait image-available \
+    --image-ids "$AMI_ID"
+
 aws ec2 create-tags \
     --resources "${AMI_ID}" \
     --tags Key=Name,Value=composer-ci Key=UUID,Value="$TEST_UUID"
@@ -776,6 +782,10 @@ cat "${INSTANCE_OUT_INFO}"
 check_result
 
 INSTANCE_ID=$(jq -r '.Instances[].InstanceId' "${INSTANCE_OUT_INFO}")
+
+# wait for instance running
+aws ec2 wait instance-running \
+    --instance-ids "$INSTANCE_ID"
 
 # get instance public ip
 PUBLIC_GUEST_ADDRESS=$(
