@@ -206,7 +206,7 @@ HOST=$($AZURE_CMD vm list-ip-addresses \
 
 greenprint "🛃 Wait until sshd is up"
 
-for LOOP_COUNTER in {0..30}; do
+for LOOP_COUNTER in {0..60}; do
     if ssh-keyscan "$HOST" > /dev/null 2>&1; then
         greenprint "up!"
         break
