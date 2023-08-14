@@ -652,7 +652,7 @@ NIGHTLY_SUCCESS:
 
 Installer:
   stage: test
-  extends: .terraform/openstack
+  extends: .terraform/gcp
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
@@ -662,9 +662,10 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.9-nightly-x86_64
-          - rhos-01/rhel-9.3-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
+          - gcp/rhel-8.9-nightly-x86_64
+          - gcp/rhel-9.3-nightly-x86_64
+          - gcp/centos-stream-9-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 Manifest-diff:
   stage: test
