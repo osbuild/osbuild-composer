@@ -111,3 +111,18 @@ func (cl *Client) CreateOSTreeRepository(name, description string) (string, erro
 
 	return result.GetPulpHref(), nil
 }
+
+// ImportCommit imports a commit that has already been uploaded to a given
+// repository. The commitHref must reference a commit tarball artifact. This
+// task is asynchronous. The returned value is the href for the import task.
+func (cl *Client) ImportCommit(commitHref, repoHref string) (string, error) {
+	req := cl.client.RepositoriesOstreeAPI.RepositoriesOstreeOstreeImportAll(cl.ctx, repoHref)
+	importOptions := *pulpclient.NewOstreeImportAll(commitHref, "repo") // our commit archives always use the repo name "repo"
+
+	result, resp, err := req.OstreeImportAll(importOptions).Execute()
+	if err != nil {
+		return "", fmt.Errorf("ostree commit import failed: %s (%s)", err.Error(), readBody(resp))
+	}
+
+	return result.Task, nil
+}
