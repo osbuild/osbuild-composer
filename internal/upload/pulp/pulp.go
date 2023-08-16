@@ -126,3 +126,16 @@ func (cl *Client) ImportCommit(commitHref, repoHref string) (string, error) {
 
 	return result.Task, nil
 }
+
+// Distribute makes an ostree repository available for download. This task is
+// asynchronous. The returned value is the href for the distribute task.
+func (cl *Client) DistributeOSTreeRepo(basePath, name, repoHref string) (string, error) {
+	dist := *pulpclient.NewOstreeOstreeDistribution(basePath, name)
+	dist.SetRepository(repoHref)
+	res, resp, err := cl.client.DistributionsOstreeAPI.DistributionsOstreeOstreeCreate(cl.ctx).OstreeOstreeDistribution(dist).Execute()
+	if err != nil {
+		return "", fmt.Errorf("error distributing ostree repository: %s (%s)", err.Error(), readBody(resp))
+	}
+
+	return res.Task, nil
+}
