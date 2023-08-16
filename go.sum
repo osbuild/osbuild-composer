@@ -580,6 +580,8 @@ github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXch
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
 github.com/osbuild/images v0.7.0 h1:ZYRnjriW734sQt2FWROVze4oEFM/pD2nAss5mE/CWwo=
 github.com/osbuild/images v0.7.0/go.mod h1:qQeyRP2cjKLusNtaFKPeheHlCdvpenlz5as+/W5u4Ss=
+github.com/osbuild/pulp-client v0.0.0-20230811165424-12d4142341a5 h1:B/BnaYhr6kzqn5p0ZtpMrP81vaMIm6EYOkzch6Z4y/8=
+github.com/osbuild/pulp-client v0.0.0-20230811165424-12d4142341a5/go.mod h1:rd/MLdfwwO2cQI1s056h8z32zAi3Bo90XhlAAryIvWc=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 h1:KoWmjvw+nsYOo29YJK9vDA65RGE3NrOnUtO7a+RF9HU=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
