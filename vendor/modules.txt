@@ -690,6 +690,9 @@ github.com/osbuild/images/pkg/rhsm/facts
 github.com/osbuild/images/pkg/rpmmd
 github.com/osbuild/images/pkg/runner
 github.com/osbuild/images/pkg/subscription
+# github.com/osbuild/pulp-client v0.1.0
+## explicit; go 1.19
+github.com/osbuild/pulp-client/pulpclient
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
