@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/osbuild/pulp-client/pulpclient"
+	"github.com/sirupsen/logrus"
 )
 
 type Client struct {
@@ -138,4 +139,43 @@ func (cl *Client) DistributeOSTreeRepo(basePath, name, repoHref string) (string,
 	}
 
 	return res.Task, nil
+}
+
+type TaskState string
+
+const (
+	TASK_WAITING   TaskState = "waiting"
+	TASK_SKIPPED   TaskState = "skipped"
+	TASK_RUNNING   TaskState = "running"
+	TASK_COMPLETED TaskState = "completed"
+	TASK_FAILED    TaskState = "failed"
+	TASK_CANCELED  TaskState = "canceled"
+	TASK_CANCELING TaskState = "canceling"
+)
+
+// TaskState returns the state of a given task.
+func (cl *Client) TaskState(task string) (TaskState, error) {
+	res, resp, err := cl.client.TasksAPI.TasksRead(cl.ctx, task).Execute()
+	if err != nil {
+		return "", fmt.Errorf("error reading task %s: %s (%s)", task, err.Error(), readBody(resp))
+	}
+
+	state := res.GetState()
+	if state == "" {
+		return "", fmt.Errorf("got empty task state for %s", task)
+	}
+
+	return TaskState(state), nil
+}
+
+// TaskWaitingOrRunning returns true if the given task is in the running state. Errors
+// are ignored and return false.
+func (cl *Client) TaskWaitingOrRunning(task string) bool {
+	state, err := cl.TaskState(task)
+	if err != nil {
+		// log the error and return false
+		logrus.Errorf("failed to get task state: %s", err.Error())
+		return false
+	}
+	return state == TASK_RUNNING || state == TASK_WAITING
 }
