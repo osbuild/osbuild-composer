@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/osbuild/pulp-client/pulpclient"
 )
@@ -55,6 +56,23 @@ func readBody(r *http.Response) string {
 		return ""
 	}
 	return string(b)
+}
+
+// UploadFile uploads the file at the given path and returns the href of the
+// new artifact.
+func (cl *Client) UploadFile(path string) (string, error) {
+	fp, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer fp.Close()
+	create := cl.client.ArtifactsAPI.ArtifactsCreate(cl.ctx).File(fp)
+	res, resp, err := create.Execute()
+	if err != nil {
+		return "", fmt.Errorf("failed to upload file %q: %s (%s)", path, err.Error(), readBody(resp))
+	}
+
+	return res.GetPulpHref(), nil
 }
 
 // ListOSTreeRepositories returns a map (repository name -> pulp href) of
