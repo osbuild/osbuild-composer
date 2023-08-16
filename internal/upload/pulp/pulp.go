@@ -76,6 +76,31 @@ func (cl *Client) UploadFile(path string) (string, error) {
 	return res.GetPulpHref(), nil
 }
 
+// GetOSTreeRepositoryByName returns the href for a repository based on its name.
+// Returns an empty string without an error if the repository does not exist.
+func (cl *Client) GetOSTreeRepositoryByName(name string) (string, error) {
+	list, resp, err := cl.client.RepositoriesOstreeAPI.RepositoriesOstreeOstreeList(cl.ctx).Name(name).Execute()
+	if err != nil {
+		return "", fmt.Errorf("repository list request returned an error: %s (%s)", err.Error(), readBody(resp))
+	}
+
+	if list.GetCount() == 0 {
+		logrus.Infof("no repository named %s was found", name)
+		return "", nil
+	}
+
+	if list.GetCount() > 1 {
+		return "", fmt.Errorf("more than one repository named %s was found: %s (%s)", name, err.Error(), readBody(resp))
+	}
+
+	results := list.GetResults()
+	repo := results[0]
+
+	repoHref := repo.GetPulpHref()
+	logrus.Infof("found repository %s: %s", name, repoHref)
+	return repoHref, nil
+}
+
 // ListOSTreeRepositories returns a map (repository name -> pulp href) of
 // existing ostree repositories.
 func (cl *Client) ListOSTreeRepositories() (map[string]string, error) {
@@ -141,6 +166,28 @@ func (cl *Client) DistributeOSTreeRepo(basePath, name, repoHref string) (string,
 	return res.Task, nil
 }
 
+// GetDistributionURLForOSTreeRepo returns the basepath for an ostree
+// distribution of a given repository. Returns an empty string without an error
+// if the no distribution for the repo exists.
+func (cl *Client) GetDistributionURLForOSTreeRepo(repoHref string) (string, error) {
+	list, resp, err := cl.client.DistributionsOstreeAPI.DistributionsOstreeOstreeList(cl.ctx).Repository(repoHref).Execute()
+
+	if list.GetCount() == 0 {
+		logrus.Infof("no distribution for repo %s was found: %s", repoHref, readBody(resp))
+		return "", nil
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("error looking up distribution for repo %s: %s (%s)", repoHref, err.Error(), readBody(resp))
+	}
+
+	results := list.GetResults()
+	// if there's more than one distribution, return the first one
+	dist := results[0]
+
+	return dist.GetBaseUrl(), nil
+}
+
 type TaskState string
 
 const (
@@ -178,4 +225,60 @@ func (cl *Client) TaskWaitingOrRunning(task string) bool {
 		return false
 	}
 	return state == TASK_RUNNING || state == TASK_WAITING
+}
+
+// UploadAndDistributeCommit uploads a commit, creates a repository if
+// necessary, imports the commit to the repository, and distributes the
+// repository.
+func (cl *Client) UploadAndDistributeCommit(archivePath, repoName, basePath string) (string, error) {
+	// Check for the repository before uploading the commit:
+	// If the repository needs to be created but the basePath is empty, we
+	// should fail before uploading the commit.
+	logrus.Infof("checking if repository %q already exists", repoName)
+	repoHref, err := cl.GetOSTreeRepositoryByName(repoName)
+	if err != nil {
+		return "", err
+	}
+
+	if repoHref == "" && basePath == "" {
+		return "", fmt.Errorf("repository %q does not exist and needs to be created, but no basepath for distribution was provided", repoName)
+	}
+
+	// Upload the file before creating the repository (if we need to create it)
+	// in case it fails. We don't want to have an empty repository if the
+	// commit upload fails.
+	logrus.Infof("uploading ostree commit to pulp")
+	fileHref, err := cl.UploadFile(archivePath)
+	if err != nil {
+		return "", err
+	}
+
+	if repoHref == "" {
+		// repository does not exist: create it and distribute
+		logrus.Infof("repository not found - creating repository %q", repoName)
+		href, err := cl.CreateOSTreeRepository(repoName, "")
+		if err != nil {
+			return "", err
+		}
+
+		repoHref = href
+		logrus.Infof("created repository %q (%s)", repoName, repoHref)
+		logrus.Infof("creating distribution at %q", basePath)
+		if _, err := cl.DistributeOSTreeRepo(basePath, repoName, repoHref); err != nil {
+			return "", err
+		}
+	}
+
+	logrus.Infof("importing commit %q to repo %q", fileHref, repoHref)
+	if _, err := cl.ImportCommit(fileHref, repoHref); err != nil {
+		return "", err
+	}
+
+	repoURL, err := cl.GetDistributionURLForOSTreeRepo(repoHref)
+	if err != nil {
+		return "", err
+	}
+	logrus.Infof("repository url: %s", repoURL)
+
+	return repoURL, nil
 }
