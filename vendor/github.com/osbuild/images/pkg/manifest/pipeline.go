@@ -23,6 +23,13 @@ type Pipeline interface {
 	// Export this tree of this pipeline as an artifact when osbuild is called.
 	Export() *artifact.Artifact
 
+	// BuildPipeline returns a reference to the pipeline that creates the build
+	// root for this pipeline. For build pipelines, it should return nil.
+	BuildPipeline() *Build
+
+	// Manifest returns a reference to the Manifest which this Pipeline belongs to.
+	Manifest() *Manifest
+
 	getCheckpoint() bool
 
 	getExport() bool
@@ -95,7 +102,11 @@ func (p Base) getExport() bool {
 	return p.export
 }
 
-func (p Base) GetManifest() *Manifest {
+func (p Base) BuildPipeline() *Build {
+	return p.build
+}
+
+func (p Base) Manifest() *Manifest {
 	return p.manifest
 }
 
@@ -176,8 +187,17 @@ func (p Base) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-type Tree interface {
+// TreePipeline is any pipeline that produces a directory tree.
+type TreePipeline interface {
 	Name() string
-	GetManifest() *Manifest
-	GetPlatform() platform.Platform
+	Manifest() *Manifest
+	BuildPipeline() *Build
+	Platform() platform.Platform
+}
+
+// FilePipeline is any pipeline that produces a single file (typically an image file).
+type FilePipeline interface {
+	Pipeline
+	Filename() string
+	SetFilename(fname string)
 }

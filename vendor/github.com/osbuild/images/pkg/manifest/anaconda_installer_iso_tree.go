@@ -55,25 +55,22 @@ type AnacondaInstallerISOTree struct {
 	ISOLinux bool
 }
 
-func NewAnacondaInstallerISOTree(m *Manifest,
-	buildPipeline *Build,
-	anacondaPipeline *AnacondaInstaller,
-	rootfsPipeline *ISORootfsImg,
-	bootTreePipeline *EFIBootTree,
-	isoLabel string) *AnacondaInstallerISOTree {
+func NewAnacondaInstallerISOTree(buildPipeline *Build, anacondaPipeline *AnacondaInstaller, rootfsPipeline *ISORootfsImg, bootTreePipeline *EFIBootTree) *AnacondaInstallerISOTree {
 
+	// the three pipelines should all belong to the same manifest
+	if anacondaPipeline.Manifest() != rootfsPipeline.Manifest() ||
+		anacondaPipeline.Manifest() != bootTreePipeline.Manifest() {
+		panic("pipelines from different manifests")
+	}
 	p := &AnacondaInstallerISOTree{
-		Base:             NewBase(m, "bootiso-tree", buildPipeline),
+		Base:             NewBase(anacondaPipeline.Manifest(), "bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
 		rootfsPipeline:   rootfsPipeline,
 		bootTreePipeline: bootTreePipeline,
-		isoLabel:         isoLabel,
+		isoLabel:         bootTreePipeline.ISOLabel,
 	}
 	buildPipeline.addDependent(p)
-	if anacondaPipeline.Base.manifest != m {
-		panic("anaconda pipeline from different manifest")
-	}
-	m.addPipeline(p)
+	anacondaPipeline.Manifest().addPipeline(p)
 	return p
 }
 

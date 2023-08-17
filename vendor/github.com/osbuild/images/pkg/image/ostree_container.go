@@ -54,7 +54,7 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSTreeRef = img.OSTreeRef
 	osPipeline.OSTreeParent = img.OSTreeParent
 
-	commitPipeline := manifest.NewOSTreeCommit(m, buildPipeline, osPipeline, img.OSTreeRef)
+	commitPipeline := manifest.NewOSTreeCommit(buildPipeline, osPipeline, img.OSTreeRef)
 	commitPipeline.OSVersion = img.OSVersion
 
 	nginxConfigPath := "/etc/nginx.conf"
@@ -69,10 +69,10 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 		listenPort)
 	serverPipeline.Language = img.ContainerLanguage
 
-	containerPipeline := manifest.NewOCIContainer(m, buildPipeline, serverPipeline)
+	containerPipeline := manifest.NewOCIContainer(buildPipeline, serverPipeline)
 	containerPipeline.Cmd = []string{"nginx", "-c", nginxConfigPath}
 	containerPipeline.ExposedPorts = []string{listenPort}
-	containerPipeline.Filename = img.Filename
+	containerPipeline.SetFilename(img.Filename)
 	artifact := containerPipeline.Export()
 
 	return artifact, nil

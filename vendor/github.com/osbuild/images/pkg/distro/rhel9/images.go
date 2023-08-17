@@ -396,24 +396,25 @@ func edgeRawImage(workload workload.Workload,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
-
-	img := image.NewOSTreeRawImage(commit)
-
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
-		img.Ignition = true
-	}
+	img := image.NewOSTreeDiskImage(commit)
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	// "rw" kernel option is required when /sysroot is mounted read-only to
-	// keep stateful parts of the filesystem writeable (/var/ and /etc)
 	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	img.Keyboard = "us"
 	img.Locale = "C.UTF-8"
 	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
 		img.SysrootReadOnly = true
 		img.KernelOptionsAppend = append(img.KernelOptionsAppend, "rw")
+	}
+
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
+		img.Ignition = true
+		img.IgnitionPlatform = "metal"
+		if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+			img.KernelOptionsAppend = append(img.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
+		}
 	}
 
 	img.Platform = t.platform
@@ -425,11 +426,6 @@ func edgeRawImage(workload workload.Workload,
 	}
 	img.OSName = "redhat"
 
-	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
-		img.KernelOptionsAppend = append(img.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
-	}
-
-	// 92+ only
 	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
 		img.KernelOptionsAppend = append(img.KernelOptionsAppend, kopts.Append)
 	}
@@ -459,17 +455,11 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
-
-	rawImg := image.NewOSTreeRawImage(commit)
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
-		rawImg.Ignition = true
-	}
+	rawImg := image.NewOSTreeDiskImage(commit)
 
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	// "rw" kernel option is required when /sysroot is mounted read-only to
-	// keep stateful parts of the filesystem writeable (/var/ and /etc)
 	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	rawImg.Keyboard = "us"
 	rawImg.Locale = "C.UTF-8"
@@ -487,6 +477,14 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	}
 	rawImg.OSName = "redhat"
 
+	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || t.arch.distro.osVersion == "9-stream" {
+		rawImg.Ignition = true
+		rawImg.IgnitionPlatform = "metal"
+		if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+			rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
+		}
+	}
+
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
@@ -495,10 +493,6 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.PartitionTable = pt
 
 	rawImg.Filename = t.Filename()
-
-	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
-		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
-	}
 
 	// 92+ only
 	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
