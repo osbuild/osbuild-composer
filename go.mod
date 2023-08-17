@@ -29,7 +29,7 @@ require (
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/labstack/gommon v0.4.0
-	github.com/openshift-online/ocm-sdk-go v0.1.362
+	github.com/openshift-online/ocm-sdk-go v0.1.363
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
 	github.com/osbuild/images v0.0.0-20230808122821-9548bf0d0140
 	github.com/prometheus/client_golang v1.16.0
