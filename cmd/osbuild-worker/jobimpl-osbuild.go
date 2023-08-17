@@ -12,12 +12,14 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
 
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
+	"github.com/osbuild/osbuild-composer/internal/upload/pulp"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -65,6 +67,11 @@ type OCIConfiguration struct {
 	Compartment  string
 	Bucket       string
 	Namespace    string
+}
+
+type PulpConfiguration struct {
+	CredsFilePath string
+	ServerAddress string
 }
 
 type OSBuildJobImpl struct {
@@ -291,6 +298,26 @@ func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions
 	}
 
 	return client, nil
+}
+
+func (impl *OSBuildJobImpl) getPulpClient(targetOptions *target.PulpOSTreeTargetOptions) (*pulp.Client, error) {
+	creds := &pulp.Credentials{}
+	if targetOptions.Username != "" && targetOptions.Password != "" {
+		creds = &pulp.Credentials{
+			Username: targetOptions.Username,
+			Password: targetOptions.Password,
+		}
+	} else {
+		// TODO: read from worker configuration
+		return nil, fmt.Errorf("no credentials for pulp were set")
+	}
+
+	if targetOptions.ServerAddress == "" {
+		// TODO: read from worker configuration
+		return nil, fmt.Errorf("pulp server address not set")
+	}
+
+	return pulp.NewClient(targetOptions.ServerAddress, creds), nil
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
@@ -1100,6 +1127,23 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Printf("[container] 🎉 Image uploaded (%s)!", digest.String())
 			targetResult.Options = &target.ContainerTargetResultOptions{URL: client.Target.String(), Digest: digest.String()}
+
+		case *target.PulpOSTreeTargetOptions:
+			targetResult = target.NewPulpOSTreeTargetResult(nil, &artifact)
+			archivePath := filepath.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
+
+			client, err := impl.getPulpClient(targetOptions)
+			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				break
+			}
+
+			url, err := client.UploadAndDistributeCommit(archivePath, targetOptions.Repository, targetOptions.BasePath)
+			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				break
+			}
+			targetResult.Options = &target.PulpOSTreeTargetResultOptions{RepoURL: url}
 
 		default:
 			// TODO: we may not want to return completely here with multiple targets, because then no TargetErrors will be added to the JobError details
