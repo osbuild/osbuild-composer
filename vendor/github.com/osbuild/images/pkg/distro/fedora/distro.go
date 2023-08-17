@@ -157,6 +157,27 @@ var (
 		exports:          []string{"bootiso"},
 	}
 
+	iotSimplifiedInstallerImgType = imageType{
+		name:     "iot-simplified-installer",
+		filename: "simplified-installer.iso",
+		mimeType: "application/x-iso9660-image",
+		packageSets: map[string]packageSetFunc{
+			installerPkgsKey: iotSimplifiedInstallerPackageSet,
+		},
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: iotServices,
+		},
+		defaultSize:         10 * common.GibiByte,
+		rpmOstree:           true,
+		bootable:            true,
+		bootISO:             true,
+		image:               iotSimplifiedInstallerImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
+		exports:             []string{"bootiso"},
+		basePartitionTables: iotSimplifiedInstallerPartitionTables,
+	}
+
 	iotRawImgType = imageType{
 		name:        "iot-raw-image",
 		nameAliases: []string{"fedora-iot-raw-image"},
@@ -170,7 +191,7 @@ var (
 		defaultSize:         4 * common.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
-		image:               iotRawImage,
+		image:               iotImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"ostree-deployment", "image", "xz"},
 		exports:             []string{"xz"},
@@ -180,6 +201,24 @@ var (
 		// default partition sizes normally set so our `basePartitionTables` can
 		// override them (and make them smaller, in this case).
 		requiredPartitionSizes: map[string]uint64{},
+	}
+
+	iotQcow2ImgType = imageType{
+		name:        "iot-qcow2-image",
+		filename:    "image.qcow2",
+		mimeType:    "application/x-qemu-disk",
+		packageSets: map[string]packageSetFunc{},
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: common.ToPtr("en_US.UTF-8"),
+		},
+		defaultSize:         10 * common.GibiByte,
+		rpmOstree:           true,
+		bootable:            true,
+		image:               iotImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"ostree-deployment", "image", "qcow2"},
+		exports:             []string{"qcow2"},
+		basePartitionTables: iotBasePartitionTables,
 	}
 
 	qcow2ImgType = imageType{
@@ -604,18 +643,10 @@ func newDistro(version int) distro.Distro {
 		&platform.X86{
 			BasePlatform: platform.BasePlatform{
 				FirmwarePackages: []string{
-					"microcode_ctl", // ??
-					"iwl1000-firmware",
-					"iwl100-firmware",
-					"iwl105-firmware",
-					"iwl135-firmware",
-					"iwl2000-firmware",
-					"iwl2030-firmware",
-					"iwl3160-firmware",
-					"iwl5000-firmware",
-					"iwl5150-firmware",
-					"iwl6000-firmware",
-					"iwl6050-firmware",
+					"biosdevname",
+					"iwlwifi-dvm-firmware",
+					"iwlwifi-mvm-firmware",
+					"microcode_ctl",
 				},
 			},
 			BIOS:       true,
@@ -637,6 +668,16 @@ func newDistro(version int) distro.Distro {
 		},
 		iotRawImgType,
 	)
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+			},
+			BIOS:       false,
+			UEFIVendor: "fedora",
+		},
+		iotQcow2ImgType,
+	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{
 			UEFIVendor: "fedora",
@@ -654,8 +695,9 @@ func newDistro(version int) distro.Distro {
 				QCOW2Compat: "1.1",
 			},
 		},
-		qcow2ImgType,
+		iotQcow2ImgType,
 		ociImgType,
+		qcow2ImgType,
 	)
 	aarch64.addImageTypes(
 		&platform.Aarch64{
@@ -674,17 +716,18 @@ func newDistro(version int) distro.Distro {
 		&platform.Aarch64{
 			BasePlatform: platform.BasePlatform{
 				FirmwarePackages: []string{
-					"uboot-images-armv8", // ??
-					"bcm283x-firmware",
 					"arm-image-installer", // ??
+					"bcm283x-firmware",
+					"iwl7260-firmware",
+					"uboot-images-armv8", // ??
 				},
 			},
 			UEFIVendor: "fedora",
 		},
-		iotCommitImgType,
-		iotOCIImgType,
-		iotInstallerImgType,
 		imageInstallerImgType,
+		iotCommitImgType,
+		iotInstallerImgType,
+		iotOCIImgType,
 		liveInstallerImgType,
 	)
 	aarch64.addImageTypes(
@@ -746,6 +789,51 @@ func newDistro(version int) distro.Distro {
 		},
 		minimalrawImgType,
 	)
+
+	if !common.VersionLessThan(rd.Releasever(), "38") {
+		// iot simplified installer was introduced in F38
+		x86_64.addImageTypes(
+			&platform.X86{
+				BasePlatform: platform.BasePlatform{
+					ImageFormat: platform.FORMAT_RAW,
+					FirmwarePackages: []string{
+						"grub2-efi-x64-cdboot",
+						"grub2-pc",
+						"grub2-pc-modules",
+						"grub2-tools",
+						"grub2-tools-extra",
+						"grub2-tools-minimal",
+						"iwlwifi-dvm-firmware",
+						"iwlwifi-mvm-firmware",
+						"microcode_ctl",
+						"syslinux",
+						"syslinux-nonlinux",
+					},
+				},
+				BIOS:       false,
+				UEFIVendor: "fedora",
+			},
+			iotSimplifiedInstallerImgType,
+		)
+		aarch64.addImageTypes(
+			&platform.Aarch64{
+				BasePlatform: platform.BasePlatform{
+					FirmwarePackages: []string{
+						"arm-image-installer",
+						"bcm283x-firmware",
+						"grub2-efi-aa64",
+						"grub2-efi-aa64-cdboot",
+						"grub2-tools",
+						"grub2-tools-extra",
+						"grub2-tools-minimal",
+						"uboot-images-armv8",
+					},
+				},
+				UEFIVendor: "fedora",
+			},
+			iotSimplifiedInstallerImgType,
+		)
+	}
 
 	rd.addArches(x86_64, aarch64)
 	return &rd

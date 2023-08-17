@@ -50,7 +50,7 @@ func (img *MyImage) InstantiateManifest(m *manifest.Manifest,
 	os.KernelName = "kernel" // use the default fedora kernel
 
 	// create a raw image containing the OS tree created above
-	raw := manifest.NewRawImage(m, build, os)
+	raw := manifest.NewRawImage(build, os)
 	artifact := raw.Export()
 
 	return artifact, nil

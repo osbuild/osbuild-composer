@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -23,6 +24,7 @@ var (
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices,
+			SystemdUnit:     systemdUnits,
 		},
 		rpmOstree:        true,
 		image:            edgeCommitImage,
@@ -46,6 +48,7 @@ var (
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices,
+			SystemdUnit:     systemdUnits,
 		},
 		rpmOstree:        true,
 		bootISO:          false,
@@ -196,7 +199,19 @@ var (
 		// TODO(runcom): move fdo-client-linuxapp.service to presets?
 		"NetworkManager.service", "firewalld.service", "sshd.service", "fdo-client-linuxapp.service",
 	}
-
+	//dropin to disable grub-boot-success.timer if greenboot present
+	systemdUnits = []*osbuild.SystemdUnitStageOptions{
+		{
+			Unit:     "grub-boot-success.timer",
+			Dropin:   "10-disable-if-greenboot.conf",
+			UnitType: osbuild.Global,
+			Config: osbuild.SystemdServiceUnitDropin{
+				Unit: &osbuild.SystemdUnitSection{
+					FileExists: "!/usr/libexec/greenboot/greenboot",
+				},
+			},
+		},
+	}
 	// Partition tables
 	edgeBasePartitionTables = distro.BasePartitionTableMap{
 		platform.ARCH_X86_64.String(): disk.PartitionTable{

@@ -56,11 +56,11 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSTreeRef = img.OSTreeRef
 	osPipeline.InstallWeakDeps = img.InstallWeakDeps
 
-	ostreeCommitPipeline := manifest.NewOSTreeCommit(m, buildPipeline, osPipeline, img.OSTreeRef)
+	ostreeCommitPipeline := manifest.NewOSTreeCommit(buildPipeline, osPipeline, img.OSTreeRef)
 	ostreeCommitPipeline.OSVersion = img.OSVersion
 
-	tarPipeline := manifest.NewTar(m, buildPipeline, &ostreeCommitPipeline.Base, "commit-archive")
-	tarPipeline.Filename = img.Filename
+	tarPipeline := manifest.NewTar(buildPipeline, ostreeCommitPipeline, "commit-archive")
+	tarPipeline.SetFilename(img.Filename)
 	artifact := tarPipeline.Export()
 
 	return artifact, nil
