@@ -427,6 +427,14 @@ aws.sh:
   variables:
     SCRIPT: aws.sh
 
+oci.sh:
+  extends: .integration
+  rules:
+    # Run only on x86_64
+    - !reference [.upstream_rules_x86_64, rules]
+  variables:
+    SCRIPT: oci.sh
+
 azure.sh:
   extends: .integration
   rules:
