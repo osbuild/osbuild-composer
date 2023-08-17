@@ -6,7 +6,7 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 require (
 	cloud.google.com/go/compute v1.23.0
-	cloud.google.com/go/storage v1.31.0
+	cloud.google.com/go/storage v1.32.0
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.1.0
 	github.com/Azure/go-autorest/autorest v0.11.29
