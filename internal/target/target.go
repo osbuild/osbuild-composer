@@ -93,6 +93,8 @@ func (target *Target) UnmarshalJSON(data []byte) error {
 		options = new(ContainerTargetOptions)
 	case TargetNameWorkerServer:
 		options = new(WorkerServerTargetOptions)
+	case TargetNamePulpOSTree:
+		options = new(PulpOSTreeTargetOptions)
 	default:
 		return fmt.Errorf("unexpected target name: %s", rawTarget.Name)
 	}
@@ -276,6 +278,10 @@ func (target Target) MarshalJSON() ([]byte, error) {
 			// WorkerServer target does not handle the backward compatibility
 			// for the Filename in target options, because it was added after
 			// the incompatible change.
+			rawOptions, err = json.Marshal(target.Options)
+
+		case *PulpOSTreeTargetOptions:
+			// added after incompatibility change
 			rawOptions, err = json.Marshal(target.Options)
 
 		default:
