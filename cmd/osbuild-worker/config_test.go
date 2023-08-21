@@ -65,6 +65,10 @@ oauth_url = "https://example.com/token"
 client_id = "toucan"
 client_secret = "/etc/osbuild-worker/client_secret"
 offline_token = "/etc/osbuild-worker/offline_token"
+
+[pulp]
+credentials = "/etc/osbuild-worker/pulp-creds"
+server_address = "https://example.com/pulp"
 `,
 			want: &workerConfig{
 				BasePath: "/api/image-builder-worker/v1",
@@ -115,6 +119,10 @@ offline_token = "/etc/osbuild-worker/offline_token"
 					OfflineTokenPath: "/etc/osbuild-worker/offline_token",
 					ClientId:         "toucan",
 					ClientSecretPath: "/etc/osbuild-worker/client_secret",
+				},
+				Pulp: &pulpConfig{
+					Credentials: "/etc/osbuild-worker/pulp-creds",
+					ServerURL:   "https://example.com/pulp",
 				},
 			},
 		},
