@@ -19,6 +19,7 @@ var supportedDistros = []func() distro.Distro{
 	fedora.NewF37,
 	fedora.NewF38,
 	fedora.NewF39,
+	fedora.NewF40,
 
 	rhel7.New,
 

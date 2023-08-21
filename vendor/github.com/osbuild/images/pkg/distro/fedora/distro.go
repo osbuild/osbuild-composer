@@ -501,6 +501,9 @@ func NewF38() distro.Distro {
 func NewF39() distro.Distro {
 	return newDistro(39)
 }
+func NewF40() distro.Distro {
+	return newDistro(40)
+}
 
 func newDistro(version int) distro.Distro {
 	rd := getDistro(version)
