@@ -101,7 +101,7 @@ fi
 
 # Install requirements for building RPMs in mock.
 greenprint "📦 Installing mock requirements"
-sudo dnf -y install createrepo_c mock s3cmd
+sudo dnf -y install createrepo_c mock s3cmd podman
 
 
 # Print some data.
