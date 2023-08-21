@@ -426,6 +426,13 @@ func main() {
 		}
 	}
 
+	var pulpCredsFilePath = ""
+	var pulpAddress = ""
+	if config.Pulp != nil {
+		pulpCredsFilePath = config.Pulp.Credentials
+		pulpAddress = config.Pulp.ServerURL
+	}
+
 	// depsolve jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
 	solver := dnfjson.NewBaseSolver(rpmmd_cache)
@@ -486,6 +493,10 @@ func main() {
 				PathPrefix:   containersPathPrefix,
 				CertPath:     containersCertPath,
 				TLSVerify:    &containersTLSVerify,
+			},
+			PulpConfig: PulpConfiguration{
+				CredsFilePath: pulpCredsFilePath,
+				ServerAddress: pulpAddress,
 			},
 		},
 		worker.JobTypeKojiInit: &KojiInitJobImpl{

@@ -2,6 +2,7 @@ package pulp
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,8 +18,27 @@ type Client struct {
 }
 
 type Credentials struct {
-	Username string
-	Password string
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func NewClientFromFile(url, path string) (*Client, error) {
+	fp, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer fp.Close()
+
+	data, err := io.ReadAll(fp)
+	if err != nil {
+		return nil, err
+	}
+	var creds Credentials
+	if err := json.Unmarshal(data, &creds); err != nil {
+		return nil, err
+	}
+
+	return NewClient(url, &creds), nil
 }
 
 func NewClient(url string, creds *Credentials) *Client {
