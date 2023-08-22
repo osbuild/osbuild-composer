@@ -504,14 +504,12 @@ if [[ "$ID" != "fedora" ]]; then
     sudo restorecon -Rv /var/lib/libvirt/images/
 
     greenprint "💿 Installing raw image on BIOS VM"
-    # TODO: os-type is deprecated in newer versions; remove conditionally
     sudo virt-install  --name="${IMAGE_KEY}-bios"\
                        --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
                        --ram 3072 \
                        --vcpus 2 \
                        --network network=integration,mac=34:49:22:B0:83:30 \
                        --import \
-                       --os-type linux \
                        --os-variant ${OS_VARIANT} \
                        --nographics \
                        --noautoconsole \
@@ -782,7 +780,6 @@ sudo virt-install --name="${IMAGE_KEY}-uefi"\
                --ram 3072 \
                --vcpus 2 \
                --network network=integration,mac=34:49:22:B0:83:31 \
-               --os-type linux \
                --import \
                --os-variant ${OS_VARIANT} \
                --boot "$BOOT_ARGS" \

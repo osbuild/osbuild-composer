@@ -518,7 +518,6 @@ sudo virt-install  --name="${IMAGE_KEY}-simplified"\
                    --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot "${BOOT_ARGS}" \
@@ -799,7 +798,6 @@ sudo virt-install  --name="${IMAGE_KEY}-simplified"\
                    --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot "${BOOT_ARGS}" \
@@ -940,7 +938,6 @@ sudo virt-install  --name="${IMAGE_KEY}-raw"\
                    --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:31 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --boot "${BOOT_ARGS}" \
                    --tpm backend.type=emulator,backend.version=2.0,model=tpm-crb \
