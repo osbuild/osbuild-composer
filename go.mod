@@ -43,7 +43,7 @@ require (
 	golang.org/x/oauth2 v0.11.0
 	golang.org/x/sync v0.3.0
 	golang.org/x/sys v0.11.0
-	google.golang.org/api v0.137.0
+	google.golang.org/api v0.138.0
 )
 
 require (
