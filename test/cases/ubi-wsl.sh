@@ -190,7 +190,6 @@ $AZURE_CMD vm create \
    --resource-group "$AZURE_RESOURCE_GROUP" \
    --name "wsl-vm-$TEST_ID" \
    --attach-os-disk "$AZ_DISK" \
-   --os-type "windows" \
    --security-type "TrustedLaunch" \
    --public-ip-sku Standard \
    --location "$AZURE_WSL_LOCATION" \

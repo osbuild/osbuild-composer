@@ -482,7 +482,6 @@ sudo virt-install  --name="${IMAGE_KEY}-simplified_iso_without_fdo"\
                    --ram "${MEMORY}" \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot "$BOOT_ARGS" \
@@ -647,7 +646,6 @@ sudo virt-install --name="${IMAGE_KEY}-http"\
                   --ram "${MEMORY}" \
                   --vcpus 2 \
                   --network network=integration,mac=34:49:22:B0:83:30 \
-                  --os-type linux \
                   --os-variant "${OS_VARIANT}" \
                   --pxe \
                   --boot "$BOOT_ARGS" \
@@ -800,7 +798,6 @@ sudo virt-install  --name="${IMAGE_KEY}-fdosshkey"\
                    --ram "${MEMORY}" \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot "$BOOT_ARGS" \
@@ -1116,7 +1113,6 @@ sudo virt-install  --name="${IMAGE_KEY}-fdorootcert"\
                    --ram "${MEMORY}" \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot "$BOOT_ARGS" \

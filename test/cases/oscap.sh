@@ -323,7 +323,6 @@ sudo virt-install --name="${VIRSH_DOMAIN}"\
                   --ram 3072 \
                   --vcpus 2 \
                   --network network=integration,mac=34:49:22:B0:83:30 \
-                  --os-type linux \
                   --os-variant "${OS_VARIANT}" \
                   --import \
                   --noautoconsole \
@@ -422,7 +421,6 @@ sudo virt-install --name="${VIRSH_DOMAIN}"\
                   --ram 3072 \
                   --vcpus 2 \
                   --network network=integration,mac=34:49:22:B0:83:30 \
-                  --os-type linux \
                   --os-variant "${OS_VARIANT}" \
                   --import \
                   --nographics \

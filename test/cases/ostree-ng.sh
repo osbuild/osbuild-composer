@@ -562,7 +562,6 @@ sudo virt-install  --name="${IMAGE_KEY}-bios" \
                    --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --nographics \
@@ -653,7 +652,6 @@ sudo virt-install  --name="${IMAGE_KEY}-uefi"\
                    --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:31 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --boot "$BOOT_ARGS" \

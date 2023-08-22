@@ -372,7 +372,6 @@ sudo virt-install  --name="${IMAGE_KEY}"\
                    --ram 3072 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
-                   --os-type linux \
                    --os-variant ${OS_VARIANT} \
                    --cdrom "/var/lib/libvirt/images/${ISO_FILENAME}" \
                    --nographics \
