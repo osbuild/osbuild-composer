@@ -57,7 +57,7 @@ func (img *MyContainer) InstantiateManifest(m *manifest.Manifest,
 	os.OSCustomizations.Timezone = "UTC"
 
 	// create an OCI container containing the OS tree created above
-	container := manifest.NewOCIContainer(m, build, os)
+	container := manifest.NewOCIContainer(build, os)
 	artifact := container.Export()
 
 	return artifact, nil

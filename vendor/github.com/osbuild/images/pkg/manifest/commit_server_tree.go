@@ -149,6 +149,6 @@ func chmodStageOptions(path, mode string, recursive bool) *osbuild.ChmodStageOpt
 	}
 }
 
-func (p *OSTreeCommitServer) GetPlatform() platform.Platform {
+func (p *OSTreeCommitServer) Platform() platform.Platform {
 	return p.platform
 }

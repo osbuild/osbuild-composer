@@ -13,25 +13,27 @@ import (
 type RawOSTreeImage struct {
 	Base
 	treePipeline *OSTreeDeployment
-	Filename     string
+	filename     string
 	platform     platform.Platform
 }
 
-func NewRawOStreeImage(m *Manifest,
-	buildPipeline *Build,
-	platform platform.Platform,
-	treePipeline *OSTreeDeployment) *RawOSTreeImage {
+func (p RawOSTreeImage) Filename() string {
+	return p.filename
+}
+
+func (p *RawOSTreeImage) SetFilename(filename string) {
+	p.filename = filename
+}
+
+func NewRawOStreeImage(buildPipeline *Build, treePipeline *OSTreeDeployment, platform platform.Platform) *RawOSTreeImage {
 	p := &RawOSTreeImage{
-		Base:         NewBase(m, "image", buildPipeline),
+		Base:         NewBase(treePipeline.Manifest(), "image", buildPipeline),
 		treePipeline: treePipeline,
-		Filename:     "disk.img",
+		filename:     "disk.img",
 		platform:     platform,
 	}
 	buildPipeline.addDependent(p)
-	if treePipeline.Base.manifest != m {
-		panic("tree pipeline from different manifest")
-	}
-	m.addPipeline(p)
+	treePipeline.Manifest().addPipeline(p)
 	return p
 }
 
@@ -57,12 +59,12 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		panic("no partition table in live image")
 	}
 
-	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename, osbuild.PTSfdisk) {
+	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename(), osbuild.PTSfdisk) {
 		pipeline.AddStage(stage)
 	}
 
 	inputName := "root-tree"
-	treeCopyOptions, treeCopyDevices, treeCopyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename, pt)
+	treeCopyOptions, treeCopyDevices, treeCopyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename(), pt)
 	treeCopyInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
 
 	pipeline.AddStage(osbuild.NewCopyStage(treeCopyOptions, treeCopyInputs, treeCopyDevices, treeCopyMounts))
@@ -71,7 +73,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 	if len(bootFiles) > 0 {
 		// we ignore the bootcopyoptions as they contain a full tree copy instead we make our own, we *do* still want all the other
 		// information such as mountpoints and devices
-		_, bootCopyDevices, bootCopyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename, pt)
+		_, bootCopyDevices, bootCopyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename(), pt)
 		bootCopyOptions := &osbuild.CopyStageOptions{}
 
 		commit := p.treePipeline.ostreeSpecs[0]
@@ -91,12 +93,12 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewCopyStage(bootCopyOptions, bootCopyInputs, bootCopyDevices, bootCopyMounts))
 	}
 
-	for _, stage := range osbuild.GenImageFinishStages(pt, p.Filename) {
+	for _, stage := range osbuild.GenImageFinishStages(pt, p.Filename()) {
 		pipeline.AddStage(stage)
 	}
 
 	if grubLegacy := p.treePipeline.platform.GetBIOSPlatform(); grubLegacy != "" {
-		pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(p.Filename, pt, grubLegacy)))
+		pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(p.Filename(), pt, grubLegacy)))
 	}
 
 	return pipeline
@@ -104,5 +106,5 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 
 func (p *RawOSTreeImage) Export() *artifact.Artifact {
 	p.Base.export = true
-	return artifact.New(p.Name(), p.Filename, nil)
+	return artifact.New(p.Name(), p.Filename(), nil)
 }

@@ -3,9 +3,10 @@ package fedora
 import (
 	"fmt"
 	"math/rand"
-	"strings"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/internal/fdo"
+	"github.com/osbuild/images/internal/ignition"
 	"github.com/osbuild/images/internal/oscap"
 	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/internal/workload"
@@ -16,6 +17,7 @@ import (
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -311,7 +313,7 @@ func imageInstallerImage(workload workload.Workload,
 
 	// Enable anaconda-webui for Fedora > 38
 	distro := t.Arch().Distro()
-	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "38") {
+	if !common.VersionLessThan(distro.Releasever(), "38") {
 		img.AdditionalAnacondaModules = []string{
 			"org.fedoraproject.Anaconda.Modules.Security",
 			"org.fedoraproject.Anaconda.Modules.Timezone",
@@ -354,12 +356,31 @@ func iotCommitImage(workload workload.Workload,
 	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
 	img := image.NewOSTreeArchive(commitRef)
 
+	d := t.arch.distro
+
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
+	if !common.VersionLessThan(d.Releasever(), "38") {
+		// see https://github.com/ostreedev/ostree/issues/2840
+		img.OSCustomizations.Presets = []osbuild.Preset{
+			{
+				Name:  "ignition-firstboot-complete.service",
+				State: osbuild.StateEnable,
+			},
+			{
+				Name:  "coreos-ignition-write-issues.service",
+				State: osbuild.StateEnable,
+			},
+			{
+				Name:  "fdo-client-linuxapp.service",
+				State: osbuild.StateEnable,
+			},
+		}
+	}
 	img.Environment = t.environment
 	img.Workload = workload
 	img.OSTreeParent = parentCommit
-	img.OSVersion = t.arch.distro.osVersion
+	img.OSVersion = d.osVersion
 	img.Filename = t.Filename()
 	img.InstallWeakDeps = false
 
@@ -376,14 +397,31 @@ func iotContainerImage(workload workload.Workload,
 
 	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
 	img := image.NewOSTreeContainer(commitRef)
-
+	d := t.arch.distro
 	img.Platform = t.platform
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
+	if !common.VersionLessThan(d.Releasever(), "38") {
+		// see https://github.com/ostreedev/ostree/issues/2840
+		img.OSCustomizations.Presets = []osbuild.Preset{
+			{
+				Name:  "ignition-firstboot-complete.service",
+				State: osbuild.StateEnable,
+			},
+			{
+				Name:  "coreos-ignition-write-issues.service",
+				State: osbuild.StateEnable,
+			},
+			{
+				Name:  "fdo-client-linuxapp.service",
+				State: osbuild.StateEnable,
+			},
+		}
+	}
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = t.environment
 	img.Workload = workload
 	img.OSTreeParent = parentCommit
-	img.OSVersion = t.arch.distro.osVersion
+	img.OSVersion = d.osVersion
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
 	img.Filename = t.Filename()
 
@@ -431,7 +469,7 @@ func iotInstallerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotRawImage(workload workload.Workload,
+func iotImage(workload workload.Workload,
 	t *imageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
@@ -443,14 +481,9 @@ func iotRawImage(workload workload.Workload,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
+	img := image.NewOSTreeDiskImage(commit)
 
-	img := image.NewOSTreeRawImage(commit)
-
-	// Set sysroot read-only only for Fedora 37+
 	distro := t.Arch().Distro()
-	if strings.HasPrefix(distro.Name(), "fedora") && !common.VersionLessThan(distro.Releasever(), "37") {
-		img.SysrootReadOnly = true
-	}
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
@@ -464,11 +497,12 @@ func iotRawImage(workload workload.Workload,
 		return nil, err
 	}
 
-	// "rw" kernel option is required when /sysroot is mounted read-only to
-	// keep stateful parts of the filesystem writeable (/var/ and /etc)
-	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4", "rw"}
+	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	img.Keyboard = "us"
 	img.Locale = "C.UTF-8"
+
+	img.SysrootReadOnly = true
+	img.KernelOptionsAppend = append(img.KernelOptionsAppend, "rw")
 
 	img.Platform = t.platform
 	img.Workload = workload
@@ -481,6 +515,23 @@ func iotRawImage(workload workload.Workload,
 	}
 	img.OSName = "fedora-iot"
 
+	if !common.VersionLessThan(distro.Releasever(), "38") {
+		img.Ignition = true
+		switch img.Platform.GetImageFormat() {
+		case platform.FORMAT_RAW:
+			img.IgnitionPlatform = "metal"
+			if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+				img.KernelOptionsAppend = append(img.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
+			}
+		case platform.FORMAT_QCOW2:
+			img.IgnitionPlatform = "qemu"
+		}
+	}
+
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		img.KernelOptionsAppend = append(img.KernelOptionsAppend, kopts.Append)
+	}
+
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
 	if err != nil {
@@ -490,6 +541,90 @@ func iotRawImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 	img.Compression = t.compression
+
+	return img, nil
+}
+
+func iotSimplifiedInstallerImage(workload workload.Workload,
+	t *imageType,
+	customizations *blueprint.Customizations,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeRef())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
+	}
+	rawImg := image.NewOSTreeDiskImage(commit)
+
+	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
+	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
+	rawImg.Keyboard = "us"
+	rawImg.Locale = "C.UTF-8"
+	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
+		rawImg.SysrootReadOnly = true
+		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, "rw")
+	}
+
+	rawImg.Platform = t.platform
+	rawImg.Workload = workload
+	rawImg.Remote = ostree.Remote{
+		Name:       "fedora-iot",
+		URL:        options.OSTree.URL,
+		ContentURL: options.OSTree.ContentURL,
+	}
+	rawImg.OSName = "fedora"
+
+	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
+		rawImg.Ignition = true
+		rawImg.IgnitionPlatform = "metal"
+		if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+			rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
+		}
+	}
+
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	if err != nil {
+		return nil, err
+	}
+	rawImg.PartitionTable = pt
+
+	rawImg.Filename = t.Filename()
+
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, kopts.Append)
+	}
+
+	img := image.NewOSTreeSimplifiedInstaller(rawImg, customizations.InstallationDevice)
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+	// img.Workload = workload
+	img.Platform = t.platform
+	img.Filename = t.Filename()
+	if bpFDO := customizations.GetFDO(); bpFDO != nil {
+		img.FDO = fdo.FromBP(*bpFDO)
+	}
+	// ignition configs from blueprint
+	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil {
+		if bpIgnition.Embedded != nil {
+			var err error
+			img.IgnitionEmbedded, err = ignition.EmbeddedOptionsFromBP(*bpIgnition.Embedded)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	d := t.arch.distro
+	img.ISOLabelTempl = d.isolabelTmpl
+	img.Product = d.product
+	img.Variant = "iot"
+	img.OSName = "fedora"
+	img.OSVersion = d.osVersion
 
 	return img, nil
 }

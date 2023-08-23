@@ -58,76 +58,59 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSVersion = img.OSVersion
 	osPipeline.OSNick = img.OSNick
 
-	imagePipeline := manifest.NewRawImage(m, buildPipeline, osPipeline)
-	imagePipeline.PartTool = img.PartTool
+	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline)
+	rawImagePipeline.PartTool = img.PartTool
 
-	var artifact *artifact.Artifact
-	var artifactPipeline manifest.Pipeline
+	var imagePipeline manifest.FilePipeline
 	switch img.Platform.GetImageFormat() {
 	case platform.FORMAT_RAW:
-		if img.Compression == "" {
-			imagePipeline.Filename = img.Filename
-		}
-		artifactPipeline = imagePipeline
-		artifact = imagePipeline.Export()
+		imagePipeline = rawImagePipeline
 	case platform.FORMAT_QCOW2:
-		qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, imagePipeline)
-		if img.Compression == "" {
-			qcow2Pipeline.Filename = img.Filename
-		}
+		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, rawImagePipeline)
 		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
-		artifactPipeline = qcow2Pipeline
-		artifact = qcow2Pipeline.Export()
+		imagePipeline = qcow2Pipeline
 	case platform.FORMAT_VHD:
-		vpcPipeline := manifest.NewVPC(m, buildPipeline, imagePipeline)
-		if img.Compression == "" {
-			vpcPipeline.Filename = img.Filename
-		}
+		vpcPipeline := manifest.NewVPC(buildPipeline, rawImagePipeline)
 		vpcPipeline.ForceSize = img.ForceSize
-		artifactPipeline = vpcPipeline
-		artifact = vpcPipeline.Export()
+		imagePipeline = vpcPipeline
 	case platform.FORMAT_VMDK:
-		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, imagePipeline, nil)
-		if img.Compression == "" {
-			vmdkPipeline.Filename = img.Filename
-		}
-		artifactPipeline = vmdkPipeline
-		artifact = vmdkPipeline.Export()
+		imagePipeline = manifest.NewVMDK(buildPipeline, rawImagePipeline)
 	case platform.FORMAT_OVA:
-		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, imagePipeline, nil)
-		ovfPipeline := manifest.NewOVF(m, buildPipeline, vmdkPipeline)
-		artifactPipeline := manifest.NewTar(m, buildPipeline, ovfPipeline, "archive")
-		artifactPipeline.Format = osbuild.TarArchiveFormatUstar
-		artifactPipeline.RootNode = osbuild.TarRootNodeOmit
-		artifactPipeline.Filename = img.Filename
-		artifact = artifactPipeline.Export()
+		vmdkPipeline := manifest.NewVMDK(buildPipeline, rawImagePipeline)
+		ovfPipeline := manifest.NewOVF(buildPipeline, vmdkPipeline)
+		tarPipeline := manifest.NewTar(buildPipeline, ovfPipeline, "archive")
+		tarPipeline.Format = osbuild.TarArchiveFormatUstar
+		tarPipeline.RootNode = osbuild.TarRootNodeOmit
+		tarPipeline.SetFilename(img.Filename)
+		imagePipeline = tarPipeline
 	case platform.FORMAT_GCE:
 		// NOTE(akoutsou): temporary workaround; filename required for GCP
 		// TODO: define internal raw filename on image type
-		imagePipeline.Filename = "disk.raw"
-		archivePipeline := manifest.NewTar(m, buildPipeline, imagePipeline, "archive")
-		archivePipeline.Format = osbuild.TarArchiveFormatOldgnu
-		archivePipeline.RootNode = osbuild.TarRootNodeOmit
+		rawImagePipeline.SetFilename("disk.raw")
+		tarPipeline := manifest.NewTar(buildPipeline, rawImagePipeline, "archive")
+		tarPipeline.Format = osbuild.TarArchiveFormatOldgnu
+		tarPipeline.RootNode = osbuild.TarRootNodeOmit
 		// these are required to successfully import the image to GCP
-		archivePipeline.ACLs = common.ToPtr(false)
-		archivePipeline.SELinux = common.ToPtr(false)
-		archivePipeline.Xattrs = common.ToPtr(false)
-		archivePipeline.Filename = img.Filename // filename extension will determine compression
+		tarPipeline.ACLs = common.ToPtr(false)
+		tarPipeline.SELinux = common.ToPtr(false)
+		tarPipeline.Xattrs = common.ToPtr(false)
+		tarPipeline.SetFilename(img.Filename) // filename extension will determine compression
+		imagePipeline = tarPipeline
 	default:
 		panic("invalid image format for image kind")
 	}
 
 	switch img.Compression {
 	case "xz":
-		xzPipeline := manifest.NewXZ(m, buildPipeline, artifactPipeline)
-		xzPipeline.Filename = img.Filename
-		artifact = xzPipeline.Export()
+		xzPipeline := manifest.NewXZ(buildPipeline, imagePipeline)
+		xzPipeline.SetFilename(img.Filename)
+		return xzPipeline.Export(), nil
 	case "":
-		// do nothing
+		// don't compress, but make sure the pipeline's filename is set
+		imagePipeline.SetFilename(img.Filename)
+		return imagePipeline.Export(), nil
 	default:
 		// panic on unknown strings
 		panic(fmt.Sprintf("unsupported compression type %q", img.Compression))
 	}
-
-	return artifact, nil
 }
