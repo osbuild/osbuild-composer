@@ -576,8 +576,8 @@ github.com/opencontainers/runc v1.1.7 h1:y2EZDS8sNng4Ksf0GUYNhKbTShZJPJg1FiXJNH/
 github.com/opencontainers/runc v1.1.7/go.mod h1:CbUumNnWCuTGFukNXahoo/RFBZvDAgRh/smNYNOhA50=
 github.com/opencontainers/runtime-spec v1.1.0-rc.3 h1:l04uafi6kxByhbxev7OWiuUv0LZxEsYUfDWZ6bztAuU=
 github.com/opencontainers/runtime-spec v1.1.0-rc.3/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift-online/ocm-sdk-go v0.1.362 h1:MoaSMCSzcr8nSK9DBqKmZ9c5e4Cp8Q0KAWnB9F2TTJg=
-github.com/openshift-online/ocm-sdk-go v0.1.362/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
+github.com/openshift-online/ocm-sdk-go v0.1.364 h1:Oaol0hc/5EaGan6zlU+rGEaqu+wI8TbY8/XbWm5mHoU=
+github.com/openshift-online/ocm-sdk-go v0.1.364/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
 github.com/osbuild/images v0.0.0-20230817095437-c2aa82cc9a86 h1:xBYCeCsCxyt9Iz1CwNOgKJOpQ7Z7CvUzF71JWhXe0t0=
