@@ -61,9 +61,9 @@ EOFKS
 
     echo "Writing new ISO"
     if nvrGreaterOrEqual "lorax" "34.9.18"; then
-        sudo mkksiso -c "console=ttyS0,115200" --ks "${newksfile}" "${iso}" "${newiso}"
+        sudo mkksiso -c "console=ttyS0,115200 softlockup_all_cpu_backtrace=1" --ks "${newksfile}" "${iso}" "${newiso}"
     else
-        sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+        sudo mkksiso -c "console=ttyS0,115200 softlockup_all_cpu_backtrace=1" "${newksfile}" "${iso}" "${newiso}"
     fi
 
     echo "==== NEW KICKSTART FILE ===="
