@@ -192,20 +192,33 @@ $AZURE_CMD vm create \
    --attach-os-disk "$AZ_DISK" \
    --os-type "windows" \
    --security-type "TrustedLaunch" \
+   --public-ip-sku Standard \
    --location "$AZURE_WSL_LOCATION" \
     --nic-delete-option delete \
     --os-disk-delete-option delete \
     --size "Standard_D2as_v5"
 
 $AZURE_CMD vm open-port --resource-group "$AZURE_RESOURCE_GROUP" --name "wsl-vm-$TEST_ID" --port 22
-HOST=$($AZURE_CMD vm list-ip-addresses \
-   --resource-group "$AZURE_RESOURCE_GROUP" \
-   --name "wsl-vm-$TEST_ID" \
-   --query "[].virtualMachine.network.publicIpAddresses[0].ipAddress" \
-   --output tsv)
+
+greenprint "🛃 Wait until the VM has a public IP"
+for LOOP_COUNTER in {0..30}; do
+    HOST=$($AZURE_CMD vm list-ip-addresses \
+       --resource-group "$AZURE_RESOURCE_GROUP" \
+       --name "wsl-vm-$TEST_ID" \
+       --query "[].virtualMachine.network.publicIpAddresses[0].ipAddress" \
+       --output tsv)
+
+    if echo "$HOST" | grep -Eq "^([0-9]{1,3}[\.]){3}[0-9]{1,3}$"; then
+        break
+    fi
+    if [ "$LOOP_COUNTER" = "10" ]; then
+        redprint "👻 the VM wasn't assigned a valid ipv4 address"
+        exit 1
+    fi
+    sleep 10
+done
 
 greenprint "🛃 Wait until sshd is up"
-
 for LOOP_COUNTER in {0..60}; do
     if ssh-keyscan "$HOST" > /dev/null 2>&1; then
         greenprint "up!"
