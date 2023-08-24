@@ -2127,7 +2127,7 @@ data:
         ]
       },
       "time": {
-        "from": "now-28d",
+        "from": "now-6h",
         "to": "now"
       },
       "timepicker": {
@@ -2158,6 +2158,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker",
       "uid": "image-builder-worker",
-      "version": 12,
+      "version": 13,
       "weekStart": ""
     }
