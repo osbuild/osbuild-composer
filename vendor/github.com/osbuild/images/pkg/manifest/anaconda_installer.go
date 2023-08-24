@@ -367,7 +367,7 @@ func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []
 	}
 }
 
-func (p *AnacondaInstaller) GetPlatform() platform.Platform {
+func (p *AnacondaInstaller) Platform() platform.Platform {
 	return p.platform
 }
 

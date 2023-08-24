@@ -180,7 +180,10 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
-				"fdo-client", // added in F38
+				"fdo-client",
+				"fdo-owner-cli",
+				"ignition-edge",
+				"ssh-key-dir",
 			},
 		})
 	}
@@ -538,4 +541,55 @@ func minimalrpmPackageSet(t *imageType) rpmmd.PackageSet {
 			"@core",
 		},
 	}
+}
+
+func iotSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
+	// common installer packages
+	ps := installerPackageSet(t)
+
+	ps = ps.Append(rpmmd.PackageSet{
+		Include: []string{
+			"attr",
+			"basesystem",
+			"binutils",
+			"bsdtar",
+			"clevis-dracut",
+			"clevis-luks",
+			"cloud-utils-growpart",
+			"coreos-installer",
+			"coreos-installer-dracut",
+			"coreutils",
+			"device-mapper-multipath",
+			"dnsmasq",
+			"dosfstools",
+			"dracut-live",
+			"e2fsprogs",
+			"fcoe-utils",
+			"fdo-init",
+			"fedora-logos",
+			"gdisk",
+			"gzip",
+			"ima-evm-utils",
+			"iproute",
+			"iptables",
+			"iputils",
+			"iscsi-initiator-utils",
+			"keyutils",
+			"lldpad",
+			"lvm2",
+			"mdadm",
+			"nss-softokn",
+			"passwd",
+			"policycoreutils",
+			"policycoreutils-python-utils",
+			"procps-ng",
+			"rootfiles",
+			"setools-console",
+			"sudo",
+			"traceroute",
+			"util-linux",
+		},
+	})
+
+	return ps
 }

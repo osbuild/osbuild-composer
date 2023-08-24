@@ -13,13 +13,13 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     1 * common.MebiByte, // 1MB
+				Size:     1 * common.MebiByte,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 200 * common.MebiByte, // 200 MB
+				Size: 200 * common.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -33,7 +33,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 500 * common.MebiByte, // 500 MB
+				Size: 500 * common.MebiByte,
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -46,7 +46,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte, // 2GiB
+				Size: 2 * common.GibiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -65,7 +65,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 200 * common.MebiByte, // 200 MB
+				Size: 200 * common.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -79,7 +79,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 500 * common.MebiByte, // 500 MB
+				Size: 500 * common.MebiByte,
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -92,7 +92,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte, // 2GiB
+				Size: 2 * common.GibiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -116,7 +116,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				Bootable: true,
 			},
 			{
-				Size: 500 * common.MebiByte, // 500 MB
+				Size: 500 * common.MebiByte,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
@@ -127,7 +127,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte, // 2GiB
+				Size: 2 * common.GibiByte,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/",
@@ -143,7 +143,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "dos",
 		Partitions: []disk.Partition{
 			{
-				Size: 500 * common.MebiByte, // 500 MB
+				Size: 500 * common.MebiByte,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",
 					Mountpoint:   "/boot",
@@ -154,7 +154,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size:     2 * common.GibiByte, // 2GiB
+				Size:     2 * common.GibiByte,
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "xfs",

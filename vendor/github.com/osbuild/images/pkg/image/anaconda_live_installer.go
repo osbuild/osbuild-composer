@@ -82,7 +82,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	// TODO: replace isoLabelTmpl with more high-level properties
 	isoLabel := fmt.Sprintf(img.ISOLabelTempl, img.Platform.GetArch())
 
-	rootfsImagePipeline := manifest.NewISORootfsImg(m, buildPipeline, livePipeline)
+	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, livePipeline)
 	rootfsImagePipeline.Size = 8 * common.GibiByte
 
 	bootTreePipeline := manifest.NewEFIBootTree(m, buildPipeline, img.Product, img.OSVersion)
@@ -104,12 +104,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	// enable ISOLinux on x86_64 only
 	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
 
-	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(m,
-		buildPipeline,
-		livePipeline,
-		rootfsImagePipeline,
-		bootTreePipeline,
-		isoLabel)
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, livePipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = rootfsPartitionTable
 	isoTreePipeline.Release = img.Release
 	isoTreePipeline.OSName = img.OSName
@@ -117,8 +112,8 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.KernelOpts = kernelOpts
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
-	isoPipeline := manifest.NewISO(m, buildPipeline, isoTreePipeline, isoLabel)
-	isoPipeline.Filename = img.Filename
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, isoLabel)
+	isoPipeline.SetFilename(img.Filename)
 	isoPipeline.ISOLinux = isoLinuxEnabled
 
 	artifact := isoPipeline.Export()

@@ -66,8 +66,10 @@ func NewCoreOSInstaller(m *Manifest,
 	return p
 }
 
-// TODO: refactor - what is required to boot and what to build, and
-// do they all belong in this pipeline?
+// TODO: refactor:
+// - what is required to boot and what to build?
+// - do they all belong in this pipeline?
+// - should these be moved to the platform for the image type?
 func (p *CoreOSInstaller) getBootPackages() []string {
 	packages := []string{
 		"grub2-tools",
@@ -76,6 +78,11 @@ func (p *CoreOSInstaller) getBootPackages() []string {
 		"efibootmgr",
 	}
 
+	packages = append(packages, p.platform.GetPackages()...)
+
+	// TODO: Move these to the platform?
+	// For Fedora, this will add a lot of duplicates, but we also add them here
+	// for RHEL and CentOS.
 	switch p.platform.GetArch() {
 	case platform.ARCH_X86_64:
 		packages = append(packages,
@@ -95,6 +102,10 @@ func (p *CoreOSInstaller) getBootPackages() []string {
 		)
 	default:
 		panic(fmt.Sprintf("unsupported arch: %s", p.platform.GetArch()))
+	}
+
+	if p.Biosdevname {
+		packages = append(packages, "biosdevname")
 	}
 
 	return packages
@@ -185,6 +196,6 @@ func (p *CoreOSInstaller) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func (p *CoreOSInstaller) GetPlatform() platform.Platform {
+func (p *CoreOSInstaller) Platform() platform.Platform {
 	return p.platform
 }

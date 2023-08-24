@@ -123,6 +123,7 @@ type OSCustomizations struct {
 	WSLConfig            *osbuild.WSLConfStageOptions
 	LeapSecTZ            *string
 	FactAPIType          *facts.APIType
+	Presets              []osbuild.Preset
 
 	Subscription *subscription.ImageOptions
 	RHSMConfig   map[subscription.RHSMStatus]*osbuild.RHSMStageOptions
@@ -732,6 +733,12 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewOscapRemediationStage(p.OpenSCAPConfig))
 	}
 
+	if len(p.Presets) != 0 {
+		pipeline.AddStage(osbuild.NewSystemdPresetStage(&osbuild.SystemdPresetStageOptions{
+			Presets: p.Presets,
+		}))
+	}
+
 	if p.SElinux != "" {
 		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 			FileContexts:     fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
@@ -797,7 +804,7 @@ func usersFirstBootOptions(users []users.User) *osbuild.FirstBootStageOptions {
 	return options
 }
 
-func (p *OS) GetPlatform() platform.Platform {
+func (p *OS) Platform() platform.Platform {
 	return p.platform
 }
 

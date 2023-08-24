@@ -16,7 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/runner"
 )
 
-type OSTreeRawImage struct {
+type OSTreeDiskImage struct {
 	Base
 
 	Platform       platform.Platform
@@ -39,32 +39,23 @@ type OSTreeRawImage struct {
 
 	Filename string
 
-	Compression string
-
-	Ignition bool
+	Ignition         bool
+	IgnitionPlatform string
+	Compression      string
 
 	Directories []*fsnode.Directory
 	Files       []*fsnode.File
 }
 
-func NewOSTreeRawImage(commit ostree.SourceSpec) *OSTreeRawImage {
-	return &OSTreeRawImage{
+func NewOSTreeDiskImage(commit ostree.SourceSpec) *OSTreeDiskImage {
+	return &OSTreeDiskImage{
 		Base:         NewBase("ostree-raw-image"),
 		CommitSource: commit,
 	}
 }
 
-func ostreeCompressedImagePipelines(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.XZ {
-	imagePipeline := baseRawOstreeImage(img, m, buildPipeline)
-
-	xzPipeline := manifest.NewXZ(m, buildPipeline, imagePipeline)
-	xzPipeline.Filename = img.Filename
-
-	return xzPipeline
-}
-
-func baseRawOstreeImage(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.RawOSTreeImage {
-	osPipeline := manifest.NewOSTreeDeployment(m, buildPipeline, img.CommitSource, img.OSName, img.Ignition, img.Platform)
+func baseRawOstreeImage(img *OSTreeDiskImage, m *manifest.Manifest, buildPipeline *manifest.Build) *manifest.RawOSTreeImage {
+	osPipeline := manifest.NewOSTreeDeployment(buildPipeline, m, img.CommitSource, img.OSName, img.Ignition, img.IgnitionPlatform, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.Remote = img.Remote
 	osPipeline.KernelOptionsAppend = img.KernelOptionsAppend
@@ -80,39 +71,48 @@ func baseRawOstreeImage(img *OSTreeRawImage, m *manifest.Manifest, buildPipeline
 	osPipeline.EnabledServices = img.Workload.GetServices()
 	osPipeline.DisabledServices = img.Workload.GetDisabledServices()
 
-	return manifest.NewRawOStreeImage(m, buildPipeline, img.Platform, osPipeline)
+	return manifest.NewRawOStreeImage(buildPipeline, osPipeline, img.Platform)
 }
 
-func (img *OSTreeRawImage) InstantiateManifest(m *manifest.Manifest,
+func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos)
 	buildPipeline.Checkpoint()
 
-	var art *artifact.Artifact
+	// don't support compressing non-raw images
+	imgFormat := img.Platform.GetImageFormat()
+	if imgFormat == platform.FORMAT_UNSET {
+		// treat unset as raw for this check
+		imgFormat = platform.FORMAT_RAW
+	}
+	if imgFormat != platform.FORMAT_RAW && img.Compression != "" {
+		panic(fmt.Sprintf("no compression is allowed with %q format for %q", imgFormat, img.name))
+	}
+
+	baseImage := baseRawOstreeImage(img, m, buildPipeline)
 	switch img.Platform.GetImageFormat() {
 	case platform.FORMAT_VMDK:
-		if img.Compression != "" {
-			panic(fmt.Sprintf("no compression is allowed with VMDK format for %q", img.name))
-		}
-		ostreeBase := baseRawOstreeImage(img, m, buildPipeline)
-		vmdkPipeline := manifest.NewVMDK(m, buildPipeline, nil, ostreeBase)
-		vmdkPipeline.Filename = img.Filename
-		art = vmdkPipeline.Export()
+		vmdkPipeline := manifest.NewVMDK(buildPipeline, baseImage)
+		vmdkPipeline.SetFilename(img.Filename)
+		return vmdkPipeline.Export(), nil
+	case platform.FORMAT_QCOW2:
+		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, baseImage)
+		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+		qcow2Pipeline.SetFilename(img.Filename)
+		return qcow2Pipeline.Export(), nil
 	default:
 		switch img.Compression {
 		case "xz":
-			ostreeCompressed := ostreeCompressedImagePipelines(img, m, buildPipeline)
-			art = ostreeCompressed.Export()
+			compressedImage := manifest.NewXZ(buildPipeline, baseImage)
+			compressedImage.SetFilename(img.Filename)
+			return compressedImage.Export(), nil
 		case "":
-			ostreeBase := baseRawOstreeImage(img, m, buildPipeline)
-			ostreeBase.Filename = img.Filename
-			art = ostreeBase.Export()
+			baseImage.SetFilename(img.Filename)
+			return baseImage.Export(), nil
 		default:
 			panic(fmt.Sprintf("unsupported compression type %q on %q", img.Compression, img.name))
 		}
 	}
-
-	return art, nil
 }

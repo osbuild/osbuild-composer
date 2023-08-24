@@ -7,21 +7,19 @@ import (
 	"github.com/osbuild/images/pkg/platform"
 )
 
-// ////////// Partition table //////////
-
 var defaultBasePartitionTables = distro.BasePartitionTableMap{
 	platform.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     1 * common.MebiByte, // 1MB
+				Size:     1 * common.MebiByte,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 200 * common.MebiByte, // 200 MB
+				Size: 200 * common.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -35,7 +33,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 500 * common.MebiByte, // 500 MB
+				Size: 500 * common.MebiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -48,7 +46,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte, // 2GiB
+				Size: 2 * common.GibiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{

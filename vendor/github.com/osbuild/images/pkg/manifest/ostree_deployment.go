@@ -45,6 +45,9 @@ type OSTreeDeployment struct {
 	// Whether ignition is in use or not
 	ignition bool
 
+	// Specifies the ignition platform to use
+	ignitionPlatform string
+
 	Directories []*fsnode.Directory
 	Files       []*fsnode.File
 
@@ -54,19 +57,21 @@ type OSTreeDeployment struct {
 
 // NewOSTreeDeployment creates a pipeline for an ostree deployment from a
 // commit.
-func NewOSTreeDeployment(m *Manifest,
-	buildPipeline *Build,
+func NewOSTreeDeployment(buildPipeline *Build,
+	m *Manifest,
 	commit ostree.SourceSpec,
 	osName string,
 	ignition bool,
+	ignitionPlatform string,
 	platform platform.Platform) *OSTreeDeployment {
 
 	p := &OSTreeDeployment{
-		Base:         NewBase(m, "ostree-deployment", buildPipeline),
-		commitSource: commit,
-		osName:       osName,
-		platform:     platform,
-		ignition:     ignition,
+		Base:             NewBase(m, "ostree-deployment", buildPipeline),
+		commitSource:     commit,
+		osName:           osName,
+		platform:         platform,
+		ignition:         ignition,
+		ignitionPlatform: ignitionPlatform,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -145,9 +150,12 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	kernelOpts = append(kernelOpts, p.KernelOptionsAppend...)
 
 	if p.ignition {
+		if p.ignitionPlatform == "" {
+			panic("ignition is enabled but ignition platform ID is not set")
+		}
 		kernelOpts = append(kernelOpts,
 			"coreos.no_persist_ip", // users cannot add connections as we don't have a live iso, this prevents connections to bleed into the system from the ign initrd
-			"ignition.platform.id=metal",
+			"ignition.platform.id="+p.ignitionPlatform,
 			"$ignition_firstboot",
 		)
 	}
