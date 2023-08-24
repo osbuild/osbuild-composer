@@ -242,6 +242,6 @@ for (( i=0 ; i<30; i++ )); do
     sleep 5
 done
 
-ssh -i "$SSH_KEY" redhat@"$PUBLIC_IP" uname -a
+ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" redhat@"$PUBLIC_IP" uname -a
 greenprint "💚 Success"
 exit 0

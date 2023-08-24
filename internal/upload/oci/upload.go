@@ -123,14 +123,86 @@ func (c Client) createImage(objectName, bucketName, namespace, compartmentID, im
 		if err != nil {
 			return "", fmt.Errorf("failed to fetch the work request for creating the image: %w", err)
 		}
-		switch r.Status {
-		case workrequests.WorkRequestStatusSucceeded:
-			return *createImageResponse.Id, nil
-		case workrequests.WorkRequestStatusCanceled, workrequests.WorkRequestStatusFailed:
+		if r.Status == workrequests.WorkRequestStatusSucceeded {
+			break
+		}
+		if r.Status == workrequests.WorkRequestStatusCanceled || r.Status == workrequests.WorkRequestStatusFailed {
 			return "", fmt.Errorf("the work request for creating an image is in status %s", r.Status)
 		}
 		time.Sleep(1 * time.Second)
 	}
+
+	log.Printf("work request complete, creating the compute image capability schema based on a global one")
+	listGlobalCS := core.ListComputeGlobalImageCapabilitySchemasRequest{
+		Limit: common.Int(1),
+	}
+	globalCSR, err := c.computeClient.ListComputeGlobalImageCapabilitySchemas(context.Background(), listGlobalCS)
+	if err != nil {
+		return *createImageResponse.Id, fmt.Errorf("failed to list the global capability schemas: %w", err)
+	}
+	if globalCSR.HTTPResponse().StatusCode != 200 {
+		return *createImageResponse.Id, fmt.Errorf("failed to list the global capability schemas: %d", globalCSR.HTTPResponse().StatusCode)
+	}
+	if len(globalCSR.Items) == 0 || globalCSR.Items[0].CurrentVersionName == nil {
+		return *createImageResponse.Id, fmt.Errorf("no global capability schema version found")
+	}
+
+	createComputeCapabilitiesReq := core.CreateComputeImageCapabilitySchemaRequest{
+		CreateComputeImageCapabilitySchemaDetails: core.CreateComputeImageCapabilitySchemaDetails{
+			CompartmentId: common.String(compartmentID),
+			ImageId:       createImageResponse.Id,
+			ComputeGlobalImageCapabilitySchemaVersionName: globalCSR.Items[0].CurrentVersionName,
+			SchemaData: map[string]core.ImageCapabilitySchemaDescriptor{
+				"Storage.RemoteDataVolumeType": core.EnumStringImageCapabilitySchemaDescriptor{
+					Source: core.ImageCapabilitySchemaDescriptorSourceImage,
+					Values: []string{
+						"PARAVIRTUALIZED",
+					},
+					DefaultValue: common.String("PARAVIRTUALIZED"),
+				},
+				"Storage.LocalDataVolumeType": core.EnumStringImageCapabilitySchemaDescriptor{
+					Source: core.ImageCapabilitySchemaDescriptorSourceImage,
+					Values: []string{
+						"PARAVIRTUALIZED",
+					},
+					DefaultValue: common.String("PARAVIRTUALIZED"),
+				},
+				"Storage.BootVolumeType": core.EnumStringImageCapabilitySchemaDescriptor{
+					Source: core.ImageCapabilitySchemaDescriptorSourceImage,
+					Values: []string{
+						"PARAVIRTUALIZED",
+					},
+					DefaultValue: common.String("PARAVIRTUALIZED"),
+				},
+				"Network.AttachmentType": core.EnumStringImageCapabilitySchemaDescriptor{
+					Source: core.ImageCapabilitySchemaDescriptorSourceImage,
+					Values: []string{
+						"PARAVIRTUALIZED",
+					},
+					DefaultValue: common.String("PARAVIRTUALIZED"),
+				},
+				"Compute.LaunchMode": core.EnumStringImageCapabilitySchemaDescriptor{
+					Source: core.ImageCapabilitySchemaDescriptorSourceImage,
+					Values: []string{
+						"NATIVE",
+						"PARAVIRTUALIZED",
+					},
+					DefaultValue: common.String("PARAVIRTUALIZED"),
+				},
+			},
+		},
+	}
+
+	createCICSR, err := c.computeClient.CreateComputeImageCapabilitySchema(context.Background(), createComputeCapabilitiesReq)
+	if err != nil {
+		return *createImageResponse.Id, fmt.Errorf("failed to create the image's capability schema: %w", err)
+	}
+	if createCICSR.HTTPResponse().StatusCode != 200 {
+		return *createImageResponse.Id, fmt.Errorf("failed to create the image's capability schema: %d", createCICSR.HTTPResponse().StatusCode)
+	}
+
+	return *createImageResponse.Id, nil
+
 }
 
 type ClientParams struct {
