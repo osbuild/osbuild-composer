@@ -143,15 +143,15 @@ const (
 // The output can be a file of various types, which is imported to Koji.
 // Examples of types are "image", "log" or other.
 type BuildOutput struct {
-	BuildRootID  uint64           `json:"buildroot_id"`
-	Filename     string           `json:"filename"`
-	FileSize     uint64           `json:"filesize"`
-	Arch         string           `json:"arch"` // can be 'noarch' or a specific arch
-	ChecksumType ChecksumType     `json:"checksum_type"`
-	Checksum     string           `json:"checksum"`
-	Type         BuildOutputType  `json:"type"`
-	RPMs         []rpmmd.RPM      `json:"components"` // TODO: should be omitempty
-	Extra        BuildOutputExtra `json:"extra"`      // TODO: should be omitempty
+	BuildRootID  uint64            `json:"buildroot_id"`
+	Filename     string            `json:"filename"`
+	FileSize     uint64            `json:"filesize"`
+	Arch         string            `json:"arch"` // can be 'noarch' or a specific arch
+	ChecksumType ChecksumType      `json:"checksum_type"`
+	Checksum     string            `json:"checksum"`
+	Type         BuildOutputType   `json:"type"`
+	RPMs         []rpmmd.RPM       `json:"components,omitempty"`
+	Extra        *BuildOutputExtra `json:"extra,omitempty"`
 }
 
 // CONTENT GENERATOR METADATA
