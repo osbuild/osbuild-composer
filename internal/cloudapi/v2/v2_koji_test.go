@@ -50,8 +50,12 @@ func TestKojiCompose(t *testing.T) {
 				Arch:   test_distro.TestArchName,
 				HostOS: test_distro.TestDistroName,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
+					Image: &target.KojiOutputInfo{
+						Filename:     "test.img",
+						ChecksumType: target.ChecksumTypeMD5,
+						Checksum:     "browns",
+						Size:         42,
+					},
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -87,8 +91,12 @@ func TestKojiCompose(t *testing.T) {
 				Arch:   test_distro.TestArchName,
 				HostOS: test_distro.TestDistroName,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
+					Image: &target.KojiOutputInfo{
+						Filename:     "test.img",
+						ChecksumType: target.ChecksumTypeMD5,
+						Checksum:     "browns",
+						Size:         42,
+					},
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -124,8 +132,12 @@ func TestKojiCompose(t *testing.T) {
 				Arch:   test_distro.TestArchName,
 				HostOS: test_distro.TestDistroName,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
+					Image: &target.KojiOutputInfo{
+						Filename:     "test.img",
+						ChecksumType: target.ChecksumTypeMD5,
+						Checksum:     "browns",
+						Size:         42,
+					},
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -160,8 +172,12 @@ func TestKojiCompose(t *testing.T) {
 				Arch:   test_distro.TestArchName,
 				HostOS: test_distro.TestDistroName,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
+					Image: &target.KojiOutputInfo{
+						Filename:     "test.img",
+						ChecksumType: target.ChecksumTypeMD5,
+						Checksum:     "browns",
+						Size:         42,
+					},
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: false,
@@ -198,8 +214,12 @@ func TestKojiCompose(t *testing.T) {
 				Arch:   test_distro.TestArchName,
 				HostOS: test_distro.TestDistroName,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
+					Image: &target.KojiOutputInfo{
+						Filename:     "test.img",
+						ChecksumType: target.ChecksumTypeMD5,
+						Checksum:     "browns",
+						Size:         42,
+					},
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -247,8 +267,12 @@ func TestKojiCompose(t *testing.T) {
 				Arch:   test_distro.TestArchName,
 				HostOS: test_distro.TestDistroName,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
+					Image: &target.KojiOutputInfo{
+						Filename:     "test.img",
+						ChecksumType: target.ChecksumTypeMD5,
+						Checksum:     "browns",
+						Size:         42,
+					},
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -288,8 +312,12 @@ func TestKojiCompose(t *testing.T) {
 				Arch:   test_distro.TestArchName,
 				HostOS: test_distro.TestDistroName,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
-					ImageMD5:  "browns",
-					ImageSize: 42,
+					Image: &target.KojiOutputInfo{
+						Filename:     "test.img",
+						ChecksumType: target.ChecksumTypeMD5,
+						Checksum:     "browns",
+						Size:         42,
+					},
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,

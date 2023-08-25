@@ -124,10 +124,11 @@ type KojiInitJobResult struct {
 }
 
 type KojiFinalizeJob struct {
-	Server        string   `json:"server"`
-	Name          string   `json:"name"`
-	Version       string   `json:"version"`
-	Release       string   `json:"release"`
+	Server  string `json:"server"`
+	Name    string `json:"name"`
+	Version string `json:"version"`
+	Release string `json:"release"`
+	// TODO: eventually deprecate and remove KojiFilenames, since the image filenames are now set in the KojiTargetResultOptions.
 	KojiFilenames []string `json:"koji_filenames"`
 	KojiDirectory string   `json:"koji_directory"`
 	TaskID        uint64   `json:"task_id"` /* https://pagure.io/koji/issue/215 */
