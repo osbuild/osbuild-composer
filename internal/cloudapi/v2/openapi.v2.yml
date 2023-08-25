@@ -789,9 +789,10 @@ components:
         - iot-container
         - iot-installer
         - iot-raw-image
+        - live-installer
         - vsphere
         - vsphere-ova
-        - live-installer
+        - wsl
     Repository:
       type: object
       description: |

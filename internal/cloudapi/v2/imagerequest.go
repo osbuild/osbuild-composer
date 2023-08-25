@@ -90,6 +90,8 @@ func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.Imag
 		fallthrough
 	case ImageTypesVsphereOva:
 		fallthrough
+	case ImageTypesWsl:
+		fallthrough
 	case ImageTypesImageInstaller:
 		fallthrough
 	case ImageTypesEdgeInstaller:
