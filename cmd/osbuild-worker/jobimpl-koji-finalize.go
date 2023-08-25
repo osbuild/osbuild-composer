@@ -187,15 +187,24 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			Arch:     buildArgs.Arch,
 			BootMode: buildArgs.ImageBootMode,
 		}
-		imgOutputsExtraInfo[args.KojiFilenames[i]] = imgOutputExtraInfo
+
+		// The image filename is now set in the KojiTargetResultOptions.
+		// For backward compatibility, if the filename is not set in the
+		// options, use the filename from the KojiTargetOptions.
+		imageFilename := kojiTargetOptions.Image.Filename
+		if imageFilename == "" {
+			imageFilename = args.KojiFilenames[i]
+		}
+
+		imgOutputsExtraInfo[imageFilename] = imgOutputExtraInfo
 
 		outputs = append(outputs, koji.BuildOutput{
 			BuildRootID:  uint64(i),
-			Filename:     args.KojiFilenames[i],
-			FileSize:     kojiTargetOptions.ImageSize,
+			Filename:     imageFilename,
+			FileSize:     kojiTargetOptions.Image.Size,
 			Arch:         buildArgs.Arch,
-			ChecksumType: koji.ChecksumTypeMD5,
-			Checksum:     kojiTargetOptions.ImageMD5,
+			ChecksumType: koji.ChecksumType(kojiTargetOptions.Image.ChecksumType),
+			Checksum:     kojiTargetOptions.Image.Checksum,
 			Type:         koji.BuildOutputTypeImage,
 			RPMs:         imageRPMs,
 			Extra: &koji.BuildOutputExtra{

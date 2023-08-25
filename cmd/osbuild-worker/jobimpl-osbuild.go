@@ -872,8 +872,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Info("[Koji] 🎉 Image successfully uploaded")
 			targetResult.Options = &target.KojiTargetResultOptions{
-				ImageMD5:  imageHash,
-				ImageSize: imageSize,
+				Image: &target.KojiOutputInfo{
+					Filename:     jobTarget.ImageName,
+					ChecksumType: target.ChecksumTypeMD5,
+					Checksum:     imageHash,
+					Size:         imageSize,
+				},
 			}
 
 		case *target.OCITargetOptions:

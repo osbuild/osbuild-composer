@@ -58,12 +58,16 @@ func TestTargetResultUnmarshal(t *testing.T) {
 			},
 		},
 		{
-			resultJSON: []byte(`{"name":"org.osbuild.koji","options":{"image_md5":"hash","image_size":123456}}`),
+			resultJSON: []byte(`{"name":"org.osbuild.koji","options":{"image":{"checksum_type":"md5","checksum":"hash","filename":"image.raw","size":123456}}}`),
 			expectedResult: &TargetResult{
 				Name: TargetNameKoji,
 				Options: &KojiTargetResultOptions{
-					ImageMD5:  "hash",
-					ImageSize: 123456,
+					Image: &KojiOutputInfo{
+						Filename:     "image.raw",
+						ChecksumType: ChecksumTypeMD5,
+						Checksum:     "hash",
+						Size:         123456,
+					},
 				},
 			},
 		},
