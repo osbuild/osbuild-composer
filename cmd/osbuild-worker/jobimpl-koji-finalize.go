@@ -198,7 +198,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			Checksum:     kojiTargetOptions.ImageMD5,
 			Type:         koji.BuildOutputTypeImage,
 			RPMs:         imageRPMs,
-			Extra: koji.BuildOutputExtra{
+			Extra: &koji.BuildOutputExtra{
 				Image: imgOutputExtraInfo,
 			},
 		})
