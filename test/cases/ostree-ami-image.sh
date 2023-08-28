@@ -642,8 +642,29 @@ IMPORT_TASK_ID=$(
 rm -f "$CONTAINERS_FILE"
 
 # Wait for snapshot import complete
-aws ec2 wait snapshot-imported \
-    --import-task-ids "$IMPORT_TASK_ID"
+for _ in $(seq 0 180); do
+    IMPORT_STATUS=$(
+        aws ec2 describe-import-snapshot-tasks \
+            --output json \
+            --import-task-ids "${IMPORT_TASK_ID}" | \
+            jq -r '.ImportSnapshotTasks[].SnapshotTaskDetail.Status'
+    )
+
+    # Has the snapshot finished?
+    if [[ $IMPORT_STATUS != active ]]; then
+        break
+    fi
+
+    # Wait 10 seconds and try again.
+    sleep 10
+done
+
+if [[ $IMPORT_STATUS != completed ]]; then
+    echo "Something went wrong with the snapshot. 😢"
+    exit 1
+else
+    greenprint "Snapshot imported successfully."
+fi
 
 SNAPSHOT_ID=$(
     aws ec2 describe-import-snapshot-tasks \
