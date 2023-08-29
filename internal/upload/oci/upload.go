@@ -77,7 +77,9 @@ func (c Client) uploadToBucket(objectName string, bucketName string, namespace s
 	ctx := context.Background()
 	resp, err := uploadManager.UploadFile(ctx, req)
 	if err != nil {
-		if resp.IsResumable() {
+		// resp.IsResumable crashes if resp.MultipartUploadResponse == nil
+		// Thus, we need to check for both.
+		if resp.MultipartUploadResponse != nil && resp.IsResumable() {
 			resp, err = uploadManager.ResumeUploadFile(ctx, *resp.MultipartUploadResponse.UploadID)
 			if err != nil {
 				return err
