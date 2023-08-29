@@ -41,6 +41,7 @@ const (
 	ErrorOSTreeParamsInvalid  ClientErrorCode = 34
 	ErrorOSTreeDependency     ClientErrorCode = 35
 	ErrorRemoteFileResolution ClientErrorCode = 36
+	ErrorJobPanicked          ClientErrorCode = 37
 )
 
 type ClientErrorCode int

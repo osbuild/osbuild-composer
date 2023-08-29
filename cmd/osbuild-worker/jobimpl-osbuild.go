@@ -280,6 +280,15 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// In all cases it is necessary to report result back to osbuild-composer worker API.
 	defer func() {
+		if r := recover(); r != nil {
+			logWithId.Errorf("Recovered from panic: %v", r)
+
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(
+				clienterrors.ErrorJobPanicked,
+				fmt.Sprintf("job panicked:\n%v\n\noriginal error:\n%v", r, osbuildJobResult.JobError),
+				nil,
+			)
+		}
 		validateResult(osbuildJobResult, job.Id().String())
 
 		err := job.Update(osbuildJobResult)
