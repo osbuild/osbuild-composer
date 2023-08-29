@@ -278,8 +278,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 	osbuildJobResult.HostOS = hostOS
 
-	var outputDirectory string
-
 	// In all cases it is necessary to report result back to osbuild-composer worker API.
 	defer func() {
 		validateResult(osbuildJobResult, job.Id().String())
@@ -288,17 +286,18 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		if err != nil {
 			logWithId.Errorf("Error reporting job result: %v", err)
 		}
+	}()
 
+	outputDirectory, err := os.MkdirTemp(impl.Output, job.Id().String()+"-*")
+	if err != nil {
+		return fmt.Errorf("error creating temporary output directory: %v", err)
+	}
+	defer func() {
 		err = os.RemoveAll(outputDirectory)
 		if err != nil {
 			logWithId.Errorf("Error removing temporary output directory (%s): %v", outputDirectory, err)
 		}
 	}()
-
-	outputDirectory, err = os.MkdirTemp(impl.Output, job.Id().String()+"-*")
-	if err != nil {
-		return fmt.Errorf("error creating temporary output directory: %v", err)
-	}
 
 	// Read the job specification
 	var jobArgs worker.OSBuildJob
