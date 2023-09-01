@@ -211,7 +211,7 @@ for LOOP_COUNTER in {0..30}; do
     if echo "$HOST" | grep -Eq "^([0-9]{1,3}[\.]){3}[0-9]{1,3}$"; then
         break
     fi
-    if [ "$LOOP_COUNTER" = "10" ]; then
+    if [ "$LOOP_COUNTER" = "30" ]; then
         redprint "👻 the VM wasn't assigned a valid ipv4 address"
         exit 1
     fi
