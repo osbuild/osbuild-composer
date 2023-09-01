@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"fmt"
@@ -871,12 +872,53 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 			logWithId.Info("[Koji] 🎉 Image successfully uploaded")
+
+			manifest := bytes.NewReader(jobArgs.Manifest)
+			logWithId.Info("[Koji] ⬆ Uploading the osbuild manifest")
+			manifestFilename := jobTarget.ImageName + ".manifest.json"
+			manifestHash, manifestSize, err := kojiAPI.Upload(manifest, targetOptions.UploadDirectory, manifestFilename)
+			if err != nil {
+				logWithId.Warnf("[Koji] ⬆ upload failed: %v", err)
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				break
+			}
+			logWithId.Info("[Koji] 🎉 Manifest successfully uploaded")
+
+			var osbuildLog bytes.Buffer
+			err = osbuildJobResult.OSBuildOutput.Write(&osbuildLog)
+			if err != nil {
+				logWithId.Warnf("[Koji] Converting osbuild log to texrt failed: %v", err)
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, err.Error(), nil)
+				break
+			}
+			logWithId.Info("[Koji] ⬆ Uploading the osbuild output log")
+			osbuildOutputFilename := jobTarget.ImageName + ".osbuild.log"
+			osbuildOutputHash, osbuildOutputSize, err := kojiAPI.Upload(&osbuildLog, targetOptions.UploadDirectory, osbuildOutputFilename)
+			if err != nil {
+				logWithId.Warnf("[Koji] ⬆ upload failed: %v", err)
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				break
+			}
+			logWithId.Info("[Koji] 🎉 osbuild output log successfully uploaded")
+
 			targetResult.Options = &target.KojiTargetResultOptions{
 				Image: &target.KojiOutputInfo{
 					Filename:     jobTarget.ImageName,
 					ChecksumType: target.ChecksumTypeMD5,
 					Checksum:     imageHash,
 					Size:         imageSize,
+				},
+				OsbuildManifest: &target.KojiOutputInfo{
+					Filename:     manifestFilename,
+					ChecksumType: target.ChecksumTypeMD5,
+					Checksum:     manifestHash,
+					Size:         manifestSize,
+				},
+				Log: &target.KojiOutputInfo{
+					Filename:     osbuildOutputFilename,
+					ChecksumType: target.ChecksumTypeMD5,
+					Checksum:     osbuildOutputHash,
+					Size:         osbuildOutputSize,
 				},
 			}
 
