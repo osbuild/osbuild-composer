@@ -384,7 +384,12 @@ func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
 		uploadOptions = OCIUploadStatus{
 			Url: ociOptions.URL,
 		}
-
+	case target.TargetNamePulpOSTree:
+		uploadType = UploadTypesPulp
+		pulpOSTreeOptions := t.Options.(*target.PulpOSTreeTargetResultOptions)
+		uploadOptions = PulpOSTreeUploadStatus{
+			RepoUrl: pulpOSTreeOptions.RepoURL,
+		}
 	default:
 		return nil, fmt.Errorf("unknown upload target: %s", t.Name)
 	}

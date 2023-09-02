@@ -103,7 +103,33 @@ func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.Imag
 	case ImageTypesEdgeCommit:
 		fallthrough
 	case ImageTypesIotCommit:
-		fallthrough
+		var pulpUploadOptions PulpOSTreeUploadOptions
+		jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+		if err != nil {
+			return nil, HTTPError(ErrorJSONMarshallingError)
+		}
+		err = json.Unmarshal(jsonUploadOptions, &pulpUploadOptions)
+		if err != nil {
+			return nil, HTTPError(ErrorJSONUnMarshallingError)
+		}
+		serverAddress := ""
+		if pulpUploadOptions.ServerAddress != nil {
+			serverAddress = *pulpUploadOptions.ServerAddress
+		}
+		repository := ""
+		if pulpUploadOptions.Repository != nil {
+			repository = *pulpUploadOptions.Repository
+		}
+		t := target.NewPulpOSTreeTarget(&target.PulpOSTreeTargetOptions{
+			ServerAddress: serverAddress,
+			Repository:    repository,
+			BasePath:      pulpUploadOptions.Basepath,
+		})
+
+		t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
+		t.OsbuildArtifact.ExportFilename = imageType.Filename()
+
+		irTarget = t
 	case ImageTypesIotRawImage:
 		var awsS3UploadOptions AWSS3UploadOptions
 		jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
