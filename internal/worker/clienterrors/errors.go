@@ -42,6 +42,7 @@ const (
 	ErrorOSTreeDependency     ClientErrorCode = 35
 	ErrorRemoteFileResolution ClientErrorCode = 36
 	ErrorJobPanicked          ClientErrorCode = 37
+	ErrorGeneratingSignedURL  ClientErrorCode = 38
 )
 
 type ClientErrorCode int

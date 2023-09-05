@@ -39,9 +39,14 @@ var uploadCmd = &cobra.Command{
 		}
 		defer file.Close()
 
-		imageID, err := uploader.Upload(objectName, bucketName, bucketNamespace, file, compartment, fileName)
+		err = uploader.Upload(objectName, bucketName, bucketNamespace, file)
 		if err != nil {
 			return fmt.Errorf("failed to upload the image: %v", err)
+		}
+
+		imageID, err := uploader.CreateImage(objectName, bucketName, bucketNamespace, compartment, fileName)
+		if err != nil {
+			return fmt.Errorf("failed to create the image from storage object: %v", err)
 		}
 
 		fmt.Printf("Image %s was uploaded and created successfully\n", imageID)

@@ -17,7 +17,9 @@ import (
 )
 
 type Uploader interface {
-	Upload(name string, bucketName string, namespace string, file *os.File, user, compartment string) (string, error)
+	Upload(name string, bucketName string, namespace string, file *os.File) error
+	CreateImage(name, bucketName, namespace, user, compartment string) (string, error)
+	PreAuthenticatedRequest(objectName, bucketName, namespace string) (string, error)
 }
 
 type ImageCreator interface {
@@ -31,17 +33,19 @@ type Client struct {
 }
 
 // Upload uploads a file into an objectName under the bucketName in the namespace.
-func (c Client) Upload(objectName string, bucketName string, namespace string, file *os.File, compartmentID, imageName string) (string, error) {
+func (c Client) Upload(objectName, bucketName, namespace string, file *os.File) error {
 	err := c.uploadToBucket(objectName, bucketName, namespace, file)
+	return err
+}
+
+// Creates an image from an existing storage object, deletes the storage object
+func (c Client) CreateImage(objectName, bucketName, namespace, compartmentID, imageName string) (string, error) {
 	// clean up the object even if we fail
 	defer func() {
 		if err := c.deleteObjectFromBucket(objectName, bucketName, namespace); err != nil {
 			log.Printf("failed to clean up the object '%s' from bucket '%s'", objectName, bucketName)
 		}
 	}()
-	if err != nil {
-		return "", err
-	}
 
 	imageID, err := c.createImage(objectName, bucketName, namespace, compartmentID, imageName)
 	if err != nil {
@@ -52,6 +56,32 @@ func (c Client) Upload(objectName string, bucketName string, namespace string, f
 			err)
 	}
 	return imageID, nil
+}
+
+// https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/usingpreauthenticatedrequests.htm
+func (c Client) PreAuthenticatedRequest(objectName, bucketName, namespace string) (string, error) {
+	req := objectstorage.CreatePreauthenticatedRequestRequest{
+		BucketName:    common.String(bucketName),
+		NamespaceName: common.String(namespace),
+		CreatePreauthenticatedRequestDetails: objectstorage.CreatePreauthenticatedRequestDetails{
+			ObjectName:          common.String(objectName),
+			TimeExpires:         &common.SDKTime{Time: time.Now().Add(24 * time.Hour)},
+			AccessType:          objectstorage.CreatePreauthenticatedRequestDetailsAccessTypeObjectread,
+			BucketListingAction: objectstorage.PreauthenticatedRequestBucketListingActionDeny,
+			Name:                common.String(fmt.Sprintf("pre-auth-req-for-%s", objectName)),
+		},
+	}
+
+	resp, err := c.storageClient.CreatePreauthenticatedRequest(context.Background(), req)
+	if err != nil {
+		return "", fmt.Errorf("failed to create a pre-authenticated request for object '%s': %w", objectName, err)
+	}
+	sc := resp.HTTPResponse().StatusCode
+	if sc != 200 {
+		return "", fmt.Errorf("failed to create a pre-authenticated request for object, status %d", sc)
+	}
+
+	return fmt.Sprintf("https://%s.objectstorage.%s.oci.customer-oci.com%s", namespace, c.region, *resp.AccessUri), nil
 }
 
 func (c Client) uploadToBucket(objectName string, bucketName string, namespace string, file *os.File) error {
@@ -216,6 +246,7 @@ type ClientParams struct {
 }
 
 type ociClient struct {
+	region             string
 	storageClient      objectstorage.ObjectStorageClient
 	identityClient     identity.IdentityClient
 	computeClient      core.ComputeClient
@@ -272,6 +303,7 @@ func NewClient(clientParams *ClientParams) (Client, error) {
 		return Client{}, fmt.Errorf("failed to create an Oracle workrequests client: %w", err)
 	}
 	return Client{ociClient: ociClient{
+		region:             clientParams.Region,
 		storageClient:      storageClient,
 		identityClient:     identityClient,
 		computeClient:      computeClient,
