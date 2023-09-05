@@ -87,6 +87,8 @@ func (target *Target) UnmarshalJSON(data []byte) error {
 		options = new(VMWareTargetOptions)
 	case TargetNameOCI:
 		options = new(OCITargetOptions)
+	case TargetNameOCIObjectStorage:
+		options = new(OCIObjectStorageTargetOptions)
 	case TargetNameContainer:
 		options = new(ContainerTargetOptions)
 	case TargetNameWorkerServer:
@@ -243,6 +245,18 @@ func (target Target) MarshalJSON() ([]byte, error) {
 			compat := compatOptionsType{
 				OCITargetOptions: t,
 				Filename:         target.OsbuildArtifact.ExportFilename,
+			}
+			rawOptions, err = json.Marshal(compat)
+
+		case *OCIObjectStorageTargetOptions:
+			type compatOptionsType struct {
+				*OCIObjectStorageTargetOptions
+				// Deprecated: `Filename` is now set in the target itself as `ExportFilename`, not in its options.
+				Filename string `json:"filename"`
+			}
+			compat := compatOptionsType{
+				OCIObjectStorageTargetOptions: t,
+				Filename:                      target.OsbuildArtifact.ExportFilename,
 			}
 			rawOptions, err = json.Marshal(compat)
 

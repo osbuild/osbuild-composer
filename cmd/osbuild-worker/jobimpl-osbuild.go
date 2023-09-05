@@ -868,21 +868,73 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			defer file.Close()
 			i, _ := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
-			imageID, err := ociClient.Upload(
+			err = ociClient.Upload(
 				fmt.Sprintf("osbuild-upload-%d", i),
 				targetOptions.Bucket,
 				targetOptions.Namespace,
 				file,
+			)
+			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				break
+			}
+
+			imageID, err := ociClient.CreateImage(
+				fmt.Sprintf("osbuild-upload-%d", i),
+				targetOptions.Bucket,
+				targetOptions.Namespace,
 				targetOptions.Compartment,
 				jobTarget.ImageName,
 			)
 			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				break
+			}
+
+			logWithId.Info("[OCI] 🎉 Image uploaded and registered!")
+			targetResult.Options = &target.OCITargetResultOptions{ImageID: imageID}
+		case *target.OCIObjectStorageTargetOptions:
+			targetResult = target.NewOCIObjectStorageTargetResult(nil)
+			// create an ociClient uploader with a valid storage client
+			var ociClient oci.Client
+			ociClient, err = oci.NewClient(&oci.ClientParams{
+				User:        targetOptions.User,
+				Region:      targetOptions.Region,
+				Tenancy:     targetOptions.Tenancy,
+				Fingerprint: targetOptions.Fingerprint,
+				PrivateKey:  targetOptions.PrivateKey,
+			})
+			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
-			logWithId.Info("[OCI] 🎉 Image uploaded and registered!")
-			targetResult.Options = &target.OCITargetResultOptions{ImageID: imageID}
+			logWithId.Info("[OCI] 🔑 Logged in OCI")
+			logWithId.Info("[OCI] ⬆ Uploading the image")
+			file, err := os.Open(path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
+			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				break
+			}
+			defer file.Close()
+			i, _ := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+			err = ociClient.Upload(
+				fmt.Sprintf("osbuild-upload-%d", i),
+				targetOptions.Bucket,
+				targetOptions.Namespace,
+				file,
+			)
+			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				break
+			}
 
+			uri, err := ociClient.PreAuthenticatedRequest(fmt.Sprintf("osbuild-upload-%d", i), targetOptions.Bucket, targetOptions.Namespace)
+			if err != nil {
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorGeneratingSignedURL, err.Error(), nil)
+				break
+			}
+			logWithId.Info("[OCI] 🎉 Image uploaded and registered!")
+			targetResult.Options = &target.OCIObjectStorageTargetResultOptions{URL: uri}
 		case *target.ContainerTargetOptions:
 			targetResult = target.NewContainerTargetResult(nil)
 			destination := jobTarget.ImageName
