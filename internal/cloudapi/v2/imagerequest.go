@@ -233,6 +233,22 @@ func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.Imag
 		t.OsbuildArtifact.ExportFilename = imageType.Filename()
 
 		irTarget = t
+	case ImageTypesOci:
+		var ociUploadOptions OCIUploadOptions
+		jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+		if err != nil {
+			return nil, HTTPError(ErrorJSONMarshallingError)
+		}
+		err = json.Unmarshal(jsonUploadOptions, &ociUploadOptions)
+		if err != nil {
+			return nil, HTTPError(ErrorJSONUnMarshallingError)
+		}
+
+		key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+		t := target.NewOCIObjectStorageTarget(&target.OCIObjectStorageTargetOptions{})
+		t.ImageName = key
+		t.OsbuildArtifact.ExportFilename = imageType.Filename()
+		irTarget = t
 	default:
 		return nil, HTTPError(ErrorUnsupportedImageType)
 	}
