@@ -331,6 +331,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "iot-raw-image"
 	case ImageTypesLiveInstaller:
 		return "live-installer"
+	case ImageTypesOci:
+		return "oci"
 	case ImageTypesWsl:
 		return "wsl"
 	}
@@ -375,6 +377,12 @@ func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
 		uploadOptions = ContainerUploadStatus{
 			Url:    containerOptions.URL,
 			Digest: containerOptions.Digest,
+		}
+	case target.TargetNameOCIObjectStorage:
+		uploadType = UploadTypesOciObjectstorage
+		ociOptions := t.Options.(*target.OCIObjectStorageTargetResultOptions)
+		uploadOptions = OCIUploadStatus{
+			Url: ociOptions.URL,
 		}
 
 	default:

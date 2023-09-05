@@ -611,6 +611,7 @@ components:
             - $ref: '#/components/schemas/GCPUploadStatus'
             - $ref: '#/components/schemas/AzureUploadStatus'
             - $ref: '#/components/schemas/ContainerUploadStatus'
+            - $ref: '#/components/schemas/OCIUploadStatus'
     UploadStatusValue:
       type: string
       enum: ['success', 'failure', 'pending', 'running']
@@ -622,6 +623,7 @@ components:
         - gcp
         - azure
         - container
+        - oci.objectstorage
     AWSEC2UploadStatus:
       type: object
       required:
@@ -683,6 +685,13 @@ components:
           type: string
           description: |
             Digest of the manifest of the uploaded container on the registry
+    OCIUploadStatus:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
     ComposeMetadata:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -790,6 +799,7 @@ components:
         - iot-installer
         - iot-raw-image
         - live-installer
+        - oci
         - vsphere
         - vsphere-ova
         - wsl
@@ -905,6 +915,7 @@ components:
       - $ref: '#/components/schemas/AzureUploadOptions'
       - $ref: '#/components/schemas/ContainerUploadOptions'
       - $ref: '#/components/schemas/LocalUploadOptions'
+      - $ref: '#/components/schemas/OCIUploadOptions'
       description: |
         This should really be oneOf but AWSS3UploadOptions is a subset of
         AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
@@ -961,6 +972,9 @@ components:
 
             If set to true, a shorter URL is returned and
             its expiration is the same as for the other upload targets.
+    OCIUploadOptions:
+      type: object
+      additionalProperties: false
     GCPUploadOptions:
       type: object
       additionalProperties: false
