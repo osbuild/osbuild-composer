@@ -133,11 +133,11 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		return nil
 	}
 
-	for i, buildArgs := range osbuildResults {
+	for i, buildResult := range osbuildResults {
 		buildRPMs := make([]rpmmd.RPM, 0)
 		// collect packages from stages in build pipelines
-		for _, plName := range buildArgs.PipelineNames.Build {
-			buildPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
+		for _, plName := range buildResult.PipelineNames.Build {
+			buildPipelineMd := buildResult.OSBuildOutput.Metadata[plName]
 			buildRPMs = append(buildRPMs, osbuild.OSBuildMetadataToRPMs(buildPipelineMd)...)
 		}
 		// this dedupe is usually not necessary since we generally only have
@@ -145,7 +145,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// multiple
 		buildRPMs = rpmmd.DeduplicateRPMs(buildRPMs)
 
-		kojiTargetResults := buildArgs.TargetResultsByName(target.TargetNameKoji)
+		kojiTargetResults := buildResult.TargetResultsByName(target.TargetNameKoji)
 		// Only a single Koji target is allowed per osbuild job
 		if len(kojiTargetResults) != 1 {
 			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Exactly one Koji target result is expected per osbuild job", nil)
@@ -158,8 +158,8 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		buildRoots = append(buildRoots, koji.BuildRoot{
 			ID: uint64(i),
 			Host: koji.Host{
-				Os:   buildArgs.HostOS,
-				Arch: buildArgs.Arch,
+				Os:   buildResult.HostOS,
+				Arch: buildResult.Arch,
 			},
 			ContentGenerator: koji.ContentGenerator{
 				Name:    "osbuild",
@@ -167,7 +167,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			},
 			Container: koji.Container{
 				Type: "none",
-				Arch: buildArgs.Arch,
+				Arch: buildResult.Arch,
 			},
 			Tools: []koji.Tool{},
 			RPMs:  buildRPMs,
@@ -175,8 +175,8 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 		// collect packages from stages in payload pipelines
 		imageRPMs := make([]rpmmd.RPM, 0)
-		for _, plName := range buildArgs.PipelineNames.Payload {
-			payloadPipelineMd := buildArgs.OSBuildOutput.Metadata[plName]
+		for _, plName := range buildResult.PipelineNames.Payload {
+			payloadPipelineMd := buildResult.OSBuildOutput.Metadata[plName]
 			imageRPMs = append(imageRPMs, osbuild.OSBuildMetadataToRPMs(payloadPipelineMd)...)
 		}
 
@@ -184,8 +184,8 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
 
 		imgOutputExtraInfo := koji.ImageExtraInfo{
-			Arch:     buildArgs.Arch,
-			BootMode: buildArgs.ImageBootMode,
+			Arch:     buildResult.Arch,
+			BootMode: buildResult.ImageBootMode,
 		}
 
 		// The image filename is now set in the KojiTargetResultOptions.
@@ -202,7 +202,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			BuildRootID:  uint64(i),
 			Filename:     imageFilename,
 			FileSize:     kojiTargetOptions.Image.Size,
-			Arch:         buildArgs.Arch,
+			Arch:         buildResult.Arch,
 			ChecksumType: koji.ChecksumType(kojiTargetOptions.Image.ChecksumType),
 			Checksum:     kojiTargetOptions.Image.Checksum,
 			Type:         koji.BuildOutputTypeImage,
