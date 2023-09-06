@@ -24,6 +24,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
+	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
@@ -395,6 +396,36 @@ func main() {
 		containersTLSVerify = config.Containers.TLSVerify
 	}
 
+	var ociConfig OCIConfiguration
+	if config.OCI != nil {
+		var creds struct {
+			User        string `toml:"user"`
+			Tenancy     string `toml:"tenancy"`
+			Region      string `toml:"region"`
+			Fingerprint string `toml:"fingerprint"`
+			PrivateKey  string `toml:"private_key"`
+			Bucket      string `toml:"bucket"`
+			Namespace   string `toml:"namespace"`
+			Compartment string `toml:"compartment"`
+		}
+		_, err := toml.DecodeFile(config.OCI.Credentials, &creds)
+		if err != nil {
+			logrus.Fatalf("cannot load oci credentials: %v", err)
+		}
+		ociConfig = OCIConfiguration{
+			ClientParams: &oci.ClientParams{
+				User:        creds.User,
+				Region:      creds.Region,
+				Tenancy:     creds.Tenancy,
+				PrivateKey:  creds.PrivateKey,
+				Fingerprint: creds.Fingerprint,
+			},
+			Bucket:      creds.Bucket,
+			Namespace:   creds.Namespace,
+			Compartment: creds.Compartment,
+		}
+	}
+
 	// depsolve jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
 	solver := dnfjson.NewBaseSolver(rpmmd_cache)
@@ -438,6 +469,7 @@ func main() {
 			KojiServers: kojiServers,
 			GCPConfig:   gcpConfig,
 			AzureConfig: azureConfig,
+			OCIConfig:   ociConfig,
 			AWSCreds:    awsCredentials,
 			AWSBucket:   awsBucket,
 			S3Config: S3Configuration{
