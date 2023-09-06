@@ -49,6 +49,9 @@ upload_threads = 8
 credentials = "/etc/osbuild-worker/aws-creds"
 bucket = "buckethead"
 
+[oci]
+credentials = "/etc/osbuild-worker/oci-creds"
+
 [generic_s3]
 credentials = "/etc/osbuild-worker/s3-creds"
 endpoint = "http://s3.example.com"
@@ -95,6 +98,9 @@ offline_token = "/etc/osbuild-worker/offline_token"
 				AWS: &awsConfig{
 					Credentials: "/etc/osbuild-worker/aws-creds",
 					Bucket:      "buckethead",
+				},
+				OCI: &ociConfig{
+					Credentials: "/etc/osbuild-worker/oci-creds",
 				},
 				GenericS3: &genericS3Config{
 					Credentials:         "/etc/osbuild-worker/s3-creds",

@@ -38,6 +38,10 @@ type awsConfig struct {
 	Bucket      string `toml:"bucket"`
 }
 
+type ociConfig struct {
+	Credentials string `toml:"credentials"`
+}
+
 type genericS3Config struct {
 	Credentials         string `toml:"credentials"`
 	Endpoint            string `toml:"endpoint"`
@@ -71,6 +75,7 @@ type workerConfig struct {
 	GenericS3      *genericS3Config            `toml:"generic_s3"`
 	Authentication *authenticationConfig       `toml:"authentication"`
 	Containers     *containersConfig           `toml:"containers"`
+	OCI            *ociConfig                  `toml:"oci"`
 	// default value: /api/worker/v1
 	BasePath string `toml:"base_path"`
 	DNFJson  string `toml:"dnf-json"`

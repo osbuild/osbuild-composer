@@ -238,11 +238,11 @@ func (c Client) createImage(objectName, bucketName, namespace, compartmentID, im
 }
 
 type ClientParams struct {
-	User        string
-	Region      string
-	Tenancy     string
-	PrivateKey  string
-	Fingerprint string
+	User        string `toml:"user"`
+	Region      string `toml:"region"`
+	Tenancy     string `toml:"tenancy"`
+	PrivateKey  string `toml:"private_key"`
+	Fingerprint string `toml:"fingerprint"`
 }
 
 type ociClient struct {
