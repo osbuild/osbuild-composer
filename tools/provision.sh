@@ -136,6 +136,38 @@ EOF
         set -x
     fi
 
+    # if OCI credentials are defined in the ENV, add them to the worker's configuration
+
+    OCI_USER=$(jq -r '.user' "$OCI_SECRETS")
+    OCI_TENANCY=$(jq -r '.tenancy' "$OCI_SECRETS")
+    OCI_REGION=$(jq -r '.region' "$OCI_SECRETS")
+    OCI_FINGERPRINT=$(jq -r '.fingerprint' "$OCI_SECRETS")
+    OCI_BUCKET_NAME=$(jq -r '.bucket' "$OCI_SECRETS")
+    OCI_NAMESPACE=$(jq -r '.namespace' "$OCI_SECRETS")
+    OCI_COMPARTMENT=$(jq -r '.compartment' "$OCI_SECRETS")
+    OCI_PRIV_KEY=$(cat "$OCI_PRIVATE_KEY")
+
+    if [[ -n "$OCI_TENANCY" ]]; then
+        set +x
+        sudo tee /etc/osbuild-worker/oci-credentials.toml > /dev/null << EOF
+user = "$OCI_USER"
+tenancy = "$OCI_TENANCY"
+region = "$OCI_REGION"
+fingerprint = "$OCI_FINGERPRINT"
+namespace = "$OCI_NAMESPACE"
+bucket = "$OCI_BUCKET_NAME"
+private_key = """
+$OCI_PRIV_KEY
+"""
+compartment = "$OCI_COMPARTMENT"
+EOF
+        sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+[oci]
+credentials = "/etc/osbuild-worker/oci-credentials.toml"
+EOF
+        set -x
+    fi
+
 else # AUTH_METHOD_NONE
     # Repositories in /etc/osbuild-composer/repositories are used only in the
     # on-premise scenario (Weldr).

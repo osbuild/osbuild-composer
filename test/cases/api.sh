@@ -22,6 +22,7 @@ CLOUD_PROVIDER_AZURE="azure"
 CLOUD_PROVIDER_AWS_S3="aws.s3"
 CLOUD_PROVIDER_GENERIC_S3="generic.s3"
 CLOUD_PROVIDER_CONTAINER_IMAGE_REGISTRY="container"
+CLOUD_PROVIDER_OCI="oci"
 
 #
 # Supported Image type names
@@ -34,6 +35,7 @@ export IMAGE_TYPE_EDGE_INSTALLER="edge-installer"
 export IMAGE_TYPE_GCP="gcp"
 export IMAGE_TYPE_IMAGE_INSTALLER="image-installer"
 export IMAGE_TYPE_GUEST="guest-image"
+export IMAGE_TYPE_OCI="oci"
 export IMAGE_TYPE_VSPHERE="vsphere"
 export IMAGE_TYPE_IOT_COMMIT="iot-commit"
 
@@ -66,6 +68,9 @@ case ${IMAGE_TYPE} in
         ;;
     "$IMAGE_TYPE_EDGE_CONTAINER")
         CLOUD_PROVIDER="${CLOUD_PROVIDER_CONTAINER_IMAGE_REGISTRY}"
+        ;;
+    "$IMAGE_TYPE_OCI")
+        CLOUD_PROVIDER="${CLOUD_PROVIDER_OCI}"
         ;;
     "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_IOT_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_VSPHERE")
         # blobby image types: upload to s3 and provide download link
@@ -175,6 +180,9 @@ case $CLOUD_PROVIDER in
     ;;
   "$CLOUD_PROVIDER_AZURE")
     source /usr/libexec/tests/osbuild-composer/api/azure.sh
+    ;;
+  "$CLOUD_PROVIDER_OCI")
+    source /usr/libexec/tests/osbuild-composer/api/oci.sh
     ;;
   "$CLOUD_PROVIDER_CONTAINER_IMAGE_REGISTRY")
     source /usr/libexec/tests/osbuild-composer/api/container.registry.sh
@@ -598,6 +606,9 @@ test "$UPLOAD_STATUS" = "success"
 EXPECTED_UPLOAD_TYPE="$CLOUD_PROVIDER"
 if [ "${CLOUD_PROVIDER}" == "${CLOUD_PROVIDER_GENERIC_S3}" ]; then
   EXPECTED_UPLOAD_TYPE="${CLOUD_PROVIDER_AWS_S3}"
+fi
+if [ "${CLOUD_PROVIDER}" == "${CLOUD_PROVIDER_OCI}" ]; then
+    EXPECTED_UPLOAD_TYPE="oci.objectstorage"
 fi
 test "$UPLOAD_TYPE" = "$EXPECTED_UPLOAD_TYPE"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"

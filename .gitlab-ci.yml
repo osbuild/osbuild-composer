@@ -490,6 +490,7 @@ cross-distro.sh:
     - vsphere
     - edge-commit generic.s3
     - edge-container
+    - oci
 
 API:
   stage: test
