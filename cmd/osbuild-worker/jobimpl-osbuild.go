@@ -908,7 +908,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 					Checksum:     imageHash,
 					Size:         imageSize,
 				},
-				OsbuildManifest: &target.KojiOutputInfo{
+				OSBuildManifest: &target.KojiOutputInfo{
 					Filename:     manifestFilename,
 					ChecksumType: target.ChecksumTypeMD5,
 					Checksum:     manifestHash,

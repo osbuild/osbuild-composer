@@ -132,7 +132,7 @@ function verify_buildinfo() {
 
     # extract the image archives paths from the output and keep only the filenames
     local outputs_images
-    outputs_images="$(koji -s "${KOJI_HUB_URL}" --noauth call --json listArchives "${buildid}" | jq -r 'map(select(.btype == "image"))')"
+    outputs_images="$(koji -s "${KOJI_HUB_URL}" --noauth call --json listArchives "${buildid}" | jq -r 'map(select(.btype == "image" and .type_name != "json"))')"
 
     # we build one image for cloud test case and two for non-cloud test case
     local outputs_images_count
@@ -147,6 +147,24 @@ function verify_buildinfo() {
             echo "Unexpected number of images in the buildinfo. Want 1, got ${outputs_images_count}."
             exit 1
         fi
+    fi
+
+    local outputs_manifests
+    outputs_manifests="$(koji -s "${KOJI_HUB_URL}" --noauth call --json listArchives "${buildid}" | jq -r 'map(select(.btype == "image" and .type_name == "json"))')"
+    local outputs_manifests_count
+    outputs_manifests_count="$(echo "${outputs_manifests}" | jq 'length')"
+    if [ "${outputs_manifests_count}" -ne "${outputs_images_count}" ]; then
+        echo "Mismatch between the number of image archives and image manifests in the buildinfo"
+        exit 1
+    fi
+
+    local outputs_logs
+    outputs_logs="$(koji -s "${KOJI_HUB_URL}" --noauth call --json getBuildLogs "${buildid}" | jq -r 'map(select(.name != "cg_import.log"))')"
+    local outputs_logs_count
+    outputs_logs_count="$(echo "${outputs_logs}" | jq 'length')"
+    if [ "${outputs_logs_count}" -ne "${outputs_images_count}" ]; then
+        echo "Mismatch between the number of image archives and image logs in the buildinfo"
+        exit 1
     fi
 
     local build_extra_md_image
@@ -296,6 +314,9 @@ koji --server="${KOJI_HUB_URL}" --noauth call --json getBuild 1
 
 greenprint "Show Koji build archives"
 koji --server="${KOJI_HUB_URL}" --noauth call --json listArchives 1
+
+greenprint "Show Koji build logs"
+koji --server="${KOJI_HUB_URL}" --noauth call --json getBuildLogs 1
 
 greenprint "Verify the Koji build info and metadata"
 verify_buildinfo 1 "${CLOUD_PROVIDER}"
