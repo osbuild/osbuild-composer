@@ -37,10 +37,10 @@ type Koji struct {
 
 // BUILD METADATA
 
-// TypeInfo is a map whose entries are the names of the build types
+// TypeInfoBuild is a map whose entries are the names of the build types
 // used for the build, and the values are free-form maps containing
 // type-specific information for the build.
-type TypeInfo struct {
+type TypeInfoBuild struct {
 	// Image holds extra metadata about all images built by the build.
 	// It is a map whose keys are the filenames of the images, and
 	// the values are the extra metadata for the image.
@@ -51,7 +51,7 @@ type TypeInfo struct {
 // BuildExtra holds extra metadata associated with the build.
 // It is a free-form map, but must contain at least the 'typeinfo' key.
 type BuildExtra struct {
-	TypeInfo TypeInfo `json:"typeinfo"`
+	TypeInfo TypeInfoBuild `json:"typeinfo"`
 }
 
 // Build represents a Koji build and holds metadata about it.
@@ -107,6 +107,10 @@ type BuildRoot struct {
 
 // OUTPUT METADATA
 
+type ImageOutputTypeExtraInfo interface {
+	isImageOutputTypeMD()
+}
+
 // ImageExtraInfo holds extra metadata about the image.
 // This structure is shared for the Extra metadata of the output and the build.
 type ImageExtraInfo struct {
@@ -118,16 +122,35 @@ type ImageExtraInfo struct {
 	BootMode string `json:"boot_mode,omitempty"`
 }
 
+func (ImageExtraInfo) isImageOutputTypeMD() {}
+
+// ManifestExtraInfo holds extra metadata about the osbuild manifest.
+type ManifestExtraInfo struct {
+	// TODO: include osbuild-composer version which produced the manifest?
+	// TODO: include the vendored 'images' version?
+
+	Arch string `json:"arch"`
+}
+
+func (ManifestExtraInfo) isImageOutputTypeMD() {}
+
 // BuildOutputExtra holds extra metadata associated with the build output.
 type BuildOutputExtra struct {
-	Image ImageExtraInfo `json:"image"`
+	// ImageOutput holds extra metadata about a single "image" output.
+	// "image" in this context is the "build type" in the Koji terminology,
+	// not necessarily an actual image. It can and must be used also for
+	// other supplementary files related to the image, such as osbuild manifest.
+	// The only exception are logs, which do not need to specify any "typeinfo".
+	ImageOutput ImageOutputTypeExtraInfo `json:"image"`
 }
 
 // BuildOutputType represents the type of a BuildOutput.
 type BuildOutputType string
 
 const (
-	BuildOutputTypeImage BuildOutputType = "image"
+	BuildOutputTypeImage    BuildOutputType = "image"
+	BuildOutputTypeLog      BuildOutputType = "log"
+	BuildOutputTypeManifest BuildOutputType = "osbuild-manifest"
 )
 
 // ChecksumType represents the type of a checksum used for a BuildOutput.

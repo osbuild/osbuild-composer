@@ -99,7 +99,7 @@ func main() {
 			Type:         koji.BuildOutputTypeImage,
 			RPMs:         []rpmmd.RPM{},
 			Extra: &koji.BuildOutputExtra{
-				Image: koji.ImageExtraInfo{
+				ImageOutput: koji.ImageExtraInfo{
 					Arch:     arch,
 					BootMode: distro.BOOT_NONE.String(), // TODO: put the correct boot mode here
 				},

@@ -179,8 +179,8 @@ func TestKojiImport(t *testing.T) {
 			Checksum:     hash,
 			Type:         koji.BuildOutputTypeImage,
 			RPMs:         []rpmmd.RPM{},
-			Extra: koji.BuildOutputExtra{
-				Image: koji.ImageExtraInfo{
+			Extra: &koji.BuildOutputExtra{
+				ImageOutput: koji.ImageExtraInfo{
 					Arch:     "noarch",
 					BootMode: distro.BOOT_LEGACY.String(),
 				},

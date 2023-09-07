@@ -198,6 +198,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 		imgOutputsExtraInfo[imageFilename] = imgOutputExtraInfo
 
+		// Image output
 		outputs = append(outputs, koji.BuildOutput{
 			BuildRootID:  uint64(i),
 			Filename:     imageFilename,
@@ -208,9 +209,44 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			Type:         koji.BuildOutputTypeImage,
 			RPMs:         imageRPMs,
 			Extra: &koji.BuildOutputExtra{
-				Image: imgOutputExtraInfo,
+				ImageOutput: imgOutputExtraInfo,
 			},
 		})
+
+		// OSBuild manifest output
+		// TODO: Condition below is present for backward compatibility with old workers which don't upload the manifest.
+		// TODO: Remove the condition it in the future.
+		if kojiTargetOptions.OSBuildManifest != nil {
+			outputs = append(outputs, koji.BuildOutput{
+				BuildRootID:  uint64(i),
+				Filename:     kojiTargetOptions.OSBuildManifest.Filename,
+				FileSize:     kojiTargetOptions.OSBuildManifest.Size,
+				Arch:         buildResult.Arch,
+				ChecksumType: koji.ChecksumType(kojiTargetOptions.OSBuildManifest.ChecksumType),
+				Checksum:     kojiTargetOptions.OSBuildManifest.Checksum,
+				Type:         koji.BuildOutputTypeManifest,
+				Extra: &koji.BuildOutputExtra{
+					ImageOutput: koji.ManifestExtraInfo{
+						Arch: buildResult.Arch,
+					},
+				},
+			})
+		}
+
+		// Build log output
+		// TODO: Condition below is present for backward compatibility with old workers which don't upload the log.
+		// TODO: Remove the condition it in the future.
+		if kojiTargetOptions.Log != nil {
+			outputs = append(outputs, koji.BuildOutput{
+				BuildRootID:  uint64(i),
+				Filename:     kojiTargetOptions.Log.Filename,
+				FileSize:     kojiTargetOptions.Log.Size,
+				Arch:         "noarch", // log file is not architecture dependent
+				ChecksumType: koji.ChecksumType(kojiTargetOptions.Log.ChecksumType),
+				Checksum:     kojiTargetOptions.Log.Checksum,
+				Type:         koji.BuildOutputTypeLog,
+			})
+		}
 	}
 
 	build := koji.Build{
@@ -222,7 +258,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		StartTime: int64(args.StartTime),
 		EndTime:   time.Now().Unix(),
 		Extra: koji.BuildExtra{
-			TypeInfo: koji.TypeInfo{
+			TypeInfo: koji.TypeInfoBuild{
 				Image: imgOutputsExtraInfo,
 			},
 		},
