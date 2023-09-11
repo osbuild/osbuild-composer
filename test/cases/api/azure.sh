@@ -110,9 +110,7 @@ function checkUploadStatusOptions() {
 
 # Log into Azure
 function cloud_login() {
-  set +x
   $AZURE_CMD login --service-principal --username "${V2_AZURE_CLIENT_ID}" --password "${V2_AZURE_CLIENT_SECRET}" --tenant "${AZURE_TENANT_ID}"
-  set -x
 }
 
 # Verify image in Azure
