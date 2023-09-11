@@ -5,12 +5,6 @@
 # uploading it to the appropriate cloud provider. The test currently supports
 # AWS and GCP.
 #
-# This script sets `-x` and is meant to always be run like that. This is
-# simpler than adding extensive error reporting, which would make this script
-# considerably more complex. Also, the full trace this produces is very useful
-# for the primary audience: developers of osbuild-composer looking at the log
-# from a run on a remote continuous integration system.
-#
 
 #
 # Cloud provider / target names
@@ -49,7 +43,7 @@ if (( $# == 0 )); then
     exit 1
 fi
 
-set -euxo pipefail
+set -euo pipefail
 
 IMAGE_TYPE="$1"
 
@@ -198,13 +192,9 @@ checkEnv
 [[ "$ID" == "rhel" ]] && printenv API_TEST_SUBSCRIPTION_ORG_ID API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2 > /dev/null
 
 function dump_db() {
-  # Disable -x for these commands to avoid printing the whole result and manifest into the log
-  set +x
-
   # Save the result, including the manifest, for the job, straight from the db
   sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
     | sudo tee "${ARTIFACTS}/build-result.txt"
-  set -x
 }
 
 WORKDIR=$(mktemp -d)
