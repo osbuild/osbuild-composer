@@ -444,6 +444,15 @@ azure.sh:
   variables:
     SCRIPT: azure.sh
 
+azure.sh_hyperv_gen2:
+  extends: .integration
+  rules:
+    # Run only on x86_64
+    - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.nightly_rules_x86_64, rules]
+  variables:
+    SCRIPT: azure_hyperv_gen2.sh
+
 # The required GCE image type is not supported on Fedora
 gcp.sh:
   extends: .integration_rhel
