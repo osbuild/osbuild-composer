@@ -94,7 +94,8 @@ const depsolveTestResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -102,7 +103,8 @@ const depsolveTestResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -110,7 +112,8 @@ const depsolveTestResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     }
@@ -1401,7 +1404,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1409,7 +1413,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1417,7 +1422,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -1468,7 +1474,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1476,7 +1483,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1484,7 +1492,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -1535,7 +1544,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1543,7 +1553,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1551,7 +1562,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -1602,7 +1614,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1610,7 +1623,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1618,7 +1632,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -1669,7 +1684,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1677,7 +1693,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1685,7 +1702,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -1736,7 +1754,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1744,7 +1763,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1752,7 +1772,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -1803,7 +1824,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1811,7 +1833,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1819,7 +1842,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -1870,7 +1894,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1878,7 +1903,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1886,7 +1912,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -1937,7 +1964,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -1945,7 +1973,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -1953,7 +1982,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2004,7 +2034,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2012,7 +2043,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2020,7 +2052,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2071,7 +2104,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2079,7 +2113,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2087,7 +2122,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2138,7 +2174,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2146,7 +2183,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2154,7 +2192,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2205,7 +2244,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2213,7 +2253,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2221,7 +2262,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2272,7 +2314,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2280,7 +2323,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2288,7 +2332,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2339,7 +2384,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2347,7 +2393,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2355,7 +2402,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2406,7 +2454,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2414,7 +2463,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2422,7 +2472,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2473,7 +2524,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2481,7 +2533,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2489,7 +2542,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2540,7 +2594,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2548,7 +2603,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2556,7 +2612,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2607,7 +2664,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2615,7 +2673,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2623,7 +2682,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2674,7 +2734,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2682,7 +2743,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2690,7 +2752,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2741,7 +2804,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2749,7 +2813,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2757,7 +2822,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2808,7 +2874,8 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2816,7 +2883,8 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2824,7 +2892,8 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     }
@@ -2882,7 +2951,8 @@ const modulesInfoFilteredResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2890,7 +2960,8 @@ const modulesInfoFilteredResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2898,7 +2969,8 @@ const modulesInfoFilteredResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -2949,7 +3021,8 @@ const modulesInfoFilteredResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -2957,7 +3030,8 @@ const modulesInfoFilteredResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -2965,7 +3039,8 @@ const modulesInfoFilteredResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -3016,7 +3091,8 @@ const modulesInfoFilteredResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -3024,7 +3100,8 @@ const modulesInfoFilteredResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -3032,7 +3109,8 @@ const modulesInfoFilteredResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     },
@@ -3083,7 +3161,8 @@ const modulesInfoFilteredResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -3091,7 +3170,8 @@ const modulesInfoFilteredResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -3099,7 +3179,8 @@ const modulesInfoFilteredResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     }
@@ -3157,7 +3238,8 @@ const modulesInfoPackage16Response = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         },
         {
           "name": "dep-package1",
@@ -3165,7 +3247,8 @@ const modulesInfoPackage16Response = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
         },
         {
           "name": "dep-package2",
@@ -3173,7 +3256,8 @@ const modulesInfoPackage16Response = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
-          "check_gpg": true
+          "check_gpg": true,
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
         }
       ]
     }
