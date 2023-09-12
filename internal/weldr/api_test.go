@@ -1907,6 +1907,7 @@ func TestModulesInfo(t *testing.T) {
 
 	for _, c := range cases {
 		api, _ := createWeldrAPI(tempdir, c.Fixture)
+		t.Logf("Path = %s", c.Path)
 		test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 	}
 }
