@@ -59,9 +59,12 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 				continue
 			}
 			dJR := &worker.DepsolveJobResult{
-				PackageSpecs: map[string][]rpmmd.PackageSpec{"build": {{Name: "pkg1"}}},
-				Error:        "",
-				ErrorType:    worker.ErrorType(""),
+				PackageSpecs: map[string][]rpmmd.PackageSpec{"build": {{
+					Name:     "pkg1",
+					Checksum: "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
+				}}},
+				Error:     "",
+				ErrorType: worker.ErrorType(""),
 			}
 
 			if failDepsolve {
@@ -585,7 +588,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 		]
 	}`, jobId, jobId))
 
-	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"":{"url":""}}}}}`
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":""}}}}}`
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
 		"href": "/api/image-builder-composer/v2/composes/%v/manifests",
