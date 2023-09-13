@@ -70,7 +70,7 @@ func executeTests(m *testing.M) int {
 	if err != nil {
 		panic(err)
 	}
-	distro2 := test_distro.New2()
+	distro2 := test_distro.NewTestDistro("test-distro-2", "platform:test-2", "2")
 
 	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
 		test_distro.TestDistroName: {
