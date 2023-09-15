@@ -157,7 +157,7 @@ func main() {
 		if repo.GPGKey != "" {
 			keys = []string{repo.GPGKey}
 		}
-
+		checkGPG := repo.CheckGPG
 		repos[i] = rpmmd.RepoConfig{
 			Id:           repoId,
 			Name:         repoName,
@@ -165,7 +165,7 @@ func main() {
 			Metalink:     repo.Metalink,
 			MirrorList:   repo.MirrorList,
 			GPGKeys:      keys,
-			CheckGPG:     &repo.CheckGPG,
+			CheckGPG:     &checkGPG,
 			CheckRepoGPG: common.ToPtr(false),
 			IgnoreSSL:    common.ToPtr(false),
 			PackageSets:  repo.PackageSets,
