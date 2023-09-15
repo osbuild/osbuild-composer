@@ -1171,6 +1171,18 @@ components:
           $ref: '#/components/schemas/FDO'
         ignition:
           $ref: '#/components/schemas/Ignition'
+        partitioning_mode:
+          type: string
+          enum:
+            - raw
+            - lvm
+            - auto-lvm
+          default: auto-lvm
+          description: |
+            Select how the disk image will be partitioned. 'auto-lvm' will use raw unless
+            there are one or more mountpoints in which case it will use LVM. 'lvm' always
+            uses LVM, even when there are no extra mountpoints. 'raw' uses raw partitions
+            even when there are one or more mountpoints.
     Container:
       type: object
       required:

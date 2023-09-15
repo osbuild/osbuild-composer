@@ -3,6 +3,7 @@ package v2
 import (
 	"testing"
 
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/subscription"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -304,4 +305,19 @@ func TestGetSubscriptions(t *testing.T) {
 	sub = cr.GetSubscription()
 	assert.Equal(t, expected, sub)
 
+}
+
+func TestGetPartitioningMode(t *testing.T) {
+	// Empty Partitioning Mode
+	cr := ComposeRequest{}
+	_, err := cr.GetPartitioningMode()
+	assert.NoError(t, err)
+
+	// Populated PartitioningMode
+	cr = ComposeRequest{Customizations: &Customizations{
+		PartitioningMode: common.ToPtr(CustomizationsPartitioningModeAutoLvm),
+	}}
+	pm, err := cr.GetPartitioningMode()
+	assert.NoError(t, err)
+	assert.Equal(t, disk.AutoLVMPartitioningMode, pm)
 }
