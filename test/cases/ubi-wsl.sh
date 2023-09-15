@@ -195,6 +195,7 @@ $AZURE_CMD vm create \
    --location "$AZURE_WSL_LOCATION" \
     --nic-delete-option delete \
     --os-disk-delete-option delete \
+    --os-type windows \
     --size "Standard_D2as_v5"
 
 $AZURE_CMD vm open-port --resource-group "$AZURE_RESOURCE_GROUP" --name "wsl-vm-$TEST_ID" --port 22
