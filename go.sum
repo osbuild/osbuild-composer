@@ -581,8 +581,8 @@ github.com/openshift-online/ocm-sdk-go v0.1.362 h1:MoaSMCSzcr8nSK9DBqKmZ9c5e4Cp8
 github.com/openshift-online/ocm-sdk-go v0.1.362/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
-github.com/osbuild/images v0.3.0 h1:eedZbt/9B8UNVfI8TDfFNqX+Psi9YMOdbA1MXcBPHnk=
-github.com/osbuild/images v0.3.0/go.mod h1:lZsi8oJNfk57VRv5zhdrSLmn0z8YPcQzZBxzdHNfZls=
+github.com/osbuild/images v0.3.0-r9.3.2 h1:jSt69Ac/6vh+7hLx1M6c5ER0+aARLxB3+I/W6bTcBCE=
+github.com/osbuild/images v0.3.0-r9.3.2/go.mod h1:lZsi8oJNfk57VRv5zhdrSLmn0z8YPcQzZBxzdHNfZls=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=
 github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 h1:KoWmjvw+nsYOo29YJK9vDA65RGE3NrOnUtO7a+RF9HU=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
