@@ -539,6 +539,12 @@ func minimalrpmPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"@core",
+			"initial-setup",
+			"libxkbcommon",
+			"NetworkManager-wifi",
+			"brcmfmac-firmware",
+			"realtek-firmware",
+			"iwlwifi-mvm-firmware",
 		},
 	}
 }

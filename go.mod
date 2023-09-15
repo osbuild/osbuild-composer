@@ -31,7 +31,7 @@ require (
 	github.com/labstack/gommon v0.4.0
 	github.com/openshift-online/ocm-sdk-go v0.1.362
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
-	github.com/osbuild/images v0.3.0
+	github.com/osbuild/images v0.3.0-r9.3.2
 	github.com/prometheus/client_golang v1.16.0
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sirupsen/logrus v1.9.3
