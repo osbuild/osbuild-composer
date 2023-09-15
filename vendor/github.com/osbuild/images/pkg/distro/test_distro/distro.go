@@ -1,14 +1,11 @@
 package test_distro
 
 import (
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"sort"
 
-	dnfjson_mock "github.com/osbuild/images/internal/mocks/dnfjson"
 	"github.com/osbuild/images/pkg/blueprint"
-	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distroregistry"
 	"github.com/osbuild/images/pkg/manifest"
@@ -297,13 +294,13 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 	return m, nil, nil
 }
 
-// newTestDistro returns a new instance of TestDistro with the
+// NewTestDistro returns a new instance of TestDistro with the
 // given name and modulePlatformID.
 //
 // It contains two architectures "test_arch" and "test_arch2".
 // "test_arch" contains one image type "test_type".
 // "test_arch2" contains two image types "test_type" and "test_type2".
-func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
+func NewTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 	td := TestDistro{
 		name:             name,
 		releasever:       releasever,
@@ -378,7 +375,7 @@ func newTestDistro(name, modulePlatformID, releasever string) *TestDistro {
 
 // New returns new instance of TestDistro named "test-distro".
 func New() *TestDistro {
-	return newTestDistro(TestDistroName, TestDistroModulePlatformID, TestDistroReleasever)
+	return NewTestDistro(TestDistroName, TestDistroModulePlatformID, TestDistroReleasever)
 }
 
 func NewRegistry() *distroregistry.Registry {
@@ -391,48 +388,4 @@ func NewRegistry() *distroregistry.Registry {
 	// Override the host's architecture name with the test's name
 	registry.SetHostArchName(TestArchName)
 	return registry
-}
-
-// New2 returns new instance of TestDistro named "test-distro-2".
-func New2() *TestDistro {
-	return newTestDistro(TestDistro2Name, TestDistro2ModulePlatformID, TestDistro2Releasever)
-}
-
-// ResolveContent transforms content source specs into resolved specs for serialization.
-// For packages, it uses the dnfjson_mock.BaseDeps() every time, but retains
-// the map keys from the input.
-// For ostree commits it hashes the URL+Ref to create a checksum.
-func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]container.SourceSpec, commits map[string][]ostree.SourceSpec) (map[string][]rpmmd.PackageSpec, map[string][]container.Spec, map[string][]ostree.CommitSpec) {
-
-	pkgSpecs := make(map[string][]rpmmd.PackageSpec, len(pkgs))
-	for name := range pkgs {
-		pkgSpecs[name] = dnfjson_mock.BaseDeps()
-	}
-
-	containerSpecs := make(map[string][]container.Spec, len(containers))
-	for name := range containers {
-		containerSpecs[name] = make([]container.Spec, len(containers[name]))
-		for idx := range containers[name] {
-			containerSpecs[name][idx] = container.Spec{
-				Source:    containers[name][idx].Source,
-				TLSVerify: containers[name][idx].TLSVerify,
-				LocalName: containers[name][idx].Name,
-			}
-		}
-	}
-
-	commitSpecs := make(map[string][]ostree.CommitSpec, len(commits))
-	for name := range commits {
-		commitSpecs[name] = make([]ostree.CommitSpec, len(commits[name]))
-		for idx := range commits[name] {
-			commitSpecs[name][idx] = ostree.CommitSpec{
-				Ref:      commits[name][idx].Ref,
-				URL:      commits[name][idx].URL,
-				Checksum: fmt.Sprintf("%x", sha256.Sum256([]byte(commits[name][idx].URL+commits[name][idx].Ref))),
-			}
-			fmt.Printf("Test distro spec: %+v\n", commitSpecs[name][idx])
-		}
-	}
-
-	return pkgSpecs, containerSpecs, commitSpecs
 }

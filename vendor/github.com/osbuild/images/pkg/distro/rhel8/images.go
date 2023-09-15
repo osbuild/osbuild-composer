@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/fdo"
+	"github.com/osbuild/images/internal/fsnode"
 	"github.com/osbuild/images/internal/ignition"
 	"github.com/osbuild/images/internal/oscap"
 	"github.com/osbuild/images/internal/users"
@@ -250,6 +251,9 @@ func osCustomizations(
 	osc.UdevRules = imageConfig.UdevRules
 	osc.GCPGuestAgentConfig = imageConfig.GCPGuestAgentConfig
 	osc.WSLConfig = imageConfig.WSLConfig
+
+	osc.Files = append(osc.Files, imageConfig.Files...)
+	osc.Directories = append(osc.Directories, imageConfig.Directories...)
 
 	return osc
 }
@@ -598,4 +602,14 @@ func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultRef string) (o
 		Ref:  commitRef,
 		RHSM: options.RHSM,
 	}, nil
+}
+
+// initialSetupKickstart returns the File configuration for a kickstart file
+// that's required to enable initial-setup to run on first boot.
+func initialSetupKickstart() *fsnode.File {
+	file, err := fsnode.NewFile("/root/anaconda-ks.cfg", nil, "root", "root", []byte("# Run initial-setup on first boot\n# Created by osbuild\nfirstboot --reconfig\nlang en_US.UTF-8\n"))
+	if err != nil {
+		panic(err)
+	}
+	return file
 }

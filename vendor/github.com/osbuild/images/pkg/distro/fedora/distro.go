@@ -8,6 +8,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
+	"github.com/osbuild/images/internal/fsnode"
 	"github.com/osbuild/images/internal/oscap"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -31,8 +32,11 @@ const (
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
 
-	//Kernel options for ami, qcow2, openstack, vhd and vmdk types
-	defaultKernelOptions = "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
+	//Default kernel command line
+	defaultKernelOptions = "ro"
+
+	// Added kernel command line options for ami, qcow2, openstack, vhd and vmdk types
+	cloudKernelOptions = "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
 )
 
 var (
@@ -59,6 +63,13 @@ var (
 		"redboot-task-runner",
 		"parsec",
 		"dbus-parsec",
+	}
+
+	minimalRawServices = []string{
+		"NetworkManager.service",
+		"firewalld.service",
+		"initial-setup.service",
+		"sshd.service",
 	}
 
 	// Image Definitions
@@ -237,7 +248,7 @@ var (
 				"cloud-init-local.service",
 			},
 		},
-		kernelOptions:       defaultKernelOptions,
+		kernelOptions:       cloudKernelOptions,
 		bootable:            true,
 		defaultSize:         5 * common.GibiByte,
 		image:               diskImage,
@@ -245,35 +256,6 @@ var (
 		payloadPipelines:    []string{"os", "image", "qcow2"},
 		exports:             []string{"qcow2"},
 		basePartitionTables: defaultBasePartitionTables,
-	}
-
-	vhdImgType = imageType{
-		name:     "vhd",
-		filename: "disk.vhd",
-		mimeType: "application/x-vhd",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: vhdCommonPackageSet,
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.ToPtr("en_US.UTF-8"),
-			EnabledServices: []string{
-				"sshd",
-			},
-			DefaultTarget: common.ToPtr("multi-user.target"),
-			DisabledServices: []string{
-				"proc-sys-fs-binfmt_misc.mount",
-				"loadmodules.service",
-			},
-		},
-		kernelOptions:       defaultKernelOptions,
-		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
-		image:               diskImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "vpc"},
-		exports:             []string{"vpc"},
-		basePartitionTables: defaultBasePartitionTables,
-		environment:         &environment.Azure{},
 	}
 
 	vmdkDefaultImageConfig = &distro.ImageConfig{
@@ -294,7 +276,7 @@ var (
 			osPkgsKey: vmdkCommonPackageSet,
 		},
 		defaultImageConfig:  vmdkDefaultImageConfig,
-		kernelOptions:       defaultKernelOptions,
+		kernelOptions:       cloudKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * common.GibiByte,
 		image:               diskImage,
@@ -312,7 +294,7 @@ var (
 			osPkgsKey: vmdkCommonPackageSet,
 		},
 		defaultImageConfig:  vmdkDefaultImageConfig,
-		kernelOptions:       defaultKernelOptions,
+		kernelOptions:       cloudKernelOptions,
 		bootable:            true,
 		defaultSize:         2 * common.GibiByte,
 		image:               diskImage,
@@ -375,6 +357,12 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: minimalrpmPackageSet,
 		},
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: minimalRawServices,
+			// NOTE: temporary workaround for a bug in initial-setup that
+			// requires a kickstart file in the root directory.
+			Files: []*fsnode.File{initialSetupKickstart()},
+		},
 		rpmOstree:           false,
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
@@ -383,7 +371,7 @@ var (
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: defaultBasePartitionTables,
+		basePartitionTables: minimalrawPartitionTables,
 	}
 )
 
@@ -572,6 +560,25 @@ func newDistro(version int) distro.Distro {
 	openstackImgType := qcow2ImgType
 	openstackImgType.name = "openstack"
 
+	vhdImgType := qcow2ImgType
+	vhdImgType.name = "vhd"
+	vhdImgType.filename = "disk.vhd"
+	vhdImgType.mimeType = "application/x-vhd"
+	vhdImgType.payloadPipelines = []string{"os", "image", "vpc"}
+	vhdImgType.exports = []string{"vpc"}
+	vhdImgType.environment = &environment.Azure{}
+	vhdImgType.packageSets = map[string]packageSetFunc{
+		osPkgsKey: vhdCommonPackageSet,
+	}
+	vhdConfig := distro.ImageConfig{
+		SshdConfig: &osbuild.SshdConfigStageOptions{
+			Config: osbuild.SshdConfigConfig{
+				ClientAliveInterval: common.ToPtr(120),
+			},
+		},
+	}
+	vhdImgType.defaultImageConfig = vhdConfig.InheritFrom(qcow2ImgType.defaultImageConfig)
+
 	x86_64.addImageTypes(
 		&platform.X86{
 			BIOS:       true,
@@ -716,10 +723,12 @@ func newDistro(version int) distro.Distro {
 		&platform.Aarch64{
 			BasePlatform: platform.BasePlatform{
 				FirmwarePackages: []string{
-					"arm-image-installer", // ??
+					"arm-image-installer",
 					"bcm283x-firmware",
-					"iwl7260-firmware",
-					"uboot-images-armv8", // ??
+					"brcmfmac-firmware",
+					"iwlwifi-mvm-firmware",
+					"realtek-firmware",
+					"uboot-images-armv8",
 				},
 			},
 			UEFIVendor: "fedora",
@@ -731,7 +740,7 @@ func newDistro(version int) distro.Distro {
 		liveInstallerImgType,
 	)
 	aarch64.addImageTypes(
-		&platform.Aarch64_IoT{
+		&platform.Aarch64_Fedora{
 			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_RAW,
 			},
@@ -781,10 +790,18 @@ func newDistro(version int) distro.Distro {
 		minimalrawImgType,
 	)
 	aarch64.addImageTypes(
-		&platform.Aarch64{
+		&platform.Aarch64_Fedora{
 			UEFIVendor: "fedora",
 			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_RAW,
+				FirmwarePackages: []string{
+					"arm-image-installer",
+					"bcm283x-firmware",
+					"uboot-images-armv8",
+				},
+			},
+			BootFiles: [][2]string{
+				{"/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"},
 			},
 		},
 		minimalrawImgType,
@@ -803,8 +820,10 @@ func newDistro(version int) distro.Distro {
 						"grub2-tools",
 						"grub2-tools-extra",
 						"grub2-tools-minimal",
+						"brcmfmac-firmware",
 						"iwlwifi-dvm-firmware",
 						"iwlwifi-mvm-firmware",
+						"realtek-firmware",
 						"microcode_ctl",
 						"syslinux",
 						"syslinux-nonlinux",
@@ -826,6 +845,10 @@ func newDistro(version int) distro.Distro {
 						"grub2-tools",
 						"grub2-tools-extra",
 						"grub2-tools-minimal",
+						"brcmfmac-firmware",
+						"iwlwifi-dvm-firmware",
+						"iwlwifi-mvm-firmware",
+						"realtek-firmware",
 						"uboot-images-armv8",
 					},
 				},

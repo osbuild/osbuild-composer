@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/internal/fsnode"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -148,8 +149,14 @@ func minimalRawImgType(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: minimalrpmPackageSet,
 		},
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: minimalrawServices(rd),
+			// NOTE: temporary workaround for a bug in initial-setup that
+			// requires a kickstart file in the root directory.
+			Files: []*fsnode.File{initialSetupKickstart()},
+		},
 		rpmOstree:           false,
-		kernelOptions:       "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0",
+		kernelOptions:       "ro",
 		bootable:            true,
 		defaultSize:         2 * common.GibiByte,
 		image:               diskImage,
@@ -400,4 +407,11 @@ func edgeServices(rd distribution) []string {
 	}
 
 	return edgeServices
+}
+
+func minimalrawServices(rd distribution) []string {
+	// Common Services
+	var minimalrawServices = []string{"NetworkManager.service", "firewalld.service", "sshd.service", "initial-setup.service"}
+
+	return minimalrawServices
 }
