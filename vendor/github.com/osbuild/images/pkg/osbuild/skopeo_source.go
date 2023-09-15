@@ -32,7 +32,9 @@ func NewSkopeoSourceItem(name, digest string, tlsVerify *bool) SkopeoSourceItem 
 			TLSVerify: tlsVerify,
 		},
 	}
-
+	if err := item.validate(); err != nil {
+		panic(err)
+	}
 	return item
 }
 
@@ -60,14 +62,8 @@ func NewSkopeoSource() *SkopeoSource {
 // if any of the supplied options are invalid or missing
 func (source *SkopeoSource) AddItem(name, digest, image string, tlsVerify *bool) {
 	item := NewSkopeoSourceItem(name, digest, tlsVerify)
-
-	if err := item.validate(); err != nil {
-		panic(err)
-	}
-
 	if !skopeoDigestPattern.MatchString(image) {
 		panic("item has invalid image id")
 	}
-
 	source.Items[image] = item
 }
