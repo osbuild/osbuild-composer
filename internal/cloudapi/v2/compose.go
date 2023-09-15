@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/subscription"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 )
@@ -423,4 +424,23 @@ func (request *ComposeRequest) GetSubscription() (sub *subscription.ImageOptions
 	}
 
 	return
+}
+
+// GetPartitioningMode returns the partitioning mode included in the request
+// or defaults to AutoLVMPartitioningMode if not included
+func (request *ComposeRequest) GetPartitioningMode() (disk.PartitioningMode, error) {
+	if request.Customizations == nil || request.Customizations.PartitioningMode == nil {
+		return disk.AutoLVMPartitioningMode, nil
+	}
+
+	switch *request.Customizations.PartitioningMode {
+	case CustomizationsPartitioningModeRaw:
+		return disk.RawPartitioningMode, nil
+	case CustomizationsPartitioningModeLvm:
+		return disk.LVMPartitioningMode, nil
+	case CustomizationsPartitioningModeAutoLvm:
+		return disk.AutoLVMPartitioningMode, nil
+	}
+
+	return disk.AutoLVMPartitioningMode, HTTPError(ErrorInvalidPartitioningMode)
 }

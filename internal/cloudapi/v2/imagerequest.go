@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/google/uuid"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -14,11 +15,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-// GetImageOptions returns the initial ImageOptions with Size set
+// GetImageOptions returns the initial ImageOptions with Size and PartitioningMode set
 // The size is set to the largest of:
 //   - Default size for the image type
 //   - Blueprint filesystem customizations
 //   - Requested size
+//
+// The partitioning mode is set to AutoLVM which will select LVM if there are additional mountpoints
 func (ir *ImageRequest) GetImageOptions(imageType distro.ImageType, bp blueprint.Blueprint) distro.ImageOptions {
 	// NOTE: The size is in bytes
 	var size uint64
@@ -30,7 +33,7 @@ func (ir *ImageRequest) GetImageOptions(imageType distro.ImageType, bp blueprint
 	} else {
 		size = imageType.Size(*ir.Size)
 	}
-	return distro.ImageOptions{Size: size}
+	return distro.ImageOptions{Size: size, PartitioningMode: disk.AutoLVMPartitioningMode}
 }
 
 // GetImageTarget returns the target for the selected image type

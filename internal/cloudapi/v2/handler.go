@@ -218,6 +218,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		// Set Subscription from the compose request
 		imageOptions.Subscription = request.GetSubscription()
 
+		// Set PartitioningMode from the compose request
+		imageOptions.PartitioningMode, err = request.GetPartitioningMode()
+		if err != nil {
+			return err
+		}
+
 		// Set OSTree options from the image request
 		imageOptions.OSTree, err = ir.GetOSTreeOptions()
 		if err != nil {

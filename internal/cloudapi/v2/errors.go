@@ -47,6 +47,7 @@ const (
 	ErrorImageNotFound                ServiceErrorCode = 34
 	ErrorInvalidCustomization         ServiceErrorCode = 35
 	ErrorLocalSaveNotEnabled          ServiceErrorCode = 36
+	ErrorInvalidPartitioningMode      ServiceErrorCode = 37
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -125,6 +126,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorImageNotFound, http.StatusBadRequest, "Image with given id not found"},
 		serviceError{ErrorInvalidCustomization, http.StatusBadRequest, "Invalid image customization"},
 		serviceError{ErrorLocalSaveNotEnabled, http.StatusBadRequest, "local_save is not enabled"},
+		serviceError{ErrorInvalidPartitioningMode, http.StatusBadRequest, "Requested partitioning mode is invalid"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
