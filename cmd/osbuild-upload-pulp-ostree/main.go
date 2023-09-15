@@ -30,5 +30,5 @@ func main() {
 	repoURL, err := client.UploadAndDistributeCommit(filename, repository, basePath)
 	check(err)
 
-	fmt.Printf("The commit will be available in the repository at %s\n", repoURL)
+	fmt.Printf("The commit is available in the repository at %s\n", repoURL)
 }
