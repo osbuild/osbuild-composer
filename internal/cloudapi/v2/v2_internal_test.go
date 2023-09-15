@@ -186,9 +186,10 @@ func TestRepoConfigConversion(t *testing.T) {
 	}
 
 	for idx, tc := range testCases {
+		repoConfig := tc.repoConfig
 		rc, err := genRepoConfig(tc.repo)
 		assert.NoError(err)
-		assert.Equal(&tc.repoConfig, rc, "mismatch in test case %d", idx)
+		assert.Equal(&repoConfig, rc, "mismatch in test case %d", idx)
 	}
 
 	errorTestCases := []struct {
