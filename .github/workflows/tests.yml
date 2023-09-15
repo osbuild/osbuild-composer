@@ -130,6 +130,7 @@ jobs:
         with:
           version: v1.51.0
           args: --verbose --timeout 5m0s
+          skip-cache: true
 
   prepare:
     name: "🔍 Check source preparation"
