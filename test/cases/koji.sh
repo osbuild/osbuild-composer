@@ -35,6 +35,9 @@ TEST_TYPE_CLOUD_UPLOAD="cloud-upload"
 # test Koji compose via cloudapi without upload to cloud by default
 TEST_TYPE="${1:-$TEST_TYPE_CLOUDAPI}"
 
+# Koji hub URL to use for testing
+KOJI_HUB_URL="http://localhost:8080/kojihub"
+
 #
 # Cloud upload - check environment and prepare it
 #
@@ -114,12 +117,12 @@ trap cleanups EXIT
 
 # Verify that all the expected information is present in the buildinfo
 function verify_buildinfo() {
-    local buildinfo="${1}"
+    local buildid="${1}"
     local target_cloud="${2:-none}"
 
     local extra_build_metadata
     # extract the extra build metadata JSON from the output
-    extra_build_metadata="$(echo "${buildinfo}" | grep -oP '(?<=Extra: ).*' | tr "'" '"')"
+    extra_build_metadata="$(koji -s "${KOJI_HUB_URL}" --noauth call --json getBuild "${buildid}" | jq -r '.extra')"
 
     # sanity check the extra build metadata
     if [ -z "${extra_build_metadata}" ]; then
@@ -129,53 +132,66 @@ function verify_buildinfo() {
 
     # extract the image archives paths from the output and keep only the filenames
     local outputs_images
-    outputs_images="$(echo "${buildinfo}" |
-        sed -zE 's/.*Image archives:\n((\S+\n){1,})([\w\s]+:){0,}.*/\1/g' |
-        sed -E 's/.*\/(.*)/\1/g')"
+    outputs_images="$(koji -s "${KOJI_HUB_URL}" --noauth call --json listArchives "${buildid}" | jq -r 'map(select(.btype == "image"))')"
 
     # we build one image for cloud test case and two for non-cloud test case
+    local outputs_images_count
+    outputs_images_count="$(echo "${outputs_images}" | jq 'length')"
     if [ "${target_cloud}" == "none" ]; then
-        if [[ $(echo "${outputs_images}" | wc -l) -ne 2 ]]; then
-            echo "Unexpected number of images in the buildinfo"
+        if [ "${outputs_images_count}" -ne 2 ]; then
+            echo "Unexpected number of images in the buildinfo. Want 2, got ${outputs_images_count}."
             exit 1
         fi
     else
-        if [[ $(echo "${outputs_images}" | wc -l) -ne 1 ]]; then
-            echo "Unexpected number of images in the buildinfo"
+        if [ "${outputs_images_count}" -ne 1 ]; then
+            echo "Unexpected number of images in the buildinfo. Want 1, got ${outputs_images_count}."
             exit 1
         fi
     fi
 
-    local images_metadata
-    images_metadata="$(echo "${extra_build_metadata}" | jq -r '.typeinfo.image')"
+    local build_extra_md_image
+    build_extra_md_image="$(echo "${extra_build_metadata}" | jq -r '.typeinfo.image')"
 
-    for image in $outputs_images; do
-        local image_metadata
-        image_metadata="$(echo "${images_metadata}" | jq -r ".\"${image}\"")"
-        if [ "${image_metadata}" == "null" ]; then
-            echo "Image metadata for '${image}' is missing"
+    for image_idx in $(seq 0 $((outputs_images_count - 1))); do
+        local image
+        image="$(echo "${outputs_images}" | jq -r ".[${image_idx}]")"
+
+        local image_filename
+        image_filename="$(echo "${image}" | jq -r '.filename')"
+
+        local image_metadata_build
+        image_metadata_build="$(echo "${build_extra_md_image}" | jq -r ".\"${image_filename}\"")"
+        if [ "${image_metadata_build}" == "null" ]; then
+            echo "Image metadata for '${image_filename}' is missing"
             exit 1
         fi
 
         local image_arch
-        image_arch="$(echo "${image_metadata}" | jq -r '.arch')"
+        image_arch="$(echo "${image_metadata_build}" | jq -r '.arch')"
         if [ "${image_arch}" != "${ARCH}" ]; then
-            echo "Unexpected arch for '${image}'. Expected '${ARCH}', but got '${image_arch}'"
+            echo "Unexpected arch for '${image_filename}'. Expected '${ARCH}', but got '${image_arch}'"
             exit 1
         fi
 
         local image_boot_mode
-        image_boot_mode="$(echo "${image_metadata}" | jq -r '.boot_mode')"
+        image_boot_mode="$(echo "${image_metadata_build}" | jq -r '.boot_mode')"
         # for now, check just that the boot mode is a valid value
         case "${image_boot_mode}" in
             "uefi"|"legacy"|"hybrid")
                 ;;
             "none"|*)
                 # for now, we don't upload any images that have 'none' as boot mode, although it is a valid value
-                echo "Unexpected boot mode for '${image}'. Expected 'uefi', 'legacy' or 'hybrid', but got '${image_boot_mode}'"
+                echo "Unexpected boot mode for '${image_filename}'. Expected 'uefi', 'legacy' or 'hybrid', but got '${image_boot_mode}'"
                 exit 1
                 ;;
         esac
+
+        local image_metadata_archive
+        image_metadata_archive="$(echo "${image}" | jq -r '.extra.image')"
+        if [ "${image_metadata_build}" != "${image_metadata_archive}" ]; then
+            echo "Image extra metadata for '${image_filename}' in the build metadata and in the archive metadata differ"
+            exit 1
+        fi
     done
 }
 
@@ -200,10 +216,10 @@ sudo cp \
 sudo update-ca-trust
 
 greenprint "Testing Koji"
-koji --server=http://localhost:8080/kojihub --user=osbuild --password=osbuildpass --authtype=password hello
+koji --server="${KOJI_HUB_URL}" --user=osbuild --password=osbuildpass --authtype=password hello
 
 greenprint "Creating Koji task"
-koji --server=http://localhost:8080/kojihub --user kojiadmin --password kojipass --authtype=password make-task image
+koji --server="${KOJI_HUB_URL}" --user kojiadmin --password kojipass --authtype=password make-task image
 
 # Always build the latest RHEL - that suits the koji API usecase the most.
 if [[ "$DISTRO_CODE" == rhel-8* ]]; then
@@ -270,14 +286,19 @@ if [[ "$TEST_TYPE" == "$TEST_TYPE_CLOUD_UPLOAD" ]]; then
 fi
 
 greenprint "Show Koji task"
-koji --server=http://localhost:8080/kojihub taskinfo 1
+koji --server="${KOJI_HUB_URL}" taskinfo 1
 
 greenprint "Show Koji buildinfo"
-BUILDINFO_OUTPUT="$(koji --server=http://localhost:8080/kojihub buildinfo 1)"
-echo "${BUILDINFO_OUTPUT}"
+koji --server="${KOJI_HUB_URL}" buildinfo 1
 
-greenprint "Verify the buildinfo output"
-verify_buildinfo "${BUILDINFO_OUTPUT}" "${CLOUD_PROVIDER}"
+greenprint "Show Koji raw buildinfo"
+koji --server="${KOJI_HUB_URL}" --noauth call --json getBuild 1
+
+greenprint "Show Koji build archives"
+koji --server="${KOJI_HUB_URL}" --noauth call --json listArchives 1
+
+greenprint "Verify the Koji build info and metadata"
+verify_buildinfo 1 "${CLOUD_PROVIDER}"
 
 greenprint "Run the integration test"
 sudo /usr/libexec/osbuild-composer-test/osbuild-koji-tests
