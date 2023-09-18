@@ -247,35 +247,6 @@ var (
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
-	vhdImgType = imageType{
-		name:     "vhd",
-		filename: "disk.vhd",
-		mimeType: "application/x-vhd",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: vhdCommonPackageSet,
-		},
-		defaultImageConfig: &distro.ImageConfig{
-			Locale: common.ToPtr("en_US.UTF-8"),
-			EnabledServices: []string{
-				"sshd",
-			},
-			DefaultTarget: common.ToPtr("multi-user.target"),
-			DisabledServices: []string{
-				"proc-sys-fs-binfmt_misc.mount",
-				"loadmodules.service",
-			},
-		},
-		kernelOptions:       defaultKernelOptions,
-		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
-		image:               diskImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "vpc"},
-		exports:             []string{"vpc"},
-		basePartitionTables: defaultBasePartitionTables,
-		environment:         &environment.Azure{},
-	}
-
 	vmdkDefaultImageConfig = &distro.ImageConfig{
 		Locale: common.ToPtr("en_US.UTF-8"),
 		EnabledServices: []string{
@@ -571,6 +542,25 @@ func newDistro(version int) distro.Distro {
 
 	openstackImgType := qcow2ImgType
 	openstackImgType.name = "openstack"
+
+	vhdImgType := qcow2ImgType
+	vhdImgType.name = "vhd"
+	vhdImgType.filename = "disk.vhd"
+	vhdImgType.mimeType = "application/x-vhd"
+	vhdImgType.payloadPipelines = []string{"os", "image", "vpc"}
+	vhdImgType.exports = []string{"vpc"}
+	vhdImgType.environment = &environment.Azure{}
+	vhdImgType.packageSets = map[string]packageSetFunc{
+		osPkgsKey: vhdCommonPackageSet,
+	}
+	vhdConfig := distro.ImageConfig{
+		SshdConfig: &osbuild.SshdConfigStageOptions{
+			Config: osbuild.SshdConfigConfig{
+				ClientAliveInterval: common.ToPtr(120),
+			},
+		},
+	}
+	vhdImgType.defaultImageConfig = vhdConfig.InheritFrom(qcow2ImgType.defaultImageConfig)
 
 	x86_64.addImageTypes(
 		&platform.X86{

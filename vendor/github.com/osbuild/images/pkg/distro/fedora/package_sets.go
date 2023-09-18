@@ -11,13 +11,12 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
+func cloudBaseSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"@Fedora Cloud Server",
 			"chrony", // not mentioned in the kickstart, anaconda pulls it when setting the timezone
 			"langpacks-en",
-			"qemu-guest-agent",
 		},
 		Exclude: []string{
 			"dracut-config-rescue",
@@ -29,25 +28,22 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 }
 
+func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
+	return cloudBaseSet(t).Append(
+		rpmmd.PackageSet{
+			Include: []string{
+				"qemu-guest-agent",
+			},
+		})
+}
+
 func vhdCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"@core",
-			"chrony",
-			"langpacks-en",
-			"net-tools",
-			"ntfsprogs",
-			"libxcrypt-compat",
-			"initscripts",
-			"glibc-all-langpacks",
-		},
-		Exclude: []string{
-			"dracut-config-rescue",
-			"geolite2-city",
-			"geolite2-country",
-			"zram-generator-defaults",
-		},
-	}
+	return cloudBaseSet(t).Append(
+		rpmmd.PackageSet{
+			Include: []string{
+				"WALinuxAgent",
+			},
+		})
 }
 
 func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
