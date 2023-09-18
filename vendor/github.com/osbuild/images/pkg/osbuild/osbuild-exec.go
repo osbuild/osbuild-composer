@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // Run an instance of osbuild, returning a parsed osbuild.Result.
@@ -83,4 +84,19 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 	}
 
 	return &res, nil
+}
+
+// OSBuildVersion returns the version of osbuild.
+func OSBuildVersion() (string, error) {
+	var stdoutBuffer bytes.Buffer
+	cmd := exec.Command("osbuild", "--version")
+	cmd.Stdout = &stdoutBuffer
+
+	err := cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("running osbuild failed: %v", err)
+	}
+
+	// osbuild --version prints the version in the form of "osbuild VERSION". Extract the version.
+	return strings.TrimPrefix(stdoutBuffer.String(), "osbuild "), nil
 }

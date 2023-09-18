@@ -213,6 +213,9 @@ func osCustomizations(
 	osc.UdevRules = imageConfig.UdevRules
 	osc.GCPGuestAgentConfig = imageConfig.GCPGuestAgentConfig
 
+	osc.Files = append(osc.Files, imageConfig.Files...)
+	osc.Directories = append(osc.Directories, imageConfig.Directories...)
+
 	return osc
 }
 
