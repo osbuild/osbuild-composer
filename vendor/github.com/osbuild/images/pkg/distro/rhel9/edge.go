@@ -5,6 +5,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
+	"github.com/osbuild/images/internal/fsnode"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -183,21 +184,31 @@ var (
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: minimalrpmPackageSet,
 		},
+		defaultImageConfig: &distro.ImageConfig{
+			EnabledServices: minimalrawServices,
+			SystemdUnit:     systemdUnits,
+			// NOTE: temporary workaround for a bug in initial-setup that
+			// requires a kickstart file in the root directory.
+			Files: []*fsnode.File{initialSetupKickstart()},
+		},
 		rpmOstree:           false,
-		kernelOptions:       "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0",
+		kernelOptions:       "ro",
 		bootable:            true,
 		defaultSize:         2 * common.GibiByte,
 		image:               diskImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: defaultBasePartitionTables,
+		basePartitionTables: minimalrawPartitionTables,
 	}
 
 	// Shared Services
 	edgeServices = []string{
 		// TODO(runcom): move fdo-client-linuxapp.service to presets?
 		"NetworkManager.service", "firewalld.service", "sshd.service", "fdo-client-linuxapp.service",
+	}
+	minimalrawServices = []string{
+		"NetworkManager.service", "firewalld.service", "sshd.service", "initial-setup.service",
 	}
 	//dropin to disable grub-boot-success.timer if greenboot present
 	systemdUnits = []*osbuild.SystemdUnitStageOptions{
@@ -213,6 +224,102 @@ var (
 		},
 	}
 	// Partition tables
+	minimalrawPartitionTables = distro.BasePartitionTableMap{
+		platform.ARCH_X86_64.String(): disk.PartitionTable{
+			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type:        "gpt",
+			StartOffset: 8 * common.MebiByte,
+			Partitions: []disk.Partition{
+				{
+					Size: 200 * common.MebiByte,
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						Label:        "EFI-SYSTEM",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: 500 * common.MebiByte,
+					Type: disk.XBootLDRPartitionGUID,
+					UUID: disk.FilesystemDataUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Mountpoint:   "/boot",
+						Label:        "boot",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+				{
+					Size: 2 * common.GibiByte,
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.RootPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		},
+		platform.ARCH_AARCH64.String(): disk.PartitionTable{
+			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type:        "gpt",
+			StartOffset: 8 * common.MebiByte,
+			Partitions: []disk.Partition{
+				{
+					Size: 200 * common.MebiByte,
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						Label:        "EFI-SYSTEM",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: 500 * common.MebiByte,
+					Type: disk.XBootLDRPartitionGUID,
+					UUID: disk.FilesystemDataUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Mountpoint:   "/boot",
+						Label:        "boot",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+				{
+					Size: 2 * common.GibiByte,
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.RootPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		},
+	}
 	edgeBasePartitionTables = distro.BasePartitionTableMap{
 		platform.ARCH_X86_64.String(): disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
