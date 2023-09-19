@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
+	"golang.org/x/exp/slices"
 )
 
 //
@@ -91,6 +92,19 @@ func (j *OSBuildJobResult) TargetResultsByName(name target.TargetName) []*target
 	targetResults := []*target.TargetResult{}
 	for _, targetResult := range j.TargetResults {
 		if targetResult.Name == name {
+			targetResults = append(targetResults, targetResult)
+		}
+	}
+	return targetResults
+}
+
+// TargetResultsFilterByName iterates over TargetResults attached to the Job result and
+// returns a slice of Target results excluding the provided names (types). If there were
+// no TargetResults left after filtering, the returned slice will be empty.
+func (j *OSBuildJobResult) TargetResultsFilterByName(excludeNames []target.TargetName) []*target.TargetResult {
+	targetResults := []*target.TargetResult{}
+	for _, targetResult := range j.TargetResults {
+		if !slices.Contains(excludeNames, targetResult.Name) {
 			targetResults = append(targetResults, targetResult)
 		}
 	}

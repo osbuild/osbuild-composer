@@ -27,6 +27,7 @@ import (
 	"github.com/ubccr/kerby/khttp"
 
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type Koji struct {
@@ -120,6 +121,9 @@ type ImageExtraInfo struct {
 	Arch string `json:"arch"`
 	// Boot mode of the image
 	BootMode string `json:"boot_mode,omitempty"`
+	// Results from any upload targets associated with the image
+	// except for the Koji target.
+	UploadTargetResults []*target.TargetResult `json:"upload_target_results,omitempty"`
 }
 
 func (ImageExtraInfo) isImageOutputTypeMD() {}
