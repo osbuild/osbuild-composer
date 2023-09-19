@@ -799,25 +799,26 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
-greenprint "🧹 Clean up VM"
-if [[ $(sudo virsh domstate "${IMAGE_KEY}") == "running" ]]; then
-    sudo virsh destroy "${IMAGE_KEY}"
-fi
-sudo virsh undefine "${IMAGE_KEY}" --nvram
-sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
+##################################################
+##
+## Upload ostree commit to pulp test
+##
+##################################################
 
-# The following pulp test is only for rhel-9.3 and later
+# Pulp test is only for rhel-9.4 and later, as there is no 9.4 in CI, run it on 9.3 first
 if [[ "${SKIP_PULP_TEST}" == "true" ]]; then
     greenprint "📋 Current OS does not support pulp, skip pulp test and exit"
     clean_up
     exit 0
 fi
 
-##################################################
-##
-## ostree upload commit to pulp
-##
-##################################################
+# Clean up VM and resources
+greenprint "🧹 Clean up VM"
+if [[ $(sudo virsh domstate "${IMAGE_KEY}") == "running" ]]; then
+    sudo virsh destroy "${IMAGE_KEY}"
+fi
+sudo virsh undefine "${IMAGE_KEY}" --nvram
+sudo virsh vol-delete --pool images "$LIBVIRT_IMAGE_PATH"
 
 # Setup pulp server
 greenprint "📄 Setup pulp server with one container"
@@ -834,7 +835,7 @@ sudo podman run --detach \
             --volume "$(pwd)/pgsql":/var/lib/pgsql:Z \
             --volume "$(pwd)/containers":/var/lib/containers:Z \
             --device /dev/fuse \
-            docker.io/pulp/pulp:latest
+            docker.io/pulp/pulp:nightly
 
 # Wait until pulp service is fully functional
 sleep 120
@@ -863,7 +864,7 @@ username = "${PULP_USERNAME}"
 password = "${PULP_PASSWORD}"
 EOF
 
-greenprint "📄 pulp config file"
+greenprint "📄 pulp config file:"
 cat "$PULP_CONFIG_FILE"
 
 # Write a blueprint for ostree image.
@@ -933,13 +934,6 @@ sudo composer-cli blueprints depsolve ostree
 
 # Build commit image
 build_image pulp ostree "$IMAGE_TYPE" test "$PULP_CONFIG_FILE"
-
-# Workaround for bug https://github.com/osbuild/osbuild-composer/issues/3673
-greenprint "Waiting for ostree commit import"
-while ! curl -sf "${PULP_SERVER}/pulp/content/${PULP_BASEPATH}/refs/heads/${OSTREE_REF}"; do
-    echo -n "."
-    sleep 5
-done
 
 # Pull commit from pulp to local repo
 greenprint "Pull commit from pulp to production repo"
@@ -1076,7 +1070,7 @@ check_result
 
 ##################################################
 ##
-## ostree commit upload to pulp upgrade
+## Upload upgrade ostree commit to pulp test
 ##
 ##################################################
 
@@ -1161,11 +1155,6 @@ PARENT_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
 # Build upgrade image.
 build_image pulp upgrade "$IMAGE_TYPE" test "$PULP_CONFIG_FILE" "$PROD_REPO_URL" "$PARENT_HASH"
-
-# Workaround for bug https://github.com/osbuild/osbuild-composer/issues/3673
-# Cannot use curl to check because parent commit is already imported
-greenprint "Waiting for ostree commit import"
-sleep 180
 
 # Clean compose and blueprints.
 greenprint "Clean up osbuild-composer again"
