@@ -147,6 +147,38 @@ function verify_buildinfo() {
             echo "Unexpected number of images in the buildinfo. Want 1, got ${outputs_images_count}."
             exit 1
         fi
+
+        # Verify that the target results are present in the image output metadata
+        local target_results
+        target_results="$(echo "${outputs_images}" | jq -r '.[0].extra.image.upload_target_results')"
+        local target_results_count
+        target_results_count="$(echo "${target_results}" | jq 'length')"
+        if [ "$target_results_count" -ne 1 ]; then
+            echo "Unexpected number of target results in the buildinfo. Want 1, got ${target_results_count}."
+            exit 1
+        fi
+
+        local target_result_name
+        target_result_name="$(echo "${target_results}" | jq -r '.[0].name')"
+        local want_target_result_name
+        case ${target_cloud} in
+            "$CLOUD_PROVIDER_AWS")
+                want_target_result_name="org.osbuild.aws"
+                ;;
+            "$CLOUD_PROVIDER_GCP")
+                want_target_result_name="org.osbuild.gcp"
+                ;;
+            "$CLOUD_PROVIDER_AZURE")
+                want_target_result_name="org.osbuild.azure.image"
+                ;;
+            *)
+                echo "Unknown cloud provider: ${CLOUD_PROVIDER}"
+                exit 1
+        esac
+        if [ "${target_result_name}" != "${want_target_result_name}" ]; then
+            echo "Unexpected target result in the buildinfo. Want '${want_target_result_name}', got '${target_result_name}'."
+            exit 1
+        fi
     fi
 
     local outputs_manifests
