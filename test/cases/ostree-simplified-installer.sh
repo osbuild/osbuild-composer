@@ -13,9 +13,15 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 # Start firewalld
 sudo systemctl enable --now firewalld
 sudo pip3 install yq==v3.2.1
-# Install fdo packages (This cannot be done in the setup.sh because fdo-admin-cli is not available on fedora)
-# Install fdo-client and fdo-init to workaround bug https://bugzilla.redhat.com/show_bug.cgi?id=2230537
-sudo dnf install -y fdo-admin-cli fdo-client fdo-init
+
+# workaround for bug https://issues.redhat.com/browse/RHEL-4992
+if [[ "$VERSION_ID" == "9.3" ]]; then
+    sudo dnf install -y http://download-node-02.eng.bos.redhat.com/rhel-9/nightly/RHEL-9/RHEL-9.3.0-20230915.0/compose/AppStream/x86_64/os/Packages/fdo-{admin-cli,client,init,manufacturing-server,owner-cli,owner-onboarding-server,rendezvous-server}-0.4.12-4.el9_2.x86_64.rpm
+else
+    # Install fdo-client and fdo-init to workaround bug https://bugzilla.redhat.com/show_bug.cgi?id=2230537
+    sudo dnf install -y fdo-admin-cli fdo-client fdo-init
+fi
+
 # Start fdo-aio to have /etc/fdo/aio folder
 sudo systemctl enable --now fdo-aio
 # Wait until config file serviceinfo_api_server.yml exists
