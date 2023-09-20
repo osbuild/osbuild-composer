@@ -133,6 +133,14 @@ if [ "${NIGHTLY:=false}" == "true" ]; then
     RELAX_REQUIRES="--with=relax_requires"
 fi
 
+if [[ $(uname -m) == aarch64 ]]; then
+  # Since aarch64 builds are being killed
+  # due to OOM, we set a soft memory limit
+  # of 3GiB.
+  echo "config_opts['environment']['GOMEMLIMIT'] = '3GiB'" | sudo tee -a "/etc/mock/${MOCK_CONFIG}.cfg"
+  echo "config_opts['environment']['GOMAXPROCS'] = '10'" | sudo tee -a "/etc/mock/${MOCK_CONFIG}.cfg"
+fi
+
 greenprint "🎁 Building RPMs"
 mock -r "$MOCK_CONFIG" \
     --define "commit ${COMMIT}" \
