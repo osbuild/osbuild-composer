@@ -16,6 +16,7 @@ ExecStart=/usr/local/libexec/worker-initialization-scripts/get_aws_creds.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/get_azure_creds.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/get_gcp_creds.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/get_koji_creds.sh
+ExecStart=/usr/local/libexec/worker-initialization-scripts/get_oci_creds.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/worker_service.sh
 
 [Install]
