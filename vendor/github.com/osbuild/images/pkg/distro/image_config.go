@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/osbuild/images/internal/fsnode"
 	"github.com/osbuild/images/internal/shell"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/subscription"
@@ -62,6 +63,9 @@ type ImageConfig struct {
 	UdevRules           *osbuild.UdevRulesStageOptions
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
 	WSLConfig           *osbuild.WSLConfStageOptions
+
+	Files       []*fsnode.File
+	Directories []*fsnode.Directory
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and

@@ -245,7 +245,8 @@ func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 	}
 
 	for arch, repos := range reposMap {
-		for _, repo := range repos {
+		for idx := range repos {
+			repo := repos[idx]
 			var urls []string
 			if repo.BaseURL != "" {
 				urls = []string{repo.BaseURL}

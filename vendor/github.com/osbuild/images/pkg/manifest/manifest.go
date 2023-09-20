@@ -149,11 +149,16 @@ func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec, containe
 		pipeline.serializeEnd()
 	}
 
+	sources, err := osbuild.GenSources(packages, commits, inline, containers)
+	if err != nil {
+		return nil, err
+	}
+
 	return json.Marshal(
 		osbuild.Manifest{
 			Version:   "2",
 			Pipelines: pipelines,
-			Sources:   osbuild.GenSources(packages, commits, inline, containers),
+			Sources:   sources,
 		},
 	)
 }

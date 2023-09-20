@@ -17,6 +17,7 @@ type PartitionTable struct {
 
 	SectorSize   uint64 // Sector size in bytes
 	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
+	StartOffset  uint64 // Starting offset of the first partition in the table (Mb)
 }
 
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, lvmify bool, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
@@ -77,6 +78,7 @@ func (pt *PartitionTable) Clone() Entity {
 		Partitions:   make([]Partition, len(pt.Partitions)),
 		SectorSize:   pt.SectorSize,
 		ExtraPadding: pt.ExtraPadding,
+		StartOffset:  pt.StartOffset,
 	}
 
 	for idx, partition := range pt.Partitions {
@@ -364,6 +366,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 	}
 
 	start := pt.AlignUp(header)
+	start += pt.StartOffset
 	size = pt.AlignUp(size)
 
 	var rootIdx = -1
