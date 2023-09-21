@@ -414,6 +414,9 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 
 	jobResult := &worker.ManifestJobByIDResult{
 		Manifest: nil,
+		ManifestInfo: worker.ManifestInfo{
+			OSBuildComposerVersion: common.BuildVersion(),
+		},
 	}
 
 	defer func() {

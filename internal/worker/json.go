@@ -265,9 +265,16 @@ type DepsolveJobResult struct {
 
 type ManifestJobByID struct{}
 
+// ManifestInfo contains information about the environment in which
+// the manifest was produced and which could affect its content.
+type ManifestInfo struct {
+	OSBuildComposerVersion string `json:"osbuild_composer_version"`
+}
+
 type ManifestJobByIDResult struct {
-	Manifest manifest.OSBuildManifest `json:"data,omitempty"`
-	Error    string                   `json:"error"`
+	Manifest     manifest.OSBuildManifest `json:"data,omitempty"`
+	ManifestInfo ManifestInfo             `json:"info,omitempty"`
+	Error        string                   `json:"error"`
 	JobResult
 }
 
