@@ -39,6 +39,6 @@ type AzureImageTargetResultOptions struct {
 
 func (AzureImageTargetResultOptions) isTargetResultOptions() {}
 
-func NewAzureImageTargetResult(options *AzureImageTargetResultOptions) *TargetResult {
-	return newTargetResult(TargetNameAzureImage, options)
+func NewAzureImageTargetResult(options *AzureImageTargetResultOptions, artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameAzureImage, options, artifact)
 }

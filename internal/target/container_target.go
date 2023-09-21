@@ -24,6 +24,6 @@ type ContainerTargetResultOptions struct {
 
 func (ContainerTargetResultOptions) isTargetResultOptions() {}
 
-func NewContainerTargetResult(options *ContainerTargetResultOptions) *TargetResult {
-	return newTargetResult(TargetNameContainer, options)
+func NewContainerTargetResult(options *ContainerTargetResultOptions, artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameContainer, options, artifact)
 }

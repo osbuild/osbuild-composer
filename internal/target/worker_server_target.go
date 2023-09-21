@@ -10,6 +10,6 @@ func NewWorkerServerTarget() *Target {
 	return newTarget(TargetNameWorkerServer, &WorkerServerTargetOptions{})
 }
 
-func NewWorkerServerTargetResult() *TargetResult {
-	return newTargetResult(TargetNameWorkerServer, nil)
+func NewWorkerServerTargetResult(artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameWorkerServer, nil, artifact)
 }

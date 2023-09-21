@@ -37,8 +37,8 @@ type AWSTargetResultOptions struct {
 
 func (AWSTargetResultOptions) isTargetResultOptions() {}
 
-func NewAWSTargetResult(options *AWSTargetResultOptions) *TargetResult {
-	return newTargetResult(TargetNameAWS, options)
+func NewAWSTargetResult(options *AWSTargetResultOptions, artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameAWS, options, artifact)
 }
 
 type AWSS3TargetOptions struct {
@@ -66,6 +66,6 @@ type AWSS3TargetResultOptions struct {
 
 func (AWSS3TargetResultOptions) isTargetResultOptions() {}
 
-func NewAWSS3TargetResult(options *AWSS3TargetResultOptions) *TargetResult {
-	return newTargetResult(TargetNameAWSS3, options)
+func NewAWSS3TargetResult(options *AWSS3TargetResultOptions, artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameAWSS3, options, artifact)
 }

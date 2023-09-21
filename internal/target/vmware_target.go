@@ -18,6 +18,6 @@ func NewVMWareTarget(options *VMWareTargetOptions) *Target {
 	return newTarget(TargetNameVMWare, options)
 }
 
-func NewVMWareTargetResult() *TargetResult {
-	return newTargetResult(TargetNameVMWare, nil)
+func NewVMWareTargetResult(artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameVMWare, nil, artifact)
 }

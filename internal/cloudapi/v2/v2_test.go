@@ -1261,6 +1261,9 @@ func TestImageFromCompose(t *testing.T) {
 	tr := target.NewAWSTargetResult(&target.AWSTargetResultOptions{
 		Ami:    "ami-abc123",
 		Region: "eu-central-1",
+	}, &target.OsbuildArtifact{
+		ExportFilename: "image.raw",
+		ExportName:     "image",
 	})
 	res, err := json.Marshal(&worker.OSBuildJobResult{
 		Success:       true,

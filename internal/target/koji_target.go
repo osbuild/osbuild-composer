@@ -117,6 +117,6 @@ func (o KojiTargetResultOptions) MarshalJSON() ([]byte, error) {
 
 func (KojiTargetResultOptions) isTargetResultOptions() {}
 
-func NewKojiTargetResult(options *KojiTargetResultOptions) *TargetResult {
-	return newTargetResult(TargetNameKoji, options)
+func NewKojiTargetResult(options *KojiTargetResultOptions, artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameKoji, options, artifact)
 }
