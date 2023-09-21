@@ -28,21 +28,21 @@ func (p *Aarch64) GetPackages() []string {
 	return packages
 }
 
-type Aarch64_IoT struct {
+type Aarch64_Fedora struct {
 	BasePlatform
 	UEFIVendor string
 	BootFiles  [][2]string
 }
 
-func (p *Aarch64_IoT) GetArch() Arch {
+func (p *Aarch64_Fedora) GetArch() Arch {
 	return ARCH_AARCH64
 }
 
-func (p *Aarch64_IoT) GetUEFIVendor() string {
+func (p *Aarch64_Fedora) GetUEFIVendor() string {
 	return p.UEFIVendor
 }
 
-func (p *Aarch64_IoT) GetPackages() []string {
+func (p *Aarch64_Fedora) GetPackages() []string {
 	packages := p.BasePlatform.FirmwarePackages
 
 	if p.UEFIVendor != "" {
@@ -57,6 +57,6 @@ func (p *Aarch64_IoT) GetPackages() []string {
 	return packages
 }
 
-func (p *Aarch64_IoT) GetBootFiles() [][2]string {
+func (p *Aarch64_Fedora) GetBootFiles() [][2]string {
 	return p.BootFiles
 }
