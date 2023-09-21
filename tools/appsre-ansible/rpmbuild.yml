@@ -51,26 +51,46 @@
     - /home/ec2-user/rpmbuild/RPMS
 
   - name: Download osbuild-composer archive
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     get_url:
       url: "https://github.com/osbuild/osbuild-composer/archive/{{ COMPOSER_COMMIT }}.tar.gz"
       dest: "/home/ec2-user/rpmbuild/SOURCES/osbuild-composer-{{ COMPOSER_COMMIT }}.tar.gz"
 
   - name: Download osbuild-composer spec
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     get_url:
       url: "https://raw.githubusercontent.com/osbuild/osbuild-composer/{{ COMPOSER_COMMIT }}/osbuild-composer.spec"
       dest: /home/ec2-user/osbuild-composer.spec
 
   - name: Download osbuild archive
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     get_url:
       url: "https://github.com/osbuild/osbuild/archive/{{ OSBUILD_COMMIT }}.tar.gz"
       dest: "/home/ec2-user/rpmbuild/SOURCES/osbuild-{{ OSBUILD_COMMIT }}.tar.gz"
 
   - name: Download osbuild spec
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     get_url:
       url: "https://raw.githubusercontent.com/osbuild/osbuild/{{ OSBUILD_COMMIT }}/osbuild.spec"
       dest: /home/ec2-user/osbuild.spec
 
   - name: Install build tools
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     package:
       name:
         - rpm-build
@@ -79,6 +99,10 @@
       state: present
 
   - name: Make osbuild srpm
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     command: >-
       rpmbuild -bs
       --define "commit {{ OSBUILD_COMMIT }}"
@@ -87,6 +111,10 @@
       /home/ec2-user/osbuild.spec
 
   - name: Mockbuild osbuild
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     shell: >-
         mock
         -r "rhel-9-{{ ansible_architecture }}"
@@ -97,6 +125,10 @@
         /home/ec2-user/rpmbuild/SRPMS/osbuild-*.src.rpm
 
   - name: Make osbuild-composer srpm
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     command: >-
       rpmbuild -bs
       --define "commit {{ COMPOSER_COMMIT }}"
@@ -106,6 +138,10 @@
 
 
   - name: Mockbuild osbuild-composer
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     shell: >-
         mock
         -r "rhel-9-{{ ansible_architecture }}"
@@ -116,9 +152,17 @@
         /home/ec2-user/rpmbuild/SRPMS/osbuild-composer-*.src.rpm
 
   - name: Create a repository from the artifacts
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     command: createrepo_c /home/ec2-user/rpmbuild/RPMS
 
   - name: Fetch rpms
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     ansible.posix.synchronize:
       mode: pull
       src: /home/ec2-user/rpmbuild/RPMS
