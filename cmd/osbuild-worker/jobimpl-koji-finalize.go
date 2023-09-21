@@ -184,8 +184,9 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
 
 		imgOutputExtraInfo := koji.ImageExtraInfo{
-			Arch:     buildResult.Arch,
-			BootMode: buildResult.ImageBootMode,
+			Arch:            buildResult.Arch,
+			BootMode:        buildResult.ImageBootMode,
+			OSBuildArtifact: kojiTargetResult.OsbuildArtifact,
 		}
 
 		// The image filename is now set in the KojiTargetResultOptions.

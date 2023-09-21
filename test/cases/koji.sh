@@ -236,6 +236,13 @@ function verify_buildinfo() {
                 ;;
         esac
 
+        local image_osbuild_artifact
+        image_osbuild_artifact="$(echo "${image_metadata_build}" | jq -r '.osbuild_artifact')"
+        if [ "${image_osbuild_artifact}" == "null" ]; then
+            echo "Image osbuild artifact information for '${image_filename}' is missing"
+            exit 1
+        fi
+
         local image_metadata_archive
         image_metadata_archive="$(echo "${image}" | jq -r '.extra.image')"
         if [ "${image_metadata_build}" != "${image_metadata_archive}" ]; then
