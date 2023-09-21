@@ -28,6 +28,6 @@ type GCPTargetResultOptions struct {
 
 func (GCPTargetResultOptions) isTargetResultOptions() {}
 
-func NewGCPTargetResult(options *GCPTargetResultOptions) *TargetResult {
-	return newTargetResult(TargetNameGCP, options)
+func NewGCPTargetResult(options *GCPTargetResultOptions, artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameGCP, options, artifact)
 }

@@ -24,6 +24,6 @@ func NewAzureTarget(options *AzureTargetOptions) *Target {
 	return newTarget(TargetNameAzure, options)
 }
 
-func NewAzureTargetResult() *TargetResult {
-	return newTargetResult(TargetNameAzure, nil)
+func NewAzureTargetResult(artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameAzure, nil, artifact)
 }

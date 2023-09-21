@@ -56,6 +56,9 @@ func TestKojiCompose(t *testing.T) {
 						Checksum:     "browns",
 						Size:         42,
 					},
+				}, &target.OsbuildArtifact{
+					ExportFilename: "disk.img",
+					ExportName:     "image",
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -97,6 +100,9 @@ func TestKojiCompose(t *testing.T) {
 						Checksum:     "browns",
 						Size:         42,
 					},
+				}, &target.OsbuildArtifact{
+					ExportFilename: "disk.img",
+					ExportName:     "image",
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -138,6 +144,9 @@ func TestKojiCompose(t *testing.T) {
 						Checksum:     "browns",
 						Size:         42,
 					},
+				}, &target.OsbuildArtifact{
+					ExportFilename: "disk.img",
+					ExportName:     "image",
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -178,6 +187,9 @@ func TestKojiCompose(t *testing.T) {
 						Checksum:     "browns",
 						Size:         42,
 					},
+				}, &target.OsbuildArtifact{
+					ExportFilename: "disk.img",
+					ExportName:     "image",
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: false,
@@ -220,6 +232,9 @@ func TestKojiCompose(t *testing.T) {
 						Checksum:     "browns",
 						Size:         42,
 					},
+				}, &target.OsbuildArtifact{
+					ExportFilename: "disk.img",
+					ExportName:     "image",
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -273,6 +288,9 @@ func TestKojiCompose(t *testing.T) {
 						Checksum:     "browns",
 						Size:         42,
 					},
+				}, &target.OsbuildArtifact{
+					ExportFilename: "disk.img",
+					ExportName:     "image",
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
@@ -318,6 +336,9 @@ func TestKojiCompose(t *testing.T) {
 						Checksum:     "browns",
 						Size:         42,
 					},
+				}, &target.OsbuildArtifact{
+					ExportFilename: "disk.img",
+					ExportName:     "image",
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
