@@ -318,10 +318,10 @@ objects:
               name: composer-maintenance
               resources:
                 requests:
-                  cpu: "${CPU_REQUEST}"
+                  cpu: "${MAINTENANCE_CPU_REQUEST}"
                   memory: "${MEMORY_REQUEST}"
                 limits:
-                  cpu: "${CPU_LIMIT}"
+                  cpu: "${MAINTENANCE_CPU_LIMIT}"
                   memory: "${MEMORY_LIMIT}"
               env:
               - name: PGHOST
@@ -473,13 +473,19 @@ parameters:
     value: "500m"
   - name: CPU_LIMIT
     description: CPU limit per container
-    value: "950m"
+    value: "1"
   - name: FLUENTD_CPU_REQUEST
     description: CPU request per container
     value: "50m"
   - name: FLUENTD_CPU_LIMIT
     description: CPU limit per container
     value: "50m"
+  - name: MAINTENANCE_CPU_REQUEST
+    description: CPU request per container
+    value: "50m"
+  - name: MAINTENANCE_CPU_LIMIT
+    description: CPU limit per container
+    value: "100m"
   - name: MEMORY_REQUEST
     description: Memory request per container
     value: "256Mi"
