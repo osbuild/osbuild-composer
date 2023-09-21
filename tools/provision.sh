@@ -137,17 +137,18 @@ EOF
     fi
 
     # if OCI credentials are defined in the ENV, add them to the worker's configuration
+    OCI_SECRETS="${OCI_SECRETS:-}"
+    OCI_PRIVATE_KEY="${OCI_PRIVATE_KEY:-}"
+    if [[ -n "$OCI_SECRETS" && -n "$OCI_PRIVATE_KEY" ]]; then
+        OCI_USER=$(jq -r '.user' "$OCI_SECRETS")
+        OCI_TENANCY=$(jq -r '.tenancy' "$OCI_SECRETS")
+        OCI_REGION=$(jq -r '.region' "$OCI_SECRETS")
+        OCI_FINGERPRINT=$(jq -r '.fingerprint' "$OCI_SECRETS")
+        OCI_BUCKET_NAME=$(jq -r '.bucket' "$OCI_SECRETS")
+        OCI_NAMESPACE=$(jq -r '.namespace' "$OCI_SECRETS")
+        OCI_COMPARTMENT=$(jq -r '.compartment' "$OCI_SECRETS")
+        OCI_PRIV_KEY=$(cat "$OCI_PRIVATE_KEY")
 
-    OCI_USER=$(jq -r '.user' "$OCI_SECRETS")
-    OCI_TENANCY=$(jq -r '.tenancy' "$OCI_SECRETS")
-    OCI_REGION=$(jq -r '.region' "$OCI_SECRETS")
-    OCI_FINGERPRINT=$(jq -r '.fingerprint' "$OCI_SECRETS")
-    OCI_BUCKET_NAME=$(jq -r '.bucket' "$OCI_SECRETS")
-    OCI_NAMESPACE=$(jq -r '.namespace' "$OCI_SECRETS")
-    OCI_COMPARTMENT=$(jq -r '.compartment' "$OCI_SECRETS")
-    OCI_PRIV_KEY=$(cat "$OCI_PRIVATE_KEY")
-
-    if [[ -n "$OCI_TENANCY" ]]; then
         set +x
         sudo tee /etc/osbuild-worker/oci-credentials.toml > /dev/null << EOF
 user = "$OCI_USER"
