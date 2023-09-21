@@ -42,10 +42,26 @@ type KojiOutputInfo struct {
 	Size         uint64       `json:"size"`
 }
 
+type OSBuildComposerDepModule struct {
+	Path    string                    `json:"path"`
+	Version string                    `json:"version"`
+	Replace *OSBuildComposerDepModule `json:"replace,omitempty"`
+}
+
+// ManifestInfo contains information about the environment in which
+// the manifest was produced and which could affect its content.
+type ManifestInfo struct {
+	OSBuildComposerVersion string `json:"osbuild_composer_version"`
+	// List of relevant modules used by osbuild-composer which
+	// could affect the manifest content.
+	OSBuildComposerDeps []*OSBuildComposerDepModule `json:"osbuild_composer_deps,omitempty"`
+}
+
 type KojiTargetResultOptions struct {
-	Image           *KojiOutputInfo `json:"image"`
-	Log             *KojiOutputInfo `json:"log,omitempty"`
-	OSBuildManifest *KojiOutputInfo `json:"osbuild_manifest,omitempty"`
+	Image               *KojiOutputInfo `json:"image"`
+	Log                 *KojiOutputInfo `json:"log,omitempty"`
+	OSBuildManifest     *KojiOutputInfo `json:"osbuild_manifest,omitempty"`
+	OSBuildManifestInfo *ManifestInfo   `json:"osbuild_manifest_info,omitempty"`
 }
 
 func (o *KojiTargetResultOptions) UnmarshalJSON(data []byte) error {

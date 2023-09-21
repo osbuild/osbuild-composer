@@ -349,6 +349,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	// In case the manifest is empty, try to get it from dynamic args
+	var manifestInfo *worker.ManifestInfo
 	if len(jobArgs.Manifest) == 0 {
 		if job.NDynamicArgs() > 0 {
 			var manifestJR worker.ManifestJobByIDResult
@@ -374,6 +375,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				return nil
 			}
 			jobArgs.Manifest = manifestJR.Manifest
+			manifestInfo = &manifestJR.ManifestInfo
 		}
 
 		if len(jobArgs.Manifest) == 0 {
@@ -901,6 +903,28 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Info("[Koji] 🎉 osbuild output log successfully uploaded")
 
+			// Attach the manifest info to the koji target result, so that it
+			// it can be imported to the Koji build by the koji-finalize job.
+			var kojiManifestInfo *target.ManifestInfo
+			if manifestInfo != nil {
+				kojiManifestInfo = &target.ManifestInfo{
+					OSBuildComposerVersion: manifestInfo.OSBuildComposerVersion,
+				}
+				for _, composerDep := range manifestInfo.OSBuildComposerDeps {
+					dep := &target.OSBuildComposerDepModule{
+						Path:    composerDep.Path,
+						Version: composerDep.Version,
+					}
+					if composerDep.Replace != nil {
+						dep.Replace = &target.OSBuildComposerDepModule{
+							Path:    composerDep.Replace.Path,
+							Version: composerDep.Replace.Version,
+						}
+					}
+					kojiManifestInfo.OSBuildComposerDeps = append(kojiManifestInfo.OSBuildComposerDeps, dep)
+				}
+			}
+
 			targetResult.Options = &target.KojiTargetResultOptions{
 				Image: &target.KojiOutputInfo{
 					Filename:     jobTarget.ImageName,
@@ -920,6 +944,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 					Checksum:     osbuildOutputHash,
 					Size:         osbuildOutputSize,
 				},
+				OSBuildManifestInfo: kojiManifestInfo,
 			}
 
 		case *target.OCITargetOptions:
