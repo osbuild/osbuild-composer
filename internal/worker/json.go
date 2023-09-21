@@ -3,6 +3,7 @@ package worker
 import (
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/manifest"
@@ -265,10 +266,40 @@ type DepsolveJobResult struct {
 
 type ManifestJobByID struct{}
 
+// OSBuildComposerDepModule contains information about a module used by
+// osbuild-composer which could affect the manifest content.
+type OSBuildComposerDepModule struct {
+	Path    string                    `json:"path"`
+	Version string                    `json:"version"`
+	Replace *OSBuildComposerDepModule `json:"replace,omitempty"`
+}
+
+// ComposerDepModuleFromDebugModule converts a debug.Module instance
+// to an OSBuildComposerDepModule instance.
+func ComposerDepModuleFromDebugModule(module *debug.Module) *OSBuildComposerDepModule {
+	if module == nil {
+		return nil
+	}
+	depModule := &OSBuildComposerDepModule{
+		Path:    module.Path,
+		Version: module.Version,
+	}
+	if module.Replace != nil {
+		depModule.Replace = &OSBuildComposerDepModule{
+			Path:    module.Replace.Path,
+			Version: module.Replace.Version,
+		}
+	}
+	return depModule
+}
+
 // ManifestInfo contains information about the environment in which
 // the manifest was produced and which could affect its content.
 type ManifestInfo struct {
 	OSBuildComposerVersion string `json:"osbuild_composer_version"`
+	// List of relevant modules used by osbuild-composer which
+	// could affect the manifest content.
+	OSBuildComposerDeps []*OSBuildComposerDepModule `json:"osbuild_composer_deps,omitempty"`
 }
 
 type ManifestJobByIDResult struct {
