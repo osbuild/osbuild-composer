@@ -127,10 +127,10 @@ objects:
           name: fluentd-sidecar
           resources:
             requests:
-              cpu: "${CPU_REQUEST}"
+              cpu: "${FLUENTD_CPU_REQUEST}"
               memory: "${MEMORY_REQUEST}"
             limits:
-              cpu: "${CPU_REQUEST}"
+              cpu: "${FLUENTD_CPU_LIMIT}"
               memory: "${MEMORY_LIMIT}"
           env:
             - name: SPLUNK_HEC_TOKEN
@@ -166,10 +166,10 @@ objects:
           command: [ "/opt/migrate/tern", "migrate", "-m", "/opt/migrate/schemas" ]
           resources:
             requests:
-              cpu: "${FLUENTD_CPU_REQUEST}"
+              cpu: "${CPU_REQUEST}"
               memory: "${MEMORY_REQUEST}"
             limits:
-              cpu: "${FLUENTD_CPU_LIMIT}"
+              cpu: "${CPU_LIMIT}"
               memory: "${MEMORY_LIMIT}"
           env:
           - name: PGHOST
@@ -481,7 +481,7 @@ parameters:
     value: "50m"
   - name: FLUENTD_CPU_LIMIT
     description: CPU limit per container
-    value: "50m"
+    value: "100m"
   - name: MAINTENANCE_CPU_REQUEST
     description: CPU request per container
     value: "50m"
