@@ -307,6 +307,8 @@ objects:
     # run maintenance job at midnight
     schedule: 0 0 * * *
     concurrencyPolicy: Forbid
+    # don't run if the job doesn't get scheduled within 30 minutes
+    startingDeadlineSeconds: 1800
     jobTemplate:
       spec:
         template:
