@@ -63,6 +63,8 @@ type OSBuildJobResult struct {
 	// Boot mode supported by the image
 	// (string representation of distro.BootMode values)
 	ImageBootMode string `json:"image_boot_mode,omitempty"`
+	// Version of the osbuild binary used by the worker to build the image
+	OSBuildVersion string `json:"osbuild_version,omitempty"`
 	JobResult
 }
 

@@ -341,6 +341,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		}
 	}()
 
+	osbuildVersion, err := osbuild.OSBuildVersion()
+	if err != nil {
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err)
+		return err
+	}
+	osbuildJobResult.OSBuildVersion = osbuildVersion
+
 	// Read the job specification
 	var jobArgs worker.OSBuildJob
 	err = job.Args(&jobArgs)
