@@ -7,6 +7,9 @@
   community.general.redhat_subscription:
     activationkey: "{{ RH_ACTIVATION_KEY }}"
     org_id: "{{ RH_ORG_ID }}"
+  register: result
+  retries: 5
+  until: result is success
 
 - name: Enable repo mgmt through subman
   become: yes
