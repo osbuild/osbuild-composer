@@ -130,12 +130,25 @@ type ImageExtraInfo struct {
 
 func (ImageExtraInfo) isImageOutputTypeMD() {}
 
+type OSBuildComposerDepModule struct {
+	Path    string                    `json:"path"`
+	Version string                    `json:"version"`
+	Replace *OSBuildComposerDepModule `json:"replace,omitempty"`
+}
+
+// ManifestInfo holds information about the environment in which
+// the manifest was produced and which could affect its content.
+type ManifestInfo struct {
+	OSBuildComposerVersion string `json:"osbuild_composer_version"`
+	// List of relevant modules used by osbuild-composer which
+	// could affect the manifest content.
+	OSBuildComposerDeps []*OSBuildComposerDepModule `json:"osbuild_composer_deps,omitempty"`
+}
+
 // ManifestExtraInfo holds extra metadata about the osbuild manifest.
 type ManifestExtraInfo struct {
-	// TODO: include osbuild-composer version which produced the manifest?
-	// TODO: include the vendored 'images' version?
-
-	Arch string `json:"arch"`
+	Arch string        `json:"arch"`
+	Info *ManifestInfo `json:"info,omitempty"`
 }
 
 func (ManifestExtraInfo) isImageOutputTypeMD() {}

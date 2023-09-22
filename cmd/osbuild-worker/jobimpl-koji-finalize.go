@@ -225,6 +225,30 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// TODO: Condition below is present for backward compatibility with old workers which don't upload the manifest.
 		// TODO: Remove the condition it in the future.
 		if kojiTargetOptions.OSBuildManifest != nil {
+			manifestExtraInfo := koji.ManifestExtraInfo{
+				Arch: buildResult.Arch,
+			}
+
+			if kojiTargetOptions.OSBuildManifestInfo != nil {
+				manifestInfo := &koji.ManifestInfo{
+					OSBuildComposerVersion: kojiTargetOptions.OSBuildManifestInfo.OSBuildComposerVersion,
+				}
+				for _, composerDep := range kojiTargetOptions.OSBuildManifestInfo.OSBuildComposerDeps {
+					dep := &koji.OSBuildComposerDepModule{
+						Path:    composerDep.Path,
+						Version: composerDep.Version,
+					}
+					if composerDep.Replace != nil {
+						dep.Replace = &koji.OSBuildComposerDepModule{
+							Path:    composerDep.Replace.Path,
+							Version: composerDep.Replace.Version,
+						}
+					}
+					manifestInfo.OSBuildComposerDeps = append(manifestInfo.OSBuildComposerDeps, dep)
+				}
+				manifestExtraInfo.Info = manifestInfo
+			}
+
 			outputs = append(outputs, koji.BuildOutput{
 				BuildRootID:  uint64(i),
 				Filename:     kojiTargetOptions.OSBuildManifest.Filename,
@@ -234,9 +258,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 				Checksum:     kojiTargetOptions.OSBuildManifest.Checksum,
 				Type:         koji.BuildOutputTypeManifest,
 				Extra: &koji.BuildOutputExtra{
-					ImageOutput: koji.ManifestExtraInfo{
-						Arch: buildResult.Arch,
-					},
+					ImageOutput: manifestExtraInfo,
 				},
 			})
 		}
