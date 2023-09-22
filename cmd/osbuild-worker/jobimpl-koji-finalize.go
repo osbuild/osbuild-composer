@@ -188,6 +188,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			Arch:            buildResult.Arch,
 			BootMode:        buildResult.ImageBootMode,
 			OSBuildArtifact: kojiTargetResult.OsbuildArtifact,
+			OSBuildVersion:  buildResult.OSBuildVersion,
 		}
 
 		// The image filename is now set in the KojiTargetResultOptions.

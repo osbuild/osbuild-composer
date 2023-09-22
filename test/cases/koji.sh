@@ -120,6 +120,9 @@ function verify_buildinfo() {
     local buildid="${1}"
     local target_cloud="${2:-none}"
 
+    local osbuild_version
+    osbuild_version="$(osbuild --version | cut -d ' ' -f 2 -)"
+
     local extra_build_metadata
     # extract the extra build metadata JSON from the output
     extra_build_metadata="$(koji -s "${KOJI_HUB_URL}" --noauth call --json getBuild "${buildid}" | jq -r '.extra')"
@@ -240,6 +243,13 @@ function verify_buildinfo() {
         image_osbuild_artifact="$(echo "${image_metadata_build}" | jq -r '.osbuild_artifact')"
         if [ "${image_osbuild_artifact}" == "null" ]; then
             echo "Image osbuild artifact information for '${image_filename}' is missing"
+            exit 1
+        fi
+
+        local image_osbuild_version
+        image_osbuild_version="$(echo "${image_metadata_build}" | jq -r '.osbuild_version')"
+        if [ "${image_osbuild_version}" != "${osbuild_version}" ]; then
+            echo "Unexpected osbuild version for '${image_filename}'. Expected '${osbuild_version}', but got '${image_osbuild_version}'"
             exit 1
         fi
 
