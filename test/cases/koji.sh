@@ -250,6 +250,68 @@ function verify_buildinfo() {
             exit 1
         fi
     done
+
+    local build_extra_md_manifest
+    build_extra_md_manifest="$(echo "${extra_build_metadata}" | jq -r '.osbuild_manifest')"
+
+    for manifest_idx in $(seq 0 $((outputs_manifests_count - 1))); do
+        local manifest
+        manifest="$(echo "${outputs_manifests}" | jq -r ".[${manifest_idx}]")"
+
+        local manifest_filename
+        manifest_filename="$(echo "${manifest}" | jq -r '.filename')"
+
+        local manifest_metadata_build
+        manifest_metadata_build="$(echo "${build_extra_md_manifest}" | jq -r ".\"${manifest_filename}\"")"
+        if [ "${manifest_metadata_build}" == "null" ]; then
+            echo "Manifest metadata for '${manifest_filename}' is missing"
+            exit 1
+        fi
+
+        local manifest_arch
+        manifest_arch="$(echo "${manifest_metadata_build}" | jq -r '.arch')"
+        if [ "${image_arch}" != "${ARCH}" ]; then
+            echo "Unexpected arch for '${manifest_filename}'. Expected '${ARCH}', but got '${manifest_arch}'"
+            exit 1
+        fi
+
+        local manifest_info
+        manifest_info="$(echo "${manifest_metadata_build}" | jq -r '.info')"
+        if [ "${manifest_info}" == "null" ]; then
+            echo "Manifest info for '${manifest_filename}' is missing"
+            exit 1
+        fi
+
+        if [ "$(echo "${manifest_info}" | jq -r '.osbuild_composer_version')" == "null" ]; then
+            echo "Manifest info for '${manifest_filename}' is missing osbuild-composer version"
+            exit 1
+        fi
+
+        # check osbuild/images version info in the metadata
+        local osbuild_composer_deps
+        osbuild_composer_deps="$(echo "${manifest_info}" | jq -r '.osbuild_composer_deps')"
+        if [ "$(echo "${osbuild_composer_deps}" | jq 'length')" -ne 1 ]; then
+            echo "Manifest info for '${manifest_filename}' has unexpected number of osbuild-composer dependencies. \
+                Expected 1, got '$(echo "${osbuild_composer_deps}" | jq 'length')'"
+            exit 1
+        fi
+        if [ "$(echo "${osbuild_composer_deps}" | jq -r '.[0].path')" != "github.com/osbuild/images" ]; then
+            echo "Manifest info for '${manifest_filename}' has unexpected osbuild-composer dependency path. \
+                Expected 'github.com/osbuild/images', got '$(echo "${osbuild_composer_deps}" | jq -r '.[0].path')'"
+            exit 1
+        fi
+        if [ "$(echo "${osbuild_composer_deps}" | jq -r '.[0].version')" == "null" ]; then
+            echo "Manifest info for '${manifest_filename}' has missing 'github.com/osbuild/images' dependency version"
+            exit 1
+        fi
+
+        local manifest_metadata_archive
+        manifest_metadata_archive="$(echo "${manifest}" | jq -r '.extra.image')"
+        if [ "${manifest_metadata_build}" != "${manifest_metadata_archive}" ]; then
+            echo "Manifest extra metadata for '${manifest_filename}' in the build metadata and in the archive metadata differ"
+            exit 1
+        fi
+    done
 }
 
 # Provision the software under test.
