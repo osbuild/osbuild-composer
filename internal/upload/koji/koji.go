@@ -127,6 +127,8 @@ type ImageExtraInfo struct {
 	BootMode string `json:"boot_mode,omitempty"`
 	// Configuration used to prouce this image using osbuild
 	OSBuildArtifact *target.OsbuildArtifact `json:"osbuild_artifact,omitempty"`
+	// Version of the osbuild binary used by the worker to build the image
+	OSBuildVersion string `json:"osbuild_version,omitempty"`
 	// Results from any upload targets associated with the image
 	// except for the Koji target.
 	UploadTargetResults []*target.TargetResult `json:"upload_target_results,omitempty"`
