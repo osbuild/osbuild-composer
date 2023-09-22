@@ -53,6 +53,10 @@ type TypeInfoBuild struct {
 // It is a free-form map, but must contain at least the 'typeinfo' key.
 type BuildExtra struct {
 	TypeInfo TypeInfoBuild `json:"typeinfo"`
+	// Manifest holds extra metadata about osbuild manifests attached to the build.
+	// It is a map whose keys are the filenames of the manifests, and
+	// the values are the extra metadata for the manifest.
+	Manifest map[string]*ManifestExtraInfo `json:"osbuild_manifest,omitempty"`
 }
 
 // Build represents a Koji build and holds metadata about it.
