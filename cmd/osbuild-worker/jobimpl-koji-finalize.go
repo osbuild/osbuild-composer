@@ -119,6 +119,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	var outputs []koji.BuildOutput
 	// Extra info for each image output is stored using the image filename as the key
 	imgOutputsExtraInfo := map[string]koji.ImageExtraInfo{}
+	manifestOutputsExtraInfo := map[string]*koji.ManifestExtraInfo{}
 
 	var osbuildResults []worker.OSBuildJobResult
 	initArgs, osbuildResults, err = extractDynamicArgs(job)
@@ -249,6 +250,8 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 				manifestExtraInfo.Info = manifestInfo
 			}
 
+			manifestOutputsExtraInfo[kojiTargetOptions.OSBuildManifest.Filename] = &manifestExtraInfo
+
 			outputs = append(outputs, koji.BuildOutput{
 				BuildRootID:  uint64(i),
 				Filename:     kojiTargetOptions.OSBuildManifest.Filename,
@@ -291,6 +294,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			TypeInfo: koji.TypeInfoBuild{
 				Image: imgOutputsExtraInfo,
 			},
+			Manifest: manifestOutputsExtraInfo,
 		},
 	}
 
