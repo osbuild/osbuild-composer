@@ -164,7 +164,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			},
 			ContentGenerator: koji.ContentGenerator{
 				Name:    "osbuild",
-				Version: "0", // TODO: put the correct version here
+				Version: buildResult.OSBuildVersion,
 			},
 			Container: koji.Container{
 				Type: "none",
