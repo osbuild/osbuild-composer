@@ -98,5 +98,8 @@ func OSBuildVersion() (string, error) {
 	}
 
 	// osbuild --version prints the version in the form of "osbuild VERSION". Extract the version.
-	return strings.TrimPrefix(stdoutBuffer.String(), "osbuild "), nil
+	version := strings.TrimPrefix(stdoutBuffer.String(), "osbuild ")
+	// Remove the trailing newline.
+	version = strings.TrimSpace(version)
+	return version, nil
 }

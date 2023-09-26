@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2014-2015 VMware, Inc. All Rights Reserved.
+Copyright (c) 2014-2023 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package esxcli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/vmware/govmomi/internal"
@@ -26,6 +25,23 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/xml"
 )
+
+type Fault struct {
+	Message string
+	Detail  string
+}
+
+func (f Fault) Error() string {
+	return f.Message
+}
+
+func (f Fault) messageDetail() string {
+	if f.Detail != "" {
+		return fmt.Sprintf("%s %s", f.Message, f.Detail)
+	}
+
+	return f.Message
+}
 
 type Executor struct {
 	c    *vim25.Client
@@ -138,7 +154,10 @@ func (e *Executor) Execute(req *internal.ExecuteSoapRequest, res interface{}) er
 
 	if x.Returnval != nil {
 		if x.Returnval.Fault != nil {
-			return errors.New(x.Returnval.Fault.FaultMsg)
+			return &Fault{
+				x.Returnval.Fault.FaultMsg,
+				x.Returnval.Fault.FaultDetail,
+			}
 		}
 
 		if err := xml.Unmarshal([]byte(x.Returnval.Response), res); err != nil {
