@@ -235,7 +235,8 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"chrony",
 			"timedatex",
 			// EFI
-			"grub2-tools-efi",
+			"grub2-tools",
+			"grub2-tools-minimal",
 			"firewalld", // not pulled in any more as on RHEL-8
 		},
 		Exclude: []string{

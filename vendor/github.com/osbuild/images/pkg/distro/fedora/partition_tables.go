@@ -350,7 +350,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 						Description: "built with lvm2 and osbuild",
 						LogicalVolumes: []disk.LVMLogicalVolume{
 							{
-								Size: 2569 * common.MebiByte,
+								Size: 8 * common.GibiByte,
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
 									Type:         "ext4",
@@ -420,7 +420,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 						Description: "built with lvm2 and osbuild",
 						LogicalVolumes: []disk.LVMLogicalVolume{
 							{
-								Size: 2569 * common.MebiByte,
+								Size: 8 * common.GibiByte,
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
 									Type:         "ext4",

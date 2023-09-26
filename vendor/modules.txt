@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.110.6
+# cloud.google.com/go v0.110.7
 ## explicit; go 1.19
 cloud.google.com/go/internal
 cloud.google.com/go/internal/optional
@@ -119,7 +119,7 @@ github.com/acarl005/stripansi
 # github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
-# github.com/aws/aws-sdk-go v1.45.10
+# github.com/aws/aws-sdk-go v1.45.16
 ## explicit; go 1.11
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -453,7 +453,7 @@ github.com/google/s2a-go/stream
 # github.com/google/uuid v1.3.1
 ## explicit
 github.com/google/uuid
-# github.com/googleapis/enterprise-certificate-proxy v0.2.5
+# github.com/googleapis/enterprise-certificate-proxy v0.3.1
 ## explicit; go 1.19
 github.com/googleapis/enterprise-certificate-proxy/client
 github.com/googleapis/enterprise-certificate-proxy/client/util
@@ -464,7 +464,7 @@ github.com/googleapis/gax-go/v2/apierror
 github.com/googleapis/gax-go/v2/apierror/internal/proto
 github.com/googleapis/gax-go/v2/callctx
 github.com/googleapis/gax-go/v2/internal
-# github.com/gophercloud/gophercloud v1.6.0
+# github.com/gophercloud/gophercloud v1.7.0
 ## explicit; go 1.14
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack
@@ -637,7 +637,7 @@ github.com/opencontainers/runc/libcontainer/user
 # github.com/opencontainers/runtime-spec v1.1.0
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift-online/ocm-sdk-go v0.1.364
+# github.com/openshift-online/ocm-sdk-go v0.1.371
 ## explicit; go 1.16
 github.com/openshift-online/ocm-sdk-go/authentication
 github.com/openshift-online/ocm-sdk-go/errors
@@ -653,7 +653,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.5.1-0.20230915095808-dd48a38be218
+# github.com/osbuild/images v0.7.0
 ## explicit; go 1.19
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
@@ -794,7 +794,7 @@ github.com/vbauerster/mpb/v8
 github.com/vbauerster/mpb/v8/cwriter
 github.com/vbauerster/mpb/v8/decor
 github.com/vbauerster/mpb/v8/internal
-# github.com/vmware/govmomi v0.30.7
+# github.com/vmware/govmomi v0.31.0
 ## explicit; go 1.19
 github.com/vmware/govmomi/cns
 github.com/vmware/govmomi/cns/methods
@@ -832,6 +832,7 @@ github.com/vmware/govmomi/vapi/rest
 github.com/vmware/govmomi/view
 github.com/vmware/govmomi/vim25
 github.com/vmware/govmomi/vim25/debug
+github.com/vmware/govmomi/vim25/json
 github.com/vmware/govmomi/vim25/methods
 github.com/vmware/govmomi/vim25/mo
 github.com/vmware/govmomi/vim25/progress
@@ -979,7 +980,7 @@ golang.org/x/tools/internal/typeparams
 ## explicit; go 1.17
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/api v0.141.0
+# google.golang.org/api v0.143.0
 ## explicit; go 1.19
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
@@ -1009,17 +1010,17 @@ google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5
+# google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/cloud/extendedops
 google.golang.org/genproto/googleapis/type/date
 google.golang.org/genproto/googleapis/type/expr
 google.golang.org/genproto/internal
-# google.golang.org/genproto/googleapis/api v0.0.0-20230803162519-f966b187b2e5
+# google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20230911183012-2d3300fd4832
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails

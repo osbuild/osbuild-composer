@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2014-2018 VMware, Inc. All Rights Reserved.
+Copyright (c) 2014-2023 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,7 +40,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/vmware/govmomi/internal/version"
 	"github.com/vmware/govmomi/vim25/progress"
@@ -87,6 +86,8 @@ type Client struct {
 
 	cookie          string
 	insecureCookies bool
+
+	useJSON bool
 }
 
 var schemeMatch = regexp.MustCompile(`^\w+://`)
@@ -113,6 +114,7 @@ func ParseURL(s string) (*url.URL, error) {
 			s = "https://" + s
 		}
 
+		s := strings.TrimSuffix(s, "/")
 		u, err = url.Parse(s)
 		if err != nil {
 			return nil, err
@@ -132,30 +134,22 @@ func ParseURL(s string) (*url.URL, error) {
 }
 
 func NewClient(u *url.URL, insecure bool) *Client {
-	c := Client{
-		u: u,
-		k: insecure,
-		d: newDebug(),
+	var t *http.Transport
 
-		Types: types.TypeFunc(),
-	}
-
-	// Initialize http.RoundTripper on client, so we can customize it below
-	if t, ok := http.DefaultTransport.(*http.Transport); ok {
-		c.t = &http.Transport{
-			Proxy:                 t.Proxy,
-			DialContext:           t.DialContext,
-			MaxIdleConns:          t.MaxIdleConns,
-			IdleConnTimeout:       t.IdleConnTimeout,
-			TLSHandshakeTimeout:   t.TLSHandshakeTimeout,
-			ExpectContinueTimeout: t.ExpectContinueTimeout,
-		}
+	if d, ok := http.DefaultTransport.(*http.Transport); ok {
+		t = d.Clone()
 	} else {
-		c.t = new(http.Transport)
+		t = new(http.Transport)
 	}
 
-	c.hosts = make(map[string]string)
-	c.t.TLSClientConfig = &tls.Config{InsecureSkipVerify: c.k}
+	if insecure {
+		if t.TLSClientConfig == nil {
+			t.TLSClientConfig = new(tls.Config)
+		}
+		t.TLSClientConfig.InsecureSkipVerify = insecure
+	}
+
+	c := newClientWithTransport(u, insecure, t)
 
 	// Always set DialTLS and DialTLSContext, even if InsecureSkipVerify=true,
 	// because of how certificate verification has been delegated to the host's
@@ -163,7 +157,22 @@ func NewClient(u *url.URL, insecure bool) *Client {
 	//
 	//   * https://tip.golang.org/doc/go1.18 (search for "Certificate.Verify")
 	//   * https://github.com/square/certigo/issues/264
-	c.t.DialTLSContext = c.dialTLSContext
+	t.DialTLSContext = c.dialTLSContext
+
+	return c
+}
+
+func newClientWithTransport(u *url.URL, insecure bool, t *http.Transport) *Client {
+	c := Client{
+		u: u,
+		k: insecure,
+		d: newDebug(),
+		t: t,
+
+		Types: types.TypeFunc(),
+	}
+
+	c.hosts = make(map[string]string)
 
 	c.Client.Transport = c.t
 	c.Client.Jar, _ = cookiejar.New(nil)
@@ -185,6 +194,10 @@ func (c *Client) DefaultTransport() *http.Transport {
 
 // NewServiceClient creates a NewClient with the given URL.Path and namespace.
 func (c *Client) NewServiceClient(path string, namespace string) *Client {
+	return c.newServiceClientWithTransport(path, namespace, c.t)
+}
+
+func (c *Client) newServiceClientWithTransport(path string, namespace string, t *http.Transport) *Client {
 	vc := c.URL()
 	u, err := url.Parse(path)
 	if err != nil {
@@ -195,12 +208,8 @@ func (c *Client) NewServiceClient(path string, namespace string) *Client {
 		u.Host = vc.Host
 	}
 
-	client := NewClient(u, c.k)
+	client := newClientWithTransport(u, c.k, t)
 	client.Namespace = "urn:" + namespace
-	client.DefaultTransport().TLSClientConfig = c.DefaultTransport().TLSClientConfig
-	if cert := c.Certificate(); cert != nil {
-		client.SetCertificate(*cert)
-	}
 
 	// Copy the trusted thumbprints
 	c.hostsMu.Lock()
@@ -237,6 +246,14 @@ func (c *Client) NewServiceClient(path string, namespace string) *Client {
 	}
 
 	return client
+}
+
+// UseJSON changes the protocol between SOAP and JSON. Starting with vCenter
+// 8.0.1 JSON over HTTP can be used. Note this method has no locking and clients
+// should be careful to not interfere with concurrent use of the client
+// instance.
+func (c *Client) UseJSON(useJSON bool) {
+	c.useJSON = useJSON
 }
 
 // SetRootCAs defines the set of PEM-encoded file locations of root certificate
@@ -415,6 +432,7 @@ func splitHostPort(host string) (string, string) {
 
 const sdkTunnel = "sdkTunnel:8089"
 
+// Certificate returns the current TLS certificate.
 func (c *Client) Certificate() *tls.Certificate {
 	certs := c.t.TLSClientConfig.Certificates
 	if len(certs) == 0 {
@@ -423,6 +441,7 @@ func (c *Client) Certificate() *tls.Certificate {
 	return &certs[0]
 }
 
+// SetCertificate st a certificate for TLS use.
 func (c *Client) SetCertificate(cert tls.Certificate) {
 	t := c.Client.Transport.(*http.Transport)
 
@@ -434,7 +453,8 @@ func (c *Client) SetCertificate(cert tls.Certificate) {
 // to the SDK tunnel virtual host.  Use of the SDK tunnel is required by LoginExtensionByCertificate()
 // and optional for other methods.
 func (c *Client) Tunnel() *Client {
-	tunnel := c.NewServiceClient(c.u.Path, c.Namespace)
+	tunnel := c.newServiceClientWithTransport(c.u.Path, c.Namespace, c.DefaultTransport().Clone())
+
 	t := tunnel.Client.Transport.(*http.Transport)
 	// Proxy to vCenter host on port 80
 	host := tunnel.u.Hostname()
@@ -460,6 +480,7 @@ func (c *Client) Tunnel() *Client {
 	return tunnel
 }
 
+// URL returns the URL to which the client is configured
 func (c *Client) URL() *url.URL {
 	urlCopy := *c.u
 	return &urlCopy
@@ -470,19 +491,23 @@ type marshaledClient struct {
 	URL      *url.URL
 	Insecure bool
 	Version  string
+	UseJSON  bool
 }
 
+// MarshalJSON writes the Client configuration to JSON.
 func (c *Client) MarshalJSON() ([]byte, error) {
 	m := marshaledClient{
 		Cookies:  c.Jar.Cookies(c.u),
 		URL:      c.u,
 		Insecure: c.k,
 		Version:  c.Version,
+		UseJSON:  c.useJSON,
 	}
 
 	return json.Marshal(m)
 }
 
+// UnmarshalJSON rads Client configuration from JSON.
 func (c *Client) UnmarshalJSON(b []byte) error {
 	var m marshaledClient
 
@@ -494,11 +519,10 @@ func (c *Client) UnmarshalJSON(b []byte) error {
 	*c = *NewClient(m.URL, m.Insecure)
 	c.Version = m.Version
 	c.Jar.SetCookies(m.URL, m.Cookies)
+	c.useJSON = m.UseJSON
 
 	return nil
 }
-
-type kindContext struct{}
 
 func (c *Client) setInsecureCookies(res *http.Response) {
 	cookies := res.Cookies()
@@ -510,6 +534,9 @@ func (c *Client) setInsecureCookies(res *http.Response) {
 	}
 }
 
+// Do is equivalent to http.Client.Do and takes care of API specifics including
+// logging, user-agent header, handling cookies, measuring responsiveness of the
+// API
 func (c *Client) Do(ctx context.Context, req *http.Request, f func(*http.Response) error) error {
 	if ctx == nil {
 		ctx = context.Background()
@@ -532,20 +559,7 @@ func (c *Client) Do(ctx context.Context, req *http.Request, f func(*http.Respons
 		ext = d.debugRequest(req)
 	}
 
-	tstart := time.Now()
 	res, err := c.Client.Do(req.WithContext(ctx))
-	tstop := time.Now()
-
-	if d.enabled() {
-		var name string
-		if kind, ok := ctx.Value(kindContext{}).(HasFault); ok {
-			name = fmt.Sprintf("%T", kind)
-		} else {
-			name = fmt.Sprintf("%s %s", req.Method, req.URL)
-		}
-		d.logf("%6dms (%s)", tstop.Sub(tstart)/time.Millisecond, name)
-	}
-
 	if err != nil {
 		return err
 	}
@@ -603,7 +617,15 @@ func newStatusError(res *http.Response) error {
 	}
 }
 
+// RoundTrip executes an API request to VMOMI server.
 func (c *Client) RoundTrip(ctx context.Context, reqBody, resBody HasFault) error {
+	if !c.useJSON {
+		return c.soapRoundTrip(ctx, reqBody, resBody)
+	}
+	return c.jsonRoundTrip(ctx, reqBody, resBody)
+}
+
+func (c *Client) soapRoundTrip(ctx context.Context, reqBody, resBody HasFault) error {
 	var err error
 	var b []byte
 
@@ -651,7 +673,7 @@ func (c *Client) RoundTrip(ctx context.Context, reqBody, resBody HasFault) error
 	}
 	req.Header.Set(`SOAPAction`, action)
 
-	return c.Do(context.WithValue(ctx, kindContext{}, resBody), req, func(res *http.Response) error {
+	return c.Do(ctx, req, func(res *http.Response) error {
 		switch res.StatusCode {
 		case http.StatusOK:
 			// OK
