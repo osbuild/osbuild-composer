@@ -34,7 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 622049,
+      "id": 622188,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -248,7 +248,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "28 * 24 * (1 - $latency_slo) \n/\n(\n  1.001 - (\n    (\n      sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\", tenant=~\"$tenant\"}[$__range]))\n      /\n      sum(rate(image_builder_composer_http_duration_seconds_count{tenant=~\"$tenant\"}[$__range]))\n    ) OR on() vector(1) # set fallback incase the above query result is empty\n  ) \n)",
+              "expr": "28 * 24 * (1 - $latency_slo) \n/\n(\n  1.001 - (\n    (\n      sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\", tenant=~\"$tenant\"}[28d]))\n      /\n      sum(rate(image_builder_composer_http_duration_seconds_count{tenant=~\"$tenant\"}[28d]))\n    ) OR on() vector(1) # set fallback incase the above query result is empty\n  ) \n)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
@@ -861,7 +861,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "sum by (path) (rate(image_builder_composer_request_count{code=~\"5.*\", tenant=~\"$tenant\"}[$interval]))",
+              "expr": "sum by (path) (rate(image_builder_composer_request_count{code=~\"5.*\", tenant=~\"$tenant\"}[$__rate_interval]))",
               "hide": false,
               "interval": "",
               "legendFormat": "{{path}} errors/sec",
@@ -952,7 +952,7 @@ data:
           ],
           "options": {
             "colorMode": "value",
-            "graphMode": "none",
+            "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
             "reduceOptions": {
@@ -1116,7 +1116,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_http_duration_seconds_bucket{tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(image_builder_composer_http_duration_seconds_bucket{tenant=~\"$tenant\"}[$__rate_interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p99",
@@ -1130,7 +1130,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "histogram_quantile(0.95, sum(rate(image_builder_composer_http_duration_seconds_bucket{tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(image_builder_composer_http_duration_seconds_bucket{tenant=~\"$tenant\"}[$__rate_interval])) by (le))",
               "hide": false,
               "interval": "",
               "legendFormat": "p95",
@@ -1144,7 +1144,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_http_duration_seconds_bucket{tenant=~\"$tenant\"}[$interval])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(image_builder_composer_http_duration_seconds_bucket{tenant=~\"$tenant\"}[$__rate_interval])) by (le))",
               "interval": "",
               "legendFormat": "p50",
               "range": true,
@@ -1241,7 +1241,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "1 - sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\", tenant=~\"$tenant\"}[$interval]))/sum(rate(image_builder_composer_http_duration_seconds_count[$interval]))",
+              "expr": "1 - sum(rate(image_builder_composer_http_duration_seconds_bucket{le=\"0.2\", tenant=~\"$tenant\"}[$__rate_interval]))/sum(rate(image_builder_composer_http_duration_seconds_count[$__rate_interval]))",
               "interval": "",
               "legendFormat": "",
               "range": true,
@@ -1361,7 +1361,7 @@ data:
         "list": [
           {
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "app-sre-prod-04-prometheus",
               "value": "app-sre-prod-04-prometheus"
             },
@@ -1376,65 +1376,6 @@ data:
             "regex": "/app-sre-(prod-04|stage-01)-prometheus/",
             "skipUrlSync": false,
             "type": "datasource"
-          },
-          {
-            "auto": false,
-            "auto_count": 30,
-            "auto_min": "10s",
-            "current": {
-              "selected": true,
-              "text": "30m",
-              "value": "30m"
-            },
-            "hide": 0,
-            "name": "interval",
-            "options": [
-              {
-                "selected": false,
-                "text": "5m",
-                "value": "5m"
-              },
-              {
-                "selected": true,
-                "text": "30m",
-                "value": "30m"
-              },
-              {
-                "selected": false,
-                "text": "1h",
-                "value": "1h"
-              },
-              {
-                "selected": false,
-                "text": "6h",
-                "value": "6h"
-              },
-              {
-                "selected": false,
-                "text": "12h",
-                "value": "12h"
-              },
-              {
-                "selected": false,
-                "text": "1d",
-                "value": "1d"
-              },
-              {
-                "selected": false,
-                "text": "3d",
-                "value": "3d"
-              },
-              {
-                "selected": false,
-                "text": "7d",
-                "value": "7d"
-              }
-            ],
-            "query": "5m,30m,1h,6h,12h,1d,3d,7d",
-            "queryValue": "",
-            "refresh": 2,
-            "skipUrlSync": false,
-            "type": "interval"
           },
           {
             "description": "Compose stability SLO target",
@@ -1543,6 +1484,6 @@ data:
       "timezone": "",
       "title": "Image Builder Composer",
       "uid": "image-builder-composer",
-      "version": 8,
+      "version": 9,
       "weekStart": ""
     }
