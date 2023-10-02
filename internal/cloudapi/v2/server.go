@@ -120,6 +120,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	ibp := blueprint.Convert(bp)
 	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
 	if err != nil {
+		logrus.Warningf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
@@ -241,6 +242,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		ibp := blueprint.Convert(bp)
 		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
 		if err != nil {
+			logrus.Errorf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
 
