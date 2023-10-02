@@ -34,7 +34,7 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 150222,
+      "id": 622049,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -576,7 +576,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "1 - (\n  (\n    sum(increase(image_builder_composer_total_failed_compose_requests{tenant=~\"$tenant\"}[$__range]))\n    /\n    sum(increase(image_builder_composer_total_compose_requests{tenant=~\"$tenant\"}[$__range]))\n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_composer_request_count{code=~\"5.*\", path=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\", tenant=~\"$tenant\"}[$__range]))\n    /\n    sum(increase(image_builder_composer_request_count{path=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\", tenant=~\"$tenant\"}[$__range]))\n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "range": true,
@@ -673,7 +673,7 @@ data:
               },
               "editorMode": "code",
               "exemplar": true,
-              "expr": "1 - (\n  (\n    sum(increase(image_builder_composer_request_count{code=~\"5.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\", tenant=~\"$tenant\"}[$__range]))\n    /\n    sum(increase(image_builder_composer_request_count{code!~\"4.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\", tenant=~\"$tenant\"}[$__range]))\n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
+              "expr": "1 - (\n  (\n    sum(increase(image_builder_composer_request_count{code=~\"5.*\", path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\", tenant=~\"$tenant\"}[$__range]))\n    /\n    sum(increase(image_builder_composer_request_count{path!=\"/api/image-builder-composer/v2/compose\", subsystem=\"composer\", tenant=~\"$tenant\"}[$__range]))\n  ) OR on() vector(0) # set a fallback if the query result is empty\n)",
               "interval": "",
               "legendFormat": "",
               "range": true,
@@ -1543,6 +1543,6 @@ data:
       "timezone": "",
       "title": "Image Builder Composer",
       "uid": "image-builder-composer",
-      "version": 7,
+      "version": 8,
       "weekStart": ""
     }
