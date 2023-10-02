@@ -619,7 +619,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, jts, channels)
 	}
 	if err != nil {
-		if err != jobqueue.ErrDequeueTimeout {
+		if err != jobqueue.ErrDequeueTimeout && err != jobqueue.ErrNotPending {
 			logrus.Errorf("dequeuing job failed: %v", err)
 		}
 		return
