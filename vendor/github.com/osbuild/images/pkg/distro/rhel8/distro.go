@@ -251,21 +251,23 @@ func newDistro(name string, minor int) *distribution {
 		amiImgTypeX86_64(rd),
 	)
 
+	x86FirmwarePackages := []string{
+		"microcode_ctl", // ??
+		"iwl1000-firmware",
+		"iwl100-firmware",
+		"iwl105-firmware",
+		"iwl135-firmware",
+		"iwl2000-firmware",
+		"iwl2030-firmware",
+		"iwl3160-firmware",
+		"iwl5000-firmware",
+		"iwl5150-firmware",
+		"iwl6050-firmware",
+	}
+
 	bareMetalX86Platform := &platform.X86{
 		BasePlatform: platform.BasePlatform{
-			FirmwarePackages: []string{
-				"microcode_ctl", // ??
-				"iwl1000-firmware",
-				"iwl100-firmware",
-				"iwl105-firmware",
-				"iwl135-firmware",
-				"iwl2000-firmware",
-				"iwl2030-firmware",
-				"iwl3160-firmware",
-				"iwl5000-firmware",
-				"iwl5150-firmware",
-				"iwl6050-firmware",
-			},
+			FirmwarePackages: x86FirmwarePackages,
 		},
 		BIOS:       true,
 		UEFIVendor: rd.vendor,
@@ -273,10 +275,21 @@ func newDistro(name string, minor int) *distribution {
 
 	x86_64.addImageTypes(
 		bareMetalX86Platform,
+		imageInstaller(),
+	)
+
+	edgeX86Platform := &platform.X86{
+		BasePlatform: platform.BasePlatform{
+			FirmwarePackages: x86FirmwarePackages,
+		},
+		UEFIVendor: rd.vendor,
+	}
+
+	x86_64.addImageTypes(
+		edgeX86Platform,
 		edgeOCIImgType(rd),
 		edgeCommitImgType(rd),
 		edgeInstallerImgType(rd),
-		imageInstaller(),
 	)
 
 	gceX86Platform := &platform.X86{
@@ -437,7 +450,7 @@ func newDistro(name string, minor int) *distribution {
 			// image types only available on 8.6 and later on RHEL
 			// These edge image types require FDO which aren't available on older versions
 			x86_64.addImageTypes(
-				bareMetalX86Platform,
+				edgeX86Platform,
 				edgeRawImgType(),
 			)
 
@@ -490,7 +503,7 @@ func newDistro(name string, minor int) *distribution {
 		rd.addArches(s390x)
 	} else {
 		x86_64.addImageTypes(
-			bareMetalX86Platform,
+			edgeX86Platform,
 			edgeRawImgType(),
 		)
 
