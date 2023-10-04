@@ -87,6 +87,47 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 				Enabled:  common.ToPtr(true),
 			},
 		},
+		Firewall: &FirewallCustomization{
+			Ports: common.ToPtr([]string{
+				"22/tcp",
+			}),
+		},
+		Hostname:           common.ToPtr("hostname"),
+		InstallationDevice: common.ToPtr("/dev/sda"),
+		Kernel: &Kernel{
+			Append: common.ToPtr("nosmt=force"),
+			Name:   common.ToPtr("kernel-debug"),
+		},
+		Locale: &Locale{
+			Keyboard: common.ToPtr("us"),
+			Languages: common.ToPtr([]string{
+				"en_US.UTF-8",
+			}),
+		},
+		Fdo: &FDO{
+			DiunPubKeyHash:         common.ToPtr("pubkeyhash"),
+			DiunPubKeyInsecure:     common.ToPtr("pubkeyinsecure"),
+			DiunPubKeyRootCerts:    common.ToPtr("pubkeyrootcerts"),
+			ManufacturingServerUrl: common.ToPtr("serverurl"),
+		},
+		Ignition: &Ignition{
+			Firstboot: &IgnitionFirstboot{
+				Url: "provisioning-url.local",
+			},
+		},
+		Sshkey: &[]SSHKey{
+			{
+				Key:  "key",
+				User: "user",
+			},
+		},
+		Timezone: &Timezone{
+			Timezone: common.ToPtr("US/Eastern"),
+			Ntpservers: common.ToPtr([]string{
+				"0.north-america.pool.ntp.org",
+				"1.north-america.pool.ntp.org",
+			}),
+		},
 	}}
 
 	// Construct the expected blueprint result
@@ -152,8 +193,48 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 				GPGCheck: common.ToPtr(true),
 			},
 		},
+		Firewall: &blueprint.FirewallCustomization{
+			Ports: []string{
+				"22/tcp",
+			},
+		},
+		Hostname:           common.ToPtr("hostname"),
+		InstallationDevice: "/dev/sda",
+		Kernel: &blueprint.KernelCustomization{
+			Append: "nosmt=force",
+			Name:   "kernel-debug",
+		},
+		Locale: &blueprint.LocaleCustomization{
+			Keyboard: common.ToPtr("us"),
+			Languages: []string{
+				"en_US.UTF-8",
+			},
+		},
+		FDO: &blueprint.FDOCustomization{
+			DiunPubKeyHash:         "pubkeyhash",
+			DiunPubKeyInsecure:     "pubkeyinsecure",
+			DiunPubKeyRootCerts:    "pubkeyrootcerts",
+			ManufacturingServerURL: "serverurl",
+		},
+		Ignition: &blueprint.IgnitionCustomization{
+			FirstBoot: &blueprint.FirstBootIgnitionCustomization{
+				ProvisioningURL: "provisioning-url.local",
+			},
+		},
+		SSHKey: []blueprint.SSHKeyCustomization{
+			{
+				Key:  "key",
+				User: "user",
+			},
+		},
+		Timezone: &blueprint.TimezoneCustomization{
+			Timezone: common.ToPtr("US/Eastern"),
+			NTPServers: []string{
+				"0.north-america.pool.ntp.org",
+				"1.north-america.pool.ntp.org",
+			},
+		},
 	}
-
 	bp, err = cr.GetBlueprintWithCustomizations()
 	require.Nil(t, err)
 	assert.Equal(t, bp, expected)

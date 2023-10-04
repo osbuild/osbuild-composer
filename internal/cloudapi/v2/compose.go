@@ -292,6 +292,191 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 			bp.Customizations.Repositories = repoCustomizations
 		}
 	}
+
+	if request.Customizations.Hostname != nil {
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Hostname: request.Customizations.Hostname,
+			}
+		} else {
+			bp.Customizations.Hostname = request.Customizations.Hostname
+		}
+	}
+
+	if request.Customizations.Kernel != nil {
+		kernel := &blueprint.KernelCustomization{}
+		if request.Customizations.Kernel.Name != nil {
+			kernel.Name = *request.Customizations.Kernel.Name
+		}
+		if request.Customizations.Kernel.Append != nil {
+			kernel.Append = *request.Customizations.Kernel.Append
+		}
+
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Kernel: kernel,
+			}
+		} else {
+			bp.Customizations.Kernel = kernel
+		}
+	}
+
+	if request.Customizations.Sshkey != nil {
+		keys := []blueprint.SSHKeyCustomization{}
+		for _, key := range *request.Customizations.Sshkey {
+			keys = append(keys, blueprint.SSHKeyCustomization{
+				User: key.User,
+				Key:  key.Key,
+			})
+		}
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				SSHKey: keys,
+			}
+		} else {
+			bp.Customizations.SSHKey = keys
+		}
+	}
+
+	if request.Customizations.Group != nil {
+		groups := []blueprint.GroupCustomization{}
+		for _, group := range *request.Customizations.Group {
+			groups = append(groups, blueprint.GroupCustomization{
+				Name: group.Name,
+				GID:  group.Gid,
+			})
+		}
+
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Group: groups,
+			}
+		} else {
+			bp.Customizations.Group = groups
+		}
+	}
+
+	if request.Customizations.Timezone != nil {
+		tz := &blueprint.TimezoneCustomization{
+			Timezone: request.Customizations.Timezone.Timezone,
+		}
+
+		if request.Customizations.Timezone.Ntpservers != nil {
+			tz.NTPServers = append(tz.NTPServers, *request.Customizations.Timezone.Ntpservers...)
+		}
+
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Timezone: tz,
+			}
+		} else {
+			bp.Customizations.Timezone = tz
+		}
+	}
+
+	if request.Customizations.Locale != nil {
+		locale := &blueprint.LocaleCustomization{
+			Keyboard: request.Customizations.Locale.Keyboard,
+		}
+
+		if request.Customizations.Locale.Languages != nil {
+			locale.Languages = append(locale.Languages, *request.Customizations.Locale.Languages...)
+		}
+
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Locale: locale,
+			}
+		} else {
+			bp.Customizations.Locale = locale
+		}
+	}
+
+	if request.Customizations.Firewall != nil {
+		firewall := &blueprint.FirewallCustomization{}
+
+		if request.Customizations.Firewall.Ports != nil {
+			firewall.Ports = append(firewall.Ports, *request.Customizations.Firewall.Ports...)
+		}
+		if request.Customizations.Firewall.Services != nil {
+			enabled := []string{}
+			if request.Customizations.Firewall.Services.Enabled != nil {
+				enabled = append(enabled, *request.Customizations.Firewall.Services.Enabled...)
+			}
+			disabled := []string{}
+			if request.Customizations.Firewall.Services.Disabled != nil {
+				disabled = append(disabled, *request.Customizations.Firewall.Services.Disabled...)
+			}
+			firewall.Services = &blueprint.FirewallServicesCustomization{
+				Enabled:  enabled,
+				Disabled: disabled,
+			}
+		}
+
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Firewall: firewall,
+			}
+		} else {
+			bp.Customizations.Firewall = firewall
+		}
+	}
+
+	if request.Customizations.InstallationDevice != nil {
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				InstallationDevice: *request.Customizations.InstallationDevice,
+			}
+		} else {
+			bp.Customizations.InstallationDevice = *request.Customizations.InstallationDevice
+		}
+	}
+
+	if request.Customizations.Fdo != nil {
+		fdo := &blueprint.FDOCustomization{}
+		if request.Customizations.Fdo.DiunPubKeyHash != nil {
+			fdo.DiunPubKeyHash = *request.Customizations.Fdo.DiunPubKeyHash
+		}
+		if request.Customizations.Fdo.DiunPubKeyInsecure != nil {
+			fdo.DiunPubKeyInsecure = *request.Customizations.Fdo.DiunPubKeyInsecure
+		}
+		if request.Customizations.Fdo.DiunPubKeyRootCerts != nil {
+			fdo.DiunPubKeyRootCerts = *request.Customizations.Fdo.DiunPubKeyRootCerts
+		}
+		if request.Customizations.Fdo.ManufacturingServerUrl != nil {
+			fdo.ManufacturingServerURL = *request.Customizations.Fdo.ManufacturingServerUrl
+		}
+
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				FDO: fdo,
+			}
+		} else {
+			bp.Customizations.FDO = fdo
+		}
+	}
+
+	if request.Customizations.Ignition != nil {
+		ignition := &blueprint.IgnitionCustomization{}
+		if request.Customizations.Ignition.Embedded != nil {
+			ignition.Embedded = &blueprint.EmbeddedIgnitionCustomization{
+				Config: request.Customizations.Ignition.Embedded.Config,
+			}
+		}
+		if request.Customizations.Ignition.Firstboot != nil {
+			ignition.FirstBoot = &blueprint.FirstBootIgnitionCustomization{
+				ProvisioningURL: request.Customizations.Ignition.Firstboot.Url,
+			}
+		}
+		if bp.Customizations == nil {
+			bp.Customizations = &blueprint.Customizations{
+				Ignition: ignition,
+			}
+		} else {
+			bp.Customizations.Ignition = ignition
+		}
+	}
+
 	return bp, nil
 }
 

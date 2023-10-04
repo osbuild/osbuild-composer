@@ -414,6 +414,26 @@ EOF
 esac
 export OPENSCAP_CUSTOMIZATION_BLOCK
 
+TIMEZONE_CUSTOMIZATION_BLOCK=$(cat <<EOF
+,
+    "timezone": {
+        "timezone": "Europe/Prague"
+    }
+EOF
+)
+export TIMEZONE_CUSTOMIZATION_BLOCK
+
+FIREWALL_CUSTOMIZATION_BLOCK=$(cat <<EOF
+,
+    "firewall": {
+        "services": {
+            "enabled": ["nfs"]
+        }
+    }
+EOF
+)
+export FIREWALL_CUSTOMIZATION_BLOCK
+
 # generate a temp key for user tests
 ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
 

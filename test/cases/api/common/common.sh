@@ -58,6 +58,23 @@ function _instanceCheck() {
 
   verify_openscap_customization "$_ssh"
 
+  echo "✔️ Checking timezone customization"
+  TZ=$($_ssh timedatectl show  -p Timezone --value)
+  if [ "$TZ" != "Europe/Prague" ]; then
+      echo "Timezone $TZ isn't Europe/Prague"
+      exit 1
+  fi
+
+  echo "✔️ Checking firewall customization"
+  if $_ssh rpm -q firewalld; then
+      FW_SERVICES=$($_ssh sudo firewall-cmd --list-services)
+      if ! grep -q "nfs" <<< "$FW_SERVICES"; then
+          echo "firewalld nfs service isn't enabled: $FW_SERVICES"
+          exit 1
+      fi
+  else
+      echo "firewalld not available on host, that's fine"
+  fi
 }
 
 WORKER_REFRESH_TOKEN_PATH="/etc/osbuild-worker/token"
