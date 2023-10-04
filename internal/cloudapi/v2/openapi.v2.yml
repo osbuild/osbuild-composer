@@ -1156,6 +1156,37 @@ components:
               items:
                 type: string
                 example: "firewalld"
+        hostname:
+          type: string
+          description: Configures the hostname
+          example: myhostname
+        kernel:
+          $ref: '#/components/schemas/Kernel'
+        sshkey:
+          type: array
+          description: List of ssh keys
+          items:
+            $ref: '#/components/schemas/SSHKey'
+        group:
+          type: array
+          description: List of groups to create
+          items:
+            $ref: '#/components/schemas/Group'
+        timezone:
+          $ref: '#/components/schemas/Timezone'
+        locale:
+          $ref: '#/components/schemas/Locale'
+        firewall:
+          $ref: '#/components/schemas/FirewallCustomization'
+        installation_device:
+          type: string
+          description: |
+            Name of the installation device, currently only useful for the edge-simplified-installer type
+          example: /dev/sda
+        fdo:
+          $ref: '#/components/schemas/FDO'
+        ignition:
+          $ref: '#/components/schemas/Ignition'
     Container:
       type: object
       required:
@@ -1172,6 +1203,34 @@ components:
           type: boolean
           description: Control TLS verifification
           example: true
+    FirewallCustomization:
+      type: object
+      description: Firewalld configuration
+      additionalProperties: false
+      properties:
+        ports:
+          type: array
+          description: List of ports (or port ranges) and protocols to open
+          example: ["22:tcp", "80:tcp", "imap:tcp"]
+          items:
+            type: string
+        services:
+          type: object
+          description: Firewalld services to enable or disable
+          additionalProperties: false
+          properties:
+            enabled:
+              type: array
+              description: List of services to enable
+              example: ["ftp", "ntp"]
+              items:
+                type: string
+            disabled:
+              type: array
+              description: List of services to disable
+              example: ["telnet"]
+              items:
+                type: string
     Directory:
       type: object
       description: |
@@ -1328,6 +1387,116 @@ components:
         key:
           type: string
           example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
+    Kernel:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Name of the kernel to use
+          example: kernel-debug
+        append:
+          type: string
+          description: Appends arguments to the bootloader kernel command line
+          example: nosmt=force
+    SSHKey:
+      type: object
+      additionalProperties: false
+      required:
+      - user
+      - key
+      properties:
+        user:
+          type: string
+          description: User to configure the ssh key for
+          example: admin
+        key:
+          type: string
+          description: Adds the key to the user's authorized_keys file
+          example: |
+            ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIASWitkOH4U874EdsBUnytb3bwvRggHlQlbYXl7n10v9
+    Timezone:
+      type: object
+      description: Timezone configuration
+      additionalProperties: false
+      properties:
+        timezone:
+          type: string
+          description: Name of the timezone, defaults to UTC
+          example: US/Eastern
+        ntpservers:
+          type: array
+          description: List of ntp servers
+          example: ["0.north-america.pool.ntp.org", "1.north-america.pool.ntp.org"]
+          items:
+            type: string
+    Locale:
+      type: object
+      description: Locale configuration
+      additionalProperties: false
+      properties:
+        languages:
+          type: array
+          description: |
+            List of locales to be installed, the first one becomes primary, subsequent ones are secondary
+          example: ["en_US.UTF-8"]
+          items:
+            type: string
+        keyboard:
+          type: string
+          description: Sets the keyboard layout
+          example: us
+    FDO:
+      type: object
+      additionalProperties: false
+      description: FIDO device onboard configuration
+      properties:
+        manufacturing_server_url:
+          type: string
+        diun_pub_key_insecure:
+          type: string
+        diun_pub_key_hash:
+          type: string
+        diun_pub_key_root_certs:
+          type: string
+    Ignition:
+      type: object
+      additionalProperties: false
+      description: Ignition configuration
+      properties:
+        embedded:
+          $ref: '#/components/schemas/IgnitionEmbedded'
+        firstboot:
+          $ref: '#/components/schemas/IgnitionFirstboot'
+    IgnitionEmbedded:
+      type: object
+      additionalProperties: false
+      required:
+      - config
+      properties:
+        config:
+          type: string
+    IgnitionFirstboot:
+      type: object
+      additionalProperties: false
+      required:
+      - url
+      properties:
+        url:
+          type: string
+          description: Provisioning URL
+    Group:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          description: Name of the group to create
+        gid:
+          type: integer
+          description: Group id of the group to create (optional)
     Koji:
       type: object
       additionalProperties: false

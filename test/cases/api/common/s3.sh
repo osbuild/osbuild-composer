@@ -79,6 +79,7 @@ function createReqFileGuest() {
         "key": "$(cat "${WORKDIR}/usertest.pub")"
       }
     ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}${REPOSITORY_CUSTOMIZATION_BLOCK}${OPENSCAP_CUSTOMIZATION_BLOCK}
+${TIMEZONE_CUSTOMIZATION_BLOCK}${FIREWALL_CUSTOMIZATION_BLOCK}
   },
   "image_request": {
     "architecture": "$ARCH",
@@ -108,6 +109,7 @@ function createReqFileVSphere() {
       "postgresql",
       "dummy"
     ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}
+${TIMEZONE_CUSTOMIZATION_BLOCK}${FIREWALL_CUSTOMIZATION_BLOCK}
   },
   "image_request": {
     "architecture": "$ARCH",
