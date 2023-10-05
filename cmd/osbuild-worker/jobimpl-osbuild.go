@@ -904,7 +904,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			var osbuildLog bytes.Buffer
 			err = osbuildJobResult.OSBuildOutput.Write(&osbuildLog)
 			if err != nil {
-				logWithId.Warnf("[Koji] Converting osbuild log to texrt failed: %v", err)
+				logWithId.Warnf("[Koji] Converting osbuild log to text failed: %v", err)
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, err.Error(), nil)
 				break
 			}
