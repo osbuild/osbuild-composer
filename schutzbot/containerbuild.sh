@@ -14,6 +14,7 @@ podman \
 	build \
 	--file="distribution/Dockerfile-ubi" \
 	--tag="${IMAGE_NAME}:${IMAGE_TAG}" \
+	--build-arg="COMMIT=${IMAGE_TAG}" \
 	--label="quay.expires-after=1w" \
 	.
 
