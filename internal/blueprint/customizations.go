@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/osbuild/images/pkg/disk"
 )
 
 type Customizations struct {
@@ -18,6 +20,7 @@ type Customizations struct {
 	Services           *ServicesCustomization    `json:"services,omitempty" toml:"services,omitempty"`
 	Filesystem         []FilesystemCustomization `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
 	InstallationDevice string                    `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
+	PartitioningMode   string                    `json:"partitioning_mode,omitempty" toml:"partitioning_mode,omitempty"`
 	FDO                *FDOCustomization         `json:"fdo,omitempty" toml:"fdo,omitempty"`
 	OpenSCAP           *OpenSCAPCustomization    `json:"openscap,omitempty" toml:"openscap,omitempty"`
 	Ignition           *IgnitionCustomization    `json:"ignition,omitempty" toml:"ignition,omitempty"`
@@ -298,6 +301,26 @@ func (c *Customizations) GetFilesystemsMinSize() uint64 {
 		agg = (agg/512 + 1) * 512
 	}
 	return agg
+}
+
+// GetPartitioningMode converts the string to a disk.PartitioningMode type
+func (c *Customizations) GetPartitioningMode() (disk.PartitioningMode, error) {
+	if c == nil {
+		return disk.DefaultPartitioningMode, nil
+	}
+
+	switch c.PartitioningMode {
+	case "raw":
+		return disk.RawPartitioningMode, nil
+	case "lvm":
+		return disk.LVMPartitioningMode, nil
+	case "auto-lvm":
+		return disk.AutoLVMPartitioningMode, nil
+	case "":
+		return disk.DefaultPartitioningMode, nil
+	default:
+		return disk.DefaultPartitioningMode, fmt.Errorf("invalid partitioning mode '%s'", c.PartitioningMode)
+	}
 }
 
 func (c *Customizations) GetInstallationDevice() string {
