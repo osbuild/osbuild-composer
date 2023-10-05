@@ -2485,9 +2485,21 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 	seed := bigSeed.Int64()
 
+	// Get the partitioning mode
+	pm, err := bp.Customizations.GetPartitioningMode()
+	if err != nil {
+		errors := responseError{
+			ID:  "BlueprintsError",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	options := distro.ImageOptions{
-		Size:   size,
-		OSTree: &cr.OSTree,
+		Size:             size,
+		OSTree:           &cr.OSTree,
+		PartitioningMode: pm,
 	}
 	options.Facts = &facts.ImageOptions{
 		APIType: facts.WELDR_APITYPE,

@@ -550,7 +550,8 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 	"openscap": {
 	    "datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
 		"profile_id": "xccdf_org.ssgproject.content_profile_cis"
-	}
+	},
+	"partitioning_mode": "raw"
   }
 }`
 	resp := test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", testBlueprint)
@@ -644,6 +645,7 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 				DataStream: "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
 				ProfileID:  "xccdf_org.ssgproject.content_profile_cis",
 			},
+			PartitioningMode: "raw",
 		},
 	}
 
