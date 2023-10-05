@@ -3,6 +3,7 @@ package blueprint
 import (
 	"testing"
 
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -386,4 +387,35 @@ func TestGetOpenSCAPConfig(t *testing.T) {
 	retOpenSCAPCustomiztions := TestCustomizations.GetOpenSCAP()
 
 	assert.EqualValues(t, expectedOscap, *retOpenSCAPCustomiztions)
+}
+
+func TestGetPartitioningMode(t *testing.T) {
+	// No customizations returns Default which is actually AutoLVM,
+	// but that is handled by the images code
+	var c *Customizations
+	pm, err := c.GetPartitioningMode()
+	assert.NoError(t, err)
+	assert.Equal(t, disk.DefaultPartitioningMode, pm)
+
+	// Empty defaults to Default which is actually AutoLVM,
+	// but that is handled by the images code
+	c = &Customizations{}
+	_, err = c.GetPartitioningMode()
+	assert.NoError(t, err)
+	assert.Equal(t, disk.DefaultPartitioningMode, pm)
+
+	// Unknown mode returns an error
+	c = &Customizations{
+		PartitioningMode: "all-of-them",
+	}
+	_, err = c.GetPartitioningMode()
+	assert.Error(t, err)
+
+	// And a known mode returns the correct type
+	c = &Customizations{
+		PartitioningMode: "lvm",
+	}
+	pm, err = c.GetPartitioningMode()
+	assert.NoError(t, err)
+	assert.Equal(t, disk.LVMPartitioningMode, pm)
 }
