@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"math"
 	"math/big"
@@ -883,10 +884,16 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Info("[Koji] 🎉 Image successfully uploaded")
 
-			manifest := bytes.NewReader(jobArgs.Manifest)
+			var manifest bytes.Buffer
+			err = json.Indent(&manifest, jobArgs.Manifest, "", "  ")
+			if err != nil {
+				logWithId.Warnf("[Koji] Indenting osbuild manifest failed: %v", err)
+				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, err.Error(), nil)
+				break
+			}
 			logWithId.Info("[Koji] ⬆ Uploading the osbuild manifest")
 			manifestFilename := jobTarget.ImageName + ".manifest.json"
-			manifestHash, manifestSize, err := kojiAPI.Upload(manifest, targetOptions.UploadDirectory, manifestFilename)
+			manifestHash, manifestSize, err := kojiAPI.Upload(&manifest, targetOptions.UploadDirectory, manifestFilename)
 			if err != nil {
 				logWithId.Warnf("[Koji] ⬆ upload failed: %v", err)
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
