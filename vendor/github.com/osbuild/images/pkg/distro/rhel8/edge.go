@@ -163,7 +163,7 @@ func minimalRawImgType(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: defaultBasePartitionTables,
+		basePartitionTables: minimalRawBasePartitionTable,
 	}
 	return it
 }
