@@ -25,6 +25,7 @@ import (
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
+
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 )
 
@@ -73,6 +74,9 @@ type crBlueprint struct {
 	Containers     []blueprint.Container     `json:"containers,omitempty"`
 	Customizations *blueprint.Customizations `json:"customizations,omitempty"`
 	Distro         string                    `json:"distro,omitempty"`
+
+	// EXPERIMENTAL
+	Minimal bool `json:"minimal,omitempty"`
 }
 
 type composeRequest struct {
@@ -150,6 +154,9 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 		var bp blueprint.Blueprint
 		if cr.Blueprint != nil {
 			bp = blueprint.Blueprint(*cr.Blueprint)
+			if bp.Minimal {
+				msgq <- fmt.Sprintf("[%s] blueprint contains minimal=true, this is considered EXPERIMENTAL", filename)
+			}
 		}
 
 		manifest, _, err := imgType.Manifest(&bp, options, repos, seedArg)
