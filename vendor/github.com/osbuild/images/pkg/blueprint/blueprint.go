@@ -12,14 +12,9 @@ type Blueprint struct {
 	Containers     []Container     `json:"containers,omitempty" toml:"containers,omitempty"`
 	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations"`
 	Distro         string          `json:"distro" toml:"distro"`
-}
 
-type Change struct {
-	Commit    string    `json:"commit" toml:"commit"`
-	Message   string    `json:"message" toml:"message"`
-	Revision  *int      `json:"revision" toml:"revision"`
-	Timestamp string    `json:"timestamp" toml:"timestamp"`
-	Blueprint Blueprint `json:"-" toml:"-"`
+	// EXPERIMENTAL
+	Minimal bool `json:"minimal" toml:"minimal"`
 }
 
 // A Package specifies an RPM package.

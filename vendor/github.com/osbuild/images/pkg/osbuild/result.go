@@ -147,10 +147,10 @@ func (res *Result) Write(writer io.Writer) error {
 	sort.Strings(pipelineNames)
 
 	for _, pipelineName := range pipelineNames {
-		fmt.Fprintf(writer, "Pipeline %s\n", pipelineName)
+		fmt.Fprintf(writer, "Pipeline: %s\n", pipelineName)
 		pipelineMD := res.Metadata[pipelineName]
 		for _, stage := range res.Log[pipelineName] {
-			fmt.Fprintf(writer, "Stage %s\n", stage.Type)
+			fmt.Fprintf(writer, "Stage: %s\n", stage.Type)
 			fmt.Fprintf(writer, "Output:\n%s\n", stage.Output)
 
 			// print structured stage metadata if available
@@ -164,8 +164,8 @@ func (res *Result) Write(writer io.Writer) error {
 						return err
 					}
 				}
-				fmt.Fprint(writer, "\n")
 			}
+			fmt.Fprint(writer, "\n")
 		}
 	}
 
