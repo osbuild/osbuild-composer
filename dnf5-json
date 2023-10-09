@@ -58,26 +58,14 @@ _BASEARCH_MAP = _invert({
 def remote_location(package, schemes=("http", "ftp", "file", "https")):
     """Return the remote url where a package rpm may be downloaded from
 
-    This re-implements the dnf4 behavior for the package.remote_location
-    because libdnf5 doesn't expose this information on the package object.
-
-    If it cannot find a suitable url it raises a RuntimeError
+    This wraps the get_remote_location() function, returning the first
+    result or if it cannot find a suitable url it raises a RuntimeError
     """
-    # If mirror or metalink is the source, pick the first https or http mirror
-    mirrors = package.get_repo().get_mirrors()
-    available = [m for m in mirrors if urlparse(m).scheme in schemes]
-    if len(available) > 0:
-        return f"{available[0]}/{package.get_location()}"
-
-    baseurls = package.get_repo().get_config().baseurl
-    if not baseurls:
+    urls = package.get_remote_locations(schemes)
+    if not urls or len(urls) == 0:
         raise RuntimeError(f"Cannot determine remote location for {package.get_nevra()}")
-    for baseurl in baseurls:
-        res = urlparse(baseurl)
-        if res.scheme in schemes:
-            return f"{baseurl}/{package.get_location()}"
 
-    raise RuntimeError(f"Cannot determine remote location for {package.get_nevra()}")
+    return urls[0]
 
 class TransactionError(Exception):
     pass
