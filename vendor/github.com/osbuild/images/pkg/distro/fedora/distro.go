@@ -233,20 +233,15 @@ var (
 	}
 
 	qcow2ImgType = imageType{
-		name:     "qcow2",
-		filename: "disk.qcow2",
-		mimeType: "application/x-qemu-disk",
+		name:        "qcow2",
+		filename:    "disk.qcow2",
+		mimeType:    "application/x-qemu-disk",
+		environment: &environment.KVM{},
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: qcow2CommonPackageSet,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: common.ToPtr("multi-user.target"),
-			EnabledServices: []string{
-				"cloud-init.service",
-				"cloud-config.service",
-				"cloud-final.service",
-				"cloud-init-local.service",
-			},
 		},
 		kernelOptions:       cloudKernelOptions,
 		bootable:            true,

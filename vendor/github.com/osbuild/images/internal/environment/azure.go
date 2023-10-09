@@ -5,9 +5,18 @@ type Azure struct {
 }
 
 func (p *Azure) GetPackages() []string {
-	return []string{"WALinuxAgent"}
+	return []string{
+		"cloud-init",
+		"WALinuxAgent",
+	}
 }
 
 func (p *Azure) GetServices() []string {
-	return []string{"waagent"}
+	return []string{
+		"cloud-init.service",
+		"cloud-config.service",
+		"cloud-final.service",
+		"cloud-init-local.service",
+		"waagent",
+	}
 }

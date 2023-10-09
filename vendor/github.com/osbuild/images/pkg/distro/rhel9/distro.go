@@ -293,31 +293,42 @@ func newDistro(name string, minor int) *distribution {
 		mkGCEImageType(rd.isRHEL()),
 	)
 
+	x86FirmwarePackages := []string{
+		"microcode_ctl", // ??
+		"iwl1000-firmware",
+		"iwl100-firmware",
+		"iwl105-firmware",
+		"iwl135-firmware",
+		"iwl2000-firmware",
+		"iwl2030-firmware",
+		"iwl3160-firmware",
+		"iwl5000-firmware",
+		"iwl5150-firmware",
+		"iwl6050-firmware",
+	}
+
 	x86_64.addImageTypes(
 		&platform.X86{
 			BasePlatform: platform.BasePlatform{
-				FirmwarePackages: []string{
-					"microcode_ctl", // ??
-					"iwl1000-firmware",
-					"iwl100-firmware",
-					"iwl105-firmware",
-					"iwl135-firmware",
-					"iwl2000-firmware",
-					"iwl2030-firmware",
-					"iwl3160-firmware",
-					"iwl5000-firmware",
-					"iwl5150-firmware",
-					"iwl6050-firmware",
-				},
+				FirmwarePackages: x86FirmwarePackages,
 			},
 			BIOS:       true,
+			UEFIVendor: rd.vendor,
+		},
+		imageInstaller,
+	)
+
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
+				FirmwarePackages: x86FirmwarePackages,
+			},
 			UEFIVendor: rd.vendor,
 		},
 		edgeOCIImgType,
 		edgeCommitImgType,
 		edgeInstallerImgType,
 		edgeRawImgType,
-		imageInstaller,
 		edgeAMIImgType,
 	)
 
@@ -326,7 +337,6 @@ func newDistro(name string, minor int) *distribution {
 			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_VMDK,
 			},
-			BIOS:       true,
 			UEFIVendor: rd.vendor,
 		},
 		edgeVsphereImgType,
@@ -337,7 +347,6 @@ func newDistro(name string, minor int) *distribution {
 			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_RAW,
 			},
-			BIOS:       false,
 			UEFIVendor: rd.vendor,
 		},
 		edgeSimplifiedInstallerImgType,

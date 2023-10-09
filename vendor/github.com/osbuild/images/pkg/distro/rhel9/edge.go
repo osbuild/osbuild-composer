@@ -223,252 +223,267 @@ var (
 			},
 		},
 	}
-	// Partition tables
-	minimalrawPartitionTables = distro.BasePartitionTableMap{
-		platform.ARCH_X86_64.String(): disk.PartitionTable{
-			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type:        "gpt",
-			StartOffset: 8 * common.MebiByte,
-			Partitions: []disk.Partition{
-				{
-					Size: 200 * common.MebiByte,
-					Type: disk.EFISystemPartitionGUID,
-					UUID: disk.EFISystemPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "vfat",
-						UUID:         disk.EFIFilesystemUUID,
-						Mountpoint:   "/boot/efi",
-						Label:        "EFI-SYSTEM",
-						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-						FSTabFreq:    0,
-						FSTabPassNo:  2,
-					},
-				},
-				{
-					Size: 500 * common.MebiByte,
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.FilesystemDataUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-				{
-					Size: 2 * common.GibiByte,
-					Type: disk.FilesystemDataGUID,
-					UUID: disk.RootPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Label:        "root",
-						Mountpoint:   "/",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-			},
-		},
-		platform.ARCH_AARCH64.String(): disk.PartitionTable{
-			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type:        "gpt",
-			StartOffset: 8 * common.MebiByte,
-			Partitions: []disk.Partition{
-				{
-					Size: 200 * common.MebiByte,
-					Type: disk.EFISystemPartitionGUID,
-					UUID: disk.EFISystemPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "vfat",
-						UUID:         disk.EFIFilesystemUUID,
-						Mountpoint:   "/boot/efi",
-						Label:        "EFI-SYSTEM",
-						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-						FSTabFreq:    0,
-						FSTabPassNo:  2,
-					},
-				},
-				{
-					Size: 500 * common.MebiByte,
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.FilesystemDataUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-				{
-					Size: 2 * common.GibiByte,
-					Type: disk.FilesystemDataGUID,
-					UUID: disk.RootPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Label:        "root",
-						Mountpoint:   "/",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-			},
-		},
-	}
-	edgeBasePartitionTables = distro.BasePartitionTableMap{
-		platform.ARCH_X86_64.String(): disk.PartitionTable{
-			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type: "gpt",
-			Partitions: []disk.Partition{
-				{
-					Size:     1 * common.MebiByte, // 1MB
-					Bootable: true,
-					Type:     disk.BIOSBootPartitionGUID,
-					UUID:     disk.BIOSBootPartitionUUID,
-				},
-				{
-					Size: 127 * common.MebiByte, // 127 MB
-					Type: disk.EFISystemPartitionGUID,
-					UUID: disk.EFISystemPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "vfat",
-						UUID:         disk.EFIFilesystemUUID,
-						Mountpoint:   "/boot/efi",
-						Label:        "EFI-SYSTEM",
-						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-						FSTabFreq:    0,
-						FSTabPassNo:  2,
-					},
-				},
-				{
-					Size: 384 * common.MebiByte, // 384 MB
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.FilesystemDataUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    1,
-						FSTabPassNo:  1,
-					},
-				},
-				{
-					Type: disk.FilesystemDataGUID,
-					UUID: disk.RootPartitionUUID,
-					Payload: &disk.LUKSContainer{
-						Label:      "crypt_root",
-						Cipher:     "cipher_null",
-						Passphrase: "osbuild",
-						PBKDF: disk.Argon2id{
-							Memory:      32,
-							Iterations:  4,
-							Parallelism: 1,
-						},
-						Clevis: &disk.ClevisBind{
-							Pin:              "null",
-							Policy:           "{}",
-							RemovePassphrase: true,
-						},
-						Payload: &disk.LVMVolumeGroup{
-							Name:        "rootvg",
-							Description: "built with lvm2 and osbuild",
-							LogicalVolumes: []disk.LVMLogicalVolume{
-								{
-									Size: 9 * 1024 * 1024 * 1024, // 9 GB
-									Name: "rootlv",
-									Payload: &disk.Filesystem{
-										Type:         "xfs",
-										Label:        "root",
-										Mountpoint:   "/",
-										FSTabOptions: "defaults",
-										FSTabFreq:    0,
-										FSTabPassNo:  0,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		platform.ARCH_AARCH64.String(): disk.PartitionTable{
-			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type: "gpt",
-			Partitions: []disk.Partition{
-				{
-					Size: 127 * common.MebiByte, // 127 MB
-					Type: disk.EFISystemPartitionGUID,
-					UUID: disk.EFISystemPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "vfat",
-						UUID:         disk.EFIFilesystemUUID,
-						Mountpoint:   "/boot/efi",
-						Label:        "EFI-SYSTEM",
-						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-						FSTabFreq:    0,
-						FSTabPassNo:  2,
-					},
-				},
-				{
-					Size: 384 * common.MebiByte, // 384 MB
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.FilesystemDataUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    1,
-						FSTabPassNo:  1,
-					},
-				},
-				{
-					Type: disk.FilesystemDataGUID,
-					UUID: disk.RootPartitionUUID,
-					Payload: &disk.LUKSContainer{
-						Label:      "crypt_root",
-						Cipher:     "cipher_null",
-						Passphrase: "osbuild",
-						PBKDF: disk.Argon2id{
-							Memory:      32,
-							Iterations:  4,
-							Parallelism: 1,
-						},
-						Clevis: &disk.ClevisBind{
-							Pin:              "null",
-							Policy:           "{}",
-							RemovePassphrase: true,
-						},
-						Payload: &disk.LVMVolumeGroup{
-							Name:        "rootvg",
-							Description: "built with lvm2 and osbuild",
-							LogicalVolumes: []disk.LVMLogicalVolume{
-								{
-									Size: 9 * 1024 * 1024 * 1024, // 9 GB
-									Name: "rootlv",
-									Payload: &disk.Filesystem{
-										Type:         "xfs",
-										Label:        "root",
-										Mountpoint:   "/",
-										FSTabOptions: "defaults",
-										FSTabFreq:    0,
-										FSTabPassNo:  0,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
 )
+
+// Partition tables
+func minimalrawPartitionTables(t *imageType) (disk.PartitionTable, bool) {
+	// RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999
+	bootSize := uint64(600) * common.MebiByte
+	if common.VersionLessThan(t.arch.distro.osVersion, "9.3") && t.arch.distro.isRHEL() {
+		bootSize = 500 * common.MebiByte
+	}
+
+	switch t.platform.GetArch() {
+	case platform.ARCH_X86_64:
+		return disk.PartitionTable{
+			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type:        "gpt",
+			StartOffset: 8 * common.MebiByte,
+			Partitions: []disk.Partition{
+				{
+					Size: 200 * common.MebiByte,
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						Label:        "EFI-SYSTEM",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: bootSize,
+					Type: disk.XBootLDRPartitionGUID,
+					UUID: disk.FilesystemDataUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Mountpoint:   "/boot",
+						Label:        "boot",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+				{
+					Size: 2 * common.GibiByte,
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.RootPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}, true
+	case platform.ARCH_AARCH64:
+		return disk.PartitionTable{
+			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type:        "gpt",
+			StartOffset: 8 * common.MebiByte,
+			Partitions: []disk.Partition{
+				{
+					Size: 200 * common.MebiByte,
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						Label:        "EFI-SYSTEM",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: bootSize,
+					Type: disk.XBootLDRPartitionGUID,
+					UUID: disk.FilesystemDataUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Mountpoint:   "/boot",
+						Label:        "boot",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+				{
+					Size: 2 * common.GibiByte,
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.RootPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}, true
+	default:
+		return disk.PartitionTable{}, false
+	}
+}
+
+func edgeBasePartitionTables(t *imageType) (disk.PartitionTable, bool) {
+	switch t.platform.GetArch() {
+	case platform.ARCH_X86_64:
+		return disk.PartitionTable{
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
+				{
+					Size: 127 * common.MebiByte, // 127 MB
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						Label:        "EFI-SYSTEM",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: 384 * common.MebiByte, // 384 MB
+					Type: disk.XBootLDRPartitionGUID,
+					UUID: disk.FilesystemDataUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Mountpoint:   "/boot",
+						Label:        "boot",
+						FSTabOptions: "defaults",
+						FSTabFreq:    1,
+						FSTabPassNo:  1,
+					},
+				},
+				{
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.RootPartitionUUID,
+					Payload: &disk.LUKSContainer{
+						Label:      "crypt_root",
+						Cipher:     "cipher_null",
+						Passphrase: "osbuild",
+						PBKDF: disk.Argon2id{
+							Memory:      32,
+							Iterations:  4,
+							Parallelism: 1,
+						},
+						Clevis: &disk.ClevisBind{
+							Pin:              "null",
+							Policy:           "{}",
+							RemovePassphrase: true,
+						},
+						Payload: &disk.LVMVolumeGroup{
+							Name:        "rootvg",
+							Description: "built with lvm2 and osbuild",
+							LogicalVolumes: []disk.LVMLogicalVolume{
+								{
+									Size: 9 * 1024 * 1024 * 1024, // 9 GB
+									Name: "rootlv",
+									Payload: &disk.Filesystem{
+										Type:         "xfs",
+										Label:        "root",
+										Mountpoint:   "/",
+										FSTabOptions: "defaults",
+										FSTabFreq:    0,
+										FSTabPassNo:  0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}, true
+	case platform.ARCH_AARCH64:
+		return disk.PartitionTable{
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
+				{
+					Size: 127 * common.MebiByte, // 127 MB
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						Label:        "EFI-SYSTEM",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: 384 * common.MebiByte, // 384 MB
+					Type: disk.XBootLDRPartitionGUID,
+					UUID: disk.FilesystemDataUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Mountpoint:   "/boot",
+						Label:        "boot",
+						FSTabOptions: "defaults",
+						FSTabFreq:    1,
+						FSTabPassNo:  1,
+					},
+				},
+				{
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.RootPartitionUUID,
+					Payload: &disk.LUKSContainer{
+						Label:      "crypt_root",
+						Cipher:     "cipher_null",
+						Passphrase: "osbuild",
+						PBKDF: disk.Argon2id{
+							Memory:      32,
+							Iterations:  4,
+							Parallelism: 1,
+						},
+						Clevis: &disk.ClevisBind{
+							Pin:              "null",
+							Policy:           "{}",
+							RemovePassphrase: true,
+						},
+						Payload: &disk.LVMVolumeGroup{
+							Name:        "rootvg",
+							Description: "built with lvm2 and osbuild",
+							LogicalVolumes: []disk.LVMLogicalVolume{
+								{
+									Size: 9 * 1024 * 1024 * 1024, // 9 GB
+									Name: "rootlv",
+									Payload: &disk.Filesystem{
+										Type:         "xfs",
+										Label:        "root",
+										Mountpoint:   "/",
+										FSTabOptions: "defaults",
+										FSTabFreq:    0,
+										FSTabPassNo:  0,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}, true
+
+	default:
+		return disk.PartitionTable{}, false
+	}
+}
 
 // Package Sets
 

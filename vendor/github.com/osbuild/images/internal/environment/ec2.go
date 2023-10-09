@@ -9,5 +9,10 @@ func (p *EC2) GetPackages() []string {
 }
 
 func (p *EC2) GetServices() []string {
-	return []string{"cloud-init.service"}
+	return []string{
+		"cloud-init.service",
+		"cloud-config.service",
+		"cloud-final.service",
+		"cloud-init-local.service",
+	}
 }

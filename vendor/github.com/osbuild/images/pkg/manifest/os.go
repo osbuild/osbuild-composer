@@ -167,6 +167,9 @@ type OS struct {
 	OSVersion string
 	OSNick    string
 
+	// InstallWeakDeps enables installation of weak dependencies for packages
+	// that are statically defined for the pipeline.
+	// Defaults to True.
 	InstallWeakDeps bool
 }
 
