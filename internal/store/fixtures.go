@@ -79,6 +79,7 @@ func FixtureBase() *Store {
 		}}
 
 	s.blueprints[bName] = b
+
 	s.composes = map[uuid.UUID]Compose{
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
 			Blueprint: &b,
@@ -308,6 +309,18 @@ func FixtureEmpty() *Store {
 	b3.Name = "test-fedora-1"
 	b3.Distro = "fedora-1"
 	s.blueprints[b3.Name] = b3
+
+	// Bad arch blueprint
+	b4 := b
+	b4.Name = "test-badarch"
+	b4.Arch = "badarch"
+	s.blueprints[b4.Name] = b4
+
+	// Cross arch blueprint
+	b5 := b
+	b5.Name = "test-crossarch"
+	b5.Arch = test_distro.TestArch2Name
+	s.blueprints[b5.Name] = b5
 
 	return s
 }
