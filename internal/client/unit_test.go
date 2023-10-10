@@ -71,6 +71,10 @@ func executeTests(m *testing.M) int {
 		panic(err)
 	}
 	distro2 := test_distro.NewTestDistro("test-distro-2", "platform:test-2", "2")
+	_, err = fixture.Workers.RegisterWorker(arch.Name())
+	if err != nil {
+		panic(err)
+	}
 
 	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
 		test_distro.TestDistroName: {

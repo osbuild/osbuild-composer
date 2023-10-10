@@ -146,7 +146,7 @@ EOF
 
     # there is a different reponse if legacy composer-cli is used
     if rpm -q --quiet weldr-client; then
-        EXPECTED_RESPONSE="ERROR: BlueprintsError: '$REMAINING_DISTRO' is not a valid distribution"
+        EXPECTED_RESPONSE="ERROR: BlueprintsError: '$REMAINING_DISTRO' is not a valid distribution (architecture '$(uname -m)')"
     else
         EXPECTED_RESPONSE="'$REMAINING_DISTRO' is not a valid distribution"
         RESPONSE=${RESPONSE#*: }

@@ -70,6 +70,9 @@ func createWeldrAPI(tempdir string, fixtureGenerator rpmmd_mock.FixtureGenerator
 			test_distro.TestArchName: {
 				{Name: "test-id", BaseURLs: []string{"http://example.com/test/os/x86_64"}, CheckGPG: common.ToPtr(true)},
 			},
+			test_distro.TestArch2Name: {
+				{Name: "test-id", BaseURLs: []string{"http://example.com/test/os/aarch64"}, CheckGPG: common.ToPtr(true)},
+			},
 		},
 		test_distro.TestDistro2Name: {
 			test_distro.TestArchName: {
@@ -236,7 +239,7 @@ func TestBlueprintsNew(t *testing.T) {
 		{"POST", "/api/v0/blueprints/new", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"Missing blueprint"}]}`},
 		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","distro":"test-distro","packages":[],"version":""}`, http.StatusOK, `{"status":true}`},
 		{"POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test 2","distro":"test-distro-2","packages":[],"version":""}`, http.StatusOK, `{"status":true}`},
-		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","distro":"fedora-1","packages":[],"version":""}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"'fedora-1' is not a valid distribution"}]}`},
+		{"POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","distro":"fedora-1","packages":[],"version":""}`, http.StatusBadRequest, `{"status":false,"errors":[{"id":"BlueprintsError","msg":"'fedora-1' is not a valid distribution (architecture 'test_arch')"}]}`},
 	}
 
 	tempdir := t.TempDir()
@@ -1191,7 +1194,27 @@ func TestCompose(t *testing.T) {
 			"/api/v1/compose",
 			fmt.Sprintf(`{"blueprint_name": "test-fedora-1","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
 			http.StatusBadRequest,
-			`{"status": false,"errors":[{"id":"DistroError", "msg":"Unknown distribution: fedora-1"}]}`,
+			`{"status": false,"errors":[{"id":"DistroError", "msg":"Unknown distribution: fedora-1 for arch test_arch"}]}`,
+			nil,
+			[]string{"build_id", "warnings"},
+		},
+		"bad-arch": {
+			false,
+			"POST",
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test-badarch","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
+			http.StatusBadRequest,
+			`{"status": false,"errors":[{"id":"DistroError", "msg":"Unknown distribution: test-distro for arch badarch"}]}`,
+			nil,
+			[]string{"build_id", "warnings"},
+		},
+		"cross-arch": {
+			false,
+			"POST",
+			"/api/v1/compose",
+			fmt.Sprintf(`{"blueprint_name": "test-crossarch","compose_type": "%s","branch": "master"}`, test_distro.TestImageTypeName),
+			http.StatusBadRequest,
+			`{"status": false,"errors":[{"id":"ComposePushErrored", "msg":"No worker for arch 'test_arch2'  available"}]}`,
 			nil,
 			[]string{"build_id", "warnings"},
 		},
@@ -1300,6 +1323,8 @@ func TestCompose(t *testing.T) {
 	tempdir := t.TempDir()
 	for name, c := range cases {
 		api, s := createWeldrAPI(tempdir, rpmmd_mock.NoComposesFixture)
+		_, err = api.workers.RegisterWorker(arch.Name())
+		require.NoError(t, err)
 		test.TestRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 
 		if c.ExpectedStatus != http.StatusOK {
@@ -2271,6 +2296,8 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 
 	for _, c := range cases {
 		api, s := createWeldrAPI2(tempdir, rpmmd_mock.NoComposesFixture, c.imageTypeDenylist)
+		_, err = api.workers.RegisterWorker(arch.Name())
+		require.NoError(t, err)
 		test.TestRoute(t, api, true, "POST", c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 
 		if c.ExpectedStatus != http.StatusOK {

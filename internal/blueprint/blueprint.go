@@ -22,6 +22,7 @@ type Blueprint struct {
 	Containers     []Container     `json:"containers,omitempty" toml:"containers,omitempty"`
 	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations"`
 	Distro         string          `json:"distro" toml:"distro"`
+	Arch           string          `json:"architecture,omitempty" toml:"architecture,omitempty"`
 }
 
 type Change struct {

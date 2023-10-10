@@ -52,7 +52,7 @@ type API struct {
 	workers *worker.Server
 
 	solver       *dnfjson.BaseSolver
-	archName     string
+	hostArch     string
 	repoRegistry *reporegistry.RepoRegistry
 
 	logger *log.Logger
@@ -63,7 +63,6 @@ type API struct {
 
 	hostDistroName string                   // Name of the host distro
 	distroRegistry *distroregistry.Registry // Available distros
-	distros        []string                 // Supported distro names
 
 	//  List of ImageType names, which should not be exposed by the API
 	distrosImageTypeDenylist map[string][]string
@@ -97,7 +96,7 @@ func (cs ComposeState) ToString() string {
 // systemRepoNames returns a list of the system repos
 // NOTE: The system repos have no concept of id vs. name so the id is returned
 func (api *API) systemRepoNames() (names []string) {
-	repos, err := api.repoRegistry.ReposByArchName(api.hostDistroName, api.archName, false)
+	repos, err := api.repoRegistry.ReposByArchName(api.hostDistroName, api.hostArch, false)
 	if err == nil {
 		for _, repo := range repos {
 			names = append(names, repo.Name)
@@ -107,14 +106,16 @@ func (api *API) systemRepoNames() (names []string) {
 }
 
 // validDistros returns a list of distributions that also have repositories
-func validDistros(rr *reporegistry.RepoRegistry, dr *distroregistry.Registry, arch string, logger *log.Logger) []string {
+func (api *API) validDistros(arch string) []string {
 	distros := []string{}
-	for _, d := range dr.List() {
-		_, found := rr.DistroHasRepos(d, arch)
+	for _, d := range api.distroRegistry.List() {
+		_, found := api.repoRegistry.DistroHasRepos(d, arch)
 		if found {
 			distros = append(distros, d)
 		} else {
-			logger.Printf("Distro %s has no repositories, skipping.", d)
+			if api.logger != nil {
+				api.logger.Printf("Distro %s has no repositories, skipping.", d)
+			}
 		}
 	}
 
@@ -136,13 +137,12 @@ func NewTestAPI(solver *dnfjson.BaseSolver, arch distro.Arch, dr *distroregistry
 		store:                    store,
 		workers:                  workers,
 		solver:                   solver,
-		archName:                 arch.Name(),
+		hostArch:                 arch.Name(),
 		repoRegistry:             rr,
 		logger:                   logger,
 		compatOutputDir:          compatOutputDir,
 		hostDistroName:           hostDistro.Name(),
 		distroRegistry:           dr,
-		distros:                  validDistros(rr, dr, arch.Name(), logger),
 		distrosImageTypeDenylist: distrosImageTypeDenylist,
 	}
 	return setupRouter(api)
@@ -158,7 +158,7 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 	if err != nil {
 		return nil, fmt.Errorf("failed to read host distro information")
 	}
-	archName := common.CurrentArch()
+	hostArch := common.CurrentArch()
 
 	rr, err := reporegistry.New(repoPaths)
 	if err != nil {
@@ -170,13 +170,13 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		// get canonical distro name if the host distro is supported
 		hostDistroName = hostDistro.Name()
 
-		_, err = hostDistro.GetArch(archName)
+		_, err = hostDistro.GetArch(hostArch)
 		if err != nil {
 			return nil, fmt.Errorf("Host distro does not support host architecture: %v", err)
 		}
 
 		// Check if repositories for the host distro and arch were loaded
-		_, err = rr.ReposByArchName(hostDistroName, archName, false)
+		_, err = rr.ReposByArchName(hostDistroName, hostArch, false)
 		if err != nil {
 			log.Printf("loaded repository definitions don't contain any for the host distro/arch: %v", err)
 		}
@@ -192,13 +192,12 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		store:                    store,
 		workers:                  workers,
 		solver:                   solver,
-		archName:                 archName,
+		hostArch:                 hostArch,
 		repoRegistry:             rr,
 		logger:                   logger,
 		compatOutputDir:          compatOutputDir,
 		hostDistroName:           hostDistroName,
 		distroRegistry:           dr,
-		distros:                  validDistros(rr, dr, archName, logger),
 		distrosImageTypeDenylist: distrosImageTypeDenylist,
 	}
 	return setupRouter(api), nil
@@ -308,22 +307,22 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // metadata.
 func (api *API) PreloadMetadata() {
 	log.Printf("Starting metadata preload goroutines")
-	for _, distro := range api.distros {
+	for _, distro := range api.validDistros(api.hostArch) {
 		go func(distro string) {
 			startTime := time.Now()
-			d := api.getDistro(distro)
+			d := api.getDistro(distro, api.hostArch)
 			if d == nil {
 				log.Printf("GetDistro - unknown distribution: %s", distro)
 				return
 			}
 
-			repos, err := api.allRepositories(distro)
+			repos, err := api.allRepositories(distro, api.hostArch)
 			if err != nil {
 				log.Printf("Error getting repositories for distro %s: %s", distro, err)
 				return
 			}
 
-			solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName, d.Name())
+			solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.hostArch, d.Name())
 			_, err = solver.Depsolve([]rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}})
 			if err != nil {
 				log.Printf("Problem preloading distro metadata for %s: %s", distro, err)
@@ -469,7 +468,7 @@ func (api *API) isImageTypeAllowed(distroName, imageType string) (bool, error) {
 // getImageType returns the ImageType for the selected distro
 // This is necessary because different distros support different image types, and the image
 // type may have a different package set than other distros.
-func (api *API) getImageType(distroName, imageType string) (distro.ImageType, error) {
+func (api *API) getImageType(distroName, imageType, archName string) (distro.ImageType, error) {
 	imgAllowed, err := api.isImageTypeAllowed(distroName, imageType)
 	if err != nil {
 		return nil, fmt.Errorf("error while checking if image type is allowed: %v", err)
@@ -478,20 +477,21 @@ func (api *API) getImageType(distroName, imageType string) (distro.ImageType, er
 		return nil, fmt.Errorf("image type %q for distro %q is denied by configuration", imageType, distroName)
 	}
 
-	distro := api.getDistro(distroName)
+	distro := api.getDistro(distroName, archName)
 	if distro == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
 	}
-	arch, err := distro.GetArch(api.archName)
+
+	arch, err := distro.GetArch(archName)
 	if err != nil {
 		return nil, err
 	}
 	return arch.GetImageType(imageType)
 }
 
-func (api *API) parseDistro(query url.Values) (string, error) {
+func (api *API) parseDistro(query url.Values, arch string) (string, error) {
 	if distro := query.Get("distro"); distro != "" {
-		if common.IsStringInSortedSlice(api.distros, distro) {
+		if common.IsStringInSortedSlice(api.validDistros(arch), distro) {
 			return distro, nil
 		}
 		return "", errors_package.New("Invalid distro: " + distro)
@@ -501,8 +501,8 @@ func (api *API) parseDistro(query url.Values) (string, error) {
 
 // getDistro returns the named distro or nil
 // It excludes unsupported distros by first checking the api.distros list
-func (api *API) getDistro(name string) distro.Distro {
-	if !common.IsStringInSortedSlice(api.distros, name) {
+func (api *API) getDistro(name, arch string) distro.Distro {
+	if !common.IsStringInSortedSlice(api.validDistros(arch), name) {
 		return nil
 	}
 	return api.distroRegistry.GetDistro(name)
@@ -664,7 +664,7 @@ func (api *API) getSourceConfigs(params httprouter.Params) (map[string]store.Sou
 	sources := map[string]store.SourceConfig{}
 	errors := []responseError{}
 
-	repos, err := api.repoRegistry.ReposByArchName(api.hostDistroName, api.archName, false)
+	repos, err := api.repoRegistry.ReposByArchName(api.hostDistroName, api.hostArch, false)
 	if err != nil {
 		error := responseError{
 			ID:  "InternalError",
@@ -939,7 +939,7 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 	// If there is a list of distros, check to make sure they are valid
 	invalid := []string{}
 	for _, d := range source.SourceConfig().Distros {
-		if !common.IsStringInSortedSlice(api.distros, d) {
+		if !common.IsStringInSortedSlice(api.validDistros(api.hostArch), d) {
 			invalid = append(invalid, d)
 		}
 	}
@@ -1050,9 +1050,14 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 
 	modulesParam := params.ByName("modules")
 
+	archName := api.hostArch
+	if queryArch := request.URL.Query().Get("arch"); queryArch != "" {
+		archName = queryArch
+	}
+
 	// Optional distro parameter
 	// If it is empty it will return api.hostDistroName
-	distroName, err := api.parseDistro(request.URL.Query())
+	distroName, err := api.parseDistro(request.URL.Query(), archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -1071,7 +1076,7 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 
 		names = strings.Split(modulesParam, ",")
 	}
-	packages, err := api.fetchPackageList(distroName, names)
+	packages, err := api.fetchPackageList(distroName, archName, names)
 
 	if err != nil {
 		errors := responseError{
@@ -1133,9 +1138,14 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
+	archName := api.hostArch
+	if queryArch := request.URL.Query().Get("arch"); queryArch != "" {
+		archName = queryArch
+	}
+
 	// Optional distro parameter
 	// If it is empty it will return api.hostDistroName
-	distroName, err := api.parseDistro(request.URL.Query())
+	distroName, err := api.parseDistro(request.URL.Query(), archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -1144,7 +1154,7 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	availablePackages, err := api.fetchPackageList(distroName, []string{})
+	availablePackages, err := api.fetchPackageList(distroName, archName, []string{})
 
 	if err != nil {
 		errors := responseError{
@@ -1216,9 +1226,14 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 
 	names := strings.Split(modules, ",")
 
+	archName := api.hostArch
+	if queryArch := request.URL.Query().Get("arch"); queryArch != "" {
+		archName = queryArch
+	}
+
 	// Optional distro parameter
 	// If it is empty it will return api.hostDistroName
-	distroName, err := api.parseDistro(request.URL.Query())
+	distroName, err := api.parseDistro(request.URL.Query(), archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -1227,7 +1242,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
-	foundPackages, err := api.fetchPackageList(distroName, names)
+	foundPackages, err := api.fetchPackageList(distroName, archName, names)
 
 	if err != nil {
 		errors := responseError{
@@ -1250,7 +1265,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	packageInfos := foundPackages.ToPackageInfos()
 
 	if modulesRequested {
-		repos, err := api.allRepositories(distroName)
+		repos, err := api.allRepositories(distroName, archName)
 		if err != nil {
 			errors := responseError{
 				ID:  "InternalError",
@@ -1259,7 +1274,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
 		}
-		d := api.getDistro(distroName)
+		d := api.getDistro(distroName, archName)
 		if d == nil {
 			errors := responseError{
 				ID:  "DistroError",
@@ -1269,7 +1284,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 			return
 		}
 
-		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName, d.Name())
+		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
 		for i := range packageInfos {
 			pkgName := packageInfos[i].Name
 			solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}})
@@ -1321,9 +1336,14 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	projects = projects[1:]
 	names := strings.Split(projects, ",")
 
+	archName := api.hostArch
+	if queryArch := request.URL.Query().Get("arch"); queryArch != "" {
+		archName = queryArch
+	}
+
 	// Optional distro parameter
 	// If it is empty it will return api.hostDistroName
-	distroName, err := api.parseDistro(request.URL.Query())
+	distroName, err := api.parseDistro(request.URL.Query(), archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -1333,7 +1353,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
-	d := api.getDistro(distroName)
+	d := api.getDistro(distroName, archName)
 	if d == nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -1343,7 +1363,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
-	repos, err := api.allRepositories(distroName)
+	repos, err := api.allRepositories(distroName, archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
@@ -1353,7 +1373,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
-	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName, d.Name())
+	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
 	deps, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names, Repositories: repos}})
 	if err != nil {
 		errors := responseError{
@@ -2034,10 +2054,14 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 
 	// Check the blueprint's distro to make sure it is valid
 	if len(blueprint.Distro) > 0 {
-		if !common.IsStringInSortedSlice(api.distros, blueprint.Distro) {
+		arch := blueprint.Arch
+		if arch == "" {
+			arch = api.hostArch
+		}
+		if !common.IsStringInSortedSlice(api.validDistros(arch), blueprint.Distro) {
 			errors := responseError{
 				ID:  "BlueprintsError",
-				Msg: fmt.Sprintf("'%s' is not a valid distribution", blueprint.Distro),
+				Msg: fmt.Sprintf("'%s' is not a valid distribution (architecture '%s')", blueprint.Distro, arch),
 			}
 			statusResponseError(writer, http.StatusBadRequest, errors)
 			return
@@ -2243,12 +2267,13 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 }
 
 // depsolve handles depsolving package sets required for serializing a manifest for a given distribution.
-func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distro distro.Distro) (map[string][]rpmmd.PackageSpec, error) {
+func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, arch distro.Arch) (map[string][]rpmmd.PackageSpec, error) {
 
+	distro := arch.Distro()
 	platformID := distro.ModulePlatformID()
 	releasever := distro.Releasever()
 	distroName := distro.Name()
-	solver := api.solver.NewWithConfig(platformID, releasever, api.archName, distroName)
+	solver := api.solver.NewWithConfig(platformID, releasever, arch.Name(), distroName)
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
 
@@ -2266,7 +2291,7 @@ func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distro distr
 	return depsolvedSets, nil
 }
 
-func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec) (map[string][]container.Spec, error) {
+func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
 
 	specs := make(map[string][]container.Spec, len(sourceSpecs))
 
@@ -2280,7 +2305,7 @@ func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec)
 	// to multiple pipelines at any point, this should work.
 	for name, sources := range sourceSpecs {
 		job := worker.ContainerResolveJob{
-			Arch:  api.archName,
+			Arch:  archName,
 			Specs: make([]worker.ContainerSpec, len(sources)),
 		}
 
@@ -2423,17 +2448,23 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	if distroName == "" {
 		distroName = api.hostDistroName
 	}
-	if api.getDistro(distroName) == nil {
+
+	archName := bp.Arch
+	if archName == "" {
+		archName = api.hostArch
+	}
+
+	if api.getDistro(distroName, archName) == nil {
 		errors := responseError{
 			ID:  "DistroError",
-			Msg: fmt.Sprintf("Unknown distribution: %s", distroName),
+			Msg: fmt.Sprintf("Unknown distribution: %s for arch %s", distroName, archName),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
 	}
 
 	// Get the imageType that corresponds to the distribution selected by the blueprint
-	imageType, err := api.getImageType(distroName, cr.ComposeType)
+	imageType, err := api.getImageType(distroName, cr.ComposeType, archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "ComposeError",
@@ -2526,7 +2557,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	packageSets, err := api.depsolve(manifest.GetPackageSetChains(), imageType.Arch().Distro())
+	packageSets, err := api.depsolve(manifest.GetPackageSetChains(), imageType.Arch())
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -2536,7 +2567,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	containerSpecs, err := api.resolveContainers(manifest.GetContainerSourceSpecs())
+	containerSpecs, err := api.resolveContainers(manifest.GetContainerSourceSpecs(), archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "ContainerResolveError",
@@ -2577,6 +2608,25 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		}
 	}
 
+	workerAvailable, err := api.workers.WorkerAvailableForArch(archName)
+	if err != nil {
+		log.Println("error when pushing new compose: ", err.Error())
+		errors := responseError{
+			ID:  "ComposePushErrored",
+			Msg: err.Error(),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+	if !workerAvailable {
+		errors := responseError{
+			ID:  "ComposePushErrored",
+			Msg: fmt.Sprintf("No worker for arch '%s'  available", archName),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+
 	if testMode == "1" {
 		// Create a failed compose
 		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, packages)
@@ -2585,8 +2635,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, true, packages)
 	} else {
 		var jobId uuid.UUID
-
-		jobId, err = api.workers.EnqueueOSBuild(api.archName, &worker.OSBuildJob{
+		jobId, err = api.workers.EnqueueOSBuild(archName, &worker.OSBuildJob{
 			Manifest: mf,
 			Targets:  targets,
 			PipelineNames: &worker.PipelineNames{
@@ -2767,9 +2816,15 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 	if !verifyRequestVersion(writer, params, 0) {
 		return
 	}
+
+	archName := api.hostArch
+	if queryArch := request.URL.Query().Get("arch"); queryArch != "" {
+		archName = queryArch
+	}
+
 	// Optional distro parameter
 	// If it is empty it will return api.hostDistroName
-	distroName, err := api.parseDistro(request.URL.Query())
+	distroName, err := api.parseDistro(request.URL.Query(), archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -2779,7 +2834,7 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	d := api.getDistro(distroName)
+	d := api.getDistro(distroName, archName)
 	if d == nil {
 		errors := responseError{
 			ID:  "DistroError",
@@ -2790,11 +2845,11 @@ func (api *API) composeTypesHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	// Get the distro specific arch so that we can return the correct list of image types
-	arch, err := d.GetArch(api.archName)
+	arch, err := d.GetArch(archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "DistroError",
-			Msg: fmt.Sprintf("Unknown arch: %s", api.archName),
+			Msg: fmt.Sprintf("Unknown arch: %s", arch),
 		}
 		statusResponseError(writer, http.StatusBadRequest, errors)
 		return
@@ -3442,17 +3497,17 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 }
 
 // fetchPackageList returns the package list or the selected distribution
-func (api *API) fetchPackageList(distroName string, names []string) (packages rpmmd.PackageList, err error) {
-	d := api.getDistro(distroName)
+func (api *API) fetchPackageList(distroName, arch string, names []string) (packages rpmmd.PackageList, err error) {
+	d := api.getDistro(distroName, arch)
 	if d == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", distroName)
 	}
-	repos, err := api.allRepositories(distroName)
+	repos, err := api.allRepositories(distroName, arch)
 	if err != nil {
 		return nil, err
 	}
 
-	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName, d.Name())
+	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
 	if len(names) == 0 {
 		packages, err = solver.FetchMetadata(repos)
 	} else {
@@ -3503,8 +3558,8 @@ func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.
 }
 
 // Returns all configured repositories (base + sources) as rpmmd.RepoConfig
-func (api *API) allRepositories(distroName string) ([]rpmmd.RepoConfig, error) {
-	repos, err := api.repoRegistry.ReposByArchName(distroName, api.archName, false)
+func (api *API) allRepositories(distroName, arch string) ([]rpmmd.RepoConfig, error) {
+	repos, err := api.repoRegistry.ReposByArchName(distroName, arch, false)
 	if err != nil {
 		return nil, err
 	}
@@ -3521,16 +3576,21 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		bp.Distro = api.hostDistroName
 	}
 
-	d := api.getDistro(bp.Distro)
+	arch := bp.Arch
+	if arch == "" {
+		arch = api.hostArch
+	}
+
+	d := api.getDistro(bp.Distro, arch)
 	if d == nil {
 		return nil, fmt.Errorf("GetDistro - unknown distribution: %s", bp.Distro)
 	}
-	repos, err := api.allRepositories(bp.Distro)
+	repos, err := api.allRepositories(bp.Distro, arch)
 	if err != nil {
 		return nil, err
 	}
 
-	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.archName, d.Name())
+	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
 	solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}})
 	if err != nil {
 		return nil, err
@@ -3629,10 +3689,15 @@ func (api *API) distrosListHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
+	archName := api.hostArch
+	if arch := request.URL.Query().Get("arch"); arch != "" {
+		archName = arch
+	}
+
 	var reply struct {
 		Distros []string `json:"distros"`
 	}
-	reply.Distros = api.distros
+	reply.Distros = api.validDistros(archName)
 
 	err := json.NewEncoder(writer).Encode(reply)
 	common.PanicOnError(err)
