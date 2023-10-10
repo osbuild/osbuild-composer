@@ -46,6 +46,8 @@ type imageFunc func(workload workload.Workload, t *imageType, customizations *bl
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
+type basePartitionTableFunc func(t *imageType) (disk.PartitionTable, bool)
+
 type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
@@ -72,7 +74,7 @@ type imageType struct {
 	// bootable image
 	bootable bool
 	// List of valid arches for the image type
-	basePartitionTables distro.BasePartitionTableMap
+	basePartitionTables basePartitionTableFunc
 }
 
 func (t *imageType) Name() string {
@@ -151,7 +153,7 @@ func (t *imageType) getPartitionTable(
 ) (*disk.PartitionTable, error) {
 	archName := t.arch.Name()
 
-	basePartitionTable, exists := t.basePartitionTables[archName]
+	basePartitionTable, exists := t.basePartitionTables(t)
 
 	if !exists {
 		return nil, fmt.Errorf("no partition table defined for architecture %q for image type %q", archName, t.Name())
@@ -175,8 +177,7 @@ func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
 }
 
 func (t *imageType) PartitionType() string {
-	archName := t.arch.Name()
-	basePartitionTable, exists := t.basePartitionTables[archName]
+	basePartitionTable, exists := t.basePartitionTables(t)
 	if !exists {
 		return ""
 	}

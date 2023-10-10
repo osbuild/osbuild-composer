@@ -434,6 +434,7 @@ func liveInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 			"fcoe-utils",
 			"gfs2-utils",
 			"reiserfs-utils",
+			"sdubby",
 		},
 	}
 
