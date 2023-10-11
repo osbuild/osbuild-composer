@@ -3,6 +3,7 @@ package v2
 // ComposeRequest methods to make it easier to use and test
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/osbuild/images/pkg/subscription"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -20,6 +21,9 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 	if request.Customizations == nil {
 		return bp, nil
 	}
+
+	// Assume there is going to be one or more customization
+	bp.Customizations = &blueprint.Customizations{}
 
 	// Set the blueprint customisation to take care of the user
 	if request.Customizations.Users != nil {
@@ -39,13 +43,7 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 				},
 			)
 		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				User: userCustomizations,
-			}
-		} else {
-			bp.Customizations.User = userCustomizations
-		}
+		bp.Customizations.User = userCustomizations
 	}
 
 	if request.Customizations.Packages != nil {
@@ -110,13 +108,7 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 			return bp, HTTPErrorWithInternal(ErrorInvalidCustomization, err)
 		}
 
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Directories: dirCustomizations,
-			}
-		} else {
-			bp.Customizations.Directories = dirCustomizations
-		}
+		bp.Customizations.Directories = dirCustomizations
 	}
 
 	if request.Customizations.Files != nil {
@@ -160,13 +152,7 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 			return bp, HTTPErrorWithInternal(ErrorInvalidCustomization, err)
 		}
 
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Files: fileCustomizations,
-			}
-		} else {
-			bp.Customizations.Files = fileCustomizations
-		}
+		bp.Customizations.Files = fileCustomizations
 	}
 
 	if request.Customizations.Filesystem != nil {
@@ -180,13 +166,7 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 				},
 			)
 		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Filesystem: fsCustomizations,
-			}
-		} else {
-			bp.Customizations.Filesystem = fsCustomizations
-		}
+		bp.Customizations.Filesystem = fsCustomizations
 	}
 
 	if request.Customizations.Services != nil {
@@ -199,13 +179,7 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 			servicesCustomization.Disabled = make([]string, len(*request.Customizations.Services.Disabled))
 			copy(servicesCustomization.Disabled, *request.Customizations.Services.Disabled)
 		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Services: servicesCustomization,
-			}
-		} else {
-			bp.Customizations.Services = servicesCustomization
-		}
+		bp.Customizations.Services = servicesCustomization
 	}
 
 	if request.Customizations.Openscap != nil {
@@ -222,13 +196,7 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 			}
 			openSCAPCustomization.Tailoring = &tailoringCustomizations
 		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				OpenSCAP: openSCAPCustomization,
-			}
-		} else {
-			bp.Customizations.OpenSCAP = openSCAPCustomization
-		}
+		bp.Customizations.OpenSCAP = openSCAPCustomization
 	}
 
 	if request.Customizations.CustomRepositories != nil {
@@ -284,14 +252,14 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 
 			repoCustomizations = append(repoCustomizations, repoCustomization)
 		}
-		if bp.Customizations == nil {
-			bp.Customizations = &blueprint.Customizations{
-				Repositories: repoCustomizations,
-			}
-		} else {
-			bp.Customizations.Repositories = repoCustomizations
-		}
+		bp.Customizations.Repositories = repoCustomizations
 	}
+
+	// Did bp.Customizations get set at all? If not, set it back to nil
+	if reflect.DeepEqual(*bp.Customizations, blueprint.Customizations{}) {
+		bp.Customizations = nil
+	}
+
 	return bp, nil
 }
 
