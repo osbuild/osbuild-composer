@@ -20,6 +20,16 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 	assert.Equal(t, "0.0.0", bp.Version)
 	assert.Nil(t, bp.Customizations)
 
+	// Empty request should return empty blueprint
+	cr = ComposeRequest{
+		Customizations: &Customizations{},
+	}
+	bp, err = cr.GetBlueprintWithCustomizations()
+	require.Nil(t, err)
+	assert.Equal(t, "empty blueprint", bp.Name)
+	assert.Equal(t, "0.0.0", bp.Version)
+	assert.Nil(t, bp.Customizations)
+
 	// Test with customizations
 	expected := blueprint.Blueprint{Name: "empty blueprint"}
 	err = expected.Initialize()
