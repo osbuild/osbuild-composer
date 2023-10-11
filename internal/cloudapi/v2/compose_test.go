@@ -28,15 +28,6 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 	// interface{} is a terrible idea. Work around it...
 	var rootStr interface{} = "root"
 
-	// anonymous structs buried in a data type are almost as bad.
-	services := struct {
-		Disabled *[]string `json:"disabled,omitempty"`
-		Enabled  *[]string `json:"enabled,omitempty"`
-	}{
-		Disabled: &[]string{"cleanup"},
-		Enabled:  &[]string{"sshd"},
-	}
-
 	// Construct the compose request with customizations
 	cr = ComposeRequest{Customizations: &Customizations{
 		Users: &[]User{
@@ -77,7 +68,10 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 				MinSize:    1099511627776,
 			},
 		},
-		Services: &services,
+		Services: &Services{
+			Disabled: &[]string{"cleanup"},
+			Enabled:  &[]string{"sshd"},
+		},
 		Openscap: &OpenSCAP{ProfileId: "B 263-59"},
 		CustomRepositories: &[]CustomRepository{
 			CustomRepository{
