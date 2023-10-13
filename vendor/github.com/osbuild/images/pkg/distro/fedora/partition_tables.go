@@ -106,6 +106,67 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
+	platform.ARCH_PPC64LE.String(): disk.PartitionTable{
+		UUID: "0x14fc63d2",
+		Type: "dos",
+		Partitions: []disk.Partition{
+			{
+				Size:     4 * common.MebiByte,
+				Type:     "41",
+				Bootable: true,
+			},
+			{
+				Size: 500 * common.MebiByte,
+				Payload: &disk.Filesystem{
+					Type:         "ext4",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
+				Size: 2 * common.GibiByte,
+				Payload: &disk.Filesystem{
+					Type:         "ext4",
+					Mountpoint:   "/",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+		},
+	},
+
+	platform.ARCH_S390X.String(): disk.PartitionTable{
+		UUID: "0x14fc63d2",
+		Type: "dos",
+		Partitions: []disk.Partition{
+			{
+				Size: 500 * common.MebiByte,
+				Payload: &disk.Filesystem{
+					Type:         "ext4",
+					Mountpoint:   "/boot",
+					Label:        "boot",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+			{
+				Size:     2 * common.GibiByte,
+				Bootable: true,
+				Payload: &disk.Filesystem{
+					Type:         "ext4",
+					Mountpoint:   "/",
+					FSTabOptions: "defaults",
+					FSTabFreq:    0,
+					FSTabPassNo:  0,
+				},
+			},
+		},
+	},
 }
 
 var minimalrawPartitionTables = distro.BasePartitionTableMap{

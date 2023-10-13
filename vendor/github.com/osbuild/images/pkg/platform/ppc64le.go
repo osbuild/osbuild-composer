@@ -17,17 +17,29 @@ func (p *PPC64LE) GetBIOSPlatform() string {
 }
 
 func (p *PPC64LE) GetPackages() []string {
-	return []string{
-		"dracut-config-generic",
-		"powerpc-utils",
-		"grub2-ppc64le",
-		"grub2-ppc64le-modules",
+	packages := p.BasePlatform.FirmwarePackages
+
+	if p.BIOS {
+		packages = append(packages,
+			"dracut-config-generic",
+			"powerpc-utils",
+			"grub2-ppc64le",
+			"grub2-ppc64le-modules",
+		)
 	}
+
+	return packages
 }
 
 func (p *PPC64LE) GetBuildPackages() []string {
-	return []string{
-		"grub2-ppc64le",
-		"grub2-ppc64le-modules",
+	packages := []string{}
+
+	if p.BIOS {
+		packages = append(packages,
+			"grub2-ppc64le",
+			"grub2-ppc64le-modules",
+		)
 	}
+
+	return packages
 }

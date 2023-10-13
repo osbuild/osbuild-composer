@@ -130,10 +130,11 @@ type ImageType interface {
 
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	Size         uint64
-	OSTree       *ostree.ImageOptions
-	Subscription *subscription.ImageOptions
-	Facts        *facts.ImageOptions
+	Size             uint64
+	OSTree           *ostree.ImageOptions
+	Subscription     *subscription.ImageOptions
+	Facts            *facts.ImageOptions
+	PartitioningMode disk.PartitioningMode
 }
 
 type BasePartitionTableMap map[string]disk.PartitionTable
