@@ -767,7 +767,20 @@ components:
             $ref: '#/components/schemas/Repository'
         ostree:
           $ref: '#/components/schemas/OSTree'
+        upload_targets:
+          type: array
+          description: |
+            The type and options for multiple upload targets. Each item defines
+            a separate upload destination with its own options. Multiple
+            different targets as well as multiple targets of the same kind are
+            supported.
+          items:
+            $ref: '#/components/schemas/UploadTarget'
         upload_options:
+          description: |
+            Top level upload options for a single upload target. If this is
+            defined, it is used with the default target type for the image type
+            and is combined with the targets defined in upload_targets.
           $ref: '#/components/schemas/UploadOptions'
         size:
           x-go-type: uint64
@@ -901,12 +914,24 @@ components:
       properties:
         selected:
           type: array
-          items: 
+          items:
             type: string
         unselected:
           type: array
-          items: 
+          items:
             type: string
+    UploadTarget:
+      type: object
+      required:
+        - type
+        - upload_options
+      properties:
+        type:
+          $ref: '#/components/schemas/UploadTypes'
+          description: |
+            The name of the upload target that matches the upload_options.
+        upload_options:
+          $ref: '#/components/schemas/UploadOptions'
     UploadOptions:
       anyOf:
       - $ref: '#/components/schemas/AWSEC2UploadOptions'
@@ -917,6 +942,7 @@ components:
       - $ref: '#/components/schemas/LocalUploadOptions'
       - $ref: '#/components/schemas/OCIUploadOptions'
       description: |
+        Options for a given upload destination.
         This should really be oneOf but AWSS3UploadOptions is a subset of
         AWSEC2UploadOptions. This means that all AWSEC2UploadOptions objects
         are also valid AWSS3UploadOptionas objects which violates the oneOf
