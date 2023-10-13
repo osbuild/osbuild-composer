@@ -90,7 +90,6 @@ func ubiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"elfutils-debuginfod-client",
 			"fedora-release",
 			"fedora-repos",
-			"file",
 			"fontpackages-filesystem",
 			"gawk-all-langpacks",
 			"gettext",

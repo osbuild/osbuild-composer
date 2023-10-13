@@ -61,7 +61,7 @@ func ec2ImgTypeX86_64(rd distribution) imageType {
 func ec2HaImgTypeX86_64(rd distribution) imageType {
 	basePartitionTables := ec2BasePartitionTables
 	// use legacy partition tables for RHEL 8.8 and older
-	if common.VersionLessThan(rd.osVersion, "8.9") {
+	if rd.isRHEL() && common.VersionLessThan(rd.osVersion, "8.9") {
 		basePartitionTables = ec2LegacyBasePartitionTables
 	}
 
@@ -223,29 +223,6 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 				},
 			},
 		},
-		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
-			subscription.RHSMConfigNoSubscription: {
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					Rhsm: &osbuild.SubManConfigRHSMSection{
-						ManageRepos: common.ToPtr(false),
-					},
-				},
-			},
-			subscription.RHSMConfigWithSubscription: {
-				// RHBZ#1932802
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
 		SystemdLogind: []*osbuild.SystemdLogindStageOptions{
 			{
 				Filename: "00-getty-fixes.conf",
@@ -317,20 +294,14 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 
 func defaultEc2ImageConfig(rd distribution) *distro.ImageConfig {
 	ic := baseEc2ImageConfig()
-	if rd.isRHEL() && common.VersionLessThan(rd.osVersion, "9.1") {
+	// The RHSM configuration should not be applied since 8.7, but it is instead done by installing the
+	// redhat-cloud-client-configuration package. See COMPOSER-1804 for more information.
+	if rd.isRHEL() && common.VersionLessThan(rd.osVersion, "8.7") {
 		ic = appendRHSM(ic)
 		// Disable RHSM redhat.repo management
 		rhsmConf := ic.RHSMConfig[subscription.RHSMConfigNoSubscription]
 		rhsmConf.SubMan.Rhsm = &osbuild.SubManConfigRHSMSection{ManageRepos: common.ToPtr(false)}
 		ic.RHSMConfig[subscription.RHSMConfigNoSubscription] = rhsmConf
-	}
-	// The RHSM configuration should not be applied since 8.7, but it is instead done by installing the redhat-cloud-client-configuration package.
-	// See COMPOSER-1804 for more information.
-	rhel87PlusEc2ImageConfigOverride := &distro.ImageConfig{
-		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{},
-	}
-	if !common.VersionLessThan(rd.osVersion, "8.7") {
-		ic = rhel87PlusEc2ImageConfigOverride.InheritFrom(ic)
 	}
 
 	return ic
@@ -340,7 +311,7 @@ func defaultEc2ImageConfig(rd distribution) *distro.ImageConfig {
 func defaultAMIImageConfig(rd distribution) *distro.ImageConfig {
 	ic := defaultEc2ImageConfig(rd)
 	if rd.isRHEL() {
-		// defaultAMIImageConfig() adds the rhsm options only for RHEL < 9.1
+		// defaultEc2ImageConfig() adds the rhsm options only for RHEL < 8.7
 		// Add it unconditionally for AMI
 		ic = appendRHSM(ic)
 	}

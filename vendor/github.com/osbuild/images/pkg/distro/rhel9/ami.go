@@ -269,7 +269,7 @@ func defaultEc2ImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
 func defaultAMIImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
 	ic := defaultEc2ImageConfig(osVersion, rhsm)
 	if rhsm {
-		// defaultAMIImageConfig() adds the rhsm options only for RHEL < 9.1
+		// defaultEc2ImageConfig() adds the rhsm options only for RHEL < 9.1
 		// Add it unconditionally for AMI
 		ic = appendRHSM(ic)
 	}

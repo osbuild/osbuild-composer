@@ -30,9 +30,10 @@ type AnacondaInstaller struct {
 	// manifest.
 	Type AnacondaInstallerType
 
-	// Packages to install in addition to the ones required by the
+	// Packages to install and/or exclude in addition to the ones required by the
 	// pipeline.
-	ExtraPackages []string
+	ExtraPackages   []string
+	ExcludePackages []string
 
 	// Extra repositories to install packages from
 	ExtraRepos []rpmmd.RepoConfig
@@ -146,6 +147,7 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	return []rpmmd.PackageSet{
 		{
 			Include:         append(packages, p.ExtraPackages...),
+			Exclude:         p.ExcludePackages,
 			Repositories:    append(p.repos, p.ExtraRepos...),
 			InstallWeakDeps: true,
 		},
@@ -273,18 +275,32 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 		}))
 	}
 
-	dracutModules := append(
-		p.AdditionalDracutModules,
-		"anaconda",
-		"rdma",
-		"rngd",
-		"multipath",
-		"fcoe",
-		"fcoe-uefi",
-		"iscsi",
-		"lunmask",
-		"nfs",
-	)
+	var dracutModules []string
+
+	if p.Type == AnacondaInstallerTypePayload {
+		dracutModules = append(
+			p.AdditionalDracutModules,
+			"anaconda",
+			"rdma",
+			"rngd",
+			"multipath",
+			"fcoe",
+			"fcoe-uefi",
+			"iscsi",
+			"lunmask",
+			"nfs",
+		)
+	} else if p.Type == AnacondaInstallerTypeLive {
+		dracutModules = append(
+			p.AdditionalDracutModules,
+			"anaconda",
+			"rdma",
+			"rngd",
+		)
+	} else {
+		panic("invalid anaconda installer type")
+	}
+
 	dracutOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
 	dracutOptions.AddDrivers = p.AdditionalDrivers
 	pipeline.AddStage(osbuild.NewDracutStage(dracutOptions))

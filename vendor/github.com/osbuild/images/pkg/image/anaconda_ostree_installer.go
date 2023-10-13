@@ -63,6 +63,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.Product,
 		img.OSVersion)
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
+	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	anacondaPipeline.Users = img.Users
 	anacondaPipeline.Groups = img.Groups

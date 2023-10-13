@@ -89,6 +89,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.Product,
 		img.OSVersion)
 	coiPipeline.ExtraPackages = img.ExtraBasePackages.Include
+	coiPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	coiPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	coiPipeline.FDO = img.FDO
 	coiPipeline.Ignition = img.IgnitionEmbedded
