@@ -220,10 +220,10 @@ func newOCITarget(ir *ImageRequest, imageType distro.ImageType) (*target.Target,
 	return t, nil
 }
 
-// GetImageTarget returns the target for the selected image type
-func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.ImageType) (irTarget *target.Target, err error) {
-	// oneOf is not supported by the openapi generator so marshal and unmarshal the uploadrequest based on the type
-	switch ir.ImageType {
+// Returns the name of the default target for a given image type name or error
+// if the image type name is unknown.
+func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
+	switch imageType {
 	case ImageTypesAws:
 		fallthrough
 	case ImageTypesAwsRhui:
@@ -231,7 +231,7 @@ func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.Imag
 	case ImageTypesAwsHaRhui:
 		fallthrough
 	case ImageTypesAwsSapRhui:
-		irTarget, err = newAWSTarget(ir, imageType)
+		return UploadTypesAws, nil
 
 	case ImageTypesGuestImage:
 		fallthrough
@@ -254,17 +254,17 @@ func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.Imag
 	case ImageTypesIotCommit:
 		fallthrough
 	case ImageTypesIotRawImage:
-		irTarget, err = newAWSS3Target(ir, imageType)
+		return UploadTypesAwsS3, nil
 
 	case ImageTypesEdgeContainer:
 		fallthrough
 	case ImageTypesIotContainer:
-		irTarget, err = newContainerTarget(ir, request, imageType)
+		return UploadTypesContainer, nil
 
 	case ImageTypesGcp:
 		fallthrough
 	case ImageTypesGcpRhui:
-		irTarget, err = newGCPTarget(ir, imageType)
+		return UploadTypesGcp, nil
 
 	case ImageTypesAzure:
 		fallthrough
@@ -273,13 +273,43 @@ func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.Imag
 	case ImageTypesAzureEap7Rhui:
 		fallthrough
 	case ImageTypesAzureSapRhui:
-		irTarget, err = newAzureTarget(ir, imageType)
+		return UploadTypesAzure, nil
 
 	case ImageTypesOci:
+		return UploadTypesOciObjectstorage, nil
+
+	default:
+		return "", HTTPError(ErrorUnsupportedImageType)
+	}
+}
+
+// GetTarget returns the target for the selected image type.
+func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.ImageType) (irTarget *target.Target, err error) {
+	uploadTarget, err := getDefaultTarget(ir.ImageType)
+	if err != nil {
+		return nil, err
+	}
+	switch uploadTarget {
+	case UploadTypesAws:
+		irTarget, err = newAWSTarget(ir, imageType)
+
+	case UploadTypesAwsS3:
+		irTarget, err = newAWSS3Target(ir, imageType)
+
+	case UploadTypesContainer:
+		irTarget, err = newContainerTarget(ir, request, imageType)
+
+	case UploadTypesGcp:
+		irTarget, err = newGCPTarget(ir, imageType)
+
+	case UploadTypesAzure:
+		irTarget, err = newAzureTarget(ir, imageType)
+
+	case UploadTypesOciObjectstorage:
 		irTarget, err = newOCITarget(ir, imageType)
 
 	default:
-		return nil, HTTPError(ErrorUnsupportedImageType)
+		return nil, HTTPError(ErrorInvalidUploadTarget)
 	}
 	if err != nil {
 		return nil, err
