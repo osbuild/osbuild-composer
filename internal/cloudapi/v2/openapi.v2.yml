@@ -616,6 +616,7 @@ components:
             - $ref: '#/components/schemas/AzureUploadStatus'
             - $ref: '#/components/schemas/ContainerUploadStatus'
             - $ref: '#/components/schemas/OCIUploadStatus'
+            - $ref: '#/components/schemas/PulpOSTreeUploadStatus'
     UploadStatusValue:
       type: string
       enum: ['success', 'failure', 'pending', 'running']
@@ -628,6 +629,7 @@ components:
         - azure
         - container
         - oci.objectstorage
+        - pulp.ostree
     AWSEC2UploadStatus:
       type: object
       required:
@@ -695,6 +697,13 @@ components:
         - url
       properties:
         url:
+          type: string
+    PulpOSTreeUploadStatus:
+      type: object
+      required:
+        - repo_url
+      properties:
+        repo_url:
           type: string
     ComposeMetadata:
       allOf:
@@ -945,6 +954,7 @@ components:
       - $ref: '#/components/schemas/ContainerUploadOptions'
       - $ref: '#/components/schemas/LocalUploadOptions'
       - $ref: '#/components/schemas/OCIUploadOptions'
+      - $ref: '#/components/schemas/PulpOSTreeUploadOptions'
       description: |
         Options for a given upload destination.
         This should really be oneOf but AWSS3UploadOptions is a subset of
@@ -1113,6 +1123,21 @@ components:
           example: 'latest'
           description: |
             Tag for the created container image
+    PulpOSTreeUploadOptions:
+      type: object
+      additionalProperties: false
+      required:
+        - basepath
+      properties:
+        basepath:
+          type: string
+          description: 'Basepath for distributing the repository'
+        repository:
+          type: string
+          description: 'Repository to import the ostree commit to'
+        server_address:
+          type: string
+          format: uri
     Customizations:
       type: object
       additionalProperties: false
