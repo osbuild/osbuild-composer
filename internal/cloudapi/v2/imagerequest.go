@@ -36,9 +36,9 @@ func (ir *ImageRequest) GetImageOptions(imageType distro.ImageType, bp blueprint
 	return distro.ImageOptions{Size: size, PartitioningMode: disk.AutoLVMPartitioningMode}
 }
 
-func newAWSTarget(ir *ImageRequest, imageType distro.ImageType) (*target.Target, error) {
+func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Target, error) {
 	var awsUploadOptions AWSEC2UploadOptions
-	jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+	jsonUploadOptions, err := json.Marshal(options)
 	if err != nil {
 		return nil, HTTPError(ErrorJSONMarshallingError)
 	}
@@ -78,9 +78,9 @@ func newAWSTarget(ir *ImageRequest, imageType distro.ImageType) (*target.Target,
 	return t, nil
 }
 
-func newAWSS3Target(ir *ImageRequest, imageType distro.ImageType) (*target.Target, error) {
+func newAWSS3Target(options UploadOptions, imageType distro.ImageType) (*target.Target, error) {
 	var awsS3UploadOptions AWSS3UploadOptions
-	jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+	jsonUploadOptions, err := json.Marshal(options)
 	if err != nil {
 		return nil, HTTPError(ErrorJSONMarshallingError)
 	}
@@ -105,9 +105,9 @@ func newAWSS3Target(ir *ImageRequest, imageType distro.ImageType) (*target.Targe
 	return t, nil
 }
 
-func newContainerTarget(ir *ImageRequest, request *ComposeRequest, imageType distro.ImageType) (*target.Target, error) {
+func newContainerTarget(options UploadOptions, request *ComposeRequest, imageType distro.ImageType) (*target.Target, error) {
 	var containerUploadOptions ContainerUploadOptions
-	jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+	jsonUploadOptions, err := json.Marshal(options)
 	if err != nil {
 		return nil, HTTPError(ErrorJSONMarshallingError)
 	}
@@ -132,9 +132,9 @@ func newContainerTarget(ir *ImageRequest, request *ComposeRequest, imageType dis
 	return t, nil
 }
 
-func newGCPTarget(ir *ImageRequest, imageType distro.ImageType) (*target.Target, error) {
+func newGCPTarget(options UploadOptions, imageType distro.ImageType) (*target.Target, error) {
 	var gcpUploadOptions GCPUploadOptions
-	jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+	jsonUploadOptions, err := json.Marshal(options)
 	if err != nil {
 		return nil, HTTPError(ErrorJSONMarshallingError)
 	}
@@ -171,9 +171,9 @@ func newGCPTarget(ir *ImageRequest, imageType distro.ImageType) (*target.Target,
 	return t, nil
 }
 
-func newAzureTarget(ir *ImageRequest, imageType distro.ImageType) (*target.Target, error) {
+func newAzureTarget(options UploadOptions, imageType distro.ImageType) (*target.Target, error) {
 	var azureUploadOptions AzureUploadOptions
-	jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+	jsonUploadOptions, err := json.Marshal(options)
 	if err != nil {
 		return nil, HTTPError(ErrorJSONMarshallingError)
 	}
@@ -202,9 +202,9 @@ func newAzureTarget(ir *ImageRequest, imageType distro.ImageType) (*target.Targe
 	return t, nil
 }
 
-func newOCITarget(ir *ImageRequest, imageType distro.ImageType) (*target.Target, error) {
+func newOCITarget(options UploadOptions, imageType distro.ImageType) (*target.Target, error) {
 	var ociUploadOptions OCIUploadOptions
-	jsonUploadOptions, err := json.Marshal(*ir.UploadOptions)
+	jsonUploadOptions, err := json.Marshal(options)
 	if err != nil {
 		return nil, HTTPError(ErrorJSONMarshallingError)
 	}
@@ -283,31 +283,102 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 	}
 }
 
-// GetTargets returns all the targets for image request.
-func (ir *ImageRequest) GetTargets(request *ComposeRequest, imageType distro.ImageType) ([]*target.Target, error) {
-	var irTarget *target.Target
-	uploadTarget, err := getDefaultTarget(ir.ImageType)
-	if err != nil {
-		return nil, err
+func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
+	return map[UploadTypes]map[ImageTypes]bool{
+		UploadTypesAws: {
+			ImageTypesAws:        true,
+			ImageTypesAwsRhui:    true,
+			ImageTypesAwsHaRhui:  true,
+			ImageTypesAwsSapRhui: true,
+		},
+		UploadTypesAwsS3: {
+			ImageTypesGuestImage:     true,
+			ImageTypesVsphere:        true,
+			ImageTypesVsphereOva:     true,
+			ImageTypesWsl:            true,
+			ImageTypesImageInstaller: true,
+			ImageTypesEdgeInstaller:  true,
+			ImageTypesIotInstaller:   true,
+			ImageTypesLiveInstaller:  true,
+			ImageTypesEdgeCommit:     true,
+			ImageTypesIotCommit:      true,
+			ImageTypesIotRawImage:    true,
+		},
+		UploadTypesContainer: {
+			ImageTypesEdgeContainer: true,
+			ImageTypesIotContainer:  true,
+		},
+		UploadTypesGcp: {
+			ImageTypesGcp:     true,
+			ImageTypesGcpRhui: true,
+		},
+		UploadTypesAzure: {
+			ImageTypesAzure:         true,
+			ImageTypesAzureRhui:     true,
+			ImageTypesAzureEap7Rhui: true,
+			ImageTypesAzureSapRhui:  true,
+		},
+		UploadTypesOciObjectstorage: {
+			ImageTypesOci: true,
+		},
 	}
-	switch uploadTarget {
+}
+
+// GetTargets returns the targets for the ImageRequest. Merges the
+// UploadTargets with the top-level default UploadOptions if specified.
+func (ir *ImageRequest) GetTargets(request *ComposeRequest, imageType distro.ImageType) ([]*target.Target, error) {
+	tsm := targetSupportMap()
+	targets := make([]*target.Target, 0)
+	if ir.UploadTargets != nil {
+		for _, ut := range *ir.UploadTargets {
+			// check if the target type is valid for the image type
+			if !tsm[ut.Type][ir.ImageType] {
+				return nil, HTTPError(ErrorInvalidUploadTarget)
+			}
+			trgt, err := getTarget(ut.Type, ut.UploadOptions, request, imageType)
+			if err != nil {
+				return nil, err
+			}
+			// prepend the top-level target
+			targets = append([]*target.Target{trgt}, targets...)
+		}
+	}
+
+	if ir.UploadOptions != nil {
+		// default upload target options also defined: append them to the targets
+		defTargetType, err := getDefaultTarget(ir.ImageType)
+		if err != nil {
+			return nil, err
+		}
+		trgt, err := getTarget(defTargetType, *ir.UploadOptions, request, imageType)
+		if err != nil {
+			return nil, err
+		}
+		targets = append(targets, trgt)
+	}
+
+	return targets, nil
+}
+
+func getTarget(targetType UploadTypes, options UploadOptions, request *ComposeRequest, imageType distro.ImageType) (irTarget *target.Target, err error) {
+	switch targetType {
 	case UploadTypesAws:
-		irTarget, err = newAWSTarget(ir, imageType)
+		irTarget, err = newAWSTarget(options, imageType)
 
 	case UploadTypesAwsS3:
-		irTarget, err = newAWSS3Target(ir, imageType)
+		irTarget, err = newAWSS3Target(options, imageType)
 
 	case UploadTypesContainer:
-		irTarget, err = newContainerTarget(ir, request, imageType)
+		irTarget, err = newContainerTarget(options, request, imageType)
 
 	case UploadTypesGcp:
-		irTarget, err = newGCPTarget(ir, imageType)
+		irTarget, err = newGCPTarget(options, imageType)
 
 	case UploadTypesAzure:
-		irTarget, err = newAzureTarget(ir, imageType)
+		irTarget, err = newAzureTarget(options, imageType)
 
 	case UploadTypesOciObjectstorage:
-		irTarget, err = newOCITarget(ir, imageType)
+		irTarget, err = newOCITarget(options, imageType)
 
 	default:
 		return nil, HTTPError(ErrorInvalidUploadTarget)
@@ -317,7 +388,8 @@ func (ir *ImageRequest) GetTargets(request *ComposeRequest, imageType distro.Ima
 	}
 	irTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
 
-	return []*target.Target{irTarget}, nil
+	return irTarget, nil
+
 }
 
 // GetOSTreeOptions returns the image ostree options when included in the request
