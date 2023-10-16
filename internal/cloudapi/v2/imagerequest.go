@@ -220,6 +220,35 @@ func newOCITarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 	return t, nil
 }
 
+func newPulpOSTreeTarget(options UploadOptions, imageType distro.ImageType) (*target.Target, error) {
+	var pulpUploadOptions PulpOSTreeUploadOptions
+	jsonUploadOptions, err := json.Marshal(options)
+	if err != nil {
+		return nil, HTTPError(ErrorJSONMarshallingError)
+	}
+	err = json.Unmarshal(jsonUploadOptions, &pulpUploadOptions)
+	if err != nil {
+		return nil, HTTPError(ErrorJSONUnMarshallingError)
+	}
+	serverAddress := ""
+	if pulpUploadOptions.ServerAddress != nil {
+		serverAddress = *pulpUploadOptions.ServerAddress
+	}
+	repository := ""
+	if pulpUploadOptions.Repository != nil {
+		repository = *pulpUploadOptions.Repository
+	}
+	t := target.NewPulpOSTreeTarget(&target.PulpOSTreeTargetOptions{
+		ServerAddress: serverAddress,
+		Repository:    repository,
+		BasePath:      pulpUploadOptions.Basepath,
+	})
+
+	t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
+	t.OsbuildArtifact.ExportFilename = imageType.Filename()
+	return t, nil
+}
+
 // Returns the name of the default target for a given image type name or error
 // if the image type name is unknown.
 func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
@@ -321,6 +350,10 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 		UploadTypesOciObjectstorage: {
 			ImageTypesOci: true,
 		},
+		UploadTypesPulpOstree: {
+			ImageTypesEdgeCommit: true,
+			ImageTypesIotCommit:  true,
+		},
 	}
 }
 
@@ -379,6 +412,9 @@ func getTarget(targetType UploadTypes, options UploadOptions, request *ComposeRe
 
 	case UploadTypesOciObjectstorage:
 		irTarget, err = newOCITarget(options, imageType)
+
+	case UploadTypesPulpOstree:
+		irTarget, err = newPulpOSTreeTarget(options, imageType)
 
 	default:
 		return nil, HTTPError(ErrorInvalidUploadTarget)
