@@ -3,9 +3,11 @@ package v2
 import (
 	"testing"
 
+	"github.com/osbuild/images/pkg/distro/rhel9"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -128,4 +130,124 @@ func TestGetOstreeOptions(t *testing.T) {
 	_, err = ir.GetOSTreeOptions()
 	require.NotNil(t, err)
 	assert.Error(t, err)
+}
+
+func TestGetTargets(t *testing.T) {
+	at := assert.New(t)
+
+	r9 := rhel9.NewRHEL93()
+	arch, err := r9.GetArch("x86_64")
+	at.NoError(err)
+
+	cr := &ComposeRequest{
+		Distribution: r9.Name(),
+	}
+
+	it, err := arch.GetImageType("qcow2")
+	at.NoError(err)
+
+	var uploadOptions UploadOptions // doesn't need a concrete value or type for this test
+
+	type testCase struct {
+		imageType      ImageTypes
+		targets        []UploadTypes
+		includeDefault bool
+		expected       []target.TargetName
+		fail           bool
+	}
+
+	testCases := map[string]testCase{
+		"guest:default": {
+			imageType:      ImageTypesGuestImage,
+			targets:        nil,
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAWSS3},
+		},
+		"guest:s3": {
+			imageType:      ImageTypesGuestImage,
+			targets:        []UploadTypes{UploadTypesAwsS3},
+			includeDefault: false,
+			expected:       []target.TargetName{target.TargetNameAWSS3},
+		},
+		"guest:s3+default": {
+			imageType:      ImageTypesGuestImage,
+			targets:        []UploadTypes{UploadTypesAwsS3},
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAWSS3, target.TargetNameAWSS3},
+		},
+		"guest:azure:fail": {
+			imageType: ImageTypesGuestImage,
+			targets:   []UploadTypes{UploadTypesAzure},
+			expected:  []target.TargetName{""},
+			fail:      true,
+		},
+		"azure:nil": {
+			imageType:      ImageTypesAzure,
+			targets:        nil,
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAzureImage},
+		},
+		"azure:azure": {
+			imageType: ImageTypesAzure,
+			targets:   []UploadTypes{UploadTypesAzure},
+			expected:  []target.TargetName{target.TargetNameAzureImage},
+		},
+		"azure:gcp:fail": {
+			imageType: ImageTypesAzure,
+			targets:   []UploadTypes{UploadTypesGcp},
+			expected:  []target.TargetName{""},
+			fail:      true,
+		},
+		"edge:default": {
+			imageType:      ImageTypesEdgeCommit,
+			targets:        nil,
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAWSS3},
+		},
+		"edge:s3": {
+			imageType: ImageTypesEdgeCommit,
+			targets:   []UploadTypes{UploadTypesAwsS3},
+			expected:  []target.TargetName{target.TargetNameAWSS3},
+		},
+		"edge:gcp:fail": {
+			imageType: ImageTypesEdgeCommit,
+			targets:   []UploadTypes{UploadTypesGcp},
+			expected:  []target.TargetName{""},
+			fail:      true,
+		},
+	}
+
+	for name := range testCases {
+		t.Run(name, func(t *testing.T) {
+			at := assert.New(t)
+			testCase := testCases[name]
+			uploadTargets := make([]UploadTarget, len(testCase.targets))
+			for idx := range testCase.targets {
+				uploadTargets[idx] = UploadTarget{
+					Type:          testCase.targets[idx],
+					UploadOptions: uploadOptions,
+				}
+			}
+			ir := ImageRequest{
+				Architecture:  arch.Name(),
+				ImageType:     testCase.imageType,
+				UploadTargets: &uploadTargets,
+			}
+			if testCase.includeDefault {
+				// add UploadOptions for the default target too
+				ir.UploadOptions = &uploadOptions
+			}
+
+			targets, err := ir.GetTargets(cr, it)
+			if !testCase.fail {
+				at.NoError(err)
+				at.Equal(len(targets), len(testCase.expected))
+				for idx := range targets {
+					at.Equal(targets[idx].Name, testCase.expected[idx])
+				}
+			} else {
+				at.Error(err)
+			}
+		})
+	}
 }
