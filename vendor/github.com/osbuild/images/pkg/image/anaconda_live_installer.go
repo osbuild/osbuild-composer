@@ -58,6 +58,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.OSVersion)
 
 	livePipeline.ExtraPackages = img.ExtraBasePackages.Include
+	livePipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 
 	livePipeline.Variant = img.Variant
 	livePipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)

@@ -136,9 +136,18 @@ func (t *imageType) getPartitionTable(
 
 	imageSize := t.Size(options.Size)
 
-	lvmify := !t.rpmOstree
+	partitioningMode := options.PartitioningMode
+	if t.rpmOstree {
+		// IoT supports only LVM, force it.
+		// Raw is not supported, return an error if it is requested
+		// TODO Need a central location for logic like this
+		if partitioningMode == disk.RawPartitioningMode {
+			return nil, fmt.Errorf("partitioning mode raw not supported for %s on %s", t.Name(), t.arch.Name())
+		}
+		partitioningMode = disk.AutoLVMPartitioningMode
+	}
 
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, lvmify, t.requiredPartitionSizes, rng)
+	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, partitioningMode, t.requiredPartitionSizes, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {

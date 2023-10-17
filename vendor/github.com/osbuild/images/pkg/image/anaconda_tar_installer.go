@@ -75,6 +75,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.OSVersion)
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
+	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	anacondaPipeline.Users = img.Users
 	anacondaPipeline.Groups = img.Groups

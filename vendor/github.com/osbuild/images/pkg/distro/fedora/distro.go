@@ -541,6 +541,16 @@ func newDistro(version int) distro.Distro {
 		distro: &rd,
 	}
 
+	ppc64le := architecture{
+		distro: &rd,
+		name:   platform.ARCH_PPC64LE.String(),
+	}
+
+	s390x := architecture{
+		distro: &rd,
+		name:   platform.ARCH_S390X.String(),
+	}
+
 	ociImgType := qcow2ImgType
 	ociImgType.name = "oci"
 
@@ -852,6 +862,36 @@ func newDistro(version int) distro.Distro {
 		)
 	}
 
-	rd.addArches(x86_64, aarch64)
+	ppc64le.addImageTypes(
+		&platform.PPC64LE{
+			BIOS: true,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
+			},
+		},
+		qcow2ImgType,
+	)
+	ppc64le.addImageTypes(
+		&platform.PPC64LE{},
+		containerImgType,
+	)
+
+	s390x.addImageTypes(
+		&platform.S390X{
+			Zipl: true,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
+			},
+		},
+		qcow2ImgType,
+	)
+	s390x.addImageTypes(
+		&platform.S390X{},
+		containerImgType,
+	)
+
+	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
 }
