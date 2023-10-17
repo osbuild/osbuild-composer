@@ -16,10 +16,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
-	"path/filepath"
 	"runtime/debug"
 	"strings"
 
@@ -35,45 +33,76 @@ func errExit(format string, args ...interface{}) {
 }
 
 var (
-	flagPackageName    string
-	flagGenerate       string
 	flagOutputFile     string
-	flagIncludeTags    string
-	flagExcludeTags    string
-	flagTemplatesDir   string
-	flagImportMapping  string
-	flagExcludeSchemas string
 	flagConfigFile     string
-	flagAliasTypes     bool
-	flagPrintVersion bool
+	flagOldConfigStyle bool
+	flagOutputConfig   bool
+	flagPrintVersion   bool
+	flagPackageName    string
+	flagPrintUsage     bool
+
+	// The options below are deprecated, and they will be removed in a future
+	// release. Please use the new config file format.
+	flagGenerate           string
+	flagIncludeTags        string
+	flagExcludeTags        string
+	flagTemplatesDir       string
+	flagImportMapping      string
+	flagExcludeSchemas     string
+	flagResponseTypeSuffix string
+	flagAliasTypes         bool
 )
 
 type configuration struct {
-	PackageName     string            `yaml:"package"`
-	GenerateTargets []string          `yaml:"generate"`
-	OutputFile      string            `yaml:"output"`
-	IncludeTags     []string          `yaml:"include-tags"`
-	ExcludeTags     []string          `yaml:"exclude-tags"`
-	TemplatesDir    string            `yaml:"templates"`
-	ImportMapping   map[string]string `yaml:"import-mapping"`
-	ExcludeSchemas  []string          `yaml:"exclude-schemas"`
+	codegen.Configuration `yaml:",inline"`
+
+	// OutputFile is the filename to output.
+	OutputFile string `yaml:"output,omitempty"`
+}
+
+// oldConfiguration is deprecated. Please add no more flags here. It is here
+// for backwards compatibility, and it will be removed in the future.
+type oldConfiguration struct {
+	PackageName        string                       `yaml:"package"`
+	GenerateTargets    []string                     `yaml:"generate"`
+	OutputFile         string                       `yaml:"output"`
+	IncludeTags        []string                     `yaml:"include-tags"`
+	ExcludeTags        []string                     `yaml:"exclude-tags"`
+	TemplatesDir       string                       `yaml:"templates"`
+	ImportMapping      map[string]string            `yaml:"import-mapping"`
+	ExcludeSchemas     []string                     `yaml:"exclude-schemas"`
+	ResponseTypeSuffix string                       `yaml:"response-type-suffix"`
+	Compatibility      codegen.CompatibilityOptions `yaml:"compatibility"`
 }
 
 func main() {
-
-	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
-	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "spec", "skip-fmt", "skip-prune"`)
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default")
+	flag.BoolVar(&flagOldConfigStyle, "old-config-style", false, "whether to use the older style config file format")
+	flag.BoolVar(&flagOutputConfig, "output-config", false, "when true, outputs a configuration file for oapi-codegen using current settings")
+	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
+	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
+	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
+	flag.BoolVar(&flagPrintUsage, "help", false, "show this help and exit")
+	flag.BoolVar(&flagPrintUsage, "h", false, "same as -help")
+
+	// All flags below are deprecated, and will be removed in a future release. Please do not
+	// update their behavior.
+	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune"`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates")
 	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path")
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation")
-	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
+	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "the suffix used for responses types")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
-	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
+
 	flag.Parse()
+
+	if flagPrintUsage {
+		flag.Usage()
+		os.Exit(0)
+	}
 
 	if flagPrintVersion {
 		bi, ok := debug.ReadBuildInfo()
@@ -87,81 +116,160 @@ func main() {
 	}
 
 	if flag.NArg() < 1 {
-		fmt.Println("Please specify a path to a OpenAPI 3.0 spec file")
-		os.Exit(1)
+		errExit("Please specify a path to a OpenAPI 3.0 spec file\n")
+	} else if flag.NArg() > 1 {
+		errExit("Only one OpenAPI 3.0 spec file is accepted and it must be the last CLI argument\n")
 	}
 
-	cfg := configFromFlags()
-
-	// If the package name has not been specified, we will use the name of the
-	// swagger file.
-	if cfg.PackageName == "" {
-		path := flag.Arg(0)
-		baseName := filepath.Base(path)
-		// Split the base name on '.' to get the first part of the file.
-		nameParts := strings.Split(baseName, ".")
-		cfg.PackageName = codegen.ToCamelCase(nameParts[0])
+	// We will try to infer whether the user has an old-style config, or a new
+	// style. Start with the command line argument. If it's true, we know it's
+	// old config style.
+	var oldConfigStyle *bool
+	if flagOldConfigStyle {
+		oldConfigStyle = &flagOldConfigStyle
 	}
 
-	opts := codegen.Options{
-		AliasTypes: flagAliasTypes,
+	// We don't know yet, so keep looking. Try to parse the configuration file,
+	// if given.
+	if oldConfigStyle == nil && (flagConfigFile != "") {
+		configFile, err := os.ReadFile(flagConfigFile)
+		if err != nil {
+			errExit("error reading config file '%s': %v\n", flagConfigFile, err)
+		}
+		var oldConfig oldConfiguration
+		oldErr := yaml.UnmarshalStrict(configFile, &oldConfig)
+
+		var newConfig configuration
+		newErr := yaml.UnmarshalStrict(configFile, &newConfig)
+
+		// If one of the two files parses, but the other fails, we know the
+		// answer.
+		if oldErr != nil && newErr == nil {
+			f := false
+			oldConfigStyle = &f
+		} else if oldErr == nil && newErr != nil {
+			t := true
+			oldConfigStyle = &t
+		} else if oldErr != nil && newErr != nil {
+			errExit("error parsing configuration style as old version or new version: %v\n", err)
+		}
+		// Else we fall through, and we still don't know, so we need to infer it from flags.
 	}
-	for _, g := range cfg.GenerateTargets {
-		switch g {
-		case "client":
-			opts.GenerateClient = true
-		case "chi-server":
-			opts.GenerateChiServer = true
-		case "server":
-			opts.GenerateEchoServer = true
-		case "types":
-			opts.GenerateTypes = true
-		case "spec":
-			opts.EmbedSpec = true
-		case "skip-fmt":
-			opts.SkipFmt = true
-		case "skip-prune":
-			opts.SkipPrune = true
-		default:
-			fmt.Printf("unknown generate option %s\n", g)
-			flag.PrintDefaults()
-			os.Exit(1)
+
+	if oldConfigStyle == nil {
+		// If any deprecated flag is present, and config file structure is unknown,
+		// the presence of the deprecated flag means we must be using the old
+		// config style. It should work correctly if we go down the old path,
+		// even if we have a simple config file readable as both types.
+		deprecatedFlagNames := map[string]bool{
+			"generate":             true,
+			"include-tags":         true,
+			"exclude-tags":         true,
+			"templates":            true,
+			"import-mapping":       true,
+			"exclude-schemas":      true,
+			"response-type-suffix": true,
+			"alias-types":          true,
+		}
+		hasDeprecatedFlag := false
+		flag.Visit(func(f *flag.Flag) {
+			if deprecatedFlagNames[f.Name] {
+				hasDeprecatedFlag = true
+			}
+		})
+		if hasDeprecatedFlag {
+			t := true
+			oldConfigStyle = &t
+		} else {
+			f := false
+			oldConfigStyle = &f
 		}
 	}
 
-	opts.IncludeTags = cfg.IncludeTags
-	opts.ExcludeTags = cfg.ExcludeTags
-	opts.ExcludeSchemas = cfg.ExcludeSchemas
+	var opts configuration
+	if !*oldConfigStyle {
+		// We simply read the configuration from disk.
+		if flagConfigFile != "" {
+			buf, err := os.ReadFile(flagConfigFile)
+			if err != nil {
+				errExit("error reading config file '%s': %v\n", flagConfigFile, err)
+			}
+			err = yaml.Unmarshal(buf, &opts)
+			if err != nil {
+				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
+			}
+		} else {
+			// In the case where no config file is provided, we assume some
+			// defaults, so that when this is invoked very simply, it's similar
+			// to old behavior.
+			opts = configuration{
+				Configuration: codegen.Configuration{
+					Generate: codegen.GenerateOptions{
+						EchoServer:   true,
+						Client:       true,
+						Models:       true,
+						EmbeddedSpec: true,
+					},
+				},
+				OutputFile: flagOutputFile,
+			}
+		}
+		var err error
+		opts, err = updateConfigFromFlags(opts)
+		if err != nil {
+			errExit("error processing flags: %v\n", err)
+		}
+	} else {
+		var oldConfig oldConfiguration
+		if flagConfigFile != "" {
+			buf, err := os.ReadFile(flagConfigFile)
+			if err != nil {
+				errExit("error reading config file '%s': %v\n", flagConfigFile, err)
+			}
+			err = yaml.Unmarshal(buf, &oldConfig)
+			if err != nil {
+				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
+			}
+		}
+		opts = newConfigFromOldConfig(oldConfig)
+	}
 
-	if opts.GenerateEchoServer && opts.GenerateChiServer {
-		errExit("can not specify both server and chi-server targets simultaneously")
+	// Ensure default values are set if user hasn't specified some needed
+	// fields.
+	opts.Configuration = opts.UpdateDefaults()
+
+	// Now, ensure that the config options are valid.
+	if err := opts.Validate(); err != nil {
+		errExit("configuration error: %v\n", err)
+	}
+
+	// If the user asked to output configuration, output it to stdout and exit
+	if flagOutputConfig {
+		buf, err := yaml.Marshal(opts)
+		if err != nil {
+			errExit("error YAML marshaling configuration: %v\n", err)
+		}
+		fmt.Print(string(buf))
+		return
 	}
 
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
-		errExit("error loading swagger spec\n: %s", err)
+		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
 	}
 
-	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
-	if err != nil {
-		errExit("error loading template overrides: %s\n", err)
-	}
-	opts.UserTemplates = templates
-
-	opts.ImportMapping = cfg.ImportMapping
-
-	code, err := codegen.Generate(swagger, cfg.PackageName, opts)
+	code, err := codegen.Generate(swagger, opts.Configuration)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
 	}
 
-	if cfg.OutputFile != "" {
-		err = ioutil.WriteFile(cfg.OutputFile, []byte(code), 0644)
+	if opts.OutputFile != "" {
+		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
 		if err != nil {
-			errExit("error writing generated code to file: %s", err)
+			errExit("error writing generated code to file: %s\n", err)
 		}
 	} else {
-		fmt.Println(code)
+		fmt.Print(code)
 	}
 }
 
@@ -172,13 +280,26 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 		return templates, nil
 	}
 
-	files, err := ioutil.ReadDir(templatesDir)
+	files, err := os.ReadDir(templatesDir)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, f := range files {
-		data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
+		// Recursively load subdirectory files, using the path relative to the templates
+		// directory as the key. This allows for overriding the files in the service-specific
+		// directories (e.g. echo, chi, etc.).
+		if f.IsDir() {
+			subFiles, err := loadTemplateOverrides(path.Join(templatesDir, f.Name()))
+			if err != nil {
+				return nil, err
+			}
+			for subDir, subFile := range subFiles {
+				templates[path.Join(f.Name(), subDir)] = subFile
+			}
+			continue
+		}
+		data, err := os.ReadFile(path.Join(templatesDir, f.Name()))
 		if err != nil {
 			return nil, err
 		}
@@ -188,25 +309,58 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 	return templates, nil
 }
 
-// configFromFlags parses the flags and the config file. Anything which is
-// a zerovalue in the configuration file will be replaced with the flag
-// value, this means that the config file overrides flag values.
-func configFromFlags() *configuration {
-	var cfg configuration
-
-	// Load the configuration file first.
-	if flagConfigFile != "" {
-		f, err := os.Open(flagConfigFile)
-		if err != nil {
-			errExit("failed to open config file with error: %v\n", err)
-		}
-		defer f.Close()
-		err = yaml.NewDecoder(f).Decode(&cfg)
-		if err != nil {
-			errExit("error parsing config file: %v\n", err)
-		}
+// updateConfigFromFlags updates a loaded configuration from flags. Flags
+// override anything in the file. We generate errors for command line options
+// associated with the old style configuration
+func updateConfigFromFlags(cfg configuration) (configuration, error) {
+	if flagPackageName != "" {
+		cfg.PackageName = flagPackageName
 	}
 
+	var unsupportedFlags []string
+
+	if flagGenerate != "types,client,server,spec" {
+		unsupportedFlags = append(unsupportedFlags, "--generate")
+	}
+	if flagIncludeTags != "" {
+		unsupportedFlags = append(unsupportedFlags, "--include-tags")
+	}
+	if flagExcludeTags != "" {
+		unsupportedFlags = append(unsupportedFlags, "--exclude-tags")
+	}
+	if flagTemplatesDir != "" {
+		unsupportedFlags = append(unsupportedFlags, "--templates")
+	}
+	if flagImportMapping != "" {
+		unsupportedFlags = append(unsupportedFlags, "--import-mapping")
+	}
+	if flagExcludeSchemas != "" {
+		unsupportedFlags = append(unsupportedFlags, "--exclude-schemas")
+	}
+	if flagResponseTypeSuffix != "" {
+		unsupportedFlags = append(unsupportedFlags, "--response-type-suffix")
+	}
+	if flagAliasTypes {
+		unsupportedFlags = append(unsupportedFlags, "--alias-types")
+	}
+
+	if len(unsupportedFlags) > 0 {
+		return configuration{}, fmt.Errorf("flags %s aren't supported in "+
+			"new config style, please use --old-config-style or update your configuration ",
+			strings.Join(unsupportedFlags, ", "))
+	}
+
+	if cfg.OutputFile == "" {
+		cfg.OutputFile = flagOutputFile
+	}
+
+	return cfg, nil
+}
+
+// updateOldConfigFromFlags parses the flags and the config file. Anything which is
+// a zerovalue in the configuration file will be replaced with the flag
+// value, this means that the config file overrides flag values.
+func updateOldConfigFromFlags(cfg oldConfiguration) oldConfiguration {
 	if cfg.PackageName == "" {
 		cfg.PackageName = flagPackageName
 	}
@@ -235,5 +389,65 @@ func configFromFlags() *configuration {
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = flagOutputFile
 	}
-	return &cfg
+	return cfg
+}
+
+func newConfigFromOldConfig(c oldConfiguration) configuration {
+	// Take flags into account.
+	cfg := updateOldConfigFromFlags(c)
+
+	// Now, copy over field by field, translating flags and old values as
+	// necessary.
+	opts := codegen.Configuration{
+		PackageName: cfg.PackageName,
+	}
+	opts.OutputOptions.ResponseTypeSuffix = flagResponseTypeSuffix
+
+	for _, g := range cfg.GenerateTargets {
+		switch g {
+		case "client":
+			opts.Generate.Client = true
+		case "chi-server":
+			opts.Generate.ChiServer = true
+		case "server":
+			opts.Generate.EchoServer = true
+		case "gin":
+			opts.Generate.GinServer = true
+		case "gorilla":
+			opts.Generate.GorillaServer = true
+		case "strict-server":
+			opts.Generate.Strict = true
+		case "types":
+			opts.Generate.Models = true
+		case "spec":
+			opts.Generate.EmbeddedSpec = true
+		case "skip-fmt":
+			opts.OutputOptions.SkipFmt = true
+		case "skip-prune":
+			opts.OutputOptions.SkipPrune = true
+		default:
+			fmt.Printf("unknown generate option %s\n", g)
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+	}
+
+	opts.OutputOptions.IncludeTags = cfg.IncludeTags
+	opts.OutputOptions.ExcludeTags = cfg.ExcludeTags
+	opts.OutputOptions.ExcludeSchemas = cfg.ExcludeSchemas
+
+	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
+	if err != nil {
+		errExit("error loading template overrides: %s\n", err)
+	}
+	opts.OutputOptions.UserTemplates = templates
+
+	opts.ImportMapping = cfg.ImportMapping
+
+	opts.Compatibility = cfg.Compatibility
+
+	return configuration{
+		Configuration: opts,
+		OutputFile:    cfg.OutputFile,
+	}
 }

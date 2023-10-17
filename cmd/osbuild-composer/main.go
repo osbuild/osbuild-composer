@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/coreos/go-systemd/activation"
+	"github.com/osbuild/image-builder/internal/logger"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/syslog"
 )
@@ -58,6 +59,13 @@ func main() {
 	err = DumpConfig(*config, logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
 	if err != nil {
 		logrus.Fatalf("Error printing configuration: %v", err)
+	}
+
+	if config.SplunkHost != "" {
+		err = logger.AddSplunkHook(logrus.StandardLogger(), config.SplunkHost, config.SplunkPort, config.SplunkToken)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	stateDir, ok := os.LookupEnv("STATE_DIRECTORY")
