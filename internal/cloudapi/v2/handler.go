@@ -160,8 +160,14 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPError(ErrorUnsupportedDistribution)
 	}
 
-	// Create a blueprint from the customizations included in the request
-	bp, err := request.GetBlueprintWithCustomizations()
+	// OpenAPI enforces blueprint or customization, not both
+	// but check anyway
+	if request.Customizations != nil && request.Blueprint != nil {
+		return HTTPError(ErrorBlueprintOrCustomNotBoth)
+	}
+
+	// Create a blueprint from the request
+	bp, err := request.GetBlueprint()
 	if err != nil {
 		return err
 	}
