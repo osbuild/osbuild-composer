@@ -12,7 +12,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/fsnode"
-	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 )
 
 // validateModeString checks that the given string is a valid mode octal number
@@ -431,40 +430,6 @@ func ValidateDirFileCustomizations(dirs []DirectoryCustomization, files []FileCu
 
 	if len(invalidFSNodes) > 0 {
 		return fmt.Errorf("the following filesystem nodes are parents of another node and are not directories: %s", invalidFSNodes)
-	}
-
-	return nil
-}
-
-// CheckFileCustomizationsPolicy checks if the given File customizations are allowed by the path policy.
-// If any of the customizations are not allowed by the path policy, an error is returned. Otherwise, nil is returned.
-func CheckFileCustomizationsPolicy(files []FileCustomization, pathPolicy *pathpolicy.PathPolicies) error {
-	var invalidPaths []string
-	for _, file := range files {
-		if err := pathPolicy.Check(file.Path); err != nil {
-			invalidPaths = append(invalidPaths, file.Path)
-		}
-	}
-
-	if len(invalidPaths) > 0 {
-		return fmt.Errorf("the following custom files are not allowed: %+q", invalidPaths)
-	}
-
-	return nil
-}
-
-// CheckDirectoryCustomizationsPolicy checks if the given Directory customizations are allowed by the path policy.
-// If any of the customizations are not allowed by the path policy, an error is returned. Otherwise, nil is returned.
-func CheckDirectoryCustomizationsPolicy(dirs []DirectoryCustomization, pathPolicy *pathpolicy.PathPolicies) error {
-	var invalidPaths []string
-	for _, dir := range dirs {
-		if err := pathPolicy.Check(dir.Path); err != nil {
-			invalidPaths = append(invalidPaths, dir.Path)
-		}
-	}
-
-	if len(invalidPaths) > 0 {
-		return fmt.Errorf("the following custom directories are not allowed: %+q", invalidPaths)
 	}
 
 	return nil
