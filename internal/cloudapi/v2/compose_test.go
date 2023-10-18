@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetBlueprintWithCustomizations(t *testing.T) {
+func TestGetBlueprintFromCustomizations(t *testing.T) {
 	// Empty request should return empty blueprint
 	cr := ComposeRequest{}
-	bp, err := cr.GetBlueprintWithCustomizations()
+	bp, err := cr.GetBlueprintFromCustomizations()
 	require.Nil(t, err)
 	assert.Equal(t, "empty blueprint", bp.Name)
 	assert.Equal(t, "0.0.0", bp.Version)
@@ -25,7 +25,7 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 	cr = ComposeRequest{
 		Customizations: &Customizations{},
 	}
-	bp, err = cr.GetBlueprintWithCustomizations()
+	bp, err = cr.GetBlueprintFromCustomizations()
 	require.Nil(t, err)
 	assert.Equal(t, "empty blueprint", bp.Name)
 	assert.Equal(t, "0.0.0", bp.Version)
@@ -234,7 +234,7 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 		},
 		FIPS: common.ToPtr(true),
 	}
-	bp, err = cr.GetBlueprintWithCustomizations()
+	bp, err = cr.GetBlueprintFromCustomizations()
 	require.Nil(t, err)
 	assert.Equal(t, bp, expected)
 }

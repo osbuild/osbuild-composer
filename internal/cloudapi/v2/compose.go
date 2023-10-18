@@ -10,20 +10,491 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 )
 
-// GetBlueprintWithCustomizations returns a new Blueprint with all of the
-// customizations set from the ComposeRequest
-func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Blueprint, error) {
-	var bp = blueprint.Blueprint{Name: "empty blueprint"}
-	err := bp.Initialize()
+// Return the string representation of the partitioning mode
+// default to auto-lvm (should never happen)
+func (bcpm BlueprintCustomizationsPartitioningMode) String() string {
+	switch bcpm {
+	case BlueprintCustomizationsPartitioningModeAutoLvm:
+		return "auto-lvm"
+	case BlueprintCustomizationsPartitioningModeLvm:
+		return "lvm"
+	case BlueprintCustomizationsPartitioningModeRaw:
+		return "raw"
+	default:
+		return "auto-lvm"
+	}
+}
+
+// GetCustomizationsFromBlueprintRequest populates a blueprint customization struct
+// with the data from the blueprint section of a ComposeRequest, which is similar but
+// slightly different from the Cloudapi's Customizations section
+// This starts with a new empty blueprint.Customization object
+// If there are no customizations, it returns nil
+func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*blueprint.Customizations, error) {
+	if request.Blueprint.Customizations == nil {
+		return nil, nil
+	}
+
+	c := &blueprint.Customizations{}
+	rbpc := request.Blueprint.Customizations
+
+	if rbpc.Hostname != nil {
+		c.Hostname = rbpc.Hostname
+	}
+
+	if rbpc.Kernel != nil {
+		kernel := &blueprint.KernelCustomization{}
+		if rbpc.Kernel.Name != nil {
+			kernel.Name = *rbpc.Kernel.Name
+		}
+		if rbpc.Kernel.Append != nil {
+			kernel.Append = *rbpc.Kernel.Append
+		}
+
+		c.Kernel = kernel
+	}
+
+	if rbpc.Sshkey != nil {
+		keys := []blueprint.SSHKeyCustomization{}
+		for _, key := range *rbpc.Sshkey {
+			keys = append(keys, blueprint.SSHKeyCustomization{
+				User: key.User,
+				Key:  key.Key,
+			})
+		}
+		c.SSHKey = keys
+	}
+
+	if rbpc.User != nil {
+		var userCustomizations []blueprint.UserCustomization
+		for _, user := range *rbpc.User {
+			uc := blueprint.UserCustomization{
+				Name:        user.Name,
+				Description: user.Description,
+				Password:    user.Password,
+				Key:         user.Key,
+				Home:        user.Home,
+				Shell:       user.Shell,
+				UID:         user.Uid,
+				GID:         user.Gid,
+			}
+			if user.Groups != nil {
+				uc.Groups = append(uc.Groups, *user.Groups...)
+			}
+			userCustomizations = append(userCustomizations, uc)
+		}
+		c.User = userCustomizations
+	}
+
+	if rbpc.Group != nil {
+		var groupCustomizations []blueprint.GroupCustomization
+		for _, group := range *rbpc.Group {
+			gc := blueprint.GroupCustomization{
+				Name: group.Name,
+				GID:  group.Gid,
+			}
+			groupCustomizations = append(groupCustomizations, gc)
+		}
+		c.Group = groupCustomizations
+
+	}
+
+	if rbpc.Timezone != nil {
+		tz := &blueprint.TimezoneCustomization{
+			Timezone: rbpc.Timezone.Timezone,
+		}
+
+		if rbpc.Timezone.Ntpservers != nil {
+			tz.NTPServers = append(tz.NTPServers, *rbpc.Timezone.Ntpservers...)
+		}
+
+		c.Timezone = tz
+	}
+
+	if rbpc.Locale != nil {
+		locale := &blueprint.LocaleCustomization{
+			Keyboard: rbpc.Locale.Keyboard,
+		}
+
+		if rbpc.Locale.Languages != nil {
+			locale.Languages = append(locale.Languages, *rbpc.Locale.Languages...)
+		}
+
+		c.Locale = locale
+	}
+
+	if rbpc.Firewall != nil {
+		firewall := &blueprint.FirewallCustomization{}
+		if rbpc.Firewall.Ports != nil {
+			firewall.Ports = append(firewall.Ports, *rbpc.Firewall.Ports...)
+		}
+		if rbpc.Firewall.Services != nil {
+			enabled := []string{}
+			if rbpc.Firewall.Services.Enabled != nil {
+				enabled = append(enabled, *rbpc.Firewall.Services.Enabled...)
+			}
+			disabled := []string{}
+			if rbpc.Firewall.Services.Disabled != nil {
+				disabled = append(disabled, *rbpc.Firewall.Services.Disabled...)
+			}
+			firewall.Services = &blueprint.FirewallServicesCustomization{
+				Enabled:  enabled,
+				Disabled: disabled,
+			}
+		}
+		if rbpc.Firewall.Zones != nil {
+			var zones []blueprint.FirewallZoneCustomization
+			for _, zone := range *rbpc.Firewall.Zones {
+				zc := blueprint.FirewallZoneCustomization{}
+				if zone.Name != nil {
+					zc.Name = zone.Name
+				}
+				if zone.Sources != nil {
+					zc.Sources = append(zc.Sources, *zone.Sources...)
+				}
+				zones = append(zones, zc)
+			}
+			firewall.Zones = zones
+		}
+
+		c.Firewall = firewall
+	}
+
+	if rbpc.Services != nil {
+		servicesCustomization := &blueprint.ServicesCustomization{}
+		if rbpc.Services.Enabled != nil {
+			servicesCustomization.Enabled = make([]string, len(*rbpc.Services.Enabled))
+			copy(servicesCustomization.Enabled, *rbpc.Services.Enabled)
+		}
+		if rbpc.Services.Disabled != nil {
+			servicesCustomization.Disabled = make([]string, len(*rbpc.Services.Disabled))
+			copy(servicesCustomization.Disabled, *rbpc.Services.Disabled)
+		}
+		c.Services = servicesCustomization
+	}
+
+	if rbpc.Filesystem != nil {
+		var fsCustomizations []blueprint.FilesystemCustomization
+		for _, f := range *rbpc.Filesystem {
+			fsCustomizations = append(fsCustomizations,
+				blueprint.FilesystemCustomization{
+					Mountpoint: f.Mountpoint,
+					MinSize:    f.Minsize,
+				},
+			)
+		}
+		c.Filesystem = fsCustomizations
+	}
+
+	if rbpc.InstallationDevice != nil {
+		c.InstallationDevice = *rbpc.InstallationDevice
+	}
+
+	if rbpc.PartitioningMode != nil {
+		c.PartitioningMode = string(*rbpc.PartitioningMode)
+	}
+
+	if rbpc.Fdo != nil {
+		fdo := &blueprint.FDOCustomization{}
+		if rbpc.Fdo.DiunPubKeyHash != nil {
+			fdo.DiunPubKeyHash = *rbpc.Fdo.DiunPubKeyHash
+		}
+		if rbpc.Fdo.DiunPubKeyInsecure != nil {
+			fdo.DiunPubKeyInsecure = *rbpc.Fdo.DiunPubKeyInsecure
+		}
+		if rbpc.Fdo.DiunPubKeyRootCerts != nil {
+			fdo.DiunPubKeyRootCerts = *rbpc.Fdo.DiunPubKeyRootCerts
+		}
+		if rbpc.Fdo.DiMfgStringTypeMacIface != nil {
+			fdo.DiMfgStringTypeMacIface = *rbpc.Fdo.DiMfgStringTypeMacIface
+		}
+		if rbpc.Fdo.ManufacturingServerUrl != nil {
+			fdo.ManufacturingServerURL = *rbpc.Fdo.ManufacturingServerUrl
+		}
+
+		c.FDO = fdo
+	}
+
+	if rbpc.Openscap != nil {
+		oscap := &blueprint.OpenSCAPCustomization{
+			ProfileID: rbpc.Openscap.ProfileId,
+		}
+		if rbpc.Openscap.Datastream != nil {
+			oscap.DataStream = *rbpc.Openscap.Datastream
+		}
+		if tailoring := rbpc.Openscap.Tailoring; tailoring != nil {
+			tc := blueprint.OpenSCAPTailoringCustomizations{}
+			if tailoring.Selected != nil && len(*tailoring.Selected) > 0 {
+				tc.Selected = append(tc.Selected, *tailoring.Selected...)
+			}
+			if tailoring.Unselected != nil && len(*tailoring.Unselected) > 0 {
+				tc.Unselected = append(tc.Unselected, *tailoring.Unselected...)
+			}
+			oscap.Tailoring = &tc
+		}
+		c.OpenSCAP = oscap
+	}
+
+	if rbpc.Ignition != nil {
+		ignition := &blueprint.IgnitionCustomization{}
+		if rbpc.Ignition.Embedded != nil {
+			ignition.Embedded = &blueprint.EmbeddedIgnitionCustomization{
+				Config: rbpc.Ignition.Embedded.Config,
+			}
+		}
+		if rbpc.Ignition.Firstboot != nil {
+			ignition.FirstBoot = &blueprint.FirstBootIgnitionCustomization{
+				ProvisioningURL: rbpc.Ignition.Firstboot.Url,
+			}
+		}
+		c.Ignition = ignition
+	}
+
+	if rbpc.Directories != nil {
+		var dirCustomizations []blueprint.DirectoryCustomization
+		for _, d := range *rbpc.Directories {
+			dirCustomization := blueprint.DirectoryCustomization{
+				Path: d.Path,
+			}
+			if d.Mode != nil {
+				dirCustomization.Mode = *d.Mode
+			}
+			if d.User != nil {
+				dirCustomization.User = *d.User
+				if uid, ok := dirCustomization.User.(float64); ok {
+					// check if uid can be converted to int64
+					if uid != float64(int64(uid)) {
+						return nil, fmt.Errorf("invalid user %f: must be an integer", uid)
+					}
+					dirCustomization.User = int64(uid)
+				}
+			}
+			if d.Group != nil {
+				dirCustomization.Group = *d.Group
+				if gid, ok := dirCustomization.Group.(float64); ok {
+					// check if gid can be converted to int64
+					if gid != float64(int64(gid)) {
+						return nil, fmt.Errorf("invalid group %f: must be an integer", gid)
+					}
+					dirCustomization.Group = int64(gid)
+				}
+			}
+			if d.EnsureParents != nil {
+				dirCustomization.EnsureParents = *d.EnsureParents
+			}
+			dirCustomizations = append(dirCustomizations, dirCustomization)
+		}
+
+		// Validate the directory customizations, because the Cloud API does not use the custom unmarshaller
+		_, err := blueprint.DirectoryCustomizationsToFsNodeDirectories(dirCustomizations)
+		if err != nil {
+			return nil, HTTPErrorWithInternal(ErrorInvalidCustomization, err)
+		}
+
+		c.Directories = dirCustomizations
+	}
+
+	if rbpc.Files != nil {
+		var fileCustomizations []blueprint.FileCustomization
+		for _, f := range *rbpc.Files {
+			fileCustomization := blueprint.FileCustomization{
+				Path: f.Path,
+			}
+			if f.Data != nil {
+				fileCustomization.Data = *f.Data
+			}
+			if f.Mode != nil {
+				fileCustomization.Mode = *f.Mode
+			}
+			if f.User != nil {
+				fileCustomization.User = *f.User
+				if uid, ok := fileCustomization.User.(float64); ok {
+					// check if uid can be converted to int64
+					if uid != float64(int64(uid)) {
+						return nil, fmt.Errorf("invalid user %f: must be an integer", uid)
+					}
+					fileCustomization.User = int64(uid)
+				}
+			}
+			if f.Group != nil {
+				fileCustomization.Group = *f.Group
+				if gid, ok := fileCustomization.Group.(float64); ok {
+					// check if gid can be converted to int64
+					if gid != float64(int64(gid)) {
+						return nil, fmt.Errorf("invalid group %f: must be an integer", gid)
+					}
+					fileCustomization.Group = int64(gid)
+				}
+			}
+			fileCustomizations = append(fileCustomizations, fileCustomization)
+		}
+
+		// Validate the file customizations, because the Cloud API does not use the custom unmarshaller
+		_, err := blueprint.FileCustomizationsToFsNodeFiles(fileCustomizations)
+		if err != nil {
+			return nil, HTTPErrorWithInternal(ErrorInvalidCustomization, err)
+		}
+
+		c.Files = fileCustomizations
+	}
+
+	if rbpc.Repositories != nil {
+		repoCustomizations := []blueprint.RepositoryCustomization{}
+		for _, repo := range *rbpc.Repositories {
+			repoCustomization := blueprint.RepositoryCustomization{
+				Id: repo.Id,
+			}
+
+			if repo.Name != nil {
+				repoCustomization.Name = *repo.Name
+			}
+
+			if repo.Filename != nil {
+				repoCustomization.Filename = *repo.Filename
+			}
+
+			if repo.Baseurls != nil && len(*repo.Baseurls) > 0 {
+				repoCustomization.BaseURLs = append(repoCustomization.BaseURLs, *repo.Baseurls...)
+			}
+
+			if repo.Gpgkeys != nil && len(*repo.Gpgkeys) > 0 {
+				repoCustomization.GPGKeys = append(repoCustomization.GPGKeys, *repo.Gpgkeys...)
+			}
+
+			if repo.Gpgcheck != nil {
+				repoCustomization.GPGCheck = repo.Gpgcheck
+			}
+
+			if repo.RepoGpgcheck != nil {
+				repoCustomization.RepoGPGCheck = repo.RepoGpgcheck
+			}
+
+			if repo.Enabled != nil {
+				repoCustomization.Enabled = repo.Enabled
+			}
+
+			if repo.Metalink != nil {
+				repoCustomization.Metalink = *repo.Metalink
+			}
+
+			if repo.Mirrorlist != nil {
+				repoCustomization.Mirrorlist = *repo.Mirrorlist
+			}
+
+			if repo.Sslverify != nil {
+				repoCustomization.SSLVerify = repo.Sslverify
+			}
+
+			if repo.Priority != nil {
+				repoCustomization.Priority = repo.Priority
+			}
+
+			if repo.ModuleHotfixes != nil {
+				repoCustomization.ModuleHotfixes = repo.ModuleHotfixes
+			}
+
+			repoCustomizations = append(repoCustomizations, repoCustomization)
+		}
+		c.Repositories = repoCustomizations
+	}
+
+	if rbpc.Fips != nil {
+		c.FIPS = rbpc.Fips
+	}
+
+	return c, nil
+}
+
+// GetBlueprintFromCompose returns a base blueprint
+// It is either constructed from the Blueprint passed in with the request, or it
+// is an empty blueprint
+func (request *ComposeRequest) GetBlueprintFromCompose() (blueprint.Blueprint, error) {
+	// nil or blank blueprint returns a valid empty blueprint
+	if request.Blueprint == nil || reflect.DeepEqual(*request.Blueprint, Blueprint{}) {
+		bp := blueprint.Blueprint{Name: "empty blueprint"}
+		err := bp.Initialize()
+		return bp, err
+	}
+
+	var bp blueprint.Blueprint
+	rbp := request.Blueprint
+
+	// Copy all the parts from the OpenAPI Blueprint into a blueprint.Blueprint
+	// NOTE: Openapi fields may be nil, test for that first.
+	bp.Name = rbp.Name
+	if rbp.Description != nil {
+		bp.Description = *rbp.Description
+	}
+	if rbp.Version != nil {
+		bp.Version = *rbp.Version
+	}
+	if rbp.Distro != nil {
+		bp.Distro = *rbp.Distro
+	}
+
+	if rbp.Packages != nil {
+		for _, pkg := range *rbp.Packages {
+			newPkg := blueprint.Package{Name: pkg.Name}
+			if pkg.Version != nil {
+				newPkg.Version = *pkg.Version
+			}
+			bp.Packages = append(bp.Packages, newPkg)
+		}
+	}
+
+	if rbp.Modules != nil {
+		for _, pkg := range *rbp.Modules {
+			newPkg := blueprint.Package{Name: pkg.Name}
+			if pkg.Version != nil {
+				newPkg.Version = *pkg.Version
+			}
+			bp.Modules = append(bp.Modules, newPkg)
+		}
+	}
+
+	if rbp.Groups != nil {
+		for _, group := range *rbp.Groups {
+			bp.Groups = append(bp.Groups, blueprint.Group{
+				Name: group.Name,
+			})
+		}
+	}
+
+	if rbp.Containers != nil {
+		for _, c := range *rbp.Containers {
+			newC := blueprint.Container{Source: c.Source, TLSVerify: c.TlsVerify}
+			if c.Name != nil {
+				newC.Name = *c.Name
+			}
+			bp.Containers = append(bp.Containers, newC)
+		}
+	}
+
+	customizations, err := request.GetCustomizationsFromBlueprintRequest()
+	if err != nil {
+		return bp, err
+	}
+	bp.Customizations = customizations
+
+	err = bp.Initialize()
 	if err != nil {
 		return bp, HTTPErrorWithInternal(ErrorFailedToInitializeBlueprint, err)
 	}
 
+	return bp, nil
+}
+
+// GetBlueprintFromCustomizations returns a new Blueprint with all of the
+// customizations set from the ComposeRequest.Customizations
+func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Blueprint, error) {
+	bp := blueprint.Blueprint{Name: "empty blueprint"}
+	err := bp.Initialize()
+	if err != nil {
+		return bp, HTTPErrorWithInternal(ErrorFailedToInitializeBlueprint, err)
+	}
 	if request.Customizations == nil {
 		return bp, nil
 	}
-
-	// Assume there is going to be one or more customization
 	bp.Customizations = &blueprint.Customizations{}
 
 	// Set the blueprint customisation to take care of the user
@@ -392,6 +863,18 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 	}
 
 	return bp, nil
+}
+
+// GetBlueprint returns a blueprint
+// If the compose request includes a blueprint, return it, otherwise if it has
+// customizations create a blueprint with those customizations. If it has neither
+// return an empty blueprint.
+func (request *ComposeRequest) GetBlueprint() (blueprint.Blueprint, error) {
+	if request.Blueprint != nil {
+		return request.GetBlueprintFromCompose()
+	}
+
+	return request.GetBlueprintFromCustomizations()
 }
 
 // GetPayloadRepositories returns the custom repos
