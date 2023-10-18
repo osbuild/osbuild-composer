@@ -8,7 +8,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/fsnode"
-	"github.com/osbuild/osbuild-composer/internal/pathpolicy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -1125,125 +1124,6 @@ func TestValidateDirFileCustomizations(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			err := ValidateDirFileCustomizations(tc.Dirs, tc.Files)
-			if tc.Error {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestCheckFileCustomizationsPolicy(t *testing.T) {
-	policy := map[string]pathpolicy.PathPolicy{
-		"/":               {Deny: true},
-		"/etc":            {},
-		"/etc/fstab":      {Deny: true},
-		"/etc/os-release": {Deny: true},
-		"/etc/hostname":   {Deny: true},
-		"/etc/shadow":     {Deny: true},
-		"/etc/passwd":     {Deny: true},
-		"/etc/group":      {Deny: true},
-	}
-	pathPolicy := pathpolicy.NewPathPolicies(policy)
-
-	testCases := []struct {
-		Name  string
-		Files []FileCustomization
-		Error bool
-	}{
-		{
-			Name: "disallowed-file",
-			Files: []FileCustomization{
-				{
-					Path: "/etc/shadow",
-				},
-			},
-			Error: true,
-		},
-		{
-			Name: "disallowed-file-2",
-			Files: []FileCustomization{
-				{
-					Path: "/home/user/.ssh/authorized_keys",
-				},
-			},
-			Error: true,
-		},
-		{
-			Name: "disallowed-file-3",
-			Files: []FileCustomization{
-				{
-					Path: "/file",
-				},
-			},
-			Error: true,
-		},
-		{
-			Name: "allowed-file-named",
-			Files: []FileCustomization{
-				{
-					Path: "/etc/named.conf",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.Name, func(t *testing.T) {
-			err := CheckFileCustomizationsPolicy(tc.Files, pathPolicy)
-			if tc.Error {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestCheckDirectoryCustomizationsPolicy(t *testing.T) {
-	policy := map[string]pathpolicy.PathPolicy{
-		"/":    {Deny: true},
-		"/etc": {},
-	}
-	pathPolicy := pathpolicy.NewPathPolicies(policy)
-
-	testCases := []struct {
-		Name        string
-		Directories []DirectoryCustomization
-		Error       bool
-	}{
-		{
-			Name: "disallowed-directory",
-			Directories: []DirectoryCustomization{
-				{
-					Path: "/dir",
-				},
-			},
-			Error: true,
-		},
-		{
-			Name: "disallowed-directory-2",
-			Directories: []DirectoryCustomization{
-				{
-					Path: "/var/log/fancy-dir",
-				},
-			},
-			Error: true,
-		},
-		{
-			Name: "allowed-directory",
-			Directories: []DirectoryCustomization{
-				{
-					Path: "/etc/systemd/system/sshd.service.d",
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.Name, func(t *testing.T) {
-			err := CheckDirectoryCustomizationsPolicy(tc.Directories, pathPolicy)
 			if tc.Error {
 				assert.Error(t, err)
 			} else {
