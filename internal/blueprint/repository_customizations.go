@@ -5,10 +5,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/fsnode"
 )
 
 type RepositoryCustomization struct {
@@ -73,65 +69,4 @@ func (rc *RepositoryCustomization) getFilename() string {
 		return fmt.Sprintf("%s.repo", rc.Filename)
 	}
 	return rc.Filename
-}
-
-func RepoCustomizationsToRepoConfigAndGPGKeyFiles(repos []RepositoryCustomization) (map[string][]rpmmd.RepoConfig, []*fsnode.File, error) {
-	if len(repos) == 0 {
-		return nil, nil, nil
-	}
-
-	repoMap := make(map[string][]rpmmd.RepoConfig, len(repos))
-	var gpgKeyFiles []*fsnode.File
-	for _, repo := range repos {
-		filename := repo.getFilename()
-		convertedRepo := repo.customRepoToRepoConfig()
-
-		// convert any inline gpgkeys to fsnode.File and
-		// replace the gpgkey with the file path
-		for idx, gpgkey := range repo.GPGKeys {
-			if _, ok := url.ParseRequestURI(gpgkey); ok != nil {
-				// create the file path
-				path := fmt.Sprintf("/etc/pki/rpm-gpg/RPM-GPG-KEY-%s-%d", repo.Id, idx)
-				// replace the gpgkey with the file path
-				convertedRepo.GPGKeys[idx] = fmt.Sprintf("file://%s", path)
-				// create the fsnode for the gpgkey keyFile
-				keyFile, err := fsnode.NewFile(path, nil, nil, nil, []byte(gpgkey))
-				if err != nil {
-					return nil, nil, err
-				}
-				gpgKeyFiles = append(gpgKeyFiles, keyFile)
-			}
-		}
-
-		repoMap[filename] = append(repoMap[filename], convertedRepo)
-	}
-
-	return repoMap, gpgKeyFiles, nil
-}
-
-func (repo RepositoryCustomization) customRepoToRepoConfig() rpmmd.RepoConfig {
-	urls := make([]string, len(repo.BaseURLs))
-	copy(urls, repo.BaseURLs)
-
-	keys := make([]string, len(repo.GPGKeys))
-	copy(keys, repo.GPGKeys)
-
-	repoConfig := rpmmd.RepoConfig{
-		Id:           repo.Id,
-		BaseURLs:     urls,
-		GPGKeys:      keys,
-		Name:         repo.Name,
-		Metalink:     repo.Metalink,
-		MirrorList:   repo.Mirrorlist,
-		CheckGPG:     repo.GPGCheck,
-		CheckRepoGPG: repo.RepoGPGCheck,
-		Priority:     repo.Priority,
-		Enabled:      repo.Enabled,
-	}
-
-	if repo.SSLVerify != nil {
-		repoConfig.IgnoreSSL = common.ToPtr(!*repo.SSLVerify)
-	}
-
-	return repoConfig
 }
