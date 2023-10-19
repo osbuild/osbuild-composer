@@ -14,9 +14,9 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	rhel "github.com/osbuild/images/pkg/distro/rhel8"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/platform"
 )
 
 // This test loads all the repositories available in /repositories directory
