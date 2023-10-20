@@ -74,6 +74,7 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    man:                Generate all man-pages"
+	@echo "    unit-tests:         Run unit tests"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -195,6 +196,10 @@ worker-key-pair: ca
 	# delete the request
 	rm /etc/osbuild-composer/worker-csr.pem
 
+.PHONY: unit-tests
+unit-tests:
+	go test -race ./...
+	go test -race ./internal/dnfjson/... -force-dnf
 
 #
 # Building packages
