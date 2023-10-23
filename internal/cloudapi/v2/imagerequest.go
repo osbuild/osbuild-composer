@@ -283,8 +283,9 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 	}
 }
 
-// GetTarget returns the target for the selected image type.
-func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.ImageType) (irTarget *target.Target, err error) {
+// GetTargets returns all the targets for image request.
+func (ir *ImageRequest) GetTargets(request *ComposeRequest, imageType distro.ImageType) ([]*target.Target, error) {
+	var irTarget *target.Target
 	uploadTarget, err := getDefaultTarget(ir.ImageType)
 	if err != nil {
 		return nil, err
@@ -316,7 +317,7 @@ func (ir *ImageRequest) GetTarget(request *ComposeRequest, imageType distro.Imag
 	}
 	irTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
 
-	return irTarget, nil
+	return []*target.Target{irTarget}, nil
 }
 
 // GetOSTreeOptions returns the image ostree options when included in the request
