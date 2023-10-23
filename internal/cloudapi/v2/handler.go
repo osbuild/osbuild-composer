@@ -139,7 +139,7 @@ type imageRequest struct {
 	arch         distro.Arch
 	repositories []rpmmd.RepoConfig
 	imageOptions distro.ImageOptions
-	target       *target.Target
+	targets      []*target.Target
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -236,7 +236,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			return err
 		}
 
-		var irTarget *target.Target
+		var irTargets []*target.Target
 		if ir.UploadOptions == nil {
 			// nowhere to put the image, this is a user error
 			if request.Koji == nil {
@@ -245,13 +245,14 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		} else if localSave {
 			// Override the image type upload selection and save it locally
 			// Final image is in /var/lib/osbuild-composer/artifacts/UUID/
-			irTarget = target.NewWorkerServerTarget()
-			irTarget.ImageName = imageType.Filename()
-			irTarget.OsbuildArtifact.ExportFilename = imageType.Filename()
-			irTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
+			srvTarget := target.NewWorkerServerTarget()
+			srvTarget.ImageName = imageType.Filename()
+			srvTarget.OsbuildArtifact.ExportFilename = imageType.Filename()
+			srvTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
+			irTargets = []*target.Target{srvTarget}
 		} else {
 			// Get the target for the selected image type
-			irTarget, err = ir.GetTarget(&request, imageType)
+			irTargets, err = ir.GetTargets(&request, imageType)
 			if err != nil {
 				return err
 			}
@@ -262,7 +263,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			arch:         arch,
 			repositories: repos,
 			imageOptions: imageOptions,
-			target:       irTarget,
+			targets:      irTargets,
 		})
 	}
 
