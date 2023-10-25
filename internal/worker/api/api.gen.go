@@ -51,10 +51,24 @@ type ObjectReference struct {
 	Kind string `json:"kind"`
 }
 
+// PostWorkersRequest defines model for PostWorkersRequest.
+type PostWorkersRequest struct {
+	Arch string `json:"arch"`
+}
+
+// PostWorkersResponse defines model for PostWorkersResponse.
+type PostWorkersResponse struct {
+	// Embedded struct due to allOf(#/components/schemas/ObjectReference)
+	ObjectReference `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+	WorkerId string `json:"worker_id"`
+}
+
 // RequestJobRequest defines model for RequestJobRequest.
 type RequestJobRequest struct {
-	Arch  string   `json:"arch"`
-	Types []string `json:"types"`
+	Arch     string   `json:"arch"`
+	Types    []string `json:"types"`
+	WorkerId *string  `json:"worker_id,omitempty"`
 }
 
 // RequestJobResponse defines model for RequestJobResponse.
@@ -91,11 +105,17 @@ type RequestJobJSONBody RequestJobRequest
 // UpdateJobJSONBody defines parameters for UpdateJob.
 type UpdateJobJSONBody UpdateJobRequest
 
+// PostWorkersJSONBody defines parameters for PostWorkers.
+type PostWorkersJSONBody PostWorkersRequest
+
 // RequestJobJSONRequestBody defines body for RequestJob for application/json ContentType.
 type RequestJobJSONRequestBody RequestJobJSONBody
 
 // UpdateJobJSONRequestBody defines body for UpdateJob for application/json ContentType.
 type UpdateJobJSONRequestBody UpdateJobJSONBody
+
+// PostWorkersJSONRequestBody defines body for PostWorkers for application/json ContentType.
+type PostWorkersJSONRequestBody PostWorkersJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -120,6 +140,12 @@ type ServerInterface interface {
 	// status
 	// (GET /status)
 	GetStatus(ctx echo.Context) error
+	// Create a new worker
+	// (POST /workers)
+	PostWorkers(ctx echo.Context) error
+	// Refresh worker status
+	// (POST /workers/{worker_id}/status)
+	PostWorkerStatus(ctx echo.Context, workerId string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -228,6 +254,31 @@ func (w *ServerInterfaceWrapper) GetStatus(ctx echo.Context) error {
 	return err
 }
 
+// PostWorkers converts echo context to params.
+func (w *ServerInterfaceWrapper) PostWorkers(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostWorkers(ctx)
+	return err
+}
+
+// PostWorkerStatus converts echo context to params.
+func (w *ServerInterfaceWrapper) PostWorkerStatus(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "worker_id" -------------
+	var workerId string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "worker_id", runtime.ParamLocationPath, ctx.Param("worker_id"), &workerId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter worker_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostWorkerStatus(ctx, workerId)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -263,32 +314,39 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PUT(baseURL+"/jobs/:token/artifacts/:name", wrapper.UploadJobArtifact)
 	router.GET(baseURL+"/openapi", wrapper.GetOpenapi)
 	router.GET(baseURL+"/status", wrapper.GetStatus)
+	router.POST(baseURL+"/workers", wrapper.PostWorkers)
+	router.POST(baseURL+"/workers/:worker_id/status", wrapper.PostWorkerStatus)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

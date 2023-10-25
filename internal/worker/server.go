@@ -72,6 +72,8 @@ type Config struct {
 	BasePath             string
 	JWTEnabled           bool
 	TenantProviderFields []string
+	WorkerTimeout        time.Duration
+	WorkerWatchFreq      time.Duration
 }
 
 func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, config Config) *Server {
@@ -81,9 +83,17 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, config Config) *Serve
 		config: config,
 	}
 
+	if s.config.WorkerTimeout == 0 {
+		s.config.WorkerTimeout = time.Hour
+	}
+	if s.config.WorkerWatchFreq == 0 {
+		s.config.WorkerWatchFreq = time.Second * 300
+	}
+
 	api.BasePath = config.BasePath
 
 	go s.WatchHeartbeats()
+	go s.WatchWorkers()
 	return s
 }
 
@@ -138,6 +148,26 @@ func (s *Server) WatchHeartbeats() {
 			err = s.RequeueOrFinishJob(token, maxHeartbeatRetries, resJson)
 			if err != nil {
 				logrus.Errorf("Error requeueing or finishing unresponsive job: %v", err)
+			}
+		}
+	}
+}
+
+// This function should be started as a goroutine
+// Every 5 minutes it goes through all workers, removing any unresponsive ones.
+func (s *Server) WatchWorkers() {
+	//nolint:staticcheck // avoid SA1015, this is an endless function
+	for range time.Tick(s.config.WorkerWatchFreq) {
+		workers, err := s.jobs.Workers(s.config.WorkerTimeout)
+		if err != nil {
+			logrus.Warningf("Unable to query workers: %v", err)
+			continue
+		}
+		for _, wID := range workers {
+			logrus.Infof("Removing inactive worker: %s", wID)
+			err = s.jobs.DeleteWorker(wID)
+			if err != nil {
+				logrus.Warningf("Unable to remove worker: %v", err)
 			}
 		}
 	}
@@ -575,15 +605,15 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	return os.RemoveAll(path.Join(s.config.ArtifactsDir, id.String()))
 }
 
-func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
-	return s.requestJob(ctx, arch, jobTypes, uuid.Nil, channels)
+func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes, channels []string, workerID uuid.UUID) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
+	return s.requestJob(ctx, arch, jobTypes, uuid.Nil, channels, workerID)
 }
 
 func (s *Server) RequestJobById(ctx context.Context, arch string, requestedJobId uuid.UUID) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
-	return s.requestJob(ctx, arch, []string{}, requestedJobId, nil)
+	return s.requestJob(ctx, arch, []string{}, requestedJobId, nil, uuid.Nil)
 }
 
-func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string, requestedJobId uuid.UUID, channels []string) (
+func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string, requestedJobId uuid.UUID, channels []string, workerID uuid.UUID) (
 	jobId uuid.UUID, token uuid.UUID, jobType string, args json.RawMessage, dynamicArgs []json.RawMessage, err error) {
 	// treat osbuild jobs specially until we have found a generic way to
 	// specify dequeuing restrictions. For now, we only have one
@@ -614,9 +644,9 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	var depIDs []uuid.UUID
 	if requestedJobId != uuid.Nil {
 		jobId = requestedJobId
-		token, depIDs, jobType, args, err = s.jobs.DequeueByID(dequeueCtx, requestedJobId)
+		token, depIDs, jobType, args, err = s.jobs.DequeueByID(dequeueCtx, requestedJobId, workerID)
 	} else {
-		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, jts, channels)
+		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, workerID, jts, channels)
 	}
 	if err != nil {
 		if err != jobqueue.ErrDequeueTimeout && err != jobqueue.ErrNotPending {
@@ -852,7 +882,15 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		channel = "org-" + tenant
 	}
 
-	jobId, jobToken, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types, []string{channel})
+	workerID := uuid.Nil
+	if body.WorkerId != nil {
+		workerID, err = uuid.Parse(*body.WorkerId)
+		if err != nil {
+			return api.HTTPErrorWithInternal(api.ErrorMalformedWorkerId, err)
+		}
+	}
+
+	jobId, jobToken, jobType, jobArgs, dynamicJobArgs, err := h.server.RequestJob(ctx.Request().Context(), body.Arch, body.Types, []string{channel}, workerID)
 	if err != nil {
 		if err == jobqueue.ErrDequeueTimeout {
 			return ctx.JSON(http.StatusNoContent, api.ObjectReference{
@@ -987,6 +1025,47 @@ func (h *apiHandlers) UploadJobArtifact(ctx echo.Context, tokenstr string, name 
 	_, err = io.Copy(f, request.Body)
 	if err != nil {
 		return api.HTTPErrorWithInternal(api.ErrorWritingArtifact, err)
+	}
+
+	return ctx.NoContent(http.StatusOK)
+}
+
+func (h *apiHandlers) PostWorkers(ctx echo.Context) error {
+	var body api.PostWorkersRequest
+	err := ctx.Bind(&body)
+	if err != nil {
+		return err
+	}
+
+	workerID, err := h.server.jobs.InsertWorker(body.Arch)
+	if err != nil {
+		return api.HTTPErrorWithInternal(api.ErrorInsertingWorker, err)
+	}
+	logrus.Infof("Worker (%v) registered", body.Arch)
+
+	return ctx.JSON(http.StatusCreated, api.PostWorkersResponse{
+		ObjectReference: api.ObjectReference{
+			Href: fmt.Sprintf("%s/workers", api.BasePath),
+			Id:   workerID.String(),
+			Kind: "WorkerID",
+		},
+		WorkerId: workerID.String(),
+	})
+}
+
+func (h *apiHandlers) PostWorkerStatus(ctx echo.Context, workerIdstr string) error {
+	workerID, err := uuid.Parse(workerIdstr)
+	if err != nil {
+		return api.HTTPErrorWithInternal(api.ErrorMalformedWorkerId, err)
+	}
+	err = h.server.jobs.UpdateWorkerStatus(workerID)
+
+	if err == jobqueue.ErrWorkerNotExist {
+		return api.HTTPErrorWithInternal(api.ErrorWorkerIdNotFound, err)
+	}
+
+	if err != nil {
+		return api.HTTPErrorWithInternal(api.ErrorUpdatingWorkerStatus, err)
 	}
 
 	return ctx.NoContent(http.StatusOK)
