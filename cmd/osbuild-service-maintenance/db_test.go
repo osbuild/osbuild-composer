@@ -44,7 +44,7 @@ func testDeleteJob(t *testing.T, d db, q *dbjobqueue.DBJobQueue) {
 	id, err := q.Enqueue("octopus", nil, nil, "")
 	require.NoError(t, err)
 	require.NotEqual(t, uuid.Nil, id)
-	_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
+	_, _, _, _, _, err = q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{""})
 	require.NoError(t, err)
 
 	type Result struct {

@@ -41,13 +41,13 @@ type JobQueue interface {
 	//
 	// Returns the job's id, token, dependencies, type, and arguments, or an error. Arguments
 	// can be unmarshaled to the type given in Enqueue().
-	Dequeue(ctx context.Context, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
+	Dequeue(ctx context.Context, workerID uuid.UUID, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
 	// Dequeues a pending job by its ID in a non-blocking way.
 	//
 	// Returns the job's token, dependencies, type, and arguments, or an error. Arguments
 	// can be unmarshaled to the type given in Enqueue().
-	DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
+	DequeueByID(ctx context.Context, id, workerID uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
 	// Tries to requeue a running job by its ID
 	//
@@ -78,8 +78,20 @@ type JobQueue interface {
 	// Get a list of tokens which haven't been updated in the specified time frame
 	Heartbeats(olderThan time.Duration) (tokens []uuid.UUID)
 
-	// Reset the last heartbeat time to time.Now()
+	// Reset the last job heartbeat time to time.Now()
 	RefreshHeartbeat(token uuid.UUID)
+
+	// Inserts the worker and creates a UUID for it
+	InsertWorker(arch string) (uuid.UUID, error)
+
+	// Reset the last worker's heartbeat time to time.Now()
+	UpdateWorkerStatus(workerID uuid.UUID) error
+
+	// Get a list of workers which haven't been updated in the specified time frame
+	Workers(olderThan time.Duration) ([]uuid.UUID, error)
+
+	// Deletes the worker
+	DeleteWorker(workerID uuid.UUID) error
 }
 
 // SimpleLogger provides a structured logging methods for the jobqueue library.
@@ -100,4 +112,6 @@ var (
 	ErrNotRunning     = errors.New("job is not running")
 	ErrCanceled       = errors.New("job was canceled")
 	ErrDequeueTimeout = errors.New("dequeue context timed out or was canceled")
+	ErrActiveJobs     = errors.New("worker has active jobs associated with it")
+	ErrWorkerNotExist = errors.New("worker does not exist")
 )
