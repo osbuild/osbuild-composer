@@ -56,6 +56,15 @@ type fsJobQueue struct {
 	// reported as done.
 	jobIdByToken map[uuid.UUID]uuid.UUID
 	heartbeats   map[uuid.UUID]time.Time // token -> heartbeat
+
+	workerIDByToken map[uuid.UUID]uuid.UUID // token -> workerID
+	workers         map[uuid.UUID]worker
+}
+
+type worker struct {
+	Arch      string    `json:"arch"`
+	Heartbeat time.Time `json:"heartbeat"`
+	Tokens    map[uuid.UUID]struct{}
 }
 
 // On-disk job struct. Contains all necessary (but non-redundant) information
@@ -85,12 +94,14 @@ type job struct {
 // loaded and rescheduled to run if necessary.
 func New(dir string) (*fsJobQueue, error) {
 	q := &fsJobQueue{
-		db:           jsondb.New(dir, 0600),
-		pending:      list.New(),
-		dependants:   make(map[uuid.UUID][]uuid.UUID),
-		jobIdByToken: make(map[uuid.UUID]uuid.UUID),
-		heartbeats:   make(map[uuid.UUID]time.Time),
-		listeners:    make(map[chan struct{}]struct{}),
+		db:              jsondb.New(dir, 0600),
+		pending:         list.New(),
+		dependants:      make(map[uuid.UUID][]uuid.UUID),
+		jobIdByToken:    make(map[uuid.UUID]uuid.UUID),
+		heartbeats:      make(map[uuid.UUID]time.Time),
+		listeners:       make(map[chan struct{}]struct{}),
+		workers:         make(map[uuid.UUID]worker),
+		workerIDByToken: make(map[uuid.UUID]uuid.UUID),
 	}
 
 	// Look for jobs that are still pending and build the dependant map.
@@ -186,7 +197,7 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return j.Id, nil
 }
 
-func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+func (q *fsJobQueue) Dequeue(ctx context.Context, wID uuid.UUID, jobTypes, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -231,6 +242,10 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []
 	j.Token = uuid.New()
 	q.jobIdByToken[j.Token] = j.Id
 	q.heartbeats[j.Token] = time.Now()
+	if _, ok := q.workers[wID]; ok {
+		q.workers[wID].Tokens[j.Token] = struct{}{}
+		q.workerIDByToken[j.Token] = wID
+	}
 
 	err := q.db.Write(j.Id.String(), j)
 	if err != nil {
@@ -240,7 +255,7 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, jobTypes []string, channels []
 	return j.Id, j.Token, j.Dependencies, j.Type, j.Args, nil
 }
 
-func (q *fsJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+func (q *fsJobQueue) DequeueByID(ctx context.Context, id, wID uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -268,6 +283,10 @@ func (q *fsJobQueue) DequeueByID(ctx context.Context, id uuid.UUID) (uuid.UUID, 
 	j.Token = uuid.New()
 	q.jobIdByToken[j.Token] = j.Id
 	q.heartbeats[j.Token] = time.Now()
+	if _, ok := q.workers[wID]; ok {
+		q.workers[wID].Tokens[j.Token] = struct{}{}
+		q.workerIDByToken[j.Token] = wID
+	}
 
 	err = q.db.Write(j.Id.String(), j)
 	if err != nil {
@@ -296,6 +315,10 @@ func (q *fsJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result 
 
 	delete(q.jobIdByToken, j.Token)
 	delete(q.heartbeats, j.Token)
+	if wID, ok := q.workerIDByToken[j.Token]; ok {
+		delete(q.workers[wID].Tokens, j.Token)
+		delete(q.workerIDByToken, j.Token)
+	}
 
 	if j.Retries >= maxRetries {
 		j.FinishedAt = time.Now()
@@ -442,6 +465,62 @@ func (q *fsJobQueue) RefreshHeartbeat(token uuid.UUID) {
 	if token != uuid.Nil {
 		q.heartbeats[token] = time.Now()
 	}
+}
+
+func (q *fsJobQueue) InsertWorker(arch string) (uuid.UUID, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	wID := uuid.New()
+	q.workers[wID] = worker{
+		Arch:      arch,
+		Heartbeat: time.Now(),
+		Tokens:    make(map[uuid.UUID]struct{}),
+	}
+	return wID, nil
+}
+
+func (q *fsJobQueue) UpdateWorkerStatus(wID uuid.UUID) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	worker, ok := q.workers[wID]
+	if !ok {
+		return jobqueue.ErrWorkerNotExist
+	}
+
+	worker.Heartbeat = time.Now()
+	return nil
+}
+
+func (q *fsJobQueue) Workers(olderThan time.Duration) ([]uuid.UUID, error) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	now := time.Now()
+	wIDs := []uuid.UUID{}
+	for wID, worker := range q.workers {
+		if now.Sub(worker.Heartbeat) > olderThan {
+			wIDs = append(wIDs, wID)
+		}
+	}
+	return wIDs, nil
+}
+
+func (q *fsJobQueue) DeleteWorker(wID uuid.UUID) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	worker, ok := q.workers[wID]
+	if !ok {
+		return jobqueue.ErrWorkerNotExist
+	}
+
+	if len(worker.Tokens) != 0 {
+		return jobqueue.ErrActiveJobs
+	}
+	delete(q.workers, wID)
+	return nil
 }
 
 // Reads job with `id`. This is a thin wrapper around `q.db.Read`, which

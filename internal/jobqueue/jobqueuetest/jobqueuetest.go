@@ -44,6 +44,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("dequeue-by-id", wrap(testDequeueByID))
 	t.Run("multiple-channels", wrap(testMultipleChannels))
 	t.Run("100-dequeuers", wrap(test100dequeuers))
+	t.Run("workers", wrap(testWorkers))
 }
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID, channel string) uuid.UUID {
@@ -55,7 +56,7 @@ func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interfa
 }
 
 func finishNextTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, result interface{}, deps []uuid.UUID) uuid.UUID {
-	id, tok, d, typ, args, err := q.Dequeue(context.Background(), []string{jobType}, []string{""})
+	id, tok, d, typ, args, err := q.Dequeue(context.Background(), uuid.Nil, []string{jobType}, []string{""})
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
 	require.NotEmpty(t, tok)
@@ -82,7 +83,7 @@ func testErrors(t *testing.T, q jobqueue.JobQueue) {
 
 	// token gets removed
 	pushTestJob(t, q, "octopus", nil, nil, "")
-	id, tok, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
+	id, tok, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{""})
 	require.NoError(t, err)
 	require.NotEmpty(t, tok)
 
@@ -133,7 +134,7 @@ func testArgs(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, "kingfisher", jchan)
 	require.Equal(t, "octopus", jtype)
 
-	id, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{"kingfisher"})
+	id, tok, deps, typ, args, err := q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{"kingfisher"})
 	require.NoError(t, err)
 	require.Equal(t, two, id)
 	require.NotEmpty(t, tok)
@@ -151,7 +152,7 @@ func testArgs(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, "kingfisher", jchan)
 	require.Equal(t, typ, jtype)
 
-	id, tok, deps, typ, args, err = q.Dequeue(context.Background(), []string{"fish"}, []string{"toucan"})
+	id, tok, deps, typ, args, err = q.Dequeue(context.Background(), uuid.Nil, []string{"fish"}, []string{"toucan"})
 	require.NoError(t, err)
 	require.Equal(t, one, id)
 	require.NotEmpty(t, tok)
@@ -181,7 +182,7 @@ func testJobTypes(t *testing.T, q jobqueue.JobQueue) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"zebra"}, []string{""})
+	id, tok, deps, typ, args, err := q.Dequeue(ctx, uuid.Nil, []string{"zebra"}, []string{""})
 	require.Equal(t, err, jobqueue.ErrDequeueTimeout)
 	require.Equal(t, uuid.Nil, id)
 	require.Equal(t, uuid.Nil, tok)
@@ -193,12 +194,12 @@ func testJobTypes(t *testing.T, q jobqueue.JobQueue) {
 func testDequeueTimeout(t *testing.T, q jobqueue.JobQueue) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*20)
 	defer cancel()
-	_, _, _, _, _, err := q.Dequeue(ctx, []string{"octopus"}, []string{""})
+	_, _, _, _, _, err := q.Dequeue(ctx, uuid.Nil, []string{"octopus"}, []string{""})
 	require.Equal(t, jobqueue.ErrDequeueTimeout, err)
 
 	ctx2, cancel2 := context.WithCancel(context.Background())
 	cancel2()
-	_, _, _, _, _, err = q.Dequeue(ctx2, []string{"octopus"}, []string{""})
+	_, _, _, _, _, err = q.Dequeue(ctx2, uuid.Nil, []string{"octopus"}, []string{""})
 	require.Equal(t, jobqueue.ErrDequeueTimeout, err)
 }
 
@@ -286,7 +287,7 @@ func testMultipleWorkers(t *testing.T, q jobqueue.JobQueue) {
 		defer close(done)
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"octopus"}, []string{""})
+		id, tok, deps, typ, args, err := q.Dequeue(ctx, uuid.Nil, []string{"octopus"}, []string{""})
 		require.NoError(t, err)
 		require.NotEmpty(t, id)
 		require.NotEmpty(t, tok)
@@ -301,7 +302,7 @@ func testMultipleWorkers(t *testing.T, q jobqueue.JobQueue) {
 
 	// This call to Dequeue() should not block on the one in the goroutine.
 	id := pushTestJob(t, q, "clownfish", nil, nil, "")
-	r, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	r, tok, deps, typ, args, err := q.Dequeue(context.Background(), uuid.Nil, []string{"clownfish"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
 	require.NotEmpty(t, tok)
@@ -324,7 +325,7 @@ func testMultipleWorkersSingleJobType(t *testing.T, q jobqueue.JobQueue) {
 			defer wg.Add(-1)
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			id, tok, deps, typ, args, err := q.Dequeue(ctx, []string{"clownfish"}, []string{""})
+			id, tok, deps, typ, args, err := q.Dequeue(ctx, uuid.Nil, []string{"clownfish"}, []string{""})
 			require.NoError(t, err)
 			require.NotEmpty(t, id)
 			require.NotEmpty(t, tok)
@@ -371,7 +372,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	// Cancel a running job, which should not dequeue the canceled job from above
 	id = pushTestJob(t, q, "clownfish", nil, nil, "")
 	require.NotEmpty(t, id)
-	r, tok, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	r, tok, deps, typ, args, err := q.Dequeue(context.Background(), uuid.Nil, []string{"clownfish"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
 	require.NotEmpty(t, tok)
@@ -391,7 +392,7 @@ func testCancel(t *testing.T, q jobqueue.JobQueue) {
 	// Cancel a finished job, which is a no-op
 	id = pushTestJob(t, q, "clownfish", nil, nil, "")
 	require.NotEmpty(t, id)
-	r, tok, deps, typ, args, err = q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	r, tok, deps, typ, args, err = q.Dequeue(context.Background(), uuid.Nil, []string{"clownfish"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
 	require.NotEmpty(t, tok)
@@ -423,7 +424,7 @@ func testRequeue(t *testing.T, q jobqueue.JobQueue) {
 	require.Error(t, err)
 
 	// Requeue a running job
-	r, tok1, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	r, tok1, deps, typ, args, err := q.Dequeue(context.Background(), uuid.Nil, []string{"clownfish"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
 	require.NotEmpty(t, tok1)
@@ -432,7 +433,7 @@ func testRequeue(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, json.RawMessage("null"), args)
 	err = q.RequeueOrFinishJob(id, 1, nil)
 	require.NoError(t, err)
-	r, tok2, deps, typ, args, err := q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	r, tok2, deps, typ, args, err := q.Dequeue(context.Background(), uuid.Nil, []string{"clownfish"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
 	require.NotEmpty(t, tok2)
@@ -457,13 +458,13 @@ func testRequeueLimit(t *testing.T, q jobqueue.JobQueue) {
 	// Start a job
 	id := pushTestJob(t, q, "clownfish", nil, nil, "")
 	require.NotEmpty(t, id)
-	_, _, _, _, _, err := q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	_, _, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"clownfish"}, []string{""})
 	require.NoError(t, err)
 	// Requeue once
 	err = q.RequeueOrFinishJob(id, 1, nil)
 	require.NoError(t, err)
 	// Start again
-	_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"clownfish"}, []string{""})
+	_, _, _, _, _, err = q.Dequeue(context.Background(), uuid.Nil, []string{"clownfish"}, []string{""})
 	require.NoError(t, err)
 	_, _, result, _, _, finished, _, _, _, err := q.JobStatus(id)
 	require.NoError(t, err)
@@ -483,7 +484,7 @@ func testHeartbeats(t *testing.T, q jobqueue.JobQueue) {
 	// No heartbeats for queued job
 	require.Empty(t, q.Heartbeats(time.Second*0))
 
-	r, tok, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
+	r, tok, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{""})
 	require.NoError(t, err)
 	require.Equal(t, id, r)
 	require.NotEmpty(t, tok)
@@ -518,7 +519,7 @@ func testDequeueByID(t *testing.T, q jobqueue.JobQueue) {
 		one := pushTestJob(t, q, "octopus", nil, nil, "")
 		two := pushTestJob(t, q, "octopus", nil, nil, "")
 
-		tok, d, typ, args, err := q.DequeueByID(context.Background(), one)
+		tok, d, typ, args, err := q.DequeueByID(context.Background(), one, uuid.Nil)
 		require.NoError(t, err)
 		require.NotEmpty(t, tok)
 		require.Empty(t, d)
@@ -535,7 +536,7 @@ func testDequeueByID(t *testing.T, q jobqueue.JobQueue) {
 		one := pushTestJob(t, q, "octopus", nil, nil, "")
 		two := pushTestJob(t, q, "octopus", nil, []uuid.UUID{one}, "")
 
-		_, _, _, _, err := q.DequeueByID(context.Background(), two)
+		_, _, _, _, err := q.DequeueByID(context.Background(), two, uuid.Nil)
 		require.Equal(t, jobqueue.ErrNotPending, err)
 
 		require.Equal(t, one, finishNextTestJob(t, q, "octopus", testResult{}, nil))
@@ -545,16 +546,16 @@ func testDequeueByID(t *testing.T, q jobqueue.JobQueue) {
 	t.Run("cannot dequeue a non-pending job", func(t *testing.T) {
 		one := pushTestJob(t, q, "octopus", nil, nil, "")
 
-		_, _, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
+		_, _, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{""})
 		require.NoError(t, err)
 
-		_, _, _, _, err = q.DequeueByID(context.Background(), one)
+		_, _, _, _, err = q.DequeueByID(context.Background(), one, uuid.Nil)
 		require.Equal(t, jobqueue.ErrNotPending, err)
 
 		err = q.RequeueOrFinishJob(one, 0, nil)
 		require.NoError(t, err)
 
-		_, _, _, _, err = q.DequeueByID(context.Background(), one)
+		_, _, _, _, err = q.DequeueByID(context.Background(), one, uuid.Nil)
 		require.Equal(t, jobqueue.ErrNotPending, err)
 	})
 }
@@ -571,7 +572,7 @@ func testMultipleChannels(t *testing.T, q jobqueue.JobQueue) {
 		go func() {
 			defer wg.Done()
 
-			id, _, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{"kingfisher"})
+			id, _, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{"kingfisher"})
 			require.NoError(t, err)
 
 			expectedID := <-twoChan
@@ -583,7 +584,7 @@ func testMultipleChannels(t *testing.T, q jobqueue.JobQueue) {
 		go func() {
 			defer wg.Done()
 
-			id, _, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{"toucan"})
+			id, _, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{"toucan"})
 			require.NoError(t, err)
 
 			expectedID := <-oneChan
@@ -610,13 +611,13 @@ func testMultipleChannels(t *testing.T, q jobqueue.JobQueue) {
 		go func() {
 			defer wg.Done()
 
-			id, _, _, _, _, err := q.Dequeue(context.Background(), []string{"octopus"}, []string{"kingfisher", "toucan"})
+			id, _, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{"kingfisher", "toucan"})
 			require.NoError(t, err)
 
 			expectedID := <-oneChan
 			require.Equal(t, expectedID, id)
 
-			id, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{"kingfisher", "toucan"})
+			id, _, _, _, _, err = q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{"kingfisher", "toucan"})
 			require.NoError(t, err)
 
 			expectedID = <-twoChan
@@ -639,11 +640,11 @@ func testMultipleChannels(t *testing.T, q jobqueue.JobQueue) {
 		// dequeue from an empty channel
 		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Millisecond*100))
 		defer cancel()
-		_, _, _, _, _, err := q.Dequeue(ctx, []string{"octopus"}, []string{""})
+		_, _, _, _, _, err := q.Dequeue(ctx, uuid.Nil, []string{"octopus"}, []string{""})
 		require.ErrorIs(t, err, jobqueue.ErrDequeueTimeout)
 
 		// dequeue from toucan channel
-		_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{"toucan"})
+		_, _, _, _, _, err = q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{"toucan"})
 		require.NoError(t, err)
 
 		// enqueue into an empty channel
@@ -652,11 +653,11 @@ func testMultipleChannels(t *testing.T, q jobqueue.JobQueue) {
 		// dequeue from toucan channel
 		ctx2, cancel2 := context.WithDeadline(context.Background(), time.Now().Add(time.Millisecond*100))
 		defer cancel2()
-		_, _, _, _, _, err = q.Dequeue(ctx2, []string{"octopus"}, []string{"toucan"})
+		_, _, _, _, _, err = q.Dequeue(ctx2, uuid.Nil, []string{"octopus"}, []string{"toucan"})
 		require.ErrorIs(t, err, jobqueue.ErrDequeueTimeout)
 
 		// dequeue from an empty channel
-		_, _, _, _, _, err = q.Dequeue(context.Background(), []string{"octopus"}, []string{""})
+		_, _, _, _, _, err = q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{""})
 		require.NoError(t, err)
 	})
 }
@@ -699,4 +700,43 @@ func test100dequeuers(t *testing.T, q jobqueue.JobQueue) {
 
 	wg.Wait()
 
+}
+
+// Registers workers and runs jobs against them
+func testWorkers(t *testing.T, q jobqueue.JobQueue) {
+	one := pushTestJob(t, q, "octopus", nil, nil, "")
+
+	w1, err := q.InsertWorker("x86_64")
+	require.NoError(t, err)
+	w2, err := q.InsertWorker("aarch64")
+	require.NoError(t, err)
+
+	workers, err := q.Workers(0)
+	require.NoError(t, err)
+	require.Len(t, workers, 2)
+
+	workers, err = q.Workers(time.Hour * 24)
+	require.NoError(t, err)
+	require.Len(t, workers, 0)
+
+	_, _, _, _, _, err = q.Dequeue(context.Background(), w1, []string{"octopus"}, []string{""})
+	require.NoError(t, err)
+
+	err = q.DeleteWorker(w1)
+	require.Equal(t, err, jobqueue.ErrActiveJobs)
+
+	err = q.UpdateWorkerStatus(w1)
+	require.NoError(t, err)
+
+	err = q.UpdateWorkerStatus(uuid.New())
+	require.Equal(t, err, jobqueue.ErrWorkerNotExist)
+
+	err = q.RequeueOrFinishJob(one, 0, &testResult{})
+	require.NoError(t, err)
+
+	err = q.DeleteWorker(w1)
+	require.NoError(t, err)
+
+	err = q.DeleteWorker(w2)
+	require.NoError(t, err)
 }
