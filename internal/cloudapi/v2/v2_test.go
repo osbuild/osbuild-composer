@@ -8,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
@@ -49,7 +50,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	go func() {
 		defer wg.Done()
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestDistroName, []string{worker.JobTypeDepsolve}, depsolveChannels)
+			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestDistroName, []string{worker.JobTypeDepsolve}, depsolveChannels, uuid.Nil)
 			select {
 			case <-depsolveContext.Done():
 				return
@@ -86,7 +87,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	go func() {
 		defer wg.Done()
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(ostreeResolveContext, test_distro.TestDistroName, []string{worker.JobTypeOSTreeResolve}, depsolveChannels)
+			_, token, _, _, _, err := workerServer.RequestJob(ostreeResolveContext, test_distro.TestDistroName, []string{worker.JobTypeOSTreeResolve}, depsolveChannels, uuid.Nil)
 			select {
 			case <-ostreeResolveContext.Done():
 				return
@@ -597,7 +598,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+	jobId, token, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
@@ -708,7 +709,7 @@ func TestComposeStatusFailure(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
@@ -779,7 +780,7 @@ func TestComposeJobError(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
@@ -844,7 +845,7 @@ func TestComposeDependencyError(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
@@ -917,7 +918,7 @@ func TestComposeTargetErrors(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
@@ -1337,7 +1338,7 @@ func TestImageFromCompose(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+	jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeOSBuild, jobType)
 
@@ -1406,7 +1407,7 @@ func TestImageFromCompose(t *testing.T) {
 		"kind": "CloneComposeId"
 	}`, jobId), "id")
 
-	_, token, jobType, _, _, err = wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeAWSEC2Copy}, []string{""})
+	_, token, jobType, _, _, err = wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeAWSEC2Copy}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeAWSEC2Copy, jobType)
 
@@ -1418,7 +1419,7 @@ func TestImageFromCompose(t *testing.T) {
 	err = wrksrv.FinishJob(token, res)
 	require.NoError(t, err)
 
-	imgJobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeAWSEC2Share}, []string{""})
+	imgJobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeAWSEC2Share}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeAWSEC2Share, jobType)
 

@@ -418,7 +418,7 @@ func TestKojiCompose(t *testing.T) {
 			require.NoError(t, err)
 
 			// handle koji-init
-			_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiInit}, []string{""})
+			_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiInit}, []string{""}, uuid.Nil)
 			require.NoError(t, err)
 			require.Equal(t, worker.JobTypeKojiInit, jobType)
 
@@ -445,7 +445,7 @@ func TestKojiCompose(t *testing.T) {
 
 			// handle build jobs
 			for i := 0; i < len(buildJobIDs); i++ {
-				jobID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""})
+				jobID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 				require.NoError(t, err)
 				require.Equal(t, worker.JobTypeOSBuild, jobType)
 
@@ -485,7 +485,7 @@ func TestKojiCompose(t *testing.T) {
 			}
 
 			// handle koji-finalize
-			finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiFinalize}, []string{""})
+			finalizeID, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiFinalize}, []string{""}, uuid.Nil)
 			require.NoError(t, err)
 			require.Equal(t, worker.JobTypeKojiFinalize, jobType)
 

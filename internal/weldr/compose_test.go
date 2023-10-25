@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/images/pkg/distro"
@@ -44,7 +45,7 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
 
-	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
+	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 
@@ -97,7 +98,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 	jobId, err := api.workers.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
 
-	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""})
+	j, token, _, _, _, err := api.workers.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 

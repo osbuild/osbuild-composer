@@ -1,3 +1,4 @@
+
 openapi: 3.0.0
 info:
   title: OSBuild Composer - Worker
@@ -203,6 +204,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /workers:
+    post:
+      operationId: postWorkers
+      summary: Create a new worker
+      description: |
+        Creates a new worker and returns a uuid which should be used in all subsequent calls.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostWorkersRequest'
+      responses:
+        '201':
+          description: Created a new worker
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostWorkersResponse'
+  /workers/{worker_id}/status:
+    parameters:
+      - schema:
+          type: string
+          format: uuid
+        name: worker_id
+        in: path
+        required: true
+    post:
+      operationId: postWorkerStatus
+      summary: Refresh worker status
+      description: |
+        Refreshes the heartbeat of the worker, and posts stats that can be used to determine overall
+        worker health. Workers that do not respond will not be kept track of after a timeout. If
+        dropped workers were running a job, this job will be restarted.
+      responses:
+        '200':
+          description: succesfully updated worker's status
+
 components:
   schemas:
     ObjectReference:
@@ -261,6 +299,8 @@ components:
             type: string
         arch:
           type: string
+        worker_id:
+          type: string
     RequestJobResponse:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -301,3 +341,21 @@ components:
           x-go-type: json.RawMessage
     UpdateJobResponse:
       $ref: '#/components/schemas/ObjectReference'
+
+    PostWorkersRequest:
+      type: object
+      required:
+        - arch
+      properties:
+        arch:
+          type: string
+    PostWorkersResponse:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - worker_id
+        properties:
+          worker_id:
+            type: string
+            format: uuid

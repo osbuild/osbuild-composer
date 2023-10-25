@@ -23,7 +23,8 @@ const (
 	ErrorErrorNotFound        ServiceErrorCode = 14
 	ErrorInvalidJobType       ServiceErrorCode = 15
 	ErrorTenantNotFound       ServiceErrorCode = 16
-	// ErrorTokenNotFound ServiceErrorCode = 6
+	ErrorMalformedWorkerId    ServiceErrorCode = 17
+	ErrorWorkerIdNotFound     ServiceErrorCode = 18
 
 	// internal errors
 	ErrorDiscardingArtifact       ServiceErrorCode = 1000
@@ -34,6 +35,8 @@ const (
 	ErrorRetrievingJobStatus      ServiceErrorCode = 1005
 	ErrorRequestingJob            ServiceErrorCode = 1006
 	ErrorFailedLoadingOpenAPISpec ServiceErrorCode = 1007
+	ErrorInsertingWorker          ServiceErrorCode = 1008
+	ErrorUpdatingWorkerStatus     ServiceErrorCode = 1009
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -56,11 +59,20 @@ func getServiceErrors() serviceErrors {
 	return serviceErrors{
 		serviceError{ErrorUnsupportedMediaType, http.StatusUnsupportedMediaType, "Only 'application/json' content is supported"},
 		serviceError{ErrorBodyDecodingError, http.StatusBadRequest, "Malformed json, unable to decode body"},
-
 		serviceError{ErrorJobNotFound, http.StatusNotFound, "Token not found"},
 		serviceError{ErrorJobNotRunning, http.StatusBadRequest, "Job is not running"},
 		serviceError{ErrorMalformedJobId, http.StatusBadRequest, "Given job id is not a uuidv4"},
 		serviceError{ErrorMalformedJobToken, http.StatusBadRequest, "Given job id is not a uuidv4"},
+		serviceError{ErrorInvalidErrorId, http.StatusBadRequest, "Invalid format for error id, it should be an integer as a string"},
+		serviceError{ErrorResourceNotFound, http.StatusNotFound, "Requested resource doesn't exist"},
+		serviceError{ErrorMethodNotAllowed, http.StatusMethodNotAllowed, "Requested method isn't supported for resource"},
+		serviceError{ErrorNotAcceptable, http.StatusNotAcceptable, "Only 'application/json' content is supported"},
+		serviceError{ErrorErrorNotFound, http.StatusNotFound, "Error with given id not found"},
+		serviceError{ErrorInvalidJobType, http.StatusBadRequest, "Requested job type cannot be dequeued"},
+		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
+		serviceError{ErrorMalformedWorkerId, http.StatusBadRequest, "Given worker id is not a uuidv4"},
+		serviceError{ErrorWorkerIdNotFound, http.StatusBadRequest, "Given worker id doesn't exist"},
+
 		serviceError{ErrorDiscardingArtifact, http.StatusInternalServerError, "Error discarding artifact"},
 		serviceError{ErrorCreatingArtifact, http.StatusInternalServerError, "Error creating artifact"},
 		serviceError{ErrorWritingArtifact, http.StatusInternalServerError, "Error writing artifact"},
@@ -68,14 +80,9 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorFinishingJob, http.StatusInternalServerError, "Error finishing job"},
 		serviceError{ErrorRetrievingJobStatus, http.StatusInternalServerError, "Error requesting job"},
 		serviceError{ErrorRequestingJob, http.StatusInternalServerError, "Error requesting job"},
-		serviceError{ErrorInvalidErrorId, http.StatusBadRequest, "Invalid format for error id, it should be an integer as a string"},
 		serviceError{ErrorFailedLoadingOpenAPISpec, http.StatusInternalServerError, "Unable to load openapi spec"},
-		serviceError{ErrorResourceNotFound, http.StatusNotFound, "Requested resource doesn't exist"},
-		serviceError{ErrorMethodNotAllowed, http.StatusMethodNotAllowed, "Requested method isn't supported for resource"},
-		serviceError{ErrorNotAcceptable, http.StatusNotAcceptable, "Only 'application/json' content is supported"},
-		serviceError{ErrorErrorNotFound, http.StatusNotFound, "Error with given id not found"},
-		serviceError{ErrorInvalidJobType, http.StatusBadRequest, "Requested job type cannot be dequeued"},
-		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
+		serviceError{ErrorInsertingWorker, http.StatusInternalServerError, "Unable to register the worker"},
+		serviceError{ErrorUpdatingWorkerStatus, http.StatusInternalServerError, "Unable update worker status"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},
