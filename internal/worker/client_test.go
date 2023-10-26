@@ -128,11 +128,12 @@ func TestProxy(t *testing.T) {
 	require.False(t, c)
 	require.NoError(t, err)
 
-	// we expect 5 calls to go through the proxy:
+	// we expect 6 calls to go through the proxy:
+	// - register worker
 	// - request job (fails, no oauth token)
 	// - oauth call
 	// - request job (succeeds)
 	// - upload artifact
 	// - cancel
-	require.Equal(t, 5, proxy.calls)
+	require.Equal(t, 6, proxy.calls)
 }
