@@ -75,8 +75,20 @@ go mod edit -replace github.com/osbuild/images=github.com/<username>/images@<com
 ./tools/prepare-source.sh
 ```
 
-This will allow you to open a test PR and run the osbuild-composer integration
-tests against your updated code.
+Using the URL of the remote fork and branch will allow you to open a test PR
+and run the osbuild-composer integration tests against your updated code.
+
+Make sure you modify any code in osbuild-composer to adapt to the changes in
+the images repository. The images API is not considered stable and changes can
+occur frequently. A good quick check that everything compiles and _mostly_ runs
+correctly is by running the unit tests:
+```
+go test ./...
+```
+and some static checks:
+```
+go vet ./...
+```
 
 The changes to the `go.mod`, `go.sum`, and `vendor/` directory should be added
 in a separate commit from any other changes. The PR should not be merged with
