@@ -624,9 +624,9 @@ func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 
 	repo.Name = name
 	repo.IgnoreSSL = common.ToPtr(!s.CheckSSL)
-	repo.CheckGPG = &s.CheckGPG
+	repo.CheckGPG = common.ToPtr(s.CheckGPG)
 	repo.RHSM = s.RHSM
-	repo.CheckRepoGPG = &s.CheckRepoGPG
+	repo.CheckRepoGPG = common.ToPtr(s.CheckRepoGPG)
 	repo.GPGKeys = s.GPGKeys
 
 	var urls []string
