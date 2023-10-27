@@ -46,9 +46,14 @@ function createReqFileEdge() {
     "ostree": {
       "ref": "${OSTREE_REF}"
     },
-    "upload_options": {
-      "region": "${AWS_REGION}"${public_block}
-    }
+    "upload_targets": [
+      {
+        "type": "aws.s3",
+        "upload_options": {
+          "region": "${AWS_REGION}"${public_block}
+        }
+      }
+    ]
   }
 }
 EOF
