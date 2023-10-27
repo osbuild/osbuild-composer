@@ -237,7 +237,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 
 		var irTargets []*target.Target
-		if ir.UploadOptions == nil {
+		if ir.UploadOptions == nil && (ir.UploadTargets == nil || len(*ir.UploadTargets) == 0) {
 			// nowhere to put the image, this is a user error
 			if request.Koji == nil {
 				return HTTPError(ErrorJSONUnMarshallingError)
