@@ -131,6 +131,24 @@ jobs:
           version: v1.54.2
           args: --verbose --timeout 5m0s
 
+  packit-config-lint:
+    name: "📦 Packit config lint"
+    runs-on: ubuntu-latest
+    container:
+      image: registry.fedoraproject.org/fedora:latest
+    steps:
+      - name: Install Packit
+        run: dnf -y install packit
+
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Validate Packit config
+        run: |
+          packit validate-config .packit.yaml
+
   prepare:
     name: "🔍 Check source preparation"
     runs-on: ubuntu-20.04
