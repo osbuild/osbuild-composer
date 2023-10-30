@@ -489,6 +489,9 @@ function waitForState() {
         UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
         UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
 
+        # get the upload_statuses array to compare the first element with the top level upload_status
+        UPLOAD_STATUSES=$(echo "$OUTPUT" | jq -r '.image_status.upload_statuses')
+
         case "$COMPOSE_STATUS" in
             "$DESIRED_STATE")
                 break
@@ -622,6 +625,17 @@ if [ "${CLOUD_PROVIDER}" == "${CLOUD_PROVIDER_OCI}" ]; then
 fi
 test "$UPLOAD_TYPE" = "$EXPECTED_UPLOAD_TYPE"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
+
+# test that the first element in the upload_statuses matches the top
+# upload_status
+UPLOAD_STATUS_0=$(echo "$UPLOAD_STATUSES" | jq -r '.[0].status')
+test "$UPLOAD_STATUS_0" = "success"
+
+UPLOAD_TYPE_0=$(echo "$UPLOAD_STATUSES" | jq -r '.[0].type')
+test "$UPLOAD_TYPE" = "$UPLOAD_TYPE_0"
+
+UPLOAD_OPTIONS_0=$(echo "$UPLOAD_STATUSES" | jq -r '.[0].options')
+test "$UPLOAD_OPTIONS" = "$UPLOAD_OPTIONS_0"
 
 
 if [ -s "$IMG_COMPOSE_REQ_FILE" ]; then
