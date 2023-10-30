@@ -887,7 +887,15 @@ func TestComposeTargetErrors(t *testing.T) {
 				},
 				"status": "failure",
 				"type": "aws"
-			}
+			},
+			"upload_statuses": [{
+				"options": {
+					"ami": "",
+					"region": ""
+				},
+				"status": "failure",
+				"type": "aws"
+			}]
 		},
 		"status": "failure"
 	}`, jobId, jobId))
@@ -1291,7 +1299,15 @@ func TestImageFromCompose(t *testing.T) {
 					"ami": "ami-abc123",
 					"region": "eu-central-1"
 				}
-			}
+			},
+			"upload_statuses": [{
+				"type": "aws",
+				"status": "success",
+				"options": {
+					"ami": "ami-abc123",
+					"region": "eu-central-1"
+				}
+			}]
 		}
 	}`, jobId, jobId))
 
