@@ -2,7 +2,7 @@
 
 specfile_path: osbuild-composer.spec
 
-synced_files:
+files_to_sync:
     - osbuild-composer.spec
     - .packit.yaml
 
