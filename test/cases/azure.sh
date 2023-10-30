@@ -219,7 +219,8 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
     {
       "vhd_uri": "${BLOB_URL}",
       "location": "${AZURE_LOCATION}",
-      "name": "${IMAGE_KEY}"
+      "name": "${IMAGE_KEY}",
+      "hyper_v_generation": "${HYPER_V_GEN}"
     }
   ]
 }
