@@ -579,6 +579,10 @@ components:
           $ref: '#/components/schemas/ImageStatusValue'
         upload_status:
           $ref: '#/components/schemas/UploadStatus'
+        upload_statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/UploadStatus'
         error:
           $ref: '#/components/schemas/ComposeStatusError'
     ComposeStatusError:
