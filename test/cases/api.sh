@@ -187,6 +187,7 @@ case $CLOUD_PROVIDER in
 esac
 
 # Verify that this script is running in the right environment.
+greenprint "Verifying environment"
 checkEnv
 # Check that needed variables are set to register to RHSM (RHEL only)
 [[ "$ID" == "rhel" ]] && printenv API_TEST_SUBSCRIPTION_ORG_ID API_TEST_SUBSCRIPTION_ACTIVATION_KEY_V2 > /dev/null
@@ -200,6 +201,7 @@ function dump_db() {
 WORKDIR=$(mktemp -d)
 KILL_PIDS=()
 function cleanups() {
+  greenprint "Cleaning up"
   set +eu
 
   cleanup
@@ -220,6 +222,7 @@ function cleanups() {
 trap cleanups EXIT
 
 # make a dummy rpm and repo to test payload_repositories
+greenprint "Setting up dummy rpm and repo"
 sudo dnf install -y rpm-build createrepo
 DUMMYRPMDIR=$(mktemp -d)
 DUMMYSPECFILE="$DUMMYRPMDIR/dummy.spec"
@@ -259,6 +262,7 @@ popd
 #
 # Install the necessary cloud provider client tools
 #
+greenprint  "Installing cloud provider client tools"
 installClient
 
 #
@@ -437,6 +441,7 @@ export FIREWALL_CUSTOMIZATION_BLOCK
 # generate a temp key for user tests
 ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
 
+greenprint  "Creating request file"
 createReqFile
 
 #
@@ -581,10 +586,12 @@ function waitForImgState() {
 REQUEST_FILE2="${WORKDIR}/request2.json"
 jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE" > "$REQUEST_FILE2"
 
+greenprint  "Sending compose: Fail test"
 sendCompose "$REQUEST_FILE2"
 waitForState "failure"
 
 # crashed/stopped/killed worker should result in the job being retried
+greenprint  "Sending compose: Retry test"
 sendCompose "$REQUEST_FILE"
 waitForState "building"
 sudo systemctl stop "osbuild-remote-worker@*"
@@ -610,6 +617,7 @@ sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbu
 sudo systemctl start "osbuild-remote-worker@localhost:8700.service"
 
 # full integration case
+greenprint  "Sending compose: Full test"
 INIT_COMPOSES="$(collectMetrics)"
 sendCompose "$REQUEST_FILE"
 waitForState
@@ -646,11 +654,13 @@ fi
 #
 # Verify the Cloud-provider specific upload_status options
 #
+greenprint  "Checking upload status options"
 checkUploadStatusOptions
 
 #
 # Verify the image landed in the appropriate cloud provider, and delete it.
 #
+greenprint  "Verifying image upload"
 verify
 
 # Verify selected package (postgresql) is included in package list
@@ -671,11 +681,13 @@ function verifyPackageList() {
   fi
 }
 
+greenprint  "Verifying package list"
 verifyPackageList
 
 #
 # Verify oauth2
 #
+greenprint  "Verifying oauth2"
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
 [koji]
 enable_tls = false
@@ -763,4 +775,5 @@ TOKEN="$(curl --request POST \
 sudo systemctl restart osbuild-remote-worker@localhost:8700.service
 sudo systemctl is-active --quiet osbuild-remote-worker@localhost:8700.service
 
+greenprint  "DONE"
 exit 0
