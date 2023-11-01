@@ -116,7 +116,7 @@ IGNITION_USER_PASSWORD=foobar
 SYSROOT_RO="true"
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-9.3")
+    "rhel-9.4")
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         ;;

@@ -369,7 +369,7 @@ sudo chown qemu:qemu "$VIRT_LOG"
 greenprint "💿 Install image via installer(ISO) on VM"
 sudo virt-install  --name="${IMAGE_KEY}"\
                    --disk path="${LIBVIRT_IMAGE_PATH}",format=qcow2 \
-                   --ram 3072 \
+                   --ram 2048 \
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-variant ${OS_VARIANT} \
