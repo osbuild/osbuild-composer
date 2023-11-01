@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -11,7 +12,7 @@ type SplunkHook struct {
 	sl *SplunkLogger
 }
 
-func NewSplunkHook(host, port, token, source string) (*SplunkHook, error) {
+func NewSplunkHook(context context.Context, host, port, token, source string) (*SplunkHook, error) {
 	url := fmt.Sprintf("https://%s:%s/services/collector/event", host, port)
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -19,7 +20,7 @@ func NewSplunkHook(host, port, token, source string) (*SplunkHook, error) {
 	}
 
 	return &SplunkHook{
-		sl: NewSplunkLogger(url, token, source, hostname),
+		sl: NewSplunkLogger(context, url, token, source, hostname),
 	}, nil
 }
 
