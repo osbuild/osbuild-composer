@@ -492,16 +492,16 @@ func (suite *storeTest) TestRepoConfigMirrorlist() {
 // Test multiple SourceConfigs with different CheckGPG and CheckRepoGPG settings
 func (suite *storeTest) TestSourceConfigGPGKeysTrueFalse() {
 	// We only care about the GPG bools
-	sources := map[string]SourceConfig{
-		"source-with-true":  {Name: "source-with-true", CheckGPG: true, CheckRepoGPG: true},
-		"source-with-false": {Name: "source-with-false", CheckGPG: false, CheckRepoGPG: false},
+	sources := []SourceConfig{
+		{Name: "source-with-true", CheckGPG: true, CheckRepoGPG: true},
+		{Name: "source-with-false", CheckGPG: false, CheckRepoGPG: false},
 	}
 
 	// source is reused inside the loop, which can result in unexpected changes in go < 1.22
 	// https://go.dev/blog/loopvar-preview
 	var repos []rpmmd.RepoConfig
-	for id, source := range sources {
-		repos = append(repos, source.RepoConfig(id))
+	for _, source := range sources {
+		repos = append(repos, source.RepoConfig(source.Name))
 	}
 
 	// First repo should be true, second should be false
@@ -512,14 +512,14 @@ func (suite *storeTest) TestSourceConfigGPGKeysTrueFalse() {
 
 	// We only care about the GPG bools
 	// Test with false then true
-	sources = map[string]SourceConfig{
-		"source-with-false": {Name: "source-with-false", CheckGPG: false, CheckRepoGPG: false},
-		"source-with-true":  {Name: "source-with-true", CheckGPG: true, CheckRepoGPG: true},
+	sources = []SourceConfig{
+		{Name: "source-with-false", CheckGPG: false, CheckRepoGPG: false},
+		{Name: "source-with-true", CheckGPG: true, CheckRepoGPG: true},
 	}
 
 	repos = []rpmmd.RepoConfig{}
-	for id, source := range sources {
-		repos = append(repos, source.RepoConfig(id))
+	for _, source := range sources {
+		repos = append(repos, source.RepoConfig(source.Name))
 	}
 
 	// First repo should be false, second should be true
