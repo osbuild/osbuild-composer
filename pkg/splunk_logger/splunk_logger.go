@@ -2,6 +2,7 @@ package logger
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -40,7 +41,7 @@ type SplunkEvent struct {
 	Host    string `json:"host"`
 }
 
-func NewSplunkLogger(url, token, source, hostname string) *SplunkLogger {
+func NewSplunkLogger(context context.Context, url, token, source, hostname string) *SplunkLogger {
 	sl := &SplunkLogger{
 		client:   retryablehttp.NewClient().StandardClient(),
 		url:      url,
@@ -52,15 +53,21 @@ func NewSplunkLogger(url, token, source, hostname string) *SplunkLogger {
 	ticker := time.NewTicker(time.Second * SendFrequency)
 	sl.payloads = make(chan *SplunkPayload, PayloadsChannelSize)
 
-	go sl.flushPayloads(ticker.C)
+	go sl.flushPayloads(context, ticker.C)
 
 	return sl
 }
 
-func (sl *SplunkLogger) flushPayloads(ticker <-chan time.Time) {
+func (sl *SplunkLogger) flushPayloads(context context.Context, ticker <-chan time.Time) {
 	var payloads []*SplunkPayload
 	for {
 		select {
+		case <-context.Done():
+			err := sl.SendPayloads(payloads)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Splunk logger unable to send payloads: %v", err)
+			}
+			return
 		case p := <-sl.payloads:
 			if p != nil {
 				payloads = append(payloads, p)
