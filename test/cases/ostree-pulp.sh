@@ -15,7 +15,7 @@ fi
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    "rhel-9.3")
+    "rhel-9.4")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"

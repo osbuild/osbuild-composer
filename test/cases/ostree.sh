@@ -66,7 +66,7 @@ case "${ID}-${VERSION_ID}" in
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
         ;;
-    "rhel-8.9")
+    "rhel-8.10")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
@@ -108,7 +108,7 @@ case "${ID}-${VERSION_ID}" in
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
         ;;
-    "rhel-9.3")
+    "rhel-9.4")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
