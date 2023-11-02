@@ -37,7 +37,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel88",
+        "runner": "org.osbuild.rhel810",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -2536,7 +2536,7 @@
             "options": {
               "arch": "aarch64",
               "product": "Red Hat Enterprise Linux",
-              "version": "8.8",
+              "version": "8.10",
               "final": true,
               "variant": "edge",
               "bugurl": ""
@@ -2613,14 +2613,14 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "8.8"
+                "version": "8.10"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
                   "rd.neednet=1",
                   "coreos.inst.crypt_root=1",
-                  "coreos.inst.isoroot=RHEL-8-8-0-BaseOS-aarch64",
+                  "coreos.inst.isoroot=RHEL-8-10-0-BaseOS-aarch64",
                   "coreos.inst.install_dev=/dev/vda",
                   "coreos.inst.image_file=/run/media/iso/image.raw.xz",
                   "coreos.inst.insecure",
@@ -2628,7 +2628,7 @@
                   "fdo.diun_pub_key_insecure=true"
                 ]
               },
-              "isolabel": "RHEL-8-8-0-BaseOS-aarch64",
+              "isolabel": "RHEL-8-10-0-BaseOS-aarch64",
               "architectures": [
                 "AA64"
               ],
@@ -2799,7 +2799,7 @@
             },
             "options": {
               "filename": "simplified-installer.iso",
-              "volid": "RHEL-8-8-0-BaseOS-aarch64",
+              "volid": "RHEL-8-10-0-BaseOS-aarch64",
               "sysid": "LINUX",
               "efi": "images/efiboot.img",
               "isolevel": 3

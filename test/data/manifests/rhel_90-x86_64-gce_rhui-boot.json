@@ -749,9 +749,6 @@
                     "id": "sha256:9efa174df0689cc9f6571a29d7a44aee22a807e673fe99cd671d0dd02ed19f7d"
                   },
                   {
-                    "id": "sha256:173e213bd2910a77161777af5b0e8f8284cfcd6f6620bc18d3ffd33a8b115f53"
-                  },
-                  {
                     "id": "sha256:6f4472eec50020806225ed621e23e72418708ccfa945538a2ef7f8caa9497ce2"
                   },
                   {
@@ -2239,9 +2236,6 @@
           },
           "sha256:17127ca6f27ec841e7b0cd6520bb0ae3d0e523b03ca8709d808b045b44992c34": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/python3-six-1.15.0-7.el9.noarch.rpm"
-          },
-          "sha256:173e213bd2910a77161777af5b0e8f8284cfcd6f6620bc18d3ffd33a8b115f53": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/grub2-tools-efi-2.06-16.el9.x86_64.rpm"
           },
           "sha256:1749334511ad1fdf2699bb0b231eebc9af72722d90786463d0eedff460a8a660": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/file-libs-5.39-8.el9.x86_64.rpm"
@@ -5367,15 +5361,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/grub2-tools-2.06-16.el9.x86_64.rpm",
         "checksum": "sha256:9efa174df0689cc9f6571a29d7a44aee22a807e673fe99cd671d0dd02ed19f7d"
-      },
-      {
-        "name": "grub2-tools-efi",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "16.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/grub2-tools-efi-2.06-16.el9.x86_64.rpm",
-        "checksum": "sha256:173e213bd2910a77161777af5b0e8f8284cfcd6f6620bc18d3ffd33a8b115f53"
       },
       {
         "name": "grub2-tools-minimal",

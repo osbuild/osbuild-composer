@@ -59,6 +59,9 @@
                     "id": "sha256:b1968e57a935aeb00ff790bb6ad40114e386cc678d43f4a56eaf7af63ad05246"
                   },
                   {
+                    "id": "sha256:78926ec2c75db8bcbdd4f4fbd8c06b373f85bd7ecce0e6aac8c75dda95fcae2c"
+                  },
+                  {
                     "id": "sha256:267858a95e543459a0cd683e641955d7c04c13bcda830c5f7db5a0529077428a"
                   },
                   {
@@ -582,6 +585,9 @@
                   },
                   {
                     "id": "sha256:fec32d37b2f34c891a64a8c5e2faf3d08de25d144289b6f2b7f5fafdd5eec4d2"
+                  },
+                  {
+                    "id": "sha256:6513599bc006a88ce088daf6cba9d8c26f709370b51c25a8e50f45da6490c8aa"
                   },
                   {
                     "id": "sha256:d1dbdff1f5e543bc5dcd8c957b07947cebd9ae4c3ba6d0cdf52a2a8c014c2fd5"
@@ -4158,6 +4164,15 @@
         "checksum": "sha256:b1968e57a935aeb00ff790bb6ad40114e386cc678d43f4a56eaf7af63ad05246"
       },
       {
+        "name": "biosdevname",
+        "epoch": 0,
+        "version": "0.7.3",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.9-20230615/Packages/biosdevname-0.7.3-2.el8.x86_64.rpm",
+        "checksum": "sha256:78926ec2c75db8bcbdd4f4fbd8c06b373f85bd7ecce0e6aac8c75dda95fcae2c"
+      },
+      {
         "name": "brotli",
         "epoch": 0,
         "version": "1.0.6",
@@ -5731,6 +5746,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.9-20230615/Packages/parted-3.2-39.el8.x86_64.rpm",
         "checksum": "sha256:fec32d37b2f34c891a64a8c5e2faf3d08de25d144289b6f2b7f5fafdd5eec4d2"
+      },
+      {
+        "name": "pciutils-libs",
+        "epoch": 0,
+        "version": "3.7.0",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.9-20230615/Packages/pciutils-libs-3.7.0-3.el8.x86_64.rpm",
+        "checksum": "sha256:6513599bc006a88ce088daf6cba9d8c26f709370b51c25a8e50f45da6490c8aa"
       },
       {
         "name": "pcre",

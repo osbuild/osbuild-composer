@@ -1932,6 +1932,14 @@
                     }
                   },
                   {
+                    "id": "sha256:42baeb450de329304f2299e7fe6902fe2e7cfae5bf0eac2ab80c5cab3f89cff7",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:20d741aba6fec483e594bde8505c30163104311d1c18a1610be135a959561ce1",
                     "options": {
                       "metadata": {
@@ -2444,6 +2452,14 @@
                     }
                   },
                   {
+                    "id": "sha256:3d72da02b103663f3f5ff0b10d668176a71316c669a763acec5c441a80898f4d",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:85de7860ada10ccd38fcdc143fa93424997db7f6e7db0b7e150344a8f86096c9",
                     "options": {
                       "metadata": {
@@ -2877,6 +2893,14 @@
                   },
                   {
                     "id": "sha256:34c6ee772b35feeda2cc89ff9c919c196b56d33c270a092da7f4b9b577676d58",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:cf0be45bf0f77c5915187ec5975f1a325376a7b3114ff28a53db44a299cb278a",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5172,6 +5196,14 @@
                     }
                   },
                   {
+                    "id": "sha256:20169e97e4744d65c8516b8eb28cba420a4ada5fa0b8f5d49cdac8868edc9114",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:6d9633b51a567aef0c1c5b0f413212680a8b6102ea912285853a0d27f6130098",
                     "options": {
                       "metadata": {
@@ -5551,6 +5583,25 @@
             }
           },
           {
+            "type": "org.osbuild.systemd.preset",
+            "options": {
+              "presets": [
+                {
+                  "name": "ignition-firstboot-complete.service",
+                  "state": "enable"
+                },
+                {
+                  "name": "coreos-ignition-write-issues.service",
+                  "state": "enable"
+                },
+                {
+                  "name": "fdo-client-linuxapp.service",
+                  "state": "enable"
+                }
+              ]
+            }
+          },
+          {
             "type": "org.osbuild.selinux",
             "options": {
               "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
@@ -5785,6 +5836,9 @@
           "sha256:1edb02bd04fae1a5e463f2b07ab57ccc5231f8ad6f0719e7f01df1e54c14585c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/l/libqmi-utils-1.32.4-1.fc39.x86_64.rpm"
           },
+          "sha256:20169e97e4744d65c8516b8eb28cba420a4ada5fa0b8f5d49cdac8868edc9114": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/s/ssh-key-dir-0.1.4-3.fc38.x86_64.rpm"
+          },
           "sha256:2079033811bec4ccf4ba45eb6c28442bf2ddcb89ee8c50e6969b3ed95950a19d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/t/traceroute-2.1.2-1.fc39.x86_64.rpm"
           },
@@ -5938,6 +5992,9 @@
           "sha256:3d57c8a275a9db4aaa234a73685d075b74b00930d7881ed7892748b790773764": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/e/efibootmgr-18-3.fc38.x86_64.rpm"
           },
+          "sha256:3d72da02b103663f3f5ff0b10d668176a71316c669a763acec5c441a80898f4d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/f/fdo-owner-cli-0.4.10-2.fc39.x86_64.rpm"
+          },
           "sha256:3da85e3b46611771b7c75cb29c79a343ceae598112fa04253c9eed5c3bcdbae8": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/i/ipset-7.17-2.fc38.x86_64.rpm"
           },
@@ -5976,6 +6033,9 @@
           },
           "sha256:4231b528994f7ced0339372ba48349829e6406a3c2681ba95003fa6ba5fe52fe": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/l/libmodulemd-2.15.0-4.fc39.x86_64.rpm"
+          },
+          "sha256:42baeb450de329304f2299e7fe6902fe2e7cfae5bf0eac2ab80c5cab3f89cff7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/b/biosdevname-0.7.3-11.fc38.x86_64.rpm"
           },
           "sha256:43b3df14ab50d29fbdc585ba8c8b70a547c15a93fd8538be5b928d64fee25a9b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/l/libgcc-13.1.1-4.fc39.x86_64.rpm"
@@ -6750,6 +6810,9 @@
           },
           "sha256:cdaa98ee701daa61ea7da0f6419fa11e6e6d6d9e696e125b18701ac2e71fd7d4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/s/selinux-policy-targeted-38.20-1.fc39.noarch.rpm"
+          },
+          "sha256:cf0be45bf0f77c5915187ec5975f1a325376a7b3114ff28a53db44a299cb278a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/i/ignition-edge-2.16.2-1.fc39.x86_64.rpm"
           },
           "sha256:cf0c74b94f342b3dabe16295d3dc345c45d38a961112f0030e6481ec0a5d63cf": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/l/libxkbcommon-1.5.0-2.fc39.x86_64.rpm"
@@ -9348,6 +9411,16 @@
         "check_gpg": true
       },
       {
+        "name": "biosdevname",
+        "epoch": 0,
+        "version": "0.7.3",
+        "release": "11.fc38",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/b/biosdevname-0.7.3-11.fc38.x86_64.rpm",
+        "checksum": "sha256:42baeb450de329304f2299e7fe6902fe2e7cfae5bf0eac2ab80c5cab3f89cff7",
+        "check_gpg": true
+      },
+      {
         "name": "bluez",
         "epoch": 0,
         "version": "5.68",
@@ -9988,6 +10061,16 @@
         "check_gpg": true
       },
       {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.4.10",
+        "release": "2.fc39",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/f/fdo-owner-cli-0.4.10-2.fc39.x86_64.rpm",
+        "checksum": "sha256:3d72da02b103663f3f5ff0b10d668176a71316c669a763acec5c441a80898f4d",
+        "check_gpg": true
+      },
+      {
         "name": "fedora-gpg-keys",
         "epoch": 0,
         "version": "39",
@@ -10535,6 +10618,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/i/ignition-2.16.2-1.fc39.x86_64.rpm",
         "checksum": "sha256:34c6ee772b35feeda2cc89ff9c919c196b56d33c270a092da7f4b9b577676d58",
+        "check_gpg": true
+      },
+      {
+        "name": "ignition-edge",
+        "epoch": 0,
+        "version": "2.16.2",
+        "release": "1.fc39",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/i/ignition-edge-2.16.2-1.fc39.x86_64.rpm",
+        "checksum": "sha256:cf0be45bf0f77c5915187ec5975f1a325376a7b3114ff28a53db44a299cb278a",
         "check_gpg": true
       },
       {
@@ -13395,6 +13488,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/s/sqlite-libs-3.42.0-6.fc39.x86_64.rpm",
         "checksum": "sha256:b0d3b97427c40e80881fc872119541b5c000367542b998d49f291f2c67349d07",
+        "check_gpg": true
+      },
+      {
+        "name": "ssh-key-dir",
+        "epoch": 0,
+        "version": "0.1.4",
+        "release": "3.fc38",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/s/ssh-key-dir-0.1.4-3.fc38.x86_64.rpm",
+        "checksum": "sha256:20169e97e4744d65c8516b8eb28cba420a4ada5fa0b8f5d49cdac8868edc9114",
         "check_gpg": true
       },
       {

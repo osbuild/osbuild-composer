@@ -58,7 +58,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel88",
+        "runner": "org.osbuild.rhel810",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -3493,7 +3493,7 @@
             "options": {
               "arch": "x86_64",
               "product": "Red Hat Enterprise Linux",
-              "version": "8.8",
+              "version": "8.10",
               "final": true,
               "variant": "",
               "bugurl": ""
@@ -3697,16 +3697,16 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "8.8"
+                "version": "8.10"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.stage2=hd:LABEL=RHEL-8-8-0-BaseOS-x86_64",
-                  "inst.ks=hd:LABEL=RHEL-8-8-0-BaseOS-x86_64:/osbuild.ks"
+                  "inst.stage2=hd:LABEL=RHEL-8-10-0-BaseOS-x86_64",
+                  "inst.ks=hd:LABEL=RHEL-8-10-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               },
-              "isolabel": "RHEL-8-8-0-BaseOS-x86_64",
+              "isolabel": "RHEL-8-10-0-BaseOS-x86_64",
               "architectures": [
                 "X64"
               ],
@@ -5417,13 +5417,13 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "8.8"
+                "version": "8.10"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.stage2=hd:LABEL=RHEL-8-8-0-BaseOS-x86_64",
-                  "inst.ks=hd:LABEL=RHEL-8-8-0-BaseOS-x86_64:/osbuild.ks"
+                  "inst.stage2=hd:LABEL=RHEL-8-10-0-BaseOS-x86_64",
+                  "inst.ks=hd:LABEL=RHEL-8-10-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               }
             }
@@ -5558,7 +5558,7 @@
             "type": "org.osbuild.discinfo",
             "options": {
               "basearch": "x86_64",
-              "release": "Red Hat Enterprise Linux 8.8"
+              "release": "Red Hat Enterprise Linux 8.10"
             }
           }
         ]
@@ -5580,7 +5580,7 @@
             },
             "options": {
               "filename": "installer.iso",
-              "volid": "RHEL-8-8-0-BaseOS-x86_64",
+              "volid": "RHEL-8-10-0-BaseOS-x86_64",
               "sysid": "LINUX",
               "boot": {
                 "image": "isolinux/isolinux.bin",

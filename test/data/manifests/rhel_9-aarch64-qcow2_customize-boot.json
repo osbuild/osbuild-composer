@@ -164,7 +164,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel92",
+        "runner": "org.osbuild.rhel94",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -5288,14 +5288,14 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 1024000,
+                  "size": 1228800,
                   "start": 411648,
                   "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 19535839,
-                  "start": 1435648,
+                  "size": 19331039,
+                  "start": 1640448,
                   "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -5330,8 +5330,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1435648,
-                  "size": 19535839,
+                  "start": 1640448,
+                  "size": 19331039,
                   "lock": true
                 }
               }
@@ -5366,7 +5366,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 411648,
-                  "size": 1024000,
+                  "size": 1228800,
                   "lock": true
                 }
               }
@@ -5390,8 +5390,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1435648,
-                  "size": 19535839,
+                  "start": 1640448,
+                  "size": 19331039,
                   "lock": true
                 }
               }
@@ -5414,8 +5414,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1435648,
-                  "size": 19535839,
+                  "start": 1640448,
+                  "size": 19331039,
                   "lock": true
                 }
               }
@@ -5446,7 +5446,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 411648,
-                  "size": 1024000
+                  "size": 1228800
                 }
               },
               "boot.efi": {
@@ -5475,8 +5475,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1435648,
-                  "size": 19535839
+                  "start": 1640448,
+                  "size": 19331039
                 }
               }
             },
@@ -5517,8 +5517,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1435648,
-                  "size": 19535839,
+                  "start": 1640448,
+                  "size": 19331039,
                   "lock": true
                 }
               }

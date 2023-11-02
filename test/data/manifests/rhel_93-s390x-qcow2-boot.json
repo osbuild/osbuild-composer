@@ -5580,13 +5580,13 @@
               "uuid": "0x14fc63d2",
               "partitions": [
                 {
-                  "size": 1024000,
+                  "size": 1228800,
                   "start": 2048
                 },
                 {
                   "bootable": true,
-                  "size": 19945472,
-                  "start": 1026048
+                  "size": 19740672,
+                  "start": 1230848
                 }
               ]
             },
@@ -5612,7 +5612,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 1024000,
+                  "size": 1228800,
                   "lock": true
                 }
               }
@@ -5628,8 +5628,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1026048,
-                  "size": 19945472,
+                  "start": 1230848,
+                  "size": 19740672,
                   "lock": true
                 }
               }
@@ -5660,7 +5660,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 1024000
+                  "size": 1228800
                 }
               },
               "disk": {
@@ -5673,8 +5673,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1026048,
-                  "size": 19945472
+                  "start": 1230848,
+                  "size": 19740672
                 }
               }
             },
@@ -5705,7 +5705,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 2048,
-                  "size": 1024000
+                  "size": 1228800
                 }
               },
               "disk": {
@@ -5718,8 +5718,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1026048,
-                  "size": 19945472
+                  "start": 1230848,
+                  "size": 19740672
                 }
               }
             },

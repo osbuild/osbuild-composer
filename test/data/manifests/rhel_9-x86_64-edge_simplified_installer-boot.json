@@ -39,7 +39,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel92",
+        "runner": "org.osbuild.rhel94",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -82,6 +82,14 @@
                   },
                   {
                     "id": "sha256:90603777c369e7e4266971d06a7c0bc33f3493b7ddf6904a7d141abe2e7b287f",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:de6dc920c963b0a6cecb61b653836883986a5a46bb682d0ab6e2c7b20a393f2b",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -6058,7 +6066,7 @@
             "options": {
               "arch": "x86_64",
               "product": "Red Hat Enterprise Linux",
-              "version": "9.2",
+              "version": "9.4",
               "final": true,
               "variant": "edge",
               "bugurl": ""
@@ -6136,14 +6144,14 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "9.2"
+                "version": "9.4"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
                   "rd.neednet=1",
                   "coreos.inst.crypt_root=1",
-                  "coreos.inst.isoroot=RHEL-9-2-0-BaseOS-x86_64",
+                  "coreos.inst.isoroot=RHEL-9-4-0-BaseOS-x86_64",
                   "coreos.inst.install_dev=/dev/vda",
                   "coreos.inst.image_file=/run/media/iso/image.raw.xz",
                   "coreos.inst.insecure",
@@ -6151,7 +6159,7 @@
                   "fdo.diun_pub_key_insecure=true"
                 ]
               },
-              "isolabel": "RHEL-9-2-0-BaseOS-x86_64",
+              "isolabel": "RHEL-9-4-0-BaseOS-x86_64",
               "architectures": [
                 "X64"
               ],
@@ -6297,14 +6305,14 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "9.2"
+                "version": "9.4"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
                   "rd.neednet=1",
                   "coreos.inst.crypt_root=1",
-                  "coreos.inst.isoroot=RHEL-9-2-0-BaseOS-x86_64",
+                  "coreos.inst.isoroot=RHEL-9-4-0-BaseOS-x86_64",
                   "coreos.inst.install_dev=/dev/vda",
                   "coreos.inst.image_file=/run/media/iso/image.raw.xz",
                   "coreos.inst.insecure",
@@ -6353,7 +6361,7 @@
             },
             "options": {
               "filename": "simplified-installer.iso",
-              "volid": "RHEL-9-2-0-BaseOS-x86_64",
+              "volid": "RHEL-9-4-0-BaseOS-x86_64",
               "sysid": "LINUX",
               "boot": {
                 "image": "isolinux/isolinux.bin",
@@ -7654,6 +7662,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/bash-5.1.8-6.el9_1.x86_64.rpm",
         "checksum": "sha256:90603777c369e7e4266971d06a7c0bc33f3493b7ddf6904a7d141abe2e7b287f",
+        "check_gpg": true
+      },
+      {
+        "name": "biosdevname",
+        "epoch": 0,
+        "version": "0.7.3",
+        "release": "9.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/biosdevname-0.7.3-9.el9.x86_64.rpm",
+        "checksum": "sha256:de6dc920c963b0a6cecb61b653836883986a5a46bb682d0ab6e2c7b20a393f2b",
         "check_gpg": true
       },
       {

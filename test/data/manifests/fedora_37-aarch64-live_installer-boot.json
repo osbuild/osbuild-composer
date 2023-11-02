@@ -3353,14 +3353,6 @@
                     }
                   },
                   {
-                    "id": "sha256:53f7349c1e2fd998dead104883f925256a09804b6b53149dc53576181a118b78",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:1cbd33c77b035562d387d941eb0f08c46c8df25f496d66c229fa5f11ea21a072",
                     "options": {
                       "metadata": {
@@ -3738,14 +3730,6 @@
                   },
                   {
                     "id": "sha256:aef4052ca482ce6d1e8400191a2791a635415868e7aa36d3efbea546f710df11",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:901464eed63918ae54da35c4ee8a694b5b06a63ee1e0fb0e8042e0bbf00d7a55",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5337,14 +5321,6 @@
                     }
                   },
                   {
-                    "id": "sha256:2fbf468cd02793593e5ebf0c1f96c451cf0dbe1d70b8c40912cfcb1b29870232",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:7fba6d46f9a692075ed666b28ce744ca96785d1810793d37536d0d344fecb41c",
                     "options": {
                       "metadata": {
@@ -6906,14 +6882,6 @@
                   },
                   {
                     "id": "sha256:4680edd936fa1e0ae7966389eb06172cce44cd63a121c72521fdc676ebb13ca5",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:d6add16bb299d5405430cae2f7626564f2dd0f4d22b4cf48ad043de4368051d6",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -10594,14 +10562,6 @@
                   },
                   {
                     "id": "sha256:3770a9fc2744f77fd123b6619361cb955bb4e98b5e4493e5253b97282233586b",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:daae8aa6b3e96165960c1dfc74ccc12f896bb7eb50c8899858412be119e6b1be",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -16642,13 +16602,7 @@
                 "uefi-lib",
                 "anaconda",
                 "rdma",
-                "rngd",
-                "multipath",
-                "fcoe",
-                "fcoe-uefi",
-                "iscsi",
-                "lunmask",
-                "nfs"
+                "rngd"
               ],
               "install": [
                 "/.buildstamp"
@@ -17952,9 +17906,6 @@
           "sha256:2f908404f2e07d57f4be40b598e2f46932f1891d013e2664a01c5f224d66ac5d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/c/curl-7.85.0-9.fc37.aarch64.rpm"
           },
-          "sha256:2fbf468cd02793593e5ebf0c1f96c451cf0dbe1d70b8c40912cfcb1b29870232": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/l/libconfig-1.7.3-4.fc37.aarch64.rpm"
-          },
           "sha256:2ff407cfb7a3a45ac4dffddc1a6d0be05f89581c1d2f306f340937610aabab67": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/p/poppler-glib-22.08.0-3.fc37.aarch64.rpm"
           },
@@ -18707,9 +18658,6 @@
           },
           "sha256:53bc31e5da5b91bd022e3367e3a815217079d323fff683fb5feea56c02b9c082": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/x/xdg-desktop-portal-gtk-1.14.1-1.fc37.aarch64.rpm"
-          },
-          "sha256:53f7349c1e2fd998dead104883f925256a09804b6b53149dc53576181a118b78": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/f/fcoe-utils-1.0.34-3.gitb233050.fc37.aarch64.rpm"
           },
           "sha256:54176057df54c87628f34f8a1bfbf80c377aabe1df2ca22b08044a7a96c2c3cd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/c/colord-1.4.6-2.fc37.aarch64.rpm"
@@ -19916,9 +19864,6 @@
           },
           "sha256:90119c81066cbc8a395ddc281a4404613202b152ddf84307cb7a2a9137bab2b4": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/t/tigervnc-license-1.13.1-3.fc37.noarch.rpm"
-          },
-          "sha256:901464eed63918ae54da35c4ee8a694b5b06a63ee1e0fb0e8042e0bbf00d7a55": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/g/gfs2-utils-3.4.1-5.fc37.aarch64.rpm"
           },
           "sha256:90255d3480ae3f778a8ba7dc919448f7415d5c6d1977c4070b119ab4f029454a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/q/qemu-char-spice-7.0.0-15.fc37.aarch64.rpm"
@@ -21435,9 +21380,6 @@
           "sha256:d67b67ae0f76163c99dc1c72da04bfb7c6a3fdd3d113c965ecd430ec5d598cc2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/g/gvfs-goa-1.50.4-1.fc37.aarch64.rpm"
           },
-          "sha256:d6add16bb299d5405430cae2f7626564f2dd0f4d22b4cf48ad043de4368051d6": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/l/lldpad-1.1.0-6.git85e5583.fc37.aarch64.rpm"
-          },
           "sha256:d6b2c1f1a135ddec7f11ee76306ebf20170422b49aec0d34464250b70a7a0223": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/g/google-noto-sans-armenian-vf-fonts-20201206^1.git0c78c8329-7.fc37.noarch.rpm"
           },
@@ -21524,9 +21466,6 @@
           },
           "sha256:daa2903bbb115115bf236a28f3ef45f1b53d99d8d2ee4466b5565b9723d72f54": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/l/libtirpc-1.3.3-1.rc1.fc37.aarch64.rpm"
-          },
-          "sha256:daae8aa6b3e96165960c1dfc74ccc12f896bb7eb50c8899858412be119e6b1be": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/d/device-mapper-multipath-0.9.0-4.fc37.aarch64.rpm"
           },
           "sha256:db087f574a6fd314f45daca13a1f4404c76144773fcd6c41df39da7fda862d8d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/p/perl-Time-Local-1.300-489.fc37.noarch.rpm"
@@ -23660,16 +23599,6 @@
         "check_gpg": true
       },
       {
-        "name": "fcoe-utils",
-        "epoch": 0,
-        "version": "1.0.34",
-        "release": "3.gitb233050.fc37",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/f/fcoe-utils-1.0.34-3.gitb233050.fc37.aarch64.rpm",
-        "checksum": "sha256:53f7349c1e2fd998dead104883f925256a09804b6b53149dc53576181a118b78",
-        "check_gpg": true
-      },
-      {
         "name": "fdk-aac-free",
         "epoch": 0,
         "version": "2.0.0",
@@ -24147,16 +24076,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/g/geolite2-country-20191217-7.fc37.noarch.rpm",
         "checksum": "sha256:aef4052ca482ce6d1e8400191a2791a635415868e7aa36d3efbea546f710df11",
-        "check_gpg": true
-      },
-      {
-        "name": "gfs2-utils",
-        "epoch": 0,
-        "version": "3.4.1",
-        "release": "5.fc37",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/g/gfs2-utils-3.4.1-5.fc37.aarch64.rpm",
-        "checksum": "sha256:901464eed63918ae54da35c4ee8a694b5b06a63ee1e0fb0e8042e0bbf00d7a55",
         "check_gpg": true
       },
       {
@@ -26140,16 +26059,6 @@
         "check_gpg": true
       },
       {
-        "name": "libconfig",
-        "epoch": 0,
-        "version": "1.7.3",
-        "release": "4.fc37",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/l/libconfig-1.7.3-4.fc37.aarch64.rpm",
-        "checksum": "sha256:2fbf468cd02793593e5ebf0c1f96c451cf0dbe1d70b8c40912cfcb1b29870232",
-        "check_gpg": true
-      },
-      {
         "name": "libcue",
         "epoch": 0,
         "version": "2.2.1",
@@ -28107,16 +28016,6 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/l/lksctp-tools-1.0.19-2.fc37.aarch64.rpm",
         "checksum": "sha256:4680edd936fa1e0ae7966389eb06172cce44cd63a121c72521fdc676ebb13ca5",
-        "check_gpg": true
-      },
-      {
-        "name": "lldpad",
-        "epoch": 0,
-        "version": "1.1.0",
-        "release": "6.git85e5583.fc37",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-fedora-20221124/Packages/l/lldpad-1.1.0-6.git85e5583.fc37.aarch64.rpm",
-        "checksum": "sha256:d6add16bb299d5405430cae2f7626564f2dd0f4d22b4cf48ad043de4368051d6",
         "check_gpg": true
       },
       {
@@ -32717,16 +32616,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/d/desktop-backgrounds-gnome-37.0.0-4.fc37.noarch.rpm",
         "checksum": "sha256:3770a9fc2744f77fd123b6619361cb955bb4e98b5e4493e5253b97282233586b",
-        "check_gpg": true
-      },
-      {
-        "name": "device-mapper-multipath",
-        "epoch": 0,
-        "version": "0.9.0",
-        "release": "4.fc37",
-        "arch": "aarch64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-aarch64-updates-released-20230724/Packages/d/device-mapper-multipath-0.9.0-4.fc37.aarch64.rpm",
-        "checksum": "sha256:daae8aa6b3e96165960c1dfc74ccc12f896bb7eb50c8899858412be119e6b1be",
         "check_gpg": true
       },
       {

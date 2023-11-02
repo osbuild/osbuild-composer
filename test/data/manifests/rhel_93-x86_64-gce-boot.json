@@ -1827,14 +1827,6 @@
                     }
                   },
                   {
-                    "id": "sha256:42a291d243e184e9f5c6d16a3854d1fc82d394fef5884f2559431908a2531a0e",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:0c0e16902a8863e9d43af8c817ceb53db60e98500d360185ea0ae9542fe37f24",
                     "options": {
                       "metadata": {
@@ -4683,14 +4675,14 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 1024000,
+                  "size": 1228800,
                   "start": 413696,
                   "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 40505311,
-                  "start": 1437696,
+                  "size": 40300511,
+                  "start": 1642496,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -4735,7 +4727,7 @@
                 "options": {
                   "filename": "disk.raw",
                   "start": 413696,
-                  "size": 1024000,
+                  "size": 1228800,
                   "lock": true
                 }
               }
@@ -4752,8 +4744,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.raw",
-                  "start": 1437696,
-                  "size": 40505311,
+                  "start": 1642496,
+                  "size": 40300511,
                   "lock": true
                 }
               }
@@ -4784,7 +4776,7 @@
                 "options": {
                   "filename": "disk.raw",
                   "start": 413696,
-                  "size": 1024000
+                  "size": 1228800
                 }
               },
               "boot.efi": {
@@ -4799,8 +4791,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.raw",
-                  "start": 1437696,
-                  "size": 40505311
+                  "start": 1642496,
+                  "size": 40300511
                 }
               }
             },
@@ -5180,9 +5172,6 @@
           },
           "sha256:4267a46f14962af7c1688e213f2ce62368b5da4cf3532d1cd809227e3d7aabef": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.3-20230615/Packages/libsss_certmap-2.9.0-5.el9.x86_64.rpm"
-          },
-          "sha256:42a291d243e184e9f5c6d16a3854d1fc82d394fef5884f2559431908a2531a0e": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.3-20230615/Packages/grub2-tools-efi-2.06-63.el9.x86_64.rpm"
           },
           "sha256:4355b701be94089f1299e9daef0f57dd5a47c9e8b9c2e2f23b11418c3aab3442": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.3-20230615/Packages/openldap-2.6.2-3.el9.x86_64.rpm"
@@ -8293,16 +8282,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.3-20230615/Packages/grub2-tools-2.06-63.el9.x86_64.rpm",
         "checksum": "sha256:0ccca1abfa981722b54cd25e640ba3b9b6597b69edbb5925d5280fc2ead1c07d",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-tools-efi",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "63.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.3-20230615/Packages/grub2-tools-efi-2.06-63.el9.x86_64.rpm",
-        "checksum": "sha256:42a291d243e184e9f5c6d16a3854d1fc82d394fef5884f2559431908a2531a0e",
         "check_gpg": true
       },
       {

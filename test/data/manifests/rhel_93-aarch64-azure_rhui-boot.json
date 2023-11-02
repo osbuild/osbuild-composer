@@ -6404,14 +6404,14 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 1024000,
+                  "size": 1228800,
                   "start": 1026048,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 132167647,
-                  "start": 2050048,
+                  "size": 131962847,
+                  "start": 2254848,
                   "type": "E6D6D379-F507-44C2-A23C-238F2A3DF928",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -6458,8 +6458,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2050048,
-                  "size": 132167647,
+                  "start": 2254848,
+                  "size": 131962847,
                   "lock": true
                 }
               }
@@ -6493,7 +6493,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1026048,
-                  "size": 1024000,
+                  "size": 1228800,
                   "lock": true
                 }
               }
@@ -6517,8 +6517,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2050048,
-                  "size": 132167647,
+                  "start": 2254848,
+                  "size": 131962847,
                   "lock": true
                 }
               }
@@ -6542,8 +6542,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2050048,
-                  "size": 132167647,
+                  "start": 2254848,
+                  "size": 131962847,
                   "lock": true
                 }
               }
@@ -6567,8 +6567,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2050048,
-                  "size": 132167647,
+                  "start": 2254848,
+                  "size": 131962847,
                   "lock": true
                 }
               }
@@ -6592,8 +6592,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2050048,
-                  "size": 132167647,
+                  "start": 2254848,
+                  "size": 131962847,
                   "lock": true
                 }
               }
@@ -6617,8 +6617,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2050048,
-                  "size": 132167647,
+                  "start": 2254848,
+                  "size": 131962847,
                   "lock": true
                 }
               }
@@ -6649,7 +6649,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 1026048,
-                  "size": 1024000
+                  "size": 1228800
                 }
               },
               "boot.efi": {
@@ -6678,8 +6678,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2050048,
-                  "size": 132167647
+                  "start": 2254848,
+                  "size": 131962847
                 }
               },
               "tmp": {
@@ -6759,8 +6759,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2050048,
-                  "size": 132167647,
+                  "start": 2254848,
+                  "size": 131962847,
                   "lock": true
                 }
               }

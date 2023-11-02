@@ -5387,12 +5387,12 @@
                   "type": "41"
                 },
                 {
-                  "size": 1024000,
+                  "size": 1228800,
                   "start": 10240
                 },
                 {
-                  "size": 19937280,
-                  "start": 1034240
+                  "size": 19732480,
+                  "start": 1239040
                 }
               ]
             },
@@ -5418,7 +5418,7 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 10240,
-                  "size": 1024000,
+                  "size": 1228800,
                   "lock": true
                 }
               }
@@ -5434,8 +5434,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1034240,
-                  "size": 19937280,
+                  "start": 1239040,
+                  "size": 19732480,
                   "lock": true
                 }
               }
@@ -5466,15 +5466,15 @@
                 "options": {
                   "filename": "disk.img",
                   "start": 10240,
-                  "size": 1024000
+                  "size": 1228800
                 }
               },
               "root": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1034240,
-                  "size": 19937280
+                  "start": 1239040,
+                  "size": 19732480
                 }
               }
             },

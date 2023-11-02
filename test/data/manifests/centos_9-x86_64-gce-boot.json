@@ -2192,14 +2192,6 @@
                     }
                   },
                   {
-                    "id": "sha256:fa521c7a30181d01ca67a4ee61a8d3e5abd83dbfac58370c2267dc6226a9173e",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:76fa275fc55a1dfad9b8980b784d7347babaabd7b43fda6abba96ca58fcf8309",
                     "options": {
                       "metadata": {
@@ -4455,14 +4447,14 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 1024000,
+                  "size": 1228800,
                   "start": 413696,
                   "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 40505311,
-                  "start": 1437696,
+                  "size": 40300511,
+                  "start": 1642496,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -4507,7 +4499,7 @@
                 "options": {
                   "filename": "disk.raw",
                   "start": 413696,
-                  "size": 1024000,
+                  "size": 1228800,
                   "lock": true
                 }
               }
@@ -4524,8 +4516,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.raw",
-                  "start": 1437696,
-                  "size": 40505311,
+                  "start": 1642496,
+                  "size": 40300511,
                   "lock": true
                 }
               }
@@ -4556,7 +4548,7 @@
                 "options": {
                   "filename": "disk.raw",
                   "start": 413696,
-                  "size": 1024000
+                  "size": 1228800
                 }
               },
               "boot.efi": {
@@ -4571,8 +4563,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.raw",
-                  "start": 1437696,
-                  "size": 40505311
+                  "start": 1642496,
+                  "size": 40300511
                 }
               }
             },
@@ -5744,9 +5736,6 @@
           },
           "sha256:f9f0a918d294d8b44c4cb92ebc335550769e6e919b4c020345e4d69c5f25abb0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20230101/Packages/sssd-common-2.8.1-1.el9.x86_64.rpm"
-          },
-          "sha256:fa521c7a30181d01ca67a4ee61a8d3e5abd83dbfac58370c2267dc6226a9173e": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20230101/Packages/grub2-tools-efi-2.06-46.el9.x86_64.rpm"
           },
           "sha256:fab361a9cba04490fd8b5664049983d1e57ebf7c1080804726ba600708524125": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20230101/Packages/libutempter-1.2.1-6.el9.x86_64.rpm"
@@ -8434,16 +8423,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20230101/Packages/grub2-tools-2.06-46.el9.x86_64.rpm",
         "checksum": "sha256:4f2f8ecd78641641a41ea364f00673d1295c2c0b752dda02c9cc6af883ead946",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-tools-efi",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "46.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-x86_64-baseos-20230101/Packages/grub2-tools-efi-2.06-46.el9.x86_64.rpm",
-        "checksum": "sha256:fa521c7a30181d01ca67a4ee61a8d3e5abd83dbfac58370c2267dc6226a9173e",
         "check_gpg": true
       },
       {

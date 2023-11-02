@@ -41,7 +41,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel92",
+        "runner": "org.osbuild.rhel94",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -1804,14 +1804,6 @@
                   },
                   {
                     "id": "sha256:925dc0bc9e4feb4788c5d5e028c8b88a906d4b21b2681bbde3a396e8d6242031",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:7e2d8f0e224067cfa0f606dc1e138935f39bb6a44831d2a8d42825f1b152f5b0",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -4673,14 +4665,14 @@
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
-                  "size": 1024000,
+                  "size": 1228800,
                   "start": 413696,
                   "type": "BC13C2FF-59E6-4262-A352-B275FD6F7172",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
-                  "size": 40505311,
-                  "start": 1437696,
+                  "size": 40300511,
+                  "start": 1642496,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -4725,7 +4717,7 @@
                 "options": {
                   "filename": "disk.raw",
                   "start": 413696,
-                  "size": 1024000,
+                  "size": 1228800,
                   "lock": true
                 }
               }
@@ -4742,8 +4734,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.raw",
-                  "start": 1437696,
-                  "size": 40505311,
+                  "start": 1642496,
+                  "size": 40300511,
                   "lock": true
                 }
               }
@@ -4774,7 +4766,7 @@
                 "options": {
                   "filename": "disk.raw",
                   "start": 413696,
-                  "size": 1024000
+                  "size": 1228800
                 }
               },
               "boot.efi": {
@@ -4789,8 +4781,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.raw",
-                  "start": 1437696,
-                  "size": 40505311
+                  "start": 1642496,
+                  "size": 40300511
                 }
               }
             },
@@ -5464,9 +5456,6 @@
           },
           "sha256:7d37cebe6c1af633f74e7e8b58b54d36cf46f048a81f56b5809a0929a13c64b7": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/nvme-cli-2.2.1-2.el9.x86_64.rpm"
-          },
-          "sha256:7e2d8f0e224067cfa0f606dc1e138935f39bb6a44831d2a8d42825f1b152f5b0": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/grub2-tools-efi-2.06-46.el9.x86_64.rpm"
           },
           "sha256:7f8ec907e86b63d44e1b2fcf867077c2d1c4297d860164abd6e469b3af1e91e0": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/libcom_err-1.46.5-3.el9.x86_64.rpm"
@@ -8260,16 +8249,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/grub2-tools-2.06-46.el9.x86_64.rpm",
         "checksum": "sha256:925dc0bc9e4feb4788c5d5e028c8b88a906d4b21b2681bbde3a396e8d6242031",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-tools-efi",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "46.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/grub2-tools-efi-2.06-46.el9.x86_64.rpm",
-        "checksum": "sha256:7e2d8f0e224067cfa0f606dc1e138935f39bb6a44831d2a8d42825f1b152f5b0",
         "check_gpg": true
       },
       {

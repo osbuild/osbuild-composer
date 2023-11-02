@@ -1835,14 +1835,6 @@
                     }
                   },
                   {
-                    "id": "sha256:7e2d8f0e224067cfa0f606dc1e138935f39bb6a44831d2a8d42825f1b152f5b0",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:0e5de5b828060e128ee9c0e57cb38a4f72692a2f1f11ed208439c4c07dcf192d",
                     "options": {
                       "metadata": {
@@ -5444,9 +5436,6 @@
           "sha256:7bebc8a5fc0f4be20a1dce94deccd2495196c34027e18a3a732a0f97b40c86bb": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/libreport-filesystem-2.15.2-6.el9.noarch.rpm"
           },
-          "sha256:7e2d8f0e224067cfa0f606dc1e138935f39bb6a44831d2a8d42825f1b152f5b0": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/grub2-tools-efi-2.06-46.el9.x86_64.rpm"
-          },
           "sha256:7edeeda804b546cf050fca305840be84046eb4a0eb370c285bad97c33ad954c3": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/libldb-2.5.2-1.el9.x86_64.rpm"
           },
@@ -8239,16 +8228,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/grub2-tools-2.06-46.el9.x86_64.rpm",
         "checksum": "sha256:925dc0bc9e4feb4788c5d5e028c8b88a906d4b21b2681bbde3a396e8d6242031",
-        "check_gpg": true
-      },
-      {
-        "name": "grub2-tools-efi",
-        "epoch": 1,
-        "version": "2.06",
-        "release": "46.el9",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.1-20221015/Packages/grub2-tools-efi-2.06-46.el9.x86_64.rpm",
-        "checksum": "sha256:7e2d8f0e224067cfa0f606dc1e138935f39bb6a44831d2a8d42825f1b152f5b0",
         "check_gpg": true
       },
       {
