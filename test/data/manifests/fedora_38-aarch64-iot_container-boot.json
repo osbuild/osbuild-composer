@@ -3778,6 +3778,14 @@
                     }
                   },
                   {
+                    "id": "sha256:9deeaae6d8cf4d99debaa8830ca99f532711d454aac7ff16706455333db4137f",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:f799df996f63eda0b4045658c88d31a16887a8a30cea55b4fa14a7134bab2102",
                     "options": {
                       "metadata": {
@@ -4258,6 +4266,14 @@
                     }
                   },
                   {
+                    "id": "sha256:545109cfc36ee325a3caf27777e943b163e3a6f8a9e04f5a06010df1624e307e",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:ac9ede79357b33f0d0c9087333b0dd3e3fd1cf5ccab5c36310b0ec446390e0c7",
                     "options": {
                       "metadata": {
@@ -4443,6 +4459,14 @@
                   },
                   {
                     "id": "sha256:cae3b0840db01e5698969d452db3ae29cdaee87d68e809b495c9b132918cac4e",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:5106004a55cdefbafdfd88a62541e891c21cc6069898ee7a05b18630152fff11",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5515,6 +5539,25 @@
                 "redboot-task-runner",
                 "parsec",
                 "dbus-parsec"
+              ]
+            }
+          },
+          {
+            "type": "org.osbuild.systemd.preset",
+            "options": {
+              "presets": [
+                {
+                  "name": "ignition-firstboot-complete.service",
+                  "state": "enable"
+                },
+                {
+                  "name": "coreos-ignition-write-issues.service",
+                  "state": "enable"
+                },
+                {
+                  "name": "fdo-client-linuxapp.service",
+                  "state": "enable"
+                }
               ]
             }
           },
@@ -7473,6 +7516,9 @@
           "sha256:51021dba502123bd5a948fddbb93d49a3a6c3592c24cb0355efca6449e836cfe": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-fedora-20230413/Packages/c/catatonit-0.1.7-14.fc38.aarch64.rpm"
           },
+          "sha256:5106004a55cdefbafdfd88a62541e891c21cc6069898ee7a05b18630152fff11": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230724/Packages/i/ignition-edge-2.16.2-1.fc38.aarch64.rpm"
+          },
           "sha256:51aebc456415ed90d74d36c76782523e0eec59a30be6b98f7f17fb5ca2b99f29": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-fedora-20230413/Packages/o/openldap-2.6.4-1.fc38.aarch64.rpm"
           },
@@ -7487,6 +7533,9 @@
           },
           "sha256:542d0ba70e8a7ee8290daa24630667de2d3137d5fca1c5dff0a183d46af7e782": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-fedora-20230413/Packages/i/iputils-20221126-2.fc38.aarch64.rpm"
+          },
+          "sha256:545109cfc36ee325a3caf27777e943b163e3a6f8a9e04f5a06010df1624e307e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230724/Packages/f/fdo-owner-cli-0.4.9-5.fc38.aarch64.rpm"
           },
           "sha256:547908864163efaee3c29c3584203ee4cc0b7099b24fa19064ddea7685ce698b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-fedora-20230413/Packages/l/libevent-2.1.12-8.fc38.aarch64.rpm"
@@ -7880,6 +7929,9 @@
           },
           "sha256:9d11e90a67f22a3dcb5dd8593b5ca2320b29173aa4d815710d1886ae8868c17f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-fedora-20230413/Packages/p/python3-distro-1.8.0-2.fc38.noarch.rpm"
+          },
+          "sha256:9deeaae6d8cf4d99debaa8830ca99f532711d454aac7ff16706455333db4137f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-fedora-20230413/Packages/s/ssh-key-dir-0.1.4-3.fc38.aarch64.rpm"
           },
           "sha256:9e410c5f26d5d86859c27770e36974b7d2e2a76ce182a1b6ea09d84f32a8fcde": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230724/Packages/l/libsss_nss_idmap-2.9.1-1.fc38.aarch64.rpm"
@@ -14785,6 +14837,16 @@
         "check_gpg": true
       },
       {
+        "name": "ssh-key-dir",
+        "epoch": 0,
+        "version": "0.1.4",
+        "release": "3.fc38",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-fedora-20230413/Packages/s/ssh-key-dir-0.1.4-3.fc38.aarch64.rpm",
+        "checksum": "sha256:9deeaae6d8cf4d99debaa8830ca99f532711d454aac7ff16706455333db4137f",
+        "check_gpg": true
+      },
+      {
         "name": "tar",
         "epoch": 2,
         "version": "1.34",
@@ -15385,6 +15447,16 @@
         "check_gpg": true
       },
       {
+        "name": "fdo-owner-cli",
+        "epoch": 0,
+        "version": "0.4.9",
+        "release": "5.fc38",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230724/Packages/f/fdo-owner-cli-0.4.9-5.fc38.aarch64.rpm",
+        "checksum": "sha256:545109cfc36ee325a3caf27777e943b163e3a6f8a9e04f5a06010df1624e307e",
+        "check_gpg": true
+      },
+      {
         "name": "fedora-release-common",
         "epoch": 0,
         "version": "38",
@@ -15622,6 +15694,16 @@
         "arch": "aarch64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230724/Packages/i/ignition-2.16.2-1.fc38.aarch64.rpm",
         "checksum": "sha256:cae3b0840db01e5698969d452db3ae29cdaee87d68e809b495c9b132918cac4e",
+        "check_gpg": true
+      },
+      {
+        "name": "ignition-edge",
+        "epoch": 0,
+        "version": "2.16.2",
+        "release": "1.fc38",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-aarch64-updates-released-20230724/Packages/i/ignition-edge-2.16.2-1.fc38.aarch64.rpm",
+        "checksum": "sha256:5106004a55cdefbafdfd88a62541e891c21cc6069898ee7a05b18630152fff11",
         "check_gpg": true
       },
       {

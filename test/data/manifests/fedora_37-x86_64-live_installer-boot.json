@@ -3417,14 +3417,6 @@
                     }
                   },
                   {
-                    "id": "sha256:ffdf20341df99c5b34102fe4d14d2e93b0a5b8a4640adeb79e915079bcd75cbc",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:9c3784b859dcf8c5fb829d5c878c120672750d8b98f3b6f8e975316e6a17aa5f",
                     "options": {
                       "metadata": {
@@ -3802,14 +3794,6 @@
                   },
                   {
                     "id": "sha256:aef4052ca482ce6d1e8400191a2791a635415868e7aa36d3efbea546f710df11",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:092836433dfb3d42f88aff14f844f648a0eb975efb8e02aedb2f458703870f86",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -5418,14 +5402,6 @@
                   },
                   {
                     "id": "sha256:1e14f25f5cdbbb523cfc3f7381b8c053a26f05f61666fb1f86fecda50d3764a1",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:fddb1f157125626cdb33e56d53e6c167899681f6ea77224951a0ab94a2e83e45",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -7042,14 +7018,6 @@
                   },
                   {
                     "id": "sha256:dca6c36371ed9904e4983cf066223cf2df0db39080414b707d57a9d83621ec8e",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:a8b72ba98ca7273e1fa8b10c99d6b61acbd4bfddc7202877ead33bf57180bbaf",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -10826,14 +10794,6 @@
                   },
                   {
                     "id": "sha256:3770a9fc2744f77fd123b6619361cb955bb4e98b5e4493e5253b97282233586b",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:d43d6a2f405f17f25582a3dee1be37df05339aeed114c6fc3819010dd4c6dd61",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -17019,13 +16979,7 @@
                 "biosdevname",
                 "anaconda",
                 "rdma",
-                "rngd",
-                "multipath",
-                "fcoe",
-                "fcoe-uefi",
-                "iscsi",
-                "lunmask",
-                "nfs"
+                "rngd"
               ],
               "install": [
                 "/.buildstamp"
@@ -17559,9 +17513,6 @@
           },
           "sha256:08e2a64cc212f5c880c231861515ccbfbabde7d198c89c50b093dd5dae0164a1": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/s/sssd-krb5-2.9.1-1.fc37.x86_64.rpm"
-          },
-          "sha256:092836433dfb3d42f88aff14f844f648a0eb975efb8e02aedb2f458703870f86": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/g/gfs2-utils-3.4.1-5.fc37.x86_64.rpm"
           },
           "sha256:095db21fd4f608cd4b195da7ab4c868fa512c2e3ea331adc1ed3bb2f4dee835b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/s/seabios-bin-1.16.2-1.fc37.noarch.rpm"
@@ -20902,9 +20853,6 @@
           "sha256:a8aa340561ee01e092585ddf58254b6fd56c67bc2e970b668233d26aaa91747d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/l/librsvg2-2.54.5-1.fc37.x86_64.rpm"
           },
-          "sha256:a8b72ba98ca7273e1fa8b10c99d6b61acbd4bfddc7202877ead33bf57180bbaf": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/l/lldpad-1.1.0-6.git85e5583.fc37.x86_64.rpm"
-          },
           "sha256:a8bc7564c8130d29c7c3f67d6e1ca12fab324f4e9bdef54d56deca51e5a9f44c": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/x/xen-libs-4.16.4-1.fc37.x86_64.rpm"
           },
@@ -21825,9 +21773,6 @@
           },
           "sha256:d422639da54c1d60215f1cc37678d6aed69d73dd45d9ab8afcb90608cd3620fe": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/q/qemu-block-curl-7.0.0-15.fc37.x86_64.rpm"
-          },
-          "sha256:d43d6a2f405f17f25582a3dee1be37df05339aeed114c6fc3819010dd4c6dd61": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/d/device-mapper-multipath-0.9.0-4.fc37.x86_64.rpm"
           },
           "sha256:d461cde14e4814227e0a6fc4e4f300bb6550a4c2258f7d972d38d024dbebf0ce": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/l/linux-firmware-20230625-151.fc37.noarch.rpm"
@@ -22810,9 +22755,6 @@
           "sha256:fdd1eadf194d9dbdc06e4a3053dfd1501952afab4f5bcaf11bafb2a93b9bef88": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/l/libvirt-daemon-kvm-8.6.0-5.fc37.x86_64.rpm"
           },
-          "sha256:fddb1f157125626cdb33e56d53e6c167899681f6ea77224951a0ab94a2e83e45": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/l/libconfig-1.7.3-4.fc37.x86_64.rpm"
-          },
           "sha256:fdde3f48dc7d4f5197d79b765c730aedc86632edc5fcbee3b50e876b2cf39e3e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/l/lzo-2.10-7.fc37.x86_64.rpm"
           },
@@ -22860,9 +22802,6 @@
           },
           "sha256:ff9b6551cc9b802c237ca8fd94d7d486d719ae55109b92c4d75aea97f7bc6d5f": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/m/mesa-vulkan-drivers-23.0.3-1.fc37.x86_64.rpm"
-          },
-          "sha256:ffdf20341df99c5b34102fe4d14d2e93b0a5b8a4640adeb79e915079bcd75cbc": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/f/fcoe-utils-1.0.34-3.gitb233050.fc37.x86_64.rpm"
           }
         }
       },
@@ -24199,16 +24138,6 @@
         "check_gpg": true
       },
       {
-        "name": "fcoe-utils",
-        "epoch": 0,
-        "version": "1.0.34",
-        "release": "3.gitb233050.fc37",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/f/fcoe-utils-1.0.34-3.gitb233050.fc37.x86_64.rpm",
-        "checksum": "sha256:ffdf20341df99c5b34102fe4d14d2e93b0a5b8a4640adeb79e915079bcd75cbc",
-        "check_gpg": true
-      },
-      {
         "name": "fdk-aac-free",
         "epoch": 0,
         "version": "2.0.0",
@@ -24686,16 +24615,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/g/geolite2-country-20191217-7.fc37.noarch.rpm",
         "checksum": "sha256:aef4052ca482ce6d1e8400191a2791a635415868e7aa36d3efbea546f710df11",
-        "check_gpg": true
-      },
-      {
-        "name": "gfs2-utils",
-        "epoch": 0,
-        "version": "3.4.1",
-        "release": "5.fc37",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/g/gfs2-utils-3.4.1-5.fc37.x86_64.rpm",
-        "checksum": "sha256:092836433dfb3d42f88aff14f844f648a0eb975efb8e02aedb2f458703870f86",
         "check_gpg": true
       },
       {
@@ -26706,16 +26625,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/l/libcomps-0.1.18-4.fc37.x86_64.rpm",
         "checksum": "sha256:1e14f25f5cdbbb523cfc3f7381b8c053a26f05f61666fb1f86fecda50d3764a1",
-        "check_gpg": true
-      },
-      {
-        "name": "libconfig",
-        "epoch": 0,
-        "version": "1.7.3",
-        "release": "4.fc37",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/l/libconfig-1.7.3-4.fc37.x86_64.rpm",
-        "checksum": "sha256:fddb1f157125626cdb33e56d53e6c167899681f6ea77224951a0ab94a2e83e45",
         "check_gpg": true
       },
       {
@@ -28736,16 +28645,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/l/lksctp-tools-1.0.19-2.fc37.x86_64.rpm",
         "checksum": "sha256:dca6c36371ed9904e4983cf066223cf2df0db39080414b707d57a9d83621ec8e",
-        "check_gpg": true
-      },
-      {
-        "name": "lldpad",
-        "epoch": 0,
-        "version": "1.1.0",
-        "release": "6.git85e5583.fc37",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-fedora-20221124/Packages/l/lldpad-1.1.0-6.git85e5583.fc37.x86_64.rpm",
-        "checksum": "sha256:a8b72ba98ca7273e1fa8b10c99d6b61acbd4bfddc7202877ead33bf57180bbaf",
         "check_gpg": true
       },
       {
@@ -33466,16 +33365,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/d/desktop-backgrounds-gnome-37.0.0-4.fc37.noarch.rpm",
         "checksum": "sha256:3770a9fc2744f77fd123b6619361cb955bb4e98b5e4493e5253b97282233586b",
-        "check_gpg": true
-      },
-      {
-        "name": "device-mapper-multipath",
-        "epoch": 0,
-        "version": "0.9.0",
-        "release": "4.fc37",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f37/f37-x86_64-updates-released-20230724/Packages/d/device-mapper-multipath-0.9.0-4.fc37.x86_64.rpm",
-        "checksum": "sha256:d43d6a2f405f17f25582a3dee1be37df05339aeed114c6fc3819010dd4c6dd61",
         "check_gpg": true
       },
       {

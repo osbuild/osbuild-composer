@@ -3481,14 +3481,6 @@
                     }
                   },
                   {
-                    "id": "sha256:0addc69e8de30d841680eb77c3349030fb7470cfc8013ec68ce4d921f0951e21",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:3b5994996497f7a65403b67cd034327243caa8d89750f5e5ff6aaf287f9ed6ec",
                     "options": {
                       "metadata": {
@@ -3730,14 +3722,6 @@
                   },
                   {
                     "id": "sha256:5b7eaff62b0e3c4e4ae66f315bdf759fd8f6df5632f6c69e453b43636b595308",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:62de90f35453c40f95a2f0e3b0a529e8cf9cab66f2b11e613bcb5b746f62dfa5",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -4242,14 +4226,6 @@
                   },
                   {
                     "id": "sha256:3837cbe450ceb59e1f9e7469aeb6ec98e08150773b83463725acfb2ebb77a98a",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:7d966781cb633085b656a086f6858b9d844fa6b9156a1155c8c8e1900c995c40",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -8106,14 +8082,6 @@
                   },
                   {
                     "id": "sha256:7c2e16c56895cb8ae6fac10411de0b732d71d30e2e4c1fe3f8bcb45945789c69",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:91e2ac1b8859a150ab5b09709b894edca8d215f8af40aab9ffa52030340aa761",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -17499,13 +17467,7 @@
                 "biosdevname",
                 "anaconda",
                 "rdma",
-                "rngd",
-                "multipath",
-                "fcoe",
-                "fcoe-uefi",
-                "iscsi",
-                "lunmask",
-                "nfs"
+                "rngd"
               ],
               "install": [
                 "/.buildstamp"
@@ -18063,9 +18025,6 @@
           },
           "sha256:0a5a5ae07041e189ea0026256f31b3a00e5b28b48342bd6ce16cd23e9c020d19": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/l/libXfont2-2.0.3-14.fc38.x86_64.rpm"
-          },
-          "sha256:0addc69e8de30d841680eb77c3349030fb7470cfc8013ec68ce4d921f0951e21": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/d/device-mapper-multipath-0.9.4-2.fc38.x86_64.rpm"
           },
           "sha256:0afc2f5a9a78aff66e550a7adf900ac5cc83daa9c2e63ee4ab81fa9cb3c3e746": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/u/urw-base35-fonts-20200910-16.fc38.noarch.rpm"
@@ -19912,9 +19871,6 @@
           "sha256:626b9f204d1c226aca54d68f1cdcedaab6489c329d7f457a1a7ee95d5a225b55": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/a/anaconda-live-38.23.4-2.fc38.x86_64.rpm"
           },
-          "sha256:62de90f35453c40f95a2f0e3b0a529e8cf9cab66f2b11e613bcb5b746f62dfa5": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/f/fcoe-utils-1.0.34-3.gitb233050.fc37.x86_64.rpm"
-          },
           "sha256:62e152d08178f575a8fae83df8c39335b3a717faab7d6f0850bb24abaefe89fa": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-updates-released-20230724/Packages/m/mesa-libgbm-23.1.3-1.fc38.x86_64.rpm"
           },
@@ -20485,9 +20441,6 @@
           "sha256:7d5eb1e8f80ae1dddc082b58c387f8d7b66d48dbf1d9ab4bcf9c9c138996085b": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/g/gpgme-1.17.1-3.fc38.x86_64.rpm"
           },
-          "sha256:7d966781cb633085b656a086f6858b9d844fa6b9156a1155c8c8e1900c995c40": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/g/gfs2-utils-3.4.1-6.fc38.x86_64.rpm"
-          },
           "sha256:7d9a98372505c9c1dff7dfea558b20a44820fda416a609467790577a848de110": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-updates-released-20230724/Packages/l/libzstd-1.5.5-1.fc38.x86_64.rpm"
           },
@@ -20964,9 +20917,6 @@
           },
           "sha256:91de25e9d5c085babb73869cda1aa4a9607c6cef36c4f98358d1824e9aba0154": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/l/libxml++-2.42.2-2.fc38.x86_64.rpm"
-          },
-          "sha256:91e2ac1b8859a150ab5b09709b894edca8d215f8af40aab9ffa52030340aa761": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/l/lldpad-1.1.0-7.git85e5583.fc38.x86_64.rpm"
           },
           "sha256:92534ea32c6207fbf307ad69b55de2c5e88d87fc0f6dcc4655de0bb6d1c609b6": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-updates-released-20230724/Packages/p/perl-Errno-1.36-497.fc38.x86_64.rpm"
@@ -24783,16 +24733,6 @@
         "check_gpg": true
       },
       {
-        "name": "device-mapper-multipath",
-        "epoch": 0,
-        "version": "0.9.4",
-        "release": "2.fc38",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/d/device-mapper-multipath-0.9.4-2.fc38.x86_64.rpm",
-        "checksum": "sha256:0addc69e8de30d841680eb77c3349030fb7470cfc8013ec68ce4d921f0951e21",
-        "check_gpg": true
-      },
-      {
         "name": "device-mapper-multipath-libs",
         "epoch": 0,
         "version": "0.9.4",
@@ -25100,16 +25040,6 @@
         "arch": "noarch",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/f/f38-backgrounds-gnome-38.1.1-1.fc38.noarch.rpm",
         "checksum": "sha256:5b7eaff62b0e3c4e4ae66f315bdf759fd8f6df5632f6c69e453b43636b595308",
-        "check_gpg": true
-      },
-      {
-        "name": "fcoe-utils",
-        "epoch": 0,
-        "version": "1.0.34",
-        "release": "3.gitb233050.fc37",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/f/fcoe-utils-1.0.34-3.gitb233050.fc37.x86_64.rpm",
-        "checksum": "sha256:62de90f35453c40f95a2f0e3b0a529e8cf9cab66f2b11e613bcb5b746f62dfa5",
         "check_gpg": true
       },
       {
@@ -25740,16 +25670,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/g/gettext-runtime-0.21.1-2.fc38.x86_64.rpm",
         "checksum": "sha256:3837cbe450ceb59e1f9e7469aeb6ec98e08150773b83463725acfb2ebb77a98a",
-        "check_gpg": true
-      },
-      {
-        "name": "gfs2-utils",
-        "epoch": 0,
-        "version": "3.4.1",
-        "release": "6.fc38",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/g/gfs2-utils-3.4.1-6.fc38.x86_64.rpm",
-        "checksum": "sha256:7d966781cb633085b656a086f6858b9d844fa6b9156a1155c8c8e1900c995c40",
         "check_gpg": true
       },
       {
@@ -30570,16 +30490,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/l/lksctp-tools-1.0.19-3.fc38.x86_64.rpm",
         "checksum": "sha256:7c2e16c56895cb8ae6fac10411de0b732d71d30e2e4c1fe3f8bcb45945789c69",
-        "check_gpg": true
-      },
-      {
-        "name": "lldpad",
-        "epoch": 0,
-        "version": "1.1.0",
-        "release": "7.git85e5583.fc38",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f38/f38-x86_64-fedora-20230413/Packages/l/lldpad-1.1.0-7.git85e5583.fc38.x86_64.rpm",
-        "checksum": "sha256:91e2ac1b8859a150ab5b09709b894edca8d215f8af40aab9ffa52030340aa761",
         "check_gpg": true
       },
       {

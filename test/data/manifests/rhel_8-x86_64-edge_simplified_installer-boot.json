@@ -37,7 +37,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel88",
+        "runner": "org.osbuild.rhel810",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -57,6 +57,9 @@
                   },
                   {
                     "id": "sha256:b1968e57a935aeb00ff790bb6ad40114e386cc678d43f4a56eaf7af63ad05246"
+                  },
+                  {
+                    "id": "sha256:78926ec2c75db8bcbdd4f4fbd8c06b373f85bd7ecce0e6aac8c75dda95fcae2c"
                   },
                   {
                     "id": "sha256:267858a95e543459a0cd683e641955d7c04c13bcda830c5f7db5a0529077428a"
@@ -582,6 +585,9 @@
                   },
                   {
                     "id": "sha256:fec32d37b2f34c891a64a8c5e2faf3d08de25d144289b6f2b7f5fafdd5eec4d2"
+                  },
+                  {
+                    "id": "sha256:6513599bc006a88ce088daf6cba9d8c26f709370b51c25a8e50f45da6490c8aa"
                   },
                   {
                     "id": "sha256:d1dbdff1f5e543bc5dcd8c957b07947cebd9ae4c3ba6d0cdf52a2a8c014c2fd5"
@@ -2588,7 +2594,7 @@
             "options": {
               "arch": "x86_64",
               "product": "Red Hat Enterprise Linux",
-              "version": "8.8",
+              "version": "8.10",
               "final": true,
               "variant": "edge",
               "bugurl": ""
@@ -2666,14 +2672,14 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "8.8"
+                "version": "8.10"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
                   "rd.neednet=1",
                   "coreos.inst.crypt_root=1",
-                  "coreos.inst.isoroot=RHEL-8-8-0-BaseOS-x86_64",
+                  "coreos.inst.isoroot=RHEL-8-10-0-BaseOS-x86_64",
                   "coreos.inst.install_dev=/dev/vda",
                   "coreos.inst.image_file=/run/media/iso/image.raw.xz",
                   "coreos.inst.insecure",
@@ -2681,7 +2687,7 @@
                   "fdo.diun_pub_key_insecure=true"
                 ]
               },
-              "isolabel": "RHEL-8-8-0-BaseOS-x86_64",
+              "isolabel": "RHEL-8-10-0-BaseOS-x86_64",
               "architectures": [
                 "X64"
               ],
@@ -2827,14 +2833,14 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "8.8"
+                "version": "8.10"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
                   "rd.neednet=1",
                   "coreos.inst.crypt_root=1",
-                  "coreos.inst.isoroot=RHEL-8-8-0-BaseOS-x86_64",
+                  "coreos.inst.isoroot=RHEL-8-10-0-BaseOS-x86_64",
                   "coreos.inst.install_dev=/dev/vda",
                   "coreos.inst.image_file=/run/media/iso/image.raw.xz",
                   "coreos.inst.insecure",
@@ -2883,7 +2889,7 @@
             },
             "options": {
               "filename": "simplified-installer.iso",
-              "volid": "RHEL-8-8-0-BaseOS-x86_64",
+              "volid": "RHEL-8-10-0-BaseOS-x86_64",
               "sysid": "LINUX",
               "boot": {
                 "image": "isolinux/isolinux.bin",
@@ -4156,6 +4162,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/bash-4.4.20-4.el8_6.x86_64.rpm",
         "checksum": "sha256:b1968e57a935aeb00ff790bb6ad40114e386cc678d43f4a56eaf7af63ad05246"
+      },
+      {
+        "name": "biosdevname",
+        "epoch": 0,
+        "version": "0.7.3",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/biosdevname-0.7.3-2.el8.x86_64.rpm",
+        "checksum": "sha256:78926ec2c75db8bcbdd4f4fbd8c06b373f85bd7ecce0e6aac8c75dda95fcae2c"
       },
       {
         "name": "brotli",
@@ -5731,6 +5746,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/parted-3.2-39.el8.x86_64.rpm",
         "checksum": "sha256:fec32d37b2f34c891a64a8c5e2faf3d08de25d144289b6f2b7f5fafdd5eec4d2"
+      },
+      {
+        "name": "pciutils-libs",
+        "epoch": 0,
+        "version": "3.7.0",
+        "release": "3.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.8-20221025/Packages/pciutils-libs-3.7.0-3.el8.x86_64.rpm",
+        "checksum": "sha256:6513599bc006a88ce088daf6cba9d8c26f709370b51c25a8e50f45da6490c8aa"
       },
       {
         "name": "pcre",

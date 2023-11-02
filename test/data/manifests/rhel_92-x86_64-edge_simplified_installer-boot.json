@@ -89,6 +89,14 @@
                     }
                   },
                   {
+                    "id": "sha256:de6dc920c963b0a6cecb61b653836883986a5a46bb682d0ab6e2c7b20a393f2b",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:327920d59130c2a3a318774b2300babfd2e5ac2994ca4123dfa10f08f5e1d9e7",
                     "options": {
                       "metadata": {
@@ -7654,6 +7662,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/bash-5.1.8-6.el9_1.x86_64.rpm",
         "checksum": "sha256:90603777c369e7e4266971d06a7c0bc33f3493b7ddf6904a7d141abe2e7b287f",
+        "check_gpg": true
+      },
+      {
+        "name": "biosdevname",
+        "epoch": 0,
+        "version": "0.7.3",
+        "release": "9.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.2-20230101/Packages/biosdevname-0.7.3-9.el9.x86_64.rpm",
+        "checksum": "sha256:de6dc920c963b0a6cecb61b653836883986a5a46bb682d0ab6e2c7b20a393f2b",
         "check_gpg": true
       },
       {

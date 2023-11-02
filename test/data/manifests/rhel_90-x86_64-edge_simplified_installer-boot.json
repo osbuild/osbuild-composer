@@ -62,6 +62,9 @@
                     "id": "sha256:f835cc738fa003147087d68427c407e17c08587156ae961d641b2dfcee1fe7af"
                   },
                   {
+                    "id": "sha256:de6dc920c963b0a6cecb61b653836883986a5a46bb682d0ab6e2c7b20a393f2b"
+                  },
+                  {
                     "id": "sha256:327920d59130c2a3a318774b2300babfd2e5ac2994ca4123dfa10f08f5e1d9e7"
                   },
                   {
@@ -4217,6 +4220,15 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/bash-5.1.8-2.el9.x86_64.rpm",
         "checksum": "sha256:f835cc738fa003147087d68427c407e17c08587156ae961d641b2dfcee1fe7af"
+      },
+      {
+        "name": "biosdevname",
+        "epoch": 0,
+        "version": "0.7.3",
+        "release": "9.el9",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-baseos-n9.0-20220208/Packages/biosdevname-0.7.3-9.el9.x86_64.rpm",
+        "checksum": "sha256:de6dc920c963b0a6cecb61b653836883986a5a46bb682d0ab6e2c7b20a393f2b"
       },
       {
         "name": "bubblewrap",

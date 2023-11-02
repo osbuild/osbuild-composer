@@ -29,7 +29,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel88",
+        "runner": "org.osbuild.rhel810",
         "stages": [
           {
             "type": "org.osbuild.rpm",

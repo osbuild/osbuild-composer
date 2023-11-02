@@ -81,6 +81,14 @@
                     }
                   },
                   {
+                    "id": "sha256:0caa72888379f82fae1bc8f448bcf0dbaead20e92f2ef4c714afadf8979c3181",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
                     "id": "sha256:e4827f4a11cc1a0b14585f9f2984de80a185d2fd823be03dd128b04c7f0576c4",
                     "options": {
                       "metadata": {
@@ -1482,6 +1490,14 @@
                   },
                   {
                     "id": "sha256:2a9f8558c6c640d8f035004f3a9e607f6941e028785da562f01b61a142b5e282",
+                    "options": {
+                      "metadata": {
+                        "rpm.check_gpg": true
+                      }
+                    }
+                  },
+                  {
+                    "id": "sha256:4c4c1acb49227d6a71b7e7ae490d0f5f33031a4643e374b2e0b6c7d53045873c",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -7455,6 +7471,16 @@
         "check_gpg": true
       },
       {
+        "name": "biosdevname",
+        "epoch": 0,
+        "version": "0.7.3",
+        "release": "2.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/biosdevname-0.7.3-2.el8.x86_64.rpm",
+        "checksum": "sha256:0caa72888379f82fae1bc8f448bcf0dbaead20e92f2ef4c714afadf8979c3181",
+        "check_gpg": true
+      },
+      {
         "name": "brotli",
         "epoch": 0,
         "version": "1.0.6",
@@ -9212,6 +9238,16 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/parted-3.2-39.el8.x86_64.rpm",
         "checksum": "sha256:2a9f8558c6c640d8f035004f3a9e607f6941e028785da562f01b61a142b5e282",
+        "check_gpg": true
+      },
+      {
+        "name": "pciutils-libs",
+        "epoch": 0,
+        "version": "3.7.0",
+        "release": "1.el8",
+        "arch": "x86_64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20220208/Packages/pciutils-libs-3.7.0-1.el8.x86_64.rpm",
+        "checksum": "sha256:4c4c1acb49227d6a71b7e7ae490d0f5f33031a4643e374b2e0b6c7d53045873c",
         "check_gpg": true
       },
       {

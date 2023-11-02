@@ -72,7 +72,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel88",
+        "runner": "org.osbuild.rhel810",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -2123,7 +2123,7 @@
             },
             "options": {
               "ref": "rhel/8/x86_64/edge",
-              "os_version": "8.8"
+              "os_version": "8.10"
             }
           }
         ]

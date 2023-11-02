@@ -5005,8 +5005,7 @@
                 "cloud-init.service",
                 "cloud-config.service",
                 "cloud-final.service",
-                "cloud-init-local.service",
-                "cloud-init.service"
+                "cloud-init-local.service"
               ],
               "default_target": "multi-user.target"
             }

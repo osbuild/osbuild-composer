@@ -31,7 +31,7 @@
     "pipelines": [
       {
         "name": "build",
-        "runner": "org.osbuild.rhel92",
+        "runner": "org.osbuild.rhel94",
         "stages": [
           {
             "type": "org.osbuild.rpm",
@@ -9503,7 +9503,7 @@
             "options": {
               "arch": "x86_64",
               "product": "Red Hat Enterprise Linux",
-              "version": "9.2",
+              "version": "9.4",
               "final": true,
               "variant": "edge",
               "bugurl": ""
@@ -9712,16 +9712,16 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "9.2"
+                "version": "9.4"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.stage2=hd:LABEL=RHEL-9-2-0-BaseOS-x86_64",
-                  "inst.ks=hd:LABEL=RHEL-9-2-0-BaseOS-x86_64:/osbuild.ks"
+                  "inst.stage2=hd:LABEL=RHEL-9-4-0-BaseOS-x86_64",
+                  "inst.ks=hd:LABEL=RHEL-9-4-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               },
-              "isolabel": "RHEL-9-2-0-BaseOS-x86_64",
+              "isolabel": "RHEL-9-4-0-BaseOS-x86_64",
               "architectures": [
                 "X64"
               ],
@@ -9806,13 +9806,13 @@
             "options": {
               "product": {
                 "name": "Red Hat Enterprise Linux",
-                "version": "9.2"
+                "version": "9.4"
               },
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "inst.stage2=hd:LABEL=RHEL-9-2-0-BaseOS-x86_64",
-                  "inst.ks=hd:LABEL=RHEL-9-2-0-BaseOS-x86_64:/osbuild.ks"
+                  "inst.stage2=hd:LABEL=RHEL-9-4-0-BaseOS-x86_64",
+                  "inst.ks=hd:LABEL=RHEL-9-4-0-BaseOS-x86_64:/osbuild.ks"
                 ]
               }
             }
@@ -9936,7 +9936,7 @@
             "type": "org.osbuild.discinfo",
             "options": {
               "basearch": "x86_64",
-              "release": "Red Hat Enterprise Linux 9.2"
+              "release": "Red Hat Enterprise Linux 9.4"
             }
           }
         ]
@@ -9958,7 +9958,7 @@
             },
             "options": {
               "filename": "installer.iso",
-              "volid": "RHEL-9-2-0-BaseOS-x86_64",
+              "volid": "RHEL-9-4-0-BaseOS-x86_64",
               "sysid": "LINUX",
               "boot": {
                 "image": "isolinux/isolinux.bin",
