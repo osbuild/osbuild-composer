@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -267,7 +266,7 @@ func (c *Client) SetRootCAs(pemPaths string) error {
 	pool := x509.NewCertPool()
 
 	for _, name := range filepath.SplitList(pemPaths) {
-		pem, err := ioutil.ReadFile(filepath.Clean(name))
+		pem, err := os.ReadFile(filepath.Clean(name))
 		if err != nil {
 			return err
 		}
@@ -317,6 +316,20 @@ func (c *Client) Thumbprint(host string) string {
 	c.hostsMu.Lock()
 	defer c.hostsMu.Unlock()
 	return c.hosts[host]
+}
+
+// KnownThumbprint checks whether the provided thumbprint is known to this client.
+func (c *Client) KnownThumbprint(tp string) bool {
+	c.hostsMu.Lock()
+	defer c.hostsMu.Unlock()
+
+	for _, v := range c.hosts {
+		if v == tp {
+			return true
+		}
+	}
+
+	return false
 }
 
 // LoadThumbprints from file with the give name.
