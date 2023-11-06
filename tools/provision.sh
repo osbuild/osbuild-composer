@@ -140,6 +140,7 @@ EOF
     OCI_SECRETS="${OCI_SECRETS:-}"
     OCI_PRIVATE_KEY="${OCI_PRIVATE_KEY:-}"
     if [[ -n "$OCI_SECRETS" && -n "$OCI_PRIVATE_KEY" ]]; then
+        set +x
         OCI_USER=$(jq -r '.user' "$OCI_SECRETS")
         OCI_TENANCY=$(jq -r '.tenancy' "$OCI_SECRETS")
         OCI_REGION=$(jq -r '.region' "$OCI_SECRETS")
@@ -149,7 +150,6 @@ EOF
         OCI_COMPARTMENT=$(jq -r '.compartment' "$OCI_SECRETS")
         OCI_PRIV_KEY=$(cat "$OCI_PRIVATE_KEY")
 
-        set +x
         sudo tee /etc/osbuild-worker/oci-credentials.toml > /dev/null << EOF
 user = "$OCI_USER"
 tenancy = "$OCI_TENANCY"
