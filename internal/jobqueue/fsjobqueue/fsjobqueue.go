@@ -106,7 +106,8 @@ func New(dir string) (*fsJobQueue, error) {
 		}
 		j, err := q.readJob(jobId)
 		if err != nil {
-			return nil, err
+			// Skip invalid jobs, leaving them in place for later examination
+			continue
 		}
 
 		// If a job is running, and not cancelled, track the token

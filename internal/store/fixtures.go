@@ -354,3 +354,152 @@ func FixtureOldChanges() *Store {
 
 	return s
 }
+
+// Fixture to use for checking job queue files
+func FixtureJobs() *Store {
+	var bName = "test"
+	var b = blueprint.Blueprint{
+		Name:           bName,
+		Version:        "0.0.0",
+		Packages:       []blueprint.Package{},
+		Modules:        []blueprint.Package{},
+		Groups:         []blueprint.Group{},
+		Customizations: nil,
+	}
+
+	var date = time.Date(2019, 11, 27, 13, 19, 0, 0, time.FixedZone("UTC+1", 60*60))
+
+	var awsTarget = &target.Target{
+		Uuid:      uuid.MustParse("10000000-0000-0000-0000-000000000000"),
+		Name:      target.TargetNameAWS,
+		ImageName: "awsimage",
+		Created:   date,
+		Status:    common.IBWaiting,
+		Options: &target.AWSTargetOptions{
+			Region:          "frankfurt",
+			AccessKeyID:     "accesskey",
+			SecretAccessKey: "secretkey",
+			Bucket:          "clay",
+			Key:             "imagekey",
+		},
+	}
+
+	dr := test_distro.NewRegistry()
+	d := dr.FromHost()
+	arch, err := d.GetArch(test_distro.TestArchName)
+	if err != nil {
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
+	}
+	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	if err != nil {
+		panic(fmt.Sprintf("failed to get image type %s for a test distro architecture: %v", test_distro.TestImageTypeName, err))
+	}
+	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, 0)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create a manifest: %v", err))
+	}
+
+	mf, err := manifest.Serialize(nil, nil, nil)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create a manifest: %v", err))
+	}
+
+	s := New(nil, dr, nil)
+
+	pkgs := []rpmmd.PackageSpec{
+		{
+			Name:    "test1",
+			Epoch:   0,
+			Version: "2.11.2",
+			Release: "1.fc35",
+			Arch:    test_distro.TestArchName,
+		}, {
+			Name:    "test2",
+			Epoch:   3,
+			Version: "4.2.2",
+			Release: "1.fc35",
+			Arch:    test_distro.TestArchName,
+		}}
+
+	s.blueprints[bName] = b
+	s.composes = map[uuid.UUID]Compose{
+		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBWaiting,
+				ImageType:   imgType,
+				Manifest:    mf,
+				Targets:     []*target.Target{awsTarget},
+				JobCreated:  date,
+			},
+			Packages: []rpmmd.PackageSpec{},
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000001"): {
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBRunning,
+				ImageType:   imgType,
+				Manifest:    mf,
+				Targets:     []*target.Target{},
+				JobCreated:  date,
+				JobStarted:  date,
+			},
+			Packages: []rpmmd.PackageSpec{},
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000002"): {
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFinished,
+				ImageType:   imgType,
+				Manifest:    mf,
+				Targets:     []*target.Target{awsTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+				JobFinished: date,
+			},
+			Packages: []rpmmd.PackageSpec{},
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000003"): {
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFailed,
+				ImageType:   imgType,
+				Manifest:    mf,
+				Targets:     []*target.Target{awsTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+				JobFinished: date,
+			},
+			Packages: []rpmmd.PackageSpec{},
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000004"): {
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFinished,
+				ImageType:   imgType,
+				Manifest:    mf,
+				Targets:     []*target.Target{awsTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+				JobFinished: date,
+			},
+			Packages: pkgs,
+		},
+		uuid.MustParse("30000000-0000-0000-0000-000000000005"): {
+			Blueprint: &b,
+			ImageBuild: ImageBuild{
+				QueueStatus: common.IBFinished,
+				ImageType:   imgType,
+				Manifest:    mf,
+				Targets:     []*target.Target{awsTarget},
+				JobCreated:  date,
+				JobStarted:  date,
+				JobFinished: date,
+				JobID:       uuid.MustParse("30000000-0000-0000-0000-000000000005"),
+			},
+			Packages: pkgs,
+		},
+	}
+
+	return s
+}

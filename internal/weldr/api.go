@@ -364,7 +364,7 @@ func composeStateFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobRe
 // Returns the state of the image in `compose` and the times the job was
 // queued, started, and finished. Assumes that there's only one image in the
 // compose.
-func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
+func (api *API) getComposeStatus(compose store.Compose) (*composeStatus, error) {
 	jobId := compose.ImageBuild.JobID
 
 	// backwards compatibility: composes that were around before splitting
@@ -388,14 +388,14 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 			Started:  compose.ImageBuild.JobStarted,
 			Finished: compose.ImageBuild.JobFinished,
 			Result:   &osbuild.Result{},
-		}
+		}, nil
 	}
 
 	// All jobs are "osbuild" jobs.
 	var result worker.OSBuildJobResult
 	jobInfo, err := api.workers.OSBuildJobInfo(jobId, &result)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &composeStatus{
@@ -404,7 +404,7 @@ func (api *API) getComposeStatus(compose store.Compose) *composeStatus {
 		Started:  jobInfo.JobStatus.Started,
 		Finished: jobInfo.JobStatus.Finished,
 		Result:   result.OSBuildOutput,
-	}
+	}, nil
 }
 
 // Opens the image file for `compose`. This asks the worker server for the
@@ -2659,7 +2659,14 @@ func (api *API) composeDeleteHandler(writer http.ResponseWriter, request *http.R
 			continue
 		}
 
-		composeStatus := api.getComposeStatus(compose)
+		composeStatus, err := api.getComposeStatus(compose)
+		if err != nil {
+			errors = append(errors, composeDeleteError{
+				"ComposeStatusError",
+				fmt.Sprintf("Error getting status of compose %s: %s", id, err),
+			})
+			continue
+		}
 		if composeStatus.State != ComposeFinished && composeStatus.State != ComposeFailed {
 			errors = append(errors, composeDeleteError{
 				"BuildInWrongState",
@@ -2724,7 +2731,15 @@ func (api *API) composeCancelHandler(writer http.ResponseWriter, request *http.R
 		return
 	}
 
-	composeStatus := api.getComposeStatus(compose)
+	composeStatus, err := api.getComposeStatus(compose)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeStatusError",
+			Msg: fmt.Sprintf("Error getting status of compose %s: %s", id, err),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
 	if composeStatus.State != ComposeWaiting && composeStatus.State != ComposeRunning {
 		errors := responseError{
 			ID:  "BuildInWrongState",
@@ -2828,7 +2843,11 @@ func (api *API) composeQueueHandler(writer http.ResponseWriter, request *http.Re
 
 	composes := api.store.GetAllComposes()
 	for id, compose := range composes {
-		composeStatus := api.getComposeStatus(compose)
+		composeStatus, err := api.getComposeStatus(compose)
+		if err != nil {
+			log.Printf("Error getting status of compose %s: %s", id, err)
+			continue
+		}
 		switch composeStatus.State {
 		case ComposeWaiting:
 			reply.New = append(reply.New, composeToComposeEntry(id, compose, composeStatus, includeUploads))
@@ -2899,7 +2918,12 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 		if !exists {
 			continue
 		}
-		composeStatus := api.getComposeStatus(compose)
+		composeStatus, err := api.getComposeStatus(compose)
+		if err != nil {
+			log.Printf("Error getting status of compose %s: %s", id, err)
+			continue
+		}
+
 		if filterBlueprint != "" && compose.Blueprint.Name != filterBlueprint {
 			continue
 		} else if filterStatus != "" && composeStatus.State.ToString() != filterStatus {
@@ -2914,7 +2938,12 @@ func (api *API) composeStatusHandler(writer http.ResponseWriter, request *http.R
 	includeUploads := isRequestVersionAtLeast(params, 1)
 	for _, id := range filteredUUIDs {
 		if compose, exists := composes[id]; exists {
-			composeStatus := api.getComposeStatus(compose)
+			composeStatus, err := api.getComposeStatus(compose)
+			if err != nil {
+				log.Printf("Error getting status of compose %s: %s", id, err)
+				continue
+			}
+
 			reply.UUIDs = append(reply.UUIDs, composeToComposeEntry(id, compose, composeStatus, includeUploads))
 		}
 	}
@@ -2969,7 +2998,16 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 	reply.Blueprint = compose.Blueprint
 	// Weldr API assumes only one image build per compose, that's why only the
 	// 1st build is considered
-	composeStatus := api.getComposeStatus(compose)
+	composeStatus, err := api.getComposeStatus(compose)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeStatusError",
+			Msg: fmt.Sprintf("Error getting status of compose %s: %s", id, err),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
+
 	reply.ComposeType = compose.ImageBuild.ImageType.Name()
 	reply.QueueStatus = composeStatus.State.ToString()
 	reply.ImageSize = compose.ImageBuild.Size
@@ -3016,7 +3054,15 @@ func (api *API) composeImageHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	composeStatus := api.getComposeStatus(compose)
+	composeStatus, err := api.getComposeStatus(compose)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeStatusError",
+			Msg: fmt.Sprintf("Error getting status of compose %s: %s", uuid, err),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
 	if composeStatus.State != ComposeFinished {
 		errors := responseError{
 			ID:  "BuildInWrongState",
@@ -3074,7 +3120,15 @@ func (api *API) composeMetadataHandler(writer http.ResponseWriter, request *http
 		return
 	}
 
-	composeStatus := api.getComposeStatus(compose)
+	composeStatus, err := api.getComposeStatus(compose)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeStatusError",
+			Msg: fmt.Sprintf("Error getting status of compose %s: %s", uuid, err),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
 	if composeStatus.State != ComposeFinished && composeStatus.State != ComposeFailed {
 		errors := responseError{
 			ID:  "BuildInWrongState",
@@ -3135,7 +3189,15 @@ func (api *API) composeResultsHandler(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	composeStatus := api.getComposeStatus(compose)
+	composeStatus, err := api.getComposeStatus(compose)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeStatusError",
+			Msg: fmt.Sprintf("Error getting status of compose %s: %s", uuid, err),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
 	if composeStatus.State != ComposeFinished && composeStatus.State != ComposeFailed {
 		errors := responseError{
 			ID:  "BuildInWrongState",
@@ -3226,7 +3288,15 @@ func (api *API) composeLogsHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	composeStatus := api.getComposeStatus(compose)
+	composeStatus, err := api.getComposeStatus(compose)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeStatusError",
+			Msg: fmt.Sprintf("Error getting status of compose %s: %s", id, err),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
 	if composeStatus.State != ComposeFinished && composeStatus.State != ComposeFailed {
 		errors := responseError{
 			ID:  "BuildInWrongState",
@@ -3290,7 +3360,15 @@ func (api *API) composeLogHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	composeStatus := api.getComposeStatus(compose)
+	composeStatus, err := api.getComposeStatus(compose)
+	if err != nil {
+		errors := responseError{
+			ID:  "ComposeStatusError",
+			Msg: fmt.Sprintf("Error getting status of compose %s: %s", id, err),
+		}
+		statusResponseError(writer, http.StatusInternalServerError, errors)
+		return
+	}
 	if composeStatus.State == ComposeWaiting {
 		errors := responseError{
 			ID:  "BuildInWrongState",
@@ -3320,7 +3398,11 @@ func (api *API) composeFinishedHandler(writer http.ResponseWriter, request *http
 
 	includeUploads := isRequestVersionAtLeast(params, 1)
 	for id, compose := range api.store.GetAllComposes() {
-		composeStatus := api.getComposeStatus(compose)
+		composeStatus, err := api.getComposeStatus(compose)
+		if err != nil {
+			log.Printf("Error getting status of compose %s: %s", id, err)
+			continue
+		}
 		if composeStatus.State != ComposeFinished {
 			continue
 		}
@@ -3343,7 +3425,11 @@ func (api *API) composeFailedHandler(writer http.ResponseWriter, request *http.R
 
 	includeUploads := isRequestVersionAtLeast(params, 1)
 	for id, compose := range api.store.GetAllComposes() {
-		composeStatus := api.getComposeStatus(compose)
+		composeStatus, err := api.getComposeStatus(compose)
+		if err != nil {
+			log.Printf("Error getting status of compose %s: %s", id, err)
+			continue
+		}
 		if composeStatus.State != ComposeFailed {
 			continue
 		}
