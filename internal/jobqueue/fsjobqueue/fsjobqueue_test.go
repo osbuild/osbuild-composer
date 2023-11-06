@@ -1,6 +1,8 @@
 package fsjobqueue_test
 
 import (
+	"os"
+	"path"
 	"testing"
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
@@ -27,4 +29,16 @@ func TestNonExistant(t *testing.T) {
 	q, err := fsjobqueue.New("/non-existant-directory")
 	require.Error(t, err)
 	require.Nil(t, q)
+}
+
+func TestJobQueueBadJSON(t *testing.T) {
+	dir := t.TempDir()
+
+	// Write a purposfully invalid JSON file into the queue
+	err := os.WriteFile(path.Join(dir, "/4f1cf5f8-525d-46b7-aef4-33c6a919c038.json"), []byte("{invalid json content"), 0600)
+	require.Nil(t, err)
+
+	q, err := fsjobqueue.New(dir)
+	require.Nil(t, err)
+	require.NotNil(t, q)
 }
