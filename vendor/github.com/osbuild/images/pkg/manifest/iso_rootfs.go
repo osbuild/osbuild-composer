@@ -30,12 +30,12 @@ func (p *ISORootfsImg) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 		Paths: []osbuild.MkdirStagePath{
 			{
-				Path: "LiveOS",
+				Path: "/LiveOS",
 			},
 		},
 	}))
 	pipeline.AddStage(osbuild.NewTruncateStage(&osbuild.TruncateStageOptions{
-		Filename: "LiveOS/rootfs.img",
+		Filename: "/LiveOS/rootfs.img",
 		Size:     fmt.Sprintf("%d", p.Size),
 	}))
 
