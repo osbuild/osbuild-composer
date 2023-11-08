@@ -60,6 +60,8 @@ jobs:
         ports:
           - 5432:5432
     steps:
+    - name: Apt update
+      run: sudo apt-get update
       # gpgme-devel is needed for container upload dependencies
     - name: Install test dependencies
       run: sudo apt-get install -y libgpgme-dev
@@ -116,6 +118,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Apt update
+        run: sudo apt-get update
 
       # This is needed to lint internal/upload/koji package
       - name: Install kerberos devel package
