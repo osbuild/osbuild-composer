@@ -153,11 +153,11 @@ func deviceName(p disk.Entity) string {
 
 	switch payload := p.(type) {
 	case disk.Mountable:
-		return pathdot(payload.GetMountpoint())
+		return pathEscape(payload.GetMountpoint())
 	case *disk.LUKSContainer:
 		return "luks-" + payload.UUID[:4]
 	case *disk.LVMVolumeGroup:
-		return payload.Name + "vg"
+		return payload.Name
 	case *disk.LVMLogicalVolume:
 		return payload.Name
 	}
@@ -206,12 +206,21 @@ func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[str
 	return do, parent
 }
 
-func pathdot(path string) string {
-	if path == "/" {
-		return "root"
+// pathEscape implements similar path escaping as used by systemd-escape
+// https://github.com/systemd/systemd/blob/c57ff6230e4e199d40f35a356e834ba99f3f8420/src/basic/unit-name.c#L389
+func pathEscape(path string) string {
+	if len(path) == 0 || path == "/" {
+		return "-"
 	}
 
-	path = strings.TrimLeft(path, "/")
+	path = strings.Trim(path, "/")
 
-	return strings.ReplaceAll(path, "/", ".")
+	escapeChars := func(s, char string) string {
+		return strings.ReplaceAll(s, char, fmt.Sprintf("\\x%x", char[0]))
+	}
+
+	path = escapeChars(path, "\\")
+	path = escapeChars(path, "-")
+
+	return strings.ReplaceAll(path, "/", "-")
 }
