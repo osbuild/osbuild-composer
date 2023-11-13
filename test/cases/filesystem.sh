@@ -120,7 +120,7 @@ greenprint "🚀 Checking custom filesystems (success case)"
 
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "rhel85-custom-filesystem"
+name = "custom-filesystem"
 description = "A base system with custom mountpoints"
 version = "0.0.1"
 
@@ -173,7 +173,7 @@ mountpoint = "/data"
 size = 131072000
 EOF
 
-build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem qcow2 false
+build_image "$BLUEPRINT_FILE" custom-filesystem qcow2 false
 
 # Download the image.
 greenprint "📥 Downloading the image"
@@ -199,7 +199,7 @@ check_result "Passing"
 # Clean compose and blueprints.
 greenprint "🧼 Clean up osbuild-composer again"
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-sudo composer-cli blueprints delete rhel85-custom-filesystem > /dev/null
+sudo composer-cli blueprints delete custom-filesystem > /dev/null
 
 ##################################################
 ##
@@ -211,7 +211,7 @@ greenprint "🚀 Checking custom filesystems (fail case)"
 
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
-name = "rhel85-custom-filesystem-fail"
+name = "custom-filesystem-fail"
 description = "A base system with custom mountpoints"
 version = "0.0.1"
 
@@ -229,8 +229,8 @@ size = 131072000
 
 EOF
 
-# build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem-fail qcow2 true
-build_image "$BLUEPRINT_FILE" rhel85-custom-filesystem-fail qcow2 true
+# build_image "$BLUEPRINT_FILE" custom-filesystem-fail qcow2 true
+build_image "$BLUEPRINT_FILE" custom-filesystem-fail qcow2 true
 
 # Clear the test variable
 FAILED_MOUNTPOINTS=()
@@ -247,7 +247,7 @@ check_result "Failing"
 
 # Clean compose and blueprints.
 greenprint "🧼 Clean up osbuild-composer again"
-sudo composer-cli blueprints delete rhel85-custom-filesystem-fail > /dev/null
+sudo composer-cli blueprints delete custom-filesystem-fail > /dev/null
 
 clean_up
 
