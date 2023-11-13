@@ -103,8 +103,21 @@ objects:
             value: "${PGSSLMODE}"
           - name: PGMAXCONNS
             value: "${PGMAXCONNS}"
-          - name: SYSLOG_SERVER
-            value: "localhost:5140"
+          # Splunk forwarding
+          - name: SPLUNK_HEC_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: splunk
+                key: token
+                optional: true
+          - name: SPLUNK_HEC_HOST
+            valueFrom:
+              secretKeyRef:
+                name: splunk
+                key: url
+                optional: true
+          - name: SPLUNK_HEC_PORT
+            value: "${SPLUNK_HEC_PORT}"
           ports:
           - name: composer-api
             protocol: TCP
@@ -123,32 +136,6 @@ objects:
             mountPath: "/var/lib/osbuild-composer"
           - name: cache-directory
             mountPath: "/var/cache/osbuild-composer"
-        - image: "quay.io/app-sre/fluentd-hec:1.2.13"
-          name: fluentd-sidecar
-          resources:
-            requests:
-              cpu: "${FLUENTD_CPU_REQUEST}"
-              memory: "${MEMORY_REQUEST}"
-            limits:
-              cpu: "${FLUENTD_CPU_LIMIT}"
-              memory: "${MEMORY_LIMIT}"
-          env:
-            - name: SPLUNK_HEC_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: splunk
-                  key: token
-                  optional: false
-            - name: SPLUNK_HEC_URL
-              valueFrom:
-                secretKeyRef:
-                  name: splunk
-                  key: url
-                  optional: false
-          volumeMounts:
-            - name: fluentd-config
-              mountPath: /fluentd/etc
-              readOnly: true
         volumes:
         - name: composer-config
           configMap:
@@ -157,9 +144,6 @@ objects:
           emptyDir: {}
         - name: cache-directory
           emptyDir: {}
-        - name: fluentd-config
-          configMap:
-            name: fluentd-config
         initContainers:
         - name: composer-migrate
           image: "${IMAGE_NAME}:${IMAGE_TAG}"
@@ -273,30 +257,6 @@ objects:
       jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
-- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: fluentd-config
-  data:
-    fluent.conf: |
-      <source>
-        @type syslog
-        port 5140
-        bind 127.0.0.1
-        <transport tcp>
-        </transport>
-        tag osbuild-composer
-        <parse>
-          time_format %Y-%m-%dT%H:%M:%SZ
-        </parse>
-      </source>
-
-      <match **>
-        @type splunk_hec
-        hec_host "#{ENV['SPLUNK_HEC_URL']}"
-        hec_port "${SPLUNK_HEC_PORT}"
-        hec_token "#{ENV['SPLUNK_HEC_TOKEN']}"
-      </match>
 - apiVersion: batch/v1
   kind: CronJob
   metadata:
@@ -523,7 +483,6 @@ parameters:
     name: MAINTENANCE_MAX_CONCURRENT_REQUESTS
     value: "10"
     required: true
-  - description: fluentd-hec splunk port
+  - description: Splunk HTTP Event Collector port
     name: SPLUNK_HEC_PORT
     value: "443"
-    required: true

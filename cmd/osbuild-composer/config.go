@@ -18,6 +18,9 @@ type ComposerConfigFile struct {
 	LogLevel     string          `toml:"log_level"`
 	LogFormat    string          `toml:"log_format"`
 	DNFJson      string          `toml:"dnf-json"`
+	SplunkHost   string          `env:"SPLUNK_HEC_HOST"`
+	SplunkPort   string          `env:"SPLUNK_HEC_PORT"`
+	SplunkToken  string          `env:"SPLUNK_HEC_TOKEN"`
 }
 
 type KojiAPIConfig struct {
