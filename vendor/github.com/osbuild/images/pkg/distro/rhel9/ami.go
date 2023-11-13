@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/images/pkg/subscription"
 )
 
+// TODO: move these to the EC2 environment
 const amiKernelOptions = "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295"
 
 var (
