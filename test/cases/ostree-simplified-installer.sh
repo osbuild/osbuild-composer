@@ -26,6 +26,11 @@ do
 done
 # Prepare service api server config filef
 sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
+if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
+    # Modify manufacturing server config to process fdo
+    # guest interface during onboarding
+    sudo sed -i 's/SerialNumber/MACAddress/g' /etc/fdo/aio/configs/manufacturing_server.yml
+fi
 sudo systemctl restart fdo-aio
 
 # workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2213660
@@ -538,6 +543,9 @@ done
 # Check image installation result
 check_result
 
+# Get VM interface name in advance
+MFG_GUEST_INT_NAME=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "simple@${EDGE_GUEST_ADDRESS}" "nmcli device status | grep ethernet & exit" | awk '{print $1}')
+
 greenprint "🕹 Get ostree install commit value"
 INSTALL_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
 
@@ -610,6 +618,12 @@ manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_insecure="true"
 EOF
 
+if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+di_mfg_string_type_mac_iface="${MFG_GUEST_INT_NAME}"
+EOF
+fi
+
 # workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
 if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
@@ -617,6 +631,7 @@ if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
 append = "enforcing=0"
 EOF
 fi
+
 
 greenprint "📄 installer blueprint"
 cat "$BLUEPRINT_FILE"
@@ -743,6 +758,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
@@ -786,6 +802,12 @@ tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
 manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_hash="${DIUN_PUB_KEY_HASH}"
 EOF
+
+if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+di_mfg_string_type_mac_iface="${MFG_GUEST_INT_NAME}"
+EOF
+fi
 
 # workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
 if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
@@ -922,6 +944,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
@@ -1060,6 +1083,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
@@ -1111,6 +1135,12 @@ manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_root_certs="""
 ${DIUN_PUB_KEY_ROOT_CERTS}"""
 EOF
+
+if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+di_mfg_string_type_mac_iface="${MFG_GUEST_INT_NAME}"
+EOF
+fi
 
 # workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
 if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
@@ -1228,6 +1258,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
@@ -1370,6 +1401,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 

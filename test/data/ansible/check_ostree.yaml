@@ -1007,6 +1007,29 @@
     - debug:
         var: result_fdo_client_linuxapp_journalctl
 
+    # case: check fdo device mac in device info field within device credentials
+    - name: Check mac address within device credentials
+      block:
+        - name: Check MAC address of interface taken from fdo customization
+          shell: "cat /sys/class/net/{{ mfg_guest_int_name }}/address"
+          register: fdo_cust_mac_add
+        - name: Check mac within fdo device credentials
+          shell: fdo-owner-tool dump-device-credential /etc/device-credentials | grep -E 'Device Info' | awk '{print $3}'
+          register: dev_credentials_mac_add
+        - assert:
+            that:
+              - dev_credentials_mac_add.stdout == fdo_cust_mac_add.stdout
+            fail_msg: "Wrong device info within device credentials"
+            success_msg: "Device onboarded successfully via network interface"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: fdo_credential == "true"
+
     # case: checking firewall customizations
     - name: Check applied firewall customizations
       block:
