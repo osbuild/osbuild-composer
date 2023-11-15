@@ -53,6 +53,8 @@ type OSTreeDeployment struct {
 
 	EnabledServices  []string
 	DisabledServices []string
+
+	FIPS bool
 }
 
 // NewOSTreeDeployment creates a pipeline for an ostree deployment from a
@@ -158,6 +160,11 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			"ignition.platform.id="+p.ignitionPlatform,
 			"$ignition_firstboot",
 		)
+	}
+
+	if p.FIPS {
+		kernelOpts = append(kernelOpts, osbuild.GenFIPSKernelOptions(p.PartitionTable)...)
+		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
 	}
 
 	pipeline.AddStage(osbuild.NewOSTreeDeployStage(
@@ -299,6 +306,13 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		localeStage := osbuild.NewLocaleStage(options)
 		localeStage.MountOSTree(p.osName, commit.Ref, 0)
 		pipeline.AddStage(localeStage)
+	}
+
+	if p.FIPS {
+		for _, stage := range osbuild.GenFIPSStages() {
+			stage.MountOSTree(p.osName, commit.Ref, 0)
+			pipeline.AddStage(stage)
+		}
 	}
 
 	grubOptions := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,

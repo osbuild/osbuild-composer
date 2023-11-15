@@ -98,10 +98,10 @@ func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 		Paths: []osbuild.MkdirStagePath{
 			{
-				Path: "images",
+				Path: "/images",
 			},
 			{
-				Path: "images/pxeboot",
+				Path: "/images/pxeboot",
 			},
 		},
 	}))

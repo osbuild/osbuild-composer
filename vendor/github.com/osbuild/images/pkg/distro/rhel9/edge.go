@@ -69,6 +69,7 @@ var (
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.ToPtr("en_US.UTF-8"),
 		},
+		kernelOptions:       "modprobe.blacklist=vc4",
 		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
@@ -145,6 +146,7 @@ var (
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.ToPtr("en_US.UTF-8"),
 		},
+		kernelOptions:       amiKernelOptions + " modprobe.blacklist=vc4",
 		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
@@ -165,6 +167,7 @@ var (
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.ToPtr("en_US.UTF-8"),
 		},
+		kernelOptions:       "modprobe.blacklist=vc4",
 		defaultSize:         10 * common.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,

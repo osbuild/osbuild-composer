@@ -901,11 +901,11 @@ components:
       properties:
         selected:
           type: array
-          items: 
+          items:
             type: string
         unselected:
           type: array
-          items: 
+          items:
             type: string
     UploadOptions:
       anyOf:
@@ -1183,6 +1183,10 @@ components:
             there are one or more mountpoints in which case it will use LVM. 'lvm' always
             uses LVM, even when there are no extra mountpoints. 'raw' uses raw partitions
             even when there are one or more mountpoints.
+        fips:
+          type: boolean
+          description: |
+            Enables the system FIPS mode
     Container:
       type: object
       required:

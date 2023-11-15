@@ -386,6 +386,10 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 		bp.Customizations.Ignition = ignition
 	}
 
+	if request.Customizations.Fips != nil {
+		bp.Customizations.FIPS = request.Customizations.Fips
+	}
+
 	// Did bp.Customizations get set at all? If not, set it back to nil
 	if reflect.DeepEqual(*bp.Customizations, blueprint.Customizations{}) {
 		bp.Customizations = nil

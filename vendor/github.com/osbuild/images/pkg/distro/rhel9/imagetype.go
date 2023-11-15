@@ -305,7 +305,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		}
 
 		if t.name == "edge-simplified-installer" {
-			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group"}
+			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group", "FIPS"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return warnings, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
 			}
@@ -343,7 +343,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 				}
 			}
 		} else if t.name == "edge-installer" {
-			allowed := []string{"User", "Group"}
+			allowed := []string{"User", "Group", "FIPS"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return warnings, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
 			}
@@ -356,7 +356,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 			return warnings, fmt.Errorf("%q images require specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
 
-		allowed := []string{"Ignition", "Kernel", "User", "Group"}
+		allowed := []string{"Ignition", "Kernel", "User", "Group", "FIPS"}
 		if err := customizations.CheckAllowed(allowed...); err != nil {
 			return warnings, fmt.Errorf("unsupported blueprint customizations found for image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
 		}

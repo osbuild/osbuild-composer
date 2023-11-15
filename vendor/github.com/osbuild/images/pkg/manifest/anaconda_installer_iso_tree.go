@@ -155,10 +155,10 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 		Paths: []osbuild.MkdirStagePath{
 			{
-				Path: "images",
+				Path: "/images",
 			},
 			{
-				Path: "images/pxeboot",
+				Path: "/images/pxeboot",
 			},
 		},
 	}))
@@ -167,7 +167,7 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 			Paths: []osbuild.MkdirStagePath{
 				{
-					Path: "LiveOS",
+					Path: "/LiveOS",
 				},
 			},
 		}))
