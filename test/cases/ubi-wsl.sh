@@ -202,10 +202,11 @@ $AZURE_CMD vm open-port --resource-group "$AZURE_RESOURCE_GROUP" --name "wsl-vm-
 
 greenprint "🛃 Wait until the VM has a public IP"
 for LOOP_COUNTER in {0..30}; do
-    HOST=$($AZURE_CMD vm list-ip-addresses \
+    HOST=$($AZURE_CMD vm show \
+       --show-details \
        --resource-group "$AZURE_RESOURCE_GROUP" \
        --name "wsl-vm-$TEST_ID" \
-       --query "[].virtualMachine.network.publicIpAddresses[0].ipAddress" \
+       --query "publicIps" \
        --output tsv)
 
     if echo "$HOST" | grep -Eq "^([0-9]{1,3}[\.]){3}[0-9]{1,3}$"; then
