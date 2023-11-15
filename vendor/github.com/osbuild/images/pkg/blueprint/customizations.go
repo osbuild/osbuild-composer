@@ -211,10 +211,11 @@ func (c *Customizations) GetUsers() []UserCustomization {
 
 	// prepend sshkey for backwards compat (overridden by users)
 	if len(c.SSHKey) > 0 {
-		for _, c := range c.SSHKey {
+		for idx := range c.SSHKey {
+			keyc := c.SSHKey[idx]
 			users = append(users, UserCustomization{
-				Name: c.User,
-				Key:  &c.Key,
+				Name: keyc.User,
+				Key:  &keyc.Key,
 			})
 		}
 	}
