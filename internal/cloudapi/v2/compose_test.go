@@ -127,6 +127,7 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 				"1.north-america.pool.ntp.org",
 			}),
 		},
+		Fips: &FIPS{Enabled: common.ToPtr(true)},
 	}}
 
 	// Construct the expected blueprint result
@@ -227,6 +228,7 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 				"1.north-america.pool.ntp.org",
 			},
 		},
+		FIPS: common.ToPtr(true),
 	}
 	bp, err = cr.GetBlueprintWithCustomizations()
 	require.Nil(t, err)
