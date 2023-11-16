@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -euo pipefail
 
 # Provision the software under test.
@@ -124,6 +125,9 @@ KERNEL_RT_PKG="kernel-rt"
 SYSROOT_RO="false"
 ANSIBLE_USER="admin"
 FDO_USER_ONBOARDING="false"
+
+# Set FIPS variable default
+FIPS="${FIPS:-false}"
 
 case "${ID}-${VERSION_ID}" in
     "rhel-8"* )
@@ -445,6 +449,12 @@ groups = ["wheel"]
 installation_device = "/dev/vda"
 EOF
 
+if [ "${FIPS}" == "true" ]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+fips = ${FIPS}
+EOF
+fi
+
 greenprint "📄 simplified_iso_without_fdo blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -547,6 +557,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -569,10 +580,17 @@ description = "A rhel-edge simplified-installer image"
 version = "0.0.1"
 modules = []
 groups = []
-
 [customizations]
 installation_device = "/dev/vda"
+EOF
 
+if [ "${FIPS}" == "true" ]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+fips = ${FIPS}
+EOF
+fi
+
+tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
 [[customizations.user]]
 name = "simple"
 description = "Administrator account"
@@ -706,7 +724,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=simple
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
@@ -719,6 +737,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -748,7 +767,15 @@ groups = []
 
 [customizations]
 installation_device = "/dev/vda"
+EOF
 
+if [ "${FIPS}" == "true" ]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+fips = ${FIPS}
+EOF
+fi
+
+tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
 [customizations.fdo]
 manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_hash="${DIUN_PUB_KEY_HASH}"
@@ -871,7 +898,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=${ANSIBLE_USER}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
@@ -889,6 +916,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -1026,6 +1054,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 check_result
@@ -1062,7 +1091,15 @@ groups = []
 
 [customizations]
 installation_device = "/dev/vda"
+EOF
 
+if [ "${FIPS}" == "true" ]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+fips = ${FIPS}
+EOF
+fi
+
+tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
 [customizations.fdo]
 manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_root_certs="""
@@ -1172,7 +1209,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
@@ -1185,6 +1222,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -1326,6 +1364,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-simplified-installer \
     -e fdo_credential="true" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 check_result
