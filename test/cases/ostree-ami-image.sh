@@ -79,6 +79,9 @@ SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 IGNITION_USER=core
 
+# Set FIPS variable default
+FIPS="${FIPS:-false}"
+
 case "${ID}-${VERSION_ID}" in
     "rhel-9."*)
         OSTREE_REF="rhel/9/${ARCH}/edge"
@@ -575,7 +578,16 @@ description = "A rhel-edge ami"
 version = "0.0.1"
 modules = []
 groups = []
+EOF
 
+if [ "${FIPS}" == "true" ]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[customizations]
+fips = ${FIPS}
+EOF
+fi
+
+tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -856,6 +868,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-ami-image \
     -e ostree_commit="${INSTALL_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -1033,6 +1046,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-ami-image \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 

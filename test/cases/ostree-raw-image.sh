@@ -104,6 +104,9 @@ KERNEL_RT_PKG="kernel-rt"
 SYSROOT_RO="false"
 CUSTOM_DIRS_FILES="false"
 
+# Set FIPS variable default
+FIPS="${FIPS:-false}"
+
 case "${ID}-${VERSION_ID}" in
     "rhel-8"* )
         OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -418,6 +421,13 @@ modules = []
 groups = []
 EOF
 
+if [ "${FIPS}" == "true" ]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+[customizations]
+fips = ${FIPS}
+EOF
+fi
+
 # User in raw image blueprint is not for RHEL 9.1 and 8.7
 # Workaround for RHEL 9.1 and 8.7 nightly test
 if [[ "$USER_IN_RAW" == "true" ]]; then
@@ -573,6 +583,7 @@ EOF
         -e ostree_commit="${INSTALL_HASH}" \
         -e sysroot_ro="$SYSROOT_RO" \
         -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
+        -e fips="${FIPS}" \
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
 
@@ -740,6 +751,7 @@ EOF
         -e ostree_commit="${REBASE_HASH}" \
         -e sysroot_ro="$SYSROOT_RO" \
         -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
+        -e fips="${FIPS}" \
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
     check_result
@@ -845,6 +857,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${INSTALL_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -1036,6 +1049,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 

@@ -91,7 +91,11 @@ IGNITION_SERVER_URL=http://${HOST_IP_ADDRESS}/ignition
 IGNITION_USER=core
 IGNITION_USER_PASSWORD=foobar
 
+# Set up variables.
 SYSROOT_RO="true"
+
+# Set FIPS variable default
+FIPS="${FIPS:-false}"
 
 DATACENTER_70="Datacenter7.0"
 DATASTORE_70="datastore-80"
@@ -420,7 +424,16 @@ description = "A rhel-edge vmdk image"
 version = "0.0.1"
 modules = []
 groups = []
+EOF
 
+if [ "${FIPS}" == "true" ]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[customizations]
+fips = ${FIPS}
+EOF
+fi
+
+tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
@@ -520,6 +533,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-vsphere \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -653,6 +667,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e edge_type=edge-vsphere \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 check_result

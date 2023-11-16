@@ -111,6 +111,9 @@ KERNEL_RT_PKG="kernel-rt"
 # Set up variables.
 SYSROOT_RO="false"
 
+# Set FIPS variable default
+FIPS="${FIPS:-false}"
+
 case "${ID}-${VERSION_ID}" in
     fedora-*)
         CONTAINER_TYPE=iot-container
@@ -499,7 +502,16 @@ description = "A rhel-edge installer image"
 version = "0.0.1"
 modules = []
 groups = []
+EOF
 
+if [ "${FIPS}" == "true" ]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[customizations]
+fips = ${FIPS}
+EOF
+fi
+
+tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[customizations.user]]
 name = "installeruser"
 description = "Added by installer blueprint"
@@ -628,6 +640,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -717,6 +730,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 # Check image installation result
@@ -901,6 +915,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e embeded_container="${EMBEDED_CONTAINER}" \
     -e test_custom_dirs_files="${DIRS_FILES_CUSTOMIZATION}" \
     -e sysroot_ro="$SYSROOT_RO" \
+    -e fips="${FIPS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
