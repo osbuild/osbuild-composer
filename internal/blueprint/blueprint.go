@@ -334,6 +334,9 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 			iservices := iblueprint.ServicesCustomization(*services)
 			customizations.Services = &iservices
 		}
+		if fips := c.FIPS; fips != nil {
+			customizations.FIPS = fips
+		}
 	}
 
 	ibp := iblueprint.Blueprint{
