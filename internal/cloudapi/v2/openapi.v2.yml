@@ -1233,6 +1233,8 @@ components:
             there are one or more mountpoints in which case it will use LVM. 'lvm' always
             uses LVM, even when there are no extra mountpoints. 'raw' uses raw partitions
             even when there are one or more mountpoints.
+        fips:
+          $ref: '#/components/schemas/FIPS'
     Container:
       type: object
       required:
@@ -1507,6 +1509,15 @@ components:
           type: string
         diun_pub_key_root_certs:
           type: string
+    FIPS:
+      type: object
+      additionalProperties: false
+      description: System FIPS mode setup
+      properties:
+        enabled:
+          type: boolean
+          description: Enables the system FIPS mode
+          default: false
     Ignition:
       type: object
       additionalProperties: false
