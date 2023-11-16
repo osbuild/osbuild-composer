@@ -13,6 +13,7 @@
     ignition: "false"
     test_custom_dirs_files: "false"
     sysroot_ro: "false"
+    fips: "false"
 
   tasks:
     # current target host's IP address
@@ -74,6 +75,22 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: "'rt' in result_kernel.stdout"
+
+    - name: check system FIPS mode
+      block:
+        - name: run 'fips-mode-setup --check'
+          command: fips-mode-setup --check
+          register: fips_mode_setup
+
+        - name: check 'fips-mode-setup --check' output
+          assert:
+            that:
+              - "'FIPS mode is enabled' in fips_mode_setup.stdout"
+              - "'FIPS mode is disabled' not in fips_mode_setup.stdout"
+              - "'Installation of FIPS modules is not completed' not in fips_mode_setup.stdout"
+              - "'Inconsistent state detected' not in fips_mode_setup.stdout"
+            fail_msg: "FIPS mode not enabled"
+      when: fips == "true"
 
     # first installed or upgraded
     # first installed has one commit, but upgraded has two
