@@ -12,7 +12,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 	github.com/BurntSushi/toml v1.3.2
-	github.com/aws/aws-sdk-go v1.47.9
+	github.com/aws/aws-sdk-go v1.47.12
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f
 	github.com/deepmap/oapi-codegen v1.8.2
@@ -29,9 +29,9 @@ require (
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
 	github.com/labstack/echo/v4 v4.11.3
 	github.com/labstack/gommon v0.4.1
-	github.com/openshift-online/ocm-sdk-go v0.1.385
+	github.com/openshift-online/ocm-sdk-go v0.1.386
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
-	github.com/osbuild/images v0.15.0
+	github.com/osbuild/images v0.16.0
 	github.com/osbuild/pulp-client v0.1.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/segmentio/ksuid v1.0.4
