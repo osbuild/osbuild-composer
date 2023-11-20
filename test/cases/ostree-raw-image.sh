@@ -107,6 +107,9 @@ CUSTOM_DIRS_FILES="false"
 # Set FIPS variable default
 FIPS="${FIPS:-false}"
 
+# Generate the user's password hash
+EDGE_USER_PASSWORD_SHA512=$(openssl passwd -6 -stdin <<< "${EDGE_USER_PASSWORD:-foobar}")
+
 case "${ID}-${VERSION_ID}" in
     "rhel-8"* )
         OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -350,7 +353,7 @@ if [[ "$USER_IN_RAW" == "false" ]]; then
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
@@ -435,7 +438,7 @@ if [[ "$USER_IN_RAW" == "true" ]]; then
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
@@ -617,7 +620,7 @@ name = "${KERNEL_RT_PKG}"
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
@@ -708,8 +711,8 @@ EOF
 
     # Rebase image/commit.
     greenprint "🗳 Rebase ostree image/commit"
-    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree rebase ${REF_PREFIX}:${OSTREE_REF}"
-    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |sudo -S rpm-ostree rebase ${REF_PREFIX}:${OSTREE_REF}"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${BIOS_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
     # Sleep 10 seconds here to make sure vm restarted already
     sleep 10
@@ -904,7 +907,7 @@ if [[ "$USER_IN_RAW" == "false" ]]; then
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
@@ -999,14 +1002,14 @@ if [[ "$ID" == "fedora" ]]; then
     # The Fedora IoT Raw image sets the fedora-iot remote URL to https://ostree.fedoraproject.org/iot
     # Replacing with our own local repo
     greenprint "Replacing default remote"
-    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote delete ${OSTREE_OSNAME}"
-    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote add --no-gpg-verify ${OSTREE_OSNAME} ${PROD_REPO_URL}"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |sudo -S ostree remote delete ${OSTREE_OSNAME}"
+    sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |sudo -S ostree remote add --no-gpg-verify ${OSTREE_OSNAME} ${PROD_REPO_URL}"
 fi
 
 # Upgrade image/commit.
 greenprint "🗳 Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |sudo -S rpm-ostree upgrade"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${UEFI_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10

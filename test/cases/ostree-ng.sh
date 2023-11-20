@@ -114,6 +114,10 @@ SYSROOT_RO="false"
 # Set FIPS variable default
 FIPS="${FIPS:-false}"
 
+# Generate the user's password hash
+EDGE_USER_PASSWORD="${EDGE_USER_PASSWORD:-foobar}"
+EDGE_USER_PASSWORD_SHA512=$(openssl passwd -6 -stdin <<< "${EDGE_USER_PASSWORD}")
+
 case "${ID}-${VERSION_ID}" in
     fedora-*)
         CONTAINER_TYPE=iot-container
@@ -402,7 +406,7 @@ version = "*"
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
@@ -515,7 +519,7 @@ tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[customizations.user]]
 name = "installeruser"
 description = "Added by installer blueprint"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 key = "${SSH_KEY_PUB}"
 home = "/home/installeruser/"
 groups = ["wheel"]
