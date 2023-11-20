@@ -1,13 +1,12 @@
 #!/bin/bash
-
 set -euo pipefail
-
-# Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh none
 
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
+
+# Provision the software under test.
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 

@@ -1,13 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+# Get OS data.
+source /etc/os-release
+ARCH=$(uname -m)
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
-# Get OS data.
-source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
-ARCH=$(uname -m)
 
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
@@ -44,10 +45,10 @@ EOF
 
 if ! sudo virsh net-info integration > /dev/null 2>&1; then
     sudo virsh net-define /tmp/integration.xml
-fi  
+fi
 if [[ $(sudo virsh net-info integration | grep 'Active' | awk '{print $2}') == 'no' ]]; then
     sudo virsh net-start integration
-fi  
+fi
 
 # Set up variables.
 TEST_UUID=$(uuidgen)
@@ -537,7 +538,7 @@ sudo tee "$IGNITION_CONFIG_SAMPLE_PATH" > /dev/null << EOF
 EOF
 sudo chmod +r "${IGNITION_CONFIG_SAMPLE_PATH}" "${IGNITION_CONFIG_PATH}"
 
-# Start AWS cli installation 
+# Start AWS cli installation
 curl "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o "awscliv2.zip"
 unzip awscliv2.zip > /dev/null
 sudo ./aws/install --update
