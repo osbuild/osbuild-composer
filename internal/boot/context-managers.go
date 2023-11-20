@@ -260,6 +260,8 @@ func WithSSHKeyPair(f func(privateKey, publicKey string) error) error {
 		cmd := exec.Command("ssh-keygen",
 			"-N", "",
 			"-f", privateKey,
+			"-t", "rsa-sha2-256",
+			"-b", "2048",
 		)
 
 		err := cmd.Run()

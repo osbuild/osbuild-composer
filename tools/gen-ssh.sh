@@ -3,7 +3,7 @@
 # Create SSH key
 SSH_DATA_DIR="$(mktemp -d)"
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
-ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa
+ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa-sha2-256 -b 2048
 
 # Change cloud-init/user-data ssh key
 key=" - $(cat "${SSH_KEY}".pub)"
