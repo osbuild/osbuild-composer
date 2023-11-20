@@ -1,15 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-# Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh none
-
-source /usr/libexec/tests/osbuild-composer/shared_lib.sh
-
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
 
+# Provision the software under test.
+/usr/libexec/osbuild-composer-test/provision.sh none
+
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"

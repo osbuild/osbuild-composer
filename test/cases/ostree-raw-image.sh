@@ -1,14 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
+# Get OS data.
+source /etc/os-release
+ARCH=$(uname -m)
+
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
-
-# Get OS data.
-source /etc/os-release
-ARCH=$(uname -m)
 
 # workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2213660
 if [[ "$VERSION_ID" == "9.3"  || "$VERSION_ID" == "9" ]]; then

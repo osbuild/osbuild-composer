@@ -1,12 +1,12 @@
 #!/bin/bash
 set -euox pipefail
 
-# Provision the software under test.
-/usr/libexec/osbuild-composer-test/provision.sh none
-
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
+
+# Provision the software under test.
+/usr/libexec/osbuild-composer-test/provision.sh none
 
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
@@ -576,7 +576,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=${IGNITION_USER}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${IGNITION_USER_PASSWORD}
 EOF
@@ -714,7 +714,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=${IGNITION_USER}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${IGNITION_USER_PASSWORD}
 EOF
@@ -1059,7 +1059,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=${IGNITION_USER}
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${IGNITION_USER_PASSWORD}
 EOF

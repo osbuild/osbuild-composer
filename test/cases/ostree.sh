@@ -2,7 +2,9 @@
 set -euo pipefail
 
 # Get OS data.
-source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /etc/os-release
+ARCH=$(uname -m)
+
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Get compose url if it's running on unsubscried RHEL
