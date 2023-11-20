@@ -226,6 +226,10 @@ clean_up () {
     fi
     # Remove qcow2 file.
     sudo rm -f "$LIBVIRT_IMAGE_PATH"
+    # Clear integration network
+    sudo virsh net-destroy integration
+    sudo virsh net-undefine integration
+
     # Remomve tmp dir.
     sudo rm -rf "$TEMPDIR"
     # Stop httpd
