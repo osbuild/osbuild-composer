@@ -4,7 +4,7 @@ package osbuild
 type OSTreePullStageOptions struct {
 	// Location of the ostree repo
 	Repo string `json:"repo"`
-	// Remote to configure for all commits
+	// Add the 'remote' to the ref spec
 	Remote string `json:"remote,omitempty"`
 }
 

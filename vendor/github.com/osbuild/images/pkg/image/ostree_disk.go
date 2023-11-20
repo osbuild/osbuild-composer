@@ -45,6 +45,8 @@ type OSTreeDiskImage struct {
 
 	Directories []*fsnode.Directory
 	Files       []*fsnode.File
+
+	FIPS bool
 }
 
 func NewOSTreeDiskImage(commit ostree.SourceSpec) *OSTreeDiskImage {
@@ -66,6 +68,7 @@ func baseRawOstreeImage(img *OSTreeDiskImage, m *manifest.Manifest, buildPipelin
 	osPipeline.SysrootReadOnly = img.SysrootReadOnly
 	osPipeline.Directories = img.Directories
 	osPipeline.Files = img.Files
+	osPipeline.FIPS = img.FIPS
 
 	// other image types (e.g. live) pass the workload to the pipeline.
 	osPipeline.EnabledServices = img.Workload.GetServices()
