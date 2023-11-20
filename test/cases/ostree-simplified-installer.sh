@@ -293,6 +293,10 @@ wait_for_fdo () {
 clean_up () {
     greenprint "🧼 Cleaning up"
 
+    # Clear integration network
+    sudo virsh net-destroy integration
+    sudo virsh net-undefine integration
+
     # Remove any status containers if exist
     sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
     # Remove all images
