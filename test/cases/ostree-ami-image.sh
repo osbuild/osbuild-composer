@@ -78,9 +78,15 @@ SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 IGNITION_USER=core
+IGNITION_USER_PASSWORD="${IGNITION_USER_PASSWORD:-foobar}"
+IGNITION_USER_PASSWORD_SHA512=$(openssl passwd -6 -stdin <<< "${IGNITION_USER_PASSWORD}")
 
 # Set FIPS variable default
 FIPS="${FIPS:-false}"
+
+# Generate the user's password hash
+EDGE_USER_PASSWORD="${EDGE_USER_PASSWORD:-foobar}"
+EDGE_USER_PASSWORD_SHA512=$(openssl passwd -6 -stdin <<< "${EDGE_USER_PASSWORD}")
 
 case "${ID}-${VERSION_ID}" in
     "rhel-9."*)
@@ -481,7 +487,7 @@ sudo tee "$IGNITION_CONFIG_PATH" > /dev/null << EOF
           "wheel"
         ],
         "name": "$IGNITION_USER",
-        "passwordHash": "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl.",
+        "passwordHash": "${IGNITION_USER_PASSWORD_SHA512}",
         "sshAuthorizedKeys": [
           "$SSH_KEY_PUB"
         ]
@@ -591,7 +597,7 @@ tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
@@ -858,7 +864,7 @@ ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ansible_become=yes
 ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
+ansible_become_pass=${IGNITION_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
@@ -902,7 +908,7 @@ version = "*"
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 home = "/home/admin/"
 groups = ["wheel"]
 EOF
@@ -987,12 +993,12 @@ sudo ssh \
     "${SSH_OPTIONS[@]}" \
     -i "${SSH_KEY}" \
     admin@"${PUBLIC_GUEST_ADDRESS}" \
-    "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote delete rhel-edge"
+    "echo '${EDGE_USER_PASSWORD}' |sudo -S ostree remote delete rhel-edge"
 sudo ssh \
     "${SSH_OPTIONS[@]}" \
     -i "${SSH_KEY}" \
     admin@"${PUBLIC_GUEST_ADDRESS}" \
-    "echo ${EDGE_USER_PASSWORD} |sudo -S ostree remote add --no-gpg-verify rhel-edge ${OBJECT_URL}/repo"
+    "echo '${EDGE_USER_PASSWORD}' |sudo -S ostree remote add --no-gpg-verify rhel-edge ${OBJECT_URL}/repo"
 
 # Upgrade image/commit.
 greenprint "🗳 Upgrade ostree image/commit"
@@ -1000,12 +1006,12 @@ sudo ssh \
     "${SSH_OPTIONS[@]}" \
     -i "${SSH_KEY}" \
     admin@"${PUBLIC_GUEST_ADDRESS}" \
-    "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
+    "echo '${EDGE_USER_PASSWORD}' |sudo -S rpm-ostree upgrade"
 sudo ssh \
     "${SSH_OPTIONS[@]}" \
     -i "${SSH_KEY}" \
     admin@"${PUBLIC_GUEST_ADDRESS}" \
-    "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+    "echo '${EDGE_USER_PASSWORD}' |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
 # Sleep 10 seconds here to make sure EC2 instance restarted already
 sleep 10
@@ -1036,7 +1042,7 @@ ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ansible_become=yes
 ansible_become_method=sudo
-ansible_become_pass=${EDGE_USER_PASSWORD}
+ansible_become_pass=${IGNITION_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS

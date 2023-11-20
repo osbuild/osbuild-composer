@@ -89,13 +89,18 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 IGNITION_SERVER_FOLDER=/var/www/html/ignition
 IGNITION_SERVER_URL=http://${HOST_IP_ADDRESS}/ignition
 IGNITION_USER=core
-IGNITION_USER_PASSWORD=foobar
+IGNITION_USER_PASSWORD="${IGNITION_USER_PASSWORD:-foobar}"
+IGNITION_USER_PASSWORD_SHA512=$(openssl passwd -6 -stdin <<< "${IGNITION_USER_PASSWORD}")
 
 # Set up variables.
 SYSROOT_RO="true"
 
 # Set FIPS variable default
 FIPS="${FIPS:-false}"
+
+# Generate the user's password hash
+EDGE_USER_PASSWORD="${EDGE_USER_PASSWORD:-foobar}"
+EDGE_USER_PASSWORD_SHA512=$(openssl passwd -6 -stdin <<< "${EDGE_USER_PASSWORD}")
 
 DATACENTER_70="Datacenter7.0"
 DATASTORE_70="datastore-80"
@@ -363,7 +368,7 @@ sudo tee "$IGNITION_CONFIG_PATH" > /dev/null << EOF
           "wheel"
         ],
         "name": "$IGNITION_USER",
-        "passwordHash": "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl.",
+        "passwordHash": "${IGNITION_USER_PASSWORD_SHA512}",
         "sshAuthorizedKeys": [
           "$SSH_KEY_PUB"
         ]
@@ -437,7 +442,7 @@ tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [[customizations.user]]
 name = "admin"
 description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+password = "${EDGE_USER_PASSWORD_SHA512}"
 key = "${SSH_KEY_PUB}"
 home = "/home/admin/"
 groups = ["wheel"]
@@ -522,7 +527,7 @@ ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ansible_become=yes
 ansible_become_method=sudo
-ansible_become_pass=${IGNITION_USER_PASSWORD}
+ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF
 
 # Test IoT/Edge OS
