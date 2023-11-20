@@ -382,6 +382,7 @@ func edgeInstallerImage(workload workload.Workload,
 	img.OSName = "rhel"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+	img.FIPS = customizations.GetFIPS()
 
 	img.Filename = t.Filename()
 
@@ -404,6 +405,7 @@ func edgeRawImage(workload workload.Workload,
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+	img.FIPS = customizations.GetFIPS()
 
 	// The kernel options defined on the image type are usually handled in
 	// osCustomiztions() but ostree images don't use OSCustomizations, so we
@@ -468,6 +470,7 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())
+	rawImg.FIPS = customizations.GetFIPS()
 
 	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	rawImg.Keyboard = "us"

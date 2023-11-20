@@ -519,10 +519,7 @@ func iotImage(workload workload.Workload,
 	img.Workload = workload
 
 	img.Remote = ostree.Remote{
-		Name:        "fedora-iot",
-		URL:         "https://ostree.fedoraproject.org/iot",
-		ContentURL:  "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",
-		GPGKeyPaths: []string{"/etc/pki/rpm-gpg/"},
+		Name: "fedora-iot",
 	}
 	img.OSName = "fedora-iot"
 
@@ -585,9 +582,7 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.Platform = t.platform
 	rawImg.Workload = workload
 	rawImg.Remote = ostree.Remote{
-		Name:       "fedora-iot",
-		URL:        options.OSTree.URL,
-		ContentURL: options.OSTree.ContentURL,
+		Name: "fedora-iot",
 	}
 	rawImg.OSName = "fedora"
 
