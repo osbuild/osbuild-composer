@@ -24,7 +24,7 @@ until [ -f /etc/fdo/aio/configs/serviceinfo_api_server.yml ]
 do
     sleep 2
 done
-# Prepare service api server config filef
+# Prepare service api server config file
 sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
 # Fedora iot-simplified-installer uses /dev/vda3, https://github.com/osbuild/osbuild-composer/issues/3527
 if [[ "${ID}" == "fedora" ]]; then
@@ -127,7 +127,7 @@ KERNEL_RT_PKG="kernel-rt"
 
 # Set up variables.
 SYSROOT_RO="false"
-ANSIBLE_USER="admin"
+ANSIBLE_USER="simple"
 FDO_USER_ONBOARDING="false"
 IMAGE_TYPE=redhat
 
@@ -284,7 +284,7 @@ build_image() {
 
 # Wait for the ssh server up to be.
 wait_for_ssh_up () {
-    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
+    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@"${1}" '/bin/bash -c "echo -n READY"')
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
     else
@@ -294,7 +294,7 @@ wait_for_ssh_up () {
 
 # Wait for FDO onboarding finished.
 wait_for_fdo () {
-    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" "id -u ${ANSIBLE_USER} > /dev/null 2>&1 && echo -n READY")
+    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@"${1}" "id -u ${ANSIBLE_USER} > /dev/null 2>&1 && echo -n READY")
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
     else
@@ -385,14 +385,6 @@ version = "*"
 [[packages]]
 name = "sssd"
 version = "*"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-key = "${SSH_KEY_PUB}"
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
 
 # Fedora does not have kernel-rt
@@ -701,7 +693,7 @@ for _ in $(seq 0 30); do
 done
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "simple@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
@@ -772,6 +764,14 @@ groups = []
 
 [customizations]
 installation_device = "/dev/vda"
+
+[[customizations.user]]
+name = "simple"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/simple/"
+groups = ["wheel"]
 
 [customizations.fdo]
 manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
@@ -867,7 +867,7 @@ if [[ "${ANSIBLE_USER}" == "fdouser" ]]; then
 fi
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "simple@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
@@ -939,13 +939,6 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
 
 # Fedora does not have kernel-rt
@@ -1011,8 +1004,8 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete rebase > /dev/null
 
 greenprint "🗳 Rebase ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree rebase ${REF_PREFIX}:${OSTREE_REF}"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree rebase ${REF_PREFIX}:${OSTREE_REF}"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -1091,6 +1084,14 @@ groups = []
 
 [customizations]
 installation_device = "/dev/vda"
+
+[[customizations.user]]
+name = "simple"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/simple/"
+groups = ["wheel"]
 
 [customizations.fdo]
 manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
@@ -1173,7 +1174,7 @@ for _ in $(seq 0 30); do
 done
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "simple@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
@@ -1198,7 +1199,7 @@ ${EDGE_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
+ansible_user=simple
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ansible_become=yes 
@@ -1243,13 +1244,6 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
 
 # Fedora does not have kernel-rt
@@ -1316,8 +1310,8 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
 
 greenprint "🗳 Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |sudo -S rpm-ostree upgrade"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@${EDGE_GUEST_ADDRESS} "echo ${EDGE_USER_PASSWORD} |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
