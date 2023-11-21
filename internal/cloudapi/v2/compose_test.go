@@ -12,125 +12,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetBlueprintFromCustomizations(t *testing.T) {
-	// Empty request should return empty blueprint
-	cr := ComposeRequest{}
-	bp, err := cr.GetBlueprintFromCustomizations()
-	require.Nil(t, err)
-	assert.Equal(t, "empty blueprint", bp.Name)
-	assert.Equal(t, "0.0.0", bp.Version)
-	assert.Nil(t, bp.Customizations)
-
-	// Empty request should return empty blueprint
-	cr = ComposeRequest{
-		Customizations: &Customizations{},
-	}
-	bp, err = cr.GetBlueprintFromCustomizations()
-	require.Nil(t, err)
-	assert.Equal(t, "empty blueprint", bp.Name)
-	assert.Equal(t, "0.0.0", bp.Version)
-	assert.Nil(t, bp.Customizations)
-
+// GetTestBlueprint returns a populated blueprint
+// This is used in testing the Customizations compose request
+// and the Blueprint compose request.
+// They both result in the same final blueprint used to create the compose
+func GetTestBlueprint() blueprint.Blueprint {
 	// Test with customizations
 	expected := blueprint.Blueprint{Name: "empty blueprint"}
-	err = expected.Initialize()
-	require.Nil(t, err)
-
-	// interface{} is a terrible idea. Work around it...
-	var rootStr interface{} = "root"
-
-	// Construct the compose request with customizations
-	cr = ComposeRequest{Customizations: &Customizations{
-		Users: &[]User{
-			User{
-				Name:   "admin",
-				Key:    common.ToPtr("dummy ssh-key"),
-				Groups: &[]string{"users", "wheel"},
-			}},
-		Packages: &[]string{"bash", "tmux"},
-		Containers: &[]Container{
-			Container{
-				Name:   common.ToPtr("container-name"),
-				Source: "http://some.path.to/a/container/source",
-			},
-		},
-		Directories: &[]Directory{
-			Directory{
-				Path:          "/opt/extra",
-				EnsureParents: common.ToPtr(true),
-				User:          &rootStr,
-				Group:         &rootStr,
-				Mode:          common.ToPtr("0755"),
-			},
-		},
-		Files: &[]File{
-			File{
-				Path:          "/etc/mad.conf",
-				Data:          common.ToPtr("Alfred E. Neuman was here.\n"),
-				EnsureParents: common.ToPtr(true),
-				User:          &rootStr,
-				Group:         &rootStr,
-				Mode:          common.ToPtr("0644"),
-			},
-		},
-		Filesystem: &[]Filesystem{
-			Filesystem{
-				Mountpoint: "/var/lib/wopr/",
-				MinSize:    1099511627776,
-			},
-		},
-		Services: &Services{
-			Disabled: &[]string{"cleanup"},
-			Enabled:  &[]string{"sshd"},
-		},
-		Openscap: &OpenSCAP{ProfileId: "B 263-59"},
-		CustomRepositories: &[]CustomRepository{
-			CustomRepository{
-				Id:             "custom repo",
-				Metalink:       common.ToPtr("http://example.org/metalink"),
-				CheckGpg:       common.ToPtr(true),
-				Enabled:        common.ToPtr(true),
-				ModuleHotfixes: common.ToPtr(true),
-			},
-		},
-		Firewall: &FirewallCustomization{
-			Ports: common.ToPtr([]string{
-				"22/tcp",
-			}),
-		},
-		Hostname:           common.ToPtr("hostname"),
-		InstallationDevice: common.ToPtr("/dev/sda"),
-		Kernel: &Kernel{
-			Append: common.ToPtr("nosmt=force"),
-			Name:   common.ToPtr("kernel-debug"),
-		},
-		Locale: &Locale{
-			Keyboard: common.ToPtr("us"),
-			Languages: common.ToPtr([]string{
-				"en_US.UTF-8",
-			}),
-		},
-		Fdo: &FDO{
-			DiunPubKeyHash:          common.ToPtr("pubkeyhash"),
-			DiunPubKeyInsecure:      common.ToPtr("pubkeyinsecure"),
-			DiunPubKeyRootCerts:     common.ToPtr("pubkeyrootcerts"),
-			ManufacturingServerUrl:  common.ToPtr("serverurl"),
-			DiMfgStringTypeMacIface: common.ToPtr("iface"),
-		},
-		Ignition: &Ignition{
-			Firstboot: &IgnitionFirstboot{
-				Url: "provisioning-url.local",
-			},
-		},
-		Timezone: &Timezone{
-			Timezone: common.ToPtr("US/Eastern"),
-			Ntpservers: common.ToPtr([]string{
-				"0.north-america.pool.ntp.org",
-				"1.north-america.pool.ntp.org",
-			}),
-		},
-		Fips: &FIPS{Enabled: common.ToPtr(true)},
-	}}
+	err := expected.Initialize()
+	// An empty blueprint should never fail to initialize
+	if err != nil {
+		panic(err)
+	}
 
 	// Construct the expected blueprint result
 	// Packages
@@ -234,9 +127,261 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		},
 		FIPS: common.ToPtr(true),
 	}
+
+	return expected
+}
+
+func TestGetBlueprintFromCustomizations(t *testing.T) {
+	// Empty request should return empty blueprint
+	cr := ComposeRequest{}
+	bp, err := cr.GetBlueprintFromCustomizations()
+	require.Nil(t, err)
+	assert.Equal(t, "empty blueprint", bp.Name)
+	assert.Equal(t, "0.0.0", bp.Version)
+	assert.Nil(t, bp.Customizations)
+
+	// Empty request should return empty blueprint
+	cr = ComposeRequest{
+		Customizations: &Customizations{},
+	}
 	bp, err = cr.GetBlueprintFromCustomizations()
 	require.Nil(t, err)
-	assert.Equal(t, bp, expected)
+	assert.Equal(t, "empty blueprint", bp.Name)
+	assert.Equal(t, "0.0.0", bp.Version)
+	assert.Nil(t, bp.Customizations)
+
+	// interface{} is a terrible idea. Work around it...
+	var rootStr interface{} = "root"
+
+	// Construct the compose request with customizations
+	cr = ComposeRequest{Customizations: &Customizations{
+		Users: &[]User{
+			User{
+				Name:   "admin",
+				Key:    common.ToPtr("dummy ssh-key"),
+				Groups: &[]string{"users", "wheel"},
+			}},
+		Packages: &[]string{"bash", "tmux"},
+		Containers: &[]Container{
+			Container{
+				Name:   common.ToPtr("container-name"),
+				Source: "http://some.path.to/a/container/source",
+			},
+		},
+		Directories: &[]Directory{
+			Directory{
+				Path:          "/opt/extra",
+				EnsureParents: common.ToPtr(true),
+				User:          &rootStr,
+				Group:         &rootStr,
+				Mode:          common.ToPtr("0755"),
+			},
+		},
+		Files: &[]File{
+			File{
+				Path:          "/etc/mad.conf",
+				Data:          common.ToPtr("Alfred E. Neuman was here.\n"),
+				EnsureParents: common.ToPtr(true),
+				User:          &rootStr,
+				Group:         &rootStr,
+				Mode:          common.ToPtr("0644"),
+			},
+		},
+		Filesystem: &[]Filesystem{
+			Filesystem{
+				Mountpoint: "/var/lib/wopr/",
+				MinSize:    1099511627776,
+			},
+		},
+		Services: &Services{
+			Disabled: &[]string{"cleanup"},
+			Enabled:  &[]string{"sshd"},
+		},
+		Openscap: &OpenSCAP{ProfileId: "B 263-59"},
+		CustomRepositories: &[]CustomRepository{
+			CustomRepository{
+				Id:             "custom repo",
+				Metalink:       common.ToPtr("http://example.org/metalink"),
+				CheckGpg:       common.ToPtr(true),
+				Enabled:        common.ToPtr(true),
+				ModuleHotfixes: common.ToPtr(true),
+			},
+		},
+		Firewall: &FirewallCustomization{
+			Ports: common.ToPtr([]string{
+				"22/tcp",
+			}),
+		},
+		Hostname:           common.ToPtr("hostname"),
+		InstallationDevice: common.ToPtr("/dev/sda"),
+		Kernel: &Kernel{
+			Append: common.ToPtr("nosmt=force"),
+			Name:   common.ToPtr("kernel-debug"),
+		},
+		Locale: &Locale{
+			Keyboard: common.ToPtr("us"),
+			Languages: common.ToPtr([]string{
+				"en_US.UTF-8",
+			}),
+		},
+		Fdo: &FDO{
+			DiunPubKeyHash:          common.ToPtr("pubkeyhash"),
+			DiunPubKeyInsecure:      common.ToPtr("pubkeyinsecure"),
+			DiunPubKeyRootCerts:     common.ToPtr("pubkeyrootcerts"),
+			DiMfgStringTypeMacIface: common.ToPtr("iface"),
+			ManufacturingServerUrl:  common.ToPtr("serverurl"),
+		},
+		Ignition: &Ignition{
+			Firstboot: &IgnitionFirstboot{
+				Url: "provisioning-url.local",
+			},
+		},
+		Timezone: &Timezone{
+			Timezone: common.ToPtr("US/Eastern"),
+			Ntpservers: common.ToPtr([]string{
+				"0.north-america.pool.ntp.org",
+				"1.north-america.pool.ntp.org",
+			}),
+		},
+		Fips: &FIPS{Enabled: common.ToPtr(true)},
+	}}
+
+	bp, err = cr.GetBlueprintFromCustomizations()
+	require.Nil(t, err)
+	assert.Equal(t, GetTestBlueprint(), bp)
+}
+
+func TestGetBlueprintFromCompose(t *testing.T) {
+	// Empty request should return empty blueprint
+	cr := ComposeRequest{}
+	bp, err := cr.GetBlueprintFromCompose()
+	require.Nil(t, err)
+	assert.Equal(t, "empty blueprint", bp.Name)
+	assert.Equal(t, "0.0.0", bp.Version)
+	assert.Nil(t, bp.Customizations)
+
+	// Empty request should return empty blueprint
+	cr = ComposeRequest{
+		Blueprint: &Blueprint{},
+	}
+	bp, err = cr.GetBlueprintFromCompose()
+	require.Nil(t, err)
+	assert.Equal(t, "empty blueprint", bp.Name)
+	assert.Equal(t, "0.0.0", bp.Version)
+	assert.Nil(t, bp.Customizations)
+
+	// interface{} is a terrible idea. Work around it...
+	var rootStr interface{} = "root"
+
+	// Construct the compose request with a blueprint
+	cr = ComposeRequest{Blueprint: &Blueprint{
+		Name:     "empty blueprint",
+		Version:  common.ToPtr("0.0.0"),
+		Packages: &[]Package{{Name: "bash"}, {Name: "tmux"}},
+		Containers: &[]Container{
+			Container{
+				Name:   common.ToPtr("container-name"),
+				Source: "http://some.path.to/a/container/source",
+			},
+		},
+		Customizations: &BlueprintCustomizations{
+			User: &[]BlueprintUser{
+				{
+					Name:   "admin",
+					Key:    common.ToPtr("dummy ssh-key"),
+					Groups: &[]string{"users", "wheel"},
+				}},
+			Directories: &[]Directory{
+				Directory{
+					Path:          "/opt/extra",
+					EnsureParents: common.ToPtr(true),
+					User:          &rootStr,
+					Group:         &rootStr,
+					Mode:          common.ToPtr("0755"),
+				},
+			},
+			Files: &[]BlueprintFile{
+				{
+					Path:  "/etc/mad.conf",
+					Data:  common.ToPtr("Alfred E. Neuman was here.\n"),
+					User:  &rootStr,
+					Group: &rootStr,
+					Mode:  common.ToPtr("0644"),
+				},
+			},
+			Filesystem: &[]BlueprintFilesystem{
+				{
+					Mountpoint: "/var/lib/wopr/",
+					Minsize:    1099511627776,
+				},
+			},
+			Services: &Services{
+				Disabled: &[]string{"cleanup"},
+				Enabled:  &[]string{"sshd"},
+			},
+			Openscap: &BlueprintOpenSCAP{ProfileId: "B 263-59"},
+			Repositories: &[]BlueprintRepository{
+				{
+					Id:             "custom repo",
+					Metalink:       common.ToPtr("http://example.org/metalink"),
+					Gpgcheck:       common.ToPtr(true),
+					Enabled:        common.ToPtr(true),
+					ModuleHotfixes: common.ToPtr(true),
+				},
+			},
+			Firewall: &BlueprintFirewall{
+				Ports: common.ToPtr([]string{
+					"22/tcp",
+				}),
+			},
+			Hostname:           common.ToPtr("hostname"),
+			InstallationDevice: common.ToPtr("/dev/sda"),
+			Kernel: &Kernel{
+				Append: common.ToPtr("nosmt=force"),
+				Name:   common.ToPtr("kernel-debug"),
+			},
+			Locale: &Locale{
+				Keyboard: common.ToPtr("us"),
+				Languages: common.ToPtr([]string{
+					"en_US.UTF-8",
+				}),
+			},
+			Fdo: &FDO{
+				DiunPubKeyHash:          common.ToPtr("pubkeyhash"),
+				DiunPubKeyInsecure:      common.ToPtr("pubkeyinsecure"),
+				DiunPubKeyRootCerts:     common.ToPtr("pubkeyrootcerts"),
+				DiMfgStringTypeMacIface: common.ToPtr("iface"),
+				ManufacturingServerUrl:  common.ToPtr("serverurl"),
+			},
+			Ignition: &Ignition{
+				Firstboot: &IgnitionFirstboot{
+					Url: "provisioning-url.local",
+				},
+			},
+			Timezone: &Timezone{
+				Timezone: common.ToPtr("US/Eastern"),
+				Ntpservers: common.ToPtr([]string{
+					"0.north-america.pool.ntp.org",
+					"1.north-america.pool.ntp.org",
+				}),
+			},
+			Fips: common.ToPtr(true),
+		},
+	}}
+
+	bp, err = cr.GetBlueprintFromCompose()
+	require.Nil(t, err)
+	assert.Equal(t, GetTestBlueprint(), bp)
+}
+
+func TestGetBlueprint(t *testing.T) {
+	cr := ComposeRequest{}
+	bp, err := cr.GetBlueprint()
+	require.Nil(t, err)
+	require.Nil(t, err)
+	assert.Equal(t, "empty blueprint", bp.Name)
+	assert.Equal(t, "0.0.0", bp.Version)
+	assert.Nil(t, bp.Customizations)
 }
 
 func TestGetPayloadRepositories(t *testing.T) {
