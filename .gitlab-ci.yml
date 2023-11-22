@@ -647,7 +647,7 @@ Upgrade:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
   variables:
-    RUNNER: rhos-01/rhel-9.4-nightly-x86_64
+    RUNNER: rhos-01/rhel-9.4-nightly-x86_64-large
 
 NIGHTLY_FAIL:
   stage: finish
