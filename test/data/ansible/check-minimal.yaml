@@ -68,47 +68,47 @@
     - name: enable persistent logging on RHEL 9 and CS9 only
       command: journalctl --flush
       become: yes
-      when: ansible_facts['distribution_version'] == "9.3" or ansible_facts['distribution_version'] == "9"
+      when: ansible_facts['distribution_version'] == "9.4" or ansible_facts['distribution_version'] == "9"
 
-    - name: add RHEL 9.3 BaseOS repository
+    - name: add RHEL 9.4 BaseOS repository
       yum_repository:
         name: baseos
         description: RHEL repository
-        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.3.0/compose/BaseOS/{{ ansible_facts['architecture'] }}/os/"
+        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/{{ ansible_facts['architecture'] }}/os/"
         gpgcheck: no
         file: rhel_repo
       become: yes
-      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.3', '==')
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.4', '==')
 
-    - name: add RHEL 9.3 AppStream repository
+    - name: add RHEL 9.4 AppStream repository
       yum_repository:
         name: appstream
         description: RHEL repository
-        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.3.0/compose/AppStream/{{ ansible_facts['architecture'] }}/os/"
+        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/AppStream/{{ ansible_facts['architecture'] }}/os/"
         gpgcheck: no
         file: rhel_repo
       become: yes
-      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.3', '==')
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.4', '==')
 
-    - name: add RHEL 8.9 BaseOS repository
+    - name: add RHEL 8.10 BaseOS repository
       yum_repository:
         name: baseos
         description: RHEL repository
-        baseurl: "http://{{ download_node }}/rhel-8/nightly/RHEL-8/latest-RHEL-8.9.0/compose/BaseOS/{{ ansible_facts['architecture'] }}/os/"
+        baseurl: "http://{{ download_node }}/rhel-8/nightly/RHEL-8/latest-RHEL-8.10.0/compose/BaseOS/{{ ansible_facts['architecture'] }}/os/"
         gpgcheck: no
         file: rhel_repo
       become: yes
-      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('8.9', '==')
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('8.10', '==')
 
-    - name: add RHEL 8.9 AppStream repository
+    - name: add RHEL 8.10 AppStream repository
       yum_repository:
         name: appstream
         description: RHEL repository
-        baseurl: "http://{{ download_node }}/rhel-8/nightly/RHEL-8/latest-RHEL-8.9.0/compose/AppStream/{{ ansible_facts['architecture'] }}/os/"
+        baseurl: "http://{{ download_node }}/rhel-8/nightly/RHEL-8/latest-RHEL-8.10.0/compose/AppStream/{{ ansible_facts['architecture'] }}/os/"
         gpgcheck: no
         file: rhel_repo
       become: yes
-      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('8.9', '==')
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('8.10', '==')
 
     - name: install podman
       dnf:
