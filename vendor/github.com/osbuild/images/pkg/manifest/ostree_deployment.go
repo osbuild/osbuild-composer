@@ -53,6 +53,8 @@ type OSTreeDeployment struct {
 
 	EnabledServices  []string
 	DisabledServices []string
+
+	FIPS bool
 }
 
 // NewOSTreeDeployment creates a pipeline for an ostree deployment from a
@@ -160,6 +162,11 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		)
 	}
 
+	if p.FIPS {
+		kernelOpts = append(kernelOpts, osbuild.GenFIPSKernelOptions(p.PartitionTable)...)
+		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
+	}
+
 	pipeline.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: p.osName,
@@ -173,24 +180,21 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		},
 	))
 
-	remoteURL := p.Remote.URL
-	if remoteURL == "" {
-		// if the remote URL for the image is not specified, use the source commit URL
-		remoteURL = commit.URL
-	}
-	pipeline.AddStage(osbuild.NewOSTreeRemotesStage(
-		&osbuild.OSTreeRemotesStageOptions{
-			Repo: "/ostree/repo",
-			Remotes: []osbuild.OSTreeRemote{
-				{
-					Name:        p.Remote.Name,
-					URL:         remoteURL,
-					ContentURL:  p.Remote.ContentURL,
-					GPGKeyPaths: p.Remote.GPGKeyPaths,
+	if p.Remote.URL != "" {
+		pipeline.AddStage(osbuild.NewOSTreeRemotesStage(
+			&osbuild.OSTreeRemotesStageOptions{
+				Repo: "/ostree/repo",
+				Remotes: []osbuild.OSTreeRemote{
+					{
+						Name:        p.Remote.Name,
+						URL:         p.Remote.URL,
+						ContentURL:  p.Remote.ContentURL,
+						GPGKeyPaths: p.Remote.GPGKeyPaths,
+					},
 				},
 			},
-		},
-	))
+		))
+	}
 
 	pipeline.AddStage(osbuild.NewOSTreeFillvarStage(
 		&osbuild.OSTreeFillvarStageOptions{
@@ -299,6 +303,13 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		localeStage := osbuild.NewLocaleStage(options)
 		localeStage.MountOSTree(p.osName, commit.Ref, 0)
 		pipeline.AddStage(localeStage)
+	}
+
+	if p.FIPS {
+		for _, stage := range osbuild.GenFIPSStages() {
+			stage.MountOSTree(p.osName, commit.Ref, 0)
+			pipeline.AddStage(stage)
+		}
 	}
 
 	grubOptions := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,

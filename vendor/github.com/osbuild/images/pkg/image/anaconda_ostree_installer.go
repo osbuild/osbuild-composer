@@ -38,6 +38,7 @@ type AnacondaOSTreeInstaller struct {
 	AdditionalDracutModules   []string
 	AdditionalAnacondaModules []string
 	AdditionalDrivers         []string
+	FIPS                      bool
 }
 
 func NewAnacondaOSTreeInstaller(commit ostree.SourceSpec) *AnacondaOSTreeInstaller {
@@ -72,6 +73,12 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Checkpoint()
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
+	if img.FIPS {
+		anacondaPipeline.AdditionalAnacondaModules = append(
+			anacondaPipeline.AdditionalAnacondaModules,
+			"org.fedoraproject.Anaconda.Modules.Security",
+		)
+	}
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
 	rootfsPartitionTable := &disk.PartitionTable{
@@ -100,6 +107,9 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
 	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", isoLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isoLabel, kspath)}
+	if img.FIPS {
+		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
+	}
 
 	// enable ISOLinux on x86_64 only
 	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
