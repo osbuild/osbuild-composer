@@ -62,6 +62,7 @@ class Solver():
         """Makes a dnf.repo.Repo out of a JSON repository description"""
 
         repo = dnf.repo.Repo(desc["id"], parent_conf)
+        repo.module_hotfixes = True
 
         if "name" in desc:
             repo.name = desc["name"]
