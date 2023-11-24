@@ -362,6 +362,8 @@ clean_up
 ###############################
 
 # Write a blueprint for hardened image.
+# TODO: Remove firewalld rules from tailoring once https://github.com/ComplianceAsCode/content/issues/11275 is fixed
+# COMPOSER-2076 is tracking this workaround
 tee "${BLUEPRINT_FILE}" > /dev/null << EOF
 name = "hardened"
 description = "A hardened OpenSCAP image"
@@ -373,7 +375,7 @@ groups = []
 profile_id = "${PROFILE}"
 datastream = "${DATASTREAM}"
 [customizations.openscap.tailoring]
-unselected = ["grub2_password"]
+unselected = ["grub2_password", "firewalld_loopback_traffic_restricted", "firewalld_loopback_traffic_trusted"]
 
 [[customizations.user]]
 name = "${SSH_USER}"
