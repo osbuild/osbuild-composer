@@ -30,42 +30,6 @@ case "${ID}-${VERSION_ID}" in
         DIRS_FILES_CUSTOMIZATION="true"
         SYSROOT_RO="true"
         ;;
-    "rhel-8.4")
-        IMAGE_TYPE=edge-commit
-        OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8.4"
-        USER_IN_COMMIT="true"
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.4.0/BaseOS/x86_64/os/"
-        EMBEDED_CONTAINER="false"
-        FIREWALL_FEATURE="false"
-        DIRS_FILES_CUSTOMIZATION="false"
-        ;;
-    "rhel-8.7")
-        IMAGE_TYPE=edge-commit
-        OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8-unknown"
-        USER_IN_COMMIT="true"
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.7.0/BaseOS/x86_64/os/"
-        EMBEDED_CONTAINER="false"
-        FIREWALL_FEATURE="false"
-        DIRS_FILES_CUSTOMIZATION="false"
-        ;;
-    "rhel-8.8")
-        IMAGE_TYPE=edge-commit
-        OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8-unknown"
-        USER_IN_COMMIT="true"
-        EMBEDED_CONTAINER="true"
-        FIREWALL_FEATURE="true"
-        DIRS_FILES_CUSTOMIZATION="true"
-
-
-        # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.8.0/BaseOS/x86_64/os/"
-        if [ "${NIGHTLY:=false}" == "true" ]; then
-            BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
-        fi
-        ;;
     "rhel-8.10")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -77,33 +41,7 @@ case "${ID}-${VERSION_ID}" in
 
 
         # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.8.0/BaseOS/x86_64/os/"
-        if [ "${NIGHTLY:=false}" == "true" ]; then
-            BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
-        fi
-        ;;
-    "rhel-9.1")
-        IMAGE_TYPE=edge-commit
-        OSTREE_REF="rhel/9/${ARCH}/edge"
-        OS_VARIANT="rhel9.1"
-        USER_IN_COMMIT="true"
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.1.0/BaseOS/x86_64/os/"
-        EMBEDED_CONTAINER="false"
-        FIREWALL_FEATURE="false"
-        DIRS_FILES_CUSTOMIZATION="false"
-        ;;
-    "rhel-9.2")
-        IMAGE_TYPE=edge-commit
-        OSTREE_REF="rhel/9/${ARCH}/edge"
-        OS_VARIANT="rhel9-unknown"
-        USER_IN_COMMIT="true"
-        EMBEDED_CONTAINER="true"
-        FIREWALL_FEATURE="true"
-        DIRS_FILES_CUSTOMIZATION="true"
-        SYSROOT_RO="true"
-
-        # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.2.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-8/RHEL-8/8.9.0/BaseOS/x86_64/os/"
         if [ "${NIGHTLY:=false}" == "true" ]; then
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
@@ -119,7 +57,7 @@ case "${ID}-${VERSION_ID}" in
         SYSROOT_RO="true"
 
         # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.2.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.3.0/BaseOS/x86_64/os/"
         if [ "${NIGHTLY:=false}" == "true" ]; then
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
