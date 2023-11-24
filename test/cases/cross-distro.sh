@@ -109,9 +109,9 @@ fi
 ALL_DISTROS=$(find "$REPO_PATH" -name '*.json' -printf '%P\n' | awk -F "." '{ print $1 }')
 ALL_EXPECTED_DISTROS=$(echo "$ALL_DISTROS" | grep -E "$PATTERN" | grep -Ev 'beta|stream' | sort)
 # Warning: filter out the remaining distros by matching whole words to avoid matching
-# the value rhel-93 by the pattern rhel-9!
-# If we're running on a RHEL 9.3 osbuild-composer doesn't know anything about 9.4
-# images so the value rhel-9.4 should be treated as unrecognized and error out as
+# the value rhel-9X by the pattern rhel-9!
+# If we're running on a RHEL 9.X osbuild-composer doesn't know anything about 9.X+1
+# images so the value rhel-9.X+1 should be treated as unrecognized and error out as
 # expected in the test snippet further below
 ALL_REMAINDERS=$(echo "$ALL_DISTROS" | grep -vw "$RECOGNIZED_DISTROS")
 

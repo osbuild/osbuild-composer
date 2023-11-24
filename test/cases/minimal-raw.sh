@@ -86,10 +86,10 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 EDGE_USER_PASSWORD=foobar
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.10")
+    "rhel-8."*)
         OS_VARIANT="rhel8-unknown"
         ;;
-    "rhel-9.4")
+    "rhel-9."*)
         OS_VARIANT="rhel9-unknown"
         ;;
     "centos-8")
