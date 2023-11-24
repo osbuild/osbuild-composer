@@ -80,7 +80,7 @@ SSH_KEY_PUB=$(cat "${SSH_KEY}".pub)
 IGNITION_USER=core
 
 case "${ID}-${VERSION_ID}" in
-    "rhel-9.4")
+    "rhel-9."*)
         OSTREE_REF="rhel/9/${ARCH}/edge"
         SYSROOT_RO="true"
         ;;
