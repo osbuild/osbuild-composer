@@ -20,9 +20,6 @@ import time
 class Cli(contextlib.AbstractContextManager):
     """Command Line Interface"""
 
-    SYSLOG_RETRIES=5
-    SYSLOG_WAIT=2.0
-
     def __init__(self, argv):
         self.args = None
         self._argv = argv
@@ -287,25 +284,6 @@ class Cli(contextlib.AbstractContextManager):
         )
 
     @staticmethod
-    def _wait_for_syslog(addr):
-        print("Waiting for fluentd syslog server", file=sys.stderr)
-        for _ in range(Cli.SYSLOG_RETRIES):
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            try:
-                sock.connect(addr)
-            except ConnectionRefusedError:
-                time.sleep(Cli.SYSLOG_WAIT)
-                continue
-            except (NameError, ConnectionError) as ex:
-                print("Unexpected error:", ex , file=sys.stderr)
-                break
-            finally:
-                sock.close()
-
-            print("fluentd syslog server is up", file=sys.stderr)
-            break
-
-    @staticmethod
     def _spawn_composer(sockets):
         cmd = [
             "/usr/libexec/osbuild-composer/osbuild-composer",
@@ -359,9 +337,6 @@ class Cli(contextlib.AbstractContextManager):
                 proc_worker = self._spawn_worker()
 
             if any([self.args.weldr_api, self.args.composer_api, self.args.local_worker_api, self.args.remote_worker_api]):
-                if "SYSLOG_SERVER" in os.environ:
-                    addr, port = os.environ["SYSLOG_SERVER"].split(":")
-                    self._wait_for_syslog((addr, int(port)))
                 proc_composer = self._spawn_composer(sockets)
 
             if proc_composer:
