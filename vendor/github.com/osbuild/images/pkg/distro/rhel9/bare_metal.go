@@ -133,6 +133,20 @@ func installerPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}
 
+	ps = ps.Append(rpmmd.PackageSet{
+		// Extra packages that are required by the dracut stage of all installers.
+		// These are weak deps of other packages in the list above, but lets be
+		// explicit about what we need and not rely on the weak deps. Relying
+		// on hard-dependencies for other modules is OK for now.
+		//
+		// TODO: add these dynamically based on the modules enabled by each
+		// pipeline.
+		Include: []string{
+			"mdadm",
+			"nss-softokn",
+		},
+	})
+
 	switch t.arch.Name() {
 	case platform.ARCH_X86_64.String():
 		ps = ps.Append(rpmmd.PackageSet{
