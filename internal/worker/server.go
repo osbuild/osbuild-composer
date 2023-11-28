@@ -832,6 +832,19 @@ func (s *Server) RegisterWorker(a string) (uuid.UUID, error) {
 	return workerID, nil
 }
 
+func (s *Server) WorkerAvailableForArch(a string) (bool, error) {
+	workers, err := s.jobs.Workers(0)
+	if err != nil {
+		return false, err
+	}
+	for _, w := range workers {
+		if a == w.Arch {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // apiHandlers implements api.ServerInterface - the http api route handlers
 // generated from api/openapi.yml. This is a separate object, because these
 // handlers should not be exposed on the `Server` object.
