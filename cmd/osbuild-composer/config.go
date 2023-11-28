@@ -11,16 +11,15 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji         KojiAPIConfig   `toml:"koji"`
-	Worker       WorkerAPIConfig `toml:"worker"`
-	WeldrAPI     WeldrAPIConfig  `toml:"weldr_api"`
-	SyslogServer string          `toml:"syslog_server" env:"SYSLOG_SERVER"`
-	LogLevel     string          `toml:"log_level"`
-	LogFormat    string          `toml:"log_format"`
-	DNFJson      string          `toml:"dnf-json"`
-	SplunkHost   string          `env:"SPLUNK_HEC_HOST"`
-	SplunkPort   string          `env:"SPLUNK_HEC_PORT"`
-	SplunkToken  string          `env:"SPLUNK_HEC_TOKEN"`
+	Koji        KojiAPIConfig   `toml:"koji"`
+	Worker      WorkerAPIConfig `toml:"worker"`
+	WeldrAPI    WeldrAPIConfig  `toml:"weldr_api"`
+	LogLevel    string          `toml:"log_level"`
+	LogFormat   string          `toml:"log_format"`
+	DNFJson     string          `toml:"dnf-json"`
+	SplunkHost  string          `env:"SPLUNK_HEC_HOST"`
+	SplunkPort  string          `env:"SPLUNK_HEC_PORT"`
+	SplunkToken string          `env:"SPLUNK_HEC_TOKEN"`
 }
 
 type KojiAPIConfig struct {
