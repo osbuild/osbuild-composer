@@ -62,7 +62,7 @@ func main() {
 	}
 
 	if config.SplunkHost != "" {
-		hook, err := slogger.NewSplunkHook(context.Background(), config.SplunkHost, config.SplunkPort, config.SplunkToken, "composer")
+		hook, err := slogger.NewSplunkHook(context.Background(), config.SplunkHost, config.SplunkPort, config.SplunkToken, "osbuild-composer")
 
 		if err != nil {
 			panic(err)
