@@ -8,7 +8,6 @@ import (
 	"github.com/coreos/go-systemd/activation"
 	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/syslog"
 )
 
 const (
@@ -79,15 +78,6 @@ func main() {
 	cacheDir, ok := os.LookupEnv("CACHE_DIRECTORY")
 	if !ok {
 		logrus.Fatal("CACHE_DIRECTORY is not set. Is the service file missing CacheDirectory=?")
-	}
-
-	if len(config.SyslogServer) > 0 {
-		hook, err := syslog.NewSyslogHook("tcp", config.SyslogServer, 0, "osbuild-composer")
-		if err != nil {
-			logrus.Fatal("Error connecting to syslog: " + err.Error())
-		}
-
-		logrus.AddHook(hook)
 	}
 
 	composer, err := NewComposer(config, stateDir, cacheDir)
