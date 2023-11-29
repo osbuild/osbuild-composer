@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
@@ -61,7 +62,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	livePipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 
 	livePipeline.Variant = img.Variant
-	livePipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
+	livePipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 
 	livePipeline.Checkpoint()
 
@@ -103,7 +104,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	// enable ISOLinux on x86_64 only
-	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
+	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, livePipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = rootfsPartitionTable

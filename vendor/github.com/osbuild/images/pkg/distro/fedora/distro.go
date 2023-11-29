@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/fsnode"
 	"github.com/osbuild/images/internal/oscap"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -532,23 +533,23 @@ func newDistro(version int) distro.Distro {
 
 	// Architecture definitions
 	x86_64 := architecture{
-		name:   platform.ARCH_X86_64.String(),
+		name:   arch.ARCH_X86_64.String(),
 		distro: &rd,
 	}
 
 	aarch64 := architecture{
-		name:   platform.ARCH_AARCH64.String(),
+		name:   arch.ARCH_AARCH64.String(),
 		distro: &rd,
 	}
 
 	ppc64le := architecture{
 		distro: &rd,
-		name:   platform.ARCH_PPC64LE.String(),
+		name:   arch.ARCH_PPC64LE.String(),
 	}
 
 	s390x := architecture{
 		distro: &rd,
-		name:   platform.ARCH_S390X.String(),
+		name:   arch.ARCH_S390X.String(),
 	}
 
 	ociImgType := qcow2ImgType

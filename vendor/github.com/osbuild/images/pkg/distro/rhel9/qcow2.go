@@ -2,9 +2,9 @@ package rhel9
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/subscription"
 )
@@ -104,7 +104,7 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}.Append(coreOsCommonPackageSet(t))
 
-	if t.arch.Name() == platform.ARCH_X86_64.String() {
+	if t.arch.Name() == arch.ARCH_X86_64.String() {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				// packages below used to come from @core group and were not excluded
