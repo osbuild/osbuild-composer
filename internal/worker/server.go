@@ -823,6 +823,15 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 	return nil
 }
 
+func (s *Server) RegisterWorker(a string) (uuid.UUID, error) {
+	workerID, err := s.jobs.InsertWorker(a)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	logrus.Infof("Worker (%v) registered", a)
+	return workerID, nil
+}
+
 // apiHandlers implements api.ServerInterface - the http api route handlers
 // generated from api/openapi.yml. This is a separate object, because these
 // handlers should not be exposed on the `Server` object.
@@ -1037,11 +1046,10 @@ func (h *apiHandlers) PostWorkers(ctx echo.Context) error {
 		return err
 	}
 
-	workerID, err := h.server.jobs.InsertWorker(body.Arch)
+	workerID, err := h.server.RegisterWorker(body.Arch)
 	if err != nil {
 		return api.HTTPErrorWithInternal(api.ErrorInsertingWorker, err)
 	}
-	logrus.Infof("Worker (%v) registered", body.Arch)
 
 	return ctx.JSON(http.StatusCreated, api.PostWorkersResponse{
 		ObjectReference: api.ObjectReference{
