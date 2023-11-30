@@ -36,7 +36,6 @@ RUN mkdir -p "/usr/share/osbuild-composer/"
 RUN mkdir -p "/opt/migrate/"
 COPY --from=builder /opt/app-root/src/go/bin/osbuild-composer /usr/libexec/osbuild-composer/
 COPY ./containers/osbuild-composer/entrypoint.py /opt/entrypoint.py
-COPY ./dnf-json /usr/libexec/osbuild-composer/
 
 COPY ./pkg/jobqueue/dbjobqueue/schemas /opt/migrate/schemas
 COPY --from=builder2 /opt/app-root/src/go/bin/tern /opt/migrate/

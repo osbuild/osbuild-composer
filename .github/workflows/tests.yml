@@ -35,9 +35,6 @@ jobs:
       - name: Run unit tests
         run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
 
-      - name: Run dnfjson tests with force-dnf to make sure it's not skipped for any reason
-        run: go test -race ./internal/dnfjson/... -force-dnf
-
       - name: Send coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 

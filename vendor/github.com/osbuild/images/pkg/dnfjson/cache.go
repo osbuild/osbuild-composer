@@ -113,70 +113,71 @@ func newRPMCache(path string, maxSize uint64) *rpmCache {
 // cache creation. Any other errors like permission issues will be caught by
 // later use of the cache. eg. touchRepo
 func (r *rpmCache) updateInfo() {
+	// reset rpmCache fields used for accumulation
+	r.size = 0
+	r.repoElements = make(map[string]pathInfo)
+
+	repos := make(map[string]pathInfo)
+	repoIDs := make([]string, 0)
+
 	dirs, _ := os.ReadDir(r.root)
 	for _, d := range dirs {
-		r.updateCacheDirInfo(filepath.Join(r.root, d.Name()))
+		path := filepath.Join(r.root, d.Name())
+
+		// See updateInfo NOTE on error handling
+		cacheEntries, _ := os.ReadDir(path)
+
+		// Collect the paths grouped by their repo ID
+		// We assume the first 64 characters of a file or directory name are the
+		// repository ID because we use a sha256 sum of the repository config to
+		// create the ID (64 hex chars)
+		for _, entry := range cacheEntries {
+			eInfo, err := entry.Info()
+			if err != nil {
+				// skip it
+				continue
+			}
+
+			fname := entry.Name()
+			if len(fname) < 64 {
+				// unknown file in cache; ignore
+				continue
+			}
+			repoID := fname[:64]
+			repo, ok := repos[repoID]
+			if !ok {
+				// new repo ID
+				repoIDs = append(repoIDs, repoID)
+			}
+			mtime := eInfo.ModTime()
+			ePath := filepath.Join(path, entry.Name())
+
+			// calculate and add entry size
+			size, err := dirSize(ePath)
+			if err != nil {
+				// skip it
+				continue
+			}
+			repo.size += size
+
+			// add path
+			repo.paths = append(repo.paths, ePath)
+
+			// if for some reason the mtimes of the various entries of a single
+			// repository are out of sync, use the most recent one
+			if repo.mtime.Before(mtime) {
+				repo.mtime = mtime
+			}
+
+			// update the collection
+			repos[repoID] = repo
+
+			// update rpmCache object
+			r.repoElements[repoID] = repo
+			r.size += size
+		}
 	}
-}
 
-func (r *rpmCache) updateCacheDirInfo(path string) {
-	// See updateInfo NOTE on error handling
-	cacheEntries, _ := os.ReadDir(path)
-
-	// each repository has multiple cache entries (3 on average), so using the
-	// number of cacheEntries to allocate the map and ID slice is a high upper
-	// bound, but guarantees we wont need to grow and reallocate either.
-	repos := make(map[string]pathInfo, len(cacheEntries))
-	repoIDs := make([]string, 0, len(cacheEntries))
-
-	var totalSize uint64
-
-	// Collect the paths grouped by their repo ID
-	// We assume the first 64 characters of a file or directory name are the
-	// repository ID because we use a sha256 sum of the repository config to
-	// create the ID (64 hex chars)
-	for _, entry := range cacheEntries {
-		eInfo, err := entry.Info()
-		if err != nil {
-			// skip it
-			continue
-		}
-
-		fname := entry.Name()
-		if len(fname) < 64 {
-			// unknown file in cache; ignore
-			continue
-		}
-		repoID := fname[:64]
-		repo, ok := repos[repoID]
-		if !ok {
-			// new repo ID
-			repoIDs = append(repoIDs, repoID)
-		}
-		mtime := eInfo.ModTime()
-		ePath := filepath.Join(path, entry.Name())
-
-		// calculate and add entry size
-		size, err := dirSize(ePath)
-		if err != nil {
-			// skip it
-			continue
-		}
-		repo.size += size
-		totalSize += size
-
-		// add path
-		repo.paths = append(repo.paths, ePath)
-
-		// if for some reason the mtimes of the various entries of a single
-		// repository are out of sync, use the most recent one
-		if repo.mtime.Before(mtime) {
-			repo.mtime = mtime
-		}
-
-		// update the collection
-		repos[repoID] = repo
-	}
 	sortFunc := func(idx, jdx int) bool {
 		ir := repos[repoIDs[idx]]
 		jr := repos[repoIDs[jdx]]
@@ -186,8 +187,6 @@ func (r *rpmCache) updateCacheDirInfo(path string) {
 	// sort IDs by mtime (oldest first)
 	sort.Slice(repoIDs, sortFunc)
 
-	r.size = totalSize
-	r.repoElements = repos
 	r.repoRecency = repoIDs
 }
 

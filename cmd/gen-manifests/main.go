@@ -27,7 +27,7 @@ import (
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
 
-	"github.com/osbuild/osbuild-composer/internal/dnfjson"
+	"github.com/osbuild/images/pkg/dnfjson"
 )
 
 type multiValue []string
@@ -323,7 +323,6 @@ func resolvePipelineCommits(commitSources map[string][]ostree.SourceSpec) map[st
 
 func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch, d.Name(), cacheDir)
-	solver.SetDNFJSONPath("./dnf-json")
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	for name, pkgSet := range packageSets {
 		res, err := solver.Depsolve(pkgSet)

@@ -126,7 +126,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 		},
 		LogLevel:  "info",
 		LogFormat: "text",
-		DNFJson:   "/usr/libexec/osbuild-composer/dnf-json",
+		DNFJson:   "/usr/libexec/osbuild-depsolve-dnf",
 	}
 }
 
