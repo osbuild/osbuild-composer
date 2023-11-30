@@ -6,6 +6,7 @@ import (
 
 type ContainersInputReferences interface {
 	isContainersInputReferences()
+	Len() int
 }
 
 type ContainersInputSourceRef struct {
@@ -15,6 +16,10 @@ type ContainersInputSourceRef struct {
 type ContainersInputSourceMap map[string]ContainersInputSourceRef
 
 func (ContainersInputSourceMap) isContainersInputReferences() {}
+
+func (cism ContainersInputSourceMap) Len() int {
+	return len(cism)
+}
 
 type ContainersInput struct {
 	inputCommon

@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -24,12 +25,25 @@ type OSTreeDeployment struct {
 
 	OSVersion string
 
-	commitSource ostree.SourceSpec
-	ostreeSpecs  []ostree.CommitSpec
+	// commitSource represents the source that will be used to retrieve the
+	// ostree commit for this pipeline.
+	commitSource *ostree.SourceSpec
+
+	// ostreeSpec is the resolved commit that will be deployed in this pipeline.
+	ostreeSpec *ostree.CommitSpec
+
+	// containerSource represents the source that will be used to retrieve the
+	// ostree native container for this pipeline.
+	containerSource *container.SourceSpec
+
+	// containerSpec is the resolved ostree native container that will be
+	// deployed in this pipeline.
+	containerSpec *container.Spec
 
 	SysrootReadOnly bool
 
 	osName string
+	ref    string
 
 	KernelOptionsAppend []string
 	Keyboard            string
@@ -42,11 +56,9 @@ type OSTreeDeployment struct {
 
 	PartitionTable *disk.PartitionTable
 
-	// Whether ignition is in use or not
-	ignition bool
-
-	// Specifies the ignition platform to use
-	ignitionPlatform string
+	// Specifies the ignition platform to use.
+	// If empty, ignition is not enabled.
+	IgnitionPlatform string
 
 	Directories []*fsnode.Directory
 	Files       []*fsnode.File
@@ -55,25 +67,46 @@ type OSTreeDeployment struct {
 	DisabledServices []string
 
 	FIPS bool
+
+	// Lock the root account in the deployment unless the user defined root
+	// user options in the build configuration.
+	LockRoot bool
 }
 
-// NewOSTreeDeployment creates a pipeline for an ostree deployment from a
+// NewOSTreeCommitDeployment creates a pipeline for an ostree deployment from a
 // commit.
-func NewOSTreeDeployment(buildPipeline *Build,
+func NewOSTreeCommitDeployment(buildPipeline *Build,
 	m *Manifest,
-	commit ostree.SourceSpec,
+	commit *ostree.SourceSpec,
 	osName string,
-	ignition bool,
-	ignitionPlatform string,
 	platform platform.Platform) *OSTreeDeployment {
 
 	p := &OSTreeDeployment{
-		Base:             NewBase(m, "ostree-deployment", buildPipeline),
-		commitSource:     commit,
-		osName:           osName,
-		platform:         platform,
-		ignition:         ignition,
-		ignitionPlatform: ignitionPlatform,
+		Base:         NewBase(m, "ostree-deployment", buildPipeline),
+		commitSource: commit,
+		osName:       osName,
+		platform:     platform,
+	}
+	buildPipeline.addDependent(p)
+	m.addPipeline(p)
+	return p
+}
+
+// NewOSTreeDeployment creates a pipeline for an ostree deployment from a
+// container
+func NewOSTreeContainerDeployment(buildPipeline *Build,
+	m *Manifest,
+	container *container.SourceSpec,
+	ref string,
+	osName string,
+	platform platform.Platform) *OSTreeDeployment {
+
+	p := &OSTreeDeployment{
+		Base:            NewBase(m, "ostree-deployment", buildPipeline),
+		containerSource: container,
+		osName:          osName,
+		ref:             ref,
+		platform:        platform,
 	}
 	buildPipeline.addDependent(p)
 	m.addPipeline(p)
@@ -88,89 +121,76 @@ func (p *OSTreeDeployment) getBuildPackages(Distro) []string {
 }
 
 func (p *OSTreeDeployment) getOSTreeCommits() []ostree.CommitSpec {
-	return p.ostreeSpecs
+	if p.ostreeSpec == nil {
+		return []ostree.CommitSpec{}
+	}
+	return []ostree.CommitSpec{*p.ostreeSpec}
 }
 
 func (p *OSTreeDeployment) getOSTreeCommitSources() []ostree.SourceSpec {
+	if p.commitSource == nil {
+		return []ostree.SourceSpec{}
+	}
 	return []ostree.SourceSpec{
-		p.commitSource,
+		*p.commitSource,
+	}
+}
+
+func (p *OSTreeDeployment) getContainerSpecs() []container.Spec {
+	if p.containerSpec == nil {
+		return []container.Spec{}
+	}
+	return []container.Spec{*p.containerSpec}
+}
+
+func (p *OSTreeDeployment) getContainerSources() []container.SourceSpec {
+	if p.containerSource == nil {
+		return []container.SourceSpec{}
+	}
+	return []container.SourceSpec{
+		*p.containerSource,
 	}
 }
 
 func (p *OSTreeDeployment) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec) {
-	if len(p.ostreeSpecs) > 0 {
+	if p.ostreeSpec != nil || p.containerSpec != nil {
 		panic("double call to serializeStart()")
 	}
 
-	if len(commits) != 1 {
-		panic("pipeline requires exactly one ostree commit")
+	switch {
+	case len(commits) == 1:
+		p.ostreeSpec = &commits[0]
+	case len(containers) == 1:
+		p.containerSpec = &containers[0]
+	default:
+		panic(fmt.Sprintf("pipeline requires exactly one ostree commit or one container (have commits: %v; containers: %v)", commits, containers))
 	}
-
-	p.ostreeSpecs = commits
 }
 
 func (p *OSTreeDeployment) serializeEnd() {
-	if len(p.ostreeSpecs) == 0 {
+	switch {
+	case p.ostreeSpec == nil && p.containerSpec == nil:
 		panic("serializeEnd() call when serialization not in progress")
+	case p.ostreeSpec != nil && p.containerSpec != nil:
+		panic("serializeEnd() multiple payload sources defined")
 	}
 
-	p.ostreeSpecs = nil
+	p.ostreeSpec = nil
+	p.containerSpec = nil
 }
 
-func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
-	if len(p.ostreeSpecs) == 0 {
-		panic("serialization not started")
-	}
-	if len(p.ostreeSpecs) > 1 {
-		panic("multiple ostree commit specs found; this is a programming error")
-	}
-	commit := p.ostreeSpecs[0]
-
-	const repoPath = "/ostree/repo"
-
-	pipeline := p.Base.serialize()
-
-	pipeline.AddStage(osbuild.OSTreeInitFsStage())
+func (p *OSTreeDeployment) doOSTreeSpec(pipeline *osbuild.Pipeline, repoPath string, kernelOpts []string) string {
+	commit := *p.ostreeSpec
+	ref := commit.Ref
 	pipeline.AddStage(osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: repoPath, Remote: p.Remote.Name},
-		osbuild.NewOstreePullStageInputs("org.osbuild.source", commit.Checksum, commit.Ref),
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", commit.Checksum, ref),
 	))
-	pipeline.AddStage(osbuild.NewOSTreeOsInitStage(
-		&osbuild.OSTreeOsInitStageOptions{
-			OSName: p.osName,
-		},
-	))
-	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
-		Paths: []osbuild.MkdirStagePath{
-			{
-				Path: "/boot/efi",
-				Mode: common.ToPtr(os.FileMode(0700)),
-			},
-		},
-	}))
-	kernelOpts := osbuild.GenImageKernelOptions(p.PartitionTable)
-	kernelOpts = append(kernelOpts, p.KernelOptionsAppend...)
-
-	if p.ignition {
-		if p.ignitionPlatform == "" {
-			panic("ignition is enabled but ignition platform ID is not set")
-		}
-		kernelOpts = append(kernelOpts,
-			"coreos.no_persist_ip", // users cannot add connections as we don't have a live iso, this prevents connections to bleed into the system from the ign initrd
-			"ignition.platform.id="+p.ignitionPlatform,
-			"$ignition_firstboot",
-		)
-	}
-
-	if p.FIPS {
-		kernelOpts = append(kernelOpts, osbuild.GenFIPSKernelOptions(p.PartitionTable)...)
-		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
-	}
 
 	pipeline.AddStage(osbuild.NewOSTreeDeployStage(
 		&osbuild.OSTreeDeployStageOptions{
 			OsName: p.osName,
-			Ref:    commit.Ref,
+			Ref:    ref,
 			Remote: p.Remote.Name,
 			Mounts: []string{"/boot", "/boot/efi"},
 			Rootfs: osbuild.Rootfs{
@@ -200,10 +220,86 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		&osbuild.OSTreeFillvarStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: p.osName,
-				Ref:    commit.Ref,
+				Ref:    ref,
 			},
 		},
 	))
+
+	return ref
+}
+
+func (p *OSTreeDeployment) doOSTreeContainerSpec(pipeline *osbuild.Pipeline, repoPath string, kernelOpts []string) string {
+	cont := *p.containerSpec
+	ref := p.ref
+
+	options := &osbuild.OSTreeDeployContainerStageOptions{
+		OsName:     p.osName,
+		KernelOpts: p.KernelOptionsAppend,
+		// NOTE: setting the target imgref to be the container source but
+		// we should make this configurable
+		TargetImgref: fmt.Sprintf("ostree-remote-registry:%s:%s", p.Remote.Name, p.containerSpec.Source),
+		Mounts:       []string{"/boot", "/boot/efi"},
+		Rootfs: &osbuild.Rootfs{
+			Label: "root",
+		},
+	}
+	images := osbuild.NewContainersInputForSources([]container.Spec{cont})
+	pipeline.AddStage(osbuild.NewOSTreeDeployContainerStage(options, images))
+	return ref
+}
+
+func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
+	switch {
+	case p.ostreeSpec == nil && p.containerSpec == nil:
+		panic("serialization not started")
+	case p.ostreeSpec != nil && p.containerSpec != nil:
+		panic("serialize() multiple payload sources defined")
+	}
+
+	const repoPath = "/ostree/repo"
+
+	pipeline := p.Base.serialize()
+
+	pipeline.AddStage(osbuild.OSTreeInitFsStage())
+	pipeline.AddStage(osbuild.NewOSTreeOsInitStage(
+		&osbuild.OSTreeOsInitStageOptions{
+			OSName: p.osName,
+		},
+	))
+	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+		Paths: []osbuild.MkdirStagePath{
+			{
+				Path: "/boot/efi",
+				Mode: common.ToPtr(os.FileMode(0700)),
+			},
+		},
+	}))
+	kernelOpts := osbuild.GenImageKernelOptions(p.PartitionTable)
+	kernelOpts = append(kernelOpts, p.KernelOptionsAppend...)
+
+	if p.IgnitionPlatform != "" {
+		kernelOpts = append(kernelOpts,
+			"ignition.platform.id="+p.IgnitionPlatform,
+			"$ignition_firstboot",
+		)
+	}
+
+	if p.FIPS {
+		kernelOpts = append(kernelOpts, osbuild.GenFIPSKernelOptions(p.PartitionTable)...)
+		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
+	}
+
+	var ref string
+	switch {
+	case p.ostreeSpec != nil:
+		ref = p.doOSTreeSpec(&pipeline, repoPath, kernelOpts)
+	case p.containerSpec != nil:
+		ref = p.doOSTreeContainerSpec(&pipeline, repoPath, kernelOpts)
+	default:
+		// this should be caught at the top of the function, but let's check
+		// again to avoid bugs from bad refactoring.
+		panic("no content source defined for ostree deployment")
+	}
 
 	configStage := osbuild.NewOSTreeConfigStage(
 		&osbuild.OSTreeConfigStageOptions{
@@ -216,12 +312,12 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		},
 	)
-	configStage.MountOSTree(p.osName, commit.Ref, 0)
+	configStage.MountOSTree(p.osName, ref, 0)
 	pipeline.AddStage(configStage)
 
 	fstabOptions := osbuild.NewFSTabStageOptions(p.PartitionTable)
 	fstabStage := osbuild.NewFSTabStage(fstabOptions)
-	fstabStage.MountOSTree(p.osName, commit.Ref, 0)
+	fstabStage.MountOSTree(p.osName, ref, 0)
 	pipeline.AddStage(fstabStage)
 
 	if len(p.Users) > 0 {
@@ -229,17 +325,17 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		if err != nil {
 			panic("password encryption failed")
 		}
-		usersStage.MountOSTree(p.osName, commit.Ref, 0)
+		usersStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(usersStage)
 	}
 
 	if len(p.Groups) > 0 {
 		grpStage := osbuild.GenGroupsStage(p.Groups)
-		grpStage.MountOSTree(p.osName, commit.Ref, 0)
+		grpStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(grpStage)
 	}
 
-	if p.ignition {
+	if p.IgnitionPlatform != "" {
 		pipeline.AddStage(osbuild.NewIgnitionStage(&osbuild.IgnitionStageOptions{
 			// This is a workaround to make the systemd believe it's firstboot when ignition runs on real firstboot.
 			// Right now, since we ship /etc/machine-id, systemd thinks it's not firstboot and ignition depends on it
@@ -260,7 +356,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		// creating a preset file.
 		if len(p.EnabledServices) != 0 || len(p.DisabledServices) != 0 {
 			presetsStage := osbuild.GenServicesPresetStage(p.EnabledServices, p.DisabledServices)
-			presetsStage.MountOSTree(p.osName, commit.Ref, 0)
+			presetsStage.MountOSTree(p.osName, ref, 0)
 			pipeline.AddStage(presetsStage)
 		}
 	}
@@ -274,7 +370,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		}
 	}
 
-	if !hasRoot {
+	if p.LockRoot && !hasRoot {
 		userOptions := &osbuild.UsersStageOptions{
 			Users: map[string]osbuild.UsersStageOptionsUser{
 				"root": {
@@ -283,7 +379,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		}
 		rootLockStage := osbuild.NewUsersStage(userOptions)
-		rootLockStage.MountOSTree(p.osName, commit.Ref, 0)
+		rootLockStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(rootLockStage)
 	}
 
@@ -292,7 +388,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			Keymap: p.Keyboard,
 		}
 		keymapStage := osbuild.NewKeymapStage(options)
-		keymapStage.MountOSTree(p.osName, commit.Ref, 0)
+		keymapStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(keymapStage)
 	}
 
@@ -301,13 +397,13 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			Language: p.Locale,
 		}
 		localeStage := osbuild.NewLocaleStage(options)
-		localeStage.MountOSTree(p.osName, commit.Ref, 0)
+		localeStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(localeStage)
 	}
 
 	if p.FIPS {
 		for _, stage := range osbuild.GenFIPSStages() {
-			stage.MountOSTree(p.osName, commit.Ref, 0)
+			stage.MountOSTree(p.osName, ref, 0)
 			pipeline.AddStage(stage)
 		}
 	}
@@ -319,21 +415,21 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		p.platform.GetBIOSPlatform(),
 		p.platform.GetUEFIVendor(), true)
 	grubOptions.Greenboot = true
-	grubOptions.Ignition = p.ignition
+	grubOptions.Ignition = p.IgnitionPlatform != ""
 	grubOptions.Config = &osbuild.GRUB2Config{
 		Default:        "saved",
 		Timeout:        1,
 		TerminalOutput: []string{"console"},
 	}
 	bootloader := osbuild.NewGRUB2Stage(grubOptions)
-	bootloader.MountOSTree(p.osName, commit.Ref, 0)
+	bootloader.MountOSTree(p.osName, ref, 0)
 	pipeline.AddStage(bootloader)
 
 	// First create custom directories, because some of the files may depend on them
 	if len(p.Directories) > 0 {
 		dirStages := osbuild.GenDirectoryNodesStages(p.Directories)
 		for _, stage := range dirStages {
-			stage.MountOSTree(p.osName, commit.Ref, 0)
+			stage.MountOSTree(p.osName, ref, 0)
 		}
 		pipeline.AddStages(dirStages...)
 	}
@@ -341,7 +437,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	if len(p.Files) > 0 {
 		fileStages := osbuild.GenFileNodesStages(p.Files)
 		for _, stage := range fileStages {
-			stage.MountOSTree(p.osName, commit.Ref, 0)
+			stage.MountOSTree(p.osName, ref, 0)
 		}
 		pipeline.AddStages(fileStages...)
 	}
@@ -351,7 +447,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			EnabledServices:  p.EnabledServices,
 			DisabledServices: p.DisabledServices,
 		})
-		systemdStage.MountOSTree(p.osName, commit.Ref, 0)
+		systemdStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(systemdStage)
 	}
 
@@ -359,7 +455,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		&osbuild.OSTreeSelinuxStageOptions{
 			Deployment: osbuild.OSTreeDeployment{
 				OSName: p.osName,
-				Ref:    commit.Ref,
+				Ref:    ref,
 			},
 		},
 	))

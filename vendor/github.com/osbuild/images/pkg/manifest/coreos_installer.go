@@ -5,6 +5,7 @@ import (
 
 	"github.com/osbuild/images/internal/fdo"
 	"github.com/osbuild/images/internal/ignition"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -85,7 +86,7 @@ func (p *CoreOSInstaller) getBootPackages() []string {
 	// For Fedora, this will add a lot of duplicates, but we also add them here
 	// for RHEL and CentOS.
 	switch p.platform.GetArch() {
-	case platform.ARCH_X86_64:
+	case arch.ARCH_X86_64:
 		packages = append(packages,
 			"grub2-efi-x64",
 			"grub2-efi-x64-cdboot",
@@ -95,7 +96,7 @@ func (p *CoreOSInstaller) getBootPackages() []string {
 			"syslinux",
 			"syslinux-nonlinux",
 		)
-	case platform.ARCH_AARCH64:
+	case arch.ARCH_AARCH64:
 		packages = append(packages,
 			"grub2-efi-aa64-cdboot",
 			"grub2-efi-aa64",

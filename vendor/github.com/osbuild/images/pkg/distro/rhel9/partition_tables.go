@@ -2,8 +2,8 @@ package rhel9
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/disk"
-	"github.com/osbuild/images/pkg/platform"
 )
 
 func defaultBasePartitionTables(t *imageType) (disk.PartitionTable, bool) {
@@ -14,7 +14,7 @@ func defaultBasePartitionTables(t *imageType) (disk.PartitionTable, bool) {
 	}
 
 	switch t.platform.GetArch() {
-	case platform.ARCH_X86_64:
+	case arch.ARCH_X86_64:
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
@@ -67,7 +67,7 @@ func defaultBasePartitionTables(t *imageType) (disk.PartitionTable, bool) {
 				},
 			},
 		}, true
-	case platform.ARCH_AARCH64:
+	case arch.ARCH_AARCH64:
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
@@ -114,7 +114,7 @@ func defaultBasePartitionTables(t *imageType) (disk.PartitionTable, bool) {
 				},
 			},
 		}, true
-	case platform.ARCH_PPC64LE:
+	case arch.ARCH_PPC64LE:
 		return disk.PartitionTable{
 			UUID: "0x14fc63d2",
 			Type: "dos",
@@ -148,7 +148,7 @@ func defaultBasePartitionTables(t *imageType) (disk.PartitionTable, bool) {
 			},
 		}, true
 
-	case platform.ARCH_S390X:
+	case arch.ARCH_S390X:
 		return disk.PartitionTable{
 			UUID: "0x14fc63d2",
 			Type: "dos",

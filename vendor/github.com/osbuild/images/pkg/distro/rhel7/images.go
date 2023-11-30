@@ -7,13 +7,13 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/internal/workload"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -40,7 +40,7 @@ func osCustomizations(
 			kernelOptions = append(kernelOptions, bpKernel.Append)
 		}
 		osc.KernelOptionsAppend = kernelOptions
-		if t.platform.GetArch() != platform.ARCH_S390X {
+		if t.platform.GetArch() != arch.ARCH_S390X {
 			osc.KernelOptionsBootloader = true
 		}
 	}
