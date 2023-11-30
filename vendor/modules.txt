@@ -876,6 +876,7 @@ github.com/osbuild/images/pkg/distro/rhel9
 github.com/osbuild/images/pkg/distro/test_distro
 github.com/osbuild/images/pkg/distrofactory
 github.com/osbuild/images/pkg/distroidparser
+github.com/osbuild/images/pkg/dnfjson
 github.com/osbuild/images/pkg/image
 github.com/osbuild/images/pkg/manifest
 github.com/osbuild/images/pkg/osbuild

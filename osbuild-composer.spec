@@ -141,7 +141,6 @@ install -m 0755 -vp _bin/osbuild-composer                          %{buildroot}%
 install -m 0755 -vp _bin/osbuild-worker                            %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-jobsite-manager                   %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-jobsite-builder                   %{buildroot}%{_libexecdir}/osbuild-composer/
-install -m 0755 -vp dnf-json                                       %{buildroot}%{_libexecdir}/osbuild-composer/
 
 # Only include repositories for the distribution and release
 install -m 0755 -vd                                                %{buildroot}%{_datadir}/osbuild-composer/repositories
@@ -298,7 +297,9 @@ cd $PWD/_build/src/%{goipath}
 
 %package core
 Summary:    The core osbuild-composer binary
-Requires:   %{name}-dnf-json = %{version}-%{release}
+Requires:   osbuild-depsolve-dnf >= 107
+Provides:   %{name}-dnf-json = %{version}-%{release}
+Obsoletes:  %{name}-dnf-json < %{version}-%{release}
 
 %description core
 The core osbuild-composer binary. This is suitable both for spawning in containers and by systemd.
@@ -315,7 +316,9 @@ Requires:   osbuild >= 98
 Requires:   osbuild-ostree >= 98
 Requires:   osbuild-lvm2 >= 98
 Requires:   osbuild-luks2 >= 98
-Requires:   %{name}-dnf-json = %{version}-%{release}
+Requires:   osbuild-depsolve-dnf >= 107
+Provides:   %{name}-dnf-json = %{version}-%{release}
+Obsoletes:  %{name}-dnf-json < %{version}-%{release}
 
 %description worker
 The worker for osbuild-composer
@@ -344,25 +347,6 @@ fi
 %postun worker
 # restart all the worker services
 %systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
-
-%package dnf-json
-Summary: The dnf-json binary used by osbuild-composer and the workers
-
-# Conflicts with older versions of composer that provide the same files
-# this can be removed when RHEL 8 reaches EOL
-Conflicts: osbuild-composer <= 35
-
-%description dnf-json
-The dnf-json binary used by osbuild-composer and the workers.
-
-%files dnf-json
-%{_libexecdir}/osbuild-composer/dnf-json
-
-%post dnf-json
-# Fix ownership of the rpmmd cache files from previous versions where it was owned by root:root
-if [ -e /var/cache/osbuild-composer/rpmmd ]; then
-    chown -f -R --from root:root _osbuild-composer:_osbuild-composer /var/cache/osbuild-composer/rpmmd
-fi
 
 %if %{with tests} || 0%{?rhel}
 

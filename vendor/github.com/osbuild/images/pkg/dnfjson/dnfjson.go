@@ -37,10 +37,27 @@ type BaseSolver struct {
 	// Cache information
 	cache *rpmCache
 
-	// Path to the dnf-json binary and optional args (default: "/usr/libexec/osbuild-composer/dnf-json")
+	// Path to the dnf-json binary and optional args (default: "/usr/libexec/osbuild-depsolve-dnf")
 	dnfJsonCmd []string
 
 	resultCache *dnfCache
+}
+
+// Find the osbuild-depsolve-dnf script. This checks the default location in
+// /usr/libexec but also /usr/lib in case it's used on a distribution that
+// doesn't use libexec.
+func findDepsolveDnf() string {
+	locations := []string{"/usr/libexec/osbuild-depsolve-dnf", "/usr/lib/osbuild/osbuild-depsolve-dnf"}
+	for _, djPath := range locations {
+		_, err := os.Stat(djPath)
+		if !os.IsNotExist(err) {
+			return djPath
+		}
+	}
+
+	// if it's not found, return empty string; the run() function will fail if
+	// it's used before setting.
+	return ""
 }
 
 // Create a new unconfigured BaseSolver (without platform information). It can
@@ -49,7 +66,6 @@ type BaseSolver struct {
 func NewBaseSolver(cacheDir string) *BaseSolver {
 	return &BaseSolver{
 		cache:       newRPMCache(cacheDir, 1024*1024*1024), // 1 GiB
-		dnfJsonCmd:  []string{"/usr/libexec/osbuild-composer/dnf-json"},
 		resultCache: NewDNFCache(60 * time.Second),
 	}
 }
@@ -134,14 +150,14 @@ func NewSolver(modulePlatformID, releaseVer, arch, distro, cacheDir string) *Sol
 
 // GetCacheDir returns a distro specific rpm cache directory
 // It ensures that the distro name is below the root cache directory, and if there is
-// a problem it returns the root cache intead of an error.
+// a problem it returns the root cache instead of an error.
 func (s *Solver) GetCacheDir() string {
-	b := filepath.Base(s.distro)
+	b := filepath.Base(strings.Join([]string{s.modulePlatformID, s.releaseVer, s.arch}, "-"))
 	if b == "." || b == "/" {
 		return s.cache.root
 	}
 
-	return filepath.Join(s.cache.root, s.distro)
+	return filepath.Join(s.cache.root, b)
 }
 
 // Depsolve the list of required package sets with explicit excludes using
@@ -284,6 +300,10 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			MetadataExpire: rr.MetadataExpire,
 			repoHash:       rr.Hash(),
 		}
+		if rr.ModuleHotfixes != nil {
+			val := *rr.ModuleHotfixes
+			dr.ModuleHotfixes = &val
+		}
 
 		if rr.CheckGPG != nil {
 			dr.CheckGPG = *rr.CheckGPG
@@ -295,10 +315,6 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 
 		if rr.IgnoreSSL != nil {
 			dr.IgnoreSSL = *rr.IgnoreSSL
-		}
-
-		if rr.ModuleHotfixes != nil {
-			dr.ModuleHotfixes = rr.ModuleHotfixes
 		}
 
 		if rr.RHSM {
@@ -313,6 +329,7 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			dr.SSLClientKey = secrets.SSLClientKey
 			dr.SSLClientCert = secrets.SSLClientCert
 		}
+
 		dnfRepos[idx] = dr
 	}
 	return dnfRepos, nil
@@ -378,8 +395,9 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[
 	transactions := make([]transactionArgs, len(pkgSets))
 	for dsIdx, pkgSet := range pkgSets {
 		transactions[dsIdx] = transactionArgs{
-			PackageSpecs: pkgSet.Include,
-			ExcludeSpecs: pkgSet.Exclude,
+			PackageSpecs:    pkgSet.Include,
+			ExcludeSpecs:    pkgSet.Exclude,
+			InstallWeakDeps: pkgSet.InstallWeakDeps,
 		}
 
 		for _, jobRepo := range pkgSet.Repositories {
@@ -558,6 +576,9 @@ type transactionArgs struct {
 
 	// IDs of repositories to use for this depsolve
 	RepoIDs []string `json:"repo-ids"`
+
+	// If we want weak deps for this depsolve
+	InstallWeakDeps bool `json:"install_weak_deps"`
 }
 
 type packageSpecs []PackageSpec
@@ -633,7 +654,10 @@ func ParseError(data []byte) Error {
 
 func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
 	if len(dnfJsonCmd) == 0 {
-		return nil, fmt.Errorf("dnf-json command undefined")
+		dnfJsonCmd = []string{findDepsolveDnf()}
+	}
+	if len(dnfJsonCmd) == 0 {
+		return nil, fmt.Errorf("osbuild-depsolve-dnf command undefined")
 	}
 	ex := dnfJsonCmd[0]
 	args := make([]string, len(dnfJsonCmd)-1)

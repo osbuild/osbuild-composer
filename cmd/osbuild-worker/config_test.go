@@ -19,7 +19,7 @@ func Test_parseConfig(t *testing.T) {
 			config: `
 # comment
 base_path = "/api/image-builder-worker/v1"
-dnf-json = "/usr/libexec/dnf-json"
+dnf-json = "/usr/libexec/osbuild-depsolve-dnf"
 
 [composer]
 proxy = "http://proxy.example.com"
@@ -72,7 +72,7 @@ server_address = "https://example.com/pulp"
 `,
 			want: &workerConfig{
 				BasePath: "/api/image-builder-worker/v1",
-				DNFJson:  "/usr/libexec/dnf-json",
+				DNFJson:  "/usr/libexec/osbuild-depsolve-dnf",
 				OSBuildExecutor: &executorConfig{
 					Type: "host",
 				},

@@ -17,9 +17,9 @@ import (
 	"testing"
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	dnfjson_mock "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"

@@ -21,6 +21,5 @@ RUN mkdir -p "/var/cache/osbuild-worker/"
 RUN mkdir -p "/var/lib/osbuild-composer/"
 RUN mkdir -p "/var/cache/osbuild-composer/output"
 COPY --from=builder /opt/app-root/src/go/bin/osbuild-worker /usr/libexec/osbuild-composer/
-COPY ./dnf-json /usr/libexec/osbuild-composer/
 
 ENTRYPOINT ["/usr/libexec/osbuild-composer/osbuild-worker"]

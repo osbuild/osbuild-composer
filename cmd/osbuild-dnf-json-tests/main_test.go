@@ -14,10 +14,10 @@ import (
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel9"
+	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 )
 
 // This test loads all the repositories available in /repositories directory
