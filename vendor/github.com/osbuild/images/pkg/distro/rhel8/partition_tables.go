@@ -2,13 +2,13 @@ package rhel8
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/platform"
 )
 
 var defaultBasePartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -46,7 +46,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_AARCH64.String(): disk.PartitionTable{
+	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -78,7 +78,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_PPC64LE.String(): disk.PartitionTable{
+	arch.ARCH_PPC64LE.String(): disk.PartitionTable{
 		UUID: "0x14fc63d2",
 		Type: "dos",
 		Partitions: []disk.Partition{
@@ -99,7 +99,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_S390X.String(): disk.PartitionTable{
+	arch.ARCH_S390X.String(): disk.PartitionTable{
 		UUID: "0x14fc63d2",
 		Type: "dos",
 		Partitions: []disk.Partition{
@@ -119,7 +119,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 }
 
 var ec2BasePartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -171,7 +171,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_AARCH64.String(): disk.PartitionTable{
+	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -222,7 +222,7 @@ var ec2BasePartitionTables = distro.BasePartitionTableMap{
 // ec2LegacyBasePartitionTables is the partition table layout for RHEL EC2
 // images prior to 8.9. It is used for backwards compatibility.
 var ec2LegacyBasePartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -247,7 +247,7 @@ var ec2LegacyBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_AARCH64.String(): disk.PartitionTable{
+	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -294,7 +294,7 @@ var ec2LegacyBasePartitionTables = distro.BasePartitionTableMap{
 }
 
 var edgeBasePartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -361,7 +361,7 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_AARCH64.String(): disk.PartitionTable{
+	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{

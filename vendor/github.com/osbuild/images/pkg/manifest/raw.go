@@ -1,9 +1,9 @@
 package manifest
 
 import (
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
 )
 
 // A RawImage represents a raw image file which can be booted in a
@@ -65,7 +65,7 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 	}
 
 	switch p.treePipeline.platform.GetArch() {
-	case platform.ARCH_S390X:
+	case arch.ARCH_S390X:
 		loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: p.Filename()})
 		pipeline.AddStage(osbuild.NewZiplInstStage(osbuild.NewZiplInstStageOptions(p.treePipeline.kernelVer, pt), loopback, copyDevices, copyMounts))
 	default:

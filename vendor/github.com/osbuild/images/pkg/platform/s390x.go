@@ -1,12 +1,16 @@
 package platform
 
+import (
+	"github.com/osbuild/images/pkg/arch"
+)
+
 type S390X struct {
 	BasePlatform
 	Zipl bool
 }
 
-func (p *S390X) GetArch() Arch {
-	return ARCH_S390X
+func (p *S390X) GetArch() arch.Arch {
+	return arch.ARCH_S390X
 }
 
 func (p *S390X) GetZiplSupport() bool {

@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/internal/workload"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
@@ -80,7 +81,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Users = img.Users
 	anacondaPipeline.Groups = img.Groups
 	anacondaPipeline.Variant = img.Variant
-	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
+	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
@@ -133,7 +134,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Workload = img.Workload
 
 	// enable ISOLinux on x86_64 only
-	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
+	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = rootfsPartitionTable

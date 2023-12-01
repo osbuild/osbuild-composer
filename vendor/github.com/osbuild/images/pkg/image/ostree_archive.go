@@ -31,6 +31,8 @@ type OSTreeArchive struct {
 	Filename  string
 
 	InstallWeakDeps bool
+
+	BootContainer bool
 }
 
 func NewOSTreeArchive(ref string) *OSTreeArchive {
@@ -59,9 +61,16 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	ostreeCommitPipeline := manifest.NewOSTreeCommit(buildPipeline, osPipeline, img.OSTreeRef)
 	ostreeCommitPipeline.OSVersion = img.OSVersion
 
-	tarPipeline := manifest.NewTar(buildPipeline, ostreeCommitPipeline, "commit-archive")
-	tarPipeline.SetFilename(img.Filename)
-	artifact := tarPipeline.Export()
+	var artifact *artifact.Artifact
+	if img.BootContainer {
+		encapsulatePipeline := manifest.NewOSTreeEncapsulate(buildPipeline, ostreeCommitPipeline, "ostree-encapsulate")
+		encapsulatePipeline.SetFilename(img.Filename)
+		artifact = encapsulatePipeline.Export()
+	} else {
+		tarPipeline := manifest.NewTar(buildPipeline, ostreeCommitPipeline, "commit-archive")
+		tarPipeline.SetFilename(img.Filename)
+		artifact = tarPipeline.Export()
+	}
 
 	return artifact, nil
 }
