@@ -1051,6 +1051,9 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 	if repo.CheckRepoGpg != nil {
 		repoConfig.CheckRepoGPG = repo.CheckRepoGpg
 	}
+	if repo.ModuleHotfixes != nil {
+		repoConfig.ModuleHotfixes = repo.ModuleHotfixes
+	}
 
 	if repoConfig.CheckGPG != nil && *repoConfig.CheckGPG && len(repoConfig.GPGKeys) == 0 {
 		return nil, HTTPError(ErrorNoGPGKey)

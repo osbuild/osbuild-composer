@@ -20,17 +20,18 @@ import (
 )
 
 type repository struct {
-	Id           string   `json:"id,omitempty"`
-	Name         string   `json:"name,omitempty"`
-	BaseURL      string   `json:"baseurl,omitempty"`
-	Metalink     string   `json:"metalink,omitempty"`
-	MirrorList   string   `json:"mirrorlist,omitempty"`
-	GPGKey       string   `json:"gpgkey,omitempty"`
-	CheckGPG     bool     `json:"check_gpg,omitempty"`
-	CheckRepoGPG bool     `json:"repo_check_gpg,omitempty"`
-	IgnoreSSL    bool     `json:"ignore_ssl,omitempty"`
-	PackageSets  []string `json:"package_sets,omitempty"`
-	RHSM         bool     `json:"rhsm,omitempty"`
+	Id             string   `json:"id,omitempty"`
+	Name           string   `json:"name,omitempty"`
+	BaseURL        string   `json:"baseurl,omitempty"`
+	Metalink       string   `json:"metalink,omitempty"`
+	MirrorList     string   `json:"mirrorlist,omitempty"`
+	GPGKey         string   `json:"gpgkey,omitempty"`
+	CheckGPG       bool     `json:"check_gpg,omitempty"`
+	CheckRepoGPG   bool     `json:"repo_check_gpg,omitempty"`
+	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
+	PackageSets    []string `json:"package_sets,omitempty"`
+	RHSM           bool     `json:"rhsm,omitempty"`
 }
 
 type ostreeOptions struct {
@@ -159,17 +160,18 @@ func main() {
 		}
 		checkGPG := repo.CheckGPG
 		repos[i] = rpmmd.RepoConfig{
-			Id:           repoId,
-			Name:         repoName,
-			BaseURLs:     urls,
-			Metalink:     repo.Metalink,
-			MirrorList:   repo.MirrorList,
-			GPGKeys:      keys,
-			CheckGPG:     &checkGPG,
-			CheckRepoGPG: common.ToPtr(false),
-			IgnoreSSL:    common.ToPtr(false),
-			PackageSets:  repo.PackageSets,
-			RHSM:         repo.RHSM,
+			Id:             repoId,
+			Name:           repoName,
+			BaseURLs:       urls,
+			Metalink:       repo.Metalink,
+			MirrorList:     repo.MirrorList,
+			GPGKeys:        keys,
+			CheckGPG:       &checkGPG,
+			CheckRepoGPG:   common.ToPtr(false),
+			IgnoreSSL:      common.ToPtr(false),
+			ModuleHotfixes: repo.ModuleHotfixes,
+			PackageSets:    repo.PackageSets,
+			RHSM:           repo.RHSM,
 		}
 	}
 

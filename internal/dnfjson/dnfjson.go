@@ -282,6 +282,10 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			dr.IgnoreSSL = *rr.IgnoreSSL
 		}
 
+		if rr.ModuleHotfixes != nil {
+			dr.ModuleHotfixes = rr.ModuleHotfixes
+		}
+
 		if rr.RHSM {
 			if s.subscriptions == nil {
 				return nil, fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources.")
@@ -315,6 +319,7 @@ type repoConfig struct {
 	SSLClientKey   string   `json:"sslclientkey,omitempty"`
 	SSLClientCert  string   `json:"sslclientcert,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	// set the repo hass from `rpmmd.RepoConfig.Hash()` function
 	// rather than re-calculating it
 	repoHash string

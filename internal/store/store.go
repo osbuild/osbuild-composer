@@ -57,16 +57,17 @@ type Store struct {
 }
 
 type SourceConfig struct {
-	Name         string   `json:"name" toml:"name"`
-	Type         string   `json:"type" toml:"type"`
-	URL          string   `json:"url" toml:"url"`
-	CheckGPG     bool     `json:"check_gpg" toml:"check_gpg"`
-	CheckSSL     bool     `json:"check_ssl" toml:"check_ssl"`
-	System       bool     `json:"system" toml:"system"`
-	Distros      []string `json:"distros" toml:"distros"`
-	RHSM         bool     `json:"rhsm" toml:"rhsm"`
-	CheckRepoGPG bool     `json:"check_repogpg" toml:"check_repogpg"`
-	GPGKeys      []string `json:"gpgkeys"`
+	Name           string   `json:"name" toml:"name"`
+	Type           string   `json:"type" toml:"type"`
+	URL            string   `json:"url" toml:"url"`
+	CheckGPG       bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL       bool     `json:"check_ssl" toml:"check_ssl"`
+	System         bool     `json:"system" toml:"system"`
+	Distros        []string `json:"distros" toml:"distros"`
+	RHSM           bool     `json:"rhsm" toml:"rhsm"`
+	CheckRepoGPG   bool     `json:"check_repogpg" toml:"check_repogpg"`
+	GPGKeys        []string `json:"gpgkeys"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 }
 
 type NotFoundError struct {
@@ -583,10 +584,11 @@ func (s *Store) GetAllDistroSources(distro string) map[string]SourceConfig {
 
 func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 	sc := SourceConfig{
-		Name:    repo.Name,
-		System:  system,
-		RHSM:    repo.RHSM,
-		GPGKeys: repo.GPGKeys,
+		Name:           repo.Name,
+		System:         system,
+		RHSM:           repo.RHSM,
+		GPGKeys:        repo.GPGKeys,
+		ModuleHotfixes: repo.ModuleHotfixes,
 	}
 
 	if repo.CheckGPG != nil {
@@ -628,6 +630,7 @@ func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 	repo.RHSM = s.RHSM
 	repo.CheckRepoGPG = common.ToPtr(s.CheckRepoGPG)
 	repo.GPGKeys = s.GPGKeys
+	repo.ModuleHotfixes = s.ModuleHotfixes
 
 	var urls []string
 	if s.URL != "" {

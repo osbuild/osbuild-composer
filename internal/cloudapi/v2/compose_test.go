@@ -86,10 +86,11 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 		Openscap: &OpenSCAP{ProfileId: "B 263-59"},
 		CustomRepositories: &[]CustomRepository{
 			CustomRepository{
-				Id:       "custom repo",
-				Metalink: common.ToPtr("http://example.org/metalink"),
-				CheckGpg: common.ToPtr(true),
-				Enabled:  common.ToPtr(true),
+				Id:             "custom repo",
+				Metalink:       common.ToPtr("http://example.org/metalink"),
+				CheckGpg:       common.ToPtr(true),
+				Enabled:        common.ToPtr(true),
+				ModuleHotfixes: common.ToPtr(true),
 			},
 		},
 		Firewall: &FirewallCustomization{
@@ -188,10 +189,11 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 		},
 		Repositories: []blueprint.RepositoryCustomization{
 			blueprint.RepositoryCustomization{
-				Id:       "custom repo",
-				Metalink: "http://example.org/metalink",
-				Enabled:  common.ToPtr(true),
-				GPGCheck: common.ToPtr(true),
+				Id:             "custom repo",
+				Metalink:       "http://example.org/metalink",
+				Enabled:        common.ToPtr(true),
+				GPGCheck:       common.ToPtr(true),
+				ModuleHotfixes: common.ToPtr(true),
 			},
 		},
 		Firewall: &blueprint.FirewallCustomization{
@@ -249,20 +251,22 @@ func TestGetPayloadRepositories(t *testing.T) {
 	cr = ComposeRequest{Customizations: &Customizations{
 		PayloadRepositories: &[]Repository{
 			Repository{
-				Baseurl:     common.ToPtr("http://example.org/pub/linux/repo"),
-				CheckGpg:    common.ToPtr(true),
-				PackageSets: &[]string{"build", "archive"},
-				Rhsm:        common.ToPtr(false),
+				Baseurl:        common.ToPtr("http://example.org/pub/linux/repo"),
+				CheckGpg:       common.ToPtr(true),
+				PackageSets:    &[]string{"build", "archive"},
+				Rhsm:           common.ToPtr(false),
+				ModuleHotfixes: common.ToPtr(true),
 			},
 		},
 	}}
 
 	expected := []Repository{
 		Repository{
-			Baseurl:     common.ToPtr("http://example.org/pub/linux/repo"),
-			CheckGpg:    common.ToPtr(true),
-			PackageSets: &[]string{"build", "archive"},
-			Rhsm:        common.ToPtr(false),
+			Baseurl:        common.ToPtr("http://example.org/pub/linux/repo"),
+			CheckGpg:       common.ToPtr(true),
+			PackageSets:    &[]string{"build", "archive"},
+			Rhsm:           common.ToPtr(false),
+			ModuleHotfixes: common.ToPtr(true),
 		},
 	}
 	repos = cr.GetPayloadRepositories()

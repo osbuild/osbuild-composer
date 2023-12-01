@@ -866,6 +866,11 @@ components:
             Enables gpg verification of the repository metadata
         ignore_ssl:
           type: boolean
+        module_hotfixes:
+          type: boolean
+          default: false
+          description: |
+            Disables modularity filtering for this repository.
         package_sets:
           type: array
           example: ["build", "os"]
@@ -913,6 +918,8 @@ components:
           type: boolean
         priority:
           type: integer
+        module_hotfixes:
+          type: boolean
     OpenSCAP:
       type: object
       required:
