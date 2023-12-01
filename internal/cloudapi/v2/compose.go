@@ -251,6 +251,10 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 				repoCustomization.Priority = repo.Priority
 			}
 
+			if repo.ModuleHotfixes != nil {
+				repoCustomization.ModuleHotfixes = repo.ModuleHotfixes
+			}
+
 			repoCustomizations = append(repoCustomizations, repoCustomization)
 		}
 		bp.Customizations.Repositories = repoCustomizations

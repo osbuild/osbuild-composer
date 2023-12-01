@@ -136,14 +136,15 @@ func NewSourceConfigV0(s store.SourceConfig) SourceConfigV0 {
 
 // SourceConfigV0 holds the source repository information
 type SourceConfigV0 struct {
-	Name     string   `json:"name" toml:"name"`
-	Type     string   `json:"type" toml:"type"`
-	URL      string   `json:"url" toml:"url"`
-	CheckGPG bool     `json:"check_gpg" toml:"check_gpg"`
-	CheckSSL bool     `json:"check_ssl" toml:"check_ssl"`
-	System   bool     `json:"system" toml:"system"`
-	Proxy    string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
-	GPGKeys  []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
+	Name           string   `json:"name" toml:"name"`
+	Type           string   `json:"type" toml:"type"`
+	URL            string   `json:"url" toml:"url"`
+	CheckGPG       bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL       bool     `json:"check_ssl" toml:"check_ssl"`
+	System         bool     `json:"system" toml:"system"`
+	Proxy          string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
+	GPGKeys        []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 }
 
 // Key return the key, .Name in this case
@@ -201,18 +202,19 @@ func NewSourceConfigV1(id string, s store.SourceConfig) SourceConfigV1 {
 
 // SourceConfigV1 holds the source repository information
 type SourceConfigV1 struct {
-	ID           string   `json:"id" toml:"id"`
-	Name         string   `json:"name" toml:"name"`
-	Type         string   `json:"type" toml:"type"`
-	URL          string   `json:"url" toml:"url"`
-	CheckGPG     bool     `json:"check_gpg" toml:"check_gpg"`
-	CheckSSL     bool     `json:"check_ssl" toml:"check_ssl"`
-	System       bool     `json:"system" toml:"system"`
-	Proxy        string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
-	GPGKeys      []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
-	Distros      []string `json:"distros,omitempty" toml:"distros,omitempty"`
-	RHSM         bool     `json:"rhsm" toml:"rhsm"`
-	CheckRepoGPG bool     `json:"check_repogpg" toml:"check_repogpg"`
+	ID             string   `json:"id" toml:"id"`
+	Name           string   `json:"name" toml:"name"`
+	Type           string   `json:"type" toml:"type"`
+	URL            string   `json:"url" toml:"url"`
+	CheckGPG       bool     `json:"check_gpg" toml:"check_gpg"`
+	CheckSSL       bool     `json:"check_ssl" toml:"check_ssl"`
+	System         bool     `json:"system" toml:"system"`
+	Proxy          string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
+	GPGKeys        []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
+	Distros        []string `json:"distros,omitempty" toml:"distros,omitempty"`
+	RHSM           bool     `json:"rhsm" toml:"rhsm"`
+	CheckRepoGPG   bool     `json:"check_repogpg" toml:"check_repogpg"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty" toml:"module_hotfixes,omitempty"`
 }
 
 // Key returns the key, .ID in this case
