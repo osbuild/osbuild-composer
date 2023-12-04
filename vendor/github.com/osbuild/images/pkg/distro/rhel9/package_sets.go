@@ -5,7 +5,7 @@ package rhel9
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -35,10 +35,10 @@ func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
 
 	switch t.arch.Name() {
 
-	case platform.ARCH_X86_64.String():
+	case arch.ARCH_X86_64.String():
 		ps = ps.Append(x8664BuildPackageSet(t))
 
-	case platform.ARCH_PPC64LE.String():
+	case arch.ARCH_PPC64LE.String():
 		ps = ps.Append(ppc64leBuildPackageSet(t))
 	}
 
@@ -84,7 +84,7 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	switch t.arch.Name() {
-	case platform.ARCH_X86_64.String():
+	case arch.ARCH_X86_64.String():
 		ps = ps.Append(grubCommon)
 		ps = ps.Append(efiCommon)
 		ps = ps.Append(rpmmd.PackageSet{
@@ -98,7 +98,7 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 				"syslinux-nonlinux",
 			},
 		})
-	case platform.ARCH_AARCH64.String():
+	case arch.ARCH_AARCH64.String():
 		ps = ps.Append(grubCommon)
 		ps = ps.Append(efiCommon)
 		ps = ps.Append(rpmmd.PackageSet{
@@ -197,7 +197,7 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	switch t.arch.Name() {
-	case platform.ARCH_X86_64.String():
+	case arch.ARCH_X86_64.String():
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"irqbalance",
@@ -205,14 +205,14 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			},
 		})
 
-	case platform.ARCH_AARCH64.String():
+	case arch.ARCH_AARCH64.String():
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"irqbalance",
 			},
 		})
 
-	case platform.ARCH_PPC64LE.String():
+	case arch.ARCH_PPC64LE.String():
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"irqbalance",
@@ -223,7 +223,7 @@ func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			},
 		})
 
-	case platform.ARCH_S390X.String():
+	case arch.ARCH_S390X.String():
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"s390utils-core",

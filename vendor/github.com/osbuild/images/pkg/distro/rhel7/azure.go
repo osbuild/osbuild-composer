@@ -2,10 +2,10 @@ package rhel7
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/subscription"
 )
@@ -273,7 +273,7 @@ func azureRhuiCommonPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Size: 64 * common.GibiByte,
