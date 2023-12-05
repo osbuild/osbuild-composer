@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
 	"github.com/osbuild/osbuild-composer/internal/boot"
 	"github.com/osbuild/osbuild-composer/internal/boot/azuretest"
@@ -410,7 +410,7 @@ func testBootUsingOpenStack(t *testing.T, imagePath string) {
 	currentArch := common.CurrentArch()
 
 	// skip on aarch64 because we don't have aarch64 openstack or kvm machines
-	if currentArch == platform.ARCH_AARCH64.String() {
+	if currentArch == arch.ARCH_AARCH64.String() {
 		t.Skip("Openstack boot test is skipped on aarch64.")
 		// if no credentials are given, fall back to qemu
 	} else if (creds == gophercloud.AuthOptions{}) {

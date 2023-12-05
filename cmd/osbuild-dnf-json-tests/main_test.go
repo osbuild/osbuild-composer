@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 	rhel "github.com/osbuild/images/pkg/distro/rhel8"
 	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 )
@@ -85,22 +85,22 @@ func TestDepsolvePackageSets(t *testing.T) {
 
 	// Set up temporary directory for rpm/dnf cache
 	dir := t.TempDir()
-	solver := dnfjson.NewSolver(cs9.ModulePlatformID(), cs9.Releasever(), platform.ARCH_X86_64.String(), cs9.Name(), dir)
+	solver := dnfjson.NewSolver(cs9.ModulePlatformID(), cs9.Releasever(), arch.ARCH_X86_64.String(), cs9.Name(), dir)
 
 	repos, err := rpmmd.LoadRepositories([]string{repoDir}, cs9.Name())
 	require.NoErrorf(t, err, "Failed to LoadRepositories %v", cs9.Name())
-	x86Repos, ok := repos[platform.ARCH_X86_64.String()]
-	require.Truef(t, ok, "failed to get %q repos for %q", platform.ARCH_X86_64.String(), cs9.Name())
+	x86Repos, ok := repos[arch.ARCH_X86_64.String()]
+	require.Truef(t, ok, "failed to get %q repos for %q", arch.ARCH_X86_64.String(), cs9.Name())
 
-	x86Arch, err := cs9.GetArch(platform.ARCH_X86_64.String())
-	require.Nilf(t, err, "failed to get %q arch of %q distro", platform.ARCH_X86_64.String(), cs9.Name())
+	x86Arch, err := cs9.GetArch(arch.ARCH_X86_64.String())
+	require.Nilf(t, err, "failed to get %q arch of %q distro", arch.ARCH_X86_64.String(), cs9.Name())
 
 	qcow2ImageTypeName := "qcow2"
 	qcow2Image, err := x86Arch.GetImageType(qcow2ImageTypeName)
-	require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), platform.ARCH_X86_64.String())
+	require.Nilf(t, err, "failed to get %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), arch.ARCH_X86_64.String())
 
 	manifestSource, _, err := qcow2Image.Manifest(&blueprint.Blueprint{Packages: []blueprint.Package{{Name: "bind"}}}, distro.ImageOptions{}, x86Repos, 0)
-	require.Nilf(t, err, "failed to initialise manifest for %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), platform.ARCH_X86_64.String())
+	require.Nilf(t, err, "failed to initialise manifest for %q image type of %q/%q distro/arch", qcow2ImageTypeName, cs9.Name(), arch.ARCH_X86_64.String())
 	imagePkgSets := manifestSource.GetPackageSetChains()
 
 	gotPackageSpecsSets := make(map[string][]rpmmd.PackageSpec, len(imagePkgSets))
