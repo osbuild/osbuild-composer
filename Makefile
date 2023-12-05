@@ -69,7 +69,7 @@ COMMIT = $(shell (cd "$(SRCDIR)" && git rev-parse HEAD))
 help:
 	@echo "make [TARGETS...]"
 	@echo
-	@echo "This is the maintenance makefile of osbuild. The following"
+	@echo "This is the maintenance makefile of osbuild-composer. The following"
 	@echo "targets are available:"
 	@echo
 	@echo "    help:               Print this usage information."
