@@ -13,11 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/fedora"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/distroregistry"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -314,7 +314,7 @@ func Test_upgrade(t *testing.T) {
 		assert.NoError(err)
 
 		// The test data has image types only supported on Fedora X86_64
-		registry.SetHostArchName(platform.ARCH_X86_64.String())
+		registry.SetHostArchName(arch.ARCH_X86_64.String())
 		store := newStoreFromV0(storeStruct, registry, nil)
 		assert.Equal(1, len(store.blueprints))
 		assert.Equal(1, len(store.blueprintsChanges))
