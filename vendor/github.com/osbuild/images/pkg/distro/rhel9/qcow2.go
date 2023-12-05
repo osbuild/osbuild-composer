@@ -4,7 +4,6 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/subscription"
 )
@@ -34,6 +33,7 @@ var (
 func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
+			"@core",
 			"authselect-compat",
 			"chrony",
 			"cloud-init",
@@ -52,6 +52,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"redhat-release-eula",
 			"rsync",
 			"tar",
+			"tuned",
 			"tcpdump",
 		},
 		Exclude: []string{
@@ -61,10 +62,28 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"alsa-tools-firmware",
 			"biosdevname",
 			"dnf-plugin-spacewalk",
+			"dracut-config-rescue",
 			"fedora-release",
 			"fedora-repos",
+			"firewalld",
 			"iprutils",
 			"ivtv-firmware",
+			"iwl1000-firmware",
+			"iwl100-firmware",
+			"iwl105-firmware",
+			"iwl135-firmware",
+			"iwl2000-firmware",
+			"iwl2030-firmware",
+			"iwl3160-firmware",
+			"iwl3945-firmware",
+			"iwl4965-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6000-firmware",
+			"iwl6000g2a-firmware",
+			"iwl6000g2b-firmware",
+			"iwl6050-firmware",
+			"iwl7260-firmware",
 			"langpacks-*",
 			"langpacks-en",
 			"libertas-sd8787-firmware",
@@ -73,7 +92,7 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"rng-tools",
 			"udisks2",
 		},
-	}.Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(distroSpecificPackageSet(t))
 
 	// Ensure to not pull in subscription-manager on non-RHEL distro
 	if t.arch.distro.isRHEL() {
@@ -91,8 +110,9 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
+			"@core",
 			"langpacks-en",
-			"firewalld",
+			"tuned",
 
 			// From the lorax kickstart
 			"cloud-init",
@@ -100,30 +120,9 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"spice-vdagent",
 		},
 		Exclude: []string{
+			"dracut-config-rescue",
 			"rng-tools",
 		},
-	}.Append(coreOsCommonPackageSet(t))
-
-	if t.arch.Name() == platform.ARCH_X86_64.String() {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				// packages below used to come from @core group and were not excluded
-				// they may not be needed at all, but kept them here to not need
-				// to exclude them instead in all other images
-				"iwl100-firmware",
-				"iwl105-firmware",
-				"iwl135-firmware",
-				"iwl1000-firmware",
-				"iwl2000-firmware",
-				"iwl2030-firmware",
-				"iwl3160-firmware",
-				"iwl5000-firmware",
-				"iwl5150-firmware",
-				"iwl6000g2a-firmware",
-				"iwl6050-firmware",
-				"iwl7260-firmware",
-			},
-		})
 	}
 
 	return ps

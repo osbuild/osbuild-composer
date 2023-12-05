@@ -76,7 +76,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		_, bootCopyDevices, bootCopyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename(), pt)
 		bootCopyOptions := &osbuild.CopyStageOptions{}
 
-		commit := p.treePipeline.ostreeSpecs[0]
+		commit := p.treePipeline.ostreeSpec
 		commitChecksum := commit.Checksum
 
 		bootCopyInputs := osbuild.OSTreeCheckoutInputs{
