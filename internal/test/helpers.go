@@ -114,6 +114,7 @@ func TestRouteWithReply(t *testing.T, api http.Handler, external bool, method, p
 
 	if expectedJSON == "" {
 		require.Lenf(t, replyJSON, 0, "%s: expected no response body, but got:\n%s", path, replyJSON)
+		return
 	}
 
 	if expectedJSON == "?" {
