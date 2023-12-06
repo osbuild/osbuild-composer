@@ -2,13 +2,13 @@ package fedora
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/platform"
 )
 
 var defaultBasePartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -60,7 +60,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_AARCH64.String(): disk.PartitionTable{
+	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -106,7 +106,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_PPC64LE.String(): disk.PartitionTable{
+	arch.ARCH_PPC64LE.String(): disk.PartitionTable{
 		UUID: "0x14fc63d2",
 		Type: "dos",
 		Partitions: []disk.Partition{
@@ -139,7 +139,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 
-	platform.ARCH_S390X.String(): disk.PartitionTable{
+	arch.ARCH_S390X.String(): disk.PartitionTable{
 		UUID: "0x14fc63d2",
 		Type: "dos",
 		Partitions: []disk.Partition{
@@ -170,7 +170,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 }
 
 var minimalrawPartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type:        "gpt",
 		StartOffset: 8 * common.MebiByte,
@@ -217,7 +217,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_AARCH64.String(): disk.PartitionTable{
+	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID:        "0xc1748067",
 		Type:        "dos",
 		StartOffset: 8 * common.MebiByte,
@@ -265,7 +265,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 }
 
 var iotBasePartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -311,7 +311,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_AARCH64.String(): disk.PartitionTable{
+	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "0xc1748067",
 		Type: "dos",
 		Partitions: []disk.Partition{
@@ -358,7 +358,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 }
 
 var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
-	platform.ARCH_X86_64.String(): disk.PartitionTable{
+	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type: "gpt",
 		Partitions: []disk.Partition{
@@ -428,7 +428,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
-	platform.ARCH_AARCH64.String(): disk.PartitionTable{
+	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID: "0xc1748067",
 		Type: "dos",
 		Partitions: []disk.Partition{

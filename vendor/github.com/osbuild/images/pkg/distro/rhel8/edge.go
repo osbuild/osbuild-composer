@@ -5,8 +5,8 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/fsnode"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -249,10 +249,10 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	switch t.arch.Name() {
-	case platform.ARCH_X86_64.String():
+	case arch.ARCH_X86_64.String():
 		ps = ps.Append(x8664EdgeCommitPackageSet(t))
 
-	case platform.ARCH_AARCH64.String():
+	case arch.ARCH_AARCH64.String():
 		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
 	}
 
@@ -370,9 +370,9 @@ func edgeSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 
 	switch t.arch.Name() {
 
-	case platform.ARCH_X86_64.String():
+	case arch.ARCH_X86_64.String():
 		ps = ps.Append(x8664EdgeCommitPackageSet(t))
-	case platform.ARCH_AARCH64.String():
+	case arch.ARCH_AARCH64.String():
 		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
 
 	default:

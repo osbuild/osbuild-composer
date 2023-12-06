@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/images/internal/shell"
 	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/internal/workload"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -610,7 +611,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 		var bootloader *osbuild.Stage
 		switch p.platform.GetArch() {
-		case platform.ARCH_S390X:
+		case arch.ARCH_S390X:
 			bootloader = osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 		default:
 			if p.NoBLS {

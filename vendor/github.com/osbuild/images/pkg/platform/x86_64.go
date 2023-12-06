@@ -1,5 +1,9 @@
 package platform
 
+import (
+	"github.com/osbuild/images/pkg/arch"
+)
+
 type X86BootLoader uint64
 
 type X86 struct {
@@ -8,8 +12,8 @@ type X86 struct {
 	UEFIVendor string
 }
 
-func (p *X86) GetArch() Arch {
-	return ARCH_X86_64
+func (p *X86) GetArch() arch.Arch {
+	return arch.ARCH_X86_64
 }
 
 func (p *X86) GetBIOSPlatform() string {
