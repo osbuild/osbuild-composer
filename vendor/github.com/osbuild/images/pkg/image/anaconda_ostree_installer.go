@@ -6,6 +6,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/users"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
@@ -69,7 +70,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Users = img.Users
 	anacondaPipeline.Groups = img.Groups
 	anacondaPipeline.Variant = img.Variant
-	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
+	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
@@ -112,7 +113,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	// enable ISOLinux on x86_64 only
-	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
+	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = rootfsPartitionTable
@@ -129,6 +130,9 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline.OSTreeCommitSource = &img.Commit
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
+	if img.FIPS {
+		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
+	}
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, isoLabel)
 	isoPipeline.SetFilename(img.Filename)

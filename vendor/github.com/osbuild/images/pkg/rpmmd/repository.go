@@ -137,25 +137,6 @@ func (ps PackageSet) Append(other PackageSet) PackageSet {
 	return ps
 }
 
-// ResolveConflictsExclude resolves conflicting Include and Exclude package lists
-// content by deleting packages listed as Excluded from the Include list.
-func (ps PackageSet) ResolveConflictsExclude() PackageSet {
-	excluded := map[string]struct{}{}
-	for _, pkg := range ps.Exclude {
-		excluded[pkg] = struct{}{}
-	}
-
-	newInclude := []string{}
-	for _, pkg := range ps.Include {
-		_, found := excluded[pkg]
-		if !found {
-			newInclude = append(newInclude, pkg)
-		}
-	}
-	ps.Include = newInclude
-	return ps
-}
-
 // TODO: the public API of this package should not be reused for serialization.
 type PackageSpec struct {
 	Name           string `json:"name"`

@@ -214,6 +214,7 @@ func defaultGceRhuiImageConfig(rhsm bool) *distro.ImageConfig {
 func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
+			"@core",
 			"langpacks-en", // not in Google's KS
 			"acpid",
 			"dhcp-client",
@@ -237,12 +238,14 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			// EFI
 			"grub2-tools",
 			"grub2-tools-minimal",
-			"firewalld", // not pulled in any more as on RHEL-8
+			// Performance tuning
+			"tuned",
 		},
 		Exclude: []string{
 			"alsa-utils",
 			"b43-fwcutter",
 			"dmraid",
+			"dracut-config-rescue",
 			"eject",
 			"gpm",
 			"irqbalance",
@@ -256,7 +259,12 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"ipw2200-firmware",
 			"ivtv-firmware",
 			"iwl100-firmware",
+			"iwl105-firmware",
+			"iwl135-firmware",
 			"iwl1000-firmware",
+			"iwl2000-firmware",
+			"iwl2030-firmware",
+			"iwl3160-firmware",
 			"iwl3945-firmware",
 			"iwl4965-firmware",
 			"iwl5000-firmware",
@@ -264,6 +272,7 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"iwl6000-firmware",
 			"iwl6000g2a-firmware",
 			"iwl6050-firmware",
+			"iwl7260-firmware",
 			"kernel-firmware",
 			"libertas-usb8388-firmware",
 			"ql2100-firmware",
@@ -278,12 +287,9 @@ func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {
 			// RHBZ#2075815
 			"qemu-guest-agent",
 		},
-	}.Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(distroSpecificPackageSet(t))
 
-	// Some excluded packages are part of the @core group package set returned
-	// by coreOsCommonPackageSet(). Ensure that the conflicting packages are
-	// returned from the list of `Include` packages.
-	return ps.ResolveConflictsExclude()
+	return ps
 }
 
 // GCE BYOS image

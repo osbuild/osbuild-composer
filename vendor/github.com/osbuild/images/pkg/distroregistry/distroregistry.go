@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/fedora"
 	"github.com/osbuild/images/pkg/distro/rhel7"
@@ -52,7 +53,7 @@ func New(hostDistro distro.Distro, distros ...distro.Distro) (*Registry, error) 
 	reg := &Registry{
 		distros:      make(map[string]distro.Distro),
 		hostDistro:   hostDistro,
-		hostArchName: common.CurrentArch(),
+		hostArchName: arch.Current().String(),
 	}
 	for _, d := range distros {
 		name := d.Name()

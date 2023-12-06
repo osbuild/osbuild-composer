@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/internal/fdo"
 	"github.com/osbuild/images/internal/ignition"
 	"github.com/osbuild/images/internal/workload"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
@@ -93,7 +94,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	coiPipeline.FDO = img.FDO
 	coiPipeline.Ignition = img.IgnitionEmbedded
-	coiPipeline.Biosdevname = (img.Platform.GetArch() == platform.ARCH_X86_64)
+	coiPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	coiPipeline.Variant = img.Variant
 	coiPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 
@@ -146,7 +147,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	// enable ISOLinux on x86_64 only
-	isoLinuxEnabled := img.Platform.GetArch() == platform.ARCH_X86_64
+	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
 
 	isoTreePipeline := manifest.NewCoreOSISOTree(buildPipeline, compressedImage, coiPipeline, bootTreePipeline)
 	isoTreePipeline.KernelOpts = kernelOpts

@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -364,7 +364,7 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	switch t.Arch().Name() {
-	case platform.ARCH_X86_64.String():
+	case arch.ARCH_X86_64.String():
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"biosdevname",
@@ -374,7 +374,7 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			},
 		})
 
-	case platform.ARCH_AARCH64.String():
+	case arch.ARCH_AARCH64.String():
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"dmidecode",

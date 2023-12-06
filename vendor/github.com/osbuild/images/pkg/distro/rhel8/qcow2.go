@@ -155,14 +155,18 @@ func openstackCommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			// Defaults
-			"@Core", "langpacks-en",
+			"@Core",
+			"langpacks-en",
 
 			// From the lorax kickstart
-			"selinux-policy-targeted", "cloud-init", "qemu-guest-agent",
+			"selinux-policy-targeted",
+			"cloud-init",
+			"qemu-guest-agent",
 			"spice-vdagent",
 		},
 		Exclude: []string{
-			"dracut-config-rescue", "rng-tools",
+			"dracut-config-rescue",
+			"rng-tools",
 		},
 	}
 }

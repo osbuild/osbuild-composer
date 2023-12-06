@@ -300,6 +300,7 @@ func ec2BuildPackageSet(t *imageType) rpmmd.PackageSet {
 func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
+			"@core",
 			"authselect-compat",
 			"chrony",
 			"cloud-init",
@@ -314,6 +315,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"redhat-release",
 			"redhat-release-eula",
 			"rsync",
+			"tuned",
 			"tar",
 		},
 		Exclude: []string{
@@ -321,16 +323,35 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"alsa-firmware",
 			"alsa-tools-firmware",
 			"biosdevname",
+			"firewalld",
 			"iprutils",
 			"ivtv-firmware",
+			"iwl1000-firmware",
+			"iwl100-firmware",
+			"iwl105-firmware",
+			"iwl135-firmware",
+			"iwl2000-firmware",
+			"iwl2030-firmware",
+			"iwl3160-firmware",
+			"iwl3945-firmware",
+			"iwl4965-firmware",
+			"iwl5000-firmware",
+			"iwl5150-firmware",
+			"iwl6000-firmware",
+			"iwl6000g2a-firmware",
+			"iwl6000g2b-firmware",
+			"iwl6050-firmware",
+			"iwl7260-firmware",
+			"libertas-sd8686-firmware",
 			"libertas-sd8787-firmware",
+			"libertas-usb8388-firmware",
 			"plymouth",
 			// RHBZ#2064087
 			"dracut-config-rescue",
 			// RHBZ#2075815
 			"qemu-guest-agent",
 		},
-	}.Append(coreOsCommonPackageSet(t)).Append(distroSpecificPackageSet(t))
+	}.Append(distroSpecificPackageSet(t))
 }
 
 // common rhel ec2 RHUI image package set

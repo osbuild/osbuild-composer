@@ -1,14 +1,10 @@
 package platform
 
-type Arch uint64
-type ImageFormat uint64
-
-const ( // architecture enum
-	ARCH_AARCH64 Arch = iota
-	ARCH_PPC64LE
-	ARCH_S390X
-	ARCH_X86_64
+import (
+	"github.com/osbuild/images/pkg/arch"
 )
+
+type ImageFormat uint64
 
 const ( // image format enum
 	FORMAT_UNSET ImageFormat = iota
@@ -20,21 +16,6 @@ const ( // image format enum
 	FORMAT_GCE
 	FORMAT_OVA
 )
-
-func (a Arch) String() string {
-	switch a {
-	case ARCH_AARCH64:
-		return "aarch64"
-	case ARCH_PPC64LE:
-		return "ppc64le"
-	case ARCH_S390X:
-		return "s390x"
-	case ARCH_X86_64:
-		return "x86_64"
-	default:
-		panic("invalid architecture")
-	}
-}
 
 func (f ImageFormat) String() string {
 	switch f {
@@ -58,7 +39,7 @@ func (f ImageFormat) String() string {
 }
 
 type Platform interface {
-	GetArch() Arch
+	GetArch() arch.Arch
 	GetImageFormat() ImageFormat
 	GetQCOW2Compat() string
 	GetBIOSPlatform() string

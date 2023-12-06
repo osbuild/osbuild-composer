@@ -5,7 +5,7 @@ package rhel9
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -35,10 +35,10 @@ func distroBuildPackageSet(t *imageType) rpmmd.PackageSet {
 
 	switch t.arch.Name() {
 
-	case platform.ARCH_X86_64.String():
+	case arch.ARCH_X86_64.String():
 		ps = ps.Append(x8664BuildPackageSet(t))
 
-	case platform.ARCH_PPC64LE.String():
+	case arch.ARCH_PPC64LE.String():
 		ps = ps.Append(ppc64leBuildPackageSet(t))
 	}
 
@@ -84,7 +84,7 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 	}
 
 	switch t.arch.Name() {
-	case platform.ARCH_X86_64.String():
+	case arch.ARCH_X86_64.String():
 		ps = ps.Append(grubCommon)
 		ps = ps.Append(efiCommon)
 		ps = ps.Append(rpmmd.PackageSet{
@@ -98,7 +98,7 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 				"syslinux-nonlinux",
 			},
 		})
-	case platform.ARCH_AARCH64.String():
+	case arch.ARCH_AARCH64.String():
 		ps = ps.Append(grubCommon)
 		ps = ps.Append(efiCommon)
 		ps = ps.Append(rpmmd.PackageSet{
@@ -117,122 +117,6 @@ func anacondaBootPackageSet(t *imageType) rpmmd.PackageSet {
 }
 
 // OS package sets
-
-// Replacement of the previously used @core package group
-func coreOsCommonPackageSet(t *imageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"audit",
-			"basesystem",
-			"bash",
-			"coreutils",
-			"cronie",
-			"crypto-policies",
-			"crypto-policies-scripts",
-			"curl",
-			"dnf",
-			"yum",
-			"e2fsprogs",
-			"filesystem",
-			"glibc",
-			"grubby",
-			"hostname",
-			"iproute",
-			"iproute-tc",
-			"iputils",
-			"kbd",
-			"kexec-tools",
-			"less",
-			"logrotate",
-			"man-db",
-			"ncurses",
-			"openssh-clients",
-			"openssh-server",
-			"p11-kit",
-			"parted",
-			"passwd",
-			"policycoreutils",
-			"procps-ng",
-			"rootfiles",
-			"rpm",
-			"rpm-plugin-audit",
-			"rsyslog",
-			"selinux-policy-targeted",
-			"setup",
-			"shadow-utils",
-			"sssd-common",
-			"sssd-kcm",
-			"sudo",
-			"systemd",
-			"tuned",
-			"util-linux",
-			"vim-minimal",
-			"xfsprogs",
-			"authselect",
-			"prefixdevname",
-			"dnf-plugins-core",
-			"NetworkManager",
-			"NetworkManager-team",
-			"NetworkManager-tui",
-			"libsysfs",
-			"linux-firmware",
-			"lshw",
-			"lsscsi",
-			"kernel-tools",
-			"sg3_utils",
-			"sg3_utils-libs",
-			"python3-libselinux",
-		},
-	}
-
-	// Do not include this in the distroSpecificPackageSet for now,
-	// because it includes 'insights-client' which is not installed
-	// by default on all RHEL images (although it would probably make sense).
-	if t.arch.distro.isRHEL() {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"subscription-manager",
-			},
-		})
-	}
-
-	switch t.arch.Name() {
-	case platform.ARCH_X86_64.String():
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"irqbalance",
-				"microcode_ctl",
-			},
-		})
-
-	case platform.ARCH_AARCH64.String():
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"irqbalance",
-			},
-		})
-
-	case platform.ARCH_PPC64LE.String():
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"irqbalance",
-				"opal-prd",
-				"ppc64-diag-rtas",
-				"powerpc-utils-core",
-				"lsvpd",
-			},
-		})
-
-	case platform.ARCH_S390X.String():
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"s390utils-core",
-			},
-		})
-	}
-
-	return ps
-}
 
 // packages that are only in some (sub)-distributions
 func distroSpecificPackageSet(t *imageType) rpmmd.PackageSet {
