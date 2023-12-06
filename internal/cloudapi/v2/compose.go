@@ -272,20 +272,9 @@ func (request *ComposeRequest) GetBlueprintWithCustomizations() (blueprint.Bluep
 		bp.Customizations.Kernel = kernel
 	}
 
-	if request.Customizations.Sshkey != nil {
-		keys := []blueprint.SSHKeyCustomization{}
-		for _, key := range *request.Customizations.Sshkey {
-			keys = append(keys, blueprint.SSHKeyCustomization{
-				User: key.User,
-				Key:  key.Key,
-			})
-		}
-		bp.Customizations.SSHKey = keys
-	}
-
-	if request.Customizations.Group != nil {
+	if request.Customizations.Groups != nil {
 		groups := []blueprint.GroupCustomization{}
-		for _, group := range *request.Customizations.Group {
+		for _, group := range *request.Customizations.Groups {
 			groups = append(groups, blueprint.GroupCustomization{
 				Name: group.Name,
 				GID:  group.Gid,

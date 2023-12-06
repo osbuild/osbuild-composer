@@ -1201,12 +1201,7 @@ components:
           example: myhostname
         kernel:
           $ref: '#/components/schemas/Kernel'
-        sshkey:
-          type: array
-          description: List of ssh keys
-          items:
-            $ref: '#/components/schemas/SSHKey'
-        group:
+        groups:
           type: array
           description: List of groups to create
           items:
@@ -1450,22 +1445,6 @@ components:
           type: string
           description: Appends arguments to the bootloader kernel command line
           example: nosmt=force
-    SSHKey:
-      type: object
-      additionalProperties: false
-      required:
-      - user
-      - key
-      properties:
-        user:
-          type: string
-          description: User to configure the ssh key for
-          example: admin
-        key:
-          type: string
-          description: Adds the key to the user's authorized_keys file
-          example: |
-            ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIASWitkOH4U874EdsBUnytb3bwvRggHlQlbYXl7n10v9
     Services:
       type: object
       additionalProperties: false

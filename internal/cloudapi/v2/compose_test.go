@@ -120,12 +120,6 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 				Url: "provisioning-url.local",
 			},
 		},
-		Sshkey: &[]SSHKey{
-			{
-				Key:  "key",
-				User: "user",
-			},
-		},
 		Timezone: &Timezone{
 			Timezone: common.ToPtr("US/Eastern"),
 			Ntpservers: common.ToPtr([]string{
@@ -224,12 +218,6 @@ func TestGetBlueprintWithCustomizations(t *testing.T) {
 		Ignition: &blueprint.IgnitionCustomization{
 			FirstBoot: &blueprint.FirstBootIgnitionCustomization{
 				ProvisioningURL: "provisioning-url.local",
-			},
-		},
-		SSHKey: []blueprint.SSHKeyCustomization{
-			{
-				Key:  "key",
-				User: "user",
 			},
 		},
 		Timezone: &blueprint.TimezoneCustomization{
