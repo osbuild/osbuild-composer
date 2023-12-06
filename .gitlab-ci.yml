@@ -186,6 +186,8 @@ Base:
           - aws/fedora-37-aarch64
           - aws/fedora-38-x86_64
           - aws/fedora-38-aarch64
+          - aws/fedora-40-x86_64
+          - aws/fedora-40-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.8-ga-x86_64
@@ -219,6 +221,8 @@ Base:
           - aws/fedora-37-aarch64
           - aws/fedora-38-x86_64
           - aws/fedora-38-aarch64
+          - aws/fedora-40-x86_64
+          - aws/fedora-40-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
