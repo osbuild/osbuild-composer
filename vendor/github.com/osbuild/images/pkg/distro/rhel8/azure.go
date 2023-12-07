@@ -2,8 +2,8 @@ package rhel8
 
 import (
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/shell"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"

@@ -119,7 +119,7 @@ github.com/acarl005/stripansi
 # github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
-# github.com/aws/aws-sdk-go v1.48.13
+# github.com/aws/aws-sdk-go v1.48.14
 ## explicit; go 1.19
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -656,23 +656,23 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.21.0
+# github.com/osbuild/images v0.22.0
 ## explicit; go 1.19
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
-github.com/osbuild/images/internal/fdo
-github.com/osbuild/images/internal/fsnode
-github.com/osbuild/images/internal/ignition
-github.com/osbuild/images/internal/oscap
 github.com/osbuild/images/internal/pathpolicy
-github.com/osbuild/images/internal/shell
-github.com/osbuild/images/internal/users
 github.com/osbuild/images/internal/workload
 github.com/osbuild/images/pkg/arch
 github.com/osbuild/images/pkg/artifact
 github.com/osbuild/images/pkg/blueprint
 github.com/osbuild/images/pkg/container
 github.com/osbuild/images/pkg/crypt
+github.com/osbuild/images/pkg/customizations/fdo
+github.com/osbuild/images/pkg/customizations/fsnode
+github.com/osbuild/images/pkg/customizations/ignition
+github.com/osbuild/images/pkg/customizations/oscap
+github.com/osbuild/images/pkg/customizations/shell
+github.com/osbuild/images/pkg/customizations/users
 github.com/osbuild/images/pkg/disk
 github.com/osbuild/images/pkg/distro
 github.com/osbuild/images/pkg/distro/fedora
