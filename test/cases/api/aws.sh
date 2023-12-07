@@ -47,11 +47,11 @@ function createReqFile() {
     "payload_repositories": [
       {
         "baseurl": "$PAYLOAD_REPO_URL"
-      }
+      }${EXTRA_PAYLOAD_REPOS_BLOCK}
     ],
     "packages": [
       "postgresql",
-      "dummy"
+      "dummy"${EXTRA_PACKAGES_BLOCK}
     ],
     "users":[
       {

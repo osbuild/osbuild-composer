@@ -86,6 +86,11 @@ func TestMakeDepsolveRequest(t *testing.T) {
 		Name:     "user-repo-2",
 		BaseURLs: []string{"https://example.org/user-repo-2"},
 	}
+	modHotfixRepo := rpmmd.RepoConfig{
+		Name:           "nginx",
+		BaseURLs:       []string{"https://example.org/nginx"},
+		ModuleHotfixes: common.ToPtr(true),
+	}
 	tests := []struct {
 		packageSets []rpmmd.PackageSet
 		args        []transactionArgs
@@ -168,6 +173,44 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
 					repoHash: "ffbdcbe6fefded88354e22cc292a62f1dac41b23f83c5eb95c1cdae84257a713",
+				},
+			},
+		},
+		// module hotfixes flag is passed
+		{
+			packageSets: []rpmmd.PackageSet{
+				{
+					Include:      []string{"pkg1"},
+					Exclude:      []string{"pkg2"},
+					Repositories: []rpmmd.RepoConfig{baseOS, appstream, modHotfixRepo},
+				},
+			},
+			args: []transactionArgs{
+				{
+					PackageSpecs: []string{"pkg1"},
+					ExcludeSpecs: []string{"pkg2"},
+					RepoIDs:      []string{baseOS.Hash(), appstream.Hash(), modHotfixRepo.Hash()},
+				},
+			},
+			wantRepos: []repoConfig{
+				{
+					ID:       baseOS.Hash(),
+					Name:     "baseos",
+					BaseURLs: []string{"https://example.org/baseos"},
+					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
+				},
+				{
+					ID:       appstream.Hash(),
+					Name:     "appstream",
+					BaseURLs: []string{"https://example.org/appstream"},
+					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
+				},
+				{
+					ID:             modHotfixRepo.Hash(),
+					Name:           "nginx",
+					BaseURLs:       []string{"https://example.org/nginx"},
+					ModuleHotfixes: common.ToPtr(true),
+					repoHash:       "6ab05f54094ff2a0ee86facecae3e75e4065a01cc8caffbbbeb7505c6bfac283",
 				},
 			},
 		},
