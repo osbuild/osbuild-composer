@@ -33,8 +33,8 @@ export IMAGE_TYPE_OCI="oci"
 export IMAGE_TYPE_VSPHERE="vsphere"
 export IMAGE_TYPE_IOT_COMMIT="iot-commit"
 
-if (( $# > 2 )); then
-    echo "$0 does not support more than two arguments"
+if (( $# > 3 )); then
+    echo "$0 does not support more than three arguments"
     exit 1
 fi
 
@@ -46,6 +46,7 @@ fi
 set -euo pipefail
 
 IMAGE_TYPE="$1"
+TEST_MODULE_HOTFIXES="${3:-0}"
 
 # select cloud provider based on image type
 #
@@ -438,6 +439,39 @@ EOF
 )
 export FIREWALL_CUSTOMIZATION_BLOCK
 
+if [ "$TEST_MODULE_HOTFIXES" = "1" ]; then
+  if [ "$ARCH" = "x86_64" ]; then
+    NGINX_REPO_URL="https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-nginx-20231207"
+  else
+    NGINX_REPO_URL="https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-aarch64-nginx-20231207"
+  fi
+  EXTRA_PAYLOAD_REPOS_BLOCK=$(cat <<EOF
+,
+      {
+        "baseurl": "$NGINX_REPO_URL",
+        "check_gpg": false,
+        "check_repo_gpg": false,
+        "rhsm": false,
+        "module_hotfixes": true
+      }
+EOF
+)
+
+  EXTRA_PACKAGES_BLOCK=$(cat <<EOF
+,
+      "nginx",
+      "nginx-module-njs"
+EOF
+)
+
+else
+  EXTRA_PAYLOAD_REPOS_BLOCK=""
+  EXTRA_PACKAGES_BLOCK=""
+fi
+
+export EXTRA_PAYLOAD_REPOS_BLOCK
+export EXTRA_PACKAGES_BLOCK
+
 # generate a temp key for user tests
 ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
 
@@ -582,13 +616,24 @@ function waitForImgState() {
 
 #
 # Make sure that requesting a non existing paquet results in failure
+# and if TEST_MODULE_HOTFIXES flag is passed, we verify, that without that flag the resolve fails
 #
+
 REQUEST_FILE2="${WORKDIR}/request2.json"
 jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE" > "$REQUEST_FILE2"
 
 greenprint  "Sending compose: Fail test"
 sendCompose "$REQUEST_FILE2"
 waitForState "failure"
+
+if [ "$TEST_MODULE_HOTFIXES" = "1" ]; then
+  cat "$REQUEST_FILE"
+
+  jq 'del(.customizations.payload_repositories[] | select(.baseurl | match(".*public/el8/el8-.*-nginx-.*")) | .module_hotfixes)' "$REQUEST_FILE" > "$REQUEST_FILE2"
+  greenprint  "Sending compose: Fail depsolve test"
+  sendCompose "$REQUEST_FILE2"
+  waitForState "failure"
+fi
 
 # crashed/stopped/killed worker should result in the job being retried
 greenprint  "Sending compose: Retry test"

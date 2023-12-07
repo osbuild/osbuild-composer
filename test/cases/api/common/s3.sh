@@ -21,11 +21,11 @@ function createReqFileEdge() {
     "payload_repositories": [
       {
         "baseurl": "$PAYLOAD_REPO_URL"
-      }
+      }${EXTRA_PAYLOAD_REPOS_BLOCK}
     ],
     "packages": [
       "postgresql",
-      "dummy"
+      "dummy"${EXTRA_PACKAGES_BLOCK}
     ],
     "users":[
       {
@@ -67,11 +67,11 @@ function createReqFileGuest() {
     "payload_repositories": [
       {
         "baseurl": "$PAYLOAD_REPO_URL"
-      }
+      }${EXTRA_PAYLOAD_REPOS_BLOCK}
     ],
     "packages": [
       "postgresql",
-      "dummy"
+      "dummy"${EXTRA_PACKAGES_BLOCK}
     ],
     "users":[
       {
@@ -108,11 +108,11 @@ function createReqFileVSphere() {
     "payload_repositories": [
       {
         "baseurl": "$PAYLOAD_REPO_URL"
-      }
+      }${EXTRA_PAYLOAD_REPOS_BLOCK}
     ],
     "packages": [
       "postgresql",
-      "dummy"
+      "dummy"${EXTRA_PACKAGES_BLOCK}
     ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}
 ${TIMEZONE_CUSTOMIZATION_BLOCK}${FIREWALL_CUSTOMIZATION_BLOCK}
   },
