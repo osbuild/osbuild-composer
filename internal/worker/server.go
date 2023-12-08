@@ -163,9 +163,9 @@ func (s *Server) WatchWorkers() {
 			logrus.Warningf("Unable to query workers: %v", err)
 			continue
 		}
-		for _, wID := range workers {
-			logrus.Infof("Removing inactive worker: %s", wID)
-			err = s.jobs.DeleteWorker(wID)
+		for _, w := range workers {
+			logrus.Infof("Removing inactive worker: %s", w.ID)
+			err = s.jobs.DeleteWorker(w.ID)
 			if err != nil {
 				logrus.Warningf("Unable to remove worker: %v", err)
 			}

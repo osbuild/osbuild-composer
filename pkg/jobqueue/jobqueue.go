@@ -88,7 +88,7 @@ type JobQueue interface {
 	UpdateWorkerStatus(workerID uuid.UUID) error
 
 	// Get a list of workers which haven't been updated in the specified time frame
-	Workers(olderThan time.Duration) ([]uuid.UUID, error)
+	Workers(olderThan time.Duration) ([]Worker, error)
 
 	// Deletes the worker
 	DeleteWorker(workerID uuid.UUID) error
@@ -115,3 +115,8 @@ var (
 	ErrActiveJobs     = errors.New("worker has active jobs associated with it")
 	ErrWorkerNotExist = errors.New("worker does not exist")
 )
+
+type Worker struct {
+	ID   uuid.UUID
+	Arch string
+}
