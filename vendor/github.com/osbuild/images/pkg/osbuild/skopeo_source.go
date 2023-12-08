@@ -39,13 +39,12 @@ func NewSkopeoSourceItem(name, digest string, tlsVerify *bool) SkopeoSourceItem 
 }
 
 func (item SkopeoSourceItem) validate() error {
-
 	if item.Image.Name == "" {
-		return fmt.Errorf("source item has empty name")
+		return fmt.Errorf("source item %#v has empty name", item)
 	}
 
 	if !skopeoDigestPattern.MatchString(item.Image.Digest) {
-		return fmt.Errorf("source item has invalid digest")
+		return fmt.Errorf("source item %#v has invalid digest", item)
 	}
 
 	return nil
@@ -63,7 +62,7 @@ func NewSkopeoSource() *SkopeoSource {
 func (source *SkopeoSource) AddItem(name, digest, image string, tlsVerify *bool) {
 	item := NewSkopeoSourceItem(name, digest, tlsVerify)
 	if !skopeoDigestPattern.MatchString(image) {
-		panic("item has invalid image id")
+		panic(fmt.Errorf("item %#v has invalid image id", image))
 	}
 	source.Items[image] = item
 }

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"

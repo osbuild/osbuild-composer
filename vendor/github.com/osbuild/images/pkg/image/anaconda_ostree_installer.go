@@ -5,9 +5,9 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"

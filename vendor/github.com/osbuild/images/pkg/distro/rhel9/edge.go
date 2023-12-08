@@ -5,8 +5,8 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/fsnode"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -400,7 +400,7 @@ func edgeBasePartitionTables(t *imageType) (disk.PartitionTable, bool) {
 							Description: "built with lvm2 and osbuild",
 							LogicalVolumes: []disk.LVMLogicalVolume{
 								{
-									Size: 9 * 1024 * 1024 * 1024, // 9 GB
+									Size: 9 * common.GiB, // 9 GiB
 									Name: "rootlv",
 									Payload: &disk.Filesystem{
 										Type:         "xfs",
@@ -471,7 +471,7 @@ func edgeBasePartitionTables(t *imageType) (disk.PartitionTable, bool) {
 							Description: "built with lvm2 and osbuild",
 							LogicalVolumes: []disk.LVMLogicalVolume{
 								{
-									Size: 9 * 1024 * 1024 * 1024, // 9 GB
+									Size: 9 * common.GiB, // 9 GiB
 									Name: "rootlv",
 									Payload: &disk.Filesystem{
 										Type:         "xfs",
