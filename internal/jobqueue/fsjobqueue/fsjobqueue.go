@@ -493,18 +493,21 @@ func (q *fsJobQueue) UpdateWorkerStatus(wID uuid.UUID) error {
 	return nil
 }
 
-func (q *fsJobQueue) Workers(olderThan time.Duration) ([]uuid.UUID, error) {
+func (q *fsJobQueue) Workers(olderThan time.Duration) ([]jobqueue.Worker, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	now := time.Now()
-	wIDs := []uuid.UUID{}
-	for wID, worker := range q.workers {
-		if now.Sub(worker.Heartbeat) > olderThan {
-			wIDs = append(wIDs, wID)
+	workers := []jobqueue.Worker{}
+	for wID, w := range q.workers {
+		if now.Sub(w.Heartbeat) > olderThan {
+			workers = append(workers, jobqueue.Worker{
+				ID:   wID,
+				Arch: w.Arch,
+			})
 		}
 	}
-	return wIDs, nil
+	return workers, nil
 }
 
 func (q *fsJobQueue) DeleteWorker(wID uuid.UUID) error {

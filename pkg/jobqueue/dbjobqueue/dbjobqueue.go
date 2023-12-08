@@ -124,7 +124,7 @@ const (
 		SET heartbeat = now()
 		WHERE worker_id = $1`
 	sqlQueryWorkers = `
-		SELECT worker_id
+		SELECT worker_id, arch
 		FROM workers
 		WHERE age(now(), heartbeat) > $1`
 	sqlDeleteWorker = `
@@ -746,7 +746,7 @@ func (q *DBJobQueue) UpdateWorkerStatus(workerID uuid.UUID) error {
 	}
 	return nil
 }
-func (q *DBJobQueue) Workers(olderThan time.Duration) ([]uuid.UUID, error) {
+func (q *DBJobQueue) Workers(olderThan time.Duration) ([]jobqueue.Worker, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return nil, err
@@ -759,23 +759,27 @@ func (q *DBJobQueue) Workers(olderThan time.Duration) ([]uuid.UUID, error) {
 	}
 	defer rows.Close()
 
-	workerIDs := make([]uuid.UUID, 0)
+	workers := make([]jobqueue.Worker, 0)
 	for rows.Next() {
 		var w uuid.UUID
-		err = rows.Scan(&w)
+		var a string
+		err = rows.Scan(&w, &a)
 		if err != nil {
 			// Log the error and try to continue with the next row
 			q.logger.Error(err, "Unable to read token from heartbeats")
 			continue
 		}
-		workerIDs = append(workerIDs, w)
+		workers = append(workers, jobqueue.Worker{
+			ID:   w,
+			Arch: a,
+		})
 	}
 	if rows.Err() != nil {
 		q.logger.Error(rows.Err(), "Error reading tokens from heartbeats")
 		return nil, rows.Err()
 	}
 
-	return workerIDs, nil
+	return workers, nil
 }
 
 func (q *DBJobQueue) DeleteWorker(workerID uuid.UUID) error {
