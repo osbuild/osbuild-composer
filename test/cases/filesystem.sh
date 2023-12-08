@@ -202,7 +202,11 @@ sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 IMAGE_FILENAME="${COMPOSE_ID}-disk.qcow2"
 
 greenprint "💬 Checking mountpoints"
-INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
+if ! INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"; then
+    echo "ERROR image-info failed, show last few kernel message to debug"
+    dmesg | tail -n10
+    exit 2
+fi
 FAILED_MOUNTPOINTS=()
 
 for MOUNTPOINT in '/' '/var' '/var/log' '/var/log/audit' '/var/tmp' '/usr' '/tmp' '/home' '/opt' '/srv' '/app' '/data'; do
