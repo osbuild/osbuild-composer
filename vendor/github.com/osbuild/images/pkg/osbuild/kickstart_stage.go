@@ -1,6 +1,6 @@
 package osbuild
 
-import "github.com/osbuild/images/internal/users"
+import "github.com/osbuild/images/pkg/customizations/users"
 
 type KickstartStageOptions struct {
 	// Where to place the kickstart file

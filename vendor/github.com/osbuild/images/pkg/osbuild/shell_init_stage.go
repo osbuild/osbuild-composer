@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/osbuild/images/internal/shell"
+	"github.com/osbuild/images/pkg/customizations/shell"
 )
 
 const filenameRegex = "^[a-zA-Z0-9\\.\\-_]{1,250}$"

@@ -5,6 +5,8 @@ import (
 	"math/rand"
 
 	"github.com/google/uuid"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 type Argon2id struct {
@@ -96,5 +98,5 @@ func (lc *LUKSContainer) MetadataSize() uint64 {
 	}
 
 	// 16 MiB is the default size for the LUKS2 header
-	return 16 * 1024 * 1024
+	return 16 * common.MiB
 }
