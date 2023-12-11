@@ -10,6 +10,8 @@ stages:
     - mkdir -p /tmp/artifacts
     - schutzbot/ci_details.sh > /tmp/artifacts/ci-details-before-run.txt
     - cat schutzbot/team_ssh_keys.txt | tee -a ~/.ssh/authorized_keys > /dev/null
+    # workaround bug https://issues.redhat.com/browse/RHEL-17890
+    - sudo dnf upgrade -y nettle
   after_script:
     - schutzbot/ci_details.sh > /tmp/artifacts/ci-details-after-run.txt || true
     - schutzbot/unregister.sh || true
