@@ -156,7 +156,7 @@
   "fedora-39": {
     "dependencies": {
       "osbuild": {
-        "commit": "433515cff898168b204833941a6d32399152128b"
+        "commit": "5fc3b565a257b0e0636d9e7f0015fc7f6cae0e55"
       }
     },
     "repos": [
