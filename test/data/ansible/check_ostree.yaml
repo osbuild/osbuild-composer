@@ -356,9 +356,9 @@
       block:
         - assert:
             that:
-              - result_var_mount_point.stdout == "{{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
-            fail_msg: "/var does not mount on {{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
-            success_msg: "/var mounts on {{ device_name }}[/ostree/deploy/{{ image_type }}/var]"
+              - result_var_mount_point.stdout == var_mount_path
+            fail_msg: "/var does not mount on {{ var_mount_path }}"
+            success_msg: "/var mounts on {{ var_mount_path }}"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
@@ -366,6 +366,8 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      vars:
+        var_mount_path: "{{ device_name  }}[/ostree/deploy/{{ image_type  }}/var]"
 
     # case: check /var mount status
     - name: check /var mount status
@@ -396,9 +398,9 @@
       block:
         - assert:
             that:
-              - result_usr_mount_point.stdout == "{{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
-            fail_msg: "/usr does not mount on {{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
-            success_msg: "/usr mounts on {{ device_name }}[/ostree/deploy/{{ image_type }}/deploy/{{ deploy_commit }}.0/usr]"
+              - result_usr_mount_point.stdout == usr_mount_path
+            fail_msg: "/usr does not mount on {{ usr_mount_path }}"
+            success_msg: "/usr mounts on {{ usr_mount_path }}"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
@@ -406,6 +408,8 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      vars:
+        usr_mount_path: "{{ device_name  }}[/ostree/deploy/{{ image_type  }}/deploy/{{ deploy_commit  }}.0/usr]"
 
     # case: check /usr mount status
     - name: check /usr mount status
