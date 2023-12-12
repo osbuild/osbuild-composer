@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/osbuild/images/internal/fsnode"
-	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
@@ -53,6 +53,10 @@ type OSTreeDiskImage struct {
 	// Lock the root account in the deployment unless the user defined root
 	// user options in the build configuration.
 	LockRoot bool
+
+	// Container buildable tweaks the buildroot to be container friendly,
+	// i.e. to not rely on an installed osbuild-selinux
+	ContainerBuildable bool
 }
 
 func NewOSTreeDiskImageFromCommit(commit ostree.SourceSpec) *OSTreeDiskImage {
@@ -102,11 +106,14 @@ func baseRawOstreeImage(img *OSTreeDiskImage, m *manifest.Manifest, buildPipelin
 	return manifest.NewRawOStreeImage(buildPipeline, osPipeline, img.Platform)
 }
 
+// replaced in testing
+var manifestNewBuild = manifest.NewBuild
+
 func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := manifest.NewBuild(m, runner, repos)
+	buildPipeline := manifestNewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
 	buildPipeline.Checkpoint()
 
 	// don't support compressing non-raw images

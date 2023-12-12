@@ -11,6 +11,14 @@ const (
 	GibiByte = 1024 * 1024 * 1024        // GiB
 	TeraByte = 1000 * 1000 * 1000 * 1000 // TB
 	TebiByte = 1024 * 1024 * 1024 * 1024 // TiB
+
+	// shorthands
+	KiB = KibiByte
+	MB  = MegaByte
+	MiB = MebiByte
+	GB  = GigaByte
+	GiB = GibiByte
+	TiB = TebiByte
 )
 
 // These constants are set during buildtime using additional

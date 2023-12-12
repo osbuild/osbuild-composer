@@ -22,6 +22,9 @@ const (
 
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
+
+	// location for saving openscap remediation data
+	oscapDataDir = "/oscap_data"
 )
 
 // RHEL-based OS image configuration defaults

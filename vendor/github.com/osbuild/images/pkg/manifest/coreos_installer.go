@@ -3,10 +3,10 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/images/internal/fdo"
-	"github.com/osbuild/images/internal/ignition"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fdo"
+	"github.com/osbuild/images/pkg/customizations/ignition"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
