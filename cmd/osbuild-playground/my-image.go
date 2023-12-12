@@ -30,7 +30,7 @@ func (img *MyImage) InstantiateManifest(m *manifest.Manifest,
 	// Let's create a simple raw image!
 
 	// configure a build pipeline
-	build := manifest.NewBuild(m, runner, repos)
+	build := manifest.NewBuild(m, runner, repos, nil)
 	build.Checkpoint()
 
 	// create an x86_64 platform with bios boot

@@ -23,6 +23,7 @@ type repository struct {
 	CheckGPG       bool     `json:"check_gpg,omitempty"`
 	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 }
@@ -42,6 +43,7 @@ type RepoConfig struct {
 	Priority       *int     `json:"priority,omitempty"`
 	IgnoreSSL      *bool    `json:"ignore_ssl,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
 	Enabled        *bool    `json:"enabled,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
@@ -58,6 +60,12 @@ func (r *RepoConfig) Hash() string {
 	bpts := func(b *bool) string {
 		return fmt.Sprintf("%T", b)
 	}
+	bptsIgnoreNil := func(b *bool) string {
+		if b == nil {
+			return ""
+		}
+		return bts(*b)
+	}
 	ats := func(s []string) string {
 		return strings.Join(s, "")
 	}
@@ -69,7 +77,8 @@ func (r *RepoConfig) Hash() string {
 		bpts(r.CheckRepoGPG)+
 		bpts(r.IgnoreSSL)+
 		r.MetadataExpire+
-		bts(r.RHSM))))
+		bts(r.RHSM)+
+		bptsIgnoreNil(r.ModuleHotfixes))))
 }
 
 type DistrosRepoConfigs map[string]map[string][]RepoConfig
@@ -245,6 +254,7 @@ func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 				CheckGPG:       &repo.CheckGPG,
 				RHSM:           repo.RHSM,
 				MetadataExpire: repo.MetadataExpire,
+				ModuleHotfixes: repo.ModuleHotfixes,
 				ImageTypeTags:  repo.ImageTypeTags,
 			}
 

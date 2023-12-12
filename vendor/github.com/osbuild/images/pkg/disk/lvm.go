@@ -138,7 +138,7 @@ func (vg *LVMVolumeGroup) MetadataSize() uint64 {
 	// of the metadata and its location and thus the start of the physical
 	// extent. For now we assume the default which results in a start of
 	// the physical extent 1 MiB
-	return 1024 * 1024
+	return 1 * common.MiB
 }
 
 type LVMLogicalVolume struct {

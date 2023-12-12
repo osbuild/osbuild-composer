@@ -1,8 +1,8 @@
 package osbuild
 
 import (
-	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/pkg/crypt"
+	"github.com/osbuild/images/pkg/customizations/users"
 )
 
 type UsersStageOptions struct {
