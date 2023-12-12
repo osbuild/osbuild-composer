@@ -48,8 +48,9 @@ type FDOCustomization struct {
 	DiunPubKeyInsecure     string `json:"diun_pub_key_insecure,omitempty" toml:"diun_pub_key_insecure,omitempty"`
 	// This is the output of:
 	// echo "sha256:$(openssl x509 -fingerprint -sha256 -noout -in diun_cert.pem | cut -d"=" -f2 | sed 's/://g')"
-	DiunPubKeyHash      string `json:"diun_pub_key_hash,omitempty" toml:"diun_pub_key_hash,omitempty"`
-	DiunPubKeyRootCerts string `json:"diun_pub_key_root_certs,omitempty" toml:"diun_pub_key_root_certs,omitempty"`
+	DiunPubKeyHash          string `json:"diun_pub_key_hash,omitempty" toml:"diun_pub_key_hash,omitempty"`
+	DiunPubKeyRootCerts     string `json:"diun_pub_key_root_certs,omitempty" toml:"diun_pub_key_root_certs,omitempty"`
+	DiMfgStringTypeMacIface string `json:"di_mfg_string_type_mac_iface,omitempty" toml:"di_mfg_string_type_mac_iface,omitempty"`
 }
 
 type KernelCustomization struct {

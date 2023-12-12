@@ -5,14 +5,14 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/fdo"
-	"github.com/osbuild/images/internal/fsnode"
-	"github.com/osbuild/images/internal/ignition"
-	"github.com/osbuild/images/internal/oscap"
-	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fdo"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/ignition"
+	"github.com/osbuild/images/pkg/customizations/oscap"
+	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
@@ -165,14 +165,25 @@ func osCustomizations(
 		if t.rpmOstree {
 			panic("unexpected oscap options for ostree image type")
 		}
+
+		// although the osbuild stage will create this directory,
+		// it's probably better to ensure that it is created here
+		dataDirNode, err := fsnode.NewDirectory(oscapDataDir, nil, nil, nil, true)
+		if err != nil {
+			panic("unexpected error creating OpenSCAP data directory")
+		}
+
+		osc.Directories = append(osc.Directories, dataDirNode)
+
 		var datastream = oscapConfig.DataStream
 		if datastream == "" {
 			datastream = oscap.DefaultFedoraDatastream()
 		}
 
 		oscapStageOptions := osbuild.OscapConfig{
-			Datastream: datastream,
-			ProfileID:  oscapConfig.ProfileID,
+			Datastream:  datastream,
+			ProfileID:   oscapConfig.ProfileID,
+			Compression: true,
 		}
 
 		if oscapConfig.Tailoring != nil {
@@ -182,14 +193,15 @@ func osCustomizations(
 			}
 
 			tailoringOptions := osbuild.OscapAutotailorConfig{
+				NewProfile: newProfile,
+				Datastream: datastream,
+				ProfileID:  oscapConfig.ProfileID,
 				Selected:   oscapConfig.Tailoring.Selected,
 				Unselected: oscapConfig.Tailoring.Unselected,
-				NewProfile: newProfile,
 			}
 
 			osc.OpenSCAPTailorConfig = osbuild.NewOscapAutotailorStageOptions(
 				tailoringFilepath,
-				oscapStageOptions,
 				tailoringOptions,
 			)
 
@@ -201,7 +213,7 @@ func osCustomizations(
 			osc.Directories = append(osc.Directories, tailoringDir)
 		}
 
-		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(oscapStageOptions)
+		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(oscapDataDir, oscapStageOptions)
 	}
 
 	osc.ShellInit = imageConfig.ShellInit

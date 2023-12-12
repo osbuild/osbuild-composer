@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/images/internal/fsnode"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 )
 
 type Profile string

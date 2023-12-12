@@ -8,9 +8,9 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/fsnode"
-	"github.com/osbuild/images/internal/oscap"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -38,6 +38,9 @@ const (
 
 	// Added kernel command line options for ami, qcow2, openstack, vhd and vmdk types
 	cloudKernelOptions = "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
+
+	// location for saving openscap remediation data
+	oscapDataDir = "/oscap_data"
 )
 
 var (

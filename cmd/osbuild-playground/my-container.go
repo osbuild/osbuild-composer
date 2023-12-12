@@ -46,7 +46,7 @@ func (img *MyContainer) InstantiateManifest(m *manifest.Manifest,
 	// Let's create a simple OCI container!
 
 	// configure a build pipeline
-	build := manifest.NewBuild(m, runner, repos)
+	build := manifest.NewBuild(m, runner, repos, nil)
 	build.Checkpoint()
 
 	// create a minimal non-bootable OS tree

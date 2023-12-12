@@ -15,6 +15,7 @@ type OscapRemediationStageOptions struct {
 	DataDir string      `json:"data_dir,omitempty"`
 	Config  OscapConfig `json:"config"`
 }
+
 type OscapConfig struct {
 	Datastream   string              `json:"datastream" toml:"datastream"`
 	ProfileID    string              `json:"profile_id" toml:"profile_id"`
@@ -23,10 +24,11 @@ type OscapConfig struct {
 	BenchmarkID  string              `json:"benchmark_id,omitempty" toml:"benchmark_id,omitempty"`
 	Tailoring    string              `json:"tailoring,omitempty" toml:"tailoring,omitempty"`
 	TailoringID  string              `json:"tailoring_id,omitempty" toml:"tailoring_id,omitempty"`
-	ArfResult    string              `json:"arf_result,omitempty" toml:"arf_result,omitempty"`
+	ArfResult    string              `json:"arf_results,omitempty" toml:"arf_results,omitempty"`
 	HtmlReport   string              `json:"html_report,omitempty" toml:"html_report,omitempty"`
 	VerboseLog   string              `json:"verbose_log,omitempty" toml:"verbose_log,omitempty"`
 	VerboseLevel OscapVerbosityLevel `json:"verbose_level,omitempty" toml:"verbose_level,omitempty"`
+	Compression  bool                `json:"compress_results,omitempty" toml:"compress_results,omitempty"`
 }
 
 func (OscapRemediationStageOptions) isStageOptions() {}
@@ -70,8 +72,9 @@ func NewOscapRemediationStage(options *OscapRemediationStageOptions) *Stage {
 	}
 }
 
-func NewOscapRemediationStageOptions(options OscapConfig) *OscapRemediationStageOptions {
+func NewOscapRemediationStageOptions(dataDir string, options OscapConfig) *OscapRemediationStageOptions {
 	return &OscapRemediationStageOptions{
+		DataDir: dataDir,
 		Config: OscapConfig{
 			ProfileID:    options.ProfileID,
 			Datastream:   options.Datastream,
@@ -83,6 +86,7 @@ func NewOscapRemediationStageOptions(options OscapConfig) *OscapRemediationStage
 			HtmlReport:   options.HtmlReport,
 			VerboseLog:   options.VerboseLog,
 			VerboseLevel: options.VerboseLevel,
+			Compression:  options.Compression,
 		},
 	}
 }

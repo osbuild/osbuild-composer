@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/fsnode"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/disk"
 )
 

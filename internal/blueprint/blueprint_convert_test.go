@@ -114,10 +114,11 @@ func TestConvert(t *testing.T) {
 					},
 					InstallationDevice: "/dev/sda",
 					FDO: &FDOCustomization{
-						ManufacturingServerURL: "http://manufacturing.fdo",
-						DiunPubKeyInsecure:     "insecure-pubkey",
-						DiunPubKeyHash:         "hash-pubkey",
-						DiunPubKeyRootCerts:    "root-certs",
+						ManufacturingServerURL:  "http://manufacturing.fdo",
+						DiunPubKeyInsecure:      "insecure-pubkey",
+						DiunPubKeyHash:          "hash-pubkey",
+						DiunPubKeyRootCerts:     "root-certs",
+						DiMfgStringTypeMacIface: "iface",
 					},
 					OpenSCAP: &OpenSCAPCustomization{
 						DataStream: "stream",
@@ -264,10 +265,11 @@ func TestConvert(t *testing.T) {
 					},
 					InstallationDevice: "/dev/sda",
 					FDO: &iblueprint.FDOCustomization{
-						ManufacturingServerURL: "http://manufacturing.fdo",
-						DiunPubKeyInsecure:     "insecure-pubkey",
-						DiunPubKeyHash:         "hash-pubkey",
-						DiunPubKeyRootCerts:    "root-certs",
+						ManufacturingServerURL:  "http://manufacturing.fdo",
+						DiunPubKeyInsecure:      "insecure-pubkey",
+						DiunPubKeyHash:          "hash-pubkey",
+						DiunPubKeyRootCerts:     "root-certs",
+						DiMfgStringTypeMacIface: "iface",
 					},
 					OpenSCAP: &iblueprint.OpenSCAPCustomization{
 						DataStream: "stream",
