@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/osbuild/images/internal/fsnode"
-	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -309,14 +309,11 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 
 	if p.Type == AnacondaInstallerTypePayload {
 		if p.InteractiveDefaults != nil {
-			kickstartOptions, err := osbuild.NewKickstartStageOptions(
+			kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
 				"/usr/share/anaconda/interactive-defaults.ks",
-				p.InteractiveDefaults.TarPath,
 				p.Users,
 				p.Groups,
-				"",
-				"",
-				"",
+				p.InteractiveDefaults.TarPath,
 			)
 
 			if err != nil {

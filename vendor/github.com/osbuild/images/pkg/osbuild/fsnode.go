@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/osbuild/images/internal/fsnode"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 )
 
 // GenFileNodesStages generates the stages for a list of file nodes.

@@ -7,23 +7,24 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/fsnode"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 type RepositoryCustomization struct {
-	Id           string   `json:"id" toml:"id"`
-	BaseURLs     []string `json:"baseurls,omitempty" toml:"baseurls,omitempty"`
-	GPGKeys      []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
-	Metalink     string   `json:"metalink,omitempty" toml:"metalink,omitempty"`
-	Mirrorlist   string   `json:"mirrorlist,omitempty" toml:"mirrorlist,omitempty"`
-	Name         string   `json:"name,omitempty" toml:"name,omitempty"`
-	Priority     *int     `json:"priority,omitempty" toml:"priority,omitempty"`
-	Enabled      *bool    `json:"enabled,omitempty" toml:"enabled,omitempty"`
-	GPGCheck     *bool    `json:"gpgcheck,omitempty" toml:"gpgcheck,omitempty"`
-	RepoGPGCheck *bool    `json:"repo_gpgcheck,omitempty" toml:"repo_gpgcheck,omitempty"`
-	SSLVerify    *bool    `json:"sslverify,omitempty" toml:"sslverify,omitempty"`
-	Filename     string   `json:"filename,omitempty" toml:"filename,omitempty"`
+	Id             string   `json:"id" toml:"id"`
+	BaseURLs       []string `json:"baseurls,omitempty" toml:"baseurls,omitempty"`
+	GPGKeys        []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
+	Metalink       string   `json:"metalink,omitempty" toml:"metalink,omitempty"`
+	Mirrorlist     string   `json:"mirrorlist,omitempty" toml:"mirrorlist,omitempty"`
+	Name           string   `json:"name,omitempty" toml:"name,omitempty"`
+	Priority       *int     `json:"priority,omitempty" toml:"priority,omitempty"`
+	Enabled        *bool    `json:"enabled,omitempty" toml:"enabled,omitempty"`
+	GPGCheck       *bool    `json:"gpgcheck,omitempty" toml:"gpgcheck,omitempty"`
+	RepoGPGCheck   *bool    `json:"repo_gpgcheck,omitempty" toml:"repo_gpgcheck,omitempty"`
+	SSLVerify      *bool    `json:"sslverify,omitempty" toml:"sslverify,omitempty"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty" toml:"module_hotfixes,omitempty"`
+	Filename       string   `json:"filename,omitempty" toml:"filename,omitempty"`
 }
 
 const repoFilenameRegex = "^[\\w.-]{1,250}\\.repo$"
@@ -117,16 +118,17 @@ func (repo RepositoryCustomization) customRepoToRepoConfig() rpmmd.RepoConfig {
 	copy(keys, repo.GPGKeys)
 
 	repoConfig := rpmmd.RepoConfig{
-		Id:           repo.Id,
-		BaseURLs:     urls,
-		GPGKeys:      keys,
-		Name:         repo.Name,
-		Metalink:     repo.Metalink,
-		MirrorList:   repo.Mirrorlist,
-		CheckGPG:     repo.GPGCheck,
-		CheckRepoGPG: repo.RepoGPGCheck,
-		Priority:     repo.Priority,
-		Enabled:      repo.Enabled,
+		Id:             repo.Id,
+		BaseURLs:       urls,
+		GPGKeys:        keys,
+		Name:           repo.Name,
+		Metalink:       repo.Metalink,
+		MirrorList:     repo.Mirrorlist,
+		CheckGPG:       repo.GPGCheck,
+		CheckRepoGPG:   repo.RepoGPGCheck,
+		Priority:       repo.Priority,
+		ModuleHotfixes: repo.ModuleHotfixes,
+		Enabled:        repo.Enabled,
 	}
 
 	if repo.SSLVerify != nil {

@@ -99,17 +99,18 @@ func repoConfigToYumRepository(repo rpmmd.RepoConfig) YumRepository {
 	}
 
 	yumRepo := YumRepository{
-		Id:           repo.Id,
-		Name:         repo.Name,
-		Mirrorlist:   repo.MirrorList,
-		Metalink:     repo.Metalink,
-		BaseURLs:     urls,
-		GPGKey:       keys,
-		GPGCheck:     repo.CheckGPG,
-		RepoGPGCheck: repo.CheckRepoGPG,
-		Enabled:      repo.Enabled,
-		Priority:     repo.Priority,
-		SSLVerify:    sslVerify,
+		Id:             repo.Id,
+		Name:           repo.Name,
+		Mirrorlist:     repo.MirrorList,
+		Metalink:       repo.Metalink,
+		BaseURLs:       urls,
+		GPGKey:         keys,
+		GPGCheck:       repo.CheckGPG,
+		RepoGPGCheck:   repo.CheckRepoGPG,
+		Enabled:        repo.Enabled,
+		Priority:       repo.Priority,
+		SSLVerify:      sslVerify,
+		ModuleHotfixes: repo.ModuleHotfixes,
 	}
 
 	return yumRepo
