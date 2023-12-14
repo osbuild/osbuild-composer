@@ -7,12 +7,12 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/fsnode"
-	"github.com/osbuild/images/internal/shell"
-	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/shell"
+	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -220,7 +220,7 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	}
 
 	if p.OpenSCAPConfig != nil {
-		packages = append(packages, "openscap-scanner", "scap-security-guide")
+		packages = append(packages, "openscap-scanner", "scap-security-guide", "xz")
 	}
 
 	// Make sure the right packages are included for subscriptions

@@ -5,11 +5,11 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/users"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
@@ -131,9 +131,11 @@ func osCustomizations(
 
 	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
 		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(
+			oscapDataDir,
 			osbuild.OscapConfig{
-				Datastream: oscapConfig.DataStream,
-				ProfileID:  oscapConfig.ProfileID,
+				Datastream:  oscapConfig.DataStream,
+				ProfileID:   oscapConfig.ProfileID,
+				Compression: true,
 			},
 		)
 	}

@@ -1,7 +1,7 @@
 package osbuild
 
 import (
-	"github.com/osbuild/images/internal/users"
+	"github.com/osbuild/images/pkg/customizations/users"
 )
 
 type GroupsStageOptions struct {

@@ -47,7 +47,7 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := manifest.NewBuild(m, runner, repos)
+	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
 	osPipeline := manifest.NewOS(m, buildPipeline, img.Platform, repos)
