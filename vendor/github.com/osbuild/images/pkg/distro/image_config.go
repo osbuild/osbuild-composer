@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/osbuild/images/internal/fsnode"
-	"github.com/osbuild/images/internal/shell"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/subscription"
 )
