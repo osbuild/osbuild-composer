@@ -1028,7 +1028,9 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: fdo_credential == "true"
+      when:
+        - fdo_credential == "true"
+        - (ansible_facts['distribution_version'] is version('9.4', '>=')) or (ansible_facts['distribution_version'] is version('9', '=='))
 
     # case: checking firewall customizations
     - name: Check applied firewall customizations
