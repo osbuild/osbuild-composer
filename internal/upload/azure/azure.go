@@ -110,6 +110,9 @@ func (ac Client) CreateStorageAccount(ctx context.Context, resourceGroup, name, 
 		Tags: map[string]*string{
 			tag.Name: &tag.Value,
 		},
+		Properties: &armstorage.AccountPropertiesCreateParameters{
+			MinimumTLSVersion: common.ToPtr(armstorage.MinimumTLSVersionTLS12),
+		},
 	}, nil)
 	if err != nil {
 		return fmt.Errorf("sending the create storage account request failed: %v", err)
