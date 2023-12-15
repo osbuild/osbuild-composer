@@ -763,21 +763,29 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			c, err := azure.NewClient(*impl.AzureConfig.Creds, targetOptions.TenantID)
+			c, err := azure.NewClient(*impl.AzureConfig.Creds, targetOptions.TenantID, targetOptions.SubscriptionID)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[Azure] 🔑 Logged in Azure")
 
+			location := targetOptions.Location
+			if location == "" {
+				location, err = c.GetResourceGroupLocation(ctx, targetOptions.ResourceGroup)
+				if err != nil {
+					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("retrieving resource group location failed: %v", err), nil)
+					break
+				}
+			}
+
 			storageAccountTag := azure.Tag{
 				Name:  "imageBuilderStorageAccount",
-				Value: fmt.Sprintf("location=%s", targetOptions.Location),
+				Value: fmt.Sprintf("location=%s", location),
 			}
 
 			storageAccount, err := c.GetResourceNameByTag(
 				ctx,
-				targetOptions.SubscriptionID,
 				targetOptions.ResourceGroup,
 				storageAccountTag,
 			)
@@ -793,10 +801,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 				err := c.CreateStorageAccount(
 					ctx,
-					targetOptions.SubscriptionID,
 					targetOptions.ResourceGroup,
 					storageAccount,
-					targetOptions.Location,
+					location,
 					storageAccountTag,
 				)
 				if err != nil {
@@ -808,7 +815,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			logWithId.Info("[Azure] 🔑📦 Retrieving a storage account key")
 			storageAccessKey, err := c.GetStorageAccountKey(
 				ctx,
-				targetOptions.SubscriptionID,
 				targetOptions.ResourceGroup,
 				storageAccount,
 			)
@@ -873,7 +879,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				storageContainer,
 				blobName,
 				jobTarget.ImageName,
-				targetOptions.Location,
+				location,
 			)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, fmt.Sprintf("registering the image failed: %v", err), nil)
