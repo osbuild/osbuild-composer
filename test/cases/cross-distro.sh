@@ -116,6 +116,14 @@ ALL_EXPECTED_DISTROS=$(echo "$ALL_DISTROS" | grep -E "$PATTERN" | grep -Ev 'beta
 # expected in the test snippet further below
 ALL_REMAINDERS=$(echo "$ALL_DISTROS" | grep -vw "$RECOGNIZED_DISTROS")
 
+echo "DEBUG: ===== ALL_DISTROS ===="
+echo "$ALL_DISTROS"
+echo "DEBUG: ===== ALL_EXPECTED_DISTROS ===="
+echo "$ALL_EXPECTED_DISTROS"
+echo "DEBUG: ===== ALL_REMAINDERS ===="
+echo "$ALL_REMAINDERS"
+echo "DEBUG: ===== END ===="
+
 # Check for any missing distros based on the expected host pattern
 if [ "$ALL_EXPECTED_DISTROS" != "$INSTALLED_DISTROS" ];then
     echo "Some distros are missing!"
@@ -131,8 +139,11 @@ if [ "$ALL_EXPECTED_DISTROS" != "$INSTALLED_DISTROS" ];then
     fi
 fi
 
+echo "INFO: Start interating over ALL_REMAINDERS"
 # Push a blueprint with unsupported distro to see if composer fails gracefuly
 for REMAINING_DISTRO in $ALL_REMAINDERS; do
+    echo "INFO: iterating over $REMAINING_DISTRO"
+
     TEST_BP=blueprint.toml
     tee "$TEST_BP" > /dev/null << EOF
 name = "bash"
