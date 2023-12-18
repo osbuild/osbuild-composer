@@ -46,3 +46,16 @@ var CustomFilesPolicies = NewPathPolicies(map[string]PathPolicy{
 	"/etc/passwd": {Deny: true},
 	"/etc/group":  {Deny: true},
 })
+
+// MountpointPolicies for ostree
+var OstreeMountpointPolicies = NewPathPolicies(map[string]PathPolicy{
+	"/":             {},
+	"/ostree":       {Deny: true},
+	"/home":         {Deny: true},
+	"/var/home":     {Deny: true},
+	"/var/opt":      {Deny: true},
+	"/var/srv":      {Deny: true},
+	"/var/roothome": {Deny: true},
+	"/var/usrlocal": {Deny: true},
+	"/var/mnt":      {Deny: true},
+})
