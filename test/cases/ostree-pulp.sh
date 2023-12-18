@@ -466,6 +466,114 @@ done
 
 check_result
 
+##################################################
+##
+## Upload upgrade ostree commit to pulp test
+##
+##################################################
+
+# Write a blueprint for ostree image.
+tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "upgrade"
+description = "An upgrade ostree image"
+version = "0.0.2"
+modules = []
+groups = []
+
+[[packages]]
+name = "python3"
+version = "*"
+
+[[packages]]
+name = "sssd"
+version = "*"
+
+[[packages]]
+name = "wget"
+version = "*"
+
+[[customizations.user]]
+name = "${SSH_USER}"
+description = "Administrator account"
+password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
+key = "${SSH_KEY_PUB}"
+home = "/home/${SSH_USER}/"
+groups = ["wheel"]
+EOF
+
+greenprint "📄 upgrade blueprint"
+cat "$BLUEPRINT_FILE"
+
+# Prepare the blueprint for the compose.
+greenprint "📋 Preparing blueprint"
+sudo composer-cli blueprints push "$BLUEPRINT_FILE"
+sudo composer-cli blueprints depsolve upgrade
+
+greenprint "🕹 Get ostree installed commit value"
+PARENT_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Build upgrade image.
+build_image upgrade "$IMAGE_TYPE" test "$PULP_CONFIG_FILE" "$PROD_REPO_URL" "$PARENT_HASH"
+
+# Clean compose and blueprints.
+greenprint "Clean up osbuild-composer again"
+sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
+sudo composer-cli blueprints delete upgrade > /dev/null
+
+# Pull content from pulp to local repo
+greenprint "Pull upgrade commit from pulp to local repo"
+sudo ostree --repo="$PROD_REPO" pull --mirror edge-pulp "$OSTREE_REF"
+sudo ostree --repo="$PROD_REPO" summary -u
+
+# Ensure SELinux is happy with all objects files.
+greenprint "👿 Running restorecon on web server root folder"
+sudo restorecon -Rv "${PROD_REPO}" > /dev/null
+
+# Get ostree commit value.
+greenprint "🕹 Get ostree upgrade commit value"
+UPGRADE_HASH=$(curl "${PROD_REPO_URL}/refs/heads/${OSTREE_REF}")
+
+# Upgrade image/commit.
+greenprint "Upgrade ostree image/commit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${GUEST_ADDRESS}" 'sudo rpm-ostree upgrade || { sudo rpm-ostree status; sudo journalctl -b -r -u rpm-ostreed; exit 1; }'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${SSH_USER}@${GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+# Sleep 10 seconds here to make sure vm restarted already
+sleep 10
+
+# Check for ssh ready to go.
+greenprint "🛃 Checking for SSH is ready to go"
+# shellcheck disable=SC2034  # Unused variables left for readability
+for LOOP_COUNTER in $(seq 0 30); do
+    RESULTS="$(wait_for_ssh_up $GUEST_ADDRESS)"
+    if [[ $RESULTS == 1 ]]; then
+        echo "SSH is ready now! 🥳"
+        break
+    fi
+    sleep 10
+done
+
+# Check ostree upgrade result
+check_result
+
+# Add instance IP address into /etc/ansible/hosts
+sudo tee "${TEMPDIR}"/inventory > /dev/null << EOF
+[ostree_guest]
+${GUEST_ADDRESS}
+[ostree_guest:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=${SSH_USER}
+ansible_private_key_file=${SSH_KEY}
+ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+EOF
+
+# Test IoT/Edge OS
+sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
+    -e image_type=${IMAGE_TYPE} \
+    -e ostree_commit="${UPGRADE_HASH}" \
+    -e sysroot_ro="true" \
+    /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
+check_result
+
 clean_up
 
 exit 0
