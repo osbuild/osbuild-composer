@@ -6,6 +6,7 @@
 APISOCKET=/run/weldr/api.socket
 
 source /etc/os-release
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Build a grep pattern that results in an empty string when the expected distros are installed
 case $ID in
@@ -146,7 +147,11 @@ EOF
 
     # there is a different reponse if legacy composer-cli is used
     if rpm -q --quiet weldr-client; then
-        EXPECTED_RESPONSE="ERROR: BlueprintsError: '$REMAINING_DISTRO' is not a valid distribution (architecture '$(uname -m)')"
+        if nvrGreaterOrEqual "osbuild-composer" "97"; then
+            EXPECTED_RESPONSE="ERROR: BlueprintsError: '$REMAINING_DISTRO' is not a valid distribution (architecture '$(uname -m)')"
+        else
+            EXPECTED_RESPONSE="ERROR: BlueprintsError: '$REMAINING_DISTRO' is not a valid distribution"
+        fi
     else
         EXPECTED_RESPONSE="'$REMAINING_DISTRO' is not a valid distribution"
         RESPONSE=${RESPONSE#*: }
