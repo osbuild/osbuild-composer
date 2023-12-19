@@ -156,6 +156,8 @@ name = "bash"
 EOF
     RESPONSE=$(sudo composer-cli blueprints push $TEST_BP 2>&1)
 
+    echo "DEBUG: $REMAINING_DISTRO, RESPONSE=$RESPONSE"
+
     # there is a different reponse if legacy composer-cli is used
     if rpm -q --quiet weldr-client; then
         if nvrGreaterOrEqual "osbuild-composer" "97"; then
