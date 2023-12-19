@@ -18,9 +18,15 @@ function _instanceWaitSSH() {
 function _instanceCheck() {
   echo "✔️ Instance checking"
   local _ssh="$1"
+  local _testModuleHotfixes="${2:-0}"
 
   # Check if postgres is installed
   $_ssh rpm -q postgresql dummy
+
+  # Check if nginx is installed from official repo
+  if [[ "$_testModuleHotfixes" == "1" ]]; then
+    $_ssh rpm -q nginx nginx-module-njs
+  fi
 
   # Verify subscribe status. Loop check since the system may not be registered such early(RHEL only)
   if [[ "$ID" == "rhel" ]]; then
