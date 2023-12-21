@@ -46,6 +46,8 @@ func osCustomizations(
 		osc.KernelOptionsAppend = kernelOptions
 	}
 
+	osc.FIPS = c.GetFIPS()
+
 	osc.ExtraBasePackages = osPackageSet.Include
 	osc.ExcludeBasePackages = osPackageSet.Exclude
 	osc.ExtraBaseRepos = osPackageSet.Repositories

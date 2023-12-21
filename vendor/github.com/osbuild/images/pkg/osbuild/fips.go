@@ -8,6 +8,15 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 )
 
+var (
+	FIPSDracutConfStageOptions = &DracutConfStageOptions{
+		Filename: "40-fips.conf",
+		Config: DracutConfigFile{
+			AddModules: []string{"fips"},
+		},
+	}
+)
+
 func GenFIPSKernelOptions(pt *disk.PartitionTable) []string {
 	cmdline := make([]string, 0)
 	cmdline = append(cmdline, "fips=1")
@@ -37,6 +46,7 @@ func GenFIPSStages() (stages []*Stage) {
 			&UpdateCryptoPoliciesStageOptions{
 				Policy: "FIPS",
 			}),
+		NewDracutConfStage(FIPSDracutConfStageOptions),
 	}
 	stages = append(stages, GenFileNodesStages(GenFIPSFiles())...)
 	return

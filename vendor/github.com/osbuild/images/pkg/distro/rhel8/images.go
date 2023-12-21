@@ -49,6 +49,8 @@ func osCustomizations(
 		}
 	}
 
+	osc.FIPS = c.GetFIPS()
+
 	osc.ExtraBasePackages = osPackageSet.Include
 	osc.ExcludeBasePackages = osPackageSet.Exclude
 	osc.ExtraBaseRepos = osPackageSet.Repositories
@@ -436,6 +438,7 @@ func edgeInstallerImage(workload workload.Workload,
 	img.OSName = "rhel"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+	img.FIPS = customizations.GetFIPS()
 
 	img.Filename = t.Filename()
 
@@ -459,6 +462,7 @@ func edgeRawImage(workload workload.Workload,
 
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+	img.FIPS = customizations.GetFIPS()
 
 	img.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	// TODO: move to image config
@@ -505,6 +509,7 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 
 	rawImg.Users = users.UsersFromBP(customizations.GetUsers())
 	rawImg.Groups = users.GroupsFromBP(customizations.GetGroups())
+	rawImg.FIPS = customizations.GetFIPS()
 
 	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	rawImg.Keyboard = "us"

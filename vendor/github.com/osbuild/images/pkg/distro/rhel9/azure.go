@@ -70,6 +70,27 @@ var (
 	}
 )
 
+func azureSapRhuiImgType(rd distribution) imageType {
+	return imageType{
+		name:        "azure-sap-rhui",
+		filename:    "disk.vhd.xz",
+		mimeType:    "application/xz",
+		compression: "xz",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: azureSapPackageSet,
+		},
+		defaultImageConfig:  defaultAzureRhuiImageConfig.InheritFrom(sapAzureImageConfig(rd)),
+		kernelOptions:       defaultAzureKernelOptions,
+		bootable:            true,
+		defaultSize:         64 * common.GibiByte,
+		image:               diskImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc", "xz"},
+		exports:             []string{"xz"},
+		basePartitionTables: azureRhuiBasePartitionTables,
+	}
+}
+
 // PACKAGE SETS
 
 // Common Azure image package set
@@ -597,4 +618,19 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 			},
 		},
 	},
+}
+
+// Azure SAP image package set
+// Includes the common azure package set, the common SAP packages, and
+// the azure rhui sap package.
+func azureSapPackageSet(t *imageType) rpmmd.PackageSet {
+	return rpmmd.PackageSet{
+		Include: []string{
+			"rhui-azure-rhel9-sap-ha",
+		},
+	}.Append(azureCommonPackageSet(t)).Append(SapPackageSet(t))
+}
+
+func sapAzureImageConfig(rd distribution) *distro.ImageConfig {
+	return sapImageConfig(rd.osVersion).InheritFrom(defaultAzureRhuiImageConfig.InheritFrom(defaultAzureImageConfig))
 }

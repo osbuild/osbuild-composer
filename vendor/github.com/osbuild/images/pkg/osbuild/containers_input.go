@@ -46,6 +46,4 @@ func NewContainersInputForSources(containers []container.Spec) ContainersInput {
 	}
 }
 
-type ContainersInputs map[string]ContainersInput
-
-func (c ContainersInputs) isStageInputs() {}
+func (c ContainersInput) isStageInputs() {}

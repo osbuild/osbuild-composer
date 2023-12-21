@@ -142,7 +142,6 @@ func SapPackageSet(t *imageType) rpmmd.PackageSet {
 			"krb5-workstation",
 			"libaio",
 			"libatomic",
-			"libcanberra-gtk2",
 			"libicu",
 			"libtool-ltdl",
 			"lm_sensors",
@@ -156,8 +155,6 @@ func SapPackageSet(t *imageType) rpmmd.PackageSet {
 			"libnsl",
 		},
 		Exclude: []string{
-			// COMPOSER-1829
-			"firewalld",
 			"iwl1000-firmware",
 			"iwl100-firmware",
 			"iwl105-firmware",

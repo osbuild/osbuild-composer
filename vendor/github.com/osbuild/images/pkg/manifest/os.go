@@ -132,6 +132,8 @@ type OSCustomizations struct {
 	// Custom directories and files to create in the image
 	Directories []*fsnode.Directory
 	Files       []*fsnode.File
+
+	FIPS bool
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -417,7 +419,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 
 		manifests := osbuild.NewFilesInputForManifestLists(p.containerSpecs)
-		skopeo := osbuild.NewSkopeoStage(storagePath, images, manifests)
+		skopeo := osbuild.NewSkopeoStageWithContainersStorage(storagePath, images, manifests)
 		pipeline.AddStage(skopeo)
 	}
 
@@ -603,6 +605,16 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if pt := p.PartitionTable; pt != nil {
 		kernelOptions := osbuild.GenImageKernelOptions(p.PartitionTable)
 		kernelOptions = append(kernelOptions, p.KernelOptionsAppend...)
+
+		if p.FIPS {
+			kernelOptions = append(kernelOptions, osbuild.GenFIPSKernelOptions(p.PartitionTable)...)
+			pipeline.AddStage(osbuild.NewDracutStage(&osbuild.DracutStageOptions{
+				Kernel:     []string{p.kernelVer},
+				AddModules: []string{"fips"},
+			}))
+			p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
+		}
+
 		if !p.KernelOptionsBootloader {
 			pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
 		}
@@ -719,6 +731,12 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	if wslConf := p.WSLConfig; wslConf != nil {
 		pipeline.AddStage(osbuild.NewWSLConfStage(wslConf))
+	}
+
+	if p.FIPS {
+		for _, stage := range osbuild.GenFIPSStages() {
+			pipeline.AddStage(stage)
+		}
 	}
 
 	if p.OpenSCAPTailorConfig != nil {

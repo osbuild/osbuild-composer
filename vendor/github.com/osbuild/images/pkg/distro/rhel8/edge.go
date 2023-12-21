@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -21,6 +22,7 @@ func edgeCommitImgType(rd distribution) imageType {
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices(rd),
+			DracutConf:      []*osbuild.DracutConfStageOptions{osbuild.FIPSDracutConfStageOptions},
 		},
 		rpmOstree:        true,
 		image:            edgeCommitImage,
@@ -47,6 +49,7 @@ func edgeOCIImgType(rd distribution) imageType {
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: edgeServices(rd),
+			DracutConf:      []*osbuild.DracutConfStageOptions{osbuild.FIPSDracutConfStageOptions},
 		},
 		rpmOstree:        true,
 		bootISO:          false,

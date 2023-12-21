@@ -122,6 +122,7 @@ var (
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: iotServices,
+			DracutConf:      []*osbuild.DracutConfStageOptions{osbuild.FIPSDracutConfStageOptions},
 		},
 		rpmOstree:        true,
 		image:            iotCommitImage,
@@ -143,6 +144,7 @@ var (
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: iotServices,
+			DracutConf:      []*osbuild.DracutConfStageOptions{osbuild.FIPSDracutConfStageOptions},
 		},
 		rpmOstree:        true,
 		bootISO:          false,
