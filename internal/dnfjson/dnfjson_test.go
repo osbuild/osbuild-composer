@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/mocks/rpmrepo"
-	"github.com/stretchr/testify/assert"
 )
 
 var forceDNF = flag.Bool("force-dnf", false, "force dnf testing, making them fail instead of skip if dnf isn't installed")
@@ -121,13 +122,13 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
+					repoHash: "f177f580cf201f52d1c62968d5b85cddae3e06cb9d5058987c07de1dbd769d4b",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
+					repoHash: "5c4a57bbb1b6a1886291819f2ceb25eb7c92e80065bc986a75c5837cf3d55a1f",
 				},
 			},
 		},
@@ -160,19 +161,19 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
+					repoHash: "f177f580cf201f52d1c62968d5b85cddae3e06cb9d5058987c07de1dbd769d4b",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
+					repoHash: "5c4a57bbb1b6a1886291819f2ceb25eb7c92e80065bc986a75c5837cf3d55a1f",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
-					repoHash: "ffbdcbe6fefded88354e22cc292a62f1dac41b23f83c5eb95c1cdae84257a713",
+					repoHash: "1d3b23c311a5597ae217a0023eab3a401e7ba569066a0b91ffdcae04795af184",
 				},
 			},
 		},
@@ -197,20 +198,20 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
+					repoHash: "f177f580cf201f52d1c62968d5b85cddae3e06cb9d5058987c07de1dbd769d4b",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
+					repoHash: "5c4a57bbb1b6a1886291819f2ceb25eb7c92e80065bc986a75c5837cf3d55a1f",
 				},
 				{
 					ID:             modHotfixRepo.Hash(),
 					Name:           "nginx",
 					BaseURLs:       []string{"https://example.org/nginx"},
 					ModuleHotfixes: common.ToPtr(true),
-					repoHash:       "6ab05f54094ff2a0ee86facecae3e75e4065a01cc8caffbbbeb7505c6bfac283",
+					repoHash:       "b7d998ee8657964c17709e35ea7eaaffe4c84f9e41cc05250a1d16e8352d52e4",
 				},
 			},
 		},
@@ -243,13 +244,13 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
+					repoHash: "f177f580cf201f52d1c62968d5b85cddae3e06cb9d5058987c07de1dbd769d4b",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
+					repoHash: "5c4a57bbb1b6a1886291819f2ceb25eb7c92e80065bc986a75c5837cf3d55a1f",
 				},
 			},
 		},
@@ -290,19 +291,19 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
+					repoHash: "f177f580cf201f52d1c62968d5b85cddae3e06cb9d5058987c07de1dbd769d4b",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
+					repoHash: "5c4a57bbb1b6a1886291819f2ceb25eb7c92e80065bc986a75c5837cf3d55a1f",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
-					repoHash: "ffbdcbe6fefded88354e22cc292a62f1dac41b23f83c5eb95c1cdae84257a713",
+					repoHash: "1d3b23c311a5597ae217a0023eab3a401e7ba569066a0b91ffdcae04795af184",
 				},
 			},
 		},
@@ -344,25 +345,25 @@ func TestMakeDepsolveRequest(t *testing.T) {
 					ID:       baseOS.Hash(),
 					Name:     "baseos",
 					BaseURLs: []string{"https://example.org/baseos"},
-					repoHash: "fdc2e5bb6cda8e113308df9396a005b81a55ec00ec29aa0a447952ad4248d803",
+					repoHash: "f177f580cf201f52d1c62968d5b85cddae3e06cb9d5058987c07de1dbd769d4b",
 				},
 				{
 					ID:       appstream.Hash(),
 					Name:     "appstream",
 					BaseURLs: []string{"https://example.org/appstream"},
-					repoHash: "71c280f63a779a8bf53961ec2f15d51d052021de024a4e06ae499b8029701808",
+					repoHash: "5c4a57bbb1b6a1886291819f2ceb25eb7c92e80065bc986a75c5837cf3d55a1f",
 				},
 				{
 					ID:       userRepo.Hash(),
 					Name:     "user-repo",
 					BaseURLs: []string{"https://example.org/user-repo"},
-					repoHash: "ffbdcbe6fefded88354e22cc292a62f1dac41b23f83c5eb95c1cdae84257a713",
+					repoHash: "1d3b23c311a5597ae217a0023eab3a401e7ba569066a0b91ffdcae04795af184",
 				},
 				{
 					ID:       userRepo2.Hash(),
 					Name:     "user-repo-2",
 					BaseURLs: []string{"https://example.org/user-repo-2"},
-					repoHash: "67d1ea4f70638dbcd397c70c9a78a477f3f4ae0ac819a1f479bebfde700160c4",
+					repoHash: "9fca2ee4a26933d0b2f8e318b398d5e2bff53cb8c14d3c7a8c47f4429ccb4c41",
 				},
 			},
 		},
