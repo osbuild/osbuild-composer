@@ -58,13 +58,10 @@ func (r *RepoConfig) Hash() string {
 		return fmt.Sprintf("%T", b)
 	}
 	bpts := func(b *bool) string {
-		return fmt.Sprintf("%T", b)
-	}
-	bptsIgnoreNil := func(b *bool) string {
 		if b == nil {
 			return ""
 		}
-		return bts(*b)
+		return fmt.Sprintf("%T", b)
 	}
 	ats := func(s []string) string {
 		return strings.Join(s, "")
@@ -78,7 +75,7 @@ func (r *RepoConfig) Hash() string {
 		bpts(r.IgnoreSSL)+
 		r.MetadataExpire+
 		bts(r.RHSM)+
-		bptsIgnoreNil(r.ModuleHotfixes))))
+		bpts(r.ModuleHotfixes))))
 }
 
 type DistrosRepoConfigs map[string]map[string][]RepoConfig
