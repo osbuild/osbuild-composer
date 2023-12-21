@@ -83,6 +83,12 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
+	if img.OSCustomizations.FIPS {
+		anacondaPipeline.AdditionalAnacondaModules = append(
+			anacondaPipeline.AdditionalAnacondaModules,
+			"org.fedoraproject.Anaconda.Modules.Security",
+		)
+	}
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
@@ -125,6 +131,9 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	if img.ISORootKickstart {
 		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isoLabel, kspath))
 	}
+	if img.OSCustomizations.FIPS {
+		kernelOpts = append(kernelOpts, "fips=1")
+	}
 	kernelOpts = append(kernelOpts, img.AdditionalKernelOpts...)
 	bootTreePipeline.KernelOpts = kernelOpts
 
@@ -151,6 +160,10 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline.OSPipeline = osPipeline
 	isoTreePipeline.KernelOpts = img.AdditionalKernelOpts
+	if img.OSCustomizations.FIPS {
+		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
+	}
+
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, isoLabel)

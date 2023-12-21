@@ -460,6 +460,8 @@ func newDistro(name string, minor int) *distribution {
 		x86_64.addImageTypes(azureX64Platform, azureRhuiImgType, azureByosImgType)
 		aarch64.addImageTypes(azureAarch64Platform, azureRhuiImgType, azureByosImgType)
 
+		x86_64.addImageTypes(azureX64Platform, azureSapRhuiImgType(rd))
+
 		// keep the RHEL EC2 x86_64 images before 9.3 BIOS-only for backward compatibility
 		if common.VersionLessThan(rd.osVersion, "9.3") {
 			ec2X86Platform = &platform.X86{

@@ -402,6 +402,11 @@ func rhelEc2SapPackageSet(t *imageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
 			"rh-amazon-rhui-client-sap-bundle-e4s",
+			"libcanberra-gtk2",
+		},
+		Exclude: []string{
+			// COMPOSER-1829
+			"firewalld",
 		},
 	}.Append(rhelEc2CommonPackageSet(t)).Append(SapPackageSet(t))
 }
