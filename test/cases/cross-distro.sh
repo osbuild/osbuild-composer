@@ -154,7 +154,10 @@ distro= "$REMAINING_DISTRO"
 [[packages]]
 name = "bash"
 EOF
+
+    set +e
     RESPONSE=$(sudo composer-cli blueprints push $TEST_BP 2>&1)
+    set -e
 
     echo "DEBUG: $REMAINING_DISTRO, RESPONSE=$RESPONSE"
 
