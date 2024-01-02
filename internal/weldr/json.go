@@ -170,6 +170,10 @@ func (s SourceConfigV0) SourceConfig() (ssc store.SourceConfig) {
 	ssc.URL = s.URL
 	ssc.CheckGPG = s.CheckGPG
 	ssc.CheckSSL = s.CheckSSL
+	if s.ModuleHotfixes != nil {
+		modHotfixesVal := *s.ModuleHotfixes
+		ssc.ModuleHotfixes = &modHotfixesVal
+	}
 
 	return ssc
 }
@@ -196,6 +200,10 @@ func NewSourceConfigV1(id string, s store.SourceConfig) SourceConfigV1 {
 	sc.RHSM = s.RHSM
 	sc.CheckRepoGPG = s.CheckRepoGPG
 	sc.GPGKeys = s.GPGKeys
+	if s.ModuleHotfixes != nil {
+		modHotfixesVal := *s.ModuleHotfixes
+		sc.ModuleHotfixes = &modHotfixesVal
+	}
 
 	return sc
 }
@@ -244,6 +252,10 @@ func (s SourceConfigV1) SourceConfig() (ssc store.SourceConfig) {
 	ssc.RHSM = s.RHSM
 	ssc.CheckRepoGPG = s.CheckRepoGPG
 	ssc.GPGKeys = s.GPGKeys
+	if s.ModuleHotfixes != nil {
+		modHotfixesVal := *s.ModuleHotfixes
+		ssc.ModuleHotfixes = &modHotfixesVal
+	}
 
 	return ssc
 }
