@@ -112,7 +112,6 @@ build:
 	- mkdir -p bin
 	go build -o bin/osbuild-composer ./cmd/osbuild-composer/
 	go build -o bin/osbuild-worker ./cmd/osbuild-worker/
-	go build -o bin/osbuild-pipeline ./cmd/osbuild-pipeline/
 	go build -o bin/osbuild-upload-azure ./cmd/osbuild-upload-azure/
 	go build -o bin/osbuild-upload-aws ./cmd/osbuild-upload-aws/
 	go build -o bin/osbuild-upload-gcp ./cmd/osbuild-upload-gcp/
