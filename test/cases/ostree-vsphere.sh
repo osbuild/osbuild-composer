@@ -80,6 +80,7 @@ CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 VSPHERE_IMAGE_TYPE=edge-vsphere
 VSPHERE_FILENAME=image.vmdk
+CUSTOM_FS_LVS="false"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -118,10 +119,12 @@ case "${ID}-${VERSION_ID}" in
     "rhel-9"* )
         OSTREE_REF="rhel/9/${ARCH}/edge"
         GUEST_ID_DC70="rhel9_64Guest"
+        CUSTOM_FS_LVS="true"
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         GUEST_ID_DC70="centos9_64Guest"
+        CUSTOM_FS_LVS="true"
         ;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
@@ -460,6 +463,20 @@ groups = ["wheel"]
 url = "${IGNITION_SERVER_URL}/config.ign"
 EOF
 
+if [[ "${CUSTOM_FS_LVS}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.filesystem]]
+mountpoint = "/foo/bar"
+size=2147483648
+[[customizations.filesystem]]
+mountpoint = "/foo"
+size=8589934592
+[[customizations.filesystem]]
+mountpoint = "/var/myfiles"
+size= "1 GiB"
+EOF
+fi
+
 greenprint "📄 vmdk blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -548,6 +565,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -682,6 +700,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 check_result

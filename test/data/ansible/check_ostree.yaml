@@ -14,6 +14,7 @@
     test_custom_dirs_files: "false"
     sysroot_ro: "false"
     fips: "false"
+    custom_fs_lvs: "false"
 
   tasks:
     # current target host's IP address
@@ -261,7 +262,7 @@
 
     # case: check pv size
     - name: check pv size
-      shell: pvs --reportformat json | jq .report[0].pv[0].pv_size -r
+      shell: pvs --reportformat json --units g | jq .report[0].pv[0].pv_size -r | sed "s/\.[0-9]\+g//g"
       become: yes
       register: result_pv_size
       when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
@@ -303,6 +304,37 @@
       when:
         - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
         - fdo_credential == "false"
+        - custom_fs_lvs == "false"
+
+    # check logical volumes
+    - name: check logical volumes
+      shell: lvdisplay -a
+      become: yes
+      register: result_custom_lvs
+      when:
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - custom_fs_lvs == "true"
+
+    - name: "check that custom partitions are present"
+      block:
+        - assert:
+            that:
+              - "'var_myfileslv' in result_custom_lvs.stdout"
+              - "'foolv' in result_custom_lvs.stdout"
+              - "'foo_barlv' in result_custom_lvs.stdout"
+            fail_msg: "There are custom partitions missing"
+            success_msg: "Custom partitions present in filesystem"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - custom_fs_lvs == "true"
+
 
     # case: check /sysroot lv size
     - name: check sysroot lv size
