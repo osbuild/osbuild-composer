@@ -24,15 +24,14 @@ func (p *ISO) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func NewISO(buildPipeline *Build, treePipeline Pipeline, isoLabel string) *ISO {
+func NewISO(buildPipeline Build, treePipeline Pipeline, isoLabel string) *ISO {
 	p := &ISO{
-		Base:         NewBase(treePipeline.Manifest(), "bootiso", buildPipeline),
+		Base:         NewBase("bootiso", buildPipeline),
 		treePipeline: treePipeline,
 		filename:     "image.iso",
 		isoLabel:     isoLabel,
 	}
 	buildPipeline.addDependent(p)
-	treePipeline.Manifest().addPipeline(p)
 	return p
 }
 

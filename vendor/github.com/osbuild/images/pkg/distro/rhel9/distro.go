@@ -125,43 +125,12 @@ func (d *distribution) getDefaultImageConfig() *distro.ImageConfig {
 	return d.defaultImageConfig
 }
 
-func New() distro.Distro {
-	// default minor: create default minor version (current GA) and rename it
-	d := newDistro("rhel", 4)
-	d.name = "rhel-9"
-	return d
-}
-
-func NewCentOS9() distro.Distro {
-	return newDistro("centos", 0)
-}
-
-func NewRHEL90() distro.Distro {
-	return newDistro("rhel", 0)
-}
-
-func NewRHEL91() distro.Distro {
-	return newDistro("rhel", 1)
-}
-
-func NewRHEL92() distro.Distro {
-	return newDistro("rhel", 2)
-}
-
-func NewRHEL93() distro.Distro {
-	return newDistro("rhel", 3)
-}
-
-func NewRHEL94() distro.Distro {
-	return newDistro("rhel", 4)
-}
-
 func newDistro(name string, minor int) *distribution {
 	var rd distribution
 	switch name {
 	case "rhel":
 		rd = distribution{
-			name:               fmt.Sprintf("rhel-9%d", minor),
+			name:               fmt.Sprintf("rhel-9.%d", minor),
 			product:            "Red Hat Enterprise Linux",
 			osVersion:          fmt.Sprintf("9.%d", minor),
 			releaseVersion:     "9",
@@ -493,4 +462,50 @@ func newDistro(name string, minor int) *distribution {
 	}
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
+}
+
+func ParseID(idStr string) (*distro.ID, error) {
+	id, err := distro.ParseID(idStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if id.Name != "rhel" && id.Name != "centos" {
+		return nil, fmt.Errorf("invalid distro name: %s", id.Name)
+	}
+
+	// Backward compatibility layer for "rhel-93" and friends
+	if id.Name == "rhel" && id.MinorVersion == -1 {
+		if id.MajorVersion/10 == 9 {
+			// handle single digit minor version
+			id.MinorVersion = id.MajorVersion % 10
+			id.MajorVersion = 9
+		}
+		// two digit minor versions in the old format are not supported
+	}
+
+	if id.MajorVersion != 9 {
+		return nil, fmt.Errorf("invalid distro major version: %d", id.MajorVersion)
+	}
+
+	// CentOS does not use minor version
+	if id.Name == "centos" && id.MinorVersion != -1 {
+		return nil, fmt.Errorf("centos does not use minor version, but got: %d", id.MinorVersion)
+	}
+
+	// RHEL uses minor version
+	if id.Name == "rhel" && id.MinorVersion == -1 {
+		return nil, fmt.Errorf("rhel requires minor version, but got: %d", id.MinorVersion)
+	}
+
+	return id, nil
+}
+
+func DistroFactory(idStr string) distro.Distro {
+	id, err := ParseID(idStr)
+	if err != nil {
+		return nil
+	}
+
+	return newDistro(id.Name, id.MinorVersion)
 }

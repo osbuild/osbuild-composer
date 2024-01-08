@@ -17,12 +17,11 @@ import (
 	"testing"
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
-	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 	dnfjson_mock "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
@@ -63,38 +62,28 @@ func executeTests(m *testing.M) int {
 	if err != nil {
 		panic(err)
 	}
-	fixture := rpmmd_mock.BaseFixture(path.Join(tmpdir, "/jobs"))
+	fixture := rpmmd_mock.BaseFixture(path.Join(tmpdir, "/jobs"), test_distro.TestDistro1Name, test_distro.TestArchName)
+	defer fixture.StoreFixture.Cleanup()
 
-	distro1 := test_distro.New()
-	arch, err := distro1.GetArch(test_distro.TestArchName)
-	if err != nil {
-		panic(err)
-	}
-	distro2 := test_distro.NewTestDistro("test-distro-2", "platform:test-2", "2")
-	_, err = fixture.Workers.RegisterWorker(arch.Name())
+	_, err = fixture.Workers.RegisterWorker(fixture.StoreFixture.HostArchName)
 	if err != nil {
 		panic(err)
 	}
 
 	rr := reporegistry.NewFromDistrosRepoConfigs(rpmmd.DistrosRepoConfigs{
-		test_distro.TestDistroName: {
-			test_distro.TestArchName: {
+		fixture.StoreFixture.HostDistroName: {
+			fixture.StoreFixture.HostArchName: {
 				{Name: "test-system-repo", BaseURLs: []string{"http://example.com/test/os/test_arch"}},
 			},
 		},
 	})
-
-	dr, err := distroregistry.New(distro1, distro1, distro2)
-	if err != nil {
-		panic(err)
-	}
 
 	dspath, err := os.MkdirTemp(tmpdir, "")
 	dnfjsonFixture := dnfjson_mock.Base(dspath)
 	solver := dnfjson.NewBaseSolver(path.Join(tmpdir, "dnfjson-cache"))
 	solver.SetDNFJSONPath(dnfjsonPath, dnfjsonFixture)
 	logger := log.New(os.Stdout, "", 0)
-	api := weldr.NewTestAPI(solver, arch, dr, rr, logger, fixture.Store, fixture.Workers, "", nil)
+	api := weldr.NewTestAPI(solver, rr, logger, fixture.StoreFixture, fixture.Workers, "", nil)
 	server := http.Server{Handler: api}
 	defer server.Close()
 

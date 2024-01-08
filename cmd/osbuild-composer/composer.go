@@ -21,7 +21,7 @@ import (
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 
-	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
@@ -36,7 +36,7 @@ type Composer struct {
 	stateDir string
 	cacheDir string
 	logger   *log.Logger
-	distros  *distroregistry.Registry
+	distros  *distrofactory.Factory
 
 	solver *dnfjson.BaseSolver
 
@@ -68,11 +68,11 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		}
 	}
 
-	c.distros = distroregistry.NewDefault()
-	logrus.Infof("Loaded %d distros", len(c.distros.List()))
+	c.distros = distrofactory.NewDefault()
 
+	// TODO: Move this to Weldr API initialization
 	// Clean up the cache, removes unknown distros and files
-	dnfjson.CleanupOldCacheDirs(path.Join(c.cacheDir, "rpmmd"), c.distros.List())
+	// dnfjson.CleanupOldCacheDirs(path.Join(c.cacheDir, "rpmmd"), c.distros.List())
 
 	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
 	c.solver.SetDNFJSONPath(c.config.DNFJson)

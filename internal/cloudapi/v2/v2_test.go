@@ -14,12 +14,12 @@ import (
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree/mock_ostree_repo"
 	"github.com/osbuild/images/pkg/rpmmd"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
-	distro_mock "github.com/osbuild/osbuild-composer/internal/mocks/distro"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -31,8 +31,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	require.NoError(t, err)
 	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id", "account_id"}})
 
-	distros, err := distro_mock.NewDefaultRegistry()
-	require.NoError(t, err)
+	distros := distrofactory.NewTestDefault()
 	require.NotNil(t, distros)
 
 	config := v2.ServerConfig{
@@ -50,7 +49,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	go func() {
 		defer wg.Done()
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestDistroName, []string{worker.JobTypeDepsolve}, depsolveChannels, uuid.Nil)
+			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestArchName, []string{worker.JobTypeDepsolve}, depsolveChannels, uuid.Nil)
 			select {
 			case <-depsolveContext.Done():
 				return
@@ -87,7 +86,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	go func() {
 		defer wg.Done()
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(ostreeResolveContext, test_distro.TestDistroName, []string{worker.JobTypeOSTreeResolve}, depsolveChannels, uuid.Nil)
+			_, token, _, _, _, err := workerServer.RequestJob(ostreeResolveContext, test_distro.TestDistro1Name, []string{worker.JobTypeOSTreeResolve}, depsolveChannels, uuid.Nil)
 			select {
 			case <-ostreeResolveContext.Done():
 				return
@@ -189,8 +188,10 @@ func TestCompose(t *testing.T) {
 	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
 	defer cancel()
 
+	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	require.NotNil(t, testDistro)
 	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
-	ostreeRepoDefault := mock_ostree_repo.Setup(test_distro.New().OSTreeRef())
+	ostreeRepoDefault := mock_ostree_repo.Setup(testDistro.OSTreeRef())
 	defer ostreeRepoDefault.TearDown()
 	ostreeRepoOther := mock_ostree_repo.Setup("some/other/ref")
 	defer ostreeRepoOther.TearDown()
@@ -235,7 +236,7 @@ func TestCompose(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName), http.StatusBadRequest, `
+	}`, testDistro.Name()), http.StatusBadRequest, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/5",
 		"id": "5",
@@ -259,7 +260,7 @@ func TestCompose(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusBadRequest, `
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusBadRequest, `
 	{
 		"href": "/api/image-builder-composer/v2/errors/30",
 		"id": "30",
@@ -283,7 +284,7 @@ func TestCompose(t *testing.T) {
 	//			"region": "eu-central-1"
 	//		}
 	//          }]
-	// }`, test_distro.TestDistroName, test_distro.TestArch3Name, test_distro.TestImageTypeName), http.StatusMethodNotAllowed, `
+	// }`, testDistro.Name(), test_distro.TestArch3Name, test_distro.TestImageTypeName), http.StatusMethodNotAllowed, `
 	// {
 	//	"href": "/api/image-builder-composer/v2/errors/22",
 	//	"id": "22",
@@ -307,7 +308,7 @@ func TestCompose(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -331,7 +332,7 @@ func TestCompose(t *testing.T) {
 				}
 			}]
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -358,7 +359,7 @@ func TestCompose(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -383,7 +384,7 @@ func TestCompose(t *testing.T) {
 				"rhsm": false
 			}]
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -409,7 +410,7 @@ func TestCompose(t *testing.T) {
 				"ref": "rhel/10/x86_64/edge"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -439,7 +440,7 @@ func TestCompose(t *testing.T) {
 				"ref": "rhel/10/x86_64/edge"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -463,7 +464,7 @@ func TestCompose(t *testing.T) {
 				"url": "%s"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoDefault.Server.URL), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name, ostreeRepoDefault.Server.URL), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -488,7 +489,7 @@ func TestCompose(t *testing.T) {
 				"url": "%s"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -513,7 +514,7 @@ func TestCompose(t *testing.T) {
 				"url": "%s"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name, ostreeRepoDefault.OSTreeRef, ostreeRepoDefault.Server.URL), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -539,7 +540,7 @@ func TestCompose(t *testing.T) {
 				"ref": "a/new/ref"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -567,7 +568,7 @@ func TestCompose(t *testing.T) {
 				"rhsm": true
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL, fmt.Sprintf("%s/content", ostreeRepoOther.Server.URL)), http.StatusCreated, `
+	}`, testDistro.Name(), test_distro.TestArch3Name, ostreeRepoOther.OSTreeRef, ostreeRepoOther.Server.URL, fmt.Sprintf("%s/content", ostreeRepoOther.Server.URL)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -592,7 +593,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -703,7 +704,7 @@ func TestComposeStatusFailure(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -774,7 +775,7 @@ func TestComposeJobError(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -839,7 +840,7 @@ func TestComposeDependencyError(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -912,7 +913,7 @@ func TestComposeTargetErrors(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1085,7 +1086,7 @@ func TestComposeCustomizations(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1121,7 +1122,7 @@ func TestComposeRhcSubscription(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1148,7 +1149,7 @@ func TestImageTypes(t *testing.T) {
 				"share_with_accounts": ["123456789012","234567890123"]
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1169,7 +1170,7 @@ func TestImageTypes(t *testing.T) {
 				"share_with_accounts": ["123456789012","234567890123"]
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1188,7 +1189,7 @@ func TestImageTypes(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesEdgeCommit)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesEdgeCommit)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1207,7 +1208,7 @@ func TestImageTypes(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesEdgeInstaller)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesEdgeInstaller)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1229,7 +1230,7 @@ func TestImageTypes(t *testing.T) {
 				"location": "westeurope"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesAzure)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesAzure)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1250,7 +1251,7 @@ func TestImageTypes(t *testing.T) {
 				"share_with_accounts": ["user:alice@example.com"]
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGcp)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesGcp)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1269,7 +1270,7 @@ func TestImageTypes(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesImageInstaller)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesImageInstaller)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1288,7 +1289,7 @@ func TestImageTypes(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1307,7 +1308,7 @@ func TestImageTypes(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesVsphere)), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesVsphere)), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
@@ -1332,7 +1333,7 @@ func TestImageFromCompose(t *testing.T) {
 				"region": "eu-central-1"
 			}
 		}
-	}`, test_distro.TestDistroName, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"

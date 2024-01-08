@@ -13,8 +13,9 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
-	rhel "github.com/osbuild/images/pkg/distro/rhel8"
+	"github.com/osbuild/images/pkg/distro/rhel9"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
 )
@@ -27,13 +28,14 @@ func TestCrossArchDepsolve(t *testing.T) {
 	repoDir := "/usr/share/tests/osbuild-composer"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	cs9 := rhel.NewCentos()
+	cs9 := rhel9.DistroFactory("centos-9")
+	require.NotNil(t, cs9)
 
 	// Set up temporary directory for rpm/dnf cache
 	dir := t.TempDir()
 	baseSolver := dnfjson.NewBaseSolver(dir)
 
-	repos, err := rpmmd.LoadRepositories([]string{repoDir}, cs9.Name())
+	repos, err := reporegistry.LoadRepositories([]string{repoDir}, cs9.Name())
 	require.NoErrorf(t, err, "Failed to LoadRepositories %v", cs9.Name())
 
 	for _, archStr := range cs9.ListArches() {
@@ -81,13 +83,14 @@ func TestDepsolvePackageSets(t *testing.T) {
 	repoDir := "/usr/share/tests/osbuild-composer"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	cs9 := rhel.NewCentos()
+	cs9 := rhel9.DistroFactory("centos-9")
+	require.NotNil(t, cs9)
 
 	// Set up temporary directory for rpm/dnf cache
 	dir := t.TempDir()
 	solver := dnfjson.NewSolver(cs9.ModulePlatformID(), cs9.Releasever(), arch.ARCH_X86_64.String(), cs9.Name(), dir)
 
-	repos, err := rpmmd.LoadRepositories([]string{repoDir}, cs9.Name())
+	repos, err := reporegistry.LoadRepositories([]string{repoDir}, cs9.Name())
 	require.NoErrorf(t, err, "Failed to LoadRepositories %v", cs9.Name())
 	x86Repos, ok := repos[arch.ARCH_X86_64.String()]
 	require.Truef(t, ok, "failed to get %q repos for %q", arch.ARCH_X86_64.String(), cs9.Name())

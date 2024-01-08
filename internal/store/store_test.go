@@ -9,6 +9,7 @@ import (
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -32,7 +33,7 @@ type storeTest struct {
 	myCompose        Compose
 	myImageBuild     ImageBuild
 	mySourceConfig   SourceConfig
-	myDistro         *test_distro.TestDistro
+	myDistro         distro.Distro
 	myArch           distro.Arch
 	myImageType      distro.ImageType
 	myManifest       manifest.OSBuildManifest
@@ -44,14 +45,18 @@ type storeTest struct {
 
 // func to initialize some default values before the suite is ran
 func (suite *storeTest) SetupSuite() {
+	var err error
 	suite.myRepoConfig = []rpmmd.RepoConfig{rpmmd.RepoConfig{
 		Name:       "testRepo",
 		MirrorList: "testURL",
 	}}
 	suite.myPackageSpec = []rpmmd.PackageSpec{rpmmd.PackageSpec{}}
-	suite.myDistro = test_distro.New()
-	suite.myArch, _ = suite.myDistro.GetArch(test_distro.TestArchName)
-	suite.myImageType, _ = suite.myArch.GetImageType(test_distro.TestImageTypeName)
+	suite.myDistro = test_distro.DistroFactory(test_distro.TestDistro1Name)
+	suite.NotNil(suite.myDistro)
+	suite.myArch, err = suite.myDistro.GetArch(test_distro.TestArchName)
+	suite.NoError(err)
+	suite.myImageType, err = suite.myArch.GetImageType(test_distro.TestImageTypeName)
+	suite.NoError(err)
 	ibp := blueprint.Convert(suite.myBP)
 	manifest, _, _ := suite.myImageType.Manifest(&ibp, suite.myImageOptions, suite.myRepoConfig, 0)
 	suite.myManifest, _ = manifest.Serialize(nil, nil, nil)
@@ -142,12 +147,9 @@ func (suite *storeTest) SetupSuite() {
 
 // setup before each test
 func (suite *storeTest) SetupTest() {
-	distro := test_distro.New()
-	_, err := distro.GetArch(test_distro.TestArchName)
-	suite.NoError(err)
 	suite.dir = suite.T().TempDir()
-	dr := test_distro.NewRegistry()
-	suite.myStore = New(&suite.dir, dr, nil)
+	df := distrofactory.NewTestDefault()
+	suite.myStore = New(&suite.dir, df, nil)
 }
 
 func (suite *storeTest) TestRandomSHA1String() {

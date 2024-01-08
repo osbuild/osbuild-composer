@@ -7,7 +7,7 @@ import (
 )
 
 type Fixture struct {
-	*store.Store
-	Workers *worker.Server
+	StoreFixture *store.Fixture
+	Workers      *worker.Server
 	dnfjson_mock.ResponseGenerator
 }

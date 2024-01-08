@@ -4,9 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -20,6 +18,7 @@ type repository struct {
 	Metalink       string   `json:"metalink,omitempty"`
 	MirrorList     string   `json:"mirrorlist,omitempty"`
 	GPGKey         string   `json:"gpgkey,omitempty"`
+	GPGKeys        []string `json:"gpgkeys,omitempty"`
 	CheckGPG       bool     `json:"check_gpg,omitempty"`
 	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
@@ -216,7 +215,7 @@ func GetVerStrFromPackageSpecListPanic(pkgs []PackageSpec, packageName string) s
 	return pkgVerStr
 }
 
-func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) {
+func LoadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -242,6 +241,9 @@ func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 			if repo.GPGKey != "" {
 				keys = []string{repo.GPGKey}
 			}
+			if len(repo.GPGKeys) > 0 {
+				keys = append(keys, repo.GPGKeys...)
+			}
 			config := RepoConfig{
 				Name:           repo.Name,
 				BaseURLs:       urls,
@@ -257,83 +259,6 @@ func loadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 
 			repoConfigs[arch] = append(repoConfigs[arch], config)
 		}
-	}
-
-	return repoConfigs, nil
-}
-
-// LoadAllRepositories loads all repositories for given distros from the given list of paths.
-// Behavior is the same as with the LoadRepositories() method.
-func LoadAllRepositories(confPaths []string) (DistrosRepoConfigs, error) {
-	distrosRepoConfigs := DistrosRepoConfigs{}
-
-	for _, confPath := range confPaths {
-		reposPath := filepath.Join(confPath, "repositories")
-
-		fileEntries, err := os.ReadDir(reposPath)
-		if os.IsNotExist(err) {
-			continue
-		} else if err != nil {
-			return nil, err
-		}
-
-		for _, fileEntry := range fileEntries {
-			// Skip all directories
-			if fileEntry.IsDir() {
-				continue
-			}
-
-			// distro repositories definition is expected to be named "<distro_name>.json"
-			if strings.HasSuffix(fileEntry.Name(), ".json") {
-				distro := strings.TrimSuffix(fileEntry.Name(), ".json")
-
-				// skip the distro repos definition, if it has been already read
-				_, ok := distrosRepoConfigs[distro]
-				if ok {
-					continue
-				}
-
-				configFile := filepath.Join(reposPath, fileEntry.Name())
-				distroRepos, err := loadRepositoriesFromFile(configFile)
-				if err != nil {
-					return nil, err
-				}
-
-				log.Println("Loaded repository configuration file:", configFile)
-
-				distrosRepoConfigs[distro] = distroRepos
-			}
-		}
-	}
-
-	return distrosRepoConfigs, nil
-}
-
-// LoadRepositories loads distribution repositories from the given list of paths.
-// If there are duplicate distro repositories definitions found in multiple paths, the first
-// encounter is preferred. For this reason, the order of paths in the passed list should
-// reflect the desired preference.
-func LoadRepositories(confPaths []string, distro string) (map[string][]RepoConfig, error) {
-	var repoConfigs map[string][]RepoConfig
-	path := "/repositories/" + distro + ".json"
-
-	for _, confPath := range confPaths {
-		var err error
-		repoConfigs, err = loadRepositoriesFromFile(confPath + path)
-		if os.IsNotExist(err) {
-			continue
-		} else if err != nil {
-			return nil, err
-		}
-
-		// Found the distro repository configs in the current path
-		if repoConfigs != nil {
-			break
-		}
-	}
-
-	if repoConfigs == nil {
-		return nil, fmt.Errorf("LoadRepositories failed: none of the provided paths contain distro configuration")
 	}
 
 	return repoConfigs, nil

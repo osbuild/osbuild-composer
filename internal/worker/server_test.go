@@ -127,8 +127,14 @@ func TestErrorsAlteredBasePath(t *testing.T) {
 	}
 }
 
+func newTestDistro(t *testing.T) distro.Distro {
+	distroStruct := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	require.NotNil(t, distroStruct)
+	return distroStruct
+}
+
 func TestCreate(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -158,7 +164,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCancel(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -199,7 +205,7 @@ func TestCancel(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -237,7 +243,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestArgs(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	require.NoError(t, err)
 	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
@@ -282,7 +288,7 @@ func TestArgs(t *testing.T) {
 }
 
 func TestUpload(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -316,7 +322,7 @@ func TestUpload(t *testing.T) {
 }
 
 func TestUploadNotAcceptingArtifacts(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -350,7 +356,7 @@ func TestUploadNotAcceptingArtifacts(t *testing.T) {
 }
 
 func TestUploadAlteredBasePath(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -390,7 +396,7 @@ func TestUploadAlteredBasePath(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -409,7 +415,7 @@ func TestTimeout(t *testing.T) {
 }
 
 func TestRequestJobById(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -612,7 +618,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 }
 
 func TestDepsolveLegacyErrorConversion(t *testing.T) {
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -1642,7 +1648,7 @@ func TestRequestJobForWorker(t *testing.T) {
 	require.NoError(t, err)
 	test.TestRoute(t, server.Handler(), false, "POST", fmt.Sprintf("/api/worker/v1/workers/%s/status", workerID), "{}", 200, "")
 
-	distroStruct := test_distro.New()
+	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)

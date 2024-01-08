@@ -10,7 +10,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-type FixtureGenerator func(tmpdir string) Fixture
+type FixtureGenerator func(tmpdir, hostDistroName, hostArchName string) Fixture
 
 func createBaseWorkersFixture(tmpdir string) *worker.Server {
 	q, err := fsjobqueue.New(tmpdir)
@@ -20,55 +20,55 @@ func createBaseWorkersFixture(tmpdir string) *worker.Server {
 	return worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1"})
 }
 
-func BaseFixture(tmpdir string) Fixture {
+func BaseFixture(tmpdir, hostDistroName, hostArchName string) Fixture {
 	return Fixture{
-		store.FixtureBase(),
+		store.FixtureBase(hostDistroName, hostArchName),
 		createBaseWorkersFixture(tmpdir),
 		dnfjson_mock.Base,
 	}
 }
 
-func NoComposesFixture(tmpdir string) Fixture {
+func NoComposesFixture(tmpdir, hostDistroName, hostArchName string) Fixture {
 	return Fixture{
-		store.FixtureEmpty(),
+		store.FixtureEmpty(hostDistroName, hostArchName),
 		createBaseWorkersFixture(tmpdir),
 		dnfjson_mock.Base,
 	}
 }
 
-func NonExistingPackage(tmpdir string) Fixture {
+func NonExistingPackage(tmpdir, hostDistroName, hostArchName string) Fixture {
 	return Fixture{
-		store.FixtureBase(),
+		store.FixtureBase(hostDistroName, hostArchName),
 		createBaseWorkersFixture(tmpdir),
 		dnfjson_mock.NonExistingPackage,
 	}
 }
 
-func BadDepsolve(tmpdir string) Fixture {
+func BadDepsolve(tmpdir, hostDistroName, hostArchName string) Fixture {
 	return Fixture{
-		store.FixtureBase(),
+		store.FixtureBase(hostDistroName, hostArchName),
 		createBaseWorkersFixture(tmpdir),
 		dnfjson_mock.BadDepsolve,
 	}
 }
 
-func BadFetch(tmpdir string) Fixture {
+func BadFetch(tmpdir, hostDistroName, hostArchName string) Fixture {
 	return Fixture{
-		store.FixtureBase(),
+		store.FixtureBase(hostDistroName, hostArchName),
 		createBaseWorkersFixture(tmpdir),
 		dnfjson_mock.BadFetch,
 	}
 }
 
-func OldChangesFixture(tmpdir string) Fixture {
+func OldChangesFixture(tmpdir, hostDistroName, hostArchName string) Fixture {
 	return Fixture{
-		store.FixtureOldChanges(),
+		store.FixtureOldChanges(hostDistroName, hostArchName),
 		createBaseWorkersFixture(tmpdir),
 		dnfjson_mock.Base,
 	}
 }
 
-func BadJobJSONFixture(tmpdir string) Fixture {
+func BadJobJSONFixture(tmpdir, hostDistroName, hostArchName string) Fixture {
 	err := os.Mkdir(path.Join(tmpdir, "/jobs"), 0755)
 	if err != nil {
 		panic(err)
@@ -79,7 +79,7 @@ func BadJobJSONFixture(tmpdir string) Fixture {
 	}
 
 	return Fixture{
-		store.FixtureJobs(),
+		store.FixtureJobs(hostDistroName, hostArchName),
 		createBaseWorkersFixture(path.Join(tmpdir, "/jobs")),
 		dnfjson_mock.Base,
 	}

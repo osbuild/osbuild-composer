@@ -18,10 +18,10 @@ import (
 	"time"
 
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
 
-	"github.com/osbuild/images/pkg/distroregistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -86,7 +86,7 @@ func (e *NoLocalTargetError) Error() string {
 	return e.message
 }
 
-func New(stateDir *string, dr *distroregistry.Registry, log *log.Logger) *Store {
+func New(stateDir *string, df *distrofactory.Factory, log *log.Logger) *Store {
 	var storeStruct storeV0
 	var db *jsondb.JSONDatabase
 
@@ -98,7 +98,7 @@ func New(stateDir *string, dr *distroregistry.Registry, log *log.Logger) *Store 
 		}
 	}
 
-	store := newStoreFromV0(storeStruct, dr, log)
+	store := newStoreFromV0(storeStruct, df, log)
 
 	store.stateDir = stateDir
 	store.db = db

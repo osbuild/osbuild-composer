@@ -33,15 +33,16 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/distroidparser"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
-	"github.com/osbuild/osbuild-composer/internal/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -61,8 +62,8 @@ type API struct {
 
 	compatOutputDir string
 
-	hostDistroName string                   // Name of the host distro
-	distroRegistry *distroregistry.Registry // Available distros
+	hostDistroName string                 // Name of the host distro
+	distroFactory  *distrofactory.Factory // Available distros
 
 	//  List of ImageType names, which should not be exposed by the API
 	distrosImageTypeDenylist map[string][]string
@@ -105,50 +106,56 @@ func (api *API) systemRepoNames() (names []string) {
 	return names
 }
 
-// validDistros returns a list of distributions that also have repositories
+// validDistros returns a sorted list of distributions that also have
+// repositories defined for the given architecture
 func (api *API) validDistros(arch string) []string {
 	distros := []string{}
-	for _, d := range api.distroRegistry.List() {
-		_, found := api.repoRegistry.DistroHasRepos(d, arch)
-		if found {
-			distros = append(distros, d)
+	for _, distroName := range api.repoRegistry.ListDistros() {
+		distro := api.distroFactory.GetDistro(distroName)
+		if distro == nil {
+			if api.logger != nil {
+				api.logger.Printf("Distro %s has repositories defined, but it's not supported. Skipping.", distroName)
+			}
+			continue
+		}
+
+		_, err := api.repoRegistry.DistroHasRepos(distroName, arch)
+		if err == nil {
+			distros = append(distros, distroName)
 		} else {
 			if api.logger != nil {
-				api.logger.Printf("Distro %s has no repositories, skipping.", d)
+				api.logger.Printf("Distro %s has no repositories defined for %s architecture, skipping.", distroName, arch)
 			}
 		}
 	}
 
-	// NOTE: distro list is already sorted, so result will be sorted
+	sort.Strings(distros)
 	return distros
 }
 
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 // NewTestAPI is used for the test framework, sets up a single distro
-func NewTestAPI(solver *dnfjson.BaseSolver, arch distro.Arch, dr *distroregistry.Registry,
-	rr *reporegistry.RepoRegistry, logger *log.Logger,
-	store *store.Store, workers *worker.Server, compatOutputDir string,
-	distrosImageTypeDenylist map[string][]string) *API {
+func NewTestAPI(solver *dnfjson.BaseSolver, rr *reporegistry.RepoRegistry,
+	logger *log.Logger, storeFixture *store.Fixture, workers *worker.Server,
+	compatOutputDir string, distrosImageTypeDenylist map[string][]string) *API {
 
-	// Use the first entry as the host distribution
-	hostDistro := dr.GetDistro(dr.List()[0])
 	api := &API{
-		store:                    store,
+		store:                    storeFixture.Store,
 		workers:                  workers,
 		solver:                   solver,
-		hostArch:                 arch.Name(),
+		hostArch:                 storeFixture.HostArchName,
 		repoRegistry:             rr,
 		logger:                   logger,
 		compatOutputDir:          compatOutputDir,
-		hostDistroName:           hostDistro.Name(),
-		distroRegistry:           dr,
+		hostDistroName:           storeFixture.HostDistroName,
+		distroFactory:            storeFixture.Factory,
 		distrosImageTypeDenylist: distrosImageTypeDenylist,
 	}
 	return setupRouter(api)
 }
 
-func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *distroregistry.Registry,
+func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, df *distrofactory.Factory,
 	logger *log.Logger, workers *worker.Server, distrosImageTypeDenylist map[string][]string) (*API, error) {
 	if logger == nil {
 		logger = log.New(os.Stdout, "", 0)
@@ -165,7 +172,7 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		return nil, fmt.Errorf("error loading repository definitions: %v", err)
 	}
 
-	hostDistro := dr.GetDistro(hostDistroName)
+	hostDistro := df.GetDistro(hostDistroName)
 	if hostDistro != nil {
 		// get canonical distro name if the host distro is supported
 		hostDistroName = hostDistro.Name()
@@ -185,7 +192,7 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		log.Printf("host distro %q is not supported: only cross-distro builds are available", hostDistroName)
 	}
 
-	store := store.New(&stateDir, dr, logger)
+	store := store.New(&stateDir, df, logger)
 	compatOutputDir := path.Join(stateDir, "outputs")
 
 	api := &API{
@@ -197,7 +204,7 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, dr *di
 		logger:                   logger,
 		compatOutputDir:          compatOutputDir,
 		hostDistroName:           hostDistroName,
-		distroRegistry:           dr,
+		distroFactory:            df,
 		distrosImageTypeDenylist: distrosImageTypeDenylist,
 	}
 	return setupRouter(api), nil
@@ -505,7 +512,7 @@ func (api *API) getDistro(name, arch string) distro.Distro {
 	if !common.IsStringInSortedSlice(api.validDistros(arch), name) {
 		return nil
 	}
-	return api.distroRegistry.GetDistro(name)
+	return api.distroFactory.GetDistro(name)
 }
 
 func verifyRequestVersion(writer http.ResponseWriter, params httprouter.Params, minVersion uint) bool {
@@ -2054,6 +2061,13 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 
 	// Check the blueprint's distro to make sure it is valid
 	if len(blueprint.Distro) > 0 {
+		// NB: For backward compatibility, try to to standardize the distro name,
+		// because it may be missing a dot to separate major and minor verion.
+		// If it fails, just use the original name.
+		if distroStandardized, err := distroidparser.DefaultParser.Standardize(blueprint.Distro); err == nil {
+			blueprint.Distro = distroStandardized
+		}
+
 		arch := blueprint.Arch
 		if arch == "" {
 			arch = api.hostArch
@@ -3542,7 +3556,11 @@ func (api *API) payloadRepositories(distroName string) []rpmmd.RepoConfig {
 // which are needed to build the specific image type. The allRepositories() can't do this, because
 // it is used in places where image types are not considered.
 func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
-	repos, err := api.repoRegistry.ReposByImageType(imageType)
+	repos, err := api.repoRegistry.ReposByImageTypeName(
+		imageType.Arch().Distro().Name(),
+		imageType.Arch().Name(),
+		imageType.Name(),
+	)
 	if err != nil {
 		return nil, err
 	}

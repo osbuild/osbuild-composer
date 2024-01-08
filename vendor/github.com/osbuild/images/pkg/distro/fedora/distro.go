@@ -131,6 +131,20 @@ var (
 		exports:          []string{"commit-archive"},
 	}
 
+	iotBootableContainer = imageType{
+		name:     "iot-bootable-container",
+		filename: "iot-bootable-container.tar",
+		mimeType: "application/x-tar",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: bootableContainerPackageSet,
+		},
+		rpmOstree:        true,
+		image:            bootableContainerImage,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"os", "ostree-commit", "ostree-encapsulate"},
+		exports:          []string{"ostree-encapsulate"},
+	}
+
 	iotOCIImgType = imageType{
 		name:        "iot-container",
 		nameAliases: []string{"fedora-iot-container"},
@@ -519,20 +533,6 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-// New creates a new distro object, defining the supported architectures and image types
-func NewF37() distro.Distro {
-	return newDistro(37)
-}
-func NewF38() distro.Distro {
-	return newDistro(38)
-}
-func NewF39() distro.Distro {
-	return newDistro(39)
-}
-func NewF40() distro.Distro {
-	return newDistro(40)
-}
-
 func newDistro(version int) distro.Distro {
 	rd := getDistro(version)
 
@@ -843,6 +843,7 @@ func newDistro(version int) distro.Distro {
 			},
 			iotSimplifiedInstallerImgType,
 		)
+
 		aarch64.addImageTypes(
 			&platform.Aarch64{
 				BasePlatform: platform.BasePlatform{
@@ -865,6 +866,63 @@ func newDistro(version int) distro.Distro {
 				UEFIVendor: "fedora",
 			},
 			iotSimplifiedInstallerImgType,
+		)
+	}
+
+	if !common.VersionLessThan(rd.Releasever(), "39") {
+		// bootc was introduced in F39
+		x86_64.addImageTypes(
+			&platform.X86{
+				BasePlatform: platform.BasePlatform{
+					FirmwarePackages: []string{
+						"biosdevname",
+						"iwlwifi-dvm-firmware",
+						"iwlwifi-mvm-firmware",
+						"microcode_ctl",
+					},
+				},
+				BIOS:       true,
+				UEFIVendor: "fedora",
+			},
+			iotBootableContainer,
+		)
+		aarch64.addImageTypes(
+			&platform.Aarch64{
+				BasePlatform: platform.BasePlatform{
+					FirmwarePackages: []string{
+						"arm-image-installer",
+						"bcm283x-firmware",
+						"brcmfmac-firmware",
+						"iwlwifi-mvm-firmware",
+						"realtek-firmware",
+						"uboot-images-armv8",
+					},
+				},
+				UEFIVendor: "fedora",
+			},
+			iotBootableContainer,
+		)
+
+		ppc64le.addImageTypes(
+			&platform.PPC64LE{
+				BIOS: true,
+				BasePlatform: platform.BasePlatform{
+					ImageFormat: platform.FORMAT_QCOW2,
+					QCOW2Compat: "1.1",
+				},
+			},
+			iotBootableContainer,
+		)
+
+		s390x.addImageTypes(
+			&platform.S390X{
+				Zipl: true,
+				BasePlatform: platform.BasePlatform{
+					ImageFormat: platform.FORMAT_QCOW2,
+					QCOW2Compat: "1.1",
+				},
+			},
+			iotBootableContainer,
 		)
 	}
 
@@ -900,4 +958,30 @@ func newDistro(version int) distro.Distro {
 
 	rd.addArches(x86_64, aarch64, ppc64le, s390x)
 	return &rd
+}
+
+func ParseID(idStr string) (*distro.ID, error) {
+	id, err := distro.ParseID(idStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if id.Name != "fedora" {
+		return nil, fmt.Errorf("invalid distro name: %s", id.Name)
+	}
+
+	if id.MinorVersion != -1 {
+		return nil, fmt.Errorf("fedora distro does not support minor versions")
+	}
+
+	return id, nil
+}
+
+func DistroFactory(idStr string) distro.Distro {
+	id, err := ParseID(idStr)
+	if err != nil {
+		return nil
+	}
+
+	return newDistro(id.MajorVersion)
 }

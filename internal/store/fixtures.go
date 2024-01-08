@@ -7,13 +7,40 @@ import (
 	"github.com/google/uuid"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-func FixtureBase() *Store {
+func setupTestHostDistro(distroName, archName string) (Cleanup func()) {
+	originalHostDistroNameFunc := getHostDistroName
+	originalHostArchFunc := getHostArch
+
+	getHostDistroName = func() (string, error) {
+		return distroName, nil
+	}
+
+	getHostArch = func() string {
+		return archName
+	}
+
+	return func() {
+		getHostDistroName = originalHostDistroNameFunc
+		getHostArch = originalHostArchFunc
+	}
+}
+
+type Fixture struct {
+	*Store
+	Cleanup func()
+	*distrofactory.Factory
+	HostDistroName string
+	HostArchName   string
+}
+
+func FixtureBase(hostDistroName, hostArchName string) *Fixture {
 	var bName = "test"
 	var b = blueprint.Blueprint{
 		Name:           bName,
@@ -41,11 +68,14 @@ func FixtureBase() *Store {
 		},
 	}
 
-	dr := test_distro.NewRegistry()
-	d := dr.FromHost()
-	arch, err := d.GetArch(test_distro.TestArchName)
+	df := distrofactory.NewTestDefault()
+	d := df.GetDistro(hostDistroName)
+	if d == nil {
+		panic(fmt.Sprintf("failed to get distro object for distro name %q", hostDistroName))
+	}
+	arch, err := d.GetArch(hostArchName)
 	if err != nil {
-		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", hostArchName, err))
 	}
 	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
@@ -61,7 +91,7 @@ func FixtureBase() *Store {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
-	s := New(nil, dr, nil)
+	s := New(nil, df, nil)
 
 	pkgs := []rpmmd.PackageSpec{
 		{
@@ -69,13 +99,13 @@ func FixtureBase() *Store {
 			Epoch:   0,
 			Version: "2.11.2",
 			Release: "1.fc35",
-			Arch:    test_distro.TestArchName,
+			Arch:    hostArchName,
 		}, {
 			Name:    "test2",
 			Epoch:   3,
 			Version: "4.2.2",
 			Release: "1.fc35",
-			Arch:    test_distro.TestArchName,
+			Arch:    hostArchName,
 		}}
 
 	s.blueprints[bName] = b
@@ -145,9 +175,16 @@ func FixtureBase() *Store {
 		},
 	}
 
-	return s
+	return &Fixture{
+		s,
+		setupTestHostDistro(hostDistroName, hostArchName),
+		df,
+		hostDistroName,
+		hostArchName,
+	}
 }
-func FixtureFinished() *Store {
+
+func FixtureFinished(hostDistroName, hostArchName string) *Fixture {
 	var bName = "test"
 	var b = blueprint.Blueprint{
 		Name:           bName,
@@ -184,11 +221,11 @@ func FixtureFinished() *Store {
 		},
 	}
 
-	dr := test_distro.NewRegistry()
-	d := dr.FromHost()
-	arch, err := d.GetArch(test_distro.TestArchName)
+	df := distrofactory.NewTestDefault()
+	d := df.GetDistro(hostDistroName)
+	arch, err := d.GetArch(hostArchName)
 	if err != nil {
-		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", hostArchName, err))
 	}
 	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
@@ -204,7 +241,7 @@ func FixtureFinished() *Store {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
-	s := New(nil, dr, nil)
+	s := New(nil, df, nil)
 
 	pkgs := []rpmmd.PackageSpec{
 		{
@@ -212,13 +249,13 @@ func FixtureFinished() *Store {
 			Epoch:   0,
 			Version: "2.11.2",
 			Release: "1.fc35",
-			Arch:    test_distro.TestArchName,
+			Arch:    hostArchName,
 		}, {
 			Name:    "test2",
 			Epoch:   3,
 			Version: "4.2.2",
 			Release: "1.fc35",
-			Arch:    test_distro.TestArchName,
+			Arch:    hostArchName,
 		}}
 
 	s.blueprints[bName] = b
@@ -273,10 +310,16 @@ func FixtureFinished() *Store {
 		},
 	}
 
-	return s
+	return &Fixture{
+		s,
+		setupTestHostDistro(hostDistroName, hostArchName),
+		df,
+		hostDistroName,
+		hostArchName,
+	}
 }
 
-func FixtureEmpty() *Store {
+func FixtureEmpty(hostDistroName, hostArchName string) *Fixture {
 	var bName = "test"
 	var b = blueprint.Blueprint{
 		Name:           bName,
@@ -287,21 +330,24 @@ func FixtureEmpty() *Store {
 		Customizations: nil,
 	}
 
-	dr := test_distro.NewRegistry()
-	d := dr.FromHost()
-	_, err := d.GetArch(test_distro.TestArchName)
+	df := distrofactory.NewTestDefault()
+	d := df.GetDistro(hostDistroName)
+	if d == nil {
+		panic(fmt.Sprintf("failed to get distro object for distro name %q", hostDistroName))
+	}
+	_, err := d.GetArch(hostArchName)
 	if err != nil {
-		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", hostArchName, err))
 	}
 
-	s := New(nil, dr, nil)
+	s := New(nil, df, nil)
 
 	s.blueprints[bName] = b
 
 	// 2nd distro blueprint
 	b2 := b
 	b2.Name = "test-distro-2"
-	b2.Distro = "test-distro-2"
+	b2.Distro = fmt.Sprintf("%s-2", test_distro.TestDistroNameBase)
 	s.blueprints[b2.Name] = b2
 
 	// Unknown distro blueprint
@@ -322,12 +368,18 @@ func FixtureEmpty() *Store {
 	b5.Arch = test_distro.TestArch2Name
 	s.blueprints[b5.Name] = b5
 
-	return s
+	return &Fixture{
+		s,
+		setupTestHostDistro(hostDistroName, hostArchName),
+		df,
+		hostDistroName,
+		hostArchName,
+	}
 }
 
 // FixtureOldChanges contains a blueprint and old changes
 // This simulates restarting the service and losing the old blueprints
-func FixtureOldChanges() *Store {
+func FixtureOldChanges(hostDistroName, hostArchName string) *Fixture {
 	var bName = "test-old-changes"
 	var b = blueprint.Blueprint{
 		Name:           bName,
@@ -338,14 +390,14 @@ func FixtureOldChanges() *Store {
 		Customizations: nil,
 	}
 
-	dr := test_distro.NewRegistry()
-	d := dr.FromHost()
-	_, err := d.GetArch(test_distro.TestArchName)
+	df := distrofactory.NewTestDefault()
+	d := df.GetDistro(hostDistroName)
+	_, err := d.GetArch(hostArchName)
 	if err != nil {
-		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", hostArchName, err))
 	}
 
-	s := New(nil, dr, nil)
+	s := New(nil, df, nil)
 
 	s.PushBlueprint(b, "Initial commit")
 	b.Version = "0.0.1"
@@ -365,11 +417,17 @@ func FixtureOldChanges() *Store {
 		}
 	}
 
-	return s
+	return &Fixture{
+		s,
+		setupTestHostDistro(hostDistroName, hostArchName),
+		df,
+		hostDistroName,
+		hostArchName,
+	}
 }
 
 // Fixture to use for checking job queue files
-func FixtureJobs() *Store {
+func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 	var bName = "test"
 	var b = blueprint.Blueprint{
 		Name:           bName,
@@ -397,11 +455,11 @@ func FixtureJobs() *Store {
 		},
 	}
 
-	dr := test_distro.NewRegistry()
-	d := dr.FromHost()
-	arch, err := d.GetArch(test_distro.TestArchName)
+	df := distrofactory.NewTestDefault()
+	d := df.GetDistro(hostDistroName)
+	arch, err := d.GetArch(hostArchName)
 	if err != nil {
-		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
+		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", hostArchName, err))
 	}
 	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	if err != nil {
@@ -417,7 +475,7 @@ func FixtureJobs() *Store {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
-	s := New(nil, dr, nil)
+	s := New(nil, df, nil)
 
 	pkgs := []rpmmd.PackageSpec{
 		{
@@ -425,13 +483,13 @@ func FixtureJobs() *Store {
 			Epoch:   0,
 			Version: "2.11.2",
 			Release: "1.fc35",
-			Arch:    test_distro.TestArchName,
+			Arch:    hostArchName,
 		}, {
 			Name:    "test2",
 			Epoch:   3,
 			Version: "4.2.2",
 			Release: "1.fc35",
-			Arch:    test_distro.TestArchName,
+			Arch:    hostArchName,
 		}}
 
 	s.blueprints[bName] = b
@@ -514,5 +572,11 @@ func FixtureJobs() *Store {
 		},
 	}
 
-	return s
+	return &Fixture{
+		s,
+		setupTestHostDistro(hostDistroName, hostArchName),
+		df,
+		hostDistroName,
+		hostArchName,
+	}
 }

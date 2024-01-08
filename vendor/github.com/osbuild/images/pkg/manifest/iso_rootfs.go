@@ -14,13 +14,12 @@ type ISORootfsImg struct {
 	installerPipeline Pipeline
 }
 
-func NewISORootfsImg(buildPipeline *Build, installerPipeline Pipeline) *ISORootfsImg {
+func NewISORootfsImg(buildPipeline Build, installerPipeline Pipeline) *ISORootfsImg {
 	p := &ISORootfsImg{
-		Base:              NewBase(installerPipeline.Manifest(), "rootfs-image", buildPipeline),
+		Base:              NewBase("rootfs-image", buildPipeline),
 		installerPipeline: installerPipeline,
 	}
 	buildPipeline.addDependent(p)
-	installerPipeline.Manifest().addPipeline(p)
 	return p
 }
 
@@ -50,7 +49,7 @@ func (p *ISORootfsImg) serialize() osbuild.Pipeline {
 	)
 
 	devName := "device"
-	devices := osbuild.Devices{devName: *lodevice}
+	devices := map[string]osbuild.Device{devName: *lodevice}
 	mkfsStage := osbuild.NewMkfsExt4Stage(mkfsStageOptions, devices)
 	pipeline.AddStage(mkfsStage)
 
@@ -64,8 +63,8 @@ func (p *ISORootfsImg) serialize() osbuild.Pipeline {
 		},
 	}
 	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.installerPipeline.Name())
-	copyStageMounts := &osbuild.Mounts{*osbuild.NewExt4Mount(devName, devName, "/")}
-	copyStage := osbuild.NewCopyStage(copyStageOptions, copyStageInputs, &devices, copyStageMounts)
+	copyStageMounts := []osbuild.Mount{*osbuild.NewExt4Mount(devName, devName, "/")}
+	copyStage := osbuild.NewCopyStage(copyStageOptions, copyStageInputs, devices, copyStageMounts)
 	pipeline.AddStage(copyStage)
 	return pipeline
 }
