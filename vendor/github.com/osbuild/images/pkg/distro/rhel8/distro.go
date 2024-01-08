@@ -123,53 +123,12 @@ func (d *distribution) getDefaultImageConfig() *distro.ImageConfig {
 	return d.defaultImageConfig
 }
 
-// New creates a new distro object, defining the supported architectures and image types
-func New() distro.Distro {
-	// default minor: create default minor version (current GA) and rename it
-	d := newDistro("rhel", 10)
-	d.name = "rhel-8"
-	return d
-
-}
-
-func NewRHEL84() distro.Distro {
-	return newDistro("rhel", 4)
-}
-
-func NewRHEL85() distro.Distro {
-	return newDistro("rhel", 5)
-}
-
-func NewRHEL86() distro.Distro {
-	return newDistro("rhel", 6)
-}
-
-func NewRHEL87() distro.Distro {
-	return newDistro("rhel", 7)
-}
-
-func NewRHEL88() distro.Distro {
-	return newDistro("rhel", 8)
-}
-
-func NewRHEL89() distro.Distro {
-	return newDistro("rhel", 9)
-}
-
-func NewRHEL810() distro.Distro {
-	return newDistro("rhel", 10)
-}
-
-func NewCentos() distro.Distro {
-	return newDistro("centos", 0)
-}
-
 func newDistro(name string, minor int) *distribution {
 	var rd distribution
 	switch name {
 	case "rhel":
 		rd = distribution{
-			name:               fmt.Sprintf("rhel-8%d", minor),
+			name:               fmt.Sprintf("rhel-8.%d", minor),
 			product:            "Red Hat Enterprise Linux",
 			osVersion:          fmt.Sprintf("8.%d", minor),
 			releaseVersion:     "8",
@@ -516,4 +475,53 @@ func newDistro(name string, minor int) *distribution {
 	}
 	rd.addArches(x86_64, aarch64, ppc64le)
 	return &rd
+}
+
+func ParseID(idStr string) (*distro.ID, error) {
+	id, err := distro.ParseID(idStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if id.Name != "rhel" && id.Name != "centos" {
+		return nil, fmt.Errorf("invalid distro name: %s", id.Name)
+	}
+
+	// Backward compatibility layer for "rhel-84" or "rhel-810"
+	if id.Name == "rhel" && id.MinorVersion == -1 {
+		if id.MajorVersion/10 == 8 {
+			// handle single digit minor version
+			id.MinorVersion = id.MajorVersion % 10
+			id.MajorVersion = 8
+		} else if id.MajorVersion/100 == 8 {
+			// handle two digit minor version
+			id.MinorVersion = id.MajorVersion % 100
+			id.MajorVersion = 8
+		}
+	}
+
+	if id.MajorVersion != 8 {
+		return nil, fmt.Errorf("invalid distro major version: %d", id.MajorVersion)
+	}
+
+	// CentOS does not use minor version
+	if id.Name == "centos" && id.MinorVersion != -1 {
+		return nil, fmt.Errorf("centos does not use minor version, but got: %d", id.MinorVersion)
+	}
+
+	// RHEL uses minor version
+	if id.Name == "rhel" && id.MinorVersion == -1 {
+		return nil, fmt.Errorf("rhel requires minor version, but got: %d", id.MinorVersion)
+	}
+
+	return id, nil
+}
+
+func DistroFactory(idStr string) distro.Distro {
+	id, err := ParseID(idStr)
+	if err != nil {
+		return nil
+	}
+
+	return newDistro(id.Name, id.MinorVersion)
 }

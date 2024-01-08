@@ -138,6 +138,19 @@ func osCustomizations(
 		panic(fmt.Sprintf("failed to convert file customizations to fs node files: %v", err))
 	}
 
+	// OSTree commits do not include data in `/var` since that is tied to the
+	// deployment, rather than the commit. Therefore the containers need to be
+	// stored in a different location, like `/usr/share`, and the container
+	// storage engine configured accordingly.
+	if t.rpmOstree && len(containers) > 0 {
+		storagePath := "/usr/share/containers/storage"
+		osc.ContainersStorage = &storagePath
+	}
+
+	if containerStorage := c.GetContainerStorage(); containerStorage != nil {
+		osc.ContainersStorage = containerStorage.StoragePath
+	}
+
 	customRepos, err := c.GetRepositories()
 	if err != nil {
 		// This shouldn't happen and since the repos
@@ -410,6 +423,32 @@ func iotCommitImage(workload workload.Workload,
 	return img, nil
 }
 
+func bootableContainerImage(workload workload.Workload,
+	t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
+	img := image.NewOSTreeArchive(commitRef)
+
+	d := t.arch.distro
+
+	img.Platform = t.platform
+	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, bp.Customizations)
+	img.Environment = t.environment
+	img.Workload = workload
+	img.OSTreeParent = parentCommit
+	img.OSVersion = d.osVersion
+	img.Filename = t.Filename()
+	img.InstallWeakDeps = false
+	img.BootContainer = true
+
+	return img, nil
+}
+
 func iotContainerImage(workload workload.Workload,
 	t *imageType,
 	bp *blueprint.Blueprint,
@@ -485,7 +524,8 @@ func iotInstallerImage(workload workload.Workload,
 	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
 	img.Variant = "IoT"
-	img.OSName = "fedora"
+	img.OSName = "fedora-iot"
+	img.Remote = "fedora-iot"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
 

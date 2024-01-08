@@ -48,7 +48,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			buildResult: worker.OSBuildJobResult{
 				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
+				HostOS: test_distro.TestDistro1Name,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
 					Image: &target.KojiOutputInfo{
 						Filename:     "test.img",
@@ -92,7 +92,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			buildResult: worker.OSBuildJobResult{
 				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
+				HostOS: test_distro.TestDistro1Name,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
 					Image: &target.KojiOutputInfo{
 						Filename:     "test.img",
@@ -136,7 +136,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			buildResult: worker.OSBuildJobResult{
 				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
+				HostOS: test_distro.TestDistro1Name,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
 					Image: &target.KojiOutputInfo{
 						Filename:     "test.img",
@@ -179,7 +179,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			buildResult: worker.OSBuildJobResult{
 				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
+				HostOS: test_distro.TestDistro1Name,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
 					Image: &target.KojiOutputInfo{
 						Filename:     "test.img",
@@ -224,7 +224,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			buildResult: worker.OSBuildJobResult{
 				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
+				HostOS: test_distro.TestDistro1Name,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
 					Image: &target.KojiOutputInfo{
 						Filename:     "test.img",
@@ -280,7 +280,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			buildResult: worker.OSBuildJobResult{
 				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
+				HostOS: test_distro.TestDistro1Name,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
 					Image: &target.KojiOutputInfo{
 						Filename:     "test.img",
@@ -328,7 +328,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			buildResult: worker.OSBuildJobResult{
 				Arch:   test_distro.TestArchName,
-				HostOS: test_distro.TestDistroName,
+				HostOS: test_distro.TestDistro1Name,
 				TargetResults: []*target.TargetResult{target.NewKojiTargetResult(&target.KojiTargetResultOptions{
 					Image: &target.KojiOutputInfo{
 						Filename:     "test.img",
@@ -407,7 +407,7 @@ func TestKojiCompose(t *testing.T) {
 				"release":"%[6]s",
 				"task_id": 42
 			}
-		}`, test_distro.TestDistroName, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage), name, version, release),
+		}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesGuestImage), name, version, release),
 				c.composeReplyCode, c.composeReply, "id", "operation_id")
 
 			// determine the compose ID from the reply
@@ -477,7 +477,7 @@ func TestKojiCompose(t *testing.T) {
 								"success": true
 							}
 						}
-					}`, test_distro.TestArch3Name, test_distro.TestDistroName)
+					}`, test_distro.TestArch3Name, test_distro.TestDistro1Name)
 				}
 
 				test.TestRoute(t, workerHandler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%v", token), buildJobResult, http.StatusOK,

@@ -8,14 +8,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
+
+var getHostDistroName func() (string, error) = distro.GetHostDistroName
+var getHostArch func() string = arch.Current().String
 
 type storeV0 struct {
 	Blueprints blueprintsV0 `json:"blueprints"`
@@ -102,11 +106,11 @@ func newWorkspaceFromV0(workspaceStruct workspaceV0) map[string]blueprint.Bluepr
 	return workspace
 }
 
-func newComposesFromV0(composesStruct composesV0, dr *distroregistry.Registry, log *log.Logger) map[uuid.UUID]Compose {
+func newComposesFromV0(composesStruct composesV0, df *distrofactory.Factory, log *log.Logger) map[uuid.UUID]Compose {
 	composes := make(map[uuid.UUID]Compose)
 
 	for composeID, composeStruct := range composesStruct {
-		c, err := newComposeFromV0(composeStruct, dr)
+		c, err := newComposeFromV0(composeStruct, df)
 		if err != nil {
 			if log != nil {
 				log.Printf("ignoring compose: %v", err)
@@ -149,7 +153,7 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 	}, nil
 }
 
-func newComposeFromV0(composeStruct composeV0, dr *distroregistry.Registry) (Compose, error) {
+func newComposeFromV0(composeStruct composeV0, df *distrofactory.Factory) (Compose, error) {
 	if len(composeStruct.ImageBuilds) != 1 {
 		return Compose{}, errors.New("compose with unsupported number of image builds")
 	}
@@ -158,15 +162,19 @@ func newComposeFromV0(composeStruct composeV0, dr *distroregistry.Registry) (Com
 	bp := composeStruct.Blueprint.DeepCopy()
 	distroName := bp.Distro
 	if len(distroName) == 0 {
-		distroName = dr.FromHost().Name()
+		var err error
+		distroName, err = getHostDistroName()
+		if err != nil {
+			return Compose{}, fmt.Errorf("Failed to get host distro name: %v", err)
+		}
 	}
-	distro := dr.GetDistro(distroName)
+	distro := df.GetDistro(distroName)
 	if distro == nil {
 		return Compose{}, fmt.Errorf("Unknown distro - %s", distroName)
 	}
 
 	// Get the host distro's architecture. This contains the distro+arch specific image types
-	arch, err := distro.GetArch(dr.HostArchName())
+	arch, err := distro.GetArch(getHostArch())
 	if err != nil {
 		return Compose{}, err
 	}
@@ -258,11 +266,11 @@ func newCommitsFromV0(commitsMapStruct commitsV0, changesMapStruct changesV0) ma
 	return commitsMap
 }
 
-func newStoreFromV0(storeStruct storeV0, dr *distroregistry.Registry, log *log.Logger) *Store {
+func newStoreFromV0(storeStruct storeV0, df *distrofactory.Factory, log *log.Logger) *Store {
 	return &Store{
 		blueprints:        newBlueprintsFromV0(storeStruct.Blueprints),
 		workspace:         newWorkspaceFromV0(storeStruct.Workspace),
-		composes:          newComposesFromV0(storeStruct.Composes, dr, log),
+		composes:          newComposesFromV0(storeStruct.Composes, df, log),
 		sources:           newSourceConfigsFromV0(storeStruct.Sources),
 		blueprintsChanges: newChangesFromV0(storeStruct.Changes),
 		blueprintsCommits: newCommitsFromV0(storeStruct.Commits, storeStruct.Changes),

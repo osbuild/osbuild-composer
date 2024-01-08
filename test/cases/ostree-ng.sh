@@ -125,7 +125,7 @@ case "${ID}-${VERSION_ID}" in
         CONTAINER_TYPE=iot-container
         INSTALLER_TYPE=iot-installer
         OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
-        OSTREE_OSNAME=fedora
+        OSTREE_OSNAME=fedora-iot
         OS_VARIANT="fedora-unknown"
         EMBEDED_CONTAINER="false"
         DIRS_FILES_CUSTOMIZATION="true"

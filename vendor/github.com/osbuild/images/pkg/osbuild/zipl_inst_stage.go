@@ -17,16 +17,16 @@ func (ZiplInstStageOptions) isStageOptions() {}
 
 // Return a new zipl.inst stage. The 'disk' parameter must represent the
 // (entire) device that contains the /boot partition.
-func NewZiplInstStage(options *ZiplInstStageOptions, disk *Device, devices *Devices, mounts *Mounts) *Stage {
+func NewZiplInstStage(options *ZiplInstStageOptions, disk *Device, devices map[string]Device, mounts []Mount) *Stage {
 	// create a new devices map and add the disk to it
-	devmap := map[string]Device(*devices)
+	devmap := map[string]Device(devices)
 	devmap["disk"] = *disk
-	ziplDevices := Devices(devmap)
+	ziplDevices := map[string]Device(devmap)
 	return &Stage{
 		Type:    "org.osbuild.zipl.inst",
 		Options: options,
 		Devices: ziplDevices,
-		Mounts:  *mounts,
+		Mounts:  mounts,
 	}
 }
 

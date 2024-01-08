@@ -42,9 +42,13 @@ BuildRequires:  make
 # Build requirements of 'theproglottis/gpgme' package
 BuildRequires:  gpgme-devel
 BuildRequires:  libassuan-devel
+# Build requirements of 'github.com/containers/storage' package
+BuildRequires:  device-mapper-devel
 %if 0%{?fedora}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
+# Build requirements of 'github.com/containers/storage' package
+BuildRequires:  btrfs-progs-devel
 # DO NOT REMOVE the BUNDLE_START and BUNDLE_END markers as they are used by 'tools/rpm_spec_add_provides_bundle.sh' to generate the Provides: bundled list
 # BUNDLE_START
 # BUNDLE_END
@@ -84,6 +88,11 @@ export GOFLAGS+=" -mod=vendor"
 %undefine gomodulesmode
 %endif
 
+# btrfs-progs-devel is not available on RHEL
+%if 0%{?rhel}
+GOTAGS="exclude_graphdriver_btrfs"
+%endif
+
 # Set the commit hash so that composer can report what source version
 # was used to build it. This has to be set explicitly when calling rpmbuild,
 # this script will not attempt to automatically discover it.
@@ -92,8 +101,8 @@ export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/comm
 %endif
 export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/common.RpmVersion=%{name}-%{?epoch:%epoch:}%{version}-%{release}.%{_arch}'"
 
-%gobuild -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
-%gobuild -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
+%gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
+%gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
 
 make man
 
@@ -112,15 +121,15 @@ export GOPATH=%{gobuilddir}:%{gopath}
 
 TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
 
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-cli-tests %{goipath}/cmd/osbuild-composer-cli-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/client/
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-auth-tests %{goipath}/cmd/osbuild-auth-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-koji-tests %{goipath}/cmd/osbuild-koji-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-dbjobqueue-tests %{goipath}/cmd/osbuild-composer-dbjobqueue-tests
-go test -c -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-service-maintenance-tests %{goipath}/cmd/osbuild-service-maintenance
-go build -tags=integration -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-mock-openid-provider %{goipath}/cmd/osbuild-mock-openid-provider
+go test -c -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-cli-tests %{goipath}/cmd/osbuild-composer-cli-tests
+go test -c -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-dnf-json-tests %{goipath}/cmd/osbuild-dnf-json-tests
+go test -c -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-weldr-tests %{goipath}/internal/client/
+go test -c -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-image-tests %{goipath}/cmd/osbuild-image-tests
+go test -c -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-auth-tests %{goipath}/cmd/osbuild-auth-tests
+go test -c -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-koji-tests %{goipath}/cmd/osbuild-koji-tests
+go test -c -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-composer-dbjobqueue-tests %{goipath}/cmd/osbuild-composer-dbjobqueue-tests
+go test -c -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-service-maintenance-tests %{goipath}/cmd/osbuild-service-maintenance
+go build -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _bin/osbuild-mock-openid-provider %{goipath}/cmd/osbuild-mock-openid-provider
 
 %endif
 
@@ -253,7 +262,7 @@ install -m 0644 -vp test/data/upgrade8to9/*                       %{buildroot}%{
 %check
 export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
-export GOFLAGS+=" -mod=vendor"
+export GOFLAGS+=" -mod=vendor -tags=exclude_graphdriver_btrfs"
 export GOPATH=$PWD/_build:%{gopath}
 # cd inside GOPATH, otherwise go with GO111MODULE=off ignores vendor directory
 cd $PWD/_build/src/%{goipath}
@@ -298,10 +307,10 @@ The core osbuild-composer binary. This is suitable both for spawning in containe
 Summary:    The worker for osbuild-composer
 Requires:   systemd
 Requires:   qemu-img
-Requires:   osbuild >= 93
-Requires:   osbuild-ostree >= 93
-Requires:   osbuild-lvm2 >= 93
-Requires:   osbuild-luks2 >= 93
+Requires:   osbuild >= 98
+Requires:   osbuild-ostree >= 98
+Requires:   osbuild-lvm2 >= 98
+Requires:   osbuild-luks2 >= 98
 Requires:   %{name}-dnf-json = %{version}-%{release}
 
 %description worker

@@ -188,6 +188,104 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	return ps
 }
 
+func bootableContainerPackageSet(t *imageType) rpmmd.PackageSet {
+	// Replicating package selection from centos-bootc:
+	// https://github.com/CentOS/centos-bootc/
+	ps := rpmmd.PackageSet{
+		Include: []string{
+			"acl",
+			"attr", // used by admins interactively
+			"bootc",
+			"bootupd",
+			"chrony", // NTP support
+			"container-selinux",
+			"container-selinux",
+			"crun",
+			"cryptsetup",
+			"dnf",
+			"e2fsprogs",
+			"fwupd",                 // if you're using linux-firmware, you probably also want fwupd
+			"iproute", "iproute-tc", // route manipulation and QoS
+			"iptables", "nftables", // firewall manipulation
+			"iptables-services", // additional firewall support
+			"kbd",               // i18n
+			"keyutils",          // Manipulating the kernel keyring; used by bootc
+			"libsss_sudo",       // allow communication between sudo and SSSD for caching sudo rules by SSSD
+			"linux-firmware",    // linux-firmware now a recommends so let's explicitly include it
+			"logrotate",         // There are things that write outside of the journal still (such as the classic wtmp, etc.). auditd also writes outside the journal but it has its own log rotation.  Anything package layered will also tend to expect files dropped in /etc/logrotate.d to work. Really, this is a legacy thing, but if we don't have it then people's disks will slowly fill up with logs.
+			"lsof",
+			"lvm2",                       // Storage configuration/management
+			"nano",                       // default editor
+			"ncurses",                    // provides terminal tools like clear, reset, tput, and tset
+			"NetworkManager-cloud-setup", // support for cloud quirks and dynamic config in real rootfs: https://github.com/coreos/fedora-coreos-tracker/issues/320
+			"NetworkManager", "hostname", // standard tools for configuring network/hostname
+			"NetworkManager-team", "teamd", // teaming https://github.com/coreos/fedora-coreos-config/pull/289 and http://bugzilla.redhat.com/1758162
+			"NetworkManager-tui",               // interactive Networking configuration during coreos-install
+			"nfs-utils-coreos", "iptables-nft", // minimal NFS client
+			"nss-altfiles",
+			"openssh-clients",
+			"openssh-server",
+			"openssl",
+			"ostree",
+			"passwd", "shadow-utils", // User configuration
+			"podman",
+			"rpm-ostree",
+			"selinux-policy-targeted",
+			"sg3_utils",
+			"skopeo",
+			"socat", "net-tools", "bind-utils", // interactive network tools for admins
+			"sssd-client", "sssd-ad", "sssd-ipa", "sssd-krb5", "sssd-ldap", // SSSD backends
+			"stalld",               // Boost starving threads https://github.com/coreos/fedora-coreos-tracker/issues/753
+			"subscription-manager", // To ensure we can enable client certs to access RHEL content
+			"sudo",
+			"systemd",
+			"systemd-resolved",  // resolved was broken out to its own package in rawhide/f35
+			"tpm2-tools",        // needed for tpm2 bound luks
+			"WALinuxAgent-udev", // udev rules for Azure (rhbz#1748432)
+			"xfsprogs",
+			"zram-generator", // zram-generator (but not zram-generator-defaults) for F33 change
+		},
+		Exclude: []string{
+			"cowsay", // just in case
+			"grubby",
+			"initscripts",                         // make sure initscripts doesn't get pulled back in https://github.com/coreos/fedora-coreos-tracker/issues/220#issuecomment-611566254
+			"NetworkManager-initscripts-ifcfg-rh", // do not use legacy ifcfg config format in NetworkManager See https://github.com/coreos/fedora-coreos-config/pull/1991
+			"nodejs",
+			"perl",
+			"perl-interpreter",
+			"plymouth",         // for (datacenter/cloud oriented) servers, we want to see the details by default.  https://lists.fedoraproject.org/archives/list/devel@lists.fedoraproject.org/thread/HSMISZ3ETWQ4ETVLWZQJ55ARZT27AAV3/
+			"systemd-networkd", // we use NetworkManager
+		},
+	}
+
+	switch t.Arch().Name() {
+	case arch.ARCH_AARCH64.String():
+		ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"irqbalance",
+				"ostree-grub2",
+			},
+		})
+	case arch.ARCH_PPC64LE.String():
+		ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"irqbalance",
+				"librtas",
+				"powerpc-utils-core",
+				"ppc64-diag-rtas",
+			},
+		})
+	case arch.ARCH_X86_64.String():
+		ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"irqbalance",
+			},
+		})
+	}
+
+	return ps
+}
+
 // INSTALLER PACKAGE SET
 
 func installerPackageSet(t *imageType) rpmmd.PackageSet {

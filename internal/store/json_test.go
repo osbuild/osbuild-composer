@@ -2,7 +2,6 @@ package store
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -17,7 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/fedora"
 	"github.com/osbuild/images/pkg/distro/test_distro"
-	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -33,14 +32,22 @@ func MustParseTime(ts string) time.Time {
 	return t
 }
 
+func getTestDistroArchImgType(t *testing.T) (distro.Distro, distro.Arch, distro.ImageType) {
+	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	require.NotNil(t, testDistro)
+	testArch, err := testDistro.GetArch(test_distro.TestArchName)
+	require.NoError(t, err)
+	testImageType, err := testArch.GetImageType(test_distro.TestImageTypeName)
+	require.NoError(t, err)
+	return testDistro, testArch, testImageType
+}
+
 func Test_imageTypeToCompatString(t *testing.T) {
 	type args struct {
 		input distro.ImageType
 	}
 
-	testDistro := test_distro.New()
-	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
-	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+	_, _, testImageType := getTestDistroArchImgType(t)
 
 	tests := []struct {
 		name string
@@ -71,9 +78,7 @@ func Test_imageTypeFromCompatString(t *testing.T) {
 		arch  distro.Arch
 	}
 
-	testDistro := test_distro.New()
-	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
-	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+	_, testArch, testImageType := getTestDistroArchImgType(t)
 
 	tests := []struct {
 		name string
@@ -116,32 +121,24 @@ func Test_imageTypeFromCompatString(t *testing.T) {
 }
 
 func TestMarshalEmpty(t *testing.T) {
-	d := test_distro.New()
-	_, err := d.GetArch(test_distro.TestArchName)
-	if err != nil {
-		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
-	}
-	store1 := FixtureEmpty()
-	storeV0 := store1.toStoreV0()
-	dr := test_distro.NewRegistry()
-	store2 := newStoreFromV0(*storeV0, dr, nil)
-	if !reflect.DeepEqual(store1, store2) {
-		t.Errorf("marshal/unmarshal roundtrip not a noop for empty store:\n got: %#v\n want: %#v", store1, store2)
+	fixture := FixtureEmpty(test_distro.TestDistro1Name, test_distro.TestArchName)
+	t.Cleanup(fixture.Cleanup)
+	storeV0 := fixture.Store.toStoreV0()
+	df := distrofactory.NewTestDefault()
+	store2 := newStoreFromV0(*storeV0, df, nil)
+	if !reflect.DeepEqual(fixture.Store, store2) {
+		t.Errorf("marshal/unmarshal roundtrip not a noop for empty store:\n got: %#v\n want: %#v", store2, fixture.Store)
 	}
 }
 
 func TestMarshalFinished(t *testing.T) {
-	d := test_distro.New()
-	_, err := d.GetArch(test_distro.TestArchName)
-	if err != nil {
-		panic(fmt.Sprintf("failed to get architecture %s for a test distro: %v", test_distro.TestArchName, err))
-	}
-	store1 := FixtureFinished()
-	storeV0 := store1.toStoreV0()
-	dr := test_distro.NewRegistry()
-	store2 := newStoreFromV0(*storeV0, dr, nil)
-	if !reflect.DeepEqual(store1, store2) {
-		t.Errorf("marshal/unmarshal roundtrip not a noop for base store:\n got: %#v\n want: %#v", store2, store1)
+	fixture := FixtureFinished(test_distro.TestDistro1Name, test_distro.TestArchName)
+	t.Cleanup(fixture.Cleanup)
+	storeV0 := fixture.Store.toStoreV0()
+	df := distrofactory.NewTestDefault()
+	store2 := newStoreFromV0(*storeV0, df, nil)
+	if !reflect.DeepEqual(fixture.Store, store2) {
+		t.Errorf("marshal/unmarshal roundtrip not a noop for base store:\n got: %#v\n want: %#v", store2, fixture.Store)
 	}
 }
 
@@ -192,12 +189,10 @@ func TestStore_toStoreV0(t *testing.T) {
 func Test_newStoreFromV0(t *testing.T) {
 	type args struct {
 		storeStruct storeV0
-		registry    *distroregistry.Registry
+		factory     *distrofactory.Factory
 	}
 
-	//testDistro := test_distro.New()
-	//	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
-	dr := test_distro.NewRegistry()
+	df := distrofactory.NewTestDefault()
 
 	tests := []struct {
 		name string
@@ -208,14 +203,14 @@ func Test_newStoreFromV0(t *testing.T) {
 			name: "empty",
 			args: args{
 				storeStruct: storeV0{},
-				registry:    dr,
+				factory:     df,
 			},
-			want: New(nil, dr, nil),
+			want: New(nil, df, nil),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newStoreFromV0(tt.args.storeStruct, tt.args.registry, nil); !reflect.DeepEqual(got, tt.want) {
+			if got := newStoreFromV0(tt.args.storeStruct, tt.args.factory, nil); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("newStoreFromV0() =\n got: %#v\n want: %#v", got, tt.want)
 			}
 		})
@@ -304,23 +299,24 @@ func Test_upgrade(t *testing.T) {
 	assert.NoErrorf(err, "Could not read test store directory '%s': %v", testPath, err)
 	require.Greaterf(t, len(fileNames), 0, "No test stores found in %s", testPath)
 	for _, fileName := range fileNames {
-		var storeStruct storeV0
-		file, err := os.ReadFile(fileName)
-		assert.NoErrorf(err, "Could not read test-store '%s': %v", fileName, err)
-		err = json.Unmarshal([]byte(file), &storeStruct)
-		assert.NoErrorf(err, "Could not parse test-store '%s': %v", fileName, err)
-		f37 := fedora.NewF37()
-		registry, err := distroregistry.New(f37, f37)
-		assert.NoError(err)
+		t.Run(fileName, func(t *testing.T) {
+			var storeStruct storeV0
+			file, err := os.ReadFile(fileName)
+			assert.NoErrorf(err, "Could not read test-store '%s': %v", fileName, err)
+			err = json.Unmarshal([]byte(file), &storeStruct)
+			assert.NoErrorf(err, "Could not parse test-store '%s': %v", fileName, err)
 
-		// The test data has image types only supported on Fedora X86_64
-		registry.SetHostArchName(arch.ARCH_X86_64.String())
-		store := newStoreFromV0(storeStruct, registry, nil)
-		assert.Equal(1, len(store.blueprints))
-		assert.Equal(1, len(store.blueprintsChanges))
-		assert.Equal(1, len(store.blueprintsCommits))
-		assert.LessOrEqual(1, len(store.composes))
-		assert.Equal(1, len(store.workspace))
+			cleanup := setupTestHostDistro("fedora-37", arch.ARCH_X86_64.String())
+			t.Cleanup(cleanup)
+			factory := distrofactory.New(fedora.DistroFactory)
+
+			store := newStoreFromV0(storeStruct, factory, nil)
+			assert.Equal(1, len(store.blueprints))
+			assert.Equal(1, len(store.blueprintsChanges))
+			assert.Equal(1, len(store.blueprintsCommits))
+			assert.LessOrEqual(1, len(store.composes))
+			assert.Equal(1, len(store.workspace))
+		})
 	}
 }
 
@@ -1131,9 +1127,7 @@ func Test_newComposeV0(t *testing.T) {
 			{Name: "tmux", Version: "*"}},
 	}
 
-	testDistro := test_distro.New()
-	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
-	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+	_, _, testImageType := getTestDistroArchImgType(t)
 
 	tests := []struct {
 		name    string
@@ -1227,29 +1221,29 @@ func Test_newComposeFromV0(t *testing.T) {
 			{Name: "tmux", Version: "*"}},
 	}
 
-	testDistro := test_distro.New()
-	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
-	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
-	dr := test_distro.NewRegistry()
+	testDistro, testArch, testImageType := getTestDistroArchImgType(t)
+	df := distrofactory.NewTestDefault()
+
+	t.Cleanup(setupTestHostDistro(testDistro.Name(), testArch.Name()))
 
 	tests := []struct {
-		name     string
-		compose  composeV0
-		registry *distroregistry.Registry
-		want     Compose
-		errOk    bool
+		name    string
+		compose composeV0
+		factory *distrofactory.Factory
+		want    Compose
+		errOk   bool
 	}{
 		{
-			name:     "empty",
-			compose:  composeV0{},
-			registry: dr,
-			want:     Compose{},
-			errOk:    true,
+			name:    "empty",
+			compose: composeV0{},
+			factory: df,
+			want:    Compose{},
+			errOk:   true,
 		},
 		{
-			name:     "qcow2 compose",
-			registry: dr,
-			errOk:    false,
+			name:    "qcow2 compose",
+			factory: df,
+			errOk:   false,
 			compose: composeV0{
 				Blueprint: &bp,
 				ImageBuilds: []imageBuildV0{
@@ -1319,7 +1313,7 @@ func Test_newComposeFromV0(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := newComposeFromV0(tt.compose, tt.registry)
+			got, err := newComposeFromV0(tt.compose, tt.factory)
 			if err != nil {
 				if !tt.errOk {
 					t.Errorf("newComposeFromV0() error = %v", err)
@@ -1340,9 +1334,7 @@ func Test_newComposesV0(t *testing.T) {
 			{Name: "tmux", Version: "*"}},
 	}
 
-	testDistro := test_distro.New()
-	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
-	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+	_, _, testImageType := getTestDistroArchImgType(t)
 
 	tests := []struct {
 		name     string
@@ -1505,26 +1497,26 @@ func Test_newComposesFromV0(t *testing.T) {
 			{Name: "tmux", Version: "*"}},
 	}
 
-	testDistro := test_distro.New()
-	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
-	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
-	dr := test_distro.NewRegistry()
+	testDistro, testArch, testImageType := getTestDistroArchImgType(t)
+	df := distrofactory.NewTestDefault()
+
+	t.Cleanup(setupTestHostDistro(testDistro.Name(), testArch.Name()))
 
 	tests := []struct {
 		name     string
-		registry *distroregistry.Registry
+		registry *distrofactory.Factory
 		composes composesV0
 		want     map[uuid.UUID]Compose
 	}{
 		{
 			name:     "empty",
-			registry: dr,
+			registry: df,
 			composes: composesV0{},
 			want:     make(map[uuid.UUID]Compose),
 		},
 		{
 			name:     "two composes",
-			registry: dr,
+			registry: df,
 			composes: composesV0{
 				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
 					Blueprint: &bp,
@@ -1671,9 +1663,7 @@ func Test_newComposesFromV0(t *testing.T) {
 }
 
 func Test_newImageBuildFromV0(t *testing.T) {
-	testDistro := test_distro.New()
-	testArch, _ := testDistro.GetArch(test_distro.TestArchName)
-	testImageType, _ := testArch.GetImageType(test_distro.TestImageTypeName)
+	_, testArch, testImageType := getTestDistroArchImgType(t)
 
 	tests := []struct {
 		name  string

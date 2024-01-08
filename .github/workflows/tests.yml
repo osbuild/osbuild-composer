@@ -22,7 +22,7 @@ jobs:
         # gcc is needed to build the mock dnf-json binary for the unit tests
         # gpgme-devel is needed for container upload dependencies
       - name: Install build and test dependencies
-        run: dnf -y install krb5-devel gcc git-core go gpgme-devel
+        run: dnf -y install krb5-devel gcc git-core go gpgme-devel btrfs-progs-devel device-mapper-devel
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v4
@@ -129,6 +129,13 @@ jobs:
       # This is needed for the container upload dependencies
       - name: Install libgpgme devel package
         run: sudo apt-get install -y libgpgme-dev
+
+      # This is needed for the 'github.com/containers/storage' package
+      - name: Install btrfs-progs devel package
+        run: sudo apt-get install -y libbtrfs-dev
+
+      - name: Install libdevmapper devel package
+        run: sudo apt-get install -y libdevmapper-dev
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3

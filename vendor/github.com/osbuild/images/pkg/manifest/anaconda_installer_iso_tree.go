@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -22,6 +23,7 @@ type AnacondaInstallerISOTree struct {
 	// TODO: review optional and mandatory fields and their meaning
 	OSName  string
 	Release string
+	Remote  string
 	Users   []users.User
 	Groups  []users.Group
 
@@ -37,7 +39,7 @@ type AnacondaInstallerISOTree struct {
 	// Anaconda pipeline.
 	KSPath string
 
-	// The path where the payload (tarball or ostree repo) will be stored.
+	// The path where the payload (tarball, ostree repo, or container) will be stored.
 	PayloadPath string
 
 	isoLabel string
@@ -48,14 +50,18 @@ type AnacondaInstallerISOTree struct {
 	OSTreeCommitSource *ostree.SourceSpec
 
 	ostreeCommitSpec *ostree.CommitSpec
+	ContainerSource  *container.SourceSpec
+	containerSpec    *container.Spec
 
 	KernelOpts []string
 
 	// Enable ISOLinux stage
 	ISOLinux bool
+
+	Files []*fsnode.File
 }
 
-func NewAnacondaInstallerISOTree(buildPipeline *Build, anacondaPipeline *AnacondaInstaller, rootfsPipeline *ISORootfsImg, bootTreePipeline *EFIBootTree) *AnacondaInstallerISOTree {
+func NewAnacondaInstallerISOTree(buildPipeline Build, anacondaPipeline *AnacondaInstaller, rootfsPipeline *ISORootfsImg, bootTreePipeline *EFIBootTree) *AnacondaInstallerISOTree {
 
 	// the three pipelines should all belong to the same manifest
 	if anacondaPipeline.Manifest() != rootfsPipeline.Manifest() ||
@@ -63,14 +69,13 @@ func NewAnacondaInstallerISOTree(buildPipeline *Build, anacondaPipeline *Anacond
 		panic("pipelines from different manifests")
 	}
 	p := &AnacondaInstallerISOTree{
-		Base:             NewBase(anacondaPipeline.Manifest(), "bootiso-tree", buildPipeline),
+		Base:             NewBase("bootiso-tree", buildPipeline),
 		anacondaPipeline: anacondaPipeline,
 		rootfsPipeline:   rootfsPipeline,
 		bootTreePipeline: bootTreePipeline,
 		isoLabel:         bootTreePipeline.ISOLabel,
 	}
 	buildPipeline.addDependent(p)
-	anacondaPipeline.Manifest().addPipeline(p)
 	return p
 }
 
@@ -91,6 +96,32 @@ func (p *AnacondaInstallerISOTree) getOSTreeCommits() []ostree.CommitSpec {
 	return []ostree.CommitSpec{*p.ostreeCommitSpec}
 }
 
+func (p *AnacondaInstallerISOTree) getContainerSpecs() []container.Spec {
+	if p.containerSpec == nil {
+		return []container.Spec{}
+	}
+	return []container.Spec{*p.containerSpec}
+}
+
+func (p *AnacondaInstallerISOTree) getContainerSources() []container.SourceSpec {
+	if p.ContainerSource == nil {
+		return []container.SourceSpec{}
+	}
+	return []container.SourceSpec{
+		*p.ContainerSource,
+	}
+}
+
+func (p *AnacondaInstallerISOTree) getInline() []string {
+	inlineData := []string{}
+
+	// inline data for custom files
+	for _, file := range p.Files {
+		inlineData = append(inlineData, string(file.Data()))
+	}
+
+	return inlineData
+}
 func (p *AnacondaInstallerISOTree) getBuildPackages(_ Distro) []string {
 	packages := []string{
 		"squashfs-tools",
@@ -100,6 +131,10 @@ func (p *AnacondaInstallerISOTree) getBuildPackages(_ Distro) []string {
 		packages = append(packages, "rpm-ostree")
 	}
 
+	if p.ContainerSource != nil {
+		packages = append(packages, "skopeo")
+	}
+
 	if p.OSPipeline != nil {
 		packages = append(packages, "tar")
 	}
@@ -107,33 +142,57 @@ func (p *AnacondaInstallerISOTree) getBuildPackages(_ Distro) []string {
 	return packages
 }
 
-func (p *AnacondaInstallerISOTree) serializeStart(_ []rpmmd.PackageSpec, _ []container.Spec, commits []ostree.CommitSpec) {
-	if len(commits) == 0 {
-		// nothing to do
-		return
+func (p *AnacondaInstallerISOTree) serializeStart(_ []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec) {
+	if p.ostreeCommitSpec != nil || p.containerSpec != nil {
+		panic("double call to serializeStart()")
 	}
 
 	if len(commits) > 1 {
 		panic("pipeline supports at most one ostree commit")
 	}
 
-	p.ostreeCommitSpec = &commits[0]
+	if len(containers) > 1 {
+		panic("pipeline supports at most one container")
+	}
+
+	if len(commits) > 0 {
+		p.ostreeCommitSpec = &commits[0]
+	}
+
+	if len(containers) > 0 {
+		p.containerSpec = &containers[0]
+	}
 }
 
 func (p *AnacondaInstallerISOTree) serializeEnd() {
 	p.ostreeCommitSpec = nil
+	p.containerSpec = nil
 }
 
 func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
-	// If the anaconda pipeline is a payload then we need one of two payload types
+	// If the anaconda pipeline is a payload then we need one of three payload types
 	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
-		if p.ostreeCommitSpec == nil && p.OSPipeline == nil {
-			panic("missing ostree or ospipeline parameters in ISO tree pipeline")
+		count := 0
+
+		if p.ostreeCommitSpec != nil {
+			count++
 		}
 
-		// But not both payloads
-		if p.ostreeCommitSpec != nil && p.OSPipeline != nil {
-			panic("got both ostree and ospipeline parameters in ISO tree pipeline")
+		if p.containerSpec != nil {
+			count++
+		}
+
+		if p.OSPipeline != nil {
+			count++
+		}
+
+		if count == 0 {
+			panic("missing ostree, container, or ospipeline parameters in ISO tree pipeline")
+		}
+
+		// But not more than one payloads
+		if count > 1 {
+			panic("got multiple payloads in ISO tree pipeline")
 		}
 	}
 
@@ -278,6 +337,7 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 			p.Groups,
 			makeISORootPath(p.PayloadPath),
 			p.ostreeCommitSpec.Ref,
+			p.Remote,
 			p.OSName)
 
 		if err != nil {
@@ -285,6 +345,69 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 		}
 
 		pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
+	}
+
+	if p.containerSpec != nil {
+		images := osbuild.NewContainersInputForSources([]container.Spec{*p.containerSpec})
+
+		pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+			Paths: []osbuild.MkdirStagePath{
+				{
+					Path: p.PayloadPath,
+				},
+			},
+		}))
+
+		// copy the container in
+		pipeline.AddStage(osbuild.NewSkopeoStageWithOCI(
+			p.PayloadPath,
+			images,
+			nil))
+
+		// do what we can in our kickstart stage
+		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeContainer(
+			"/osbuild-base.ks",
+			p.Users,
+			p.Groups,
+			path.Join("/run/install/repo", p.PayloadPath),
+			"oci",
+			"",
+			"")
+
+		if err != nil {
+			panic("failed to create kickstartstage options")
+		}
+
+		pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
+
+		// and what we can't do in a separate kickstart that we include
+
+		kickstartFile, err := fsnode.NewFile(p.KSPath, nil, nil, nil, []byte(`
+%include /run/install/repo/osbuild-base.ks
+
+rootpw --lock
+
+lang en_US.UTF-8
+keyboard us
+timezone UTC
+
+clearpart --all
+
+reqpart --add-boot
+
+part swap --fstype=swap --size=1024
+part / --fstype=ext4 --grow
+
+reboot --eject
+`))
+
+		if err != nil {
+			panic(err)
+		}
+
+		p.Files = []*fsnode.File{kickstartFile}
+
+		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
 	}
 
 	if p.OSPipeline != nil {

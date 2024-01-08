@@ -3,6 +3,7 @@ package v2
 import (
 	"testing"
 
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro/rhel9"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
@@ -14,7 +15,8 @@ import (
 )
 
 func TestImageRequestSize(t *testing.T) {
-	distro := test_distro.New()
+	distro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	require.NotNil(t, distro)
 	arch, err := distro.GetArch(test_distro.TestArchName)
 	if err != nil {
 		panic(err)
@@ -135,8 +137,9 @@ func TestGetOstreeOptions(t *testing.T) {
 func TestGetTargets(t *testing.T) {
 	at := assert.New(t)
 
-	r9 := rhel9.NewRHEL93()
-	arch, err := r9.GetArch("x86_64")
+	r9 := rhel9.DistroFactory("rhel-9.3")
+	require.NotNil(t, r9)
+	arch, err := r9.GetArch(arch.ARCH_X86_64.String())
 	at.NoError(err)
 
 	cr := &ComposeRequest{

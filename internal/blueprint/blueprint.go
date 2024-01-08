@@ -45,10 +45,12 @@ type Group struct {
 }
 
 type Container struct {
-	Source string `json:"source" toml:"source"`
+	Source string `json:"source,omitempty" toml:"source"`
 	Name   string `json:"name,omitempty" toml:"name,omitempty"`
 
-	TLSVerify *bool `json:"tls-verify,omitempty" toml:"tls-verify,omitempty"`
+	TLSVerify           *bool   `json:"tls-verify,omitempty" toml:"tls-verify,omitempty"`
+	ContainersTransport *string `json:"containers-transport,omitempty" toml:"containers-transport,omitempty"`
+	StoragePath         *string `json:"source-path,omitempty" toml:"source-path,omitempty"`
 }
 
 // DeepCopy returns a deep copy of the blueprint

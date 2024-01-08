@@ -48,21 +48,6 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 	},
 }
 
-// distribution objects without the arches > image types
-var distroMap = map[string]distribution{
-	"rhel-7": {
-		name:               "rhel-7",
-		product:            "Red Hat Enterprise Linux",
-		osVersion:          "7.9",
-		nick:               "Maipo",
-		releaseVersion:     "7",
-		modulePlatformID:   "platform:el7",
-		vendor:             "redhat",
-		runner:             &runner.RHEL{Major: uint64(7), Minor: uint64(9)},
-		defaultImageConfig: defaultDistroImageConfig,
-	},
-}
-
 // --- Distribution ---
 type distribution struct {
 	name               string
@@ -193,14 +178,24 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-// New creates a new distro object, defining the supported architectures and image types
-func New() distro.Distro {
-	return newDistro("rhel-7")
-}
-
-func newDistro(distroName string) distro.Distro {
-
-	rd := distroMap[distroName]
+func newDistro(name string, minor int) *distribution {
+	var rd distribution
+	switch name {
+	case "rhel":
+		rd = distribution{
+			name:               fmt.Sprintf("rhel-7.%d", minor),
+			product:            "Red Hat Enterprise Linux",
+			osVersion:          fmt.Sprintf("7.%d", minor),
+			nick:               "Maipo",
+			releaseVersion:     "7",
+			modulePlatformID:   "platform:el7",
+			vendor:             "redhat",
+			runner:             &runner.RHEL{Major: uint64(7), Minor: uint64(minor)},
+			defaultImageConfig: defaultDistroImageConfig,
+		}
+	default:
+		panic(fmt.Sprintf("unknown distro name: %s", name))
+	}
 
 	// Architecture definitions
 	x86_64 := architecture{
@@ -236,4 +231,34 @@ func newDistro(distroName string) distro.Distro {
 	)
 
 	return &rd
+}
+
+func ParseID(idStr string) (*distro.ID, error) {
+	id, err := distro.ParseID(idStr)
+	if err != nil {
+		return nil, err
+	}
+	if id.Name != "rhel" {
+		return nil, fmt.Errorf("invalid distro name: %s", id.Name)
+	}
+
+	if id.MajorVersion != 7 {
+		return nil, fmt.Errorf("invalid distro major version: %d", id.MajorVersion)
+	}
+
+	// RHEL uses minor version
+	if id.Name == "rhel" && id.MinorVersion == -1 {
+		return nil, fmt.Errorf("rhel requires minor version, but got: %d", id.MinorVersion)
+	}
+
+	return id, nil
+}
+
+func DistroFactory(idStr string) distro.Distro {
+	id, err := ParseID(idStr)
+	if err != nil {
+		return nil
+	}
+
+	return newDistro(id.Name, id.MinorVersion)
 }

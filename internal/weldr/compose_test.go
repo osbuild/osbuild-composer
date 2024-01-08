@@ -22,9 +22,10 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
+	api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.BaseFixture, nil)
+	t.Cleanup(sf.Cleanup)
 
-	distroStruct := test_distro.New()
+	distroStruct := test_distro.DistroFactory(test_distro.TestDistro1Name)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)
@@ -77,9 +78,10 @@ func TestComposeStatusFromJobError(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	api, _ := createWeldrAPI(t.TempDir(), rpmmd_mock.BaseFixture)
+	api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.BaseFixture, nil)
+	t.Cleanup(sf.Cleanup)
 
-	distroStruct := test_distro.New()
+	distroStruct := test_distro.DistroFactory(test_distro.TestDistro1Name)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
 	if err != nil {
 		t.Fatalf("error getting arch from distro: %v", err)

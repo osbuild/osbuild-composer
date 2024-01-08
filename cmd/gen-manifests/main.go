@@ -15,12 +15,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rhsm/facts"
@@ -207,6 +208,15 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 }
 
 type DistroArchRepoMap map[string]map[string][]repository
+
+func (darm DistroArchRepoMap) ListDistros() []string {
+	distros := make([]string, 0, len(darm))
+	for d := range darm {
+		distros = append(distros, d)
+	}
+	sort.Strings(distros)
+	return distros
+}
 
 func convertRepo(r repository) rpmmd.RepoConfig {
 	var urls []string
@@ -447,7 +457,7 @@ func main() {
 
 	seedArg := int64(0)
 	darm := readRepos()
-	distroReg := distroregistry.NewDefault()
+	distroFac := distrofactory.NewDefault()
 	jobs := make([]manifestJob, 0)
 
 	requestMap := loadFormatRequestMap()
@@ -459,10 +469,10 @@ func main() {
 
 	fmt.Println("Collecting jobs")
 	if len(distros) == 0 {
-		distros = distroReg.List()
+		distros = darm.ListDistros()
 	}
 	for _, distroName := range distros {
-		distribution := distroReg.GetDistro(distroName)
+		distribution := distroFac.GetDistro(distroName)
 		if distribution == nil {
 			fmt.Fprintf(os.Stderr, "invalid distro name %q\n", distroName)
 			continue

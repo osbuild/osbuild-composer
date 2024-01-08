@@ -7,7 +7,6 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/pathpolicy"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
@@ -17,6 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/policies"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"golang.org/x/exp/slices"
 )
@@ -222,8 +222,14 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	}
 
 	containerSources := make([]container.SourceSpec, len(bp.Containers))
-	for idx := range bp.Containers {
-		containerSources[idx] = container.SourceSpec(bp.Containers[idx])
+	for idx, cont := range bp.Containers {
+		containerSources[idx] = container.SourceSpec{
+			Source:              cont.Source,
+			Name:                cont.Name,
+			TLSVerify:           cont.TLSVerify,
+			ContainersTransport: cont.ContainersTransport,
+			StoragePath:         cont.StoragePath,
+		}
 	}
 
 	source := rand.NewSource(seed)
@@ -256,6 +262,14 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return nil, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
+	if len(bp.Containers) > 0 {
+		for _, container := range bp.Containers {
+			if err := container.Validate(); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	if options.OSTree != nil {
 		if err := options.OSTree.Validate(); err != nil {
 			return nil, err
@@ -272,7 +286,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	if t.name == "iot-raw-image" || t.name == "iot-qcow2-image" {
 		allowed := []string{"User", "Group", "Directories", "Files", "Services", "FIPS"}
 		if err := customizations.CheckAllowed(allowed...); err != nil {
-			return nil, fmt.Errorf("unsupported blueprint customizations found for image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+			return nil, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 		}
 		// TODO: consider additional checks, such as those in "edge-simplified-installer" in RHEL distros
 	}
@@ -283,7 +297,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		if t.name == "iot-simplified-installer" {
 			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group", "FIPS"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+				return nil, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 			}
 			if customizations.GetInstallationDevice() == "" {
 				return nil, fmt.Errorf("boot ISO image type %q requires specifying an installation device to install to", t.name)
@@ -321,12 +335,12 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		} else if t.name == "iot-installer" || t.name == "image-installer" {
 			allowed := []string{"User", "Group", "FIPS"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+				return nil, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 			}
 		} else if t.name == "live-installer" {
 			allowed := []string{}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return nil, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: None)", t.name)
+				return nil, fmt.Errorf(distro.NoCustomizationsAllowedError, t.name)
 			}
 		}
 	}
@@ -341,7 +355,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")
 	}
 
-	err := blueprint.CheckMountpointsPolicy(mountpoints, pathpolicy.MountpointPolicies)
+	err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
 	if err != nil {
 		return nil, err
 	}
@@ -368,12 +382,12 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return nil, err
 	}
 
-	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, pathpolicy.CustomDirectoriesPolicies)
+	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.CustomDirectoriesPolicies)
 	if err != nil {
 		return nil, err
 	}
 
-	err = blueprint.CheckFileCustomizationsPolicy(fc, pathpolicy.CustomFilesPolicies)
+	err = blueprint.CheckFileCustomizationsPolicy(fc, policies.CustomFilesPolicies)
 	if err != nil {
 		return nil, err
 	}
@@ -382,6 +396,11 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	_, err = customizations.GetRepositories()
 	if err != nil {
 		return nil, err
+	}
+
+	if customizations.GetFIPS() && !common.IsBuildHostFIPSEnabled() {
+		w := fmt.Sprintln(common.FIPSEnabledImageWarning)
+		return []string{w}, nil
 	}
 
 	return nil, nil

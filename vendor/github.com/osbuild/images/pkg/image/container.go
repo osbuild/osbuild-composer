@@ -34,7 +34,7 @@ func (img *BaseContainer) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOS(m, buildPipeline, img.Platform, repos)
+	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload

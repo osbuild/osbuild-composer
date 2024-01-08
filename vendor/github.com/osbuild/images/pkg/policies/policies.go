@@ -1,0 +1,65 @@
+package policies
+
+import (
+	"github.com/osbuild/images/internal/pathpolicy"
+)
+
+// MountpointPolicies is a set of default mountpoint policies used for filesystem customizations
+var MountpointPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
+	"/": {},
+	// /etc must be on the root filesystem
+	"/etc": {Deny: true},
+	// NB: any mountpoints under /usr are not supported by systemd fstab
+	// generator in initram before the switch-root, so we don't allow them.
+	"/usr": {Exact: true},
+	// API filesystems
+	"/sys":  {Deny: true},
+	"/proc": {Deny: true},
+	"/dev":  {Deny: true},
+	"/run":  {Deny: true},
+	// not allowed due to merged-usr
+	"/bin":   {Deny: true},
+	"/sbin":  {Deny: true},
+	"/lib":   {Deny: true},
+	"/lib64": {Deny: true},
+	// used by ext filesystems
+	"/lost+found": {Deny: true},
+	// used by EFI
+	"/boot/efi": {Deny: true},
+	// used by systemd / ostree
+	"/sysroot": {Deny: true},
+	// symlink to ../run which is on tmpfs
+	"/var/run": {Deny: true},
+	// symlink to ../run/lock which is on tmpfs
+	"/var/lock": {Deny: true},
+})
+
+// CustomDirectoriesPolicies is a set of default policies for custom directories
+var CustomDirectoriesPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
+	"/":    {Deny: true},
+	"/etc": {},
+})
+
+// CustomFilesPolicies is a set of default policies for custom files
+var CustomFilesPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
+	"/":           {Deny: true},
+	"/etc":        {},
+	"/root":       {},
+	"/etc/fstab":  {Deny: true},
+	"/etc/shadow": {Deny: true},
+	"/etc/passwd": {Deny: true},
+	"/etc/group":  {Deny: true},
+})
+
+// MountpointPolicies for ostree
+var OstreeMountpointPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
+	"/":             {},
+	"/ostree":       {Deny: true},
+	"/home":         {Deny: true},
+	"/var/home":     {Deny: true},
+	"/var/opt":      {Deny: true},
+	"/var/srv":      {Deny: true},
+	"/var/roothome": {Deny: true},
+	"/var/usrlocal": {Deny: true},
+	"/var/mnt":      {Deny: true},
+})

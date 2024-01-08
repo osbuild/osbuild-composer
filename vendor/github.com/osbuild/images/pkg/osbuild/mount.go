@@ -1,7 +1,5 @@
 package osbuild
 
-type Mounts []Mount
-
 type Mount struct {
 	Name    string       `json:"name"`
 	Type    string       `json:"type"`

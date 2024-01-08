@@ -5,7 +5,6 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/pathpolicy"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
@@ -14,6 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/policies"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"golang.org/x/exp/slices"
 )
@@ -198,8 +198,14 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	}
 
 	containerSources := make([]container.SourceSpec, len(bp.Containers))
-	for idx := range bp.Containers {
-		containerSources[idx] = container.SourceSpec(bp.Containers[idx])
+	for idx, cont := range bp.Containers {
+		containerSources[idx] = container.SourceSpec{
+			Source:              cont.Source,
+			Name:                cont.Name,
+			TLSVerify:           cont.TLSVerify,
+			ContainersTransport: cont.ContainersTransport,
+			StoragePath:         cont.StoragePath,
+		}
 	}
 
 	source := rand.NewSource(seed)
@@ -237,7 +243,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		// set of customizations.  The current set of customizations defined in
 		// the blueprint spec corresponds to the Custom workflow.
 		if customizations != nil {
-			return warnings, fmt.Errorf("image type %q does not support customizations", t.name)
+			return warnings, fmt.Errorf(distro.NoCustomizationsAllowedError, t.name)
 		}
 	}
 
@@ -247,7 +253,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 
 	mountpoints := customizations.GetFilesystems()
 
-	err := blueprint.CheckMountpointsPolicy(mountpoints, pathpolicy.MountpointPolicies)
+	err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
 	if err != nil {
 		return warnings, err
 	}
@@ -265,12 +271,12 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return warnings, err
 	}
 
-	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, pathpolicy.CustomDirectoriesPolicies)
+	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.CustomDirectoriesPolicies)
 	if err != nil {
 		return warnings, err
 	}
 
-	err = blueprint.CheckFileCustomizationsPolicy(fc, pathpolicy.CustomFilesPolicies)
+	err = blueprint.CheckFileCustomizationsPolicy(fc, policies.CustomFilesPolicies)
 	if err != nil {
 		return warnings, err
 	}

@@ -12,8 +12,9 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/fedora"
-	"github.com/osbuild/images/pkg/distroregistry"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/dnfjson"
@@ -126,7 +127,9 @@ func main() {
 	awsTarget.Created = time.Now()
 	awsTarget.OsbuildArtifact.ExportFilename = "image.ami"
 
-	d := fedora.NewF37()
+	const fedoraID = "fedora-37"
+
+	d := fedora.DistroFactory(fedoraID)
 	a, err := d.GetArch(arch.ARCH_X86_64.String())
 	if err != nil {
 		panic(err)
@@ -139,7 +142,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	allRepos, err := rpmmd.LoadRepositories([]string{cwd}, "fedora-37")
+	allRepos, err := reporegistry.LoadRepositories([]string{cwd}, fedoraID)
 	if err != nil {
 		panic(err)
 	}
@@ -150,8 +153,9 @@ func main() {
 	}
 	rpmmdCache := path.Join(homeDir, ".cache/osbuild-composer/rpmmd")
 
-	dr, _ := distroregistry.New(d, nil)
-	s := store.New(&cwd, dr, nil)
+	df := distrofactory.New(fedora.DistroFactory)
+
+	s := store.New(&cwd, df, nil)
 	if s == nil {
 		panic("could not create store")
 	}
