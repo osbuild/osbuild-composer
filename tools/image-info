@@ -2685,12 +2685,20 @@ def append_partitions(report, image):
                 jsonschema.validate(options, info.get_schema()["properties"]["options"])
 
                 # Finally mount
-                mmgr.mount(mounts.Mount(
-                    part_device,
-                    info,
-                    devices_map[part_device],  # retrieves the associated Device Object
-                    part_mountpoint,
-                    options))
+                mnt_kwargs = {
+                    "name": part_device,
+                    "info": info,
+                    # retrieves the associated Device Object
+                    "device": devices_map[part_device],
+                    "target": part_mountpoint,
+                    "options": options
+                }
+                # XXX: remove inspect and just add "partition" above
+                # once osbuild PR#1501 is available everywhere
+                import inspect
+                if "partition" in inspect.getfullargspec(mounts.Mount).args:
+                    mnt_kwargs["partition"] = None
+                mmgr.mount(mounts.Mount(**mnt_kwargs))
 
             if not root_tree:
                 raise RuntimeError("The root filesystem tree is not mounted")
