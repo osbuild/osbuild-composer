@@ -102,6 +102,7 @@ INSTALLER_FILENAME=simplified-installer.iso
 MEMORY=2048
 BOOT_ARGS="uefi"
 REF_PREFIX="rhel-edge"
+CUSTOM_FS_LVS="false"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -142,6 +143,7 @@ case "${ID}-${VERSION_ID}" in
         SYSROOT_RO="true"
         ANSIBLE_USER=fdouser
         FDO_USER_ONBOARDING="true"
+        CUSTOM_FS_LVS="true"
         # workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
         sudo setenforce 0
         getenforce
@@ -160,6 +162,7 @@ case "${ID}-${VERSION_ID}" in
         SYSROOT_RO="true"
         ANSIBLE_USER=fdouser
         FDO_USER_ONBOARDING="true"
+        CUSTOM_FS_LVS="true"
         # workaround selinux bug https://bugzilla.redhat.com/show_bug.cgi?id=2026795
         sudo setenforce 0
         getenforce
@@ -459,6 +462,20 @@ fips = ${FIPS}
 EOF
 fi
 
+if [[ "${CUSTOM_FS_LVS}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.filesystem]]
+mountpoint = "/foo/bar"
+size=2147483648
+[[customizations.filesystem]]
+mountpoint = "/foo"
+size=8589934592
+[[customizations.filesystem]]
+mountpoint = "/var/myfiles"
+size= "1 GiB"
+EOF
+fi
+
 greenprint "📄 simplified_iso_without_fdo blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -565,6 +582,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e fdo_credential="false" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -625,6 +643,19 @@ append = "enforcing=0"
 EOF
 fi
 
+if [[ "${CUSTOM_FS_LVS}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.filesystem]]
+mountpoint = "/foo/bar"
+size=2147483648
+[[customizations.filesystem]]
+mountpoint = "/foo"
+size=8589934592
+[[customizations.filesystem]]
+mountpoint = "/var/myfiles"
+size= "1 GiB"
+EOF
+fi
 
 greenprint "📄 installer blueprint"
 cat "$BLUEPRINT_FILE"
@@ -753,6 +784,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e sysroot_ro="$SYSROOT_RO" \
     -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -807,6 +839,20 @@ if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
 append = "enforcing=0"
+EOF
+fi
+
+if [[ "${CUSTOM_FS_LVS}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.filesystem]]
+mountpoint = "/foo/bar"
+size=2147483648
+[[customizations.filesystem]]
+mountpoint = "/foo"
+size=8589934592
+[[customizations.filesystem]]
+mountpoint = "/var/myfiles"
+size= "1 GiB"
 EOF
 fi
 
@@ -939,6 +985,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e sysroot_ro="$SYSROOT_RO" \
     -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -1078,6 +1125,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e sysroot_ro="$SYSROOT_RO" \
     -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 check_result
@@ -1140,6 +1188,20 @@ if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 [customizations.kernel]
 append = "enforcing=0"
+EOF
+fi
+
+if [[ "${CUSTOM_FS_LVS}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.filesystem]]
+mountpoint = "/foo/bar"
+size=2147483648
+[[customizations.filesystem]]
+mountpoint = "/foo"
+size=8589934592
+[[customizations.filesystem]]
+mountpoint = "/var/myfiles"
+size= "1 GiB"
 EOF
 fi
 
@@ -1253,6 +1315,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e sysroot_ro="$SYSROOT_RO" \
     -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -1396,6 +1459,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e sysroot_ro="$SYSROOT_RO" \
     -e mfg_guest_int_name="${MFG_GUEST_INT_NAME}" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
 check_result

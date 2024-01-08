@@ -96,6 +96,7 @@ KERNEL_RT_PKG="kernel-rt"
 # Set up variables.
 SYSROOT_RO="false"
 CUSTOM_DIRS_FILES="false"
+CUSTOM_FS_LVS="false"
 
 # Set FIPS variable default
 FIPS="${FIPS:-false}"
@@ -114,6 +115,7 @@ case "${ID}-${VERSION_ID}" in
         PARENT_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
         SYSROOT_RO="true"
+        CUSTOM_FS_LVS="true"
         ;;
     "centos-8")
         OSTREE_REF="centos/8/${ARCH}/edge"
@@ -127,6 +129,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         SYSROOT_RO="true"
+        CUSTOM_FS_LVS="true"
         ;;
     "fedora-"*)
         CONTAINER_TYPE=iot-container
@@ -471,6 +474,22 @@ enabled = ["custom.service"]
 EOF
 fi
 
+if [[ "${CUSTOM_FS_LVS}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.filesystem]]
+mountpoint = "/foo/bar"
+size=2147483648
+
+[[customizations.filesystem]]
+mountpoint = "/foo"
+size=8589934592
+
+[[customizations.filesystem]]
+mountpoint = "/var/myfiles"
+size= "1 GiB"
+EOF
+fi
+
 greenprint "📄 raw image blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -583,6 +602,7 @@ EOF
         -e sysroot_ro="$SYSROOT_RO" \
         -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
         -e fips="${FIPS}" \
+        -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
     check_result
 
@@ -751,6 +771,7 @@ EOF
         -e sysroot_ro="$SYSROOT_RO" \
         -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
         -e fips="${FIPS}" \
+        -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
         /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 
     check_result
@@ -857,6 +878,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e sysroot_ro="$SYSROOT_RO" \
     -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -1049,6 +1071,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e sysroot_ro="$SYSROOT_RO" \
     -e test_custom_dirs_files="$CUSTOM_DIRS_FILES" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
