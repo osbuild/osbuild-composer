@@ -70,10 +70,6 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 
 	c.distros = distrofactory.NewDefault()
 
-	// TODO: Move this to Weldr API initialization
-	// Clean up the cache, removes unknown distros and files
-	// dnfjson.CleanupOldCacheDirs(path.Join(c.cacheDir, "rpmmd"), c.distros.List())
-
 	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
 	c.solver.SetDNFJSONPath(c.config.DNFJson)
 
