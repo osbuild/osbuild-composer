@@ -486,6 +486,14 @@ vmware.sh_ova:
 
 filesystem.sh:
   extends: .integration
+  parallel:
+    matrix:
+    - RUNNER:
+      # don't execute on fedora-39 yet until https://lkml.kernel.org/linux-xfs/20230823220225.3591135-1-david@fromorbit.com/#t is in the kernel
+      # see also https://github.com/osbuild/osbuild-composer/pull/3820#issuecomment-1881587335 for more details
+      - aws/fedora-38-x86_64
+    - *rhel_runners
+
   variables:
     SCRIPT: filesystem.sh
 
