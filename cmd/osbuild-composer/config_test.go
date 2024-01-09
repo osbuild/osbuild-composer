@@ -61,6 +61,14 @@ func TestDefaultConfig(t *testing.T) {
 	}
 
 	require.Equal(t, expectedWeldrAPIConfig, defaultConfig.WeldrAPI)
+
+	expectedDistroAliases := map[string]string{
+		"rhel-7": "rhel-7.9",
+		"rhel-8": "rhel-8.10",
+		"rhel-9": "rhel-9.4",
+	}
+	require.Equal(t, expectedDistroAliases, defaultConfig.DistroAliases)
+
 	require.Equal(t, "text", defaultConfig.LogFormat)
 }
 
@@ -90,6 +98,14 @@ func TestConfig(t *testing.T) {
 	require.Equal(t, []string{"https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"}, config.Koji.JWTKeysURLs)
 	require.Equal(t, "", config.Koji.JWTKeysCA)
 	require.Equal(t, "/var/lib/osbuild-composer/acl", config.Koji.JWTACLFile)
+
+	// 'rhel-8' and 'rhel-9' aliases are overwritten by the config file
+	expectedDistroAliases := map[string]string{
+		"rhel-7": "rhel-7.9", // this value is from the default config
+		"rhel-8": "rhel-8.9",
+		"rhel-9": "rhel-9.3",
+	}
+	require.Equal(t, expectedDistroAliases, config.DistroAliases)
 }
 
 func TestWeldrDistrosImageTypeDenyList(t *testing.T) {

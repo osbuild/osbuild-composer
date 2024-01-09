@@ -18,3 +18,7 @@ image_type_denylist = [ "qcow2" ]
 
 # overrides the default rhel-* configuration
 [weldr_api.distros."rhel-*"]
+
+[distro_aliases]
+rhel-8 = "rhel-8.9"
+rhel-9 = "rhel-9.3"

@@ -69,6 +69,9 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	}
 
 	c.distros = distrofactory.NewDefault()
+	// TODO: set the c.config.DistroAliases to the distrofactory
+	// More work is needed to make the distro aliases behavior consistent for Weldr API,
+	// specifically for picking the correct repositories definition.
 
 	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
 	c.solver.SetDNFJSONPath(c.config.DNFJson)
