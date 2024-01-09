@@ -58,7 +58,7 @@ func main() {
 		bootModePtr = &bootMode
 	}
 
-	ami, err := a.Register(imageName, bucketName, keyName, share, arch, bootModePtr)
+	ami, err := a.Register(imageName, bucketName, keyName, imageName, share, arch, bootModePtr)
 	if err != nil {
 		println(err.Error())
 		return

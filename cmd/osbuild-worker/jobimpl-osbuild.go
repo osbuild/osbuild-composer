@@ -636,7 +636,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, arch.Current().String(), targetOptions.BootMode)
+			// giving a Name tag value is optional, default to ImageName if missing.
+			tagName := jobTarget.ImageName
+			if targetOptions.TagName != "" {
+				tagName = targetOptions.TagName
+			}
+			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, tagName, targetOptions.ShareWithAccounts, arch.Current().String(), targetOptions.BootMode)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, err.Error(), nil)
 				break

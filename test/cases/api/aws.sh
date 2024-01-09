@@ -103,7 +103,7 @@ function checkUploadStatusOptions() {
 function verify() {
   $AWS_CMD ec2 describe-images \
     --owners self \
-    --filters Name=name,Values="$AWS_SNAPSHOT_NAME" \
+    --filters Name=name,Values="$AWS_SNAPSHOT_NAME-*" \
     > "$WORKDIR/ami.json"
 
   AMI_IMAGE_ID=$(jq -r '.Images[].ImageId' "$WORKDIR/ami.json")
