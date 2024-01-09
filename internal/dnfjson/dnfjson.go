@@ -89,6 +89,21 @@ func (bs *BaseSolver) CleanCache() error {
 	return bs.cache.shrink()
 }
 
+// CleanupOldCacheDirs will remove cache directories for unsupported distros
+// eg. Once support for a fedora release stops and it is removed, this will
+// delete its directory under BaseSolver cache root.
+//
+// A happy side effect of this is that it will delete old cache directories
+// and files from before the switch to per-distro cache directories.
+//
+// NOTE: This does not return any errors. This is because the most common one
+// will be a nonexistant directory which will be created later, during initial
+// cache creation. Any other errors like permission issues will be caught by
+// later use of the cache. eg. touchRepo
+func (bs *BaseSolver) CleanupOldCacheDirs(distros []string) {
+	CleanupOldCacheDirs(bs.cache.root, distros)
+}
+
 // Solver is configured with system information in order to resolve
 // dependencies for RPM packages using DNF.
 type Solver struct {

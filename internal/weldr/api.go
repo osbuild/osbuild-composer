@@ -172,6 +172,9 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, df *di
 		return nil, fmt.Errorf("error loading repository definitions: %v", err)
 	}
 
+	// Clean up the cache, removes unknown distros and files
+	solver.CleanupOldCacheDirs(rr.ListDistros())
+
 	hostDistro := df.GetDistro(hostDistroName)
 	if hostDistro != nil {
 		// get canonical distro name if the host distro is supported
