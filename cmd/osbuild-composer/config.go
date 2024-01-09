@@ -11,15 +11,16 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji        KojiAPIConfig   `toml:"koji"`
-	Worker      WorkerAPIConfig `toml:"worker"`
-	WeldrAPI    WeldrAPIConfig  `toml:"weldr_api"`
-	LogLevel    string          `toml:"log_level"`
-	LogFormat   string          `toml:"log_format"`
-	DNFJson     string          `toml:"dnf-json"`
-	SplunkHost  string          `env:"SPLUNK_HEC_HOST"`
-	SplunkPort  string          `env:"SPLUNK_HEC_PORT"`
-	SplunkToken string          `env:"SPLUNK_HEC_TOKEN"`
+	Koji          KojiAPIConfig     `toml:"koji"`
+	Worker        WorkerAPIConfig   `toml:"worker"`
+	WeldrAPI      WeldrAPIConfig    `toml:"weldr_api"`
+	DistroAliases map[string]string `toml:"distro_aliases"`
+	LogLevel      string            `toml:"log_level"`
+	LogFormat     string            `toml:"log_format"`
+	DNFJson       string            `toml:"dnf-json"`
+	SplunkHost    string            `env:"SPLUNK_HEC_HOST"`
+	SplunkPort    string            `env:"SPLUNK_HEC_PORT"`
+	SplunkToken   string            `env:"SPLUNK_HEC_TOKEN"`
 }
 
 type KojiAPIConfig struct {
@@ -111,6 +112,11 @@ func GetDefaultConfig() *ComposerConfigFile {
 					},
 				},
 			},
+		},
+		DistroAliases: map[string]string{
+			"rhel-7": "rhel-7.9",
+			"rhel-8": "rhel-8.10",
+			"rhel-9": "rhel-9.4",
 		},
 		LogLevel:  "info",
 		LogFormat: "text",
