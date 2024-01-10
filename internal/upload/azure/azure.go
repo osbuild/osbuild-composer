@@ -163,6 +163,7 @@ func (ac Client) RegisterImage(ctx context.Context, subscriptionID, resourceGrou
 
 	imageFuture, err := c.BeginCreateOrUpdate(ctx, resourceGroup, imageName, armcompute.Image{
 		Properties: &armcompute.ImageProperties{
+			HyperVGeneration:     common.ToPtr(armcompute.HyperVGenerationTypesV1),
 			SourceVirtualMachine: nil,
 			StorageProfile: &armcompute.ImageStorageProfile{
 				OSDisk: &armcompute.ImageOSDisk{
