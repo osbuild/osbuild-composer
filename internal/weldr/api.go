@@ -2285,12 +2285,17 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 }
 
 // depsolve handles depsolving package sets required for serializing a manifest for a given distribution.
-func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, arch distro.Arch) (map[string][]rpmmd.PackageSpec, error) {
+//
+// Distro name is not determined from the provided architecture, but has to be provided explicitly.
+// The reason is that a distro name alias may have been used to get the distro object as well as the
+// repositories for the depsolving. The actual distro object name may not correspond to the alias.
+// Since the solver uses the distro name to namespace cache, it is important to use the same distro
+// name as the one used to get the repositories.
+func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName string, arch distro.Arch) (map[string][]rpmmd.PackageSpec, error) {
 
 	distro := arch.Distro()
 	platformID := distro.ModulePlatformID()
 	releasever := distro.Releasever()
-	distroName := distro.Name()
 	solver := api.solver.NewWithConfig(platformID, releasever, arch.Name(), distroName)
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
@@ -2554,7 +2559,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		APIType: facts.WELDR_APITYPE,
 	}
 
-	imageRepos, err := api.allRepositoriesByImageType(imageType)
+	imageRepos, err := api.allRepositoriesByImageType(distroName, imageType)
 	if err != nil {
 		errors := responseError{
 			ID:  "InternalError",
@@ -2575,7 +2580,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	packageSets, err := api.depsolve(manifest.GetPackageSetChains(), imageType.Arch())
+	packageSets, err := api.depsolve(manifest.GetPackageSetChains(), distroName, imageType.Arch())
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -3559,17 +3564,16 @@ func (api *API) payloadRepositories(distroName string) []rpmmd.RepoConfig {
 // The difference from allRepositories() is that this method may return additional repositories
 // which are needed to build the specific image type. The allRepositories() can't do this, because
 // it is used in places where image types are not considered.
-func (api *API) allRepositoriesByImageType(imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
-	repos, err := api.repoRegistry.ReposByImageTypeName(
-		imageType.Arch().Distro().Name(),
-		imageType.Arch().Name(),
-		imageType.Name(),
-	)
+//
+// Note that the distro name is not determined from the image type, but must be provided as an argument.
+// This enables using distro name aliases to get repositories.
+func (api *API) allRepositoriesByImageType(distroName string, imageType distro.ImageType) ([]rpmmd.RepoConfig, error) {
+	repos, err := api.repoRegistry.ReposByImageTypeName(distroName, imageType.Arch().Name(), imageType.Name())
 	if err != nil {
 		return nil, err
 	}
 
-	payloadRepos := api.payloadRepositories(imageType.Arch().Distro().Name())
+	payloadRepos := api.payloadRepositories(distroName)
 	// tag payload repositories with the payload package set names and add them to list of repos
 	for _, pr := range payloadRepos {
 		pr.PackageSets = imageType.PayloadPackageSets()
