@@ -181,7 +181,7 @@ mountpoint = "/boot"
 size = 131072000
 EOF
 
-if ! nvrGreaterOrEqual "osbuild-composer" "94"; then
+if nvrGreaterOrEqual "osbuild-composer" "94"; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 
 [[customizations.filesystem]]
@@ -293,7 +293,7 @@ mountpoint = "/sysroot"
 size = 131072000
 EOF
 
-if ! nvrGreaterOrEqual "osbuild-composer" "94"; then
+if nvrGreaterOrEqual "osbuild-composer" "94"; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 
 [[customizations.filesystem]]
@@ -323,7 +323,7 @@ for MOUNTPOINT in '/etc' '/sys' '/proc' '/dev' '/run' '/bin' '/sbin' '/lib' '/li
   fi
 done
 
-if ! nvrGreaterOrEqual "osbuild-composer" "94"; then
+if nvrGreaterOrEqual "osbuild-composer" "94"; then
   for MOUNTPOINT in '/usr/bin' '/var/run' '/var/lock'; do
     if ! [[ $ERROR_MSG == *"$MOUNTPOINT"* ]]; then
       FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
