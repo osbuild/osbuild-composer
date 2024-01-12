@@ -312,11 +312,7 @@ else
 fi
 export SSH_USER
 
-# This removes dot from VERSION_ID.
-# ID == rhel   && VERSION_ID == 8.6 => DISTRO == rhel-86
-# ID == centos && VERSION_ID == 8   => DISTRO == centos-8
-# ID == fedora && VERSION_ID == 35  => DISTRO == fedora-35
-export DISTRO="$ID-${VERSION_ID//./}"
+export DISTRO="$ID-${VERSION_ID}"
 SUBSCRIPTION_BLOCK=
 
 # Only RHEL need subscription block.

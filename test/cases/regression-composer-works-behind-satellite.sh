@@ -67,7 +67,7 @@ case "${ID}" in
     "fedora")
         echo "Running on Fedora"
         DISTRO_NAME="${ID}-${VERSION_ID}"
-        REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/${ID}-${VERSION_ID}.json"
+        REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/${DISTRO_NAME}.json"
         REPO1_NAME="fedora"
         REPO2_NAME="updates"
         ;;
@@ -76,10 +76,14 @@ case "${ID}" in
         case "${VERSION_ID%.*}" in
             "8" | "9")
                 echo "Running on RHEL ${VERSION_ID}"
-                # starting in 8.5 the override file contains minor version number as well
-                VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
-                DISTRO_NAME="rhel-${VERSION_SUFFIX}"
-                REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
+                # TODO: remove once the osbuild-composer v100 is in RHEL
+                if ! nvrGreaterOrEqual "osbuild-composer" "100"; then
+                    VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
+                else
+                    VERSION_SUFFIX=${VERSION_ID}
+                fi
+                DISTRO_NAME="${ID}-${VERSION_SUFFIX}"
+                REPOSITORY_OVERRIDE="/etc/osbuild-composer/repositories/${DISTRO_NAME}.json"
                 REPO1_NAME="baseos"
                 REPO2_NAME="appstream"
                 ;;

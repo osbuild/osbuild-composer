@@ -2,6 +2,7 @@
 set -euxo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # create artifacts folder
 ARTIFACTS="${ARTIFACTS:=/tmp/artifacts}"
@@ -184,12 +185,25 @@ else # AUTH_METHOD_NONE
     if [ "${NIGHTLY:=false}" == "true" ]; then
         source /usr/libexec/osbuild-composer-test/define-compose-url.sh
 
-        VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
+        # TODO: remove once the osbuild-composer v100 is in RHEL
+        if ! nvrGreaterOrEqual "osbuild-composer" "100"; then
+            VERSION_SUFFIX=$(echo "${VERSION_ID}" | tr -d ".")
+            # remove dots from the repo overrides filename, because the installed version of composer can't handle it
+            for REPO_FILE in "${REPODIR}"/*.json; do
+                REPO_FILE_NO_DOTS="$(basename "${REPO_FILE}" ".json" | tr -d ".").json"
+                if [[ "${REPO_FILE}" != "${REPODIR}/${REPO_FILE_NO_DOTS}" ]]; then
+                    sudo mv "${REPO_FILE}" "${REPODIR}/${REPO_FILE_NO_DOTS}"
+                fi
+            done
+        else
+            VERSION_SUFFIX=${VERSION_ID}
+        fi
+
         for ARCH in aarch64 ppc64le s390x x86_64; do
             for REPO_NAME in BaseOS AppStream RT; do
                 REPO_NAME_LOWERCASE=$(echo "$REPO_NAME" | tr "[:upper:]" "[:lower:]")
                 # will replace only the lines which match
-                sudo sed -i "s|https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el.*${ARCH}-${REPO_NAME_LOWERCASE}-.*|${COMPOSE_URL}/compose/${REPO_NAME}/${ARCH}/os/\",|" "/etc/osbuild-composer/repositories/rhel-${VERSION_SUFFIX}.json"
+                sudo sed -i "s|https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el.*${ARCH}-${REPO_NAME_LOWERCASE}-.*|${COMPOSE_URL}/compose/${REPO_NAME}/${ARCH}/os/\",|" "${REPODIR}/rhel-${VERSION_SUFFIX}.json"
             done
         done
     fi

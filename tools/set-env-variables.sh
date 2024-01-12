@@ -4,4 +4,4 @@
 
 source /etc/os-release
 ARCH=$(uname -m)
-DISTRO_CODE="${DISTRO_CODE:-${ID}-${VERSION_ID//./}}"
+DISTRO_CODE="${DISTRO_CODE:-${ID}-${VERSION_ID}}"
