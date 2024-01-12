@@ -63,7 +63,7 @@ sudo cp \
     "${OSBUILD_COMPOSER_TEST_DATA}"/kerberos/krb5-local.conf \
     /etc/krb5.conf.d/local
 
-DISTRO=rhel-87
+DISTRO=rhel-8.7
 
 function s3_request {
   cat <<EOF

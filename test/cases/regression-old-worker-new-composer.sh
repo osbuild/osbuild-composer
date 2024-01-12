@@ -234,11 +234,7 @@ ARCH=$(uname -m)
 CLOUD_PROVIDER="aws.s3"
 IMAGE_TYPE="guest-image"
 
-# This removes dot from VERSION_ID.
-# ID == rhel   && VERSION_ID == 8.6 => DISTRO == rhel-86
-# ID == centos && VERSION_ID == 8   => DISTRO == centos-8
-# ID == fedora && VERSION_ID == 35  => DISTRO == fedora-35
-DISTRO="$ID-${VERSION_ID//./}"
+DISTRO="$ID-${VERSION_ID}"
 
 cat > "$REQUEST_FILE" << EOF
 {
