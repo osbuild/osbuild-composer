@@ -215,6 +215,7 @@ unit-tests:
 RPM_SPECFILE=rpmbuild/SPECS/osbuild-composer.spec
 RPM_TARBALL=rpmbuild/SOURCES/osbuild-composer-$(COMMIT).tar.gz
 
+.PHONY: $(RPM_SPECFILE)
 $(RPM_SPECFILE):
 	mkdir -p $(CURDIR)/rpmbuild/SPECS
 	git show HEAD:osbuild-composer.spec > $(RPM_SPECFILE)
