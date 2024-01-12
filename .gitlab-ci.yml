@@ -649,6 +649,22 @@ ubi-wsl.sh:
       RUNNER: aws/rhel-8.8-ga-x86_64
       INTERNAL_NETWORK: "true"
 
+weldr-distro-dot-notation+aliases:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/weldr-distro-dot-notation-and-aliases.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.10-nightly-x86_64
+          - aws/rhel-9.4-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+
 .generic_s3:
   extends: .libvirt_integration
   rules:
