@@ -568,6 +568,46 @@ API-module-hotfixes:
         INTERNAL_NETWORK: ["true"]
         TEST_MODULE_HOTFIXES: [1]
 
+API-no-dot-notation:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules_all, rules]
+    # note: cloud API is not supported for on-prem installations so
+    # don't run this test case for nightly trees
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api.sh "${IMAGE_TYPE}"
+  parallel:
+    matrix:
+      - IMAGE_TYPE:
+          - aws
+        RUNNER:
+          - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-9.3-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+        TEST_NO_DOT_NOTATION: [1]
+
+API-distro-alias:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules_all, rules]
+    # note: cloud API is not supported for on-prem installations so
+    # don't run this test case for nightly trees
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api.sh "${IMAGE_TYPE}"
+  parallel:
+    matrix:
+      - IMAGE_TYPE:
+          - aws-sap-rhui
+        RUNNER:
+          - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-9.3-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+        TEST_DISTRO_ALIAS: [1]
+
 .libvirt_integration:
   stage: test
   extends: .terraform/gcp
