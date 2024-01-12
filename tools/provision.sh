@@ -15,6 +15,17 @@ AUTH_METHOD_NONE="none"
 # default to TLS for now
 AUTH_METHOD="${1:-$AUTH_METHOD_TLS}"
 
+COMPOSER_CONFIG="/etc/osbuild-composer/osbuild-composer.toml"
+
+# Path to a file with additional configuration for composer.
+# The content of this file will be appended to the default configuration.
+EXTRA_COMPOSER_CONFIG="${2:-}"
+
+if [[ -n "${EXTRA_COMPOSER_CONFIG}" && ! -f "${EXTRA_COMPOSER_CONFIG}" ]]; then
+    echo "ERROR: File '${EXTRA_COMPOSER_CONFIG}' with extra configuration for composer does not exist."
+    exit 1
+fi
+
 # koji and ansible are not in RHEL repositories. Depending on them in the spec
 # file breaks RHEL gating (see OSCI-1541). Therefore, we need to enable epel
 # and install koji and ansible here.
@@ -83,7 +94,7 @@ EOF
         WORKER_TEST_CONFIG="/usr/share/tests/osbuild-composer/worker/osbuild-worker-tls.toml"
     fi
 
-    sudo cp -a "$COMPOSER_TEST_CONFIG" /etc/osbuild-composer/osbuild-composer.toml
+    sudo cp -a "$COMPOSER_TEST_CONFIG" "$COMPOSER_CONFIG"
     sudo cp -a "$WORKER_TEST_CONFIG" /etc/osbuild-worker/osbuild-worker.toml
 
     # if GCP credentials are defined in the ENV, add them to the worker's configuration
@@ -207,6 +218,12 @@ else # AUTH_METHOD_NONE
             done
         done
     fi
+fi
+
+# Append the extra configuration to the default configuration
+if [[ -n "${EXTRA_COMPOSER_CONFIG}" ]]; then
+    echo "INFO: Appending extra composer configuration from '${EXTRA_COMPOSER_CONFIG}'"
+    cat "${EXTRA_COMPOSER_CONFIG}" | sudo tee -a "${COMPOSER_CONFIG}"
 fi
 
 # start appropriate units

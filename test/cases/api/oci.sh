@@ -60,7 +60,7 @@ function installClient() {
 function createReqFile() {
     cat > "$REQUEST_FILE" << EOF
 {
-  "distribution": "$DISTRO",
+  "distribution": "$DISTRO_NAME",
   "customizations": {
     "filesystem": [
       {

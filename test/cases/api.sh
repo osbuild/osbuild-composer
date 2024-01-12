@@ -22,7 +22,9 @@ CLOUD_PROVIDER_OCI="oci"
 # Supported Image type names
 #
 export IMAGE_TYPE_AWS="aws"
+export IMAGE_TYPE_AWS_SAP_RHUI="aws-sap-rhui"
 export IMAGE_TYPE_AZURE="azure"
+export IMAGE_TYPE_AZURE_SAP_RHUI="azure-sap-rhui"
 export IMAGE_TYPE_EDGE_COMMIT="edge-commit"
 export IMAGE_TYPE_EDGE_CONTAINER="edge-container"
 export IMAGE_TYPE_EDGE_INSTALLER="edge-installer"
@@ -50,14 +52,50 @@ IMAGE_TYPE="$1"
 # set TEST_MODULE_HOTFIXES to 1 to enable module hotfixes for the test
 TEST_MODULE_HOTFIXES="${TEST_MODULE_HOTFIXES:-0}"
 
+# set TEST_NO_DOT_NOTATION to 1 to disable dot notation in the test
+# Not using the dot notation means that the dot separating the major and minor
+# version in the distro name will be removed.
+#
+# This test variant is mutually exclusive with TEST_DISTRO_ALIAS.
+TEST_NO_DOT_NOTATION="${TEST_NO_DOT_NOTATION:-0}"
+
+# set TEST_DISTRO_ALIAS to 1 to test configuring and using a distro alias
+# when submitting composer request.
+#
+# This test variant deliberately uses the SAP image to test that the alias
+# works as expected. The reason is that the SAP image will always have DNF
+# configuration pinned down to a specific OS version and the version is the
+# same as the distro definition used to generate the manifest.
+# Specifically, the `/etc/dnf/vars/releasever` file will contain `X.Y`.
+#
+# This test variant is mutually exclusive with TEST_NO_DOT_NOTATION.
+export TEST_DISTRO_ALIAS="${TEST_DISTRO_ALIAS:-0}"
+
+# TEST_NO_DOT_NOTATION and TEST_DISTRO_ALIAS are mutually exclusive
+if [[ "$TEST_NO_DOT_NOTATION" == "1" && "$TEST_DISTRO_ALIAS" == "1" ]]; then
+    echo "TEST_NO_DOT_NOTATION and TEST_DISTRO_ALIAS are mutually exclusive"
+    exit 1
+fi
+
+# TEST_DISTRO_ALIAS requires that the IMAGE_TYPE is a SAP image
+if [[ "$TEST_DISTRO_ALIAS" == "1" ]]; then
+    case "${IMAGE_TYPE}" in
+        "$IMAGE_TYPE_AWS_SAP_RHUI"|"IMAGE_TYPE_AZURE_SAP_RHUI")
+            ;;
+        *)
+            echo "TEST_DISTRO_ALIAS can only be used with SAP images"
+            exit 1
+    esac
+fi
+
 # select cloud provider based on image type
 #
 # the supported image types are listed in the api spec (internal/cloudapi/v2/openapi.v2.yml)
 case ${IMAGE_TYPE} in
-    "$IMAGE_TYPE_AWS")
+    "$IMAGE_TYPE_AWS"|"$IMAGE_TYPE_AWS_SAP_RHUI")
         CLOUD_PROVIDER="${CLOUD_PROVIDER_AWS}"
         ;;
-    "$IMAGE_TYPE_AZURE")
+    "$IMAGE_TYPE_AZURE"|"IMAGE_TYPE_AZURE_SAP_RHUI")
         CLOUD_PROVIDER="${CLOUD_PROVIDER_AZURE}"
         ;;
     "$IMAGE_TYPE_GCP")
@@ -88,14 +126,54 @@ ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
+export DISTRO="${DISTRO_CODE}"
+
 # Container image used for cloud provider CLI tools
 export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+
+WORKDIR=$(mktemp -d)
+KILL_PIDS=()
+function cleanups() {
+  greenprint "Cleaning up"
+  set +eu
+
+  cleanup
+
+  # dump the DB here to ensure that it gets dumped even if the test fails
+  dump_db
+
+  sudo "${CONTAINER_RUNTIME}" kill "${DB_CONTAINER_NAME}"
+  sudo "${CONTAINER_RUNTIME}" rm "${DB_CONTAINER_NAME}"
+
+  sudo rm -rf "$WORKDIR"
+
+  for P in "${KILL_PIDS[@]}"; do
+      sudo pkill -P "$P"
+  done
+  set -eu
+}
+trap cleanups EXIT
 
 #
 # Provision the software under test.
 #
 
-/usr/libexec/osbuild-composer-test/provision.sh
+# Path to a file with extra composer configuration
+EXTRA_COMPOSER_CONF=""
+
+# Configure distro alias for the host distro in composer without the minor
+# version.
+if [[ "${TEST_DISTRO_ALIAS}" == "1" ]]; then
+    DISTRO_ALIAS="${ID}-${VERSION_ID%.*}"
+    EXTRA_COMPOSER_CONF="$(mktemp -p "${WORKDIR}")"
+
+    cat <<EOF | tee "${EXTRA_COMPOSER_CONF}" >/dev/null
+[distro_aliases]
+${DISTRO_ALIAS} = "${DISTRO}"
+EOF
+fi
+
+/usr/libexec/osbuild-composer-test/provision.sh tls "${EXTRA_COMPOSER_CONF}"
 
 #
 # Set up the database queue
@@ -133,7 +211,9 @@ PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PG
     "$(go env GOPATH)"/bin/tern migrate -m /usr/share/tests/osbuild-composer/schemas
 popd
 
-cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+# TODO: move this to the tools/provision.sh and don't override composer config
+COMPOSER_CONFIG="/etc/osbuild-composer/osbuild-composer.toml"
+cat <<EOF | sudo tee "${COMPOSER_CONFIG}"
 log_level = "debug"
 [koji]
 allowed_domains = [ "localhost", "client.osbuild.org" ]
@@ -149,6 +229,10 @@ pg_password = "foobar"
 pg_ssl_mode = "disable"
 pg_max_conns = 10
 EOF
+
+if [[ "${TEST_DISTRO_ALIAS}" == "1" ]]; then
+    cat "${EXTRA_COMPOSER_CONF}" | sudo tee -a "${COMPOSER_CONFIG}"
+fi
 
 sudo systemctl restart osbuild-composer
 
@@ -200,29 +284,6 @@ function dump_db() {
   sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
     | sudo tee "${ARTIFACTS}/build-result.txt"
 }
-
-WORKDIR=$(mktemp -d)
-KILL_PIDS=()
-function cleanups() {
-  greenprint "Cleaning up"
-  set +eu
-
-  cleanup
-
-  # dump the DB here to ensure that it gets dumped even if the test fails
-  dump_db
-
-  sudo "${CONTAINER_RUNTIME}" kill "${DB_CONTAINER_NAME}"
-  sudo "${CONTAINER_RUNTIME}" rm "${DB_CONTAINER_NAME}"
-
-  sudo rm -rf "$WORKDIR"
-
-  for P in "${KILL_PIDS[@]}"; do
-      sudo pkill -P "$P"
-  done
-  set -eu
-}
-trap cleanups EXIT
 
 # make a dummy rpm and repo to test payload_repositories
 greenprint "Setting up dummy rpm and repo"
@@ -312,7 +373,19 @@ else
 fi
 export SSH_USER
 
-export DISTRO="$ID-${VERSION_ID}"
+if [[ "$TEST_NO_DOT_NOTATION" == "1" ]]; then
+  # This removes dot from VERSION_ID.
+  # ID == rhel   && VERSION_ID == 8.6 => DISTRO == rhel-86
+  # ID == centos && VERSION_ID == 8   => DISTRO == centos-8
+  # ID == fedora && VERSION_ID == 35  => DISTRO == fedora-35
+  DISTRO_NAME="$ID-${VERSION_ID//./}"
+elif [[ "$TEST_DISTRO_ALIAS" == "1" ]]; then
+  DISTRO_NAME="$DISTRO_ALIAS"
+else
+  DISTRO_NAME="$DISTRO"
+fi
+export DISTRO_NAME
+
 SUBSCRIPTION_BLOCK=
 
 # Only RHEL need subscription block.
@@ -490,6 +563,9 @@ function collectMetrics(){
 }
 
 function sendCompose() {
+    echo "Compose request:"
+    cat "$1"
+
     OUTPUT=$(mktemp)
     HTTPSTATUS=$(curl \
                  --silent \
