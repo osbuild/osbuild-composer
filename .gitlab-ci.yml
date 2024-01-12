@@ -551,7 +551,7 @@ API-module-hotfixes:
     # don't run this test case for nightly trees
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh "${IMAGE_TYPE}" "" "${TEST_MODULE_HOTFIXES}"
+    - /usr/libexec/tests/osbuild-composer/api.sh "${IMAGE_TYPE}"
   parallel:
     matrix:
       - IMAGE_TYPE:

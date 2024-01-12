@@ -33,8 +33,8 @@ export IMAGE_TYPE_OCI="oci"
 export IMAGE_TYPE_VSPHERE="vsphere"
 export IMAGE_TYPE_IOT_COMMIT="iot-commit"
 
-if (( $# > 3 )); then
-    echo "$0 does not support more than three arguments"
+if (( $# > 2 )); then
+    echo "$0 does not support more than two arguments"
     exit 1
 fi
 
@@ -46,7 +46,9 @@ fi
 set -euo pipefail
 
 IMAGE_TYPE="$1"
-TEST_MODULE_HOTFIXES="${3:-0}"
+
+# set TEST_MODULE_HOTFIXES to 1 to enable module hotfixes for the test
+TEST_MODULE_HOTFIXES="${TEST_MODULE_HOTFIXES:-0}"
 
 # select cloud provider based on image type
 #
