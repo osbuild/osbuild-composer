@@ -13,9 +13,9 @@ ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
-# Only run this on x86 and rhel8 GA
+# Only run this on x86
 if [ "$ARCH" != "x86_64" ] || [ "$ID" != rhel ] || ! sudo subscription-manager status; then
-    echo "Test only supported on GA RHEL."
+    echo "Test only supported on RHEL x86_64."
     exit 1
 fi
 
