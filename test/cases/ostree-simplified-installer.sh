@@ -24,12 +24,17 @@ until [ -f /etc/fdo/aio/configs/serviceinfo_api_server.yml ]
 do
     sleep 2
 done
-# Prepare service api server config filef
+# Prepare service api server config file
 sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
 if [[ "$VERSION_ID" == "9.4" || "$VERSION_ID" == "9" ]]; then
     # Modify manufacturing server config to process fdo
     # guest interface during onboarding
     sudo sed -i 's/SerialNumber/MACAddress/g' /etc/fdo/aio/configs/manufacturing_server.yml
+fi
+# Fedora iot-simplified-installer uses /dev/vda3, https://github.com/osbuild/osbuild-composer/issues/3527
+if [[ "${ID}" == "fedora" ]]; then
+    echo "Change vda4 to vda3 for fedora in serviceinfo config file"
+    sudo sed -i 's/vda4/vda3/' /etc/fdo/aio/configs/serviceinfo_api_server.yml
 fi
 sudo systemctl restart fdo-aio
 
@@ -127,8 +132,9 @@ KERNEL_RT_PKG="kernel-rt"
 
 # Set up variables.
 SYSROOT_RO="false"
-ANSIBLE_USER="admin"
+ANSIBLE_USER="simple"
 FDO_USER_ONBOARDING="false"
+IMAGE_TYPE=redhat
 
 # Set FIPS variable default
 FIPS="${FIPS:-false}"
@@ -171,6 +177,18 @@ case "${ID}-${VERSION_ID}" in
         sudo setenforce 0
         getenforce
         ;;
+    "fedora-"*)
+        OSTREE_REF="fedora/${VERSION_ID}/${ARCH}/iot"
+        PARENT_REF="fedora/${VERSION_ID}/${ARCH}/iot"
+        OS_VARIANT="fedora-unknown"
+        CONTAINER_TYPE="iot-container"
+        INSTALLER_TYPE="iot-simplified-installer"
+        REF_PREFIX="fedora-iot"
+        SYSROOT_RO="true"
+        IMAGE_TYPE="fedora"
+        ANSIBLE_USER=fdouser
+        FDO_USER_ONBOARDING="true"
+        ;;
     *)
         redprint "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
@@ -180,10 +198,10 @@ if [[ "$FDO_USER_ONBOARDING" == "true" ]]; then
     # FDO user does not have password, use ssh key and no sudo password instead
     sudo /usr/local/bin/yq -iy ".service_info.initial_user |= {username: \"fdouser\", sshkeys: [\"${SSH_KEY_PUB}\"]}" /etc/fdo/aio/configs/serviceinfo_api_server.yml
     # No sudo password required by ansible
-    tee /tmp/fdouser > /dev/null << EOF
+    sudo tee /var/lib/fdo/fdouser > /dev/null << EOF
 fdouser ALL=(ALL) NOPASSWD: ALL
 EOF
-    sudo /usr/local/bin/yq -iy '.service_info.files |= [{path: "/etc/sudoers.d/fdouser", source_path: "/tmp/fdouser"}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
+    sudo /usr/local/bin/yq -iy '.service_info.files |= [{path: "/etc/sudoers.d/fdouser", source_path: "/var/lib/fdo/fdouser"}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
     sudo systemctl restart fdo-aio
 fi
 # Wait for fdo server to be running
@@ -276,7 +294,7 @@ build_image() {
 
 # Wait for the ssh server up to be.
 wait_for_ssh_up () {
-    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
+    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@"${1}" '/bin/bash -c "echo -n READY"')
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
     else
@@ -286,7 +304,7 @@ wait_for_ssh_up () {
 
 # Wait for FDO onboarding finished.
 wait_for_fdo () {
-    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" "id -u ${ANSIBLE_USER} > /dev/null 2>&1 && echo -n READY")
+    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@"${1}" "id -u ${ANSIBLE_USER} > /dev/null 2>&1 && echo -n READY")
     if [[ $SSH_STATUS == READY ]]; then
         echo 1
     else
@@ -381,18 +399,16 @@ version = "*"
 [[packages]]
 name = "sssd"
 version = "*"
+EOF
 
+# Fedora does not have kernel-rt
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
 [customizations.kernel]
 name = "${KERNEL_RT_PKG}"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "${EDGE_USER_PASSWORD_SHA512}"
-key = "${SSH_KEY_PUB}"
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
+fi
+
 
 greenprint "📄 container blueprint"
 cat "$BLUEPRINT_FILE"
@@ -565,7 +581,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -631,7 +647,6 @@ if [[ "$VERSION_ID" == "9.3" || "$VERSION_ID" == "9" ]]; then
 append = "enforcing=0"
 EOF
 fi
-
 
 greenprint "📄 installer blueprint"
 cat "$BLUEPRINT_FILE"
@@ -716,7 +731,7 @@ for _ in $(seq 0 30); do
 done
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "simple@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
@@ -752,7 +767,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -786,7 +801,6 @@ description = "A rhel-edge simplified-installer image"
 version = "0.0.1"
 modules = []
 groups = []
-
 [customizations]
 installation_device = "/dev/vda"
 EOF
@@ -798,6 +812,14 @@ EOF
 fi
 
 tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
+[[customizations.user]]
+name = "simple"
+description = "Administrator account"
+password = "${EDGE_USER_PASSWORD_SHA512}"
+key = "${SSH_KEY_PUB}"
+home = "/home/simple/"
+groups = ["wheel"]
+
 [customizations.fdo]
 manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_hash="${DIUN_PUB_KEY_HASH}"
@@ -898,7 +920,7 @@ if [[ "${ANSIBLE_USER}" == "fdouser" ]]; then
 fi
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "simple@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
@@ -938,7 +960,7 @@ fi
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -972,17 +994,15 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
+EOF
 
+# Fedora does not have kernel-rt
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
 [customizations.kernel]
 name = "${KERNEL_RT_PKG}"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "${EDGE_USER_PASSWORD_SHA512}"
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
+fi
 
 greenprint "📄 rebase blueprint"
 cat "$BLUEPRINT_FILE"
@@ -1039,8 +1059,8 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete rebase > /dev/null
 
 greenprint "🗳 Rebase ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |sudo -S rpm-ostree rebase ${REF_PREFIX}:${OSTREE_REF}"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |nohup sudo -S systemctl reboot &>/dev/null & exit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@${EDGE_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |sudo -S rpm-ostree rebase ${REF_PREFIX}:${OSTREE_REF}"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@${EDGE_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -1077,7 +1097,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${REBASE_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -1121,6 +1141,14 @@ groups = []
 
 [customizations]
 installation_device = "/dev/vda"
+
+[[customizations.user]]
+name = "simple"
+description = "Administrator account"
+password = "${EDGE_USER_PASSWORD_SHA512}"
+key = "${SSH_KEY_PUB}"
+home = "/home/simple/"
+groups = ["wheel"]
 EOF
 
 if [ "${FIPS}" == "true" ]; then
@@ -1217,7 +1245,7 @@ for _ in $(seq 0 30); do
 done
 
 # With new ostree-libs-2022.6-3, edge vm needs to reboot twice to make the /sysroot readonly
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "admin@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "simple@${EDGE_GUEST_ADDRESS}" 'nohup sudo systemctl reboot &>/dev/null & exit'
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
 for _ in $(seq 0 30); do
@@ -1242,7 +1270,7 @@ ${EDGE_GUEST_ADDRESS}
 
 [ostree_guest:vars]
 ansible_python_interpreter=/usr/bin/python3
-ansible_user=admin
+ansible_user=simple
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 ansible_become=yes
@@ -1252,7 +1280,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -1289,17 +1317,15 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
+EOF
 
+# Fedora does not have kernel-rt
+if [[ "$ID" != "fedora" ]]; then
+    tee -a "$BLUEPRINT_FILE" >> /dev/null << EOF
 [customizations.kernel]
 name = "${KERNEL_RT_PKG}"
-
-[[customizations.user]]
-name = "admin"
-description = "Administrator account"
-password = "${EDGE_USER_PASSWORD_SHA512}"
-home = "/home/admin/"
-groups = ["wheel"]
 EOF
+fi
 
 greenprint "📄 upgrade blueprint"
 cat "$BLUEPRINT_FILE"
@@ -1357,8 +1383,8 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 sudo composer-cli blueprints delete upgrade > /dev/null
 
 greenprint "🗳 Upgrade ostree image/commit"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |sudo -S rpm-ostree upgrade"
-sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@${EDGE_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |nohup sudo -S systemctl reboot &>/dev/null & exit"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@${EDGE_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |sudo -S rpm-ostree upgrade"
+sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" simple@${EDGE_GUEST_ADDRESS} "echo '${EDGE_USER_PASSWORD}' |nohup sudo -S systemctl reboot &>/dev/null & exit"
 
 # Sleep 10 seconds here to make sure vm restarted already
 sleep 10
@@ -1395,7 +1421,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=${IMAGE_TYPE} \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \

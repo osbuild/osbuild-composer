@@ -14,6 +14,7 @@
     test_custom_dirs_files: "false"
     sysroot_ro: "false"
     fips: "false"
+    image_type: "none"
 
   tasks:
     # current target host's IP address
@@ -284,6 +285,27 @@
       when:
         - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
         - fdo_credential == "true"
+        - image_type == "redhat"
+
+    # on fedora, it grows to 18.49G
+    - name: "pv size should bigger than 18G for simplified installer"
+      block:
+        - assert:
+            that:
+              - "'18' in result_pv_size.stdout"
+            fail_msg: "pv size is not bigger than 18G"
+            success_msg: "pv size is bigger than 18G"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - fdo_credential == "true"
+        - image_type == "fedora"
 
     # raw image does not have coreos-installer to grow fs to 19G
     - name: "pv size should keep at 9G for raw image"
@@ -324,7 +346,28 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+      when: 
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - image_type == "redhat"
+
+    # lv size on fedora is 7.8G, https://github.com/osbuild/osbuild-composer/issues/3529
+    - name: "/sysroot lv size should be 7.8G on fedora"
+      block:
+        - assert:
+            that:
+              - "'7.8G' in result_sysroot_lv_size.stdout"
+            fail_msg: "lv size is not 7.8G"
+            success_msg: "lv size is 7.8G"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: 
+        - "'/dev/mapper/rootvg-rootlv' in result_sysroot_source.stdout"
+        - image_type == "fedora"
 
     # case: check /sysroot mount status
     - name: check /sysroot mount status
@@ -997,12 +1040,33 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: fdo_credential == "true"
+      when:
+        - fdo_credential == "true"
+        - image_type == "redhat"
 
     - name: check fdo-client-linuxapp logs
       command: journalctl -u fdo-client-linuxapp
       register: result_fdo_client_linuxapp_journalctl
-      when: fdo_credential == "true"
+      when:
+        - fdo_credential == "true"
+
+    - name: wait for FDO re-encryption
+      block:
+        - shell: cryptsetup luksDump /dev/vda3
+          register: result
+          until: not result.stdout_lines is search("cipher_null-ecb")
+          retries: 30
+          delay: 60
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - fdo_credential == "true"
+        - image_type == "fedora"
 
     - debug:
         var: result_fdo_client_linuxapp_journalctl
@@ -1030,6 +1094,7 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when:
         - fdo_credential == "true"
+        - image_type == "redhat"
         - (ansible_facts['distribution_version'] is version('9.4', '>=')) or (ansible_facts['distribution_version'] is version('9', '=='))
 
     # case: checking firewall customizations
