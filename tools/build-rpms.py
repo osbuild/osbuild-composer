@@ -144,7 +144,7 @@ def run_ansible(args, key_material):
 
     with open(args.base_dir / "Schutzfile") as f:
         osbuild_commit = json.load(
-            f)["rhel-8.6"]["dependencies"]["osbuild"]["commit"]
+            f)["centos-stream-9"]["dependencies"]["osbuild"]["commit"]
 
     return run_command(["ansible-playbook",
                         "--ssh-extra-args", "-o ControlPersist=no -o StrictHostKeyChecking=no -o ServerAliveInterval=5",
