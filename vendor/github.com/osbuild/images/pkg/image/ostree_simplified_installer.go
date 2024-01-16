@@ -79,16 +79,17 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	imageFilename := "image.raw.xz"
 
 	// image in simplified installer is always compressed
-	compressedImage := manifest.NewXZ(buildPipeline, baseRawOstreeImage(img.rawImage, m, buildPipeline))
+	compressedImage := manifest.NewXZ(buildPipeline, baseRawOstreeImage(img.rawImage, buildPipeline))
 	compressedImage.SetFilename(imageFilename)
 
-	coiPipeline := manifest.NewCoreOSInstaller(m,
+	coiPipeline := manifest.NewCoreOSInstaller(
 		buildPipeline,
 		img.Platform,
 		repos,
 		"kernel",
 		img.Product,
-		img.OSVersion)
+		img.OSVersion,
+	)
 	coiPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	coiPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	coiPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
@@ -100,7 +101,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoLabel := fmt.Sprintf(img.ISOLabelTempl, img.Platform.GetArch())
 
-	bootTreePipeline := manifest.NewEFIBootTree(m, buildPipeline, img.Product, img.OSVersion)
+	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel

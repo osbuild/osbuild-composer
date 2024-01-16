@@ -25,6 +25,7 @@ import (
 	"github.com/containers/image/v5/manifest"
 	"github.com/containers/image/v5/signature"
 	"github.com/containers/image/v5/transports"
+	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/image/v5/types"
 	"github.com/opencontainers/go-digest"
 
@@ -34,6 +35,9 @@ import (
 const (
 	DefaultUserAgent  = "osbuild-composer/1.0"
 	DefaultPolicyPath = "/etc/containers/policy.json"
+
+	containersStorageTransport = "containers-storage"
+	dockerTransport            = "docker"
 )
 
 // GetDefaultAuthFile returns the authentication file to use for the
@@ -340,9 +344,32 @@ func (m RawManifest) Digest() (digest.Digest, error) {
 	return manifest.Digest(m.Data)
 }
 
+func getImageRef(target reference.Named, transport string, storagePath string) (types.ImageReference, error) {
+	switch transport {
+	case "", dockerTransport:
+		ref, err := docker.NewReference(target)
+		if err != nil {
+			return nil, err
+		}
+		return ref, nil
+	case containersStorageTransport:
+		var storage string
+		if storagePath != "" {
+			storage = fmt.Sprintf("[overlay@%s]", storagePath)
+		}
+		ref, err := alltransports.ParseImageName(fmt.Sprintf("%s:%s%s", transport, storage, target.Name()))
+		if err != nil {
+			return nil, err
+		}
+		return ref, nil
+	default:
+		return nil, fmt.Errorf("Unknown containers-transport: %s", transport)
+	}
+}
+
 // GetManifest fetches the raw manifest data from the server. If digest is not empty
 // it will override any given tag for the Client's Target.
-func (cl *Client) GetManifest(ctx context.Context, digest digest.Digest) (r RawManifest, err error) {
+func (cl *Client) GetManifest(ctx context.Context, digest digest.Digest, container *SourceSpec) (r RawManifest, err error) {
 	target := cl.Target
 
 	if digest != "" {
@@ -355,13 +382,22 @@ func (cl *Client) GetManifest(ctx context.Context, digest digest.Digest) (r RawM
 		target = t
 	}
 
-	ref, err := docker.NewReference(target)
+	var transport string
+	if container != nil && container.ContainersTransport != nil {
+		transport = *container.ContainersTransport
+	}
+
+	var storagePath string
+	if container != nil && container.StoragePath != nil {
+		storagePath = *container.StoragePath
+	}
+
+	ref, err := getImageRef(target, transport, storagePath)
 	if err != nil {
 		return
 	}
 
 	src, err := ref.NewImageSource(ctx, cl.sysCtx)
-
 	if err != nil {
 		return
 	}
@@ -402,8 +438,7 @@ func (cl *Client) resolveManifestList(ctx context.Context, list manifestList) (r
 		return resolvedIds{}, err
 	}
 
-	raw, err := cl.GetManifest(ctx, digest)
-
+	raw, err := cl.GetManifest(ctx, digest, nil)
 	if err != nil {
 		return resolvedIds{}, fmt.Errorf("error getting manifest: %w", err)
 	}
@@ -487,9 +522,9 @@ func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest) (resol
 // which is the digest of the configuration object. It uses the architecture and
 // variant specified via SetArchitectureChoice or the corresponding defaults for
 // the host.
-func (cl *Client) Resolve(ctx context.Context, name string) (Spec, error) {
+func (cl *Client) Resolve(ctx context.Context, name string, container *SourceSpec) (Spec, error) {
 
-	raw, err := cl.GetManifest(ctx, "")
+	raw, err := cl.GetManifest(ctx, "", container)
 
 	if err != nil {
 		return Spec{}, fmt.Errorf("error getting manifest: %w", err)
@@ -500,7 +535,23 @@ func (cl *Client) Resolve(ctx context.Context, name string) (Spec, error) {
 		return Spec{}, err
 	}
 
-	spec := NewSpec(cl.Target, ids.Manifest, ids.Config, cl.GetTLSVerify(), ids.ListManifest.String(), name)
+	var transport *string
+	var location *string
+	if container != nil {
+		transport = container.ContainersTransport
+		location = container.StoragePath
+	}
+
+	spec := NewSpec(
+		cl.Target,
+		ids.Manifest,
+		ids.Config,
+		cl.GetTLSVerify(),
+		ids.ListManifest.String(),
+		name,
+		transport,
+		location,
+	)
 
 	return spec, nil
 }

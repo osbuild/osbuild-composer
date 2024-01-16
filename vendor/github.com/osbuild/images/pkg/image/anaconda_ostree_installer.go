@@ -56,14 +56,15 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	anacondaPipeline := manifest.NewAnacondaInstaller(m,
+	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
 		img.Platform,
 		repos,
 		"kernel",
 		img.Product,
-		img.OSVersion)
+		img.OSVersion,
+	)
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
@@ -103,7 +104,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
 	rootfsImagePipeline.Size = 4 * common.GibiByte
 
-	bootTreePipeline := manifest.NewEFIBootTree(m, buildPipeline, img.Product, img.OSVersion)
+	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
