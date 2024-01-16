@@ -24,14 +24,13 @@ func (p *OCIContainer) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func NewOCIContainer(buildPipeline *Build, treePipeline TreePipeline) *OCIContainer {
+func NewOCIContainer(buildPipeline Build, treePipeline TreePipeline) *OCIContainer {
 	p := &OCIContainer{
-		Base:         NewBase(treePipeline.Manifest(), "container", buildPipeline),
+		Base:         NewBase("container", buildPipeline),
 		treePipeline: treePipeline,
 		filename:     "oci-archive.tar",
 	}
 	buildPipeline.addDependent(p)
-	treePipeline.Manifest().addPipeline(p)
 	return p
 }
 
