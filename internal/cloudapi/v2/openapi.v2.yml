@@ -826,6 +826,7 @@ components:
         - iot-commit
         - iot-container
         - iot-installer
+        - iot-simplified-installer
         - iot-raw-image
         - live-installer
         - oci
