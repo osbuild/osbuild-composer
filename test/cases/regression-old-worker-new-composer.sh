@@ -31,6 +31,8 @@ DESIRED_WORKER_RPM="osbuild-composer-worker-$((CURRENT_WORKER_VERSION - 3))"
 DESIRED_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_WORKER_VERSION-3))" | jq -r '.object.sha')
 DESIRED_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$DESIRED_TAG_SHA" | jq -r '.object.sha')
 
+COMPOSER_CONTAINER_NAME="composer"
+
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 
@@ -99,7 +101,7 @@ EOF
 # The host entitlement doesn't get picked up by composer
 # see https://github.com/osbuild/osbuild-composer/issues/1845
 sudo "${CONTAINER_RUNTIME}" run  \
-     --name=composer \
+     --name=${COMPOSER_CONTAINER_NAME} \
      -d \
      -v /etc/osbuild-composer:/etc/osbuild-composer:Z \
      -v /etc/rhsm:/etc/rhsm:Z \
@@ -111,8 +113,17 @@ sudo "${CONTAINER_RUNTIME}" run  \
      --remote-worker-api --no-local-worker-api
 
 greenprint "Wait for composer API"
+composer_wait_times=0
 while ! openapi=$(curl  --silent  --show-error  --cacert /etc/osbuild-composer/ca-crt.pem  --key /etc/osbuild-composer/client-key.pem  --cert /etc/osbuild-composer/client-crt.pem  https://localhost:8080/api/image-builder-composer/v2/openapi); do
     sleep 10
+    composer_wait_times=$((composer_wait_times + 1))
+
+    # wait at maximum 120 seconds for the composer API to come up
+    if [[ $composer_wait_times -gt 12 ]]; then
+        echo "Composer API did not come up in time"
+        sudo "${CONTAINER_RUNTIME}" logs "${COMPOSER_CONTAINER_NAME}"
+        exit 1
+    fi
 done
 jq . <<< "${openapi}"
 
