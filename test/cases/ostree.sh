@@ -1,4 +1,5 @@
 #!/bin/bash
+# Test pr for edge test case upgrad from f38 to f39.
 set -euo pipefail
 
 # Get OS data.
