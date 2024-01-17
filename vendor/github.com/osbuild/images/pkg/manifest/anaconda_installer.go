@@ -72,11 +72,13 @@ type AnacondaInstaller struct {
 	AdditionalDrivers       []string
 
 	Files []*fsnode.File
+
+	// Temporary
+	UseRHELLoraxTemplates bool
 }
 
-func NewAnacondaInstaller(m *Manifest,
-	installerType AnacondaInstallerType,
-	buildPipeline *Build,
+func NewAnacondaInstaller(installerType AnacondaInstallerType,
+	buildPipeline Build,
 	platform platform.Platform,
 	repos []rpmmd.RepoConfig,
 	kernelName,
@@ -84,7 +86,7 @@ func NewAnacondaInstaller(m *Manifest,
 	version string) *AnacondaInstaller {
 	name := "anaconda-tree"
 	p := &AnacondaInstaller{
-		Base:       NewBase(m, name, buildPipeline),
+		Base:       NewBase(name, buildPipeline),
 		Type:       installerType,
 		platform:   platform,
 		repos:      filterRepos(repos, name),
@@ -93,7 +95,6 @@ func NewAnacondaInstaller(m *Manifest,
 		version:    version,
 	}
 	buildPipeline.addDependent(p)
-	m.addPipeline(p)
 	return p
 }
 
@@ -135,8 +136,18 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) []string {
 	packages := p.anacondaBootPackageSet()
 	packages = append(packages,
 		"rpm",
-		"lorax-templates-generic",
 	)
+
+	if p.UseRHELLoraxTemplates {
+		packages = append(packages,
+			"lorax-templates-rhel",
+		)
+	} else {
+		packages = append(packages,
+			"lorax-templates-generic",
+		)
+	}
+
 	return packages
 }
 
@@ -269,9 +280,17 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	}
 
 	if p.Type == AnacondaInstallerTypePayload {
+		var LoraxPath string
+
+		if p.UseRHELLoraxTemplates {
+			LoraxPath = "80-rhel/runtime-postinstall.tmpl"
+		} else {
+			LoraxPath = "99-generic/runtime-postinstall.tmpl"
+		}
+
 		pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules)))
 		pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
-			Path:     "99-generic/runtime-postinstall.tmpl",
+			Path:     LoraxPath,
 			BaseArch: p.platform.GetArch().String(),
 		}))
 	}

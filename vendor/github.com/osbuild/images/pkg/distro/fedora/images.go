@@ -138,6 +138,19 @@ func osCustomizations(
 		panic(fmt.Sprintf("failed to convert file customizations to fs node files: %v", err))
 	}
 
+	// OSTree commits do not include data in `/var` since that is tied to the
+	// deployment, rather than the commit. Therefore the containers need to be
+	// stored in a different location, like `/usr/share`, and the container
+	// storage engine configured accordingly.
+	if t.rpmOstree && len(containers) > 0 {
+		storagePath := "/usr/share/containers/storage"
+		osc.ContainersStorage = &storagePath
+	}
+
+	if containerStorage := c.GetContainerStorage(); containerStorage != nil {
+		osc.ContainersStorage = containerStorage.StoragePath
+	}
+
 	customRepos, err := c.GetRepositories()
 	if err != nil {
 		// This shouldn't happen and since the repos
