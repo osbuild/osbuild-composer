@@ -2,38 +2,17 @@
 # AppSRE runs this script to build an ami and share it with an account
 set -exv
 
+COMMIT_SHA="${COMMIT_SHA:-$(git rev-parse HEAD)}"
+COMMIT_BRANCH="${COMMIT_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
+SKIP_CREATE_AMI="${SKIP_CREATE_AMI:-false}"
+BUILD_RPMS="${BUILD_RPMS:-true}"
+SKIP_TAGS="${SKIP_TAGS:-rpmrepo}"
+# Build rhel only
+PACKER_ONLY_EXCEPT="${PACKER_ONLY_EXCEPT:---only=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64}"
 
-COMMIT_SHA=$(git rev-parse HEAD)
-COMMIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-ON_JENKINS=true
-SKIP_CREATE_AMI=false
-BUILD_RPMS=false
-
-# Use gitlab CI variables if available
-if [ -n "$CI_COMMIT_SHA" ]; then
-    ON_JENKINS=false
-    COMMIT_SHA="$CI_COMMIT_SHA"
-fi
-if [ -n "$CI_COMMIT_BRANCH" ]; then
-    COMMIT_BRANCH="$CI_COMMIT_BRANCH"
-elif [ -n "$GIT_BRANCH" ]; then
+if [ -n "$GIT_BRANCH" ]; then
     # Use jenkins CI variables if available
     COMMIT_BRANCH="${GIT_BRANCH#*/}"
-fi
-
-if [ "$ON_JENKINS" = false ]; then
-    # work around not working podman from 9.1 on a 9.0 image
-    # see https://bugzilla.redhat.com/show_bug.cgi?id=2143282
-    # TODO: Remove me when the bug is fixed or we switch to 9.1
-    sudo dnf remove -y python-unversioned-command
-    sudo dnf upgrade -y
-
-    sudo dnf install -y podman jq
-fi
-
-# skip creating AMIs on PRs to save a ton of resources
-if [[ $COMMIT_BRANCH == PR-* ]]; then
-    SKIP_CREATE_AMI=true
 fi
 
 # decide whether podman or docker should be used
@@ -55,25 +34,6 @@ function cleanup {
     $CONTAINER_RUNTIME rmi "packer:$COMMIT_SHA"
 }
 trap cleanup EXIT
-
-# Use prebuilt rpms on CI
-SKIP_TAGS="rpmcopy,subscribe"
-if [ "$ON_JENKINS" = true ]; then
-    # Build RPMs when running on AppSRE's infra
-    BUILD_RPMS=true
-    SKIP_TAGS="rpmrepo"
-fi
-
-if [ "$ON_JENKINS" = true ]; then
-    # jenkins on main: build rhel only
-    PACKER_ONLY_EXCEPT=--only=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64
-elif [ -n "$CI_COMMIT_BRANCH" ] && [ "$CI_COMMIT_BRANCH" == "main" ]; then
-    # Schutzbot on main: build all except rhel
-    PACKER_ONLY_EXCEPT=--except=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64
-elif [ -n "$CI_COMMIT_BRANCH" ]; then
-    # Schutzbot but not main, build everything (use dummy except)
-    PACKER_ONLY_EXCEPT=--except=amazon-ebs.dummy
-fi
 
 # prepare ansible inventories
 function write_inventories {

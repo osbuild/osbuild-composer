@@ -147,7 +147,7 @@ Packer:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
   script:
-    - tools/appsre-build-worker-packer.sh
+    - tools/ci-build-worker-packer.sh
   variables:
     RUNNER: aws/rhel-9.2-ga-x86_64
 
