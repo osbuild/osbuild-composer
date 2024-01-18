@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/coreos/go-systemd/activation"
+	"github.com/getsentry/sentry-go"
 	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"github.com/sirupsen/logrus"
 )
@@ -68,6 +69,17 @@ func main() {
 			panic(err)
 		}
 		logrus.AddHook(hook)
+	}
+
+	if config.GlitchTipDSN != "" {
+		err = sentry.Init(sentry.ClientOptions{
+			Dsn: config.GlitchTipDSN,
+		})
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		logrus.Warn("GLITCHTIP_DSN not configured, skipping initializing Sentry/Glitchtip")
 	}
 
 	stateDir, ok := os.LookupEnv("STATE_DIRECTORY")

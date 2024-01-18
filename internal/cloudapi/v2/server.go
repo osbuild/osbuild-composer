@@ -12,6 +12,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
 	legacyrouter "github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/getsentry/sentry-go"
+	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -86,6 +88,12 @@ func (s *Server) Handler(path string) http.Handler {
 	e.Pre(common.OperationIDMiddleware)
 	e.Use(middleware.Recover())
 	e.Logger = common.Logger()
+
+	if sentry.CurrentHub().Client() == nil {
+		logrus.Warn("Sentry/Glitchtip not initialized, echo middleware was not enabled")
+	} else {
+		e.Use(sentryecho.New(sentryecho.Options{}))
+	}
 
 	handler := apiHandlers{
 		server: s,

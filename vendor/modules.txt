@@ -490,6 +490,15 @@ github.com/getkin/kin-openapi/openapi3filter
 github.com/getkin/kin-openapi/routers
 github.com/getkin/kin-openapi/routers/legacy
 github.com/getkin/kin-openapi/routers/legacy/pathpattern
+# github.com/getsentry/sentry-go v0.26.0
+## explicit; go 1.18
+github.com/getsentry/sentry-go
+github.com/getsentry/sentry-go/echo
+github.com/getsentry/sentry-go/internal/debug
+github.com/getsentry/sentry-go/internal/otel/baggage
+github.com/getsentry/sentry-go/internal/otel/baggage/internal/baggage
+github.com/getsentry/sentry-go/internal/ratelimit
+github.com/getsentry/sentry-go/internal/traceparser
 # github.com/ghodss/yaml v1.0.0
 ## explicit
 github.com/ghodss/yaml
@@ -776,8 +785,8 @@ github.com/mattn/go-sqlite3
 # github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0
 ## explicit; go 1.19
 github.com/matttproud/golang_protobuf_extensions/v2/pbutil
-# github.com/microcosm-cc/bluemonday v1.0.18
-## explicit; go 1.16
+# github.com/microcosm-cc/bluemonday v1.0.23
+## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
 # github.com/miekg/pkcs11 v1.1.1
