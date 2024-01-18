@@ -290,6 +290,14 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return warnings, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
 	}
 
+	if len(bp.Containers) > 0 {
+		for _, container := range bp.Containers {
+			if err := container.Validate(); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	if options.OSTree != nil {
 		if err := options.OSTree.Validate(); err != nil {
 			return nil, err

@@ -125,6 +125,7 @@ type OSCustomizations struct {
 	LeapSecTZ            *string
 	FactAPIType          *facts.APIType
 	Presets              []osbuild.Preset
+	ContainersStorage    *string
 
 	Subscription *subscription.ImageOptions
 	RHSMConfig   map[subscription.RHSMStatus]*osbuild.RHSMStageOptions
@@ -179,19 +180,15 @@ type OS struct {
 // NewOS creates a new OS pipeline. build is the build pipeline to use for
 // building the OS pipeline. platform is the target platform for the final
 // image. repos are the repositories to install RPMs from.
-func NewOS(m *Manifest,
-	buildPipeline *Build,
-	platform platform.Platform,
-	repos []rpmmd.RepoConfig) *OS {
+func NewOS(buildPipeline Build, platform platform.Platform, repos []rpmmd.RepoConfig) *OS {
 	name := "os"
 	p := &OS{
-		Base:            NewBase(m, name, buildPipeline),
+		Base:            NewBase(name, buildPipeline),
 		repos:           filterRepos(repos, name),
 		platform:        platform,
 		InstallWeakDeps: true,
 	}
 	buildPipeline.addDependent(p)
-	m.addPipeline(p)
 	return p
 }
 
@@ -290,7 +287,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 	}
 
 	if len(p.OSCustomizations.Containers) > 0 {
-		if p.OSTreeRef != "" {
+		if p.OSCustomizations.ContainersStorage != nil {
 			switch distro {
 			case DISTRO_EL8:
 				packages = append(packages, "python3-pytoml")
@@ -406,12 +403,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 		var storagePath string
 
-		// OSTree commits do not include data in `/var` since that is tied to the
-		// deployment, rather than the commit. Therefore the containers need to be
-		// stored in a different location, like `/usr/share`, and the container
-		// storage engine configured accordingly.
-		if p.OSTreeRef != "" {
-			storagePath = "/usr/share/containers/storage"
+		if containerStore := p.OSCustomizations.ContainersStorage; containerStore != nil {
+			storagePath = *containerStore
 			storageConf := "/etc/containers/storage.conf"
 
 			containerStoreOpts := osbuild.NewContainerStorageOptions(storageConf, storagePath)
