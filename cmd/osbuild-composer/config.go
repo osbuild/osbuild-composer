@@ -21,6 +21,7 @@ type ComposerConfigFile struct {
 	SplunkHost    string            `env:"SPLUNK_HEC_HOST"`
 	SplunkPort    string            `env:"SPLUNK_HEC_PORT"`
 	SplunkToken   string            `env:"SPLUNK_HEC_TOKEN"`
+	GlitchTipDSN  string            `env:"GLITCHTIP_DSN"`
 }
 
 type KojiAPIConfig struct {

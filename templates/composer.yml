@@ -118,6 +118,12 @@ objects:
                 optional: true
           - name: SPLUNK_HEC_PORT
             value: "${SPLUNK_HEC_PORT}"
+          - name: GLITCHTIP_DSN
+            valueFrom:
+              secretKeyRef:
+                key: dsn
+                name: "${GLITCHTIP_DSN_NAME}"
+                optional: true
           ports:
           - name: composer-api
             protocol: TCP
@@ -486,3 +492,6 @@ parameters:
   - description: Splunk HTTP Event Collector port
     name: SPLUNK_HEC_PORT
     value: "443"
+  - name: GLITCHTIP_DSN_NAME
+    value: "composer-stage-dsn"
+    description: Name of the secret for connecting to sentry/glitchtip
