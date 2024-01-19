@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
 
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
@@ -351,7 +352,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		Arch:         common.CurrentArch(),
 	}
 
-	hostOS, _, _, err := common.GetHostDistroName()
+	hostOS, err := distro.GetHostDistroName()
 	if err != nil {
 		logWithId.Warnf("Failed to get host distro name: %v", err)
 		hostOS = "linux"
