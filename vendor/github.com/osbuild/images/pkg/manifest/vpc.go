@@ -26,14 +26,13 @@ func (p *VPC) SetFilename(filename string) {
 // NewVPC createsa new Qemu pipeline. imgPipeline is the pipeline producing the
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced image.
-func NewVPC(buildPipeline *Build, imgPipeline *RawImage) *VPC {
+func NewVPC(buildPipeline Build, imgPipeline *RawImage) *VPC {
 	p := &VPC{
-		Base:        NewBase(imgPipeline.Manifest(), "vpc", buildPipeline),
+		Base:        NewBase("vpc", buildPipeline),
 		imgPipeline: imgPipeline,
 		filename:    "image.vhd",
 	}
 	buildPipeline.addDependent(p)
-	imgPipeline.Manifest().addPipeline(p)
 	return p
 }
 

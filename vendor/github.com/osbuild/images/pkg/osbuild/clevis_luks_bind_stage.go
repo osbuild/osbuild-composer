@@ -8,7 +8,7 @@ type ClevisLuksBindStageOptions struct {
 
 func (ClevisLuksBindStageOptions) isStageOptions() {}
 
-func NewClevisLuksBindStage(options *ClevisLuksBindStageOptions, devices Devices) *Stage {
+func NewClevisLuksBindStage(options *ClevisLuksBindStageOptions, devices map[string]Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.clevis.luks-bind",
 		Options: options,

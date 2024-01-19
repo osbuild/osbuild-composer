@@ -42,7 +42,7 @@ func (o LUKS2CreateStageOptions) validate() error {
 	return nil
 }
 
-func NewLUKS2CreateStage(options *LUKS2CreateStageOptions, devices Devices) *Stage {
+func NewLUKS2CreateStage(options *LUKS2CreateStageOptions, devices map[string]Device) *Stage {
 	if err := options.validate(); err != nil {
 		panic(err)
 	}

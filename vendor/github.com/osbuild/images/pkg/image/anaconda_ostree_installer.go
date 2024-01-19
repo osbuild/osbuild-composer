@@ -8,7 +8,6 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/users"
-	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -31,6 +30,7 @@ type AnacondaOSTreeInstaller struct {
 	OSName        string
 	OSVersion     string
 	Release       string
+	Remote        string
 
 	Commit ostree.SourceSpec
 
@@ -56,14 +56,15 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	anacondaPipeline := manifest.NewAnacondaInstaller(m,
+	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
 		img.Platform,
 		repos,
 		"kernel",
 		img.Product,
-		img.OSVersion)
+		img.OSVersion,
+	)
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
@@ -82,28 +83,13 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
-	rootfsPartitionTable := &disk.PartitionTable{
-		Size: 20 * common.MebiByte,
-		Partitions: []disk.Partition{
-			{
-				Start: 0,
-				Size:  20 * common.MebiByte,
-				Payload: &disk.Filesystem{
-					Type:       "vfat",
-					Mountpoint: "/",
-					UUID:       disk.NewVolIDFromRand(rng),
-				},
-			},
-		},
-	}
-
 	// TODO: replace isoLabelTmpl with more high-level properties
 	isoLabel := fmt.Sprintf(img.ISOLabelTempl, img.Platform.GetArch())
 
 	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
 	rootfsImagePipeline.Size = 4 * common.GibiByte
 
-	bootTreePipeline := manifest.NewEFIBootTree(m, buildPipeline, img.Product, img.OSVersion)
+	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
@@ -116,9 +102,10 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
-	isoTreePipeline.PartitionTable = rootfsPartitionTable
+	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
 	isoTreePipeline.Release = img.Release
 	isoTreePipeline.OSName = img.OSName
+	isoTreePipeline.Remote = img.Remote
 	isoTreePipeline.Users = img.Users
 	isoTreePipeline.Groups = img.Groups
 
