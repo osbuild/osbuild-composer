@@ -86,7 +86,15 @@ func (m *Manifest) addPipeline(p Pipeline) {
 			panic("duplicate pipeline name in manifest")
 		}
 	}
+	if p.Manifest() != nil {
+		panic("pipeline already added to a different manifest")
+	}
 	m.pipelines = append(m.pipelines, p)
+	p.setManifest(m)
+	// check that the pipeline's build pipeline is included in the same manifest
+	if build := p.BuildPipeline(); build != nil && build.Manifest() != m {
+		panic("cannot add pipeline to a different manifest than its build pipeline")
+	}
 }
 
 type PackageSelector func([]rpmmd.PackageSet) []rpmmd.PackageSet

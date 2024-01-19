@@ -6,7 +6,7 @@ type LUKS2RemoveKeyStageOptions struct {
 
 func (LUKS2RemoveKeyStageOptions) isStageOptions() {}
 
-func NewLUKS2RemoveKeyStage(options *LUKS2RemoveKeyStageOptions, devices Devices) *Stage {
+func NewLUKS2RemoveKeyStage(options *LUKS2RemoveKeyStageOptions, devices map[string]Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.luks2.remove-key",
 		Options: options,

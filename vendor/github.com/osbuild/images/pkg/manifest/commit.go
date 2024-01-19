@@ -16,14 +16,13 @@ type OSTreeCommit struct {
 // NewOSTreeCommit creates a new OSTree commit pipeline. The
 // treePipeline is the tree representing the content of the commit.
 // ref is the ref to create the commit under.
-func NewOSTreeCommit(buildPipeline *Build, treePipeline *OS, ref string) *OSTreeCommit {
+func NewOSTreeCommit(buildPipeline Build, treePipeline *OS, ref string) *OSTreeCommit {
 	p := &OSTreeCommit{
-		Base:         NewBase(treePipeline.Manifest(), "ostree-commit", buildPipeline),
+		Base:         NewBase("ostree-commit", buildPipeline),
 		treePipeline: treePipeline,
 		ref:          ref,
 	}
 	buildPipeline.addDependent(p)
-	treePipeline.Manifest().addPipeline(p)
 	return p
 }
 
