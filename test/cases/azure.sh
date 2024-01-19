@@ -60,7 +60,9 @@ fi
 az version
 
 ARCH=$(uname -m)
-TEST_ID="$DISTRO_CODE-$ARCH-$BRANCH_NAME-$BUILD_ID"
+# Remove the potential dot from the DISTRO_CODE to workaround cloud-image-val limitation
+# TODO: remove once https://github.com/osbuild/cloud-image-val/pull/290 is merged
+TEST_ID="${DISTRO_CODE//./}-$ARCH-$BRANCH_NAME-$BUILD_ID"
 IMAGE_KEY=image-${TEST_ID}
 
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
