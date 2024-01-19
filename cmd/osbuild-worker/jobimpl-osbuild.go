@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -27,7 +28,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
@@ -349,7 +349,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			Success: false,
 		},
 		UploadStatus: "failure",
-		Arch:         common.CurrentArch(),
+		Arch:         arch.Current().String(),
 	}
 
 	hostOS, err := distro.GetHostDistroName()
@@ -627,7 +627,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, common.CurrentArch(), targetOptions.BootMode)
+			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, arch.Current().String(), targetOptions.BootMode)
 			if err != nil {
 				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, err.Error(), nil)
 				break

@@ -31,6 +31,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
@@ -165,7 +166,7 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, df *di
 	if err != nil {
 		return nil, fmt.Errorf("failed to read host distro information")
 	}
-	hostArch := common.CurrentArch()
+	hostArch := arch.Current().String()
 
 	rr, err := reporegistry.New(repoPaths)
 	if err != nil {
