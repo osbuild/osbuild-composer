@@ -22,7 +22,6 @@ import (
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -1626,7 +1625,7 @@ func TestWorkerWatch(t *testing.T) {
 
 	server := newTestServer(t, t.TempDir(), config, false)
 
-	reply := test.TestRouteWithReply(t, server.Handler(), false, "POST", "/api/worker/v1/workers", fmt.Sprintf(`{"arch":"%s"}`, common.CurrentArch()), 201, `{"href":"/api/worker/v1/workers","kind":"WorkerID","id": "15"}`, "id", "worker_id")
+	reply := test.TestRouteWithReply(t, server.Handler(), false, "POST", "/api/worker/v1/workers", fmt.Sprintf(`{"arch":"%s"}`, arch.Current().String()), 201, `{"href":"/api/worker/v1/workers","kind":"WorkerID","id": "15"}`, "id", "worker_id")
 	var resp api.PostWorkersResponse
 	require.NoError(t, json.Unmarshal(reply, &resp))
 	workerID, err := uuid.Parse(resp.WorkerId)
@@ -1641,7 +1640,7 @@ func TestWorkerWatch(t *testing.T) {
 
 func TestRequestJobForWorker(t *testing.T) {
 	server := newTestServer(t, t.TempDir(), defaultConfig, false)
-	reply := test.TestRouteWithReply(t, server.Handler(), false, "POST", "/api/worker/v1/workers", fmt.Sprintf(`{"arch":"%s"}`, common.CurrentArch()), 201, `{"href":"/api/worker/v1/workers","kind":"WorkerID","id": "15"}`, "id", "worker_id")
+	reply := test.TestRouteWithReply(t, server.Handler(), false, "POST", "/api/worker/v1/workers", fmt.Sprintf(`{"arch":"%s"}`, arch.Current().String()), 201, `{"href":"/api/worker/v1/workers","kind":"WorkerID","id": "15"}`, "id", "worker_id")
 	var resp api.PostWorkersResponse
 	require.NoError(t, json.Unmarshal(reply, &resp))
 	workerID, err := uuid.Parse(resp.WorkerId)

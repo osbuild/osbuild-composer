@@ -16,7 +16,6 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/osbuild-composer/cmd/osbuild-image-tests/constants"
-	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 // WithNetworkNamespace provides the function f with a new network namespace
@@ -114,7 +113,7 @@ func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 		}
 
 		var qemuCmd *exec.Cmd
-		if common.CurrentArch() == "x86_64" {
+		if arch.Current() == arch.ARCH_X86_64 {
 			hostDistroName, err := distro.GetHostDistroName()
 			if err != nil {
 				return fmt.Errorf("cannot determing the current distro: %v", err)
@@ -139,7 +138,7 @@ func WithBootedQemuImage(image string, ns NetNS, f func() error) error {
 				"-nographic",
 				image,
 			)
-		} else if common.CurrentArch() == arch.ARCH_AARCH64.String() {
+		} else if arch.Current() == arch.ARCH_AARCH64 {
 			// This command does not use KVM as I was unable to make it work in Beaker,
 			// once we have machines that can use KVM, enable it to make it faster
 			qemuCmd = ns.NamespacedCommand(
