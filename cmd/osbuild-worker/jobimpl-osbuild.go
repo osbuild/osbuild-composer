@@ -479,7 +479,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, extraEnv, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", nil)
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err)
 		return err
 	}
 
@@ -507,7 +507,16 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", nil)
+		var osbErrors []error
+		if osbuildJobResult.OSBuildOutput.Error != nil {
+			osbErrors = append(osbErrors, fmt.Errorf("osbuild error: %v", osbuildJobResult.OSBuildOutput.Error))
+		}
+		if osbuildJobResult.OSBuildOutput.Errors != nil {
+			for _, err := range osbuildJobResult.OSBuildOutput.Errors {
+				osbErrors = append(osbErrors, fmt.Errorf("manifest validation error: %v", err))
+			}
+		}
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", osbErrors)
 		return nil
 	}
 
