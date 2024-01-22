@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/disk"
 )
 
@@ -54,53 +53,6 @@ func NewGRUB2Stage(options *GRUB2StageOptions) *Stage {
 }
 
 func NewGrub2StageOptions(pt *disk.PartitionTable,
-	kernelOptions string,
-	kernel *blueprint.KernelCustomization,
-	kernelVer string,
-	uefi bool,
-	legacy string,
-	vendor string,
-	install bool) *GRUB2StageOptions {
-
-	rootFs := pt.FindMountable("/")
-	if rootFs == nil {
-		panic("root filesystem must be defined for grub2 stage, this is a programming error")
-	}
-
-	stageOptions := GRUB2StageOptions{
-		RootFilesystemUUID: uuid.MustParse(rootFs.GetFSSpec().UUID),
-		KernelOptions:      kernelOptions,
-		Legacy:             legacy,
-	}
-
-	bootFs := pt.FindMountable("/boot")
-	if bootFs != nil {
-		bootFsUUID := uuid.MustParse(bootFs.GetFSSpec().UUID)
-		stageOptions.BootFilesystemUUID = &bootFsUUID
-	}
-
-	if uefi {
-		stageOptions.UEFI = &GRUB2UEFI{
-			Vendor:  vendor,
-			Install: install,
-			Unified: legacy == "", // force unified grub scheme for pure efi systems
-		}
-	}
-
-	if kernel != nil {
-		if kernel.Append != "" {
-			stageOptions.KernelOptions += " " + kernel.Append
-		}
-		stageOptions.SavedEntry = "ffffffffffffffffffffffffffffffff-" + kernelVer
-		stageOptions.Config = &GRUB2Config{
-			Default: "saved",
-		}
-	}
-
-	return &stageOptions
-}
-
-func NewGrub2StageOptionsUnified(pt *disk.PartitionTable,
 	kernelOptions string,
 	kernelVer string,
 	uefi bool,

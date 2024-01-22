@@ -75,41 +75,37 @@ type OSTreeDeployment struct {
 
 // NewOSTreeCommitDeployment creates a pipeline for an ostree deployment from a
 // commit.
-func NewOSTreeCommitDeployment(buildPipeline *Build,
-	m *Manifest,
+func NewOSTreeCommitDeployment(buildPipeline Build,
 	commit *ostree.SourceSpec,
 	osName string,
 	platform platform.Platform) *OSTreeDeployment {
 
 	p := &OSTreeDeployment{
-		Base:         NewBase(m, "ostree-deployment", buildPipeline),
+		Base:         NewBase("ostree-deployment", buildPipeline),
 		commitSource: commit,
 		osName:       osName,
 		platform:     platform,
 	}
 	buildPipeline.addDependent(p)
-	m.addPipeline(p)
 	return p
 }
 
 // NewOSTreeDeployment creates a pipeline for an ostree deployment from a
 // container
-func NewOSTreeContainerDeployment(buildPipeline *Build,
-	m *Manifest,
+func NewOSTreeContainerDeployment(buildPipeline Build,
 	container *container.SourceSpec,
 	ref string,
 	osName string,
 	platform platform.Platform) *OSTreeDeployment {
 
 	p := &OSTreeDeployment{
-		Base:            NewBase(m, "ostree-deployment", buildPipeline),
+		Base:            NewBase("ostree-deployment", buildPipeline),
 		containerSource: container,
 		osName:          osName,
 		ref:             ref,
 		platform:        platform,
 	}
 	buildPipeline.addDependent(p)
-	m.addPipeline(p)
 	return p
 }
 
@@ -163,7 +159,7 @@ func (p *OSTreeDeployment) serializeStart(packages []rpmmd.PackageSpec, containe
 	case len(containers) == 1:
 		p.containerSpec = &containers[0]
 	default:
-		panic(fmt.Sprintf("pipeline requires exactly one ostree commit or one container (have commits: %v; containers: %v)", commits, containers))
+		panic(fmt.Sprintf("pipeline %s requires exactly one ostree commit or one container (have commits: %v; containers: %v)", p.Name(), commits, containers))
 	}
 }
 
@@ -232,12 +228,19 @@ func (p *OSTreeDeployment) doOSTreeContainerSpec(pipeline *osbuild.Pipeline, rep
 	cont := *p.containerSpec
 	ref := p.ref
 
+	var targetImgref string
+	// The ostree-remote case is unusual; it may be used by FCOS/Silverblue for example to handle
+	// embedded GPG signatures
+	if p.Remote.Name != "" {
+		targetImgref = fmt.Sprintf("ostree-remote-registry:%s:%s", p.Remote.Name, p.containerSpec.LocalName)
+	} else {
+		targetImgref = fmt.Sprintf("ostree-unverified-registry:%s", p.containerSpec.LocalName)
+	}
+
 	options := &osbuild.OSTreeDeployContainerStageOptions{
-		OsName:     p.osName,
-		KernelOpts: p.KernelOptionsAppend,
-		// NOTE: setting the target imgref to be the container source but
-		// we should make this configurable
-		TargetImgref: fmt.Sprintf("ostree-remote-registry:%s:%s", p.Remote.Name, p.containerSpec.Source),
+		OsName:       p.osName,
+		KernelOpts:   p.KernelOptionsAppend,
+		TargetImgref: targetImgref,
 		Mounts:       []string{"/boot", "/boot/efi"},
 		Rootfs: &osbuild.Rootfs{
 			Label: "root",
@@ -408,7 +411,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		}
 	}
 
-	grubOptions := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
+	grubOptions := osbuild.NewGrub2StageOptions(p.PartitionTable,
 		strings.Join(kernelOpts, " "),
 		"",
 		p.platform.GetUEFIVendor() != "",

@@ -41,6 +41,8 @@ func NewSgdiskStage(options *SgdiskStageOptions, device *Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.sgdisk",
 		Options: options,
-		Devices: Devices{"device": *device},
+		Devices: map[string]Device{
+			"device": *device,
+		},
 	}
 }

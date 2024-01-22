@@ -20,14 +20,13 @@ type EFIBootTree struct {
 	KernelOpts []string
 }
 
-func NewEFIBootTree(m *Manifest, buildPipeline *Build, product, version string) *EFIBootTree {
+func NewEFIBootTree(buildPipeline Build, product, version string) *EFIBootTree {
 	p := &EFIBootTree{
-		Base:    NewBase(m, "efiboot-tree", buildPipeline),
+		Base:    NewBase("efiboot-tree", buildPipeline),
 		product: product,
 		version: version,
 	}
 	buildPipeline.addDependent(p)
-	m.addPipeline(p)
 	return p
 }
 

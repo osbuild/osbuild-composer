@@ -47,8 +47,7 @@ type CoreOSInstaller struct {
 }
 
 // NewCoreOSInstaller creates an CoreOS installer pipeline object.
-func NewCoreOSInstaller(m *Manifest,
-	buildPipeline *Build,
+func NewCoreOSInstaller(buildPipeline Build,
 	platform platform.Platform,
 	repos []rpmmd.RepoConfig,
 	kernelName,
@@ -56,7 +55,7 @@ func NewCoreOSInstaller(m *Manifest,
 	version string) *CoreOSInstaller {
 	name := "coi-tree"
 	p := &CoreOSInstaller{
-		Base:       NewBase(m, name, buildPipeline),
+		Base:       NewBase(name, buildPipeline),
 		platform:   platform,
 		repos:      filterRepos(repos, name),
 		kernelName: kernelName,
@@ -64,7 +63,6 @@ func NewCoreOSInstaller(m *Manifest,
 		version:    version,
 	}
 	buildPipeline.addDependent(p)
-	m.addPipeline(p)
 	return p
 }
 
