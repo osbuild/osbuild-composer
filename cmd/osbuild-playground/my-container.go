@@ -50,7 +50,7 @@ func (img *MyContainer) InstantiateManifest(m *manifest.Manifest,
 	build.Checkpoint()
 
 	// create a minimal non-bootable OS tree
-	os := manifest.NewOS(m, build, &platform.X86{}, repos)
+	os := manifest.NewOS(build, &platform.X86{}, repos)
 	os.ExtraBasePackages = []string{"@core"}
 	os.OSCustomizations.Language = "en_US.UTF-8"
 	os.OSCustomizations.Hostname = "my-host"
