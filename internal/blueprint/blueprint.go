@@ -45,7 +45,7 @@ type Group struct {
 }
 
 type Container struct {
-	Source string `json:"source" toml:"source"`
+	Source string `json:"source,omitempty" toml:"source"`
 	Name   string `json:"name,omitempty" toml:"name,omitempty"`
 
 	TLSVerify *bool `json:"tls-verify,omitempty" toml:"tls-verify,omitempty"`
@@ -215,7 +215,11 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 	if len(bp.Containers) > 0 {
 		containers = make([]iblueprint.Container, len(bp.Containers))
 		for idx := range bp.Containers {
-			containers[idx] = iblueprint.Container(bp.Containers[idx])
+			containers[idx] = iblueprint.Container{
+				Source:    bp.Containers[idx].Source,
+				Name:      bp.Containers[idx].Name,
+				TLSVerify: bp.Containers[idx].TLSVerify,
+			}
 		}
 	}
 

@@ -32,7 +32,12 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	resolver.AuthFilePath = impl.AuthFilePath
 
 	for _, s := range args.Specs {
-		resolver.Add(container.SourceSpec{s.Source, s.Name, s.TLSVerify})
+		c := container.SourceSpec{
+			Source:    s.Source,
+			Name:      s.Name,
+			TLSVerify: s.TLSVerify,
+		}
+		resolver.Add(c)
 	}
 
 	specs, err := resolver.Finish()
