@@ -47,7 +47,7 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOS(m, buildPipeline, img.Platform, repos)
+	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
@@ -60,13 +60,14 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	nginxConfigPath := "/etc/nginx.conf"
 	listenPort := "8080"
 
-	serverPipeline := manifest.NewOSTreeCommitServer(m,
+	serverPipeline := manifest.NewOSTreeCommitServer(
 		buildPipeline,
 		img.Platform,
 		repos,
 		commitPipeline,
 		nginxConfigPath,
-		listenPort)
+		listenPort,
+	)
 	serverPipeline.Language = img.ContainerLanguage
 
 	containerPipeline := manifest.NewOCIContainer(buildPipeline, serverPipeline)

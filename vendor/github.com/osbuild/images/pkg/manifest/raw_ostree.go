@@ -25,15 +25,14 @@ func (p *RawOSTreeImage) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func NewRawOStreeImage(buildPipeline *Build, treePipeline *OSTreeDeployment, platform platform.Platform) *RawOSTreeImage {
+func NewRawOStreeImage(buildPipeline Build, treePipeline *OSTreeDeployment, platform platform.Platform) *RawOSTreeImage {
 	p := &RawOSTreeImage{
-		Base:         NewBase(treePipeline.Manifest(), "image", buildPipeline),
+		Base:         NewBase("image", buildPipeline),
 		treePipeline: treePipeline,
 		filename:     "disk.img",
 		platform:     platform,
 	}
 	buildPipeline.addDependent(p)
-	treePipeline.Manifest().addPipeline(p)
 	return p
 }
 
@@ -86,7 +85,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		// Find the FS root mount name to use as the destination root
 		// for the target when copying the boot files.
 		var fsRootMntName string
-		for _, mnt := range *bootCopyMounts {
+		for _, mnt := range bootCopyMounts {
 			if mnt.Target == "/" {
 				fsRootMntName = mnt.Name
 				break

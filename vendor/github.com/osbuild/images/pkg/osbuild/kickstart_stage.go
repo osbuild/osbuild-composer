@@ -22,6 +22,7 @@ type LiveIMGOptions struct {
 
 type OSTreeCommitOptions struct {
 	OSName string `json:"osname"`
+	Remote string `json:"remote"`
 	URL    string `json:"url"`
 	Ref    string `json:"ref"`
 	GPG    bool   `json:"gpg"`
@@ -77,6 +78,7 @@ func NewKickstartStageOptionsWithOSTreeCommit(
 	groupCustomizations []users.Group,
 	ostreeURL string,
 	ostreeRef string,
+	ostreeRemote string,
 	osName string) (*KickstartStageOptions, error) {
 
 	options, err := NewKickstartStageOptions(path, userCustomizations, groupCustomizations)
@@ -88,6 +90,7 @@ func NewKickstartStageOptionsWithOSTreeCommit(
 	if ostreeURL != "" {
 		ostreeCommitOptions := &OSTreeCommitOptions{
 			OSName: osName,
+			Remote: ostreeRemote,
 			URL:    ostreeURL,
 			Ref:    ostreeRef,
 			GPG:    false,
