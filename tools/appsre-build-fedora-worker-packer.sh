@@ -6,6 +6,6 @@ export SKIP_CREATE_AMI=false
 # Use prebuilt rpms for the fedora images
 export BUILD_RPMS=false
 export SKIP_TAGS="rpmcopy,subscribe"
-export PACKER_ONLY_EXCEPT=--except=amazon-ebs.fedora-38-x86_64,amazon-ebs.fedora-38-aarch64
+export PACKER_ONLY_EXCEPT=--only=amazon-ebs.fedora-38-x86_64,amazon-ebs.fedora-38-aarch64
 
 tools/appsre-build-worker-packer.sh
