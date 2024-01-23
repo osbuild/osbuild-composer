@@ -40,6 +40,8 @@ func NewSfdiskStage(options *SfdiskStageOptions, device *Device) *Stage {
 	return &Stage{
 		Type:    "org.osbuild.sfdisk",
 		Options: options,
-		Devices: Devices{"device": *device},
+		Devices: map[string]Device{
+			"device": *device,
+		},
 	}
 }
