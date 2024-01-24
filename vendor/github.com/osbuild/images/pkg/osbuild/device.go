@@ -2,12 +2,12 @@ package osbuild
 
 import (
 	"fmt"
+	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/osbuild/images/pkg/disk"
 )
-
-type Devices map[string]Device
 
 type Device struct {
 	Type    string        `json:"type"`
@@ -223,4 +223,65 @@ func pathEscape(path string) string {
 	path = escapeChars(path, "-")
 
 	return strings.ReplaceAll(path, "/", "-")
+}
+
+func genMountsDevicesFromPt(filename string, pt *disk.PartitionTable) (string, []Mount, map[string]Device, error) {
+	devices := make(map[string]Device, len(pt.Partitions))
+	mounts := make([]Mount, 0, len(pt.Partitions))
+	var fsRootMntName string
+	genMounts := func(mnt disk.Mountable, path []disk.Entity) error {
+		stageDevices, name := getDevices(path, filename, false)
+		mountpoint := mnt.GetMountpoint()
+
+		if mountpoint == "/" {
+			fsRootMntName = name
+		}
+
+		var mount *Mount
+		t := mnt.GetFSType()
+		switch t {
+		case "xfs":
+			mount = NewXfsMount(name, name, mountpoint)
+		case "vfat":
+			mount = NewFATMount(name, name, mountpoint)
+		case "ext4":
+			mount = NewExt4Mount(name, name, mountpoint)
+		case "btrfs":
+			mount = NewBtrfsMount(name, name, mountpoint)
+		default:
+			return fmt.Errorf("unknown fs type " + t)
+		}
+		mounts = append(mounts, *mount)
+
+		// update devices map with new elements from stageDevices
+		for devName := range stageDevices {
+			if existingDevice, exists := devices[devName]; exists {
+				// It is usual that the a device is generated twice for the same Entity e.g. LVM VG, which is OK.
+				// Therefore fail only if a device with the same name is generated for two different Entities.
+				if !reflect.DeepEqual(existingDevice, stageDevices[devName]) {
+					return fmt.Errorf("the device name %q has been generated for two different devices", devName)
+				}
+			}
+			devices[devName] = stageDevices[devName]
+		}
+		return nil
+	}
+
+	if err := pt.ForEachMountable(genMounts); err != nil {
+		return "", nil, nil, err
+	}
+
+	// sort the mounts, using < should just work because:
+	// - a parent directory should be always before its children:
+	//   / < /boot
+	// - the order of siblings doesn't matter
+	sort.Slice(mounts, func(i, j int) bool {
+		return mounts[i].Target < mounts[j].Target
+	})
+
+	if fsRootMntName == "" {
+		return "", nil, nil, fmt.Errorf("no mount found for the filesystem root")
+	}
+
+	return fsRootMntName, mounts, devices, nil
 }

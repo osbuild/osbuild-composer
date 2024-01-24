@@ -30,7 +30,7 @@ type ContentTest struct {
 // content sources.
 func NewContentTest(m *Manifest, name string, packageSets []rpmmd.PackageSet, containers []container.SourceSpec, commits []ostree.SourceSpec) *ContentTest {
 	pipeline := &ContentTest{
-		Base:        NewBase(m, name, nil),
+		Base:        NewBase(name, nil),
 		packageSets: packageSets,
 		containers:  containers,
 		commits:     commits,

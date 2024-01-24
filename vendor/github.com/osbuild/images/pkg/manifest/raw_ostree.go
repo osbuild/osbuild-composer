@@ -25,15 +25,14 @@ func (p *RawOSTreeImage) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func NewRawOStreeImage(buildPipeline *Build, treePipeline *OSTreeDeployment, platform platform.Platform) *RawOSTreeImage {
+func NewRawOStreeImage(buildPipeline Build, treePipeline *OSTreeDeployment, platform platform.Platform) *RawOSTreeImage {
 	p := &RawOSTreeImage{
-		Base:         NewBase(treePipeline.Manifest(), "image", buildPipeline),
+		Base:         NewBase("image", buildPipeline),
 		treePipeline: treePipeline,
 		filename:     "disk.img",
 		platform:     platform,
 	}
 	buildPipeline.addDependent(p)
-	treePipeline.Manifest().addPipeline(p)
 	return p
 }
 
@@ -86,7 +85,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		// Find the FS root mount name to use as the destination root
 		// for the target when copying the boot files.
 		var fsRootMntName string
-		for _, mnt := range *bootCopyMounts {
+		for _, mnt := range bootCopyMounts {
 			if mnt.Target == "/" {
 				fsRootMntName = mnt.Name
 				break
@@ -111,11 +110,45 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		pipeline.AddStage(stage)
 	}
 
-	if grubLegacy := p.treePipeline.platform.GetBIOSPlatform(); grubLegacy != "" {
-		pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(p.Filename(), pt, grubLegacy)))
+	if p.treePipeline.UseBootupd {
+		p.addBootupdStage(&pipeline)
+	} else {
+		p.maybeAddGrubInstStage(&pipeline)
 	}
 
 	return pipeline
+}
+
+func (p *RawOSTreeImage) addBootupdStage(pipeline *osbuild.Pipeline) {
+	pt := p.treePipeline.PartitionTable
+
+	treeBootupdDevices, treeBootupdMounts := osbuild.GenBootupdDevicesMounts(p.Filename(), pt)
+	opts := &osbuild.BootupdStageOptions{
+		Deployment: &osbuild.OSTreeDeployment{
+			OSName: p.treePipeline.osName,
+			Ref:    p.treePipeline.ref,
+		},
+		StaticConfigs: true,
+	}
+	if legacyBios := p.treePipeline.platform.GetBIOSPlatform(); legacyBios != "" {
+		opts.Bios = &osbuild.BootupdStageOptionsBios{
+			Device: "disk",
+		}
+	}
+	bootupd, err := osbuild.NewBootupdStage(opts, treeBootupdDevices, treeBootupdMounts)
+	if err != nil {
+		panic(err)
+	}
+
+	pipeline.AddStage(bootupd)
+}
+
+func (p *RawOSTreeImage) maybeAddGrubInstStage(pipeline *osbuild.Pipeline) {
+	pt := p.treePipeline.PartitionTable
+
+	if grubLegacy := p.treePipeline.platform.GetBIOSPlatform(); grubLegacy != "" {
+		pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(p.Filename(), pt, grubLegacy)))
+	}
 }
 
 func (p *RawOSTreeImage) Export() *artifact.Artifact {
