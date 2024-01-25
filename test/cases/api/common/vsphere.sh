@@ -137,6 +137,7 @@ function verifyInVSphere() {
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
         -dc="${GOVC_DATACENTER}" \
+        -pool="${GOVMOMI_CLUSTER}"/Resources \
         -ds="${GOVMOMI_DATASTORE}" \
         "${WORKDIR}/${VSPHERE_IMAGE_NAME}" \
         "${VSPHERE_VM_NAME}"
