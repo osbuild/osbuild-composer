@@ -35,7 +35,7 @@ func (o LVM2MetadataStageOptions) validate() error {
 	return nil
 }
 
-func NewLVM2MetadataStage(options *LVM2MetadataStageOptions, devices Devices) *Stage {
+func NewLVM2MetadataStage(options *LVM2MetadataStageOptions, devices map[string]Device) *Stage {
 	if err := options.validate(); err != nil {
 		panic(err)
 	}

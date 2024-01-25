@@ -237,7 +237,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		// set of customizations.  The current set of customizations defined in
 		// the blueprint spec corresponds to the Custom workflow.
 		if customizations != nil {
-			return warnings, fmt.Errorf("image type %q does not support customizations", t.name)
+			return warnings, fmt.Errorf(distro.NoCustomizationsAllowedError, t.name)
 		}
 	}
 

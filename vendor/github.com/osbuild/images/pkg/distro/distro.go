@@ -17,6 +17,8 @@ const (
 	BOOT_LEGACY
 	BOOT_UEFI
 	BOOT_HYBRID
+	UnsupportedCustomizationError = "unsupported blueprint customizations found for image type %q: (allowed: %s)"
+	NoCustomizationsAllowedError  = "image type %q does not support customizations"
 )
 
 func (m BootMode) String() string {

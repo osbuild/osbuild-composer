@@ -15,7 +15,16 @@ import (
 // is not predictable nor reproducible. For the purposes of building the
 // build pipeline, we do use the build host's filesystem, this means we should
 // make minimal assumptions about what's available there.
-type Build struct {
+
+type Build interface {
+	Name() string
+	Checkpoint()
+	Manifest() *Manifest
+
+	addDependent(dep Pipeline)
+}
+
+type BuildrootFromPackages struct {
 	Base
 
 	runner       runner.Runner
@@ -34,29 +43,33 @@ type BuildOptions struct {
 
 // NewBuild creates a new build pipeline from the repositories in repos
 // and the specified packages.
-func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts *BuildOptions) *Build {
+func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts *BuildOptions) Build {
 	if opts == nil {
 		opts = &BuildOptions{}
 	}
 
 	name := "build"
-	pipeline := &Build{
-		Base:       NewBase(m, name, nil),
-		runner:     runner,
-		dependents: make([]Pipeline, 0),
-		repos:      filterRepos(repos, name),
-
+	pipeline := &BuildrootFromPackages{
+		Base:               NewBase(name, nil),
+		runner:             runner,
+		dependents:         make([]Pipeline, 0),
+		repos:              filterRepos(repos, name),
 		containerBuildable: opts.ContainerBuildable,
 	}
 	m.addPipeline(pipeline)
 	return pipeline
 }
 
-func (p *Build) addDependent(dep Pipeline) {
+func (p *BuildrootFromPackages) addDependent(dep Pipeline) {
 	p.dependents = append(p.dependents, dep)
+	man := p.Manifest()
+	if man == nil {
+		panic("cannot add build dependent without a manifest")
+	}
+	man.addPipeline(dep)
 }
 
-func (p *Build) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
+func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 	// TODO: make the /usr/bin/cp dependency conditional
 	// TODO: make the /usr/bin/xz dependency conditional
 	packages := []string{
@@ -80,25 +93,25 @@ func (p *Build) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 	}
 }
 
-func (p *Build) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *BuildrootFromPackages) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *Build) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
+func (p *BuildrootFromPackages) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
 	p.packageSpecs = packages
 }
 
-func (p *Build) serializeEnd() {
+func (p *BuildrootFromPackages) serializeEnd() {
 	if len(p.packageSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.packageSpecs = nil
 }
 
-func (p *Build) serialize() osbuild.Pipeline {
+func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
@@ -117,7 +130,7 @@ func (p *Build) serialize() osbuild.Pipeline {
 
 // Returns a map of paths to labels for the SELinux stage based on specific
 // packages found in the pipeline.
-func (p *Build) getSELinuxLabels() map[string]string {
+func (p *BuildrootFromPackages) getSELinuxLabels() map[string]string {
 	labels := make(map[string]string)
 	for _, pkg := range p.getPackageSpecs() {
 		switch pkg.Name {
@@ -132,4 +145,91 @@ func (p *Build) getSELinuxLabels() map[string]string {
 		}
 	}
 	return labels
+}
+
+type BuildrootFromContainer struct {
+	Base
+
+	runner     runner.Runner
+	dependents []Pipeline
+
+	containers     []container.SourceSpec
+	containerSpecs []container.Spec
+
+	containerBuildable bool
+}
+
+// NewBuildFromContainer creates a new build pipeline from the given
+// containers specs
+func NewBuildFromContainer(m *Manifest, runner runner.Runner, containerSources []container.SourceSpec, opts *BuildOptions) Build {
+	if opts == nil {
+		opts = &BuildOptions{}
+	}
+
+	name := "build"
+	pipeline := &BuildrootFromContainer{
+		Base:       NewBase(name, nil),
+		runner:     runner,
+		dependents: make([]Pipeline, 0),
+		containers: containerSources,
+
+		containerBuildable: opts.ContainerBuildable,
+	}
+	m.addPipeline(pipeline)
+	return pipeline
+}
+
+func (p *BuildrootFromContainer) addDependent(dep Pipeline) {
+	p.dependents = append(p.dependents, dep)
+	man := p.Manifest()
+	if man == nil {
+		panic("cannot add build dependent without a manifest")
+	}
+	man.addPipeline(dep)
+}
+
+func (p *BuildrootFromContainer) getContainerSources() []container.SourceSpec {
+	return p.containers
+}
+
+func (p *BuildrootFromContainer) getContainerSpecs() []container.Spec {
+	return p.containerSpecs
+}
+
+func (p *BuildrootFromContainer) serializeStart(_ []rpmmd.PackageSpec, containerSpecs []container.Spec, _ []ostree.CommitSpec) {
+	if len(p.containerSpecs) > 0 {
+		panic("double call to serializeStart()")
+	}
+	p.containerSpecs = containerSpecs
+}
+
+func (p *BuildrootFromContainer) serializeEnd() {
+	if len(p.containerSpecs) == 0 {
+		panic("serializeEnd() call when serialization not in progress")
+	}
+	p.containerSpecs = nil
+}
+
+func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
+	if len(p.containerSpecs) == 0 {
+		panic("serialization not started")
+	}
+	pipeline := p.Base.serialize()
+	pipeline.Runner = p.runner.String()
+
+	stage, err := osbuild.NewContainerDeployStage(osbuild.NewContainersInputForSources(p.containerSpecs))
+	if err != nil {
+		panic(err)
+	}
+	pipeline.AddStage(stage)
+	pipeline.AddStage(osbuild.NewSELinuxStage(
+		&osbuild.SELinuxStageOptions{
+			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+			Labels: map[string]string{
+				"/usr/bin/ostree": "system_u:object_r:install_exec_t:s0",
+			},
+		},
+	))
+
+	return pipeline
 }

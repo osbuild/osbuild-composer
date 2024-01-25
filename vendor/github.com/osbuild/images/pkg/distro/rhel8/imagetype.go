@@ -282,12 +282,20 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		// set of customizations.  The current set of customizations defined in
 		// the blueprint spec corresponds to the Custom workflow.
 		if customizations != nil {
-			return warnings, fmt.Errorf("image type %q does not support customizations", t.name)
+			return warnings, fmt.Errorf(distro.NoCustomizationsAllowedError, t.name)
 		}
 	}
 	// we do not support embedding containers on ostree-derived images, only on commits themselves
 	if len(bp.Containers) > 0 && t.rpmOstree && (t.name != "edge-commit" && t.name != "edge-container") {
 		return warnings, fmt.Errorf("embedding containers is not supported for %s on %s", t.name, t.arch.distro.name)
+	}
+
+	if len(bp.Containers) > 0 {
+		for _, container := range bp.Containers {
+			if err := container.Validate(); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	if options.OSTree != nil {
@@ -305,7 +313,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		if t.name == "edge-simplified-installer" {
 			allowed := []string{"InstallationDevice", "FDO", "User", "Group", "FIPS"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return warnings, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+				return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 			}
 			if customizations.GetInstallationDevice() == "" {
 				return warnings, fmt.Errorf("boot ISO image type %q requires specifying an installation device to install to", t.name)
@@ -332,7 +340,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		} else if t.name == "edge-installer" {
 			allowed := []string{"User", "Group", "FIPS"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return warnings, fmt.Errorf("unsupported blueprint customizations found for boot ISO image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+				return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 			}
 		}
 	}
@@ -345,7 +353,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 
 		allowed := []string{"User", "Group", "FIPS"}
 		if err := customizations.CheckAllowed(allowed...); err != nil {
-			return warnings, fmt.Errorf("unsupported blueprint customizations found for image type %q: (allowed: %s)", t.name, strings.Join(allowed, ", "))
+			return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 		}
 		// TODO: consider additional checks, such as those in "edge-simplified-installer"
 	}
@@ -417,6 +425,12 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	_, err = customizations.GetRepositories()
 	if err != nil {
 		return warnings, err
+	}
+
+	if customizations.GetFIPS() && !common.IsBuildHostFIPSEnabled() {
+		w := fmt.Sprintln(common.FIPSEnabledImageWarning)
+		log.Print(w)
+		warnings = append(warnings, w)
 	}
 
 	return warnings, nil
