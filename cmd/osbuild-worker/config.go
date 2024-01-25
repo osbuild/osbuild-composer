@@ -71,6 +71,10 @@ type pulpConfig struct {
 	ServerURL   string `toml:"server_address"`
 }
 
+type executorConfig struct {
+	Type string `toml:"type"`
+}
+
 type workerConfig struct {
 	Composer       *composerConfig             `toml:"composer"`
 	Koji           map[string]kojiServerConfig `toml:"koji"`
@@ -85,12 +89,17 @@ type workerConfig struct {
 	// default value: /api/worker/v1
 	BasePath string `toml:"base_path"`
 	DNFJson  string `toml:"dnf-json"`
+	// default value: &{ Type: host }
+	OSBuildExecutor *executorConfig `toml:"osbuild_executor"`
 }
 
 func parseConfig(file string) (*workerConfig, error) {
 	// set defaults
 	config := workerConfig{
 		BasePath: "/api/worker/v1",
+		OSBuildExecutor: &executorConfig{
+			Type: "host",
+		},
 	}
 
 	_, err := toml.DecodeFile(file, &config)
@@ -111,6 +120,13 @@ func parseConfig(file string) (*workerConfig, error) {
 		} else if config.Azure.UploadThreads < 0 {
 			return nil, fmt.Errorf("invalid number of Azure upload threads: %d", config.Azure.UploadThreads)
 		}
+	}
+
+	switch config.OSBuildExecutor.Type {
+	case "host", "aws.ec2", "qemu.kvm":
+		// good and supported
+	default:
+		return nil, fmt.Errorf("OSBuildExecutor needs to be host, aws.ec2, or qemu.kvm. Got: %s.", config.OSBuildExecutor)
 	}
 
 	return &config, nil
