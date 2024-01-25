@@ -28,6 +28,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
+	"github.com/osbuild/osbuild-composer/internal/osbuildexecutor"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
@@ -75,9 +76,15 @@ type PulpConfiguration struct {
 	ServerAddress string
 }
 
+type ExecutorConfiguration struct {
+	Type       string
+	IAMProfile string
+}
+
 type OSBuildJobImpl struct {
 	Store            string
 	Output           string
+	OSBuildExecutor  ExecutorConfiguration
 	KojiServers      map[string]kojiServer
 	GCPConfig        GCPConfiguration
 	AzureConfig      AzureConfiguration
@@ -476,7 +483,16 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	// Run osbuild and handle two kinds of errors
-	osbuildJobResult.OSBuildOutput, err = osbuild.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, extraEnv, true, os.Stderr)
+	var executor osbuildexecutor.Executor
+	switch impl.OSBuildExecutor.Type {
+	case "host":
+		executor = osbuildexecutor.NewHostExecutor()
+	default:
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
+		return err
+	}
+
+	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, extraEnv, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err)
