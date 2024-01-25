@@ -57,7 +57,7 @@ EOF
         # get distro name for schutzfile
         local schutzfile_distro="$distro"
         if [[ $schutzfile_distro == rhel-9 ]]; then
-            schutzfile_distro=rhel-9.0
+            schutzfile_distro=rhel-9.3
         fi
 
         # get osbuild_commit from schutzfile
