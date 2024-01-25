@@ -73,6 +73,9 @@ server_address = "https://example.com/pulp"
 			want: &workerConfig{
 				BasePath: "/api/image-builder-worker/v1",
 				DNFJson:  "/usr/libexec/dnf-json",
+				OSBuildExecutor: &executorConfig{
+					Type: "host",
+				},
 				Composer: &composerConfig{
 					Proxy: "http://proxy.example.com",
 				},
@@ -131,6 +134,9 @@ server_address = "https://example.com/pulp"
 			config: ``,
 			want: &workerConfig{
 				BasePath: "/api/worker/v1",
+				OSBuildExecutor: &executorConfig{
+					Type: "host",
+				},
 			},
 		},
 	}
