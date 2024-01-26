@@ -492,7 +492,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, nil, extraEnv, true, os.Stderr)
+	exportPaths := []string{}
+	for _, jobTarget := range jobArgs.Targets {
+		exportPaths = append(exportPaths, path.Join(jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
+	}
+
+	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, exportPaths, nil, extraEnv, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err)
