@@ -334,6 +334,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "rhel-edge-container"
 	case ImageTypesEdgeInstaller:
 		return "rhel-edge-installer"
+	case ImageTypesIotBootableContainer:
+		return "iot-bootable-container"
 	case ImageTypesIotCommit:
 		return "iot-commit"
 	case ImageTypesIotContainer:
