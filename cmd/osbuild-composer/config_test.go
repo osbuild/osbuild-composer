@@ -57,6 +57,11 @@ func TestDefaultConfig(t *testing.T) {
 					"gce-rhui",
 				},
 			},
+			"fedora-*": {
+				[]string{
+					"iot-bootable-container",
+				},
+			},
 		},
 	}
 
@@ -113,9 +118,11 @@ func TestWeldrDistrosImageTypeDenyList(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 
+	// rhel config is overridden, but fedora is unaffected
 	expectedWeldrDistrosImageTypeDenyList := map[string][]string{
-		"*":       {"qcow2", "vmdk"},
-		"rhel-84": {"qcow2"},
+		"*":        {"qcow2", "vmdk"},
+		"fedora-*": {"iot-bootable-container"},
+		"rhel-84":  {"qcow2"},
 	}
 
 	require.Equal(t, expectedWeldrDistrosImageTypeDenyList, config.weldrDistrosImageTypeDenyList())
