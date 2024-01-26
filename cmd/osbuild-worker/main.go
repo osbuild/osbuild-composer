@@ -474,7 +474,7 @@ func main() {
 			Store:  store,
 			Output: output,
 			OSBuildExecutor: ExecutorConfiguration{
-				Type:       config.OSBuildExecutor.Type,
+				Type: config.OSBuildExecutor.Type,
 			},
 			KojiServers: kojiServers,
 			GCPConfig:   gcpConfig,

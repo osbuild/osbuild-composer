@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -19,9 +20,10 @@ import (
 )
 
 type AWS struct {
-	uploader *s3manager.Uploader
-	ec2      *ec2.EC2
-	s3       *s3.S3
+	uploader    *s3manager.Uploader
+	ec2         *ec2.EC2
+	ec2metadata *ec2metadata.EC2Metadata
+	s3          *s3.S3
 }
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
@@ -36,9 +38,10 @@ func newAwsFromCreds(creds *credentials.Credentials, region string) (*AWS, error
 	}
 
 	return &AWS{
-		uploader: s3manager.NewUploader(sess),
-		ec2:      ec2.New(sess),
-		s3:       s3.New(sess),
+		uploader:    s3manager.NewUploader(sess),
+		ec2:         ec2.New(sess),
+		ec2metadata: ec2metadata.New(sess),
+		s3:          s3.New(sess),
 	}, nil
 }
 
@@ -64,6 +67,18 @@ func NewFromFile(filename string, region string) (*AWS, error) {
 // Looks for env variables, shared credential file, and EC2 Instance Roles.
 func NewDefault(region string) (*AWS, error) {
 	return newAwsFromCreds(nil, region)
+}
+
+func RegionFromInstanceMetadata() (string, error) {
+	sess, err := session.NewSession()
+	if err != nil {
+		return "", err
+	}
+	identity, err := ec2metadata.New(sess).GetInstanceIdentityDocument()
+	if err != nil {
+		return "", err
+	}
+	return identity.Region, nil
 }
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
@@ -102,9 +117,10 @@ func newAwsFromCredsWithEndpoint(creds *credentials.Credentials, region, endpoin
 	}
 
 	return &AWS{
-		uploader: s3manager.NewUploader(sess),
-		ec2:      ec2.New(sess),
-		s3:       s3.New(sess),
+		uploader:    s3manager.NewUploader(sess),
+		ec2:         ec2.New(sess),
+		ec2metadata: ec2metadata.New(sess),
+		s3:          s3.New(sess),
 	}, nil
 }
 
