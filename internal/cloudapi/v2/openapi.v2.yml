@@ -823,11 +823,12 @@ components:
         - gcp-rhui
         - guest-image
         - image-installer
+        - iot-bootable-container
         - iot-commit
         - iot-container
         - iot-installer
-        - iot-simplified-installer
         - iot-raw-image
+        - iot-simplified-installer
         - live-installer
         - oci
         - vsphere

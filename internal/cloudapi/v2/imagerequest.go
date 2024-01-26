@@ -287,6 +287,8 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 
 	case ImageTypesEdgeContainer:
 		fallthrough
+	case ImageTypesIotBootableContainer:
+		fallthrough
 	case ImageTypesIotContainer:
 		return UploadTypesContainer, nil
 
@@ -321,21 +323,23 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesAwsSapRhui: true,
 		},
 		UploadTypesAwsS3: {
-			ImageTypesGuestImage:     true,
-			ImageTypesVsphere:        true,
-			ImageTypesVsphereOva:     true,
-			ImageTypesWsl:            true,
-			ImageTypesImageInstaller: true,
-			ImageTypesEdgeInstaller:  true,
-			ImageTypesIotInstaller:   true,
-			ImageTypesLiveInstaller:  true,
-			ImageTypesEdgeCommit:     true,
-			ImageTypesIotCommit:      true,
-			ImageTypesIotRawImage:    true,
+			ImageTypesEdgeCommit:           true,
+			ImageTypesEdgeInstaller:        true,
+			ImageTypesGuestImage:           true,
+			ImageTypesImageInstaller:       true,
+			ImageTypesIotBootableContainer: true,
+			ImageTypesIotCommit:            true,
+			ImageTypesIotInstaller:         true,
+			ImageTypesIotRawImage:          true,
+			ImageTypesLiveInstaller:        true,
+			ImageTypesVsphereOva:           true,
+			ImageTypesVsphere:              true,
+			ImageTypesWsl:                  true,
 		},
 		UploadTypesContainer: {
-			ImageTypesEdgeContainer: true,
-			ImageTypesIotContainer:  true,
+			ImageTypesEdgeContainer:        true,
+			ImageTypesIotBootableContainer: true,
+			ImageTypesIotContainer:         true,
 		},
 		UploadTypesGcp: {
 			ImageTypesGcp:     true,
