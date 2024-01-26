@@ -536,6 +536,12 @@ API:
         RUNNER:
           - aws/fedora-38-x86_64
           - aws/fedora-39-x86_64
+      - IMAGE_TYPE: ["iot-bootable-container"]
+        RUNNER:
+          - aws/fedora-39-x86_64
+          - aws/fedora-39-aarch64
+          - aws/fedora-40-x86_64
+          - aws/fedora-40-aarch64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.9-ga-aarch64
