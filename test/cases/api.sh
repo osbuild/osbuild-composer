@@ -34,6 +34,7 @@ export IMAGE_TYPE_GUEST="guest-image"
 export IMAGE_TYPE_OCI="oci"
 export IMAGE_TYPE_VSPHERE="vsphere"
 export IMAGE_TYPE_IOT_COMMIT="iot-commit"
+export IMAGE_TYPE_IOT_BOOTABLE_CONTAINER="iot-bootable-container"
 
 if (( $# > 2 )); then
     echo "$0 does not support more than two arguments"
@@ -107,7 +108,7 @@ case ${IMAGE_TYPE} in
     "$IMAGE_TYPE_OCI")
         CLOUD_PROVIDER="${CLOUD_PROVIDER_OCI}"
         ;;
-    "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_IOT_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_VSPHERE")
+    "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_IOT_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_VSPHERE"|"$IMAGE_TYPE_IOT_BOOTABLE_CONTAINER")
         # blobby image types: upload to s3 and provide download link
         CLOUD_PROVIDER="${2:-$CLOUD_PROVIDER_AWS_S3}"
         if [ "${CLOUD_PROVIDER}" != "${CLOUD_PROVIDER_AWS_S3}" ] && [ "${CLOUD_PROVIDER}" != "${CLOUD_PROVIDER_GENERIC_S3}" ]; then
