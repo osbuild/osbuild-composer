@@ -487,6 +487,8 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	switch impl.OSBuildExecutor.Type {
 	case "host":
 		executor = osbuildexecutor.NewHostExecutor()
+	case "aws.ec2":
+		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile)
 	default:
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
 		return err
