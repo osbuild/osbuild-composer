@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 source /tmp/cloud_init_vars
 
 echo "Deploy GCP credentials."
@@ -13,6 +13,7 @@ sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 bucket = "${WORKER_CONFIG_GCP_BUCKET:-}"
 EOF
 
+GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN=${GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN:-}
 if [[ -z "$GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
   echo "GCP_SERVICE_ACCOUNT_IMAGE_BUILDER_ARN not defined, skipping."
   exit 0

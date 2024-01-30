@@ -1,9 +1,10 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 source /tmp/cloud_init_vars
 
 echo "Deploy Koji credentials."
 
+KOJI_ACCOUNT_IMAGE_BUILDER_ARN=${KOJI_ACCOUNT_IMAGE_BUILDER_ARN:-}
 if [[ -z "$KOJI_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
   echo "KOJI_ACCOUNT_IMAGE_BUILDER_ARN not defined, skipping."
   exit 0

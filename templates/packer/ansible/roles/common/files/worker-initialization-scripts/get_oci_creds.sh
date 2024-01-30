@@ -1,9 +1,10 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 source /tmp/cloud_init_vars
 
 echo "Deploy OCI credentials."
 
+OCI_ACCOUNT_IMAGE_BUILDER_ARN=${OCI_ACCOUNT_IMAGE_BUILDER_ARN:-}
 if [[ -z "$OCI_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
   echo "OCI_ACCOUNT_IMAGE_BUILDER_ARN not defined, skipping."
   exit 0
