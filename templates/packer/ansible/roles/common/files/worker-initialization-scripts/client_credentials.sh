@@ -1,9 +1,10 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 source /tmp/cloud_init_vars
 
 echo "Writing client credentials."
 
+CLIENT_CREDENTIALS_ARN=${CLIENT_CREDENTIALS_ARN:-}
 if [[ -z "$CLIENT_CREDENTIALS_ARN" ]]; then
   echo "CLIENT_CREDENTIALS_ARN not defined, skipping."
   exit 0

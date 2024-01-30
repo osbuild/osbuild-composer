@@ -1,9 +1,10 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 source /tmp/cloud_init_vars
 
 echo "Deploy Azure credentials."
 
+AZURE_ACCOUNT_IMAGE_BUILDER_ARN=${AZURE_ACCOUNT_IMAGE_BUILDER_ARN:-}
 if [[ -z "$AZURE_ACCOUNT_IMAGE_BUILDER_ARN" ]]; then
   echo "AZURE_ACCOUNT_IMAGE_BUILDER_ARN not defined, skipping."
   exit 0

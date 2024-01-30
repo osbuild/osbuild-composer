@@ -4,6 +4,7 @@ source /tmp/cloud_init_vars
 
 echo "Subscribing instance to RHN."
 
+SUBSCRIPTION_MANAGER_COMMAND_ARN=${SUBSCRIPTION_MANAGER_COMMAND_ARN:-}
 if [[ -z "$SUBSCRIPTION_MANAGER_COMMAND_ARN" ]]; then
   echo "SUBSCRIPTION_MANAGER_COMMAND_ARN not defined, skipping."
   exit 0

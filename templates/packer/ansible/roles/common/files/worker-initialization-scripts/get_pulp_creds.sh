@@ -1,9 +1,10 @@
 #!/bin/bash
-set -eo pipefail
+set -euo pipefail
 source /tmp/cloud_init_vars
 
 echo "Deploy Pulp credentials."
 
+PULP_PASSWORD_ARN=${PULP_PASSWORD_ARN:-}
 if [[ -z "$PULP_PASSWORD_ARN" ]]; then
   echo "PULP_PASSWORD_ARN not defined, skipping."
   exit 0

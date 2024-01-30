@@ -4,6 +4,7 @@ source /tmp/cloud_init_vars
 
 echo "Writing offline token."
 
+OFFLINE_TOKEN_ARN=${OFFLINE_TOKEN_ARN:-}
 if [[ -z "$OFFLINE_TOKEN_ARN" ]]; then
   echo "OFFLINE_TOKEN_ARN not defined, skipping."
   exit 0
