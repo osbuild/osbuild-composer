@@ -133,7 +133,8 @@ EOF
     name = "fedora-38-aarch64"
 
     # Use a static Fedora 38 Cloud Base Image.
-    source_ami = "ami-0da456bb338ee122b"
+    # Fedora-Cloud-Base-38-1.5
+    source_ami = "ami-046ab62d59c5a451c"
     ssh_username = "fedora"
     instance_type = "c6g.large"
 
