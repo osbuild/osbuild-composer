@@ -120,7 +120,7 @@ const (
 		INSERT INTO workers(worker_id, arch, heartbeat)
 		VALUES($1, $2, now())`
 	sqlUpdateWorkerStatus = `
-		UPDATE heartbeats
+		UPDATE workers
 		SET heartbeat = now()
 		WHERE worker_id = $1`
 	sqlQueryWorkers = `
@@ -746,6 +746,7 @@ func (q *DBJobQueue) UpdateWorkerStatus(workerID uuid.UUID) error {
 	}
 	return nil
 }
+
 func (q *DBJobQueue) Workers(olderThan time.Duration) ([]jobqueue.Worker, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
