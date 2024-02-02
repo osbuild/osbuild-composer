@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -141,4 +142,40 @@ func TestDumpConfig(t *testing.T) {
 	require.NotContains(t, buf.String(), "sensitive")
 	// DumpConfig takes a copy
 	require.Equal(t, "sensitive", config.Worker.PGPassword)
+}
+
+func TestEnvStrToMap(t *testing.T) {
+	env := "key1=value1,key2=value2,key3=value3"
+	expected := map[string]string{
+		"key1": "value1",
+		"key2": "value2",
+		"key3": "value3",
+	}
+	got, err := envStrToMap(env)
+	require.NoError(t, err)
+	require.Equal(t, expected, got)
+}
+
+func TestConfigFromEnv(t *testing.T) {
+	// simulate the environment variables
+	currentEnv := os.Environ()
+	defer func() {
+		os.Clearenv()
+		for _, env := range currentEnv {
+			pair := strings.SplitN(env, "=", 2)
+			_ = os.Setenv(pair[0], pair[1])
+		}
+	}()
+
+	os.Setenv("DISTRO_ALIASES", "rhel-7=rhel-7.9,rhel-8=rhel-8.9,rhel-9=rhel-9.3,rhel-10.0=rhel-9.5")
+	expectedDistroAliases := map[string]string{
+		"rhel-7":    "rhel-7.9",
+		"rhel-8":    "rhel-8.9",
+		"rhel-9":    "rhel-9.3",
+		"rhel-10.0": "rhel-9.5",
+	}
+
+	config, err := LoadConfig("")
+	require.NoError(t, err)
+	require.Equal(t, expectedDistroAliases, config.DistroAliases)
 }
