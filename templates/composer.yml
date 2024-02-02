@@ -124,6 +124,8 @@ objects:
                 key: dsn
                 name: "${GLITCHTIP_DSN_NAME}"
                 optional: true
+          - name: DISTRO_ALIASES
+            value: ${DISTRO_ALIASES}
           ports:
           - name: composer-api
             protocol: TCP
@@ -495,3 +497,6 @@ parameters:
   - name: GLITCHTIP_DSN_NAME
     value: "composer-stage-dsn"
     description: Name of the secret for connecting to sentry/glitchtip
+  - description: Distro name aliases
+    name: DISTRO_ALIASES
+    value: "rhel-7=rhel-7.9,rhel-8=rhel-8.9,rhel-9=rhel-9.3,rhel-10.0=rhel-9.4"
