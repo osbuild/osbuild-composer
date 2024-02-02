@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 )
@@ -14,7 +15,7 @@ type ComposerConfigFile struct {
 	Koji          KojiAPIConfig     `toml:"koji"`
 	Worker        WorkerAPIConfig   `toml:"worker"`
 	WeldrAPI      WeldrAPIConfig    `toml:"weldr_api"`
-	DistroAliases map[string]string `toml:"distro_aliases"`
+	DistroAliases map[string]string `toml:"distro_aliases" env:"DISTRO_ALIASES"`
 	LogLevel      string            `toml:"log_level"`
 	LogFormat     string            `toml:"log_format"`
 	DNFJson       string            `toml:"dnf-json"`
@@ -143,6 +144,24 @@ func LoadConfig(name string) (*ComposerConfigFile, error) {
 	return c, nil
 }
 
+// envStrToMap converts map string to map[string]string
+func envStrToMap(s string) (map[string]string, error) {
+	result := map[string]string{}
+	if s == "" {
+		return result, nil
+	}
+
+	parts := strings.Split(s, ",")
+	for _, part := range parts {
+		keyValue := strings.Split(part, "=")
+		if len(keyValue) != 2 {
+			return nil, fmt.Errorf("Invalid key-value pair in map string: %s", part)
+		}
+		result[keyValue[0]] = keyValue[1]
+	}
+	return result, nil
+}
+
 func loadConfigFromEnv(intf interface{}) error {
 	t := reflect.TypeOf(intf).Elem()
 	v := reflect.ValueOf(intf).Elem()
@@ -184,8 +203,23 @@ func loadConfigFromEnv(intf interface{}) error {
 			// no-op
 			continue
 		case reflect.Map:
-			// no-op
-			continue
+			key, ok := fieldT.Tag.Lookup("env")
+			if !ok {
+				continue
+			}
+			// handle only map[string]string
+			if fieldV.Type().Key().Kind() != reflect.String || fieldV.Type().Elem().Kind() != reflect.String {
+				return fmt.Errorf("Unsupported map type for loading from ENV: %s", kind)
+			}
+			confV, ok := os.LookupEnv(key)
+			if !ok {
+				continue
+			}
+			value, err := envStrToMap(confV)
+			if err != nil {
+				return err
+			}
+			fieldV.Set(reflect.ValueOf(value))
 		case reflect.Struct:
 			err := loadConfigFromEnv(fieldV.Addr().Interface())
 			if err != nil {
