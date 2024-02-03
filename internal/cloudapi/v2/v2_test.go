@@ -35,7 +35,6 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	distros := distrofactory.NewTestDefault()
 	require.NotNil(t, distros)
 
-	// TODO pass it a real path?
 	repos, err := reporegistry.NewTestedDefault()
 	require.Nil(t, err)
 	require.NotNil(t, repos)

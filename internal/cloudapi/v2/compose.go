@@ -4,16 +4,17 @@ package v2
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/rhsm/facts"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"math"
 	"math/big"
 	"reflect"
 
 	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/reporegistry"
+	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/subscription"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 // Return the string representation of the partitioning mode
@@ -944,7 +945,7 @@ func (request *ComposeRequest) GetPartitioningMode() (disk.PartitioningMode, err
 
 // GetImageRequests converts a composeRequest structure from the API to an intermediate imageRequest structure
 // that's used for generating manifests and orchestrating worker jobs.
-func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Factory) ([]imageRequest, error) {
+func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Factory, repoRegistry *reporegistry.RepoRegistry) ([]imageRequest, error) {
 	distribution := distroFactory.GetDistro(request.Distribution)
 	if distribution == nil {
 		return nil, HTTPError(ErrorUnsupportedDistribution)
@@ -1000,6 +1001,15 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 		repos, err := convertRepos(ir.Repositories, payloadRepositories, imageType.PayloadPackageSets())
 		if err != nil {
 			return nil, err
+		}
+
+		// If no repositories are included with the imageRequest use the defaults for the distro
+		if len(ir.Repositories) == 0 {
+			dr, err := repoRegistry.ReposByImageTypeName(request.Distribution, arch.Name(), imageType.Name())
+			if err != nil {
+				return nil, err
+			}
+			repos = append(repos, dr...)
 		}
 
 		// Get the initial ImageOptions with image size set
