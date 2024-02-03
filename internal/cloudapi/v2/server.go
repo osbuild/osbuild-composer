@@ -25,6 +25,7 @@ import (
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -38,6 +39,7 @@ import (
 type Server struct {
 	workers *worker.Server
 	distros *distrofactory.Factory
+	repos   *reporegistry.RepoRegistry
 	config  ServerConfig
 	router  routers.Router
 
@@ -51,7 +53,7 @@ type ServerConfig struct {
 	JWTEnabled           bool
 }
 
-func NewServer(workers *worker.Server, distros *distrofactory.Factory, config ServerConfig) *Server {
+func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, config ServerConfig) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
 	spec, err := GetSwagger()
 	if err != nil {
@@ -71,6 +73,7 @@ func NewServer(workers *worker.Server, distros *distrofactory.Factory, config Se
 	server := &Server{
 		workers: workers,
 		distros: distros,
+		repos:   repos,
 		config:  config,
 		router:  router,
 
