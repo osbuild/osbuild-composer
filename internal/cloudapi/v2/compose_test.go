@@ -1,14 +1,15 @@
 package v2
 
 import (
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/osbuild-composer/internal/target"
 	"testing"
 
 	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/subscription"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/target"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -647,6 +648,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(string(tt.requestedImageType), func(t *testing.T) {
 			for _, d := range tt.requestedDistros {
@@ -657,16 +659,42 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 						Architecture:  "x86_64",
 						ImageType:     tt.requestedImageType,
 						UploadOptions: &uo,
+						Repositories: []Repository{
+							Repository{
+								Baseurl: common.ToPtr("http://example.org/pub/linux/repo"),
+							},
+						},
 					},
 				}
-				got, err := request.GetImageRequests(distrofactory.NewDefault())
+				// NOTE: repoRegistry can be nil as long as ImageRequest.Repositories has data
+				got, err := request.GetImageRequests(distrofactory.NewDefault(), nil)
 				assert.NoError(t, err)
-				assert.Len(t, got, 1)
+				require.Len(t, got, 1)
 				assert.Equal(t, tt.expectedImageType, got[0].imageType.Name())
 
-				assert.Len(t, got[0].targets, 1)
+				require.Len(t, got[0].targets, 1)
 				assert.Equal(t, tt.expectedTargetName, got[0].targets[0].Name)
 			}
 		})
 	}
+}
+
+func TestGetImageRequests_NoRepositories(t *testing.T) {
+	uo := UploadOptions(struct{}{})
+	request := &ComposeRequest{
+		Distribution: "fedora-40",
+		ImageRequest: &ImageRequest{
+			Architecture:  "x86_64",
+			ImageType:     ImageTypesAws,
+			UploadOptions: &uo,
+			Repositories:  []Repository{},
+		},
+	}
+	// NOTE: current directory is the location of this file, back up so it can use ./repositories/
+	rr, err := reporegistry.New([]string{"../../../"})
+	require.NoError(t, err)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	assert.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Greater(t, len(got[0].repositories), 0)
 }
