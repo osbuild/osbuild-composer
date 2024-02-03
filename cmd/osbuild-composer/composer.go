@@ -23,6 +23,7 @@ import (
 
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
@@ -37,6 +38,7 @@ type Composer struct {
 	cacheDir string
 	logger   *log.Logger
 	distros  *distrofactory.Factory
+	repos    *reporegistry.RepoRegistry
 
 	solver *dnfjson.BaseSolver
 
@@ -74,8 +76,16 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		return nil, fmt.Errorf("failed to configure distro aliases: %v", err)
 	}
 
+	c.repos, err = reporegistry.New(repositoryConfigs)
+	if err != nil {
+		return nil, fmt.Errorf("error loading repository definitions: %v", err)
+	}
+
 	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
 	c.solver.SetDNFJSONPath(c.config.DNFJson)
+
+	// Clean up the cache, removes unknown distros and files
+	c.solver.CleanupOldCacheDirs(c.repos.ListDistros())
 
 	var jobs jobqueue.JobQueue
 	if config.Worker.PGDatabase != "" {
@@ -117,9 +127,8 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	return &c, nil
 }
 
-func (c *Composer) InitWeldr(repoPaths []string, weldrListener net.Listener,
-	distrosImageTypeDenylist map[string][]string) (err error) {
-	c.weldr, err = weldr.New(repoPaths, c.stateDir, c.solver, c.distros, c.logger, c.workers, distrosImageTypeDenylist)
+func (c *Composer) InitWeldr(weldrListener net.Listener, distrosImageTypeDenylist map[string][]string) (err error) {
+	c.weldr, err = weldr.New(c.repos, c.stateDir, c.solver, c.distros, c.logger, c.workers, distrosImageTypeDenylist)
 	if err != nil {
 		return err
 	}

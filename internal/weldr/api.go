@@ -156,7 +156,7 @@ func NewTestAPI(solver *dnfjson.BaseSolver, rr *reporegistry.RepoRegistry,
 	return setupRouter(api)
 }
 
-func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, df *distrofactory.Factory,
+func New(rr *reporegistry.RepoRegistry, stateDir string, solver *dnfjson.BaseSolver, df *distrofactory.Factory,
 	logger *log.Logger, workers *worker.Server, distrosImageTypeDenylist map[string][]string) (*API, error) {
 	if logger == nil {
 		logger = log.New(os.Stdout, "", 0)
@@ -167,14 +167,6 @@ func New(repoPaths []string, stateDir string, solver *dnfjson.BaseSolver, df *di
 		return nil, fmt.Errorf("failed to read host distro information")
 	}
 	hostArch := arch.Current().String()
-
-	rr, err := reporegistry.New(repoPaths)
-	if err != nil {
-		return nil, fmt.Errorf("error loading repository definitions: %v", err)
-	}
-
-	// Clean up the cache, removes unknown distros and files
-	solver.CleanupOldCacheDirs(rr.ListDistros())
 
 	hostDistro := df.GetDistro(hostDistroName)
 	if hostDistro != nil {

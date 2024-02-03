@@ -114,7 +114,7 @@ func main() {
 			logrus.Fatal("The osbuild-composer.socket unit is misconfigured. It should contain two sockets.")
 		}
 
-		err = composer.InitWeldr(repositoryConfigs, l[0], config.weldrDistrosImageTypeDenyList())
+		err = composer.InitWeldr(l[0], config.weldrDistrosImageTypeDenyList())
 		if err != nil {
 			logrus.Fatalf("Error initializing weldr API: %v", err)
 		}
