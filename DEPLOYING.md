@@ -5,7 +5,9 @@
 `deploy-`) to deploy it into cloud-init-enabled environemnts. These scripts all
 take the form:
 
-    $ ./tools/deploy-<target> <config> <userdata>
+```
+ ./tools/deploy-<target> <config> <userdata>
+```
 
 `<config>` depends on the target (see below). `<userdata>` is either a
 cloud-init [cloud-config file][cloud-config], or a directory containing
@@ -24,7 +26,7 @@ changes to the virtual machine are lost after stopping qemu.
 Two ports are forwarded to the host via qemu's [user networking][qemu-network]:
 22 → 2222 and 443 → 4430.
 
-See [HACKING.md][./HACKING.md] for how to use this target for running
+See [HACKING.md](./HACKING.md) for how to use this target for running
 integration tests locally.
 
 [qemu-network]: https://wiki.qemu.org/Documentation/Networking#User_Networking_.28SLIRP.29
@@ -36,7 +38,9 @@ integration tests locally.
 to deploy a machine in an OpenStack cluster. It expects that an [OpenStack RC
 file][openstackrc] was sourced into the running shell:
 
-    . openstackrc.sh
+```
+. openstackrc.sh
+```
 
 `<config>` has to be a JSON-file containing configuration about what kind of
 machine to create. For example:
