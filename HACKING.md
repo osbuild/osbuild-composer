@@ -39,7 +39,7 @@ mimic what is run on *osbuild-composer*'s continuous integration
 infrastructure, i.e., installing `osbuild-composer-tests` and starting the
 service.
 
-The virtual machine uses qemu's [user networking][1], forwarding port 22 to
+The virtual machine uses qemu's [user networking](https://wiki.qemu.org/Documentation/Networking#User_Networking_.28SLIRP.29), forwarding port 22 to
 the host's 2222 and 443 to 4430. You can log into the running machine with
 
 ```
@@ -50,8 +50,6 @@ The password is `foobar`. Stopping the machine loses all data.
 
 For a quick compile and debug cycle, we recommend iterating code using thorough
 unit tests before going through the full workflow described above.
-
-[1]: https://wiki.qemu.org/Documentation/Networking#User_Networking_.28SLIRP.29
 
 ## Containers
 
