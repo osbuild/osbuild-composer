@@ -1626,6 +1626,11 @@ data:
               },
               {
                 "selected": false,
+                "text": "community stage",
+                "value": "org-17546013"
+              },
+              {
+                "selected": false,
                 "text": "crc production",
                 "value": "org-15885990"
               },
@@ -1843,6 +1848,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker Job Stats",
       "uid": "image-builder-worker",
-      "version": 14,
+      "version": 15,
       "weekStart": ""
     }

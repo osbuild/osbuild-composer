@@ -1431,6 +1431,11 @@ data:
               },
               {
                 "selected": false,
+                "text": "community stage",
+                "value": "org-17546013"
+              },
+              {
+                "selected": false,
                 "text": "crc production",
                 "value": "org-15885990"
               },
@@ -1484,6 +1489,6 @@ data:
       "timezone": "",
       "title": "Image Builder Composer",
       "uid": "image-builder-composer",
-      "version": 9,
+      "version": 10,
       "weekStart": ""
     }
