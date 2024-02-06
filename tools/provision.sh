@@ -36,25 +36,10 @@ if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
 fi
 
 # RHEL 8.6+ and CentOS 9 require different handling for ansible
-ge86=$(echo "${VERSION_ID}" | awk '{print $1 >= 8.6}')  # do a numerical comparison for the version
-echo -n "${ID}=${VERSION_ID} "
-if [[ "${ID}" == "rhel" || "${ID}" == "centos" ]] && (( ge86 )); then
-    sudo dnf install -y ansible-core koji
-else
+if [[ "$VERSION_ID" == "8.4" ]]; then
     sudo dnf install -y ansible koji
-fi
-
-# workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2162815
-if [[ "${ID}" == "fedora" && "$VERSION_ID" == "37" ]]; then
-    sudo dnf install -y nghttp2
-fi
-
-# workaround for bug https://bugzilla.redhat.com/show_bug.cgi?id=2057769
-if [[ "$VERSION_ID" == "9.0" || "$VERSION_ID" == "9" ]]; then
-    if [[ -f "/usr/share/qemu/firmware/50-edk2-ovmf-amdsev.json" ]]; then
-        jq '.mapping += {"nvram-template": {"filename": "/usr/share/edk2/ovmf/OVMF_VARS.fd","format": "raw"}}' /usr/share/qemu/firmware/50-edk2-ovmf-amdsev.json | sudo tee /tmp/50-edk2-ovmf-amdsev.json
-        sudo mv /tmp/50-edk2-ovmf-amdsev.json /usr/share/qemu/firmware/50-edk2-ovmf-amdsev.json
-    fi
+else
+    sudo dnf install -y ansible-core koji
 fi
 
 sudo mkdir -p /etc/osbuild-composer
