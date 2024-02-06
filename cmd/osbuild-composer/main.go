@@ -7,6 +7,7 @@ import (
 
 	"github.com/coreos/go-systemd/activation"
 	"github.com/getsentry/sentry-go"
+	sentrylogrus "github.com/getsentry/sentry-go/logrus"
 	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"github.com/sirupsen/logrus"
 )
@@ -78,6 +79,12 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
+		sentryhook := sentrylogrus.NewFromClient([]logrus.Level{logrus.PanicLevel,
+			logrus.FatalLevel, logrus.ErrorLevel},
+			sentry.CurrentHub().Client())
+		logrus.AddHook(sentryhook)
+
 	} else {
 		logrus.Warn("GLITCHTIP_DSN not configured, skipping initializing Sentry/Glitchtip")
 	}
