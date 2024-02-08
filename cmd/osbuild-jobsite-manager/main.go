@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path"
@@ -347,7 +348,7 @@ func StepProgress() error {
 func StepExport() error {
 	return Wait(argTimeoutExport, func(done chan<- struct{}, errs chan<- error) {
 		for _, export := range argExports {
-			res, err := Request("GET", fmt.Sprintf("export?path=%s", export), []byte(""))
+			res, err := Request("GET", fmt.Sprintf("export?path=%s", url.PathEscape(export)), []byte(""))
 
 			if err != nil {
 				errs <- err
