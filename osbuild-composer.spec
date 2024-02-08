@@ -103,6 +103,8 @@ export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/comm
 
 %gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/osbuild-composer %{goipath}/cmd/osbuild-composer
 %gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/osbuild-worker %{goipath}/cmd/osbuild-worker
+%gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/osbuild-jobsite-manager %{goipath}/cmd/osbuild-jobsite-manager
+%gobuild ${GOTAGS:+-tags=$GOTAGS} -o _bin/osbuild-jobsite-builder %{goipath}/cmd/osbuild-jobsite-builder
 
 make man
 
@@ -137,6 +139,8 @@ go build -tags="integration${GOTAGS:+,$GOTAGS}" -ldflags="${TEST_LDFLAGS}" -o _b
 install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/osbuild-composer
 install -m 0755 -vp _bin/osbuild-composer                          %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp _bin/osbuild-worker                            %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-jobsite-manager                   %{buildroot}%{_libexecdir}/osbuild-composer/
+install -m 0755 -vp _bin/osbuild-jobsite-builder                   %{buildroot}%{_libexecdir}/osbuild-composer/
 install -m 0755 -vp dnf-json                                       %{buildroot}%{_libexecdir}/osbuild-composer/
 
 # Only include repositories for the distribution and release
@@ -318,6 +322,8 @@ The worker for osbuild-composer
 
 %files worker
 %{_libexecdir}/osbuild-composer/osbuild-worker
+%{_libexecdir}/osbuild-composer/osbuild-jobsite-manager
+%{_libexecdir}/osbuild-composer/osbuild-jobsite-builder
 %{_unitdir}/osbuild-worker@.service
 %{_unitdir}/osbuild-remote-worker@.service
 
