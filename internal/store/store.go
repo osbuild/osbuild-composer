@@ -58,6 +58,7 @@ type Store struct {
 
 type SourceConfig struct {
 	Name           string   `json:"name" toml:"name"`
+	ID             string   `json:"id" toml:"id"`
 	Type           string   `json:"type" toml:"type"`
 	URL            string   `json:"url" toml:"url"`
 	CheckGPG       bool     `json:"check_gpg" toml:"check_gpg"`
