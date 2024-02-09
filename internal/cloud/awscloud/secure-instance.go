@@ -1,6 +1,7 @@
 package awscloud
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -16,6 +17,12 @@ type SecureInstance struct {
 	LTID     string
 	Instance *ec2.Instance
 }
+
+const UserData = `#cloud-config
+write_files:
+  - path: /tmp/worker-run-executor-service
+    content: ''
+`
 
 // Runs an instance with a security group that only allows traffic to
 // the host. Will replace resources if they already exists.
@@ -262,7 +269,7 @@ func (a *AWS) createOrReplaceSG(hostInstanceID, hostIP, vpcID string) (string, e
 
 func isLaunchTemplateNotFoundError(err error) bool {
 	if awsErr, ok := err.(awserr.Error); ok {
-		if awsErr.Code() == "InvalidLaunchTemplateId.NotFound" && awsErr.Code() == "InvalidLaunchTemplateName.NotFoundException" {
+		if awsErr.Code() == "InvalidLaunchTemplateId.NotFound" || awsErr.Code() == "InvalidLaunchTemplateName.NotFoundException" {
 			return true
 		}
 	}
@@ -320,6 +327,7 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile string
 			SecurityGroupIds: []*string{
 				aws.String(sgID),
 			},
+			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(UserData))),
 		},
 		TagSpecifications: []*ec2.TagSpecification{
 			&ec2.TagSpecification{
