@@ -240,8 +240,7 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 
 	args := []string{
 		"--store", path.Join(argBuildPath, "store"),
-		"--cache-max-size", "unlimited",
-		"--checkpoint", "*",
+		"--cache-max-size", "0",
 		"--output-directory", path.Join(argBuildPath, "export"),
 	}
 
