@@ -22,6 +22,8 @@ const (
 
 type State int
 
+type Handler func(w http.ResponseWriter, r *http.Request) error
+
 const (
 	StateClaim State = iota
 	StateProvision
@@ -125,7 +127,15 @@ func (agent *Agent) GuardState(stateWanted State) {
 	}
 }
 
-func (agent *Agent) HandleClaim(w http.ResponseWriter, r *http.Request) {
+func (agent *Agent) RegisterHandler(h Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := h(w, r); err != nil {
+			logrus.Fatal(err)
+		}
+	})
+}
+
+func (agent *Agent) HandleClaim(w http.ResponseWriter, r *http.Request) error {
 	agent.GuardState(StateClaim)
 
 	if r.Method != "POST" {
@@ -139,15 +149,15 @@ func (agent *Agent) HandleClaim(w http.ResponseWriter, r *http.Request) {
 	logrus.Info("Agent.HandleClaim: Done.")
 
 	agent.SetState(StateProvision)
+
+	return nil
 }
 
-func (agent *Agent) HandleProvision(w http.ResponseWriter, r *http.Request) {
+func (agent *Agent) HandleProvision(w http.ResponseWriter, r *http.Request) error {
 	agent.GuardState(StateProvision)
 
 	if r.Method != "PUT" {
-		logrus.WithFields(
-			logrus.Fields{"method": r.Method},
-		).Fatal("Agent.HandleProvision: Unexpected request method.")
+		return fmt.Errorf("Agent.HandleProvision: Unexpected request method.")
 	}
 
 	logrus.WithFields(logrus.Fields{"argBuildPath": argBuildPath}).Debug("Agent.HandleProvision: Opening manifest.json.")
@@ -160,7 +170,7 @@ func (agent *Agent) HandleProvision(w http.ResponseWriter, r *http.Request) {
 	defer dst.Close()
 
 	if err != nil {
-		logrus.Fatal("Agent.HandleProvision: Failed to open manifest.json.")
+		return fmt.Errorf("Agent.HandleProvision: Failed to open manifest.json.")
 	}
 
 	logrus.Debug("Agent.HandleProvision: Writing manifest.json.")
@@ -168,47 +178,47 @@ func (agent *Agent) HandleProvision(w http.ResponseWriter, r *http.Request) {
 	_, err = io.Copy(dst, r.Body)
 
 	if err != nil {
-		logrus.Fatal("Agent.HandleProvision: Failed to write manifest.json.")
+		return fmt.Errorf("Agent.HandleProvision: Failed to write manifest.json.")
 	}
 
 	w.WriteHeader(http.StatusCreated)
 
 	if _, err := w.Write([]byte(`done`)); err != nil {
-		logrus.Fatal("Agent.HandleProvision: Failed to write response.")
+		return fmt.Errorf("Agent.HandleProvision: Failed to write response.")
 	}
 
 	logrus.Info("Agent.HandleProvision: Done.")
 
 	agent.SetState(StatePopulate)
+
+	return nil
 }
 
-func (agent *Agent) HandlePopulate(w http.ResponseWriter, r *http.Request) {
+func (agent *Agent) HandlePopulate(w http.ResponseWriter, r *http.Request) error {
 	agent.GuardState(StatePopulate)
 
 	if r.Method != "POST" {
-		logrus.WithFields(
-			logrus.Fields{"method": r.Method},
-		).Fatal("Agent.HandlePopulate: unexpected request method")
+		return fmt.Errorf("Agent.HandlePopulate: unexpected request method")
 	}
 
 	w.WriteHeader(http.StatusOK)
 
 	if _, err := w.Write([]byte(`done`)); err != nil {
-		logrus.Fatal("Agent.HandlePopulate: Failed to write response.")
+		return fmt.Errorf("Agent.HandlePopulate: Failed to write response.")
 	}
 
 	logrus.Info("Agent.HandlePopulate: Done.")
 
 	agent.SetState(StateBuild)
+
+	return nil
 }
 
-func (agent *Agent) HandleBuild(w http.ResponseWriter, r *http.Request) {
+func (agent *Agent) HandleBuild(w http.ResponseWriter, r *http.Request) error {
 	agent.GuardState(StateBuild)
 
 	if r.Method != "POST" {
-		logrus.WithFields(
-			logrus.Fields{"method": r.Method},
-		).Fatal("Agent.HandleBuild: Unexpected request method.")
+		return fmt.Errorf("Agent.HandleBuild: Unexpected request method.")
 	}
 
 	var buildRequest BuildRequest
@@ -216,7 +226,7 @@ func (agent *Agent) HandleBuild(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if err = json.NewDecoder(r.Body).Decode(&buildRequest); err != nil {
-		logrus.Fatal("HandleBuild: Failed to decode body.")
+		return fmt.Errorf("HandleBuild: Failed to decode body.")
 	}
 
 	if Build != nil {
@@ -258,11 +268,11 @@ func (agent *Agent) HandleBuild(w http.ResponseWriter, r *http.Request) {
 	Build.Stderr, err = Build.Process.StderrPipe()
 
 	if err != nil {
-		logrus.Fatal(err)
+		return err
 	}
 
 	if err := Build.Process.Start(); err != nil {
-		logrus.Fatal("BackgroundProcess: Failed to start process.")
+		return fmt.Errorf("BackgroundProcess: Failed to start process.")
 	}
 
 	go func() {
@@ -291,26 +301,26 @@ func (agent *Agent) HandleBuild(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	agent.SetState(StateProgress)
+
+	return nil
 }
 
-func (agent *Agent) HandleProgress(w http.ResponseWriter, r *http.Request) {
+func (agent *Agent) HandleProgress(w http.ResponseWriter, r *http.Request) error {
 	agent.GuardState(StateProgress)
 
 	if r.Method != "GET" {
-		logrus.WithFields(
-			logrus.Fields{"method": r.Method},
-		).Fatal("Agent.HandleProgress: Unexpected request method.")
+		return fmt.Errorf("Agent.HandleProgress: Unexpected request method.")
 	}
 
 	if Build == nil {
-		logrus.Fatal("HandleProgress: Progress requested but Build was nil.")
+		return fmt.Errorf("HandleProgress: Progress requested but Build was nil.")
 	}
 
 	if Build.Done {
 		w.WriteHeader(http.StatusOK)
 
 		if Build.Error != nil {
-			logrus.Fatalf("Agent.HandleBuild: Buildprocess exited with error: %s", Build.Error)
+			return fmt.Errorf("Agent.HandleBuild: Buildprocess exited with error: %s", Build.Error)
 		}
 
 		agent.SetState(StateExport)
@@ -319,25 +329,25 @@ func (agent *Agent) HandleProgress(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := w.Write([]byte(`done`)); err != nil {
-		logrus.Fatal("Agent.HandleBuild: Failed to write response.")
+		return fmt.Errorf("Agent.HandleBuild: Failed to write response.")
 	}
 
 	logrus.Info("Agent.HandleBuild: Done.")
+
+	return nil
 }
 
-func (agent *Agent) HandleExport(w http.ResponseWriter, r *http.Request) {
+func (agent *Agent) HandleExport(w http.ResponseWriter, r *http.Request) error {
 	agent.GuardState(StateExport)
 
 	if r.Method != "GET" {
-		logrus.WithFields(
-			logrus.Fields{"method": r.Method},
-		).Fatal("Agent.HandleExport: unexpected request method")
+		return fmt.Errorf("Agent.HandleExport: unexpected request method")
 	}
 
 	exportPath := r.URL.Query().Get("path")
 
 	if exportPath == "" {
-		logrus.Fatal("Agent.HandleExport: Missing export.")
+		return fmt.Errorf("Agent.HandleExport: Missing export.")
 	}
 
 	// XXX check subdir
@@ -348,31 +358,33 @@ func (agent *Agent) HandleExport(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		logrus.Fatalf("Agent.HandleExport: Failed to open source: %s.", err)
+		return fmt.Errorf("Agent.HandleExport: Failed to open source: %s.", err)
 	}
 
 	_, err = io.Copy(w, src)
 
 	if err != nil {
-		logrus.Fatalf("Agent.HandleExport: Failed to write response: %s.", err)
+		return fmt.Errorf("Agent.HandleExport: Failed to write response: %s.", err)
 	}
 
 	logrus.Info("Agent.HandleExport: Done.")
 
 	agent.SetState(StateDone)
+
+	return nil
 }
 
 func (agent *Agent) Serve() error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/claim", agent.HandleClaim)
+	mux.HandleFunc("/claim", agent.RegisterHandler(agent.HandleClaim))
 
-	mux.HandleFunc("/provision", agent.HandleProvision)
-	mux.HandleFunc("/populate", agent.HandlePopulate)
+	mux.HandleFunc("/provision", agent.RegisterHandler(agent.HandleProvision))
+	mux.HandleFunc("/populate", agent.RegisterHandler(agent.HandlePopulate))
 
-	mux.HandleFunc("/build", agent.HandleBuild)
-	mux.HandleFunc("/progress", agent.HandleProgress)
+	mux.HandleFunc("/build", agent.RegisterHandler(agent.HandleBuild))
+	mux.HandleFunc("/progress", agent.RegisterHandler(agent.HandleProgress))
 
-	mux.HandleFunc("/export", agent.HandleExport)
+	mux.HandleFunc("/export", agent.RegisterHandler(agent.HandleExport))
 
 	net := &http.Server{
 		ReadTimeout:       1 * time.Second,
@@ -396,11 +408,11 @@ func main() {
 			"argTimeoutProvision": argTimeoutProvision,
 			"argTimeoutBuild":     argTimeoutBuild,
 			"argTimeoutExport":    argTimeoutExport,
-		}).Info("main: startup")
+		}).Info("main: Starting up.")
 
 	agent := Agent{
 		State:        StateClaim,
-		StateChannel: make(chan State, 16),
+		StateChannel: make(chan State, 1),
 		Host:         argBuilderHost,
 		Port:         argBuilderPort,
 	}
@@ -408,7 +420,7 @@ func main() {
 
 	for state := range agent.StateChannel {
 		if state == StateDone {
-			logrus.Info("main: Shutdown.")
+			logrus.Info("main: Shutting down successfully.")
 			os.Exit(ExitOk)
 		}
 	}
