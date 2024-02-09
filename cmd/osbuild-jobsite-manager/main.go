@@ -181,13 +181,20 @@ func Request(method string, path string, body []byte) (*http.Response, error) {
 
 	logrus.Debugf("Request: Making a %s request to %s.", method, url)
 
-	res, err := cli.Do(req)
+	for {
+		res, err := cli.Do(req)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			if errors.Is(err, syscall.ECONNABORTED) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.ECONNREFUSED) {
+				time.Sleep(1 * time.Second)
+				continue
+			}
+
+			return nil, err
+		}
+
+		return res, nil
 	}
-
-	return res, nil
 }
 
 func Wait(timeout int, fn Step) error {
@@ -208,27 +215,18 @@ func Wait(timeout int, fn Step) error {
 
 func StepClaim() error {
 	return Wait(argTimeoutClaim, func(done chan<- struct{}, errs chan<- error) {
-		for {
-			res, err := Request("POST", "claim", []byte(""))
+		res, err := Request("POST", "claim", []byte(""))
 
-			if err != nil {
-				if errors.Is(err, syscall.ECONNREFUSED) {
-					logrus.Info("StepClaim: Got ECONNREFUSED, the builder is likely not yet up. Retry.")
-					time.Sleep(1 * time.Second)
-					continue
-				}
-				errs <- err
-				return
-			}
+		if err != nil {
+			errs <- err
+			return
+		}
 
-			defer res.Body.Close()
+		defer res.Body.Close()
 
-			if res.StatusCode != http.StatusOK {
-				errs <- fmt.Errorf("StepClaim: Got an unexpected response %d while expecting %d. Exiting.", res.StatusCode, http.StatusOK)
-				return
-			}
-
-			break
+		if res.StatusCode != http.StatusOK {
+			errs <- fmt.Errorf("StepClaim: Got an unexpected response %d while expecting %d. Exiting.", res.StatusCode, http.StatusOK)
+			return
 		}
 
 		logrus.Info("StepClaim: Done.")
