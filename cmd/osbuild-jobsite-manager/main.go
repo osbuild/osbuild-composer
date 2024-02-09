@@ -81,9 +81,10 @@ func init() {
 	flag.IntVar(&argTimeoutProgress, "timeout-progress", 3600, "Timeout before the progress phase needs to be completed in seconds.")
 	flag.IntVar(&argTimeoutExport, "timeout-export", 1800, "Timeout before the export phase needs to be completed in seconds.")
 
-	flag.Var(&argPipelines, "pipeline", "Pipelines to export. Can be passed multiple times.")
+	flag.Var(&argPipelines, "export", "Pipelines to export. Can be passed multiple times.")
+	flag.Var(&argExports, "export-file", "Files to export. Can be passed multiple times.")
+
 	flag.Var(&argEnvironments, "environment", "Environments to add. Can be passed multiple times.")
-	flag.Var(&argExports, "export", "Files to export. Can be passed multiple times.")
 	flag.StringVar(&argOutputPath, "output", "/dev/null", "Output directory to write to.")
 
 	flag.Parse()
