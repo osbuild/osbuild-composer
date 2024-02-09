@@ -421,12 +421,24 @@ func main() {
 		Host:         argBuilderHost,
 		Port:         argBuilderPort,
 	}
-	go builder.Serve()
 
-	for state := range builder.StateChannel {
-		if state == StateDone {
-			logrus.Info("main: Shutting down successfully.")
-			os.Exit(ExitOk)
+	errs := make(chan error, 1)
+
+	go func(errs chan<- error) {
+		if err := builder.Serve(); err != nil {
+			errs <- err
+		}
+	}(errs)
+
+	for {
+		select {
+		case state := <-builder.StateChannel:
+			if state == StateDone {
+				logrus.Info("main: Shutting down successfully.")
+				os.Exit(ExitOk)
+			}
+		case err := <-errs:
+			logrus.Fatal(err)
 		}
 	}
 }
