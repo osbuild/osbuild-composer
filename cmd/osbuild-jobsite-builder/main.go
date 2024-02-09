@@ -153,7 +153,7 @@ func (agent *Agent) HandleClaim(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (agent *Agent) HandleProvision(w http.ResponseWriter, r *http.Request) error {
+func (agent *Agent) HandleProvision(w http.ResponseWriter, r *http.Request) (err error) {
 	agent.GuardState(StateProvision)
 
 	if r.Method != "PUT" {
@@ -167,7 +167,12 @@ func (agent *Agent) HandleProvision(w http.ResponseWriter, r *http.Request) erro
 		os.O_WRONLY|os.O_CREATE|os.O_EXCL,
 		0400,
 	)
-	defer dst.Close()
+
+	defer func() {
+		if cerr := dst.Close(); cerr != nil {
+			err = cerr
+		}
+	}()
 
 	if err != nil {
 		return fmt.Errorf("Agent.HandleProvision: Failed to open manifest.json.")
