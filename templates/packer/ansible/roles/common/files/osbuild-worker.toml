@@ -1,1 +1,5 @@
 base_path = "/api/image-builder-worker/v1"
+
+[osbuild_executor]
+type = "aws.ec2"
+iam_profile = "osbuild-executor"
