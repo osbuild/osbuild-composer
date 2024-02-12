@@ -123,7 +123,7 @@ func (builder *Builder) GetState() State {
 
 func (builder *Builder) GuardState(stateWanted State) {
 	if stateCurrent := builder.GetState(); stateWanted != stateCurrent {
-		logrus.Fatalf("Builder.GuardState: Requested guard for %d but we're in %d. Exit.", stateWanted, stateCurrent)
+		logrus.Fatalf("Builder.GuardState: Requested guard for %d but we're in %d. Exit", stateWanted, stateCurrent)
 	}
 }
 
@@ -146,7 +146,7 @@ func (builder *Builder) HandleClaim(w http.ResponseWriter, r *http.Request) erro
 
 	fmt.Fprintf(w, "%s", "done")
 
-	logrus.Info("Builder.HandleClaim: Done.")
+	logrus.Info("Builder.HandleClaim: Done")
 
 	builder.SetState(StateProvision)
 
@@ -157,10 +157,10 @@ func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) 
 	builder.GuardState(StateProvision)
 
 	if r.Method != "PUT" {
-		return fmt.Errorf("Builder.HandleProvision: Unexpected request method.")
+		return fmt.Errorf("Builder.HandleProvision: Unexpected request method")
 	}
 
-	logrus.WithFields(logrus.Fields{"argBuildPath": argBuildPath}).Debug("Builder.HandleProvision: Opening manifest.json.")
+	logrus.WithFields(logrus.Fields{"argBuildPath": argBuildPath}).Debug("Builder.HandleProvision: Opening manifest.json")
 
 	dst, err := os.OpenFile(
 		path.Join(argBuildPath, "manifest.json"),
@@ -175,24 +175,24 @@ func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) 
 	}()
 
 	if err != nil {
-		return fmt.Errorf("Builder.HandleProvision: Failed to open manifest.json.")
+		return fmt.Errorf("Builder.HandleProvision: Failed to open manifest.json")
 	}
 
-	logrus.Debug("Builder.HandleProvision: Writing manifest.json.")
+	logrus.Debug("Builder.HandleProvision: Writing manifest.json")
 
 	_, err = io.Copy(dst, r.Body)
 
 	if err != nil {
-		return fmt.Errorf("Builder.HandleProvision: Failed to write manifest.json.")
+		return fmt.Errorf("Builder.HandleProvision: Failed to write manifest.json")
 	}
 
 	w.WriteHeader(http.StatusCreated)
 
 	if _, err := w.Write([]byte(`done`)); err != nil {
-		return fmt.Errorf("Builder.HandleProvision: Failed to write response.")
+		return fmt.Errorf("Builder.HandleProvision: Failed to write response")
 	}
 
-	logrus.Info("Builder.HandleProvision: Done.")
+	logrus.Info("Builder.HandleProvision: Done")
 
 	builder.SetState(StatePopulate)
 
@@ -209,10 +209,10 @@ func (builder *Builder) HandlePopulate(w http.ResponseWriter, r *http.Request) e
 	w.WriteHeader(http.StatusOK)
 
 	if _, err := w.Write([]byte(`done`)); err != nil {
-		return fmt.Errorf("Builder.HandlePopulate: Failed to write response.")
+		return fmt.Errorf("Builder.HandlePopulate: Failed to write response")
 	}
 
-	logrus.Info("Builder.HandlePopulate: Done.")
+	logrus.Info("Builder.HandlePopulate: Done")
 
 	builder.SetState(StateBuild)
 
@@ -223,7 +223,7 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	builder.GuardState(StateBuild)
 
 	if r.Method != "POST" {
-		return fmt.Errorf("Builder.HandleBuild: Unexpected request method.")
+		return fmt.Errorf("Builder.HandleBuild: Unexpected request method")
 	}
 
 	var buildRequest BuildRequest
@@ -231,11 +231,11 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	var err error
 
 	if err = json.NewDecoder(r.Body).Decode(&buildRequest); err != nil {
-		return fmt.Errorf("HandleBuild: Failed to decode body.")
+		return fmt.Errorf("HandleBuild: Failed to decode body")
 	}
 
 	if Build != nil {
-		logrus.Fatal("HandleBuild: Build started but Build was non-nil.")
+		logrus.Fatal("HandleBuild: Build started but Build was non-nil")
 	}
 
 	args := []string{
@@ -277,14 +277,14 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	}
 
 	if err := Build.Process.Start(); err != nil {
-		return fmt.Errorf("BackgroundProcess: Failed to start process.")
+		return fmt.Errorf("BackgroundProcess: Failed to start process")
 	}
 
 	go func() {
 		Build.Error = Build.Process.Wait()
 		Build.Done = true
 
-		logrus.Info("BackgroundProcess: Exited.")
+		logrus.Info("BackgroundProcess: Exited")
 	}()
 
 	go func() {
@@ -314,11 +314,11 @@ func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) e
 	builder.GuardState(StateProgress)
 
 	if r.Method != "GET" {
-		return fmt.Errorf("Builder.HandleProgress: Unexpected request method.")
+		return fmt.Errorf("Builder.HandleProgress: Unexpected request method")
 	}
 
 	if Build == nil {
-		return fmt.Errorf("HandleProgress: Progress requested but Build was nil.")
+		return fmt.Errorf("HandleProgress: Progress requested but Build was nil")
 	}
 
 	if Build.Done {
@@ -334,10 +334,10 @@ func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) e
 	}
 
 	if _, err := w.Write([]byte(`done`)); err != nil {
-		return fmt.Errorf("Builder.HandleBuild: Failed to write response.")
+		return fmt.Errorf("Builder.HandleBuild: Failed to write response")
 	}
 
-	logrus.Info("Builder.HandleBuild: Done.")
+	logrus.Info("Builder.HandleBuild: Done")
 
 	return nil
 }
@@ -352,7 +352,7 @@ func (builder *Builder) HandleExport(w http.ResponseWriter, r *http.Request) err
 	exportPath := r.URL.Query().Get("path")
 
 	if exportPath == "" {
-		return fmt.Errorf("Builder.HandleExport: Missing export.")
+		return fmt.Errorf("Builder.HandleExport: Missing export")
 	}
 
 	// XXX check subdir
@@ -363,16 +363,16 @@ func (builder *Builder) HandleExport(w http.ResponseWriter, r *http.Request) err
 	)
 
 	if err != nil {
-		return fmt.Errorf("Builder.HandleExport: Failed to open source: %s.", err)
+		return fmt.Errorf("Builder.HandleExport: Failed to open source: %s", err)
 	}
 
 	_, err = io.Copy(w, src)
 
 	if err != nil {
-		return fmt.Errorf("Builder.HandleExport: Failed to write response: %s.", err)
+		return fmt.Errorf("Builder.HandleExport: Failed to write response: %s", err)
 	}
 
-	logrus.Info("Builder.HandleExport: Done.")
+	logrus.Info("Builder.HandleExport: Done")
 
 	builder.SetState(StateDone)
 
@@ -413,7 +413,7 @@ func main() {
 			"argTimeoutProvision": argTimeoutProvision,
 			"argTimeoutBuild":     argTimeoutBuild,
 			"argTimeoutExport":    argTimeoutExport,
-		}).Info("main: Starting up.")
+		}).Info("main: Starting up")
 
 	builder := Builder{
 		State:        StateClaim,
@@ -434,7 +434,7 @@ func main() {
 		select {
 		case state := <-builder.StateChannel:
 			if state == StateDone {
-				logrus.Info("main: Shutting down successfully.")
+				logrus.Info("main: Shutting down successfully")
 				os.Exit(ExitOk)
 			}
 		case err := <-errs:
