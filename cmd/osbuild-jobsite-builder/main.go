@@ -87,6 +87,7 @@ type Builder struct {
 	State        State
 	StateLock    sync.Mutex
 	StateChannel chan State
+	Build        *BackgroundProcess
 }
 
 type BackgroundProcess struct {
@@ -96,10 +97,6 @@ type BackgroundProcess struct {
 	Done    bool
 	Error   error
 }
-
-var (
-	Build *BackgroundProcess
-)
 
 func (builder *Builder) SetState(state State) {
 	builder.StateLock.Lock()
@@ -234,7 +231,7 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 		return fmt.Errorf("HandleBuild: Failed to decode body")
 	}
 
-	if Build != nil {
+	if builder.Build != nil {
 		logrus.Fatal("HandleBuild: Build started but Build was non-nil")
 	}
 
@@ -255,40 +252,40 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	envs := os.Environ()
 	envs = append(envs, buildRequest.Environments...)
 
-	Build = &BackgroundProcess{}
-	Build.Process = exec.Command(
+	builder.Build = &BackgroundProcess{}
+	builder.Build.Process = exec.Command(
 		"/usr/bin/osbuild",
 		args...,
 	)
-	Build.Process.Env = envs
+	builder.Build.Process.Env = envs
 
-	logrus.Infof("BackgroundProcess: Starting %s with %s", Build.Process, envs)
+	logrus.Infof("BackgroundProcess: Starting %s with %s", builder.Build.Process, envs)
 
-	Build.Stdout, err = Build.Process.StdoutPipe()
+	builder.Build.Stdout, err = builder.Build.Process.StdoutPipe()
 
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	Build.Stderr, err = Build.Process.StderrPipe()
+	builder.Build.Stderr, err = builder.Build.Process.StderrPipe()
 
 	if err != nil {
 		return err
 	}
 
-	if err := Build.Process.Start(); err != nil {
+	if err := builder.Build.Process.Start(); err != nil {
 		return fmt.Errorf("BackgroundProcess: Failed to start process")
 	}
 
 	go func() {
-		Build.Error = Build.Process.Wait()
-		Build.Done = true
+		builder.Build.Error = builder.Build.Process.Wait()
+		builder.Build.Done = true
 
 		logrus.Info("BackgroundProcess: Exited")
 	}()
 
 	go func() {
-		scanner := bufio.NewScanner(Build.Stdout)
+		scanner := bufio.NewScanner(builder.Build.Stdout)
 		for scanner.Scan() {
 			m := scanner.Text()
 			logrus.Infof("BackgroundProcess: Stdout: %s", m)
@@ -296,7 +293,7 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	}()
 
 	go func() {
-		scanner := bufio.NewScanner(Build.Stderr)
+		scanner := bufio.NewScanner(builder.Build.Stderr)
 		for scanner.Scan() {
 			m := scanner.Text()
 			logrus.Infof("BackgroundProcess: Stderr: %s", m)
@@ -317,15 +314,15 @@ func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) e
 		return fmt.Errorf("Builder.HandleProgress: Unexpected request method")
 	}
 
-	if Build == nil {
+	if builder.Build == nil {
 		return fmt.Errorf("HandleProgress: Progress requested but Build was nil")
 	}
 
-	if Build.Done {
+	if builder.Build.Done {
 		w.WriteHeader(http.StatusOK)
 
-		if Build.Error != nil {
-			return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", Build.Error)
+		if builder.Build.Error != nil {
+			return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", builder.Build.Error)
 		}
 
 		builder.SetState(StateExport)
