@@ -97,7 +97,7 @@ func init() {
 }
 
 func main() {
-	logrus.Info("main: Starting up.")
+	logrus.Info("main: Starting up")
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -113,16 +113,16 @@ func main() {
 			logrus.WithFields(
 				logrus.Fields{
 					"signal": sig,
-				}).Info("main: Exiting on signal.")
+				}).Info("main: Exiting on signal")
 			os.Exit(ExitSignal)
 		case err := <-errs:
 			logrus.WithFields(
 				logrus.Fields{
 					"error": err,
-				}).Info("main: Exiting on error.")
+				}).Info("main: Exiting on error")
 			os.Exit(ExitError)
 		case <-done:
-			logrus.Info("main: Shutting down succesfully.")
+			logrus.Info("main: Shutting down succesfully")
 			os.Exit(ExitOk)
 		}
 	}
@@ -179,7 +179,7 @@ func Request(method string, path string, body []byte) (*http.Response, error) {
 		return nil, err
 	}
 
-	logrus.Debugf("Request: Making a %s request to %s.", method, url)
+	logrus.Debugf("Request: Making a %s request to %s", method, url)
 
 	for {
 		res, err := cli.Do(req)
@@ -225,11 +225,11 @@ func StepClaim() error {
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
-			errs <- fmt.Errorf("StepClaim: Got an unexpected response %d while expecting %d. Exiting.", res.StatusCode, http.StatusOK)
+			errs <- fmt.Errorf("StepClaim: Got an unexpected response %d while expecting %d. Exiting", res.StatusCode, http.StatusOK)
 			return
 		}
 
-		logrus.Info("StepClaim: Done.")
+		logrus.Info("StepClaim: Done")
 
 		close(done)
 	})
@@ -247,11 +247,11 @@ func StepProvision(manifest []byte) error {
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusCreated {
-			errs <- fmt.Errorf("StepProvision: Got an unexpected response %d while expecting %d. Exiting.", res.StatusCode, http.StatusCreated)
+			errs <- fmt.Errorf("StepProvision: Got an unexpected response %d while expecting %d. Exiting", res.StatusCode, http.StatusCreated)
 			return
 		}
 
-		logrus.Info("StepProvision: Done.")
+		logrus.Info("StepProvision: Done")
 
 		close(done)
 	})
@@ -269,11 +269,11 @@ func StepPopulate() error {
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
-			errs <- fmt.Errorf("StepPopulate: Got an unexpected response %d while expecting %d. Exiting.", res.StatusCode, http.StatusOK)
+			errs <- fmt.Errorf("StepPopulate: Got an unexpected response %d while expecting %d. Exiting", res.StatusCode, http.StatusOK)
 			return
 		}
 
-		logrus.Info("StepPopulate: Done.")
+		logrus.Info("StepPopulate: Done")
 
 		close(done)
 	})
@@ -302,11 +302,11 @@ func StepBuild() error {
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusCreated {
-			errs <- fmt.Errorf("StepBuild: Got an unexpected response %d while expecting %d. Exiting.", res.StatusCode, http.StatusOK)
+			errs <- fmt.Errorf("StepBuild: Got an unexpected response %d while expecting %d. Exiting", res.StatusCode, http.StatusOK)
 			return
 		}
 
-		logrus.Info("StepBuild: Done.")
+		logrus.Info("StepBuild: Done")
 
 		close(done)
 	})
@@ -325,20 +325,20 @@ func StepProgress() error {
 			defer res.Body.Close()
 
 			if res.StatusCode == http.StatusAccepted {
-				logrus.Info("StepProgress: Build is pending. Retry.")
+				logrus.Info("StepProgress: Build is pending. Retry")
 				time.Sleep(5 * time.Second)
 				continue
 			}
 
 			if res.StatusCode != http.StatusOK {
-				errs <- fmt.Errorf("StepProgress: Got an unexpected response %d while expecting %d. Exiting.", res.StatusCode, http.StatusOK)
+				errs <- fmt.Errorf("StepProgress: Got an unexpected response %d while expecting %d. Exiting", res.StatusCode, http.StatusOK)
 				return
 			}
 
 			break
 		}
 
-		logrus.Info("StepProgress: Done.")
+		logrus.Info("StepProgress: Done")
 
 		close(done)
 	})
@@ -357,7 +357,7 @@ func StepExport() error {
 			defer res.Body.Close()
 
 			if res.StatusCode != http.StatusOK {
-				errs <- fmt.Errorf("StepExport: Got an unexpected response %d while expecting %d. Exiting.", res.StatusCode, http.StatusOK)
+				errs <- fmt.Errorf("StepExport: Got an unexpected response %d while expecting %d. Exiting", res.StatusCode, http.StatusOK)
 				return
 			}
 
@@ -368,19 +368,19 @@ func StepExport() error {
 			)
 
 			if err != nil {
-				errs <- fmt.Errorf("StepExport: Failed to open destination response: %s.", err)
+				errs <- fmt.Errorf("StepExport: Failed to open destination response: %s", err)
 				return
 			}
 
 			_, err = io.Copy(dst, res.Body)
 
 			if err != nil {
-				errs <- fmt.Errorf("StepExport: Failed to copy response: %s.", err)
+				errs <- fmt.Errorf("StepExport: Failed to copy response: %s", err)
 				return
 			}
 		}
 
-		logrus.Info("StepExport: Done.")
+		logrus.Info("StepExport: Done")
 
 		close(done)
 	})
