@@ -242,6 +242,7 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 		"--store", path.Join(argBuildPath, "store"),
 		"--cache-max-size", "0",
 		"--output-directory", path.Join(argBuildPath, "export"),
+		"--json",
 	}
 
 	for _, pipeline := range buildRequest.Pipelines {
