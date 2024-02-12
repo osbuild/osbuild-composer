@@ -300,6 +300,7 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile string
 		LaunchTemplateData: &ec2.RequestLaunchTemplateData{
 			ImageId:                           aws.String(imageID),
 			InstanceInitiatedShutdownBehavior: aws.String(ec2.ShutdownBehaviorTerminate),
+			KeyName:                           aws.String("sanne-us-east-1-438669297788"),
 			InstanceRequirements: &ec2.InstanceRequirementsRequest{
 				InstanceGenerations: []*string{
 					aws.String(ec2.InstanceGenerationCurrent),
