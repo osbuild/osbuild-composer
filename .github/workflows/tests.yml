@@ -138,7 +138,7 @@ jobs:
         run: sudo apt-get install -y libdevmapper-dev
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         with:
           version: v1.54.2
           args: --verbose --timeout 5m0s
