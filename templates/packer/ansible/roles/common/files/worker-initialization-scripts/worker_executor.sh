@@ -11,4 +11,4 @@ if [ "$ID" != fedora ]; then
 fi
 
 echo "Starting osbuild-jobsite-builder."
-/usr/libexec/osbuild-composer/osbuild-jobsite-builder
+/usr/libexec/osbuild-composer/osbuild-jobsite-builder -builder-host 0.0.0.0
