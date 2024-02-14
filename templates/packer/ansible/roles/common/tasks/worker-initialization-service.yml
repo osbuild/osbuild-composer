@@ -24,3 +24,13 @@
   with_fileglob:
     - "{{ playbook_dir }}/roles/common/files/worker-initialization-scripts/*"
 
+- name: Copy worker executor service
+  copy:
+    src: "{{ playbook_dir }}/roles/common/files/worker-executor.service"
+    dest: /etc/systemd/system/
+
+- name: Enable worker executor service
+  systemd:
+    name: worker-executor.service
+    enabled: yes
+    daemon_reload: yes
