@@ -102,6 +102,10 @@ func (a *AWS) RunSecureInstance(iamProfile string) (*SecureInstance, error) {
 			})
 			availZones[az] = struct{}{}
 		}
+		// A maximum of 4 overrides are allowed
+		if len(overrides) == 4 {
+			break
+		}
 	}
 
 	createFleetOutput, err := a.ec2.CreateFleet(&ec2.CreateFleetInput{
