@@ -46,6 +46,7 @@ func (a *AWS) RunSecureInstance(iamProfile string) (*SecureInstance, error) {
 	}
 	vpcID := *descrInstancesOutput.Reservations[0].Instances[0].VpcId
 	imageID := *descrInstancesOutput.Reservations[0].Instances[0].ImageId
+	instanceType := *descrInstancesOutput.Reservations[0].Instances[0].InstanceType
 
 	secureInstance := &SecureInstance{}
 	defer func() {
@@ -65,7 +66,7 @@ func (a *AWS) RunSecureInstance(iamProfile string) (*SecureInstance, error) {
 		return nil, err
 	}
 
-	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, iamProfile)
+	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, instanceType, iamProfile)
 	if ltID != "" {
 		secureInstance.LTID = ltID
 	}
@@ -313,7 +314,7 @@ func isLaunchTemplateNotFoundError(err error) bool {
 
 }
 
-func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile string) (string, error) {
+func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iamProfile string) (string, error) {
 	ltName := fmt.Sprintf("launch-template-for-%s-runner-instance", hostInstanceID)
 	descrLTOutput, err := a.ec2.DescribeLaunchTemplates(&ec2.DescribeLaunchTemplatesInput{
 		LaunchTemplateNames: []*string{
@@ -336,19 +337,7 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile string
 		LaunchTemplateData: &ec2.RequestLaunchTemplateData{
 			ImageId:                           aws.String(imageID),
 			InstanceInitiatedShutdownBehavior: aws.String(ec2.ShutdownBehaviorTerminate),
-			InstanceRequirements: &ec2.InstanceRequirementsRequest{
-				InstanceGenerations: []*string{
-					aws.String(ec2.InstanceGenerationCurrent),
-				},
-				MemoryMiB: &ec2.MemoryMiBRequest{
-					Min: aws.Int64(2048),
-					Max: aws.Int64(4096),
-				},
-				VCpuCount: &ec2.VCpuCountRangeRequest{
-					Min: aws.Int64(2),
-					Max: aws.Int64(4),
-				},
-			},
+			InstanceType:                      aws.String(instanceType),
 			BlockDeviceMappings: []*ec2.LaunchTemplateBlockDeviceMappingRequest{
 				&ec2.LaunchTemplateBlockDeviceMappingRequest{
 					DeviceName: aws.String("/dev/sda1"),
