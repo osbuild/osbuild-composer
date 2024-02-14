@@ -325,6 +325,14 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile string
 					},
 				},
 			},
+			NetworkInterfaces: []*ec2.LaunchTemplateInstanceNetworkInterfaceSpecificationRequest{
+				&ec2.LaunchTemplateInstanceNetworkInterfaceSpecificationRequest{
+					AssociatePublicIpAddress: aws.Bool(true),
+					Groups: []*string{
+						aws.String(sgID),
+					},
+				},
+			},
 			SecurityGroupIds: []*string{
 				aws.String(sgID),
 			},
