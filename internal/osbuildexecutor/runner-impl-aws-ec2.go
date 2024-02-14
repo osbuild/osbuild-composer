@@ -65,6 +65,7 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory s
 	stderr := &bytes.Buffer{}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	cmd.Stdin = bytes.NewReader(manifest)
 
 	err = cmd.Start()
 	if err != nil {
