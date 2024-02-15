@@ -335,6 +335,11 @@ func StepProgress() error {
 				return
 			}
 
+			_, err = io.Copy(os.Stdout, res.Body)
+			if err != nil {
+				errs <- fmt.Errorf("StepProgress: Unable to write response body to stdout: %v", err)
+			}
+
 			break
 		}
 
