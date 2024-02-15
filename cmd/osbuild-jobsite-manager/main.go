@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -364,6 +365,16 @@ func StepExport() error {
 			if res.StatusCode != http.StatusOK {
 				errs <- fmt.Errorf("StepExport: Got an unexpected response %d while expecting %d. Exiting", res.StatusCode, http.StatusOK)
 				return
+			}
+
+			dstPath := path.Join(argOutputPath, export)
+			dstDir := filepath.Dir(dstPath)
+
+			if _, err := os.Stat(dstDir); os.IsNotExist(err) {
+				logrus.Infof("StepExport: Destination directory does not exist. Creating %s", dstDir)
+				if err := os.MkdirAll(dstDir, 0700); err != nil {
+					errs <- fmt.Errorf("StepExport: Failed to create destination directory: %s", err)
+				}
 			}
 
 			dst, err := os.OpenFile(
