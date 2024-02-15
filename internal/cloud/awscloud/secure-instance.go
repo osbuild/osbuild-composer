@@ -262,28 +262,6 @@ func (a *AWS) createOrReplaceSG(hostInstanceID, hostIP, vpcID string) (string, e
 		return sgID, fmt.Errorf("Unable to attach ingress rules to SG")
 	}
 
-	sgEgressOutput, err := a.ec2.AuthorizeSecurityGroupEgress(&ec2.AuthorizeSecurityGroupEgressInput{
-		GroupId: aws.String(sgID),
-		IpPermissions: []*ec2.IpPermission{
-			&ec2.IpPermission{
-				IpProtocol: aws.String(ec2.ProtocolTcp),
-				FromPort:   aws.Int64(1),
-				ToPort:     aws.Int64(65535),
-				IpRanges: []*ec2.IpRange{
-					&ec2.IpRange{
-						CidrIp: aws.String(fmt.Sprintf("%s/32", hostIP)),
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
-		return sgID, err
-	}
-	if !*sgEgressOutput.Return {
-		return sgID, fmt.Errorf("Unable to attach egress rules to SG")
-	}
-
 	describeSGOutput, err := a.ec2.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
 		GroupIds: []*string{
 			aws.String(sgID),
@@ -295,9 +273,9 @@ func (a *AWS) createOrReplaceSG(hostInstanceID, hostIP, vpcID string) (string, e
 	if len(describeSGOutput.SecurityGroups) != 1 {
 		return sgID, fmt.Errorf("Expected 1 security group, got %d", len(describeSGOutput.SecurityGroups))
 	}
-	// SGs are created with a predefind egress rule that allows all outgoing traffic, so expecting 2 outbound rules
-	if len(describeSGOutput.SecurityGroups[0].IpPermissions) != 1 || len(describeSGOutput.SecurityGroups[0].IpPermissionsEgress) != 2 {
-		return sgID, fmt.Errorf("Expected 3 security group rules: 1 inbound (got %d) and 2 outbound (got %d)",
+	// SGs are created with a predefind egress rule that allows all outgoing traffic, so expecting 1 outbound rule
+	if len(describeSGOutput.SecurityGroups[0].IpPermissions) != 1 || len(describeSGOutput.SecurityGroups[0].IpPermissionsEgress) != 1 {
+		return sgID, fmt.Errorf("Expected 3 security group rules: 1 inbound (got %d) and 1 outbound (got %d)",
 			len(describeSGOutput.SecurityGroups[0].IpPermissions), len(describeSGOutput.SecurityGroups[0].IpPermissionsEgress))
 	}
 
