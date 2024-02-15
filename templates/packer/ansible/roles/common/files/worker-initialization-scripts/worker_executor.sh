@@ -10,6 +10,27 @@ if [ "$ID" != fedora ]; then
   rm -f /tmp/subscription_manager_command.json
 fi
 
+echo "Writing vector config."
+REGION=$(curl -Ls http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
+HOSTNAME=$(hostname)
+CLOUDWATCH_ENDPOINT="https://logs.$REGION.amazonaws.com"
+sudo mkdir -p /etc/vector
+sudo tee /etc/vector/vector.toml > /dev/null << EOF
+[sources.journald]
+type = "journald"
+exclude_units = ["vector.service"]
+
+[sinks.out]
+type = "aws_cloudwatch_logs"
+inputs = [ "journald" ]
+region = "${REGION}"
+endpoint = "${CLOUDWATCH_ENDPOINT}"
+group_name = "osbuild-executor"
+stream_name = "osbuild_executor_syslog_${HOSTNAME}"
+encoding.codec = "json"
+EOF
+sudo systemctl enable --now vector
+
 echo "Starting osbuild-jobsite-builder."
 mkdir -p /var/cache/osbuild-builder
 /usr/libexec/osbuild-composer/osbuild-jobsite-builder -builder-host 0.0.0.0 -build-path /var/cache/osbuild-builder
