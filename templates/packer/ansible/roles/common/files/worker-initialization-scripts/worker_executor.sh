@@ -25,7 +25,7 @@ type = "aws_cloudwatch_logs"
 inputs = [ "journald" ]
 region = "${REGION}"
 endpoint = "${CLOUDWATCH_ENDPOINT}"
-group_name = "osbuild-executor"
+group_name = "osbuild-executor-log-group"
 stream_name = "osbuild_executor_syslog_${HOSTNAME}"
 encoding.codec = "json"
 EOF
