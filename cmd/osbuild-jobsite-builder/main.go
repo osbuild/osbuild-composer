@@ -263,6 +263,7 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	logrus.Infof("BackgroundProcess: Starting %s with %s", builder.Build.Process, envs)
 
 	builder.Build.Stdout = &bytes.Buffer{}
+	builder.Build.Process.Stdout = builder.Build.Stdout
 
 	builder.Build.Stderr, err = builder.Build.Process.StderrPipe()
 
