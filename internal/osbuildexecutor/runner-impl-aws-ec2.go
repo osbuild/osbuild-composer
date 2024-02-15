@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os/exec"
+	"path"
 
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/sirupsen/logrus"
@@ -49,6 +50,10 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory s
 		args = append(args, "--export", exp)
 	}
 	for _, exp := range exportPaths {
+		err = os.MkdirAll(path.Dir(exp), 0750)
+		if err != nil {
+			return nil, err
+		}
 		args = append(args, "--export-file", exp)
 	}
 	for _, env := range extraEnv {
