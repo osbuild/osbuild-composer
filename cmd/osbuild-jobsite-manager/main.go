@@ -179,6 +179,10 @@ func Request(method string, path string, body []byte) (*http.Response, error) {
 		return nil, err
 	}
 
+	// Don't accept any compression on the return value; it intermittently leads to unexpected EOFs during the larger
+	// download when the exports are requested.
+	req.Header.Set("Accept-Encoding", "identity")
+
 	logrus.Debugf("Request: Making a %s request to %s", method, url)
 
 	for {
