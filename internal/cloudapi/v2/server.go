@@ -117,7 +117,7 @@ func (s *Server) Shutdown() {
 	s.goroutinesGroup.Wait()
 }
 
-func (s *Server) enqueueCompose(manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
+func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
 	if len(irs) != 1 {
 		return id, HTTPError(ErrorInvalidNumberOfImageBuilds)
@@ -129,7 +129,7 @@ func (s *Server) enqueueCompose(manifestSeed int64, irs []imageRequest, channel 
 	arch := ir.imageType.Arch()
 	distribution := arch.Distro()
 
-	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
+	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, ir.manifestSeed)
 	if err != nil {
 		logrus.Warningf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -226,14 +226,14 @@ func (s *Server) enqueueCompose(manifestSeed int64, irs []imageRequest, channel 
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, manifestSeed)
+		serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
 		defer s.goroutinesGroup.Done()
 	}()
 
 	return id, nil
 }
 
-func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
+func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
 	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
 
@@ -256,7 +256,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		arch := ir.imageType.Arch()
 		distribution := arch.Distro()
 
-		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
+		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, ir.manifestSeed)
 		if err != nil {
 			logrus.Errorf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -380,7 +380,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, manifestSeed)
+			serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
