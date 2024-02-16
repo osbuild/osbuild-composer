@@ -47,6 +47,7 @@ func (a *AWS) RunSecureInstance(iamProfile string) (*SecureInstance, error) {
 	vpcID := *descrInstancesOutput.Reservations[0].Instances[0].VpcId
 	imageID := *descrInstancesOutput.Reservations[0].Instances[0].ImageId
 	instanceType := *descrInstancesOutput.Reservations[0].Instances[0].InstanceType
+	subnetID := *descrInstancesOutput.Reservations[0].Instances[0].SubnetId
 
 	secureInstance := &SecureInstance{}
 	defer func() {
@@ -91,24 +92,6 @@ func (a *AWS) RunSecureInstance(iamProfile string) (*SecureInstance, error) {
 		return nil, fmt.Errorf("Expected at least 1 subnet in the VPC, got 0")
 	}
 
-	// For creating a fleet in a non-default VPC, AWS needs the subnets, and at most 1 subnet per AZ.
-	// If a VPC has multiple subnets for a single AZ, only pick the first one.
-	overrides := []*ec2.FleetLaunchTemplateOverridesRequest{}
-	availZones := map[string]struct{}{}
-	for _, subnet := range descrSubnetsOutput.Subnets {
-		az := *subnet.AvailabilityZone
-		if _, ok := availZones[az]; !ok {
-			overrides = append(overrides, &ec2.FleetLaunchTemplateOverridesRequest{
-				SubnetId: subnet.SubnetId,
-			})
-			availZones[az] = struct{}{}
-		}
-		// A maximum of 4 overrides are allowed
-		if len(overrides) == 4 {
-			break
-		}
-	}
-
 	createFleetOutput, err := a.ec2.CreateFleet(&ec2.CreateFleetInput{
 		LaunchTemplateConfigs: []*ec2.FleetLaunchTemplateConfigRequest{
 			&ec2.FleetLaunchTemplateConfigRequest{
@@ -116,7 +99,11 @@ func (a *AWS) RunSecureInstance(iamProfile string) (*SecureInstance, error) {
 					LaunchTemplateId: aws.String(secureInstance.LTID),
 					Version:          aws.String("1"),
 				},
-				Overrides: overrides,
+				Overrides: []*ec2.FleetLaunchTemplateOverridesRequest{
+					&ec2.FleetLaunchTemplateOverridesRequest{
+						SubnetId: aws.String(subnetID),
+					},
+				},
 			},
 		},
 		TagSpecifications: []*ec2.TagSpecification{
