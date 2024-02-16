@@ -2,7 +2,13 @@ package v2
 
 // ComposeRequest methods to make it easier to use and test
 import (
+	"crypto/rand"
 	"fmt"
+	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/rhsm/facts"
+	"github.com/osbuild/osbuild-composer/internal/target"
+	"math"
+	"math/big"
 	"reflect"
 
 	"github.com/osbuild/images/pkg/disk"
@@ -926,4 +932,128 @@ func (request *ComposeRequest) GetPartitioningMode() (disk.PartitioningMode, err
 	}
 
 	return disk.AutoLVMPartitioningMode, HTTPError(ErrorInvalidPartitioningMode)
+}
+
+// GetImageRequests converts a composeRequest structure from the API to an intermediate imageRequest structure
+// that's used for generating manifests and orchestrating worker jobs.
+func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Factory) ([]imageRequest, error) {
+	distribution := distroFactory.GetDistro(request.Distribution)
+	if distribution == nil {
+		return nil, HTTPError(ErrorUnsupportedDistribution)
+	}
+
+	// OpenAPI enforces blueprint or customization, not both
+	// but check anyway
+	if request.Customizations != nil && request.Blueprint != nil {
+		return nil, HTTPError(ErrorBlueprintOrCustomNotBoth)
+	}
+
+	// Create a blueprint from the request
+	bp, err := request.GetBlueprint()
+	if err != nil {
+		return nil, err
+	}
+
+	// add the user-defined repositories only to the depsolve job for the
+	// payload (the packages for the final image)
+	payloadRepositories := request.GetPayloadRepositories()
+
+	// use the same seed for all images so we get the same IDs
+	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	if err != nil {
+		return nil, HTTPError(ErrorFailedToGenerateManifestSeed)
+	}
+	manifestSeed := bigSeed.Int64()
+
+	// For backwards compatibility, we support both a single image request
+	// as well as an array of requests in the API. Exactly one must be
+	// specified.
+	if request.ImageRequest != nil {
+		if request.ImageRequests != nil {
+			// we should really be using oneOf in the spec
+			return nil, HTTPError(ErrorInvalidNumberOfImageBuilds)
+		}
+		request.ImageRequests = &[]ImageRequest{*request.ImageRequest}
+	}
+	if request.ImageRequests == nil {
+		return nil, HTTPError(ErrorInvalidNumberOfImageBuilds)
+	}
+	var irs []imageRequest
+	for _, ir := range *request.ImageRequests {
+		arch, err := distribution.GetArch(ir.Architecture)
+		if err != nil {
+			return nil, HTTPError(ErrorUnsupportedArchitecture)
+		}
+		imageType, err := arch.GetImageType(imageTypeFromApiImageType(ir.ImageType, arch))
+		if err != nil {
+			return nil, HTTPError(ErrorUnsupportedImageType)
+		}
+
+		repos, err := convertRepos(ir.Repositories, payloadRepositories, imageType.PayloadPackageSets())
+		if err != nil {
+			return nil, err
+		}
+
+		// Get the initial ImageOptions with image size set
+		imageOptions := ir.GetImageOptions(imageType, bp)
+
+		if request.Koji == nil {
+			imageOptions.Facts = &facts.ImageOptions{
+				APIType: facts.CLOUDV2_APITYPE,
+			}
+		}
+
+		// Set Subscription from the compose request
+		imageOptions.Subscription = request.GetSubscription()
+
+		// Set PartitioningMode from the compose request
+		imageOptions.PartitioningMode, err = request.GetPartitioningMode()
+		if err != nil {
+			return nil, err
+		}
+
+		// Set OSTree options from the image request
+		imageOptions.OSTree, err = ir.GetOSTreeOptions()
+		if err != nil {
+			return nil, err
+		}
+
+		// Check to see if local_save is enabled and set
+		localSave, err := isLocalSave(ir.UploadOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		var irTargets []*target.Target
+		if ir.UploadOptions == nil && (ir.UploadTargets == nil || len(*ir.UploadTargets) == 0) {
+			// nowhere to put the image, this is a user error
+			if request.Koji == nil {
+				return nil, HTTPError(ErrorJSONUnMarshallingError)
+			}
+		} else if localSave {
+			// Override the image type upload selection and save it locally
+			// Final image is in /var/lib/osbuild-composer/artifacts/UUID/
+			srvTarget := target.NewWorkerServerTarget()
+			srvTarget.ImageName = imageType.Filename()
+			srvTarget.OsbuildArtifact.ExportFilename = imageType.Filename()
+			srvTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
+			irTargets = []*target.Target{srvTarget}
+		} else {
+			// Get the target for the selected image type
+			irTargets, err = ir.GetTargets(request, imageType)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		irs = append(irs, imageRequest{
+			imageType:    imageType,
+			repositories: repos,
+			imageOptions: imageOptions,
+			targets:      irTargets,
+			blueprint:    bp,
+			manifestSeed: manifestSeed,
+		})
+	}
+	return irs, nil
 }
