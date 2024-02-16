@@ -301,27 +301,32 @@ func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) e
 		return fmt.Errorf("HandleProgress: Progress requested but Build was nil")
 	}
 
-	if builder.Build.Done {
-		if builder.Build.Error != nil {
-			w.WriteHeader(http.StatusConflict)
-
-			if _, err := w.Write(builder.Build.Stderr.Bytes()); err != nil {
-				return fmt.Errorf("Builder.HandleBuild: Failed to write stderr response")
-			}
-
-			return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", builder.Build.Error)
-		}
-
-		w.WriteHeader(http.StatusOK)
-
-		if _, err := w.Write(builder.Build.Stdout.Bytes()); err != nil {
-			return fmt.Errorf("Builder.HandleBuild: Failed to write stdout response")
-		}
-
-		builder.SetState(StateExport)
-	} else {
+	if !builder.Build.Done {
 		w.WriteHeader(http.StatusAccepted)
+		logrus.Info("Builder.HandleBuild: In Progress")
+		return nil
 	}
+
+	// If there was an error in the build process we respond with an appropriate error status code and include
+	// stderr in the body of the response before exiting.
+	if builder.Build.Error != nil {
+		w.WriteHeader(http.StatusConflict)
+
+		if _, err := w.Write(builder.Build.Stderr.Bytes()); err != nil {
+			return fmt.Errorf("Builder.HandleBuild: Failed to write stderr response")
+		}
+
+		return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", builder.Build.Error)
+	}
+
+	// Otherwise we respond with OK and include stdout instead.
+	w.WriteHeader(http.StatusOK)
+
+	if _, err := w.Write(builder.Build.Stdout.Bytes()); err != nil {
+		return fmt.Errorf("Builder.HandleBuild: Failed to write stdout response")
+	}
+
+	builder.SetState(StateExport)
 
 	logrus.Info("Builder.HandleBuild: Done")
 	return nil
