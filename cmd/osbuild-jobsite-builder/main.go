@@ -121,14 +121,26 @@ func (builder *Builder) GetState() State {
 	return builder.State
 }
 
-func (builder *Builder) GuardState(stateWanted State) {
+func (builder *Builder) GuardState(stateWanted State) error {
 	if stateCurrent := builder.GetState(); stateWanted != stateCurrent {
-		logrus.Fatalf("Builder.GuardState: Requested guard for %d but we're in %d. Exit", stateWanted, stateCurrent)
+		return fmt.Errorf("Builder.GuardState: Requested guard for %d but we're in %d. Exit", stateWanted, stateCurrent)
 	}
+
+	return nil
 }
 
-func (builder *Builder) RegisterHandler(h Handler) http.HandlerFunc {
+func (builder *Builder) RegisterHandler(s State, m string, h Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := builder.GuardState(s); err != nil {
+			w.WriteHeader(http.StatusConflict)
+			logrus.Fatal("Received request in invalid state. Exiting")
+		}
+
+		if r.Method != m {
+			w.WriteHeader(http.StatusBadRequest)
+			logrus.Fatal("Received invalid request method. Exiting")
+		}
+
 		if err := h(w, r); err != nil {
 			logrus.Fatal(err)
 		}
@@ -136,14 +148,6 @@ func (builder *Builder) RegisterHandler(h Handler) http.HandlerFunc {
 }
 
 func (builder *Builder) HandleClaim(w http.ResponseWriter, r *http.Request) error {
-	builder.GuardState(StateClaim)
-
-	if r.Method != "POST" {
-		logrus.WithFields(
-			logrus.Fields{"method": r.Method},
-		).Fatal("Builder.HandleClaim: unexpected request method")
-	}
-
 	fmt.Fprintf(w, "%s", "done")
 
 	logrus.Info("Builder.HandleClaim: Done")
@@ -154,12 +158,6 @@ func (builder *Builder) HandleClaim(w http.ResponseWriter, r *http.Request) erro
 }
 
 func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) (err error) {
-	builder.GuardState(StateProvision)
-
-	if r.Method != "PUT" {
-		return fmt.Errorf("Builder.HandleProvision: Unexpected request method")
-	}
-
 	logrus.WithFields(logrus.Fields{"argBuildPath": argBuildPath}).Debug("Builder.HandleProvision: Opening manifest.json")
 
 	dst, err := os.OpenFile(
@@ -200,12 +198,6 @@ func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) 
 }
 
 func (builder *Builder) HandlePopulate(w http.ResponseWriter, r *http.Request) error {
-	builder.GuardState(StatePopulate)
-
-	if r.Method != "POST" {
-		return fmt.Errorf("Builder.HandlePopulate: unexpected request method")
-	}
-
 	w.WriteHeader(http.StatusOK)
 
 	if _, err := w.Write([]byte(`done`)); err != nil {
@@ -220,12 +212,6 @@ func (builder *Builder) HandlePopulate(w http.ResponseWriter, r *http.Request) e
 }
 
 func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) error {
-	builder.GuardState(StateBuild)
-
-	if r.Method != "POST" {
-		return fmt.Errorf("Builder.HandleBuild: Unexpected request method")
-	}
-
 	var buildRequest BuildRequest
 
 	var err error
@@ -291,12 +277,6 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 }
 
 func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) error {
-	builder.GuardState(StateProgress)
-
-	if r.Method != "GET" {
-		return fmt.Errorf("Builder.HandleProgress: Unexpected request method")
-	}
-
 	if builder.Build == nil {
 		return fmt.Errorf("HandleProgress: Progress requested but Build was nil")
 	}
@@ -333,12 +313,6 @@ func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) e
 }
 
 func (builder *Builder) HandleExport(w http.ResponseWriter, r *http.Request) error {
-	builder.GuardState(StateExport)
-
-	if r.Method != "GET" {
-		return fmt.Errorf("Builder.HandleExport: unexpected request method")
-	}
-
 	exportPath := r.URL.Query().Get("path")
 
 	if exportPath == "" {
@@ -371,15 +345,15 @@ func (builder *Builder) HandleExport(w http.ResponseWriter, r *http.Request) err
 
 func (builder *Builder) Serve() error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/claim", builder.RegisterHandler(builder.HandleClaim))
+	mux.HandleFunc("/claim", builder.RegisterHandler(StateClaim, "POST", builder.HandleClaim))
 
-	mux.HandleFunc("/provision", builder.RegisterHandler(builder.HandleProvision))
-	mux.HandleFunc("/populate", builder.RegisterHandler(builder.HandlePopulate))
+	mux.HandleFunc("/provision", builder.RegisterHandler(StateProvision, "PUT", builder.HandleProvision))
+	mux.HandleFunc("/populate", builder.RegisterHandler(StatePopulate, "POST", builder.HandlePopulate))
 
-	mux.HandleFunc("/build", builder.RegisterHandler(builder.HandleBuild))
-	mux.HandleFunc("/progress", builder.RegisterHandler(builder.HandleProgress))
+	mux.HandleFunc("/build", builder.RegisterHandler(StateBuild, "POST", builder.HandleBuild))
+	mux.HandleFunc("/progress", builder.RegisterHandler(StateProgress, "GET", builder.HandleProgress))
 
-	mux.HandleFunc("/export", builder.RegisterHandler(builder.HandleExport))
+	mux.HandleFunc("/export", builder.RegisterHandler(StateExport, "GET", builder.HandleExport))
 
 	builder.net = &http.Server{
 		ReadTimeout:       1 * time.Second,
