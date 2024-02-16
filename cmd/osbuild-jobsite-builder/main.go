@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -97,7 +96,7 @@ type Builder struct {
 type BackgroundProcess struct {
 	Process *exec.Cmd
 	Stdout  *bytes.Buffer
-	Stderr  io.ReadCloser
+	Stderr  *bytes.Buffer
 	Done    bool
 	Error   error
 }
@@ -267,8 +266,7 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 
 	builder.Build.Stdout = &bytes.Buffer{}
 	builder.Build.Process.Stdout = builder.Build.Stdout
-
-	builder.Build.Stderr, err = builder.Build.Process.StderrPipe()
+	builder.Build.Process.Stderr = builder.Build.Stderr
 
 	if err != nil {
 		return err
@@ -283,14 +281,6 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 		builder.Build.Done = true
 
 		logrus.Info("BackgroundProcess: Exited")
-	}()
-
-	go func() {
-		scanner := bufio.NewScanner(builder.Build.Stderr)
-		for scanner.Scan() {
-			m := scanner.Text()
-			logrus.Infof("BackgroundProcess: Stderr: %s", m)
-		}
 	}()
 
 	w.WriteHeader(http.StatusCreated)
@@ -314,13 +304,18 @@ func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) e
 	if builder.Build.Done {
 		if builder.Build.Error != nil {
 			w.WriteHeader(http.StatusConflict)
+
+			if _, err := w.Write(builder.Build.Stderr.Bytes()); err != nil {
+				return fmt.Errorf("Builder.HandleBuild: Failed to write stderr response")
+			}
+
 			return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", builder.Build.Error)
 		}
 
 		w.WriteHeader(http.StatusOK)
 
 		if _, err := w.Write(builder.Build.Stdout.Bytes()); err != nil {
-			return fmt.Errorf("Builder.HandleBuild: Failed to write response")
+			return fmt.Errorf("Builder.HandleBuild: Failed to write stdout response")
 		}
 
 		builder.SetState(StateExport)
