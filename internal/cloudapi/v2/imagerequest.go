@@ -276,6 +276,8 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 		fallthrough
 	case ImageTypesIotRawImage:
 		fallthrough
+	case ImageTypesIotSimplifiedInstaller:
+		fallthrough
 	case ImageTypesLiveInstaller:
 		fallthrough
 	case ImageTypesMinimalRaw:
