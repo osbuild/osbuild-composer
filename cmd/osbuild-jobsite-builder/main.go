@@ -312,11 +312,12 @@ func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) e
 	}
 
 	if builder.Build.Done {
-		w.WriteHeader(http.StatusOK)
-
 		if builder.Build.Error != nil {
+			w.WriteHeader(http.StatusConflict)
 			return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", builder.Build.Error)
 		}
+
+		w.WriteHeader(http.StatusOK)
 
 		if _, err := w.Write(builder.Build.Stdout.Bytes()); err != nil {
 			return fmt.Errorf("Builder.HandleBuild: Failed to write response")

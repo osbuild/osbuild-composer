@@ -335,6 +335,11 @@ func StepProgress() error {
 				continue
 			}
 
+			if res.StatusCode == http.StatusConflict {
+				errs <- fmt.Errorf("StepProgress: The builder encountered an error while building the manifest (%d). Exiting", res.StatusCode)
+				return
+			}
+
 			if res.StatusCode != http.StatusOK {
 				errs <- fmt.Errorf("StepProgress: Got an unexpected response %d while expecting %d. Exiting", res.StatusCode, http.StatusOK)
 				return
