@@ -117,14 +117,14 @@ func (s *Server) Shutdown() {
 	s.goroutinesGroup.Wait()
 }
 
-func (s *Server) enqueueCompose(bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
+func (s *Server) enqueueCompose(manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
 	if len(irs) != 1 {
 		return id, HTTPError(ErrorInvalidNumberOfImageBuilds)
 	}
 	ir := irs[0]
 
-	ibp := blueprint.Convert(bp)
+	ibp := blueprint.Convert(ir.blueprint)
 	// shortcuts
 	arch := ir.imageType.Arch()
 	distribution := arch.Distro()
@@ -233,7 +233,7 @@ func (s *Server) enqueueCompose(bp blueprint.Blueprint, manifestSeed int64, irs 
 	return id, nil
 }
 
-func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
+func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
 	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
 
@@ -250,7 +250,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	var kojiFilenames []string
 	var buildIDs []uuid.UUID
 	for _, ir := range irs {
-		ibp := blueprint.Convert(bp)
+		ibp := blueprint.Convert(ir.blueprint)
 
 		// shortcuts
 		arch := ir.imageType.Arch()
@@ -296,7 +296,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 
 			job := worker.ContainerResolveJob{
 				Arch:  arch.Name(),
-				Specs: make([]worker.ContainerSpec, len(bp.Containers)),
+				Specs: make([]worker.ContainerSpec, len(ir.blueprint.Containers)),
 			}
 
 			jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)

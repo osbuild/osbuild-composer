@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"math"
 	"math/big"
 	"net/http"
@@ -139,6 +140,7 @@ type imageRequest struct {
 	repositories []rpmmd.RepoConfig
 	imageOptions distro.ImageOptions
 	targets      []*target.Target
+	blueprint    blueprint.Blueprint
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -268,17 +270,18 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 			repositories: repos,
 			imageOptions: imageOptions,
 			targets:      irTargets,
+			blueprint:    bp,
 		})
 	}
 
 	var id uuid.UUID
 	if request.Koji != nil {
-		id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, bp, manifestSeed, irs, channel)
+		id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, manifestSeed, irs, channel)
 		if err != nil {
 			return err
 		}
 	} else {
-		id, err = h.server.enqueueCompose(bp, manifestSeed, irs, channel)
+		id, err = h.server.enqueueCompose(manifestSeed, irs, channel)
 		if err != nil {
 			return err
 		}
