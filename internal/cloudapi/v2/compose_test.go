@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"testing"
 
 	"github.com/osbuild/images/pkg/disk"
@@ -461,4 +463,207 @@ func TestGetPartitioningMode(t *testing.T) {
 	pm, err := cr.GetPartitioningMode()
 	assert.NoError(t, err)
 	assert.Equal(t, disk.AutoLVMPartitioningMode, pm)
+}
+
+func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
+	// The focus of this test is to ensure that the image type enumeration in the public Cloud API is correctly
+	// translated to the image type names as defined in the images library.
+	// Additionally, it covers that the default target is correctly set.
+
+	fedora := "fedora-41"
+	rhel8 := "rhel-8.10"
+	centos8 := "centos-8"
+	rhel9 := "rhel-9.10"
+	centos9 := "centos-9"
+	tests := []struct {
+		requestedImageType ImageTypes
+		requestedDistros   []string
+		expectedImageType  string
+		expectedTargetName target.TargetName
+	}{
+		{
+			requestedImageType: ImageTypesAws,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "ami",
+			expectedTargetName: target.TargetNameAWS,
+		},
+		{
+			requestedImageType: ImageTypesAwsHaRhui,
+			requestedDistros:   []string{rhel8, rhel9},
+			expectedImageType:  "ec2-ha",
+			expectedTargetName: target.TargetNameAWS,
+		},
+		{
+			requestedImageType: ImageTypesAwsRhui,
+			requestedDistros:   []string{rhel8, rhel9},
+			expectedImageType:  "ec2",
+			expectedTargetName: target.TargetNameAWS,
+		},
+		{
+			requestedImageType: ImageTypesAwsSapRhui,
+			requestedDistros:   []string{rhel8, rhel9},
+			expectedImageType:  "ec2-sap",
+			expectedTargetName: target.TargetNameAWS,
+		},
+		{
+			requestedImageType: ImageTypesAzure,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "vhd",
+			expectedTargetName: target.TargetNameAzureImage,
+		},
+		{
+			requestedImageType: ImageTypesAzureEap7Rhui,
+			requestedDistros:   []string{rhel8},
+			expectedImageType:  "azure-eap7-rhui",
+			expectedTargetName: target.TargetNameAzureImage,
+		},
+		{
+			requestedImageType: ImageTypesAzureRhui,
+			requestedDistros:   []string{rhel8, rhel9},
+			expectedImageType:  "azure-rhui",
+			expectedTargetName: target.TargetNameAzureImage,
+		},
+		{
+			requestedImageType: ImageTypesAzureSapRhui,
+			requestedDistros:   []string{rhel8, rhel9},
+			expectedImageType:  "azure-sap-rhui",
+			expectedTargetName: target.TargetNameAzureImage,
+		},
+		{
+			requestedImageType: ImageTypesEdgeCommit,
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "edge-commit",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesEdgeContainer,
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "edge-container",
+			expectedTargetName: target.TargetNameContainer,
+		},
+		{
+			requestedImageType: ImageTypesEdgeInstaller,
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "edge-installer",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesGcp,
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "gce",
+			expectedTargetName: target.TargetNameGCP,
+		},
+		{
+			requestedImageType: ImageTypesGcpRhui,
+			requestedDistros:   []string{rhel8, rhel9},
+			expectedImageType:  "gce-rhui",
+			expectedTargetName: target.TargetNameGCP,
+		},
+		{
+			requestedImageType: ImageTypesGuestImage,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "qcow2",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesImageInstaller,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "image-installer",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesIotBootableContainer,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "iot-bootable-container",
+			expectedTargetName: target.TargetNameContainer,
+		},
+		{
+			requestedImageType: ImageTypesIotCommit,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "iot-commit",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesIotContainer,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "iot-container",
+			expectedTargetName: target.TargetNameContainer,
+		},
+		{
+			requestedImageType: ImageTypesIotInstaller,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "iot-installer",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesIotRawImage,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "iot-raw-image",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesIotSimplifiedInstaller,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "iot-simplified-installer",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesLiveInstaller,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "live-installer",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesMinimalRaw,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "minimal-raw",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesOci,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "oci",
+			expectedTargetName: target.TargetNameOCIObjectStorage,
+		},
+		{
+			requestedImageType: ImageTypesVsphere,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "vmdk",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesVsphereOva,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "ova",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesWsl,
+			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			expectedImageType:  "wsl",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(string(tt.requestedImageType), func(t *testing.T) {
+			for _, d := range tt.requestedDistros {
+				uo := UploadOptions(struct{}{})
+				request := &ComposeRequest{
+					Distribution: d,
+					ImageRequest: &ImageRequest{
+						Architecture:  "x86_64",
+						ImageType:     tt.requestedImageType,
+						UploadOptions: &uo,
+					},
+				}
+				got, err := request.GetImageRequests(distrofactory.NewDefault())
+				assert.NoError(t, err)
+				assert.Len(t, got, 1)
+				assert.Equal(t, tt.expectedImageType, got[0].imageType.Name())
+
+				assert.Len(t, got[0].targets, 1)
+				assert.Equal(t, tt.expectedTargetName, got[0].targets[0].Name)
+			}
+		})
+	}
 }
