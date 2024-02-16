@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -89,6 +90,8 @@ type Builder struct {
 	StateLock    sync.Mutex
 	StateChannel chan State
 	Build        *BackgroundProcess
+
+	net *http.Server
 }
 
 type BackgroundProcess struct {
@@ -377,7 +380,7 @@ func (builder *Builder) Serve() error {
 
 	mux.HandleFunc("/export", builder.RegisterHandler(builder.HandleExport))
 
-	net := &http.Server{
+	builder.net = &http.Server{
 		ReadTimeout:       1 * time.Second,
 		WriteTimeout:      1800 * time.Second,
 		IdleTimeout:       30 * time.Second,
@@ -386,7 +389,7 @@ func (builder *Builder) Serve() error {
 		Handler:           mux,
 	}
 
-	return net.ListenAndServe()
+	return builder.net.ListenAndServe()
 }
 
 func main() {
@@ -420,6 +423,11 @@ func main() {
 		select {
 		case state := <-builder.StateChannel:
 			if state == StateDone {
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				if err := builder.net.Shutdown(ctx); err != nil {
+					logrus.Errorf("main: server shutdown failed: %v", err)
+				}
+				cancel()
 				logrus.Info("main: Shutting down successfully")
 				os.Exit(ExitOk)
 			}
