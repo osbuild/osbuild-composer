@@ -273,12 +273,12 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	var id uuid.UUID
 	if request.Koji != nil {
-		id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, distribution, bp, manifestSeed, irs, channel)
+		id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, bp, manifestSeed, irs, channel)
 		if err != nil {
 			return err
 		}
 	} else {
-		id, err = h.server.enqueueCompose(distribution, bp, manifestSeed, irs, channel)
+		id, err = h.server.enqueueCompose(bp, manifestSeed, irs, channel)
 		if err != nil {
 			return err
 		}
