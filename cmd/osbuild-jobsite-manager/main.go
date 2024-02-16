@@ -337,6 +337,12 @@ func StepProgress() error {
 
 			if res.StatusCode == http.StatusConflict {
 				errs <- fmt.Errorf("StepProgress: The builder encountered an error while building the manifest (%d). Exiting", res.StatusCode)
+
+				_, err = io.Copy(os.Stderr, res.Body)
+				if err != nil {
+					errs <- fmt.Errorf("StepProgress: Unable to write response body to stderr: %v", err)
+				}
+
 				return
 			}
 
