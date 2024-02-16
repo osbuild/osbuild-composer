@@ -22,7 +22,6 @@ import (
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
@@ -118,7 +117,7 @@ func (s *Server) Shutdown() {
 	s.goroutinesGroup.Wait()
 }
 
-func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
+func (s *Server) enqueueCompose(bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
 	if len(irs) != 1 {
 		return id, HTTPError(ErrorInvalidNumberOfImageBuilds)
@@ -126,8 +125,9 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	ir := irs[0]
 
 	ibp := blueprint.Convert(bp)
-	// shortcut
+	// shortcuts
 	arch := ir.imageType.Arch()
+	distribution := arch.Distro()
 
 	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
 	if err != nil {
@@ -233,7 +233,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	return id, nil
 }
 
-func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, distribution distro.Distro, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
+func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, bp blueprint.Blueprint, manifestSeed int64, irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
 	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
 
@@ -252,8 +252,9 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	for _, ir := range irs {
 		ibp := blueprint.Convert(bp)
 
-		// shortcut
+		// shortcuts
 		arch := ir.imageType.Arch()
+		distribution := arch.Distro()
 
 		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
 		if err != nil {
