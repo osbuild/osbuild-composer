@@ -136,7 +136,6 @@ func isLocalSave(options *UploadOptions) (bool, error) {
 
 type imageRequest struct {
 	imageType    distro.ImageType
-	arch         distro.Arch
 	repositories []rpmmd.RepoConfig
 	imageOptions distro.ImageOptions
 	targets      []*target.Target
@@ -266,7 +265,6 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 		irs = append(irs, imageRequest{
 			imageType:    imageType,
-			arch:         arch,
 			repositories: repos,
 			imageOptions: imageOptions,
 			targets:      irTargets,

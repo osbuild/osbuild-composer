@@ -126,6 +126,9 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	ir := irs[0]
 
 	ibp := blueprint.Convert(bp)
+	// shortcut
+	arch := ir.imageType.Arch()
+
 	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
 	if err != nil {
 		logrus.Warningf("ErrorEnqueueingJob, failed generating manifest: %v", err)
@@ -135,7 +138,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 	depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
 		PackageSets:      manifestSource.GetPackageSetChains(),
 		ModulePlatformID: distribution.ModulePlatformID(),
-		Arch:             ir.arch.Name(),
+		Arch:             arch.Name(),
 		Releasever:       distribution.Releasever(),
 	}, channel)
 	if err != nil {
@@ -165,7 +168,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		}
 
 		job := worker.ContainerResolveJob{
-			Arch:  ir.arch.Name(),
+			Arch:  arch.Name(),
 			Specs: workerResolveSpecs,
 		}
 
@@ -210,7 +213,7 @@ func (s *Server) enqueueCompose(distribution distro.Distro, bp blueprint.Bluepri
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	id, err = s.workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{
+	id, err = s.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
 		Targets: ir.targets,
 		PipelineNames: &worker.PipelineNames{
 			Build:   ir.imageType.BuildPipelines(),
@@ -248,6 +251,10 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	var buildIDs []uuid.UUID
 	for _, ir := range irs {
 		ibp := blueprint.Convert(bp)
+
+		// shortcut
+		arch := ir.imageType.Arch()
+
 		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, manifestSeed)
 		if err != nil {
 			logrus.Errorf("ErrorEnqueueingJob, failed generating manifest: %v", err)
@@ -257,7 +264,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
 			PackageSets:      manifestSource.GetPackageSetChains(),
 			ModulePlatformID: distribution.ModulePlatformID(),
-			Arch:             ir.arch.Name(),
+			Arch:             arch.Name(),
 			Releasever:       distribution.Releasever(),
 		}, channel)
 		if err != nil {
@@ -287,7 +294,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			}
 
 			job := worker.ContainerResolveJob{
-				Arch:  ir.arch.Name(),
+				Arch:  arch.Name(),
 				Specs: make([]worker.ContainerSpec, len(bp.Containers)),
 			}
 
@@ -336,7 +343,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			name,
 			version,
 			release,
-			ir.arch.Name(),
+			arch.Name(),
 			splitExtension(ir.imageType.Filename()),
 		)
 
@@ -354,7 +361,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			targets = append(targets, ir.targets...)
 		}
 
-		buildID, err := s.workers.EnqueueOSBuildAsDependency(ir.arch.Name(), &worker.OSBuildJob{
+		buildID, err := s.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
 			PipelineNames: &worker.PipelineNames{
 				Build:   ir.imageType.BuildPipelines(),
 				Payload: ir.imageType.PayloadPipelines(),
