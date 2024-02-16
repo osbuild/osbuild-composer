@@ -348,6 +348,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "iot-raw-image"
 	case ImageTypesLiveInstaller:
 		return "live-installer"
+	case ImageTypesMinimalRaw:
+		return "minimal-raw"
 	case ImageTypesOci:
 		return "oci"
 	case ImageTypesWsl:
