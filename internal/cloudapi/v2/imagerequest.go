@@ -278,6 +278,8 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 		fallthrough
 	case ImageTypesLiveInstaller:
 		fallthrough
+	case ImageTypesMinimalRaw:
+		fallthrough
 	case ImageTypesVsphere:
 		fallthrough
 	case ImageTypesVsphereOva:
@@ -332,6 +334,7 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesIotInstaller:         true,
 			ImageTypesIotRawImage:          true,
 			ImageTypesLiveInstaller:        true,
+			ImageTypesMinimalRaw:           true,
 			ImageTypesVsphereOva:           true,
 			ImageTypesVsphere:              true,
 			ImageTypesWsl:                  true,

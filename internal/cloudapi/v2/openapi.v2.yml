@@ -830,6 +830,7 @@ components:
         - iot-raw-image
         - iot-simplified-installer
         - live-installer
+        - minimal-raw
         - oci
         - vsphere
         - vsphere-ova
