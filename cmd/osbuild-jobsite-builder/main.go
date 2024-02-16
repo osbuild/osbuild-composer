@@ -147,17 +147,16 @@ func (builder *Builder) RegisterHandler(s State, m string, h Handler) http.Handl
 	})
 }
 
-func (builder *Builder) HandleClaim(w http.ResponseWriter, r *http.Request) error {
-	fmt.Fprintf(w, "%s", "done")
-
+func (b *Builder) HandleClaim(w http.ResponseWriter, r *http.Request) error {
 	logrus.Info("Builder.HandleClaim: Done")
 
-	builder.SetState(StateProvision)
+	w.WriteHeader(http.StatusOK)
+	b.SetState(StateProvision)
 
 	return nil
 }
 
-func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) (err error) {
+func (b *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) error {
 	logrus.WithFields(logrus.Fields{"argBuildPath": argBuildPath}).Debug("Builder.HandleProvision: Opening manifest.json")
 
 	dst, err := os.OpenFile(
@@ -166,13 +165,8 @@ func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) 
 		0400,
 	)
 
-	defer func() {
-		if cerr := dst.Close(); cerr != nil {
-			err = cerr
-		}
-	}()
-
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Errorf("Builder.HandleProvision: Failed to open manifest.json")
 	}
 
@@ -181,46 +175,42 @@ func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) 
 	_, err = io.Copy(dst, r.Body)
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Errorf("Builder.HandleProvision: Failed to write manifest.json")
 	}
 
-	w.WriteHeader(http.StatusCreated)
-
-	if _, err := w.Write([]byte(`done`)); err != nil {
-		return fmt.Errorf("Builder.HandleProvision: Failed to write response")
+	if err = dst.Close(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return fmt.Errorf("Builder.HandleProvision: Failed to close manifest.json")
 	}
 
 	logrus.Info("Builder.HandleProvision: Done")
 
-	builder.SetState(StatePopulate)
+	w.WriteHeader(http.StatusCreated)
+	b.SetState(StatePopulate)
 
 	return nil
 }
 
-func (builder *Builder) HandlePopulate(w http.ResponseWriter, r *http.Request) error {
-	w.WriteHeader(http.StatusOK)
-
-	if _, err := w.Write([]byte(`done`)); err != nil {
-		return fmt.Errorf("Builder.HandlePopulate: Failed to write response")
-	}
-
+func (b *Builder) HandlePopulate(w http.ResponseWriter, r *http.Request) error {
 	logrus.Info("Builder.HandlePopulate: Done")
 
-	builder.SetState(StateBuild)
+	w.WriteHeader(http.StatusOK)
+	b.SetState(StateBuild)
 
 	return nil
 }
 
-func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) error {
+func (b *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) error {
 	var buildRequest BuildRequest
 
-	var err error
-
-	if err = json.NewDecoder(r.Body).Decode(&buildRequest); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&buildRequest); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Errorf("HandleBuild: Failed to decode body")
 	}
 
-	if builder.Build != nil {
+	if b.Build != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		logrus.Fatal("HandleBuild: Build started but Build was non-nil")
 	}
 
@@ -241,81 +231,80 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	envs := os.Environ()
 	envs = append(envs, buildRequest.Environments...)
 
-	builder.Build = &BackgroundProcess{}
-	builder.Build.Process = exec.Command(
+	b.Build = &BackgroundProcess{}
+	b.Build.Process = exec.Command(
 		"/usr/bin/osbuild",
 		args...,
 	)
-	builder.Build.Process.Env = envs
+	b.Build.Process.Env = envs
 
-	logrus.Infof("BackgroundProcess: Starting %s with %s", builder.Build.Process, envs)
+	logrus.Infof("BackgroundProcess: Starting %s with %s", b.Build.Process, envs)
 
-	builder.Build.Stdout = &bytes.Buffer{}
-	builder.Build.Process.Stdout = builder.Build.Stdout
-	builder.Build.Process.Stderr = builder.Build.Stderr
+	b.Build.Stdout = &bytes.Buffer{}
+	b.Build.Process.Stdout = b.Build.Stdout
+	b.Build.Process.Stderr = b.Build.Stderr
 
-	if err != nil {
-		return err
-	}
-
-	if err := builder.Build.Process.Start(); err != nil {
+	if err := b.Build.Process.Start(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Errorf("BackgroundProcess: Failed to start process")
 	}
 
 	go func() {
-		builder.Build.Error = builder.Build.Process.Wait()
-		builder.Build.Done = true
+		b.Build.Error = b.Build.Process.Wait()
+		b.Build.Done = true
 
 		logrus.Info("BackgroundProcess: Exited")
 	}()
 
 	w.WriteHeader(http.StatusCreated)
-
-	builder.SetState(StateProgress)
+	b.SetState(StateProgress)
 
 	return nil
 }
 
-func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) error {
-	if builder.Build == nil {
+func (b *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) error {
+	if b.Build == nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Errorf("HandleProgress: Progress requested but Build was nil")
 	}
 
-	if !builder.Build.Done {
-		w.WriteHeader(http.StatusAccepted)
+	if !b.Build.Done {
 		logrus.Info("Builder.HandleBuild: In Progress")
+		w.WriteHeader(http.StatusAccepted)
 		return nil
 	}
 
 	// If there was an error in the build process we respond with an appropriate error status code and include
 	// stderr in the body of the response before exiting.
-	if builder.Build.Error != nil {
+	if b.Build.Error != nil {
 		w.WriteHeader(http.StatusConflict)
 
-		if _, err := w.Write(builder.Build.Stderr.Bytes()); err != nil {
+		if _, err := w.Write(b.Build.Stderr.Bytes()); err != nil {
 			return fmt.Errorf("Builder.HandleBuild: Failed to write stderr response")
 		}
 
-		return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", builder.Build.Error)
+		return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", b.Build.Error)
 	}
 
 	// Otherwise we respond with OK and include stdout instead.
 	w.WriteHeader(http.StatusOK)
 
-	if _, err := w.Write(builder.Build.Stdout.Bytes()); err != nil {
+	if _, err := w.Write(b.Build.Stdout.Bytes()); err != nil {
 		return fmt.Errorf("Builder.HandleBuild: Failed to write stdout response")
 	}
 
-	builder.SetState(StateExport)
+	b.SetState(StateExport)
 
 	logrus.Info("Builder.HandleBuild: Done")
+
 	return nil
 }
 
-func (builder *Builder) HandleExport(w http.ResponseWriter, r *http.Request) error {
+func (b *Builder) HandleExport(w http.ResponseWriter, r *http.Request) error {
 	exportPath := r.URL.Query().Get("path")
 
 	if exportPath == "" {
+		w.WriteHeader(http.StatusBadRequest)
 		return fmt.Errorf("Builder.HandleExport: Missing export")
 	}
 
@@ -327,6 +316,7 @@ func (builder *Builder) HandleExport(w http.ResponseWriter, r *http.Request) err
 	)
 
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return fmt.Errorf("Builder.HandleExport: Failed to open source: %s", err)
 	}
 
@@ -338,7 +328,7 @@ func (builder *Builder) HandleExport(w http.ResponseWriter, r *http.Request) err
 
 	logrus.Info("Builder.HandleExport: Done")
 
-	builder.SetState(StateDone)
+	b.SetState(StateDone)
 
 	return nil
 }
