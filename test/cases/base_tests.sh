@@ -51,6 +51,13 @@ run_test_case () {
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
+# Explicitly install osbuild-depsolve-dnf in nightly pipeline until the
+# osbuild-composer version which has the dependency lands there (v101).
+if ! nvrGreaterOrEqual "osbuild-composer" "101"; then
+    echo "osbuild-composer version is too old, explicitly installing osbuild-depsolve-dnf"
+    sudo dnf install -y osbuild-depsolve-dnf
+fi
+
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 
