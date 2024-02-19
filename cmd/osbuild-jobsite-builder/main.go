@@ -133,16 +133,16 @@ func (builder *Builder) RegisterHandler(s State, m string, h Handler) http.Handl
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := builder.GuardState(s); err != nil {
 			w.WriteHeader(http.StatusConflict)
-			logrus.Fatal("Received request in invalid state. Exiting")
+			logrus.Fatalf("Received request in invalid state: %d. Exiting", s)
 		}
 
 		if r.Method != m {
 			w.WriteHeader(http.StatusBadRequest)
-			logrus.Fatal("Received invalid request method. Exiting")
+			logrus.Fatalf("Received request with invalid method: %s while expecting %s in state %d. Exiting", r.Method, m, s)
 		}
 
 		if err := h(w, r); err != nil {
-			logrus.Fatal(err)
+			logrus.Fatalf("Error executing handler in state: %d, error: %v", s, err)
 		}
 	})
 }
@@ -204,7 +204,7 @@ func (b *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) error {
 
 	if err := json.NewDecoder(r.Body).Decode(&buildRequest); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("HandleBuild: Failed to decode body")
+		return fmt.Errorf("HandleBuild: Failed to decode body: %v", err)
 	}
 
 	if b.Build != nil {
@@ -280,7 +280,7 @@ func (b *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) error {
 		w.WriteHeader(http.StatusConflict)
 
 		if _, err := w.Write(b.Build.Stderr.Bytes()); err != nil {
-			return fmt.Errorf("Builder.HandleBuild: Failed to write stderr response")
+			return fmt.Errorf("Builder.HandleBuild: Failed to write stderr response: %v", err)
 		}
 
 		return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %v", b.Build.Error)
@@ -290,7 +290,7 @@ func (b *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusOK)
 
 	if _, err := w.Write(b.Build.Stdout.Bytes()); err != nil {
-		return fmt.Errorf("Builder.HandleBuild: Failed to write stdout response")
+		return fmt.Errorf("Builder.HandleBuild: Failed to write stdout response: %v", err)
 	}
 
 	b.SetState(StateExport)
