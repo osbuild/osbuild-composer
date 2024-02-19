@@ -159,10 +159,8 @@ func (b *Builder) HandleClaim(w http.ResponseWriter, r *http.Request) error {
 func (b *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) error {
 	logrus.WithFields(logrus.Fields{"argBuildPath": argBuildPath}).Debug("Builder.HandleProvision: Opening manifest.json")
 
-	dst, err := os.OpenFile(
+	dst, err := os.Create(
 		path.Join(argBuildPath, "manifest.json"),
-		os.O_WRONLY|os.O_CREATE|os.O_EXCL,
-		0400,
 	)
 
 	if err != nil {
