@@ -60,6 +60,9 @@ At build-time, the following software is required:
  * `go >= 1.19`
  * `python-docutils >= 0.13`
  * `krb5-devel` for fedora/rhel or `libkrb5-dev` for debian/ubuntu`
+ * `btrfs-progs-devel` for fedora/rhel or `libbtrfs-dev` for debian/ubuntu
+ * `device-mapper-devel` for fedora/rhel or `libdevmapper-dev` for debian/ubuntu
+ * `gpgme-devel` for fedora/rhel or `libgpgme-dev` for debian/ubuntu
 
 ### Build
 
