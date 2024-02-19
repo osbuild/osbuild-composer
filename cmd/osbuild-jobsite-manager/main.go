@@ -294,7 +294,7 @@ func StepBuild() error {
 		dat, err := json.Marshal(arg)
 
 		if err != nil {
-			logrus.Fatalf("StepBuild: Failed to marshal data: %s", err)
+			logrus.Fatalf("StepBuild: Failed to marshal data: %v", err)
 		}
 
 		res, err := Request("POST", "build", dat)
@@ -388,7 +388,7 @@ func StepExport() error {
 			if _, err := os.Stat(dstDir); os.IsNotExist(err) {
 				logrus.Infof("StepExport: Destination directory does not exist. Creating %s", dstDir)
 				if err := os.MkdirAll(dstDir, 0700); err != nil {
-					errs <- fmt.Errorf("StepExport: Failed to create destination directory: %s", err)
+					errs <- fmt.Errorf("StepExport: Failed to create destination directory: %v", err)
 				}
 			}
 
@@ -399,14 +399,14 @@ func StepExport() error {
 			)
 
 			if err != nil {
-				errs <- fmt.Errorf("StepExport: Failed to open destination response: %s", err)
+				errs <- fmt.Errorf("StepExport: Failed to open destination response: %v", err)
 				return
 			}
 
 			_, err = io.Copy(dst, res.Body)
 
 			if err != nil {
-				errs <- fmt.Errorf("StepExport: Failed to copy response: %s", err)
+				errs <- fmt.Errorf("StepExport: Failed to copy response: %v", err)
 				return
 			}
 		}

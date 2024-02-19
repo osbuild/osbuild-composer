@@ -167,7 +167,7 @@ func (b *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) error 
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("Builder.HandleProvision: Failed to open manifest.json")
+		return fmt.Errorf("Builder.HandleProvision: Failed to open manifest.json: %v", err)
 	}
 
 	logrus.Debug("Builder.HandleProvision: Writing manifest.json")
@@ -176,12 +176,12 @@ func (b *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) error 
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("Builder.HandleProvision: Failed to write manifest.json")
+		return fmt.Errorf("Builder.HandleProvision: Failed to write manifest.json: %v", err)
 	}
 
 	if err = dst.Close(); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("Builder.HandleProvision: Failed to close manifest.json")
+		return fmt.Errorf("Builder.HandleProvision: Failed to close manifest.json: %v", err)
 	}
 
 	logrus.Info("Builder.HandleProvision: Done")
@@ -238,7 +238,7 @@ func (b *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) error {
 	)
 	b.Build.Process.Env = envs
 
-	logrus.Infof("BackgroundProcess: Starting %s with %s", b.Build.Process, envs)
+	logrus.Infof("BackgroundProcess: Starting %v with %s", b.Build.Process, envs)
 
 	b.Build.Stdout = &bytes.Buffer{}
 	b.Build.Stderr = &bytes.Buffer{}
@@ -285,7 +285,7 @@ func (b *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) error {
 			return fmt.Errorf("Builder.HandleBuild: Failed to write stderr response")
 		}
 
-		return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %s", b.Build.Error)
+		return fmt.Errorf("Builder.HandleBuild: Buildprocess exited with error: %v", b.Build.Error)
 	}
 
 	// Otherwise we respond with OK and include stdout instead.
@@ -319,13 +319,13 @@ func (b *Builder) HandleExport(w http.ResponseWriter, r *http.Request) error {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return fmt.Errorf("Builder.HandleExport: Failed to open source: %s", err)
+		return fmt.Errorf("Builder.HandleExport: Failed to open source: %v", err)
 	}
 
 	_, err = io.Copy(w, src)
 
 	if err != nil {
-		return fmt.Errorf("Builder.HandleExport: Failed to write response: %s", err)
+		return fmt.Errorf("Builder.HandleExport: Failed to write response: %v", err)
 	}
 
 	logrus.Info("Builder.HandleExport: Done")
