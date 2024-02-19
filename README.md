@@ -77,6 +77,14 @@ The man-pages require `python-docutils` and can be built via:
 make man
 ```
 
+### Run Tests
+
+To run our tests locally just call
+
+```sh
+make unit-tests
+```
+
 ### Repository:
 
  - **web**:   <https://github.com/osbuild/osbuild-composer>
