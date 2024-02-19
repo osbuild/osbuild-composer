@@ -1229,3 +1229,56 @@ func TestBlueprintChangeV1(t *testing.T) {
 	require.NotNil(t, bp, "GET blueprint change failed: missing blueprint")
 	assert.Equal(t, bp.Version, "0.0.1")
 }
+
+func TestEmptyPackageNameBlueprintJsonV0(t *testing.T) {
+	bp := `{
+		"name": "test-emptypackage-blueprint-v0",
+		"description": "TestEmptyPackageNameBlueprintV0",
+		"version": "0.0.1",
+		"packages": [{"name": "", "version": "1.32.1"}]
+	}`
+
+	// Push a blueprint
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.False(t, resp.Status, "Negative status expected.")
+	require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
+	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), "BlueprintsError"), "I expect a BlueprintsError")
+}
+
+func TestEmptyPackageNameBlueprintV0(t *testing.T) {
+	bp := `name = "EMPTY-PACKAGE-NAME"
+           description = "empty package name"
+           version = "0.0.1"
+           modules = []
+           groups = []
+           distro = "test-distro"
+
+           [[packages]]
+           version = "*"
+           `
+
+	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.False(t, resp.Status, "Negative status expected.")
+	require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
+	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), "BlueprintsError"), "I expect a BlueprintsError")
+}
+
+func TestEmptyPackageNameAndVersionBlueprintV0(t *testing.T) {
+	bp := `name = "EMPTY-PACKAGE-NAME"
+           description = "empty package name"
+           version = "0.0.1"
+           modules = []
+           groups = []
+           distro = "test-distro"
+
+           [[packages]]
+           `
+
+	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "failed with a client error")
+	require.False(t, resp.Status, "Negative status expected.")
+	require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
+	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), "BlueprintsError"), "I expect a BlueprintsError")
+}
