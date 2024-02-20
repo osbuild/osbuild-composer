@@ -201,8 +201,13 @@ func isInvalidGroupNotFoundErr(err error) bool {
 func (a *AWS) createOrReplaceSG(hostInstanceID, hostIP, vpcID string) (string, error) {
 	sgName := fmt.Sprintf("SG for %s (%s)", hostInstanceID, hostIP)
 	descrSGOutput, err := a.ec2.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
-		GroupNames: []*string{
-			aws.String(sgName),
+		Filters: []*ec2.Filter{
+			&ec2.Filter{
+				Name: aws.String("group-name"),
+				Values: []*string{
+					aws.String(sgName),
+				},
+			},
 		},
 	})
 	if err != nil && !isInvalidGroupNotFoundErr(err) {
