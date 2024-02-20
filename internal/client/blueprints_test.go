@@ -1238,47 +1238,52 @@ func TestEmptyPackageNameBlueprintJsonV0(t *testing.T) {
 		"packages": [{"name": "", "version": "1.32.1"}]
 	}`
 
-	// Push a blueprint
+	expectedErrorPrefix := "BlueprintsError: All package entries need to contain the name of the package."
+
 	resp, err := PostJSONBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "Negative status expected.")
 	require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
-	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), "BlueprintsError"), "I expect a BlueprintsError")
+	reasoning := "I expected an error message starting with\n" + expectedErrorPrefix +
+		"\nnot\n" + resp.Errors[0].String()
+	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErrorPrefix), reasoning)
 }
 
 func TestEmptyPackageNameBlueprintV0(t *testing.T) {
 	bp := `name = "EMPTY-PACKAGE-NAME"
            description = "empty package name"
            version = "0.0.1"
-           modules = []
-           groups = []
-           distro = "test-distro"
 
            [[packages]]
            version = "*"
            `
 
+	expectedErrorPrefix := "BlueprintsError: All package entries need to contain the name of the package."
+
 	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "Negative status expected.")
 	require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
-	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), "BlueprintsError"), "I expect a BlueprintsError")
+	reasoning := "I expected an error message starting with\n" + expectedErrorPrefix +
+		"\nnot\n" + resp.Errors[0].String()
+	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErrorPrefix), reasoning)
 }
 
 func TestEmptyPackageNameAndVersionBlueprintV0(t *testing.T) {
 	bp := `name = "EMPTY-PACKAGE-NAME"
            description = "empty package name"
            version = "0.0.1"
-           modules = []
-           groups = []
-           distro = "test-distro"
 
            [[packages]]
            `
+
+	expectedErrorPrefix := "BlueprintsError: All package entries need to contain the name of the package."
 
 	resp, err := PostTOMLBlueprintV0(testState.socket, bp)
 	require.NoError(t, err, "failed with a client error")
 	require.False(t, resp.Status, "Negative status expected.")
 	require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
-	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), "BlueprintsError"), "I expect a BlueprintsError")
+	reasoning := "I expected an error message starting with\n" + expectedErrorPrefix +
+		"\nnot\n" + resp.Errors[0].String()
+	assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErrorPrefix), reasoning)
 }

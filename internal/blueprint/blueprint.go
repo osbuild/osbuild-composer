@@ -105,7 +105,7 @@ func (b *Blueprint) Initialize() error {
 		if len(p.Name) == 0 {
 			var errMsg string
 			if len(p.Version) == 0 {
-				errMsg = fmt.Sprintf("Entry #%d has neither version nor name.", i+1)
+				errMsg = fmt.Sprintf("Entry #%d has no name.", i+1)
 			} else {
 				errMsg = fmt.Sprintf("Entry #%d has version '%v' but no name.", i+1, p.Version)
 			}
