@@ -74,9 +74,14 @@ help:
 	@echo
 	@echo "    help:               Print this usage information."
 	@echo "    build:              Build all binaries"
+	@echo "    rpm:                Build the RPM"
+	@echo "    srpm:               Build the source RPM"
+	@echo "    scratch:            Quick scratch build of RPM"
 	@echo "    clean:              Remove all built binaries"
 	@echo "    man:                Generate all man-pages"
 	@echo "    unit-tests:         Run unit tests"
+	@echo "    push-check:         Replicates the github workflow checks as close as possible"
+	@echo "                        (do this before pushing!)"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -148,6 +153,20 @@ install: build
 .PHONY: clean
 clean:
 	rm -rf $(BUILDDIR)/bin/
+	rm -rf $(CURDIR)/rpmbuild
+
+.PHONY: push-check
+push-check: build unit-tests srpm man
+	./tools/check-runners
+	./tools/check-snapshots --errors-only .
+	rpmlint --config rpmlint.config $(CURDIR)/rpmbuild/SRPMS/*
+	./tools/prepare-source.sh
+	@if [ 0 -ne $$(git status --porcelain --untracked-files|wc -l) ]; then \
+	    echo "There should be no changed or untracked files"; \
+	    git status --porcelain --untracked-files; \
+	    exit 1; \
+	fi
+	@echo "All looks good - congratulations"
 
 CERT_DIR=/etc/osbuild-composer
 
