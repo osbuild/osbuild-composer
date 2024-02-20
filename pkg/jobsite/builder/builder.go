@@ -284,7 +284,7 @@ func (b *Builder) HandleExport(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-func (builder *Builder) Serve() error {
+func (builder *Builder) Mux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/claim", builder.RegisterHandler(StateClaim, "POST", builder.HandleClaim))
 
@@ -295,6 +295,12 @@ func (builder *Builder) Serve() error {
 	mux.HandleFunc("/progress", builder.RegisterHandler(StateProgress, "GET", builder.HandleProgress))
 
 	mux.HandleFunc("/export", builder.RegisterHandler(StateExport, "GET", builder.HandleExport))
+
+	return mux
+}
+
+func (builder *Builder) Serve() error {
+	mux := builder.Mux()
 
 	net := &http.Server{
 		ReadTimeout:       1 * time.Second,
