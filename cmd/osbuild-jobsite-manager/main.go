@@ -17,26 +17,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/pkg/jobsite"
+	"github.com/osbuild/osbuild-composer/pkg/jobsite/manager"
 	"github.com/sirupsen/logrus"
 )
-
-const (
-	ExitOk int = iota
-	ExitError
-	ExitTimeout
-	ExitSignal
-)
-
-type ArgumentList []string
-
-func (AL *ArgumentList) String() string {
-	return ""
-}
-
-func (AL *ArgumentList) Set(value string) error {
-	*AL = append(*AL, value)
-	return nil
-}
 
 var (
 	argJSON bool
@@ -53,16 +37,11 @@ var (
 	argTimeoutProgress  int
 	argTimeoutExport    int
 
-	argPipelines    ArgumentList
-	argEnvironments ArgumentList
-	argExports      ArgumentList
+	argPipelines    manager.ArgumentList
+	argEnvironments manager.ArgumentList
+	argExports      manager.ArgumentList
 	argOutputPath   string
 )
-
-type BuildRequest struct {
-	Pipelines    []string `json:"pipelines"`
-	Environments []string `json:"environments"`
-}
 
 type Step func(chan<- struct{}, chan<- error)
 
@@ -115,16 +94,16 @@ func main() {
 				logrus.Fields{
 					"signal": sig,
 				}).Info("main: Exiting on signal")
-			os.Exit(ExitSignal)
+			os.Exit(jobsite.ExitSignal)
 		case err := <-errs:
 			logrus.WithFields(
 				logrus.Fields{
 					"error": err,
 				}).Info("main: Exiting on error")
-			os.Exit(ExitError)
+			os.Exit(jobsite.ExitError)
 		case <-done:
 			logrus.Info("main: Shutting down succesfully")
-			os.Exit(ExitOk)
+			os.Exit(jobsite.ExitOk)
 		}
 	}
 }
@@ -286,7 +265,7 @@ func StepPopulate() error {
 
 func StepBuild() error {
 	return Wait(argTimeoutBuild, func(done chan<- struct{}, errs chan<- error) {
-		arg := BuildRequest{
+		arg := jobsite.BuildRequest{
 			Pipelines:    argPipelines,
 			Environments: argEnvironments,
 		}
