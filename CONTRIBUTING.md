@@ -3,7 +3,7 @@
 First of all, thank you for taking the time to contribute to osbuild-composer.
 In this document you will find information that can help you with your
 contribution.
-For more information feel free to read our [developer guide](https://www.osbuild.org/guides/developer-guide/developer-guide.html).
+For more information feel free to read our [developer guide](https://www.osbuild.org/docs/developer-guide/index).
 
 ### Running from sources
 

@@ -3,7 +3,8 @@ This pull request includes:
 
 - [ ] adequate testing for the new functionality or fixed issue
 - [ ] adequate documentation informing people about the change such as
-  - [ ] submit a PR for the [guides](https://github.com/osbuild/guides) repository if this PR changed any behavior described there: https://www.osbuild.org/guides/
+  - [ ] submit a PR for the READMEs [listed here](https://github.com/osbuild/osbuild.github.io/blob/main/readme-list)
+  - [ ] submit a PR for the [osbuild.org website](https://github.com/osbuild/osbuild.github.io/) repository if this PR changed any behavior not covered by the automatically updated READMEs
 
 <!--
 Thanks for proposing a change to osbuild-composer!
