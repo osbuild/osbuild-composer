@@ -62,9 +62,14 @@ get_test_cases () {
         if nvrGreaterOrEqual "osbuild-composer" "84"; then
             echo
         else
-            SKIP_ME=$(grep ova-boot <<< "$ALL_CASES" || echo -n)
-            SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_ME")
+            SKIP_OVA=$(grep ova-boot <<< "$ALL_CASES" || echo -n)
+            SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_OVA")
         fi
+
+        # skip image types already covered in osbuild/images repository
+        # see https://issues.redhat.com/browse/COMPOSER-2127
+        SKIP_AMI=$(grep -E 'ami-boot|edge_ami|ec2-boot|ec2_ha|ec2_sap' <<< "$ALL_CASES")
+        SKIP_CASES=("${SKIP_CASES[@]}" "${SKIP_AMI[@]}")
 
         mapfile -t TEST_CASES < <(grep -vxFf <(printf '%s\n' "${SKIP_CASES[@]}") <(printf '%s\n' "${ALL_CASES[@]}"))
         echo "${TEST_CASES[@]}"
