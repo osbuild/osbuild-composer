@@ -1231,46 +1231,64 @@ func TestBlueprintChangeV1(t *testing.T) {
 }
 
 func TestEmptyPackageNameBlueprintJsonV0(t *testing.T) {
-	for _, packageSnippet := range []string{
-		`"packages": [{"name": "", "version": "*"}]`,
-		`"packages": [{"name": ""}]`,
+	for _, tc := range []struct {
+		packageSnippet string
+		specificErr    string
+	}{
+		{
+			`"packages": [{"name": "", "version": "*"}]`,
+			"Entry #1 has version '*' but no name.",
+		}, {
+			`"packages": [{"name": ""}]`,
+			"Entry #1 has no name.",
+		},
 	} {
 		bp := `{
-		"name": "test-emptypackage-blueprint-v0",
-		"description": "TestEmptyPackageNameBlueprintV0",
-		"version": "0.0.1",
-        ` + packageSnippet + `}`
+ 		"name": "test-emptypackage-blueprint-v0",
+ 		"description": "TestEmptyPackageNameBlueprintV0",
+ 		"version": "0.0.1",
+		` + tc.packageSnippet + `}`
 
 		expectedErrorPrefix := "BlueprintsError: All package entries need to contain the name of the package."
+		expectedErr := expectedErrorPrefix + " " + tc.specificErr
 
 		resp, err := PostJSONBlueprintV0(testState.socket, bp)
 		require.NoError(t, err, "failed with a client error")
 		require.False(t, resp.Status, "Negative status expected.")
 		require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
-		reasoning := "I expected an error message starting with\n" + expectedErrorPrefix +
+		reasoning := "I expected the error message\n" + expectedErr +
 			"\nnot\n" + resp.Errors[0].String()
-		assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErrorPrefix), reasoning)
+		assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErr), reasoning)
 	}
 }
 
 func TestEmptyPackageNameBlueprintTOMLV0(t *testing.T) {
-	for _, packageSnippet := range []string{
-		"[[packages]]\nversion = \"*\"\n",
-		"[[packages]]\n",
+	for _, tc := range []struct {
+		packageSnippet string
+		specificErr    string
+	}{
+		{
+			"[[packages]]\nversion = \"*\"\n",
+			"Entry #1 has version '*' but no name.",
+		}, {
+			"[[packages]]\n",
+			"Entry #1 has no name.",
+		},
 	} {
 		bp := `name = "EMPTY-PACKAGE-NAME"
            description = "empty package name"
            version = "0.0.1"
-           ` + packageSnippet
+           ` + tc.packageSnippet
 
 		expectedErrorPrefix := "BlueprintsError: All package entries need to contain the name of the package."
+		expectedErr := expectedErrorPrefix + " " + tc.specificErr
 
 		resp, err := PostTOMLBlueprintV0(testState.socket, bp)
 		require.NoError(t, err, "failed with a client error")
 		require.False(t, resp.Status, "Negative status expected.")
 		require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
-		reasoning := "I expected an error message starting with\n" + expectedErrorPrefix +
+		reasoning := "I expected the error message\n" + expectedErr +
 			"\nnot\n" + resp.Errors[0].String()
-		assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErrorPrefix), reasoning)
+		assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErr), reasoning)
 	}
 }
