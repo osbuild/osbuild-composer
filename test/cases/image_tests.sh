@@ -63,6 +63,10 @@ get_test_cases () {
         SKIP_AZURE=$(grep vhd-boot <<< "$ALL_CASES" || echo -n)
         SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_AZURE")
 
+        # skip image types covered in gcp.sh
+        SKIP_GCE=$(grep gce-boot <<< "$ALL_CASES" || echo -n)
+        SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_GCE")
+
         # skip image types covered in vmware.sh
         SKIP_OVA=$(grep -E 'ova-boot|vmdk-boot' <<< "$ALL_CASES" || echo -n)
         SKIP_CASES=("${SKIP_CASES[@]}" "${SKIP_OVA[@]}")
