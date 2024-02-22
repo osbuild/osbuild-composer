@@ -1256,9 +1256,7 @@ func TestEmptyPackageNameBlueprintJsonV0(t *testing.T) {
 		require.NoError(t, err, "failed with a client error")
 		require.False(t, resp.Status, "Negative status expected.")
 		require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
-		reasoning := "I expected the error message\n" + expectedErr +
-			"\nnot\n" + resp.Errors[0].String()
-		assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErr), reasoning)
+		require.Equal(t, resp.Errors[0].String(), expectedErr, "Error message shall match exactly")
 	}
 }
 
@@ -1287,8 +1285,6 @@ func TestEmptyPackageNameBlueprintTOMLV0(t *testing.T) {
 		require.NoError(t, err, "failed with a client error")
 		require.False(t, resp.Status, "Negative status expected.")
 		require.Equal(t, len(resp.Errors), 1, "There should be exactly one error")
-		reasoning := "I expected the error message\n" + expectedErr +
-			"\nnot\n" + resp.Errors[0].String()
-		assert.True(t, strings.HasPrefix(resp.Errors[0].String(), expectedErr), reasoning)
+		require.Equal(t, resp.Errors[0].String(), expectedErr, "Error message shall match exactly")
 	}
 }
