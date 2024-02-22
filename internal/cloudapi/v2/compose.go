@@ -176,6 +176,10 @@ func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*bluepri
 			servicesCustomization.Disabled = make([]string, len(*rbpc.Services.Disabled))
 			copy(servicesCustomization.Disabled, *rbpc.Services.Disabled)
 		}
+		if rbpc.Services.Masked != nil {
+			servicesCustomization.Masked = make([]string, len(*rbpc.Services.Masked))
+			copy(servicesCustomization.Masked, *rbpc.Services.Masked)
+		}
 		c.Services = servicesCustomization
 	}
 
@@ -656,6 +660,10 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		if request.Customizations.Services.Disabled != nil {
 			servicesCustomization.Disabled = make([]string, len(*request.Customizations.Services.Disabled))
 			copy(servicesCustomization.Disabled, *request.Customizations.Services.Disabled)
+		}
+		if request.Customizations.Services.Masked != nil {
+			servicesCustomization.Masked = make([]string, len(*request.Customizations.Services.Masked))
+			copy(servicesCustomization.Masked, *request.Customizations.Services.Masked)
 		}
 		bp.Customizations.Services = servicesCustomization
 	}
