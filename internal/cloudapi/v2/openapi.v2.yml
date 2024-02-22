@@ -1819,6 +1819,13 @@ components:
           items:
             type: string
             example: "firewalld"
+        masked:
+          description: List of services to mask by default
+          type: array
+          minItems: 1
+          items:
+            type: string
+            example: "telnetd"
     Timezone:
       type: object
       description: Timezone configuration
