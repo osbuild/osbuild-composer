@@ -7,6 +7,9 @@
 # This is used internally during nightly pipeline testing!
 %bcond_with relax_requires
 
+# The minimum required osbuild version
+%global min_osbuild_version 109
+
 %global goipath         github.com/osbuild/osbuild-composer
 
 Version:        101
@@ -297,7 +300,7 @@ cd $PWD/_build/src/%{goipath}
 
 %package core
 Summary:    The core osbuild-composer binary
-Requires:   osbuild-depsolve-dnf >= 107
+Requires:   osbuild-depsolve-dnf >= %{min_osbuild_version}
 Provides:   %{name}-dnf-json = %{version}-%{release}
 Obsoletes:  %{name}-dnf-json < %{version}-%{release}
 
@@ -312,11 +315,11 @@ The core osbuild-composer binary. This is suitable both for spawning in containe
 Summary:    The worker for osbuild-composer
 Requires:   systemd
 Requires:   qemu-img
-Requires:   osbuild >= 98
-Requires:   osbuild-ostree >= 98
-Requires:   osbuild-lvm2 >= 98
-Requires:   osbuild-luks2 >= 98
-Requires:   osbuild-depsolve-dnf >= 107
+Requires:   osbuild >= %{min_osbuild_version}
+Requires:   osbuild-ostree >= %{min_osbuild_version}
+Requires:   osbuild-lvm2 >= %{min_osbuild_version}
+Requires:   osbuild-luks2 >= %{min_osbuild_version}
+Requires:   osbuild-depsolve-dnf >= %{min_osbuild_version}
 Provides:   %{name}-dnf-json = %{version}-%{release}
 Obsoletes:  %{name}-dnf-json < %{version}-%{release}
 

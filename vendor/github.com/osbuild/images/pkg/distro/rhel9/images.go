@@ -390,6 +390,16 @@ func edgeInstallerImage(workload workload.Workload,
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
+	img.Language, img.Keyboard = customizations.GetPrimaryLocale()
+	// ignore ntp servers - we don't currently support setting these in the
+	// kickstart though kickstart does support setting them
+	img.Timezone, _ = customizations.GetTimezoneSettings()
+
+	if instCust := customizations.GetInstaller(); instCust != nil {
+		img.WheelNoPasswd = instCust.WheelSudoNopasswd
+		img.UnattendedKickstart = instCust.Unattended
+	}
+
 	img.SquashfsCompression = "xz"
 	img.AdditionalDracutModules = []string{
 		"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
@@ -594,6 +604,11 @@ func imageInstallerImage(workload workload.Workload,
 	}
 	img.AdditionalDrivers = []string{"cuse", "ipmi_devintf", "ipmi_msghandler"}
 	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
+
+	if instCust := customizations.GetInstaller(); instCust != nil {
+		img.WheelNoPasswd = instCust.WheelSudoNopasswd
+		img.UnattendedKickstart = instCust.Unattended
+	}
 
 	img.SquashfsCompression = "xz"
 

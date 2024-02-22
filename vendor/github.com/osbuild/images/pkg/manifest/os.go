@@ -152,6 +152,12 @@ type OS struct {
 	// OSTreeParent source spec (optional). If nil the new commit (if
 	// applicable) will have no parent
 	OSTreeParent *ostree.SourceSpec
+
+	// Enabling Bootupd runs bootupctl generate-update-metadata in the tree to
+	// transform /usr/lib/ostree-boot into a bootupd-compatible update
+	// payload. Only works with ostree-based images.
+	Bootupd bool
+
 	// Partition table, if nil the tree cannot be put on a partitioned disk
 	PartitionTable *disk.PartitionTable
 
@@ -605,7 +611,6 @@ func (p *OS) serialize() osbuild.Pipeline {
 				Kernel:     []string{p.kernelVer},
 				AddModules: []string{"fips"},
 			}))
-			p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
 		}
 
 		if !p.KernelOptionsBootloader {
@@ -727,6 +732,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if p.FIPS {
+		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
 		for _, stage := range osbuild.GenFIPSStages() {
 			pipeline.AddStage(stage)
 		}
@@ -768,6 +774,13 @@ func (p *OS) serialize() osbuild.Pipeline {
 				"wheel", "docker",
 			},
 		}))
+		if p.Bootupd {
+			pipeline.AddStage(osbuild.NewBootupdGenMetadataStage())
+		}
+	} else {
+		if p.Bootupd {
+			panic("bootupd is only compatible with ostree-based images, this is a programming error")
+		}
 	}
 
 	return pipeline

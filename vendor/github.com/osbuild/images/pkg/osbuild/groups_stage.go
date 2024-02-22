@@ -36,13 +36,5 @@ func NewGroupsStageOptions(groups []users.Group) *GroupsStageOptions {
 }
 
 func GenGroupsStage(groups []users.Group) *Stage {
-	options := &GroupsStageOptions{
-		Groups: make(map[string]GroupsStageOptionsGroup, len(groups)),
-	}
-	for _, group := range groups {
-		options.Groups[group.Name] = GroupsStageOptionsGroup{
-			GID: group.GID,
-		}
-	}
-	return NewGroupsStage(options)
+	return NewGroupsStage(NewGroupsStageOptions(groups))
 }

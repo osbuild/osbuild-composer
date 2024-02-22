@@ -34,12 +34,25 @@ type GRUB2UEFI struct {
 	Unified bool   `json:"unified,omitempty"`
 }
 
+type GRUB2ConfigTimeoutStyle string
+
+const (
+	GRUB2ConfigTimeoutStyleCountdown GRUB2ConfigTimeoutStyle = "countdown"
+	GRUB2ConfigTimeoutStyleHidden    GRUB2ConfigTimeoutStyle = "hidden"
+	GRUB2ConfigTimeoutStyleMenu      GRUB2ConfigTimeoutStyle = "menu"
+)
+
 type GRUB2Config struct {
-	Default        string   `json:"default,omitempty"`
-	TerminalInput  []string `json:"terminal_input,omitempty"`
-	TerminalOutput []string `json:"terminal_output,omitempty"`
-	Timeout        int      `json:"timeout,omitempty"`
-	Serial         string   `json:"serial,omitempty"`
+	Default         string                  `json:"default,omitempty"`
+	DisableRecovery *bool                   `json:"disable_recovery,omitempty"`
+	DisableSubmenu  *bool                   `json:"disable_submenu,omitempty"`
+	Distributor     string                  `json:"distributor,omitempty"`
+	Terminal        []string                `json:"terminal,omitempty"`
+	TerminalInput   []string                `json:"terminal_input,omitempty"`
+	TerminalOutput  []string                `json:"terminal_output,omitempty"`
+	Timeout         int                     `json:"timeout,omitempty"`
+	TimeoutStyle    GRUB2ConfigTimeoutStyle `json:"timeout_style,omitempty"`
+	Serial          string                  `json:"serial,omitempty"`
 }
 
 func (GRUB2StageOptions) isStageOptions() {}

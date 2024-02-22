@@ -83,8 +83,7 @@ type GRUB2BIOS struct {
 
 type GRUB2LegacyConfig struct {
 	GRUB2Config
-	CmdLine     string `json:"cmdline,omitempty"`
-	Distributor string `json:"distributor,omitempty"`
+	CmdLine string `json:"cmdline,omitempty"`
 }
 
 type GRUB2LegacyStageOptions struct {
@@ -145,13 +144,19 @@ func NewGrub2LegacyStageOptions(cfg *GRUB2Config,
 		RootFS:  GRUB2FSDesc{UUID: &rootFsUUID},
 		Entries: entries,
 		Config: &GRUB2LegacyConfig{
-			CmdLine:     kopts,
-			Distributor: "$(sed 's, release .*$,,g' /etc/system-release)",
+			CmdLine: kopts,
 		},
 	}
 
 	if cfg != nil {
 		stageOptions.Config.GRUB2Config = *cfg
+	}
+
+	// NB: previously, the distributor was part of the GRUB2LegacyConfig struct and
+	// was always set. Now it is part of GRUB2Config, which could override it above.
+	// Set it here if it is not set.
+	if stageOptions.Config.Distributor == "" {
+		stageOptions.Config.Distributor = "$(sed 's, release .*$,,g' /etc/system-release)"
 	}
 
 	bootFs := pt.FindMountable("/boot")

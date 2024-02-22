@@ -48,19 +48,21 @@ var (
 	}
 )
 
-func mkGCEImageType(rhsm bool) imageType {
+func mkGCEImageType() imageType {
 	it := gceImgType
-	it.defaultImageConfig = baseGCEImageConfig(rhsm)
+	// The configuration for non-RHUI images does not touch the RHSM configuration at all.
+	// https://issues.redhat.com/browse/COMPOSER-2157
+	it.defaultImageConfig = baseGCEImageConfig()
 	return it
 }
 
-func mkGCERHUIImageType(rhsm bool) imageType {
+func mkGCERHUIImageType() imageType {
 	it := gceRhuiImgType
-	it.defaultImageConfig = defaultGceRhuiImageConfig(rhsm)
+	it.defaultImageConfig = defaultGceRhuiImageConfig()
 	return it
 }
 
-func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
+func baseGCEImageConfig() *distro.ImageConfig {
 	ic := &distro.ImageConfig{
 		Timezone: common.ToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
@@ -154,37 +156,10 @@ func baseGCEImageConfig(rhsm bool) *distro.ImageConfig {
 		},
 	}
 
-	if rhsm {
-		ic.RHSMConfig = map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
-			subscription.RHSMConfigNoSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// Don't disable RHSM redhat.repo management on the GCE
-					// image, which is BYOS and does not use RHUI for content.
-					// Otherwise subscribing the system manually after booting
-					// it would result in empty redhat.repo. Without RHUI, such
-					// system would have no way to get Red Hat content, but
-					// enable the repo management manually, which would be very
-					// confusing.
-				},
-			},
-			subscription.RHSMConfigWithSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		}
-	}
 	return ic
 }
 
-func defaultGceRhuiImageConfig(rhsm bool) *distro.ImageConfig {
+func defaultGceRhuiImageConfig() *distro.ImageConfig {
 	ic := &distro.ImageConfig{
 		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
 			subscription.RHSMConfigNoSubscription: {
@@ -208,7 +183,7 @@ func defaultGceRhuiImageConfig(rhsm bool) *distro.ImageConfig {
 			},
 		},
 	}
-	return ic.InheritFrom(baseGCEImageConfig(rhsm))
+	return ic.InheritFrom(baseGCEImageConfig())
 }
 
 func gceCommonPackageSet(t *imageType) rpmmd.PackageSet {

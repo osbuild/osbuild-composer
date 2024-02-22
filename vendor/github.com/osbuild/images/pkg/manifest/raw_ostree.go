@@ -122,7 +122,10 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 func (p *RawOSTreeImage) addBootupdStage(pipeline *osbuild.Pipeline) {
 	pt := p.treePipeline.PartitionTable
 
-	treeBootupdDevices, treeBootupdMounts := osbuild.GenBootupdDevicesMounts(p.Filename(), pt)
+	treeBootupdDevices, treeBootupdMounts, err := osbuild.GenBootupdDevicesMounts(p.Filename(), pt)
+	if err != nil {
+		panic(err)
+	}
 	opts := &osbuild.BootupdStageOptions{
 		Deployment: &osbuild.OSTreeDeployment{
 			OSName: p.treePipeline.osName,

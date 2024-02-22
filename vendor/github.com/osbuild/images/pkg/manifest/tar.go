@@ -12,6 +12,7 @@ type Tar struct {
 
 	Format   osbuild.TarArchiveFormat
 	RootNode osbuild.TarRootNode
+	Paths    []string
 	ACLs     *bool
 	SELinux  *bool
 	Xattrs   *bool
@@ -50,6 +51,7 @@ func (p *Tar) serialize() osbuild.Pipeline {
 		SELinux:  p.SELinux,
 		Xattrs:   p.Xattrs,
 		RootNode: p.RootNode,
+		Paths:    p.Paths,
 	}
 	tarStage := osbuild.NewTarStage(tarOptions, p.inputPipeline.Name())
 	pipeline.AddStage(tarStage)

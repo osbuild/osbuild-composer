@@ -76,17 +76,56 @@ func NewBootupdStage(opts *BootupdStageOptions, devices map[string]Device, mount
 	}, nil
 }
 
-func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable) (map[string]Device, []Mount) {
-	_, mounts, devices, err := genMountsDevicesFromPt(filename, pt)
-	if err != nil {
-		panic(err)
+func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error) {
+	mounts := make([]Mount, 0, len(pt.Partitions))
+	// note that we are not using pt.forEachMountable() here because we
+	// need to keep track of the partition number (even if it's not
+	// mountable)
+	for idx, part := range pt.Partitions {
+		if part.Payload == nil {
+			continue
+		}
+		// TODO: support things like LVM here via supporting "disk.Container"
+		mnt, ok := part.Payload.(disk.Mountable)
+		if !ok {
+			return nil, fmt.Errorf("type %v not supported by bootupd handling yet", mnt)
+		}
+
+		partNum := idx + 1
+		name := fmt.Sprintf("part%v", partNum)
+		mount, err := genOsbuildMount(name, source, mnt)
+		if err != nil {
+			return nil, err
+		}
+		mount.Partition = &partNum
+		mounts = append(mounts, *mount)
 	}
-	devices["disk"] = Device{
-		Type: "org.osbuild.loopback",
-		Options: &LoopbackDeviceOptions{
-			Filename: filename,
+	// this must be sorted in so that mounts do not shadow each other
+	sort.Slice(mounts, func(i, j int) bool {
+		return mounts[i].Target < mounts[j].Target
+	})
+
+	return mounts, nil
+}
+
+func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable) (map[string]Device, []Mount, error) {
+	devName := "disk"
+	devices := map[string]Device{
+		devName: Device{
+			Type: "org.osbuild.loopback",
+			Options: &LoopbackDeviceOptions{
+				Filename: filename,
+				Partscan: true,
+			},
 		},
 	}
+	mounts, err := genMountsForBootupd(devName, pt)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := validateBootupdMounts(mounts); err != nil {
+		return nil, nil, err
+	}
 
-	return devices, mounts
+	return devices, mounts, nil
 }

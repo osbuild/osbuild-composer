@@ -63,6 +63,7 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 
 	var artifact *artifact.Artifact
 	if img.BootContainer {
+		osPipeline.Bootupd = true
 		encapsulatePipeline := manifest.NewOSTreeEncapsulate(buildPipeline, ostreeCommitPipeline, "ostree-encapsulate")
 		encapsulatePipeline.SetFilename(img.Filename)
 		artifact = encapsulatePipeline.Export()

@@ -750,3 +750,20 @@ func (pt *PartitionTable) GetBuildPackages() []string {
 
 	return packages
 }
+
+// GetMountpointSize takes a mountpoint and returns the size of the entity this
+// mountpoint belongs to.
+func (pt *PartitionTable) GetMountpointSize(mountpoint string) (uint64, error) {
+	path := entityPath(pt, mountpoint)
+	if path == nil {
+		return 0, fmt.Errorf("cannot find mountpoint %s", mountpoint)
+	}
+
+	for _, ent := range path {
+		if sizeable, ok := ent.(Sizeable); ok {
+			return sizeable.GetSize(), nil
+		}
+	}
+
+	panic(fmt.Sprintf("no sizeable of the entity path for mountpoint %s, this is a programming error", mountpoint))
+}

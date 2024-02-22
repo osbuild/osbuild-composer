@@ -17,6 +17,9 @@ type LoopbackDeviceOptions struct {
 
 	// Lock (bsd lock) the device after opening it
 	Lock bool `json:"lock,omitempty"`
+
+	// Enable partition scanning as an option
+	Partscan bool `json:"partscan,omitempty"`
 }
 
 func (LoopbackDeviceOptions) isDeviceOptions() {}

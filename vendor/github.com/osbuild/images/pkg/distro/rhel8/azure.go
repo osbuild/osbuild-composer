@@ -11,7 +11,8 @@ import (
 	"github.com/osbuild/images/pkg/subscription"
 )
 
-const defaultAzureKernelOptions = "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
+// use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
+const defaultAzureKernelOptions = "ro loglevel=3 crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
 
 func azureRhuiImgType() imageType {
 	return imageType{
@@ -473,6 +474,7 @@ var azureRhuiBasePartitionTables = distro.BasePartitionTableMap{
 	},
 }
 
+// based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/deploying_rhel_8_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
 var defaultAzureImageConfig = &distro.ImageConfig{
 	Timezone: common.ToPtr("Etc/UTC"),
 	Locale:   common.ToPtr("en_US.UTF-8"),
@@ -584,10 +586,13 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 		},
 	},
 	Grub2Config: &osbuild.GRUB2Config{
-		TerminalInput:  []string{"serial", "console"},
-		TerminalOutput: []string{"serial", "console"},
-		Serial:         "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
-		Timeout:        10,
+		DisableRecovery: common.ToPtr(true),
+		DisableSubmenu:  common.ToPtr(true),
+		Distributor:     "$(sed 's, release .*$,,g' /etc/system-release)",
+		Terminal:        []string{"serial", "console"},
+		Serial:          "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1",
+		Timeout:         10,
+		TimeoutStyle:    osbuild.GRUB2ConfigTimeoutStyleCountdown,
 	},
 	UdevRules: &osbuild.UdevRulesStageOptions{
 		Filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules",
@@ -624,34 +629,11 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 }
 
 // Diff of the default Image Config compare to the `defaultAzureImageConfig`
+// The configuration for non-RHUI images does not touch the RHSM configuration at all.
+// https://issues.redhat.com/browse/COMPOSER-2157
 var defaultAzureByosImageConfig = &distro.ImageConfig{
 	GPGKeyFiles: []string{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
-	},
-	RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
-		subscription.RHSMConfigNoSubscription: {
-			SubMan: &osbuild.RHSMStageOptionsSubMan{
-				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-					AutoRegistration: common.ToPtr(true),
-				},
-				// Don't disable RHSM redhat.repo management on the GCE
-				// image, which is BYOS and does not use RHUI for content.
-				// Otherwise subscribing the system manually after booting
-				// it would result in empty redhat.repo. Without RHUI, such
-				// system would have no way to get Red Hat content, but
-				// enable the repo management manually, which would be very
-				// confusing.
-			},
-		},
-		subscription.RHSMConfigWithSubscription: {
-			SubMan: &osbuild.RHSMStageOptionsSubMan{
-				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
-					AutoRegistration: common.ToPtr(true),
-				},
-				// do not disable the redhat.repo management if the user
-				// explicitly request the system to be subscribed
-			},
-		},
 	},
 }
 

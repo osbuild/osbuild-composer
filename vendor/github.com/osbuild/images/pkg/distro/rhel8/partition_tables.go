@@ -117,182 +117,6 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 }
-
-var ec2BasePartitionTables = distro.BasePartitionTableMap{
-	arch.ARCH_X86_64.String(): disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
-		Partitions: []disk.Partition{
-			{
-				Size:     1 * common.MebiByte,
-				Bootable: true,
-				Type:     disk.BIOSBootPartitionGUID,
-				UUID:     disk.BIOSBootPartitionUUID,
-			},
-			{
-				Size: 200 * common.MebiByte,
-				Type: disk.EFISystemPartitionGUID,
-				UUID: disk.EFISystemPartitionUUID,
-				Payload: &disk.Filesystem{
-					Type:         "vfat",
-					UUID:         disk.EFIFilesystemUUID,
-					Mountpoint:   "/boot/efi",
-					Label:        "EFI-SYSTEM",
-					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-					FSTabFreq:    0,
-					FSTabPassNo:  2,
-				},
-			},
-			{
-				Size: 500 * common.MebiByte,
-				Type: disk.XBootLDRPartitionGUID,
-				UUID: disk.FilesystemDataUUID,
-				Payload: &disk.Filesystem{
-					Type:         "xfs",
-					Mountpoint:   "/boot",
-					Label:        "boot",
-					FSTabOptions: "defaults",
-					FSTabFreq:    0,
-					FSTabPassNo:  0,
-				},
-			},
-			{
-				Size: 2 * common.GibiByte,
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.RootPartitionUUID,
-				Payload: &disk.Filesystem{
-					Type:         "xfs",
-					Label:        "root",
-					Mountpoint:   "/",
-					FSTabOptions: "defaults",
-					FSTabFreq:    0,
-					FSTabPassNo:  0,
-				},
-			},
-		},
-	},
-	arch.ARCH_AARCH64.String(): disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
-		Partitions: []disk.Partition{
-			{
-				Size: 200 * common.MebiByte,
-				Type: disk.EFISystemPartitionGUID,
-				UUID: disk.EFISystemPartitionUUID,
-				Payload: &disk.Filesystem{
-					Type:         "vfat",
-					UUID:         disk.EFIFilesystemUUID,
-					Mountpoint:   "/boot/efi",
-					Label:        "EFI-SYSTEM",
-					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-					FSTabFreq:    0,
-					FSTabPassNo:  2,
-				},
-			},
-			{
-				Size: 500 * common.MebiByte,
-				Type: disk.XBootLDRPartitionGUID,
-				UUID: disk.FilesystemDataUUID,
-				Payload: &disk.Filesystem{
-					Type:         "xfs",
-					Mountpoint:   "/boot",
-					Label:        "boot",
-					FSTabOptions: "defaults",
-					FSTabFreq:    0,
-					FSTabPassNo:  0,
-				},
-			},
-			{
-				Size: 2 * common.GibiByte,
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.RootPartitionUUID,
-				Payload: &disk.Filesystem{
-					Type:         "xfs",
-					Label:        "root",
-					Mountpoint:   "/",
-					FSTabOptions: "defaults",
-					FSTabFreq:    0,
-					FSTabPassNo:  0,
-				},
-			},
-		},
-	},
-}
-
-// ec2LegacyBasePartitionTables is the partition table layout for RHEL EC2
-// images prior to 8.9. It is used for backwards compatibility.
-var ec2LegacyBasePartitionTables = distro.BasePartitionTableMap{
-	arch.ARCH_X86_64.String(): disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
-		Partitions: []disk.Partition{
-			{
-				Size:     1 * common.MebiByte,
-				Bootable: true,
-				Type:     disk.BIOSBootPartitionGUID,
-				UUID:     disk.BIOSBootPartitionUUID,
-			},
-			{
-				Size: 2 * common.GibiByte,
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.RootPartitionUUID,
-				Payload: &disk.Filesystem{
-					Type:         "xfs",
-					Label:        "root",
-					Mountpoint:   "/",
-					FSTabOptions: "defaults",
-					FSTabFreq:    0,
-					FSTabPassNo:  0,
-				},
-			},
-		},
-	},
-	arch.ARCH_AARCH64.String(): disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
-		Partitions: []disk.Partition{
-			{
-				Size: 200 * common.MebiByte,
-				Type: disk.EFISystemPartitionGUID,
-				UUID: disk.EFISystemPartitionUUID,
-				Payload: &disk.Filesystem{
-					Type:         "vfat",
-					UUID:         disk.EFIFilesystemUUID,
-					Mountpoint:   "/boot/efi",
-					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-					FSTabFreq:    0,
-					FSTabPassNo:  2,
-				},
-			},
-			{
-				Size: 512 * common.MebiByte,
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.FilesystemDataUUID,
-				Payload: &disk.Filesystem{
-					Type:         "xfs",
-					Mountpoint:   "/boot",
-					FSTabOptions: "defaults",
-					FSTabFreq:    0,
-					FSTabPassNo:  0,
-				},
-			},
-			{
-				Size: 2 * common.GibiByte,
-				Type: disk.FilesystemDataGUID,
-				UUID: disk.RootPartitionUUID,
-				Payload: &disk.Filesystem{
-					Type:         "xfs",
-					Label:        "root",
-					Mountpoint:   "/",
-					FSTabOptions: "defaults",
-					FSTabFreq:    0,
-					FSTabPassNo:  0,
-				},
-			},
-		},
-	},
-}
-
 var edgeBasePartitionTables = distro.BasePartitionTableMap{
 	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
@@ -422,4 +246,101 @@ var edgeBasePartitionTables = distro.BasePartitionTableMap{
 			},
 		},
 	},
+}
+
+func getEc2PartitionTables(osVersion string, isRHEL bool) distro.BasePartitionTableMap {
+	// x86_64 - without /boot
+	// aarch  - <= 8.9 - 512MiB, 8.10 and centos: 1 GiB
+	var aarch64BootSize uint64
+	switch {
+	case common.VersionLessThan(osVersion, "8.10") && isRHEL:
+		aarch64BootSize = 512 * common.MebiByte
+	default:
+		aarch64BootSize = 1 * common.GibiByte
+	}
+
+	return distro.BasePartitionTableMap{
+		arch.ARCH_X86_64.String(): disk.PartitionTable{
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
+				{
+					Size:     1 * common.MebiByte,
+					Bootable: true,
+					Type:     disk.BIOSBootPartitionGUID,
+					UUID:     disk.BIOSBootPartitionUUID,
+				},
+				{
+					Size: 200 * common.MebiByte,
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: 2 * common.GibiByte,
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.RootPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		},
+		arch.ARCH_AARCH64.String(): disk.PartitionTable{
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: "gpt",
+			Partitions: []disk.Partition{
+				{
+					Size: 200 * common.MebiByte,
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: aarch64BootSize,
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.FilesystemDataUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Mountpoint:   "/boot",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+				{
+					Size: 2 * common.GibiByte,
+					Type: disk.FilesystemDataGUID,
+					UUID: disk.RootPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "xfs",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		},
+	}
 }

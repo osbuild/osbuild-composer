@@ -344,7 +344,14 @@ func imageInstallerImage(workload workload.Workload,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
+	customizations := bp.Customizations
+
 	img := image.NewAnacondaTarInstaller()
+
+	if instCust := customizations.GetInstaller(); instCust != nil {
+		img.WheelNoPasswd = instCust.WheelSudoNopasswd
+		img.UnattendedKickstart = instCust.Unattended
+	}
 
 	// Enable anaconda-webui for Fedora > 38
 	distro := t.Arch().Distro()
@@ -354,11 +361,20 @@ func imageInstallerImage(workload workload.Workload,
 			"org.fedoraproject.Anaconda.Modules.Timezone",
 			"org.fedoraproject.Anaconda.Modules.Localization",
 		}
-		img.AdditionalKernelOpts = []string{"inst.webui", "inst.webui.remote"}
+		if img.UnattendedKickstart {
+			// NOTE: this is not supported right now because the
+			// image-installer on Fedora isn't working when unattended.
+			// These options are probably necessary but could change.
+			// Unattended/non-interactive installations are better set to text
+			// time since they might be running headless and a UI is
+			// unnecessary.
+			img.AdditionalKernelOpts = []string{"inst.text", "inst.noninteractive"}
+		} else {
+			img.AdditionalKernelOpts = []string{"inst.webui", "inst.webui.remote"}
+		}
 	}
 	img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, "org.fedoraproject.Anaconda.Modules.Users")
 
-	customizations := bp.Customizations
 	img.Platform = t.platform
 	img.Workload = workload
 	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], containers, customizations)
@@ -513,10 +529,21 @@ func iotInstallerImage(workload workload.Workload,
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 	img.Users = users.UsersFromBP(customizations.GetUsers())
 	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.Language, img.Keyboard = customizations.GetPrimaryLocale()
+	// ignore ntp servers - we don't currently support setting these in the
+	// kickstart though kickstart does support setting them
+	img.Timezone, _ = customizations.GetTimezoneSettings()
+
 	img.AdditionalAnacondaModules = []string{
 		"org.fedoraproject.Anaconda.Modules.Timezone",
 		"org.fedoraproject.Anaconda.Modules.Localization",
 		"org.fedoraproject.Anaconda.Modules.Users",
+	}
+
+	if instCust := customizations.GetInstaller(); instCust != nil {
+		img.WheelNoPasswd = instCust.WheelSudoNopasswd
+		img.UnattendedKickstart = instCust.Unattended
 	}
 
 	img.SquashfsCompression = "lz4"
