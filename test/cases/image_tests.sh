@@ -59,12 +59,9 @@ get_test_cases () {
             SKIP_CASES=("${SKIP_OSTREE[@]}")
         fi
 
-        if nvrGreaterOrEqual "osbuild-composer" "84"; then
-            echo
-        else
-            SKIP_OVA=$(grep ova-boot <<< "$ALL_CASES" || echo -n)
-            SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_OVA")
-        fi
+        # skip image types covered in vmware.sh
+        SKIP_OVA=$(grep -E 'ova-boot|vmdk-boot' <<< "$ALL_CASES" || echo -n)
+        SKIP_CASES=("${SKIP_CASES[@]}" "${SKIP_OVA[@]}")
 
         # skip image types already covered in osbuild/images repository
         # see https://issues.redhat.com/browse/COMPOSER-2127
