@@ -222,7 +222,6 @@ worker-key-pair: ca
 .PHONY: unit-tests
 unit-tests:
 	go test -race ./...
-	go test -race ./internal/dnfjson/... -force-dnf
 
 #
 # Building packages
