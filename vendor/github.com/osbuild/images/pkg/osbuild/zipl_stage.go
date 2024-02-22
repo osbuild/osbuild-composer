@@ -9,13 +9,6 @@ type ZiplStageOptions struct {
 
 func (ZiplStageOptions) isStageOptions() {}
 
-// NewZiplStageOptions creates a new ZiplStageOptions object with no timeout
-func NewZiplStageOptions() *ZiplStageOptions {
-	return &ZiplStageOptions{
-		Timeout: 0,
-	}
-}
-
 // NewZiplStage creates a new zipl Stage object.
 func NewZiplStage(options *ZiplStageOptions) *Stage {
 	return &Stage{

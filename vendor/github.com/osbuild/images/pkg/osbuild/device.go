@@ -225,6 +225,23 @@ func pathEscape(path string) string {
 	return strings.ReplaceAll(path, "/", "-")
 }
 
+func genOsbuildMount(name, source string, mnt disk.Mountable) (*Mount, error) {
+	mountpoint := mnt.GetMountpoint()
+	t := mnt.GetFSType()
+	switch t {
+	case "xfs":
+		return NewXfsMount(name, source, mountpoint), nil
+	case "vfat":
+		return NewFATMount(name, source, mountpoint), nil
+	case "ext4":
+		return NewExt4Mount(name, source, mountpoint), nil
+	case "btrfs":
+		return NewBtrfsMount(name, source, mountpoint), nil
+	default:
+		return nil, fmt.Errorf("unknown fs type " + t)
+	}
+}
+
 func genMountsDevicesFromPt(filename string, pt *disk.PartitionTable) (string, []Mount, map[string]Device, error) {
 	devices := make(map[string]Device, len(pt.Partitions))
 	mounts := make([]Mount, 0, len(pt.Partitions))
@@ -232,24 +249,13 @@ func genMountsDevicesFromPt(filename string, pt *disk.PartitionTable) (string, [
 	genMounts := func(mnt disk.Mountable, path []disk.Entity) error {
 		stageDevices, name := getDevices(path, filename, false)
 		mountpoint := mnt.GetMountpoint()
-
 		if mountpoint == "/" {
 			fsRootMntName = name
 		}
 
-		var mount *Mount
-		t := mnt.GetFSType()
-		switch t {
-		case "xfs":
-			mount = NewXfsMount(name, name, mountpoint)
-		case "vfat":
-			mount = NewFATMount(name, name, mountpoint)
-		case "ext4":
-			mount = NewExt4Mount(name, name, mountpoint)
-		case "btrfs":
-			mount = NewBtrfsMount(name, name, mountpoint)
-		default:
-			return fmt.Errorf("unknown fs type " + t)
+		mount, err := genOsbuildMount(name, name, mnt)
+		if err != nil {
+			return err
 		}
 		mounts = append(mounts, *mount)
 

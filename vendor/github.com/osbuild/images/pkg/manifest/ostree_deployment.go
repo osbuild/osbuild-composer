@@ -292,7 +292,6 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 
 	if p.FIPS {
 		kernelOpts = append(kernelOpts, osbuild.GenFIPSKernelOptions(p.PartitionTable)...)
-		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
 	}
 
 	var ref string
@@ -408,6 +407,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}
 
 	if p.FIPS {
+		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
 		for _, stage := range osbuild.GenFIPSStages() {
 			stage.MountOSTree(p.osName, ref, 0)
 			pipeline.AddStage(stage)

@@ -71,41 +71,9 @@ func NewUsersStageOptions(userCustomizations []users.User, omitKey bool) (*Users
 }
 
 func GenUsersStage(users []users.User, omitKey bool) (*Stage, error) {
-	options := &UsersStageOptions{
-		Users: make(map[string]UsersStageOptionsUser, len(users)),
+	options, err := NewUsersStageOptions(users, omitKey)
+	if err != nil {
+		return nil, err
 	}
-
-	for _, user := range users {
-		// Don't hash empty passwords, set to nil to lock account
-		if user.Password != nil && len(*user.Password) == 0 {
-			user.Password = nil
-		}
-
-		// Hash non-empty un-hashed passwords
-		if user.Password != nil && !crypt.PasswordIsCrypted(*user.Password) {
-			cryptedPassword, err := crypt.CryptSHA512(*user.Password)
-			if err != nil {
-				return nil, err
-			}
-
-			user.Password = &cryptedPassword
-		}
-
-		userOptions := UsersStageOptionsUser{
-			UID:         user.UID,
-			GID:         user.GID,
-			Groups:      user.Groups,
-			Description: user.Description,
-			Home:        user.Home,
-			Shell:       user.Shell,
-			Password:    user.Password,
-			Key:         nil,
-		}
-		if !omitKey {
-			userOptions.Key = user.Key
-		}
-		options.Users[user.Name] = userOptions
-	}
-
 	return NewUsersStage(options), nil
 }

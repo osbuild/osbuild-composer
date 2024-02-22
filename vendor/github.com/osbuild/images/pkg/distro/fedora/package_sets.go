@@ -203,8 +203,10 @@ func bootableContainerPackageSet(t *imageType) rpmmd.PackageSet {
 			"crun",
 			"cryptsetup",
 			"dnf",
+			"dosfstools",
 			"e2fsprogs",
-			"fwupd",                 // if you're using linux-firmware, you probably also want fwupd
+			"fwupd", // if you're using linux-firmware, you probably also want fwupd
+			"gdisk",
 			"iproute", "iproute-tc", // route manipulation and QoS
 			"iptables", "nftables", // firewall manipulation
 			"iptables-services", // additional firewall support

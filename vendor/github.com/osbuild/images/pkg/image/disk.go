@@ -3,6 +3,8 @@ package image
 import (
 	"fmt"
 	"math/rand"
+	"path/filepath"
+	"strings"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
@@ -87,8 +89,14 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		ovfPipeline := manifest.NewOVF(buildPipeline, vmdkPipeline)
 		tarPipeline := manifest.NewTar(buildPipeline, ovfPipeline, "archive")
 		tarPipeline.Format = osbuild.TarArchiveFormatUstar
-		tarPipeline.RootNode = osbuild.TarRootNodeOmit
 		tarPipeline.SetFilename(img.Filename)
+		extLess := strings.TrimSuffix(img.Filename, filepath.Ext(img.Filename))
+		// The .ovf descriptor needs to be the first file in the archive
+		tarPipeline.Paths = []string{
+			fmt.Sprintf("%s.ovf", extLess),
+			fmt.Sprintf("%s.mf", extLess),
+			fmt.Sprintf("%s.vmdk", extLess),
+		}
 		imagePipeline = tarPipeline
 	case platform.FORMAT_GCE:
 		// NOTE(akoutsou): temporary workaround; filename required for GCP

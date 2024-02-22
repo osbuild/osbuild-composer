@@ -31,8 +31,8 @@ type SourceSpec struct {
 	StoragePath         *string
 }
 
-func NewResolver(arch string) Resolver {
-	return Resolver{
+func NewResolver(arch string) *Resolver {
+	return &Resolver{
 		ctx:   context.Background(),
 		queue: make(chan resolveResult, 2),
 		Arch:  arch,

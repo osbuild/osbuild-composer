@@ -16,7 +16,7 @@ func amiImgTypeX86_64(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: ec2CommonPackageSet,
 		},
-		defaultImageConfig:  defaultAMIImageConfigX86_64(rd),
+		defaultImageConfig:  defaultAMIImageConfigX86_64(),
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto",
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
@@ -24,19 +24,13 @@ func amiImgTypeX86_64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: getEc2PartitionTables(rd.osVersion, rd.isRHEL()),
 	}
 
 	return it
 }
 
 func ec2ImgTypeX86_64(rd distribution) imageType {
-	basePartitionTables := ec2BasePartitionTables
-	// use legacy partition tables for RHEL 8.8 and older
-	if common.VersionLessThan(rd.osVersion, "8.9") {
-		basePartitionTables = ec2LegacyBasePartitionTables
-	}
-
 	it := imageType{
 		name:        "ec2",
 		filename:    "image.raw.xz",
@@ -53,18 +47,12 @@ func ec2ImgTypeX86_64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: basePartitionTables,
+		basePartitionTables: getEc2PartitionTables(rd.osVersion, rd.isRHEL()),
 	}
 	return it
 }
 
 func ec2HaImgTypeX86_64(rd distribution) imageType {
-	basePartitionTables := ec2BasePartitionTables
-	// use legacy partition tables for RHEL 8.8 and older
-	if rd.isRHEL() && common.VersionLessThan(rd.osVersion, "8.9") {
-		basePartitionTables = ec2LegacyBasePartitionTables
-	}
-
 	it := imageType{
 		name:        "ec2-ha",
 		filename:    "image.raw.xz",
@@ -81,7 +69,7 @@ func ec2HaImgTypeX86_64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: basePartitionTables,
+		basePartitionTables: getEc2PartitionTables(rd.osVersion, rd.isRHEL()),
 	}
 	return it
 }
@@ -94,7 +82,7 @@ func amiImgTypeAarch64(rd distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: ec2CommonPackageSet,
 		},
-		defaultImageConfig:  defaultAMIImageConfig(rd),
+		defaultImageConfig:  defaultAMIImageConfig(),
 		kernelOptions:       "console=ttyS0,115200n8 console=tty0 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 iommu.strict=0 crashkernel=auto",
 		bootable:            true,
 		defaultSize:         10 * common.GibiByte,
@@ -102,18 +90,12 @@ func amiImgTypeAarch64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image"},
 		exports:             []string{"image"},
-		basePartitionTables: ec2BasePartitionTables,
+		basePartitionTables: getEc2PartitionTables(rd.osVersion, rd.isRHEL()),
 	}
 	return it
 }
 
 func ec2ImgTypeAarch64(rd distribution) imageType {
-	basePartitionTables := ec2BasePartitionTables
-	// use legacy partition tables for RHEL 8.8 and older
-	if common.VersionLessThan(rd.osVersion, "8.9") {
-		basePartitionTables = ec2LegacyBasePartitionTables
-	}
-
 	it := imageType{
 		name:        "ec2",
 		filename:    "image.raw.xz",
@@ -130,18 +112,12 @@ func ec2ImgTypeAarch64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: basePartitionTables,
+		basePartitionTables: getEc2PartitionTables(rd.osVersion, rd.isRHEL()),
 	}
 	return it
 }
 
 func ec2SapImgTypeX86_64(rd distribution) imageType {
-	basePartitionTables := ec2BasePartitionTables
-	// use legacy partition tables for RHEL 8.8 and older
-	if common.VersionLessThan(rd.osVersion, "8.9") {
-		basePartitionTables = ec2LegacyBasePartitionTables
-	}
-
 	it := imageType{
 		name:        "ec2-sap",
 		filename:    "image.raw.xz",
@@ -158,7 +134,7 @@ func ec2SapImgTypeX86_64(rd distribution) imageType {
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
 		exports:             []string{"xz"},
-		basePartitionTables: basePartitionTables,
+		basePartitionTables: getEc2PartitionTables(rd.osVersion, rd.isRHEL()),
 	}
 	return it
 }
@@ -227,7 +203,6 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 			{
 				Filename: "00-getty-fixes.conf",
 				Config: osbuild.SystemdLogindConfigDropin{
-
 					Login: osbuild.SystemdLogindConfigLoginSection{
 						NAutoVTs: common.ToPtr(0),
 					},
@@ -307,24 +282,23 @@ func defaultEc2ImageConfig(rd distribution) *distro.ImageConfig {
 	return ic
 }
 
-// default AMI (EC2 BYOS) images config
-func defaultAMIImageConfig(rd distribution) *distro.ImageConfig {
-	ic := defaultEc2ImageConfig(rd)
-	if rd.isRHEL() {
-		// defaultEc2ImageConfig() adds the rhsm options only for RHEL < 8.7
-		// Add it unconditionally for AMI
-		ic = appendRHSM(ic)
-	}
-	return ic
-}
-
 func defaultEc2ImageConfigX86_64(rd distribution) *distro.ImageConfig {
 	ic := defaultEc2ImageConfig(rd)
 	return appendEC2DracutX86_64(ic)
 }
 
-func defaultAMIImageConfigX86_64(rd distribution) *distro.ImageConfig {
-	ic := defaultAMIImageConfig(rd).InheritFrom(defaultEc2ImageConfigX86_64(rd))
+// Default AMI (custom image built by users) images config.
+// The configuration does not touch the RHSM configuration at all.
+// https://issues.redhat.com/browse/COMPOSER-2157
+func defaultAMIImageConfig() *distro.ImageConfig {
+	return baseEc2ImageConfig()
+}
+
+// Default AMI x86_64 (custom image built by users) images config.
+// The configuration does not touch the RHSM configuration at all.
+// https://issues.redhat.com/browse/COMPOSER-2157
+func defaultAMIImageConfigX86_64() *distro.ImageConfig {
+	ic := defaultAMIImageConfig()
 	return appendEC2DracutX86_64(ic)
 }
 

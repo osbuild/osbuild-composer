@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
@@ -188,24 +189,15 @@ func (p *AnacondaInstaller) serializeEnd() {
 	p.packageSpecs = nil
 }
 
+func installerRootUser() osbuild.UsersStageOptionsUser {
+	return osbuild.UsersStageOptionsUser{
+		Password: common.ToPtr(""),
+	}
+}
+
 func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
-	}
-
-	// Let's do a bunch of sanity checks that are dependent on the installer type
-	// being serialized
-	if p.Type == AnacondaInstallerTypeLive {
-		if len(p.Users) != 0 || len(p.Groups) != 0 {
-			panic("anaconda installer type payload does not support users and groups customization")
-		}
-
-		if p.InteractiveDefaults != nil {
-			panic("anaconda installer type payload does not support interactive defaults")
-		}
-	} else if p.Type == AnacondaInstallerTypePayload {
-	} else {
-		panic("invalid anaconda installer type")
 	}
 
 	pipeline := p.Base.serialize()
@@ -220,130 +212,143 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	}))
 	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 
-	rootPassword := ""
-	rootUser := osbuild.UsersStageOptionsUser{
-		Password: &rootPassword,
-	}
-
-	var usersStageOptions *osbuild.UsersStageOptions
-
-	if p.Type == AnacondaInstallerTypePayload {
-		installUID := 0
-		installGID := 0
-		installHome := "/root"
-		installShell := "/usr/libexec/anaconda/run-anaconda"
-		installPassword := ""
-		installUser := osbuild.UsersStageOptionsUser{
-			UID:      &installUID,
-			GID:      &installGID,
-			Home:     &installHome,
-			Shell:    &installShell,
-			Password: &installPassword,
+	// Let's do a bunch of sanity checks that are dependent on the installer type
+	// being serialized
+	switch p.Type {
+	case AnacondaInstallerTypeLive:
+		if len(p.Users) != 0 || len(p.Groups) != 0 {
+			panic("anaconda installer type live does not support users and groups customization")
 		}
-
-		usersStageOptions = &osbuild.UsersStageOptions{
-			Users: map[string]osbuild.UsersStageOptionsUser{
-				"root":    rootUser,
-				"install": installUser,
-			},
+		if p.InteractiveDefaults != nil {
+			panic("anaconda installer type live does not support interactive defaults")
 		}
-	} else if p.Type == AnacondaInstallerTypeLive {
-		usersStageOptions = &osbuild.UsersStageOptions{
-			Users: map[string]osbuild.UsersStageOptionsUser{
-				"root": rootUser,
-			},
-		}
-	}
-
-	pipeline.AddStage(osbuild.NewUsersStage(usersStageOptions))
-
-	if p.Type == AnacondaInstallerTypeLive {
-		systemdStageOptions := &osbuild.SystemdStageOptions{
-			EnabledServices: []string{
-				"livesys.service",
-				"livesys-late.service",
-			},
-		}
-
-		pipeline.AddStage(osbuild.NewSystemdStage(systemdStageOptions))
-
-		livesysMode := os.FileMode(int(0644))
-		livesysFile, err := fsnode.NewFile("/etc/sysconfig/livesys", &livesysMode, "root", "root", []byte("livesys_session=\"gnome\""))
-
-		if err != nil {
-			panic(err)
-		}
-
-		p.Files = []*fsnode.File{livesysFile}
-
-		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
-	}
-
-	if p.Type == AnacondaInstallerTypePayload {
-		var LoraxPath string
-
-		if p.UseRHELLoraxTemplates {
-			LoraxPath = "80-rhel/runtime-postinstall.tmpl"
-		} else {
-			LoraxPath = "99-generic/runtime-postinstall.tmpl"
-		}
-
-		pipeline.AddStage(osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules)))
-		pipeline.AddStage(osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
-			Path:     LoraxPath,
-			BaseArch: p.platform.GetArch().String(),
-		}))
-	}
-
-	var dracutModules []string
-
-	if p.Type == AnacondaInstallerTypePayload {
-		dracutModules = append(
-			p.AdditionalDracutModules,
-			"anaconda",
-			"rdma",
-			"rngd",
-			"multipath",
-			"fcoe",
-			"fcoe-uefi",
-			"iscsi",
-			"lunmask",
-			"nfs",
-		)
-	} else if p.Type == AnacondaInstallerTypeLive {
-		dracutModules = append(
-			p.AdditionalDracutModules,
-			"anaconda",
-			"rdma",
-			"rngd",
-		)
-	} else {
+		pipeline.AddStages(p.liveStages()...)
+	case AnacondaInstallerTypePayload:
+		pipeline.AddStages(p.payloadStages()...)
+	default:
 		panic("invalid anaconda installer type")
 	}
 
-	dracutOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
-	dracutOptions.AddDrivers = p.AdditionalDrivers
-	pipeline.AddStage(osbuild.NewDracutStage(dracutOptions))
-	pipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
+	return pipeline
+}
 
-	if p.Type == AnacondaInstallerTypePayload {
-		if p.InteractiveDefaults != nil {
-			kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
-				"/usr/share/anaconda/interactive-defaults.ks",
-				p.Users,
-				p.Groups,
-				p.InteractiveDefaults.TarPath,
-			)
+func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
+	stages := make([]*osbuild.Stage, 0)
 
-			if err != nil {
-				panic("failed to create kickstartstage options for interactive defaults")
-			}
-
-			pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
-		}
+	installUID := 0
+	installGID := 0
+	installHome := "/root"
+	installShell := "/usr/libexec/anaconda/run-anaconda"
+	installPassword := ""
+	installUser := osbuild.UsersStageOptionsUser{
+		UID:      &installUID,
+		GID:      &installGID,
+		Home:     &installHome,
+		Shell:    &installShell,
+		Password: &installPassword,
 	}
 
-	return pipeline
+	usersStageOptions := &osbuild.UsersStageOptions{
+		Users: map[string]osbuild.UsersStageOptionsUser{
+			"root":    installerRootUser(),
+			"install": installUser,
+		},
+	}
+	stages = append(stages, osbuild.NewUsersStage(usersStageOptions))
+
+	var LoraxPath string
+
+	if p.UseRHELLoraxTemplates {
+		LoraxPath = "80-rhel/runtime-postinstall.tmpl"
+	} else {
+		LoraxPath = "99-generic/runtime-postinstall.tmpl"
+	}
+
+	stages = append(stages, osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules)))
+	stages = append(stages, osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
+		Path:     LoraxPath,
+		BaseArch: p.platform.GetArch().String(),
+	}))
+
+	dracutModules := append(
+		p.AdditionalDracutModules,
+		"anaconda",
+		"rdma",
+		"rngd",
+		"multipath",
+		"fcoe",
+		"fcoe-uefi",
+		"iscsi",
+		"lunmask",
+		"nfs",
+	)
+	dracutOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
+	dracutOptions.AddDrivers = p.AdditionalDrivers
+	stages = append(stages, osbuild.NewDracutStage(dracutOptions))
+
+	stages = append(stages, osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
+
+	if p.InteractiveDefaults != nil {
+		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
+			osbuild.KickstartPathInteractiveDefaults,
+			p.Users,
+			p.Groups,
+			p.InteractiveDefaults.TarPath,
+		)
+
+		if err != nil {
+			panic(fmt.Sprintf("failed to create kickstart stage options for interactive defaults: %v", err))
+		}
+
+		stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
+	}
+
+	return stages
+}
+
+func (p *AnacondaInstaller) liveStages() []*osbuild.Stage {
+	stages := make([]*osbuild.Stage, 0)
+
+	usersStageOptions := &osbuild.UsersStageOptions{
+		Users: map[string]osbuild.UsersStageOptionsUser{
+			"root": installerRootUser(),
+		},
+	}
+	stages = append(stages, osbuild.NewUsersStage(usersStageOptions))
+
+	systemdStageOptions := &osbuild.SystemdStageOptions{
+		EnabledServices: []string{
+			"livesys.service",
+			"livesys-late.service",
+		},
+	}
+
+	stages = append(stages, osbuild.NewSystemdStage(systemdStageOptions))
+
+	livesysMode := os.FileMode(int(0644))
+	livesysFile, err := fsnode.NewFile("/etc/sysconfig/livesys", &livesysMode, "root", "root", []byte("livesys_session=\"gnome\""))
+
+	if err != nil {
+		panic(err)
+	}
+
+	p.Files = []*fsnode.File{livesysFile}
+
+	stages = append(stages, osbuild.GenFileNodesStages(p.Files)...)
+
+	dracutModules := append(
+		p.AdditionalDracutModules,
+		"anaconda",
+		"rdma",
+		"rngd",
+	)
+	dracutOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
+	dracutOptions.AddDrivers = p.AdditionalDrivers
+	stages = append(stages, osbuild.NewDracutStage(dracutOptions))
+
+	stages = append(stages, osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
+
+	return stages
 }
 
 func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []string) *osbuild.DracutStageOptions {

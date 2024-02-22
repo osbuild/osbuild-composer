@@ -189,7 +189,6 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 			{
 				Filename: "00-getty-fixes.conf",
 				Config: osbuild.SystemdLogindConfigDropin{
-
 					Login: osbuild.SystemdLogindConfigLoginSection{
 						NAutoVTs: common.ToPtr(0),
 					},
@@ -266,24 +265,23 @@ func defaultEc2ImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
 	return ic
 }
 
-// default AMI (EC2 BYOS) images config
-func defaultAMIImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
-	ic := defaultEc2ImageConfig(osVersion, rhsm)
-	if rhsm {
-		// defaultEc2ImageConfig() adds the rhsm options only for RHEL < 9.1
-		// Add it unconditionally for AMI
-		ic = appendRHSM(ic)
-	}
-	return ic
-}
-
 func defaultEc2ImageConfigX86_64(osVersion string, rhsm bool) *distro.ImageConfig {
 	ic := defaultEc2ImageConfig(osVersion, rhsm)
 	return appendEC2DracutX86_64(ic)
 }
 
-func defaultAMIImageConfigX86_64(osVersion string, rhsm bool) *distro.ImageConfig {
-	ic := defaultAMIImageConfig(osVersion, rhsm).InheritFrom(defaultEc2ImageConfigX86_64(osVersion, rhsm))
+// Default AMI (custom image built by users) images config.
+// The configuration does not touch the RHSM configuration at all.
+// https://issues.redhat.com/browse/COMPOSER-2157
+func defaultAMIImageConfig() *distro.ImageConfig {
+	return baseEc2ImageConfig()
+}
+
+// Default AMI x86_64 (custom image built by users) images config.
+// The configuration does not touch the RHSM configuration at all.
+// https://issues.redhat.com/browse/COMPOSER-2157
+func defaultAMIImageConfigX86_64() *distro.ImageConfig {
+	ic := defaultAMIImageConfig()
 	return appendEC2DracutX86_64(ic)
 }
 
@@ -418,9 +416,9 @@ func mkEc2ImgTypeX86_64(osVersion string, rhsm bool) imageType {
 	return it
 }
 
-func mkAMIImgTypeX86_64(osVersion string, rhsm bool) imageType {
+func mkAMIImgTypeX86_64() imageType {
 	it := amiImgTypeX86_64
-	ic := defaultAMIImageConfigX86_64(osVersion, rhsm)
+	ic := defaultAMIImageConfigX86_64()
 	it.defaultImageConfig = ic
 	return it
 }
@@ -438,9 +436,9 @@ func mkEc2HaImgTypeX86_64(osVersion string, rhsm bool) imageType {
 	return it
 }
 
-func mkAMIImgTypeAarch64(osVersion string, rhsm bool) imageType {
+func mkAMIImgTypeAarch64() imageType {
 	it := amiImgTypeAarch64
-	ic := defaultAMIImageConfig(osVersion, rhsm)
+	ic := defaultAMIImageConfig()
 	it.defaultImageConfig = ic
 	return it
 }

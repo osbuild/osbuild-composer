@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/users"
@@ -26,6 +27,16 @@ type AnacondaInstallerISOTree struct {
 	Remote  string
 	Users   []users.User
 	Groups  []users.Group
+
+	Language *string
+	Keyboard *string
+	Timezone *string
+
+	// Create a sudoers drop-in file for wheel group with NOPASSWD option
+	WheelNoPasswd bool
+
+	// Add kickstart options to make the installation fully unattended
+	UnattendedKickstart bool
 
 	PartitionTable *disk.PartitionTable
 
@@ -322,112 +333,19 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 		copyInputs,
 	))
 
-	if p.ostreeCommitSpec != nil {
-		// Set up the payload ostree repo
-		pipeline.AddStage(osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: p.PayloadPath}))
-		pipeline.AddStage(osbuild.NewOSTreePullStage(
-			&osbuild.OSTreePullStageOptions{Repo: p.PayloadPath},
-			osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
-		))
-
-		// Configure the kickstart file with the payload and any user options
-		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeCommit(
-			p.KSPath,
-			p.Users,
-			p.Groups,
-			makeISORootPath(p.PayloadPath),
-			p.ostreeCommitSpec.Ref,
-			p.Remote,
-			p.OSName)
-
-		if err != nil {
-			panic("failed to create kickstartstage options")
-		}
-
-		pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
-	}
-
-	if p.containerSpec != nil {
-		images := osbuild.NewContainersInputForSources([]container.Spec{*p.containerSpec})
-
-		pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
-			Paths: []osbuild.MkdirStagePath{
-				{
-					Path: p.PayloadPath,
-				},
-			},
-		}))
-
-		// copy the container in
-		pipeline.AddStage(osbuild.NewSkopeoStageWithOCI(
-			p.PayloadPath,
-			images,
-			nil))
-
-		// do what we can in our kickstart stage
-		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeContainer(
-			"/osbuild-base.ks",
-			p.Users,
-			p.Groups,
-			path.Join("/run/install/repo", p.PayloadPath),
-			"oci",
-			"",
-			"")
-
-		if err != nil {
-			panic("failed to create kickstartstage options")
-		}
-
-		pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
-
-		// and what we can't do in a separate kickstart that we include
-
-		kickstartFile, err := fsnode.NewFile(p.KSPath, nil, nil, nil, []byte(`
-%include /run/install/repo/osbuild-base.ks
-
-rootpw --lock
-
-lang en_US.UTF-8
-keyboard us
-timezone UTC
-
-clearpart --all
-
-reqpart --add-boot
-
-part swap --fstype=swap --size=1024
-part / --fstype=ext4 --grow
-
-reboot --eject
-`))
-
-		if err != nil {
-			panic(err)
-		}
-
-		p.Files = []*fsnode.File{kickstartFile}
-
-		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
-	}
-
-	if p.OSPipeline != nil {
-		// Create the payload tarball
-		pipeline.AddStage(osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: p.PayloadPath}, p.OSPipeline.name))
-
-		// If the KSPath is set, we need to add the kickstart stage to this (bootiso-tree) pipeline.
-		// If it's not specified here, it should have been added to the InteractiveDefaults in the anaconda-tree.
-		if p.KSPath != "" {
-			kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
-				p.KSPath,
-				p.Users,
-				p.Groups,
-				makeISORootPath(p.PayloadPath))
-
-			if err != nil {
-				panic("failed to create kickstartstage options")
-			}
-
-			pipeline.AddStage(osbuild.NewKickstartStage(kickstartOptions))
+	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
+		// the following pipelines are only relevant for payload installers
+		switch {
+		case p.ostreeCommitSpec != nil:
+			pipeline.AddStages(p.ostreeCommitStages()...)
+		case p.containerSpec != nil:
+			pipeline.AddStages(p.ostreeContainerStages()...)
+		case p.OSPipeline != nil:
+			pipeline.AddStages(p.tarPayloadStages()...)
+		default:
+			// this should have been caught at the top of the function, but
+			// let's check again in case we refactor the function.
+			panic("missing ostree, container, or ospipeline parameters in ISO tree pipeline")
 		}
 	}
 
@@ -437,6 +355,210 @@ reboot --eject
 	}))
 
 	return pipeline
+}
+
+func (p *AnacondaInstallerISOTree) ostreeCommitStages() []*osbuild.Stage {
+	stages := make([]*osbuild.Stage, 0)
+
+	// Set up the payload ostree repo
+	stages = append(stages, osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: p.PayloadPath}))
+	stages = append(stages, osbuild.NewOSTreePullStage(
+		&osbuild.OSTreePullStageOptions{Repo: p.PayloadPath},
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
+	))
+
+	// Configure the kickstart file with the payload and any user options
+	kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeCommit(
+		p.KSPath,
+		p.Users,
+		p.Groups,
+		makeISORootPath(p.PayloadPath),
+		p.ostreeCommitSpec.Ref,
+		p.Remote,
+		p.OSName)
+
+	if err != nil {
+		panic(fmt.Sprintf("failed to create kickstart stage options: %v", err))
+	}
+
+	stages = append(stages, p.makeKickstartStages(kickstartOptions)...)
+
+	return stages
+}
+
+func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
+	stages := make([]*osbuild.Stage, 0)
+
+	images := osbuild.NewContainersInputForSources([]container.Spec{*p.containerSpec})
+
+	stages = append(stages, osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+		Paths: []osbuild.MkdirStagePath{
+			{
+				Path: p.PayloadPath,
+			},
+		},
+	}))
+
+	// copy the container in
+	stages = append(stages, osbuild.NewSkopeoStageWithOCI(
+		p.PayloadPath,
+		images,
+		nil))
+
+	// do what we can in our kickstart stage
+	kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeContainer(
+		p.KSPath,
+		p.Users,
+		p.Groups,
+		path.Join("/run/install/repo", p.PayloadPath),
+		"oci",
+		"",
+		"")
+	if err != nil {
+		panic(fmt.Sprintf("failed to create kickstart stage options: %v", err))
+	}
+
+	// NOTE: these are similar to the unattended kickstart options in the
+	// other two payload configurations but partitioning is different and
+	// we need to add that separately, so we can't use makeKickstartStage
+	kickstartOptions.RootPassword = &osbuild.RootPasswordOptions{
+		Lock: true,
+	}
+
+	// NOTE: These were decided somewhat arbitrarily for the BIB installer. We
+	// might want to drop them here and move them into the bib code as
+	// project-specific defaults.
+	kickstartOptions.Lang = "en_US.UTF-8"
+	kickstartOptions.Keyboard = "us"
+	kickstartOptions.Timezone = "UTC"
+	kickstartOptions.ClearPart = &osbuild.ClearPartOptions{
+		All: true,
+	}
+
+	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
+
+	// and what we can't do in a separate kickstart that we include
+	targetContainerTransport := "registry"
+	if p.containerSpec.ContainersTransport != nil {
+		targetContainerTransport = *p.containerSpec.ContainersTransport
+	}
+	// Canonicalize to registry, as that's what the bootc stack wants
+	if targetContainerTransport == "docker://" {
+		targetContainerTransport = "registry"
+	}
+
+	// Because osbuild core only supports a subset of options, we append to the
+	// base here with some more hardcoded defaults
+	// that should very likely become configurable.
+	hardcodedKickstartBits := `
+reqpart --add-boot
+
+part swap --fstype=swap --size=1024
+part / --fstype=ext4 --grow
+
+reboot --eject
+`
+
+	// Workaround for lack of --target-imgref in Anaconda, xref https://github.com/osbuild/images/issues/380
+	hardcodedKickstartBits += fmt.Sprintf(`%%post
+bootc switch --mutate-in-place --transport %s %s
+%%end
+`, targetContainerTransport, p.containerSpec.LocalName)
+
+	kickstartFile, err := kickstartOptions.IncludeRaw(hardcodedKickstartBits)
+	if err != nil {
+		panic(err)
+	}
+
+	p.Files = []*fsnode.File{kickstartFile}
+
+	stages = append(stages, osbuild.GenFileNodesStages(p.Files)...)
+	return stages
+}
+
+func (p *AnacondaInstallerISOTree) tarPayloadStages() []*osbuild.Stage {
+	stages := make([]*osbuild.Stage, 0)
+
+	// Create the payload tarball
+	stages = append(stages, osbuild.NewTarStage(&osbuild.TarStageOptions{Filename: p.PayloadPath}, p.OSPipeline.name))
+
+	// If the KSPath is set, we need to add the kickstart stage to this (bootiso-tree) pipeline.
+	// If it's not specified here, it should have been added to the InteractiveDefaults in the anaconda-tree.
+	if p.KSPath != "" {
+		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
+			p.KSPath,
+			p.Users,
+			p.Groups,
+			makeISORootPath(p.PayloadPath))
+
+		if err != nil {
+			panic(fmt.Sprintf("failed to create kickstart stage options: %v", err))
+		}
+
+		stages = append(stages, p.makeKickstartStages(kickstartOptions)...)
+	}
+	return stages
+}
+
+// Create the base kickstart stage with any options required for unattended
+// installation if set and with any extra file insertion stage required for
+// extra kickstart content.
+func (p *AnacondaInstallerISOTree) makeKickstartStages(kickstartOptions *osbuild.KickstartStageOptions) []*osbuild.Stage {
+	stages := make([]*osbuild.Stage, 0)
+	if p.UnattendedKickstart {
+		// set the default options for Unattended kickstart
+		kickstartOptions.DisplayMode = "text"
+
+		// override options that can be configured by the image type or the user
+		kickstartOptions.Lang = "en_US.UTF-8"
+		if p.Language != nil {
+			kickstartOptions.Lang = *p.Language
+		}
+
+		kickstartOptions.Keyboard = "us"
+		if p.Keyboard != nil {
+			kickstartOptions.Keyboard = *p.Keyboard
+		}
+
+		kickstartOptions.Timezone = "UTC"
+		if p.Timezone != nil {
+			kickstartOptions.Timezone = *p.Timezone
+		}
+
+		kickstartOptions.Reboot = &osbuild.RebootOptions{Eject: true}
+		kickstartOptions.RootPassword = &osbuild.RootPasswordOptions{Lock: true}
+
+		kickstartOptions.ZeroMBR = true
+		kickstartOptions.ClearPart = &osbuild.ClearPartOptions{All: true, InitLabel: true}
+		kickstartOptions.AutoPart = &osbuild.AutoPartOptions{Type: "plain", FSType: "xfs", NoHome: true}
+
+		kickstartOptions.Network = []osbuild.NetworkOptions{
+			{BootProto: "dhcp", Device: "link", Activate: common.ToPtr(true), OnBoot: "on"},
+		}
+	}
+
+	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
+
+	if p.WheelNoPasswd {
+		// Because osbuild core only supports a subset of options,
+		// we append to the base here with hardcoded wheel group with NOPASSWD option
+		hardcodedKickstartBits := `
+%post
+echo -e "%wheel\tALL=(ALL)\tNOPASSWD: ALL" > "/etc/sudoers.d/wheel"
+chmod 0440 /etc/sudoers.d/wheel
+restorecon -rvF /etc/sudoers.d
+%end
+`
+		kickstartFile, err := kickstartOptions.IncludeRaw(hardcodedKickstartBits)
+		if err != nil {
+			panic(err)
+		}
+
+		p.Files = []*fsnode.File{kickstartFile}
+
+		stages = append(stages, osbuild.GenFileNodesStages(p.Files)...)
+	}
+	return stages
 }
 
 // makeISORootPath return a path that can be used to address files and folders

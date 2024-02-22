@@ -39,6 +39,9 @@ type TarStageOptions struct {
 
 	// How to handle the root node: include or omit
 	RootNode TarRootNode `json:"root-node,omitempty"`
+
+	// List of paths to include, instead of the whole tree
+	Paths []string `json:"paths,omitempty"`
 }
 
 func (TarStageOptions) isStageOptions() {}
@@ -79,6 +82,10 @@ func (o TarStageOptions) validate() error {
 		if !valid {
 			return fmt.Errorf("'root-node' option does not allow %q as a value", o.RootNode)
 		}
+	}
+
+	if len(o.Paths) > 0 && o.RootNode != "" {
+		return fmt.Errorf("'paths' cannot be combined with 'root-node'")
 	}
 
 	return nil
