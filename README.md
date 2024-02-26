@@ -17,17 +17,28 @@ instance, includes a
 [Cockpit Module](https://github.com/osbuild/cockpit-composer) or using the
 [composer-cli](https://weldr.io/lorax/composer-cli.html) command-line tool.
 
-### Project
+## Project
 
  * **Website**: <https://www.osbuild.org>
  * **Bug Tracker**: <https://github.com/osbuild/osbuild-composer/issues>
- * **matrix**: https://matrix.to/#/#image-builder:fedoraproject.org
-*  **Mailing List**: image-builder@redhat.com
+ * **Matrix**: https://matrix.to/#/#image-builder:fedoraproject.org
+ * **Mailing List**: image-builder@redhat.com
  * **Changelog**: <https://github.com/osbuild/osbuild-composer/releases>
 
-#### Contributing
+### Principles
 
-Please refer to the [developer guide](https://www.osbuild.org/docs/developer-guide/index/) to learn about our workflow, code style and more.
+1. OSBuild Composer shall only allow users to do what generally makes sense.
+2. Blueprints are the policy layer where we decide what to expose to end users.
+3. If a blueprint can be built, it should also boot.
+4. It should be obvious why a blueprint doesn’t build.
+5. The [cloud API](./internal/cloudapi) is never broken.
+6. In the hosted service, OSBuild Composer is an orchestrator of image builds.
+7. On-premises, it should be as easy as possible to run the service and build an image.
+8. OSBuild Composer needs to run on the oldest supported target distribution.
+
+### Contributing
+
+Please refer to the [developer guide](https://osbuild.org/docs/developer-guide/index) to learn about our workflow, code style and more.
 
 ### About
 
