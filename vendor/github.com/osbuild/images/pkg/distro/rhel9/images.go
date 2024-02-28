@@ -68,6 +68,7 @@ func osCustomizations(
 
 	osc.EnabledServices = imageConfig.EnabledServices
 	osc.DisabledServices = imageConfig.DisabledServices
+	osc.MaskedServices = imageConfig.MaskedServices
 	if imageConfig.DefaultTarget != nil {
 		osc.DefaultTarget = *imageConfig.DefaultTarget
 	}
@@ -327,7 +328,7 @@ func edgeCommitImage(workload workload.Workload,
 	img.OSVersion = t.arch.distro.osVersion
 	img.Filename = t.Filename()
 
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
 		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues.service")
 	}
 	img.Environment = t.environment
@@ -361,7 +362,7 @@ func edgeContainerImage(workload workload.Workload,
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
 	img.Filename = t.Filename()
 
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
 		img.OSCustomizations.EnabledServices = append(img.OSCustomizations.EnabledServices, "ignition-firstboot-complete.service", "coreos-ignition-write-issues.service")
 	}
 
@@ -452,12 +453,12 @@ func edgeRawImage(workload workload.Workload,
 	}
 	img.Keyboard = "us"
 	img.Locale = "C.UTF-8"
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
 		img.SysrootReadOnly = true
 		img.KernelOptionsAppend = append(img.KernelOptionsAppend, "rw")
 	}
 
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
 		img.IgnitionPlatform = "metal"
 		img.KernelOptionsAppend = append(img.KernelOptionsAppend, "coreos.no_persist_ip")
 		if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
@@ -513,7 +514,7 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.KernelOptionsAppend = []string{"modprobe.blacklist=vc4"}
 	rawImg.Keyboard = "us"
 	rawImg.Locale = "C.UTF-8"
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
 		rawImg.SysrootReadOnly = true
 		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, "rw")
 	}
@@ -528,7 +529,7 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.OSName = "redhat"
 	rawImg.LockRoot = true
 
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
 		rawImg.IgnitionPlatform = "metal"
 		rawImg.KernelOptionsAppend = append(rawImg.KernelOptionsAppend, "coreos.no_persist_ip")
 		if bpIgnition := customizations.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {

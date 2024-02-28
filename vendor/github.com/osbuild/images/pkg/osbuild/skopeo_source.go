@@ -17,11 +17,9 @@ type SkopeoSource struct {
 func (SkopeoSource) isSource() {}
 
 type SkopeopSourceImage struct {
-	Name                string  `json:"name,omitempty"`
-	Digest              string  `json:"digest,omitempty"`
-	TLSVerify           *bool   `json:"tls-verify,omitempty"`
-	ContainersTransport *string `json:"containers-transport,omitempty"`
-	StorageLocation     *string `json:"storage-location,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Digest    string `json:"digest,omitempty"`
+	TLSVerify *bool  `json:"tls-verify,omitempty"`
 }
 
 type SkopeoSourceItem struct {
@@ -29,14 +27,12 @@ type SkopeoSourceItem struct {
 }
 
 // NewSkopeoSourceItem creates a new source item for name and digest
-func NewSkopeoSourceItem(name, digest string, tlsVerify *bool, containersTransport *string, storageLocation *string) SkopeoSourceItem {
+func NewSkopeoSourceItem(name, digest string, tlsVerify *bool) SkopeoSourceItem {
 	item := SkopeoSourceItem{
 		Image: SkopeopSourceImage{
-			Name:                name,
-			Digest:              digest,
-			TLSVerify:           tlsVerify,
-			ContainersTransport: containersTransport,
-			StorageLocation:     storageLocation,
+			Name:      name,
+			Digest:    digest,
+			TLSVerify: tlsVerify,
 		},
 	}
 	if err := item.validate(); err != nil {
@@ -54,10 +50,6 @@ func (item SkopeoSourceItem) validate() error {
 		return fmt.Errorf("source item %#v has invalid digest", item)
 	}
 
-	if err := validateTransport(item.Image.ContainersTransport); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -70,8 +62,8 @@ func NewSkopeoSource() *SkopeoSource {
 
 // AddItem adds a source item to the source; will panic
 // if any of the supplied options are invalid or missing
-func (source *SkopeoSource) AddItem(name, digest, image string, tlsVerify *bool, containersTransport *string, storageLocation *string) {
-	item := NewSkopeoSourceItem(name, digest, tlsVerify, containersTransport, storageLocation)
+func (source *SkopeoSource) AddItem(name, digest, image string, tlsVerify *bool) {
+	item := NewSkopeoSourceItem(name, digest, tlsVerify)
 	if !skopeoDigestPattern.MatchString(image) {
 		panic(fmt.Errorf("item %#v has invalid image id", image))
 	}

@@ -18,6 +18,7 @@ type ImageConfig struct {
 	Keyboard            *osbuild.KeymapStageOptions
 	EnabledServices     []string
 	DisabledServices    []string
+	MaskedServices      []string
 	DefaultTarget       *string
 	Sysconfig           []*osbuild.SysconfigStageOptions
 

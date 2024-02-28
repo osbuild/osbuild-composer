@@ -26,3 +26,7 @@ func VersionLessThan(a, b string) bool {
 
 	return aV.LessThan(bV)
 }
+
+func VersionGreaterThanOrEqual(a, b string) bool {
+	return !VersionLessThan(a, b)
+}

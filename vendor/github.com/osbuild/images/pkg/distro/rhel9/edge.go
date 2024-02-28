@@ -589,7 +589,7 @@ func edgeCommitPackageSet(t *imageType) rpmmd.PackageSet {
 		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
 	}
 
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "9.2") || !t.arch.distro.isRHEL() {
 		ps.Include = append(ps.Include, "ignition", "ignition-edge", "ssh-key-dir")
 	}
 

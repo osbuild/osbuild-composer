@@ -397,7 +397,7 @@ func newDistro(name string, minor int) *distribution {
 	)
 
 	if rd.isRHEL() {
-		if !common.VersionLessThan(rd.osVersion, "8.6") {
+		if common.VersionGreaterThanOrEqual(rd.osVersion, "8.6") {
 			// image types only available on 8.6 and later on RHEL
 			// These edge image types require FDO which aren't available on older versions
 			x86_64.addImageTypes(

@@ -389,7 +389,7 @@ func (p *AnacondaInstallerISOTree) ostreeCommitStages() []*osbuild.Stage {
 func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 	stages := make([]*osbuild.Stage, 0)
 
-	images := osbuild.NewContainersInputForSources([]container.Spec{*p.containerSpec})
+	image := osbuild.NewContainersInputForSingleSource(*p.containerSpec)
 
 	stages = append(stages, osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 		Paths: []osbuild.MkdirStagePath{
@@ -402,7 +402,7 @@ func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 	// copy the container in
 	stages = append(stages, osbuild.NewSkopeoStageWithOCI(
 		p.PayloadPath,
-		images,
+		image,
 		nil))
 
 	// do what we can in our kickstart stage
@@ -439,13 +439,6 @@ func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 
 	// and what we can't do in a separate kickstart that we include
 	targetContainerTransport := "registry"
-	if p.containerSpec.ContainersTransport != nil {
-		targetContainerTransport = *p.containerSpec.ContainersTransport
-	}
-	// Canonicalize to registry, as that's what the bootc stack wants
-	if targetContainerTransport == "docker://" {
-		targetContainerTransport = "registry"
-	}
 
 	// Because osbuild core only supports a subset of options, we append to the
 	// base here with some more hardcoded defaults

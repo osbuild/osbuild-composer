@@ -23,12 +23,11 @@ type Resolver struct {
 }
 
 type SourceSpec struct {
-	Source              string
-	Name                string
-	Digest              *string
-	TLSVerify           *bool
-	ContainersTransport *string
-	StoragePath         *string
+	Source    string
+	Name      string
+	Digest    *string
+	TLSVerify *bool
+	Local     bool
 }
 
 func NewResolver(arch string) *Resolver {
@@ -55,7 +54,7 @@ func (r *Resolver) Add(spec SourceSpec) {
 	}
 
 	go func() {
-		spec, err := client.Resolve(r.ctx, spec.Name, &spec)
+		spec, err := client.Resolve(r.ctx, spec.Name, spec.Local)
 		if err != nil {
 			err = fmt.Errorf("'%s': %w", spec.Source, err)
 		}
