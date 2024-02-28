@@ -63,6 +63,7 @@ func osCustomizations(
 
 	osc.EnabledServices = imageConfig.EnabledServices
 	osc.DisabledServices = imageConfig.DisabledServices
+	osc.MaskedServices = imageConfig.MaskedServices
 	if imageConfig.DefaultTarget != nil {
 		osc.DefaultTarget = *imageConfig.DefaultTarget
 	}

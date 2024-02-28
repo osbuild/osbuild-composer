@@ -200,11 +200,10 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	containerSources := make([]container.SourceSpec, len(bp.Containers))
 	for idx, cont := range bp.Containers {
 		containerSources[idx] = container.SourceSpec{
-			Source:              cont.Source,
-			Name:                cont.Name,
-			TLSVerify:           cont.TLSVerify,
-			ContainersTransport: cont.ContainersTransport,
-			StoragePath:         cont.StoragePath,
+			Source:    cont.Source,
+			Name:      cont.Name,
+			TLSVerify: cont.TLSVerify,
+			Local:     cont.LocalStorage,
 		}
 	}
 

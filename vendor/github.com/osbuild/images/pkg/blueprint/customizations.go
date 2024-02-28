@@ -108,6 +108,7 @@ type FirewallServicesCustomization struct {
 type ServicesCustomization struct {
 	Enabled  []string `json:"enabled,omitempty" toml:"enabled,omitempty"`
 	Disabled []string `json:"disabled,omitempty" toml:"disabled,omitempty"`
+	Masked   []string `json:"masked,omitempty" toml:"masked,omitempty"`
 }
 
 type OpenSCAPCustomization struct {

@@ -228,6 +228,7 @@ func TestGetServices(t *testing.T) {
 	expectedServices := ServicesCustomization{
 		Enabled:  []string{"cockpit", "osbuild-composer"},
 		Disabled: []string{"sshd", "ftp"},
+		Masked:   []string{"firewalld"},
 	}
 
 	TestCustomizations := Customizations{
@@ -238,6 +239,7 @@ func TestGetServices(t *testing.T) {
 
 	assert.ElementsMatch(t, expectedServices.Enabled, retServices.Enabled)
 	assert.ElementsMatch(t, expectedServices.Disabled, retServices.Disabled)
+	assert.ElementsMatch(t, expectedServices.Masked, retServices.Masked)
 }
 
 func TestError(t *testing.T) {

@@ -11,36 +11,18 @@ type SkopeoIndexSource struct {
 func (SkopeoIndexSource) isSource() {}
 
 type SkopeoIndexSourceImage struct {
-	Name                string  `json:"name"`
-	TLSVerify           *bool   `json:"tls-verify,omitempty"`
-	ContainersTransport *string `json:"containers-transport,omitempty"`
-	StorageLocation     *string `json:"storage-location,omitempty"`
+	Name      string `json:"name"`
+	TLSVerify *bool  `json:"tls-verify,omitempty"`
 }
 
 type SkopeoIndexSourceItem struct {
 	Image SkopeoIndexSourceImage `json:"image"`
 }
 
-func validateTransport(transport *string) error {
-	if transport == nil {
-		return nil
-	}
-
-	if *transport != DockerTransport && *transport != ContainersStorageTransport {
-		return fmt.Errorf("invalid container transport: %s", *transport)
-	}
-
-	return nil
-}
-
 func (item SkopeoIndexSourceItem) validate() error {
 
 	if item.Image.Name == "" {
 		return fmt.Errorf("source item has empty name")
-	}
-
-	if err := validateTransport(item.Image.ContainersTransport); err != nil {
-		return err
 	}
 
 	return nil
@@ -55,13 +37,11 @@ func NewSkopeoIndexSource() *SkopeoIndexSource {
 
 // AddItem adds a source item to the source; will panic
 // if any of the supplied options are invalid or missing
-func (source *SkopeoIndexSource) AddItem(name, image string, tlsVerify *bool, containersTransport *string, storageLocation *string) {
+func (source *SkopeoIndexSource) AddItem(name, image string, tlsVerify *bool) {
 	item := SkopeoIndexSourceItem{
 		Image: SkopeoIndexSourceImage{
-			Name:                name,
-			TLSVerify:           tlsVerify,
-			ContainersTransport: containersTransport,
-			StorageLocation:     storageLocation,
+			Name:      name,
+			TLSVerify: tlsVerify,
 		},
 	}
 

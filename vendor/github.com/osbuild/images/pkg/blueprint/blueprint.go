@@ -1,13 +1,6 @@
 // Package blueprint contains primitives for representing weldr blueprints
 package blueprint
 
-import "fmt"
-
-const (
-	dockerTransport            = "docker"
-	containersStorageTransport = "containers-storage"
-)
-
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
 	Name           string          `json:"name" toml:"name"`
@@ -36,12 +29,11 @@ type Group struct {
 }
 
 type Container struct {
-	Source string `json:"source,omitempty" toml:"source"`
+	Source string `json:"source" toml:"source"`
 	Name   string `json:"name,omitempty" toml:"name,omitempty"`
 
-	TLSVerify           *bool   `json:"tls-verify,omitempty" toml:"tls-verify,omitempty"`
-	ContainersTransport *string `json:"containers-transport,omitempty" toml:"containers-transport,omitempty"`
-	StoragePath         *string `json:"source-path,omitempty" toml:"source-path,omitempty"`
+	TLSVerify    *bool `json:"tls-verify,omitempty" toml:"tls-verify,omitempty"`
+	LocalStorage bool  `json:"local-storage,omitempty" toml:"local-storage,omitempty"`
 }
 
 // packages, modules, and groups all resolve to rpm packages right now. This
@@ -78,32 +70,4 @@ func (p Package) ToNameVersion() string {
 	}
 
 	return p.Name + "-" + p.Version
-}
-
-func (c Container) Validate() error {
-	if c.StoragePath != nil {
-		if c.ContainersTransport == nil {
-			// error out here, but realistically we could also just
-			// set the transport instead
-			return fmt.Errorf("Cannot specify storage location %s without a transport", *c.StoragePath)
-		}
-
-		if *c.ContainersTransport != containersStorageTransport {
-			return fmt.Errorf(
-				"Incompatible transport %s for storage location %s, only containers-storage transport is supported",
-				*c.ContainersTransport,
-				*c.StoragePath,
-			)
-		}
-	}
-
-	if c.ContainersTransport == nil {
-		return nil
-	}
-
-	if *c.ContainersTransport != dockerTransport && *c.ContainersTransport != containersStorageTransport {
-		return fmt.Errorf("Unknown containers-transport: %s", *c.ContainersTransport)
-	}
-
-	return nil
 }

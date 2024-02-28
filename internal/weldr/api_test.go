@@ -499,7 +499,7 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
         ],
         "disabled": [
           "telnet"
-        ]
+		]
       }
     },
     "services": {
@@ -511,6 +511,9 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
       "disabled": [
         "postfix",
         "telnetd"
+      ],
+	  "masked": [
+	    "firewalld"
       ]
     },
     "user": [
@@ -629,6 +632,7 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 			Services: &blueprint.ServicesCustomization{
 				Enabled:  []string{"sshd", "cockpit.socket", "httpd"},
 				Disabled: []string{"postfix", "telnetd"},
+				Masked:   []string{"firewalld"},
 			},
 			Filesystem: []blueprint.FilesystemCustomization{
 				blueprint.FilesystemCustomization{

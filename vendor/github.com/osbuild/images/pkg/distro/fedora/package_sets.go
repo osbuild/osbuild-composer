@@ -4,7 +4,6 @@ package fedora
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
@@ -74,6 +73,9 @@ func vmdkCommonPackageSet(t *imageType) rpmmd.PackageSet {
 func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
+			"NetworkManager",
+			"NetworkManager-wifi",
+			"NetworkManager-wwan",
 			"aardvark-dns",
 			"atheros-firmware",
 			"attr",
@@ -87,8 +89,8 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"clevis-dracut",
 			"clevis-luks",
 			"clevis-pin-tpm2",
-			"containernetworking-plugins",
 			"container-selinux",
+			"containernetworking-plugins",
 			"coreutils",
 			"cracklib-dicts",
 			"criu",
@@ -101,6 +103,8 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"dracut-network",
 			"e2fsprogs",
 			"efibootmgr",
+			"fdo-client",
+			"fdo-owner-cli",
 			"fedora-iot-config",
 			"fedora-release-iot",
 			"firewalld",
@@ -116,6 +120,7 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"gzip",
 			"hostname",
 			"ignition",
+			"ignition-edge",
 			"ima-evm-utils",
 			"iproute",
 			"iputils",
@@ -128,9 +133,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"linux-firmware",
 			"lvm2",
 			"netavark",
-			"NetworkManager",
-			"NetworkManager-wifi",
-			"NetworkManager-wwan",
 			"nss-altfiles",
 			"openssh-clients",
 			"openssh-server",
@@ -154,6 +156,7 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"shadow-utils",
 			"skopeo",
 			"slirp4netns",
+			"ssh-key-dir",
 			"sssd-client",
 			"sudo",
 			"systemd",
@@ -172,17 +175,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"zezere-ignition",
 			"zram-generator",
 		},
-	}
-
-	if !common.VersionLessThan(t.arch.distro.osVersion, "38") {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"fdo-client",
-				"fdo-owner-cli",
-				"ignition-edge",
-				"ssh-key-dir",
-			},
-		})
 	}
 
 	return ps
@@ -498,13 +490,7 @@ func iotInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	// include anaconda packages
 	ps := anacondaPackageSet(t)
 
-	releasever := t.Arch().Distro().Releasever()
-	version, err := strconv.Atoi(releasever)
-	if err != nil {
-		panic("cannot convert releasever to int: " + err.Error())
-	}
-
-	if version >= 38 {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "39") {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"fedora-release-iot",
@@ -545,8 +531,7 @@ func liveInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}
 
-	// We want to generate a preview image when rawhide is built
-	if !common.VersionLessThan(t.arch.distro.osVersion, "39") {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "39") {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"anaconda-webui",
@@ -560,14 +545,7 @@ func liveInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 func imageInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := anacondaPackageSet(t)
 
-	releasever := t.Arch().Distro().Releasever()
-	version, err := strconv.Atoi(releasever)
-	if err != nil {
-		panic("cannot convert releasever to int: " + err.Error())
-	}
-
-	// We want to generate a preview image when rawhide is built
-	if version >= 38 {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "39") {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"anaconda-webui",

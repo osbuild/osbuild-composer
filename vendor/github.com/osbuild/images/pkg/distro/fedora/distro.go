@@ -818,58 +818,56 @@ func newDistro(version int) distro.Distro {
 		minimalrawImgType,
 	)
 
-	if !common.VersionLessThan(rd.Releasever(), "38") {
-		// iot simplified installer was introduced in F38
-		x86_64.addImageTypes(
-			&platform.X86{
-				BasePlatform: platform.BasePlatform{
-					ImageFormat: platform.FORMAT_RAW,
-					FirmwarePackages: []string{
-						"grub2-efi-x64",
-						"grub2-efi-x64-cdboot",
-						"grub2-tools",
-						"grub2-tools-minimal",
-						"efibootmgr",
-						"shim-x64",
-						"brcmfmac-firmware",
-						"iwlwifi-dvm-firmware",
-						"iwlwifi-mvm-firmware",
-						"realtek-firmware",
-						"microcode_ctl",
-					},
+	// iot simplified installer was introduced in F38
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+				FirmwarePackages: []string{
+					"grub2-efi-x64",
+					"grub2-efi-x64-cdboot",
+					"grub2-tools",
+					"grub2-tools-minimal",
+					"efibootmgr",
+					"shim-x64",
+					"brcmfmac-firmware",
+					"iwlwifi-dvm-firmware",
+					"iwlwifi-mvm-firmware",
+					"realtek-firmware",
+					"microcode_ctl",
 				},
-				BIOS:       false,
-				UEFIVendor: "fedora",
 			},
-			iotSimplifiedInstallerImgType,
-		)
+			BIOS:       false,
+			UEFIVendor: "fedora",
+		},
+		iotSimplifiedInstallerImgType,
+	)
 
-		aarch64.addImageTypes(
-			&platform.Aarch64{
-				BasePlatform: platform.BasePlatform{
-					FirmwarePackages: []string{
-						"arm-image-installer",
-						"bcm283x-firmware",
-						"grub2-efi-aa64",
-						"grub2-efi-aa64-cdboot",
-						"grub2-tools",
-						"grub2-tools-minimal",
-						"efibootmgr",
-						"shim-aa64",
-						"brcmfmac-firmware",
-						"iwlwifi-dvm-firmware",
-						"iwlwifi-mvm-firmware",
-						"realtek-firmware",
-						"uboot-images-armv8",
-					},
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			BasePlatform: platform.BasePlatform{
+				FirmwarePackages: []string{
+					"arm-image-installer",
+					"bcm283x-firmware",
+					"grub2-efi-aa64",
+					"grub2-efi-aa64-cdboot",
+					"grub2-tools",
+					"grub2-tools-minimal",
+					"efibootmgr",
+					"shim-aa64",
+					"brcmfmac-firmware",
+					"iwlwifi-dvm-firmware",
+					"iwlwifi-mvm-firmware",
+					"realtek-firmware",
+					"uboot-images-armv8",
 				},
-				UEFIVendor: "fedora",
 			},
-			iotSimplifiedInstallerImgType,
-		)
-	}
+			UEFIVendor: "fedora",
+		},
+		iotSimplifiedInstallerImgType,
+	)
 
-	if !common.VersionLessThan(rd.Releasever(), "39") {
+	if common.VersionGreaterThanOrEqual(rd.Releasever(), "39") {
 		// bootc was introduced in F39
 		x86_64.addImageTypes(
 			&platform.X86{

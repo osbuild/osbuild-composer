@@ -356,7 +356,7 @@ func ec2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 func rhelEc2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := ec2CommonPackageSet(t)
 	// Include "redhat-cloud-client-configuration" on 9.1+ (COMPOSER-1805)
-	if !common.VersionLessThan(t.arch.distro.osVersion, "9.1") {
+	if common.VersionGreaterThanOrEqual(t.arch.distro.osVersion, "9.1") {
 		ps.Include = append(ps.Include, "redhat-cloud-client-configuration")
 	}
 	return ps
