@@ -74,6 +74,7 @@ type pulpConfig struct {
 type executorConfig struct {
 	Type       string `toml:"type"`
 	IAMProfile string `toml:"iam_profile"`
+	KeyName    string `toml:"key_name"`
 }
 
 type workerConfig struct {

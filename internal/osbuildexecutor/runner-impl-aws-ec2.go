@@ -14,6 +14,7 @@ import (
 
 type awsEC2Executor struct {
 	iamProfile string
+	keyName    string
 }
 
 func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory string, exports, exportPaths, checkpoints,
@@ -28,7 +29,7 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory s
 		return nil, err
 	}
 
-	si, err := aws.RunSecureInstance(ec2e.iamProfile)
+	si, err := aws.RunSecureInstance(ec2e.iamProfile, ec2e.keyName)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +92,9 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory s
 	return &osbuildResult, nil
 }
 
-func NewAWSEC2Executor(iamProfile string) Executor {
+func NewAWSEC2Executor(iamProfile, keyName string) Executor {
 	return &awsEC2Executor{
 		iamProfile,
+		keyName,
 	}
 }
