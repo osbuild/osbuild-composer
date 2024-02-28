@@ -830,6 +830,18 @@ ContainerEmbedding:
         - aws/rhel-9.4-nightly-x86_64
         - aws/rhel-9.4-nightly-aarch64
 
+WorkerExecutor:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/worker-executor.sh
+  variables:
+    RUNNER: aws/fedora-39-x86_64
+    IAM_INSTANCE_PROFILE: worker-executor
+
 finish:
   stage: finish
   dependencies: []
