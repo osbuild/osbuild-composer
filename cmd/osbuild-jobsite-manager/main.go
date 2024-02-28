@@ -2,6 +2,7 @@
 package main
 
 import (
+	"archive/tar"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,7 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -57,6 +59,7 @@ var (
 	argEnvironments ArgumentList
 	argExports      ArgumentList
 	argOutputPath   string
+	argStore        string
 )
 
 type BuildRequest struct {
@@ -87,6 +90,7 @@ func init() {
 
 	flag.Var(&argEnvironments, "environment", "Environments to add. Can be passed multiple times.")
 	flag.StringVar(&argOutputPath, "output", "/dev/null", "Output directory to write to.")
+	flag.StringVar(&argStore, "store", "", "Store to send to builder.")
 
 	flag.Parse()
 
@@ -170,11 +174,11 @@ func Dance(done chan<- struct{}, errs chan<- error) {
 	close(done)
 }
 
-func Request(method string, path string, body []byte) (*http.Response, error) {
+func Request(method string, path string, body io.Reader) (*http.Response, error) {
 	cli := &http.Client{}
 	url := fmt.Sprintf("http://%s:%d/%s", argBuilderHost, argBuilderPort, path)
 
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
+	req, err := http.NewRequest(method, url, body)
 
 	if err != nil {
 		return nil, err
@@ -220,7 +224,7 @@ func Wait(timeout int, fn Step) error {
 
 func StepClaim() error {
 	return Wait(argTimeoutClaim, func(done chan<- struct{}, errs chan<- error) {
-		res, err := Request("POST", "claim", []byte(""))
+		res, err := Request("POST", "claim", nil)
 
 		if err != nil {
 			errs <- err
@@ -242,7 +246,7 @@ func StepClaim() error {
 
 func StepProvision(manifest []byte) error {
 	return Wait(argTimeoutProvision, func(done chan<- struct{}, errs chan<- error) {
-		res, err := Request("PUT", "provision", manifest)
+		res, err := Request("PUT", "provision", bytes.NewBuffer(manifest))
 
 		if err != nil {
 			errs <- err
@@ -264,13 +268,68 @@ func StepProvision(manifest []byte) error {
 
 func StepPopulate() error {
 	return Wait(argTimeoutPopulate, func(done chan<- struct{}, errs chan<- error) {
-		res, err := Request("POST", "populate", []byte(""))
+		file, err := os.CreateTemp(filepath.Dir(argStore), "store.*.tar")
+		if err != nil {
+			errs <- err
+			return
+		}
+		tw := tar.NewWriter(file)
+		defer tw.Close()
+		err = filepath.Walk(argStore, func(filePath string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
 
+			// skip the store direction itself, just package the contents
+			if filePath == argStore {
+				return nil
+			}
+
+			if !fi.Mode().IsRegular() && !fi.Mode().IsDir() {
+				return nil
+			}
+			header, err := tar.FileInfoHeader(fi, fi.Name())
+			if err != nil {
+				return err
+			}
+
+			// FileInfo only contains the basename, see https://pkg.go.dev/archive/tar#FileInfoHeader.
+			header.Name = strings.TrimPrefix(strings.Replace(filePath, argStore, "", -1), string(filepath.Separator))
+			if err := tw.WriteHeader(header); err != nil {
+				return err
+			}
+
+			if fi.Mode().IsRegular() {
+				f, err := os.Open(filePath)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				if err != nil {
+					return err
+				}
+				if _, err := io.Copy(tw, f); err != nil {
+					return err
+				}
+				f.Close()
+			}
+			return nil
+		})
+		if err != nil {
+			errs <- err
+			return
+		}
+		_, err = file.Seek(0, io.SeekStart)
 		if err != nil {
 			errs <- err
 			return
 		}
 
+		res, err := Request("POST", "populate", file)
+		if err != nil {
+			errs <- err
+			return
+		}
 		defer res.Body.Close()
 
 		if res.StatusCode != http.StatusOK {
@@ -297,7 +356,7 @@ func StepBuild() error {
 			logrus.Fatalf("StepBuild: Failed to marshal data: %s", err)
 		}
 
-		res, err := Request("POST", "build", dat)
+		res, err := Request("POST", "build", bytes.NewBuffer(dat))
 
 		if err != nil {
 			errs <- err
@@ -320,7 +379,7 @@ func StepBuild() error {
 func StepProgress() error {
 	return Wait(argTimeoutProgress, func(done chan<- struct{}, errs chan<- error) {
 		for {
-			res, err := Request("GET", "progress", []byte(""))
+			res, err := Request("GET", "progress", nil)
 
 			if err != nil {
 				errs <- err
@@ -357,7 +416,7 @@ func StepProgress() error {
 func StepExport() error {
 	return Wait(argTimeoutExport, func(done chan<- struct{}, errs chan<- error) {
 		for _, export := range argExports {
-			res, err := Request("GET", fmt.Sprintf("export?path=%s", url.PathEscape(export)), []byte(""))
+			res, err := Request("GET", fmt.Sprintf("export?path=%s", url.PathEscape(export)), nil)
 
 			if err != nil {
 				errs <- err
