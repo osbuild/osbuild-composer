@@ -26,7 +26,7 @@ write_files:
 
 // Runs an instance with a security group that only allows traffic to
 // the host. Will replace resources if they already exists.
-func (a *AWS) RunSecureInstance(iamProfile string) (*SecureInstance, error) {
+func (a *AWS) RunSecureInstance(iamProfile, keyName string) (*SecureInstance, error) {
 	identity, err := a.ec2metadata.GetInstanceIdentityDocument()
 	if err != nil {
 		logrus.Errorf("Error getting the identity document, %s", err)
@@ -67,7 +67,7 @@ func (a *AWS) RunSecureInstance(iamProfile string) (*SecureInstance, error) {
 		return nil, err
 	}
 
-	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, instanceType, iamProfile)
+	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, instanceType, iamProfile, keyName)
 	if ltID != "" {
 		secureInstance.LTID = ltID
 	}
@@ -284,7 +284,7 @@ func isLaunchTemplateNotFoundError(err error) bool {
 
 }
 
-func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iamProfile string) (string, error) {
+func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iamProfile, keyName string) (string, error) {
 	ltName := fmt.Sprintf("launch-template-for-%s-runner-instance", hostInstanceID)
 	descrLTOutput, err := a.ec2.DescribeLaunchTemplates(&ec2.DescribeLaunchTemplatesInput{
 		LaunchTemplateNames: []*string{
@@ -342,6 +342,10 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iam
 		input.LaunchTemplateData.IamInstanceProfile = &ec2.LaunchTemplateIamInstanceProfileSpecificationRequest{
 			Name: aws.String(iamProfile),
 		}
+	}
+
+	if keyName != "" {
+		input.LaunchTemplateData.KeyName = aws.String(keyName)
 	}
 
 	createLaunchTemplateOutput, err := a.ec2.CreateLaunchTemplate(input)

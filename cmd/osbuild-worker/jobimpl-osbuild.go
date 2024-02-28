@@ -79,6 +79,7 @@ type PulpConfiguration struct {
 type ExecutorConfiguration struct {
 	Type       string
 	IAMProfile string
+	KeyName    string
 }
 
 type OSBuildJobImpl struct {
@@ -488,7 +489,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	case "host":
 		executor = osbuildexecutor.NewHostExecutor()
 	case "aws.ec2":
-		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile)
+		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName)
 	default:
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
 		return err

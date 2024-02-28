@@ -476,6 +476,7 @@ func main() {
 			OSBuildExecutor: ExecutorConfiguration{
 				Type:       config.OSBuildExecutor.Type,
 				IAMProfile: config.OSBuildExecutor.IAMProfile,
+				KeyName:    config.OSBuildExecutor.KeyName,
 			},
 			KojiServers: kojiServers,
 			GCPConfig:   gcpConfig,
