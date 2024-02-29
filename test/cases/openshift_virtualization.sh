@@ -14,14 +14,20 @@ BUILD_ID="${CI_JOB_ID:-$(uuidgen)}"
 TEMPDIR=$(mktemp -d)
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
-    # TODO: this needs to be added to cloud-cleaner as well
-    $OC_CLI delete vm "$VM_NAME"
-    $OC_CLI delete pvc "$PVC_NAME"
+
+    # since this function can be called at any time, ensure that we don't expand unbound variables
+    OC_CLI="${OC_CLI:-}"
+    VM_NAME="${VM_NAME:-}"
+    PVC_NAME="${PVC_NAME:-}"
+
+    [[ "$OC_CLI" && "$VM_NAME" ]] && $OC_CLI delete vm "$VM_NAME"
+    [[ "$OC_CLI" && "$PVC_NAME" ]] && $OC_CLI delete pvc "$PVC_NAME"
 
     sudo rm -rf "$TEMPDIR"
 
     # Stop watching the worker journal when exiting.
-    sudo pkill -P "${WORKER_JOURNAL_PID}"
+    WORKER_JOURNAL_PID="${WORKER_JOURNAL_PID:-}"
+    [ "$WORKER_JOURNAL_PID" ] && sudo pkill -P "$WORKER_JOURNAL_PID"
 }
 trap cleanup EXIT
 
