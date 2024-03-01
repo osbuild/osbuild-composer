@@ -125,6 +125,8 @@ build: $(BUILDDIR)/bin/
 	go build -o $<osbuild-upload-generic-s3 ./cmd/osbuild-upload-generic-s3/
 	go build -o $<osbuild-mock-openid-provider ./cmd/osbuild-mock-openid-provider
 	go build -o $<osbuild-service-maintenance ./cmd/osbuild-service-maintenance
+	go build -o $<osbuild-jobsite-manager ./cmd/osbuild-jobsite-manager
+	go build -o $<osbuild-jobsite-builder ./cmd/osbuild-jobsite-builder
 	go test -c -tags=integration -o $<osbuild-composer-cli-tests ./cmd/osbuild-composer-cli-tests/main_test.go
 	go test -c -tags=integration -o $<osbuild-weldr-tests ./internal/client/
 	go test -c -tags=integration -o $<osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go

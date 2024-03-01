@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/tar"
 	"bufio"
 	"bytes"
 	"context"
@@ -12,6 +13,8 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -205,6 +208,46 @@ func (builder *Builder) HandlePopulate(w http.ResponseWriter, r *http.Request) e
 
 	if r.Method != "POST" {
 		return fmt.Errorf("Builder.HandlePopulate: unexpected request method")
+	}
+	storePath := path.Join(argBuildPath, "store")
+	err := os.Mkdir(storePath, 0755)
+	if err != nil {
+		return fmt.Errorf("Builder.HandlePopulate: failed to make store directory: %v", err)
+	}
+
+	tarReader := tar.NewReader(r.Body)
+	for header, err := tarReader.Next(); err != io.EOF; header, err = tarReader.Next() {
+		if err != nil {
+			return fmt.Errorf("Builder.HandlerPopulate: failed to unpack sources: %v", err)
+		}
+
+		// gosec seems overly zealous here, as the destination gets verified
+		dest := filepath.Join(storePath, header.Name) // #nosec G305
+		if !strings.HasPrefix(dest, filepath.Clean(storePath)) {
+			return fmt.Errorf("Builder.HandlerPopulate: name not clean: %v doesn't have %v prefix", dest, filepath.Clean(storePath))
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err := os.Mkdir(dest, header.FileInfo().Mode()); err != nil {
+				return fmt.Errorf("Builder.HandlerPopulate: unable to make dir in sources: %v", err)
+			}
+		case tar.TypeReg:
+			file, err := os.Create(dest)
+			if err != nil {
+				return fmt.Errorf("Builder.HandlerPopulate: unable to open file in sources: %v", err)
+			}
+			defer file.Close()
+
+			// the inputs are trusted so ignore G110
+			_, err = io.Copy(file, tarReader) // #nosec G110
+			if err != nil {
+				return fmt.Errorf("Builder.HandlerPopulate: unable to write file in sources: %v", err)
+			}
+			file.Close()
+		default:
+			return fmt.Errorf("Builder.HandlerPopulate: unexpected tar header type: %v", header.Typeflag)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
