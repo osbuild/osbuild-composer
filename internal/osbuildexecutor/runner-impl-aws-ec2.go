@@ -18,8 +18,20 @@ type awsEC2Executor struct {
 	cloudWatchGroup string
 }
 
+func prepareSources(manifest []byte, store string, result bool, errorWriter io.Writer) error {
+	hostExecutor := NewHostExecutor()
+	_, err := hostExecutor.RunOSBuild(manifest, store, "", nil, nil, nil, nil, result, errorWriter)
+	return err
+}
+
 func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory string, exports, exportPaths, checkpoints,
 	extraEnv []string, result bool, errorWriter io.Writer) (*osbuild.Result, error) {
+
+	err := prepareSources(manifest, store, result, errorWriter)
+	if err != nil {
+		return nil, err
+	}
+
 	region, err := awscloud.RegionFromInstanceMetadata()
 	if err != nil {
 		return nil, err
@@ -45,6 +57,8 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory s
 	args := []string{
 		"--builder-host",
 		*si.Instance.PrivateIpAddress,
+		"--store",
+		store,
 	}
 
 	for _, exp := range exports {
