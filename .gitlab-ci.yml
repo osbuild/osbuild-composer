@@ -798,18 +798,6 @@ Installer:
           - rhos-01/rhel-9.4-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
-SonarQube:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == "main"'
-  script:
-    - schutzbot/sonarqube.sh
-  variables:
-    RUNNER: aws/centos-stream-8-x86_64
-    INTERNAL_NETWORK: "true"
-    GIT_DEPTH: 0
-
 ContainerUpload:
   stage: test
   extends: .terraform
