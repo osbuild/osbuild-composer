@@ -17,6 +17,7 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start.json
 COMPOSE_INFO=${TEMPDIR}/compose-info.json
 DESCR_INST=${TEMPDIR}/descr-inst.json
+DESCR_SGRULE=${TEMPDIR}/descr-sgrule.json
 KEYPAIR=${TEMPDIR}/keypair.pem
 INSTANCE_ID=$(curl -Ls http://169.254.169.254/latest/meta-data/instance-id)
 
@@ -120,6 +121,12 @@ if [ "$RDY" = 0 ]; then
 fi
 
 greenprint "Setting up executor"
+
+# allow the executor to access the internet for the setup
+SGID=$(jq -r .Reservations[0].Instances[0].SecurityGroups[0].GroupId "$DESCR_INST")
+$AWS_CMD ec2 authorize-security-group-egress --group-id "$SGID" --protocol tcp --cidr 0.0.0.0/0 --port 1-65535 > "$DESCR_SGRULE"
+SGRULEID=$(jq -r .SecurityGroupRules[0].SecurityGroupRuleId "$DESCR_SGRULE")
+
 GIT_COMMIT="${GIT_COMMIT:-${CI_COMMIT_SHA}}"
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 # shellcheck disable=SC2087
@@ -142,6 +149,9 @@ ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@EXECUTOR_IP" sudo journalct
 subprocessPIDs+=( $! )
 
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo dnf install -y osbuild-composer osbuild
+
+# no internet access during the build
+$AWS_CMD ec2 revoke-security-group-egress --group-id "$SGID" --security-group-rule-ids "$SGRULEID"
 
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo mkdir -p /var/cache/osbuild-builder
 
