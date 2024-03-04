@@ -59,27 +59,6 @@ get_test_cases () {
             SKIP_CASES=("${SKIP_OSTREE[@]}")
         fi
 
-        # skip image types covered in azure.sh
-        SKIP_AZURE=$(grep vhd-boot <<< "$ALL_CASES" || echo -n)
-        SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_AZURE")
-
-        # skip image types covered in Edge CI
-        SKIP_EDGE=$(grep edge_ <<< "$ALL_CASES" || echo -n)
-        SKIP_CASES=("${SKIP_CASES[@]}" "${SKIP_EDGE[@]}")
-
-        # skip image types covered in gcp.sh
-        SKIP_GCE=$(grep gce-boot <<< "$ALL_CASES" || echo -n)
-        SKIP_CASES=("${SKIP_CASES[@]}" "$SKIP_GCE")
-
-        # skip image types covered in vmware.sh
-        SKIP_OVA=$(grep -E 'ova-boot|vmdk-boot' <<< "$ALL_CASES" || echo -n)
-        SKIP_CASES=("${SKIP_CASES[@]}" "${SKIP_OVA[@]}")
-
-        # skip image types already covered in osbuild/images repository
-        # see https://issues.redhat.com/browse/COMPOSER-2127
-        SKIP_AMI=$(grep -E 'ami-boot|edge_ami|ec2-boot|ec2_ha|ec2_sap' <<< "$ALL_CASES")
-        SKIP_CASES=("${SKIP_CASES[@]}" "${SKIP_AMI[@]}")
-
         mapfile -t TEST_CASES < <(grep -vxFf <(printf '%s\n' "${SKIP_CASES[@]}") <(printf '%s\n' "${ALL_CASES[@]}"))
         echo "${TEST_CASES[@]}"
     popd > /dev/null
