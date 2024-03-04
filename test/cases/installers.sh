@@ -300,13 +300,16 @@ version = "*"
 name = "python3"
 version = "*"
 
+[[customizations.group]]
+name = "testers"
+
 [[customizations.user]]
 name = "${SSH_USER}"
 description = "Administrator account"
 password = "\$6\$GRmb7S0p8vsYmXzH\$o0E020S.9JQGaHkszoog4ha4AQVs3sk8q0DvLjSMxoxHBKnB2FBXGQ/OkwZQfW/76ktHd0NX5nls2LPxPuUdl."
 key = "${SSH_KEY_PUB}"
 home = "/home/${SSH_USER}/"
-groups = ["wheel"]
+groups = ["wheel", "testers"]
 EOF
 
 greenprint "📄 installer blueprint"
