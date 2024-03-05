@@ -22,6 +22,8 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
+const ISO_LABEL = "%s-%s-%s-%s"
+
 // HELPERS
 
 func osCustomizations(
@@ -326,11 +328,12 @@ func liveInstallerImage(workload workload.Workload,
 
 	d := t.arch.distro
 
-	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
 	img.OSName = "fedora"
+	img.Variant = "Workstation"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
 
 	img.Filename = t.Filename()
 
@@ -375,11 +378,18 @@ func imageInstallerImage(workload workload.Workload,
 
 	d := t.arch.distro
 
-	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
+
+	// We don't know the variant that goes into the OS pipeline that gets installed
+	img.Variant = "Unknown"
+
 	img.OSName = "fedora"
+
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+
+	// We don't know the variant of the OS pipeline being installed
+	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
 
 	img.Filename = t.Filename()
 
@@ -537,13 +547,13 @@ func iotInstallerImage(workload workload.Workload,
 
 	img.SquashfsCompression = "lz4"
 
-	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
 	img.Variant = "IoT"
 	img.OSName = "fedora-iot"
 	img.Remote = "fedora-iot"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
+	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
 
 	img.Filename = t.Filename()
 
@@ -694,11 +704,11 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 	}
 
 	d := t.arch.distro
-	img.ISOLabelTempl = d.isolabelTmpl
 	img.Product = d.product
-	img.Variant = "iot"
+	img.Variant = "IoT"
 	img.OSName = "fedora"
 	img.OSVersion = d.osVersion
+	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
 
 	return img, nil
 }

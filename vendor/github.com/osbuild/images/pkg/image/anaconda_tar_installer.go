@@ -66,12 +66,13 @@ type AnacondaTarInstaller struct {
 
 	SquashfsCompression string
 
-	ISOLabelTempl string
-	Product       string
-	Variant       string
-	OSName        string
-	OSVersion     string
-	Release       string
+	ISOLabel     string
+	ISOLabelTmpl string
+	Product      string
+	Variant      string
+	OSName       string
+	OSVersion    string
+	Release      string
 
 	Filename string
 
@@ -136,8 +137,14 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	anacondaPipeline.Checkpoint()
 
-	// TODO: replace isoLabelTmpl with more high-level properties
-	isoLabel := fmt.Sprintf(img.ISOLabelTempl, img.Platform.GetArch())
+	var isoLabel string
+
+	if len(img.ISOLabel) > 0 {
+		isoLabel = img.ISOLabel
+	} else {
+		// TODO: replace isoLabelTmpl with more high-level properties
+		isoLabel = fmt.Sprintf(img.ISOLabelTmpl, img.Platform.GetArch())
+	}
 
 	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
 	rootfsImagePipeline.Size = 5 * common.GibiByte
