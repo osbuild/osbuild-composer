@@ -61,8 +61,8 @@ TEST_UUID=$(uuidgen)
 IMAGE_KEY="minimal-raw-${TEST_UUID}"
 UEFI_GUEST_ADDRESS=192.168.100.51
 MINIMAL_RAW_TYPE=minimal-raw
-MINIMAL_RAW_DECOMPRESSED=raw.img
-MINIMAL_RAW_FILENAME=raw.img.xz
+MINIMAL_RAW_DECOMPRESSED=disk.raw
+MINIMAL_RAW_FILENAME=disk.raw.xz
 BOOT_ARGS="uefi"
 
 # Set up temporary files.
