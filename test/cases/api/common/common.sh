@@ -75,16 +75,6 @@ function _instanceCheck() {
   else
       echo "firewalld not available on host, that's fine"
   fi
-
-  if [[ "${TEST_DISTRO_ALIAS}" == "1" ]]; then
-      echo "✔️ Checking DNF config of an image built using distro alias"
-      DNF_VARS_RELEASEVER=$($_ssh cat /etc/dnf/vars/releasever)
-      if [[ "$DNF_VARS_RELEASEVER" != "$VERSION_ID" ]]; then
-          echo "DNF config of an image built using distro alias has wrong releasever: $DNF_VARS_RELEASEVER"
-          echo "Expected: $VERSION_ID"
-          exit 1
-      fi
-  fi
 }
 
 WORKER_REFRESH_TOKEN_PATH="/etc/osbuild-worker/token"

@@ -16,7 +16,7 @@ function createReqFileEdge() {
 
   cat > "$REQUEST_FILE" << EOF
 {
-  "distribution": "$DISTRO_NAME",
+  "distribution": "$DISTRO",
   "customizations": {
     "payload_repositories": [
       {
@@ -62,7 +62,7 @@ EOF
 function createReqFileGuest() {
   cat > "$REQUEST_FILE" << EOF
 {
-  "distribution": "$DISTRO_NAME",
+  "distribution": "$DISTRO",
   "customizations": {
     "payload_repositories": [
       {
@@ -103,7 +103,7 @@ EOF
 function createReqFileVSphere() {
   cat > "$REQUEST_FILE" << EOF
 {
-  "distribution": "$DISTRO_NAME",
+  "distribution": "$DISTRO",
   "customizations": {
     "payload_repositories": [
       {
