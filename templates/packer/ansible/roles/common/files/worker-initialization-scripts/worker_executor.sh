@@ -5,14 +5,6 @@ source /etc/os-release
 # /tmp/cloud_init_vars may not exist on the osbuild-executor
 source /tmp/cloud_init_vars || true
 
-# Don't subscribe on fedora
-if [ "$ID" != fedora ]; then
-  /usr/local/bin/aws secretsmanager get-secret-value \
-    --secret-id executor-subscription-manager-command | jq -r ".SecretString" > /tmp/subscription_manager_command.json
-  jq -r ".subscription_manager_command" /tmp/subscription_manager_command.json | bash
-  rm -f /tmp/subscription_manager_command.json
-fi
-
 echo "Writing vector config."
 REGION=$(curl -Ls http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
 HOSTNAME=$(hostname)
