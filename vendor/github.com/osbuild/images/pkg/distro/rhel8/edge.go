@@ -147,7 +147,7 @@ func edgeSimplifiedInstallerImgType(rd distribution) imageType {
 func minimalRawImgType(rd distribution) imageType {
 	it := imageType{
 		name:        "minimal-raw",
-		filename:    "raw.img.xz",
+		filename:    "disk.raw.xz",
 		compression: "xz",
 		mimeType:    "application/xz",
 		packageSets: map[string]packageSetFunc{

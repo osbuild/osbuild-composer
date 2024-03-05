@@ -366,7 +366,7 @@ var (
 
 	minimalrawImgType = imageType{
 		name:        "minimal-raw",
-		filename:    "raw.img.xz",
+		filename:    "disk.raw.xz",
 		compression: "xz",
 		mimeType:    "application/xz",
 		packageSets: map[string]packageSetFunc{
@@ -397,7 +397,6 @@ type distribution struct {
 	releaseVersion     string
 	modulePlatformID   string
 	ostreeRefTmpl      string
-	isolabelTmpl       string
 	runner             runner.Runner
 	arches             map[string]distro.Arch
 	defaultImageConfig *distro.ImageConfig
@@ -417,7 +416,6 @@ func getDistro(version int) distribution {
 		releaseVersion:     strconv.Itoa(version),
 		modulePlatformID:   fmt.Sprintf("platform:f%d", version),
 		ostreeRefTmpl:      fmt.Sprintf("fedora/%d/%%s/iot", version),
-		isolabelTmpl:       fmt.Sprintf("Fedora-%d-BaseOS-%%s", version),
 		runner:             &runner.Fedora{Version: uint64(version)},
 		defaultImageConfig: defaultDistroImageConfig,
 	}

@@ -344,7 +344,7 @@ func imageInstallerImage(workload workload.Workload,
 
 	d := t.arch.distro
 
-	img.ISOLabelTempl = d.isolabelTmpl
+	img.ISOLabelTmpl = d.isolabelTmpl
 	img.Product = d.product
 	img.OSName = "redhat"
 	img.OSVersion = d.osVersion
@@ -461,7 +461,7 @@ func edgeInstallerImage(workload workload.Workload,
 		img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 	}
 
-	img.ISOLabelTempl = d.isolabelTmpl
+	img.ISOLabelTmpl = d.isolabelTmpl
 	img.Product = d.product
 	img.Variant = "edge"
 	img.OSName = "rhel"
@@ -586,7 +586,7 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	}
 
 	d := t.arch.distro
-	img.ISOLabelTempl = d.isolabelTmpl
+	img.ISOLabelTmpl = d.isolabelTmpl
 	img.Product = d.product
 	img.Variant = "edge"
 	img.OSName = "redhat"
