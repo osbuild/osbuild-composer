@@ -55,7 +55,7 @@ function createReqFile() {
 
   cat > "$REQUEST_FILE" << EOF
 {
-  "distribution": "$DISTRO_NAME",
+  "distribution": "$DISTRO",
   "customizations": {
     "filesystem": [
       {
