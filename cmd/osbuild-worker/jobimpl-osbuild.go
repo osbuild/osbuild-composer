@@ -533,7 +533,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	if !osbuildJobResult.OSBuildOutput.Success {
 		var osbErrors []error
 		if osbuildJobResult.OSBuildOutput.Error != nil {
-			osbErrors = append(osbErrors, fmt.Errorf("osbuild error: %v", osbuildJobResult.OSBuildOutput.Error))
+			osbErrors = append(osbErrors, fmt.Errorf("osbuild error: %s", string(osbuildJobResult.OSBuildOutput.Error)))
 		}
 		if osbuildJobResult.OSBuildOutput.Errors != nil {
 			for _, err := range osbuildJobResult.OSBuildOutput.Errors {
