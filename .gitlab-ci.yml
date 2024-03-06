@@ -391,20 +391,20 @@ koji.sh (cloud upload):
   parallel:
     matrix:
       - RUNNER:
-          # Brew workers use RHEL-8.7
           - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-9.3-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: aws
         IMAGE_TYPE: aws-rhui
       - RUNNER:
-          # Brew workers use RHEL-8.6
           - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-9.3-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: azure
         IMAGE_TYPE: azure-rhui
       - RUNNER:
-          # Brew workers use RHEL-8.6
           - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-9.3-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: gcp
         IMAGE_TYPE: gcp-rhui
@@ -416,6 +416,13 @@ koji.sh (cloudapi):
     - !reference [.upstream_rules_all, rules]
   variables:
     SCRIPT: koji.sh
+  parallel:
+    matrix:
+      - *fedora_runners
+      - RUNNER:
+          - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-9.3-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 aws.sh:
   extends: .integration
