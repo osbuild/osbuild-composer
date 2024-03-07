@@ -15,6 +15,9 @@ TEMPDIR=$(mktemp -d)
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
 
+    # kill dangling journalctl processes to prevent GitLab CI from hanging
+    sudo pkill journalctl || echo "Nothing killed"
+
     # since this function can be called at any time, ensure that we don't expand unbound variables
     OC_CLI="${OC_CLI:-}"
     VM_NAME="${VM_NAME:-}"
@@ -24,10 +27,6 @@ function cleanup() {
     [[ "$OC_CLI" && "$PVC_NAME" ]] && $OC_CLI delete pvc "$PVC_NAME"
 
     sudo rm -rf "$TEMPDIR"
-
-    # Stop watching the worker journal when exiting.
-    WORKER_JOURNAL_PID="${WORKER_JOURNAL_PID:-}"
-    [ "$WORKER_JOURNAL_PID" ] && sudo pkill -P "$WORKER_JOURNAL_PID"
 }
 trap cleanup EXIT
 
@@ -131,7 +130,7 @@ greenprint "💬 Getting compose log and metadata"
 get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
-# Kill the journal monitor immediately and remove the trap
+# Kill the journal monitor
 sudo pkill -P ${WORKER_JOURNAL_PID}
 
 # Did the compose finish with success?

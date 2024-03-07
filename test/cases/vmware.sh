@@ -73,6 +73,8 @@ SSH_KEY_PUB=$(cat "$SSH_KEY".pub)
 function cleanup() {
     set +eu
     greenprint "🧼 Cleaning up"
+    # kill dangling journalctl processes to prevent GitLab CI from hanging
+    sudo pkill journalctl || echo "Nothing killed"
     $GOVC_CMD vm.destroy -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true "${IMAGE_KEY}"
     set -eu
 }
@@ -160,8 +162,6 @@ sudo composer-cli blueprints depsolve bash
 WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
 sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 WORKER_JOURNAL_PID=$!
-# Stop watching the worker journal when exiting.
-trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
 # Start the compose and upload to VMWare.
 greenprint "🚀 Starting compose"
@@ -189,11 +189,8 @@ greenprint "💬 Getting compose log and metadata"
 get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
-# Kill the journal monitor immediately and remove the trap
-# while adding just the cleanup trap
+# Kill the journal monitor
 sudo pkill -P ${WORKER_JOURNAL_PID}
-trap - EXIT
-trap cleanup EXIT
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
