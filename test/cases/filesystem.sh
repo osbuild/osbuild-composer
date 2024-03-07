@@ -21,6 +21,13 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
+function cleanup_on_exit() {
+    greenprint "== Script execution stopped or finished - Cleaning up =="
+    # kill dangling journalctl processes to prevent GitLab CI from hanging
+    sudo pkill journalctl || echo "Nothing killed"
+}
+trap cleanup_on_exit EXIT
+
 # Workaround the problem that 'image-info' can not read SELinux labels unknown to the host from the image
 OSBUILD_LABEL=$(matchpathcon -n "$(which osbuild)")
 sudo chcon "$OSBUILD_LABEL" /usr/libexec/osbuild-composer-test/image-info
@@ -41,8 +48,6 @@ build_image() {
     WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
     sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
     WORKER_JOURNAL_PID=$!
-    # Stop watching the worker journal when exiting.
-    trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
     # Start the compose.
     greenprint "🚀 Starting compose"
@@ -53,11 +58,9 @@ build_image() {
     if [[ $want_fail == "$STATUS" ]]; then
         redprint "Something went wrong with the compose. 😢"
         sudo pkill -P ${WORKER_JOURNAL_PID}
-        trap - EXIT
         exit 1
     elif [[ $want_fail == true && $STATUS == false ]]; then
         sudo pkill -P ${WORKER_JOURNAL_PID}
-        trap - EXIT
         # use get_build_info to extract errors before picking the first
         errors=$(get_build_info ".errors" "$COMPOSE_START")
         ERROR_MSG=$(jq 'first(.[] | select(.id == "ManifestCreationFailed")) | .msg' <<< "${errors}")
@@ -81,9 +84,8 @@ build_image() {
         sleep 5
     done
 
-    # Kill the journal monitor immediately and remove the trap
+    # Kill the journal monitor
     sudo pkill -P ${WORKER_JOURNAL_PID}
-    trap - EXIT
 
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
@@ -97,7 +99,7 @@ clean_up () {
     greenprint "🧼 Cleaning up"
     # Remove "remote" repo.
     sudo rm -f "$IMAGE_FILENAME"
-    # Remomve tmp dir.
+    # Remove tmp dir.
     sudo rm -rf "$TEMPDIR"
 }
 check_result () {

@@ -10,6 +10,13 @@ ARCH=$(uname -m)
 
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
+function cleanup_on_exit() {
+    greenprint "== Script execution stopped or finished - Cleaning up =="
+    # kill dangling journalctl processes to prevent GitLab CI from hanging
+    sudo pkill journalctl || echo "Nothing killed"
+}
+trap cleanup_on_exit EXIT
+
 # Install and start firewalld
 greenprint "🔧 Install and start firewalld"
 sudo dnf install -y firewalld
@@ -158,8 +165,6 @@ build_image() {
     WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
     sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
     WORKER_JOURNAL_PID=$!
-    # Stop watching the worker journal when exiting.
-    trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
     # Start the compose.
     greenprint "🚀 Starting compose"
@@ -193,9 +198,8 @@ build_image() {
     get_compose_log "$COMPOSE_ID"
     get_compose_metadata "$COMPOSE_ID"
 
-    # Kill the journal monitor immediately and remove the trap
+    # Kill the journal monitor
     sudo pkill -P ${WORKER_JOURNAL_PID}
-    trap - EXIT
 
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
