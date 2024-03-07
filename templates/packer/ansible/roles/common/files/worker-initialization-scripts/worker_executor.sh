@@ -2,8 +2,8 @@
 set -euo pipefail
 
 source /etc/os-release
-# TODO: uncomment, when the cloud_init_vars file is created on the executor
-#source /tmp/cloud_init_vars
+# /tmp/cloud_init_vars may not exist on the osbuild-executor
+source /tmp/cloud_init_vars || true
 
 # Don't subscribe on fedora
 if [ "$ID" != fedora ]; then
