@@ -157,25 +157,27 @@ case "${ID}-${VERSION_ID}" in
         exit 1;;
 esac
 
+isomount=$(mktemp -d --tmpdir=/var/tmp/)
+kspath=$(mktemp -d --tmpdir=/var/tmp/)
+cleanup() {
+    # kill dangling journalctl processes to prevent GitLab CI from hanging
+    sudo pkill journalctl || echo "Nothing killed"
+
+    sudo umount -v "${isomount}" || echo
+    rmdir -v "${isomount}"
+    rm -rv "${kspath}"
+}
+trap cleanup EXIT
+
 # modify existing kickstart by prepending and appending commands
 function modksiso {
     sudo dnf install -y lorax  # for mkksiso
-    isomount=$(mktemp -d --tmpdir=/var/tmp/)
-    kspath=$(mktemp -d --tmpdir=/var/tmp/)
 
     iso="$1"
     newiso="$2"
 
     echo "Mounting ${iso} -> ${isomount}"
     sudo mount -v -o ro "${iso}" "${isomount}"
-
-    cleanup() {
-        sudo umount -v "${isomount}"
-        rmdir -v "${isomount}"
-        rm -rv "${kspath}"
-    }
-
-    trap cleanup RETURN
 
     # When sudo-nopasswd is specified, a second kickstart file is added which
     # includes the %post section for creating sudoers drop-in files. This
@@ -246,8 +248,6 @@ build_image() {
     WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
     sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
     WORKER_JOURNAL_PID=$!
-    # Stop watching the worker journal when exiting.
-    trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
     # Start the compose.
     greenprint "🚀 Starting compose"
@@ -284,6 +284,9 @@ build_image() {
     greenprint "💬 Getting compose log and metadata"
     get_compose_log "$COMPOSE_ID"
     get_compose_metadata "$COMPOSE_ID"
+
+    # Kill the journal monitor
+    sudo pkill -P ${WORKER_JOURNAL_PID}
 
     # Did the compose finish with success?
     if [[ $COMPOSE_STATUS != FINISHED ]]; then
