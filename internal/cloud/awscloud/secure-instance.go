@@ -18,15 +18,27 @@ type SecureInstance struct {
 	Instance *ec2.Instance
 }
 
-const UserData = `#cloud-config
+// SecureInstanceUserData returns the cloud-init user data for a secure instance.
+func SecureInstanceUserData(CloudWatchGroup string) string {
+	additionalFiles := ""
+
+	if CloudWatchGroup != "" {
+		additionalFiles += fmt.Sprintf(`  - path: /tmp/cloud_init_vars
+    content: |
+      OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='%s'
+`, CloudWatchGroup)
+	}
+
+	return fmt.Sprintf(`#cloud-config
 write_files:
   - path: /tmp/worker-run-executor-service
     content: ''
-`
+%s`, additionalFiles)
+}
 
 // Runs an instance with a security group that only allows traffic to
 // the host. Will replace resources if they already exists.
-func (a *AWS) RunSecureInstance(iamProfile, keyName string) (*SecureInstance, error) {
+func (a *AWS) RunSecureInstance(iamProfile, keyName, CloudWatchGroup string) (*SecureInstance, error) {
 	identity, err := a.ec2metadata.GetInstanceIdentityDocument()
 	if err != nil {
 		logrus.Errorf("Error getting the identity document, %s", err)
@@ -67,7 +79,7 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName string) (*SecureInstance, er
 		return nil, err
 	}
 
-	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, instanceType, iamProfile, keyName)
+	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, instanceType, iamProfile, keyName, CloudWatchGroup)
 	if ltID != "" {
 		secureInstance.LTID = ltID
 	}
@@ -284,7 +296,7 @@ func isLaunchTemplateNotFoundError(err error) bool {
 
 }
 
-func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iamProfile, keyName string) (string, error) {
+func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iamProfile, keyName, CloudWatchGroup string) (string, error) {
 	ltName := fmt.Sprintf("launch-template-for-%s-runner-instance", hostInstanceID)
 	descrLTOutput, err := a.ec2.DescribeLaunchTemplates(&ec2.DescribeLaunchTemplatesInput{
 		LaunchTemplateNames: []*string{
@@ -322,7 +334,7 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iam
 			SecurityGroupIds: []*string{
 				aws.String(sgID),
 			},
-			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(UserData))),
+			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(SecureInstanceUserData(CloudWatchGroup)))),
 		},
 		TagSpecifications: []*ec2.TagSpecification{
 			&ec2.TagSpecification{

@@ -72,9 +72,10 @@ type pulpConfig struct {
 }
 
 type executorConfig struct {
-	Type       string `toml:"type"`
-	IAMProfile string `toml:"iam_profile"`
-	KeyName    string `toml:"key_name"`
+	Type            string `toml:"type"`
+	IAMProfile      string `toml:"iam_profile"`
+	KeyName         string `toml:"key_name"`
+	CloudWatchGroup string `toml:"cloudwatch_group"`
 }
 
 type workerConfig struct {
