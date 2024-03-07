@@ -45,6 +45,8 @@ function cleanupGCP() {
 TEMPDIR=$(mktemp -d)
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
+    # kill dangling journalctl processes to prevent GitLab CI from hanging
+    sudo pkill journalctl || echo "Nothing killed"
     cleanupGCP
     sudo rm -rf "$TEMPDIR"
 }
@@ -226,8 +228,6 @@ sudo composer-cli blueprints depsolve "$BLUEPRINT_NAME"
 WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
 sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 WORKER_JOURNAL_PID=$!
-# Stop watching the worker journal when exiting.
-trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
 # Start the compose and upload to GCP.
 greenprint "🚀 Starting compose"
@@ -254,11 +254,8 @@ greenprint "💬 Getting compose log and metadata"
 get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
-# Kill the journal monitor immediately and remove the trap
+# Kill the journal monitor
 sudo pkill -P ${WORKER_JOURNAL_PID}
-trap - EXIT
-# trap cleanup again
-trap cleanup EXIT
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
