@@ -474,9 +474,10 @@ func main() {
 			Store:  store,
 			Output: output,
 			OSBuildExecutor: ExecutorConfiguration{
-				Type:       config.OSBuildExecutor.Type,
-				IAMProfile: config.OSBuildExecutor.IAMProfile,
-				KeyName:    config.OSBuildExecutor.KeyName,
+				Type:            config.OSBuildExecutor.Type,
+				IAMProfile:      config.OSBuildExecutor.IAMProfile,
+				KeyName:         config.OSBuildExecutor.KeyName,
+				CloudWatchGroup: config.OSBuildExecutor.CloudWatchGroup,
 			},
 			KojiServers: kojiServers,
 			GCPConfig:   gcpConfig,

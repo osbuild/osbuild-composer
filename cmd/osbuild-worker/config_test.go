@@ -69,12 +69,21 @@ offline_token = "/etc/osbuild-worker/offline_token"
 [pulp]
 credentials = "/etc/osbuild-worker/pulp-creds"
 server_address = "https://example.com/pulp"
+
+[osbuild_executor]
+type = "aws.ec2"
+iam_profile = "osbuild-worker"
+key_name = "osbuild-worker"
+cloudwatch_group = "osbuild-worker"
 `,
 			want: &workerConfig{
 				BasePath: "/api/image-builder-worker/v1",
 				DNFJson:  "/usr/libexec/osbuild-depsolve-dnf",
 				OSBuildExecutor: &executorConfig{
-					Type: "host",
+					Type:            "aws.ec2",
+					IAMProfile:      "osbuild-worker",
+					KeyName:         "osbuild-worker",
+					CloudWatchGroup: "osbuild-worker",
 				},
 				Composer: &composerConfig{
 					Proxy: "http://proxy.example.com",
