@@ -258,6 +258,7 @@ cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
 # temporary workaround for
 # https://issues.redhat.com/browse/CLOUDX-488
 if nvrGreaterOrEqual "osbuild-composer" "83"; then
+    # TODO: remove test filtering using "-t" once https://issues.redhat.com/browse/RHEL-24346 is resolved
     sudo "${CONTAINER_RUNTIME}" run \
         -a stdout -a stderr \
         -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
@@ -265,6 +266,7 @@ if nvrGreaterOrEqual "osbuild-composer" "83"; then
         -e AWS_REGION="${AWS_REGION}" \
         -e JIRA_PAT="${JIRA_PAT}" \
         -v "${TEMPDIR}":/tmp:Z \
+        -t "not test_no_avc_denials" \
         "${CONTAINER_CLOUD_IMAGE_VAL}" \
         python cloud-image-val.py \
         -c /tmp/civ_config.yml \
