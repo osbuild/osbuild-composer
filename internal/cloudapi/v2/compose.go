@@ -967,11 +967,6 @@ func (request *ComposeRequest) GetPartitioningMode() (disk.PartitioningMode, err
 // GetImageRequests converts a composeRequest structure from the API to an intermediate imageRequest structure
 // that's used for generating manifests and orchestrating worker jobs.
 func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Factory, repoRegistry *reporegistry.RepoRegistry) ([]imageRequest, error) {
-	distribution := distroFactory.GetDistro(request.Distribution)
-	if distribution == nil {
-		return nil, HTTPError(ErrorUnsupportedDistribution)
-	}
-
 	// OpenAPI enforces blueprint or customization, not both
 	// but check anyway
 	if request.Customizations != nil && request.Blueprint != nil {
@@ -982,6 +977,19 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 	bp, err := request.GetBlueprint()
 	if err != nil {
 		return nil, err
+	}
+
+	// Used when no repositories are included. Must be the original name because it may
+	// be an alias and you cannot map back from the distrofactory to the original string.
+	originalDistroName := request.Distribution
+
+	// If there is a distribution in the blueprint it overrides the request's distro
+	if len(bp.Distro) > 0 {
+		originalDistroName = bp.Distro
+	}
+	distribution := distroFactory.GetDistro(originalDistroName)
+	if distribution == nil {
+		return nil, HTTPError(ErrorUnsupportedDistribution)
 	}
 
 	// add the user-defined repositories only to the depsolve job for the
@@ -1024,9 +1032,10 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 			return nil, err
 		}
 
-		// If no repositories are included with the imageRequest use the defaults for the distro
+		// If no repositories are included with the imageRequest use the defaults for
+		// the distro selected by the blueprint, or the compose request.
 		if len(ir.Repositories) == 0 {
-			dr, err := repoRegistry.ReposByImageTypeName(request.Distribution, arch.Name(), imageType.Name())
+			dr, err := repoRegistry.ReposByImageTypeName(originalDistroName, arch.Name(), imageType.Name())
 			if err != nil {
 				return nil, err
 			}
