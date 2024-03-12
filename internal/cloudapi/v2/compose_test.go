@@ -708,5 +708,33 @@ func TestGetImageRequests_NoRepositories(t *testing.T) {
 	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
-	assert.Greater(t, len(got[0].repositories), 0)
+	require.Greater(t, len(got[0].repositories), 0)
+	assert.Contains(t, got[0].repositories[0].Metalink, "40")
+}
+
+// TestGetImageRequests_BlueprintDistro test to make sure blueprint distro overrides request distro
+func TestGetImageRequests_BlueprintDistro(t *testing.T) {
+	uo := UploadOptions(struct{}{})
+	request := &ComposeRequest{
+		Distribution: "fedora-40",
+		ImageRequest: &ImageRequest{
+			Architecture:  "x86_64",
+			ImageType:     ImageTypesAws,
+			UploadOptions: &uo,
+			Repositories:  []Repository{},
+		},
+		Blueprint: &Blueprint{
+			Name:   "distro-test",
+			Distro: common.ToPtr("fedora-38"),
+		},
+	}
+	// NOTE: current directory is the location of this file, back up so it can use ./repositories/
+	rr, err := reporegistry.New([]string{"../../../"})
+	require.NoError(t, err)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	assert.NoError(t, err)
+	require.Len(t, got, 1)
+	require.Greater(t, len(got[0].repositories), 0)
+	assert.Contains(t, got[0].repositories[0].Metalink, "38")
+	assert.Equal(t, got[0].blueprint.Distro, "fedora-38")
 }
