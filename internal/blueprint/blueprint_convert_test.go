@@ -170,6 +170,10 @@ func TestConvert(t *testing.T) {
 							Filename:     "repofile",
 						},
 					},
+					Installer: &InstallerCustomization{
+						Unattended:   true,
+						SudoNopasswd: []string{"%group", "user"},
+					},
 				},
 				Distro: "distro",
 			},
@@ -320,6 +324,10 @@ func TestConvert(t *testing.T) {
 							SSLVerify:    common.ToPtr(true),
 							Filename:     "repofile",
 						},
+					},
+					Installer: &iblueprint.InstallerCustomization{
+						Unattended:   true,
+						SudoNopasswd: []string{"%group", "user"},
 					},
 				},
 				Distro: "distro",

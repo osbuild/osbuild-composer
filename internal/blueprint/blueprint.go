@@ -351,6 +351,10 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 		if fips := c.FIPS; fips != nil {
 			customizations.FIPS = fips
 		}
+		if installer := c.Installer; installer != nil {
+			iinst := iblueprint.InstallerCustomization(*installer)
+			customizations.Installer = &iinst
+		}
 	}
 
 	ibp := iblueprint.Blueprint{
