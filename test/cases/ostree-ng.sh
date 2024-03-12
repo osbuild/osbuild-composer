@@ -177,26 +177,22 @@ function modksiso {
 
     trap cleanup RETURN
 
-    ksfiles=("${isomount}"/*.ks)
-    ksfile="${ksfiles[0]}"  # there shouldn't be more than one anyway
-    echo "Found kickstart file ${ksfile}"
+    # When sudo-nopasswd is specified, a second kickstart file is added which
+    # includes the %post section for creating sudoers drop-in files. This
+    # kickstart file is called osbuild.ks and it %includes osbuild-base.ks at
+    # the top, which is the main kickstart file created by osbuild. To inject
+    # our extra %post section, lets modify the osbuild.ks file and start that
+    # one so that the %include chain isn't disrupted.
+    ksfile="${isomount}/osbuild.ks"
+    echo "Modifying kickstart file ${ksfile}"
 
     ksbase=$(basename "${ksfile}")
     newksfile="${kspath}/${ksbase}"
     oldks=$(cat "${ksfile}")
     echo "Preparing modified kickstart file"
     cat > "${newksfile}" << EOFKS
-text
-network --bootproto=dhcp --device=link --activate --onboot=on
-zerombr
-clearpart --all --initlabel --disklabel=msdos
-autopart --nohome --noswap --type=plain
 ${oldks}
-poweroff
 %post --log=/var/log/anaconda/post-install.log --erroronfail
-# no sudo password for user admin and installeruser
-echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
-echo -e 'installeruser\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
 # delete local ostree repo and add external prod edge repo
 ostree remote delete ${OSTREE_OSNAME}
 ostree remote add --no-gpg-verify --no-sign-verify ${OSTREE_OSNAME} ${PROD_REPO_URL}
@@ -521,6 +517,10 @@ password = "${EDGE_USER_PASSWORD_SHA512}"
 key = "${SSH_KEY_PUB}"
 home = "/home/installeruser/"
 groups = ["wheel"]
+
+[customizations.installer]
+unattended = true
+sudo-nopasswd = ["admin", "installeruser"]
 EOF
 
 greenprint "📄 installer blueprint"
