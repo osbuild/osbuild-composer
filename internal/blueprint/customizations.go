@@ -28,6 +28,7 @@ type Customizations struct {
 	Files              []FileCustomization       `json:"files,omitempty" toml:"files,omitempty"`
 	Repositories       []RepositoryCustomization `json:"repositories,omitempty" toml:"repositories,omitempty"`
 	FIPS               *bool                     `json:"fips,omitempty" toml:"fips,omitempty"`
+	Installer          *InstallerCustomization   `json:"installer,omitempty" toml:"installer,omitempty"`
 }
 
 type IgnitionCustomization struct {
