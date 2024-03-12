@@ -130,6 +130,10 @@ func GetTestBlueprint() blueprint.Blueprint {
 			},
 		},
 		FIPS: common.ToPtr(true),
+		Installer: &blueprint.InstallerCustomization{
+			Unattended:   true,
+			SudoNopasswd: []string{`%wheel`},
+		},
 	}
 
 	return expected
@@ -249,6 +253,10 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			}),
 		},
 		Fips: &FIPS{Enabled: common.ToPtr(true)},
+		Installer: &Installer{
+			Unattended:   common.ToPtr(true),
+			SudoNopasswd: &[]string{`%wheel`},
+		},
 	}}
 
 	bp, err = cr.GetBlueprintFromCustomizations()
@@ -372,6 +380,10 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				}),
 			},
 			Fips: common.ToPtr(true),
+			Installer: &Installer{
+				Unattended:   common.ToPtr(true),
+				SudoNopasswd: &[]string{`%wheel`},
+			},
 		},
 	}}
 

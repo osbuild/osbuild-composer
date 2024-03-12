@@ -1000,6 +1000,15 @@ components:
           type: array
           items:
             type: string
+    Installer:
+      type: object
+      properties:
+        unattended:
+          type: boolean
+        sudo-nopasswd:
+          type: array
+          items:
+            type: string
     UploadTarget:
       type: object
       required:
@@ -1328,6 +1337,8 @@ components:
         fips:
           type: boolean
           description: Enable FIPS mode
+        installer:
+          $ref: '#/components/schemas/Installer'
     SSHKey:
       type: object
       additionalProperties: false
@@ -1470,6 +1481,8 @@ components:
             even when there are one or more mountpoints.
         fips:
           $ref: '#/components/schemas/FIPS'
+        installer:
+          $ref: '#/components/schemas/Installer'
     Container:
       type: object
       required:

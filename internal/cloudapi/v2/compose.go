@@ -413,6 +413,16 @@ func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*bluepri
 		c.FIPS = rbpc.Fips
 	}
 
+	if installer := rbpc.Installer; installer != nil {
+		c.Installer = &blueprint.InstallerCustomization{}
+		if installer.Unattended != nil {
+			c.Installer.Unattended = *installer.Unattended
+		}
+		if installer.SudoNopasswd != nil {
+			c.Installer.SudoNopasswd = *installer.SudoNopasswd
+		}
+	}
+
 	return c, nil
 }
 
@@ -870,6 +880,17 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 
 	if request.Customizations.Fips != nil {
 		bp.Customizations.FIPS = request.Customizations.Fips.Enabled
+	}
+
+	if request.Customizations.Installer != nil {
+		installer := &blueprint.InstallerCustomization{}
+		if request.Customizations.Installer.Unattended != nil {
+			installer.Unattended = *request.Customizations.Installer.Unattended
+		}
+		if request.Customizations.Installer.SudoNopasswd != nil {
+			installer.SudoNopasswd = *request.Customizations.Installer.SudoNopasswd
+		}
+		bp.Customizations.Installer = installer
 	}
 
 	// Did bp.Customizations get set at all? If not, set it back to nil
