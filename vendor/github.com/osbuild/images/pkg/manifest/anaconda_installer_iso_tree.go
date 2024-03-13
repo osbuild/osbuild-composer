@@ -3,6 +3,8 @@ package manifest
 import (
 	"fmt"
 	"path"
+	"sort"
+	"strings"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
@@ -32,8 +34,9 @@ type AnacondaInstallerISOTree struct {
 	Keyboard *string
 	Timezone *string
 
-	// Create a sudoers drop-in file for wheel group with NOPASSWD option
-	WheelNoPasswd bool
+	// Create a sudoers drop-in file for each user or group to enable the
+	// NOPASSWD option
+	NoPasswd []string
 
 	// Add kickstart options to make the installation fully unattended
 	UnattendedKickstart bool
@@ -532,16 +535,10 @@ func (p *AnacondaInstallerISOTree) makeKickstartStages(kickstartOptions *osbuild
 
 	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
 
-	if p.WheelNoPasswd {
+	hardcodedKickstartBits := makeKickstartSudoersPost(p.NoPasswd)
+	if hardcodedKickstartBits != "" {
 		// Because osbuild core only supports a subset of options,
 		// we append to the base here with hardcoded wheel group with NOPASSWD option
-		hardcodedKickstartBits := `
-%post
-echo -e "%wheel\tALL=(ALL)\tNOPASSWD: ALL" > "/etc/sudoers.d/wheel"
-chmod 0440 /etc/sudoers.d/wheel
-restorecon -rvF /etc/sudoers.d
-%end
-`
 		kickstartFile, err := kickstartOptions.IncludeRaw(hardcodedKickstartBits)
 		if err != nil {
 			panic(err)
@@ -559,4 +556,32 @@ restorecon -rvF /etc/sudoers.d
 func makeISORootPath(p string) string {
 	fullpath := path.Join("/run/install/repo", p)
 	return fmt.Sprintf("file://%s", fullpath)
+}
+
+func makeKickstartSudoersPost(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
+	echoLineFmt := `echo -e "%[1]s\tALL=(ALL)\tNOPASSWD: ALL" > "/etc/sudoers.d/%[1]s"
+chmod 0440 /etc/sudoers.d/%[1]s`
+
+	filenames := make(map[string]bool)
+	sort.Strings(names)
+	entries := make([]string, 0, len(names))
+	for _, name := range names {
+		if filenames[name] {
+			continue
+		}
+		entries = append(entries, fmt.Sprintf(echoLineFmt, name))
+		filenames[name] = true
+	}
+
+	kickstartSudoersPost := `
+%%post
+%s
+restorecon -rvF /etc/sudoers.d
+%%end
+`
+	return fmt.Sprintf(kickstartSudoersPost, strings.Join(entries, "\n"))
+
 }

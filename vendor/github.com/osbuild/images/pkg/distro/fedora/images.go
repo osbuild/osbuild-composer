@@ -353,7 +353,7 @@ func imageInstallerImage(workload workload.Workload,
 	img := image.NewAnacondaTarInstaller()
 
 	if instCust := customizations.GetInstaller(); instCust != nil {
-		img.WheelNoPasswd = instCust.WheelSudoNopasswd
+		img.NoPasswd = instCust.SudoNopasswd
 		img.UnattendedKickstart = instCust.Unattended
 	}
 
@@ -541,7 +541,7 @@ func iotInstallerImage(workload workload.Workload,
 	}
 
 	if instCust := customizations.GetInstaller(); instCust != nil {
-		img.WheelNoPasswd = instCust.WheelSudoNopasswd
+		img.NoPasswd = instCust.SudoNopasswd
 		img.UnattendedKickstart = instCust.Unattended
 	}
 

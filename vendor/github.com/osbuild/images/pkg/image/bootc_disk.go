@@ -3,10 +3,13 @@ package image
 import (
 	"fmt"
 	"math/rand"
+	"path/filepath"
+	"strings"
 
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/runner"
 )
@@ -47,15 +50,43 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 		panic(fmt.Sprintf("no compression is allowed with %q format for %q", imgFormat, img.name))
 	}
 
+	// In the bootc flow, we reuse the host container context for tools;
+	// this is signified by passing nil to the below pipelines.
+	var hostPipeline manifest.Build
+
 	opts := &baseRawOstreeImageOpts{useBootupd: true}
 	baseImage := baseRawOstreeImage(img.OSTreeDiskImage, buildPipeline, opts)
+
+	// In BIB, we intend to export multiple images from the same pipeline and
+	// this is the expected filename for the raw images. Set it so that it's
+	// always disk.raw even when we're building a qcow2 or other image type.
+	baseImage.SetFilename("disk.raw")
 	switch imgFormat {
 	case platform.FORMAT_QCOW2:
-		// qcow2 runs without a build pipeline directly from "bib"
-		qcow2Pipeline := manifest.NewQCOW2(nil, baseImage)
+		qcow2Pipeline := manifest.NewQCOW2(hostPipeline, baseImage)
 		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
 		qcow2Pipeline.SetFilename(img.Filename)
 		return qcow2Pipeline.Export(), nil
+	// TODO: refactor to share this with disk.go; note here the build pipeline runs
+	// on the host (that's the nil)
+	case platform.FORMAT_VMDK:
+		vmdkPipeline := manifest.NewVMDK(hostPipeline, baseImage)
+		vmdkPipeline.SetFilename(img.Filename)
+		return vmdkPipeline.Export(), nil
+	case platform.FORMAT_OVA:
+		vmdkPipeline := manifest.NewVMDK(hostPipeline, baseImage)
+		ovfPipeline := manifest.NewOVF(hostPipeline, vmdkPipeline)
+		tarPipeline := manifest.NewTar(hostPipeline, ovfPipeline, "archive")
+		tarPipeline.Format = osbuild.TarArchiveFormatUstar
+		tarPipeline.SetFilename(img.Filename)
+		extLess := strings.TrimSuffix(img.Filename, filepath.Ext(img.Filename))
+		// The .ovf descriptor needs to be the first file in the archive
+		tarPipeline.Paths = []string{
+			fmt.Sprintf("%s.ovf", extLess),
+			fmt.Sprintf("%s.mf", extLess),
+			fmt.Sprintf("%s.vmdk", extLess),
+		}
+		return tarPipeline.Export(), nil
 	}
 
 	switch img.Compression {

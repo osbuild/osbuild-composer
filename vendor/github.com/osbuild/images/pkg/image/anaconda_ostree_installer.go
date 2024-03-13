@@ -27,8 +27,9 @@ type AnacondaOSTreeInstaller struct {
 	Keyboard *string
 	Timezone *string
 
-	// Create a sudoers drop-in file for wheel group with NOPASSWD option
-	WheelNoPasswd bool
+	// Create a sudoers drop-in file for each user or group to enable the
+	// NOPASSWD option
+	NoPasswd []string
 
 	// Add kickstart options to make the installation fully unattended
 	UnattendedKickstart bool
@@ -128,7 +129,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.Remote = img.Remote
 	isoTreePipeline.Users = img.Users
 	isoTreePipeline.Groups = img.Groups
-	isoTreePipeline.WheelNoPasswd = img.WheelNoPasswd
+	isoTreePipeline.NoPasswd = img.NoPasswd
 	isoTreePipeline.UnattendedKickstart = img.UnattendedKickstart
 	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
 	isoTreePipeline.Language = img.Language
