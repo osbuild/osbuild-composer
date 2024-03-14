@@ -14,12 +14,17 @@ type OVF struct {
 }
 
 // NewOVF creates a new OVF pipeline. imgPipeline is the pipeline producing the vmdk image.
-func NewOVF(buidPipeline Build, imgPipeline *VMDK) *OVF {
+func NewOVF(buildPipeline Build, imgPipeline *VMDK) *OVF {
 	p := &OVF{
-		Base:        NewBase("ovf", buidPipeline),
+		Base:        NewBase("ovf", buildPipeline),
 		imgPipeline: imgPipeline,
 	}
-	buidPipeline.addDependent(p)
+	// See similar logic in qcow2 to run on the host
+	if buildPipeline != nil {
+		buildPipeline.addDependent(p)
+	} else {
+		imgPipeline.Manifest().addPipeline(p)
+	}
 	return p
 }
 

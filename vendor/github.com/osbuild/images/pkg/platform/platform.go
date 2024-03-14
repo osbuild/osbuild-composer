@@ -1,6 +1,8 @@
 package platform
 
 import (
+	"fmt"
+
 	"github.com/osbuild/images/pkg/arch"
 )
 
@@ -19,6 +21,8 @@ const ( // image format enum
 
 func (f ImageFormat) String() string {
 	switch f {
+	case FORMAT_UNSET:
+		return "unset"
 	case FORMAT_RAW:
 		return "raw"
 	case FORMAT_ISO:
@@ -34,7 +38,7 @@ func (f ImageFormat) String() string {
 	case FORMAT_OVA:
 		return "ova"
 	default:
-		panic("invalid image format")
+		panic(fmt.Errorf("unknown image format %d", f))
 	}
 }
 

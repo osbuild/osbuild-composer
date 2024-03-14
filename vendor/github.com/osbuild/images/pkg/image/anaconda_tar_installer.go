@@ -56,8 +56,9 @@ type AnacondaTarInstaller struct {
 	// defaults.
 	ISORootKickstart bool
 
-	// Create a sudoers drop-in file for wheel group with NOPASSWD option
-	WheelNoPasswd bool
+	// Create a sudoers drop-in file for each user or group to enable the
+	// NOPASSWD option
+	NoPasswd []string
 
 	// Add kickstart options to make the installation fully unattended.
 	// Enabling this option also automatically enables the ISORootKickstart
@@ -193,7 +194,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		isoTreePipeline.KSPath = kspath
 	}
 
-	isoTreePipeline.WheelNoPasswd = img.WheelNoPasswd
+	isoTreePipeline.NoPasswd = img.NoPasswd
 	isoTreePipeline.UnattendedKickstart = img.UnattendedKickstart
 	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
 
