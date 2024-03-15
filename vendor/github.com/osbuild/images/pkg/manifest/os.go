@@ -298,6 +298,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 			switch distro {
 			case DISTRO_EL8:
 				packages = append(packages, "python3-pytoml")
+			case DISTRO_EL10:
 			default:
 				packages = append(packages, "python3-toml")
 			}

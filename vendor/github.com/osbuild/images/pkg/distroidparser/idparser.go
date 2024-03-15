@@ -66,5 +66,6 @@ func NewDefaultParser() *Parser {
 		rhel7.ParseID,
 		rhel8.ParseID,
 		rhel9.ParseID,
+		rhel9.ParseIDEl10,
 	)
 }

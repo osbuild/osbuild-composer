@@ -267,7 +267,14 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		return nil, nil, err
 	}
 	mf := manifest.New()
-	mf.Distro = manifest.DISTRO_EL9
+	switch t.arch.distro.releaseVersion {
+	case "9":
+		mf.Distro = manifest.DISTRO_EL9
+	case "10":
+		mf.Distro = manifest.DISTRO_EL10
+	default:
+		return nil, nil, fmt.Errorf("unsupported distro release version %s", t.arch.distro.releaseVersion)
+	}
 	_, err = img.InstantiateManifest(&mf, repos, t.arch.distro.runner, rng)
 	if err != nil {
 		return nil, nil, err
