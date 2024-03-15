@@ -34,6 +34,7 @@ type Distro uint64
 
 const (
 	DISTRO_NULL = iota
+	DISTRO_EL10
 	DISTRO_EL9
 	DISTRO_EL8
 	DISTRO_EL7

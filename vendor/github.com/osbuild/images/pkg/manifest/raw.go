@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"fmt"
+
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -58,6 +60,38 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 	copyOptions, copyDevices, copyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename(), pt)
 	copyInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
 	pipeline.AddStage(osbuild.NewCopyStage(copyOptions, copyInputs, copyDevices, copyMounts))
+
+	bootFiles := p.treePipeline.platform.GetBootFiles()
+	if len(bootFiles) > 0 {
+		// we ignore the bootcopyoptions as they contain a full tree copy instead we make our own, we *do* still want all the other
+		// information such as mountpoints and devices
+		_, bootCopyDevices, bootCopyMounts := osbuild.GenCopyFSTreeOptions(inputName, p.treePipeline.Name(), p.Filename(), pt)
+		bootCopyOptions := &osbuild.CopyStageOptions{}
+		bootCopyInputs := osbuild.NewPipelineTreeInputs(inputName, p.treePipeline.Name())
+
+		// Find the FS root mount name to use as the destination root
+		// for the target when copying the boot files.
+		var fsRootMntName string
+		for _, mnt := range bootCopyMounts {
+			if mnt.Target == "/" {
+				fsRootMntName = mnt.Name
+				break
+			}
+		}
+
+		if fsRootMntName == "" {
+			panic("no mount found for the filesystem root")
+		}
+
+		for _, paths := range bootFiles {
+			bootCopyOptions.Paths = append(bootCopyOptions.Paths, osbuild.CopyStagePath{
+				From: fmt.Sprintf("input://root-tree%s", paths[0]),
+				To:   fmt.Sprintf("mount://%s%s", fsRootMntName, paths[1]),
+			})
+		}
+
+		pipeline.AddStage(osbuild.NewCopyStage(bootCopyOptions, bootCopyInputs, bootCopyDevices, bootCopyMounts))
+	}
 
 	for _, stage := range osbuild.GenImageFinishStages(pt, p.Filename()) {
 		pipeline.AddStage(stage)

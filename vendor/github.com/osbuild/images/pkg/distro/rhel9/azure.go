@@ -30,25 +30,6 @@ var (
 		basePartitionTables: defaultBasePartitionTables,
 	}
 
-	// Azure BYOS image type
-	azureByosImgType = imageType{
-		name:     "vhd",
-		filename: "disk.vhd",
-		mimeType: "application/x-vhd",
-		packageSets: map[string]packageSetFunc{
-			osPkgsKey: azurePackageSet,
-		},
-		defaultImageConfig:  defaultAzureByosImageConfig.InheritFrom(defaultAzureImageConfig),
-		kernelOptions:       defaultAzureKernelOptions,
-		bootable:            true,
-		defaultSize:         4 * common.GibiByte,
-		image:               diskImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"os", "image", "vpc"},
-		exports:             []string{"vpc"},
-		basePartitionTables: defaultBasePartitionTables,
-	}
-
 	// Azure RHUI image type
 	azureRhuiImgType = imageType{
 		name:        "azure-rhui",
@@ -69,6 +50,27 @@ var (
 		basePartitionTables: azureRhuiBasePartitionTables,
 	}
 )
+
+// Azure BYOS image type
+func azureByosImgType(rd distribution) imageType {
+	return imageType{
+		name:     "vhd",
+		filename: "disk.vhd",
+		mimeType: "application/x-vhd",
+		packageSets: map[string]packageSetFunc{
+			osPkgsKey: azurePackageSet,
+		},
+		defaultImageConfig:  defaultAzureByosImageConfig(rd).InheritFrom(defaultAzureImageConfig),
+		kernelOptions:       defaultAzureKernelOptions,
+		bootable:            true,
+		defaultSize:         4 * common.GibiByte,
+		image:               diskImage,
+		buildPipelines:      []string{"build"},
+		payloadPipelines:    []string{"os", "image", "vpc"},
+		exports:             []string{"vpc"},
+		basePartitionTables: defaultBasePartitionTables,
+	}
+}
 
 func azureSapRhuiImgType(rd distribution) imageType {
 	return imageType{
@@ -574,10 +576,18 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 // Diff of the default Image Config compare to the `defaultAzureImageConfig`
 // The configuration for non-RHUI images does not touch the RHSM configuration at all.
 // https://issues.redhat.com/browse/COMPOSER-2157
-var defaultAzureByosImageConfig = &distro.ImageConfig{
-	GPGKeyFiles: []string{
-		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
-	},
+func defaultAzureByosImageConfig(rd distribution) *distro.ImageConfig {
+	ic := &distro.ImageConfig{}
+	// NOTE RHEL 10 content is currently unsigned - remove this when GPG keys get added to the repos
+	if rd.Releasever() == "9" {
+		ic = &distro.ImageConfig{
+			GPGKeyFiles: []string{
+				"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+			},
+		}
+	}
+	return ic
+
 }
 
 // Diff of the default Image Config compare to the `defaultAzureImageConfig`

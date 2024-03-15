@@ -34,7 +34,6 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
 			"@core",
-			"authselect-compat",
 			"chrony",
 			"cloud-init",
 			"cloud-utils-growpart",
@@ -93,6 +92,10 @@ func qcow2CommonPackageSet(t *imageType) rpmmd.PackageSet {
 			"udisks2",
 		},
 	}.Append(distroSpecificPackageSet(t))
+
+	if t.arch.distro.releaseVersion == "9" {
+		ps.Include = append(ps.Include, "authselect-compat")
+	}
 
 	// Ensure to not pull in subscription-manager on non-RHEL distro
 	if t.arch.distro.isRHEL() {

@@ -112,6 +112,7 @@ func NewDefault() *Factory {
 		rhel7.DistroFactory,
 		rhel8.DistroFactory,
 		rhel9.DistroFactory,
+		rhel9.DistroFactoryEl10,
 	)
 }
 

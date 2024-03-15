@@ -37,7 +37,12 @@ func NewTar(buildPipeline Build, inputPipeline Pipeline, pipelinename string) *T
 		inputPipeline: inputPipeline,
 		filename:      "image.tar",
 	}
-	buildPipeline.addDependent(p)
+	// See similar logic in qcow2 to run on the host
+	if buildPipeline != nil {
+		buildPipeline.addDependent(p)
+	} else {
+		inputPipeline.Manifest().addPipeline(p)
+	}
 	return p
 }
 
