@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/runner"
 )
 
@@ -32,41 +31,41 @@ func NewBootcDiskImage(container container.SourceSpec) *BootcDiskImage {
 func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifest,
 	containers []container.SourceSpec,
 	runner runner.Runner,
-	rng *rand.Rand) (*artifact.Artifact, error) {
+	rng *rand.Rand) error {
 
 	buildPipeline := manifest.NewBuildFromContainer(m, runner, containers, &manifest.BuildOptions{ContainerBuildable: true})
 	buildPipeline.Checkpoint()
 
-	// don't support compressing non-raw images
-	imgFormat := img.Platform.GetImageFormat()
-	if imgFormat == platform.FORMAT_UNSET {
-		// treat unset as raw for this check
-		imgFormat = platform.FORMAT_RAW
-	}
-	if imgFormat != platform.FORMAT_RAW && img.Compression != "" {
-		panic(fmt.Sprintf("no compression is allowed with %q format for %q", imgFormat, img.name))
-	}
+	// In the bootc flow, we reuse the host container context for tools;
+	// this is signified by passing nil to the below pipelines.
+	var hostPipeline manifest.Build
 
 	opts := &baseRawOstreeImageOpts{useBootupd: true}
-	baseImage := baseRawOstreeImage(img.OSTreeDiskImage, buildPipeline, opts)
-	switch imgFormat {
-	case platform.FORMAT_QCOW2:
-		// qcow2 runs without a build pipeline directly from "bib"
-		qcow2Pipeline := manifest.NewQCOW2(nil, baseImage)
-		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
-		qcow2Pipeline.SetFilename(img.Filename)
-		return qcow2Pipeline.Export(), nil
-	}
 
-	switch img.Compression {
-	case "xz":
-		compressedImage := manifest.NewXZ(buildPipeline, baseImage)
-		compressedImage.SetFilename(img.Filename)
-		return compressedImage.Export(), nil
-	case "":
-		baseImage.SetFilename(img.Filename)
-		return baseImage.Export(), nil
-	default:
-		panic(fmt.Sprintf("unsupported compression type %q on %q", img.Compression, img.name))
+	fileBasename := img.Filename
+
+	// In BIB, we export multiple images from the same pipeline so we use the
+	// filename as the basename for each export and set the extensions based on
+	// each file format.
+	baseImage := baseRawOstreeImage(img.OSTreeDiskImage, buildPipeline, opts)
+	baseImage.SetFilename(fmt.Sprintf("%s.raw", fileBasename))
+
+	qcow2Pipeline := manifest.NewQCOW2(hostPipeline, baseImage)
+	qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+	qcow2Pipeline.SetFilename(fmt.Sprintf("%s.qcow2", fileBasename))
+
+	vmdkPipeline := manifest.NewVMDK(hostPipeline, baseImage)
+	vmdkPipeline.SetFilename(fmt.Sprintf("%s.vmdk", fileBasename))
+
+	ovfPipeline := manifest.NewOVF(hostPipeline, vmdkPipeline)
+	tarPipeline := manifest.NewTar(hostPipeline, ovfPipeline, "archive")
+	tarPipeline.Format = osbuild.TarArchiveFormatUstar
+	tarPipeline.SetFilename(fmt.Sprintf("%s.tar", fileBasename))
+	// The .ovf descriptor needs to be the first file in the archive
+	tarPipeline.Paths = []string{
+		fmt.Sprintf("%s.ovf", fileBasename),
+		fmt.Sprintf("%s.mf", fileBasename),
+		fmt.Sprintf("%s.vmdk", fileBasename),
 	}
+	return nil
 }

@@ -333,7 +333,7 @@ func imageInstallerImage(workload workload.Workload,
 	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 
 	if instCust := customizations.GetInstaller(); instCust != nil {
-		img.WheelNoPasswd = instCust.WheelSudoNopasswd
+		img.NoPasswd = instCust.SudoNopasswd
 		img.UnattendedKickstart = instCust.Unattended
 	}
 
@@ -449,7 +449,7 @@ func edgeInstallerImage(workload workload.Workload,
 	img.Timezone, _ = customizations.GetTimezoneSettings()
 
 	if instCust := customizations.GetInstaller(); instCust != nil {
-		img.WheelNoPasswd = instCust.WheelSudoNopasswd
+		img.NoPasswd = instCust.SudoNopasswd
 		img.UnattendedKickstart = instCust.Unattended
 	}
 

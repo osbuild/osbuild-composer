@@ -31,7 +31,12 @@ func NewVMDK(buildPipeline Build, imgPipeline FilePipeline) *VMDK {
 		imgPipeline: imgPipeline,
 		filename:    "image.vmdk",
 	}
-	buildPipeline.addDependent(p)
+	// See similar logic in qcow2 to run on the host
+	if buildPipeline != nil {
+		buildPipeline.addDependent(p)
+	} else {
+		imgPipeline.Manifest().addPipeline(p)
+	}
 	return p
 }
 
