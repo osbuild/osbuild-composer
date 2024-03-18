@@ -15,6 +15,62 @@ set -euo pipefail
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
+# modify existing kickstart by prepending and appending commands
+function modksiso {
+    sudo dnf install -y lorax  # for mkksiso
+    isomount=$(mktemp -d)
+    kspath=$(mktemp -d)
+
+    iso="$1"
+    newiso="$2"
+
+    echo "Mounting ${iso} -> ${isomount}"
+    sudo mount -v -o ro "${iso}" "${isomount}"
+
+    cleanup() {
+        sudo umount -v "${isomount}"
+        rmdir -v "${isomount}"
+        rm -rv "${kspath}"
+    }
+
+    trap cleanup RETURN
+
+    ksfiles=("${isomount}"/*.ks)
+    ksfile="${ksfiles[0]}"  # there shouldn't be more than one anyway
+    echo "Found kickstart file ${ksfile}"
+
+    ksbase=$(basename "${ksfile}")
+    newksfile="${kspath}/${ksbase}"
+    oldks=$(cat "${ksfile}")
+    echo "Preparing modified kickstart file"
+    cat > "${newksfile}" << EOFKS
+text --non-interactive
+zerombr
+clearpart --all --initlabel --disklabel=gpt
+autopart --noswap --type=plain
+network --bootproto=dhcp --device=link --activate --onboot=on
+${oldks}
+poweroff
+
+%post --log=/var/log/anaconda/post-install.log --erroronfail
+
+# no sudo password for user admin
+echo -e 'admin\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
+%end
+EOFKS
+
+    echo "Writing new ISO"
+    if nvrGreaterOrEqual "lorax" "34.9.18"; then
+        sudo mkksiso -c "console=ttyS0,115200" --ks "${newksfile}" "${iso}" "${newiso}"
+    else
+        sudo mkksiso -c "console=ttyS0,115200" "${newksfile}" "${iso}" "${newiso}"
+    fi
+
+    echo "==== NEW KICKSTART FILE ===="
+    cat "${newksfile}"
+    echo "============================"
+}
+
 # Start libvirtd and test it.
 greenprint "🚀 Starting libvirt daemon"
 sudo systemctl start libvirtd
@@ -276,7 +332,16 @@ greenprint "📥 Downloading the installer image"
 sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 ISO_FILENAME="${COMPOSE_ID}-installer.iso"
 greenprint "🖥 Modify kickstart file and create new ISO"
-sudo mv "${ISO_FILENAME}" "/var/lib/libvirt/images/${ISO_FILENAME}"
+
+# in nightly pipelines the feature wont be available for a while, so the
+# customizations will have no effect and we need to modify the kickstart file
+# on the ISO
+if [[ "${NIGHTLY:=false}" == "true" ]] && ! nvrGreaterOrEqual "osbuild-composer" "103"; then
+    modksiso "${ISO_FILENAME}" "/var/lib/libvirt/images/${ISO_FILENAME}"
+    sudo rm "${ISO_FILENAME}"
+else
+    sudo mv "${ISO_FILENAME}" "/var/lib/libvirt/images/${ISO_FILENAME}"
+fi
 
 # Clean compose and blueprints.
 greenprint "🧹 Clean up installer blueprint and compose"
