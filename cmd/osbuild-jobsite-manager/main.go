@@ -319,6 +319,13 @@ func StepPopulate() error {
 			errs <- err
 			return
 		}
+
+		err = tw.Close()
+		if err != nil {
+			errs <- err
+			return
+		}
+
 		_, err = file.Seek(0, io.SeekStart)
 		if err != nil {
 			errs <- err
