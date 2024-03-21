@@ -284,7 +284,16 @@ func StepPopulate() error {
 			errs <- err
 			return
 		}
-		defer os.Remove(file.Name())
+		defer func() {
+			err = file.Close()
+			if err != nil {
+				logrus.Warnf("Unable to close temporary store file: %v", err)
+			}
+			err = os.Remove(file.Name())
+			if err != nil {
+				logrus.Warnf("Unable to delete temporary store file: %v", err)
+			}
+		}()
 
 		tw := tar.NewWriter(file)
 		defer tw.Close()
