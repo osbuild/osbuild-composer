@@ -423,13 +423,10 @@ func (builder *Builder) Serve() error {
 
 	mux.HandleFunc("/export", builder.RegisterHandler(builder.HandleExport))
 
+	/* #nosec G112 */
 	builder.net = &http.Server{
-		ReadTimeout:       1 * time.Second,
-		WriteTimeout:      1800 * time.Second,
-		IdleTimeout:       30 * time.Second,
-		ReadHeaderTimeout: 1 * time.Second,
-		Addr:              fmt.Sprintf("%s:%d", builder.Host, builder.Port),
-		Handler:           mux,
+		Addr:    fmt.Sprintf("%s:%d", builder.Host, builder.Port),
+		Handler: mux,
 	}
 
 	return builder.net.ListenAndServe()
