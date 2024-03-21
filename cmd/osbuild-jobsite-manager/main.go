@@ -284,6 +284,8 @@ func StepPopulate() error {
 			errs <- err
 			return
 		}
+		defer os.Remove(file.Name())
+
 		tw := tar.NewWriter(file)
 		defer tw.Close()
 		err = filepath.Walk(argStore, func(filePath string, fi os.FileInfo, err error) error {
