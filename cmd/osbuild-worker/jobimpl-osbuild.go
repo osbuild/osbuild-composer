@@ -84,18 +84,19 @@ type ExecutorConfiguration struct {
 }
 
 type OSBuildJobImpl struct {
-	Store            string
-	Output           string
-	OSBuildExecutor  ExecutorConfiguration
-	KojiServers      map[string]kojiServer
-	GCPConfig        GCPConfiguration
-	AzureConfig      AzureConfiguration
-	OCIConfig        OCIConfiguration
-	AWSCreds         string
-	AWSBucket        string
-	S3Config         S3Configuration
-	ContainersConfig ContainersConfiguration
-	PulpConfig       PulpConfiguration
+	Store                string
+	Output               string
+	OSBuildExecutor      ExecutorConfiguration
+	KojiServers          map[string]kojiServer
+	GCPConfig            GCPConfiguration
+	AzureConfig          AzureConfiguration
+	OCIConfig            OCIConfiguration
+	AWSCreds             string
+	AWSBucket            string
+	S3Config             S3Configuration
+	ContainersConfig     ContainersConfiguration
+	PulpConfig           PulpConfiguration
+	RepositoryMTLSConfig *RepositoryMTLSConfig
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -482,6 +483,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		extraEnv = []string{
 			fmt.Sprintf("REGISTRY_AUTH_FILE=%s", impl.ContainersConfig.AuthFilePath),
 		}
+	}
+
+	if impl.RepositoryMTLSConfig != nil {
+		if impl.RepositoryMTLSConfig.CA != "" {
+			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT=%s", impl.RepositoryMTLSConfig.CA))
+		}
+		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY=%s", impl.RepositoryMTLSConfig.MTLSClientKey))
+		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT=%s", impl.RepositoryMTLSConfig.MTLSClientCert))
 	}
 
 	// Run osbuild and handle two kinds of errors

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -11,8 +13,36 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
+// Used by both depsolve and osbuild jobs
+type RepositoryMTLSConfig struct {
+	BaseURL        *url.URL
+	CA             string
+	MTLSClientKey  string
+	MTLSClientCert string
+}
+
+func (rmc *RepositoryMTLSConfig) CompareBaseURL(baseURLStr string) (bool, error) {
+	baseURL, err := url.Parse(baseURLStr)
+	if err != nil {
+		return false, err
+	}
+
+	if baseURL.Scheme != rmc.BaseURL.Scheme {
+		return false, nil
+	}
+	if baseURL.Host != rmc.BaseURL.Host {
+		return false, nil
+	}
+	if !strings.HasPrefix(baseURL.Path, rmc.BaseURL.Path) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 type DepsolveJobImpl struct {
-	Solver *dnfjson.BaseSolver
+	Solver               *dnfjson.BaseSolver
+	RepositoryMTLSConfig *RepositoryMTLSConfig
 }
 
 // depsolve each package set in the pacakgeSets map.  The repositories defined
@@ -43,6 +73,28 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	}
 
 	var result worker.DepsolveJobResult
+
+	if impl.RepositoryMTLSConfig != nil {
+		for _, pkgsets := range args.PackageSets {
+			for _, pkgset := range pkgsets {
+				for _, repo := range pkgset.Repositories {
+					for _, baseurlstr := range repo.BaseURLs {
+						match, err := impl.RepositoryMTLSConfig.CompareBaseURL(baseurlstr)
+						if err != nil {
+							result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err)
+							return err
+						}
+						if match {
+							repo.SSLCACert = impl.RepositoryMTLSConfig.CA
+							repo.SSLClientKey = impl.RepositoryMTLSConfig.MTLSClientKey
+							repo.SSLClientCert = impl.RepositoryMTLSConfig.MTLSClientCert
+						}
+					}
+				}
+			}
+		}
+	}
+
 	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
 		switch e := err.(type) {
