@@ -30,6 +30,7 @@ type AnacondaLiveInstaller struct {
 	OSName       string
 	OSVersion    string
 	Release      string
+	Preview      bool
 
 	Filename string
 
@@ -57,6 +58,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 		"kernel",
 		img.Product,
 		img.OSVersion,
+		img.Preview,
 	)
 
 	livePipeline.ExtraPackages = img.ExtraBasePackages.Include

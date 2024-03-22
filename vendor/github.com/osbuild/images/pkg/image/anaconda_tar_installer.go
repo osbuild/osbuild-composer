@@ -74,6 +74,7 @@ type AnacondaTarInstaller struct {
 	OSName       string
 	OSVersion    string
 	Release      string
+	Preview      bool
 
 	Filename string
 
@@ -110,6 +111,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		"kernel",
 		img.Product,
 		img.OSVersion,
+		img.Preview,
 	)
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
