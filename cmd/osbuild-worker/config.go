@@ -78,6 +78,13 @@ type executorConfig struct {
 	CloudWatchGroup string `toml:"cloudwatch_group"`
 }
 
+type repositoryMTLSConfig struct {
+	BaseURL        string `toml:"baseurl"`
+	CA             string `toml:"ca"`
+	MTLSClientKey  string `toml:"mtls_client_key"`
+	MTLSClientCert string `toml:"mtls_client_cert"`
+}
+
 type workerConfig struct {
 	Composer       *composerConfig             `toml:"composer"`
 	Koji           map[string]kojiServerConfig `toml:"koji"`
@@ -93,7 +100,8 @@ type workerConfig struct {
 	BasePath string `toml:"base_path"`
 	DNFJson  string `toml:"dnf-json"`
 	// default value: &{ Type: host }
-	OSBuildExecutor *executorConfig `toml:"osbuild_executor"`
+	OSBuildExecutor      *executorConfig       `toml:"osbuild_executor"`
+	RepositoryMTLSConfig *repositoryMTLSConfig `toml:"repository_mtls"`
 }
 
 func parseConfig(file string) (*workerConfig, error) {

@@ -43,6 +43,7 @@ const (
 	ErrorRemoteFileResolution ClientErrorCode = 36
 	ErrorJobPanicked          ClientErrorCode = 37
 	ErrorGeneratingSignedURL  ClientErrorCode = 38
+	ErrorInvalidRepositoryURL ClientErrorCode = 39
 )
 
 type ClientErrorCode int
