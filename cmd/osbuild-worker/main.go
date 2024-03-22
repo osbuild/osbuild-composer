@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -433,6 +434,20 @@ func main() {
 		pulpAddress = config.Pulp.ServerURL
 	}
 
+	var repositoryMTLSConfig *RepositoryMTLSConfig
+	if config.RepositoryMTLSConfig != nil {
+		baseURL, err := url.Parse(config.RepositoryMTLSConfig.BaseURL)
+		if err != nil {
+			logrus.Fatalf("Repository MTL baseurl not valid: %v", err)
+		}
+		repositoryMTLSConfig = &RepositoryMTLSConfig{
+			BaseURL:        baseURL,
+			CA:             config.RepositoryMTLSConfig.CA,
+			MTLSClientKey:  config.RepositoryMTLSConfig.MTLSClientKey,
+			MTLSClientCert: config.RepositoryMTLSConfig.MTLSClientCert,
+		}
+	}
+
 	// depsolve jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
 	solver := dnfjson.NewBaseSolver(rpmmd_cache)
@@ -443,7 +458,8 @@ func main() {
 	go func() {
 		jobImpls := map[string]JobImplementation{
 			worker.JobTypeDepsolve: &DepsolveJobImpl{
-				Solver: solver,
+				Solver:               solver,
+				RepositoryMTLSConfig: repositoryMTLSConfig,
 			},
 		}
 		acceptedJobTypes := []string{}
@@ -504,6 +520,7 @@ func main() {
 				CredsFilePath: pulpCredsFilePath,
 				ServerAddress: pulpAddress,
 			},
+			RepositoryMTLSConfig: repositoryMTLSConfig,
 		},
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
 			KojiServers: kojiServers,
