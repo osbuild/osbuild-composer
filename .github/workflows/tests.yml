@@ -215,6 +215,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
+
     - name: Run ShellCheck
       uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
       with:
@@ -223,6 +224,20 @@ jobs:
         # don't check /etc/os-release sourcing, allow useless cats to live inside our codebase, and
         # allow seemingly unreachable commands
         SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317
+
+    - name: Do not doube trap signals inside test scripts
+      run: |
+        FILES_WITH_DOUBLE_TRAP=$(grep trap test/cases/* -R | cut -f1 -d: | sort | uniq -c | grep -v 1 || echo -n)
+
+        echo "INFO: ----- files with possible double calls to 'trap' -----"
+        echo "$FILES_WITH_DOUBLE_TRAP"
+        echo "---------- END ----------"
+
+        if [ -n "$FILES_WITH_DOUBLE_TRAP" ]; then
+            echo "FAIL: Do not double 'trap' signals"
+            echo "INFO: because this may lead to cleanup() function not being executed"
+            exit 1
+        fi
 
   rpmlint:
     name: "📦 RPMlint"

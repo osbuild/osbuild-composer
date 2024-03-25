@@ -15,25 +15,27 @@ set -euo pipefail
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
+isomount=$(mktemp -d)
+kspath=$(mktemp -d)
+cleanup() {
+    # kill dangling journalctl processes to prevent GitLab CI from hanging
+    sudo pkill journalctl || echo "Nothing killed"
+
+    sudo umount -v "${isomount}" || echo
+    rmdir -v "${isomount}"
+    rm -rv "${kspath}"
+}
+trap cleanup EXIT
+
 # modify existing kickstart by prepending and appending commands
 function modksiso {
     sudo dnf install -y lorax  # for mkksiso
-    isomount=$(mktemp -d)
-    kspath=$(mktemp -d)
 
     iso="$1"
     newiso="$2"
 
     echo "Mounting ${iso} -> ${isomount}"
     sudo mount -v -o ro "${iso}" "${isomount}"
-
-    cleanup() {
-        sudo umount -v "${isomount}"
-        rmdir -v "${isomount}"
-        rm -rv "${kspath}"
-    }
-
-    trap cleanup RETURN
 
     ksfiles=("${isomount}"/*.ks)
     ksfile="${ksfiles[0]}"  # there shouldn't be more than one anyway
@@ -189,8 +191,6 @@ build_image() {
     WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
     sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
     WORKER_JOURNAL_PID=$!
-    # Stop watching the worker journal when exiting.
-    trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
     # Start the compose.
     greenprint "🚀 Starting compose"
@@ -223,9 +223,8 @@ build_image() {
         exit 1
     fi
 
-    # Kill the journal monitor immediately and remove the trap
+    # Kill the journal monitor
     sudo pkill -P ${WORKER_JOURNAL_PID}
-    trap - EXIT
 }
 
 # Wait for the ssh server up to be.

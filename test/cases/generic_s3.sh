@@ -22,9 +22,14 @@ else
 fi
 
 TEMPDIR=$(mktemp -d)
+# note: moved here to avoid undefined variable in cleanup()
+MINIO_CONTAINER_NAME="minio-server"
 function cleanup() {
     echo "== Script execution stopped or finished - Cleaning up =="
     sudo rm -rf "$TEMPDIR"
+
+    # Kill the MinIO server once we're done
+    ${CONTAINER_RUNTIME} kill ${MINIO_CONTAINER_NAME}
 }
 trap cleanup EXIT
 
@@ -60,7 +65,6 @@ fi
 mkdir "${MINIO_CONFIG_DIR}"
 $MC_CMD --version
 
-MINIO_CONTAINER_NAME="minio-server"
 MINIO_ENDPOINT="http://localhost:9000"
 MINIO_ROOT_USER="X29DU5Q6C5NKDQ8PLGVT"
 MINIO_ROOT_PASSWORD=$(date +%s | sha256sum | base64 | head -c 32 ; echo)
@@ -88,8 +92,6 @@ ${CONTAINER_RUNTIME} run --rm -d \
     -e MINIO_ROOT_USER="${MINIO_ROOT_USER}" \
     -e MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD}" \
     ${CONTAINER_MINIO_SERVER} server /data
-    # Kill the server once we're done
-    trap '${CONTAINER_RUNTIME} kill ${MINIO_CONTAINER_NAME}' EXIT
 
 # Configure the local server (retry until the service is up)
 MINIO_CONFIGURE_RETRY=0
