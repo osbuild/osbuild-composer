@@ -294,6 +294,8 @@ func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
 		uploadOptions = PulpOSTreeUploadStatus{
 			RepoUrl: pulpOSTreeOptions.RepoURL,
 		}
+	case target.TargetNameWorkerServer:
+		uploadType = UploadTypesLocal
 	default:
 		return nil, fmt.Errorf("unknown upload target: %s", t.Name)
 	}
