@@ -630,6 +630,7 @@ components:
         - container
         - oci.objectstorage
         - pulp.ostree
+        - local
     AWSEC2UploadStatus:
       type: object
       required:
