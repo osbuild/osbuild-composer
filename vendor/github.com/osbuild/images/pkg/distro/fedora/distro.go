@@ -377,6 +377,10 @@ var (
 			// NOTE: temporary workaround for a bug in initial-setup that
 			// requires a kickstart file in the root directory.
 			Files: []*fsnode.File{initialSetupKickstart()},
+			Grub2Config: &osbuild.GRUB2Config{
+				// Overwrite the default Grub2 timeout value.
+				Timeout: 5,
+			},
 		},
 		rpmOstree:           false,
 		kernelOptions:       defaultKernelOptions,
