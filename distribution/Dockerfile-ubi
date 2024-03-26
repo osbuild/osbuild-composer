@@ -13,11 +13,18 @@ ARG COMMIT
 ENV LDFLAGS="${COMMIT:+-X \'github.com/osbuild/osbuild-composer/internal/common.GitRev=${COMMIT}\'}"
 ENV LDFLAGS="${LDFLAGS:+-ldflags=\"${LDFLAGS}\"}"
 ENV GOFLAGS="-mod=vendor -tags=exclude_graphdriver_btrfs"
+
+ARG GOPROXY=https://proxy.golang.org,direct
+RUN go env -w GOPROXY=$GOPROXY
+
+ARG GOMODARGS=""
+ENV GOMODARGS=$GOMODARGS
+
 # if run without "sh -c", podman for some reason executes the command in a way,
 # which results in the following error:
 # [1/3] STEP 12/12: RUN go install ${LDFLAGS} ./cmd/osbuild-composer/
 # invalid value "\"-X" for flag -ldflags: missing =<value> in <pattern>=<value>
-RUN /usr/bin/sh -c "go install ${LDFLAGS} ./cmd/osbuild-composer/"
+RUN /usr/bin/sh -c "go install ${LDFLAGS} ${GOMODARGS} ./cmd/osbuild-composer/"
 
 FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder2
 RUN go install github.com/jackc/tern@latest
