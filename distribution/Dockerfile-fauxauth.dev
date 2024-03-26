@@ -1,14 +1,18 @@
-FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
-# ubi9/go-toolset defaults to uid 1001. Let's copy the files with this UID as well.
-# Otherwise, VCS stamping will fail because git >= 2.35.2 refuses to work in
-# a repository owned by a different user.
-COPY --chown=1001 . .
+FROM registry.fedoraproject.org/fedora:latest AS builder
+ENV GOBIN=/opt/app-root/src/go/bin
+
+RUN dnf install -y gpgme-devel libassuan-devel device-mapper-devel golang
+
+WORKDIR /osbuild-composer
+COPY . /osbuild-composer
 ENV GOFLAGS=-mod=vendor
 
 ARG GOPROXY=https://proxy.golang.org,direct
 RUN go env -w GOPROXY=$GOPROXY
 
-RUN go install ./cmd/osbuild-mock-openid-provider/
+ARG GOMODARGS=""
+
+RUN go install $GOMODARGS ./cmd/osbuild-mock-openid-provider/
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 RUN microdnf install -y python3

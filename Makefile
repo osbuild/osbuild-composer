@@ -182,6 +182,10 @@ clean: db-tests-prune
 	rm -rf container_composer_golangci_built.info
 	rm -rf $(BUILDDIR)/$(PROCESSED_TEMPLATE_DIR)
 	rm -rf $(GOLANGCI_LINT_CACHE_DIR)
+	rm -rf $(BUILDDIR)/build/
+	rm -f $(BUILDDIR)/go.local.*
+	rm -f $(BUILDDIR)/container_worker_built.info
+	rm -f $(BUILDDIR)/container_composer_built.info
 
 .PHONY: push-check
 push-check: lint build unit-tests srpm man
@@ -247,6 +251,9 @@ worker-key-pair: ca
 	rm /etc/osbuild-composer/worker-csr.pem
 
 .PHONY: unit-tests
+.ONESHELL:
+SHELL := /bin/bash
+.SHELLFLAGS := -ec -o pipefail
 unit-tests:
 	go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$$(go list ./... | tr "\n" ",") ./...
 	# go modules with go.mod in subdirs are not tested automatically
@@ -389,3 +396,95 @@ osbuild-service-maintenance-dry-run-aws: build-maintenance
 	env DRY_RUN=true \
 	    ENABLE_AWS_MAINTENANCE=true \
 	    $(BUILDDIR)/bin/osbuild-service-maintenance
+
+CONTAINER_EXECUTABLE ?= podman
+
+CONTAINER_IMAGE_WORKER ?= osbuild-worker_dev
+CONTAINERFILE_WORKER := distribution/Dockerfile-worker.dev
+
+CONTAINER_IMAGE_COMPOSER ?= osbuild-composer_dev
+CONTAINERFILE_COMPOSER := distribution/Dockerfile-composer.dev
+
+GOPROXY ?= https://proxy.golang.org,direct
+
+# source where the other repos are locally
+# has to end with a trailing slash
+SRC_DEPS_EXTERNAL_CHECKOUT_DIR ?= ../
+
+# names of folder that have to be git-cloned additionally to be able
+# to build all code
+SRC_DEPS_EXTERNAL_NAMES := images pulp-client
+SRC_DEPS_EXTERNAL_DIRS := $(addprefix $(SRC_DEPS_EXTERNAL_CHECKOUT_DIR),$(SRC_DEPS_EXTERNAL_NAMES))
+
+$(SRC_DEPS_EXTERNAL_DIRS):
+	@for DIR in $@; do if ! [ -d $$DIR ]; then echo "Please checkout $$DIR so it is available at $$DIR"; exit 1; fi; done
+
+
+SRC_DEPS_DIRS := internal cmd pkg repositories
+
+# All files to check for rebuild!
+SRC_DEPS := $(shell find $(SRC_DEPS_DIRS) -name *.go -or -name *.json)
+SRC_DEPS_EXTERNAL := $(shell find $(SRC_DEPS_EXTERNAL_DIRS) -name *.go)
+
+# dependencies to rebuild worker
+WORKER_SRC_DEPS := $(SRC_DEPS)
+# dependencies to rebuild composer
+COMPOSER_SRC_DEPS := $(SRC_DEPS)
+
+GOMODARGS ?= -modfile=go.local.mod
+# gcflags "-N -l" for golang to allow debugging
+GCFLAGS ?= -gcflags=all=-N -gcflags=all=-l
+
+CONTAINER_DEPS_COMPOSER := ./containers/osbuild-composer/entrypoint.py
+CONTAINER_DEPS_WORKER := ./distribution/osbuild-worker-entrypoint.sh
+
+USE_BTRFS ?= yes
+
+
+# source where the other repos are locally
+# has to end with a trailing slash
+SRC_DEPS_EXTERNAL_CHECKOUT_DIR ?= ../
+
+COMMON_SRC_DEPS_NAMES := osbuild
+COMMON_SRC_DEPS_ORIGIN := $(addprefix $(SRC_DEPS_EXTERNAL_CHECKOUT_DIR),$(COMMON_SRC_DEPS_NAMES))
+
+OSBUILD_CONTAINER_INDICATOR := $(SRC_DEPS_EXTERNAL_CHECKOUT_DIR)/osbuild/container_built.info
+
+MAKE_SUB_CALL := make CONTAINER_EXECUTABLE="$(CONTAINER_EXECUTABLE)"
+
+$(COMMON_SRC_DEPS_ORIGIN):
+	@for DIR in $@; do if ! [ -d $$DIR ]; then echo "Please checkout $$DIR so it is available at $$DIR"; exit 1; fi; done
+
+# we'll trigger the sub-make for osbuild with "osbuild-container"
+# and use OSBUILD_CONTAINER_INDICATOR to check if we need to rebuild our containers here
+.PHONY: osbuild-container.dev
+$(OSBUILD_CONTAINER_INDICATOR) osbuild-container.dev:
+	$(MAKE_SUB_CALL) -C $(SRC_DEPS_EXTERNAL_CHECKOUT_DIR)osbuild container.dev
+
+go.local.mod go.local.sum: $(SRC_DEPS_EXTERNAL_DIRS) go.mod $(SRC_DEPS_EXTERNAL) $(WORKER_SRC_DEPS) $(COMPOSER_SRC_DEPS) Makefile
+	cp go.mod go.local.mod
+	cp go.sum go.local.sum
+
+	go mod edit $(GOMODARGS) -replace github.com/osbuild/images=$(SRC_DEPS_EXTERNAL_CHECKOUT_DIR)images
+	go mod edit $(GOMODARGS) -replace github.com/osbuild/pulp-client=$(SRC_DEPS_EXTERNAL_CHECKOUT_DIR)pulp-client
+	go mod edit $(GOMODARGS) -replace github.com/osbuild/osbuild-composer/pkg/splunk_logger=./pkg/splunk_logger
+	env GOPROXY=$(GOPROXY) go mod tidy $(GOMODARGS)
+	env GOPROXY=$(GOPROXY) go mod vendor $(GOMODARGS)
+
+container_worker_built.info: go.local.mod $(WORKER_SRC_DEPS) $(CONTAINER_WORKER) $(CONTAINER_DEPS_WORKER) $(OSBUILD_CONTAINER_INDICATOR)
+	$(CONTAINER_EXECUTABLE) build -t $(CONTAINER_IMAGE_WORKER) -f $(CONTAINERFILE_WORKER) --build-arg GOMODARGS="$(GOMODARGS)"  --build-arg GCFLAGS="$(GCFLAGS)" --build-arg USE_BTRFS=$(USE_BTRFS) .
+	echo "Worker last built on" > $@
+	date >> $@
+
+container_composer_built.info: go.local.mod $(COMPOSER_SRC_DEPS) $(CONTAINERFILE_COMPOSER) $(CONTAINER_DEPS_COMPOSER) $(OSBUILD_CONTAINER_INDICATOR)
+	$(CONTAINER_EXECUTABLE) build -t $(CONTAINER_IMAGE_COMPOSER) -f $(CONTAINERFILE_COMPOSER) --build-arg GOMODARGS="$(GOMODARGS)" --build-arg GCFLAGS="$(GCFLAGS)" .
+	echo "Composer last built on" > $@
+	date >> $@
+
+# build a container with a worker from full source
+.PHONY: container_worker.dev
+container_worker.dev: osbuild-container.dev container_worker_built.info
+
+# build a container with the composer from full source
+.PHONY: container_composer.dev
+container_composer.dev: osbuild-container.dev container_composer_built.info

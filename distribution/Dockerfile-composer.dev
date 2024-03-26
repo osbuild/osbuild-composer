@@ -1,0 +1,40 @@
+FROM registry.fedoraproject.org/fedora:latest AS builder
+ENV GOBIN=/opt/app-root/src/go/bin
+
+RUN dnf install -y gpgme-devel libassuan-devel device-mapper-devel golang
+
+WORKDIR /osbuild-composer
+COPY . /osbuild-composer
+ENV GOFLAGS="-mod=vendor -tags=exclude_graphdriver_btrfs"
+
+ARG GOPROXY=https://proxy.golang.org,direct
+RUN go env -w GOPROXY=$GOPROXY
+
+ARG GOMODARGS=""
+ARG GCFLAGS=""
+
+RUN go install $GOMODARGS $GCFLAGS ./cmd/osbuild-composer/
+
+FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder2
+RUN go install github.com/jackc/tern@latest
+
+FROM osbuild_dev
+
+RUN dnf install -y python3 python3-dnf procps-ng gpgme libassuan device-mapper-libs delve
+RUN mkdir -p "/usr/libexec/osbuild-composer"
+RUN mkdir -p "/etc/osbuild-composer/"
+RUN mkdir -p "/run/osbuild-composer/"
+RUN mkdir -p "/var/cache/osbuild-composer/"
+RUN mkdir -p "/var/lib/osbuild-composer/"
+RUN mkdir -p "/usr/share/osbuild-composer/"
+RUN mkdir -p "/opt/migrate/"
+COPY --from=builder /opt/app-root/src/go/bin/osbuild-composer /usr/libexec/osbuild-composer/
+COPY ./containers/osbuild-composer/entrypoint.py /opt/entrypoint.py
+
+COPY ./pkg/jobqueue/dbjobqueue/schemas /opt/migrate/schemas
+COPY --from=builder2 /opt/app-root/src/go/bin/tern /opt/migrate/
+
+COPY  ./repositories /usr/share/osbuild-composer/repositories
+
+EXPOSE 8008 8080 8700
+ENTRYPOINT ["python3", "/opt/entrypoint.py", "--remote-worker-api", "--composer-api", "--prometheus", "--shutdown-wait-period", "15"]
