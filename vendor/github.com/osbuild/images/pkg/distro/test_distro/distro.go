@@ -82,6 +82,14 @@ func (d *TestDistro) Releasever() string {
 	return d.releasever
 }
 
+func (d *TestDistro) OsVersion() string {
+	return d.releasever
+}
+
+func (d *TestDistro) Product() string {
+	return d.name
+}
+
 func (d *TestDistro) ModulePlatformID() string {
 	return d.modulePlatformID
 }
@@ -180,6 +188,10 @@ func (t *TestImageType) OSTreeRef() string {
 		return t.architecture.distribution.OSTreeRef()
 	}
 	return ""
+}
+
+func (t *TestImageType) ISOLabel() (string, error) {
+	return "", nil
 }
 
 func (t *TestImageType) Size(size uint64) uint64 {

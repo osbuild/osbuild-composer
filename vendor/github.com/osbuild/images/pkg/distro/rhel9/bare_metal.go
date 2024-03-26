@@ -39,6 +39,7 @@ var (
 		bootISO:          true,
 		bootable:         true,
 		image:            imageInstallerImage,
+		isoLabel:         distroISOLabelFunc,
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},

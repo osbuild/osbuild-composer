@@ -20,6 +20,7 @@ type UsersStageOptionsUser struct {
 	Shell       *string  `json:"shell,omitempty"`
 	Password    *string  `json:"password,omitempty"`
 	Key         *string  `json:"key,omitempty"`
+	ExpireDate  *int     `json:"expiredate,omitempty"`
 }
 
 func NewUsersStage(options *UsersStageOptions) *Stage {
@@ -60,6 +61,7 @@ func NewUsersStageOptions(userCustomizations []users.User, omitKey bool) (*Users
 			Shell:       uc.Shell,
 			Password:    uc.Password,
 			Key:         nil,
+			ExpireDate:  uc.ExpireDate,
 		}
 		if !omitKey {
 			user.Key = uc.Key

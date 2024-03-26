@@ -342,9 +342,13 @@ func imageInstallerImage(workload workload.Workload,
 	// put the kickstart file in the root of the iso
 	img.ISORootKickstart = true
 
-	d := t.arch.distro
+	var err error
+	img.ISOLabel, err = t.ISOLabel()
+	if err != nil {
+		return nil, err
+	}
 
-	img.ISOLabelTmpl = d.isolabelTmpl
+	d := t.arch.distro
 	img.Product = d.product
 	img.OSName = "redhat"
 	img.OSVersion = d.osVersion
@@ -461,7 +465,11 @@ func edgeInstallerImage(workload workload.Workload,
 		img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 	}
 
-	img.ISOLabelTmpl = d.isolabelTmpl
+	img.ISOLabel, err = t.ISOLabel()
+	if err != nil {
+		return nil, err
+	}
+
 	img.Product = d.product
 	img.Variant = "edge"
 	img.OSName = "rhel"
@@ -585,8 +593,12 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 		}
 	}
 
+	img.ISOLabel, err = t.ISOLabel()
+	if err != nil {
+		return nil, err
+	}
+
 	d := t.arch.distro
-	img.ISOLabelTmpl = d.isolabelTmpl
 	img.Product = d.product
 	img.Variant = "edge"
 	img.OSName = "redhat"
