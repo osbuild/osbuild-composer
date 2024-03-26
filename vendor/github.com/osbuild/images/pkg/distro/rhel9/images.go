@@ -490,6 +490,10 @@ func edgeRawImage(workload workload.Workload,
 	img.Filename = t.Filename()
 	img.Compression = t.compression
 
+	for _, fs := range customizations.GetFilesystems() {
+		img.CustomFilesystems = append(img.CustomFilesystems, fs.Mountpoint)
+	}
+
 	return img, nil
 }
 
@@ -545,6 +549,10 @@ func edgeSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.PartitionTable = pt
 
 	rawImg.Filename = t.Filename()
+
+	for _, fs := range customizations.GetFilesystems() {
+		rawImg.CustomFilesystems = append(rawImg.CustomFilesystems, fs.Mountpoint)
+	}
 
 	// 92+ only
 	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {

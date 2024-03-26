@@ -167,12 +167,7 @@ func (t *imageType) getPartitionTable(
 	partitioningMode := options.PartitioningMode
 	if t.rpmOstree {
 		// Edge supports only LVM, force it.
-		// Raw is not supported, return an error if it is requested
 		// TODO Need a central location for logic like this
-		if partitioningMode == disk.RawPartitioningMode {
-			return nil, fmt.Errorf("partitioning mode raw not supported for %s on %s", t.Name(), t.arch.Name())
-		}
-
 		partitioningMode = disk.LVMPartitioningMode
 	}
 
@@ -320,7 +315,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		}
 
 		if t.name == "edge-simplified-installer" {
-			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group", "FIPS"}
+			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group", "FIPS", "Filesystem"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 			}
@@ -370,8 +365,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		if options.OSTree == nil || options.OSTree.URL == "" {
 			return warnings, fmt.Errorf("%q images require specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
-
-		allowed := []string{"Ignition", "Kernel", "User", "Group", "FIPS"}
+		allowed := []string{"Ignition", "Kernel", "User", "Group", "FIPS", "Filesystem"}
 		if err := customizations.CheckAllowed(allowed...); err != nil {
 			return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 		}
@@ -398,9 +392,14 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 
 	mountpoints := customizations.GetFilesystems()
-
-	if mountpoints != nil && t.rpmOstree {
-		return warnings, fmt.Errorf("Custom mountpoints are not supported for ostree types")
+	if mountpoints != nil && t.rpmOstree && (t.name == "edge-container" || t.name == "edge-commit") {
+		return warnings, fmt.Errorf("Custom mountpoints are not supported for edge-container and edge-commit")
+	} else if mountpoints != nil && t.rpmOstree && !(t.name == "edge-container" || t.name == "edge-commit") {
+		//customization allowed for edge-raw-image,edge-ami,edge-vsphere,edge-simplified-installer
+		err := blueprint.CheckMountpointsPolicy(mountpoints, policies.OstreeMountpointPolicies)
+		if err != nil {
+			return warnings, err
+		}
 	}
 
 	err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)

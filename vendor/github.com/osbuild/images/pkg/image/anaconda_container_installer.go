@@ -33,6 +33,7 @@ type AnacondaContainerInstaller struct {
 	Ref          string
 	OSVersion    string
 	Release      string
+	Preview      bool
 
 	ContainerSource container.SourceSpec
 
@@ -67,6 +68,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 		"kernel",
 		img.Product,
 		img.OSVersion,
+		img.Preview,
 	)
 
 	// This is only built with ELN for now

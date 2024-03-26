@@ -334,6 +334,7 @@ func liveInstallerImage(workload workload.Workload,
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
 	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
+	img.Preview = common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_BRANCHED)
 
 	img.Filename = t.Filename()
 
@@ -390,6 +391,7 @@ func imageInstallerImage(workload workload.Workload,
 
 	// We don't know the variant of the OS pipeline being installed
 	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
+	img.Preview = common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_BRANCHED)
 
 	img.Filename = t.Filename()
 
@@ -554,6 +556,7 @@ func iotInstallerImage(workload workload.Workload,
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
 	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
+	img.Preview = common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_BRANCHED)
 
 	img.Filename = t.Filename()
 

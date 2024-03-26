@@ -57,6 +57,8 @@ type OSTreeDiskImage struct {
 	// Container buildable tweaks the buildroot to be container friendly,
 	// i.e. to not rely on an installed osbuild-selinux
 	ContainerBuildable bool
+
+	CustomFilesystems []string
 }
 
 func NewOSTreeDiskImageFromCommit(commit ostree.SourceSpec) *OSTreeDiskImage {
@@ -107,6 +109,7 @@ func baseRawOstreeImage(img *OSTreeDiskImage, buildPipeline manifest.Build, opts
 	osPipeline.IgnitionPlatform = img.IgnitionPlatform
 	osPipeline.LockRoot = img.LockRoot
 	osPipeline.UseBootupd = opts.useBootupd
+	osPipeline.CustomFileSystems = img.CustomFilesystems
 
 	// other image types (e.g. live) pass the workload to the pipeline.
 	if img.Workload != nil {

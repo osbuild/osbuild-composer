@@ -43,6 +43,7 @@ type AnacondaOSTreeInstaller struct {
 	OSName       string
 	OSVersion    string
 	Release      string
+	Preview      bool
 	Remote       string
 
 	Commit ostree.SourceSpec
@@ -77,6 +78,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		"kernel",
 		img.Product,
 		img.OSVersion,
+		img.Preview,
 	)
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
