@@ -196,7 +196,7 @@ func (s *Solver) SetProxy(proxy string) error {
 func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, []rpmmd.RepoConfig, error) {
 	req, rhsmMap, err := s.makeDepsolveRequest(pkgSets)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("makeDepsolveRequest failed: %w", err)
 	}
 
 	// get non-exclusive read lock
@@ -205,7 +205,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, []rp
 
 	output, err := run(s.dnfJsonCmd, req)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("run (%s) failed: %w", s.dnfJsonCmd, err)
 	}
 	// touch repos to now
 	now := time.Now().Local()
@@ -219,7 +219,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, []rp
 	dec := json.NewDecoder(bytes.NewReader(output))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&result); err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("Decoding result failed: %w", err)
 	}
 
 	packages, repos := result.toRPMMD(rhsmMap)
@@ -757,7 +757,7 @@ func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
 	cmd := exec.Command(ex, args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("calling %s failed: %w", ex, err)
 	}
 
 	cmd.Stderr = os.Stderr
@@ -766,12 +766,12 @@ func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
 
 	err = cmd.Start()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("starting %s failed: %w", ex, err)
 	}
 
 	err = json.NewEncoder(stdin).Encode(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("encoding request for %s failed: %w", ex, err)
 	}
 	stdin.Close()
 

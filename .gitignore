@@ -11,3 +11,7 @@ __pycache__
 /tools/appsre-ansible/inventory
 
 /docs/osbuild-composer.7
+go.local.mod
+go.local.sum
+container_worker_built.info
+container_composer_built.info

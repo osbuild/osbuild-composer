@@ -907,10 +907,10 @@ github.com/osbuild/images/pkg/rhsm/facts
 github.com/osbuild/images/pkg/rpmmd
 github.com/osbuild/images/pkg/runner
 github.com/osbuild/images/pkg/subscription
-# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
-## explicit; go 1.19
+# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1 => ./pkg/splunk_logger
+## explicit; go 1.20
 github.com/osbuild/osbuild-composer/pkg/splunk_logger
-# github.com/osbuild/pulp-client v0.1.0
+# github.com/osbuild/pulp-client v0.1.0 => ../pulp-client
 ## explicit; go 1.19
 github.com/osbuild/pulp-client/pulpclient
 # github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f
@@ -1411,3 +1411,6 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# github.com/osbuild/images => ../images
+# github.com/osbuild/pulp-client => ../pulp-client
+# github.com/osbuild/osbuild-composer/pkg/splunk_logger => ./pkg/splunk_logger
