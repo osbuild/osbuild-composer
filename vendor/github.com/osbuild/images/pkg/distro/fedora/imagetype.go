@@ -25,6 +25,8 @@ type imageFunc func(workload workload.Workload, t *imageType, bp *blueprint.Blue
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
+type isoLabelFunc func(t *imageType) string
+
 type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
@@ -43,6 +45,7 @@ type imageType struct {
 	payloadPipelines   []string
 	exports            []string
 	image              imageFunc
+	isoLabel           isoLabelFunc
 
 	// bootISO: installable ISO
 	bootISO bool
@@ -77,6 +80,18 @@ func (t *imageType) OSTreeRef() string {
 		return fmt.Sprintf(d.ostreeRefTmpl, t.arch.Name())
 	}
 	return ""
+}
+
+func (t *imageType) ISOLabel() (string, error) {
+	if !t.bootISO {
+		return "", fmt.Errorf("image type %q is not an ISO", t.name)
+	}
+
+	if t.isoLabel != nil {
+		return t.isoLabel(t), nil
+	}
+
+	return "", nil
 }
 
 func (t *imageType) Size(size uint64) uint64 {

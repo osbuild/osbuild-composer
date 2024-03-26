@@ -67,13 +67,13 @@ type AnacondaTarInstaller struct {
 
 	SquashfsCompression string
 
-	ISOLabel     string
-	ISOLabelTmpl string
-	Product      string
-	Variant      string
-	OSName       string
-	OSVersion    string
-	Release      string
+	ISOLabel  string
+	Product   string
+	Variant   string
+	OSName    string
+	OSVersion string
+	Release   string
+	Preview   bool
 
 	Filename string
 
@@ -110,6 +110,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		"kernel",
 		img.Product,
 		img.OSVersion,
+		img.Preview,
 	)
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
@@ -138,27 +139,18 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	anacondaPipeline.Checkpoint()
 
-	var isoLabel string
-
-	if len(img.ISOLabel) > 0 {
-		isoLabel = img.ISOLabel
-	} else {
-		// TODO: replace isoLabelTmpl with more high-level properties
-		isoLabel = fmt.Sprintf(img.ISOLabelTmpl, img.Platform.GetArch())
-	}
-
 	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
 	rootfsImagePipeline.Size = 5 * common.GibiByte
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = isoLabel
+	bootTreePipeline.ISOLabel = img.ISOLabel
 
 	kspath := osbuild.KickstartPathOSBuild
-	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", isoLabel)}
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOLabel)}
 	if img.ISORootKickstart {
-		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isoLabel, kspath))
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOLabel, kspath))
 	}
 	if img.OSCustomizations.FIPS {
 		kernelOpts = append(kernelOpts, "fips=1")
@@ -206,7 +198,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
-	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, isoLabel)
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)
 	isoPipeline.ISOLinux = isoLinuxEnabled
 

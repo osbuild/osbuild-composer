@@ -190,7 +190,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 500 * common.MebiByte,
+				Size: 1 * common.GibiByte,
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -237,7 +237,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 500 * common.MebiByte,
+				Size: 1 * common.GibiByte,
 				Type: "83",
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
@@ -266,8 +266,9 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 
 var iotBasePartitionTables = distro.BasePartitionTableMap{
 	arch.ARCH_X86_64.String(): disk.PartitionTable{
-		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-		Type: "gpt",
+		UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type:        "gpt",
+		StartOffset: 8 * common.MebiByte,
 		Partitions: []disk.Partition{
 			{
 				Size: 501 * common.MebiByte,
@@ -312,8 +313,9 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 	arch.ARCH_AARCH64.String(): disk.PartitionTable{
-		UUID: "0xc1748067",
-		Type: "dos",
+		UUID:        "0xc1748067",
+		Type:        "dos",
+		StartOffset: 8 * common.MebiByte,
 		Partitions: []disk.Partition{
 			{
 				Size:     501 * common.MebiByte,

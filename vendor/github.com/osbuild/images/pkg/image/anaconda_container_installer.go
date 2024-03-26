@@ -25,14 +25,14 @@ type AnacondaContainerInstaller struct {
 
 	SquashfsCompression string
 
-	ISOLabel     string
-	ISOLabelTmpl string
-	Product      string
-	Variant      string
-	OSName       string
-	Ref          string
-	OSVersion    string
-	Release      string
+	ISOLabel  string
+	Product   string
+	Variant   string
+	OSName    string
+	Ref       string
+	OSVersion string
+	Release   string
+	Preview   bool
 
 	ContainerSource container.SourceSpec
 
@@ -67,6 +67,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 		"kernel",
 		img.Product,
 		img.OSVersion,
+		img.Preview,
 	)
 
 	// This is only built with ELN for now
@@ -90,25 +91,16 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
-	var isoLabel string
-
-	if len(img.ISOLabel) > 0 {
-		isoLabel = img.ISOLabel
-	} else {
-		// TODO: replace isoLabelTmpl with more high-level properties
-		isoLabel = fmt.Sprintf(img.ISOLabelTmpl, img.Platform.GetArch())
-	}
-
 	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
 	rootfsImagePipeline.Size = 4 * common.GibiByte
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = isoLabel
+	bootTreePipeline.ISOLabel = img.ISOLabel
 
 	kspath := osbuild.KickstartPathOSBuild
-	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", isoLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", isoLabel, kspath)}
+	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOLabel, kspath)}
 	if img.FIPS {
 		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
 	}
@@ -135,7 +127,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
 	}
 
-	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, isoLabel)
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)
 	isoPipeline.ISOLinux = isoLinuxEnabled
 	artifact := isoPipeline.Export()

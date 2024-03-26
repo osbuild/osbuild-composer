@@ -22,8 +22,6 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-const ISO_LABEL = "%s-%s-%s-%s"
-
 // HELPERS
 
 func osCustomizations(
@@ -333,7 +331,13 @@ func liveInstallerImage(workload workload.Workload,
 	img.Variant = "Workstation"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
-	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
+	img.Preview = common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_BRANCHED)
+
+	var err error
+	img.ISOLabel, err = t.ISOLabel()
+	if err != nil {
+		return nil, err
+	}
 
 	img.Filename = t.Filename()
 
@@ -388,8 +392,13 @@ func imageInstallerImage(workload workload.Workload,
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
 
-	// We don't know the variant of the OS pipeline being installed
-	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
+	img.Preview = common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_BRANCHED)
+
+	var err error
+	img.ISOLabel, err = t.ISOLabel()
+	if err != nil {
+		return nil, err
+	}
 
 	img.Filename = t.Filename()
 
@@ -553,7 +562,12 @@ func iotInstallerImage(workload workload.Workload,
 	img.Remote = "fedora-iot"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
-	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
+	img.Preview = common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_BRANCHED)
+
+	img.ISOLabel, err = t.ISOLabel()
+	if err != nil {
+		return nil, err
+	}
 
 	img.Filename = t.Filename()
 
@@ -708,7 +722,11 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 	img.Variant = "IoT"
 	img.OSName = "fedora"
 	img.OSVersion = d.osVersion
-	img.ISOLabel = fmt.Sprintf(ISO_LABEL, img.Product, img.OSVersion, img.Variant, img.Platform.GetArch())
+
+	img.ISOLabel, err = t.ISOLabel()
+	if err != nil {
+		return nil, err
+	}
 
 	return img, nil
 }

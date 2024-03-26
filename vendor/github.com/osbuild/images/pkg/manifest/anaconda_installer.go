@@ -60,6 +60,7 @@ type AnacondaInstaller struct {
 	kernelVer    string
 	product      string
 	version      string
+	preview      bool
 
 	// Interactive defaults is a kickstart stage that can be provided, it
 	// will be written to /usr/share/anaconda/interactive-defaults
@@ -84,7 +85,8 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 	repos []rpmmd.RepoConfig,
 	kernelName,
 	product,
-	version string) *AnacondaInstaller {
+	version string,
+	preview bool) *AnacondaInstaller {
 	name := "anaconda-tree"
 	p := &AnacondaInstaller{
 		Base:       NewBase(name, buildPipeline),
@@ -94,6 +96,7 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 		kernelName: kernelName,
 		product:    product,
 		version:    version,
+		preview:    preview,
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -208,7 +211,7 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 		Product: p.product,
 		Variant: p.Variant,
 		Version: p.version,
-		Final:   true,
+		Final:   !p.preview,
 	}))
 	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "en_US.UTF-8"}))
 

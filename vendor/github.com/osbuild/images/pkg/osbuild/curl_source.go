@@ -39,6 +39,10 @@ func NewCurlPackageItem(pkg rpmmd.PackageSpec) (CurlSourceItem, error) {
 		item.Secrets = &URLSecrets{
 			Name: "org.osbuild.rhsm",
 		}
+	} else if pkg.Secrets == "org.osbuild.mtls" {
+		item.Secrets = &URLSecrets{
+			Name: "org.osbuild.mtls",
+		}
 	}
 	item.Insecure = pkg.IgnoreSSL
 	return item, nil
