@@ -14,11 +14,16 @@ __pycache__
 
 /docs/osbuild-composer.7
 .cache
-container_composer_golangci_built.info
 processed-templates
 
 coverage.txt
 coverage.html
-
 coverage_splunk_logger.txt
 coverage_splunk_logger.html
+
+go.local.mod
+go.local.sum
+container_worker_built.info
+container_composer_built.info
+container_composer_golangci_built.info
+
