@@ -74,6 +74,7 @@ type UserCustomization struct {
 	Groups      []string `json:"groups,omitempty" toml:"groups,omitempty"`
 	UID         *int     `json:"uid,omitempty" toml:"uid,omitempty"`
 	GID         *int     `json:"gid,omitempty" toml:"gid,omitempty"`
+	ExpireDate  *int     `json:"expiredate,omitempty" toml:"expiredate,omitempty"`
 }
 
 type GroupCustomization struct {
