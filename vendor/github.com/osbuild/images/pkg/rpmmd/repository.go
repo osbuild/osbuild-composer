@@ -47,6 +47,12 @@ type RepoConfig struct {
 	Enabled        *bool    `json:"enabled,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 	PackageSets    []string `json:"package_sets,omitempty"`
+
+	// These fields are only filled out by the worker during the
+	// depsolve job for certain baseurls.
+	SSLCACert     string `json:"sslcacert,omitempty"`
+	SSLClientKey  string `json:"sslclientkey,omitempty"`
+	SSLClientCert string `json:"sslclientcert,omitempty"`
 }
 
 // Hash calculates an ID string that uniquely represents a repository
@@ -74,7 +80,10 @@ func (r *RepoConfig) Hash() string {
 		bpts(r.IgnoreSSL)+
 		r.MetadataExpire+
 		bts(r.RHSM)+
-		bpts(r.ModuleHotfixes))))
+		bpts(r.ModuleHotfixes)+
+		r.SSLCACert+
+		r.SSLClientKey+
+		r.SSLClientCert)))
 }
 
 type DistrosRepoConfigs map[string]map[string][]RepoConfig

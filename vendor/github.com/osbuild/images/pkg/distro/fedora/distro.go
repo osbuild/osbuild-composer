@@ -86,10 +86,12 @@ var (
 			osPkgsKey:        minimalrpmPackageSet,
 			installerPkgsKey: imageInstallerPackageSet,
 		},
-		bootable:         true,
-		bootISO:          true,
-		rpmOstree:        false,
-		image:            imageInstallerImage,
+		bootable:  true,
+		bootISO:   true,
+		rpmOstree: false,
+		image:     imageInstallerImage,
+		// We don't know the variant of the OS pipeline being installed
+		isoLabel:         getISOLabelFunc("Unknown"),
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
@@ -107,6 +109,7 @@ var (
 		bootISO:          true,
 		rpmOstree:        false,
 		image:            liveInstallerImage,
+		isoLabel:         getISOLabelFunc("Workstation"),
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
@@ -183,6 +186,7 @@ var (
 		rpmOstree:        true,
 		bootISO:          true,
 		image:            iotInstallerImage,
+		isoLabel:         getISOLabelFunc("IoT"),
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:          []string{"bootiso"},
@@ -203,6 +207,7 @@ var (
 		bootable:            true,
 		bootISO:             true,
 		image:               iotSimplifiedInstallerImage,
+		isoLabel:            getISOLabelFunc("IoT"),
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:             []string{"bootiso"},
@@ -377,6 +382,10 @@ var (
 			// NOTE: temporary workaround for a bug in initial-setup that
 			// requires a kickstart file in the root directory.
 			Files: []*fsnode.File{initialSetupKickstart()},
+			Grub2Config: &osbuild.GRUB2Config{
+				// Overwrite the default Grub2 timeout value.
+				Timeout: 5,
+			},
 		},
 		rpmOstree:           false,
 		kernelOptions:       defaultKernelOptions,
@@ -408,6 +417,15 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 	Locale:   common.ToPtr("en_US"),
 }
 
+func getISOLabelFunc(variant string) isoLabelFunc {
+	const ISO_LABEL = "%s-%s-%s-%s"
+
+	return func(t *imageType) string {
+		return fmt.Sprintf(ISO_LABEL, t.Arch().Distro().Product(), t.Arch().Distro().OsVersion(), variant, t.Arch().Name())
+	}
+
+}
+
 func getDistro(version int) distribution {
 	return distribution{
 		name:               fmt.Sprintf("fedora-%d", version),
@@ -427,6 +445,14 @@ func (d *distribution) Name() string {
 
 func (d *distribution) Releasever() string {
 	return d.releaseVersion
+}
+
+func (d *distribution) OsVersion() string {
+	return d.releaseVersion
+}
+
+func (d *distribution) Product() string {
+	return d.product
 }
 
 func (d *distribution) ModulePlatformID() string {

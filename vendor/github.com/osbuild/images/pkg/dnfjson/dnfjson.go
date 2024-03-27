@@ -298,6 +298,9 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 			MirrorList:     rr.MirrorList,
 			GPGKeys:        rr.GPGKeys,
 			MetadataExpire: rr.MetadataExpire,
+			SSLCACert:      rr.SSLCACert,
+			SSLClientKey:   rr.SSLClientKey,
+			SSLClientCert:  rr.SSLClientCert,
 			repoHash:       rr.Hash(),
 		}
 		if rr.ModuleHotfixes != nil {
@@ -502,8 +505,13 @@ func (pkgs packageSpecs) toRPMMD(repos map[string]rpmmd.RepoConfig) []rpmmd.Pack
 		if repo.IgnoreSSL != nil {
 			rpmDependencies[i].IgnoreSSL = *repo.IgnoreSSL
 		}
+
+		// The ssl secrets will also be set if rhsm is true,
+		// which should take priority.
 		if repo.RHSM {
 			rpmDependencies[i].Secrets = "org.osbuild.rhsm"
+		} else if repo.SSLClientKey != "" {
+			rpmDependencies[i].Secrets = "org.osbuild.mtls"
 		}
 	}
 	return rpmDependencies

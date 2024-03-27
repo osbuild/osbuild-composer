@@ -51,6 +51,8 @@ type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
 type basePartitionTableFunc func(t *imageType) (disk.PartitionTable, bool)
 
+type isoLabelFunc func(t *imageType) string
+
 type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
@@ -69,6 +71,7 @@ type imageType struct {
 	payloadPipelines   []string
 	exports            []string
 	image              imageFunc
+	isoLabel           isoLabelFunc
 
 	// bootISO: installable ISO
 	bootISO bool
@@ -102,6 +105,18 @@ func (t *imageType) OSTreeRef() string {
 		return fmt.Sprintf(d.ostreeRefTmpl, t.Arch().Name())
 	}
 	return ""
+}
+
+func (t *imageType) ISOLabel() (string, error) {
+	if !t.bootISO {
+		return "", fmt.Errorf("image type %q is not an ISO", t.name)
+	}
+
+	if t.isoLabel != nil {
+		return t.isoLabel(t), nil
+	}
+
+	return "", nil
 }
 
 func (t *imageType) Size(size uint64) uint64 {
@@ -167,12 +182,7 @@ func (t *imageType) getPartitionTable(
 	partitioningMode := options.PartitioningMode
 	if t.rpmOstree {
 		// Edge supports only LVM, force it.
-		// Raw is not supported, return an error if it is requested
 		// TODO Need a central location for logic like this
-		if partitioningMode == disk.RawPartitioningMode {
-			return nil, fmt.Errorf("partitioning mode raw not supported for %s on %s", t.Name(), t.arch.Name())
-		}
-
 		partitioningMode = disk.LVMPartitioningMode
 	}
 
@@ -283,6 +293,18 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	return &mf, warnings, err
 }
 
+func distroISOLabelFunc(t *imageType) string {
+	const RHEL_ISO_LABEL = "RHEL-%s-%s-0-BaseOS-%s"
+	const CS_ISO_LABEL = "CentOS-Stream-%s-BaseOS-%s"
+
+	if t.arch.distro.isRHEL() {
+		osVer := strings.Split(t.Arch().Distro().OsVersion(), ".")
+		return fmt.Sprintf(RHEL_ISO_LABEL, osVer[0], osVer[1], t.Arch().Name())
+	} else {
+		return fmt.Sprintf(CS_ISO_LABEL, t.Arch().Distro().Releasever(), t.Arch().Name())
+	}
+}
+
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 // Returns ([]string, error) where []string, if non-nil, will hold any generated warnings (e.g. deprecation notices).
 func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
@@ -320,7 +342,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		}
 
 		if t.name == "edge-simplified-installer" {
-			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group", "FIPS"}
+			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group", "FIPS", "Filesystem"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 			}
@@ -370,8 +392,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		if options.OSTree == nil || options.OSTree.URL == "" {
 			return warnings, fmt.Errorf("%q images require specifying a URL from which to retrieve the OSTree commit", t.name)
 		}
-
-		allowed := []string{"Ignition", "Kernel", "User", "Group", "FIPS"}
+		allowed := []string{"Ignition", "Kernel", "User", "Group", "FIPS", "Filesystem"}
 		if err := customizations.CheckAllowed(allowed...); err != nil {
 			return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 		}
@@ -398,9 +419,14 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 
 	mountpoints := customizations.GetFilesystems()
-
-	if mountpoints != nil && t.rpmOstree {
-		return warnings, fmt.Errorf("Custom mountpoints are not supported for ostree types")
+	if mountpoints != nil && t.rpmOstree && (t.name == "edge-container" || t.name == "edge-commit") {
+		return warnings, fmt.Errorf("Custom mountpoints are not supported for edge-container and edge-commit")
+	} else if mountpoints != nil && t.rpmOstree && !(t.name == "edge-container" || t.name == "edge-commit") {
+		//customization allowed for edge-raw-image,edge-ami,edge-vsphere,edge-simplified-installer
+		err := blueprint.CheckMountpointsPolicy(mountpoints, policies.OstreeMountpointPolicies)
+		if err != nil {
+			return warnings, err
+		}
 	}
 
 	err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)

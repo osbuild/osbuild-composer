@@ -45,9 +45,18 @@ type Distro interface {
 	// files on the host system and required for the subscription support.
 	Releasever() string
 
+	// Returns the OS version of the distro, which may contain minor versions
+	// if the distro supports them. This is used in various places where the
+	// minor version of the distro is needed to determine the correct
+	// configuration.
+	OsVersion() string
+
 	// Returns the module platform id of the distro. This is used by DNF
 	// for modularity support.
 	ModulePlatformID() string
+
+	// Returns the product name of the distro.
+	Product() string
 
 	// Returns the ostree reference template
 	OSTreeRef() string
@@ -95,6 +104,10 @@ type ImageType interface {
 
 	// Returns the default OSTree ref for the image type.
 	OSTreeRef() string
+
+	// Returns the ISO Label for the image type. Returns an error if the image
+	// type is not an ISO.
+	ISOLabel() (string, error)
 
 	// Returns the proper image size for a given output format. If the input size
 	// is 0 the default value for the format will be returned.
