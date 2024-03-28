@@ -87,9 +87,31 @@ func (s *Server) Handler(path string) http.Handler {
 	e := echo.New()
 	e.Binder = binder{}
 	e.HTTPErrorHandler = s.HTTPErrorHandler
-	e.Pre(common.OperationIDMiddleware)
+	e.Pre(common.OperationIDMiddleware, common.ExternalIDMiddleware, common.LoggerMiddleware)
 	e.Use(middleware.Recover())
 	e.Logger = common.Logger()
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:     true,
+		LogStatus:  true,
+		LogLatency: true,
+		LogMethod:  true,
+		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
+			fields := logrus.Fields{
+				"uri":          values.URI,
+				"method":       values.Method,
+				"status":       values.Status,
+				"latency_ms":   values.Latency.Milliseconds(),
+				"operation_id": c.Get(common.OperationIDKey),
+				"external_id":  c.Get(common.ExternalIDKey),
+			}
+			if values.Error != nil {
+				fields["error"] = values.Error
+			}
+			logrus.WithFields(fields).Infof("Processed request %s %s", values.Method, values.URI)
+
+			return nil
+		},
+	}))
 
 	if sentry.CurrentHub().Client() == nil {
 		logrus.Warn("Sentry/Glitchtip not initialized, echo middleware was not enabled")

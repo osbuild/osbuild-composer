@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"io"
+	"log"
 	"os"
 
 	"github.com/coreos/go-systemd/activation"
+	"github.com/coreos/go-systemd/journal"
 	"github.com/getsentry/sentry-go"
 	sentrylogrus "github.com/getsentry/sentry-go/logrus"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"github.com/sirupsen/logrus"
 )
@@ -28,6 +32,10 @@ func main() {
 	flag.BoolVar(&verbose, "verbose", false, "Print access log")
 	flag.Parse()
 
+	// Redirect Go standard logger into logrus before it's used by other packages
+	log.SetFlags(0)
+	log.SetOutput(common.Logger())
+
 	if !verbose {
 		logrus.Print("verbose flag is provided for backward compatibility only, current behavior is always printing the access log")
 	}
@@ -41,6 +49,7 @@ func main() {
 	logLevel, err := logrus.ParseLevel(config.LogLevel)
 
 	logrus.SetReportCaller(true)
+	logrus.AddHook(&common.ContextHook{})
 
 	if err == nil {
 		logrus.SetLevel(logLevel)
@@ -49,6 +58,14 @@ func main() {
 	}
 
 	switch config.LogFormat {
+	case "journal":
+		if journal.Enabled() {
+			logrus.SetFormatter(&logrus.JSONFormatter{})
+			logrus.AddHook(&common.JournalHook{})
+			logrus.SetOutput(io.Discard)
+		} else {
+			logrus.SetFormatter(&logrus.TextFormatter{})
+		}
 	case "text":
 		logrus.SetFormatter(&logrus.TextFormatter{})
 	case "json":
