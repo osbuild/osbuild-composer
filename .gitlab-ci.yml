@@ -440,14 +440,12 @@ oci.sh:
 OpenShift_Virtualization:
   extends: .integration_rhel
   rules:
-    - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
   variables:
     SCRIPT: openshift_virtualization.sh
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.10-nightly-x86_64
           - aws/rhel-9.4-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
