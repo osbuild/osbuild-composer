@@ -49,7 +49,7 @@ set -euo pipefail
 IMAGE_TYPE="$1"
 
 # set TEST_MODULE_HOTFIXES to 1 to enable module hotfixes for the test
-TEST_MODULE_HOTFIXES="${TEST_MODULE_HOTFIXES:-0}"
+export TEST_MODULE_HOTFIXES="${TEST_MODULE_HOTFIXES:-0}"
 
 # select cloud provider based on image type
 #
@@ -626,8 +626,6 @@ sendCompose "$REQUEST_FILE2"
 waitForState "failure"
 
 if [ "$TEST_MODULE_HOTFIXES" = "1" ]; then
-  cat "$REQUEST_FILE"
-
   jq 'del(.customizations.payload_repositories[] | select(.baseurl | match(".*public/el8/el8-.*-nginx-.*")) | .module_hotfixes)' "$REQUEST_FILE" > "$REQUEST_FILE2"
   greenprint  "Sending compose: Fail depsolve test"
   sendCompose "$REQUEST_FILE2"
@@ -722,6 +720,13 @@ function verifyPackageList() {
   if ! grep -q postgresql <<< "${PACKAGENAMES}"; then
       echo "'postgresql' not found in compose package list 😠"
       exit 1
+  fi
+
+  if [ "$TEST_MODULE_HOTFIXES" = "1" ]; then
+    if ! grep -q nginx-module-njs <<< "${PACKAGENAMES}"; then
+        echo "'nginx-module-njs' package added from official nginx repo not found in compose package list 😠"
+        exit 1
+    fi
   fi
 }
 

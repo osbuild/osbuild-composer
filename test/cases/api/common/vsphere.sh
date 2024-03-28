@@ -213,7 +213,7 @@ function verifyInVSphere() {
     _instanceWaitSSH "${HOST}"
 
     _ssh="ssh -oStrictHostKeyChecking=no -i ${_vsphere_ssh_key} $SSH_USER@$HOST"
-    _instanceCheck "${_ssh}"
+    _instanceCheck "${_ssh}" "$TEST_MODULE_HOTFIXES"
 
     greenprint "✅ Successfully verified VSphere image with cloud-init"
 }

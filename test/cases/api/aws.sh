@@ -233,7 +233,7 @@ function verify() {
 
   # Verify image
   _ssh="ssh -oStrictHostKeyChecking=no -i ./keypair.pem $SSH_USER@$HOST"
-  _instanceCheck "$_ssh"
+  _instanceCheck "$_ssh" "$TEST_MODULE_HOTFIXES"
 
   # Check access to user1 and user2
   check_groups=$(ssh -oStrictHostKeyChecking=no -i "${WORKDIR}/usertest" "user1@$HOST" -t 'groups')
