@@ -402,7 +402,7 @@ func (c *Composer) Start() error {
 func (c *Composer) ensureStateDirectory(name string, perm os.FileMode) (string, error) {
 	d := path.Join(c.stateDir, name)
 
-	err := os.Mkdir(d, perm)
+	err := os.MkdirAll(d, perm)
 	if err != nil && !os.IsExist(err) {
 		return "", fmt.Errorf("cannot create state directory %s: %v", name, err)
 	}

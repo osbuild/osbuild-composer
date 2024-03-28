@@ -43,6 +43,8 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 }
 
 func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
+	ctx.Logger().Info("Returning OpenAPI document")
+
 	spec, err := GetSwagger()
 	if err != nil {
 		return HTTPError(ErrorFailedToLoadOpenAPISpec)
