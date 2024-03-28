@@ -74,6 +74,8 @@ type OSTreeDeployment struct {
 
 	// Use bootupd instead of grub2 as the bootloader
 	UseBootupd bool
+
+	CustomFileSystems []string
 }
 
 // NewOSTreeCommitDeployment creates a pipeline for an ostree deployment from a
@@ -353,6 +355,19 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		}))
 
+		// This will create a custom systemd unit that create
+		// mountpoints if its not present.This will safeguard
+		// any ostree deployment  which has custom filesystem
+		// during ostree upgrade.
+		// issue # https://github.com/osbuild/images/issues/352
+		if len(p.CustomFileSystems) != 0 {
+			serviceName := "osbuild-ostree-mountpoints.service"
+			stageOption := osbuild.NewSystemdUnitCreateStageOptions(createMountpointService(serviceName, p.CustomFileSystems))
+			stageOption.MountOSTree(p.osName, ref, 0)
+			pipeline.AddStage(stageOption)
+			p.EnabledServices = append(p.EnabledServices, serviceName)
+		}
+
 		// We enable / disable services below using the systemd stage, but its effect
 		// may be overridden by systemd which may reset enabled / disabled services on
 		// firstboot (which happend on F37+). This behavior, if available, is triggered
@@ -480,4 +495,39 @@ func (p *OSTreeDeployment) getInline() []string {
 	}
 
 	return inlineData
+}
+
+// Creates systemd unit stage by ingesting the servicename and mount-points
+func createMountpointService(serviceName string, mountpoints []string) *osbuild.SystemdUnitCreateStageOptions {
+	var conditionPathIsDirectory []string
+	for _, mountpoint := range mountpoints {
+		conditionPathIsDirectory = append(conditionPathIsDirectory, "|!"+mountpoint)
+	}
+	unit := osbuild.Unit{
+		Description:              "Ensure custom filesystem mountpoints exist",
+		DefaultDependencies:      false,
+		ConditionPathIsDirectory: conditionPathIsDirectory,
+	}
+	service := osbuild.Service{
+		Type:            osbuild.Oneshot,
+		RemainAfterExit: true,
+		//compatibility with composefs, will require transient rootfs to be enabled too.
+		ExecStartPre: []string{"/bin/sh -c \"if [ -z \"$(grep -Uq composefs /run/ostree-booted)\" ]; then chattr -i /; fi\""},
+		ExecStopPost: []string{"/bin/sh -c \"if [ -z \"$(grep -Uq composefs /run/ostree-booted)\" ]; then chattr +i /; fi\""},
+		ExecStart:    []string{"mkdir -p " + strings.Join(mountpoints[:], " ")},
+	}
+	install := osbuild.Install{
+		WantedBy: []string{"local-fs.target"},
+	}
+	options := osbuild.SystemdUnitCreateStageOptions{
+		Filename: serviceName,
+		UnitPath: osbuild.Etc,
+		UnitType: osbuild.System,
+		Config: osbuild.SystemdServiceUnit{
+			Unit:    &unit,
+			Service: &service,
+			Install: &install,
+		},
+	}
+	return &options
 }

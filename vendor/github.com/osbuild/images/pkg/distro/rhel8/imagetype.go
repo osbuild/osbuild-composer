@@ -46,6 +46,8 @@ type imageFunc func(workload workload.Workload, t *imageType, customizations *bl
 
 type packageSetFunc func(t *imageType) rpmmd.PackageSet
 
+type isoLabelFunc func(t *imageType) string
+
 type imageType struct {
 	arch               *architecture
 	platform           platform.Platform
@@ -64,6 +66,7 @@ type imageType struct {
 	payloadPipelines   []string
 	exports            []string
 	image              imageFunc
+	isoLabel           isoLabelFunc
 
 	// bootISO: installable ISO
 	bootISO bool
@@ -97,6 +100,18 @@ func (t *imageType) OSTreeRef() string {
 		return fmt.Sprintf(d.ostreeRefTmpl, t.Arch().Name())
 	}
 	return ""
+}
+
+func (t *imageType) ISOLabel() (string, error) {
+	if !t.bootISO {
+		return "", fmt.Errorf("image type %q is not an ISO", t.name)
+	}
+
+	if t.isoLabel != nil {
+		return t.isoLabel(t), nil
+	}
+
+	return "", nil
 }
 
 func (t *imageType) Size(size uint64) uint64 {
@@ -272,6 +287,19 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	}
 
 	return &mf, warnings, err
+}
+
+func distroISOLabelFunc(t *imageType) string {
+	const RHEL_ISO_LABEL = "RHEL-8-%s-0-BaseOS-%s"
+	const CS_ISO_LABEL = "CentOS-Stream-8-%s-dvd"
+
+	if t.arch.distro.isRHEL() {
+		minor := strings.Split(t.Arch().Distro().OsVersion(), ".")[1]
+		return fmt.Sprintf(RHEL_ISO_LABEL, minor, t.Arch().Name())
+	} else {
+		return fmt.Sprintf(CS_ISO_LABEL, t.Arch().Name())
+	}
+
 }
 
 // checkOptions checks the validity and compatibility of options and customizations for the image type.

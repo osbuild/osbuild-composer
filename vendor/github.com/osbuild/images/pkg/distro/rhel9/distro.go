@@ -47,7 +47,6 @@ type distribution struct {
 	modulePlatformID   string
 	vendor             string
 	ostreeRefTmpl      string
-	isolabelTmpl       string
 	runner             runner.Runner
 	arches             map[string]distro.Arch
 	defaultImageConfig *distro.ImageConfig
@@ -77,6 +76,14 @@ func (d *distribution) Name() string {
 
 func (d *distribution) Releasever() string {
 	return d.releaseVersion
+}
+
+func (d *distribution) OsVersion() string {
+	return d.osVersion
+}
+
+func (d *distribution) Product() string {
+	return d.product
 }
 
 func (d *distribution) ModulePlatformID() string {
@@ -137,7 +144,6 @@ func newDistro(name string, major, minor int) *distribution {
 			modulePlatformID:   "platform:el9",
 			vendor:             "redhat",
 			ostreeRefTmpl:      "rhel/9/%s/edge",
-			isolabelTmpl:       fmt.Sprintf("RHEL-9-%d-0-BaseOS-%%s", minor),
 			runner:             &runner.RHEL{Major: uint64(9), Minor: uint64(minor)},
 			defaultImageConfig: defaultDistroImageConfig,
 		}
@@ -150,7 +156,6 @@ func newDistro(name string, major, minor int) *distribution {
 			modulePlatformID:   "platform:el10",
 			vendor:             "redhat",
 			ostreeRefTmpl:      "rhel/10/%s/edge",
-			isolabelTmpl:       fmt.Sprintf("RHEL-10-%d-0-BaseOS-%%s", minor),
 			runner:             &runner.RHEL{Major: uint64(10), Minor: uint64(minor)},
 			defaultImageConfig: defaultDistroImageConfig,
 		}
@@ -163,7 +168,6 @@ func newDistro(name string, major, minor int) *distribution {
 			modulePlatformID:   "platform:el9",
 			vendor:             "centos",
 			ostreeRefTmpl:      "centos/9/%s/edge",
-			isolabelTmpl:       "CentOS-Stream-9-BaseOS-%s",
 			runner:             &runner.CentOS{Version: uint64(9)},
 			defaultImageConfig: defaultDistroImageConfig,
 		}
@@ -176,7 +180,6 @@ func newDistro(name string, major, minor int) *distribution {
 			modulePlatformID:   "platform:el10",
 			vendor:             "centos",
 			ostreeRefTmpl:      "centos/10/%s/edge",
-			isolabelTmpl:       "CentOS-Stream-10-BaseOS-%s",
 			runner:             &runner.CentOS{Version: uint64(10)},
 			defaultImageConfig: defaultDistroImageConfig,
 		}

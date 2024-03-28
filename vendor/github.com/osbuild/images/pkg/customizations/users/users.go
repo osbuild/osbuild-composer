@@ -12,6 +12,7 @@ type User struct {
 	Groups      []string
 	UID         *int
 	GID         *int
+	ExpireDate  *int
 }
 
 type Group struct {
