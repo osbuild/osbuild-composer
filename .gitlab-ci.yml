@@ -76,6 +76,11 @@ init:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.4-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.10-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
+.nightly_rules_ga/eus:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
@@ -188,12 +193,6 @@ Base:
           - aws/fedora-38-aarch64
           - aws/fedora-39-x86_64
           - aws/fedora-39-aarch64
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.9-ga-x86_64
-          - aws/rhel-8.9-ga-aarch64
-          - aws/rhel-9.3-ga-x86_64
-          - aws/rhel-9.3-ga-aarch64
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
@@ -203,6 +202,22 @@ Base:
           - aws/rhel-9.4-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
+        INTERNAL_NETWORK: ["true"]
+
+Base-GA:
+  stage: test
+  extends: Base
+  rules:
+    - !reference [.nightly_rules_ga/eus, rules]
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
+          - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-8.9-ga-aarch64
+          - aws/rhel-9.3-ga-x86_64
+          - aws/rhel-9.3-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
 .regression:
@@ -224,18 +239,28 @@ Base:
           - aws/centos-stream-8-x86_64
           - aws/centos-stream-8-aarch64
       - RUNNER:
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.9-ga-x86_64
-          - aws/rhel-8.9-ga-aarch64
-          - aws/rhel-9.3-ga-x86_64
-          - aws/rhel-9.3-ga-aarch64
           - aws/rhel-8.10-nightly-x86_64
           - aws/rhel-8.10-nightly-aarch64
           - aws/rhel-9.4-nightly-x86_64
           - aws/rhel-9.4-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
+        INTERNAL_NETWORK: ["true"]
+
+.regression-GA:
+  stage: test
+  extends: .regression
+  rules:
+    - !reference [.nightly_rules_ga/eus, rules]
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.4-ga-x86_64
+          - aws/rhel-8.4-ga-aarch64
+          - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-8.9-ga-aarch64
+          - aws/rhel-9.3-ga-x86_64
+          - aws/rhel-9.3-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
 regression-composer-works-behind-satellite-fallback:
@@ -275,6 +300,8 @@ regression-include-excluded-packages:
     SCRIPT: regression-include-excluded-packages.sh
 
 regression-old-worker-new-composer:
+  rules:
+    - !reference [.nightly_rules_ga/eus, rules]
   parallel:
     matrix:
       - RUNNER:
