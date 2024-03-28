@@ -47,11 +47,8 @@ func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 		return nil, HTTPError(ErrorJSONUnMarshallingError)
 	}
 
-	// For service maintenance, images are discovered by the "Name:composer-api-*"
-	// tag filter. Currently all image names in the service are generated, so they're
-	// guaranteed to be unique as well. If users are ever allowed to name their images,
-	// an extra tag should be added.
-	key := fmt.Sprintf("composer-api-%s", uuid.New().String())
+	targetUuid := uuid.New()
+	key := fmt.Sprintf("composer-api-%s", targetUuid.String())
 
 	var amiBootMode *string
 	switch imageType.BootMode() {
@@ -63,16 +60,23 @@ func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 		amiBootMode = common.ToPtr(ec2.BootModeValuesLegacyBios)
 	}
 
+	// tag name is optional, not providing one will make the Name tag default to the ImageName
+	tagName := ""
+	if awsUploadOptions.SnapshotName != nil {
+		tagName = *awsUploadOptions.SnapshotName
+	}
+
 	t := target.NewAWSTarget(&target.AWSTargetOptions{
 		Region:            awsUploadOptions.Region,
 		Key:               key,
+		TagName:           tagName,
 		ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
 		BootMode:          amiBootMode,
 	})
+	t.ImageName = key
 	if awsUploadOptions.SnapshotName != nil {
-		t.ImageName = *awsUploadOptions.SnapshotName
-	} else {
-		t.ImageName = key
+		// When registering an image the ImageName is used to set the ami's name. AMIs names must be unique.
+		t.ImageName = fmt.Sprintf("%s-%s", *awsUploadOptions.SnapshotName, targetUuid.String())
 	}
 	t.OsbuildArtifact.ExportFilename = imageType.Filename()
 	return t, nil

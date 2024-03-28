@@ -14,6 +14,9 @@ type AWSTargetOptions struct {
 	Key               string   `json:"key"`
 	ShareWithAccounts []string `json:"shareWithAccounts"`
 
+	// Optional tag value if not provided will default to the ImageName's value.
+	TagName string `json:"tag_name,omitempty"`
+
 	// Boot mode of the AMI (optional)
 	// Supported values:
 	//  - ec2.BootModeValuesLegacyBios

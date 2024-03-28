@@ -228,7 +228,7 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 // The caller can optionally specify the boot mode of the AMI. If the boot
 // mode is not specified, then the instances launched from this AMI use the
 // default boot mode value of the instance type.
-func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch string, bootMode *string) (*string, error) {
+func (a *AWS) Register(imageName, bucket, s3key, tagName string, shareWith []string, rpmArch string, bootMode *string) (*string, error) {
 	rpmArchToEC2Arch := map[string]string{
 		"x86_64":  "x86_64",
 		"aarch64": "arm64",
@@ -245,15 +245,18 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 		}
 	}
 
-	logrus.Infof("[AWS] 📥 Importing snapshot from image: %s/%s", bucket, key)
-	snapshotDescription := fmt.Sprintf("Image Builder AWS Import of %s", name)
+	// Note that the key value is only used in the upload transition phase in S3. It's deleted once the snapshot is done
+	// importing. So it's content has not much impact. The key is not conveyed anymore, compute a unique one based on
+	// the nameTag's value.
+	logrus.Infof("[AWS] 📥 Importing snapshot from image: %s/%s", bucket, s3key)
+	snapshotDescription := fmt.Sprintf("Image Builder AWS Import of %s", imageName)
 	importTaskOutput, err := a.ec2.ImportSnapshot(
 		&ec2.ImportSnapshotInput{
 			Description: aws.String(snapshotDescription),
 			DiskContainer: &ec2.SnapshotDiskContainer{
 				UserBucket: &ec2.UserBucket{
 					S3Bucket: aws.String(bucket),
-					S3Key:    aws.String(key),
+					S3Key:    aws.String(s3key),
 				},
 			},
 		},
@@ -277,10 +280,10 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 	}
 
 	// we no longer need the object in s3, let's just delete it
-	logrus.Infof("[AWS] 🧹 Deleting image from S3: %s/%s", bucket, key)
+	logrus.Infof("[AWS] 🧹 Deleting image from S3: %s/%s", bucket, s3key)
 	_, err = a.s3.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
+		Key:    aws.String(s3key),
 	})
 	if err != nil {
 		return nil, err
@@ -306,7 +309,11 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 			Tags: []*ec2.Tag{
 				{
 					Key:   aws.String("Name"),
-					Value: aws.String(name),
+					Value: aws.String(tagName),
+				},
+				{
+					Key:   aws.String("Build-by"),
+					Value: aws.String("osbuild-composer"),
 				},
 			},
 		},
@@ -322,7 +329,7 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 			Architecture:       aws.String(ec2Arch),
 			BootMode:           bootMode,
 			VirtualizationType: aws.String("hvm"),
-			Name:               aws.String(name),
+			Name:               aws.String(imageName),
 			RootDeviceName:     aws.String("/dev/sda1"),
 			EnaSupport:         aws.Bool(true),
 			BlockDeviceMappings: []*ec2.BlockDeviceMapping{
@@ -348,7 +355,11 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 			Tags: []*ec2.Tag{
 				{
 					Key:   aws.String("Name"),
-					Value: aws.String(name),
+					Value: aws.String(tagName),
+				},
+				{
+					Key:   aws.String("Build-by"),
+					Value: aws.String("osbuild-composer"),
 				},
 			},
 		},
