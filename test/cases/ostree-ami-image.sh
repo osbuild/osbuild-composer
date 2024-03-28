@@ -66,6 +66,7 @@ OSTREE_OSNAME=redhat
 BUCKET_NAME="composer-ci-${TEST_UUID}"
 BUCKET_URL="s3://${BUCKET_NAME}"
 OBJECT_URL="http://${BUCKET_NAME}.s3.${AWS_DEFAULT_REGION}.amazonaws.com"
+CUSTOM_FS_LVS="false"
 
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
@@ -93,10 +94,12 @@ case "${ID}-${VERSION_ID}" in
     "rhel-9."*)
         OSTREE_REF="rhel/9/${ARCH}/edge"
         SYSROOT_RO="true"
+        CUSTOM_FS_LVS="true"
         ;;
     "centos-9")
         OSTREE_REF="centos/9/${ARCH}/edge"
         SYSROOT_RO="true"
+        CUSTOM_FS_LVS="true"
         ;;
     *)
         redprint "unsupported distro: ${ID}-${VERSION_ID}"
@@ -611,6 +614,20 @@ groups = ["wheel"]
 url = "${OBJECT_URL}/config.ign"
 EOF
 
+if [[ "${CUSTOM_FS_LVS}" == "true" ]]; then
+    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
+[[customizations.filesystem]]
+mountpoint = "/foo/bar"
+size=2147483648
+[[customizations.filesystem]]
+mountpoint = "/foo"
+size=8589934592
+[[customizations.filesystem]]
+mountpoint = "/var/myfiles"
+size= "1 GiB"
+EOF
+fi
+
 greenprint "📄 aws ami blueprint"
 cat "$BLUEPRINT_FILE"
 
@@ -880,6 +897,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${INSTALL_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
@@ -1058,6 +1076,7 @@ sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e sysroot_ro="$SYSROOT_RO" \
     -e fips="${FIPS}" \
+    -e custom_fs_lvs="${CUSTOM_FS_LVS}" \
     /usr/share/tests/osbuild-composer/ansible/check_ostree.yaml || RESULTS=0
 check_result
 
