@@ -22,9 +22,17 @@ COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 function cleanup_on_exit() {
-    greenprint "== Script execution stopped or finished - Cleaning up =="
+    greenprint "🧼 Cleaning up"
     # kill dangling journalctl processes to prevent GitLab CI from hanging
     sudo pkill journalctl || echo "Nothing killed"
+
+    # since this function can be called at any time, ensure that we don't expand unbound variables
+    IMAGE_FILENAME="${IMAGE_FILENAME:-}"
+    [ "$IMAGE_FILENAME" ] && sudo rm -f "$IMAGE_FILENAME"
+
+    # Remove tmp dir.
+    sudo rm -rf "$TEMPDIR"
+
 }
 trap cleanup_on_exit EXIT
 
@@ -94,14 +102,6 @@ build_image() {
     fi
 }
 
-# Clean up our mess.
-clean_up () {
-    greenprint "🧼 Cleaning up"
-    # Remove "remote" repo.
-    sudo rm -f "$IMAGE_FILENAME"
-    # Remove tmp dir.
-    sudo rm -rf "$TEMPDIR"
-}
 check_result () {
     if [ ${#FAILED_MOUNTPOINTS[@]} -eq 0 ]; then
         greenprint "🎉 $1 scenario went as expected"
@@ -339,8 +339,6 @@ check_result "Failing"
 # Clean compose and blueprints.
 greenprint "🧼 Clean up osbuild-composer again"
 sudo composer-cli blueprints delete custom-filesystem-fail > /dev/null
-
-clean_up
 
 greenprint "🎉 All tests passed."
 exit 0
