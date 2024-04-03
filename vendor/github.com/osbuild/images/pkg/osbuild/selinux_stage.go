@@ -6,6 +6,7 @@ package osbuild
 // the filesystem labels to apply to the image.
 type SELinuxStageOptions struct {
 	FileContexts     string            `json:"file_contexts"`
+	ExcludePaths     []string          `json:"exclude_paths,omitempty"`
 	Labels           map[string]string `json:"labels,omitempty"`
 	ForceAutorelabel *bool             `json:"force_autorelabel,omitempty"`
 }
