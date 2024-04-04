@@ -129,7 +129,7 @@ func GetDefaultConfig() *ComposerConfigFile {
 			"rhel-10": "rhel-10.0",
 		},
 		LogLevel:  "info",
-		LogFormat: "text",
+		LogFormat: "journal",
 		DNFJson:   "/usr/libexec/osbuild-depsolve-dnf",
 	}
 }

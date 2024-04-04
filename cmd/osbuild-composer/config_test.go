@@ -77,7 +77,7 @@ func TestDefaultConfig(t *testing.T) {
 	}
 	require.Equal(t, expectedDistroAliases, defaultConfig.DistroAliases)
 
-	require.Equal(t, "text", defaultConfig.LogFormat)
+	require.Equal(t, "journal", defaultConfig.LogFormat)
 }
 
 func TestConfig(t *testing.T) {
