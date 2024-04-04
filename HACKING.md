@@ -6,6 +6,8 @@
 onto a system. We recommend doing this by building rpms, with:
 
 ```
+dnf install fedora-packager
+dnf builddep osbuild-composer
 make rpm
 ```
 
@@ -94,4 +96,22 @@ To rebuild the containers after a change, add the `--build` flag to the `docker-
 
 ```
 docker-compose up --build
+```
+
+## Shortening the loop
+
+For some components, it is possible to install distribution packages first and then only to replace binaries which may or may not work for smaller changes.
+
+```
+systemctl stop osbuild-composer.service osbuild-composer.socket osbuild-local-worker.socket
+make build && sudo install -m755 bin/osbuild-composer bin/osbuild-worker /usr/libexec/osbuild-composer/
+systemctl start osbuild-composer.socket osbuild-local-worker.socket
+```
+
+## Accessing Cloud API
+
+You can use curl to access the Cloud API:
+
+```
+curl --unix-socket /run/cloudapi/api.socket -XGET http://localhost/api/image-builder-composer/v2/openapi
 ```
