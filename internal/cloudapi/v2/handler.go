@@ -2,6 +2,7 @@
 package v2
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -293,6 +294,30 @@ func (h *apiHandlers) targetResultToUploadStatus(jobId uuid.UUID, t *target.Targ
 	}
 
 	return us, nil
+}
+
+// GetComposeList returns a list of the root job UUIDs
+func (h *apiHandlers) GetComposeList(ctx echo.Context) error {
+	jobs, err := h.server.workers.AllRootJobIDs()
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorGettingComposeList, err)
+	}
+
+	// Gather up the details of each job
+	var stats []ComposeStatus
+	for _, jid := range jobs {
+		s, err := h.getJobIDComposeStatus(jid)
+		if err != nil {
+			// TODO log this error?
+			continue
+		}
+		stats = append(stats, s)
+	}
+	slices.SortFunc(stats, func(a, b ComposeStatus) int {
+		return cmp.Compare(a.Id, b.Id)
+	})
+
+	return ctx.JSON(http.StatusOK, stats)
 }
 
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
