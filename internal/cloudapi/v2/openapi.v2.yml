@@ -37,6 +37,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /composes/:
+    get:
+      operationId: getComposeList
+      summary: The list of composes
+      security:
+        - Bearer: []
+      description: |-
+        Get the list of composes. They may be completed, uploaded,
+        locally saved, or failed.
+      responses:
+        '200':
+          description: list of composes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /composes/{id}:
     get:
       operationId: getComposeStatus
@@ -635,6 +676,18 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Error'
+
+    ComposeList:
+      allOf:
+        - $ref: '#/components/schemas/List'
+        - type: object
+          required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ComposeStatus'
 
     ComposeStatus:
       allOf:
