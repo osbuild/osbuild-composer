@@ -314,6 +314,16 @@ func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
 	return us, nil
 }
 
+// GetComposeList returns a list of the root job UUIDs
+func (h *apiHandlers) GetComposeList(ctx echo.Context) error {
+	jobs, err := h.server.workers.AllRootJobIDs()
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorGettingComposeList, err)
+	}
+
+	return ctx.JSON(http.StatusOK, jobs)
+}
+
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 	return h.server.EnsureJobChannel(h.getComposeStatusImpl)(ctx, id)
 }

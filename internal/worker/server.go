@@ -335,6 +335,11 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 	return nil, nil
 }
 
+// AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
+func (s *Server) AllRootJobIDs() ([]uuid.UUID, error) {
+	return s.jobs.AllRootJobIDs()
+}
+
 func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInfo, error) {
 	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {
