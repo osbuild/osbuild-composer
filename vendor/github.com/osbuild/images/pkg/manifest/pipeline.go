@@ -97,7 +97,7 @@ func (p Base) getCheckpoint() bool {
 }
 
 func (p *Base) Export() *artifact.Artifact {
-	panic("can't export pipeline")
+	panic("can't export pipeline directly from pipeline.Base")
 }
 
 func (p Base) getExport() bool {
