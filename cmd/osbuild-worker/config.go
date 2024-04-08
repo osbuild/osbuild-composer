@@ -83,6 +83,7 @@ type repositoryMTLSConfig struct {
 	CA             string `toml:"ca"`
 	MTLSClientKey  string `toml:"mtls_client_key"`
 	MTLSClientCert string `toml:"mtls_client_cert"`
+	Proxy          string `toml:"proxy"`
 }
 
 type workerConfig struct {

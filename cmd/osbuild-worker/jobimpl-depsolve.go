@@ -19,6 +19,7 @@ type RepositoryMTLSConfig struct {
 	CA             string
 	MTLSClientKey  string
 	MTLSClientCert string
+	Proxy          *url.URL
 }
 
 func (rmc *RepositoryMTLSConfig) CompareBaseURL(baseURLStr string) (bool, error) {

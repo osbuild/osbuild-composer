@@ -440,11 +440,21 @@ func main() {
 		if err != nil {
 			logrus.Fatalf("Repository MTL baseurl not valid: %v", err)
 		}
+
+		var proxyURL *url.URL
+		if config.RepositoryMTLSConfig.Proxy != "" {
+			proxyURL, err = url.Parse(config.RepositoryMTLSConfig.Proxy)
+			if err != nil {
+				logrus.Fatalf("Repository Proxy url not valid: %v", err)
+			}
+		}
+
 		repositoryMTLSConfig = &RepositoryMTLSConfig{
 			BaseURL:        baseURL,
 			CA:             config.RepositoryMTLSConfig.CA,
 			MTLSClientKey:  config.RepositoryMTLSConfig.MTLSClientKey,
 			MTLSClientCert: config.RepositoryMTLSConfig.MTLSClientCert,
+			Proxy:          proxyURL,
 		}
 	}
 
