@@ -21,7 +21,7 @@ instance, includes a
 
  * **Website**: <https://www.osbuild.org>
  * **Bug Tracker**: <https://github.com/osbuild/osbuild-composer/issues>
- * **Matrix**: https://matrix.to/#/#image-builder:fedoraproject.org
+ * **Matrix**: <https://matrix.to/#/#image-builder:fedoraproject.org?web-instance[element.io]=chat.fedoraproject.org>
  * **Mailing List**: image-builder@redhat.com
  * **Changelog**: <https://github.com/osbuild/osbuild-composer/releases>
 
