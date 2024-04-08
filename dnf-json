@@ -20,7 +20,7 @@ import hawkey
 class Solver():
 
     # pylint: disable=too-many-arguments
-    def __init__(self, repos, module_platform_id, persistdir, cachedir, arch):
+    def __init__(self, repos, module_platform_id, persistdir, cachedir, arch, proxy):
         self.base = dnf.Base()
 
         # Enable fastestmirror to ensure we choose the fastest mirrors for
@@ -51,6 +51,8 @@ class Solver():
         self.base.conf.cachedir = cachedir
         self.base.conf.substitutions['arch'] = arch
         self.base.conf.substitutions['basearch'] = dnf.rpm.basearch(arch)
+        if proxy:
+            self.base.conf.proxy = proxy
 
         for repo in repos:
             self.base.repos.add(self._dnfrepo(repo, self.base.conf))
@@ -273,6 +275,7 @@ def solve(request, cache_dir):
     arch = request["arch"]
     module_platform_id = request["module_platform_id"]
     arguments = request["arguments"]
+    proxy = request["proxy"]
 
     transactions = arguments.get("transactions")
     with tempfile.TemporaryDirectory() as persistdir:
@@ -282,6 +285,7 @@ def solve(request, cache_dir):
                 module_platform_id,
                 persistdir,
                 cache_dir,
+                proxy,
                 arch
             )
             if command == "dump":
