@@ -245,7 +245,7 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
 EOF
 
 if [ "$ARCH" == "aarch64" ]; then
-    sed -i s/t3.medium/a1.large/ "${TEMPDIR}/resource-file.json"
+    sed -i s/t3.medium/m6g.medium/ "${TEMPDIR}/resource-file.json"
 fi
 
 if [ -z "$CIV_CONFIG_FILE" ]; then
