@@ -16,10 +16,42 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
+// OSTreeDeploymentCustomizations encapsulates all configuration applied to an
+// OSTree deployment independently of where and how it is integrated and what
+// workload it is running.
+type OSTreeDeploymentCustomizations struct {
+	SysrootReadOnly bool
+
+	KernelOptionsAppend []string
+	Keyboard            string
+	Locale              string
+
+	Users  []users.User
+	Groups []users.Group
+
+	// Specifies the ignition platform to use.
+	// If empty, ignition is not enabled.
+	IgnitionPlatform string
+
+	Directories []*fsnode.Directory
+	Files       []*fsnode.File
+
+	FIPS bool
+
+	CustomFileSystems []string
+
+	// Lock the root account in the deployment unless the user defined root
+	// user options in the build configuration.
+	LockRoot bool
+}
+
 // OSTreeDeployment represents the filesystem tree of a target image based
 // on a deployed ostree commit.
 type OSTreeDeployment struct {
 	Base
+
+	// Customizations to apply to the deployment
+	OSTreeDeploymentCustomizations
 
 	Remote ostree.Remote
 
@@ -40,42 +72,18 @@ type OSTreeDeployment struct {
 	// deployed in this pipeline.
 	containerSpec *container.Spec
 
-	SysrootReadOnly bool
-
 	osName string
 	ref    string
-
-	KernelOptionsAppend []string
-	Keyboard            string
-	Locale              string
-
-	Users  []users.User
-	Groups []users.Group
 
 	platform platform.Platform
 
 	PartitionTable *disk.PartitionTable
 
-	// Specifies the ignition platform to use.
-	// If empty, ignition is not enabled.
-	IgnitionPlatform string
-
-	Directories []*fsnode.Directory
-	Files       []*fsnode.File
-
 	EnabledServices  []string
 	DisabledServices []string
 
-	FIPS bool
-
-	// Lock the root account in the deployment unless the user defined root
-	// user options in the build configuration.
-	LockRoot bool
-
 	// Use bootupd instead of grub2 as the bootloader
 	UseBootupd bool
-
-	CustomFileSystems []string
 }
 
 // NewOSTreeCommitDeployment creates a pipeline for an ostree deployment from a
