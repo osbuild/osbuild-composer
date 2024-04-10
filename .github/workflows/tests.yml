@@ -65,7 +65,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        go-version: 1.19
+        go-version: "1.20"
     - env:
         PGUSER: postgres
         PGPASSWORD: foobar
@@ -105,10 +105,10 @@ jobs:
     name: "⌨ Golang Lint"
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.19
+      - name: Set up Go 1.20
         uses: actions/setup-go@v5
         with:
-          go-version: 1.19
+          go-version: "1.20"
         id: go
 
       - name: Check out code into the Go module directory
@@ -163,10 +163,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
 
-      - name: Set up Go 1.19
+      - name: Set up Go 1.20
         uses: actions/setup-go@v5
         with:
-          go-version: 1.19
+          go-version: "1.20"
         id: go
 
       - name: Check out code into the Go module directory
