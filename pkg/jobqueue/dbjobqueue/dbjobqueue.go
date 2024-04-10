@@ -871,3 +871,10 @@ func (q *DBJobQueue) jobDependents(ctx context.Context, conn connection, id uuid
 
 	return dependents, nil
 }
+
+// AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
+func (q *DBJobQueue) AllRootJobIDs() ([]uuid.UUID, error) {
+	// TODO write this
+
+	return nil, nil
+}
