@@ -83,7 +83,7 @@ jobs:
     - run: go test -tags=integration ./cmd/osbuild-service-maintenance
 
   python-lint:
-    name: "🐍 Lint (dnf-json)"
+    name: "🐍 Lint python scripts"
     runs-on: ubuntu-latest
     container:
       image: registry.fedoraproject.org/fedora:37
@@ -99,7 +99,7 @@ jobs:
 
       - name: Analysing the code with pylint
         run: |
-          python3 -m pylint dnf-json tools/koji-compose.py
+          python3 -m pylint tools/koji-compose.py
 
   golang-lint:
     name: "⌨ Golang Lint"
