@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/distro/rhel9"
+	"github.com/osbuild/images/pkg/distro/rhel/rhel9"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"

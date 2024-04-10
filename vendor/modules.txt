@@ -846,8 +846,8 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.51.0
-## explicit; go 1.19
+# github.com/osbuild/images v0.54.0
+## explicit; go 1.20
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
 github.com/osbuild/images/internal/pathpolicy
@@ -866,9 +866,11 @@ github.com/osbuild/images/pkg/customizations/users
 github.com/osbuild/images/pkg/disk
 github.com/osbuild/images/pkg/distro
 github.com/osbuild/images/pkg/distro/fedora
+github.com/osbuild/images/pkg/distro/rhel
+github.com/osbuild/images/pkg/distro/rhel/rhel10
+github.com/osbuild/images/pkg/distro/rhel/rhel8
+github.com/osbuild/images/pkg/distro/rhel/rhel9
 github.com/osbuild/images/pkg/distro/rhel7
-github.com/osbuild/images/pkg/distro/rhel8
-github.com/osbuild/images/pkg/distro/rhel9
 github.com/osbuild/images/pkg/distro/test_distro
 github.com/osbuild/images/pkg/distrofactory
 github.com/osbuild/images/pkg/distroidparser

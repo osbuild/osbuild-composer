@@ -608,7 +608,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			}))
 		}
 
-		if !p.KernelOptionsBootloader {
+		if !p.KernelOptionsBootloader || p.platform.GetArch() == arch.ARCH_S390X {
 			pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
 		}
 

@@ -36,21 +36,48 @@ var MountpointPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPo
 
 // CustomDirectoriesPolicies is a set of default policies for custom directories
 var CustomDirectoriesPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
-	"/":    {Deny: true},
-	"/etc": {},
+	"/":           {},
+	"/bin":        {Deny: true},
+	"/boot":       {Deny: true},
+	"/dev":        {Deny: true},
+	"/lib":        {Deny: true},
+	"/lib64":      {Deny: true},
+	"/lost+found": {Deny: true},
+	"/proc":       {Deny: true},
+	"/run":        {Deny: true},
+	"/sbin":       {Deny: true},
+	"/sys":        {Deny: true},
+	"/sysroot":    {Deny: true},
+	"/tmp":        {Deny: true},
+	"/usr":        {Deny: true},
+	"/var/run":    {Deny: true},
+	"/var/tmp":    {Deny: true},
+	"/efi":        {Deny: true},
 })
 
 // CustomFilesPolicies is a set of default policies for custom files
 var CustomFilesPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
-	"/":               {Deny: true},
-	"/etc":            {},
-	"/root":           {},
-	"/usr/local/bin":  {},
-	"/usr/local/sbin": {},
-	"/etc/fstab":      {Deny: true},
-	"/etc/shadow":     {Deny: true},
-	"/etc/passwd":     {Deny: true},
-	"/etc/group":      {Deny: true},
+	"/":           {},
+	"/bin":        {Deny: true},
+	"/boot":       {Deny: true},
+	"/dev":        {Deny: true},
+	"/efi":        {Deny: true},
+	"/etc/fstab":  {Deny: true},
+	"/etc/group":  {Deny: true},
+	"/etc/passwd": {Deny: true},
+	"/etc/shadow": {Deny: true},
+	"/lib":        {Deny: true},
+	"/lib64":      {Deny: true},
+	"/lost+found": {Deny: true},
+	"/proc":       {Deny: true},
+	"/run":        {Deny: true},
+	"/sbin":       {Deny: true},
+	"/sys":        {Deny: true},
+	"/sysroot":    {Deny: true},
+	"/tmp":        {Deny: true},
+	"/usr":        {Deny: true},
+	"/var/run":    {Deny: true},
+	"/var/tmp":    {Deny: true},
 })
 
 // MountpointPolicies for ostree
@@ -64,4 +91,23 @@ var OstreeMountpointPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.
 	"/var/roothome": {Deny: true},
 	"/var/usrlocal": {Deny: true},
 	"/var/mnt":      {Deny: true},
+})
+
+// CustomDirectoriesPolicies for ostree
+var OstreeCustomDirectoriesPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
+	"/":    {Deny: true},
+	"/etc": {},
+})
+
+// CustomFilesPolicies for ostree
+var OstreeCustomFilesPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
+	"/":               {Deny: true},
+	"/etc":            {},
+	"/root":           {},
+	"/usr/local/bin":  {},
+	"/usr/local/sbin": {},
+	"/etc/fstab":      {Deny: true},
+	"/etc/shadow":     {Deny: true},
+	"/etc/passwd":     {Deny: true},
+	"/etc/group":      {Deny: true},
 })

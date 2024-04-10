@@ -46,6 +46,7 @@ var defaultDistroImageConfig = &distro.ImageConfig{
 			},
 		},
 	},
+	KernelOptionsBootloader: common.ToPtr(true),
 }
 
 // --- Distribution ---

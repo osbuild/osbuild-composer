@@ -13,7 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/rhel9"
+	"github.com/osbuild/images/pkg/distro/rhel/rhel9"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"

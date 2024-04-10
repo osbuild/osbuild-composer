@@ -6,7 +6,6 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/workload"
-	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/users"
@@ -23,7 +22,7 @@ func osCustomizations(
 	options distro.ImageOptions,
 	containers []container.SourceSpec,
 	c *blueprint.Customizations,
-) manifest.OSCustomizations {
+) (manifest.OSCustomizations, error) {
 
 	imageConfig := t.getDefaultImageConfig()
 
@@ -40,8 +39,8 @@ func osCustomizations(
 			kernelOptions = append(kernelOptions, bpKernel.Append)
 		}
 		osc.KernelOptionsAppend = kernelOptions
-		if t.platform.GetArch() != arch.ARCH_S390X {
-			osc.KernelOptionsBootloader = true
+		if imageConfig.KernelOptionsBootloader != nil {
+			osc.KernelOptionsBootloader = *imageConfig.KernelOptionsBootloader
 		}
 	}
 
@@ -131,10 +130,18 @@ func osCustomizations(
 	}
 
 	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
+		var datastream = oscapConfig.DataStream
+		if datastream == "" {
+			if imageConfig.DefaultOSCAPDatastream == nil {
+				return manifest.OSCustomizations{}, fmt.Errorf("No OSCAP datastream specified and the distro does not have any default set")
+			}
+			datastream = *imageConfig.DefaultOSCAPDatastream
+		}
+
 		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(
 			oscapDataDir,
 			osbuild.OscapConfig{
-				Datastream:  oscapConfig.DataStream,
+				Datastream:  datastream,
 				ProfileID:   oscapConfig.ProfileID,
 				Compression: true,
 			},
@@ -219,7 +226,7 @@ func osCustomizations(
 	osc.Files = append(osc.Files, imageConfig.Files...)
 	osc.Directories = append(osc.Directories, imageConfig.Directories...)
 
-	return osc
+	return osc, nil
 }
 
 func diskImage(workload workload.Workload,
@@ -232,7 +239,13 @@ func diskImage(workload workload.Workload,
 
 	img := image.NewDiskImage()
 	img.Platform = t.platform
-	img.OSCustomizations = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, customizations)
+	if err != nil {
+		return nil, err
+	}
+
 	img.Environment = t.environment
 	img.Workload = workload
 	img.Compression = t.compression
