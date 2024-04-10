@@ -774,8 +774,9 @@ func TestBlueprintsDelete(t *testing.T) {
 func TestBlueprintsChanges(t *testing.T) {
 	api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.BaseFixture, nil)
 	t.Cleanup(sf.Cleanup)
-	rand.Seed(time.Now().UnixNano())
 	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	/* #nosec G404 */
 	id := strconv.Itoa(rand.Int())
 	ignoreFields := []string{"commit", "timestamp"}
@@ -800,8 +801,9 @@ func TestBlueprintsChanges(t *testing.T) {
 func TestBlueprintChange(t *testing.T) {
 	api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.BaseFixture, nil)
 	t.Cleanup(sf.Cleanup)
-	rand.Seed(time.Now().UnixNano())
 	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	/* #nosec G404 */
 	id := strconv.Itoa(rand.Int())
 
@@ -860,8 +862,9 @@ func TestBlueprintsDepsolve(t *testing.T) {
 func TestOldBlueprintsUndo(t *testing.T) {
 	api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.OldChangesFixture, nil)
 	t.Cleanup(sf.Cleanup)
-	rand.Seed(time.Now().UnixNano())
 	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	/* #nosec G404 */
 	ignoreFields := []string{"commit", "timestamp"}
 
@@ -895,8 +898,9 @@ func TestOldBlueprintsUndo(t *testing.T) {
 func TestNewBlueprintsUndo(t *testing.T) {
 	api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.BaseFixture, nil)
 	t.Cleanup(sf.Cleanup)
-	rand.Seed(time.Now().UnixNano())
 	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	/* #nosec G404 */
 	id := strconv.Itoa(rand.Int())
 	ignoreFields := []string{"commit", "timestamp"}
