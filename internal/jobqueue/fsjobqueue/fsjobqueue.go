@@ -702,3 +702,27 @@ func jobMatchesCriteria(j *job, acceptedJobTypes []string, acceptedChannels []st
 
 	return contains(acceptedJobTypes, j.Type) && contains(acceptedChannels, j.Channel)
 }
+
+// AllRootJobIDs Return a list of all the top level(root) job uuids
+// This only includes jobs without any Dependents set
+func (q *fsJobQueue) AllRootJobIDs() ([]uuid.UUID, error) {
+	ids, err := q.db.List()
+	if err != nil {
+		return nil, err
+	}
+
+	jobIDs := []uuid.UUID{}
+	for _, id := range ids {
+		var j job
+		exists, err := q.db.Read(id, &j)
+		if err != nil {
+			return jobIDs, err
+		}
+		if !exists || len(j.Dependents) > 0 {
+			continue
+		}
+		jobIDs = append(jobIDs, j.Id)
+	}
+
+	return jobIDs, nil
+}
