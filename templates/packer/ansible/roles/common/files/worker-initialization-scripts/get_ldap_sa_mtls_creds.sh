@@ -17,6 +17,7 @@ MTLS_CERT=$(jq -r ".cert" /tmp/ldap_service_account_mtls_credentials.json)
 MTLS_KEY=$(jq -r ".key" /tmp/ldap_service_account_mtls_credentials.json)
 BASEURL=$(jq -r ".baseurl" /tmp/ldap_service_account_mtls_credentials.json)
 CA=$(jq -r ".ca" /tmp/ldap_service_account_mtls_credentials.json)
+PROXY=$(jq -r ".proxy" /tmp/ldap_service_account_mtls_credentials.json)
 rm /tmp/ldap_service_account_mtls_credentials.json
 
 sudo tee /etc/osbuild-worker/image_builder_sa_mtls_cert.pem > /dev/null << EOF
@@ -32,6 +33,7 @@ sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 baseurl = "$BASEURL"
 mtls_client_key = "/etc/osbuild-worker/image_builder_sa_mtls_key.pem"
 mtls_client_cert = "/etc/osbuild-worker/image_builder_sa_mtls_cert.pem"
+proxy = "$PROXY"
 EOF
 
 if [ "$CA" != null ]; then
