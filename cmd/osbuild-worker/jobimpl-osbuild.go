@@ -491,6 +491,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		}
 		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY=%s", impl.RepositoryMTLSConfig.MTLSClientKey))
 		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT=%s", impl.RepositoryMTLSConfig.MTLSClientCert))
+		if impl.RepositoryMTLSConfig.Proxy != nil {
+			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_PROXY=%s", impl.RepositoryMTLSConfig.Proxy.String()))
+		}
 	}
 
 	// Run osbuild and handle two kinds of errors

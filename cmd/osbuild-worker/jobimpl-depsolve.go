@@ -19,6 +19,7 @@ type RepositoryMTLSConfig struct {
 	CA             string
 	MTLSClientKey  string
 	MTLSClientCert string
+	Proxy          *url.URL
 }
 
 func (rmc *RepositoryMTLSConfig) CompareBaseURL(baseURLStr string) (bool, error) {
@@ -51,6 +52,12 @@ type DepsolveJobImpl struct {
 // (matching map keys).
 func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
+	if impl.RepositoryMTLSConfig.Proxy != nil {
+		err := solver.SetProxy(impl.RepositoryMTLSConfig.Proxy.String())
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	repoConfigs := make(map[string][]rpmmd.RepoConfig)
