@@ -269,7 +269,7 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 				Dropin: "10-rh-enable-for-ec2.conf",
 				Config: osbuild.SystemdServiceUnitDropin{
 					Service: &osbuild.SystemdUnitServiceSection{
-						Environment: "NM_CLOUD_SETUP_EC2=yes",
+						Environment: []osbuild.EnvironmentVariable{{Key: "NM_CLOUD_SETUP_EC2", Value: "yes"}},
 					},
 				},
 			},
