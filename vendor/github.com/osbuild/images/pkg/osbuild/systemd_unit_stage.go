@@ -1,5 +1,10 @@
 package osbuild
 
+import (
+	"fmt"
+	"regexp"
+)
+
 type unitType string
 
 const (
@@ -16,7 +21,22 @@ type SystemdUnitStageOptions struct {
 
 func (SystemdUnitStageOptions) isStageOptions() {}
 
+func (o *SystemdUnitStageOptions) validate() error {
+	vre := regexp.MustCompile(envVarRegex)
+	if service := o.Config.Service; service != nil {
+		for _, envVar := range service.Environment {
+			if !vre.MatchString(envVar.Key) {
+				return fmt.Errorf("variable name %q doesn't conform to schema (%s)", envVar.Key, envVarRegex)
+			}
+		}
+	}
+	return nil
+}
+
 func NewSystemdUnitStage(options *SystemdUnitStageOptions) *Stage {
+	if err := options.validate(); err != nil {
+		panic(err)
+	}
 	return &Stage{
 		Type:    "org.osbuild.systemd.unit",
 		Options: options,
@@ -32,7 +52,8 @@ type SystemdServiceUnitDropin struct {
 // 'Service' configuration section of a unit file
 type SystemdUnitServiceSection struct {
 	// Sets environment variables for executed process
-	Environment string `json:"Environment,omitempty"`
+	Environment     []EnvironmentVariable `json:"Environment,omitempty"`
+	EnvironmentFile []string              `json:"EnvironmentFile,omitempty"`
 }
 
 // 'Unit' configuration section of a unit file
