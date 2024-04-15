@@ -326,7 +326,7 @@ func (api *API) PreloadMetadata() {
 			}
 
 			solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.hostArch, d.Name())
-			_, err = solver.Depsolve([]rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}})
+			_, _, err = solver.Depsolve([]rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}})
 			if err != nil {
 				log.Printf("Problem preloading distro metadata for %s: %s", distro, err)
 			}
@@ -1290,7 +1290,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
 		for i := range packageInfos {
 			pkgName := packageInfos[i].Name
-			solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}})
+			solved, _, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}})
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1377,7 +1377,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
-	deps, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names, Repositories: repos}})
+	deps, _, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names, Repositories: repos}})
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
@@ -3611,7 +3611,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
-	solved, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}})
+	solved, _, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}})
 	if err != nil {
 		return nil, err
 	}

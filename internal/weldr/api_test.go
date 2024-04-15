@@ -954,7 +954,7 @@ func TestCompose(t *testing.T) {
 
 	rPkgs, rContainers, rCommits := ResolveContent(manifest.GetPackageSetChains(), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
 
-	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits)
+	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 
 	ostreeImgType, err := arch.GetImageType(test_distro.TestImageTypeOSTree)
@@ -965,7 +965,7 @@ func TestCompose(t *testing.T) {
 
 	rPkgs, rContainers, rCommits = ResolveContent(ostreeManifest.GetPackageSetChains(), ostreeManifest.GetContainerSourceSpecs(), ostreeManifest.GetOSTreeSourceSpecs())
 
-	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits)
+	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{
@@ -1076,7 +1076,7 @@ func TestCompose(t *testing.T) {
 
 	rPkgs, rContainers, rCommits = ResolveContent(ostreeManifestOther.GetPackageSetChains(), ostreeManifestOther.GetContainerSourceSpecs(), ostreeManifestOther.GetOSTreeSourceSpecs())
 
-	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits)
+	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 	expectedComposeOSTreeOther := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
@@ -1118,7 +1118,7 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 
 	rPkgs, rContainers, rCommits = ResolveContent(manifest2.GetPackageSetChains(), manifest2.GetContainerSourceSpecs(), manifest2.GetOSTreeSourceSpecs())
-	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits)
+	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 
 	expectedComposeGoodDistro := &store.Compose{
@@ -2156,7 +2156,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	require.NoError(t, err)
 
 	rPkgs, rContainers, rCommits := ResolveContent(manifest.GetPackageSetChains(), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
-	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits)
+	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &store.Compose{
