@@ -29,16 +29,18 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 		panic(err)
 	}
 	pkgSpecSets := make(map[string][]rpmmd.PackageSpec)
+	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), d.Name(), cacheDir)
 	for name, packages := range manifest.GetPackageSetChains() {
-		res, err := solver.Depsolve(packages)
+		res, repos, err := solver.Depsolve(packages)
 		if err != nil {
 			panic(err)
 		}
 		pkgSpecSets[name] = res
+		repoConfigs[name] = repos
 	}
 
-	mf, err := manifest.Serialize(pkgSpecSets, nil, nil)
+	mf, err := manifest.Serialize(pkgSpecSets, nil, nil, repoConfigs)
 	if err != nil {
 		panic(err)
 	}
