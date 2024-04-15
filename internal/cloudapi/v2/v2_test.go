@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path"
 	"sync"
 	"testing"
 
@@ -70,9 +72,22 @@ var sbomDoc = json.RawMessage(`{
 }`)
 
 func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT bool, failDepsolve bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
-	q, err := fsjobqueue.New(dir)
+	jobsDir := path.Join(dir, "jobs")
+	err := os.Mkdir(jobsDir, 0755)
 	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id", "account_id"}})
+	q, err := fsjobqueue.New(jobsDir)
+	require.NoError(t, err)
+
+	artifactsDir := path.Join(dir, "artifacts")
+	err = os.Mkdir(artifactsDir, 0755)
+	require.NoError(t, err)
+
+	workerServer := worker.NewServer(nil, q,
+		worker.Config{
+			BasePath:             "/api/worker/v1",
+			JWTEnabled:           enableJWT,
+			TenantProviderFields: []string{"rh-org-id", "account_id"},
+			ArtifactsDir:         artifactsDir})
 
 	distros := distrofactory.NewTestDefault()
 	require.NotNil(t, distros)
@@ -1582,4 +1597,66 @@ func TestComposesRoute(t *testing.T) {
 	// List root composes
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
 		http.StatusOK, fmt.Sprintf(`["%s"]`, jobID.String()), "id")
+}
+
+func TestComposesDeleteRoute(t *testing.T) {
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	// Make a compose so it has something to list and delete
+	reply := test.TestRouteWithReply(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "%s",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1",
+				"snapshot_name": "name",
+				"share_with_accounts": ["123456789012","234567890123"]
+			}
+		}
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	// Extract the compose ID to use to test the list response
+	var composeReply v2.ComposeId
+	err := json.Unmarshal(reply, &composeReply)
+	require.NoError(t, err)
+	jobID, err := uuid.Parse(composeReply.Id)
+	require.NoError(t, err)
+
+	_, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
+	res, err := json.Marshal(&worker.OSBuildJobResult{
+		Success:       true,
+		OSBuildOutput: &osbuild.Result{Success: true},
+	})
+	require.NoError(t, err)
+	err = wrksrv.FinishJob(token, res)
+	require.NoError(t, err)
+
+	// List root composes
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
+		http.StatusOK, fmt.Sprintf(`["%s"]`, jobID.String()), "id")
+
+	// Delete the compose
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "DELETE", fmt.Sprintf("/api/image-builder-composer/v2/composes/delete/%s", jobID.String()), ``,
+		http.StatusOK, fmt.Sprintf(`
+	{
+		"id": "%s",
+		"kind": "ComposeDeleteStatus"
+	}`, jobID.String()), "href")
+
+	// List root composes (should now be none)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
+		http.StatusOK, `[]`, "id")
 }

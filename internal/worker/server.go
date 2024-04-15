@@ -345,6 +345,11 @@ func (s *Server) AllRootJobIDs() ([]uuid.UUID, error) {
 	return s.jobs.AllRootJobIDs()
 }
 
+// RemoveJob deletes a job and all of its dependencies
+func (s *Server) RemoveJob(id uuid.UUID) error {
+	return s.jobs.RemoveJob(id)
+}
+
 func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInfo, error) {
 	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {
