@@ -85,34 +85,53 @@ func generateSearchResults() map[string]interface{} {
 	}
 }
 
-func createBaseDepsolveFixture() []dnfjson.PackageSpec {
-	return []dnfjson.PackageSpec{
-		{
-			Name:     "dep-package3",
-			Epoch:    7,
-			Version:  "3.0.3",
-			Release:  "1.fc30",
-			Arch:     "x86_64",
-			RepoID:   "REPOID", // added by mock-dnf-json
-			Checksum: "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
+// These are duplicated from images/pk/dnfjson
+type depsolveResult struct {
+	Packages []dnfjson.PackageSpec `json:"packages"`
+	Repos    map[string]repoConfig `json:"repos"`
+}
+
+type repoConfig struct {
+	ID       string `json:"id"`
+	GPGCheck bool   `json:"gpgcheck"`
+}
+
+func createBaseDepsolveFixture() depsolveResult {
+	return depsolveResult{
+		Packages: []dnfjson.PackageSpec{
+			{
+				Name:     "dep-package3",
+				Epoch:    7,
+				Version:  "3.0.3",
+				Release:  "1.fc30",
+				Arch:     "x86_64",
+				RepoID:   "REPOID", // added by mock-dnf-json
+				Checksum: "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
+			},
+			{
+				Name:     "dep-package1",
+				Epoch:    0,
+				Version:  "1.33",
+				Release:  "2.fc30",
+				Arch:     "x86_64",
+				RepoID:   "REPOID", // added by mock-dnf-json
+				Checksum: "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
+			},
+			{
+				Name:     "dep-package2",
+				Epoch:    0,
+				Version:  "2.9",
+				Release:  "1.fc30",
+				Arch:     "x86_64",
+				RepoID:   "REPOID", // added by mock-dnf-json
+				Checksum: "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
+			},
 		},
-		{
-			Name:     "dep-package1",
-			Epoch:    0,
-			Version:  "1.33",
-			Release:  "2.fc30",
-			Arch:     "x86_64",
-			RepoID:   "REPOID", // added by mock-dnf-json
-			Checksum: "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
-		},
-		{
-			Name:     "dep-package2",
-			Epoch:    0,
-			Version:  "2.9",
-			Release:  "1.fc30",
-			Arch:     "x86_64",
-			RepoID:   "REPOID", // added by mock-dnf-json
-			Checksum: "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
+		Repos: map[string]repoConfig{
+			"REPOID": repoConfig{
+				ID:       "REPOID",
+				GPGCheck: true,
+			},
 		},
 	}
 }
