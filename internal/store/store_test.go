@@ -59,7 +59,7 @@ func (suite *storeTest) SetupSuite() {
 	suite.NoError(err)
 	ibp := blueprint.Convert(suite.myBP)
 	manifest, _, _ := suite.myImageType.Manifest(&ibp, suite.myImageOptions, suite.myRepoConfig, 0)
-	suite.myManifest, _ = manifest.Serialize(nil, nil, nil)
+	suite.myManifest, _ = manifest.Serialize(nil, nil, nil, nil)
 	suite.mySourceConfig = SourceConfig{
 		Name: "testSourceConfig",
 	}

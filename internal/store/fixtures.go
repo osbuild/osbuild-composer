@@ -86,7 +86,7 @@ func FixtureBase(hostDistroName, hostArchName string) *Fixture {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
-	mf, err := manifest.Serialize(nil, nil, nil)
+	mf, err := manifest.Serialize(nil, nil, nil, nil)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
@@ -236,7 +236,7 @@ func FixtureFinished(hostDistroName, hostArchName string) *Fixture {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
-	mf, err := manifest.Serialize(nil, nil, nil)
+	mf, err := manifest.Serialize(nil, nil, nil, nil)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
@@ -470,7 +470,7 @@ func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
 
-	mf, err := manifest.Serialize(nil, nil, nil)
+	mf, err := manifest.Serialize(nil, nil, nil, nil)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create a manifest: %v", err))
 	}
