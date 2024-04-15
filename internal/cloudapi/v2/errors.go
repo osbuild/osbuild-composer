@@ -74,6 +74,7 @@ const (
 	ErrorGettingJobType                           ServiceErrorCode = 1019
 	ErrorTenantNotInContext                       ServiceErrorCode = 1020
 	ErrorGettingComposeList                       ServiceErrorCode = 1021
+	ErrorRemovingJob                              ServiceErrorCode = 1022
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -155,6 +156,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorGettingJobType, http.StatusInternalServerError, "Unable to get job type of existing job"},
 		serviceError{ErrorTenantNotInContext, http.StatusInternalServerError, "Unable to retrieve tenant from request context"},
 		serviceError{ErrorGettingComposeList, http.StatusInternalServerError, "Unable to get list of composes"},
+		serviceError{ErrorRemovingJob, http.StatusInternalServerError, "Unable to remove job"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},
