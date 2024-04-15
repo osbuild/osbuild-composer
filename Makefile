@@ -141,7 +141,6 @@ install: build
 	- mkdir -p /usr/libexec/osbuild-composer
 	cp $(BUILDDIR)/bin/osbuild-composer /usr/libexec/osbuild-composer/
 	cp $(BUILDDIR)/bin/osbuild-worker /usr/libexec/osbuild-composer/
-	cp dnf-json /usr/libexec/osbuild-composer/
 	- mkdir -p /usr/share/osbuild-composer/repositories
 	cp repositories/* /usr/share/osbuild-composer/repositories
 	- mkdir -p /etc/sysusers.d/
