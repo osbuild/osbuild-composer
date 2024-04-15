@@ -166,7 +166,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			return
 		}
 
-		packageSpecs, err := depsolve(cacheDir, manifest.GetPackageSetChains(), distribution, archName)
+		packageSpecs, repoConfigs, err := depsolve(cacheDir, manifest.GetPackageSetChains(), distribution, archName)
 		if err != nil {
 			err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
 			return
@@ -187,7 +187,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 
 		commitSpecs := resolvePipelineCommits(manifest.GetOSTreeSourceSpecs())
 
-		mf, err := manifest.Serialize(packageSpecs, containerSpecs, commitSpecs)
+		mf, err := manifest.Serialize(packageSpecs, containerSpecs, commitSpecs, repoConfigs)
 		if err != nil {
 			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
 		}
@@ -321,17 +321,19 @@ func resolvePipelineCommits(commitSources map[string][]ostree.SourceSpec) map[st
 	return commits
 }
 
-func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, error) {
+func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch, d.Name(), cacheDir)
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve(pkgSet)
+		res, repos, err := solver.Depsolve(pkgSet)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		depsolvedSets[name] = res
+		repoConfigs[name] = repos
 	}
-	return depsolvedSets, nil
+	return depsolvedSets, repoConfigs, nil
 }
 
 func save(ms manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, cr composeRequest, path, filename string) error {
