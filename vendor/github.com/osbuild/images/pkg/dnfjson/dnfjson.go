@@ -18,6 +18,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/rhsm"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -139,6 +141,11 @@ type Solver struct {
 	// for each distribution.
 	distro string
 
+	rootDir string
+
+	// Proxy to use while depsolving. This is used in DNF's base configuration.
+	proxy string
+
 	subscriptions *rhsm.Subscriptions
 }
 
@@ -146,6 +153,13 @@ type Solver struct {
 func NewSolver(modulePlatformID, releaseVer, arch, distro, cacheDir string) *Solver {
 	s := NewBaseSolver(cacheDir)
 	return s.NewWithConfig(modulePlatformID, releaseVer, arch, distro)
+}
+
+// SetRootDir sets a path from which repository configurations, gpg keys, and
+// vars are loaded during depsolve, instead of (or in addition to) the
+// repositories and keys included in each depsolve request.
+func (s *Solver) SetRootDir(path string) {
+	s.rootDir = path
 }
 
 // GetCacheDir returns a distro specific rpm cache directory
@@ -160,14 +174,23 @@ func (s *Solver) GetCacheDir() string {
 	return filepath.Join(s.cache.root, b)
 }
 
+// Set the proxy to use while depsolving. The proxy will be set in DNF's base configuration.
+func (s *Solver) SetProxy(proxy string) error {
+	if _, err := url.ParseRequestURI(proxy); err != nil {
+		return fmt.Errorf("proxy URL %q is invalid", proxy)
+	}
+	s.proxy = proxy
+	return nil
+}
+
 // Depsolve the list of required package sets with explicit excludes using
 // their associated repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
-func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, error) {
-	req, repoMap, err := s.makeDepsolveRequest(pkgSets)
+func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, []rpmmd.RepoConfig, error) {
+	req, rhsmMap, err := s.makeDepsolveRequest(pkgSets)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// get non-exclusive read lock
@@ -176,22 +199,25 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, erro
 
 	output, err := run(s.dnfJsonCmd, req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// touch repos to now
 	now := time.Now().Local()
-	for _, r := range repoMap {
+	for _, r := range req.Arguments.Repos {
 		// ignore errors
 		_ = s.cache.touchRepo(r.Hash(), now)
 	}
 	s.cache.updateInfo()
 
-	var result packageSpecs
-	if err := json.Unmarshal(output, &result); err != nil {
-		return nil, err
+	var result depsolveResult
+	dec := json.NewDecoder(bytes.NewReader(output))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&result); err != nil {
+		return nil, nil, err
 	}
 
-	return result.toRPMMD(repoMap), nil
+	packages, repos := result.toRPMMD(rhsmMap)
+	return packages, repos, nil
 }
 
 // FetchMetadata returns the list of all the available packages in repos and
@@ -309,15 +335,15 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 		}
 
 		if rr.CheckGPG != nil {
-			dr.CheckGPG = *rr.CheckGPG
+			dr.GPGCheck = *rr.CheckGPG
 		}
 
 		if rr.CheckRepoGPG != nil {
-			dr.CheckRepoGPG = *rr.CheckRepoGPG
+			dr.RepoGPGCheck = *rr.CheckRepoGPG
 		}
 
 		if rr.IgnoreSSL != nil {
-			dr.IgnoreSSL = *rr.IgnoreSSL
+			dr.SSLVerify = common.ToPtr(!*rr.IgnoreSSL)
 		}
 
 		if rr.RHSM {
@@ -347,9 +373,9 @@ type repoConfig struct {
 	Metalink       string   `json:"metalink,omitempty"`
 	MirrorList     string   `json:"mirrorlist,omitempty"`
 	GPGKeys        []string `json:"gpgkeys,omitempty"`
-	CheckGPG       bool     `json:"gpgcheck"`
-	CheckRepoGPG   bool     `json:"check_repogpg"`
-	IgnoreSSL      bool     `json:"ignoressl"`
+	GPGCheck       bool     `json:"gpgcheck"`
+	RepoGPGCheck   bool     `json:"repo_gpgcheck"`
+	SSLVerify      *bool    `json:"sslverify,omitempty"`
 	SSLCACert      string   `json:"sslcacert,omitempty"`
 	SSLClientKey   string   `json:"sslclientkey,omitempty"`
 	SSLClientCert  string   `json:"sslclientcert,omitempty"`
@@ -366,30 +392,31 @@ func (r *repoConfig) Hash() string {
 	return r.repoHash
 }
 
-// Helper function for creating a depsolve request payload.
-// The request defines a sequence of transactions, each depsolving one of the
-// elements of `pkgSets` in the order they appear.  The `repoConfigs` are used
-// as the base repositories for all transactions.  The extra repository configs
-// in `pkgsetsRepos` are used for each of the `pkgSets` with matching index.
-// The length of `pkgsetsRepos` must match the length of `pkgSets` or be empty
-// (nil or empty slice).
+// Helper function for creating a depsolve request payload. The request defines
+// a sequence of transactions, each depsolving one of the elements of `pkgSets`
+// in the order they appear. The repositories are collected in the request
+// arguments indexed by their ID, and each transaction lists the repositories
+// it will use for depsolving.
+//
+// The second return value is a map of repository IDs that have RHSM enabled.
+// The RHSM property is not part of the dnf repository configuration so it's
+// returned separately for setting the value on each package that requires it.
 //
 // NOTE: Due to implementation limitations of DNF and dnf-json, each package set
 // in the chain must use all of the repositories used by its predecessor.
 // An error is returned if this requirement is not met.
-func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[string]rpmmd.RepoConfig, error) {
-
+func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[string]bool, error) {
 	// dedupe repository configurations but maintain order
 	// the order in which repositories are added to the request affects the
 	// order of the dependencies in the result
 	repos := make([]rpmmd.RepoConfig, 0)
-	rpmRepoMap := make(map[string]rpmmd.RepoConfig)
+	rhsmMap := make(map[string]bool)
 
 	for _, ps := range pkgSets {
 		for _, repo := range ps.Repositories {
 			id := repo.Hash()
-			if _, ok := rpmRepoMap[id]; !ok {
-				rpmRepoMap[id] = repo
+			if _, ok := rhsmMap[id]; !ok {
+				rhsmMap[id] = repo.RHSM
 				repos = append(repos, repo)
 			}
 		}
@@ -429,6 +456,7 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[
 	}
 	args := arguments{
 		Repos:        dnfRepoMap,
+		RootDir:      s.rootDir,
 		Transactions: transactions,
 	}
 
@@ -436,11 +464,13 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[
 		Command:          "depsolve",
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
+		Releasever:       s.releaseVer,
 		CacheDir:         s.GetCacheDir(),
+		Proxy:            s.proxy,
 		Arguments:        args,
 	}
 
-	return &req, rpmRepoMap, nil
+	return &req, rhsmMap, nil
 }
 
 // Helper function for creating a dump request payload
@@ -453,7 +483,9 @@ func (s *Solver) makeDumpRequest(repos []rpmmd.RepoConfig) (*Request, error) {
 		Command:          "dump",
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
+		Releasever:       s.releaseVer,
 		CacheDir:         s.GetCacheDir(),
+		Proxy:            s.proxy,
 		Arguments: arguments{
 			Repos: dnfRepos,
 		},
@@ -472,6 +504,8 @@ func (s *Solver) makeSearchRequest(repos []rpmmd.RepoConfig, packages []string) 
 		ModulePlatformID: s.modulePlatformID,
 		Arch:             s.arch,
 		CacheDir:         s.GetCacheDir(),
+		Releasever:       s.releaseVer,
+		Proxy:            s.proxy,
 		Arguments: arguments{
 			Repos: dnfRepos,
 			Search: searchArgs{
@@ -482,9 +516,12 @@ func (s *Solver) makeSearchRequest(repos []rpmmd.RepoConfig, packages []string) 
 	return &req, nil
 }
 
-// convert internal a list of PackageSpecs to the rpmmd equivalent and attach
-// key and subscription information based on the repository configs.
-func (pkgs packageSpecs) toRPMMD(repos map[string]rpmmd.RepoConfig) []rpmmd.PackageSpec {
+// convert internal a list of PackageSpecs and map of repoConfig to the rpmmd
+// equivalents and attach key and subscription information based on the
+// repository configs.
+func (result depsolveResult) toRPMMD(rhsm map[string]bool) ([]rpmmd.PackageSpec, []rpmmd.RepoConfig) {
+	pkgs := result.Packages
+	repos := result.Repos
 	rpmDependencies := make([]rpmmd.PackageSpec, len(pkgs))
 	for i, dep := range pkgs {
 		repo, ok := repos[dep.RepoID]
@@ -499,22 +536,46 @@ func (pkgs packageSpecs) toRPMMD(repos map[string]rpmmd.RepoConfig) []rpmmd.Pack
 		rpmDependencies[i].Arch = dep.Arch
 		rpmDependencies[i].RemoteLocation = dep.RemoteLocation
 		rpmDependencies[i].Checksum = dep.Checksum
-		if repo.CheckGPG != nil {
-			rpmDependencies[i].CheckGPG = *repo.CheckGPG
-		}
-		if repo.IgnoreSSL != nil {
-			rpmDependencies[i].IgnoreSSL = *repo.IgnoreSSL
+		rpmDependencies[i].CheckGPG = repo.GPGCheck
+		if verify := repo.SSLVerify; verify != nil {
+			rpmDependencies[i].IgnoreSSL = !*verify
 		}
 
 		// The ssl secrets will also be set if rhsm is true,
 		// which should take priority.
-		if repo.RHSM {
+		if rhsm[dep.RepoID] {
 			rpmDependencies[i].Secrets = "org.osbuild.rhsm"
 		} else if repo.SSLClientKey != "" {
 			rpmDependencies[i].Secrets = "org.osbuild.mtls"
 		}
 	}
-	return rpmDependencies
+
+	repoConfigs := make([]rpmmd.RepoConfig, 0, len(repos))
+	for repoID := range repos {
+		repo := repos[repoID]
+		var ignoreSSL bool
+		if sslVerify := repo.SSLVerify; sslVerify != nil {
+			ignoreSSL = !*sslVerify
+		}
+		repoConfigs = append(repoConfigs, rpmmd.RepoConfig{
+			Id:             repo.ID,
+			Name:           repo.Name,
+			BaseURLs:       repo.BaseURLs,
+			Metalink:       repo.Metalink,
+			MirrorList:     repo.MirrorList,
+			GPGKeys:        repo.GPGKeys,
+			CheckGPG:       &repo.GPGCheck,
+			CheckRepoGPG:   &repo.RepoGPGCheck,
+			IgnoreSSL:      &ignoreSSL,
+			MetadataExpire: repo.MetadataExpire,
+			ModuleHotfixes: repo.ModuleHotfixes,
+			Enabled:        common.ToPtr(true),
+			SSLCACert:      repo.SSLCACert,
+			SSLClientKey:   repo.SSLClientKey,
+			SSLClientCert:  repo.SSLClientCert,
+		})
+	}
+	return rpmDependencies, repoConfigs
 }
 
 // Request command and arguments for dnf-json
@@ -525,11 +586,17 @@ type Request struct {
 	// Platform ID, e.g., "platform:el8"
 	ModulePlatformID string `json:"module_platform_id"`
 
+	// Distro Releasever, e.e., "8"
+	Releasever string `json:"releasever"`
+
 	// System architecture
 	Arch string `json:"arch"`
 
 	// Cache directory for the DNF metadata
 	CacheDir string `json:"cachedir"`
+
+	// Proxy to use
+	Proxy string `json:"proxy"`
 
 	// Arguments for the action defined by Command
 	Arguments arguments `json:"arguments"`
@@ -563,6 +630,10 @@ type arguments struct {
 
 	// Depsolve package sets and repository mappings for this request
 	Transactions []transactionArgs `json:"transactions"`
+
+	// Load repository configurations, gpg keys, and vars from an os-root-like
+	// tree.
+	RootDir string `json:"root_dir"`
 }
 
 type searchArgs struct {
@@ -590,6 +661,11 @@ type transactionArgs struct {
 }
 
 type packageSpecs []PackageSpec
+
+type depsolveResult struct {
+	Packages packageSpecs          `json:"packages"`
+	Repos    map[string]repoConfig `json:"repos"`
+}
 
 // Package specification
 type PackageSpec struct {

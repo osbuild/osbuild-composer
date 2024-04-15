@@ -22,6 +22,8 @@ type ContentTest struct {
 	containerSpecs []container.Spec
 	commitSpecs    []ostree.CommitSpec
 
+	repos []rpmmd.RepoConfig
+
 	// serialization flag
 	serializing bool
 }
@@ -63,13 +65,14 @@ func (p *ContentTest) getOSTreeCommits() []ostree.CommitSpec {
 	return p.commitSpecs
 }
 
-func (p *ContentTest) serializeStart(pkgs []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec) {
+func (p *ContentTest) serializeStart(pkgs []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec, rpmRepos []rpmmd.RepoConfig) {
 	if p.serializing {
 		panic("double call to serializeStart()")
 	}
 	p.packageSpecs = pkgs
 	p.containerSpecs = containers
 	p.commitSpecs = commits
+	p.repos = rpmRepos
 
 	p.serializing = true
 }
