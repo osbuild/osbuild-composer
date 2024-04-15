@@ -192,6 +192,7 @@ const (
 
 type DepsolveJobResult struct {
 	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
+	RepoConfigs  map[string][]rpmmd.RepoConfig  `json:"repo_configs"`
 	Error        string                         `json:"error"`
 	ErrorType    ErrorType                      `json:"error_type"`
 	JobResult

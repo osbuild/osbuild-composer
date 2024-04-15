@@ -49,19 +49,21 @@ type DepsolveJobImpl struct {
 // in repos are used for all package sets, whereas the repositories in
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, error) {
+func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve(pkgSet)
+		res, repos, err := solver.Depsolve(pkgSet)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		depsolvedSets[name] = res
+		repoConfigs[name] = repos
 	}
 
-	return depsolvedSets, nil
+	return depsolvedSets, repoConfigs, nil
 }
 
 func (impl *DepsolveJobImpl) Run(job worker.Job) error {
@@ -95,7 +97,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 		}
 	}
 
-	result.PackageSpecs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever)
+	result.PackageSpecs, result.RepoConfigs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
 		switch e := err.(type) {
 		case dnfjson.Error:
