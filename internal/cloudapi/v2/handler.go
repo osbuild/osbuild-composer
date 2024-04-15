@@ -329,6 +329,29 @@ func (h *apiHandlers) GetComposeList(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, stats)
 }
 
+// DeleteCompose deletes a compose by UUID
+func (h *apiHandlers) DeleteCompose(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.deleteComposeImpl)(ctx, jobId)
+}
+
+func (h *apiHandlers) deleteComposeImpl(ctx echo.Context, jobId uuid.UUID) error {
+	_, err := h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+
+	err = h.server.workers.DeleteJob(ctx.Request().Context(), jobId)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorDeletingJob, err)
+	}
+
+	return ctx.JSON(http.StatusOK, ComposeDeleteStatus{
+		Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/delete/%v", jobId),
+		Id:   jobId.String(),
+		Kind: "ComposeDeleteStatus",
+	})
+}
+
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, jobId uuid.UUID) error {
 	return h.server.EnsureJobChannel(h.getComposeStatusImpl)(ctx, jobId)
 }
