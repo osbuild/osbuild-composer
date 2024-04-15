@@ -385,6 +385,19 @@ func (s *Server) CleanupArtifacts() error {
 	return nil
 }
 
+// DeleteJob deletes a job and all of its dependencies
+func (s *Server) DeleteJob(ctx context.Context, id uuid.UUID) error {
+	jobInfo, err := s.jobInfo(id, nil)
+	if err != nil {
+		return err
+	}
+	if jobInfo.JobStatus.Finished.IsZero() {
+		return fmt.Errorf("Cannot delete job before job is finished: %s", id)
+	}
+
+	return s.jobs.DeleteJob(ctx, id)
+}
+
 func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInfo, error) {
 	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -241,11 +242,19 @@ func mockSearch(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, f
 }
 
 func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
-	q, err := fsjobqueue.New(dir)
+	jobsDir := filepath.Join(dir, "jobs")
+	err := os.Mkdir(jobsDir, 0755)
 	require.NoError(t, err)
+	q, err := fsjobqueue.New(jobsDir)
+	require.NoError(t, err)
+
+	artifactsDir := filepath.Join(dir, "artifacts")
+	err = os.Mkdir(artifactsDir, 0755)
+	require.NoError(t, err)
+
 	workerServer := worker.NewServer(nil, q,
 		worker.Config{
-			ArtifactsDir:         t.TempDir(),
+			ArtifactsDir:         artifactsDir,
 			BasePath:             "/api/worker/v1",
 			JWTEnabled:           enableJWT,
 			TenantProviderFields: []string{"rh-org-id", "account_id"},
@@ -2126,4 +2135,66 @@ func TestComposeRequestMetadata(t *testing.T) {
 		"kind": "ComposeMetadata",
 		"request": %s
 	}`, jobId, request))
+}
+
+func TestComposesDeleteRoute(t *testing.T) {
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	// Make a compose so it has something to list and delete
+	reply := test.TestRouteWithReply(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "%s",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1",
+				"snapshot_name": "name",
+				"share_with_accounts": ["123456789012","234567890123"]
+			}
+		}
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	// Extract the compose ID to use to test the list response
+	var composeReply v2.ComposeId
+	err := json.Unmarshal(reply, &composeReply)
+	require.NoError(t, err)
+	jobID := composeReply.Id
+
+	_, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
+	res, err := json.Marshal(&worker.OSBuildJobResult{
+		Success:       true,
+		OSBuildOutput: &osbuild.Result{Success: true},
+	})
+	require.NoError(t, err)
+	err = wrksrv.FinishJob(token, res)
+	require.NoError(t, err)
+
+	// List root composes
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
+		http.StatusOK, fmt.Sprintf(`[{"href":"/api/image-builder-composer/v2/composes/%[1]s", "id":"%[1]s", "image_status":{"status":"success"}, "kind":"ComposeStatus", "status":"success"}]`,
+			jobID.String()))
+
+	// Delete the compose
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "DELETE", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s", jobID.String()), ``,
+		http.StatusOK, fmt.Sprintf(`
+	{
+		"id": "%s",
+		"kind": "ComposeDeleteStatus"
+	}`, jobID.String()), "href")
+
+	// List root composes (should now be none)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
+		http.StatusOK, `[]`)
 }
