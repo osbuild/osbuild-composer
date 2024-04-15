@@ -2283,7 +2283,7 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 // repositories for the depsolving. The actual distro object name may not correspond to the alias.
 // Since the solver uses the distro name to namespace cache, it is important to use the same distro
 // name as the one used to get the repositories.
-func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName string, arch distro.Arch) (map[string][]rpmmd.PackageSpec, error) {
+func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName string, arch distro.Arch) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
 
 	distro := arch.Distro()
 	platformID := distro.ModulePlatformID()
@@ -2291,19 +2291,21 @@ func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName s
 	solver := api.solver.NewWithConfig(platformID, releasever, arch.Name(), distroName)
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
+	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve(pkgSet)
+		res, repos, err := solver.Depsolve(pkgSet)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		depsolvedSets[name] = res
+		repoConfigs[name] = repos
 	}
 	if err := solver.CleanCache(); err != nil {
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	return depsolvedSets, nil
+	return depsolvedSets, repoConfigs, nil
 }
 
 func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
@@ -2572,7 +2574,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	packageSets, err := api.depsolve(manifest.GetPackageSetChains(), distroName, imageType.Arch())
+	packageSets, repoConfigs, err := api.depsolve(manifest.GetPackageSetChains(), distroName, imageType.Arch())
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -2604,7 +2606,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	mf, err := manifest.Serialize(packageSets, containerSpecs, ostreeCommitSpecs)
+	mf, err := manifest.Serialize(packageSets, containerSpecs, ostreeCommitSpecs, repoConfigs)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
