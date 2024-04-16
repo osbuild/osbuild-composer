@@ -30,6 +30,8 @@ DESIRED_WORKER_RPM="osbuild-composer-worker-$((CURRENT_WORKER_VERSION - 3))"
 # we subtract 3 from the current version.
 DESIRED_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_WORKER_VERSION-3))" | jq -r '.object.sha')
 DESIRED_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$DESIRED_TAG_SHA" | jq -r '.object.sha')
+DESIRED_OSBUILD_COMMIT_SHA=$(curl -s "https://raw.githubusercontent.com/osbuild/osbuild-composer/$DESIRED_COMMIT_SHA/Schutzfile" | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
+
 
 # Get commit hash of latest composer version, only used for verification.
 CURRENT_COMPOSER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer)
@@ -54,17 +56,20 @@ sudo systemctl stop osbuild-composer.service osbuild-composer.socket osbuild-wor
 sudo systemctl disable osbuild-composer.service osbuild-composer.socket osbuild-worker@1.service || true
 
 greenprint "Removing latest worker"
-sudo dnf remove -y osbuild-composer osbuild-composer-worker osbuild-composer-tests
+sudo dnf remove -y osbuild-composer osbuild-composer-worker osbuild-composer-tests osbuild
 
 function setup_repo {
   local project=$1
   local commit=$2
   local priority=${3:-10}
-  echo "Setting up dnf repository for ${project} ${commit}"
+  local major
+  major=$(echo "$VERSION_ID" | sed -E 's/\..*//')
+
+  greenprint "Setting up dnf repository for ${project} ${commit}"
   sudo tee "/etc/yum.repos.d/${project}.repo" << EOF
 [${project}]
 name=${project} ${commit}
-baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/rhel-8-cdn/x86_64/${commit}
+baseurl=http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/${project}/rhel-${major}-cdn/x86_64/${commit}
 enabled=1
 gpgcheck=0
 priority=${priority}
@@ -73,7 +78,8 @@ EOF
 
 greenprint "Installing osbuild-composer-worker from commit ${DESIRED_COMMIT_SHA}"
 setup_repo osbuild-composer "$DESIRED_COMMIT_SHA" 20
-sudo dnf install -y osbuild-composer-worker osbuild-composer-dnf-json podman composer-cli
+setup_repo osbuild "$DESIRED_OSBUILD_COMMIT_SHA" 20
+sudo dnf install -y osbuild-composer-worker podman composer-cli
 
 # verify the right worker is installed just to be sure
 rpm -q "$DESIRED_WORKER_RPM"
