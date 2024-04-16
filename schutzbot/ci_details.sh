@@ -33,9 +33,13 @@ CI MACHINE SPECS
 EOF
 echo -e "\033[0m"
 
+echo "Volume and file system info:"
+sudo lsblk
+sudo findmnt
+echo "------------------------------------------------------------------------------"
+
 echo "List of system repositories:"
 sudo yum repolist -v
-
 echo "------------------------------------------------------------------------------"
 
 echo "List of installed packages:"
