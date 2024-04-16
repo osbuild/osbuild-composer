@@ -910,3 +910,9 @@ func (q *DBJobQueue) AllRootJobIDs() ([]uuid.UUID, error) {
 
 	return nil, nil
 }
+
+// DeleteJob deletes a job from the database
+// Currently not implemented for the DBJobQueue
+func (q *DBJobQueue) DeleteJob(uuid.UUID) error {
+	return nil
+}
