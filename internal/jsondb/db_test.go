@@ -121,3 +121,38 @@ func TestMultiple(t *testing.T) {
 		require.Equalf(t, doc, d, "error retrieving document '%s'", name)
 	}
 }
+
+func TestDelete(t *testing.T) {
+	dir := t.TempDir()
+
+	perm := os.FileMode(0600)
+	documents := map[string]document{
+		"one":   document{"octopus", true},
+		"two":   document{"zebra", false},
+		"three": document{"clownfish", true},
+	}
+
+	db := jsondb.New(dir, perm)
+
+	for name, doc := range documents {
+		err := db.Write(name, doc)
+		require.NoError(t, err)
+	}
+
+	err := db.Delete("two")
+	require.Nil(t, err)
+
+	names, err := db.List()
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"one", "three"}, names)
+}
+
+func TestDeleteError(t *testing.T) {
+	dir := t.TempDir()
+
+	perm := os.FileMode(0600)
+	db := jsondb.New(dir, perm)
+
+	err := db.Delete("missing")
+	require.Error(t, err)
+}
