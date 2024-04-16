@@ -885,3 +885,10 @@ func (q *DBJobQueue) AllRootJobIDs() ([]uuid.UUID, error) {
 
 	return nil, nil
 }
+
+// RemoveJob deletes a job from the database
+func (q *DBJobQueue) RemoveJob(uuid.UUID) error {
+	// TODO write this
+
+	return nil
+}

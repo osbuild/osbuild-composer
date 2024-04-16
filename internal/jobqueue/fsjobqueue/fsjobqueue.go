@@ -711,3 +711,48 @@ func (q *fsJobQueue) AllRootJobIDs() ([]uuid.UUID, error) {
 
 	return jobIDs, nil
 }
+
+// RemoveJob removes a job and all of its dependencies
+// If a dependency has multiple depenents it will only remove the parent job from
+// the dependants list and then re-save the job instead of removing it.
+//
+// This assumes that the jobs have been created correctly, and that they have
+// no dependency loops. Shared Dependants are ok, but a job cannot have a dependancy
+// on any of its parents (this should never happen).
+func (q *fsJobQueue) RemoveJob(id uuid.UUID) error {
+	// Start it off with an empty parent
+	return q.removeJob(uuid.UUID{}, id)
+}
+
+// removeJob will remove jobs as far down the list as possible
+// missing dependencies are ignored, it deletes as much as it can.
+// A missing parent (the first call) will be returned as an error
+func (q *fsJobQueue) removeJob(parent, id uuid.UUID) error {
+	var j job
+	_, err := q.db.Read(id.String(), &j)
+	if err != nil {
+		return err
+	}
+
+	// Remove the parent uuid from the Dependents list
+	var deps []uuid.UUID
+	for _, d := range j.Dependents {
+		if d == parent {
+			continue
+		}
+		deps = append(deps, d)
+	}
+	j.Dependents = deps
+
+	// This job can only be deleted when the Dependents list is empty
+	// Otherwise it needs to be saved with the new Dependents list
+	if len(j.Dependents) > 0 {
+		return q.db.Write(id.String(), j)
+	}
+	// Recursively remove the dependencies of this job
+	for _, dj := range j.Dependencies {
+		_ = q.removeJob(id, dj)
+	}
+
+	return q.db.Remove(id.String())
+}
