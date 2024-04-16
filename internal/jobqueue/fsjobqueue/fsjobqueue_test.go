@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
@@ -86,4 +87,83 @@ func TestAllRootJobIDs(t *testing.T) {
 	require.Greater(t, len(roots), 0)
 	sortUUIDs(roots)
 	require.Equal(t, rootJobs, roots)
+}
+
+func TestDeleteJob(t *testing.T) {
+	dir := t.TempDir()
+	q, err := fsjobqueue.New(dir)
+	require.Nil(t, err)
+	require.NotNil(t, q)
+
+	// root with no dependencies
+	jidRoot1, err := q.Enqueue("oneRoot", nil, nil, "OneRootJob")
+	require.Nil(t, err)
+
+	err = q.DeleteJob(context.TODO(), jidRoot1)
+	require.Nil(t, err)
+	jobs, err := q.AllRootJobIDs()
+	require.Nil(t, err)
+	require.Equal(t, 0, len(jobs))
+
+	// root with 2 dependencies
+	jid1, err := q.Enqueue("twoDeps", nil, nil, "TwoDepJobs")
+	require.Nil(t, err)
+	jid2, err := q.Enqueue("twoDeps", nil, nil, "TwoDepJobs")
+	require.Nil(t, err)
+	jidRoot2, err := q.Enqueue("twoDeps", nil, []uuid.UUID{jid1, jid2}, "TwoDepJobs")
+	require.Nil(t, err)
+
+	// root with 2 dependencies, one shared with the previous root
+	jid3, err := q.Enqueue("sharedDeps", nil, nil, "SharedDepJobs")
+	require.Nil(t, err)
+	jidRoot3, err := q.Enqueue("sharedDeps", nil, []uuid.UUID{jid1, jid3}, "SharedDepJobs")
+	require.Nil(t, err)
+
+	// This should only remove jidRoot2 and jid2, leaving jidRoot3, jid1, jid3
+	err = q.DeleteJob(context.TODO(), jidRoot2)
+	require.Nil(t, err)
+	jobs, err = q.AllRootJobIDs()
+	require.Nil(t, err)
+	require.Equal(t, 1, len(jobs))
+	assert.Equal(t, []uuid.UUID{jidRoot3}, jobs)
+
+	// This should remove the rest
+	err = q.DeleteJob(context.TODO(), jidRoot3)
+	require.Nil(t, err)
+	jobs, err = q.AllRootJobIDs()
+	require.Nil(t, err)
+	require.Equal(t, 0, len(jobs))
+
+	// Make sure all the jobs are deleted
+	allJobs := []uuid.UUID{jidRoot1, jidRoot2, jidRoot3, jid1, jid2, jid3}
+	for _, jobId := range allJobs {
+		jobType, _, _, _, err := q.Job(jobId)
+		assert.Error(t, err, jobType)
+	}
+
+	// root with 2 jobs depending on another (simulates Koji jobs)
+	kojiOSTree, err := q.Enqueue("ostree", nil, nil, "KojiJob")
+	require.Nil(t, err)
+	kojiDepsolve, err := q.Enqueue("depsolve", nil, nil, "KojiJob")
+	require.Nil(t, err)
+	kojiManifest, err := q.Enqueue("manifest", nil, []uuid.UUID{kojiOSTree, kojiDepsolve}, "KojiJob")
+	require.Nil(t, err)
+	kojiInit, err := q.Enqueue("init", nil, nil, "KojiJob")
+	require.Nil(t, err)
+	kojiRoot, err := q.Enqueue("final", nil, []uuid.UUID{kojiInit, kojiManifest, kojiDepsolve}, "KojiJob")
+	require.Nil(t, err)
+
+	// Delete the koji job
+	err = q.DeleteJob(context.TODO(), kojiRoot)
+	require.Nil(t, err)
+	jobs, err = q.AllRootJobIDs()
+	require.Nil(t, err)
+	require.Equal(t, 0, len(jobs))
+
+	// Make sure all the jobs are deleted
+	kojiJobs := []uuid.UUID{kojiRoot, kojiInit, kojiOSTree, kojiDepsolve, kojiManifest}
+	for _, jobId := range kojiJobs {
+		jobType, _, _, _, err := q.Job(jobId)
+		assert.Error(t, err, jobType)
+	}
 }

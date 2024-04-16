@@ -98,6 +98,9 @@ type JobQueue interface {
 
 	// AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
 	AllRootJobIDs() ([]uuid.UUID, error)
+
+	// DeleteJob deletes a job and all of its dependencies
+	DeleteJob(context.Context, uuid.UUID) error
 }
 
 // SimpleLogger provides a structured logging methods for the jobqueue library.
