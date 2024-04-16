@@ -136,7 +136,7 @@ func (p *CoreOSInstaller) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *CoreOSInstaller) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
+func (p *CoreOSInstaller) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec, rpmRepos []rpmmd.RepoConfig) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
@@ -144,6 +144,7 @@ func (p *CoreOSInstaller) serializeStart(packages []rpmmd.PackageSpec, _ []conta
 	if p.kernelName != "" {
 		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
 	}
+	p.repos = append(p.repos, rpmRepos...)
 }
 
 func (p *CoreOSInstaller) getInline() []string {
