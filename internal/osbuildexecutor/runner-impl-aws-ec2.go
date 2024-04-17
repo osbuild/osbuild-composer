@@ -18,16 +18,16 @@ type awsEC2Executor struct {
 	cloudWatchGroup string
 }
 
-func prepareSources(manifest []byte, store string, result bool, errorWriter io.Writer) error {
+func prepareSources(manifest []byte, store string, extraEnv []string, result bool, errorWriter io.Writer) error {
 	hostExecutor := NewHostExecutor()
-	_, err := hostExecutor.RunOSBuild(manifest, store, "", nil, nil, nil, nil, result, errorWriter)
+	_, err := hostExecutor.RunOSBuild(manifest, store, "", nil, nil, nil, extraEnv, result, errorWriter)
 	return err
 }
 
 func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory string, exports, exportPaths, checkpoints,
 	extraEnv []string, result bool, errorWriter io.Writer) (*osbuild.Result, error) {
 
-	err := prepareSources(manifest, store, result, errorWriter)
+	err := prepareSources(manifest, store, extraEnv, result, errorWriter)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +66,6 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory s
 	}
 	for _, exp := range exportPaths {
 		args = append(args, "--export-file", exp)
-	}
-	for _, env := range extraEnv {
-		args = append(args, "--environment", env)
 	}
 	args = append(args, "--output", outputDirectory)
 
