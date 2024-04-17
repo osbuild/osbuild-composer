@@ -2,6 +2,7 @@ package osbuild
 
 import (
 	"github.com/osbuild/images/pkg/rpmmd"
+	"golang.org/x/exp/slices"
 )
 
 type RPMStageOptions struct {
@@ -138,14 +139,21 @@ func pkgRefs(specs []rpmmd.PackageSpec) FilesInputRef {
 }
 
 func NewRPMStageOptions(repos []rpmmd.RepoConfig) *RPMStageOptions {
-	var gpgKeys []string
+	gpgKeys := make([]string, 0)
+	keyMap := make(map[string]bool) // for deduplicating keys
 	for _, repo := range repos {
 		if len(repo.GPGKeys) == 0 {
 			continue
 		}
-		gpgKeys = append(gpgKeys, repo.GPGKeys...)
+		for _, key := range repo.GPGKeys {
+			if !keyMap[key] {
+				gpgKeys = append(gpgKeys, key)
+				keyMap[key] = true
+			}
+		}
 	}
 
+	slices.Sort(gpgKeys)
 	return &RPMStageOptions{
 		GPGKeys: gpgKeys,
 	}

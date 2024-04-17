@@ -644,7 +644,7 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 			Dropin: "10-rh-enable-for-azure.conf",
 			Config: osbuild.SystemdServiceUnitDropin{
 				Service: &osbuild.SystemdUnitServiceSection{
-					Environment: "NM_CLOUD_SETUP_AZURE=yes",
+					Environment: []osbuild.EnvironmentVariable{{Key: "NM_CLOUD_SETUP_AZURE", Value: "yes"}},
 				},
 			},
 		},

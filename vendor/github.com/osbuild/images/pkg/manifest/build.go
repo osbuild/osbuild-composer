@@ -99,11 +99,12 @@ func (p *BuildrootFromPackages) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *BuildrootFromPackages) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
+func (p *BuildrootFromPackages) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec, rpmRepos []rpmmd.RepoConfig) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
 	p.packageSpecs = packages
+	p.repos = append(p.repos, rpmRepos...)
 }
 
 func (p *BuildrootFromPackages) serializeEnd() {
@@ -198,7 +199,7 @@ func (p *BuildrootFromContainer) getContainerSpecs() []container.Spec {
 	return p.containerSpecs
 }
 
-func (p *BuildrootFromContainer) serializeStart(_ []rpmmd.PackageSpec, containerSpecs []container.Spec, _ []ostree.CommitSpec) {
+func (p *BuildrootFromContainer) serializeStart(_ []rpmmd.PackageSpec, containerSpecs []container.Spec, _ []ostree.CommitSpec, _ []rpmmd.RepoConfig) {
 	if len(p.containerSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
