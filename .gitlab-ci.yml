@@ -424,6 +424,11 @@ koji.sh (cloudapi):
 
 aws.sh:
   extends: .integration
+  rules:
+    # Skip rhel-8.4-ga-x86_64
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-8.4-[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.4-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.10-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
   variables:
     SCRIPT: aws.sh
 
