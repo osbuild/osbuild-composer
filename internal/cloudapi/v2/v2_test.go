@@ -1660,3 +1660,54 @@ func TestComposesDeleteRoute(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
 		http.StatusOK, `[]`, "id")
 }
+
+func TestComposesDeleteRouteRunning(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	// Make a compose so it has something to list and delete
+	reply := test.TestRouteWithReply(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "%s",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1",
+				"snapshot_name": "name",
+				"share_with_accounts": ["123456789012","234567890123"]
+			}
+		}
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesAws)), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	// Extract the compose ID to use to test the list response
+	var composeReply v2.ComposeId
+	err := json.Unmarshal(reply, &composeReply)
+	require.NoError(t, err)
+	jobID, err := uuid.Parse(composeReply.Id)
+	require.NoError(t, err)
+
+	// List root composes
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
+		http.StatusOK, fmt.Sprintf(`["%s"]`, jobID.String()), "id")
+
+	// Delete the compose
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "DELETE", fmt.Sprintf("/api/image-builder-composer/v2/composes/delete/%s", jobID.String()), ``,
+		http.StatusBadRequest, `
+	{
+		"code":"IMAGE-BUILDER-COMPOSER-40", 
+		"details":"", 
+		"href":"/api/image-builder-composer/v2/errors/40",
+		"id":"40", 
+		"kind":"Error", 
+		"reason":"Compose is running"
+	}`, "operation_id")
+}

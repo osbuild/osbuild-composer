@@ -50,6 +50,7 @@ const (
 	ErrorInvalidPartitioningMode      ServiceErrorCode = 37
 	ErrorInvalidUploadTarget          ServiceErrorCode = 38
 	ErrorBlueprintOrCustomNotBoth     ServiceErrorCode = 39
+	ErrorComposeRunning               ServiceErrorCode = 40
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -133,6 +134,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidPartitioningMode, http.StatusBadRequest, "Requested partitioning mode is invalid"},
 		serviceError{ErrorInvalidUploadTarget, http.StatusBadRequest, "Invalid upload target for image type"},
 		serviceError{ErrorBlueprintOrCustomNotBoth, http.StatusBadRequest, "Invalid request, include blueprint or customizations, not both"},
+		serviceError{ErrorComposeRunning, http.StatusBadRequest, "Compose is running"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
