@@ -84,9 +84,9 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	var result worker.DepsolveJobResult
 
 	if impl.RepositoryMTLSConfig != nil {
-		for _, pkgsets := range args.PackageSets {
-			for _, pkgset := range pkgsets {
-				for _, repo := range pkgset.Repositories {
+		for pkgsetsi, pkgsets := range args.PackageSets {
+			for pkgseti, pkgset := range pkgsets {
+				for repoi, repo := range pkgset.Repositories {
 					for _, baseurlstr := range repo.BaseURLs {
 						match, err := impl.RepositoryMTLSConfig.CompareBaseURL(baseurlstr)
 						if err != nil {
@@ -94,9 +94,9 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 							return err
 						}
 						if match {
-							repo.SSLCACert = impl.RepositoryMTLSConfig.CA
-							repo.SSLClientKey = impl.RepositoryMTLSConfig.MTLSClientKey
-							repo.SSLClientCert = impl.RepositoryMTLSConfig.MTLSClientCert
+							args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi].SSLCACert = impl.RepositoryMTLSConfig.CA
+							args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi].SSLClientKey = impl.RepositoryMTLSConfig.MTLSClientKey
+							args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi].SSLClientCert = impl.RepositoryMTLSConfig.MTLSClientCert
 						}
 					}
 				}
