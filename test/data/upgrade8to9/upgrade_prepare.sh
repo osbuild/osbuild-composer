@@ -11,7 +11,7 @@ echo "gpgcheck=0" >> /etc/yum.repos.d/appstream.repo
 dnf install -y osbuild-composer composer-cli
 
 # Prepare the upgrade
-curl -k -o /etc/yum.repos.d/oam-group-leapp-rhel-8.repo https://gitlab.cee.redhat.com/leapp/oamg-rhel8-vagrant/-/raw/master/roles/init/files/leapp-copr.repo
+curl -k -o /etc/yum.repos.d/oam-group-leapp-rhel-8.repo https://gitlab.cee.redhat.com/oamg/upgrades-dev/oamg-rhel8-vagrant/-/raw/main/roles/init/files/leapp-copr.repo
 # install the leapp upgrade tool + other dependencies
 dnf install -y leapp-upgrade-el8toel9 vdo jq rpmdevtools
 
