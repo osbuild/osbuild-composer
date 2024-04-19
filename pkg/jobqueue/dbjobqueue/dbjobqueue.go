@@ -117,14 +117,14 @@ const (
 		WHERE worker_id = $1`
 
 	sqlInsertWorker = `
-		INSERT INTO workers(worker_id, arch, heartbeat)
-		VALUES($1, $2, now())`
+		INSERT INTO workers(worker_id, channel, arch, heartbeat)
+		VALUES($1, $2, $3, now())`
 	sqlUpdateWorkerStatus = `
 		UPDATE workers
 		SET heartbeat = now()
 		WHERE worker_id = $1`
 	sqlQueryWorkers = `
-		SELECT worker_id, arch
+		SELECT worker_id, channel, arch
 		FROM workers
 		WHERE age(now(), heartbeat) > $1`
 	sqlDeleteWorker = `
@@ -713,7 +713,7 @@ func (q *DBJobQueue) RefreshHeartbeat(token uuid.UUID) {
 	}
 }
 
-func (q *DBJobQueue) InsertWorker(arch string) (uuid.UUID, error) {
+func (q *DBJobQueue) InsertWorker(channel, arch string) (uuid.UUID, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return uuid.Nil, err
@@ -721,7 +721,7 @@ func (q *DBJobQueue) InsertWorker(arch string) (uuid.UUID, error) {
 	defer conn.Release()
 
 	id := uuid.New()
-	_, err = conn.Exec(context.Background(), sqlInsertWorker, id, arch)
+	_, err = conn.Exec(context.Background(), sqlInsertWorker, id, channel, arch)
 	if err != nil {
 		q.logger.Error(err, "Error inserting worker")
 		return uuid.Nil, err
@@ -763,16 +763,18 @@ func (q *DBJobQueue) Workers(olderThan time.Duration) ([]jobqueue.Worker, error)
 	workers := make([]jobqueue.Worker, 0)
 	for rows.Next() {
 		var w uuid.UUID
+		var c string
 		var a string
-		err = rows.Scan(&w, &a)
+		err = rows.Scan(&w, &c, &a)
 		if err != nil {
 			// Log the error and try to continue with the next row
 			q.logger.Error(err, "Unable to read token from heartbeats")
 			continue
 		}
 		workers = append(workers, jobqueue.Worker{
-			ID:   w,
-			Arch: a,
+			ID:      w,
+			Channel: c,
+			Arch:    a,
 		})
 	}
 	if rows.Err() != nil {

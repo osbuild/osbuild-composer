@@ -1338,7 +1338,7 @@ func TestCompose(t *testing.T) {
 			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.NoComposesFixture, nil)
 			t.Cleanup(sf.Cleanup)
 
-			_, err = api.workers.RegisterWorker(arch.Name())
+			_, err = api.workers.RegisterWorker("", arch.Name())
 			require.NoError(t, err)
 			test.TestRoute(t, api, c.External, c.Method, c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 
@@ -2329,7 +2329,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
 			api, sf := createTestWeldrAPI(t.TempDir(), distro2.Name(), arch.Name(), rpmmd_mock.NoComposesFixture, c.imageTypeDenylist)
 			t.Cleanup(sf.Cleanup)
-			_, err = api.workers.RegisterWorker(arch.Name())
+			_, err = api.workers.RegisterWorker("", arch.Name())
 			require.NoError(t, err)
 			test.TestRoute(t, api, true, "POST", c.Path, c.Body, c.ExpectedStatus, c.ExpectedJSON, c.IgnoreFields...)
 

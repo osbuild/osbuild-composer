@@ -704,22 +704,23 @@ func test100dequeuers(t *testing.T, q jobqueue.JobQueue) {
 
 // Registers workers and runs jobs against them
 func testWorkers(t *testing.T, q jobqueue.JobQueue) {
-	one := pushTestJob(t, q, "octopus", nil, nil, "")
+	one := pushTestJob(t, q, "octopus", nil, nil, "chan")
 
-	w1, err := q.InsertWorker("x86_64")
+	w1, err := q.InsertWorker("chan", "x86_64")
 	require.NoError(t, err)
-	w2, err := q.InsertWorker("aarch64")
+	w2, err := q.InsertWorker("chan", "aarch64")
 	require.NoError(t, err)
 
 	workers, err := q.Workers(0)
 	require.NoError(t, err)
 	require.Len(t, workers, 2)
+	require.Equal(t, "chan", workers[0].Channel)
 
 	workers, err = q.Workers(time.Hour * 24)
 	require.NoError(t, err)
 	require.Len(t, workers, 0)
 
-	_, _, _, _, _, err = q.Dequeue(context.Background(), w1, []string{"octopus"}, []string{""})
+	_, _, _, _, _, err = q.Dequeue(context.Background(), w1, []string{"octopus"}, []string{"chan"})
 	require.NoError(t, err)
 
 	err = q.DeleteWorker(w1)
