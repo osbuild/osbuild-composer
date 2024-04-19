@@ -168,7 +168,9 @@ func (s *Server) WatchWorkers() {
 			err = s.jobs.DeleteWorker(w.ID)
 			if err != nil {
 				logrus.Warningf("Unable to remove worker: %v", err)
+				continue
 			}
+			prometheus.RemoveActiveWorker(w.ID.String(), w.Channel, w.Arch)
 		}
 	}
 }
@@ -828,6 +830,7 @@ func (s *Server) RegisterWorker(c, a string) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, err
 	}
+	prometheus.AddActiveWorker(workerID.String(), c, a)
 	logrus.Infof("Worker (%v) registered", a)
 	return workerID, nil
 }
