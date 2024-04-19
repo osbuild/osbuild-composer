@@ -60,6 +60,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		BasePath:             config.Worker.BasePath,
 		JWTEnabled:           config.Worker.EnableJWT,
 		TenantProviderFields: config.Worker.JWTTenantProviderFields,
+		WorkerWatchFreq:      time.Minute * 5,
 	}
 
 	var err error
@@ -120,6 +121,10 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	workerConfig.RequestJobTimeout, err = time.ParseDuration(config.Worker.RequestJobTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse request job timeout: %v", err)
+	}
+	workerConfig.WorkerTimeout, err = time.ParseDuration(config.Worker.WorkerHeartbeatTimeout)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to parse request worker heartbeat timeout: %v", err)
 	}
 
 	c.workers = worker.NewServer(c.logger, jobs, workerConfig)

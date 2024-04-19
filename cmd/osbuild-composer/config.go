@@ -57,6 +57,7 @@ type WorkerAPIConfig struct {
 	JWTKeysCA               string   `toml:"jwt_ca_file"`
 	JWTACLFile              string   `toml:"jwt_acl_file"`
 	JWTTenantProviderFields []string `toml:"jwt_tenant_provider_fields"`
+	WorkerHeartbeatTimeout  string   `toml:"worker_heartbeat_timeout"`
 }
 
 type WeldrAPIConfig struct {
@@ -93,12 +94,13 @@ func GetDefaultConfig() *ComposerConfigFile {
 			EnableJWT:  false,
 		},
 		Worker: WorkerAPIConfig{
-			RequestJobTimeout: "0",
-			BasePath:          "/api/worker/v1",
-			EnableArtifacts:   true,
-			EnableTLS:         true,
-			EnableMTLS:        true,
-			EnableJWT:         false,
+			RequestJobTimeout:      "0",
+			BasePath:               "/api/worker/v1",
+			EnableArtifacts:        true,
+			EnableTLS:              true,
+			EnableMTLS:             true,
+			EnableJWT:              false,
+			WorkerHeartbeatTimeout: "1h",
 		},
 		WeldrAPI: WeldrAPIConfig{
 			map[string]WeldrDistroConfig{
