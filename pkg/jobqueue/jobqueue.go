@@ -82,7 +82,7 @@ type JobQueue interface {
 	RefreshHeartbeat(token uuid.UUID)
 
 	// Inserts the worker and creates a UUID for it
-	InsertWorker(arch string) (uuid.UUID, error)
+	InsertWorker(channel, arch string) (uuid.UUID, error)
 
 	// Reset the last worker's heartbeat time to time.Now()
 	UpdateWorkerStatus(workerID uuid.UUID) error
@@ -117,6 +117,7 @@ var (
 )
 
 type Worker struct {
-	ID   uuid.UUID
-	Arch string
+	ID      uuid.UUID
+	Channel string
+	Arch    string
 }

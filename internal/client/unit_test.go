@@ -65,7 +65,7 @@ func executeTests(m *testing.M) int {
 	fixture := rpmmd_mock.BaseFixture(path.Join(tmpdir, "/jobs"), test_distro.TestDistro1Name, test_distro.TestArchName)
 	defer fixture.StoreFixture.Cleanup()
 
-	_, err = fixture.Workers.RegisterWorker(fixture.StoreFixture.HostArchName)
+	_, err = fixture.Workers.RegisterWorker("", fixture.StoreFixture.HostArchName)
 	if err != nil {
 		panic(err)
 	}

@@ -62,6 +62,7 @@ type fsJobQueue struct {
 }
 
 type worker struct {
+	Channel   string    `json:"channel"`
 	Arch      string    `json:"arch"`
 	Heartbeat time.Time `json:"heartbeat"`
 	Tokens    map[uuid.UUID]struct{}
@@ -467,12 +468,13 @@ func (q *fsJobQueue) RefreshHeartbeat(token uuid.UUID) {
 	}
 }
 
-func (q *fsJobQueue) InsertWorker(arch string) (uuid.UUID, error) {
+func (q *fsJobQueue) InsertWorker(channel, arch string) (uuid.UUID, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	wID := uuid.New()
 	q.workers[wID] = worker{
+		Channel:   channel,
 		Arch:      arch,
 		Heartbeat: time.Now(),
 		Tokens:    make(map[uuid.UUID]struct{}),
@@ -502,8 +504,9 @@ func (q *fsJobQueue) Workers(olderThan time.Duration) ([]jobqueue.Worker, error)
 	for wID, w := range q.workers {
 		if now.Sub(w.Heartbeat) > olderThan {
 			workers = append(workers, jobqueue.Worker{
-				ID:   wID,
-				Arch: w.Arch,
+				ID:      wID,
+				Channel: w.Channel,
+				Arch:    w.Arch,
 			})
 		}
 	}
