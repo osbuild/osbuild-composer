@@ -265,6 +265,7 @@ objects:
       jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs"]
       jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
       jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
+      worker_heartbeat_timeout = "5m"
 - apiVersion: batch/v1
   kind: CronJob
   metadata:
