@@ -2,6 +2,8 @@ package osbuild
 
 import (
 	"fmt"
+
+	"golang.org/x/exp/slices"
 )
 
 type CloudInitStageOptions struct {
@@ -86,10 +88,12 @@ func (c CloudInitConfigFile) validate() error {
 			return err
 		}
 	}
+
+	allowedDatasources := []string{"Azure", "Ec2", "None"}
 	if len(c.DatasourceList) > 0 {
 		for _, d := range c.DatasourceList {
-			if d != "Azure" {
-				return fmt.Errorf("only 'Azure' is allowed as an item in the datasource_list")
+			if !slices.Contains(allowedDatasources, d) {
+				return fmt.Errorf("datasource %s is not allowed, only %v are allowed", d, allowedDatasources)
 			}
 		}
 	}

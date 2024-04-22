@@ -30,6 +30,7 @@ type SourceSpec struct {
 	Local     bool
 }
 
+// XXX: use arch.Arch here?
 func NewResolver(arch string) *Resolver {
 	return &Resolver{
 		ctx:   context.Background(),

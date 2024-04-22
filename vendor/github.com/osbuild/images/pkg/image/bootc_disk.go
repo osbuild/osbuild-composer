@@ -26,11 +26,14 @@ type BootcDiskImage struct {
 	// Customizations
 	KernelOptionsAppend []string
 
-	// "Users" is a bit misleading as only root and its ssh key is supported
-	// right now because that is all that bootc gives us by default but that
-	// will most likely change over time.
-	// See https://github.com/containers/bootc/pull/267
-	Users []users.User
+	// The users to put into the image, note that /etc/paswd (and friends)
+	// will become unmanaged state by bootc when used
+	Users  []users.User
+	Groups []users.Group
+
+	// SELinux policy, when set it enables the labeling of the tree with the
+	// selected profile
+	SELinux string
 }
 
 func NewBootcDiskImage(container container.SourceSpec) *BootcDiskImage {
@@ -52,24 +55,24 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	// this is signified by passing nil to the below pipelines.
 	var hostPipeline manifest.Build
 
-	// TODO: no support for customization right now but minimal support
-	// for root ssh keys is supported
-	baseImage := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
-	baseImage.PartitionTable = img.PartitionTable
-	baseImage.Users = img.Users
-	baseImage.KernelOptionsAppend = img.KernelOptionsAppend
+	rawImage := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
+	rawImage.PartitionTable = img.PartitionTable
+	rawImage.Users = img.Users
+	rawImage.Groups = img.Groups
+	rawImage.KernelOptionsAppend = img.KernelOptionsAppend
+	rawImage.SELinux = img.SELinux
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on
 	// each file format.
 	fileBasename := img.Filename
-	baseImage.SetFilename(fmt.Sprintf("%s.raw", fileBasename))
+	rawImage.SetFilename(fmt.Sprintf("%s.raw", fileBasename))
 
-	qcow2Pipeline := manifest.NewQCOW2(hostPipeline, baseImage)
+	qcow2Pipeline := manifest.NewQCOW2(hostPipeline, rawImage)
 	qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
 	qcow2Pipeline.SetFilename(fmt.Sprintf("%s.qcow2", fileBasename))
 
-	vmdkPipeline := manifest.NewVMDK(hostPipeline, baseImage)
+	vmdkPipeline := manifest.NewVMDK(hostPipeline, rawImage)
 	vmdkPipeline.SetFilename(fmt.Sprintf("%s.vmdk", fileBasename))
 
 	ovfPipeline := manifest.NewOVF(hostPipeline, vmdkPipeline)
