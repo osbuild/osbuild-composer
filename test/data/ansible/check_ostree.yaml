@@ -506,6 +506,7 @@
     # case: check dmesg error and failed log
     - name: check dmesg output
       command: dmesg
+      become: yes
       register: result_dmesg
 
     - name: save dmesg output to log file
@@ -517,6 +518,7 @@
     - name: check dmesg error and fail log
       shell: dmesg --notime | grep -i "error\|fail" || true
       register: result_dmesg_error
+      become: yes
 
     - name: check embeded container image with podman
       command: podman images
