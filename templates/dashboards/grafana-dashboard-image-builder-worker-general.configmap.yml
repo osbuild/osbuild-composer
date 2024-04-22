@@ -2064,6 +2064,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker Job Stats",
       "uid": "image-builder-worker",
-      "version": 15,
+      "version": 16,
       "weekStart": ""
     }
