@@ -34,7 +34,6 @@ data:
       "editable": true,
       "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "id": 692859,
       "links": [],
       "liveNow": false,
       "panels": [
@@ -377,7 +376,7 @@ data:
                 "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
-                "pointSize": 5,
+                "pointSize": 1,
                 "scaleDistribution": {
                   "type": "linear"
                 },
@@ -436,7 +435,7 @@ data:
               "showLegend": true
             },
             "tooltip": {
-              "mode": "single",
+              "mode": "multi",
               "sort": "none"
             }
           },
@@ -450,7 +449,7 @@ data:
               "exemplar": true,
               "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"$jobtype\", status!=\"4xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) OR on() vector(0))\n- \n(sum(rate(image_builder_worker_total_jobs{type=~\"$jobtype\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) OR on() vector(0))",
               "hide": false,
-              "interval": "",
+              "interval": "300",
               "legendFormat": "success/sec",
               "range": true,
               "refId": "A"
@@ -464,7 +463,7 @@ data:
               "exemplar": true,
               "expr": "(sum(rate(image_builder_worker_total_jobs{type=~\"$jobtype\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) OR on() vector(0))",
               "hide": false,
-              "interval": "",
+              "interval": "300",
               "legendFormat": "errors/sec",
               "range": true,
               "refId": "B"
@@ -546,7 +545,7 @@ data:
               "showLegend": false
             },
             "tooltip": {
-              "mode": "single",
+              "mode": "multi",
               "sort": "none"
             }
           },
@@ -559,7 +558,7 @@ data:
               "editorMode": "code",
               "exemplar": true,
               "expr": "(\n  sum(rate(image_builder_worker_total_jobs{type=~\"$jobtype\", status=\"5xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval]))\n  /\n  sum(rate(image_builder_worker_total_jobs{type=~\"$jobtype\", status!=\"4xx\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval]))\n)\nOR on() vector(0) # set fallback incase the above query result is empty",
-              "interval": "",
+              "interval": "300",
               "legendFormat": "",
               "range": true,
               "refId": "A"
@@ -1019,7 +1018,7 @@ data:
               "showLegend": true
             },
             "tooltip": {
-              "mode": "single",
+              "mode": "multi",
               "sort": "none"
             }
           },
@@ -1033,7 +1032,7 @@ data:
               "exemplar": true,
               "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"$jobtype\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) by (le))",
               "hide": false,
-              "interval": "",
+              "interval": "300",
               "legendFormat": "p99",
               "range": true,
               "refId": "C"
@@ -1047,7 +1046,7 @@ data:
               "exemplar": true,
               "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"$jobtype\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) by (le))",
               "hide": false,
-              "interval": "",
+              "interval": "300",
               "legendFormat": "p95",
               "range": true,
               "refId": "B"
@@ -1060,7 +1059,7 @@ data:
               "editorMode": "code",
               "exemplar": true,
               "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_duration_seconds_bucket{type=~\"$jobtype\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) by (le))",
-              "interval": "",
+              "interval": "300",
               "legendFormat": "p50",
               "range": true,
               "refId": "A"
@@ -1098,7 +1097,7 @@ data:
                 "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
-                "pointSize": 5,
+                "pointSize": 1,
                 "scaleDistribution": {
                   "type": "linear"
                 },
@@ -1160,7 +1159,7 @@ data:
               "editorMode": "code",
               "exemplar": true,
               "expr": "1 - (\n    sum(rate(image_builder_worker_job_duration_seconds_bucket{le=\"$target_duration\",type=~\"$jobtype\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval]))\n    /\n    sum(rate(image_builder_worker_job_duration_seconds_count{type=~\"$jobtype\", tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval]))\n)",
-              "interval": "",
+              "interval": "300",
               "legendFormat": "",
               "range": true,
               "refId": "A"
@@ -1425,7 +1424,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "#EAB839",
@@ -1471,10 +1471,12 @@ data:
               "fields": "",
               "values": false
             },
+            "showPercentChange": false,
             "text": {},
-            "textMode": "auto"
+            "textMode": "auto",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.8",
+          "pluginVersion": "10.4.1",
           "targets": [
             {
               "datasource": {
@@ -1505,6 +1507,7 @@ data:
                 "mode": "thresholds"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "seconds",
@@ -1518,6 +1521,7 @@ data:
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 3,
                 "pointSize": 5,
@@ -1540,7 +1544,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   }
                 ]
               },
@@ -1609,7 +1614,7 @@ data:
               "showLegend": true
             },
             "tooltip": {
-              "mode": "single",
+              "mode": "multi",
               "sort": "none"
             }
           },
@@ -1623,7 +1628,7 @@ data:
               "exemplar": true,
               "expr": "histogram_quantile(0.99, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) by (le))",
               "hide": false,
-              "interval": "",
+              "interval": "300",
               "legendFormat": "p99",
               "range": true,
               "refId": "C"
@@ -1637,7 +1642,7 @@ data:
               "exemplar": true,
               "expr": "histogram_quantile(0.95, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) by (le))",
               "hide": false,
-              "interval": "",
+              "interval": "300",
               "legendFormat": "p95",
               "range": true,
               "refId": "B"
@@ -1650,7 +1655,7 @@ data:
               "editorMode": "code",
               "exemplar": true,
               "expr": "histogram_quantile(0.5, sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{type=~\"$jobtype\",tenant=~\"$tenant\", arch=~\"$arch\"}[$__rate_interval])) by (le))",
-              "interval": "",
+              "interval": "300",
               "legendFormat": "p50",
               "range": true,
               "refId": "A"
@@ -1671,6 +1676,7 @@ data:
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
@@ -1684,9 +1690,10 @@ data:
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
-                "pointSize": 5,
+                "pointSize": 1,
                 "scaleDistribution": {
                   "type": "linear"
                 },
@@ -1707,7 +1714,8 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1747,7 +1755,7 @@ data:
               "editorMode": "code",
               "exemplar": true,
               "expr": "1 - sum(rate(image_builder_worker_job_wait_duration_seconds_bucket{le=\"$target_duration\",type=~\"$jobtype\",tenant=~\"$tenant\"}[$__rate_interval]))/sum(rate(image_builder_worker_job_wait_duration_seconds_count{type=~\"$jobtype\",tenant=~\"$tenant\"}[$__rate_interval]))",
-              "interval": "",
+              "interval": "300",
               "legendFormat": "",
               "range": true,
               "refId": "A"
@@ -1758,8 +1766,7 @@ data:
         }
       ],
       "refresh": false,
-      "schemaVersion": 37,
-      "style": "dark",
+      "schemaVersion": 39,
       "tags": [],
       "templating": {
         "list": [
