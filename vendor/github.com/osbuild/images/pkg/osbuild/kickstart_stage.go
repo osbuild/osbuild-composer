@@ -37,6 +37,11 @@ type KickstartStageOptions struct {
 	ClearPart    *ClearPartOptions    `json:"clearpart,omitempty"`
 	AutoPart     *AutoPartOptions     `json:"autopart,omitempty"`
 	Network      []NetworkOptions     `json:"network,omitempty"`
+	Bootloader   *BootloaderOptions   `json:"bootloader,omitempty"`
+}
+
+type BootloaderOptions struct {
+	Append string `json:"append"`
 }
 
 type LiveIMGOptions struct {
