@@ -33,8 +33,13 @@ sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 baseurl = "$BASEURL"
 mtls_client_key = "/etc/osbuild-worker/image_builder_sa_mtls_key.pem"
 mtls_client_cert = "/etc/osbuild-worker/image_builder_sa_mtls_cert.pem"
+EOF
+
+if [ "$PROXY" != null ]; then
+    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 proxy = "$PROXY"
 EOF
+fi
 
 if [ "$CA" != null ]; then
     sudo tee /etc/osbuild-worker/image_builder_sa_ca.pem > /dev/null << EOF
