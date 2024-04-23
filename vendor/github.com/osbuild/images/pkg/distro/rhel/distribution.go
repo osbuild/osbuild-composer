@@ -16,6 +16,7 @@ type DefaultDistroImageConfigFunc func(d *Distribution) *distro.ImageConfig
 
 type Distribution struct {
 	name               string
+	DistCodename       string
 	product            string
 	osVersion          string
 	releaseVersion     string
@@ -32,6 +33,10 @@ type Distribution struct {
 
 func (d *Distribution) Name() string {
 	return d.name
+}
+
+func (d *Distribution) Codename() string {
+	return d.DistCodename
 }
 
 func (d *Distribution) Releasever() string {

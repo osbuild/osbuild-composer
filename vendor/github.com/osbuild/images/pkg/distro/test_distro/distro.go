@@ -78,6 +78,10 @@ func (d *TestDistro) Name() string {
 	return d.name
 }
 
+func (d *TestDistro) Codename() string {
+	return "" // not supported
+}
+
 func (d *TestDistro) Releasever() string {
 	return d.releasever
 }

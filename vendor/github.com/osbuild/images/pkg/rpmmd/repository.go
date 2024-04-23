@@ -25,6 +25,7 @@ type repository struct {
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
+	PackageSets    []string `json:"package_sets,omitempty"`
 }
 
 type RepoConfig struct {
@@ -264,6 +265,7 @@ func LoadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 				MetadataExpire: repo.MetadataExpire,
 				ModuleHotfixes: repo.ModuleHotfixes,
 				ImageTypeTags:  repo.ImageTypeTags,
+				PackageSets:    repo.PackageSets,
 			}
 
 			repoConfigs[arch] = append(repoConfigs[arch], config)

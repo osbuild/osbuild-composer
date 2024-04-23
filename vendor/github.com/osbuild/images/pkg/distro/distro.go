@@ -41,6 +41,9 @@ type Distro interface {
 	// Returns the name of the distro.
 	Name() string
 
+	// Returns the codename of the distro.
+	Codename() string
+
 	// Returns the release version of the distro. This is used in repo
 	// files on the host system and required for the subscription support.
 	Releasever() string
