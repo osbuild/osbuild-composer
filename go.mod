@@ -16,7 +16,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 	github.com/BurntSushi/toml v1.3.2
-	github.com/aws/aws-sdk-go v1.51.19
+	github.com/aws/aws-sdk-go v1.51.25
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/deepmap/oapi-codegen v1.8.2
@@ -36,7 +36,7 @@ require (
 	github.com/labstack/gommon v0.4.2
 	github.com/openshift-online/ocm-sdk-go v0.1.398
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
-	github.com/osbuild/images v0.55.0
+	github.com/osbuild/images v0.56.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
 	github.com/osbuild/pulp-client v0.1.0
 	github.com/prometheus/client_golang v1.18.0
@@ -45,17 +45,19 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
-	github.com/vmware/govmomi v0.36.3
+	github.com/vmware/govmomi v0.37.1
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/oauth2 v0.19.0
 	golang.org/x/sync v0.6.0
 	golang.org/x/sys v0.19.0
-	google.golang.org/api v0.172.0
+	google.golang.org/api v0.175.0
 )
 
 require (
 	cloud.google.com/go v0.112.1 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/auth v0.2.2 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.1 // indirect
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/iam v1.1.7 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
@@ -81,7 +83,7 @@ require (
 	github.com/containerd/cgroups/v3 v3.0.2 // indirect
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
-	github.com/containers/common v0.58.1 // indirect
+	github.com/containers/common v0.58.2 // indirect
 	github.com/containers/image/v5 v5.30.0 // indirect
 	github.com/containers/libtrust v0.0.0-20230121012942-c1716e8a8d01 // indirect
 	github.com/containers/ocicrypt v1.1.9 // indirect
@@ -200,17 +202,17 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
-	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/mod v0.15.0 // indirect
-	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/term v0.18.0 // indirect
+	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/term v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
-	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
+	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240314234333-6e1732d8331c // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
-	google.golang.org/grpc v1.62.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be // indirect
+	google.golang.org/grpc v1.63.2 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -84,6 +85,10 @@ type ImageType struct {
 	UnsupportedPartitioningModes []disk.PartitioningMode
 
 	ISOLabelFn ISOLabelFunc
+
+	// TODO: determine a better place for these options, but for now they are here
+	DiskImagePartTool     *osbuild.PartTool
+	DiskImageVPCForceSize *bool
 }
 
 func (t *ImageType) Name() string {
@@ -305,6 +310,8 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 	mf := manifest.New()
 
 	switch t.Arch().Distro().Releasever() {
+	case "7":
+		mf.Distro = manifest.DISTRO_EL7
 	case "8":
 		mf.Distro = manifest.DISTRO_EL8
 	case "9":
