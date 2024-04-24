@@ -15,3 +15,5 @@ __pycache__
 /docs/osbuild-composer.7
 .cache
 container_composer_golangci_built.info
+processed-templates
+
