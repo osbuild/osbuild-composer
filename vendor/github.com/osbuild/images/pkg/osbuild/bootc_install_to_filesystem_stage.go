@@ -9,6 +9,9 @@ type BootcInstallToFilesystemOptions struct {
 	RootSSHAuthorizedKeys []string `json:"root-ssh-authorized-keys,omitempty"`
 	// options for --karg
 	Kargs []string `json:"kernel-args,omitempty"`
+
+	// option for --target-imgref
+	TargetImgref string `json:"target-imgref"`
 }
 
 func (BootcInstallToFilesystemOptions) isStageOptions() {}

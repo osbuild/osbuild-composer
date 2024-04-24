@@ -134,6 +134,7 @@ func osCustomizations(
 	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
 	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
 		osc.SElinux = "targeted"
+		osc.SELinuxForceRelabel = imageConfig.SELinuxForceRelabel
 	}
 
 	if t.IsRHEL() && options.Facts != nil {
@@ -272,6 +273,7 @@ func osCustomizations(
 	osc.Sysctld = imageConfig.Sysctld
 	osc.DNFConfig = imageConfig.DNFConfig
 	osc.DNFAutomaticConfig = imageConfig.DNFAutomaticConfig
+	osc.YUMConfig = imageConfig.YumConfig
 	osc.SshdConfig = imageConfig.SshdConfig
 	osc.AuthConfig = imageConfig.Authconfig
 	osc.PwQuality = imageConfig.PwQuality
@@ -284,6 +286,10 @@ func osCustomizations(
 
 	osc.Files = append(osc.Files, imageConfig.Files...)
 	osc.Directories = append(osc.Directories, imageConfig.Directories...)
+
+	if imageConfig.NoBLS != nil {
+		osc.NoBLS = *imageConfig.NoBLS
+	}
 
 	return osc, nil
 }
@@ -390,6 +396,18 @@ func DiskImage(workload workload.Workload,
 	img.PartitionTable = pt
 
 	img.Filename = t.Filename()
+
+	img.VPCForceSize = t.DiskImageVPCForceSize
+
+	if img.OSCustomizations.NoBLS {
+		img.OSProduct = t.Arch().Distro().Product()
+		img.OSVersion = t.Arch().Distro().OsVersion()
+		img.OSNick = t.Arch().Distro().Codename()
+	}
+
+	if t.DiskImagePartTool != nil {
+		img.PartTool = *t.DiskImagePartTool
+	}
 
 	return img, nil
 }

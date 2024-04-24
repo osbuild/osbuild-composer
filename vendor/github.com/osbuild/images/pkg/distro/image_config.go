@@ -80,6 +80,10 @@ type ImageConfig struct {
 	// if no datastream value is provided by the user.
 	DefaultOSCAPDatastream *string
 
+	// NoBLS configures the image bootloader with traditional menu entries
+	// instead of BLS. Required for legacy systems like RHEL 7.
+	NoBLS *bool
+
 	// OSTree specific configuration
 
 	// Read only sysroot and boot

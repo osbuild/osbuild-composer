@@ -27,8 +27,10 @@ type DiskImage struct {
 	Workload         workload.Workload
 	Filename         string
 	Compression      string
-	ForceSize        *bool
-	PartTool         osbuild.PartTool
+
+	// Control the VPC subformat use of force_size
+	VPCForceSize *bool
+	PartTool     osbuild.PartTool
 
 	NoBLS     bool
 	OSProduct string
@@ -59,7 +61,6 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
-	osPipeline.NoBLS = img.NoBLS
 	osPipeline.OSProduct = img.OSProduct
 	osPipeline.OSVersion = img.OSVersion
 	osPipeline.OSNick = img.OSNick
@@ -80,7 +81,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		imagePipeline = qcow2Pipeline
 	case platform.FORMAT_VHD:
 		vpcPipeline := manifest.NewVPC(buildPipeline, rawImagePipeline)
-		vpcPipeline.ForceSize = img.ForceSize
+		vpcPipeline.ForceSize = img.VPCForceSize
 		imagePipeline = vpcPipeline
 	case platform.FORMAT_VMDK:
 		imagePipeline = manifest.NewVMDK(buildPipeline, rawImagePipeline)
