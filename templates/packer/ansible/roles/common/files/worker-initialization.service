@@ -21,6 +21,7 @@ ExecStart=/usr/local/libexec/worker-initialization-scripts/get_oci_creds.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/get_pulp_creds.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/get_ldap_sa_mtls_creds.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/worker_service.sh
+ExecStopPost=/usr/local/libexec/worker-initialization-scripts/on_exit.sh
 
 [Install]
 WantedBy=multi-user.target
