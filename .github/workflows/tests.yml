@@ -276,15 +276,7 @@ jobs:
     - uses: redhat-actions/oc-installer@v1
     - name: Process template
       run: |
-        mkdir processed-templates
-        oc process -f templates/openshift/composer.yml \
-          -p IMAGE_TAG=image_tag \
-          --local \
-          -o yaml > processed-templates/composer.yml
-        oc process -f templates/openshift/maintenance.yml \
-          -p IMAGE_TAG=image_tag \
-          --local \
-          -o yaml > processed-templates/maintenance.yml
+        make process-templates
 
     - uses: stackrox/kube-linter-action@v1.0.5
       with:
