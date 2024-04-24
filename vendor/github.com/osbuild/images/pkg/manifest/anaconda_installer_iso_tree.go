@@ -34,6 +34,12 @@ type AnacondaInstallerISOTree struct {
 	Keyboard *string
 	Timezone *string
 
+	// Kernel options that will be apended to the installed system
+	// (not the iso)
+	KickstartKernelOptionsAppend []string
+	// Enable networking on on boot in the installed system
+	KickstartNetworkOnBoot bool
+
 	// Create a sudoers drop-in file for each user or group to enable the
 	// NOPASSWD option
 	NoPasswd []string
@@ -67,6 +73,7 @@ type AnacondaInstallerISOTree struct {
 	ContainerSource  *container.SourceSpec
 	containerSpec    *container.Spec
 
+	// Kernel options for the ISO image
 	KernelOpts []string
 
 	// Enable ISOLinux stage
@@ -436,6 +443,22 @@ func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 	kickstartOptions.Timezone = "UTC"
 	kickstartOptions.ClearPart = &osbuild.ClearPartOptions{
 		All: true,
+	}
+	if len(p.KickstartKernelOptionsAppend) > 0 {
+		kickstartOptions.Bootloader = &osbuild.BootloaderOptions{
+			// We currently leaves quoting to the
+			// user. This is generally ok - to do better
+			// we will have to mimic the kernel arg
+			// parser, see
+			// https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
+			// and lib/cmdline.c in the kernel source
+			Append: strings.Join(p.KickstartKernelOptionsAppend, " "),
+		}
+	}
+	if p.KickstartNetworkOnBoot {
+		kickstartOptions.Network = []osbuild.NetworkOptions{
+			{BootProto: "dhcp", Device: "link", Activate: common.ToPtr(true), OnBoot: "on"},
+		}
 	}
 
 	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))

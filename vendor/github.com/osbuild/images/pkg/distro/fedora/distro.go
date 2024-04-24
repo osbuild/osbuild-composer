@@ -469,6 +469,10 @@ func (d *distribution) Name() string {
 	return d.name
 }
 
+func (d *distribution) Codename() string {
+	return "" // Fedora does not use distro codename
+}
+
 func (d *distribution) Releasever() string {
 	return d.releaseVersion
 }

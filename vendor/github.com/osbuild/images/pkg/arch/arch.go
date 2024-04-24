@@ -7,7 +7,8 @@ import (
 type Arch uint64
 
 const ( // architecture enum
-	ARCH_AARCH64 Arch = iota
+	ARCH_UNSET Arch = iota
+	ARCH_AARCH64
 	ARCH_PPC64LE
 	ARCH_S390X
 	ARCH_X86_64
@@ -15,6 +16,8 @@ const ( // architecture enum
 
 func (a Arch) String() string {
 	switch a {
+	case ARCH_UNSET:
+		return "unset"
 	case ARCH_AARCH64:
 		return "aarch64"
 	case ARCH_PPC64LE:
