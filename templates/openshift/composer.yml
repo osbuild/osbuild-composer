@@ -1,0 +1,503 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: composer
+  annotations:
+    openshift.io/display-name: Image-Builder composer service
+    description: Composer component of the image-builder serivce
+    tags: golang
+    iconClass: icon-shadowman
+    template.openshift.io/provider-display-name: Red Hat, Inc.
+labels:
+  template: composer
+objects:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      service: image-builder
+    name: composer
+  spec:
+    replicas: ${{REPLICAS}}
+    selector:
+      matchLabels:
+        app: composer
+    strategy:
+      # Update pods 1 at a time
+      type: RollingUpdate
+      rollingUpdate:
+        # Create at most 0 extra pod over .spec.replicas
+        maxSurge: 0
+        # At all times there should be .spec.replicas - 1 available
+        maxUnavailable: 1
+    template:
+      metadata:
+        labels:
+          app: composer
+      spec:
+        serviceAccountName: image-builder
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: composer
+                topologyKey: kubernetes.io/hostname
+        containers:
+        - image: "${IMAGE_NAME}:${IMAGE_TAG}"
+          name: composer
+          livenessProbe:
+            failureThreshold: 3
+            exec:
+              command:
+              - cat
+              - /tmp/osbuild-composer-live
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: ${READINESS_URI}
+              port: ${{COMPOSER_API_PORT}}
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: "${MEMORY_LIMIT}"
+          env:
+          - name: PGHOST
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.host
+          - name: PGPORT
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.port
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.name
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.user
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.password
+          - name: PGSSLMODE
+            value: "${PGSSLMODE}"
+          - name: PGMAXCONNS
+            value: "${PGMAXCONNS}"
+          # Splunk forwarding
+          - name: SPLUNK_HEC_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: splunk
+                key: token
+                optional: true
+          - name: SPLUNK_HEC_HOST
+            valueFrom:
+              secretKeyRef:
+                name: splunk
+                key: url
+                optional: true
+          - name: SPLUNK_HEC_PORT
+            value: "${SPLUNK_HEC_PORT}"
+          - name: GLITCHTIP_DSN
+            valueFrom:
+              secretKeyRef:
+                key: dsn
+                name: "${GLITCHTIP_DSN_NAME}"
+                optional: true
+          - name: DISTRO_ALIASES
+            value: ${DISTRO_ALIASES}
+          ports:
+          - name: composer-api
+            protocol: TCP
+            containerPort: ${{COMPOSER_API_PORT}}
+          - name: prometheus
+            protocol: TCP
+            containerPort: ${{PROMETHEUS_PORT}}
+          - name: worker-api
+            protocol: TCP
+            containerPort: ${{WORKER_API_PORT}}
+          volumeMounts:
+          - name: composer-config
+            mountPath: "${COMPOSER_CONFIG_DIR}"
+            readOnly: true
+          - name: state-directory
+            mountPath: "/var/lib/osbuild-composer"
+          - name: cache-directory
+            mountPath: "/var/cache/osbuild-composer"
+        volumes:
+        - name: composer-config
+          configMap:
+            name: composer-config
+        - name: state-directory
+          emptyDir: {}
+        - name: cache-directory
+          emptyDir: {}
+        initContainers:
+        - name: composer-migrate
+          image: "${IMAGE_NAME}:${IMAGE_TAG}"
+          command: [ "/opt/migrate/tern", "migrate", "-m", "/opt/migrate/schemas" ]
+          resources:
+            requests:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: "${MEMORY_LIMIT}"
+          env:
+          - name: PGHOST
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.host
+          - name: PGPORT
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.port
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.name
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.user
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: composer-db
+                key: db.password
+          - name: PGSSLMODE
+            value: "${PGSSLMODE}"
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: image-builder
+  imagePullSecrets:
+  - name: quay.io
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: image-builder-composer
+    labels:
+      app: composer
+      port: composer-api
+  spec:
+    ports:
+      - name: composer-api
+        protocol: TCP
+        port: 80
+        targetPort: ${{COMPOSER_API_PORT}}
+      - name: prometheus
+        protocol: TCP
+        port: 8008
+        targetPort: ${{PROMETHEUS_PORT}}
+    selector:
+      app: composer
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: image-builder-worker
+    labels:
+      app: composer
+      port: worker-api
+  spec:
+    ports:
+      - name: worker-api
+        protocol: TCP
+        port: 80
+        targetPort: ${{WORKER_API_PORT}}
+    selector:
+      app: composer
+
+# This map should probably move to app-intf
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: composer-config
+  data:
+    acl.yml: |
+      - claim: rh-org-id
+        pattern: ^(${ACL_ORG_ID_TENANTS})$
+      - claim: account_id
+        pattern: ^(${ACL_ACCOUNT_ID_TENANTS})$
+    osbuild-composer.toml: |
+      log_level = "info"
+      [koji]
+      enable_tls = false
+      enable_mtls = false
+      enable_jwt = true
+      jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs"]
+      jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
+      jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
+      [worker]
+      request_job_timeout = "20s"
+      base_path = "/api/image-builder-worker/v1"
+      enable_artifacts = false
+      enable_tls = false
+      enable_mtls = false
+      enable_jwt = true
+      jwt_keys_urls = ["${RH_SSO_BASE_URL}/protocol/openid-connect/certs"]
+      jwt_acl_file = "${COMPOSER_CONFIG_DIR}/acl.yml"
+      jwt_tenant_provider_fields = ["rh-org-id", "account_id"]
+      worker_heartbeat_timeout = "5m"
+- apiVersion: batch/v1
+  kind: CronJob
+  metadata:
+    labels:
+      service: image-builder
+    name: composer-maintenance
+  spec:
+    # run maintenance job at midnight
+    schedule: 0 0 * * *
+    concurrencyPolicy: Forbid
+    # don't run if the job doesn't get scheduled within 30 minutes
+    startingDeadlineSeconds: 1800
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            serviceAccountName: image-builder
+            restartPolicy: Never
+            containers:
+            - image: "${MAINTENANCE_IMAGE_NAME}:${IMAGE_TAG}"
+              name: composer-maintenance
+              resources:
+                requests:
+                  cpu: "${MAINTENANCE_CPU_REQUEST}"
+                  memory: "${MEMORY_REQUEST}"
+                limits:
+                  cpu: "${MAINTENANCE_CPU_LIMIT}"
+                  memory: "${MEMORY_LIMIT}"
+              env:
+              - name: PGHOST
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.host
+              - name: PGPORT
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.port
+              - name: PGDATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.name
+              - name: PGUSER
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.user
+              - name: PGPASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.password
+              - name: PGSSLMODE
+                value: "${PGSSLMODE}"
+              - name: GCP_AUTH_PROVIDER_X509_CERT_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: auth_provider_x509_cert_url
+              - name: GCP_AUTH_URI
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: auth_uri
+              - name: GCP_CLIENT_EMAIL
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: client_email
+              - name: GCP_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: client_id
+              - name: GCP_CLIENT_X509_CERT_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: client_x509_cert_url
+              - name: GCP_PRIVATE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: private_key
+              - name: GCP_PRIVATE_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: private_key_id
+              - name: GCP_PROJECT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: project_id
+              - name: GCP_TOKEN_URI
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: token_uri
+              - name: GCP_TYPE
+                valueFrom:
+                  secretKeyRef:
+                    name: gcp-service-account
+                    key: type
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-account
+                    key: access_key_id
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: aws-account
+                    key: secret_access_key
+              - name: DRY_RUN
+                value: "${MAINTENANCE_DRY_RUN}"
+              - name: ENABLE_AWS_MAINTENANCE
+                value: "${ENABLE_AWS_MAINTENANCE}"
+              - name: ENABLE_GCP_MAINTENANCE
+                value: "${ENABLE_GCP_MAINTENANCE}"
+              - name: ENABLE_DB_MAINTENANCE
+                value: "${ENABLE_DB_MAINTENANCE}"
+              - name: MAX_CONCURRENT_REQUESTS
+                value: "${MAINTENANCE_MAX_CONCURRENT_REQUESTS}"
+
+parameters:
+  - description: composer image name
+    name: IMAGE_NAME
+    value: quay.io/app-sre/composer
+    required: true
+  - description: composer image tag
+    name: IMAGE_TAG
+    required: true
+  - description: postgres sslmode to use when connecting to the db
+    name: PGSSLMODE
+    value: "require"
+  - description: postgres maximum connections per pod
+    name: PGMAXCONNS
+    value: "20"
+  - description: number of pods to spin up
+    name: REPLICAS
+    value: "3"
+    required: true
+  - description: base sso url
+    name: RH_SSO_BASE_URL
+    required: true
+    value: "https://sso.redhat.com/auth/realms/redhat-external"
+  - description: base sso url
+    name: COMPOSER_CONFIG_DIR
+    required: true
+    value: "/etc/osbuild-composer"
+  - description: Allowed tenants based on org id
+    name: ACL_ORG_ID_TENANTS
+    value: "15842261|15877963|15885990|16057323"
+  - description: Allowed tenants based on account id
+    name: ACL_ACCOUNT_ID_TENANTS
+    value: "15842261|16057323"
+  - description: composer-api port
+    name: COMPOSER_API_PORT
+    required: true
+    value: "8080"
+  - description: prometheus port
+    name: PROMETHEUS_PORT
+    value: "8008"
+  - description: worker-api port
+    name: WORKER_API_PORT
+    required: true
+    value: "8700"
+  - name: READINESS_URI
+    description: URI to query for the readiness check
+    value: "/api/image-builder-composer/v2/openapi"
+  - name: CPU_REQUEST
+    description: CPU request per container
+    value: "500m"
+  - name: CPU_LIMIT
+    description: CPU limit per container
+    value: "1"
+  - name: FLUENTD_CPU_REQUEST
+    description: CPU request per container
+    value: "50m"
+  - name: FLUENTD_CPU_LIMIT
+    description: CPU limit per container
+    value: "100m"
+  - name: MAINTENANCE_CPU_REQUEST
+    description: CPU request per container
+    value: "50m"
+  - name: MAINTENANCE_CPU_LIMIT
+    description: CPU limit per container
+    value: "100m"
+  - name: MEMORY_REQUEST
+    description: Memory request per container
+    value: "256Mi"
+  - name: MEMORY_LIMIT
+    description: Memory limit per container
+    value: "512Mi"
+  # maintenance image variables
+  - description: composer-maintenance image name
+    name: MAINTENANCE_IMAGE_NAME
+    value: quay.io/app-sre/composer-maintenance
+    required: true
+  - description: composer-maintenance dry run
+    name: MAINTENANCE_DRY_RUN
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "true"
+    required: true
+  - description: Enable AWS maintenance
+    name: ENABLE_AWS_MAINTENANCE
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "false"
+    required: true
+  - description: Enable GPC maintenance
+    name: ENABLE_GCP_MAINTENANCE
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "false"
+    required: true
+  - description: Enable DB maintenance
+    name: ENABLE_DB_MAINTENANCE
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "false"
+    required: true
+  - description: composer-maintenance max concurrent requests
+    name: MAINTENANCE_MAX_CONCURRENT_REQUESTS
+    value: "10"
+    required: true
+  - description: Splunk HTTP Event Collector port
+    name: SPLUNK_HEC_PORT
+    value: "443"
+  - name: GLITCHTIP_DSN_NAME
+    value: "composer-stage-dsn"
+    description: Name of the secret for connecting to sentry/glitchtip
+  - description: Distro name aliases
+    name: DISTRO_ALIASES
+    value: "rhel-7=rhel-7.9,rhel-8=rhel-8.9,rhel-9=rhel-9.3"
