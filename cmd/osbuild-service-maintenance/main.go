@@ -16,7 +16,12 @@ func main() {
 	cutoff := time.Now().Add(-(time.Hour * 24 * 14))
 	logrus.Infof("Cutoff date: %v", cutoff)
 
-	var conf Config
+	conf := Config{
+		MaxConcurrentRequests: 20,
+		EnableDBMaintenance:   false,
+		EnableGCPMaintenance:  false,
+		EnableAWSMaintenance:  false,
+	}
 	err := LoadConfigFromEnv(&conf)
 	if err != nil {
 		logrus.Fatal(err)

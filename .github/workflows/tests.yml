@@ -282,10 +282,14 @@ jobs:
     - name: Process template
       run: |
         mkdir processed-templates
-        oc process -f templates/composer.yml \
+        oc process -f templates/openshift/composer.yml \
           -p IMAGE_TAG=image_tag \
           --local \
           -o yaml > processed-templates/composer.yml
+        oc process -f templates/openshift/maintenance-crc-workers.yml \
+          -p IMAGE_TAG=image_tag \
+          --local \
+          -o yaml > processed-templates/maintenance-crc-workers.yml
 
     - uses: stackrox/kube-linter-action@v1.0.5
       with:
