@@ -1090,7 +1090,7 @@ data:
                 "value": "org-16135456"
               }
             ],
-            "query": "crc stage : org-15877963,fedora stage : org-15842261,brew stage : org-16133643,crc production : org-15885990,fedora production : org-16057323,brew production : org-16135456",
+            "query": "crc stage : org-15877963,fedora stage : org-15842261,brew stage : org-16133643,community stage : org-17546013,crc production : org-15885990,fedora production : org-16057323,brew production : org-16135456",
             "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
@@ -1119,6 +1119,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker API",
       "uid": "image-builder-worker-api",
-      "version": 2,
+      "version": 3,
       "weekStart": ""
     }
