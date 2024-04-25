@@ -394,6 +394,8 @@ $AWS_CMD s3api put-object-tagging \
 greenprint "✅ Successfully tagged S3 object"
 
 setup_repo osbuild-composer "$COMPOSER_LATEST_COMMIT_SHA" 10
+OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
+setup_repo osbuild "$OSBUILD_GIT_COMMIT" 10
 
 greenprint "Installing osbuild-composer-tests for image-info"
 sudo dnf install -y $VERIFICATION_COMPOSER_RPM
