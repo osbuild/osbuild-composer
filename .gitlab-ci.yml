@@ -100,6 +100,8 @@ RPM:
           - aws/fedora-38-aarch64
           - aws/fedora-39-x86_64
           - aws/fedora-39-aarch64
+          - aws/fedora-40-x86_64
+          - aws/fedora-40-aarch64
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.9-ga-x86_64
@@ -546,6 +548,8 @@ API:
         RUNNER:
           - aws/fedora-39-x86_64
           - aws/fedora-39-aarch64
+          - aws/fedora-40-x86_64
+          - aws/fedora-40-aarch64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.9-ga-aarch64
