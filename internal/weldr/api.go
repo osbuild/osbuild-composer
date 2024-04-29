@@ -23,6 +23,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -310,8 +311,17 @@ func (api *API) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 // metadata.
 func (api *API) PreloadMetadata() {
 	log.Printf("Starting metadata preload goroutines")
+    totalDistros := len(api.validDistros(api.hostArch))
+    var counter int32
 	for _, distro := range api.validDistros(api.hostArch) {
 		go func(distro string) {
+			deferredCounting := true
+			defer func() {
+				if deferredCounting {
+					atomic.AddInt32(&counter, 1)
+				}
+			}()
+
 			startTime := time.Now()
 			d := api.getDistro(distro, api.hostArch)
 			if d == nil {
@@ -330,7 +340,9 @@ func (api *API) PreloadMetadata() {
 			if err != nil {
 				log.Printf("Problem preloading distro metadata for %s: %s", distro, err)
 			}
-			log.Printf("Finished preload of %s in %v", distro, time.Since(startTime))
+
+			deferredCounting = false
+			log.Printf("Finished preload (%d/%d) of %s in %v", atomic.AddInt32(&counter, 1), totalDistros, distro, time.Since(startTime))
 		}(distro)
 	}
 }
