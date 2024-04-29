@@ -520,6 +520,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
+	var failedStages []string
 	// Include pipeline stages output inside the worker's logs.
 	// Order pipelines based on PipelineNames from job
 	for _, pipelineName := range osbuildJobResult.PipelineNames.All() {
@@ -534,6 +535,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				logWithId.Infof("  %s success", stageResult.Type)
 			} else {
 				logWithId.Infof("  %s failure:", stageResult.Type)
+				failedStages = append(failedStages, stageResult.Type)
 				stageOutput := strings.Split(stageResult.Output, "\n")
 				for _, line := range stageOutput {
 					logWithId.Infof("    %s", line)
@@ -553,7 +555,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				osbErrors = append(osbErrors, fmt.Errorf("manifest validation error: %v", err))
 			}
 		}
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", osbErrors)
+
+		reason := "osbuild build failed"
+		if len(failedStages) > 0 {
+			reason += " in stage"
+			if len(failedStages) > 1 { reason += "s" }
+			reason += ":\n" + strings.Join(failedStages, "\n")
+		}
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason, osbErrors)
 		return nil
 	}
 
