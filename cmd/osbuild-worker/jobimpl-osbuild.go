@@ -351,6 +351,33 @@ func (impl *OSBuildJobImpl) getPulpClient(targetOptions *target.PulpOSTreeTarget
 	return pulp.NewClientFromFile(address, impl.PulpConfig.CredsFilePath)
 }
 
+func makeJobErrorFromOsbuildOutput(osbuildOutput *osbuild.Result) *clienterrors.Error {
+	var osbErrors []string
+	if osbuildOutput.Error != nil {
+		osbErrors = append(osbErrors, fmt.Sprintf("osbuild error: %s", string(osbuildOutput.Error)))
+	}
+	if osbuildOutput.Errors != nil {
+		for _, err := range osbuildOutput.Errors {
+			osbErrors = append(osbErrors, fmt.Sprintf("manifest validation error: %v", err))
+		}
+	}
+	var failedStage string
+	for _, pipelineLog := range osbuildOutput.Log {
+		for _, stageResult := range pipelineLog {
+			if !stageResult.Success {
+				failedStage = stageResult.Type
+				break
+			}
+		}
+	}
+
+	reason := "osbuild build failed"
+	if len(failedStage) > 0 {
+		reason += " in stage:\n" + failedStage
+	}
+	return clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason, osbErrors)
+}
+
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	logWithId := logrus.WithField("jobId", job.Id().String())
 	// Initialize variable needed for reporting back to osbuild-composer.
@@ -565,16 +592,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
-		var osbErrors []string
-		if osbuildJobResult.OSBuildOutput.Error != nil {
-			osbErrors = append(osbErrors, fmt.Sprintf("osbuild error: %s", string(osbuildJobResult.OSBuildOutput.Error)))
-		}
-		if osbuildJobResult.OSBuildOutput.Errors != nil {
-			for _, err := range osbuildJobResult.OSBuildOutput.Errors {
-				osbErrors = append(osbErrors, fmt.Sprintf("manifest validation error: %v", err))
-			}
-		}
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", osbErrors)
+		osbuildJobResult.JobError = makeJobErrorFromOsbuildOutput(osbuildJobResult.OSBuildOutput)
 		return nil
 	}
 
