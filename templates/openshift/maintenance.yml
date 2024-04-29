@@ -1,23 +1,23 @@
 apiVersion: v1
 kind: Template
 metadata:
-  name: composer
+  name: image-builder-maintenance
   annotations:
-    openshift.io/display-name: Image Builder CRC worker services
+    openshift.io/display-name: Image Builder maintenance
     description: |
-      Services related to maintaining the CRC workers.
+      Cronjob related to maintaining both composer and the workers.
     tags: golang
     iconClass: icon-shadowman
     template.openshift.io/provider-display-name: Red Hat, Inc.
 labels:
-  template: composer-worker-maintenance
+  template: image-builder-maintenance
 objects:
 - apiVersion: batch/v1
   kind: CronJob
   metadata:
     labels:
       service: image-builder
-    name: crc-worker-maintenance
+    name: image-builder-maintenance
   spec:
     # run maintenance job at midnight
     schedule: 0 0 * * *
@@ -32,7 +32,7 @@ objects:
             restartPolicy: Never
             containers:
             - image: "${IMAGE_NAME}:${IMAGE_TAG}"
-              name: crc-worker-maintenance
+              name: image-builder-maintenance
               resources:
                 requests:
                   cpu: "${CPU_REQUEST}"
@@ -41,72 +41,118 @@ objects:
                   cpu: "${CPU_LIMIT}"
                   memory: "${MEMORY_LIMIT}"
               env:
+              - name: PGHOST
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.host
+                    optional: true
+              - name: PGPORT
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.port
+                    optional: true
+              - name: PGDATABASE
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.name
+                    optional: true
+              - name: PGUSER
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.user
+                    optional: true
+              - name: PGPASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: composer-db
+                    key: db.password
+                    optional: true
+              - name: PGSSLMODE
+                value: "${PGSSLMODE}"
               - name: GCP_AUTH_PROVIDER_X509_CERT_URL
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: auth_provider_x509_cert_url
+                    optional: true
               - name: GCP_AUTH_URI
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: auth_uri
+                    optional: true
               - name: GCP_CLIENT_EMAIL
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: client_email
+                    optional: true
               - name: GCP_CLIENT_ID
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: client_id
+                    optional: true
               - name: GCP_CLIENT_X509_CERT_URL
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: client_x509_cert_url
+                    optional: true
               - name: GCP_PRIVATE_KEY
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: private_key
+                    optional: true
               - name: GCP_PRIVATE_KEY_ID
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: private_key_id
+                    optional: true
               - name: GCP_PROJECT_ID
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: project_id
+                    optional: true
               - name: GCP_TOKEN_URI
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: token_uri
+                    optional: true
               - name: GCP_TYPE
                 valueFrom:
                   secretKeyRef:
                     name: gcp-service-account
                     key: type
+                    optional: true
               - name: AWS_ACCESS_KEY_ID
                 valueFrom:
                   secretKeyRef:
                     name: aws-account
                     key: access_key_id
+                    optional: true
               - name: AWS_SECRET_ACCESS_KEY
                 valueFrom:
                   secretKeyRef:
                     name: aws-account
                     key: secret_access_key
+                    optional: true
               - name: DRY_RUN
                 value: "${MAINTENANCE_DRY_RUN}"
               - name: ENABLE_AWS_MAINTENANCE
                 value: "${ENABLE_AWS_MAINTENANCE}"
               - name: ENABLE_GCP_MAINTENANCE
                 value: "${ENABLE_GCP_MAINTENANCE}"
+              - name: ENABLE_DB_MAINTENANCE
+                value: "${ENABLE_DB_MAINTENANCE}"
               - name: MAX_CONCURRENT_REQUESTS
                 value: "${MAINTENANCE_MAX_CONCURRENT_REQUESTS}"
 
@@ -142,6 +188,11 @@ parameters:
     required: true
   - description: Enable GPC maintenance
     name: ENABLE_GCP_MAINTENANCE
+    # don't change this value, overwrite it in app-interface for a specific namespace
+    value: "false"
+    required: true
+  - description: Enable DB maintenance
+    name: ENABLE_DB_MAINTENANCE
     # don't change this value, overwrite it in app-interface for a specific namespace
     value: "false"
     required: true
