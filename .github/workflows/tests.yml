@@ -286,10 +286,10 @@ jobs:
           -p IMAGE_TAG=image_tag \
           --local \
           -o yaml > processed-templates/composer.yml
-        oc process -f templates/openshift/maintenance-crc-workers.yml \
+        oc process -f templates/openshift/maintenance.yml \
           -p IMAGE_TAG=image_tag \
           --local \
-          -o yaml > processed-templates/maintenance-crc-workers.yml
+          -o yaml > processed-templates/maintenance.yml
 
     - uses: stackrox/kube-linter-action@v1.0.5
       with:
