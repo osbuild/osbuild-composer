@@ -741,7 +741,7 @@ NIGHTLY_FAIL:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
       when: on_failure
   script:
-    - schutzbot/slack_notification.sh FAILED ":big-sad:" rhel
+    - schutzbot/slack_notification.sh FAILED ":big-sad:" nightly
 
 NIGHTLY_SUCCESS:
   stage: finish
@@ -750,7 +750,7 @@ NIGHTLY_SUCCESS:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
   script:
-    - schutzbot/slack_notification.sh SUCCESS ":partymeow:" rhel
+    - schutzbot/slack_notification.sh SUCCESS ":partymeow:" nightly
 
 GA/EUS_FAIL:
   stage: finish
