@@ -401,7 +401,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	osbuildVersion, err := osbuild.OSBuildVersion()
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err)
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err.Error())
 		return err
 	}
 	osbuildJobResult.OSBuildVersion = osbuildVersion
@@ -516,7 +516,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, exportPaths, nil, extraEnv, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err)
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())
 		return err
 	}
 
