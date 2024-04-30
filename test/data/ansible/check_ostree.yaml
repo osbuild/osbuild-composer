@@ -499,9 +499,9 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      # Skipping playbook task in CS9 due to bug https://issues.redhat.com/browse/RHEL-25249
+      # Skipping playbook task in CS9 and RHEL 9 due to bug https://issues.redhat.com/browse/RHEL-25249
       when: (edge_type == "none") and ((ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '<')) or
-            ((ansible_facts['distribution'] == 'CentOS') and ansible_facts['distribution_version'] is version('9', '!=')) or (ansible_facts['distribution'] == 'RedHat'))
+            ((ansible_facts['distribution'] == 'CentOS') and ansible_facts['distribution_version'] is version('9', '!=')) or (ansible_facts['distribution'] != 'RedHat'))
 
     # case: check dmesg error and failed log
     - name: check dmesg output
