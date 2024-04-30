@@ -20,6 +20,8 @@ type Resolver struct {
 
 	Arch         string
 	AuthFilePath string
+
+	newClient func(string) (*Client, error)
 }
 
 type SourceSpec struct {
@@ -36,11 +38,13 @@ func NewResolver(arch string) *Resolver {
 		ctx:   context.Background(),
 		queue: make(chan resolveResult, 2),
 		Arch:  arch,
+
+		newClient: NewClient,
 	}
 }
 
 func (r *Resolver) Add(spec SourceSpec) {
-	client, err := NewClient(spec.Source)
+	client, err := r.newClient(spec.Source)
 	r.jobs += 1
 
 	if err != nil {
