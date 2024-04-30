@@ -36,9 +36,13 @@ jobs:
         run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
 
       - uses: codecov/codecov-action@v4
+        if: env.CODECOV_TOKEN
         with:
           fail_ci_if_error: false
           verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   db-tests:
     name: "🗄 DB tests"
