@@ -196,6 +196,10 @@ parameters:
     # don't change this value, overwrite it in app-interface for a specific namespace
     value: "false"
     required: true
+  - description: postgres sslmode to use when connecting to the db
+    name: PGSSLMODE
+    value: "require"
+    required: true
   - description: composer-maintenance max concurrent requests
     name: MAINTENANCE_MAX_CONCURRENT_REQUESTS
     value: "10"
