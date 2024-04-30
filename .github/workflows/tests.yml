@@ -35,8 +35,10 @@ jobs:
       - name: Run unit tests
         run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
 
-      - name: Send coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
+      # disabled as 'pinging codecov' hangs
+      # see https://github.com/codecov/feedback/issues/354
+      # - name: Send coverage to codecov.io
+      #   run: bash <(curl -s https://codecov.io/bash)
 
   db-tests:
     name: "🗄 DB tests"
