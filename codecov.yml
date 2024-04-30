@@ -6,4 +6,4 @@ coverage:
         threshold: 5%
 codecov:
   require_ci_to_pass: no
-comment: no
+comment: yes
