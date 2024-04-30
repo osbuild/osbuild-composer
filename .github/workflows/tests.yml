@@ -35,10 +35,10 @@ jobs:
       - name: Run unit tests
         run: go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
 
-      # disabled as 'pinging codecov' hangs
-      # see https://github.com/codecov/feedback/issues/354
-      # - name: Send coverage to codecov.io
-      #   run: bash <(curl -s https://codecov.io/bash)
+      - uses: codecov/codecov-action@v4
+        with:
+          fail_ci_if_error: false
+          verbose: true
 
   db-tests:
     name: "🗄 DB tests"
