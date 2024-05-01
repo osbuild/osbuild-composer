@@ -14,6 +14,7 @@ import (
 	_ "github.com/containers/image/v5/docker/archive"
 	_ "github.com/containers/image/v5/oci/archive"
 	_ "github.com/containers/image/v5/oci/layout"
+	"github.com/containers/storage"
 	"golang.org/x/sys/unix"
 
 	"github.com/containers/common/pkg/retry"
@@ -110,6 +111,8 @@ type Client struct {
 	// internal state
 	policy *signature.Policy
 	sysCtx *types.SystemContext
+
+	store string // another store location other than the main one, useful for testing
 }
 
 // NewClient constructs a new Client for target with default options.
@@ -153,6 +156,7 @@ func NewClient(target string) (*Client, error) {
 			AuthFilePath: GetDefaultAuthFile(),
 		},
 		policy: policy,
+		store:  "/var/lib/containers/storage",
 	}
 
 	return &client, nil
@@ -343,44 +347,78 @@ func (m RawManifest) Digest() (digest.Digest, error) {
 	return manifest.Digest(m.Data)
 }
 
-func getImageRef(target reference.Named, local bool) (types.ImageReference, error) {
+func (cl *Client) getImageRef(id string, local bool) (types.ImageReference, error) {
 	if local {
-		return alltransports.ParseImageName(fmt.Sprintf("containers-storage:%s", target))
+		imageName := cl.Target.String()
+		if id != "" {
+			imageName = id
+		}
+		options := fmt.Sprintf("containers-storage:[overlay@%s+/run/containers/storage]%s", cl.store, imageName)
+		return alltransports.ParseImageName(options)
 	}
 
-	return docker.NewReference(target)
+	return docker.NewReference(cl.Target)
+}
+
+func (cl *Client) resolveContainerImageArch(ctx context.Context, ref types.ImageReference) (*arch.Arch, error) {
+	img, err := ref.NewImage(ctx, cl.sysCtx)
+	if err != nil {
+		return nil, err
+	}
+	defer img.Close()
+	info, err := img.Inspect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	a := arch.FromString(info.Architecture)
+	return &a, nil
+}
+
+func (cl *Client) getLocalImageIDFromDigest(instance digest.Digest) (string, error) {
+	store, err := storage.GetStore(storage.StoreOptions{GraphRoot: cl.store})
+	if err != nil {
+		return "", err
+	}
+	images, err := store.ImagesByDigest(instance)
+	if err != nil {
+		return "", err
+	}
+	if len(images) == 0 {
+		return "", fmt.Errorf("Unable to find image id for digest: %v", instance)
+	}
+	// the `ImagesByDigest` function always returns a list
+	// of images. The list could be larger than 1 in the case
+	// since it searches all stores for the matching digest,
+	// so it is okay to return the first item.
+	return images[0].ID, nil
 }
 
 // GetManifest fetches the raw manifest data from the server. If digest is not empty
 // it will override any given tag for the Client's Target.
-func (cl *Client) GetManifest(ctx context.Context, digest digest.Digest, local bool) (r RawManifest, err error) {
-	target := cl.Target
+func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest, local bool) (r RawManifest, err error) {
+	var localId string
+	var overrideDigest *digest.Digest
 
-	if digest != "" {
-		t := reference.TrimNamed(cl.Target)
-		t, err = reference.WithDigest(t, digest)
-		if err != nil {
-			return
+	if instanceDigest != "" {
+		if local {
+			localId, err = cl.getLocalImageIDFromDigest(instanceDigest)
+			if err != nil {
+				return r, err
+			}
+		} else {
+			// We can pass the instance digest, if it is nil, then this is the primary manifest.
+			// If it is not nil, then this is the instance digest and the primary manifest is a
+			// manifest list. The `GetManifest` call will then retrieve the manifest for the
+			// desired instance, see:
+			// https://github.com/containers/image/blob/cdb2f596a95018444f4dee0993e321d3d8bc328d/types/types.go#L252C2-L253C121
+			overrideDigest = &instanceDigest
 		}
-
-		target = t
 	}
 
-	ref, err := getImageRef(target, local)
+	ref, err := cl.getImageRef(localId, local)
 	if err != nil {
 		return
 	}
-	img, err := ref.NewImage(ctx, cl.sysCtx)
-	if err != nil {
-		return r, err
-	}
-	defer img.Close()
-
-	info, err := img.Inspect(ctx)
-	if err != nil {
-		return r, err
-	}
-	r.Arch = arch.FromString(info.Architecture)
 
 	src, err := ref.NewImageSource(ctx, cl.sysCtx)
 	if err != nil {
@@ -398,8 +436,23 @@ func (cl *Client) GetManifest(ctx context.Context, digest digest.Digest, local b
 	}
 
 	if err = retry.RetryIfNecessary(ctx, func() error {
-		r.Data, r.MimeType, err = src.GetManifest(ctx, nil)
-		return err
+		r.Data, r.MimeType, err = src.GetManifest(ctx, overrideDigest)
+		if err != nil {
+			return err
+		}
+
+		// getting the container image arch doesn't work with local manifest lists
+		if local && (r.MimeType == imgspecv1.MediaTypeImageIndex || r.MimeType == manifest.DockerV2ListMediaType) {
+			return nil
+		}
+
+		imageArch, err := cl.resolveContainerImageArch(ctx, ref)
+		if err != nil {
+			return err
+		}
+		r.Arch = *imageArch
+
+		return nil
 	}, &retryOpts); err != nil {
 		return
 	}
@@ -417,26 +470,26 @@ type resolvedIds struct {
 	ListManifest digest.Digest
 }
 
-func (cl *Client) resolveManifestList(ctx context.Context, list manifestList) (resolvedIds, error) {
+func (cl *Client) resolveManifestList(ctx context.Context, list manifestList, local bool) (resolvedIds, *arch.Arch, error) {
 	digest, err := list.ChooseInstance(cl.sysCtx)
 	if err != nil {
-		return resolvedIds{}, err
+		return resolvedIds{}, nil, err
 	}
 
-	raw, err := cl.GetManifest(ctx, digest, false)
+	raw, err := cl.GetManifest(ctx, digest, local)
 	if err != nil {
-		return resolvedIds{}, fmt.Errorf("error getting manifest: %w", err)
+		return resolvedIds{}, nil, fmt.Errorf("error getting manifest: %w", err)
 	}
 
-	ids, err := cl.resolveRawManifest(ctx, raw)
+	ids, _, err := cl.resolveRawManifest(ctx, raw, local)
 	if err != nil {
-		return resolvedIds{}, err
+		return resolvedIds{}, nil, err
 	}
 
-	return ids, err
+	return ids, &raw.Arch, err
 }
 
-func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest) (resolvedIds, error) {
+func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest, local bool) (resolvedIds, *arch.Arch, error) {
 
 	var imageID digest.Digest
 
@@ -444,37 +497,37 @@ func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest) (resol
 	case manifest.DockerV2ListMediaType:
 		list, err := manifest.Schema2ListFromManifest(rm.Data)
 		if err != nil {
-			return resolvedIds{}, err
+			return resolvedIds{}, nil, err
 		}
 
 		// Save digest of the manifest list as well.
-		ids, err := cl.resolveManifestList(ctx, list)
+		ids, imageArch, err := cl.resolveManifestList(ctx, list, local)
 		if err != nil {
-			return resolvedIds{}, err
+			return resolvedIds{}, nil, err
 		}
 		// NOTE: Comment in Digest() source says this should never fail. Ignore the error.
 		ids.ListManifest, _ = rm.Digest()
-		return ids, nil
+		return ids, imageArch, nil
 
 	case imgspecv1.MediaTypeImageIndex:
 		index, err := manifest.OCI1IndexFromManifest(rm.Data)
 		if err != nil {
-			return resolvedIds{}, err
+			return resolvedIds{}, nil, err
 		}
 
 		// Save digest of the manifest list as well.
-		ids, err := cl.resolveManifestList(ctx, index)
+		ids, imageArch, err := cl.resolveManifestList(ctx, index, local)
 		if err != nil {
-			return resolvedIds{}, err
+			return resolvedIds{}, nil, err
 		}
 		// NOTE: Comment in Digest() source says this should never fail. Ignore the error.
 		ids.ListManifest, _ = rm.Digest()
-		return ids, nil
+		return ids, imageArch, nil
 
 	case imgspecv1.MediaTypeImageManifest:
 		m, err := manifest.OCI1FromManifest(rm.Data)
 		if err != nil {
-			return resolvedIds{}, nil
+			return resolvedIds{}, nil, nil
 		}
 		imageID = m.ConfigInfo().Digest
 
@@ -482,25 +535,25 @@ func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest) (resol
 		m, err := manifest.Schema2FromManifest(rm.Data)
 
 		if err != nil {
-			return resolvedIds{}, nil
+			return resolvedIds{}, nil, nil
 		}
 
 		imageID = m.ConfigInfo().Digest
 
 	default:
-		return resolvedIds{}, fmt.Errorf("unsupported manifest format '%s'", rm.MimeType)
+		return resolvedIds{}, nil, fmt.Errorf("unsupported manifest format '%s'", rm.MimeType)
 	}
 
 	dg, err := rm.Digest()
 
 	if err != nil {
-		return resolvedIds{}, err
+		return resolvedIds{}, nil, err
 	}
 
 	return resolvedIds{
 		Manifest: dg,
 		Config:   imageID,
-	}, nil
+	}, nil, nil
 }
 
 // Resolve the Client's Target to the manifest digest and the corresponding image id
@@ -514,7 +567,7 @@ func (cl *Client) Resolve(ctx context.Context, name string, local bool) (Spec, e
 		return Spec{}, fmt.Errorf("error getting manifest: %w", err)
 	}
 
-	ids, err := cl.resolveRawManifest(ctx, raw)
+	ids, imageArch, err := cl.resolveRawManifest(ctx, raw, local)
 	if err != nil {
 		return Spec{}, err
 	}
@@ -528,7 +581,12 @@ func (cl *Client) Resolve(ctx context.Context, name string, local bool) (Spec, e
 		name,
 		local,
 	)
-	spec.Arch = raw.Arch
+
+	if imageArch != nil {
+		spec.Arch = *imageArch
+	} else {
+		spec.Arch = raw.Arch
+	}
 
 	return spec, nil
 }

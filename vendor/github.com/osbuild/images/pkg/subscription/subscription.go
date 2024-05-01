@@ -4,12 +4,12 @@ package subscription
 // ServerUrl denotes the host to register the system with
 // BaseUrl specifies the repository URL for DNF
 type ImageOptions struct {
-	Organization  string
-	ActivationKey string
-	ServerUrl     string
-	BaseUrl       string
-	Insights      bool
-	Rhc           bool
+	Organization  string `json:"organization"`
+	ActivationKey string `json:"activation_key"`
+	ServerUrl     string `json:"server_url"`
+	BaseUrl       string `json:"base_url"`
+	Insights      bool   `json:"insights"`
+	Rhc           bool   `json:"rhc"`
 }
 
 type RHSMStatus string

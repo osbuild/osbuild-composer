@@ -370,7 +370,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		// issue # https://github.com/osbuild/images/issues/352
 		if len(p.CustomFileSystems) != 0 {
 			serviceName := "osbuild-ostree-mountpoints.service"
-			stageOption := osbuild.NewSystemdUnitCreateStageOptions(createMountpointService(serviceName, p.CustomFileSystems))
+			stageOption := osbuild.NewSystemdUnitCreateStage(createMountpointService(serviceName, p.CustomFileSystems))
 			stageOption.MountOSTree(p.osName, ref, 0)
 			pipeline.AddStage(stageOption)
 			p.EnabledServices = append(p.EnabledServices, serviceName)
