@@ -353,6 +353,38 @@ func (s *Server) AllRootJobIDs(ctx context.Context) ([]uuid.UUID, error) {
 	return s.jobs.AllRootJobIDs(ctx)
 }
 
+// CleanupArtifacts removes worker artifact directories that do not have matching jobs
+// The UUID used for the artifact directory is the same as for the job that created it
+func (s *Server) CleanupArtifacts() error {
+	artifacts, err := os.ReadDir(s.config.ArtifactsDir)
+	if err != nil {
+		return err
+	}
+
+	for _, d := range artifacts {
+		if !d.IsDir() {
+			continue
+		}
+		id, err := uuid.Parse(d.Name())
+		if err != nil {
+			continue
+		}
+
+		// Is there a job with this UUID?
+		if _, _, _, _, err := s.jobs.Job(id); err != nil {
+			// No associated job, it is safe to remove the unused artifact directory
+			// and everything under it, and the ComposeRequest (if it exists)
+			_ = os.Remove(path.Join(s.config.ArtifactsDir, "ComposeRequest", id.String()+".json"))
+			err = os.RemoveAll(path.Join(s.config.ArtifactsDir, id.String()))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInfo, error) {
 	jobInfo, err := s.jobInfo(id, result)
 	if err != nil {
