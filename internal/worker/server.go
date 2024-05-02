@@ -18,6 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slices"
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
@@ -348,6 +349,42 @@ func (s *Server) AllRootJobIDs() ([]uuid.UUID, error) {
 // RemoveJob deletes a job and all of its dependencies
 func (s *Server) RemoveJob(id uuid.UUID) error {
 	return s.jobs.RemoveJob(id)
+}
+
+// CleanupArtifacts removes worker artifact directories that do not have matching jobs
+func (s *Server) CleanupArtifacts() error {
+	allJobs, err := s.jobs.AllJobIDs()
+	if err != nil {
+		return err
+	}
+
+	artifacts, err := os.ReadDir(s.config.ArtifactsDir)
+	if err != nil {
+		return err
+	}
+
+	for _, d := range artifacts {
+		if !d.IsDir() {
+			continue
+		}
+		id, err := uuid.Parse(d.Name())
+		if err != nil {
+			continue
+		}
+
+		// Artifact directory is still in use, skip it
+		if slices.Contains(allJobs, id) {
+			continue
+		}
+
+		// Remove the unused artifact directory and everything under it
+		err = os.RemoveAll(path.Join(s.config.ArtifactsDir, id.String()))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInfo, error) {
