@@ -54,8 +54,8 @@ init:
 
 .build_rules:
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "false"'
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "true"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "false" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
       when: manual
 
 .upstream_rules_all:
@@ -251,8 +251,6 @@ regression-composer-works-behind-satellite:
 regression-excluded-dependency:
   extends: .regression
   rules:
-    # BLACKLIST: Skipped on RHEL GA for pull requests
-    - if: $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     # WHITELIST
     - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
     - !reference [.nightly_rules_all, rules]
@@ -264,9 +262,7 @@ regression-include-excluded-packages:
   extends: .regression
   rules: 
     # BLACKLIST: Skipped on fedora systems
-    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    # BLACKLIST: Skipped on RHEL GA for pull requests
-    - if: $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
@@ -289,9 +285,7 @@ regression-insecure-repo:
   extends: .regression
   rules:
     # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel-*).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    # BLACKLIST: Skipped on RHEL GA for pull requests
-    - if: $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER =~ "/^.*(rhel-*).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
@@ -302,9 +296,7 @@ regression-no-explicit-rootfs-definition:
   extends: .regression
   rules: 
     # BLACKLIST: Skipped on fedora systems
-    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    # BLACKLIST: Skipped on RHEL GA for pull requests
-    - if: $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
@@ -430,10 +422,8 @@ aws.sh:
   extends: .integration
   rules:
     # Skip rhel-8.4-ga-x86_64
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-8.4-[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-8.4-[\S]+/ && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    # BLACKLIST: Skipped on RHEL GA for pull requests
-    - if: $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
   variables:
     SCRIPT: aws.sh
 
@@ -658,9 +648,7 @@ weldr-distro-dot-notation+aliases:
   extends: .libvirt_integration
   rules:
     # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
-    # BLACKLIST: Skipped on RHEL GA for pull requests
-    - if: $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
 
