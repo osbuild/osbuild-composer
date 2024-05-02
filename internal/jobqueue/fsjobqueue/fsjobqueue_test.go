@@ -87,3 +87,35 @@ func TestAllRootJobIDs(t *testing.T) {
 	sortUUIDs(roots)
 	require.Equal(t, rootJobs, roots)
 }
+
+func TestAllJobIDs(t *testing.T) {
+	dir := t.TempDir()
+	q, err := fsjobqueue.New(dir)
+	require.Nil(t, err)
+	require.NotNil(t, q)
+
+	var allJobs []uuid.UUID
+
+	// root with no dependencies
+	jidRoot1, err := q.Enqueue("oneRoot", nil, nil, "OneRootJob")
+	require.Nil(t, err)
+	allJobs = append(allJobs, jidRoot1)
+
+	// root with 2 dependencies
+	jid1, err := q.Enqueue("twoDeps", nil, nil, "TwoDepJobs")
+	require.Nil(t, err)
+	allJobs = append(allJobs, jid1)
+	jid2, err := q.Enqueue("twoDeps", nil, nil, "TwoDepJobs")
+	require.Nil(t, err)
+	allJobs = append(allJobs, jid2)
+	jidRoot2, err := q.Enqueue("twoDeps", nil, []uuid.UUID{jid1, jid2}, "TwoDepJobs")
+	require.Nil(t, err)
+	allJobs = append(allJobs, jidRoot2)
+
+	sortUUIDs(allJobs)
+	jobs, err := q.AllJobIDs()
+	require.Nil(t, err)
+	require.Greater(t, len(jobs), 0)
+	sortUUIDs(jobs)
+	require.Equal(t, allJobs, jobs)
+}
