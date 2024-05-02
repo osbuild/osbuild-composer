@@ -93,6 +93,9 @@ type JobQueue interface {
 	// Deletes the worker
 	DeleteWorker(workerID uuid.UUID) error
 
+	// AllJobIDs returns a list of all job UUIDs that the worker knows about
+	AllJobIDs() ([]uuid.UUID, error)
+
 	// AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
 	AllRootJobIDs() ([]uuid.UUID, error)
 }
