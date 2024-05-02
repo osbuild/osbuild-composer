@@ -12,10 +12,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/osbuild/images/pkg/blueprint"
@@ -126,6 +128,14 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 	}
 	filename := fmt.Sprintf("%s-%s-%s-boot.json", u(distroName), u(archName), u(name))
 	cacheDir := filepath.Join(cacheRoot, archName+distribution.Name())
+
+	// ensure that each file has a unique seed based on filename
+	hash := func(s string) int64 {
+		h := fnv.New64()
+		h.Write([]byte(filename))
+		return int64(h.Sum64())
+	}
+	seedArg += hash(filename)
 
 	options := distro.ImageOptions{Size: 0}
 	if cr.OSTree != nil {
@@ -440,6 +450,18 @@ func mergeOverrides(base, overrides composeRequest) composeRequest {
 	return merged
 }
 
+func seedArgFromEnv() (int64, error) {
+	seedFromEnv := os.Getenv("OSBUILD_GEN_MANIFEST_RNG_SEED")
+	if seedFromEnv == "" {
+		return 0, nil
+	}
+	seedArg, err := strconv.ParseInt(seedFromEnv, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("cannot parse env OSBUILD_GEN_MANIFEST_RNG_SEED: %w", err)
+	}
+	return seedArg, nil
+}
+
 func main() {
 	// common args
 	var outputDir, cacheRoot string
@@ -456,7 +478,10 @@ func main() {
 
 	flag.Parse()
 
-	seedArg := int64(0)
+	seedArg, err := seedArgFromEnv()
+	if err != nil {
+		panic(err)
+	}
 	darm := readRepos()
 	distroFac := distrofactory.NewDefault()
 	jobs := make([]manifestJob, 0)
