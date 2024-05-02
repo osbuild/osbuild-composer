@@ -354,6 +354,11 @@ func (h *apiHandlers) deleteComposeImpl(ctx echo.Context, id string) error {
 		return HTTPErrorWithInternal(ErrorRemovingJob, err)
 	}
 
+	err = h.server.workers.CleanupArtifacts()
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorRemovingArtifacts, err)
+	}
+
 	return ctx.JSON(http.StatusOK, ComposeDeleteStatus{
 		Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/delete/%v", jobId),
 		Id:   jobId.String(),
