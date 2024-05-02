@@ -582,7 +582,7 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 		Include: []string{
 			"bash",
 			"coreutils",
-			"dnf-yum",
+			"yum",
 			"dnf",
 			"fedora-release-container",
 			"glibc-minimal-langpack",
