@@ -50,6 +50,12 @@ type BaseSolver struct {
 // doesn't use libexec.
 func findDepsolveDnf() string {
 	locations := []string{"/usr/libexec/osbuild-depsolve-dnf", "/usr/lib/osbuild/osbuild-depsolve-dnf"}
+
+	// Override the default location
+	testLocation := os.Getenv("OSBUILD_DEPSOLVE_DNF")
+	if len(testLocation) > 0 {
+		locations = []string{testLocation}
+	}
 	for _, djPath := range locations {
 		_, err := os.Stat(djPath)
 		if !os.IsNotExist(err) {
