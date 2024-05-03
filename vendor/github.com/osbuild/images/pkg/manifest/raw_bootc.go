@@ -85,6 +85,39 @@ func (p *RawBootcImage) serializeEnd() {
 	p.containerSpecs = nil
 }
 
+func buildHomedirPaths(users []users.User) []osbuild.MkdirStagePath {
+	var containsRootUser, containsNormalUser bool
+
+	for _, user := range users {
+		if user.Name == "root" {
+			containsRootUser = true
+		} else {
+			containsNormalUser = true
+		}
+	}
+
+	rootHomePath := osbuild.MkdirStagePath{
+		Path:    "/var/roothome",
+		Mode:    common.ToPtr(os.FileMode(0700)),
+		ExistOk: true,
+	}
+	userHomePath := osbuild.MkdirStagePath{
+		Path:    "/var/home",
+		Mode:    common.ToPtr(os.FileMode(0755)),
+		ExistOk: true,
+	}
+	switch {
+	case containsRootUser && containsNormalUser:
+		return []osbuild.MkdirStagePath{rootHomePath, userHomePath}
+	case containsRootUser:
+		return []osbuild.MkdirStagePath{rootHomePath}
+	case containsNormalUser:
+		return []osbuild.MkdirStagePath{userHomePath}
+	default:
+		return nil
+	}
+}
+
 func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
@@ -148,16 +181,12 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 		groupsStage.Devices = devices
 		pipeline.AddStage(groupsStage)
 	}
+
 	if len(p.Users) > 0 {
-		// ensure /var/home is available
+		// ensure home root dir (currently /var/home, /var/roothome) is
+		// available
 		mkdirStage := osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
-			Paths: []osbuild.MkdirStagePath{
-				{
-					Path:    "/var/home",
-					Mode:    common.ToPtr(os.FileMode(0755)),
-					ExistOk: true,
-				},
-			},
+			Paths: buildHomedirPaths(p.Users),
 		})
 		mkdirStage.Mounts = mounts
 		mkdirStage.Devices = devices

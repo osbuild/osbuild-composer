@@ -577,6 +577,9 @@ func (p *OS) serialize() osbuild.Pipeline {
 			commands = append(commands, "restorecon -R /root/.gnupg")
 			// execute the rhc post install script as the selinuxenabled check doesn't work in the buildroot container
 			commands = append(commands, "/usr/sbin/semanage permissive --add rhcd_t")
+			if p.OSTreeRef != "" {
+				p.runInsightsClientOnBoot()
+			}
 		} else {
 			commands = []string{fmt.Sprintf("/usr/sbin/subscription-manager register --org=${ORG_ID} --activationkey=${ACTIVATION_KEY} --serverurl %s --baseurl %s", p.Subscription.ServerUrl, p.Subscription.BaseUrl)}
 
@@ -585,6 +588,9 @@ func (p *OS) serialize() osbuild.Pipeline {
 				commands = append(commands, "/usr/bin/insights-client --register")
 				// insights-client creates the .gnupg directory during boot process, and is labeled incorrectly
 				commands = append(commands, "restorecon -R /root/.gnupg")
+				if p.OSTreeRef != "" {
+					p.runInsightsClientOnBoot()
+				}
 			}
 		}
 
@@ -881,4 +887,44 @@ func (p *OS) getInline() []string {
 	}
 
 	return inlineData
+}
+
+// For ostree-based systems, creates a drop-in file for the insights-client
+// service to run on boot and enables the service. This is only meant for
+// ostree-based systems.
+func (p *OS) runInsightsClientOnBoot() {
+	// Insights-client collection must occur at boot time  so
+	// that the current ostree commit hash can be reflected
+	// after upgrade. Otherwise, the upgrade shows as failed in
+	// the console UI.
+	// Add a drop-in file that enables insights-client.service to
+	// run on successful boot.
+	// See https://issues.redhat.com/browse/HMS-4031
+	//
+	// NOTE(akoutsou): drop-in files can normally be created with the
+	// org.osbuild.systemd.unit stage but the stage doesn't support
+	// all the options we need. This is a temporary workaround
+	// until we get the stage updated to support everything we need.
+	icDropinFilepath, icDropinContents := insightsClientDropin()
+	if icDropinDirectory, err := fsnode.NewDirectory(filepath.Dir(icDropinFilepath), nil, "root", "root", true); err == nil {
+		p.Directories = append(p.Directories, icDropinDirectory)
+	}
+	if icDropinFile, err := fsnode.NewFile(icDropinFilepath, nil, "root", "root", []byte(icDropinContents)); err == nil {
+		p.Files = append(p.Files, icDropinFile)
+	} else {
+		panic(err)
+	}
+	// Enable the service now that it's "enable-able"
+	p.EnabledServices = append(p.EnabledServices, "insights-client.service")
+}
+
+// Filename and contents for the insights-client service drop-in.
+// This is a temporary workaround until the org.osbuild.systemd.unit stage
+// gains support for all the options we need.
+func insightsClientDropin() (string, string) {
+	return "/etc/systemd/system/insights-client.service.d/override.conf", `[Unit]
+Requisite=greenboot-healthcheck.service
+After=network-online.target greenboot-healthcheck.service osbuild-first-boot.service
+[Install]
+WantedBy=multi-user.target`
 }

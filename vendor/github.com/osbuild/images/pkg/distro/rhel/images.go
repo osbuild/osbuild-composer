@@ -524,7 +524,7 @@ func EdgeInstallerImage(workload workload.Workload,
 
 	img.Product = t.Arch().Distro().Product()
 	img.Variant = "edge"
-	img.OSName = "rhel"
+	img.OSName = "rhel-edge"
 	img.OSVersion = t.Arch().Distro().OsVersion()
 	img.Release = fmt.Sprintf("%s %s", t.Arch().Distro().Product(), t.Arch().Distro().OsVersion())
 	img.FIPS = customizations.GetFIPS()
@@ -561,7 +561,7 @@ func EdgeRawImage(workload workload.Workload,
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
 	}
-	img.OSName = "redhat"
+	img.OSName = "rhel-edge"
 
 	// TODO: move generation into LiveImage
 	pt, err := t.GetPartitionTable(customizations.GetFilesystems(), options, rng)
@@ -603,7 +603,7 @@ func EdgeSimplifiedInstallerImage(workload workload.Workload,
 		URL:        options.OSTree.URL,
 		ContentURL: options.OSTree.ContentURL,
 	}
-	rawImg.OSName = "redhat"
+	rawImg.OSName = "rhel-edge"
 
 	// TODO: move generation into LiveImage
 	pt, err := t.GetPartitionTable(customizations.GetFilesystems(), options, rng)
@@ -641,7 +641,7 @@ func EdgeSimplifiedInstallerImage(workload workload.Workload,
 	d := t.arch.distro
 	img.Product = d.product
 	img.Variant = "edge"
-	img.OSName = "redhat"
+	img.OSName = "rhel-edge"
 	img.OSVersion = d.osVersion
 
 	installerConfig, err := t.getDefaultInstallerConfig()
@@ -708,7 +708,6 @@ func ImageInstallerImage(workload workload.Workload,
 
 	d := t.arch.distro
 	img.Product = d.product
-	img.OSName = "redhat"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
 
