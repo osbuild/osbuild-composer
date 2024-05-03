@@ -56,7 +56,7 @@ case "${ID}-${VERSION_ID}" in
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
         ;;
-    "rhel-9.4")
+    "rhel-9.5")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
@@ -67,7 +67,7 @@ case "${ID}-${VERSION_ID}" in
         SYSROOT_RO="true"
 
         # Use a stable installer image unless it's the nightly pipeline
-        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.3.0/BaseOS/x86_64/os/"
+        BOOT_LOCATION="http://download.devel.redhat.com/released/rhel-9/RHEL-9/9.4.0/BaseOS/x86_64/os/"
         if [ "${NIGHTLY:=false}" == "true" ]; then
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi

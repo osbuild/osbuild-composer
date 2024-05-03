@@ -354,7 +354,7 @@ koji --server="${KOJI_HUB_URL}" --user kojiadmin --password kojipass --authtype=
 if [[ "$DISTRO_CODE" == rhel-8* ]]; then
     DISTRO_CODE=rhel-8.10
 elif [[ "$DISTRO_CODE" == rhel-9* ]]; then
-    DISTRO_CODE=rhel-9.4
+    DISTRO_CODE=rhel-9.5
 fi
 
 case ${TEST_TYPE} in
