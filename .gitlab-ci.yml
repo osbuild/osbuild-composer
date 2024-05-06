@@ -251,8 +251,8 @@ regression-composer-works-behind-satellite:
 regression-excluded-dependency:
   extends: .regression
   rules:
-    # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    # WHITELIST & BLACKLIST: excluding GA runners from the PR pipeline
+    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
@@ -261,7 +261,7 @@ regression-excluded-dependency:
 regression-include-excluded-packages:
   extends: .regression
   rules: 
-    # BLACKLIST: Skipped on fedora systems
+    # BLACKLIST: Skipped on fedora systems & excluding GA runners from the PR pipeline
     - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
@@ -284,7 +284,7 @@ regression-old-worker-new-composer:
 regression-insecure-repo:
   extends: .regression
   rules:
-    # WHITELIST
+    # WHITELIST & BLACKLIST: excluding GA runners from the PR pipeline
     - if: $RUNNER =~ "/^.*(rhel-*).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
@@ -295,7 +295,7 @@ regression-insecure-repo:
 regression-no-explicit-rootfs-definition:
   extends: .regression
   rules: 
-    # BLACKLIST: Skipped on fedora systems
+    # BLACKLIST: Skipped on fedora systems & excluding GA runners from the PR pipeline
     - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
@@ -421,8 +421,7 @@ koji.sh (cloudapi):
 aws.sh:
   extends: .integration
   rules:
-    # Skip rhel-8.4-ga-x86_64
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-8.4-[\S]+/ && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
   variables:
     SCRIPT: aws.sh
@@ -729,7 +728,7 @@ NIGHTLY_SUCCESS:
   script:
     - schutzbot/slack_notification.sh SUCCESS ":partymeow:" nightly
 
-GA/EUS_FAIL:
+GA_FAIL:
   stage: finish
   tags:
     - shell
@@ -739,7 +738,7 @@ GA/EUS_FAIL:
   script:
     - schutzbot/slack_notification.sh FAILED ":big-sad:" ga
 
-GA/EUS_SUCCESS:
+GA_SUCCESS:
   stage: finish
   tags:
     - shell
