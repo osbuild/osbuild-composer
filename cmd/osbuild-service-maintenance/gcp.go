@@ -29,12 +29,12 @@ func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff tim
 				break
 			}
 			if err != nil {
-				logrus.Fatalf("Error iterating over list of images: %v", err)
+				logrus.Fatalf("GCP: Error iterating over list of images: %v", err)
 			}
 
 			created, err := time.Parse(time.RFC3339, image.GetCreationTimestamp())
 			if err != nil {
-				logrus.Errorf("Unable to parse image %s(%d)'s creation timestamp: %v", image.GetName(), image.Id, err)
+				logrus.Errorf("GCP: Unable to parse image %s(%d)'s creation timestamp: %v", image.GetName(), image.Id, err)
 				continue
 			}
 
@@ -43,12 +43,12 @@ func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff tim
 			}
 
 			if dryRun {
-				logrus.Infof("Dry run, gcp image %s(%d), with creation date %v would be removed", image.GetName(), image.Id, created)
+				logrus.Infof("GCP: Dry run, gcp image %s(%d), with creation date %v would be removed", image.GetName(), image.Id, created)
 				continue
 			}
 
 			if err = sem.Acquire(context.Background(), 1); err != nil {
-				logrus.Errorf("Error acquiring semaphore: %v", err)
+				logrus.Errorf("GCP: Error acquiring semaphore: %v", err)
 				continue
 			}
 			wg.Add(1)
@@ -59,7 +59,7 @@ func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff tim
 
 				err = g.ComputeImageDelete(context.Background(), image.GetName())
 				if err != nil {
-					logrus.Errorf("Error deleting image %s created at %v: %v", image.GetName(), created, err)
+					logrus.Errorf("GCP: Error deleting image %s created at %v: %v", image.GetName(), created, err)
 				}
 			}(fmt.Sprintf("%d", image.Id))
 		}

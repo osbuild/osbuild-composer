@@ -25,7 +25,7 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 	for _, region := range regions {
 		a, err := awscloud.New(region, accessKeyID, accessKey, "")
 		if err != nil {
-			logrus.Errorf("Unable to create new aws session for region %s: %v", region, err)
+			logrus.Errorf("AWS: Unable to create new aws session for region %s: %v", region, err)
 			continue
 		}
 
@@ -33,24 +33,24 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		sem := semaphore.NewWeighted(int64(maxConcurrentRequests))
 		images, err := a.DescribeImagesByTag("Name", "composer-api-*")
 		if err != nil {
-			logrus.Errorf("Unable to describe images for region %s: %v", region, err)
+			logrus.Errorf("AWS: Unable to describe images for region %s: %v", region, err)
 			continue
 		}
 
 		for index, image := range images {
 			// TODO are these actual concerns?
 			if image.ImageId == nil {
-				logrus.Infof("ImageId is nil %v", image)
+				logrus.Infof("AWS: ImageId is nil %v", image)
 				continue
 			}
 			if image.CreationDate == nil {
-				logrus.Infof("Image %v has nil creationdate", *image.ImageId)
+				logrus.Infof("AWS: Image %v has nil creationdate", *image.ImageId)
 				continue
 			}
 
 			created, err := time.Parse(time.RFC3339, *image.CreationDate)
 			if err != nil {
-				logrus.Infof("Unable to parse date %s for image %s", *image.CreationDate, *image.ImageId)
+				logrus.Infof("AWS: Unable to parse date %s for image %s", *image.CreationDate, *image.ImageId)
 				continue
 			}
 
@@ -59,12 +59,12 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 			}
 
 			if dryRun {
-				logrus.Infof("Dry run, aws image %s in region %s, with creation date %s would be removed", *image.ImageId, region, *image.CreationDate)
+				logrus.Infof("AWS: Dry run, aws image %s in region %s, with creation date %s would be removed", *image.ImageId, region, *image.CreationDate)
 				continue
 			}
 
 			if err = sem.Acquire(context.Background(), 1); err != nil {
-				logrus.Errorf("Error acquiring semaphore: %v", err)
+				logrus.Errorf("AWS: Error acquiring semaphore: %v", err)
 				continue
 			}
 			wg.Add(1)
@@ -75,7 +75,7 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 
 				err := a.RemoveSnapshotAndDeregisterImage(images[i])
 				if err != nil {
-					logrus.Errorf("Cleanup for image %s in region %s failed: %v", *images[i].ImageId, region, err)
+					logrus.Errorf("AWS: Cleanup for image %s in region %s failed: %v", *images[i].ImageId, region, err)
 				}
 			}(index)
 		}
