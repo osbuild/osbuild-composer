@@ -68,7 +68,7 @@ EOF
         # write osbuild_commit variable if defined in Schutzfile
         # if it's not defined, osbuild will be installed from distribution repositories
         if [[ $osbuild_commit != "null" ]]; then
-            tee -a "$item/group_vars/all.yml" null >dev <<EOF
+            tee -a "$item/group_vars/all.yml" <<EOF
 osbuild_commit: $osbuild_commit
 EOF
         fi
