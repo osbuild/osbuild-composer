@@ -7,7 +7,7 @@ COMMIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 SKIP_CREATE_AMI=false
 BUILD_RPMS=false
 # Use prebuilt rpms on CI
-SKIP_TAGS="rpmcopy,subscribe"
+SKIP_TAGS="rpmcopy,rpmcopr,subscribe"
 
 if [ -n "$CI_COMMIT_SHA" ]; then
     COMMIT_SHA="$CI_COMMIT_SHA"
