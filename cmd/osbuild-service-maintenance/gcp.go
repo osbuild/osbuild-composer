@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	compute "cloud.google.com/go/compute/apiv1"
@@ -22,6 +23,7 @@ func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff tim
 
 	sem := semaphore.NewWeighted(int64(maxConcurrentRequests))
 	var wg sync.WaitGroup
+	imagesRemoved := atomic.Uint32{}
 	removeImageOlderThan := func(images *compute.ImageIterator) error {
 		for {
 			image, err := images.Next()
@@ -61,6 +63,7 @@ func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff tim
 				if err != nil {
 					logrus.Errorf("GCP: Error deleting image %s created at %v: %v", image.GetName(), created, err)
 				}
+				imagesRemoved.Add(1)
 			}(fmt.Sprintf("%d", image.Id))
 		}
 		return nil
@@ -71,5 +74,6 @@ func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff tim
 		return err
 	}
 	wg.Wait()
+	logrus.Infof("GCP: cleaned up %d images", imagesRemoved.Load())
 	return nil
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -22,6 +23,7 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		return err
 	}
 
+	imagesRemoved := atomic.Uint32{}
 	for _, region := range regions {
 		a, err := awscloud.New(region, accessKeyID, accessKey, "")
 		if err != nil {
@@ -77,10 +79,11 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 				if err != nil {
 					logrus.Errorf("AWS: Cleanup for image %s in region %s failed: %v", *images[i].ImageId, region, err)
 				}
+				imagesRemoved.Add(1)
 			}(index)
 		}
 		wg.Wait()
 	}
-
+	logrus.Infof("AWS: cleaned up %d images", imagesRemoved.Load())
 	return nil
 }
