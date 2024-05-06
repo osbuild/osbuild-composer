@@ -2,7 +2,7 @@
 
 - name: Add osbuild-composer repository
   tags:
-    - rpmrepo
+    - rpmrepo_composer
   yum_repository:
     name: "composer"
     description: "osbuild-composer commit {{ COMPOSER_COMMIT }}"
@@ -13,7 +13,8 @@
 
 - name: Add osbuild repository
   tags:
-    - rpmrepo
+    - rpmrepo_osbuild
+    - rpmcopr
   yum_repository:
     name: "osbuild"
     description: "osbuild commit {{ osbuild_commit }}"
@@ -104,10 +105,27 @@
       priority=1
 
 - name: Install worker rpm
+  tags:
+    - rpmcopy
+    - rpmrepo_osbuild
   package:
     name:
       - osbuild-composer-worker
     state: present
+
+- name: Install worker rpm from copr
+  tags:
+    - rpmcopr
+  shell: |
+    dnf copr enable -y @osbuild/osbuild-composer
+    COMPOSER_COMMIT_SHORT=$(echo {{ COMPOSER_COMMIT }} | head -c 9)
+    COMPOSER_RPMS=$(dnf search -q --showduplicates osbuild-composer | grep -E "osbuild-composer-worker-[0-9]+.*g$COMPOSER_COMMIT_SHORT.*{{ ansible_architecture }}" | cut -f 1 -d ':')
+    if [ -z $COMPOSER_RPMS ]; then
+      echo $COMPOSER_COMMIT_SHORT worker rpms not available for on @osbuild/osbuild-composer copr
+      exit 1
+    fi
+    echo "installing rpms $COMPOSER_RPMS"
+    dnf install -y $COMPOSER_RPMS
 
 - name: Cleanup rpmbuild dir
   file:
