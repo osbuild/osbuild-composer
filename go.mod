@@ -16,7 +16,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 	github.com/BurntSushi/toml v1.3.2
-	github.com/aws/aws-sdk-go v1.52.1
+	github.com/aws/aws-sdk-go v1.52.3
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/deepmap/oapi-codegen v1.8.2
@@ -34,9 +34,9 @@ require (
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2
-	github.com/openshift-online/ocm-sdk-go v0.1.418
+	github.com/openshift-online/ocm-sdk-go v0.1.419
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
-	github.com/osbuild/images v0.59.0
+	github.com/osbuild/images v0.60.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
 	github.com/osbuild/pulp-client v0.1.0
 	github.com/prometheus/client_golang v1.19.0
@@ -47,9 +47,9 @@ require (
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.37.1
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
-	golang.org/x/oauth2 v0.19.0
+	golang.org/x/oauth2 v0.20.0
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.19.0
+	golang.org/x/sys v0.20.0
 	google.golang.org/api v0.177.0
 )
 
