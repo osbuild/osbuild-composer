@@ -14,7 +14,7 @@ COMMIT_SHA="${COMMIT_SHA:-$(git rev-parse HEAD)}"
 
 # wait up to 30 minutes for the packit-as-a-service app (app id being 29076)
 for RETRY in {1..31}; do
-    if [ "$RETRY" = 11 ]; then
+    if [ "$RETRY" = 31 ]; then
         echo Waiting for the packit-as-a-service suite failed after 10 minutes
         exit 1
     fi
@@ -37,9 +37,9 @@ if [ "$CHECK_RUNS_URL" = null ]; then
     exit 1
 fi
 
-# wait up to 30 minutes for the rpms to be built
-for RETRY in {1..31}; do
-    if [ "$RETRY" = 31 ]; then
+# wait up to 2 hours for the rpms to be built
+for RETRY in {1..121}; do
+    if [ "$RETRY" = 121 ]; then
         echo Waiting for the packit-as-a-service results failed after 30 minutes
         exit 1
     fi
