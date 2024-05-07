@@ -1,8 +1,10 @@
 package common
 
 import (
+	"context"
 	"encoding/json"
 	"io"
+	"runtime"
 
 	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
@@ -11,11 +13,19 @@ import (
 // EchoLogrusLogger extend logrus.Logger
 type EchoLogrusLogger struct {
 	*logrus.Logger
+	Ctx context.Context
 }
 
 var commonLogger = &EchoLogrusLogger{
 	Logger: logrus.StandardLogger(),
+	Ctx: context.Background(),
 }
+
+type ctxKey int
+
+const (
+	LoggingFrameCtx ctxKey = iota
+)
 
 func Logger() *EchoLogrusLogger {
 	return commonLogger
@@ -34,6 +44,49 @@ func toEchoLevel(level logrus.Level) log.Lvl {
 	}
 
 	return log.OFF
+}
+
+// add the context and caller to the fields
+// as logrus will report "echo_logrus.go" otherwise
+func (l *EchoLogrusLogger) fixCaller() *logrus.Entry {
+	rpc := make([]uintptr, 1)
+	// fixCaller is always 3 frames below the calling context
+	n := runtime.Callers(3, rpc[:])
+	if n < 1 {
+		return l.Logger.WithContext(l.Ctx)
+	}
+	frame, _ := runtime.CallersFrames(rpc).Next()
+	frameOverride := context.WithValue(l.Ctx, LoggingFrameCtx, frame)
+	return l.Logger.WithContext(frameOverride)
+}
+
+type ctxHook struct {
+}
+
+func (h *ctxHook) Levels() []logrus.Level {
+	return []logrus.Level{
+		logrus.DebugLevel,
+		logrus.InfoLevel,
+		logrus.WarnLevel,
+		logrus.ErrorLevel,
+		logrus.FatalLevel,
+		logrus.PanicLevel,
+	}
+}
+
+func (h *ctxHook) Fire(e *logrus.Entry) error {
+	if e.Context != nil {
+		if e.Context.Value(LoggingFrameCtx) != nil {
+			frame := e.Context.Value(LoggingFrameCtx).(runtime.Frame)
+			e.Caller = &frame
+		}
+	}
+
+	return nil
+}
+
+func init() {
+	commonLogger.Logger.AddHook(&ctxHook{})
 }
 
 func (l *EchoLogrusLogger) Output() io.Writer {
@@ -63,11 +116,11 @@ func (l *EchoLogrusLogger) SetPrefix(p string) {
 }
 
 func (l *EchoLogrusLogger) Print(i ...interface{}) {
-	l.Logger.Print(i...)
+	l.fixCaller().Print(i...)
 }
 
 func (l *EchoLogrusLogger) Printf(format string, args ...interface{}) {
-	l.Logger.Printf(format, args...)
+	l.fixCaller().Printf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Printj(j log.JSON) {
@@ -75,15 +128,15 @@ func (l *EchoLogrusLogger) Printj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.Println(string(b))
+	l.fixCaller().Println(string(b))
 }
 
 func (l *EchoLogrusLogger) Debug(i ...interface{}) {
-	l.Logger.Debug(i...)
+	l.fixCaller().Debug(i...)
 }
 
 func (l *EchoLogrusLogger) Debugf(format string, args ...interface{}) {
-	l.Logger.Debugf(format, args...)
+	l.fixCaller().Debugf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Debugj(j log.JSON) {
@@ -91,15 +144,15 @@ func (l *EchoLogrusLogger) Debugj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.Debugln(string(b))
+	l.fixCaller().Debugln(string(b))
 }
 
 func (l *EchoLogrusLogger) Info(i ...interface{}) {
-	l.Logger.Info(i...)
+	l.fixCaller().Info(i...)
 }
 
 func (l *EchoLogrusLogger) Infof(format string, args ...interface{}) {
-	l.Logger.Infof(format, args...)
+	l.fixCaller().Infof(format, args...)
 }
 
 func (l *EchoLogrusLogger) Infoj(j log.JSON) {
@@ -107,15 +160,15 @@ func (l *EchoLogrusLogger) Infoj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.Infoln(string(b))
+	l.fixCaller().Infoln(string(b))
 }
 
 func (l *EchoLogrusLogger) Warn(i ...interface{}) {
-	l.Logger.Warn(i...)
+	l.fixCaller().Warn(i...)
 }
 
 func (l *EchoLogrusLogger) Warnf(format string, args ...interface{}) {
-	l.Logger.Warnf(format, args...)
+	l.fixCaller().Warnf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Warnj(j log.JSON) {
@@ -123,15 +176,15 @@ func (l *EchoLogrusLogger) Warnj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.Warnln(string(b))
+	l.fixCaller().Warnln(string(b))
 }
 
 func (l *EchoLogrusLogger) Error(i ...interface{}) {
-	l.Logger.Error(i...)
+	l.fixCaller().Error(i...)
 }
 
 func (l *EchoLogrusLogger) Errorf(format string, args ...interface{}) {
-	l.Logger.Errorf(format, args...)
+	l.fixCaller().Errorf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Errorj(j log.JSON) {
@@ -139,15 +192,15 @@ func (l *EchoLogrusLogger) Errorj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.Errorln(string(b))
+	l.fixCaller().Errorln(string(b))
 }
 
 func (l *EchoLogrusLogger) Fatal(i ...interface{}) {
-	l.Logger.Fatal(i...)
+	l.fixCaller().Fatal(i...)
 }
 
 func (l *EchoLogrusLogger) Fatalf(format string, args ...interface{}) {
-	l.Logger.Fatalf(format, args...)
+	l.fixCaller().Fatalf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Fatalj(j log.JSON) {
@@ -155,15 +208,15 @@ func (l *EchoLogrusLogger) Fatalj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.Fatalln(string(b))
+	l.fixCaller().Fatalln(string(b))
 }
 
 func (l *EchoLogrusLogger) Panic(i ...interface{}) {
-	l.Logger.Panic(i...)
+	l.fixCaller().Panic(i...)
 }
 
 func (l *EchoLogrusLogger) Panicf(format string, args ...interface{}) {
-	l.Logger.Panicf(format, args...)
+	l.fixCaller().Panicf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Panicj(j log.JSON) {
@@ -171,5 +224,5 @@ func (l *EchoLogrusLogger) Panicj(j log.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.Panicln(string(b))
+	l.fixCaller().Panicln(string(b))
 }
