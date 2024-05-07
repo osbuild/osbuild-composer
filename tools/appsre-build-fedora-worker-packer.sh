@@ -1,6 +1,6 @@
 #!/bin/bash
 # AppSRE runs this script to build an ami and share it with an account
-set -exv
+set -ev
 
 export SKIP_CREATE_AMI=false
 # Use prebuilt rpms for the fedora images
