@@ -11,8 +11,8 @@ export SKIP_TAGS="rpmrepo_composer,rpmcopy,subscribe"
 FEDORA=fedora-38
 export PACKER_ONLY_EXCEPT=--only=amazon-ebs."$FEDORA"-x86_64,amazon-ebs."$FEDORA"-aarch64
 
-# wait up to 10 minutes for the packit-as-a-service app (app id being 29076)
-for RETRY in {1..11}; do
+# wait up to 30 minutes for the packit-as-a-service app (app id being 29076)
+for RETRY in {1..31}; do
     if [ "$RETRY" = 11 ]; then
         echo Waiting for the packit-as-a-service suite failed after 10 minutes
         exit 1
