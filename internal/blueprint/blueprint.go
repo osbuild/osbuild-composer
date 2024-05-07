@@ -352,7 +352,15 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 			customizations.FIPS = fips
 		}
 		if installer := c.Installer; installer != nil {
-			iinst := iblueprint.InstallerCustomization(*installer)
+			iinst := iblueprint.InstallerCustomization{
+				Unattended:   installer.Unattended,
+				SudoNopasswd: installer.SudoNopasswd,
+			}
+			if installer.Kickstart != nil {
+				iinst.Kickstart = &iblueprint.Kickstart{
+					Contents: installer.Kickstart.Contents,
+				}
+			}
 			customizations.Installer = &iinst
 		}
 	}
