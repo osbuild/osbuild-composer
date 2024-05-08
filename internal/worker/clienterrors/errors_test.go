@@ -34,5 +34,5 @@ func TestErrorJSONMarshal(t *testing.T) {
 
 	json, err := json.Marshal(clienterrors.WorkerClientError(2, "details", err))
 	assert.NoError(t, err)
-	assert.Equal(t, `{"id":2,"reason":"details","details":{"some-error"}}`, string(json))
+	assert.Equal(t, `{"id":2,"reason":"details","details":"some-error"}`, string(json))
 }

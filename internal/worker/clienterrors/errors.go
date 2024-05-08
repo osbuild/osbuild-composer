@@ -1,6 +1,7 @@
 package clienterrors
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -56,6 +57,26 @@ type Error struct {
 
 func (e *Error) String() string {
 	return fmt.Sprintf("Code: %d, Reason: %s, Details: %v", e.ID, e.Reason, e.Details)
+}
+
+func (e *Error) MarshalJSON() ([]byte, error) {
+	var details interface{}
+	switch v := e.Details.(type) {
+	case error:
+		details = v.Error()
+	default:
+		details = v
+	}
+
+	return json.Marshal(&struct {
+		ID      ClientErrorCode `json:"id"`
+		Reason  string          `json:"reason"`
+		Details interface{}     `json:"details,omitempty"`
+	}{
+		ID:      e.ID,
+		Reason:  e.Reason,
+		Details: details,
+	})
 }
 
 const (
