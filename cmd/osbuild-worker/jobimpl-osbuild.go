@@ -546,13 +546,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
-		var osbErrors []error
+		var osbErrors []string
 		if osbuildJobResult.OSBuildOutput.Error != nil {
-			osbErrors = append(osbErrors, fmt.Errorf("osbuild error: %s", string(osbuildJobResult.OSBuildOutput.Error)))
+			osbErrors = append(osbErrors, fmt.Sprintf("osbuild error: %s", string(osbuildJobResult.OSBuildOutput.Error)))
 		}
 		if osbuildJobResult.OSBuildOutput.Errors != nil {
 			for _, err := range osbuildJobResult.OSBuildOutput.Errors {
-				osbErrors = append(osbErrors, fmt.Errorf("manifest validation error: %v", err))
+				osbErrors = append(osbErrors, fmt.Sprintf("manifest validation error: %v", err))
 			}
 		}
 
