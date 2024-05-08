@@ -1,14 +1,18 @@
 package osbuild
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/osbuild/images/internal/common"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 )
+
+const maxErrLinesToReport = 20
 
 // Run an instance of osbuild, returning a parsed osbuild.Result.
 //
@@ -17,6 +21,7 @@ import (
 // with its corresponding logs through osbuild.Result.
 func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpoints, extraEnv []string, result bool, errorWriter io.Writer) (*Result, error) {
 	var stdoutBuffer bytes.Buffer
+	//FLO var stderrBuffer bytes.Buffer
 	var res Result
 
 	cmd := exec.Command(
@@ -25,6 +30,64 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 		"--output-directory", outputDirectory,
 		"-",
 	)
+
+	progressTracking := true
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating pipe for JSONSeqMonitor: %w\n(Just disabling progress)", err)
+		progressTracking = false
+	}
+	if progressTracking {
+		defer r.Close()
+		defer w.Close()
+		cmd.ExtraFiles = []*os.File{w}
+		go func(pipe io.Reader) {
+			for {
+				scanner := bufio.NewScanner(pipe)
+				scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+					if atEOF && len(data) == 0 {
+						return 0, nil, nil
+					}
+
+					if i := strings.Index(string(data), "\x1e"); i >= 0 {
+						return i + 1, data[:i], nil
+					}
+
+					if atEOF {
+						return len(data), data, nil
+					}
+
+					return 0, nil, nil
+				})
+				for scanner.Scan() {
+					line := scanner.Bytes()
+					//fmt.Fprintf(os.Stderr, "JSON raw: %s\n", line)
+
+					var jsonProgress common.ProgressWrapper
+					if err := json.Unmarshal(line, &jsonProgress); err != nil {
+						fmt.Fprintf(os.Stderr, "Error decoding JSON: %v\n", err)
+						continue
+					}
+
+					//fmt.Fprintf(os.Stderr, "JSON decoded: %+v\n", jsonProgress)
+					fmt.Fprintf(os.Stderr, "JSON progress: %+v\n", jsonProgress.ToShortString())
+				}
+
+				if err := scanner.Err(); err != nil {
+					fmt.Fprintf(os.Stderr, "Error reading JSON progress: %v\n", err)
+					break
+				}
+			}
+		}(r)
+		// first FD for ExtraFiles is always 3 (+1 for each additional entry)
+		const FirstExtraFilesFD = 3
+		cmd.Args = append(
+			cmd.Args,
+			"--monitor", "JSONSeqMonitor",
+			"--monitor-fd", fmt.Sprintf("%d", FirstExtraFilesFD),
+		)
+	}
 
 	for _, export := range exports {
 		cmd.Args = append(cmd.Args, "--export", export)
@@ -70,9 +133,13 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 
 	if result {
 		// try to decode the output even though the job could have failed
-		decodeErr := json.Unmarshal(stdoutBuffer.Bytes(), &res)
-		if decodeErr != nil {
-			return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, stdoutBuffer.String())
+		if stdoutBuffer.Len() == 0 {
+			return nil, fmt.Errorf("osbuild did not return any output")
+		} else {
+			decodeErr := json.Unmarshal(stdoutBuffer.Bytes(), &res)
+			if decodeErr != nil {
+				return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, stdoutBuffer.String())
+			}
 		}
 	}
 

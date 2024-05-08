@@ -15,10 +15,10 @@ import (
 // Behavior is the same as with the LoadRepositories() method.
 func LoadAllRepositories(confPaths []string) (rpmmd.DistrosRepoConfigs, error) {
 	distrosRepoConfigs := rpmmd.DistrosRepoConfigs{}
-
+	log.Printf("Loading all repository configs from %d paths\n", len(confPaths))
 	for _, confPath := range confPaths {
 		reposPath := filepath.Join(confPath, "repositories")
-
+		log.Printf("Loading from '%s'\n", reposPath)
 		fileEntries, err := os.ReadDir(reposPath)
 		if os.IsNotExist(err) {
 			continue

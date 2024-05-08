@@ -205,7 +205,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, []rp
 
 	output, err := run(s.dnfJsonCmd, req)
 	if err != nil {
-		return nil, nil, fmt.Errorf("run (%s) failed: %w", s.dnfJsonCmd, err)
+		return nil, nil, fmt.Errorf("running osbuild-depsolve-dnf failed:\n%w", err)
 	}
 	// touch repos to now
 	now := time.Now().Local()
@@ -219,7 +219,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet) ([]rpmmd.PackageSpec, []rp
 	dec := json.NewDecoder(bytes.NewReader(output))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&result); err != nil {
-		return nil, nil, fmt.Errorf("Decoding result failed: %w", err)
+		return nil, nil, fmt.Errorf("decoding depsolve result failed: %w", err)
 	}
 
 	packages, repos := result.toRPMMD(rhsmMap)
@@ -702,6 +702,13 @@ func (err Error) Error() string {
 // message.
 func parseError(data []byte, repos []repoConfig) Error {
 	var e Error
+	if len(data) == 0 {
+		return Error{
+			Kind:   "InternalError",
+			Reason: fmt.Sprintf("dnf-json output was empty"),
+		}
+	}
+
 	if err := json.Unmarshal(data, &e); err != nil {
 		// dumping the error into the Reason can get noisy, but it's good for troubleshooting
 		return Error{
@@ -760,6 +767,7 @@ func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
 		return nil, fmt.Errorf("calling %s failed: %w", ex, err)
 	}
 
+	//FLO also hook here and forward the errors
 	cmd.Stderr = os.Stderr
 	stdout := new(bytes.Buffer)
 	cmd.Stdout = stdout
