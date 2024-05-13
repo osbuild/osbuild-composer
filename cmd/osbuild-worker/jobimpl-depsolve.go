@@ -79,21 +79,21 @@ func workerClientErrorFrom(err error) (*clienterrors.Error, error) {
 		// Error originates from dnf-json
 		switch e.Kind {
 		case "DepsolveError":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, err.Error(), e.Reason), nil
+			return clienterrors.New(clienterrors.ErrorDNFDepsolveError, err.Error(), e.Reason), nil
 		case "MarkingErrors":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, err.Error(), e.Reason), nil
+			return clienterrors.New(clienterrors.ErrorDNFMarkingErrors, err.Error(), e.Reason), nil
 		case "RepoError":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, err.Error(), e.Reason), nil
+			return clienterrors.New(clienterrors.ErrorDNFRepoError, err.Error(), e.Reason), nil
 		default:
 			err := fmt.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
 			// This still has the kind/reason format but a kind that's returned
 			// by dnf-json and not explicitly handled here.
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, err.Error(), e.Reason), err
+			return clienterrors.New(clienterrors.ErrorDNFOtherError, err.Error(), e.Reason), err
 		}
 	default:
 		err := fmt.Errorf("rpmmd error in depsolve job: %v", err)
 		// Error originates from internal/rpmmd, not from dnf-json
-		return clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, err.Error(), nil), err
+		return clienterrors.New(clienterrors.ErrorRPMMDError, err.Error(), nil), err
 	}
 }
 
@@ -114,7 +114,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 					for _, baseurlstr := range repo.BaseURLs {
 						match, err := impl.RepositoryMTLSConfig.CompareBaseURL(baseurlstr)
 						if err != nil {
-							result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
+							result.JobError = clienterrors.New(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
 							return err
 						}
 						if match {

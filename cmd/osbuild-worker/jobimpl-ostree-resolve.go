@@ -16,19 +16,19 @@ type OSTreeResolveJobImpl struct {
 func setError(err error, result *worker.OSTreeResolveJobResult) {
 	switch err.(type) {
 	case ostree.RefError:
-		result.JobError = clienterrors.WorkerClientError(
+		result.JobError = clienterrors.New(
 			clienterrors.ErrorOSTreeRefInvalid,
 			"Invalid OSTree ref",
 			err.Error(),
 		)
 	case ostree.ResolveRefError:
-		result.JobError = clienterrors.WorkerClientError(
+		result.JobError = clienterrors.New(
 			clienterrors.ErrorOSTreeRefResolution,
 			"Error resolving OSTree ref",
 			err.Error(),
 		)
 	default:
-		result.JobError = clienterrors.WorkerClientError(
+		result.JobError = clienterrors.New(
 			clienterrors.ErrorOSTreeParamsInvalid,
 			"Invalid OSTree parameters or parameter combination",
 			err.Error(),
