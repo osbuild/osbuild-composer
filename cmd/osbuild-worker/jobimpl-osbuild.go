@@ -247,7 +247,7 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	if result.OSBuildOutput == nil || !result.OSBuildOutput.Success {
 		reason := "osbuild job was unsuccessful"
 		logWithId.Errorf("osbuild job failed: %s", reason)
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason, nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorBuildJob, reason, nil)
 		return
 	} else {
 		logWithId.Infof("osbuild job succeeded")
@@ -265,14 +265,14 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 
 	result, err := a.Upload(imagePath, bucket, key)
 	if err != nil {
-		return "", clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+		return "", clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 
 	}
 
 	if public {
 		err := a.MarkS3ObjectAsPublic(bucket, key)
 		if err != nil {
-			return "", clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+			return "", clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 		}
 
 		return result.Location, nil
@@ -280,7 +280,7 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 
 	url, err := a.S3ObjectPresignedURL(bucket, key)
 	if err != nil {
-		return "", clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+		return "", clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 	}
 
 	return url, nil
@@ -375,7 +375,7 @@ func makeJobErrorFromOsbuildOutput(osbuildOutput *osbuild.Result) *clienterrors.
 	if failedStage != "" {
 		reason += fmt.Sprintf(" in stage: %q", failedStage)
 	}
-	return clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason, osbErrors)
+	return clienterrors.New(clienterrors.ErrorBuildJob, reason, osbErrors)
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
@@ -403,7 +403,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			logWithId.Errorf("Recovered from panic: %v", r)
 			logWithId.Errorf("%s", debug.Stack())
 
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(
+			osbuildJobResult.JobError = clienterrors.New(
 				clienterrors.ErrorJobPanicked,
 				fmt.Sprintf("job panicked:\n%v\n\noriginal error:\n%v", r, osbuildJobResult.JobError),
 				nil,
@@ -430,7 +430,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	osbuildVersion, err := osbuild.OSBuildVersion()
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err.Error())
+		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err.Error())
 		return err
 	}
 	osbuildJobResult.OSBuildVersion = osbuildVersion
@@ -459,13 +459,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				err = job.DynamicArgs(*jobArgs.ManifestDynArgsIdx, &manifestJR)
 			}
 			if err != nil {
-				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", nil)
+				osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", nil)
 				return err
 			}
 
 			// skip the job if the manifest generation failed
 			if manifestJR.JobError != nil {
-				osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed", nil)
+				osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest dependency failed", nil)
 				return nil
 			}
 			jobArgs.Manifest = manifestJR.Manifest
@@ -473,7 +473,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		}
 
 		if len(jobArgs.Manifest) == 0 {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyManifest, "Job has no manifest", nil)
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorEmptyManifest, "Job has no manifest", nil)
 			return nil
 		}
 	}
@@ -484,12 +484,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		var jobResult worker.JobResult
 		err = job.DynamicArgs(idx, &jobResult)
 		if err != nil {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", nil)
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", nil)
 			return err
 		}
 
 		if jobResult.JobError != nil {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorJobDependency, "Job dependency failed", nil)
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorJobDependency, "Job dependency failed", nil)
 			return nil
 		}
 	}
@@ -503,7 +503,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	// get exports for all job's targets
 	exports := jobArgs.OsbuildExports()
 	if len(exports) == 0 {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "no osbuild export specified for the job", nil)
+		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "no osbuild export specified for the job", nil)
 		return nil
 	}
 
@@ -533,18 +533,18 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	case "aws.ec2":
 		err = os.MkdirAll("/var/tmp/osbuild-composer", 0755)
 		if err != nil {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Unable to create /var/tmp/osbuild-composer needed to aws.ec2 executor", nil)
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorInvalidConfig, "Unable to create /var/tmp/osbuild-composer needed to aws.ec2 executor", nil)
 			return err
 		}
 		tmpDir, err := os.MkdirTemp("/var/tmp/osbuild-composer", "")
 		if err != nil {
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Unable to create /var/tmp/osbuild-composer needed to aws.ec2 executor", nil)
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorInvalidConfig, "Unable to create /var/tmp/osbuild-composer needed to aws.ec2 executor", nil)
 			return err
 		}
 		defer os.RemoveAll(tmpDir)
 		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, impl.OSBuildExecutor.CloudWatchGroup, job.Id().String(), tmpDir)
 	default:
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
+		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
 		return err
 	}
 
@@ -564,7 +564,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, opts, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())
+		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())
 		return err
 	}
 
@@ -606,13 +606,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			imagePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
 			f, err = os.Open(imagePath)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, err.Error(), nil)
 				break
 			}
 			defer f.Close()
 			err = job.UploadArtifact(jobTarget.ImageName, f)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 
@@ -630,7 +630,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			tempDirectory, err := os.MkdirTemp(impl.Output, job.Id().String()+"-vmware-*")
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 
@@ -650,23 +650,23 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 				err = os.Symlink(exportedImagePath, imagePath)
 				if err != nil {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 					break
 				}
 
 				err = vmware.ImportVmdk(credentials, imagePath)
 				if err != nil {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 					break
 				}
 			} else if strings.HasSuffix(exportedImagePath, ".ova") {
 				err = vmware.ImportOva(credentials, exportedImagePath, jobTarget.ImageName)
 				if err != nil {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 					break
 				}
 			} else {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "No vmdk or ova provided", nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, "No vmdk or ova provided", nil)
 				break
 			}
 
@@ -674,12 +674,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResult = target.NewAWSTargetResult(nil, &artifact)
 			a, err := impl.getAWS(targetOptions.Region, targetOptions.AccessKeyID, targetOptions.SecretAccessKey, targetOptions.SessionToken)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 
 			if targetOptions.Key == "" {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No AWS object key provided", nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "No AWS object key provided", nil)
 				break
 			}
 
@@ -687,7 +687,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if bucket == "" {
 				bucket = impl.AWSBucket
 				if bucket == "" {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No AWS bucket provided", nil)
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "No AWS bucket provided", nil)
 					break
 				}
 			}
@@ -701,25 +701,25 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if strings.HasSuffix(imagePath, ".xz") {
 				imagePath, err = extractXzArchive(imagePath)
 				if err != nil {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "Failed to extract compressed image", err.Error())
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorTargetError, "Failed to extract compressed image", err.Error())
 					break
 				}
 			}
 
 			_, err = a.Upload(imagePath, bucket, targetOptions.Key)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 
 			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, arch.Current().String(), targetOptions.BootMode)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorImportingImage, err.Error(), nil)
 				break
 			}
 
 			if ami == nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, "No ami returned", nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorImportingImage, "No ami returned", nil)
 				break
 			}
 			targetResult.Options = &target.AWSTargetResultOptions{
@@ -731,12 +731,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResult = target.NewAWSS3TargetResult(nil, &artifact)
 			a, bucket, err := impl.getAWSForS3Target(targetOptions)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 
 			if targetOptions.Key == "" {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No AWS object key provided", nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "No AWS object key provided", nil)
 				break
 			}
 
@@ -751,7 +751,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResult = target.NewAzureTargetResult(&artifact)
 			azureStorageClient, err := azure.NewStorageClient(targetOptions.StorageAccount, targetOptions.StorageAccessKey)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 
@@ -771,7 +771,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			)
 
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 
@@ -781,12 +781,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			g, err := impl.getGCP(targetOptions.Credentials)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 
 			if targetOptions.Object == "" {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No GCP object key provided", nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "No GCP object key provided", nil)
 				break
 			}
 
@@ -794,7 +794,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if bucket == "" {
 				bucket = impl.GCPConfig.Bucket
 				if bucket == "" {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "No GCP bucket provided", nil)
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "No GCP bucket provided", nil)
 					break
 				}
 			}
@@ -803,7 +803,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			_, err = g.StorageObjectUpload(ctx, path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename),
 				bucket, targetOptions.Object, map[string]string{gcp.MetadataKeyImageName: jobTarget.ImageName})
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 
@@ -822,7 +822,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			// check error from ComputeImageInsert()
 			if importErr != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, importErr.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorImportingImage, importErr.Error(), nil)
 				break
 			}
 			logWithId.Infof("[GCP] 💿 Image URL: %s", g.ComputeImageURL(jobTarget.ImageName))
@@ -831,7 +831,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				logWithId.Infof("[GCP] 🔗 Sharing the image with: %+v", targetOptions.ShareWithAccounts)
 				err = g.ComputeImageShare(ctx, jobTarget.ImageName, targetOptions.ShareWithAccounts)
 				if err != nil {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, err.Error(), nil)
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorSharingTarget, err.Error(), nil)
 					break
 				}
 			}
@@ -845,13 +845,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			ctx := context.Background()
 
 			if impl.AzureConfig.Creds == nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, "osbuild job has org.osbuild.azure.image target but this worker doesn't have azure credentials", nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorSharingTarget, "osbuild job has org.osbuild.azure.image target but this worker doesn't have azure credentials", nil)
 				break
 			}
 
 			c, err := azure.NewClient(*impl.AzureConfig.Creds, targetOptions.TenantID, targetOptions.SubscriptionID)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[Azure] 🔑 Logged in Azure")
@@ -860,7 +860,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if location == "" {
 				location, err = c.GetResourceGroupLocation(ctx, targetOptions.ResourceGroup)
 				if err != nil {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("retrieving resource group location failed: %v", err), nil)
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("retrieving resource group location failed: %v", err), nil)
 					break
 				}
 			}
@@ -876,7 +876,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				storageAccountTag,
 			)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("searching for a storage account failed: %v", err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("searching for a storage account failed: %v", err), nil)
 				break
 			}
 
@@ -893,7 +893,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 					storageAccountTag,
 				)
 				if err != nil {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("creating a new storage account failed: %v", err), nil)
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("creating a new storage account failed: %v", err), nil)
 					break
 				}
 			}
@@ -905,13 +905,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				storageAccount,
 			)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("retrieving the storage account key failed: %v", err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("retrieving the storage account key failed: %v", err), nil)
 				break
 			}
 
 			azureStorageClient, err := azure.NewStorageClient(storageAccount, storageAccessKey)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("creating the storage client failed: %v", err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("creating the storage client failed: %v", err), nil)
 				break
 			}
 
@@ -920,7 +920,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			logWithId.Info("[Azure] 📦 Ensuring that we have a storage container")
 			err = azureStorageClient.CreateStorageContainerIfNotExist(ctx, storageAccount, storageContainer)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("cannot create a storage container: %v", err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("cannot create a storage container: %v", err), nil)
 				break
 			}
 
@@ -936,7 +936,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			if strings.HasSuffix(imagePath, ".xz") {
 				imagePath, err = extractXzArchive(imagePath)
 				if err != nil {
-					targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "Failed to extract compressed image", err.Error())
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorTargetError, "Failed to extract compressed image", err.Error())
 					break
 				}
 			}
@@ -952,7 +952,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				impl.AzureConfig.UploadThreads,
 			)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, fmt.Sprintf("uploading the image failed: %v", err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, fmt.Sprintf("uploading the image failed: %v", err), nil)
 				break
 			}
 
@@ -968,7 +968,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				location,
 			)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, fmt.Sprintf("registering the image failed: %v", err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorImportingImage, fmt.Sprintf("registering the image failed: %v", err), nil)
 				break
 			}
 			logWithId.Info("[Azure] 🎉 Image uploaded and registered!")
@@ -980,13 +980,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			targetResult = target.NewKojiTargetResult(nil, &artifact)
 			kojiServerURL, err := url.Parse(targetOptions.Server)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to parse Koji server URL: %v", err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to parse Koji server URL: %v", err), nil)
 				break
 			}
 
 			kojiServer, exists := impl.KojiServers[kojiServerURL.Hostname()]
 			if !exists {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("Koji server has not been configured: %s", kojiServerURL.Hostname()), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("Koji server has not been configured: %s", kojiServerURL.Hostname()), nil)
 				break
 			}
 
@@ -995,7 +995,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			kojiAPI, err := koji.NewFromGSSAPI(targetOptions.Server, &kojiServer.creds, kojiTransport)
 			if err != nil {
 				logWithId.Warnf("[Koji] 🔑 login failed: %v", err) // DON'T EDIT: Used for Splunk dashboard
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to authenticate with Koji server %q: %v", kojiServerURL.Hostname(), err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to authenticate with Koji server %q: %v", kojiServerURL.Hostname(), err), nil)
 				break
 			}
 			logWithId.Infof("[Koji] 🔑 Authenticated with %q", kojiServerURL.Hostname())
@@ -1008,7 +1008,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			file, err := os.Open(path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, fmt.Sprintf("failed to open the image for reading: %v", err), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorKojiBuild, fmt.Sprintf("failed to open the image for reading: %v", err), nil)
 				break
 			}
 			defer file.Close()
@@ -1017,7 +1017,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			imageHash, imageSize, err := kojiAPI.Upload(file, targetOptions.UploadDirectory, jobTarget.ImageName)
 			if err != nil {
 				logWithId.Warnf("[Koji] ⬆ upload failed: %v", err) // DON'T EDIT: used for Splunk dashboard
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[Koji] 🎉 Image successfully uploaded")
@@ -1026,7 +1026,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			err = json.Indent(&manifest, jobArgs.Manifest, "", "  ")
 			if err != nil {
 				logWithId.Warnf("[Koji] Indenting osbuild manifest failed: %v", err)
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorKojiBuild, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[Koji] ⬆ Uploading the osbuild manifest")
@@ -1034,7 +1034,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			manifestHash, manifestSize, err := kojiAPI.Upload(&manifest, targetOptions.UploadDirectory, manifestFilename)
 			if err != nil {
 				logWithId.Warnf("[Koji] ⬆ upload failed: %v", err)
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[Koji] 🎉 Manifest successfully uploaded")
@@ -1043,7 +1043,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			err = osbuildJobResult.OSBuildOutput.Write(&osbuildLog)
 			if err != nil {
 				logWithId.Warnf("[Koji] Converting osbuild log to text failed: %v", err)
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorKojiBuild, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorKojiBuild, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[Koji] ⬆ Uploading the osbuild output log")
@@ -1051,7 +1051,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			osbuildOutputHash, osbuildOutputSize, err := kojiAPI.Upload(&osbuildLog, targetOptions.UploadDirectory, osbuildOutputFilename)
 			if err != nil {
 				logWithId.Warnf("[Koji] ⬆ upload failed: %v", err)
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[Koji] 🎉 osbuild output log successfully uploaded")
@@ -1112,14 +1112,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				PrivateKey:  targetOptions.PrivateKey,
 			})
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[OCI] 🔑 Logged in OCI")
 			logWithId.Info("[OCI] ⬆ Uploading the image")
 			file, err := os.Open(path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 			defer file.Close()
@@ -1139,7 +1139,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				file,
 			)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 
@@ -1155,7 +1155,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				jobTarget.ImageName,
 			)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 
@@ -1172,14 +1172,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				PrivateKey:  targetOptions.PrivateKey,
 			})
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[OCI] 🔑 Logged in OCI")
 			logWithId.Info("[OCI] ⬆ Uploading the image")
 			file, err := os.Open(path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 			defer file.Close()
@@ -1199,13 +1199,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				file,
 			)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 
 			uri, err := ociClient.PreAuthenticatedRequest(fmt.Sprintf("osbuild-upload-%d", i), bucket, namespace)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorGeneratingSignedURL, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorGeneratingSignedURL, err.Error(), nil)
 				break
 			}
 			logWithId.Info("[OCI] 🎉 Image uploaded and pre-authenticated request generated!")
@@ -1218,7 +1218,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			client, err := impl.getContainerClient(destination, targetOptions)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 
@@ -1233,7 +1233,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			if err != nil {
 				logWithId.Infof("[container] 🙁 Upload of '%s' failed: %v", sourceRef, err)
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 			logWithId.Printf("[container] 🎉 Image uploaded (%s)!", digest.String())
@@ -1245,13 +1245,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 			client, err := impl.getPulpClient(targetOptions)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
 				break
 			}
 
 			url, err := client.UploadAndDistributeCommit(archivePath, targetOptions.Repository, targetOptions.BasePath)
 			if err != nil {
-				targetResult.TargetError = clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, err.Error(), nil)
+				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 				break
 			}
 			targetResult.Options = &target.PulpOSTreeTargetResultOptions{RepoURL: url}
@@ -1259,7 +1259,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		default:
 			// TODO: we may not want to return completely here with multiple targets, because then no TargetErrors will be added to the JobError details
 			// Nevertheless, all target errors will be still in the OSBuildJobResult.
-			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidTarget, fmt.Sprintf("invalid target type: %s", jobTarget.Name), nil)
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorInvalidTarget, fmt.Sprintf("invalid target type: %s", jobTarget.Name), nil)
 			return nil
 		}
 
@@ -1272,7 +1272,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	targetErrors := osbuildJobResult.TargetErrors()
 	if len(targetErrors) != 0 {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "at least one target failed", targetErrors)
+		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorTargetError, "at least one target failed", targetErrors)
 	} else {
 		osbuildJobResult.Success = true
 		osbuildJobResult.UploadStatus = "success"

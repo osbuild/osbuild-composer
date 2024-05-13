@@ -80,7 +80,7 @@ func (j *OSBuildJobResult) TargetErrors() []*clienterrors.Error {
 			// Add the target name to the error details, because the error reason
 			// may not contain any information to determine the type of the target
 			// which failed.
-			targetErrors = append(targetErrors, clienterrors.WorkerClientError(targetError.ID, targetError.Reason, targetResult.Name))
+			targetErrors = append(targetErrors, clienterrors.New(targetError.ID, targetError.Reason, targetResult.Name))
 		}
 	}
 

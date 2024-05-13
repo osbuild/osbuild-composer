@@ -135,7 +135,7 @@ func (s *Server) WatchHeartbeats() {
 			logrus.Infof("Removing unresponsive job: %s\n", id)
 
 			missingHeartbeatResult := JobResult{
-				JobError: clienterrors.WorkerClientError(clienterrors.ErrorJobMissingHeartbeat,
+				JobError: clienterrors.New(clienterrors.ErrorJobMissingHeartbeat,
 					fmt.Sprintf("Workers running this job stopped responding more than %d times.", maxHeartbeatRetries),
 					nil),
 			}
@@ -338,11 +338,11 @@ func (s *Server) OSBuildJobInfo(id uuid.UUID, result *OSBuildJobResult) (*JobInf
 
 	if result.JobError == nil && !jobInfo.JobStatus.Finished.IsZero() {
 		if result.OSBuildOutput == nil {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", nil)
+			result.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "osbuild build failed", nil)
 		} else if len(result.OSBuildOutput.Error) > 0 {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, string(result.OSBuildOutput.Error), nil)
+			result.JobError = clienterrors.New(clienterrors.ErrorOldResultCompatible, string(result.OSBuildOutput.Error), nil)
 		} else if len(result.TargetErrors()) > 0 {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "at least one target failed", result.TargetErrors())
+			result.JobError = clienterrors.New(clienterrors.ErrorTargetError, "at least one target failed", result.TargetErrors())
 		}
 	}
 	// For backwards compatibility: OSBuildJobResult didn't use to have a
@@ -365,7 +365,7 @@ func (s *Server) KojiInitJobInfo(id uuid.UUID, result *KojiInitJobResult) (*JobI
 	}
 
 	if result.JobError == nil && result.KojiError != "" {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.KojiError, nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorOldResultCompatible, result.KojiError, nil)
 	}
 
 	return jobInfo, nil
@@ -382,7 +382,7 @@ func (s *Server) KojiFinalizeJobInfo(id uuid.UUID, result *KojiFinalizeJobResult
 	}
 
 	if result.JobError == nil && result.KojiError != "" {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOldResultCompatible, result.KojiError, nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorOldResultCompatible, result.KojiError, nil)
 	}
 
 	return jobInfo, nil
@@ -400,9 +400,9 @@ func (s *Server) DepsolveJobInfo(id uuid.UUID, result *DepsolveJobResult) (*JobI
 
 	if result.JobError == nil && result.Error != "" {
 		if result.ErrorType == DepsolveErrorType {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, result.Error, nil)
+			result.JobError = clienterrors.New(clienterrors.ErrorDNFDepsolveError, result.Error, nil)
 		} else {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, result.Error, nil)
+			result.JobError = clienterrors.New(clienterrors.ErrorRPMMDError, result.Error, nil)
 		}
 	}
 

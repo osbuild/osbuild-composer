@@ -130,7 +130,7 @@ func (e *Error) IsDependencyError() bool {
 	}
 }
 
-func WorkerClientError(code ClientErrorCode, reason string, details interface{}) *Error {
+func New(code ClientErrorCode, reason string, details interface{}) *Error {
 	return &Error{
 		ID:      code,
 		Reason:  reason,

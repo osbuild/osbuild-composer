@@ -81,16 +81,16 @@ func workerClientErrorFrom(err error) (*clienterrors.Error, error) {
 		details := e.Reason
 		switch e.Kind {
 		case "DepsolveError":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, reason, details), nil
+			return clienterrors.New(clienterrors.ErrorDNFDepsolveError, reason, details), nil
 		case "MarkingErrors":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, reason, details), nil
+			return clienterrors.New(clienterrors.ErrorDNFMarkingErrors, reason, details), nil
 		case "RepoError":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, reason, details), nil
+			return clienterrors.New(clienterrors.ErrorDNFRepoError, reason, details), nil
 		default:
 			err := fmt.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
 			// This still has the kind/reason format but a kind that's returned
 			// by dnf-json and not explicitly handled here.
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, reason, details), err
+			return clienterrors.New(clienterrors.ErrorDNFOtherError, reason, details), err
 		}
 	default:
 		reason := "rpmmd error in depsolve job"
@@ -101,7 +101,7 @@ func workerClientErrorFrom(err error) (*clienterrors.Error, error) {
 			details = err.Error()
 		}
 		// Error originates from internal/rpmmd, not from dnf-json
-		return clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, reason, details), err
+		return clienterrors.New(clienterrors.ErrorRPMMDError, reason, details), err
 	}
 }
 
@@ -122,7 +122,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 					for _, baseurlstr := range repo.BaseURLs {
 						match, err := impl.RepositoryMTLSConfig.CompareBaseURL(baseurlstr)
 						if err != nil {
-							result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
+							result.JobError = clienterrors.New(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
 							return err
 						}
 						if match {
