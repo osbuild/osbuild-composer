@@ -131,7 +131,7 @@ func TestKojiCompose(t *testing.T) {
 		{
 			initResult: worker.KojiInitJobResult{
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, "Koji init error", nil),
+					JobError: clienterrors.New(clienterrors.ErrorKojiInit, "Koji init error", nil),
 				},
 			},
 			buildResult: worker.OSBuildJobResult{
@@ -240,7 +240,7 @@ func TestKojiCompose(t *testing.T) {
 					Success: true,
 				},
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Koji build error", nil),
+					JobError: clienterrors.New(clienterrors.ErrorBuildJob, "Koji build error", nil),
 				},
 			},
 			composeReplyCode: http.StatusCreated,
@@ -346,7 +346,7 @@ func TestKojiCompose(t *testing.T) {
 			},
 			finalizeResult: worker.KojiFinalizeJobResult{
 				JobResult: worker.JobResult{
-					JobError: clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Koji finalize error", nil),
+					JobError: clienterrors.New(clienterrors.ErrorKojiFinalize, "Koji finalize error", nil),
 				},
 			},
 			composeReplyCode: http.StatusCreated,

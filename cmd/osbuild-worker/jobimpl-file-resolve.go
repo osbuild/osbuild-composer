@@ -30,7 +30,7 @@ func (impl *FileResolveJobImpl) Run(job worker.Job) error {
 
 		if result.Results == nil || len(result.Results) == 0 {
 			logWithId.Infof("Resolving file contents failed: %v", err)
-			result.JobError = clienterrors.WorkerClientError(
+			result.JobError = clienterrors.New(
 				clienterrors.ErrorRemoteFileResolution,
 				"Error resolving file contents",
 				"All remote file contents returned empty",
@@ -70,7 +70,7 @@ func (impl *FileResolveJobImpl) Run(job worker.Job) error {
 	if len(resolutionErrors) == 0 {
 		result.Success = true
 	} else {
-		result.JobError = clienterrors.WorkerClientError(
+		result.JobError = clienterrors.New(
 			clienterrors.ErrorRemoteFileResolution,
 			"at least one file resolution failed",
 			resolutionErrors,
