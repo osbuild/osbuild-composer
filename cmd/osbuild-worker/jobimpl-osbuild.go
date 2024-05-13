@@ -401,7 +401,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	osbuildVersion, err := osbuild.OSBuildVersion()
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err)
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err.Error())
 		return err
 	}
 	osbuildJobResult.OSBuildVersion = osbuildVersion
@@ -516,7 +516,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, exportPaths, nil, extraEnv, true, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err)
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())
 		return err
 	}
 
@@ -544,13 +544,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
-		var osbErrors []error
+		var osbErrors []string
 		if osbuildJobResult.OSBuildOutput.Error != nil {
-			osbErrors = append(osbErrors, fmt.Errorf("osbuild error: %s", string(osbuildJobResult.OSBuildOutput.Error)))
+			osbErrors = append(osbErrors, fmt.Sprintf("osbuild error: %s", string(osbuildJobResult.OSBuildOutput.Error)))
 		}
 		if osbuildJobResult.OSBuildOutput.Errors != nil {
 			for _, err := range osbuildJobResult.OSBuildOutput.Errors {
-				osbErrors = append(osbErrors, fmt.Errorf("manifest validation error: %v", err))
+				osbErrors = append(osbErrors, fmt.Sprintf("manifest validation error: %v", err))
 			}
 		}
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", osbErrors)

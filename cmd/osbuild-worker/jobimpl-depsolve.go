@@ -90,7 +90,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 					for _, baseurlstr := range repo.BaseURLs {
 						match, err := impl.RepositoryMTLSConfig.CompareBaseURL(baseurlstr)
 						if err != nil {
-							result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err)
+							result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
 							return err
 						}
 						if match {
