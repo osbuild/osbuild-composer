@@ -104,9 +104,21 @@
       gpgcheck=0
       priority=1
 
-- name: Install worker rpm
+# We use --skip-tags rpmrepo_composer,rpmrepo_osbuild,rpmcopr for our prod builds. Thus, if we merge
+# the following two tasks into one, no RPMs will be installed in prod builds, because --skip-tags joins
+# multiple tags with OR. (IoW a task with tags == [rpmcopy, rpmrepo_osbuild] will not run with
+# --skip-tags rpmrepo_osbuild)
+# TODO: deduplicate me!
+- name: Install worker rpm (from local repo)
   tags:
     - rpmcopy
+  package:
+    name:
+      - osbuild-composer-worker
+    state: present
+
+- name: Install worker rpm (from rpmrepo)
+  tags:
     - rpmrepo_osbuild
   package:
     name:
