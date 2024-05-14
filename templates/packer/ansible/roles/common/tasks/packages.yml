@@ -14,7 +14,6 @@
 - name: Add osbuild repository
   tags:
     - rpmrepo_osbuild
-    - rpmcopr
   yum_repository:
     name: "osbuild"
     description: "osbuild commit {{ osbuild_commit }}"
