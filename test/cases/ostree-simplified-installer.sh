@@ -562,7 +562,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=rhel-edge \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -749,7 +749,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=rhel-edge \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -935,7 +935,7 @@ fi
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=rhel-edge \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -1074,7 +1074,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=rhel-edge \
     -e ostree_commit="${REBASE_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -1249,7 +1249,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=rhel-edge \
     -e ostree_commit="${INSTALL_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
@@ -1392,7 +1392,7 @@ EOF
 
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
-    -e image_type=redhat \
+    -e image_type=rhel-edge \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e skip_rollback_test="true" \
     -e edge_type=edge-simplified-installer \
