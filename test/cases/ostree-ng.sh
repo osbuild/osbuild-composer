@@ -82,7 +82,7 @@ CONTAINER_FILENAME=container.tar
 INSTALLER_TYPE=edge-installer
 INSTALLER_FILENAME=installer.iso
 ANSIBLE_USER_FOR_BIOS="installeruser"
-OSTREE_OSNAME=rhel
+OSTREE_OSNAME=rhel-edge
 BOOT_ARGS="uefi"
 
 # Set up temporary files.

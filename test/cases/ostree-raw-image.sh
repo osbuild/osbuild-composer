@@ -81,7 +81,7 @@ CONTAINER_TYPE=edge-container
 CONTAINER_FILENAME=container.tar
 RAW_IMAGE_TYPE=edge-raw-image
 RAW_IMAGE_FILENAME=image.raw.xz
-OSTREE_OSNAME=redhat
+OSTREE_OSNAME=rhel-edge
 BOOT_ARGS="uefi"
 REF_PREFIX="rhel-edge"
 
