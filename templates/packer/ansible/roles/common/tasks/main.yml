@@ -16,4 +16,6 @@
 - include_tasks: unregister.yml
 
 - name: Ensure SELinux contexts are updated
+  tags:
+    - always
   command: restorecon -Rv /etc

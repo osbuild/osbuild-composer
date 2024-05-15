@@ -1,11 +1,15 @@
 ---
 
 - name: Create osbuild-worker config directory
+  tags:
+    - always
   file:
     path: /etc/osbuild-worker/
     state: directory
 
 - name: Copy worker config stub
+  tags:
+    - always
   copy:
     src: "{{ playbook_dir }}/roles/common/files/osbuild-worker.toml"
     dest: /etc/osbuild-worker/osbuild-worker.toml

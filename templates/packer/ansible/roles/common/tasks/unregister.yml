@@ -3,6 +3,6 @@
 - name: Unregister
   become: yes
   tags:
-    - subscribe
+    - rhel
   shell: >-
     subscription-manager unregister

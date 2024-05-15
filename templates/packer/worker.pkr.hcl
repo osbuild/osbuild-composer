@@ -174,7 +174,7 @@ EOF
       "-e", "COMPOSER_COMMIT=${var.composer_commit}",
       "-e", "RH_ACTIVATION_KEY=${var.rh_activation_key}",
       "-e", "RH_ORG_ID=${var.rh_org_id}",
-      "--skip-tags", "${var.ansible_skip_tags}",
+      "--tags", "${var.ansible_tags}",
     ]
     inventory_directory = "${path.root}/ansible/inventory/${source.name}"
   }
