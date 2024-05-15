@@ -33,7 +33,7 @@ variable "image_users" {
 }
 
 # Skip ansible tags
-variable "ansible_skip_tags" {
+variable "ansible_tags" {
   type = string
   default = ""
 }

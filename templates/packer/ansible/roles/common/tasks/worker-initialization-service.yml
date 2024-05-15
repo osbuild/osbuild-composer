@@ -1,22 +1,30 @@
 ---
 
 - name: Copy worker initialization service
+  tags:
+    - always
   copy:
     src: "{{ playbook_dir }}/roles/common/files/worker-initialization.service"
     dest: /etc/systemd/system/
 
 - name: Enable worker initialization service
+  tags:
+    - always
   systemd:
     name: worker-initialization.service
     enabled: yes
     daemon_reload: yes # make sure the new service is loaded before enabling it
 
 - name: Create a directory for initialization scripts
+  tags:
+    - always
   file:
     path: /usr/local/libexec/worker-initialization-scripts
     state: directory
 
 - name: Copy scripts used by the initialization service
+  tags:
+    - always
   copy:
     src: "{{ item }}"
     dest: /usr/local/libexec/worker-initialization-scripts
@@ -25,11 +33,15 @@
     - "{{ playbook_dir }}/roles/common/files/worker-initialization-scripts/*"
 
 - name: Copy worker executor service
+  tags:
+    - always
   copy:
     src: "{{ playbook_dir }}/roles/common/files/worker-executor.service"
     dest: /etc/systemd/system/
 
 - name: Enable worker executor service
+  tags:
+    - always
   systemd:
     name: worker-executor.service
     enabled: yes

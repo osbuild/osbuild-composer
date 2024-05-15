@@ -2,7 +2,7 @@
 
 - name: Add osbuild-composer repository
   tags:
-    - rpmrepo_composer
+    - ci
   yum_repository:
     name: "composer"
     description: "osbuild-composer commit {{ COMPOSER_COMMIT }}"
@@ -13,8 +13,8 @@
 
 - name: Add osbuild repository
   tags:
-    - rpmrepo_osbuild
-    - rpmcopr
+    - ci
+    - fedora
   yum_repository:
     name: "osbuild"
     description: "osbuild commit {{ osbuild_commit }}"
@@ -26,6 +26,8 @@
   when: osbuild_commit is defined
 
 - name: Upgrade all packages
+  tags:
+    - always
   package:
     name: "*"
     state: latest
@@ -34,11 +36,15 @@
   until: result is success
 
 - name: Add Vector repo
+  tags:
+    - always
   copy:
     src: "{{ playbook_dir }}/roles/common/files/timber-vector.repo"
     dest: /etc/yum.repos.d/
 
 - name: Install required packages
+  tags:
+    - always
   package:
     name:
       - jq
@@ -49,6 +55,8 @@
   until: result is success
 
 - name: Download AWS CLI installer
+  tags:
+    - always
   get_url:
     url: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
     dest: /tmp/awscli.zip
@@ -57,15 +65,21 @@
   until: result is success
 
 - name: Unpack AWS CLI installer
+  tags:
+    - always
   unarchive:
     src: /tmp/awscli.zip
     dest: /tmp
     remote_src: yes
 
 - name: Run AWS installer
+  tags:
+    - always
   command: /tmp/aws/install
 
 - name: Cleanup AWS installer
+  tags:
+    - always
   file:
     path: "{{ item }}"
     state: absent
@@ -75,7 +89,7 @@
 
 - name: Create rpmbuild directory
   tags:
-    - rpmcopy
+    - rhel
   file:
     path: "{{ item }}"
     state: directory
@@ -85,7 +99,7 @@
 
 - name: Push rpms
   tags:
-    - rpmcopy
+    - rhel
   ansible.posix.synchronize:
     mode: push
     src: "{{ playbook_dir }}/roles/common/files/rpmbuild/{{ ansible_architecture }}/RPMS"
@@ -93,7 +107,7 @@
 
 - name: Add repo config
   tags:
-    - rpmcopy
+    - rhel
   copy:
     dest: /etc/yum.repos.d/osbuild.repo
     content: |
@@ -106,8 +120,8 @@
 
 - name: Install worker rpm
   tags:
-    - rpmcopy
-    - rpmrepo_osbuild
+    - ci
+    - rhel
   package:
     name:
       - osbuild-composer-worker
@@ -115,7 +129,7 @@
 
 - name: Install worker rpm from copr
   tags:
-    - rpmcopr
+    - fedora
   shell: |
     dnf copr enable -y @osbuild/osbuild-composer
     COMPOSER_COMMIT_SHORT=$(echo {{ COMPOSER_COMMIT }} | head -c 9)
@@ -128,6 +142,8 @@
     dnf install -y $COMPOSER_RPMS
 
 - name: Cleanup rpmbuild dir
+  tags:
+    - always
   file:
     path: "{{ item }}"
     state: absent

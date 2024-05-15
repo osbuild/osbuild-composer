@@ -3,7 +3,7 @@
 # the packer instances (RHUI, which might be older).
 - name: Subscribe
   tags:
-    - subscribe
+    - rhel
   community.general.redhat_subscription:
     activationkey: "{{ RH_ACTIVATION_KEY }}"
     org_id: "{{ RH_ORG_ID }}"
@@ -14,14 +14,14 @@
 - name: Enable repo mgmt through subman
   become: yes
   tags:
-    - subscribe
+    - rhel
   shell: >-
     subscription-manager config --rhsm.manage_repos 1
 
 - name: Enable cdn repos
   become: yes
   tags:
-    - subscribe
+    - rhel
   shell: >-
     subscription-manager repos \
       --enable rhel-9-for-{{ ansible_architecture }}-appstream-rpms \

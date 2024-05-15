@@ -7,7 +7,7 @@ COMMIT_BRANCH="${COMMIT_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
 SKIP_CREATE_AMI="${SKIP_CREATE_AMI:-false}"
 BUILD_RPMS="${BUILD_RPMS:-true}"
 # RHEL workers build their own rpms.
-SKIP_TAGS="${SKIP_TAGS:-rpmrepo_composer,rpmrepo_osbuild,rpmcopr}"
+ANSIBLE_TAGS="${ANSIBLE_TAGS:-rhel}"
 # Build rhel only
 PACKER_ONLY_EXCEPT="${PACKER_ONLY_EXCEPT:---only=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64}"
 
@@ -102,7 +102,7 @@ $CONTAINER_RUNTIME run --rm \
                    -e PKR_VAR_aws_secret_key="$PACKER_AWS_SECRET_ACCESS_KEY" \
                    -e PKR_VAR_image_name="osbuild-composer-worker-$COMMIT_BRANCH-$COMMIT_SHA" \
                    -e PKR_VAR_composer_commit="$COMMIT_SHA" \
-                   -e PKR_VAR_ansible_skip_tags="$SKIP_TAGS" \
+                   -e PKR_VAR_ansible_tags="$ANSIBLE_TAGS" \
                    -e PKR_VAR_skip_create_ami="$SKIP_CREATE_AMI" \
                    -e PKR_VAR_rh_activation_key="$RH_ACTIVATION_KEY" \
                    -e PKR_VAR_rh_org_id="$RH_ORG_ID" \
