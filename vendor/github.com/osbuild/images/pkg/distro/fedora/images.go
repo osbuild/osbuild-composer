@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/ignition"
@@ -572,6 +573,10 @@ func bootableContainerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 	img.InstallWeakDeps = false
 	img.BootContainer = true
+	img.BootcConfig = &bootc.Config{
+		Filename:           "20-fedora.toml",
+		RootFilesystemType: "ext4",
+	}
 
 	return img, nil
 }

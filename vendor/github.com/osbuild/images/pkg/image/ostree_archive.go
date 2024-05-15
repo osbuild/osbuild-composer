@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -33,6 +34,11 @@ type OSTreeArchive struct {
 	InstallWeakDeps bool
 
 	BootContainer bool
+
+	// bootc install config for defining the preferred filesystem type and
+	// kernel arguments for bootable containers.
+	// This is ignored if BootContainer = false.
+	BootcConfig *bootc.Config
 }
 
 func NewOSTreeArchive(ref string) *OSTreeArchive {
@@ -64,6 +70,7 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	var artifact *artifact.Artifact
 	if img.BootContainer {
 		osPipeline.Bootupd = true
+		osPipeline.BootcConfig = img.BootcConfig
 		encapsulatePipeline := manifest.NewOSTreeEncapsulate(buildPipeline, ostreeCommitPipeline, "ostree-encapsulate")
 		encapsulatePipeline.SetFilename(img.Filename)
 		artifact = encapsulatePipeline.Export()
