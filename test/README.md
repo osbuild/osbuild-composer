@@ -101,19 +101,9 @@ Each file contains a sample manifest for an image configuration and some
 metadata describing the request that created the manifest and all the content
 (packages, containers, ostree commits).
 
-To (re)generate these test cases use the tool `cmd/gen-manifests`.
-
-```
-go run ./cmd/gen-manifests
-```
-will generate all manifests using the default options.
-
-Manifest generation can be restricted to only some distributions,
-architectures, or image types using command line flags.
-
-The command uses the configurations in
-`tools/test-case-generators/format-request-map.json` and repositories defined
-in `tools/test-case-generators/repos.json`.
+Those are legacy now and all manifest testing is happening in
+github.com/osbuild/images - there is a similar `test/data/manifest` directory
+in this repo.
 
 ### Setting up Azure upload tests
 
