@@ -81,6 +81,7 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 		return "", err
 	}
 
+	// the result is put into a tar because we get sparse file support for free this way
 	// #nosec G204
 	cmd = exec.Command(
 		"tar",
