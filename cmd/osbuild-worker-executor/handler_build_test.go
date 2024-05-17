@@ -282,7 +282,6 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 
 	assert.Equal(t, http.StatusCreated, rsp.StatusCode)
 	reader := bufio.NewReader(rsp.Body)
-
 	var lineno, seconds, nano int64
 	for i := 1; i <= 3; i++ {
 		line, err := reader.ReadString('\n')
