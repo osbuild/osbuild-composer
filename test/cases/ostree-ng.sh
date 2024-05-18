@@ -4,6 +4,7 @@ set -euo pipefail
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
+source /usr/libexec/tests/osbuild-composer/ostree-common-functions.sh
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
@@ -14,55 +15,7 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 greenprint "🔧 Installing oenshift client(oc)"
 curl https://osbuild-storage.s3.amazonaws.com/oc-4.9.0-linux.tar.gz | sudo tar -xz -C /usr/local/bin/
 
-# Start libvirtd and test it.
-greenprint "🚀 Starting libvirt daemon"
-sudo systemctl start libvirtd
-sudo virsh list --all > /dev/null
-
-# Install and start firewalld
-greenprint "🔧 Install and start firewalld"
-sudo dnf install -y firewalld
-sudo systemctl enable --now firewalld
-
-# Set a customized dnsmasq configuration for libvirt so we always get the
-# same address on bootup.
-sudo tee /tmp/integration.xml > /dev/null << EOF
-<network>
-  <name>integration</name>
-  <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
-  <forward mode='nat'>
-    <nat>
-      <port start='1024' end='65535'/>
-    </nat>
-  </forward>
-  <bridge name='integration' zone='trusted' stp='on' delay='0'/>
-  <mac address='52:54:00:36:46:ef'/>
-  <ip address='192.168.100.1' netmask='255.255.255.0'>
-    <dhcp>
-      <range start='192.168.100.2' end='192.168.100.254'/>
-      <host mac='34:49:22:B0:83:30' name='vm-bios' ip='192.168.100.50'/>
-      <host mac='34:49:22:B0:83:31' name='vm-uefi' ip='192.168.100.51'/>
-    </dhcp>
-  </ip>
-</network>
-EOF
-if ! sudo virsh net-info integration > /dev/null 2>&1; then
-    sudo virsh net-define /tmp/integration.xml
-fi
-if [[ $(sudo virsh net-info integration | grep 'Active' | awk '{print $2}') == 'no' ]]; then
-    sudo virsh net-start integration
-fi
-
-# Allow anyone in the wheel group to talk to libvirt.
-greenprint "🚪 Allowing users in wheel group to talk to libvirt"
-sudo tee /etc/polkit-1/rules.d/50-libvirt.rules > /dev/null << EOF
-polkit.addRule(function(action, subject) {
-    if (action.id == "org.libvirt.unix.manage" &&
-        subject.isInGroup("adm")) {
-            return polkit.Result.YES;
-    }
-});
-EOF
+common_init
 
 # Set up variables.
 TEST_UUID=$(uuidgen)
@@ -89,8 +42,8 @@ BOOT_ARGS="uefi"
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 QUAY_CONFIG=${TEMPDIR}/quay_config.toml
-COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
-COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
+export COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
+export COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 FEDORA_IMAGE_DIGEST="sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
 FEDORA_LOCAL_NAME="localhost/fedora-minimal:v1"
 
@@ -157,27 +110,25 @@ case "${ID}-${VERSION_ID}" in
         exit 1;;
 esac
 
-isomount=$(mktemp -d --tmpdir=/var/tmp/)
-kspath=$(mktemp -d --tmpdir=/var/tmp/)
-cleanup() {
-    # kill dangling journalctl processes to prevent GitLab CI from hanging
-    sudo pkill journalctl || echo "Nothing killed"
-
-    sudo umount -v "${isomount}" || echo
-    rmdir -v "${isomount}"
-    rm -rv "${kspath}"
-}
-trap cleanup EXIT
-
 # modify existing kickstart by prepending and appending commands
 function modksiso {
     sudo dnf install -y lorax  # for mkksiso
+    isomount=$(mktemp -d --tmpdir=/var/tmp/)
+    kspath=$(mktemp -d --tmpdir=/var/tmp/)
 
     iso="$1"
     newiso="$2"
 
     echo "Mounting ${iso} -> ${isomount}"
     sudo mount -v -o ro "${iso}" "${isomount}"
+
+    cleanup() {
+        sudo umount -v "${isomount}"
+        rmdir -v "${isomount}"
+        rm -rv "${kspath}"
+    }
+
+    trap cleanup RETURN
 
     # When sudo-nopasswd is specified, a second kickstart file is added which
     # includes the %post section for creating sudoers drop-in files. This
@@ -211,143 +162,6 @@ EOFKS
     echo "==== NEW KICKSTART FILE ===="
     cat "${newksfile}"
     echo "============================"
-}
-
-# Get the compose log.
-get_compose_log () {
-    COMPOSE_ID=$1
-    LOG_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.log
-
-    # Download the logs.
-    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
-}
-
-# Get the compose metadata.
-get_compose_metadata () {
-    COMPOSE_ID=$1
-    METADATA_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.json
-
-    # Download the metadata.
-    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
-
-    # Find the tarball and extract it.
-    TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
-    sudo tar -xf "$TARBALL" -C "${TEMPDIR}"
-    sudo rm -f "$TARBALL"
-
-    # Move the JSON file into place.
-    sudo cat "${TEMPDIR}"/"${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
-}
-
-# Build ostree image.
-build_image() {
-    blueprint_name=$1
-    image_type=$2
-
-    # Get worker unit file so we can watch the journal.
-    WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
-    sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
-    WORKER_JOURNAL_PID=$!
-
-    # Start the compose.
-    greenprint "🚀 Starting compose"
-    if [ $# -eq 2 ]; then
-        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
-    fi
-    if [ $# -eq 3 ]; then
-        repo_url=$3
-        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
-    fi
-    if [ $# -eq 4 ]; then
-        image_repo_url=$3
-        registry_config=$4
-        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" "$image_repo_url" "$registry_config" | tee "$COMPOSE_START"
-    fi
-    COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-    # Wait for the compose to finish.
-    greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-    while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-        # Is the compose finished?
-        if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-            break
-        fi
-
-        # Wait 30 seconds and try again.
-        sleep 5
-    done
-
-    # Capture the compose logs from osbuild.
-    greenprint "💬 Getting compose log and metadata"
-    get_compose_log "$COMPOSE_ID"
-    get_compose_metadata "$COMPOSE_ID"
-
-    # Kill the journal monitor
-    sudo pkill -P ${WORKER_JOURNAL_PID}
-
-    # Did the compose finish with success?
-    if [[ $COMPOSE_STATUS != FINISHED ]]; then
-        redprint "Something went wrong with the compose. 😢"
-        exit 1
-    fi
-}
-
-# Wait for the ssh server up to be.
-# Test user admin added by edge-container bp
-wait_for_ssh_up () {
-    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" admin@"${1}" '/bin/bash -c "echo -n READY"')
-    if [[ $SSH_STATUS == READY ]]; then
-        echo 1
-    else
-        echo 0
-    fi
-}
-
-# Clean up our mess.
-clean_up () {
-    greenprint "🧼 Cleaning up"
-    # Remove tag from quay.io repo
-    skopeo delete --creds "${V2_QUAY_USERNAME}:${V2_QUAY_PASSWORD}" "docker://${QUAY_REPO_URL}:${QUAY_REPO_TAG}"
-
-    # Clear vm
-    if [[ $(sudo virsh domstate "${IMAGE_KEY}-uefi") == "running" ]]; then
-        sudo virsh destroy "${IMAGE_KEY}-uefi"
-    fi
-    sudo virsh undefine "${IMAGE_KEY}-uefi" --nvram
-    # Remove qcow2 file.
-    sudo rm -f "$LIBVIRT_UEFI_IMAGE_PATH"
-    # Clear integration network
-    sudo virsh net-destroy integration
-    sudo virsh net-undefine integration
-
-    # Remove any status containers if exist
-    sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
-    # Remove all images
-    sudo podman rmi -f -a
-
-    # Remove prod repo
-    sudo rm -rf "$PROD_REPO"
-
-    # Remomve tmp dir.
-    sudo rm -rf "$TEMPDIR"
-
-    # Stop prod repo http service
-    sudo systemctl disable --now httpd
-}
-
-# Test result checking
-check_result () {
-    greenprint "🎏 Checking for test result"
-    if [[ $RESULTS == 1 ]]; then
-        greenprint "💚 Success"
-    else
-        redprint "❌ Failed"
-        clean_up
-        exit 1
-    fi
 }
 
 ###########################################################
@@ -465,7 +279,7 @@ password = "$V2_QUAY_PASSWORD"
 EOF
 
 # Build container image.
-build_image container "$CONTAINER_TYPE" "${QUAY_REPO_URL}:${QUAY_REPO_TAG}" "$QUAY_CONFIG"
+build_image -b container -t "$CONTAINER_TYPE" -k "${QUAY_REPO_URL}:${QUAY_REPO_TAG}" -c "$QUAY_CONFIG"
 
 # Run edge stage repo
 greenprint "🛰 Running edge stage repo"
@@ -532,7 +346,7 @@ sudo composer-cli blueprints depsolve installer
 
 # Build installer image.
 # Test --url arg following by URL with tailling slash for bz#1942029
-build_image installer "${INSTALLER_TYPE}" "${PROD_REPO_URL}/"
+build_image -b installer -t "${INSTALLER_TYPE}" -u "${PROD_REPO_URL}/"
 
 # Download the image
 greenprint "📥 Downloading the installer image"
@@ -824,7 +638,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve upgrade
 
 # Build upgrade image.
-build_image upgrade  "${CONTAINER_TYPE}" "$PROD_REPO_URL"
+build_image -b upgrade -t "${CONTAINER_TYPE}" -u "$PROD_REPO_URL"
 
 # Download the image
 greenprint "📥 Downloading the upgrade image"

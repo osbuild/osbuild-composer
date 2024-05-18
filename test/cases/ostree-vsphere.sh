@@ -4,68 +4,18 @@ set -euo pipefail
 # Get OS data.
 source /etc/os-release
 ARCH=$(uname -m)
+source /usr/libexec/tests/osbuild-composer/ostree-common-functions.sh
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
-function cleanup_on_exit() {
-    greenprint "== Script execution stopped or finished - Cleaning up =="
-    # kill dangling journalctl processes to prevent GitLab CI from hanging
-    sudo pkill journalctl || echo "Nothing killed"
-}
-trap cleanup_on_exit EXIT
-
-
 # Install govc
 GOVC_VERSION="v0.30.5"
 sudo curl -L -o - "https://github.com/vmware/govmomi/releases/download/${GOVC_VERSION}/govc_Linux_x86_64.tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
 
-# Start firewall
-sudo systemctl enable --now firewalld
-# Allow http service in firewall to enable ignition
-sudo firewall-cmd --permanent --zone=public --add-service=http
-sudo firewall-cmd --reload
-
-# Start libvirtd and test it.
-greenprint "🚀 Starting libvirt daemon"
-sudo systemctl start libvirtd
-sudo virsh list --all > /dev/null
-
-# Set a customized dnsmasq configuration for libvirt so we always get the
-# same address on bootup.
-sudo tee /tmp/integration.xml > /dev/null << EOF
-<network xmlns:dnsmasq='http://libvirt.org/schemas/network/dnsmasq/1.0'>
-  <name>integration</name>
-  <uuid>1c8fe98c-b53a-4ca4-bbdb-deb0f26b3579</uuid>
-  <forward mode='nat'>
-    <nat>
-      <port start='1024' end='65535'/>
-    </nat>
-  </forward>
-  <bridge name='integration' zone='trusted' stp='on' delay='0'/>
-  <mac address='52:54:00:36:46:ef'/>
-  <ip address='192.168.100.1' netmask='255.255.255.0'>
-    <dhcp>
-      <range start='192.168.100.2' end='192.168.100.254'/>
-      <host mac='34:49:22:B0:83:30' name='vm' ip='192.168.100.50'/>
-    </dhcp>
-  </ip>
-  <dnsmasq:options>
-    <dnsmasq:option value='dhcp-vendorclass=set:efi-http,HTTPClient:Arch:00016'/>
-    <dnsmasq:option value='dhcp-option-force=tag:efi-http,60,HTTPClient'/>
-    <dnsmasq:option value='dhcp-boot=tag:efi-http,&quot;http://192.168.100.1/httpboot/EFI/BOOT/BOOTX64.EFI&quot;'/>
-  </dnsmasq:options>
-</network>
-EOF
-
-if ! sudo virsh net-info integration > /dev/null 2>&1; then
-    sudo virsh net-define /tmp/integration.xml
-fi
-if [[ $(sudo virsh net-info integration | grep 'Active' | awk '{print $2}') == 'no' ]]; then
-    sudo virsh net-start integration
-fi
+common_init
 
 # Set up variables.
 TEST_UUID=$(uuidgen)
@@ -84,8 +34,8 @@ VSPHERE_FILENAME=image.vmdk
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
-COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
-COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
+export COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
+export COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
@@ -127,130 +77,6 @@ case "${ID}-${VERSION_ID}" in
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
 esac
-
-# Get the compose log.
-get_compose_log () {
-    COMPOSE_ID=$1
-    LOG_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.log
-
-    # Download the logs.
-    sudo composer-cli compose log "$COMPOSE_ID" | tee "$LOG_FILE" > /dev/null
-}
-
-# Get the compose metadata.
-get_compose_metadata () {
-    COMPOSE_ID=$1
-    METADATA_FILE=${ARTIFACTS}/osbuild-${ID}-${VERSION_ID}-${COMPOSE_ID}.json
-
-    # Download the metadata.
-    sudo composer-cli compose metadata "$COMPOSE_ID" > /dev/null
-
-    # Find the tarball and extract it.
-    TARBALL=$(basename "$(find . -maxdepth 1 -type f -name "*-metadata.tar")")
-    sudo tar -xf "$TARBALL" -C "${TEMPDIR}"
-    sudo rm -f "$TARBALL"
-
-    # Move the JSON file into place.
-    sudo cat "${TEMPDIR}"/"${COMPOSE_ID}".json | jq -M '.' | tee "$METADATA_FILE" > /dev/null
-}
-
-# Build ostree image.
-build_image() {
-    blueprint_name=$1
-    image_type=$2
-
-    # Get worker unit file so we can watch the journal.
-    WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
-    sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
-    WORKER_JOURNAL_PID=$!
-
-    # Start the compose.
-    greenprint "🚀 Starting compose"
-    if [ $# -eq 3 ]; then
-        repo_url=$3
-        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" --url "$repo_url" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
-    else
-        sudo composer-cli --json compose start-ostree --ref "$OSTREE_REF" "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
-    fi
-    COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-    # Wait for the compose to finish.
-    greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-    while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-        # Is the compose finished?
-        if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-            break
-        fi
-
-        # Wait 30 seconds and try again.
-        sleep 5
-    done
-
-    # Capture the compose logs from osbuild.
-    greenprint "💬 Getting compose log and metadata"
-    get_compose_log "$COMPOSE_ID"
-    get_compose_metadata "$COMPOSE_ID"
-
-    # Kill the journal monitor
-    sudo pkill -P ${WORKER_JOURNAL_PID}
-
-    # Did the compose finish with success?
-    if [[ $COMPOSE_STATUS != FINISHED ]]; then
-        echo "Something went wrong with the compose. 😢"
-        exit 1
-    fi
-}
-
-# Wait for the ssh server up to be.
-wait_for_ssh_up () {
-    SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" "${IGNITION_USER}"@"${1}" '/bin/bash -c "echo -n READY"')
-    if [[ $SSH_STATUS == READY ]]; then
-        echo 1
-    else
-        echo 0
-    fi
-}
-
-# Clean up our mess.
-clean_up () {
-    greenprint "🧼 Cleaning up"
-
-    # Clear integration network
-    sudo virsh net-destroy integration
-    sudo virsh net-undefine integration
-
-    # Remove any status containers if exist
-    sudo podman ps -a -q --format "{{.ID}}" | sudo xargs --no-run-if-empty podman rm -f
-    # Remove all images
-    sudo podman rmi -f -a
-
-    # Remove prod repo
-    sudo rm -rf "$PROD_REPO"
-
-    # Remomve tmp dir.
-    sudo rm -rf "$TEMPDIR"
-
-    # Stop prod repo http service
-    sudo systemctl disable --now httpd
-
-    # Remove vm
-    govc vm.destroy -dc="${DATACENTER_70}" "${DC70_VSPHERE_VM_NAME}"
-}
-
-# Test result checking
-check_result () {
-    greenprint "🎏 Checking for test result"
-    if [[ $RESULTS == 1 ]]; then
-        greenprint "💚 Success"
-    else
-        greenprint "❌ Failed"
-        clean_up
-        exit 1
-    fi
-}
 
 ###########################################################
 ##
@@ -314,7 +140,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve container
 
 # Build container image.
-build_image container "${CONTAINER_TYPE}"
+build_image -b container -t "${CONTAINER_TYPE}"
 
 # Download the image
 greenprint "📥 Downloading the container image"
@@ -469,7 +295,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve vmdk
 
 # Build simplified installer iso image.
-build_image vmdk "${VSPHERE_IMAGE_TYPE}" "${PROD_REPO_URL}/"
+build_image -b vmdk -t "${VSPHERE_IMAGE_TYPE}" -u "${PROD_REPO_URL}/"
 
 # Download the image
 greenprint "📥 Downloading the vmdk image"
@@ -585,7 +411,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve upgrade
 
 # Build upgrade image.
-build_image upgrade  "${CONTAINER_TYPE}" "$PROD_REPO_URL"
+build_image -b upgrade -t "${CONTAINER_TYPE}" -u "$PROD_REPO_URL"
 
 # Download the image
 greenprint "📥 Downloading the upgrade image"
