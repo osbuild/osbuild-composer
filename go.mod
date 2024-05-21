@@ -5,8 +5,8 @@ go 1.20
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 require (
-	cloud.google.com/go/compute v1.26.0
-	cloud.google.com/go/storage v1.40.0
+	cloud.google.com/go/compute v1.27.0
+	cloud.google.com/go/storage v1.41.0
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.2
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 v5.7.0
@@ -16,7 +16,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.12
 	github.com/BurntSushi/toml v1.3.2
-	github.com/aws/aws-sdk-go v1.52.1
+	github.com/aws/aws-sdk-go v1.53.6
 	github.com/coreos/go-semver v0.3.1
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/deepmap/oapi-codegen v1.8.2
@@ -27,38 +27,38 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gophercloud/gophercloud v1.11.0
-	github.com/hashicorp/go-retryablehttp v0.7.5
+	github.com/hashicorp/go-retryablehttp v0.7.6
 	github.com/jackc/pgtype v1.14.3
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/labstack/gommon v0.4.2
-	github.com/openshift-online/ocm-sdk-go v0.1.418
+	github.com/openshift-online/ocm-sdk-go v0.1.420
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
-	github.com/osbuild/images v0.59.0
+	github.com/osbuild/images v0.62.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
 	github.com/osbuild/pulp-client v0.1.0
-	github.com/prometheus/client_golang v1.19.0
+	github.com/prometheus/client_golang v1.19.1
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
-	github.com/vmware/govmomi v0.37.1
+	github.com/vmware/govmomi v0.37.2
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
-	golang.org/x/oauth2 v0.19.0
+	golang.org/x/oauth2 v0.20.0
 	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.19.0
-	google.golang.org/api v0.177.0
+	golang.org/x/sys v0.20.0
+	google.golang.org/api v0.181.0
 )
 
 require (
-	cloud.google.com/go v0.112.2 // indirect
-	cloud.google.com/go/auth v0.3.0 // indirect
+	cloud.google.com/go v0.113.0 // indirect
+	cloud.google.com/go/auth v0.4.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
-	cloud.google.com/go/iam v1.1.7 // indirect
+	cloud.google.com/go/iam v1.1.8 // indirect
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.6.0 // indirect
@@ -83,8 +83,8 @@ require (
 	github.com/containerd/cgroups/v3 v3.0.2 // indirect
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
-	github.com/containers/common v0.58.2 // indirect
-	github.com/containers/image/v5 v5.30.0 // indirect
+	github.com/containers/common v0.58.3 // indirect
+	github.com/containers/image/v5 v5.30.1 // indirect
 	github.com/containers/libtrust v0.0.0-20230121012942-c1716e8a8d01 // indirect
 	github.com/containers/ocicrypt v1.1.9 // indirect
 	github.com/containers/storage v1.53.0 // indirect
@@ -124,7 +124,7 @@ require (
 	github.com/google/go-intervals v0.0.2 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
-	github.com/googleapis/gax-go/v2 v2.12.3 // indirect
+	github.com/googleapis/gax-go/v2 v2.12.4 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -201,18 +201,18 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
-	golang.org/x/crypto v0.22.0 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/mod v0.15.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
+	golang.org/x/term v0.20.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.18.0 // indirect
 	google.golang.org/genproto v0.0.0-20240401170217-c3f982113cda // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240429193739-8cf5692501f6 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240429193739-8cf5692501f6 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240513163218-0867130af1f8 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240513163218-0867130af1f8 // indirect
 	google.golang.org/grpc v1.63.2 // indirect
-	google.golang.org/protobuf v1.34.0 // indirect
+	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

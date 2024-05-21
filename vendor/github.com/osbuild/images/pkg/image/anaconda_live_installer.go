@@ -26,7 +26,6 @@ type AnacondaLiveInstaller struct {
 	ISOLabel  string
 	Product   string
 	Variant   string
-	OSName    string
 	OSVersion string
 	Release   string
 	Preview   bool
@@ -93,7 +92,6 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, livePipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
 	isoTreePipeline.Release = img.Release
-	isoTreePipeline.OSName = img.OSName
 
 	isoTreePipeline.KernelOpts = kernelOpts
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
