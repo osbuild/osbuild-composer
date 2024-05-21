@@ -8,23 +8,18 @@ import (
 
 // GenMkfsStages generates a list of org.mkfs.* stages based on a
 // partition table description for a single device node
-func GenMkfsStages(pt *disk.PartitionTable, device *Device) []*Stage {
+// filename is the path to the underlying image file (to be used as a source for the loopback device)
+func GenMkfsStages(pt *disk.PartitionTable, filename string) []*Stage {
 	stages := make([]*Stage, 0, len(pt.Partitions))
-
-	// assume loopback device for simplicity since it's the only one currently supported
-	// panic if the conversion fails
-	devOptions, ok := device.Options.(*LoopbackDeviceOptions)
-	if !ok {
-		panic("GenMkfsStages: failed to convert device options to loopback options")
-	}
 
 	genStage := func(mnt disk.Mountable, path []disk.Entity) error {
 		t := mnt.GetFSType()
 		var stage *Stage
 
-		stageDevices, lastName := getDevices(path, devOptions.Filename, true)
+		stageDevices, lastName := getDevices(path, filename, true)
 
-		// the last device on the PartitionTable must be named "device"
+		// The last device in the chain must be named "device", because that's the device that mkfs stages run on.
+		// See their schema for reference.
 		lastDevice := stageDevices[lastName]
 		delete(stageDevices, lastName)
 		stageDevices["device"] = lastDevice

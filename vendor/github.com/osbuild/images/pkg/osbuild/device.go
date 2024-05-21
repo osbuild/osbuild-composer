@@ -164,6 +164,18 @@ func deviceName(p disk.Entity) string {
 	panic(fmt.Sprintf("unsupported device type in deviceName: '%T'", p))
 }
 
+// getDevices takes an entity path, and returns osbuild devices required before being able to mount the leaf Mountable
+//
+// - path is an entity path as defined by the disk.entityPath function
+// - filename is the name of an underlying image file (which will get loop-mounted)
+// - lockLoopback determines whether the loop device will get locked after creation
+//
+// The device names are created from the payload that they are holding. This is useful to easily visually map e.g.
+// a loopback device and its mount (in the case of ordinary partitions): they should have the same, or similar name.
+//
+// The first returned value is a map of devices for the given path.
+// The second returned value is the name of the last device in the path. This is the device that should be used as the
+// source for the mount.
 func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[string]Device, string) {
 	var pt *disk.PartitionTable
 
@@ -225,8 +237,14 @@ func pathEscape(path string) string {
 	return strings.ReplaceAll(path, "/", "-")
 }
 
-func genOsbuildMount(name, source string, mnt disk.Mountable) (*Mount, error) {
+// genOsbuildMount generates an osbuild mount from Mountable mnt
+//
+// - source is the name of the device that the mount should be created from.
+// The name of the mount is derived from the mountpoint of the mountable, escaped with pathEscape. This shouldn't
+// create any conflicts, as the mountpoint is unique within the partition table.
+func genOsbuildMount(source string, mnt disk.Mountable) (*Mount, error) {
 	mountpoint := mnt.GetMountpoint()
+	name := pathEscape(mountpoint)
 	t := mnt.GetFSType()
 	switch t {
 	case "xfs":
@@ -242,21 +260,30 @@ func genOsbuildMount(name, source string, mnt disk.Mountable) (*Mount, error) {
 	}
 }
 
+// genMountsDevicesFromPt generates osbuild mounts and devices from a disk.PartitionTable
+// filename is the name of the underlying image file (which will get loop-mounted).
+//
+// Returned values:
+// 1) the name of the mount for the filesystem root
+// 2) generated mounts
+// 3) generated devices
+// 4) error if any
 func genMountsDevicesFromPt(filename string, pt *disk.PartitionTable) (string, []Mount, map[string]Device, error) {
 	devices := make(map[string]Device, len(pt.Partitions))
 	mounts := make([]Mount, 0, len(pt.Partitions))
 	var fsRootMntName string
 	genMounts := func(mnt disk.Mountable, path []disk.Entity) error {
-		stageDevices, name := getDevices(path, filename, false)
-		mountpoint := mnt.GetMountpoint()
-		if mountpoint == "/" {
-			fsRootMntName = name
-		}
-
-		mount, err := genOsbuildMount(name, name, mnt)
+		stageDevices, leafDeviceName := getDevices(path, filename, false)
+		mount, err := genOsbuildMount(leafDeviceName, mnt)
 		if err != nil {
 			return err
 		}
+
+		mountpoint := mnt.GetMountpoint()
+		if mountpoint == "/" {
+			fsRootMntName = mount.Name
+		}
+
 		mounts = append(mounts, *mount)
 
 		// update devices map with new elements from stageDevices

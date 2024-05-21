@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -40,11 +41,6 @@ type AnacondaInstaller struct {
 	// Extra repositories to install packages from
 	ExtraRepos []rpmmd.RepoConfig
 
-	// Users and Groups to create during installation.
-	// If empty, then the user can interactively create users at install time.
-	Users  []users.User
-	Groups []users.Group
-
 	// Biosdevname indicates whether or not biosdevname should be used to
 	// name network devices when booting the installer. This may affect
 	// the naming of network devices on the target system.
@@ -65,6 +61,11 @@ type AnacondaInstaller struct {
 	// Interactive defaults is a kickstart stage that can be provided, it
 	// will be written to /usr/share/anaconda/interactive-defaults
 	InteractiveDefaults *AnacondaInteractiveDefaults
+
+	// Kickstart options that will be written to the interactive defaults
+	// kickstart file. Currently only supports Users and Groups. Other
+	// properties are ignored.
+	InteractiveDefaultsKickstart *kickstart.Options
 
 	// Additional anaconda modules to enable
 	AdditionalAnacondaModules []string
@@ -220,7 +221,7 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	// being serialized
 	switch p.Type {
 	case AnacondaInstallerTypeLive:
-		if len(p.Users) != 0 || len(p.Groups) != 0 {
+		if p.InteractiveDefaultsKickstart != nil && (len(p.InteractiveDefaultsKickstart.Users) != 0 || len(p.InteractiveDefaultsKickstart.Groups) != 0) {
 			panic("anaconda installer type live does not support users and groups customization")
 		}
 		if p.InteractiveDefaults != nil {
@@ -293,10 +294,16 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 	stages = append(stages, osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
 	if p.InteractiveDefaults != nil {
+		var ksUsers []users.User
+		var ksGroups []users.Group
+		if p.InteractiveDefaultsKickstart != nil {
+			ksUsers = p.InteractiveDefaultsKickstart.Users
+			ksGroups = p.InteractiveDefaultsKickstart.Groups
+		}
 		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
 			osbuild.KickstartPathInteractiveDefaults,
-			p.Users,
-			p.Groups,
+			ksUsers,
+			ksGroups,
 			p.InteractiveDefaults.TarPath,
 		)
 
