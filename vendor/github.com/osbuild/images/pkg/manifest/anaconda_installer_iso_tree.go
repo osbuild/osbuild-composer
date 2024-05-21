@@ -9,7 +9,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
-	"github.com/osbuild/images/pkg/customizations/users"
+	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -24,40 +24,13 @@ type AnacondaInstallerISOTree struct {
 	Base
 
 	// TODO: review optional and mandatory fields and their meaning
-	OSName  string
 	Release string
-	Remote  string
-	Users   []users.User
-	Groups  []users.Group
-
-	Language *string
-	Keyboard *string
-	Timezone *string
-
-	// Kernel options that will be apended to the installed system
-	// (not the iso)
-	KickstartKernelOptionsAppend []string
-	// Enable networking on on boot in the installed system
-	KickstartNetworkOnBoot bool
-
-	// Create a sudoers drop-in file for each user or group to enable the
-	// NOPASSWD option
-	NoPasswd []string
-
-	// Add kickstart options to make the installation fully unattended
-	UnattendedKickstart bool
 
 	PartitionTable *disk.PartitionTable
 
 	anacondaPipeline *AnacondaInstaller
 	rootfsPipeline   *ISORootfsImg
 	bootTreePipeline *EFIBootTree
-
-	// The location of the kickstart file, if it will be added to the
-	// bootiso-tree.
-	// Otherwise, it should be defined in the interactive defaults of the
-	// Anaconda pipeline.
-	KSPath string
 
 	// The path where the payload (tarball, ostree repo, or container) will be stored.
 	PayloadPath string
@@ -78,6 +51,8 @@ type AnacondaInstallerISOTree struct {
 
 	// Enable ISOLinux stage
 	ISOLinux bool
+
+	Kickstart *kickstart.Options
 
 	Files []*fsnode.File
 }
@@ -223,8 +198,8 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 
 	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
 		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", p.isoLabel))
-		if p.KSPath != "" {
-			kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.isoLabel, p.KSPath))
+		if p.Kickstart != nil && p.Kickstart.Path != "" {
+			kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.isoLabel, p.Kickstart.Path))
 		}
 	}
 
@@ -320,8 +295,7 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 		Size:     fmt.Sprintf("%d", p.PartitionTable.Size),
 	}))
 
-	efibootDevice := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: filename})
-	for _, stage := range osbuild.GenMkfsStages(p.PartitionTable, efibootDevice) {
+	for _, stage := range osbuild.GenMkfsStages(p.PartitionTable, filename) {
 		pipeline.AddStage(stage)
 	}
 
@@ -377,15 +351,22 @@ func (p *AnacondaInstallerISOTree) ostreeCommitStages() []*osbuild.Stage {
 		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
 	))
 
+	if p.Kickstart == nil {
+		panic(fmt.Sprintf("Kickstart options not set for %s pipeline", p.name))
+	}
+
+	if p.Kickstart.OSTree == nil {
+		panic(fmt.Sprintf("Kickstart ostree options not set for %s pipeline", p.name))
+	}
 	// Configure the kickstart file with the payload and any user options
 	kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeCommit(
-		p.KSPath,
-		p.Users,
-		p.Groups,
+		p.Kickstart.Path,
+		p.Kickstart.Users,
+		p.Kickstart.Groups,
 		makeISORootPath(p.PayloadPath),
 		p.ostreeCommitSpec.Ref,
-		p.Remote,
-		p.OSName)
+		p.Kickstart.OSTree.Remote,
+		p.Kickstart.OSTree.OSName)
 
 	if err != nil {
 		panic(fmt.Sprintf("failed to create kickstart stage options: %v", err))
@@ -415,11 +396,24 @@ func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 		image,
 		nil))
 
+	stages = append(stages, p.bootcInstallerKickstartStages()...)
+	return stages
+}
+
+// bootcInstallerKickstartStages sets up kickstart-related stages for Anaconda
+// ISOs that install a bootc bootable container.
+func (p *AnacondaInstallerISOTree) bootcInstallerKickstartStages() []*osbuild.Stage {
+	if p.Kickstart == nil {
+		panic(fmt.Sprintf("Kickstart options not set for %s pipeline", p.name))
+	}
+
+	stages := make([]*osbuild.Stage, 0)
+
 	// do what we can in our kickstart stage
 	kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeContainer(
-		p.KSPath,
-		p.Users,
-		p.Groups,
+		p.Kickstart.Path,
+		p.Kickstart.Users,
+		p.Kickstart.Groups,
 		path.Join("/run/install/repo", p.PayloadPath),
 		"oci",
 		"",
@@ -427,6 +421,28 @@ func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 	if err != nil {
 		panic(fmt.Sprintf("failed to create kickstart stage options: %v", err))
 	}
+
+	// kickstart.New() already validates the options but they may have been
+	// modified since then, so validate them before we create the stages
+	if err := p.Kickstart.Validate(); err != nil {
+		panic(err)
+	}
+
+	if p.Kickstart.UserFile != nil {
+
+		// when a user defines their own kickstart, we create a kickstart that
+		// takes care of the installation and let the user kickstart handle
+		// everything else
+		stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
+		kickstartFile, err := kickstartOptions.IncludeRaw(p.Kickstart.UserFile.Contents)
+		if err != nil {
+			panic(err)
+		}
+		p.Files = []*fsnode.File{kickstartFile}
+		return append(stages, osbuild.GenFileNodesStages(p.Files)...)
+	}
+
+	// create a fully unattended/automated kickstart
 
 	// NOTE: these are similar to the unattended kickstart options in the
 	// other two payload configurations but partitioning is different and
@@ -438,13 +454,16 @@ func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 	// NOTE: These were decided somewhat arbitrarily for the BIB installer. We
 	// might want to drop them here and move them into the bib code as
 	// project-specific defaults.
+
+	// TODO: unify with other ostree variants and allow overrides from customizations
 	kickstartOptions.Lang = "en_US.UTF-8"
 	kickstartOptions.Keyboard = "us"
 	kickstartOptions.Timezone = "UTC"
 	kickstartOptions.ClearPart = &osbuild.ClearPartOptions{
 		All: true,
 	}
-	if len(p.KickstartKernelOptionsAppend) > 0 {
+
+	if len(p.Kickstart.KernelOptionsAppend) > 0 {
 		kickstartOptions.Bootloader = &osbuild.BootloaderOptions{
 			// We currently leaves quoting to the
 			// user. This is generally ok - to do better
@@ -452,10 +471,10 @@ func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 			// parser, see
 			// https://www.kernel.org/doc/html/latest/admin-guide/kernel-parameters.html
 			// and lib/cmdline.c in the kernel source
-			Append: strings.Join(p.KickstartKernelOptionsAppend, " "),
+			Append: strings.Join(p.Kickstart.KernelOptionsAppend, " "),
 		}
 	}
-	if p.KickstartNetworkOnBoot {
+	if p.Kickstart.NetworkOnBoot {
 		kickstartOptions.Network = []osbuild.NetworkOptions{
 			{BootProto: "dhcp", Device: "link", Activate: common.ToPtr(true), OnBoot: "on"},
 		}
@@ -491,8 +510,7 @@ bootc switch --mutate-in-place --transport %s %s
 
 	p.Files = []*fsnode.File{kickstartFile}
 
-	stages = append(stages, osbuild.GenFileNodesStages(p.Files)...)
-	return stages
+	return append(stages, osbuild.GenFileNodesStages(p.Files)...)
 }
 
 func (p *AnacondaInstallerISOTree) tarPayloadStages() []*osbuild.Stage {
@@ -503,11 +521,11 @@ func (p *AnacondaInstallerISOTree) tarPayloadStages() []*osbuild.Stage {
 
 	// If the KSPath is set, we need to add the kickstart stage to this (bootiso-tree) pipeline.
 	// If it's not specified here, it should have been added to the InteractiveDefaults in the anaconda-tree.
-	if p.KSPath != "" {
+	if p.Kickstart != nil && p.Kickstart.Path != "" {
 		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
-			p.KSPath,
-			p.Users,
-			p.Groups,
+			p.Kickstart.Path,
+			p.Kickstart.Users,
+			p.Kickstart.Groups,
 			makeISORootPath(p.PayloadPath))
 
 		if err != nil {
@@ -522,47 +540,73 @@ func (p *AnacondaInstallerISOTree) tarPayloadStages() []*osbuild.Stage {
 // Create the base kickstart stage with any options required for unattended
 // installation if set and with any extra file insertion stage required for
 // extra kickstart content.
-func (p *AnacondaInstallerISOTree) makeKickstartStages(kickstartOptions *osbuild.KickstartStageOptions) []*osbuild.Stage {
+func (p *AnacondaInstallerISOTree) makeKickstartStages(stageOptions *osbuild.KickstartStageOptions) []*osbuild.Stage {
+	kickstartOptions := p.Kickstart
+	if kickstartOptions == nil {
+		kickstartOptions = new(kickstart.Options)
+	}
+
 	stages := make([]*osbuild.Stage, 0)
-	if p.UnattendedKickstart {
+
+	// kickstart.New() already validates the options but they may have been
+	// modified since then, so validate them before we create the stages
+	if err := p.Kickstart.Validate(); err != nil {
+		panic(err)
+	}
+
+	if kickstartOptions.UserFile != nil {
+		stages = append(stages, osbuild.NewKickstartStage(stageOptions))
+		if kickstartOptions.UserFile != nil {
+			kickstartFile, err := stageOptions.IncludeRaw(kickstartOptions.UserFile.Contents)
+			if err != nil {
+				panic(err)
+			}
+
+			p.Files = []*fsnode.File{kickstartFile}
+
+			stages = append(stages, osbuild.GenFileNodesStages(p.Files)...)
+		}
+	}
+
+	if kickstartOptions.Unattended {
 		// set the default options for Unattended kickstart
-		kickstartOptions.DisplayMode = "text"
+		stageOptions.DisplayMode = "text"
 
 		// override options that can be configured by the image type or the user
-		kickstartOptions.Lang = "en_US.UTF-8"
-		if p.Language != nil {
-			kickstartOptions.Lang = *p.Language
+		stageOptions.Lang = "en_US.UTF-8"
+		if kickstartOptions.Language != nil {
+			stageOptions.Lang = *kickstartOptions.Language
 		}
 
-		kickstartOptions.Keyboard = "us"
-		if p.Keyboard != nil {
-			kickstartOptions.Keyboard = *p.Keyboard
+		stageOptions.Keyboard = "us"
+		if kickstartOptions.Keyboard != nil {
+			stageOptions.Keyboard = *kickstartOptions.Keyboard
 		}
 
-		kickstartOptions.Timezone = "UTC"
-		if p.Timezone != nil {
-			kickstartOptions.Timezone = *p.Timezone
+		stageOptions.Timezone = "UTC"
+		if kickstartOptions.Timezone != nil {
+			stageOptions.Timezone = *kickstartOptions.Timezone
 		}
 
-		kickstartOptions.Reboot = &osbuild.RebootOptions{Eject: true}
-		kickstartOptions.RootPassword = &osbuild.RootPasswordOptions{Lock: true}
+		stageOptions.Reboot = &osbuild.RebootOptions{Eject: true}
+		stageOptions.RootPassword = &osbuild.RootPasswordOptions{Lock: true}
 
-		kickstartOptions.ZeroMBR = true
-		kickstartOptions.ClearPart = &osbuild.ClearPartOptions{All: true, InitLabel: true}
-		kickstartOptions.AutoPart = &osbuild.AutoPartOptions{Type: "plain", FSType: "xfs", NoHome: true}
+		stageOptions.ZeroMBR = true
+		stageOptions.ClearPart = &osbuild.ClearPartOptions{All: true, InitLabel: true}
+		stageOptions.AutoPart = &osbuild.AutoPartOptions{Type: "plain", FSType: "xfs", NoHome: true}
 
-		kickstartOptions.Network = []osbuild.NetworkOptions{
+		stageOptions.Network = []osbuild.NetworkOptions{
 			{BootProto: "dhcp", Device: "link", Activate: common.ToPtr(true), OnBoot: "on"},
 		}
 	}
 
-	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
+	stages = append(stages, osbuild.NewKickstartStage(stageOptions))
 
-	hardcodedKickstartBits := makeKickstartSudoersPost(p.NoPasswd)
+	hardcodedKickstartBits := makeKickstartSudoersPost(kickstartOptions.SudoNopasswd)
 	if hardcodedKickstartBits != "" {
 		// Because osbuild core only supports a subset of options,
 		// we append to the base here with hardcoded wheel group with NOPASSWD option
-		kickstartFile, err := kickstartOptions.IncludeRaw(hardcodedKickstartBits)
+		kickstartFile, err := stageOptions.IncludeRaw(hardcodedKickstartBits)
 		if err != nil {
 			panic(err)
 		}

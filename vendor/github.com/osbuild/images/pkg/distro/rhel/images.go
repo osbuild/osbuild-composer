@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/ignition"
+	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/distro"
@@ -487,18 +488,19 @@ func EdgeInstallerImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[InstallerPkgsKey]
-	img.Users = users.UsersFromBP(customizations.GetUsers())
-	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	img.Language, img.Keyboard = customizations.GetPrimaryLocale()
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, err
+	}
+	img.Kickstart.OSTree = &kickstart.OSTree{
+		OSName: "rhel-edge",
+	}
+	img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	img.Kickstart.Language, img.Kickstart.Keyboard = customizations.GetPrimaryLocale()
 	// ignore ntp servers - we don't currently support setting these in the
 	// kickstart though kickstart does support setting them
-	img.Timezone, _ = customizations.GetTimezoneSettings()
-
-	if instCust := customizations.GetInstaller(); instCust != nil {
-		img.NoPasswd = instCust.SudoNopasswd
-		img.UnattendedKickstart = instCust.Unattended
-	}
+	img.Kickstart.Timezone, _ = customizations.GetTimezoneSettings()
 
 	img.SquashfsCompression = "xz"
 
@@ -512,7 +514,7 @@ func EdgeInstallerImage(workload workload.Workload,
 		img.AdditionalDrivers = installerConfig.AdditionalDrivers
 	}
 
-	if len(img.Users)+len(img.Groups) > 0 {
+	if len(img.Kickstart.Users)+len(img.Kickstart.Groups) > 0 {
 		// only enable the users module if needed
 		img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
 	}
@@ -524,7 +526,6 @@ func EdgeInstallerImage(workload workload.Workload,
 
 	img.Product = t.Arch().Distro().Product()
 	img.Variant = "edge"
-	img.OSName = "rhel-edge"
 	img.OSVersion = t.Arch().Distro().OsVersion()
 	img.Release = fmt.Sprintf("%s %s", t.Arch().Distro().Product(), t.Arch().Distro().OsVersion())
 	img.FIPS = customizations.GetFIPS()
@@ -676,8 +677,14 @@ func ImageInstallerImage(workload workload.Workload,
 	}
 
 	img.ExtraBasePackages = packageSets[InstallerPkgsKey]
-	img.Users = users.UsersFromBP(customizations.GetUsers())
-	img.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, err
+	}
+	img.Kickstart.Language = &img.OSCustomizations.Language
+	img.Kickstart.Keyboard = img.OSCustomizations.Keyboard
+	img.Kickstart.Timezone = &img.OSCustomizations.Timezone
 
 	installerConfig, err := t.getDefaultInstallerConfig()
 	if err != nil {
@@ -690,11 +697,6 @@ func ImageInstallerImage(workload workload.Workload,
 	}
 
 	img.AdditionalAnacondaModules = []string{"org.fedoraproject.Anaconda.Modules.Users"}
-
-	if instCust := customizations.GetInstaller(); instCust != nil {
-		img.NoPasswd = instCust.SudoNopasswd
-		img.UnattendedKickstart = instCust.Unattended
-	}
 
 	img.SquashfsCompression = "xz"
 

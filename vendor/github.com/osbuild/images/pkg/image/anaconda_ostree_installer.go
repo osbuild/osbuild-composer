@@ -7,7 +7,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
-	"github.com/osbuild/images/pkg/customizations/users"
+	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -20,30 +20,17 @@ type AnacondaOSTreeInstaller struct {
 	Base
 	Platform          platform.Platform
 	ExtraBasePackages rpmmd.PackageSet
-	Users             []users.User
-	Groups            []users.Group
 
-	Language *string
-	Keyboard *string
-	Timezone *string
-
-	// Create a sudoers drop-in file for each user or group to enable the
-	// NOPASSWD option
-	NoPasswd []string
-
-	// Add kickstart options to make the installation fully unattended
-	UnattendedKickstart bool
+	Kickstart *kickstart.Options
 
 	SquashfsCompression string
 
 	ISOLabel  string
 	Product   string
 	Variant   string
-	OSName    string
 	OSVersion string
 	Release   string
 	Preview   bool
-	Remote    string
 
 	Commit ostree.SourceSpec
 
@@ -82,8 +69,12 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
-	anacondaPipeline.Users = img.Users
-	anacondaPipeline.Groups = img.Groups
+	if img.Kickstart != nil {
+		anacondaPipeline.InteractiveDefaultsKickstart = &kickstart.Options{
+			Users:  img.Kickstart.Users,
+			Groups: img.Kickstart.Groups,
+		}
+	}
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
@@ -105,8 +96,11 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = img.ISOLabel
 
-	kspath := osbuild.KickstartPathOSBuild
-	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOLabel, kspath)}
+	ksPath := osbuild.KickstartPathOSBuild
+	if img.Kickstart != nil && img.Kickstart.Path != "" {
+		ksPath = img.Kickstart.Path
+	}
+	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOLabel, ksPath)}
 	if img.FIPS {
 		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
 	}
@@ -117,19 +111,9 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
 	isoTreePipeline.Release = img.Release
-	isoTreePipeline.OSName = img.OSName
-	isoTreePipeline.Remote = img.Remote
-	isoTreePipeline.Users = img.Users
-	isoTreePipeline.Groups = img.Groups
-	isoTreePipeline.NoPasswd = img.NoPasswd
-	isoTreePipeline.UnattendedKickstart = img.UnattendedKickstart
+	isoTreePipeline.Kickstart = img.Kickstart
 	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
-	isoTreePipeline.Language = img.Language
-	isoTreePipeline.Keyboard = img.Keyboard
-	isoTreePipeline.Timezone = img.Timezone
 
-	// For ostree installers, always put the kickstart file in the root of the ISO
-	isoTreePipeline.KSPath = kspath
 	isoTreePipeline.PayloadPath = "/ostree/repo"
 
 	isoTreePipeline.OSTreeCommitSource = &img.Commit
