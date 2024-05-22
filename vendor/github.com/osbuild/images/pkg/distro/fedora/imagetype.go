@@ -418,10 +418,25 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return []string{w}, nil
 	}
 
-	if customizations.GetInstaller() != nil {
+	instCust, err := customizations.GetInstaller()
+	if err != nil {
+		return nil, err
+	}
+	if instCust != nil {
 		// only supported by the Anaconda installer
 		if slices.Index([]string{"iot-installer"}, t.name) == -1 {
-			return nil, fmt.Errorf("installer customizations are not supported for %q", t.name)
+			return nil, fmt.Errorf("installer customizations are not supported for %q", t.Name())
+		}
+
+		// NOTE: the image type check is redundant with the check above, but
+		// let's keep it explicit in case one of the two changes.
+		// The kickstart contents is incompatible with the users and groups
+		// customization only for the iot-installer.
+		if t.Name() == "iot-installer" &&
+			instCust.Kickstart != nil &&
+			len(instCust.Kickstart.Contents) > 0 &&
+			(customizations.GetUsers() != nil || customizations.GetGroups() != nil) {
+			return nil, fmt.Errorf("iot-installer installer.kickstart.contents are not supported in combination with users or groups")
 		}
 	}
 

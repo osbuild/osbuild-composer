@@ -173,7 +173,7 @@ func ec2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"chrony",
 			"cloud-init",
 			"cloud-utils-growpart",
-			"dhcp-client",
+			"dhcpcd",
 			"yum-utils",
 			"dracut-config-generic",
 			"gdisk",
