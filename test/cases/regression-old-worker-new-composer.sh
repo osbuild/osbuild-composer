@@ -32,11 +32,6 @@ DESIRED_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer
 DESIRED_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$DESIRED_TAG_SHA" | jq -r '.object.sha')
 DESIRED_OSBUILD_COMMIT_SHA=$(curl -s "https://raw.githubusercontent.com/osbuild/osbuild-composer/$DESIRED_COMMIT_SHA/Schutzfile" | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 
-
-# Get commit hash of latest composer version, only used for verification.
-CURRENT_COMPOSER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer)
-VERIFICATION_COMPOSER_RPM="osbuild-composer-tests-$((CURRENT_COMPOSER_VERSION - 1))"
-
 COMPOSER_LATEST_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_COMPOSER_VERSION-1))" | jq -r '.object.sha')
 COMPOSER_LATEST_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$COMPOSER_LATEST_TAG_SHA" | jq -r '.object.sha')
 
@@ -397,8 +392,11 @@ setup_repo osbuild-composer "$COMPOSER_LATEST_COMMIT_SHA" 10
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 setup_repo osbuild "$OSBUILD_GIT_COMMIT" 10
 
+# Install test rpms for image info, this needs to match the version of the composer container,
+# which is version of the CI pipeline.
 greenprint "Installing osbuild-composer-tests for image-info"
-sudo dnf install -y $VERIFICATION_COMPOSER_RPM
+setup_repo osbuild-composer "${GIT_COMMIT:-${CI_COMMIT_SHA}}" 5
+sudo dnf install -y osbuild-composer-tests
 
 curl "${S3_URL}" --output "${WORKDIR}/disk.qcow2"
 
