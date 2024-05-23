@@ -65,16 +65,17 @@ type SSHKeyCustomization struct {
 }
 
 type UserCustomization struct {
-	Name        string   `json:"name" toml:"name"`
-	Description *string  `json:"description,omitempty" toml:"description,omitempty"`
-	Password    *string  `json:"password,omitempty" toml:"password,omitempty"`
-	Key         *string  `json:"key,omitempty" toml:"key,omitempty"`
-	Home        *string  `json:"home,omitempty" toml:"home,omitempty"`
-	Shell       *string  `json:"shell,omitempty" toml:"shell,omitempty"`
-	Groups      []string `json:"groups,omitempty" toml:"groups,omitempty"`
-	UID         *int     `json:"uid,omitempty" toml:"uid,omitempty"`
-	GID         *int     `json:"gid,omitempty" toml:"gid,omitempty"`
-	ExpireDate  *int     `json:"expiredate,omitempty" toml:"expiredate,omitempty"`
+	Name               string   `json:"name" toml:"name"`
+	Description        *string  `json:"description,omitempty" toml:"description,omitempty"`
+	Password           *string  `json:"password,omitempty" toml:"password,omitempty"`
+	Key                *string  `json:"key,omitempty" toml:"key,omitempty"`
+	Home               *string  `json:"home,omitempty" toml:"home,omitempty"`
+	Shell              *string  `json:"shell,omitempty" toml:"shell,omitempty"`
+	Groups             []string `json:"groups,omitempty" toml:"groups,omitempty"`
+	UID                *int     `json:"uid,omitempty" toml:"uid,omitempty"`
+	GID                *int     `json:"gid,omitempty" toml:"gid,omitempty"`
+	ExpireDate         *int     `json:"expiredate,omitempty" toml:"expiredate,omitempty"`
+	ForcePasswordReset *bool    `json:"force_password_reset,omitempty" toml:"force_password_reset,omitempty"`
 }
 
 type GroupCustomization struct {
