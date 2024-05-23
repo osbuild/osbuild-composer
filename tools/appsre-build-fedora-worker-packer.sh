@@ -8,7 +8,7 @@ export BUILD_RPMS=false
 # Fedora community workers use osbuild form rpmrepo + composer from
 # copr, as the osbuild rpms from copr disappear too quickly.
 export ANSIBLE_TAGS="fedora"
-FEDORA=fedora-38
+FEDORA=fedora-40
 export PACKER_ONLY_EXCEPT=--only=amazon-ebs."$FEDORA"-x86_64,amazon-ebs."$FEDORA"-aarch64
 COMMIT_SHA="${COMMIT_SHA:-$(git rev-parse HEAD)}"
 
