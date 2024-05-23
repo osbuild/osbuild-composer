@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/customizations/users"
@@ -163,6 +164,9 @@ type OS struct {
 	// payload. Only works with ostree-based images.
 	Bootupd bool
 
+	// Add a bootc config file to the image (for bootable containers)
+	BootcConfig *bootc.Config
+
 	// Partition table, if nil the tree cannot be put on a partitioned disk
 	PartitionTable *disk.PartitionTable
 
@@ -309,6 +313,16 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 
 	if p.OpenSCAPTailorConfig != nil {
 		packages = append(packages, "openscap-utils")
+	}
+
+	if p.BootcConfig != nil {
+		switch distro {
+		case DISTRO_EL8:
+			packages = append(packages, "python3-pytoml")
+		case DISTRO_EL10:
+		default:
+			packages = append(packages, "python3-toml")
+		}
 	}
 
 	return packages
@@ -819,9 +833,17 @@ func (p *OS) serialize() osbuild.Pipeline {
 		if p.Bootupd {
 			pipeline.AddStage(osbuild.NewBootupdGenMetadataStage())
 		}
+		if cfg := p.BootcConfig; cfg != nil {
+			pipeline.AddStage(osbuild.NewBootcInstallConfigStage(
+				osbuild.GenBootcInstallOptions(cfg.Filename, cfg.RootFilesystemType),
+			))
+		}
 	} else {
 		if p.Bootupd {
 			panic("bootupd is only compatible with ostree-based images, this is a programming error")
+		}
+		if p.BootcConfig != nil {
+			panic("bootc config is only compatible with ostree-based images, this is a programming error")
 		}
 	}
 
