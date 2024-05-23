@@ -73,6 +73,12 @@ osbuild_commit: $osbuild_commit
 EOF
         fi
 
+        if [[ "$item" == templates/packer/ansible/inventory/fedora* ]]; then
+            tee -a "$item/group_vars/all.yml" <<EOF
+ansible_python_interpreter: /usr/bin/python3.9
+EOF
+        fi
+
     done
 }
 
