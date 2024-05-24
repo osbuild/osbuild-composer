@@ -111,8 +111,7 @@ func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 		Size:     fmt.Sprintf("%d", p.PartitionTable.Size),
 	}))
 
-	efibootDevice := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: filename})
-	for _, stage := range osbuild.GenMkfsStages(p.PartitionTable, efibootDevice) {
+	for _, stage := range osbuild.GenMkfsStages(p.PartitionTable, filename) {
 		pipeline.AddStage(stage)
 	}
 

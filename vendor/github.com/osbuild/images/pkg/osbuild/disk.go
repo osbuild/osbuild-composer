@@ -99,7 +99,7 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool Pa
 	stages = append(stages, s...)
 
 	// Generate all the filesystems on partitons and devices
-	s = GenMkfsStages(pt, loopback)
+	s = GenMkfsStages(pt, filename)
 	stages = append(stages, s...)
 
 	return stages
