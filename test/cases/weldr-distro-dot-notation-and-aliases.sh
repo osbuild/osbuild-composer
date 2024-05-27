@@ -33,10 +33,20 @@ trap cleanup EXIT
 
 # Remove any restrictions on the image types for weldr API, since
 # testing the distro alias requires building the SAP image.
+#
+# Also override the alias for RHEL 8 since the default alias, 8.10, doesn't
+# have a locked version, so the releasever is not set in the dnf vars, and this
+# test relies on that file to verify that we are using the correct distro
+# object and code path.
 EXTRA_COMPOSER_CONF="$(mktemp -p "$TMPDIR")"
 cat <<EOF | tee "${EXTRA_COMPOSER_CONF}"
 # overrides the default rhel-* configuration
 [weldr_api.distros."rhel-*"]
+
+# overrides the default rhel-8 alias
+[distro_aliases]
+rhel-8 = "rhel-8.8"
+rhel-9 = "rhel-9.4"
 EOF
 
 # Provision the software under test.
