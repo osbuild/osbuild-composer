@@ -638,7 +638,7 @@ weldr-distro-dot-notation+aliases:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.10-nightly-x86_64
+          - aws/rhel-8.8-ga-x86_64
           - aws/rhel-9.4-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
