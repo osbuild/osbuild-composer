@@ -5,7 +5,7 @@
 # This test case verifies that distributions can be specified with and without
 # the dot to sepratae the major and minor version (true for RHEL-8 and RHEL-9).
 # It also verifies the behavior of distro name aliases
-# (e.g. "rhel-8" -> "rhel-8.10"). This is done by building a SAP image and
+# (e.g. "rhel-9" -> "rhel-9.4"). This is done by building a SAP image and
 # inspecting it using guestfish. Specifically, the SAP image contains DNF VAR
 # config /etc/dnf/vars/releasever, which contains value "X.Y", which should be
 # the same as the distro release that the alias points to.
@@ -163,9 +163,9 @@ function _test_compose_bp() {
     sudo composer-cli compose delete "${composeid}" >/dev/null
 }
 
-# Verify that the image contains /etc/dnf/vars/releasever with the expected content.
-# Specifically, verify that the the content of /etc/dnf/vars/releasever is the same
-# as the VERSION_ID of the distro that the distro alias point to.
+# Verify that the image contains /etc/dnf/vars/releasever with the expected
+# content. Specifically, verify that the content of /etc/dnf/vars/releasever
+# is the same as the VERSION_ID of the distro that the distro alias point to.
 function _verify_distro_alias_img() {
     if [[ $# -ne 1 ]]; then
         echo "Usage: _verify_distro_alias_img <compose_id>"
@@ -217,7 +217,7 @@ name = "${blueprint_name}"
 description = "A testing blueprint"
 version = "0.0.1"
 EOF
-    
+
         if [[ -n "${distro}" ]]; then
             cat <<EOF >> "${directory}/${blueprint_name}.toml"
 distro = "${distro}"
@@ -239,7 +239,7 @@ function _test_repo() {
     local distro="$2"
 
     greenprint "TEST: ${test_name}"
-    
+
     local directory="${TMPDIR}/${test_name}"
     mkdir -p "${directory}"
 
@@ -264,14 +264,14 @@ function test_repo_without_dot() {
     _test_repo "repo_without_dot" "${DISTRO_WITHOUT_DOT}"
 }
 
-# Test that the repository definitions with andwithout a dot in its filename
-# are equivalent and can override each other. Test uses empty file in the shipped
-# directory and the test repository in the overrides directory to verify that
-# the override happens.
+# Test that the repository definitions with and without a dot in its filename
+# are equivalent and can override each other. Test uses empty file in the
+# shipped directory and the test repository in the overrides directory to
+# verify that the override happens.
 function test_repo_dot_overrides() {
     local test_name="repo_dot_overrides"
     greenprint "TEST: ${test_name}"
-    
+
     local directory="${TMPDIR}/${test_name}"
     mkdir -p "${directory}"
 
