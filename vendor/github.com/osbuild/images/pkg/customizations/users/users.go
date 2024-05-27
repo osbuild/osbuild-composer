@@ -3,16 +3,17 @@ package users
 import "github.com/osbuild/images/pkg/blueprint"
 
 type User struct {
-	Name        string
-	Description *string
-	Password    *string
-	Key         *string
-	Home        *string
-	Shell       *string
-	Groups      []string
-	UID         *int
-	GID         *int
-	ExpireDate  *int
+	Name               string
+	Description        *string
+	Password           *string
+	Key                *string
+	Home               *string
+	Shell              *string
+	Groups             []string
+	UID                *int
+	GID                *int
+	ExpireDate         *int
+	ForcePasswordReset *bool
 }
 
 type Group struct {

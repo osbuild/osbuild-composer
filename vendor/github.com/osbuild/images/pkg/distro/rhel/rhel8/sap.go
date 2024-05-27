@@ -10,7 +10,7 @@ import (
 
 // sapImageConfig returns the SAP specific ImageConfig data
 func sapImageConfig(rd distro.Distro) *distro.ImageConfig {
-	return &distro.ImageConfig{
+	ic := &distro.ImageConfig{
 		SELinuxConfig: &osbuild.SELinuxConfigStageOptions{
 			State: osbuild.SELinuxStatePermissive,
 		},
@@ -105,8 +105,11 @@ func sapImageConfig(rd distro.Distro) *distro.ImageConfig {
 				},
 			),
 		},
+	}
+
+	if common.VersionLessThan(rd.OsVersion(), "8.10") {
 		// E4S/EUS
-		DNFConfig: []*osbuild.DNFConfigStageOptions{
+		ic.DNFConfig = []*osbuild.DNFConfigStageOptions{
 			osbuild.NewDNFConfigStageOptions(
 				[]osbuild.DNFVariable{
 					{
@@ -116,8 +119,10 @@ func sapImageConfig(rd distro.Distro) *distro.ImageConfig {
 				},
 				nil,
 			),
-		},
+		}
 	}
+
+	return ic
 }
 
 func SapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {

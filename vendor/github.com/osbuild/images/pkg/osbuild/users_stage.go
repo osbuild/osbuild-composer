@@ -12,15 +12,16 @@ type UsersStageOptions struct {
 func (UsersStageOptions) isStageOptions() {}
 
 type UsersStageOptionsUser struct {
-	UID         *int     `json:"uid,omitempty"`
-	GID         *int     `json:"gid,omitempty"`
-	Groups      []string `json:"groups,omitempty"`
-	Description *string  `json:"description,omitempty"`
-	Home        *string  `json:"home,omitempty"`
-	Shell       *string  `json:"shell,omitempty"`
-	Password    *string  `json:"password,omitempty"`
-	Key         *string  `json:"key,omitempty"`
-	ExpireDate  *int     `json:"expiredate,omitempty"`
+	UID                *int     `json:"uid,omitempty"`
+	GID                *int     `json:"gid,omitempty"`
+	Groups             []string `json:"groups,omitempty"`
+	Description        *string  `json:"description,omitempty"`
+	Home               *string  `json:"home,omitempty"`
+	Shell              *string  `json:"shell,omitempty"`
+	Password           *string  `json:"password,omitempty"`
+	Key                *string  `json:"key,omitempty"`
+	ExpireDate         *int     `json:"expiredate,omitempty"`
+	ForcePasswordReset *bool    `json:"force_password_reset,omitempty"`
 }
 
 func NewUsersStage(options *UsersStageOptions) *Stage {
@@ -53,15 +54,16 @@ func NewUsersStageOptions(userCustomizations []users.User, omitKey bool) (*Users
 		}
 
 		user := UsersStageOptionsUser{
-			UID:         uc.UID,
-			GID:         uc.GID,
-			Groups:      uc.Groups,
-			Description: uc.Description,
-			Home:        uc.Home,
-			Shell:       uc.Shell,
-			Password:    uc.Password,
-			Key:         nil,
-			ExpireDate:  uc.ExpireDate,
+			UID:                uc.UID,
+			GID:                uc.GID,
+			Groups:             uc.Groups,
+			Description:        uc.Description,
+			Home:               uc.Home,
+			Shell:              uc.Shell,
+			Password:           uc.Password,
+			Key:                nil,
+			ExpireDate:         uc.ExpireDate,
+			ForcePasswordReset: uc.ForcePasswordReset,
 		}
 		if !omitKey {
 			user.Key = uc.Key
