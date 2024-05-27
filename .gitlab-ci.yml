@@ -622,9 +622,12 @@ ubi-wsl.sh:
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ubi-wsl.sh
-  variables:
-      RUNNER: aws/rhel-8.9-ga-x86_64
-      INTERNAL_NETWORK: "true"
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.9-ga-x86_64
+          - aws/rhel-9.3-ga-x86_64
+        INTERNAL_NETWORK: "true"
 
 weldr-distro-dot-notation+aliases:
   stage: test

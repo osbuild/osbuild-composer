@@ -167,7 +167,7 @@ cloud_login
 $AZURE_CMD version
 
 # Create a windows VM from the WSL snapshot image
-if ! $AZURE_CMD snapshot show --name "$AZURE_WSL_SNAPSHOT" --resource-group "$AZURE_RESOURCE_GROUP"; then
+if ! $AZURE_CMD snapshot show --name "$AZURE_WSL_SNAPSHOT_2" --resource-group "$AZURE_RESOURCE_GROUP"; then
     redprint "WSL snapshot missing from test resource group"
     exit 1
 fi
@@ -181,7 +181,7 @@ $AZURE_CMD disk create \
    --sku "Standard_LRS" \
    --location "$AZURE_WSL_LOCATION" \
    --size-gb 128 \
-   --source "$AZURE_WSL_SNAPSHOT"
+   --source "$AZURE_WSL_SNAPSHOT_2"
 
 # Create VM by attaching created managed disks as OS
 # The VM needs to support virtualization, supposedly all v4 and v5's support this but this wasn't
@@ -231,13 +231,23 @@ done
 
 sudo chmod 600 "$AZ_WSL_HOST_PRIVATE_KEY"
 sudo scp -i "$AZ_WSL_HOST_PRIVATE_KEY" -o StrictHostKeyChecking=no "$DISK" "$AZURE_WSL_USER@$HOST:"
+
+# Use absolute path to wsl.exe to avoid "The file cannot be accessed by the system."
 ssh -i "$AZ_WSL_HOST_PRIVATE_KEY" -o StrictHostKeyChecking=no "$AZURE_WSL_USER@$HOST" \
-    wsl --import ibwsl ibwsl "$DISK"
+    '"C:\Program Files\WSL\wsl.exe"' --import ibwsl ibwsl "$DISK"
 
-UNAME=$(ssh -i "$AZ_WSL_HOST_PRIVATE_KEY" -o StrictHostKeyChecking=no "$AZURE_WSL_USER@$HOST" wsl -d ibwsl uname)
-
+UNAME=$(ssh -i "$AZ_WSL_HOST_PRIVATE_KEY" -o StrictHostKeyChecking=no "$AZURE_WSL_USER@$HOST" '"C:\Program Files\WSL\wsl.exe"' -d ibwsl uname)
 if [ ! "$UNAME" = "Linux" ]; then
     redprint "Not running linux on the windows host :("
+    exit 1
+fi
+
+OS_RELEASE=$(ssh -i "$AZ_WSL_HOST_PRIVATE_KEY" -o StrictHostKeyChecking=no "$AZURE_WSL_USER@$HOST" '"C:\Program Files\WSL\wsl.exe"' -d ibwsl cat /etc/os-release)
+WSL_ID=$(echo "$OS_RELEASE" | grep "^ID=" | cut -d '=' -f2  | tr -d '"')
+WSL_VERSION_ID=$(echo "$OS_RELEASE" | grep "^VERSION_ID=" | cut -d '=' -f2  | tr -d '"')
+
+if [ ! "$DISTRO_CODE" = "$WSL_ID-$WSL_VERSION_ID" ]; then
+    redprint "wsl os-release ($WSL_ID-$WSL_VERSION_ID) is not the same as the test runner os-release ($DISTRO_CODE)"
     exit 1
 fi
 
