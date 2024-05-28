@@ -130,22 +130,25 @@ class ComposerAPIClient:
         resp = requests.post(self.auth_server + "/token", data={
             "grant_type": "refresh_token",
             "refresh_token": self.refresh_token,
-        })
+        }, timeout=5)
         if resp.status_code != 200:
             raise RuntimeError(f"failed to refresh token: {resp.text}")
         return resp.json()["access_token"]
 
     def submit_compose(self, request):
         return requests.post(self.api_url + "/compose", json=request,
-                             headers={"Authorization": f"Bearer {self.access_token()}"})
+                             headers={"Authorization": f"Bearer {self.access_token()}"},
+                             timeout=5)
 
     def compose_status(self, compose_id):
         return requests.get(self.api_url + f"/composes/{compose_id}",
-                            headers={"Authorization": f"Bearer {self.access_token()}"})
+                            headers={"Authorization": f"Bearer {self.access_token()}"},
+                            timeout=5)
 
     def compose_log(self, compose_id):
         return requests.get(self.api_url + f"/composes/{compose_id}/logs",
-                            headers={"Authorization": f"Bearer {self.access_token()}"})
+                            headers={"Authorization": f"Bearer {self.access_token()}"},
+                            timeout=5)
 
 
 def get_parser():
