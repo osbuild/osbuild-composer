@@ -395,7 +395,11 @@ Requires:   httpd
 Requires:   mod_ssl
 Requires:   openssl
 Requires:   firewalld
+# podman-plugins has been deprecated since podman version 5.0.0,
+# which is in Fedora 40+ and in c10s / el10
+%if (0%{?rhel} && 0%{?rhel} < 10) || (0%{?fedora} && 0%{?fedora} < 40)
 Requires:   podman-plugins
+%endif
 Requires:   dnf-plugins-core
 Requires:   skopeo
 Requires:   make
