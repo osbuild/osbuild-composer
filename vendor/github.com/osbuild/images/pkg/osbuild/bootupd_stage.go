@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/disk"
 )
 
@@ -85,20 +86,19 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 		if part.Payload == nil {
 			continue
 		}
-		// TODO: support things like LVM here via supporting "disk.Container"
-		mnt, ok := part.Payload.(disk.Mountable)
-		if !ok {
-			return nil, fmt.Errorf("type %v not supported by bootupd handling yet", mnt)
-		}
 
-		partNum := idx + 1
-		name := fmt.Sprintf("part%v", partNum)
-		mount, err := genOsbuildMount(name, source, mnt)
-		if err != nil {
-			return nil, err
+		// TODO: support things like LVM here via supporting "disk.Container"
+		switch payload := part.Payload.(type) {
+		case disk.Mountable:
+			mount, err := genOsbuildMount(source, payload)
+			if err != nil {
+				return nil, err
+			}
+			mount.Partition = common.ToPtr(idx + 1)
+			mounts = append(mounts, *mount)
+		default:
+			return nil, fmt.Errorf("type %T not supported by bootupd handling yet", part.Payload)
 		}
-		mount.Partition = &partNum
-		mounts = append(mounts, *mount)
 	}
 	// this must be sorted in so that mounts do not shadow each other
 	sort.Slice(mounts, func(i, j int) bool {

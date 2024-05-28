@@ -8,9 +8,11 @@ import (
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/ignition"
+	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/distro"
@@ -414,7 +416,6 @@ func liveInstallerImage(workload workload.Workload,
 	d := t.arch.distro
 
 	img.Product = d.product
-	img.OSName = "fedora"
 	img.Variant = "Workstation"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
@@ -443,12 +444,16 @@ func imageInstallerImage(workload workload.Workload,
 
 	img := image.NewAnacondaTarInstaller()
 
-	if instCust := customizations.GetInstaller(); instCust != nil {
-		img.NoPasswd = instCust.SudoNopasswd
-		img.UnattendedKickstart = instCust.Unattended
+	var err error
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, err
 	}
+	img.Kickstart.Language = &img.OSCustomizations.Language
+	img.Kickstart.Keyboard = img.OSCustomizations.Keyboard
+	img.Kickstart.Timezone = &img.OSCustomizations.Timezone
 
-	if img.UnattendedKickstart {
+	if img.Kickstart.Unattended {
 		// NOTE: this is not supported right now because the
 		// image-installer on Fedora isn't working when unattended.
 		// These options are probably necessary but could change.
@@ -461,15 +466,12 @@ func imageInstallerImage(workload workload.Workload,
 	img.Platform = t.platform
 	img.Workload = workload
 
-	var err error
 	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], containers, bp.Customizations)
 	if err != nil {
 		return nil, err
 	}
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
-	img.Users = users.UsersFromBP(customizations.GetUsers())
-	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
 	img.SquashfsCompression = "lz4"
 
@@ -479,8 +481,6 @@ func imageInstallerImage(workload workload.Workload,
 
 	// We don't know the variant that goes into the OS pipeline that gets installed
 	img.Variant = "Unknown"
-
-	img.OSName = "fedora"
 
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
@@ -572,6 +572,10 @@ func bootableContainerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 	img.InstallWeakDeps = false
 	img.BootContainer = true
+	img.BootcConfig = &bootc.Config{
+		Filename:           "20-fedora.toml",
+		RootFilesystemType: "ext4",
+	}
 
 	return img, nil
 }
@@ -643,13 +647,20 @@ func iotInstallerImage(workload workload.Workload,
 	img.FIPS = customizations.GetFIPS()
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
-	img.Users = users.UsersFromBP(customizations.GetUsers())
-	img.Groups = users.GroupsFromBP(customizations.GetGroups())
 
-	img.Language, img.Keyboard = customizations.GetPrimaryLocale()
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, err
+	}
+	img.Kickstart.OSTree = &kickstart.OSTree{
+		OSName: "fedora-iot",
+		Remote: "fedora-iot",
+	}
+	img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	img.Kickstart.Language, img.Kickstart.Keyboard = customizations.GetPrimaryLocale()
 	// ignore ntp servers - we don't currently support setting these in the
 	// kickstart though kickstart does support setting them
-	img.Timezone, _ = customizations.GetTimezoneSettings()
+	img.Kickstart.Timezone, _ = customizations.GetTimezoneSettings()
 
 	img.AdditionalAnacondaModules = []string{
 		"org.fedoraproject.Anaconda.Modules.Timezone",
@@ -657,17 +668,10 @@ func iotInstallerImage(workload workload.Workload,
 		"org.fedoraproject.Anaconda.Modules.Users",
 	}
 
-	if instCust := customizations.GetInstaller(); instCust != nil {
-		img.NoPasswd = instCust.SudoNopasswd
-		img.UnattendedKickstart = instCust.Unattended
-	}
-
 	img.SquashfsCompression = "lz4"
 
 	img.Product = d.product
 	img.Variant = "IoT"
-	img.OSName = "fedora-iot"
-	img.Remote = "fedora-iot"
 	img.OSVersion = d.osVersion
 	img.Release = fmt.Sprintf("%s %s", d.product, d.osVersion)
 	img.Preview = common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_BRANCHED)
@@ -779,6 +783,8 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 			}
 		}
 	}
+
+	img.AdditionalDracutModules = append(img.AdditionalDracutModules, "dbus-broker")
 
 	d := t.arch.distro
 	img.Product = d.product

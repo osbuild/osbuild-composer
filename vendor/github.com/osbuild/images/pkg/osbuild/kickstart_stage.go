@@ -243,6 +243,10 @@ func NewKickstartStageOptionsWithLiveIMG(
 // generated in place of the original file and is returned as an fsnode.File.
 // The raw content *should not* contain the %include statement.
 func (options *KickstartStageOptions) IncludeRaw(raw string) (*fsnode.File, error) {
+	// TODO: flip the way this function includes one kickstart in another when
+	// we add an include option to the kickstart stage so that the raw part
+	// remains intact, our own kickstart file remains the "primary", and we
+	// %include the raw kickstart from our own.
 	origPath := options.Path
 	origName := filepath.Base(origPath)
 

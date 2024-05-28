@@ -417,9 +417,14 @@ func rhelEc2HaPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 // Includes the common ec2 package set, the common SAP packages, and
 // the amazon rhui sap package
 func rhelEc2SapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
+	rhuiPkg := "rh-amazon-rhui-client-sap-bundle-e4s"
+	if t.Arch().Distro().OsVersion() == "8.10" {
+		rhuiPkg = "rh-amazon-rhui-client-sap-bundle"
+	}
+
 	return rpmmd.PackageSet{
 		Include: []string{
-			"rh-amazon-rhui-client-sap-bundle-e4s",
+			rhuiPkg,
 		},
 	}.Append(rhelEc2CommonPackageSet(t)).Append(SapPackageSet(t))
 }

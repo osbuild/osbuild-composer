@@ -63,16 +63,17 @@ type SSHKeyCustomization struct {
 }
 
 type UserCustomization struct {
-	Name        string   `json:"name" toml:"name"`
-	Description *string  `json:"description,omitempty" toml:"description,omitempty"`
-	Password    *string  `json:"password,omitempty" toml:"password,omitempty"`
-	Key         *string  `json:"key,omitempty" toml:"key,omitempty"`
-	Home        *string  `json:"home,omitempty" toml:"home,omitempty"`
-	Shell       *string  `json:"shell,omitempty" toml:"shell,omitempty"`
-	Groups      []string `json:"groups,omitempty" toml:"groups,omitempty"`
-	UID         *int     `json:"uid,omitempty" toml:"uid,omitempty"`
-	GID         *int     `json:"gid,omitempty" toml:"gid,omitempty"`
-	ExpireDate  *int     `json:"expiredate,omitempty" toml:"expiredate,omitempty"`
+	Name               string   `json:"name" toml:"name"`
+	Description        *string  `json:"description,omitempty" toml:"description,omitempty"`
+	Password           *string  `json:"password,omitempty" toml:"password,omitempty"`
+	Key                *string  `json:"key,omitempty" toml:"key,omitempty"`
+	Home               *string  `json:"home,omitempty" toml:"home,omitempty"`
+	Shell              *string  `json:"shell,omitempty" toml:"shell,omitempty"`
+	Groups             []string `json:"groups,omitempty" toml:"groups,omitempty"`
+	UID                *int     `json:"uid,omitempty" toml:"uid,omitempty"`
+	GID                *int     `json:"gid,omitempty" toml:"gid,omitempty"`
+	ExpireDate         *int     `json:"expiredate,omitempty" toml:"expiredate,omitempty"`
+	ForcePasswordReset *bool    `json:"force_password_reset,omitempty" toml:"force_password_reset,omitempty"`
 }
 
 type GroupCustomization struct {
@@ -387,9 +388,21 @@ func (c *Customizations) GetContainerStorage() *ContainerStorageCustomization {
 	return c.ContainersStorage
 }
 
-func (c *Customizations) GetInstaller() *InstallerCustomization {
+func (c *Customizations) GetInstaller() (*InstallerCustomization, error) {
 	if c == nil || c.Installer == nil {
-		return nil
+		return nil, nil
 	}
-	return c.Installer
+
+	// Validate conflicting customizations: Installer options aren't supported
+	// when the user adds their own kickstart content
+	if c.Installer.Kickstart != nil && len(c.Installer.Kickstart.Contents) > 0 {
+		if c.Installer.Unattended {
+			return nil, fmt.Errorf("installer.unattended is not allowed when adding custom kickstart contents")
+		}
+		if len(c.Installer.SudoNopasswd) > 0 {
+			return nil, fmt.Errorf("installer.sudo-nopasswd is not allowed when adding custom kickstart contents")
+		}
+	}
+
+	return c.Installer, nil
 }
