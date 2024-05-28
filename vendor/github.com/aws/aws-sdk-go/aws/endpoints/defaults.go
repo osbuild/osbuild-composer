@@ -74,7 +74,9 @@ const (
 )
 
 // AWS ISOE (Europe) partition's regions.
-const ()
+const (
+	EuIsoeWest1RegionID = "eu-isoe-west-1" // EU ISOE West.
+)
 
 // AWS ISOF partition's regions.
 const ()
@@ -5055,6 +5057,9 @@ var awsPartition = partition{
 		},
 		"braket": service{
 			Endpoints: serviceEndpoints{
+				endpointKey{
+					Region: "eu-north-1",
+				}: endpoint{},
 				endpointKey{
 					Region: "eu-west-2",
 				}: endpoint{},
@@ -15436,13 +15441,6 @@ var awsPartition = partition{
 				endpointKey{
 					Region: "us-east-2",
 				}: endpoint{},
-				endpointKey{
-					Region: "us-west-2",
-				}: endpoint{},
-			},
-		},
-		"honeycode": service{
-			Endpoints: serviceEndpoints{
 				endpointKey{
 					Region: "us-west-2",
 				}: endpoint{},
@@ -27253,6 +27251,55 @@ var awsPartition = partition{
 					SignatureVersions: []string{"s3v4"},
 					CredentialScope: credentialScope{
 						Region: "ca-central-1",
+					},
+					Deprecated: boxedTrue,
+				},
+				endpointKey{
+					Region: "ca-west-1",
+				}: endpoint{
+					Hostname:          "s3-control.ca-west-1.amazonaws.com",
+					SignatureVersions: []string{"s3v4"},
+					CredentialScope: credentialScope{
+						Region: "ca-west-1",
+					},
+				},
+				endpointKey{
+					Region:  "ca-west-1",
+					Variant: dualStackVariant,
+				}: endpoint{
+					Hostname:          "s3-control.dualstack.ca-west-1.amazonaws.com",
+					SignatureVersions: []string{"s3v4"},
+					CredentialScope: credentialScope{
+						Region: "ca-west-1",
+					},
+				},
+				endpointKey{
+					Region:  "ca-west-1",
+					Variant: fipsVariant,
+				}: endpoint{
+					Hostname:          "s3-control-fips.ca-west-1.amazonaws.com",
+					SignatureVersions: []string{"s3v4"},
+					CredentialScope: credentialScope{
+						Region: "ca-west-1",
+					},
+				},
+				endpointKey{
+					Region:  "ca-west-1",
+					Variant: fipsVariant | dualStackVariant,
+				}: endpoint{
+					Hostname:          "s3-control-fips.dualstack.ca-west-1.amazonaws.com",
+					SignatureVersions: []string{"s3v4"},
+					CredentialScope: credentialScope{
+						Region: "ca-west-1",
+					},
+				},
+				endpointKey{
+					Region: "ca-west-1-fips",
+				}: endpoint{
+					Hostname:          "s3-control-fips.ca-west-1.amazonaws.com",
+					SignatureVersions: []string{"s3v4"},
+					CredentialScope: credentialScope{
+						Region: "ca-west-1",
 					},
 					Deprecated: boxedTrue,
 				},
@@ -47237,7 +47284,11 @@ var awsisoePartition = partition{
 			SignatureVersions: []string{"v4"},
 		},
 	},
-	Regions:  regions{},
+	Regions: regions{
+		"eu-isoe-west-1": region{
+			Description: "EU ISOE West",
+		},
+	},
 	Services: services{},
 }
 
