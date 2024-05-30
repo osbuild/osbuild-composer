@@ -307,7 +307,7 @@ func (h *apiHandlers) targetResultToUploadStatus(jobId uuid.UUID, t *target.Targ
 
 // GetComposeList returns a list of the root job UUIDs
 func (h *apiHandlers) GetComposeList(ctx echo.Context) error {
-	jobs, err := h.server.workers.AllRootJobIDs()
+	jobs, err := h.server.workers.AllRootJobIDs(ctx.Request().Context())
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorGettingComposeList, err)
 	}

@@ -705,7 +705,7 @@ func jobMatchesCriteria(j *job, acceptedJobTypes []string, acceptedChannels []st
 
 // AllRootJobIDs Return a list of all the top level(root) job uuids
 // This only includes jobs without any Dependents set
-func (q *fsJobQueue) AllRootJobIDs() ([]uuid.UUID, error) {
+func (q *fsJobQueue) AllRootJobIDs(_ context.Context) ([]uuid.UUID, error) {
 	ids, err := q.db.List()
 	if err != nil {
 		return nil, err
