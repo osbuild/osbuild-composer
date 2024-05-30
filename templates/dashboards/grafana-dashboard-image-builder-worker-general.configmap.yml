@@ -39,210 +39,14 @@ data:
       "panels": [
         {
           "collapsed": false,
+          "datasource": {
+            "uid": "${datasource}"
+          },
           "gridPos": {
             "h": 1,
             "w": 24,
             "x": 0,
             "y": 0
-          },
-          "id": 240,
-          "panels": [],
-          "title": "Worker status",
-          "type": "row"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 5,
-                "gradientMode": "scheme",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 2,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "fieldMinMax": false,
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "red",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 1
-                  },
-                  {
-                    "color": "green",
-                    "value": 2
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 1
-          },
-          "id": 242,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": false
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "10.4.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "sum (clamp_min(image_builder_worker_active_workers{tenant=~\"$tenant\",arch=~\"$arch\"}, 0))",
-              "instant": false,
-              "interval": "",
-              "legendFormat": "__auto",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Active workers",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "red",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 1
-                  },
-                  {
-                    "color": "green",
-                    "value": 2
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 1
-          },
-          "id": 243,
-          "options": {
-            "displayMode": "lcd",
-            "maxVizHeight": 300,
-            "minVizHeight": 16,
-            "minVizWidth": 8,
-            "namePlacement": "auto",
-            "orientation": "horizontal",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showUnfilled": true,
-            "sizing": "auto",
-            "valueMode": "color"
-          },
-          "pluginVersion": "10.4.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${datasource}"
-              },
-              "editorMode": "code",
-              "expr": "sum by(arch) (clamp_min(image_builder_worker_active_workers{tenant=~\"$tenant\"}, 0))",
-              "instant": false,
-              "legendFormat": "__auto",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Active workers",
-          "type": "bargauge"
-        },
-        {
-          "collapsed": false,
-          "datasource": {
-            "uid": "${datasource}"
-          },
-          "gridPos": {
-            "h": 1,
-            "w": 24,
-            "x": 0,
-            "y": 9
           },
           "id": 212,
           "panels": [],
@@ -299,7 +103,7 @@ data:
             "h": 8,
             "w": 4,
             "x": 0,
-            "y": 10
+            "y": 1
           },
           "id": 197,
           "mappings": [
@@ -424,7 +228,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 4,
-            "y": 10
+            "y": 1
           },
           "id": 202,
           "options": {
@@ -534,7 +338,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 10
+            "y": 1
           },
           "id": 228,
           "options": {
@@ -628,7 +432,7 @@ data:
             "h": 8,
             "w": 4,
             "x": 0,
-            "y": 18
+            "y": 9
           },
           "id": 238,
           "maxDataPoints": 100,
@@ -743,7 +547,7 @@ data:
             "h": 8,
             "w": 20,
             "x": 4,
-            "y": 18
+            "y": 9
           },
           "id": 239,
           "options": {
@@ -786,7 +590,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 26
+            "y": 17
           },
           "id": 129,
           "panels": [],
@@ -843,7 +647,7 @@ data:
             "h": 8,
             "w": 4,
             "x": 0,
-            "y": 27
+            "y": 18
           },
           "id": 200,
           "mappings": [
@@ -1007,7 +811,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 4,
-            "y": 27
+            "y": 18
           },
           "id": 201,
           "options": {
@@ -1135,7 +939,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 27
+            "y": 18
           },
           "id": 210,
           "options": {
@@ -1228,7 +1032,7 @@ data:
             "h": 8,
             "w": 4,
             "x": 0,
-            "y": 35
+            "y": 26
           },
           "id": 198,
           "maxDataPoints": 100,
@@ -1345,7 +1149,7 @@ data:
             "h": 8,
             "w": 20,
             "x": 4,
-            "y": 35
+            "y": 26
           },
           "id": 199,
           "options": {
@@ -1388,7 +1192,7 @@ data:
             "h": 1,
             "w": 24,
             "x": 0,
-            "y": 43
+            "y": 34
           },
           "id": 207,
           "panels": [],
@@ -1424,8 +1228,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "#EAB839",
@@ -1445,7 +1248,7 @@ data:
             "h": 8,
             "w": 4,
             "x": 0,
-            "y": 44
+            "y": 35
           },
           "id": 208,
           "mappings": [
@@ -1544,8 +1347,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   }
                 ]
               },
@@ -1603,7 +1405,7 @@ data:
             "h": 8,
             "w": 12,
             "x": 4,
-            "y": 44
+            "y": 35
           },
           "id": 209,
           "options": {
@@ -1714,8 +1516,7 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1731,7 +1532,7 @@ data:
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 44
+            "y": 35
           },
           "id": 204,
           "options": {
@@ -1989,7 +1790,7 @@ data:
           },
           {
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "1792",
               "value": "1792"
             },
@@ -2064,6 +1865,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker Job Stats",
       "uid": "image-builder-worker",
-      "version": 17,
+      "version": 18,
       "weekStart": ""
     }
