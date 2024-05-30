@@ -75,6 +75,8 @@ const (
 		SELECT type, args, channel, started_at, finished_at, retries, canceled
 		FROM jobs
 		WHERE id = $1`
+	sqlQueryAllJobs = `
+		SELECT id FROM jobs`
 	sqlQueryJobStatus = `
 		SELECT type, channel, result, queued_at, started_at, finished_at, canceled
 		FROM jobs
@@ -873,10 +875,34 @@ func (q *DBJobQueue) jobDependents(ctx context.Context, conn connection, id uuid
 }
 
 // AllJobIDs returns a list of all job UUIDs that the worker knows about
-func (q *DBJobQueue) AllJobIDs() ([]uuid.UUID, error) {
-	// TODO write this
+func (q *DBJobQueue) AllJobIDs() (jobs []uuid.UUID, err error) {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return
+	}
+	defer conn.Release()
 
-	return nil, nil
+	rows, err := conn.Query(context.Background(), sqlQueryAllJobs)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var t uuid.UUID
+		err = rows.Scan(&t)
+		if err != nil {
+			// Log the error and try to continue with the next row
+			q.logger.Error(err, "Unable to read job uuid from jobs")
+			continue
+		}
+		jobs = append(jobs, t)
+	}
+	if rows.Err() != nil {
+		q.logger.Error(rows.Err(), "Error reading job uuids from jobs")
+	}
+
+	return
 }
 
 // AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
