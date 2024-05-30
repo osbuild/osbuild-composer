@@ -71,6 +71,8 @@ const (
 		FROM job_dependencies
 		WHERE dependency_id = $1`
 
+	sqlQueryListJobs = `
+		SELECT id from jobs`
 	sqlQueryJob = `
 		SELECT type, args, channel, started_at, finished_at, retries, canceled
 		FROM jobs
@@ -904,11 +906,58 @@ func (q *DBJobQueue) jobDependents(ctx context.Context, conn connection, id uuid
 	return dependents, nil
 }
 
-// AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
-func (q *DBJobQueue) AllRootJobIDs() ([]uuid.UUID, error) {
-	// TODO write this
+// listJobs returns a list of all of the job UUIDs
+func (q *DBJobQueue) listJobs(ctx context.Context, conn connection) (jobs []uuid.UUID, err error) {
+	rows, err := conn.Query(ctx, sqlQueryListJobs)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
 
-	return nil, nil
+	for rows.Next() {
+		var t uuid.UUID
+		err = rows.Scan(&t)
+		if err != nil {
+			// Log the error and try to continue with the next row
+			q.logger.Error(err, "Unable to read job uuid from jobs")
+			continue
+		}
+		jobs = append(jobs, t)
+	}
+	if rows.Err() != nil {
+		q.logger.Error(rows.Err(), "Error reading job uuids from jobs")
+	}
+
+	return
+}
+
+// AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
+func (q *DBJobQueue) AllRootJobIDs(ctx context.Context) (rootJobs []uuid.UUID, err error) {
+	conn, err := q.pool.Acquire(ctx)
+	if err != nil {
+		return
+	}
+	defer conn.Release()
+
+	var jobs []uuid.UUID
+	jobs, err = q.listJobs(ctx, conn)
+	if err != nil {
+		return
+	}
+
+	for _, id := range jobs {
+		var dependents []uuid.UUID
+		dependents, err = q.jobDependents(ctx, conn, id)
+		if err != nil {
+			return
+		}
+
+		if len(dependents) == 0 {
+			rootJobs = append(rootJobs, id)
+		}
+	}
+
+	return
 }
 
 // DeleteJob deletes a job from the database
