@@ -93,23 +93,23 @@ build {
   }
 
   source "amazon-ebs.image_builder"  {
-    name = "fedora-40-x86_64"
+    name = "fedora-38-x86_64"
 
-    # Fedora-Cloud-Base-AmazonEC2.x86_64-40-1.14-hvm-us-east-1-gp3-0
-    source_ami = "ami-004f552bba0e5f64f"
+    # Use a static Fedora 38 Cloud Base Image.
+    source_ami = "ami-01752495da7056fa9"
     ssh_username = "fedora"
     instance_type = "c6a.large"
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-fedora-40-x86_64"
+    ami_name = "${var.image_name}-fedora-38-x86_64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}-fedora-40-x86_64"
+      Name = "${var.image_name}-fedora-38-x86_64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
-      os_version = "40"
+      os_version = "38"
       arch = "x86_64"
     }
 
@@ -117,7 +117,7 @@ build {
     launch_block_device_mappings {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
-      volume_size           = 6
+      volume_size           = 5
       volume_type           = "gp3"
     }
 
@@ -130,23 +130,24 @@ EOF
   }
 
   source "amazon-ebs.image_builder"  {
-    name = "fedora-40-aarch64"
+    name = "fedora-38-aarch64"
 
-    # Fedora-Cloud-Base-AmazonEC2.aarch64-40-1.14-hvm-us-east-1-gp3-0
-    source_ami = "ami-0d3825b70fa928886"
+    # Use a static Fedora 38 Cloud Base Image.
+    # Fedora-Cloud-Base-38-1.5
+    source_ami = "ami-046ab62d59c5a451c"
     ssh_username = "fedora"
     instance_type = "c6g.large"
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-fedora-40-aarch64"
+    ami_name = "${var.image_name}-fedora-38-aarch64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}-fedora-40-aarch64"
+      Name = "${var.image_name}-fedora-38-aarch64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
-      os_version = "40"
+      os_version = "38"
       arch = "aarch64"
     }
 
@@ -154,7 +155,7 @@ EOF
     launch_block_device_mappings {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
-      volume_size           = 6
+      volume_size           = 5
       volume_type           = "gp3"
     }
 
@@ -164,14 +165,6 @@ EOF
 #!/bin/bash
 update-crypto-policies --set LEGACY
 EOF
-  }
-
-  # Ansible is a little broken on fedora>39, needs python-six
-  provisioner "shell" {
-    only = ["amazon-ebs.fedora-40-x86_64", "amazon-ebs.fedora-40-aarch64"]
-    inline = [
-      "sudo dnf install -y python3.9"
-    ]
   }
 
   provisioner "ansible" {
