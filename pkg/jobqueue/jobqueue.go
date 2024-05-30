@@ -97,7 +97,7 @@ type JobQueue interface {
 	DeleteWorker(workerID uuid.UUID) error
 
 	// AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
-	AllRootJobIDs() ([]uuid.UUID, error)
+	AllRootJobIDs(context.Context) ([]uuid.UUID, error)
 
 	// DeleteJob deletes a job and all of its dependencies
 	DeleteJob(context.Context, uuid.UUID) error

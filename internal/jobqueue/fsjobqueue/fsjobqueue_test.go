@@ -1,6 +1,7 @@
 package fsjobqueue_test
 
 import (
+	"context"
 	"os"
 	"path"
 	"sort"
@@ -82,7 +83,7 @@ func TestAllRootJobIDs(t *testing.T) {
 	rootJobs = append(rootJobs, jidRoot3)
 
 	sortUUIDs(rootJobs)
-	roots, err := q.AllRootJobIDs()
+	roots, err := q.AllRootJobIDs(context.TODO())
 	require.Nil(t, err)
 	require.Greater(t, len(roots), 0)
 	sortUUIDs(roots)
@@ -101,7 +102,7 @@ func TestDeleteJob(t *testing.T) {
 
 	err = q.DeleteJob(context.TODO(), jidRoot1)
 	require.Nil(t, err)
-	jobs, err := q.AllRootJobIDs()
+	jobs, err := q.AllRootJobIDs(context.TODO())
 	require.Nil(t, err)
 	require.Equal(t, 0, len(jobs))
 
@@ -122,7 +123,7 @@ func TestDeleteJob(t *testing.T) {
 	// This should only remove jidRoot2 and jid2, leaving jidRoot3, jid1, jid3
 	err = q.DeleteJob(context.TODO(), jidRoot2)
 	require.Nil(t, err)
-	jobs, err = q.AllRootJobIDs()
+	jobs, err = q.AllRootJobIDs(context.TODO())
 	require.Nil(t, err)
 	require.Equal(t, 1, len(jobs))
 	assert.Equal(t, []uuid.UUID{jidRoot3}, jobs)
@@ -130,7 +131,7 @@ func TestDeleteJob(t *testing.T) {
 	// This should remove the rest
 	err = q.DeleteJob(context.TODO(), jidRoot3)
 	require.Nil(t, err)
-	jobs, err = q.AllRootJobIDs()
+	jobs, err = q.AllRootJobIDs(context.TODO())
 	require.Nil(t, err)
 	require.Equal(t, 0, len(jobs))
 
@@ -156,7 +157,7 @@ func TestDeleteJob(t *testing.T) {
 	// Delete the koji job
 	err = q.DeleteJob(context.TODO(), kojiRoot)
 	require.Nil(t, err)
-	jobs, err = q.AllRootJobIDs()
+	jobs, err = q.AllRootJobIDs(context.TODO())
 	require.Nil(t, err)
 	require.Equal(t, 0, len(jobs))
 
