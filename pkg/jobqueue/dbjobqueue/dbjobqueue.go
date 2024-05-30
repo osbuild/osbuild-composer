@@ -905,10 +905,32 @@ func (q *DBJobQueue) jobDependents(ctx context.Context, conn connection, id uuid
 }
 
 // AllRootJobIDs returns a list of top level job UUIDs that the worker knows about
-func (q *DBJobQueue) AllRootJobIDs() ([]uuid.UUID, error) {
-	// TODO write this
+func (q *DBJobQueue) AllRootJobIDs(ctx context.Context) (rootJobs []uuid.UUID, err error) {
+	conn, err := q.pool.Acquire(ctx)
+	if err != nil {
+		return
+	}
+	defer conn.Release()
 
-	return nil, nil
+	var jobs []uuid.UUID
+	jobs, err = q.AllJobIDs()
+	if err != nil {
+		return
+	}
+
+	for _, id := range jobs {
+		var dependents []uuid.UUID
+		dependents, err = q.jobDependents(ctx, conn, id)
+		if err != nil {
+			return
+		}
+
+		if len(dependents) == 0 {
+			rootJobs = append(rootJobs, id)
+		}
+	}
+
+	return
 }
 
 // DeleteJob deletes a job from the database
