@@ -1,19 +1,19 @@
 ---
 
 # Subscribe
-- include_tasks: subscribe.yml
+- import_tasks: subscribe.yml
 
 # Install various software packages.
-- include_tasks: packages.yml
+- import_tasks: packages.yml
 
 # Configure worker initialization service.
-- include_tasks: worker-initialization-service.yml
+- import_tasks: worker-initialization-service.yml
 
 # Configure the worker.
-- include_tasks: worker-config.yml
+- import_tasks: worker-config.yml
 
 # Unregister
-- include_tasks: unregister.yml
+- import_tasks: unregister.yml
 
 - name: Ensure SELinux contexts are updated
   tags:
