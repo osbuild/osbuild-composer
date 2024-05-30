@@ -542,7 +542,7 @@ EOF
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ignition="true" \
-    -e image_type=redhat \
+    -e image_type=rhel-edge \
     -e ostree_commit="${INSTALL_HASH}" \
     -e edge_type=edge-vsphere \
     -e fdo_credential="false" \
@@ -676,7 +676,7 @@ EOF
 # Test IoT/Edge OS
 sudo ansible-playbook -v -i "${TEMPDIR}"/inventory \
     -e ignition="true" \
-    -e image_type=redhat \
+    -e image_type=rhel-edge \
     -e ostree_commit="${UPGRADE_HASH}" \
     -e edge_type=edge-vsphere \
     -e fdo_credential="false" \
