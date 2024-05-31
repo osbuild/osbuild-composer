@@ -37,6 +37,8 @@ jobs:
     - centos-stream-8-aarch64
     - centos-stream-8-x86_64
     - centos-stream-9-aarch64
+    - centos-stream-9-s390x
+    - centos-stream-9-ppc64le
     - centos-stream-9-x86_64
     - centos-stream-10-aarch64
     - centos-stream-10-s390x
