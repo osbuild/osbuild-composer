@@ -70,9 +70,10 @@ func TestDefaultConfig(t *testing.T) {
 	require.Equal(t, expectedWeldrAPIConfig, defaultConfig.WeldrAPI)
 
 	expectedDistroAliases := map[string]string{
-		"rhel-7": "rhel-7.9",
-		"rhel-8": "rhel-8.10",
-		"rhel-9": "rhel-9.4",
+		"rhel-10": "rhel-10.0",
+		"rhel-7":  "rhel-7.9",
+		"rhel-8":  "rhel-8.10",
+		"rhel-9":  "rhel-9.4",
 	}
 	require.Equal(t, expectedDistroAliases, defaultConfig.DistroAliases)
 
@@ -108,9 +109,10 @@ func TestConfig(t *testing.T) {
 
 	// 'rhel-8' and 'rhel-9' aliases are overwritten by the config file
 	expectedDistroAliases := map[string]string{
-		"rhel-7": "rhel-7.9", // this value is from the default config
-		"rhel-8": "rhel-8.9",
-		"rhel-9": "rhel-9.3",
+		"rhel-10": "rhel-10.0", // this value is from the default config
+		"rhel-7":  "rhel-7.9",  // this value is from the default config
+		"rhel-8":  "rhel-8.9",
+		"rhel-9":  "rhel-9.3",
 	}
 	require.Equal(t, expectedDistroAliases, config.DistroAliases)
 }
