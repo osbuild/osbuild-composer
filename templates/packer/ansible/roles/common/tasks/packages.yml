@@ -28,9 +28,8 @@
 - name: Upgrade all packages
   tags:
     - always
-  package:
-    name: "*"
-    state: latest
+  shell: |
+    sudo dnf -y update
   register: result
   retries: 5
   until: result is success
@@ -45,11 +44,8 @@
 - name: Install required packages
   tags:
     - always
-  package:
-    name:
-      - jq
-      - unzip
-      - vector
+  shell: |
+    sudo dnf -y install jq unzip vector
   register: result
   retries: 5
   until: result is success
@@ -122,10 +118,8 @@
   tags:
     - ci
     - rhel
-  package:
-    name:
-      - osbuild-composer-worker
-    state: present
+  shell: |
+    sudo dnf -y install osbuild-composer-worker
 
 - name: Install worker rpm from copr
   tags:

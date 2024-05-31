@@ -166,14 +166,12 @@ update-crypto-policies --set LEGACY
 EOF
   }
 
-  # Ansible is a little broken on fedora>39, needs python-six & 3.9
-  # Installing python3.9 breaks dnf update with ansible, so do it here
-  # first
+  # Ansible is quite broken on fedora 40, using python 3.10 + not using
+  # the dnf module seems to work.
   provisioner "shell" {
     only = ["amazon-ebs.fedora-40-x86_64", "amazon-ebs.fedora-40-aarch64"]
     inline = [
-      "sudo dnf install -y python3.9",
-      "sudo dnf -y update"
+      "sudo dnf install -y python3.10",
     ]
   }
 
