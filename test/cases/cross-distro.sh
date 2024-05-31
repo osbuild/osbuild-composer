@@ -18,11 +18,15 @@ case $ID in
         case $MAJOR in
             8)
                 # RHEL 8 only supports building RHEL 8
-                PATTERN="\[|\]|rhel-$MAJOR"
+                PATTERN="\[|\]|rhel-8"
+                ;;
+            9)
+                # RHEL 9 supports building RHEL 8 and 9
+                PATTERN="\[|\]|rhel-(8|9)"
                 ;;
             *)
-                # RHEL 9 and later support building all releases
-                PATTERN="\[|\]|rhel-*"
+                # RHEL 10 and later support building all releases
+                PATTERN="\[|\]|rhel-.*"
                 ;;
         esac
         ;;
@@ -31,11 +35,15 @@ case $ID in
         case $MAJOR in
             8)
                 # CentOS 8 only supports building CentosOS 8
-                PATTERN="\[|\]|centos-$MAJOR"
+                PATTERN="\[|\]|centos-8"
+                ;;
+            9)
+                # CentOS 9 supports building CentosOS 8 and 9
+                PATTERN="\[|\]|centos-(8|9)"
                 ;;
             *)
-                # CentOS 9 and later support building all releases
-                PATTERN="\[|\]|centos-*"
+                # CentOS 10 and later support building all releases
+                PATTERN="\[|\]|centos-.*"
                 ;;
         esac
         ;;
