@@ -73,7 +73,7 @@ func TestDefaultConfig(t *testing.T) {
 		"rhel-10": "rhel-10.0",
 		"rhel-7":  "rhel-7.9",
 		"rhel-8":  "rhel-8.10",
-		"rhel-9":  "rhel-9.4",
+		"rhel-9":  "rhel-9.5",
 	}
 	require.Equal(t, expectedDistroAliases, defaultConfig.DistroAliases)
 
