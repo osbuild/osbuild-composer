@@ -147,27 +147,42 @@ install -m 0755 -vp _bin/osbuild-jobsite-builder                   %{buildroot}%
 
 # Only include repositories for the distribution and release
 install -m 0755 -vd                                                %{buildroot}%{_datadir}/osbuild-composer/repositories
+
 # CentOS also defines rhel so we check for centos first
 %if 0%{?centos}
 
-# CentOS 9 supports building for CentOS 8 and later
-%if 0%{?centos} >= 9
+# Latest CentOS supports building all CentOS versions
+%if 0%{?centos} >= 10
 install -m 0644 -vp repositories/centos-*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
+
 %else
-# CentOS 8 only supports building for CentOS 8
+# All other CentOS versions support building for the same version
 install -m 0644 -vp repositories/centos-%{centos}*                 %{buildroot}%{_datadir}/osbuild-composer/repositories/
 install -m 0644 -vp repositories/centos-stream-%{centos}*          %{buildroot}%{_datadir}/osbuild-composer/repositories/
 
+# CentOS 9 supports building also for CentOS 8
+%if 0%{?centos} == 9
+install -m 0644 -vp repositories/centos-8*                        %{buildroot}%{_datadir}/osbuild-composer/repositories/
+install -m 0644 -vp repositories/centos-stream-8*                 %{buildroot}%{_datadir}/osbuild-composer/repositories/
 %endif
+
+%endif
+
 %else
+
 %if 0%{?rhel}
-# RHEL 9 supports building for RHEL 8 and later
-%if 0%{?rhel} >= 9
+# RHEL 10 supports building all RHEL versions
+%if 0%{?rhel} >= 10
 install -m 0644 -vp repositories/rhel-*                            %{buildroot}%{_datadir}/osbuild-composer/repositories/
 
 %else
-# RHEL 8 only supports building for 8
+# All other RHEL versions support building for the same version
 install -m 0644 -vp repositories/rhel-%{rhel}*                     %{buildroot}%{_datadir}/osbuild-composer/repositories/
+
+# RHEL 9 supports building also for RHEL 8
+%if 0%{?rhel} == 9
+install -m 0644 -vp repositories/rhel-8*                           %{buildroot}%{_datadir}/osbuild-composer/repositories/
+%endif
 
 %endif
 %endif
