@@ -75,7 +75,7 @@ EOF
 
         if [[ "$item" == templates/packer/ansible/inventory/fedora* ]]; then
             tee -a "$item/group_vars/all.yml" <<EOF
-ansible_python_interpreter: /usr/bin/python3.9
+ansible_python_interpreter: /usr/bin/python3.10
 EOF
         fi
 
