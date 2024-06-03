@@ -34,8 +34,6 @@ jobs:
 - job: copr_build
   trigger: pull_request
   targets: &build_targets
-    - centos-stream-8-aarch64
-    - centos-stream-8-x86_64
     - centos-stream-9-aarch64
     - centos-stream-9-s390x
     - centos-stream-9-ppc64le
