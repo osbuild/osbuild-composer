@@ -35,5 +35,6 @@ pushd "${tmpdir}"
 
 manifest_dir="${workdir}/test/data/manifests/"
 echo "Generating manifests and storing in ${manifest_dir}"
+export OSBUILD_TESTING_RNG_SEED=0  # set the RNG seed for reproducible UUIDs
 set -x
 go run -tags=exclude_graphdriver_btrfs ./cmd/gen-manifests --output "${manifest_dir}" --distros="${distros}" --arches="${arches}" --images="${images}"
