@@ -192,16 +192,17 @@ jobs:
             exit "0"
           fi
 
-  check-snapshots:
-    name: "🔍 Check for valid snapshot urls"
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-      - name: Check for valid snapshot urls
-        run: ./tools/check-snapshots --errors-only .
+  # TODO: enable again once enumerating rpmrepo does not fail anymore
+  #check-snapshots:
+  #  name: "🔍 Check for valid snapshot urls"
+  #  runs-on: ubuntu-20.04
+  #  steps:
+  #    - name: Check out code into the Go module directory
+  #      uses: actions/checkout@v4
+  #      with:
+  #        ref: ${{ github.event.pull_request.head.sha }}
+  #    - name: Check for valid snapshot urls
+  #      run: ./tools/check-snapshots --errors-only .
 
   check-runners:
     name: "🔍 Check for missing or unused runner repos"
