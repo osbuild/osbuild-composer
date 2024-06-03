@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+# Generate manifests using the gen-manifests tool in github.com/osbuild/images
+
+set -euo pipefail
+
+workdir="$(pwd)"
+
+# get the version tag of osbuild/images from the go.mod
+images_version="$(go list -m -json -versions -mod=readonly github.com/osbuild/images | jq -r .Version)"
+
+tmpdir="$(mktemp -d)"
+
+cleanup() {
+    rm -rf "${tmpdir}"
+}
+
+trap cleanup EXIT
+
+# shallow clone osbuild/images into a temporary directory to generate the manifests
+echo "Cloning osbuild/images ${images_version}"
+git clone https://github.com/osbuild/images --branch "${images_version}" --depth=1 "${tmpdir}"
+pushd "${tmpdir}"
+
+manifest_dir="${workdir}/test/data/manifests/"
+echo "Generating manifests and storing in ${manifest_dir}"
+go run ./cmd/gen-manifests --output "${manifest_dir}"
