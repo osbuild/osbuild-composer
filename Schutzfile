@@ -272,13 +272,6 @@
       }
     ]
   },
-  "centos-8": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "4dbf8e2d593b769bf4797a18a9c6462696990af3"
-      }
-    }
-  },
   "centos-9": {
     "dependencies": {
       "osbuild": {
@@ -327,66 +320,6 @@
             "title": "crb",
             "name": "crb",
             "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/cs9-aarch64-crb-20240514"
-          }
-        ]
-      }
-    ]
-  },
-  "centos-stream-8": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "4dbf8e2d593b769bf4797a18a9c6462696990af3"
-      }
-    },
-    "repos": [
-      {
-        "file": "/etc/yum.repos.d/CentOS-Stream-BaseOS.repo",
-        "x86_64": [
-          {
-            "title": "baseos",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-baseos-20240514"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "baseos",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-baseos-20240514"
-          }
-        ]
-      },
-      {
-        "file": "/etc/yum.repos.d/CentOS-Stream-AppStream.repo",
-        "x86_64": [
-          {
-            "title": "appstream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-appstream-20240514"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "appstream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-appstream-20240514"
-          }
-        ]
-      },
-      {
-        "file": "/etc/yum.repos.d/CentOS-Stream-PowerTools.repo",
-        "x86_64": [
-          {
-            "title": "powertools",
-            "name": "powertools",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-x86_64-powertools-20240514"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "powertools",
-            "name": "powertoosl",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/cs8-aarch64-powertools-20240514"
           }
         ]
       }
