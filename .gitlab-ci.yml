@@ -106,8 +106,6 @@ RPM:
           - aws/rhel-8.9-ga-aarch64
           - aws/rhel-9.3-ga-x86_64
           - aws/rhel-9.3-ga-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
       - <<: *RPM_RUNNERS_RHEL
@@ -192,8 +190,6 @@ Base:
           - aws/rhel-8.9-ga-aarch64
           - aws/rhel-9.3-ga-x86_64
           - aws/rhel-9.3-ga-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
       - RUNNER:
           - aws/rhel-8.10-nightly-x86_64
           - aws/rhel-8.10-nightly-aarch64
@@ -219,8 +215,6 @@ Base:
           - aws/fedora-38-aarch64
           - aws/fedora-39-x86_64
           - aws/fedora-39-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
       - RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
@@ -258,7 +252,7 @@ regression-excluded-dependency:
   extends: .regression
   rules: 
     # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-8|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
     - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-excluded-dependency.sh
@@ -343,7 +337,6 @@ Trigger-rhel-edge-ci:
 
 .rhel_runners: &rhel_runners
     RUNNER:
-      - aws/centos-stream-8-x86_64
       - aws/rhel-8.4-ga-x86_64
       - aws/rhel-8.9-ga-x86_64
       - aws/rhel-9.3-ga-x86_64
@@ -600,7 +593,6 @@ API-module-hotfixes:
           - rhos-01/fedora-38-x86_64
           # - rhos-01/fedora-39-x86_64
       - RUNNER:
-          - gcp/centos-stream-8-x86_64
           - gcp/rhel-8.9-ga-x86_64
           - gcp/rhel-9.3-ga-x86_64
           - gcp/rhel-8.10-nightly-x86_64
@@ -771,7 +763,6 @@ ContainerEmbedding:
     matrix:
       - INTERNAL_NETWORK: "true"
         RUNNER:
-        - aws/centos-stream-8-x86_64
         - aws/centos-stream-9-x86_64
         - aws/rhel-8.10-nightly-x86_64
         - aws/rhel-8.10-nightly-aarch64
