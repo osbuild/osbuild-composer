@@ -1,0 +1,3559 @@
+{
+  "build-request": {
+    "distro": "centos-10",
+    "arch": "aarch64",
+    "image-type": "tar",
+    "repositories": [
+      {
+        "name": "AppStream",
+        "baseurls": [
+          "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626"
+        ],
+        "check_gpg": false,
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626"
+      },
+      {
+        "name": "BaseOS",
+        "baseurls": [
+          "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626"
+        ],
+        "check_gpg": false,
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626"
+      }
+    ],
+    "config": {
+      "name": "empty",
+      "blueprint": {
+        "name": "",
+        "description": "",
+        "packages": null,
+        "modules": null,
+        "groups": null,
+        "distro": "",
+        "minimal": false
+      },
+      "options": {
+        "size": 0
+      }
+    }
+  },
+  "manifest": {
+    "version": "2",
+    "pipelines": [
+      {
+        "name": "build",
+        "runner": "org.osbuild.centos10",
+        "stages": [
+          {
+            "type": "org.osbuild.rpm",
+            "inputs": {
+              "packages": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  {
+                    "id": "sha256:c5b5b3427fa1a29a699d039d1d6b18911c6a98ac695d30dd5b14ea15a1b4cf97"
+                  },
+                  {
+                    "id": "sha256:e1e4a7ebd569c11ca697854485b6c0cca739525a98eae0d143d7a8a7dbf711ee"
+                  },
+                  {
+                    "id": "sha256:1e22121fcc343f1e494c8616ae037d84f1ec89feb07db15a6a1e8e7ab966e6f1"
+                  },
+                  {
+                    "id": "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df"
+                  },
+                  {
+                    "id": "sha256:d5c3b61d12c113b04fa70958fc58e2b6ed15b5ccfd53b2778d1ec1970d37bb43"
+                  },
+                  {
+                    "id": "sha256:b42542b9d5bb8b0334c840126d276d73a5aa139af99c9aed599627f3fb5d5456"
+                  },
+                  {
+                    "id": "sha256:59eff0d2c99d18f772bbd139fa1bc030f6710041b142e93dd117fc85004c620d"
+                  },
+                  {
+                    "id": "sha256:8ac0c35b934663bf8cdfba21393551f9ecd1a74418e35798efbf8422501945dd"
+                  },
+                  {
+                    "id": "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8"
+                  },
+                  {
+                    "id": "sha256:638e8eda51252e100e82815c75ac53dbd2f19ab747aad58041906786e123fd73"
+                  },
+                  {
+                    "id": "sha256:ac4e8a0e0c915486ade00d5d8495d0fb170929469ef03488c711218348d6ddc5"
+                  },
+                  {
+                    "id": "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce"
+                  },
+                  {
+                    "id": "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade"
+                  },
+                  {
+                    "id": "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386"
+                  },
+                  {
+                    "id": "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2"
+                  },
+                  {
+                    "id": "sha256:30e0f0a9edf77f35a6127f209a70249a1049247d3f36d79499c68d80d2d574ed"
+                  },
+                  {
+                    "id": "sha256:dac6be5604965f2ad4634a2b57148a92ce8a3bd5994206bc115f431f7e01eea9"
+                  },
+                  {
+                    "id": "sha256:1840de429bffeefccfebd795795d6773db445a69daa29a36c34900896397ee73"
+                  },
+                  {
+                    "id": "sha256:cbb6936e36cca23893c441d69701f20bb81731602b999226f21e6e749edc5896"
+                  },
+                  {
+                    "id": "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86"
+                  },
+                  {
+                    "id": "sha256:53db8b2e320df4ed1b981b74ffea12445522babad044466b074148cbf0fff72b"
+                  },
+                  {
+                    "id": "sha256:bdb025acca6c2195dc8c570975e093c364980f925402049184ba1e68baffcd9d"
+                  },
+                  {
+                    "id": "sha256:1ea5ca231290f16a04bece9f57c2d9b8a8f782de0ccb07651833212014e9988c"
+                  },
+                  {
+                    "id": "sha256:1280421265f9391af58ec25089c53c3a09a0929a40abfb71bb76ffedee3fa07c"
+                  },
+                  {
+                    "id": "sha256:21b702ada68404f9eaf3b9ed9a7200e564627a97d67c8c764647b9c3ffdaacbf"
+                  },
+                  {
+                    "id": "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9"
+                  },
+                  {
+                    "id": "sha256:6dadda87f7211658de9567b1f0056c486f8c34e613a8d34db3ab8c5ddcea3de4"
+                  },
+                  {
+                    "id": "sha256:35d3b13f74040ad6e716a2fbde5c9cdbb8958cd312af1d77a254c98facaf43fd"
+                  },
+                  {
+                    "id": "sha256:15fa7c46101bdbe6aa1cc4b683ad4494bcf737cfc22ff7a539a2ab24b81c04bd"
+                  },
+                  {
+                    "id": "sha256:e56419799f5a39150851a6bc1f214a5c81f33d47218417dfb5135d0be6c430b0"
+                  },
+                  {
+                    "id": "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db"
+                  },
+                  {
+                    "id": "sha256:da75ea74585ce461921b2915991677d7e7d9e42fc282da9cc35d5b161610e3f9"
+                  },
+                  {
+                    "id": "sha256:80fc26212ea0e35a2f6346a6ecad619ab4d538304207bf932036cea07575dab3"
+                  },
+                  {
+                    "id": "sha256:a0e7c04114f8c44d1f5b2dc4d2e31589a4ac11070fc6d43117a56e3c8a0bda5a"
+                  },
+                  {
+                    "id": "sha256:c1f07adb6fae5ebbf8c1323e8d94478934328880276a9df6074ab0c6096579b2"
+                  },
+                  {
+                    "id": "sha256:c8df5a25125e4413b859bce4d6b08b3ccee355ac12c6ceb9ef52d0f18faab3bb"
+                  },
+                  {
+                    "id": "sha256:8e5511fb6ad86fb7b6401f124d1d87af378ecab0754fa53c26c33370ac17681e"
+                  },
+                  {
+                    "id": "sha256:7e2ac5e6550f2ca9158a8fd7d87a7fb169a997766345653debdcae387a660cd5"
+                  },
+                  {
+                    "id": "sha256:a331f1e3bbed69feb35487635b1761634654c404c27c28abce84b8bb7254276d"
+                  },
+                  {
+                    "id": "sha256:0405fc80a4250e37d40fd370e889604ed68b57f4da26e4bca72feaf833aff957"
+                  },
+                  {
+                    "id": "sha256:786c2977ae2b7a27928d88c5fb66be7e2f4a3d64f5ba2b4462685089b6d1a149"
+                  },
+                  {
+                    "id": "sha256:b86dd555f1f199da14d117c61a2d4577274ad37d37a061d05bfee6c0e8eb37fa"
+                  },
+                  {
+                    "id": "sha256:7824b392d5a96023ab99f3fc380d84c119efcabc73b7393793b0cc580e8d0a9a"
+                  },
+                  {
+                    "id": "sha256:653514c709b721ed64089fceef4b017e79ec173fb8c6218a35b123dac9e6aca7"
+                  },
+                  {
+                    "id": "sha256:c7f3370be2b61b2608e3bf151e45902e2f016cddf37506bf3fac496c9dfb47b9"
+                  },
+                  {
+                    "id": "sha256:3fa91a16da9ce3e0f49ddb9fd59873c33cfe2cac33afeb407e2e86a0ee872e0e"
+                  },
+                  {
+                    "id": "sha256:cff20866af80033505c02229e69b98d9efa6c2b9cdf4db707004c3547ca8b046"
+                  },
+                  {
+                    "id": "sha256:ceef19d1ae7dc3b4bc877a8a4166109f007d551f10a53811c49bb193d2fb6923"
+                  },
+                  {
+                    "id": "sha256:0946ba6ea2ad2f803d04fcf1882d206bd3f09f553c70c60d35a6776afd84a2b8"
+                  },
+                  {
+                    "id": "sha256:334bfc6b3afd065c5b5c503ccd617f5d4b5e91fb289bf4649a792551bcc0de3f"
+                  },
+                  {
+                    "id": "sha256:282c987dca7a968ac97a1c0b224d54e425a179dfccab44d34fa769de1b7c80c4"
+                  },
+                  {
+                    "id": "sha256:23e31bb868c4df294c5a2653cac0d294f448c1b7886120f8f7466d1687912ef7"
+                  },
+                  {
+                    "id": "sha256:7e5b543b40e06e9c80e78271b78657e08961bc8a9a216c1f683cfdc8588544f9"
+                  },
+                  {
+                    "id": "sha256:62cbfcc13286a54befa55036093968d7f3f504a1bd8360d0c852cd68f4b5a4e3"
+                  },
+                  {
+                    "id": "sha256:3c2e72d674ce3712a547cfb07d095518211a6584979b9bb0b47a7b66bca737ca"
+                  },
+                  {
+                    "id": "sha256:b922824f5da0b69d413469020b0ff80cd6ce8186d0cfeb185fbdce84f90e3c73"
+                  },
+                  {
+                    "id": "sha256:fb6359ac0c5cebf463beaf56f95d83418c7e61fe005e20d4280d2a770d5d0b30"
+                  },
+                  {
+                    "id": "sha256:0200da59a192613f0a796c9d17dbb47d23ad1839ae811fc813c977e7eb09f016"
+                  },
+                  {
+                    "id": "sha256:602e53269d96eac84db35659b0dec33d56f78ab7b22987c534093d7388ae1471"
+                  },
+                  {
+                    "id": "sha256:5f9eb9f6650af70e5415bce54d3ff296f216c85e5fc9e329e6412a07f0c55529"
+                  },
+                  {
+                    "id": "sha256:46fc57fd8ebad4fb20ff7dce1b82d434aaef7209bb1cf1fc3424d544b9177fc6"
+                  },
+                  {
+                    "id": "sha256:b374bab409e5e85957a10f8a9bd90a135d8097d40204fa5f064e6ee89bd4eb16"
+                  },
+                  {
+                    "id": "sha256:caf6325ff658534a9807a8e45ae8c692bf54af94a212978d1af922833a84afb9"
+                  },
+                  {
+                    "id": "sha256:dd28d6ab61e319d34e6693a96a8cc5da63ada6f6299280f0bd85e62470b774b9"
+                  },
+                  {
+                    "id": "sha256:7a3c7ecd7c655425156c8802625b65232ca9a761224e19c09e65628eeb0143f5"
+                  },
+                  {
+                    "id": "sha256:7a3ecb21209a6866248cc95ada9526e4687a30972b6ff95ceb19a54e6cc0556a"
+                  },
+                  {
+                    "id": "sha256:bfd2b4b058cfd2400651c65d45102dac9e70e801078ad7f18fdfd8a7275ce9a3"
+                  },
+                  {
+                    "id": "sha256:52565b078ed6c79d9a913999b207c3d85bde5d479acc3deb8285d2c138abd84e"
+                  },
+                  {
+                    "id": "sha256:bbb4424e5df2e7c403ca233e10123a9093a30c4008a74678cd996f12d0643a94"
+                  },
+                  {
+                    "id": "sha256:7e9f46966b98e4542695f463e59d618d1ad8d739ab9736c4f9dc070ed215dc89"
+                  },
+                  {
+                    "id": "sha256:eabd1439e76f6f5f003a858b97bff931154c2e0a6f44f5336d7f7e37934a5a48"
+                  },
+                  {
+                    "id": "sha256:52007456d5a84c87cc36da61854ef571e8573316402fbf0d114800f203f59c82"
+                  },
+                  {
+                    "id": "sha256:f1cd06f092b24855054f84d36768d507bf92fe83cb74ad3445c645c5e74a6b76"
+                  },
+                  {
+                    "id": "sha256:ddb96d772329a5cc6adfb78cd463143ad4149da658fadbb34438ba21dd957704"
+                  },
+                  {
+                    "id": "sha256:2732f25a383c8716548ab979c9b2cda9758dca6f9b0156f1bdd18bff2690045c"
+                  },
+                  {
+                    "id": "sha256:184f216ee2e3cb430c2b53a29f242920f22b0e5523e556dfb7e4d8ef272849a4"
+                  },
+                  {
+                    "id": "sha256:158ca0f3779196ea070474ec07e04fbd8651d9cd7e64721086ac257553de9f28"
+                  },
+                  {
+                    "id": "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65"
+                  },
+                  {
+                    "id": "sha256:c7ac3f6433ef22f08fa9f2c56d668ea27452a27ab16b468fb6ca8dd8fcca572e"
+                  },
+                  {
+                    "id": "sha256:d2dd3a46bd828a16a125b0d6c5619c6da48426985ea56f5de5824eb611c6bee4"
+                  },
+                  {
+                    "id": "sha256:9bbfc69de31a0fff17222ac31d17aa58979fab487daa31a33e2823a9b03a2703"
+                  },
+                  {
+                    "id": "sha256:f71c259002756aa0af05a854e28447afcea3249fb05c80667f84d8c189040fcc"
+                  },
+                  {
+                    "id": "sha256:63df046a41121814f3dfb9e7e172f62735dfe6ee506f244004a6033ba70d61ab"
+                  },
+                  {
+                    "id": "sha256:fab03729edf4c0157d5cc3e60e300f4124149e4662e45d18adbd48ffc3a9d84a"
+                  },
+                  {
+                    "id": "sha256:30272cafbb35245c89e54d2c97058c948b8adadc17f8a0aa839bc579aab1a894"
+                  },
+                  {
+                    "id": "sha256:d81e342a84bf9452cc130be1d1eb98d0e75d52ebf836c96c7e2ede67728e6bcb"
+                  },
+                  {
+                    "id": "sha256:6aab01c97f90aa4b18998a53f34e75fffb4b42c6d5635d5fdc9ef9d61451c60e"
+                  },
+                  {
+                    "id": "sha256:e5f6cfcac6c8b208e72bd0253fca5d7699c0888cdee5636adf8d6453fd7ca215"
+                  },
+                  {
+                    "id": "sha256:ffe0ffe153b591f5b93389787811fe04253422b7599b6672048bcc81f667bdcd"
+                  },
+                  {
+                    "id": "sha256:564564e9239593cfd7d8501a5b06321f121d2a1f37b5bcadc150521f44cb7a45"
+                  },
+                  {
+                    "id": "sha256:9cfe55167bcfd455a942bade330c8c02c668f9216a8fd00685e8fcf19c45aa21"
+                  },
+                  {
+                    "id": "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31"
+                  },
+                  {
+                    "id": "sha256:92a2fa27bf703e005b92409af69ae50732695132db45cba3f7612019b16b2ca8"
+                  },
+                  {
+                    "id": "sha256:cf450e4ed1dbeb0ad78db94887ec845ec593d7e4feab37f3be5841918fda6282"
+                  },
+                  {
+                    "id": "sha256:76df1c323b7ebf3b827af099036f2273a1e2a57d526e8add6eb1213e6dbd42bb"
+                  },
+                  {
+                    "id": "sha256:024341af7ba196e55e667e1ad3bc8cea5fd73be818bc2dd500f141752baea987"
+                  },
+                  {
+                    "id": "sha256:7a224f090c49ef13848f3be3fc34db81d767e647a9ab79754170c76e62a30f36"
+                  },
+                  {
+                    "id": "sha256:70af2c10f0aff296be4fc558e9434b757650343ebd38b12a2c61f2b33ff7c1fe"
+                  },
+                  {
+                    "id": "sha256:24ea291ed1420d5bcc477d436af317aa49b08d668782560641621b245441400d"
+                  },
+                  {
+                    "id": "sha256:5aadabc71e75f37c9bc5b927899c18ab36d547a726a788fe9b70804935c6fd3f"
+                  },
+                  {
+                    "id": "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f"
+                  },
+                  {
+                    "id": "sha256:30402153d20da7a9eaa822ba0ecbd3cfb5af349c1fd849f380b258b3f5ef7104"
+                  },
+                  {
+                    "id": "sha256:0a380d54c2a01d6bb41ed3e97babf6776e17842de9a78159a26611e77974ef75"
+                  },
+                  {
+                    "id": "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607"
+                  },
+                  {
+                    "id": "sha256:5641bdde9e836179cf80e199e72eca80e6fe17e2b66c07f2c5f2bba10c8a034f"
+                  },
+                  {
+                    "id": "sha256:6ef4593984c83176477c7f615cf154bae12066b5a553f256649adb176363f197"
+                  },
+                  {
+                    "id": "sha256:3465cf9c9261f72dc8ecdfadf5ea98d56a42aed0a6e09038fc69d9bada766aa6"
+                  },
+                  {
+                    "id": "sha256:b0f9b643fffbe6d1bdf6374134953345ed24484cb2deac65fbeab568a115f737"
+                  },
+                  {
+                    "id": "sha256:ef4f1d6c774c09ffac9c81af7afd99c49e1679ba2d946df47bd9eef15eeb6298"
+                  },
+                  {
+                    "id": "sha256:a73fe7b2339ae2e64e916e5a64648272539c317d4d45df68233226e005bc487f"
+                  },
+                  {
+                    "id": "sha256:8bee32b462a5497a07c37f9ef5906be971c0df427b00502fa1835f0336b6b950"
+                  },
+                  {
+                    "id": "sha256:43de4368faf5f89bec477ae9867a5244497e4ac6531b985759df0befb0d0f1ac"
+                  },
+                  {
+                    "id": "sha256:b793336fcae47be1919fd9ddc945b1530ed6a0584e1d33d99f788e0be1be5fcd"
+                  },
+                  {
+                    "id": "sha256:829ed79acf93a16c2f3ee945987d7fa7dc1fc416d3be1d422c246d72e50c8bc9"
+                  },
+                  {
+                    "id": "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6"
+                  },
+                  {
+                    "id": "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be"
+                  },
+                  {
+                    "id": "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6"
+                  },
+                  {
+                    "id": "sha256:69c9cd64733f41c600458cca6a45161151889a7496de45bbebc1aaf653d763ca"
+                  },
+                  {
+                    "id": "sha256:82e2838124d07333bc8104022a7af1e37d775c857ab6ba815707df95faa859d5"
+                  },
+                  {
+                    "id": "sha256:8f9ef02f75b4e98860b208318799c4c3f4c63a0afa2ab3675eea7d07adf2a045"
+                  },
+                  {
+                    "id": "sha256:9b5b6fef1e7c0f1155615cb6df7d11248afa3f91473da8272901442a17ac6c4d"
+                  },
+                  {
+                    "id": "sha256:95b90ce268a40b3400cca7136674739bc2c754b9aa93c304527c79673c5c2e24"
+                  },
+                  {
+                    "id": "sha256:fbd59b08576fb02f78f16417947c4dfe66cb1647075efc4e3438ce0c6b66cdfc"
+                  },
+                  {
+                    "id": "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9"
+                  },
+                  {
+                    "id": "sha256:65204ec2f95275b11b307e844fe652c730885e4175afdd46eef128c4620e4f19"
+                  },
+                  {
+                    "id": "sha256:0dab1a01bf872eb68160301f4925fa9612406467fce9e3f454fd8edd3cf9eb3a"
+                  },
+                  {
+                    "id": "sha256:29fa9d28b940c38f8407c9354dda42c07c2f3bfebf98ae5fd3cd166976ebd344"
+                  },
+                  {
+                    "id": "sha256:48f8ef16306832b7098dc9a2ea0fce1ab3eb6f8091597d5020162d8ae8315106"
+                  },
+                  {
+                    "id": "sha256:baa2d71f83334dddc4a3be8db35722add321079c379c898e597eb7e3e0d1974b"
+                  }
+                ]
+              }
+            },
+            "options": {}
+          },
+          {
+            "type": "org.osbuild.selinux",
+            "options": {
+              "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts",
+              "labels": {
+                "/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
+                "/usr/bin/tar": "system_u:object_r:install_exec_t:s0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "os",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.rpm",
+            "inputs": {
+              "packages": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  {
+                    "id": "sha256:c5b5b3427fa1a29a699d039d1d6b18911c6a98ac695d30dd5b14ea15a1b4cf97"
+                  },
+                  {
+                    "id": "sha256:e1e4a7ebd569c11ca697854485b6c0cca739525a98eae0d143d7a8a7dbf711ee"
+                  },
+                  {
+                    "id": "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df"
+                  },
+                  {
+                    "id": "sha256:d5c3b61d12c113b04fa70958fc58e2b6ed15b5ccfd53b2778d1ec1970d37bb43"
+                  },
+                  {
+                    "id": "sha256:b42542b9d5bb8b0334c840126d276d73a5aa139af99c9aed599627f3fb5d5456"
+                  },
+                  {
+                    "id": "sha256:59eff0d2c99d18f772bbd139fa1bc030f6710041b142e93dd117fc85004c620d"
+                  },
+                  {
+                    "id": "sha256:8ac0c35b934663bf8cdfba21393551f9ecd1a74418e35798efbf8422501945dd"
+                  },
+                  {
+                    "id": "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8"
+                  },
+                  {
+                    "id": "sha256:638e8eda51252e100e82815c75ac53dbd2f19ab747aad58041906786e123fd73"
+                  },
+                  {
+                    "id": "sha256:ac4e8a0e0c915486ade00d5d8495d0fb170929469ef03488c711218348d6ddc5"
+                  },
+                  {
+                    "id": "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce"
+                  },
+                  {
+                    "id": "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade"
+                  },
+                  {
+                    "id": "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386"
+                  },
+                  {
+                    "id": "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2"
+                  },
+                  {
+                    "id": "sha256:30e0f0a9edf77f35a6127f209a70249a1049247d3f36d79499c68d80d2d574ed"
+                  },
+                  {
+                    "id": "sha256:dac6be5604965f2ad4634a2b57148a92ce8a3bd5994206bc115f431f7e01eea9"
+                  },
+                  {
+                    "id": "sha256:1840de429bffeefccfebd795795d6773db445a69daa29a36c34900896397ee73"
+                  },
+                  {
+                    "id": "sha256:cbb6936e36cca23893c441d69701f20bb81731602b999226f21e6e749edc5896"
+                  },
+                  {
+                    "id": "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86"
+                  },
+                  {
+                    "id": "sha256:53db8b2e320df4ed1b981b74ffea12445522babad044466b074148cbf0fff72b"
+                  },
+                  {
+                    "id": "sha256:bdb025acca6c2195dc8c570975e093c364980f925402049184ba1e68baffcd9d"
+                  },
+                  {
+                    "id": "sha256:1ea5ca231290f16a04bece9f57c2d9b8a8f782de0ccb07651833212014e9988c"
+                  },
+                  {
+                    "id": "sha256:1280421265f9391af58ec25089c53c3a09a0929a40abfb71bb76ffedee3fa07c"
+                  },
+                  {
+                    "id": "sha256:21b702ada68404f9eaf3b9ed9a7200e564627a97d67c8c764647b9c3ffdaacbf"
+                  },
+                  {
+                    "id": "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9"
+                  },
+                  {
+                    "id": "sha256:6dadda87f7211658de9567b1f0056c486f8c34e613a8d34db3ab8c5ddcea3de4"
+                  },
+                  {
+                    "id": "sha256:35d3b13f74040ad6e716a2fbde5c9cdbb8958cd312af1d77a254c98facaf43fd"
+                  },
+                  {
+                    "id": "sha256:15fa7c46101bdbe6aa1cc4b683ad4494bcf737cfc22ff7a539a2ab24b81c04bd"
+                  },
+                  {
+                    "id": "sha256:e56419799f5a39150851a6bc1f214a5c81f33d47218417dfb5135d0be6c430b0"
+                  },
+                  {
+                    "id": "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db"
+                  },
+                  {
+                    "id": "sha256:da75ea74585ce461921b2915991677d7e7d9e42fc282da9cc35d5b161610e3f9"
+                  },
+                  {
+                    "id": "sha256:80fc26212ea0e35a2f6346a6ecad619ab4d538304207bf932036cea07575dab3"
+                  },
+                  {
+                    "id": "sha256:a0e7c04114f8c44d1f5b2dc4d2e31589a4ac11070fc6d43117a56e3c8a0bda5a"
+                  },
+                  {
+                    "id": "sha256:c1f07adb6fae5ebbf8c1323e8d94478934328880276a9df6074ab0c6096579b2"
+                  },
+                  {
+                    "id": "sha256:c8df5a25125e4413b859bce4d6b08b3ccee355ac12c6ceb9ef52d0f18faab3bb"
+                  },
+                  {
+                    "id": "sha256:8e5511fb6ad86fb7b6401f124d1d87af378ecab0754fa53c26c33370ac17681e"
+                  },
+                  {
+                    "id": "sha256:7e2ac5e6550f2ca9158a8fd7d87a7fb169a997766345653debdcae387a660cd5"
+                  },
+                  {
+                    "id": "sha256:a331f1e3bbed69feb35487635b1761634654c404c27c28abce84b8bb7254276d"
+                  },
+                  {
+                    "id": "sha256:0405fc80a4250e37d40fd370e889604ed68b57f4da26e4bca72feaf833aff957"
+                  },
+                  {
+                    "id": "sha256:786c2977ae2b7a27928d88c5fb66be7e2f4a3d64f5ba2b4462685089b6d1a149"
+                  },
+                  {
+                    "id": "sha256:b86dd555f1f199da14d117c61a2d4577274ad37d37a061d05bfee6c0e8eb37fa"
+                  },
+                  {
+                    "id": "sha256:7824b392d5a96023ab99f3fc380d84c119efcabc73b7393793b0cc580e8d0a9a"
+                  },
+                  {
+                    "id": "sha256:653514c709b721ed64089fceef4b017e79ec173fb8c6218a35b123dac9e6aca7"
+                  },
+                  {
+                    "id": "sha256:c7f3370be2b61b2608e3bf151e45902e2f016cddf37506bf3fac496c9dfb47b9"
+                  },
+                  {
+                    "id": "sha256:3fa91a16da9ce3e0f49ddb9fd59873c33cfe2cac33afeb407e2e86a0ee872e0e"
+                  },
+                  {
+                    "id": "sha256:cff20866af80033505c02229e69b98d9efa6c2b9cdf4db707004c3547ca8b046"
+                  },
+                  {
+                    "id": "sha256:ceef19d1ae7dc3b4bc877a8a4166109f007d551f10a53811c49bb193d2fb6923"
+                  },
+                  {
+                    "id": "sha256:0946ba6ea2ad2f803d04fcf1882d206bd3f09f553c70c60d35a6776afd84a2b8"
+                  },
+                  {
+                    "id": "sha256:334bfc6b3afd065c5b5c503ccd617f5d4b5e91fb289bf4649a792551bcc0de3f"
+                  },
+                  {
+                    "id": "sha256:282c987dca7a968ac97a1c0b224d54e425a179dfccab44d34fa769de1b7c80c4"
+                  },
+                  {
+                    "id": "sha256:23e31bb868c4df294c5a2653cac0d294f448c1b7886120f8f7466d1687912ef7"
+                  },
+                  {
+                    "id": "sha256:7e5b543b40e06e9c80e78271b78657e08961bc8a9a216c1f683cfdc8588544f9"
+                  },
+                  {
+                    "id": "sha256:62cbfcc13286a54befa55036093968d7f3f504a1bd8360d0c852cd68f4b5a4e3"
+                  },
+                  {
+                    "id": "sha256:3c2e72d674ce3712a547cfb07d095518211a6584979b9bb0b47a7b66bca737ca"
+                  },
+                  {
+                    "id": "sha256:b922824f5da0b69d413469020b0ff80cd6ce8186d0cfeb185fbdce84f90e3c73"
+                  },
+                  {
+                    "id": "sha256:fb6359ac0c5cebf463beaf56f95d83418c7e61fe005e20d4280d2a770d5d0b30"
+                  },
+                  {
+                    "id": "sha256:0200da59a192613f0a796c9d17dbb47d23ad1839ae811fc813c977e7eb09f016"
+                  },
+                  {
+                    "id": "sha256:602e53269d96eac84db35659b0dec33d56f78ab7b22987c534093d7388ae1471"
+                  },
+                  {
+                    "id": "sha256:5f9eb9f6650af70e5415bce54d3ff296f216c85e5fc9e329e6412a07f0c55529"
+                  },
+                  {
+                    "id": "sha256:46fc57fd8ebad4fb20ff7dce1b82d434aaef7209bb1cf1fc3424d544b9177fc6"
+                  },
+                  {
+                    "id": "sha256:b374bab409e5e85957a10f8a9bd90a135d8097d40204fa5f064e6ee89bd4eb16"
+                  },
+                  {
+                    "id": "sha256:caf6325ff658534a9807a8e45ae8c692bf54af94a212978d1af922833a84afb9"
+                  },
+                  {
+                    "id": "sha256:dd28d6ab61e319d34e6693a96a8cc5da63ada6f6299280f0bd85e62470b774b9"
+                  },
+                  {
+                    "id": "sha256:7a3c7ecd7c655425156c8802625b65232ca9a761224e19c09e65628eeb0143f5"
+                  },
+                  {
+                    "id": "sha256:7a3ecb21209a6866248cc95ada9526e4687a30972b6ff95ceb19a54e6cc0556a"
+                  },
+                  {
+                    "id": "sha256:bfd2b4b058cfd2400651c65d45102dac9e70e801078ad7f18fdfd8a7275ce9a3"
+                  },
+                  {
+                    "id": "sha256:52565b078ed6c79d9a913999b207c3d85bde5d479acc3deb8285d2c138abd84e"
+                  },
+                  {
+                    "id": "sha256:bbb4424e5df2e7c403ca233e10123a9093a30c4008a74678cd996f12d0643a94"
+                  },
+                  {
+                    "id": "sha256:7e9f46966b98e4542695f463e59d618d1ad8d739ab9736c4f9dc070ed215dc89"
+                  },
+                  {
+                    "id": "sha256:eabd1439e76f6f5f003a858b97bff931154c2e0a6f44f5336d7f7e37934a5a48"
+                  },
+                  {
+                    "id": "sha256:52007456d5a84c87cc36da61854ef571e8573316402fbf0d114800f203f59c82"
+                  },
+                  {
+                    "id": "sha256:f1cd06f092b24855054f84d36768d507bf92fe83cb74ad3445c645c5e74a6b76"
+                  },
+                  {
+                    "id": "sha256:ddb96d772329a5cc6adfb78cd463143ad4149da658fadbb34438ba21dd957704"
+                  },
+                  {
+                    "id": "sha256:2732f25a383c8716548ab979c9b2cda9758dca6f9b0156f1bdd18bff2690045c"
+                  },
+                  {
+                    "id": "sha256:184f216ee2e3cb430c2b53a29f242920f22b0e5523e556dfb7e4d8ef272849a4"
+                  },
+                  {
+                    "id": "sha256:158ca0f3779196ea070474ec07e04fbd8651d9cd7e64721086ac257553de9f28"
+                  },
+                  {
+                    "id": "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65"
+                  },
+                  {
+                    "id": "sha256:c7ac3f6433ef22f08fa9f2c56d668ea27452a27ab16b468fb6ca8dd8fcca572e"
+                  },
+                  {
+                    "id": "sha256:d2dd3a46bd828a16a125b0d6c5619c6da48426985ea56f5de5824eb611c6bee4"
+                  },
+                  {
+                    "id": "sha256:9bbfc69de31a0fff17222ac31d17aa58979fab487daa31a33e2823a9b03a2703"
+                  },
+                  {
+                    "id": "sha256:f71c259002756aa0af05a854e28447afcea3249fb05c80667f84d8c189040fcc"
+                  },
+                  {
+                    "id": "sha256:63df046a41121814f3dfb9e7e172f62735dfe6ee506f244004a6033ba70d61ab"
+                  },
+                  {
+                    "id": "sha256:fab03729edf4c0157d5cc3e60e300f4124149e4662e45d18adbd48ffc3a9d84a"
+                  },
+                  {
+                    "id": "sha256:30272cafbb35245c89e54d2c97058c948b8adadc17f8a0aa839bc579aab1a894"
+                  },
+                  {
+                    "id": "sha256:d81e342a84bf9452cc130be1d1eb98d0e75d52ebf836c96c7e2ede67728e6bcb"
+                  },
+                  {
+                    "id": "sha256:6aab01c97f90aa4b18998a53f34e75fffb4b42c6d5635d5fdc9ef9d61451c60e"
+                  },
+                  {
+                    "id": "sha256:e5f6cfcac6c8b208e72bd0253fca5d7699c0888cdee5636adf8d6453fd7ca215"
+                  },
+                  {
+                    "id": "sha256:ffe0ffe153b591f5b93389787811fe04253422b7599b6672048bcc81f667bdcd"
+                  },
+                  {
+                    "id": "sha256:9cfe55167bcfd455a942bade330c8c02c668f9216a8fd00685e8fcf19c45aa21"
+                  },
+                  {
+                    "id": "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31"
+                  },
+                  {
+                    "id": "sha256:92a2fa27bf703e005b92409af69ae50732695132db45cba3f7612019b16b2ca8"
+                  },
+                  {
+                    "id": "sha256:cf450e4ed1dbeb0ad78db94887ec845ec593d7e4feab37f3be5841918fda6282"
+                  },
+                  {
+                    "id": "sha256:76df1c323b7ebf3b827af099036f2273a1e2a57d526e8add6eb1213e6dbd42bb"
+                  },
+                  {
+                    "id": "sha256:024341af7ba196e55e667e1ad3bc8cea5fd73be818bc2dd500f141752baea987"
+                  },
+                  {
+                    "id": "sha256:7a224f090c49ef13848f3be3fc34db81d767e647a9ab79754170c76e62a30f36"
+                  },
+                  {
+                    "id": "sha256:70af2c10f0aff296be4fc558e9434b757650343ebd38b12a2c61f2b33ff7c1fe"
+                  },
+                  {
+                    "id": "sha256:24ea291ed1420d5bcc477d436af317aa49b08d668782560641621b245441400d"
+                  },
+                  {
+                    "id": "sha256:5aadabc71e75f37c9bc5b927899c18ab36d547a726a788fe9b70804935c6fd3f"
+                  },
+                  {
+                    "id": "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f"
+                  },
+                  {
+                    "id": "sha256:30402153d20da7a9eaa822ba0ecbd3cfb5af349c1fd849f380b258b3f5ef7104"
+                  },
+                  {
+                    "id": "sha256:0a380d54c2a01d6bb41ed3e97babf6776e17842de9a78159a26611e77974ef75"
+                  },
+                  {
+                    "id": "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607"
+                  },
+                  {
+                    "id": "sha256:b0f9b643fffbe6d1bdf6374134953345ed24484cb2deac65fbeab568a115f737"
+                  },
+                  {
+                    "id": "sha256:ef4f1d6c774c09ffac9c81af7afd99c49e1679ba2d946df47bd9eef15eeb6298"
+                  },
+                  {
+                    "id": "sha256:a73fe7b2339ae2e64e916e5a64648272539c317d4d45df68233226e005bc487f"
+                  },
+                  {
+                    "id": "sha256:8bee32b462a5497a07c37f9ef5906be971c0df427b00502fa1835f0336b6b950"
+                  },
+                  {
+                    "id": "sha256:43de4368faf5f89bec477ae9867a5244497e4ac6531b985759df0befb0d0f1ac"
+                  },
+                  {
+                    "id": "sha256:b793336fcae47be1919fd9ddc945b1530ed6a0584e1d33d99f788e0be1be5fcd"
+                  },
+                  {
+                    "id": "sha256:829ed79acf93a16c2f3ee945987d7fa7dc1fc416d3be1d422c246d72e50c8bc9"
+                  },
+                  {
+                    "id": "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6"
+                  },
+                  {
+                    "id": "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be"
+                  },
+                  {
+                    "id": "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6"
+                  },
+                  {
+                    "id": "sha256:69c9cd64733f41c600458cca6a45161151889a7496de45bbebc1aaf653d763ca"
+                  },
+                  {
+                    "id": "sha256:82e2838124d07333bc8104022a7af1e37d775c857ab6ba815707df95faa859d5"
+                  },
+                  {
+                    "id": "sha256:8f9ef02f75b4e98860b208318799c4c3f4c63a0afa2ab3675eea7d07adf2a045"
+                  },
+                  {
+                    "id": "sha256:9b5b6fef1e7c0f1155615cb6df7d11248afa3f91473da8272901442a17ac6c4d"
+                  },
+                  {
+                    "id": "sha256:95b90ce268a40b3400cca7136674739bc2c754b9aa93c304527c79673c5c2e24"
+                  },
+                  {
+                    "id": "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9"
+                  },
+                  {
+                    "id": "sha256:65204ec2f95275b11b307e844fe652c730885e4175afdd46eef128c4620e4f19"
+                  },
+                  {
+                    "id": "sha256:0dab1a01bf872eb68160301f4925fa9612406467fce9e3f454fd8edd3cf9eb3a"
+                  },
+                  {
+                    "id": "sha256:48f8ef16306832b7098dc9a2ea0fce1ab3eb6f8091597d5020162d8ae8315106"
+                  },
+                  {
+                    "id": "sha256:baa2d71f83334dddc4a3be8db35722add321079c379c898e597eb7e3e0d1974b"
+                  }
+                ]
+              }
+            },
+            "options": {}
+          },
+          {
+            "type": "org.osbuild.fix-bls",
+            "options": {}
+          },
+          {
+            "type": "org.osbuild.locale",
+            "options": {
+              "language": "C.UTF-8"
+            }
+          },
+          {
+            "type": "org.osbuild.timezone",
+            "options": {
+              "zone": "America/New_York"
+            }
+          },
+          {
+            "type": "org.osbuild.sysconfig",
+            "options": {
+              "kernel": {
+                "update_default": true,
+                "default_kernel": "kernel"
+              },
+              "network": {
+                "networking": true,
+                "no_zero_conf": true
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.selinux",
+            "options": {
+              "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+            }
+          }
+        ]
+      },
+      {
+        "name": "archive",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.tar",
+            "inputs": {
+              "tree": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:os"
+                ]
+              }
+            },
+            "options": {
+              "filename": "root.tar.xz"
+            }
+          }
+        ]
+      }
+    ],
+    "sources": {
+      "org.osbuild.curl": {
+        "items": {
+          "sha256:0200da59a192613f0a796c9d17dbb47d23ad1839ae811fc813c977e7eb09f016": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcap-ng-0.8.4-4.el10.aarch64.rpm"
+          },
+          "sha256:024341af7ba196e55e667e1ad3bc8cea5fd73be818bc2dd500f141752baea987": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/p11-kit-0.25.3-4.el10.aarch64.rpm"
+          },
+          "sha256:0405fc80a4250e37d40fd370e889604ed68b57f4da26e4bca72feaf833aff957": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-2.39-15.el10.aarch64.rpm"
+          },
+          "sha256:0946ba6ea2ad2f803d04fcf1882d206bd3f09f553c70c60d35a6776afd84a2b8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/kmod-libs-31-5.el10.aarch64.rpm"
+          },
+          "sha256:0a380d54c2a01d6bb41ed3e97babf6776e17842de9a78159a26611e77974ef75": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/popt-1.19-6.el10.aarch64.rpm"
+          },
+          "sha256:0dab1a01bf872eb68160301f4925fa9612406467fce9e3f454fd8edd3cf9eb3a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/util-linux-core-2.40.1-4.el10.aarch64.rpm"
+          },
+          "sha256:1280421265f9391af58ec25089c53c3a09a0929a40abfb71bb76ffedee3fa07c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-1.14.10-3.el10.aarch64.rpm"
+          },
+          "sha256:158ca0f3779196ea070474ec07e04fbd8651d9cd7e64721086ac257553de9f28": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libssh-0.10.6-6.el10.aarch64.rpm"
+          },
+          "sha256:15fa7c46101bdbe6aa1cc4b683ad4494bcf737cfc22ff7a539a2ab24b81c04bd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/diffutils-3.10-5.el10.aarch64.rpm"
+          },
+          "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-gpg-keys-10.0-0.14.el10.noarch.rpm"
+          },
+          "sha256:1840de429bffeefccfebd795795d6773db445a69daa29a36c34900896397ee73": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cracklib-2.9.11-5.el10.aarch64.rpm"
+          },
+          "sha256:184f216ee2e3cb430c2b53a29f242920f22b0e5523e556dfb7e4d8ef272849a4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsmartcols-2.40.1-4.el10.aarch64.rpm"
+          },
+          "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/tzdata-2024a-3.el10.noarch.rpm"
+          },
+          "sha256:1e22121fcc343f1e494c8616ae037d84f1ec89feb07db15a6a1e8e7ab966e6f1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/python-unversioned-command-3.12.2-7.el10.noarch.rpm"
+          },
+          "sha256:1ea5ca231290f16a04bece9f57c2d9b8a8f782de0ccb07651833212014e9988c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cyrus-sasl-lib-2.1.28-19.el10.aarch64.rpm"
+          },
+          "sha256:21b702ada68404f9eaf3b9ed9a7200e564627a97d67c8c764647b9c3ffdaacbf": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-broker-35-4.el10.aarch64.rpm"
+          },
+          "sha256:23e31bb868c4df294c5a2653cac0d294f448c1b7886120f8f7466d1687912ef7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libarchive-3.7.2-6.el10.aarch64.rpm"
+          },
+          "sha256:24ea291ed1420d5bcc477d436af317aa49b08d668782560641621b245441400d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pam-libs-1.6.1-2.el10.aarch64.rpm"
+          },
+          "sha256:2732f25a383c8716548ab979c9b2cda9758dca6f9b0156f1bdd18bff2690045c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsepol-3.6-3.el10.aarch64.rpm"
+          },
+          "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-common-1.14.10-3.el10.noarch.rpm"
+          },
+          "sha256:282c987dca7a968ac97a1c0b224d54e425a179dfccab44d34fa769de1b7c80c4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libacl-2.3.2-1.el10.aarch64.rpm"
+          },
+          "sha256:29fa9d28b940c38f8407c9354dda42c07c2f3bfebf98ae5fd3cd166976ebd344": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/xz-5.4.6-1.el10.aarch64.rpm"
+          },
+          "sha256:30272cafbb35245c89e54d2c97058c948b8adadc17f8a0aa839bc579aab1a894": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libxcrypt-4.4.36-5.el10.aarch64.rpm"
+          },
+          "sha256:30402153d20da7a9eaa822ba0ecbd3cfb5af349c1fd849f380b258b3f5ef7104": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/policycoreutils-3.6-4.el10.aarch64.rpm"
+          },
+          "sha256:30e0f0a9edf77f35a6127f209a70249a1049247d3f36d79499c68d80d2d574ed": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/coreutils-9.4-6.el10.aarch64.rpm"
+          },
+          "sha256:334bfc6b3afd065c5b5c503ccd617f5d4b5e91fb289bf4649a792551bcc0de3f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/krb5-libs-1.21.2-5.el10.aarch64.rpm"
+          },
+          "sha256:3465cf9c9261f72dc8ecdfadf5ea98d56a42aed0a6e09038fc69d9bada766aa6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/python3-pip-wheel-23.3.2-2.el10.noarch.rpm"
+          },
+          "sha256:35d3b13f74040ad6e716a2fbde5c9cdbb8958cd312af1d77a254c98facaf43fd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/device-mapper-libs-1.02.197-1.el10.aarch64.rpm"
+          },
+          "sha256:3c2e72d674ce3712a547cfb07d095518211a6584979b9bb0b47a7b66bca737ca": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libbpf-1.4.0-2.el10.aarch64.rpm"
+          },
+          "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/xkeyboard-config-2.41-1.el10.noarch.rpm"
+          },
+          "sha256:3fa91a16da9ce3e0f49ddb9fd59873c33cfe2cac33afeb407e2e86a0ee872e0e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gzip-1.13-1.el10.aarch64.rpm"
+          },
+          "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/setup-2.14.5-2.el10.noarch.rpm"
+          },
+          "sha256:43de4368faf5f89bec477ae9867a5244497e4ac6531b985759df0befb0d0f1ac": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-plugin-selinux-4.19.1.1-1.el10.aarch64.rpm"
+          },
+          "sha256:46fc57fd8ebad4fb20ff7dce1b82d434aaef7209bb1cf1fc3424d544b9177fc6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libeconf-0.6.2-2.el10.aarch64.rpm"
+          },
+          "sha256:48f8ef16306832b7098dc9a2ea0fce1ab3eb6f8091597d5020162d8ae8315106": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/xz-libs-5.4.6-1.el10.aarch64.rpm"
+          },
+          "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pcre2-syntax-10.42-3.el10.1.noarch.rpm"
+          },
+          "sha256:52007456d5a84c87cc36da61854ef571e8573316402fbf0d114800f203f59c82": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libselinux-3.6-4.el10.aarch64.rpm"
+          },
+          "sha256:52565b078ed6c79d9a913999b207c3d85bde5d479acc3deb8285d2c138abd84e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libnghttp2-1.61.0-1.el10.aarch64.rpm"
+          },
+          "sha256:53db8b2e320df4ed1b981b74ffea12445522babad044466b074148cbf0fff72b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cryptsetup-libs-2.7.2-2.el10.aarch64.rpm"
+          },
+          "sha256:5641bdde9e836179cf80e199e72eca80e6fe17e2b66c07f2c5f2bba10c8a034f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/python3-3.12.2-7.el10.aarch64.rpm"
+          },
+          "sha256:564564e9239593cfd7d8501a5b06321f121d2a1f37b5bcadc150521f44cb7a45": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/mpdecimal-2.5.1-9.el10.aarch64.rpm"
+          },
+          "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ncurses-base-6.4-12.20240127.el10.noarch.rpm"
+          },
+          "sha256:59eff0d2c99d18f772bbd139fa1bc030f6710041b142e93dd117fc85004c620d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/authselect-1.5.0-5.el10.aarch64.rpm"
+          },
+          "sha256:5aadabc71e75f37c9bc5b927899c18ab36d547a726a788fe9b70804935c6fd3f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pcre2-10.42-3.el10.1.aarch64.rpm"
+          },
+          "sha256:5f9eb9f6650af70e5415bce54d3ff296f216c85e5fc9e329e6412a07f0c55529": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcurl-8.6.0-6.el10.aarch64.rpm"
+          },
+          "sha256:602e53269d96eac84db35659b0dec33d56f78ab7b22987c534093d7388ae1471": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcom_err-1.47.0-5.el10.aarch64.rpm"
+          },
+          "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-stream-release-10.0-0.14.el10.noarch.rpm"
+          },
+          "sha256:62cbfcc13286a54befa55036093968d7f3f504a1bd8360d0c852cd68f4b5a4e3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libblkid-2.40.1-4.el10.aarch64.rpm"
+          },
+          "sha256:638e8eda51252e100e82815c75ac53dbd2f19ab747aad58041906786e123fd73": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/bash-5.2.26-3.el10.aarch64.rpm"
+          },
+          "sha256:63df046a41121814f3dfb9e7e172f62735dfe6ee506f244004a6033ba70d61ab": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libuuid-2.40.1-4.el10.aarch64.rpm"
+          },
+          "sha256:65204ec2f95275b11b307e844fe652c730885e4175afdd46eef128c4620e4f19": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/util-linux-2.40.1-4.el10.aarch64.rpm"
+          },
+          "sha256:653514c709b721ed64089fceef4b017e79ec173fb8c6218a35b123dac9e6aca7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gmp-6.2.1-8.el10.aarch64.rpm"
+          },
+          "sha256:69c9cd64733f41c600458cca6a45161151889a7496de45bbebc1aaf653d763ca": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/shadow-utils-4.15.0-2.el10.aarch64.rpm"
+          },
+          "sha256:6aab01c97f90aa4b18998a53f34e75fffb4b42c6d5635d5fdc9ef9d61451c60e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libzstd-1.5.5-5.el10.aarch64.rpm"
+          },
+          "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libssh-config-0.10.6-6.el10.noarch.rpm"
+          },
+          "sha256:6dadda87f7211658de9567b1f0056c486f8c34e613a8d34db3ab8c5ddcea3de4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/device-mapper-1.02.197-1.el10.aarch64.rpm"
+          },
+          "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/basesystem-11-20.el10.noarch.rpm"
+          },
+          "sha256:6ef4593984c83176477c7f615cf154bae12066b5a553f256649adb176363f197": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/python3-libs-3.12.2-7.el10.aarch64.rpm"
+          },
+          "sha256:70af2c10f0aff296be4fc558e9434b757650343ebd38b12a2c61f2b33ff7c1fe": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pam-1.6.1-2.el10.aarch64.rpm"
+          },
+          "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/crypto-policies-20240522-1.git77963ab.el10.noarch.rpm"
+          },
+          "sha256:76df1c323b7ebf3b827af099036f2273a1e2a57d526e8add6eb1213e6dbd42bb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/openssl-libs-3.2.2-3.el10.aarch64.rpm"
+          },
+          "sha256:7824b392d5a96023ab99f3fc380d84c119efcabc73b7393793b0cc580e8d0a9a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-minimal-langpack-2.39-15.el10.aarch64.rpm"
+          },
+          "sha256:786c2977ae2b7a27928d88c5fb66be7e2f4a3d64f5ba2b4462685089b6d1a149": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-common-2.39-15.el10.aarch64.rpm"
+          },
+          "sha256:7a224f090c49ef13848f3be3fc34db81d767e647a9ab79754170c76e62a30f36": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/p11-kit-trust-0.25.3-4.el10.aarch64.rpm"
+          },
+          "sha256:7a3c7ecd7c655425156c8802625b65232ca9a761224e19c09e65628eeb0143f5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libgcc-14.1.1-5.el10.aarch64.rpm"
+          },
+          "sha256:7a3ecb21209a6866248cc95ada9526e4687a30972b6ff95ceb19a54e6cc0556a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libidn2-2.3.7-1.el10.aarch64.rpm"
+          },
+          "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/selinux-policy-40.13.3-1.el10.noarch.rpm"
+          },
+          "sha256:7e2ac5e6550f2ca9158a8fd7d87a7fb169a997766345653debdcae387a660cd5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gdbm-1.23-6.el10.aarch64.rpm"
+          },
+          "sha256:7e5b543b40e06e9c80e78271b78657e08961bc8a9a216c1f683cfdc8588544f9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libattr-2.5.2-3.el10.aarch64.rpm"
+          },
+          "sha256:7e9f46966b98e4542695f463e59d618d1ad8d739ab9736c4f9dc070ed215dc89": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libpwquality-1.4.5-9.el10.aarch64.rpm"
+          },
+          "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ca-certificates-2023.2.62_v7.0.401-6.el10.noarch.rpm"
+          },
+          "sha256:80fc26212ea0e35a2f6346a6ecad619ab4d538304207bf932036cea07575dab3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-libs-0.191-3.el10.aarch64.rpm"
+          },
+          "sha256:829ed79acf93a16c2f3ee945987d7fa7dc1fc416d3be1d422c246d72e50c8bc9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/sed-4.9-1.el10.aarch64.rpm"
+          },
+          "sha256:82e2838124d07333bc8104022a7af1e37d775c857ab6ba815707df95faa859d5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/sqlite-libs-3.45.1-2.el10.aarch64.rpm"
+          },
+          "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/publicsuffix-list-dafsa-20240107-3.el10.noarch.rpm"
+          },
+          "sha256:8ac0c35b934663bf8cdfba21393551f9ecd1a74418e35798efbf8422501945dd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/authselect-libs-1.5.0-5.el10.aarch64.rpm"
+          },
+          "sha256:8bee32b462a5497a07c37f9ef5906be971c0df427b00502fa1835f0336b6b950": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-plugin-audit-4.19.1.1-1.el10.aarch64.rpm"
+          },
+          "sha256:8e5511fb6ad86fb7b6401f124d1d87af378ecab0754fa53c26c33370ac17681e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gawk-5.3.0-3.el10.aarch64.rpm"
+          },
+          "sha256:8f9ef02f75b4e98860b208318799c4c3f4c63a0afa2ab3675eea7d07adf2a045": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-255.3-1.el10.aarch64.rpm"
+          },
+          "sha256:92a2fa27bf703e005b92409af69ae50732695132db45cba3f7612019b16b2ca8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ncurses-libs-6.4-12.20240127.el10.aarch64.rpm"
+          },
+          "sha256:95b90ce268a40b3400cca7136674739bc2c754b9aa93c304527c79673c5c2e24": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-pam-255.3-1.el10.aarch64.rpm"
+          },
+          "sha256:9b5b6fef1e7c0f1155615cb6df7d11248afa3f91473da8272901442a17ac6c4d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-libs-255.3-1.el10.aarch64.rpm"
+          },
+          "sha256:9bbfc69de31a0fff17222ac31d17aa58979fab487daa31a33e2823a9b03a2703": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libunistring-1.1-7.el10.aarch64.rpm"
+          },
+          "sha256:9cfe55167bcfd455a942bade330c8c02c668f9216a8fd00685e8fcf19c45aa21": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/mpfr-4.2.1-3.el10.aarch64.rpm"
+          },
+          "sha256:a0e7c04114f8c44d1f5b2dc4d2e31589a4ac11070fc6d43117a56e3c8a0bda5a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/expat-2.5.0-5.el10.aarch64.rpm"
+          },
+          "sha256:a331f1e3bbed69feb35487635b1761634654c404c27c28abce84b8bb7254276d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gdbm-libs-1.23-6.el10.aarch64.rpm"
+          },
+          "sha256:a73fe7b2339ae2e64e916e5a64648272539c317d4d45df68233226e005bc487f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-libs-4.19.1.1-1.el10.aarch64.rpm"
+          },
+          "sha256:ac4e8a0e0c915486ade00d5d8495d0fb170929469ef03488c711218348d6ddc5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/bzip2-libs-1.0.8-18.el10.aarch64.rpm"
+          },
+          "sha256:b0f9b643fffbe6d1bdf6374134953345ed24484cb2deac65fbeab568a115f737": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/readline-8.2-8.el10.aarch64.rpm"
+          },
+          "sha256:b374bab409e5e85957a10f8a9bd90a135d8097d40204fa5f064e6ee89bd4eb16": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libevent-2.1.12-13.el10.aarch64.rpm"
+          },
+          "sha256:b42542b9d5bb8b0334c840126d276d73a5aa139af99c9aed599627f3fb5d5456": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/audit-libs-4.0-8.el10.aarch64.rpm"
+          },
+          "sha256:b793336fcae47be1919fd9ddc945b1530ed6a0584e1d33d99f788e0be1be5fcd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-sequoia-1.6.0-2.el10.aarch64.rpm"
+          },
+          "sha256:b86dd555f1f199da14d117c61a2d4577274ad37d37a061d05bfee6c0e8eb37fa": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-gconv-extra-2.39-15.el10.aarch64.rpm"
+          },
+          "sha256:b922824f5da0b69d413469020b0ff80cd6ce8186d0cfeb185fbdce84f90e3c73": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libbrotli-1.1.0-3.el10.aarch64.rpm"
+          },
+          "sha256:baa2d71f83334dddc4a3be8db35722add321079c379c898e597eb7e3e0d1974b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/zlib-ng-compat-2.1.6-2.el10.aarch64.rpm"
+          },
+          "sha256:bbb4424e5df2e7c403ca233e10123a9093a30c4008a74678cd996f12d0643a94": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libpsl-0.21.5-3.el10.aarch64.rpm"
+          },
+          "sha256:bdb025acca6c2195dc8c570975e093c364980f925402049184ba1e68baffcd9d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/curl-8.6.0-6.el10.aarch64.rpm"
+          },
+          "sha256:bfd2b4b058cfd2400651c65d45102dac9e70e801078ad7f18fdfd8a7275ce9a3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libmount-2.40.1-4.el10.aarch64.rpm"
+          },
+          "sha256:c1f07adb6fae5ebbf8c1323e8d94478934328880276a9df6074ab0c6096579b2": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/filesystem-3.18-8.el10.aarch64.rpm"
+          },
+          "sha256:c5b5b3427fa1a29a699d039d1d6b18911c6a98ac695d30dd5b14ea15a1b4cf97": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/gawk-all-langpacks-5.3.0-3.el10.aarch64.rpm"
+          },
+          "sha256:c7ac3f6433ef22f08fa9f2c56d668ea27452a27ab16b468fb6ca8dd8fcca572e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libtasn1-4.19.0-6.el10.aarch64.rpm"
+          },
+          "sha256:c7f3370be2b61b2608e3bf151e45902e2f016cddf37506bf3fac496c9dfb47b9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/grep-3.11-8.el10.aarch64.rpm"
+          },
+          "sha256:c8df5a25125e4413b859bce4d6b08b3ccee355ac12c6ceb9ef52d0f18faab3bb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/findutils-4.9.0-8.el10.aarch64.rpm"
+          },
+          "sha256:caf6325ff658534a9807a8e45ae8c692bf54af94a212978d1af922833a84afb9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libfdisk-2.40.1-4.el10.aarch64.rpm"
+          },
+          "sha256:cbb6936e36cca23893c441d69701f20bb81731602b999226f21e6e749edc5896": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cracklib-dicts-2.9.11-5.el10.aarch64.rpm"
+          },
+          "sha256:ceef19d1ae7dc3b4bc877a8a4166109f007d551f10a53811c49bb193d2fb6923": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/keyutils-libs-1.6.3-3.el10.aarch64.rpm"
+          },
+          "sha256:cf450e4ed1dbeb0ad78db94887ec845ec593d7e4feab37f3be5841918fda6282": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/openldap-2.6.7-1.el10.aarch64.rpm"
+          },
+          "sha256:cff20866af80033505c02229e69b98d9efa6c2b9cdf4db707004c3547ca8b046": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/json-c-0.17-3.el10.aarch64.rpm"
+          },
+          "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-stream-repos-10.0-0.14.el10.noarch.rpm"
+          },
+          "sha256:d2dd3a46bd828a16a125b0d6c5619c6da48426985ea56f5de5824eb611c6bee4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libtool-ltdl-2.4.7-10.el10.aarch64.rpm"
+          },
+          "sha256:d5c3b61d12c113b04fa70958fc58e2b6ed15b5ccfd53b2778d1ec1970d37bb43": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/alternatives-1.26-3.el10.aarch64.rpm"
+          },
+          "sha256:d81e342a84bf9452cc130be1d1eb98d0e75d52ebf836c96c7e2ede67728e6bcb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libxml2-2.12.5-1.el10.aarch64.rpm"
+          },
+          "sha256:da75ea74585ce461921b2915991677d7e7d9e42fc282da9cc35d5b161610e3f9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-libelf-0.191-3.el10.aarch64.rpm"
+          },
+          "sha256:dac6be5604965f2ad4634a2b57148a92ce8a3bd5994206bc115f431f7e01eea9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/coreutils-common-9.4-6.el10.aarch64.rpm"
+          },
+          "sha256:dd28d6ab61e319d34e6693a96a8cc5da63ada6f6299280f0bd85e62470b774b9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libffi-3.4.4-7.el10.aarch64.rpm"
+          },
+          "sha256:ddb96d772329a5cc6adfb78cd463143ad4149da658fadbb34438ba21dd957704": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsemanage-3.6-3.el10.aarch64.rpm"
+          },
+          "sha256:e1e4a7ebd569c11ca697854485b6c0cca739525a98eae0d143d7a8a7dbf711ee": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/libxkbcommon-1.6.0-2.el10.aarch64.rpm"
+          },
+          "sha256:e56419799f5a39150851a6bc1f214a5c81f33d47218417dfb5135d0be6c430b0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-debuginfod-client-0.191-3.el10.aarch64.rpm"
+          },
+          "sha256:e5f6cfcac6c8b208e72bd0253fca5d7699c0888cdee5636adf8d6453fd7ca215": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/lua-libs-5.4.6-5.el10.aarch64.rpm"
+          },
+          "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/selinux-policy-targeted-40.13.3-1.el10.noarch.rpm"
+          },
+          "sha256:eabd1439e76f6f5f003a858b97bff931154c2e0a6f44f5336d7f7e37934a5a48": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libseccomp-2.5.3-8.el10.aarch64.rpm"
+          },
+          "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-default-yama-scope-0.191-3.el10.noarch.rpm"
+          },
+          "sha256:ef4f1d6c774c09ffac9c81af7afd99c49e1679ba2d946df47bd9eef15eeb6298": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-4.19.1.1-1.el10.aarch64.rpm"
+          },
+          "sha256:f1cd06f092b24855054f84d36768d507bf92fe83cb74ad3445c645c5e74a6b76": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libselinux-utils-3.6-4.el10.aarch64.rpm"
+          },
+          "sha256:f71c259002756aa0af05a854e28447afcea3249fb05c80667f84d8c189040fcc": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libutempter-1.2.1-13.el10.aarch64.rpm"
+          },
+          "sha256:fab03729edf4c0157d5cc3e60e300f4124149e4662e45d18adbd48ffc3a9d84a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libverto-0.3.2-8.el10.aarch64.rpm"
+          },
+          "sha256:fb6359ac0c5cebf463beaf56f95d83418c7e61fe005e20d4280d2a770d5d0b30": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcap-2.69-4.el10.aarch64.rpm"
+          },
+          "sha256:fbd59b08576fb02f78f16417947c4dfe66cb1647075efc4e3438ce0c6b66cdfc": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/tar-1.35-3.el10.aarch64.rpm"
+          },
+          "sha256:ffe0ffe153b591f5b93389787811fe04253422b7599b6672048bcc81f667bdcd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/lz4-libs-1.9.4-6.el10.aarch64.rpm"
+          }
+        }
+      }
+    }
+  },
+  "rpmmd": {
+    "build": [
+      {
+        "name": "gawk-all-langpacks",
+        "epoch": 0,
+        "version": "5.3.0",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/gawk-all-langpacks-5.3.0-3.el10.aarch64.rpm",
+        "checksum": "sha256:c5b5b3427fa1a29a699d039d1d6b18911c6a98ac695d30dd5b14ea15a1b4cf97"
+      },
+      {
+        "name": "libxkbcommon",
+        "epoch": 0,
+        "version": "1.6.0",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/libxkbcommon-1.6.0-2.el10.aarch64.rpm",
+        "checksum": "sha256:e1e4a7ebd569c11ca697854485b6c0cca739525a98eae0d143d7a8a7dbf711ee"
+      },
+      {
+        "name": "python-unversioned-command",
+        "epoch": 0,
+        "version": "3.12.2",
+        "release": "7.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/python-unversioned-command-3.12.2-7.el10.noarch.rpm",
+        "checksum": "sha256:1e22121fcc343f1e494c8616ae037d84f1ec89feb07db15a6a1e8e7ab966e6f1"
+      },
+      {
+        "name": "xkeyboard-config",
+        "epoch": 0,
+        "version": "2.41",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/xkeyboard-config-2.41-1.el10.noarch.rpm",
+        "checksum": "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df"
+      },
+      {
+        "name": "alternatives",
+        "epoch": 0,
+        "version": "1.26",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/alternatives-1.26-3.el10.aarch64.rpm",
+        "checksum": "sha256:d5c3b61d12c113b04fa70958fc58e2b6ed15b5ccfd53b2778d1ec1970d37bb43"
+      },
+      {
+        "name": "audit-libs",
+        "epoch": 0,
+        "version": "4.0",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/audit-libs-4.0-8.el10.aarch64.rpm",
+        "checksum": "sha256:b42542b9d5bb8b0334c840126d276d73a5aa139af99c9aed599627f3fb5d5456"
+      },
+      {
+        "name": "authselect",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/authselect-1.5.0-5.el10.aarch64.rpm",
+        "checksum": "sha256:59eff0d2c99d18f772bbd139fa1bc030f6710041b142e93dd117fc85004c620d"
+      },
+      {
+        "name": "authselect-libs",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/authselect-libs-1.5.0-5.el10.aarch64.rpm",
+        "checksum": "sha256:8ac0c35b934663bf8cdfba21393551f9ecd1a74418e35798efbf8422501945dd"
+      },
+      {
+        "name": "basesystem",
+        "epoch": 0,
+        "version": "11",
+        "release": "20.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/basesystem-11-20.el10.noarch.rpm",
+        "checksum": "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8"
+      },
+      {
+        "name": "bash",
+        "epoch": 0,
+        "version": "5.2.26",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/bash-5.2.26-3.el10.aarch64.rpm",
+        "checksum": "sha256:638e8eda51252e100e82815c75ac53dbd2f19ab747aad58041906786e123fd73"
+      },
+      {
+        "name": "bzip2-libs",
+        "epoch": 0,
+        "version": "1.0.8",
+        "release": "18.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/bzip2-libs-1.0.8-18.el10.aarch64.rpm",
+        "checksum": "sha256:ac4e8a0e0c915486ade00d5d8495d0fb170929469ef03488c711218348d6ddc5"
+      },
+      {
+        "name": "ca-certificates",
+        "epoch": 0,
+        "version": "2023.2.62_v7.0.401",
+        "release": "6.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ca-certificates-2023.2.62_v7.0.401-6.el10.noarch.rpm",
+        "checksum": "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce"
+      },
+      {
+        "name": "centos-gpg-keys",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-gpg-keys-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade"
+      },
+      {
+        "name": "centos-stream-release",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-stream-release-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386"
+      },
+      {
+        "name": "centos-stream-repos",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-stream-repos-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2"
+      },
+      {
+        "name": "coreutils",
+        "epoch": 0,
+        "version": "9.4",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/coreutils-9.4-6.el10.aarch64.rpm",
+        "checksum": "sha256:30e0f0a9edf77f35a6127f209a70249a1049247d3f36d79499c68d80d2d574ed"
+      },
+      {
+        "name": "coreutils-common",
+        "epoch": 0,
+        "version": "9.4",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/coreutils-common-9.4-6.el10.aarch64.rpm",
+        "checksum": "sha256:dac6be5604965f2ad4634a2b57148a92ce8a3bd5994206bc115f431f7e01eea9"
+      },
+      {
+        "name": "cracklib",
+        "epoch": 0,
+        "version": "2.9.11",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cracklib-2.9.11-5.el10.aarch64.rpm",
+        "checksum": "sha256:1840de429bffeefccfebd795795d6773db445a69daa29a36c34900896397ee73"
+      },
+      {
+        "name": "cracklib-dicts",
+        "epoch": 0,
+        "version": "2.9.11",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cracklib-dicts-2.9.11-5.el10.aarch64.rpm",
+        "checksum": "sha256:cbb6936e36cca23893c441d69701f20bb81731602b999226f21e6e749edc5896"
+      },
+      {
+        "name": "crypto-policies",
+        "epoch": 0,
+        "version": "20240522",
+        "release": "1.git77963ab.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/crypto-policies-20240522-1.git77963ab.el10.noarch.rpm",
+        "checksum": "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86"
+      },
+      {
+        "name": "cryptsetup-libs",
+        "epoch": 0,
+        "version": "2.7.2",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cryptsetup-libs-2.7.2-2.el10.aarch64.rpm",
+        "checksum": "sha256:53db8b2e320df4ed1b981b74ffea12445522babad044466b074148cbf0fff72b"
+      },
+      {
+        "name": "curl",
+        "epoch": 0,
+        "version": "8.6.0",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/curl-8.6.0-6.el10.aarch64.rpm",
+        "checksum": "sha256:bdb025acca6c2195dc8c570975e093c364980f925402049184ba1e68baffcd9d"
+      },
+      {
+        "name": "cyrus-sasl-lib",
+        "epoch": 0,
+        "version": "2.1.28",
+        "release": "19.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cyrus-sasl-lib-2.1.28-19.el10.aarch64.rpm",
+        "checksum": "sha256:1ea5ca231290f16a04bece9f57c2d9b8a8f782de0ccb07651833212014e9988c"
+      },
+      {
+        "name": "dbus",
+        "epoch": 1,
+        "version": "1.14.10",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-1.14.10-3.el10.aarch64.rpm",
+        "checksum": "sha256:1280421265f9391af58ec25089c53c3a09a0929a40abfb71bb76ffedee3fa07c"
+      },
+      {
+        "name": "dbus-broker",
+        "epoch": 0,
+        "version": "35",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-broker-35-4.el10.aarch64.rpm",
+        "checksum": "sha256:21b702ada68404f9eaf3b9ed9a7200e564627a97d67c8c764647b9c3ffdaacbf"
+      },
+      {
+        "name": "dbus-common",
+        "epoch": 1,
+        "version": "1.14.10",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-common-1.14.10-3.el10.noarch.rpm",
+        "checksum": "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9"
+      },
+      {
+        "name": "device-mapper",
+        "epoch": 10,
+        "version": "1.02.197",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/device-mapper-1.02.197-1.el10.aarch64.rpm",
+        "checksum": "sha256:6dadda87f7211658de9567b1f0056c486f8c34e613a8d34db3ab8c5ddcea3de4"
+      },
+      {
+        "name": "device-mapper-libs",
+        "epoch": 10,
+        "version": "1.02.197",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/device-mapper-libs-1.02.197-1.el10.aarch64.rpm",
+        "checksum": "sha256:35d3b13f74040ad6e716a2fbde5c9cdbb8958cd312af1d77a254c98facaf43fd"
+      },
+      {
+        "name": "diffutils",
+        "epoch": 0,
+        "version": "3.10",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/diffutils-3.10-5.el10.aarch64.rpm",
+        "checksum": "sha256:15fa7c46101bdbe6aa1cc4b683ad4494bcf737cfc22ff7a539a2ab24b81c04bd"
+      },
+      {
+        "name": "elfutils-debuginfod-client",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-debuginfod-client-0.191-3.el10.aarch64.rpm",
+        "checksum": "sha256:e56419799f5a39150851a6bc1f214a5c81f33d47218417dfb5135d0be6c430b0"
+      },
+      {
+        "name": "elfutils-default-yama-scope",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-default-yama-scope-0.191-3.el10.noarch.rpm",
+        "checksum": "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db"
+      },
+      {
+        "name": "elfutils-libelf",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-libelf-0.191-3.el10.aarch64.rpm",
+        "checksum": "sha256:da75ea74585ce461921b2915991677d7e7d9e42fc282da9cc35d5b161610e3f9"
+      },
+      {
+        "name": "elfutils-libs",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-libs-0.191-3.el10.aarch64.rpm",
+        "checksum": "sha256:80fc26212ea0e35a2f6346a6ecad619ab4d538304207bf932036cea07575dab3"
+      },
+      {
+        "name": "expat",
+        "epoch": 0,
+        "version": "2.5.0",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/expat-2.5.0-5.el10.aarch64.rpm",
+        "checksum": "sha256:a0e7c04114f8c44d1f5b2dc4d2e31589a4ac11070fc6d43117a56e3c8a0bda5a"
+      },
+      {
+        "name": "filesystem",
+        "epoch": 0,
+        "version": "3.18",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/filesystem-3.18-8.el10.aarch64.rpm",
+        "checksum": "sha256:c1f07adb6fae5ebbf8c1323e8d94478934328880276a9df6074ab0c6096579b2"
+      },
+      {
+        "name": "findutils",
+        "epoch": 1,
+        "version": "4.9.0",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/findutils-4.9.0-8.el10.aarch64.rpm",
+        "checksum": "sha256:c8df5a25125e4413b859bce4d6b08b3ccee355ac12c6ceb9ef52d0f18faab3bb"
+      },
+      {
+        "name": "gawk",
+        "epoch": 0,
+        "version": "5.3.0",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gawk-5.3.0-3.el10.aarch64.rpm",
+        "checksum": "sha256:8e5511fb6ad86fb7b6401f124d1d87af378ecab0754fa53c26c33370ac17681e"
+      },
+      {
+        "name": "gdbm",
+        "epoch": 1,
+        "version": "1.23",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gdbm-1.23-6.el10.aarch64.rpm",
+        "checksum": "sha256:7e2ac5e6550f2ca9158a8fd7d87a7fb169a997766345653debdcae387a660cd5"
+      },
+      {
+        "name": "gdbm-libs",
+        "epoch": 1,
+        "version": "1.23",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gdbm-libs-1.23-6.el10.aarch64.rpm",
+        "checksum": "sha256:a331f1e3bbed69feb35487635b1761634654c404c27c28abce84b8bb7254276d"
+      },
+      {
+        "name": "glibc",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-2.39-15.el10.aarch64.rpm",
+        "checksum": "sha256:0405fc80a4250e37d40fd370e889604ed68b57f4da26e4bca72feaf833aff957"
+      },
+      {
+        "name": "glibc-common",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-common-2.39-15.el10.aarch64.rpm",
+        "checksum": "sha256:786c2977ae2b7a27928d88c5fb66be7e2f4a3d64f5ba2b4462685089b6d1a149"
+      },
+      {
+        "name": "glibc-gconv-extra",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-gconv-extra-2.39-15.el10.aarch64.rpm",
+        "checksum": "sha256:b86dd555f1f199da14d117c61a2d4577274ad37d37a061d05bfee6c0e8eb37fa"
+      },
+      {
+        "name": "glibc-minimal-langpack",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-minimal-langpack-2.39-15.el10.aarch64.rpm",
+        "checksum": "sha256:7824b392d5a96023ab99f3fc380d84c119efcabc73b7393793b0cc580e8d0a9a"
+      },
+      {
+        "name": "gmp",
+        "epoch": 1,
+        "version": "6.2.1",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gmp-6.2.1-8.el10.aarch64.rpm",
+        "checksum": "sha256:653514c709b721ed64089fceef4b017e79ec173fb8c6218a35b123dac9e6aca7"
+      },
+      {
+        "name": "grep",
+        "epoch": 0,
+        "version": "3.11",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/grep-3.11-8.el10.aarch64.rpm",
+        "checksum": "sha256:c7f3370be2b61b2608e3bf151e45902e2f016cddf37506bf3fac496c9dfb47b9"
+      },
+      {
+        "name": "gzip",
+        "epoch": 0,
+        "version": "1.13",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gzip-1.13-1.el10.aarch64.rpm",
+        "checksum": "sha256:3fa91a16da9ce3e0f49ddb9fd59873c33cfe2cac33afeb407e2e86a0ee872e0e"
+      },
+      {
+        "name": "json-c",
+        "epoch": 0,
+        "version": "0.17",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/json-c-0.17-3.el10.aarch64.rpm",
+        "checksum": "sha256:cff20866af80033505c02229e69b98d9efa6c2b9cdf4db707004c3547ca8b046"
+      },
+      {
+        "name": "keyutils-libs",
+        "epoch": 0,
+        "version": "1.6.3",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/keyutils-libs-1.6.3-3.el10.aarch64.rpm",
+        "checksum": "sha256:ceef19d1ae7dc3b4bc877a8a4166109f007d551f10a53811c49bb193d2fb6923"
+      },
+      {
+        "name": "kmod-libs",
+        "epoch": 0,
+        "version": "31",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/kmod-libs-31-5.el10.aarch64.rpm",
+        "checksum": "sha256:0946ba6ea2ad2f803d04fcf1882d206bd3f09f553c70c60d35a6776afd84a2b8"
+      },
+      {
+        "name": "krb5-libs",
+        "epoch": 0,
+        "version": "1.21.2",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/krb5-libs-1.21.2-5.el10.aarch64.rpm",
+        "checksum": "sha256:334bfc6b3afd065c5b5c503ccd617f5d4b5e91fb289bf4649a792551bcc0de3f"
+      },
+      {
+        "name": "libacl",
+        "epoch": 0,
+        "version": "2.3.2",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libacl-2.3.2-1.el10.aarch64.rpm",
+        "checksum": "sha256:282c987dca7a968ac97a1c0b224d54e425a179dfccab44d34fa769de1b7c80c4"
+      },
+      {
+        "name": "libarchive",
+        "epoch": 0,
+        "version": "3.7.2",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libarchive-3.7.2-6.el10.aarch64.rpm",
+        "checksum": "sha256:23e31bb868c4df294c5a2653cac0d294f448c1b7886120f8f7466d1687912ef7"
+      },
+      {
+        "name": "libattr",
+        "epoch": 0,
+        "version": "2.5.2",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libattr-2.5.2-3.el10.aarch64.rpm",
+        "checksum": "sha256:7e5b543b40e06e9c80e78271b78657e08961bc8a9a216c1f683cfdc8588544f9"
+      },
+      {
+        "name": "libblkid",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libblkid-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:62cbfcc13286a54befa55036093968d7f3f504a1bd8360d0c852cd68f4b5a4e3"
+      },
+      {
+        "name": "libbpf",
+        "epoch": 2,
+        "version": "1.4.0",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libbpf-1.4.0-2.el10.aarch64.rpm",
+        "checksum": "sha256:3c2e72d674ce3712a547cfb07d095518211a6584979b9bb0b47a7b66bca737ca"
+      },
+      {
+        "name": "libbrotli",
+        "epoch": 0,
+        "version": "1.1.0",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libbrotli-1.1.0-3.el10.aarch64.rpm",
+        "checksum": "sha256:b922824f5da0b69d413469020b0ff80cd6ce8186d0cfeb185fbdce84f90e3c73"
+      },
+      {
+        "name": "libcap",
+        "epoch": 0,
+        "version": "2.69",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcap-2.69-4.el10.aarch64.rpm",
+        "checksum": "sha256:fb6359ac0c5cebf463beaf56f95d83418c7e61fe005e20d4280d2a770d5d0b30"
+      },
+      {
+        "name": "libcap-ng",
+        "epoch": 0,
+        "version": "0.8.4",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcap-ng-0.8.4-4.el10.aarch64.rpm",
+        "checksum": "sha256:0200da59a192613f0a796c9d17dbb47d23ad1839ae811fc813c977e7eb09f016"
+      },
+      {
+        "name": "libcom_err",
+        "epoch": 0,
+        "version": "1.47.0",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcom_err-1.47.0-5.el10.aarch64.rpm",
+        "checksum": "sha256:602e53269d96eac84db35659b0dec33d56f78ab7b22987c534093d7388ae1471"
+      },
+      {
+        "name": "libcurl",
+        "epoch": 0,
+        "version": "8.6.0",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcurl-8.6.0-6.el10.aarch64.rpm",
+        "checksum": "sha256:5f9eb9f6650af70e5415bce54d3ff296f216c85e5fc9e329e6412a07f0c55529"
+      },
+      {
+        "name": "libeconf",
+        "epoch": 0,
+        "version": "0.6.2",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libeconf-0.6.2-2.el10.aarch64.rpm",
+        "checksum": "sha256:46fc57fd8ebad4fb20ff7dce1b82d434aaef7209bb1cf1fc3424d544b9177fc6"
+      },
+      {
+        "name": "libevent",
+        "epoch": 0,
+        "version": "2.1.12",
+        "release": "13.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libevent-2.1.12-13.el10.aarch64.rpm",
+        "checksum": "sha256:b374bab409e5e85957a10f8a9bd90a135d8097d40204fa5f064e6ee89bd4eb16"
+      },
+      {
+        "name": "libfdisk",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libfdisk-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:caf6325ff658534a9807a8e45ae8c692bf54af94a212978d1af922833a84afb9"
+      },
+      {
+        "name": "libffi",
+        "epoch": 0,
+        "version": "3.4.4",
+        "release": "7.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libffi-3.4.4-7.el10.aarch64.rpm",
+        "checksum": "sha256:dd28d6ab61e319d34e6693a96a8cc5da63ada6f6299280f0bd85e62470b774b9"
+      },
+      {
+        "name": "libgcc",
+        "epoch": 0,
+        "version": "14.1.1",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libgcc-14.1.1-5.el10.aarch64.rpm",
+        "checksum": "sha256:7a3c7ecd7c655425156c8802625b65232ca9a761224e19c09e65628eeb0143f5"
+      },
+      {
+        "name": "libidn2",
+        "epoch": 0,
+        "version": "2.3.7",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libidn2-2.3.7-1.el10.aarch64.rpm",
+        "checksum": "sha256:7a3ecb21209a6866248cc95ada9526e4687a30972b6ff95ceb19a54e6cc0556a"
+      },
+      {
+        "name": "libmount",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libmount-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:bfd2b4b058cfd2400651c65d45102dac9e70e801078ad7f18fdfd8a7275ce9a3"
+      },
+      {
+        "name": "libnghttp2",
+        "epoch": 0,
+        "version": "1.61.0",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libnghttp2-1.61.0-1.el10.aarch64.rpm",
+        "checksum": "sha256:52565b078ed6c79d9a913999b207c3d85bde5d479acc3deb8285d2c138abd84e"
+      },
+      {
+        "name": "libpsl",
+        "epoch": 0,
+        "version": "0.21.5",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libpsl-0.21.5-3.el10.aarch64.rpm",
+        "checksum": "sha256:bbb4424e5df2e7c403ca233e10123a9093a30c4008a74678cd996f12d0643a94"
+      },
+      {
+        "name": "libpwquality",
+        "epoch": 0,
+        "version": "1.4.5",
+        "release": "9.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libpwquality-1.4.5-9.el10.aarch64.rpm",
+        "checksum": "sha256:7e9f46966b98e4542695f463e59d618d1ad8d739ab9736c4f9dc070ed215dc89"
+      },
+      {
+        "name": "libseccomp",
+        "epoch": 0,
+        "version": "2.5.3",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libseccomp-2.5.3-8.el10.aarch64.rpm",
+        "checksum": "sha256:eabd1439e76f6f5f003a858b97bff931154c2e0a6f44f5336d7f7e37934a5a48"
+      },
+      {
+        "name": "libselinux",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libselinux-3.6-4.el10.aarch64.rpm",
+        "checksum": "sha256:52007456d5a84c87cc36da61854ef571e8573316402fbf0d114800f203f59c82"
+      },
+      {
+        "name": "libselinux-utils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libselinux-utils-3.6-4.el10.aarch64.rpm",
+        "checksum": "sha256:f1cd06f092b24855054f84d36768d507bf92fe83cb74ad3445c645c5e74a6b76"
+      },
+      {
+        "name": "libsemanage",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsemanage-3.6-3.el10.aarch64.rpm",
+        "checksum": "sha256:ddb96d772329a5cc6adfb78cd463143ad4149da658fadbb34438ba21dd957704"
+      },
+      {
+        "name": "libsepol",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsepol-3.6-3.el10.aarch64.rpm",
+        "checksum": "sha256:2732f25a383c8716548ab979c9b2cda9758dca6f9b0156f1bdd18bff2690045c"
+      },
+      {
+        "name": "libsmartcols",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsmartcols-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:184f216ee2e3cb430c2b53a29f242920f22b0e5523e556dfb7e4d8ef272849a4"
+      },
+      {
+        "name": "libssh",
+        "epoch": 0,
+        "version": "0.10.6",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libssh-0.10.6-6.el10.aarch64.rpm",
+        "checksum": "sha256:158ca0f3779196ea070474ec07e04fbd8651d9cd7e64721086ac257553de9f28"
+      },
+      {
+        "name": "libssh-config",
+        "epoch": 0,
+        "version": "0.10.6",
+        "release": "6.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libssh-config-0.10.6-6.el10.noarch.rpm",
+        "checksum": "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65"
+      },
+      {
+        "name": "libtasn1",
+        "epoch": 0,
+        "version": "4.19.0",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libtasn1-4.19.0-6.el10.aarch64.rpm",
+        "checksum": "sha256:c7ac3f6433ef22f08fa9f2c56d668ea27452a27ab16b468fb6ca8dd8fcca572e"
+      },
+      {
+        "name": "libtool-ltdl",
+        "epoch": 0,
+        "version": "2.4.7",
+        "release": "10.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libtool-ltdl-2.4.7-10.el10.aarch64.rpm",
+        "checksum": "sha256:d2dd3a46bd828a16a125b0d6c5619c6da48426985ea56f5de5824eb611c6bee4"
+      },
+      {
+        "name": "libunistring",
+        "epoch": 0,
+        "version": "1.1",
+        "release": "7.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libunistring-1.1-7.el10.aarch64.rpm",
+        "checksum": "sha256:9bbfc69de31a0fff17222ac31d17aa58979fab487daa31a33e2823a9b03a2703"
+      },
+      {
+        "name": "libutempter",
+        "epoch": 0,
+        "version": "1.2.1",
+        "release": "13.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libutempter-1.2.1-13.el10.aarch64.rpm",
+        "checksum": "sha256:f71c259002756aa0af05a854e28447afcea3249fb05c80667f84d8c189040fcc"
+      },
+      {
+        "name": "libuuid",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libuuid-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:63df046a41121814f3dfb9e7e172f62735dfe6ee506f244004a6033ba70d61ab"
+      },
+      {
+        "name": "libverto",
+        "epoch": 0,
+        "version": "0.3.2",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libverto-0.3.2-8.el10.aarch64.rpm",
+        "checksum": "sha256:fab03729edf4c0157d5cc3e60e300f4124149e4662e45d18adbd48ffc3a9d84a"
+      },
+      {
+        "name": "libxcrypt",
+        "epoch": 0,
+        "version": "4.4.36",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libxcrypt-4.4.36-5.el10.aarch64.rpm",
+        "checksum": "sha256:30272cafbb35245c89e54d2c97058c948b8adadc17f8a0aa839bc579aab1a894"
+      },
+      {
+        "name": "libxml2",
+        "epoch": 0,
+        "version": "2.12.5",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libxml2-2.12.5-1.el10.aarch64.rpm",
+        "checksum": "sha256:d81e342a84bf9452cc130be1d1eb98d0e75d52ebf836c96c7e2ede67728e6bcb"
+      },
+      {
+        "name": "libzstd",
+        "epoch": 0,
+        "version": "1.5.5",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libzstd-1.5.5-5.el10.aarch64.rpm",
+        "checksum": "sha256:6aab01c97f90aa4b18998a53f34e75fffb4b42c6d5635d5fdc9ef9d61451c60e"
+      },
+      {
+        "name": "lua-libs",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/lua-libs-5.4.6-5.el10.aarch64.rpm",
+        "checksum": "sha256:e5f6cfcac6c8b208e72bd0253fca5d7699c0888cdee5636adf8d6453fd7ca215"
+      },
+      {
+        "name": "lz4-libs",
+        "epoch": 0,
+        "version": "1.9.4",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/lz4-libs-1.9.4-6.el10.aarch64.rpm",
+        "checksum": "sha256:ffe0ffe153b591f5b93389787811fe04253422b7599b6672048bcc81f667bdcd"
+      },
+      {
+        "name": "mpdecimal",
+        "epoch": 0,
+        "version": "2.5.1",
+        "release": "9.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/mpdecimal-2.5.1-9.el10.aarch64.rpm",
+        "checksum": "sha256:564564e9239593cfd7d8501a5b06321f121d2a1f37b5bcadc150521f44cb7a45"
+      },
+      {
+        "name": "mpfr",
+        "epoch": 0,
+        "version": "4.2.1",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/mpfr-4.2.1-3.el10.aarch64.rpm",
+        "checksum": "sha256:9cfe55167bcfd455a942bade330c8c02c668f9216a8fd00685e8fcf19c45aa21"
+      },
+      {
+        "name": "ncurses-base",
+        "epoch": 0,
+        "version": "6.4",
+        "release": "12.20240127.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ncurses-base-6.4-12.20240127.el10.noarch.rpm",
+        "checksum": "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31"
+      },
+      {
+        "name": "ncurses-libs",
+        "epoch": 0,
+        "version": "6.4",
+        "release": "12.20240127.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ncurses-libs-6.4-12.20240127.el10.aarch64.rpm",
+        "checksum": "sha256:92a2fa27bf703e005b92409af69ae50732695132db45cba3f7612019b16b2ca8"
+      },
+      {
+        "name": "openldap",
+        "epoch": 0,
+        "version": "2.6.7",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/openldap-2.6.7-1.el10.aarch64.rpm",
+        "checksum": "sha256:cf450e4ed1dbeb0ad78db94887ec845ec593d7e4feab37f3be5841918fda6282"
+      },
+      {
+        "name": "openssl-libs",
+        "epoch": 1,
+        "version": "3.2.2",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/openssl-libs-3.2.2-3.el10.aarch64.rpm",
+        "checksum": "sha256:76df1c323b7ebf3b827af099036f2273a1e2a57d526e8add6eb1213e6dbd42bb"
+      },
+      {
+        "name": "p11-kit",
+        "epoch": 0,
+        "version": "0.25.3",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/p11-kit-0.25.3-4.el10.aarch64.rpm",
+        "checksum": "sha256:024341af7ba196e55e667e1ad3bc8cea5fd73be818bc2dd500f141752baea987"
+      },
+      {
+        "name": "p11-kit-trust",
+        "epoch": 0,
+        "version": "0.25.3",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/p11-kit-trust-0.25.3-4.el10.aarch64.rpm",
+        "checksum": "sha256:7a224f090c49ef13848f3be3fc34db81d767e647a9ab79754170c76e62a30f36"
+      },
+      {
+        "name": "pam",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pam-1.6.1-2.el10.aarch64.rpm",
+        "checksum": "sha256:70af2c10f0aff296be4fc558e9434b757650343ebd38b12a2c61f2b33ff7c1fe"
+      },
+      {
+        "name": "pam-libs",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pam-libs-1.6.1-2.el10.aarch64.rpm",
+        "checksum": "sha256:24ea291ed1420d5bcc477d436af317aa49b08d668782560641621b245441400d"
+      },
+      {
+        "name": "pcre2",
+        "epoch": 0,
+        "version": "10.42",
+        "release": "3.el10.1",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pcre2-10.42-3.el10.1.aarch64.rpm",
+        "checksum": "sha256:5aadabc71e75f37c9bc5b927899c18ab36d547a726a788fe9b70804935c6fd3f"
+      },
+      {
+        "name": "pcre2-syntax",
+        "epoch": 0,
+        "version": "10.42",
+        "release": "3.el10.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pcre2-syntax-10.42-3.el10.1.noarch.rpm",
+        "checksum": "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f"
+      },
+      {
+        "name": "policycoreutils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/policycoreutils-3.6-4.el10.aarch64.rpm",
+        "checksum": "sha256:30402153d20da7a9eaa822ba0ecbd3cfb5af349c1fd849f380b258b3f5ef7104"
+      },
+      {
+        "name": "popt",
+        "epoch": 0,
+        "version": "1.19",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/popt-1.19-6.el10.aarch64.rpm",
+        "checksum": "sha256:0a380d54c2a01d6bb41ed3e97babf6776e17842de9a78159a26611e77974ef75"
+      },
+      {
+        "name": "publicsuffix-list-dafsa",
+        "epoch": 0,
+        "version": "20240107",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/publicsuffix-list-dafsa-20240107-3.el10.noarch.rpm",
+        "checksum": "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607"
+      },
+      {
+        "name": "python3",
+        "epoch": 0,
+        "version": "3.12.2",
+        "release": "7.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/python3-3.12.2-7.el10.aarch64.rpm",
+        "checksum": "sha256:5641bdde9e836179cf80e199e72eca80e6fe17e2b66c07f2c5f2bba10c8a034f"
+      },
+      {
+        "name": "python3-libs",
+        "epoch": 0,
+        "version": "3.12.2",
+        "release": "7.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/python3-libs-3.12.2-7.el10.aarch64.rpm",
+        "checksum": "sha256:6ef4593984c83176477c7f615cf154bae12066b5a553f256649adb176363f197"
+      },
+      {
+        "name": "python3-pip-wheel",
+        "epoch": 0,
+        "version": "23.3.2",
+        "release": "2.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/python3-pip-wheel-23.3.2-2.el10.noarch.rpm",
+        "checksum": "sha256:3465cf9c9261f72dc8ecdfadf5ea98d56a42aed0a6e09038fc69d9bada766aa6"
+      },
+      {
+        "name": "readline",
+        "epoch": 0,
+        "version": "8.2",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/readline-8.2-8.el10.aarch64.rpm",
+        "checksum": "sha256:b0f9b643fffbe6d1bdf6374134953345ed24484cb2deac65fbeab568a115f737"
+      },
+      {
+        "name": "rpm",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-4.19.1.1-1.el10.aarch64.rpm",
+        "checksum": "sha256:ef4f1d6c774c09ffac9c81af7afd99c49e1679ba2d946df47bd9eef15eeb6298"
+      },
+      {
+        "name": "rpm-libs",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-libs-4.19.1.1-1.el10.aarch64.rpm",
+        "checksum": "sha256:a73fe7b2339ae2e64e916e5a64648272539c317d4d45df68233226e005bc487f"
+      },
+      {
+        "name": "rpm-plugin-audit",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-plugin-audit-4.19.1.1-1.el10.aarch64.rpm",
+        "checksum": "sha256:8bee32b462a5497a07c37f9ef5906be971c0df427b00502fa1835f0336b6b950"
+      },
+      {
+        "name": "rpm-plugin-selinux",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-plugin-selinux-4.19.1.1-1.el10.aarch64.rpm",
+        "checksum": "sha256:43de4368faf5f89bec477ae9867a5244497e4ac6531b985759df0befb0d0f1ac"
+      },
+      {
+        "name": "rpm-sequoia",
+        "epoch": 0,
+        "version": "1.6.0",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-sequoia-1.6.0-2.el10.aarch64.rpm",
+        "checksum": "sha256:b793336fcae47be1919fd9ddc945b1530ed6a0584e1d33d99f788e0be1be5fcd"
+      },
+      {
+        "name": "sed",
+        "epoch": 0,
+        "version": "4.9",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/sed-4.9-1.el10.aarch64.rpm",
+        "checksum": "sha256:829ed79acf93a16c2f3ee945987d7fa7dc1fc416d3be1d422c246d72e50c8bc9"
+      },
+      {
+        "name": "selinux-policy",
+        "epoch": 0,
+        "version": "40.13.3",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/selinux-policy-40.13.3-1.el10.noarch.rpm",
+        "checksum": "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6"
+      },
+      {
+        "name": "selinux-policy-targeted",
+        "epoch": 0,
+        "version": "40.13.3",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/selinux-policy-targeted-40.13.3-1.el10.noarch.rpm",
+        "checksum": "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be"
+      },
+      {
+        "name": "setup",
+        "epoch": 0,
+        "version": "2.14.5",
+        "release": "2.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/setup-2.14.5-2.el10.noarch.rpm",
+        "checksum": "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6"
+      },
+      {
+        "name": "shadow-utils",
+        "epoch": 2,
+        "version": "4.15.0",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/shadow-utils-4.15.0-2.el10.aarch64.rpm",
+        "checksum": "sha256:69c9cd64733f41c600458cca6a45161151889a7496de45bbebc1aaf653d763ca"
+      },
+      {
+        "name": "sqlite-libs",
+        "epoch": 0,
+        "version": "3.45.1",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/sqlite-libs-3.45.1-2.el10.aarch64.rpm",
+        "checksum": "sha256:82e2838124d07333bc8104022a7af1e37d775c857ab6ba815707df95faa859d5"
+      },
+      {
+        "name": "systemd",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-255.3-1.el10.aarch64.rpm",
+        "checksum": "sha256:8f9ef02f75b4e98860b208318799c4c3f4c63a0afa2ab3675eea7d07adf2a045"
+      },
+      {
+        "name": "systemd-libs",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-libs-255.3-1.el10.aarch64.rpm",
+        "checksum": "sha256:9b5b6fef1e7c0f1155615cb6df7d11248afa3f91473da8272901442a17ac6c4d"
+      },
+      {
+        "name": "systemd-pam",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-pam-255.3-1.el10.aarch64.rpm",
+        "checksum": "sha256:95b90ce268a40b3400cca7136674739bc2c754b9aa93c304527c79673c5c2e24"
+      },
+      {
+        "name": "tar",
+        "epoch": 2,
+        "version": "1.35",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/tar-1.35-3.el10.aarch64.rpm",
+        "checksum": "sha256:fbd59b08576fb02f78f16417947c4dfe66cb1647075efc4e3438ce0c6b66cdfc"
+      },
+      {
+        "name": "tzdata",
+        "epoch": 0,
+        "version": "2024a",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/tzdata-2024a-3.el10.noarch.rpm",
+        "checksum": "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9"
+      },
+      {
+        "name": "util-linux",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/util-linux-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:65204ec2f95275b11b307e844fe652c730885e4175afdd46eef128c4620e4f19"
+      },
+      {
+        "name": "util-linux-core",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/util-linux-core-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:0dab1a01bf872eb68160301f4925fa9612406467fce9e3f454fd8edd3cf9eb3a"
+      },
+      {
+        "name": "xz",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/xz-5.4.6-1.el10.aarch64.rpm",
+        "checksum": "sha256:29fa9d28b940c38f8407c9354dda42c07c2f3bfebf98ae5fd3cd166976ebd344"
+      },
+      {
+        "name": "xz-libs",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/xz-libs-5.4.6-1.el10.aarch64.rpm",
+        "checksum": "sha256:48f8ef16306832b7098dc9a2ea0fce1ab3eb6f8091597d5020162d8ae8315106"
+      },
+      {
+        "name": "zlib-ng-compat",
+        "epoch": 0,
+        "version": "2.1.6",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/zlib-ng-compat-2.1.6-2.el10.aarch64.rpm",
+        "checksum": "sha256:baa2d71f83334dddc4a3be8db35722add321079c379c898e597eb7e3e0d1974b"
+      }
+    ],
+    "os": [
+      {
+        "name": "gawk-all-langpacks",
+        "epoch": 0,
+        "version": "5.3.0",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/gawk-all-langpacks-5.3.0-3.el10.aarch64.rpm",
+        "checksum": "sha256:c5b5b3427fa1a29a699d039d1d6b18911c6a98ac695d30dd5b14ea15a1b4cf97"
+      },
+      {
+        "name": "libxkbcommon",
+        "epoch": 0,
+        "version": "1.6.0",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/libxkbcommon-1.6.0-2.el10.aarch64.rpm",
+        "checksum": "sha256:e1e4a7ebd569c11ca697854485b6c0cca739525a98eae0d143d7a8a7dbf711ee"
+      },
+      {
+        "name": "xkeyboard-config",
+        "epoch": 0,
+        "version": "2.41",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240626/Packages/xkeyboard-config-2.41-1.el10.noarch.rpm",
+        "checksum": "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df"
+      },
+      {
+        "name": "alternatives",
+        "epoch": 0,
+        "version": "1.26",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/alternatives-1.26-3.el10.aarch64.rpm",
+        "checksum": "sha256:d5c3b61d12c113b04fa70958fc58e2b6ed15b5ccfd53b2778d1ec1970d37bb43"
+      },
+      {
+        "name": "audit-libs",
+        "epoch": 0,
+        "version": "4.0",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/audit-libs-4.0-8.el10.aarch64.rpm",
+        "checksum": "sha256:b42542b9d5bb8b0334c840126d276d73a5aa139af99c9aed599627f3fb5d5456"
+      },
+      {
+        "name": "authselect",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/authselect-1.5.0-5.el10.aarch64.rpm",
+        "checksum": "sha256:59eff0d2c99d18f772bbd139fa1bc030f6710041b142e93dd117fc85004c620d"
+      },
+      {
+        "name": "authselect-libs",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/authselect-libs-1.5.0-5.el10.aarch64.rpm",
+        "checksum": "sha256:8ac0c35b934663bf8cdfba21393551f9ecd1a74418e35798efbf8422501945dd"
+      },
+      {
+        "name": "basesystem",
+        "epoch": 0,
+        "version": "11",
+        "release": "20.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/basesystem-11-20.el10.noarch.rpm",
+        "checksum": "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8"
+      },
+      {
+        "name": "bash",
+        "epoch": 0,
+        "version": "5.2.26",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/bash-5.2.26-3.el10.aarch64.rpm",
+        "checksum": "sha256:638e8eda51252e100e82815c75ac53dbd2f19ab747aad58041906786e123fd73"
+      },
+      {
+        "name": "bzip2-libs",
+        "epoch": 0,
+        "version": "1.0.8",
+        "release": "18.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/bzip2-libs-1.0.8-18.el10.aarch64.rpm",
+        "checksum": "sha256:ac4e8a0e0c915486ade00d5d8495d0fb170929469ef03488c711218348d6ddc5"
+      },
+      {
+        "name": "ca-certificates",
+        "epoch": 0,
+        "version": "2023.2.62_v7.0.401",
+        "release": "6.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ca-certificates-2023.2.62_v7.0.401-6.el10.noarch.rpm",
+        "checksum": "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce"
+      },
+      {
+        "name": "centos-gpg-keys",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-gpg-keys-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade"
+      },
+      {
+        "name": "centos-stream-release",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-stream-release-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386"
+      },
+      {
+        "name": "centos-stream-repos",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/centos-stream-repos-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2"
+      },
+      {
+        "name": "coreutils",
+        "epoch": 0,
+        "version": "9.4",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/coreutils-9.4-6.el10.aarch64.rpm",
+        "checksum": "sha256:30e0f0a9edf77f35a6127f209a70249a1049247d3f36d79499c68d80d2d574ed"
+      },
+      {
+        "name": "coreutils-common",
+        "epoch": 0,
+        "version": "9.4",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/coreutils-common-9.4-6.el10.aarch64.rpm",
+        "checksum": "sha256:dac6be5604965f2ad4634a2b57148a92ce8a3bd5994206bc115f431f7e01eea9"
+      },
+      {
+        "name": "cracklib",
+        "epoch": 0,
+        "version": "2.9.11",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cracklib-2.9.11-5.el10.aarch64.rpm",
+        "checksum": "sha256:1840de429bffeefccfebd795795d6773db445a69daa29a36c34900896397ee73"
+      },
+      {
+        "name": "cracklib-dicts",
+        "epoch": 0,
+        "version": "2.9.11",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cracklib-dicts-2.9.11-5.el10.aarch64.rpm",
+        "checksum": "sha256:cbb6936e36cca23893c441d69701f20bb81731602b999226f21e6e749edc5896"
+      },
+      {
+        "name": "crypto-policies",
+        "epoch": 0,
+        "version": "20240522",
+        "release": "1.git77963ab.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/crypto-policies-20240522-1.git77963ab.el10.noarch.rpm",
+        "checksum": "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86"
+      },
+      {
+        "name": "cryptsetup-libs",
+        "epoch": 0,
+        "version": "2.7.2",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cryptsetup-libs-2.7.2-2.el10.aarch64.rpm",
+        "checksum": "sha256:53db8b2e320df4ed1b981b74ffea12445522babad044466b074148cbf0fff72b"
+      },
+      {
+        "name": "curl",
+        "epoch": 0,
+        "version": "8.6.0",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/curl-8.6.0-6.el10.aarch64.rpm",
+        "checksum": "sha256:bdb025acca6c2195dc8c570975e093c364980f925402049184ba1e68baffcd9d"
+      },
+      {
+        "name": "cyrus-sasl-lib",
+        "epoch": 0,
+        "version": "2.1.28",
+        "release": "19.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/cyrus-sasl-lib-2.1.28-19.el10.aarch64.rpm",
+        "checksum": "sha256:1ea5ca231290f16a04bece9f57c2d9b8a8f782de0ccb07651833212014e9988c"
+      },
+      {
+        "name": "dbus",
+        "epoch": 1,
+        "version": "1.14.10",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-1.14.10-3.el10.aarch64.rpm",
+        "checksum": "sha256:1280421265f9391af58ec25089c53c3a09a0929a40abfb71bb76ffedee3fa07c"
+      },
+      {
+        "name": "dbus-broker",
+        "epoch": 0,
+        "version": "35",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-broker-35-4.el10.aarch64.rpm",
+        "checksum": "sha256:21b702ada68404f9eaf3b9ed9a7200e564627a97d67c8c764647b9c3ffdaacbf"
+      },
+      {
+        "name": "dbus-common",
+        "epoch": 1,
+        "version": "1.14.10",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/dbus-common-1.14.10-3.el10.noarch.rpm",
+        "checksum": "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9"
+      },
+      {
+        "name": "device-mapper",
+        "epoch": 10,
+        "version": "1.02.197",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/device-mapper-1.02.197-1.el10.aarch64.rpm",
+        "checksum": "sha256:6dadda87f7211658de9567b1f0056c486f8c34e613a8d34db3ab8c5ddcea3de4"
+      },
+      {
+        "name": "device-mapper-libs",
+        "epoch": 10,
+        "version": "1.02.197",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/device-mapper-libs-1.02.197-1.el10.aarch64.rpm",
+        "checksum": "sha256:35d3b13f74040ad6e716a2fbde5c9cdbb8958cd312af1d77a254c98facaf43fd"
+      },
+      {
+        "name": "diffutils",
+        "epoch": 0,
+        "version": "3.10",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/diffutils-3.10-5.el10.aarch64.rpm",
+        "checksum": "sha256:15fa7c46101bdbe6aa1cc4b683ad4494bcf737cfc22ff7a539a2ab24b81c04bd"
+      },
+      {
+        "name": "elfutils-debuginfod-client",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-debuginfod-client-0.191-3.el10.aarch64.rpm",
+        "checksum": "sha256:e56419799f5a39150851a6bc1f214a5c81f33d47218417dfb5135d0be6c430b0"
+      },
+      {
+        "name": "elfutils-default-yama-scope",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-default-yama-scope-0.191-3.el10.noarch.rpm",
+        "checksum": "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db"
+      },
+      {
+        "name": "elfutils-libelf",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-libelf-0.191-3.el10.aarch64.rpm",
+        "checksum": "sha256:da75ea74585ce461921b2915991677d7e7d9e42fc282da9cc35d5b161610e3f9"
+      },
+      {
+        "name": "elfutils-libs",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/elfutils-libs-0.191-3.el10.aarch64.rpm",
+        "checksum": "sha256:80fc26212ea0e35a2f6346a6ecad619ab4d538304207bf932036cea07575dab3"
+      },
+      {
+        "name": "expat",
+        "epoch": 0,
+        "version": "2.5.0",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/expat-2.5.0-5.el10.aarch64.rpm",
+        "checksum": "sha256:a0e7c04114f8c44d1f5b2dc4d2e31589a4ac11070fc6d43117a56e3c8a0bda5a"
+      },
+      {
+        "name": "filesystem",
+        "epoch": 0,
+        "version": "3.18",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/filesystem-3.18-8.el10.aarch64.rpm",
+        "checksum": "sha256:c1f07adb6fae5ebbf8c1323e8d94478934328880276a9df6074ab0c6096579b2"
+      },
+      {
+        "name": "findutils",
+        "epoch": 1,
+        "version": "4.9.0",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/findutils-4.9.0-8.el10.aarch64.rpm",
+        "checksum": "sha256:c8df5a25125e4413b859bce4d6b08b3ccee355ac12c6ceb9ef52d0f18faab3bb"
+      },
+      {
+        "name": "gawk",
+        "epoch": 0,
+        "version": "5.3.0",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gawk-5.3.0-3.el10.aarch64.rpm",
+        "checksum": "sha256:8e5511fb6ad86fb7b6401f124d1d87af378ecab0754fa53c26c33370ac17681e"
+      },
+      {
+        "name": "gdbm",
+        "epoch": 1,
+        "version": "1.23",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gdbm-1.23-6.el10.aarch64.rpm",
+        "checksum": "sha256:7e2ac5e6550f2ca9158a8fd7d87a7fb169a997766345653debdcae387a660cd5"
+      },
+      {
+        "name": "gdbm-libs",
+        "epoch": 1,
+        "version": "1.23",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gdbm-libs-1.23-6.el10.aarch64.rpm",
+        "checksum": "sha256:a331f1e3bbed69feb35487635b1761634654c404c27c28abce84b8bb7254276d"
+      },
+      {
+        "name": "glibc",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-2.39-15.el10.aarch64.rpm",
+        "checksum": "sha256:0405fc80a4250e37d40fd370e889604ed68b57f4da26e4bca72feaf833aff957"
+      },
+      {
+        "name": "glibc-common",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-common-2.39-15.el10.aarch64.rpm",
+        "checksum": "sha256:786c2977ae2b7a27928d88c5fb66be7e2f4a3d64f5ba2b4462685089b6d1a149"
+      },
+      {
+        "name": "glibc-gconv-extra",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-gconv-extra-2.39-15.el10.aarch64.rpm",
+        "checksum": "sha256:b86dd555f1f199da14d117c61a2d4577274ad37d37a061d05bfee6c0e8eb37fa"
+      },
+      {
+        "name": "glibc-minimal-langpack",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/glibc-minimal-langpack-2.39-15.el10.aarch64.rpm",
+        "checksum": "sha256:7824b392d5a96023ab99f3fc380d84c119efcabc73b7393793b0cc580e8d0a9a"
+      },
+      {
+        "name": "gmp",
+        "epoch": 1,
+        "version": "6.2.1",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gmp-6.2.1-8.el10.aarch64.rpm",
+        "checksum": "sha256:653514c709b721ed64089fceef4b017e79ec173fb8c6218a35b123dac9e6aca7"
+      },
+      {
+        "name": "grep",
+        "epoch": 0,
+        "version": "3.11",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/grep-3.11-8.el10.aarch64.rpm",
+        "checksum": "sha256:c7f3370be2b61b2608e3bf151e45902e2f016cddf37506bf3fac496c9dfb47b9"
+      },
+      {
+        "name": "gzip",
+        "epoch": 0,
+        "version": "1.13",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/gzip-1.13-1.el10.aarch64.rpm",
+        "checksum": "sha256:3fa91a16da9ce3e0f49ddb9fd59873c33cfe2cac33afeb407e2e86a0ee872e0e"
+      },
+      {
+        "name": "json-c",
+        "epoch": 0,
+        "version": "0.17",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/json-c-0.17-3.el10.aarch64.rpm",
+        "checksum": "sha256:cff20866af80033505c02229e69b98d9efa6c2b9cdf4db707004c3547ca8b046"
+      },
+      {
+        "name": "keyutils-libs",
+        "epoch": 0,
+        "version": "1.6.3",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/keyutils-libs-1.6.3-3.el10.aarch64.rpm",
+        "checksum": "sha256:ceef19d1ae7dc3b4bc877a8a4166109f007d551f10a53811c49bb193d2fb6923"
+      },
+      {
+        "name": "kmod-libs",
+        "epoch": 0,
+        "version": "31",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/kmod-libs-31-5.el10.aarch64.rpm",
+        "checksum": "sha256:0946ba6ea2ad2f803d04fcf1882d206bd3f09f553c70c60d35a6776afd84a2b8"
+      },
+      {
+        "name": "krb5-libs",
+        "epoch": 0,
+        "version": "1.21.2",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/krb5-libs-1.21.2-5.el10.aarch64.rpm",
+        "checksum": "sha256:334bfc6b3afd065c5b5c503ccd617f5d4b5e91fb289bf4649a792551bcc0de3f"
+      },
+      {
+        "name": "libacl",
+        "epoch": 0,
+        "version": "2.3.2",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libacl-2.3.2-1.el10.aarch64.rpm",
+        "checksum": "sha256:282c987dca7a968ac97a1c0b224d54e425a179dfccab44d34fa769de1b7c80c4"
+      },
+      {
+        "name": "libarchive",
+        "epoch": 0,
+        "version": "3.7.2",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libarchive-3.7.2-6.el10.aarch64.rpm",
+        "checksum": "sha256:23e31bb868c4df294c5a2653cac0d294f448c1b7886120f8f7466d1687912ef7"
+      },
+      {
+        "name": "libattr",
+        "epoch": 0,
+        "version": "2.5.2",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libattr-2.5.2-3.el10.aarch64.rpm",
+        "checksum": "sha256:7e5b543b40e06e9c80e78271b78657e08961bc8a9a216c1f683cfdc8588544f9"
+      },
+      {
+        "name": "libblkid",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libblkid-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:62cbfcc13286a54befa55036093968d7f3f504a1bd8360d0c852cd68f4b5a4e3"
+      },
+      {
+        "name": "libbpf",
+        "epoch": 2,
+        "version": "1.4.0",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libbpf-1.4.0-2.el10.aarch64.rpm",
+        "checksum": "sha256:3c2e72d674ce3712a547cfb07d095518211a6584979b9bb0b47a7b66bca737ca"
+      },
+      {
+        "name": "libbrotli",
+        "epoch": 0,
+        "version": "1.1.0",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libbrotli-1.1.0-3.el10.aarch64.rpm",
+        "checksum": "sha256:b922824f5da0b69d413469020b0ff80cd6ce8186d0cfeb185fbdce84f90e3c73"
+      },
+      {
+        "name": "libcap",
+        "epoch": 0,
+        "version": "2.69",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcap-2.69-4.el10.aarch64.rpm",
+        "checksum": "sha256:fb6359ac0c5cebf463beaf56f95d83418c7e61fe005e20d4280d2a770d5d0b30"
+      },
+      {
+        "name": "libcap-ng",
+        "epoch": 0,
+        "version": "0.8.4",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcap-ng-0.8.4-4.el10.aarch64.rpm",
+        "checksum": "sha256:0200da59a192613f0a796c9d17dbb47d23ad1839ae811fc813c977e7eb09f016"
+      },
+      {
+        "name": "libcom_err",
+        "epoch": 0,
+        "version": "1.47.0",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcom_err-1.47.0-5.el10.aarch64.rpm",
+        "checksum": "sha256:602e53269d96eac84db35659b0dec33d56f78ab7b22987c534093d7388ae1471"
+      },
+      {
+        "name": "libcurl",
+        "epoch": 0,
+        "version": "8.6.0",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libcurl-8.6.0-6.el10.aarch64.rpm",
+        "checksum": "sha256:5f9eb9f6650af70e5415bce54d3ff296f216c85e5fc9e329e6412a07f0c55529"
+      },
+      {
+        "name": "libeconf",
+        "epoch": 0,
+        "version": "0.6.2",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libeconf-0.6.2-2.el10.aarch64.rpm",
+        "checksum": "sha256:46fc57fd8ebad4fb20ff7dce1b82d434aaef7209bb1cf1fc3424d544b9177fc6"
+      },
+      {
+        "name": "libevent",
+        "epoch": 0,
+        "version": "2.1.12",
+        "release": "13.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libevent-2.1.12-13.el10.aarch64.rpm",
+        "checksum": "sha256:b374bab409e5e85957a10f8a9bd90a135d8097d40204fa5f064e6ee89bd4eb16"
+      },
+      {
+        "name": "libfdisk",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libfdisk-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:caf6325ff658534a9807a8e45ae8c692bf54af94a212978d1af922833a84afb9"
+      },
+      {
+        "name": "libffi",
+        "epoch": 0,
+        "version": "3.4.4",
+        "release": "7.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libffi-3.4.4-7.el10.aarch64.rpm",
+        "checksum": "sha256:dd28d6ab61e319d34e6693a96a8cc5da63ada6f6299280f0bd85e62470b774b9"
+      },
+      {
+        "name": "libgcc",
+        "epoch": 0,
+        "version": "14.1.1",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libgcc-14.1.1-5.el10.aarch64.rpm",
+        "checksum": "sha256:7a3c7ecd7c655425156c8802625b65232ca9a761224e19c09e65628eeb0143f5"
+      },
+      {
+        "name": "libidn2",
+        "epoch": 0,
+        "version": "2.3.7",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libidn2-2.3.7-1.el10.aarch64.rpm",
+        "checksum": "sha256:7a3ecb21209a6866248cc95ada9526e4687a30972b6ff95ceb19a54e6cc0556a"
+      },
+      {
+        "name": "libmount",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libmount-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:bfd2b4b058cfd2400651c65d45102dac9e70e801078ad7f18fdfd8a7275ce9a3"
+      },
+      {
+        "name": "libnghttp2",
+        "epoch": 0,
+        "version": "1.61.0",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libnghttp2-1.61.0-1.el10.aarch64.rpm",
+        "checksum": "sha256:52565b078ed6c79d9a913999b207c3d85bde5d479acc3deb8285d2c138abd84e"
+      },
+      {
+        "name": "libpsl",
+        "epoch": 0,
+        "version": "0.21.5",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libpsl-0.21.5-3.el10.aarch64.rpm",
+        "checksum": "sha256:bbb4424e5df2e7c403ca233e10123a9093a30c4008a74678cd996f12d0643a94"
+      },
+      {
+        "name": "libpwquality",
+        "epoch": 0,
+        "version": "1.4.5",
+        "release": "9.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libpwquality-1.4.5-9.el10.aarch64.rpm",
+        "checksum": "sha256:7e9f46966b98e4542695f463e59d618d1ad8d739ab9736c4f9dc070ed215dc89"
+      },
+      {
+        "name": "libseccomp",
+        "epoch": 0,
+        "version": "2.5.3",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libseccomp-2.5.3-8.el10.aarch64.rpm",
+        "checksum": "sha256:eabd1439e76f6f5f003a858b97bff931154c2e0a6f44f5336d7f7e37934a5a48"
+      },
+      {
+        "name": "libselinux",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libselinux-3.6-4.el10.aarch64.rpm",
+        "checksum": "sha256:52007456d5a84c87cc36da61854ef571e8573316402fbf0d114800f203f59c82"
+      },
+      {
+        "name": "libselinux-utils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libselinux-utils-3.6-4.el10.aarch64.rpm",
+        "checksum": "sha256:f1cd06f092b24855054f84d36768d507bf92fe83cb74ad3445c645c5e74a6b76"
+      },
+      {
+        "name": "libsemanage",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsemanage-3.6-3.el10.aarch64.rpm",
+        "checksum": "sha256:ddb96d772329a5cc6adfb78cd463143ad4149da658fadbb34438ba21dd957704"
+      },
+      {
+        "name": "libsepol",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsepol-3.6-3.el10.aarch64.rpm",
+        "checksum": "sha256:2732f25a383c8716548ab979c9b2cda9758dca6f9b0156f1bdd18bff2690045c"
+      },
+      {
+        "name": "libsmartcols",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libsmartcols-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:184f216ee2e3cb430c2b53a29f242920f22b0e5523e556dfb7e4d8ef272849a4"
+      },
+      {
+        "name": "libssh",
+        "epoch": 0,
+        "version": "0.10.6",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libssh-0.10.6-6.el10.aarch64.rpm",
+        "checksum": "sha256:158ca0f3779196ea070474ec07e04fbd8651d9cd7e64721086ac257553de9f28"
+      },
+      {
+        "name": "libssh-config",
+        "epoch": 0,
+        "version": "0.10.6",
+        "release": "6.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libssh-config-0.10.6-6.el10.noarch.rpm",
+        "checksum": "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65"
+      },
+      {
+        "name": "libtasn1",
+        "epoch": 0,
+        "version": "4.19.0",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libtasn1-4.19.0-6.el10.aarch64.rpm",
+        "checksum": "sha256:c7ac3f6433ef22f08fa9f2c56d668ea27452a27ab16b468fb6ca8dd8fcca572e"
+      },
+      {
+        "name": "libtool-ltdl",
+        "epoch": 0,
+        "version": "2.4.7",
+        "release": "10.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libtool-ltdl-2.4.7-10.el10.aarch64.rpm",
+        "checksum": "sha256:d2dd3a46bd828a16a125b0d6c5619c6da48426985ea56f5de5824eb611c6bee4"
+      },
+      {
+        "name": "libunistring",
+        "epoch": 0,
+        "version": "1.1",
+        "release": "7.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libunistring-1.1-7.el10.aarch64.rpm",
+        "checksum": "sha256:9bbfc69de31a0fff17222ac31d17aa58979fab487daa31a33e2823a9b03a2703"
+      },
+      {
+        "name": "libutempter",
+        "epoch": 0,
+        "version": "1.2.1",
+        "release": "13.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libutempter-1.2.1-13.el10.aarch64.rpm",
+        "checksum": "sha256:f71c259002756aa0af05a854e28447afcea3249fb05c80667f84d8c189040fcc"
+      },
+      {
+        "name": "libuuid",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libuuid-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:63df046a41121814f3dfb9e7e172f62735dfe6ee506f244004a6033ba70d61ab"
+      },
+      {
+        "name": "libverto",
+        "epoch": 0,
+        "version": "0.3.2",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libverto-0.3.2-8.el10.aarch64.rpm",
+        "checksum": "sha256:fab03729edf4c0157d5cc3e60e300f4124149e4662e45d18adbd48ffc3a9d84a"
+      },
+      {
+        "name": "libxcrypt",
+        "epoch": 0,
+        "version": "4.4.36",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libxcrypt-4.4.36-5.el10.aarch64.rpm",
+        "checksum": "sha256:30272cafbb35245c89e54d2c97058c948b8adadc17f8a0aa839bc579aab1a894"
+      },
+      {
+        "name": "libxml2",
+        "epoch": 0,
+        "version": "2.12.5",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libxml2-2.12.5-1.el10.aarch64.rpm",
+        "checksum": "sha256:d81e342a84bf9452cc130be1d1eb98d0e75d52ebf836c96c7e2ede67728e6bcb"
+      },
+      {
+        "name": "libzstd",
+        "epoch": 0,
+        "version": "1.5.5",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/libzstd-1.5.5-5.el10.aarch64.rpm",
+        "checksum": "sha256:6aab01c97f90aa4b18998a53f34e75fffb4b42c6d5635d5fdc9ef9d61451c60e"
+      },
+      {
+        "name": "lua-libs",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "5.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/lua-libs-5.4.6-5.el10.aarch64.rpm",
+        "checksum": "sha256:e5f6cfcac6c8b208e72bd0253fca5d7699c0888cdee5636adf8d6453fd7ca215"
+      },
+      {
+        "name": "lz4-libs",
+        "epoch": 0,
+        "version": "1.9.4",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/lz4-libs-1.9.4-6.el10.aarch64.rpm",
+        "checksum": "sha256:ffe0ffe153b591f5b93389787811fe04253422b7599b6672048bcc81f667bdcd"
+      },
+      {
+        "name": "mpfr",
+        "epoch": 0,
+        "version": "4.2.1",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/mpfr-4.2.1-3.el10.aarch64.rpm",
+        "checksum": "sha256:9cfe55167bcfd455a942bade330c8c02c668f9216a8fd00685e8fcf19c45aa21"
+      },
+      {
+        "name": "ncurses-base",
+        "epoch": 0,
+        "version": "6.4",
+        "release": "12.20240127.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ncurses-base-6.4-12.20240127.el10.noarch.rpm",
+        "checksum": "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31"
+      },
+      {
+        "name": "ncurses-libs",
+        "epoch": 0,
+        "version": "6.4",
+        "release": "12.20240127.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/ncurses-libs-6.4-12.20240127.el10.aarch64.rpm",
+        "checksum": "sha256:92a2fa27bf703e005b92409af69ae50732695132db45cba3f7612019b16b2ca8"
+      },
+      {
+        "name": "openldap",
+        "epoch": 0,
+        "version": "2.6.7",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/openldap-2.6.7-1.el10.aarch64.rpm",
+        "checksum": "sha256:cf450e4ed1dbeb0ad78db94887ec845ec593d7e4feab37f3be5841918fda6282"
+      },
+      {
+        "name": "openssl-libs",
+        "epoch": 1,
+        "version": "3.2.2",
+        "release": "3.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/openssl-libs-3.2.2-3.el10.aarch64.rpm",
+        "checksum": "sha256:76df1c323b7ebf3b827af099036f2273a1e2a57d526e8add6eb1213e6dbd42bb"
+      },
+      {
+        "name": "p11-kit",
+        "epoch": 0,
+        "version": "0.25.3",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/p11-kit-0.25.3-4.el10.aarch64.rpm",
+        "checksum": "sha256:024341af7ba196e55e667e1ad3bc8cea5fd73be818bc2dd500f141752baea987"
+      },
+      {
+        "name": "p11-kit-trust",
+        "epoch": 0,
+        "version": "0.25.3",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/p11-kit-trust-0.25.3-4.el10.aarch64.rpm",
+        "checksum": "sha256:7a224f090c49ef13848f3be3fc34db81d767e647a9ab79754170c76e62a30f36"
+      },
+      {
+        "name": "pam",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pam-1.6.1-2.el10.aarch64.rpm",
+        "checksum": "sha256:70af2c10f0aff296be4fc558e9434b757650343ebd38b12a2c61f2b33ff7c1fe"
+      },
+      {
+        "name": "pam-libs",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pam-libs-1.6.1-2.el10.aarch64.rpm",
+        "checksum": "sha256:24ea291ed1420d5bcc477d436af317aa49b08d668782560641621b245441400d"
+      },
+      {
+        "name": "pcre2",
+        "epoch": 0,
+        "version": "10.42",
+        "release": "3.el10.1",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pcre2-10.42-3.el10.1.aarch64.rpm",
+        "checksum": "sha256:5aadabc71e75f37c9bc5b927899c18ab36d547a726a788fe9b70804935c6fd3f"
+      },
+      {
+        "name": "pcre2-syntax",
+        "epoch": 0,
+        "version": "10.42",
+        "release": "3.el10.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/pcre2-syntax-10.42-3.el10.1.noarch.rpm",
+        "checksum": "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f"
+      },
+      {
+        "name": "policycoreutils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/policycoreutils-3.6-4.el10.aarch64.rpm",
+        "checksum": "sha256:30402153d20da7a9eaa822ba0ecbd3cfb5af349c1fd849f380b258b3f5ef7104"
+      },
+      {
+        "name": "popt",
+        "epoch": 0,
+        "version": "1.19",
+        "release": "6.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/popt-1.19-6.el10.aarch64.rpm",
+        "checksum": "sha256:0a380d54c2a01d6bb41ed3e97babf6776e17842de9a78159a26611e77974ef75"
+      },
+      {
+        "name": "publicsuffix-list-dafsa",
+        "epoch": 0,
+        "version": "20240107",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/publicsuffix-list-dafsa-20240107-3.el10.noarch.rpm",
+        "checksum": "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607"
+      },
+      {
+        "name": "readline",
+        "epoch": 0,
+        "version": "8.2",
+        "release": "8.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/readline-8.2-8.el10.aarch64.rpm",
+        "checksum": "sha256:b0f9b643fffbe6d1bdf6374134953345ed24484cb2deac65fbeab568a115f737"
+      },
+      {
+        "name": "rpm",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-4.19.1.1-1.el10.aarch64.rpm",
+        "checksum": "sha256:ef4f1d6c774c09ffac9c81af7afd99c49e1679ba2d946df47bd9eef15eeb6298"
+      },
+      {
+        "name": "rpm-libs",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-libs-4.19.1.1-1.el10.aarch64.rpm",
+        "checksum": "sha256:a73fe7b2339ae2e64e916e5a64648272539c317d4d45df68233226e005bc487f"
+      },
+      {
+        "name": "rpm-plugin-audit",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-plugin-audit-4.19.1.1-1.el10.aarch64.rpm",
+        "checksum": "sha256:8bee32b462a5497a07c37f9ef5906be971c0df427b00502fa1835f0336b6b950"
+      },
+      {
+        "name": "rpm-plugin-selinux",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-plugin-selinux-4.19.1.1-1.el10.aarch64.rpm",
+        "checksum": "sha256:43de4368faf5f89bec477ae9867a5244497e4ac6531b985759df0befb0d0f1ac"
+      },
+      {
+        "name": "rpm-sequoia",
+        "epoch": 0,
+        "version": "1.6.0",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/rpm-sequoia-1.6.0-2.el10.aarch64.rpm",
+        "checksum": "sha256:b793336fcae47be1919fd9ddc945b1530ed6a0584e1d33d99f788e0be1be5fcd"
+      },
+      {
+        "name": "sed",
+        "epoch": 0,
+        "version": "4.9",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/sed-4.9-1.el10.aarch64.rpm",
+        "checksum": "sha256:829ed79acf93a16c2f3ee945987d7fa7dc1fc416d3be1d422c246d72e50c8bc9"
+      },
+      {
+        "name": "selinux-policy",
+        "epoch": 0,
+        "version": "40.13.3",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/selinux-policy-40.13.3-1.el10.noarch.rpm",
+        "checksum": "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6"
+      },
+      {
+        "name": "selinux-policy-targeted",
+        "epoch": 0,
+        "version": "40.13.3",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/selinux-policy-targeted-40.13.3-1.el10.noarch.rpm",
+        "checksum": "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be"
+      },
+      {
+        "name": "setup",
+        "epoch": 0,
+        "version": "2.14.5",
+        "release": "2.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/setup-2.14.5-2.el10.noarch.rpm",
+        "checksum": "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6"
+      },
+      {
+        "name": "shadow-utils",
+        "epoch": 2,
+        "version": "4.15.0",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/shadow-utils-4.15.0-2.el10.aarch64.rpm",
+        "checksum": "sha256:69c9cd64733f41c600458cca6a45161151889a7496de45bbebc1aaf653d763ca"
+      },
+      {
+        "name": "sqlite-libs",
+        "epoch": 0,
+        "version": "3.45.1",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/sqlite-libs-3.45.1-2.el10.aarch64.rpm",
+        "checksum": "sha256:82e2838124d07333bc8104022a7af1e37d775c857ab6ba815707df95faa859d5"
+      },
+      {
+        "name": "systemd",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-255.3-1.el10.aarch64.rpm",
+        "checksum": "sha256:8f9ef02f75b4e98860b208318799c4c3f4c63a0afa2ab3675eea7d07adf2a045"
+      },
+      {
+        "name": "systemd-libs",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-libs-255.3-1.el10.aarch64.rpm",
+        "checksum": "sha256:9b5b6fef1e7c0f1155615cb6df7d11248afa3f91473da8272901442a17ac6c4d"
+      },
+      {
+        "name": "systemd-pam",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/systemd-pam-255.3-1.el10.aarch64.rpm",
+        "checksum": "sha256:95b90ce268a40b3400cca7136674739bc2c754b9aa93c304527c79673c5c2e24"
+      },
+      {
+        "name": "tzdata",
+        "epoch": 0,
+        "version": "2024a",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/tzdata-2024a-3.el10.noarch.rpm",
+        "checksum": "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9"
+      },
+      {
+        "name": "util-linux",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/util-linux-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:65204ec2f95275b11b307e844fe652c730885e4175afdd46eef128c4620e4f19"
+      },
+      {
+        "name": "util-linux-core",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/util-linux-core-2.40.1-4.el10.aarch64.rpm",
+        "checksum": "sha256:0dab1a01bf872eb68160301f4925fa9612406467fce9e3f454fd8edd3cf9eb3a"
+      },
+      {
+        "name": "xz-libs",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "1.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/xz-libs-5.4.6-1.el10.aarch64.rpm",
+        "checksum": "sha256:48f8ef16306832b7098dc9a2ea0fce1ab3eb6f8091597d5020162d8ae8315106"
+      },
+      {
+        "name": "zlib-ng-compat",
+        "epoch": 0,
+        "version": "2.1.6",
+        "release": "2.el10",
+        "arch": "aarch64",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240626/Packages/zlib-ng-compat-2.1.6-2.el10.aarch64.rpm",
+        "checksum": "sha256:baa2d71f83334dddc4a3be8db35722add321079c379c898e597eb7e3e0d1974b"
+      }
+    ]
+  },
+  "no-image-info": true
+}
