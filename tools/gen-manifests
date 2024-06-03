@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 #
 # Generate manifests using the gen-manifests tool in github.com/osbuild/images
+#
+# Supports up to three positional arguments:
+# distros: comma-separated list of distribution names to generate manifests for
+# arches: comma-separated list of architectures to generate manifests for
+# images: comma-separated list of image types to generate manifests for
+#
+# All three arguments support globs (fedora-*, *64*, *rhui*).
 
 set -euo pipefail
+
+distros="${1:-*}"
+arches="${2:-*}"
+images="${3:-*}"
 
 workdir="$(pwd)"
 
@@ -24,4 +35,5 @@ pushd "${tmpdir}"
 
 manifest_dir="${workdir}/test/data/manifests/"
 echo "Generating manifests and storing in ${manifest_dir}"
-go run ./cmd/gen-manifests --output "${manifest_dir}"
+set -x
+go run ./cmd/gen-manifests --output "${manifest_dir}" --distros="${distros}" --arches="${arches}" --images="${images}"
