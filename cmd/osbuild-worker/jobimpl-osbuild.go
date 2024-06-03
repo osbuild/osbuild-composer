@@ -502,7 +502,18 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	case "host":
 		executor = osbuildexecutor.NewHostExecutor()
 	case "aws.ec2":
-		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, impl.OSBuildExecutor.CloudWatchGroup)
+		err = os.MkdirAll("/var/tmp/osbuild-composer", 0755)
+		if err != nil {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Unable to create /var/tmp/osbuild-composer needed to aws.ec2 executor", nil)
+			return err
+		}
+		tmpDir, err := os.MkdirTemp("/var/tmp/osbuild-composer", "")
+		if err != nil {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Unable to create /var/tmp/osbuild-composer needed to aws.ec2 executor", nil)
+			return err
+		}
+		defer os.RemoveAll(tmpDir)
+		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, impl.OSBuildExecutor.CloudWatchGroup, tmpDir)
 	default:
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
 		return err
