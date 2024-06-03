@@ -163,13 +163,6 @@ install -m 0644 -vp repositories/centos-*                          %{buildroot}%
 # All other CentOS versions support building for the same version
 install -m 0644 -vp repositories/centos-%{centos}*                 %{buildroot}%{_datadir}/osbuild-composer/repositories/
 install -m 0644 -vp repositories/centos-stream-%{centos}*          %{buildroot}%{_datadir}/osbuild-composer/repositories/
-
-# CentOS 9 supports building also for CentOS 8
-%if 0%{?centos} == 9
-install -m 0644 -vp repositories/centos-8*                        %{buildroot}%{_datadir}/osbuild-composer/repositories/
-install -m 0644 -vp repositories/centos-stream-8*                 %{buildroot}%{_datadir}/osbuild-composer/repositories/
-%endif
-
 %endif
 
 %else
