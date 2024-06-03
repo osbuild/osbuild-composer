@@ -36,4 +36,4 @@ pushd "${tmpdir}"
 manifest_dir="${workdir}/test/data/manifests/"
 echo "Generating manifests and storing in ${manifest_dir}"
 set -x
-go run ./cmd/gen-manifests --output "${manifest_dir}" --distros="${distros}" --arches="${arches}" --images="${images}"
+go run -tags=exclude_graphdriver_btrfs ./cmd/gen-manifests --output "${manifest_dir}" --distros="${distros}" --arches="${arches}" --images="${images}"
