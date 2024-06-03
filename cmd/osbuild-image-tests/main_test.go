@@ -37,7 +37,7 @@ type testcaseStruct struct {
 		Distro   string
 		Arch     string
 		Filename string
-	} `json:"compose-request"`
+	} `json:"build-request"`
 	Manifest  json.RawMessage
 	ImageInfo json.RawMessage `json:"image-info"`
 	Boot      *struct {
