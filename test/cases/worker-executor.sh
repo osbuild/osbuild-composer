@@ -153,9 +153,7 @@ ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo dnf inst
 # no internet access during the build
 $AWS_CMD ec2 revoke-security-group-egress --group-id "$SGID" --security-group-rule-ids "$SGRULEID"
 
-ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo mkdir -p /var/cache/osbuild-builder
-
-ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo /usr/libexec/osbuild-composer/osbuild-jobsite-builder -builder-host 0.0.0.0 -build-path /var/cache/osbuild-builder &
+ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo /usr/libexec/osbuild-composer/osbuild-worker-executor -host 0.0.0.0 &
 subprocessPIDs+=( $! )
 
 # wait for compose to complete
