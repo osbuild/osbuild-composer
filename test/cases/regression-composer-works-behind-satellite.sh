@@ -26,6 +26,10 @@ function generate_certificates {
     # Certificate for the client
     sudo openssl req -new -subj "/C=GB/CN=localhost" -sha256 -key client.key -out client.csr
     sudo openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365 -sha256
+
+    # add the certificate authority to the system trust stores
+    sudo cp ca.crt "/etc/pki/ca-trust/source/anchors/ca-$(uuidgen).crt"
+    sudo update-ca-trust
 }
 
 function cleanup {
