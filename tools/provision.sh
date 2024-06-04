@@ -31,14 +31,14 @@ fi
 # and install koji and ansible here.
 #
 # TODO: Adjust the c10s condition, once EPEL-10 is available.
-if [[ $ID == rhel || ($ID == centos && ${VERSION_ID%.*} -lt 10) ]] && ! rpm -q epel-release; then
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} -lt 10 ]] && ! rpm -q epel-release; then
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-"${VERSION_ID%.*}".noarch.rpm
     sudo rpm -Uvh /tmp/epel.rpm
 fi
 
 # TODO: Remove this workaround, once koji is in EPEL-10
-if [[ $ID == centos && ${VERSION_ID%.*} == 10 ]]; then
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
     sudo dnf copr enable -y @osbuild/centpkg "centos-stream-10-$(uname -m)"
 fi
 
