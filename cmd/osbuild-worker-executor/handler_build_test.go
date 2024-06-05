@@ -65,7 +65,7 @@ func makeTestPost(t *testing.T, controlJSON, manifestJSON string) *bytes.Buffer 
 	// for now we assume we get validated data, for files we could
 	// trivially validate on the fly but for containers that is
 	// harder
-	for _, dir := range []string{"store/", "store/sources", "store/sources/org.osbuild.files"} {
+	for _, dir := range []string{"osbuild-store/", "osbuild-store/sources", "osbuild-store/sources/org.osbuild.files"} {
 		err = archive.WriteHeader(&tar.Header{
 			Name:     dir,
 			Mode:     0755,
@@ -73,9 +73,9 @@ func makeTestPost(t *testing.T, controlJSON, manifestJSON string) *bytes.Buffer 
 		})
 		assert.NoError(t, err)
 	}
-	err = writeToTar(archive, "store/sources/org.osbuild.files/sha256:ff800c5263b915d8a0776be5620575df2d478332ad35e8dd18def6a8c720f9c7", "random-data")
+	err = writeToTar(archive, "osbuild-store/sources/org.osbuild.files/sha256:ff800c5263b915d8a0776be5620575df2d478332ad35e8dd18def6a8c720f9c7", "random-data")
 	assert.NoError(t, err)
-	err = writeToTar(archive, "store/sources/org.osbuild.files/sha256:aabbcc5263b915d8a0776be5620575df2d478332ad35e8dd18def6a8c720f9c7", "other-data")
+	err = writeToTar(archive, "osbuild-store/sources/org.osbuild.files/sha256:aabbcc5263b915d8a0776be5620575df2d478332ad35e8dd18def6a8c720f9c7", "other-data")
 	assert.NoError(t, err)
 	return buf
 }
@@ -109,7 +109,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	reader := bufio.NewReader(rsp.Body)
 
 	// check that we get the output of osbuild streamed to us
-	expectedContent := fmt.Sprintf(`fake-osbuild --export tree --output-dir %[1]s/build/output --store %[1]s/build/store --json
+	expectedContent := fmt.Sprintf(`fake-osbuild --export tree --output-dir %[1]s/build/output --store %[1]s/build/osbuild-store --json
 ---
 {"fake": "manifest"}`, baseBuildDir)
 	content, err := io.ReadAll(reader)
@@ -120,7 +120,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	assert.NoError(t, err)
 	assert.Equal(t, expectedContent, string(logFileContent))
 	// check that the "store" dir got created
-	stat, err := os.Stat(filepath.Join(baseBuildDir, "build/store"))
+	stat, err := os.Stat(filepath.Join(baseBuildDir, "build/osbuild-store"))
 	assert.NoError(t, err)
 	assert.True(t, stat.IsDir())
 
@@ -181,11 +181,11 @@ func TestHandleIncludedSourcesUnclean(t *testing.T) {
 
 	buf := bytes.NewBuffer(nil)
 	atar := tar.NewWriter(buf)
-	err := writeToTar(atar, "store/../../etc/passwd", "some-content")
+	err := writeToTar(atar, "osbuild-store/../../etc/passwd", "some-content")
 	assert.NoError(t, err)
 
 	err = main.HandleIncludedSources(tar.NewReader(buf), tmpdir)
-	assert.EqualError(t, err, "name not clean: ../etc/passwd != store/../../etc/passwd")
+	assert.EqualError(t, err, "name not clean: ../etc/passwd != osbuild-store/../../etc/passwd")
 }
 
 func TestHandleIncludedSourcesNotFromStore(t *testing.T) {
@@ -197,7 +197,7 @@ func TestHandleIncludedSourcesNotFromStore(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = main.HandleIncludedSources(tar.NewReader(buf), tmpdir)
-	assert.EqualError(t, err, "expected store/ prefix, got not-store")
+	assert.EqualError(t, err, "expected osbuild-store/ prefix, got not-store")
 }
 
 func TestHandleIncludedSourcesBadTypes(t *testing.T) {
@@ -207,7 +207,7 @@ func TestHandleIncludedSourcesBadTypes(t *testing.T) {
 		buf := bytes.NewBuffer(nil)
 		atar := tar.NewWriter(buf)
 		err := atar.WriteHeader(&tar.Header{
-			Name:     "store/bad-type",
+			Name:     "osbuild-store/bad-type",
 			Typeflag: badType,
 		})
 		assert.NoError(t, err)
