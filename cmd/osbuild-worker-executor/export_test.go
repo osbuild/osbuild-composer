@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -35,7 +35,8 @@ func MockOsbuildBinary(t *testing.T, new string) (restore func()) {
 
 	tmpdir := t.TempDir()
 	osbuildBinary = filepath.Join(tmpdir, "fake-osbuild")
-	if err := ioutil.WriteFile(osbuildBinary, []byte(new), 0755); err != nil {
+	/* #nosec G306 */
+	if err := os.WriteFile(osbuildBinary, []byte(new), 0755); err != nil {
 		t.Fatal(err)
 	}
 

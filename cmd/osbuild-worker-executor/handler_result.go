@@ -27,7 +27,9 @@ func handleResult(logger *logrus.Logger, config *Config) http.Handler {
 					return
 				}
 				defer f.Close()
-				io.Copy(w, f)
+				if _, err := io.Copy(w, f); err != nil {
+					logger.Errorf("Unable to write log to response")
+				}
 				return
 			case buildResult.Good():
 				// good result

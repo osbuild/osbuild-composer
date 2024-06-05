@@ -75,7 +75,7 @@ func runOsbuild(buildDir string, control *controlJSON, output io.Writer) (string
 	if err := cmd.Wait(); err != nil {
 		// we cannot use "http.Error()" here because the http
 		// header was already set to "201" when we started streaming
-		mw.Write([]byte(fmt.Sprintf("cannot run osbuild: %v", err)))
+		_, _ = mw.Write([]byte(fmt.Sprintf("cannot run osbuild: %v", err)))
 		return "", err
 	}
 
@@ -90,7 +90,7 @@ func runOsbuild(buildDir string, control *controlJSON, output io.Writer) (string
 	if err != nil {
 		err = fmt.Errorf("cannot tar output directory: %w, output:\n%s", err, out)
 		logrus.Errorf(err.Error())
-		mw.Write([]byte(err.Error()))
+		_, _ = mw.Write([]byte(err.Error()))
 		return "", err
 	}
 	logrus.Infof("tar output:\n%s", out)

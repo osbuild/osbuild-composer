@@ -1,7 +1,7 @@
 package main_test
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -27,15 +27,15 @@ func TestResultBad(t *testing.T) {
 	// todo: make a nice helper method
 	err := os.MkdirAll(filepath.Join(buildBaseDir, "build"), 0755)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(filepath.Join(buildBaseDir, "result.bad"), nil, 0644)
+	err = os.WriteFile(filepath.Join(buildBaseDir, "result.bad"), nil, 0644)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(filepath.Join(buildBaseDir, "build/build.log"), []byte("failure log"), 0644)
+	err = os.WriteFile(filepath.Join(buildBaseDir, "build/build.log"), []byte("failure log"), 0644)
 	assert.NoError(t, err)
 
 	rsp, err := http.Get(endpoint)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rsp.StatusCode)
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := io.ReadAll(rsp.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, "build failed\nfailure log", string(body))
 }
@@ -48,15 +48,15 @@ func TestResultGood(t *testing.T) {
 	// todo: make a nice helper method
 	err := os.MkdirAll(filepath.Join(buildBaseDir, "build/output"), 0755)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(filepath.Join(buildBaseDir, "result.good"), nil, 0644)
+	err = os.WriteFile(filepath.Join(buildBaseDir, "result.good"), nil, 0644)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(filepath.Join(buildBaseDir, "build/output/disk.img"), []byte("fake-build-result"), 0644)
+	err = os.WriteFile(filepath.Join(buildBaseDir, "build/output/disk.img"), []byte("fake-build-result"), 0644)
 	assert.NoError(t, err)
 
 	rsp, err := http.Get(endpoint)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rsp.StatusCode)
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := io.ReadAll(rsp.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, "fake-build-result", string(body))
 }
