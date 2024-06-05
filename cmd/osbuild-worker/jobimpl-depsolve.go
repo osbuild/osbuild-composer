@@ -73,6 +73,30 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 	return depsolvedSets, repoConfigs, nil
 }
 
+func workerClientErrorFrom(err error) (*clienterrors.Error, error) {
+	switch e := err.(type) {
+	case dnfjson.Error:
+		// Error originates from dnf-json
+		switch e.Kind {
+		case "DepsolveError":
+			return clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, err.Error(), e.Reason), nil
+		case "MarkingErrors":
+			return clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, err.Error(), e.Reason), nil
+		case "RepoError":
+			return clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, err.Error(), e.Reason), nil
+		default:
+			err := fmt.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
+			// This still has the kind/reason format but a kind that's returned
+			// by dnf-json and not explicitly handled here.
+			return clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, err.Error(), e.Reason), err
+		}
+	default:
+		err := fmt.Errorf("rpmmd error in depsolve job: %v", err)
+		// Error originates from internal/rpmmd, not from dnf-json
+		return clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, err.Error(), nil), err
+	}
+}
+
 func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	logWithId := logrus.WithField("jobId", job.Id())
 	var args worker.DepsolveJob
@@ -106,26 +130,9 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 
 	result.PackageSpecs, result.RepoConfigs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
-		switch e := err.(type) {
-		case dnfjson.Error:
-			// Error originates from dnf-json
-			switch e.Kind {
-			case "DepsolveError":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, err.Error(), e.Reason)
-			case "MarkingErrors":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, err.Error(), e.Reason)
-			case "RepoError":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, err.Error(), e.Reason)
-			default:
-				// This still has the kind/reason format but a kind that's returned
-				// by dnf-json and not explicitly handled here.
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, err.Error(), e.Reason)
-				logWithId.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
-			}
-		case error:
-			// Error originates from internal/rpmmd, not from dnf-json
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, err.Error(), nil)
-			logWithId.Errorf("rpmmd error in depsolve job: %v", err)
+		result.JobError, err = workerClientErrorFrom(err)
+		if err != nil {
+			logWithId.Errorf(err.Error())
 		}
 	}
 	if err := impl.Solver.CleanCache(); err != nil {
