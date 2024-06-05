@@ -39,8 +39,9 @@ func run(ctx context.Context, args []string, getenv func(string) string) error {
 
 	srv := newServer(logger, config)
 	httpServer := &http.Server{
-		Addr:    net.JoinHostPort(config.Host, config.Port),
-		Handler: srv,
+		Addr:              net.JoinHostPort(config.Host, config.Port),
+		Handler:           srv,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 	go func() {
 		logger.Printf("listening on %s\n", httpServer.Addr)
