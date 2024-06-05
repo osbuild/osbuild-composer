@@ -102,7 +102,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	buf := makeTestPost(t, `{"exports": ["tree"], "environments": ["MY=env"]}`, `{"fake": "manifest"}`)
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
-	defer io.ReadAll(rsp.Body)
+	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
 
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
@@ -165,7 +165,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
-	defer io.ReadAll(rsp.Body)
+	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
 
 	buf = makeTestPost(t, `{"exports": ["tree"]}`, `{"fake": "manifest"}`)
@@ -233,7 +233,7 @@ exit 23
 	buf := makeTestPost(t, `{"exports": ["tree"], "environments": ["MY=env"]}`, `{"fake": "manifest"}`)
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
-	defer io.ReadAll(rsp.Body)
+	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
 
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
@@ -277,7 +277,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	buf := makeTestPost(t, `{"exports": ["tree"], "environments": ["MY=env"]}`, `{"fake": "manifest"}`)
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
-	defer io.ReadAll(rsp.Body)
+	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
 
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
@@ -290,7 +290,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 		// the out contains when it was generated
 		_, err = fmt.Sscanf(line, "line-%d: %d.%d\n", &lineno, &seconds, &nano)
 		assert.NoError(t, err)
-		timeSinceOutput := time.Now().Sub(time.Unix(seconds, nano))
+		timeSinceOutput := time.Since(time.Unix(seconds, nano))
 		// we expect lines to appear right away, for really slow VMs
 		// we give a grace time of 200ms (which should be plenty and
 		// is also a bit arbitrary)
